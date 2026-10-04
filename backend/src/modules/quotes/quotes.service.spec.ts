@@ -1,4 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import { HadithGrade, QuoteOrigin, QuoteType, SourceType, TagCategory } from '@prisma/client';
 import type { Prisma } from '@prisma/client';
@@ -8,6 +9,9 @@ import { QuotesService } from './quotes.service.js';
 import type { AdminQuotesQueryDto } from './dto/admin-quotes-query.dto.js';
 import type { QuotesQueryDto } from './dto/quotes-query.dto.js';
 import { vi } from 'vitest';
+
+/** Minimal ConfigService mock — returns VARIETY_SCORE_FLOOR=70 by default. */
+const makeConfigMock = () => ({ get: vi.fn().mockReturnValue(70) });
 
 function makeRow(overrides: Partial<QuoteRowForDto> = {}): QuoteRowForDto {
   return {
@@ -81,6 +85,7 @@ describe('QuotesService', () => {
       providers: [
         QuotesService,
         { provide: PrismaService, useValue: {} },
+        { provide: ConfigService, useValue: makeConfigMock() },
       ],
     }).compile();
     service = module.get(QuotesService);
@@ -171,6 +176,7 @@ describe('QuotesService — grade policy (P0-2)', () => {
       providers: [
         QuotesService,
         { provide: PrismaService, useValue: mock },
+        { provide: ConfigService, useValue: makeConfigMock() },
       ],
     }).compile();
     svc = module.get(QuotesService);

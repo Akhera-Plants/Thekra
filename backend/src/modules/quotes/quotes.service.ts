@@ -3,6 +3,7 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Prisma, QuoteOrigin, QuoteType, HadithGrade } from '@prisma/client';
 import { paginated } from '../../common/dto/paginated-result.js';
 import {
@@ -16,6 +17,7 @@ import {
 import { findIdsByNormalizedArabic } from '../../common/text/arabic-search.js';
 import { GradePolicy } from '../hadith/grade-policy.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import type { EnvironmentVariables } from '../../config/env.validation.js';
 import type { AdminQuotesQueryDto } from './dto/admin-quotes-query.dto.js';
 import type { CreateQuoteDto } from './dto/create-quote.dto.js';
 import type { QuoteDetailQueryDto } from './dto/quote-detail-query.dto.js';
@@ -41,9 +43,17 @@ function translationsInclude(
     : ({ where: { languageCode: locale }, take: 1 } as const);
 }
 
+/** Link tables that support the variety shuffle query. */
+export type ShuffleLinkTable = '"SinQuote"' | '"GoodDeedQuote"';
+/** Foreign-key column in the link table that references the parent. */
+export type ShuffleParentKey = '"sinId"' | '"goodDeedId"';
+
 @Injectable()
 export class QuotesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly config: ConfigService<EnvironmentVariables>,
+  ) {}
 
   /**
    * Locale-filtered include that still projects as `QuoteRowForDto`.
@@ -92,6 +102,102 @@ export class QuotesService {
 
   linkOrderBy() {
     return LINK_ORDER_BY;
+  }
+
+  /**
+   * Returns the configured minimum relevanceScore for the variety shuffle band.
+   * Reads `VARIETY_SCORE_FLOOR` from validated env (default 70). See §4.2.
+   */
+  getVarietyScoreFloor(): number {
+    return this.config.get('VARIETY_SCORE_FLOOR') ?? 70;
+  }
+
+  /**
+   * Variety-mode shuffle (§4.2): returns the IDs of link rows for the requested
+   * page, ordered so that:
+   *   • Links with `relevanceScore >= floor` come first, sorted by
+   *     `md5(link.id || seed)` — deterministic pseudo-random per seed.
+   *   • Remaining links follow in normal LINK_ORDER (score DESC, grade ASC,
+   *     createdAt DESC, id ASC).
+   *
+   * The caller must pass pre-validated, closed-union values for `table` and
+   * `parentKey` (never raw user input) — they are embedded with Prisma.raw.
+   *
+   * After calling this, fetch the rows with
+   *   `sinQuote.findMany({ where: { id: { in: ids } } })` and re-sort in memory
+   * using the returned order so the Prisma include stays type-safe.
+   */
+  async shuffleLinksPage(opts: {
+    table: ShuffleLinkTable;
+    parentKey: ShuffleParentKey;
+    parentId: string;
+    minScore?: number;
+    types?: QuoteType[];
+    allowedGrades: HadithGrade[];
+    seed: string;
+    floor: number;
+    page: number;
+    limit: number;
+  }): Promise<string[]> {
+    const { table, parentKey, parentId, minScore, types, allowedGrades, seed, floor, page, limit } = opts;
+    const offset = (page - 1) * limit;
+    const includeUngraded = allowedGrades.includes(HadithGrade.UNGRADED);
+
+    // Conditional WHERE fragments — values are parameterised, table/column via closed-union Prisma.raw
+    const minScoreFilter =
+      minScore !== undefined
+        ? Prisma.sql`AND sq."relevanceScore" >= ${minScore}`
+        : Prisma.sql``;
+
+    const typeFilter =
+      types && types.length > 0
+        ? Prisma.sql`AND q.type::text IN (${Prisma.join(types)})`
+        : Prisma.sql``;
+
+    // Grade clause mirrors GradePolicy.whereClause:
+    //   non-HADITH rows always pass; HADITH must be in allowedGrades;
+    //   if UNGRADED is allowed, also include HADITH rows with null grade.
+    const nullGradeClause = includeUngraded ? Prisma.sql`OR q.grade IS NULL` : Prisma.sql``;
+    const gradeFilter = Prisma.sql`AND (
+      q.type::text != 'HADITH'
+      OR q.grade::text IN (${Prisma.join(allowedGrades)})
+      ${nullGradeClause}
+    )`;
+
+    // ORDER BY strategy (see §4.2):
+    //   Column 1 — band: high-band (score >= floor) = 0, low-band = 1.
+    //   Column 2 — shuffle within high-band via md5(id || seed); NULLs last
+    //              (low-band rows have NULL here, but band column already separates them).
+    //   Columns 3-5 — normal LINK_ORDER within low-band (NULL in high-band rows
+    //              is irrelevant because band column puts them first).
+    const rows = await this.prisma.$queryRaw<{ id: string }[]>(Prisma.sql`
+      SELECT   sq.id
+      FROM     ${Prisma.raw(table)} sq
+      JOIN     "Quote" q ON sq."quoteId" = q.id
+      WHERE    sq.${Prisma.raw(parentKey)} = ${parentId}
+      ${minScoreFilter}
+      ${typeFilter}
+      ${gradeFilter}
+      ORDER BY
+        CASE WHEN COALESCE(sq."relevanceScore", -1) >= ${floor} THEN 0 ELSE 1 END ASC,
+        CASE WHEN COALESCE(sq."relevanceScore", -1) >= ${floor}
+             THEN md5(CAST(sq.id AS text) || CAST(${seed} AS text))
+             ELSE NULL END ASC NULLS LAST,
+        CASE WHEN COALESCE(sq."relevanceScore", -1) <  ${floor}
+             THEN sq."relevanceScore" ELSE NULL END DESC NULLS LAST,
+        CASE WHEN COALESCE(sq."relevanceScore", -1) <  ${floor}
+             THEN (CASE q.grade::text
+                   WHEN 'SAHIH'    THEN 1 WHEN 'HASAN'    THEN 2
+                   WHEN 'DAIF'     THEN 3 WHEN 'UNGRADED' THEN 4
+                   WHEN 'MAWDU'    THEN 5 ELSE                 6 END)
+             ELSE NULL END ASC NULLS LAST,
+        CASE WHEN COALESCE(sq."relevanceScore", -1) <  ${floor}
+             THEN q."createdAt" ELSE NULL END DESC NULLS LAST,
+        sq.id ASC
+      LIMIT    ${limit} OFFSET ${offset}
+    `);
+
+    return rows.map((r) => r.id);
   }
 
   async search(query: QuotesQueryDto) {

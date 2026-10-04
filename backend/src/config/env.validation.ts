@@ -3,6 +3,7 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  Max,
   Min,
   validateSync,
 } from 'class-validator';
@@ -27,6 +28,17 @@ export class EnvironmentVariables {
   @IsOptional()
   @IsString()
   LOG_LEVEL?: string = 'info';
+
+  /**
+   * Minimum relevanceScore for a link to be placed in the shuffled "variety band".
+   * Links with score >= this threshold are ordered by md5(link.id + seed); links
+   * below the threshold follow in the normal LINK_ORDER. See backend-plan §4.2.
+   */
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  VARIETY_SCORE_FLOOR?: number = 70;
 }
 
 export function validateEnv(config: Record<string, unknown>): EnvironmentVariables {

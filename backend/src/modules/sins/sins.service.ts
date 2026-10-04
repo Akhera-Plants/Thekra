@@ -155,6 +155,98 @@ export class SinsService {
       },
     };
 
+    // Shared sub-queries (count, type breakdown, alternatives) — same for both paths
+    const countQ = this.prisma.sinQuote.count({ where });
+    const typeGroupsQ = this.prisma.quote.groupBy({
+      by: ['type'],
+      where: { sinLinks: { some: where } },
+      _count: { _all: true },
+    });
+    const alternativesQ = this.prisma.goodDeed.findMany({
+      where: { oppositeSinId: sin.id },
+      take: 3,
+      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        slug: true,
+        name: true,
+        nameAr: true,
+        reward: true,
+        rewardAr: true,
+      },
+    });
+
+    // ── Shuffle variety mode (§4.2) ────────────────────────────────────────────
+    // When shuffle=true: rows with score >= VARIETY_SCORE_FLOOR are ordered by
+    // md5(link.id || seed); remainder follows normal LINK_ORDER. Pagination is
+    // deterministic for a given seed. seed defaults to the current day bucket
+    // (yyyy-mm-dd) so the order is stable across the day without requiring auth.
+    if (query.shuffle) {
+      const seed = query.seed ?? new Date().toISOString().slice(0, 10);
+      const floor = this.quotes.getVarietyScoreFloor();
+
+      const ids = await this.quotes.shuffleLinksPage({
+        table: '"SinQuote"',
+        parentKey: '"sinId"',
+        parentId: sin.id,
+        minScore: query.minScore,
+        types: query.type,
+        allowedGrades,
+        seed,
+        floor,
+        page,
+        limit,
+      });
+
+      const [rows, total, typeGroups, alternatives] = await this.prisma.$transaction([
+        this.prisma.sinQuote.findMany({
+          where: { id: { in: ids } },
+          include: { quote: { include: this.quotes.buildQuoteInclude(locale) } },
+        }),
+        countQ,
+        typeGroupsQ,
+        alternativesQ,
+      ]);
+
+      // Re-order to match the shuffle ordering from the raw query
+      if (ids.length > 1) {
+        const order = new Map(ids.map((id, i) => [id, i]));
+        rows.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+      }
+
+      const countsByType: Record<string, number> = {
+        QURAN_VERSE: 0, HADITH: 0, SCHOLAR_QUOTE: 0, BOOK_EXCERPT: 0,
+      };
+      for (const g of typeGroups) countsByType[g.type] = g._count._all;
+
+      return {
+        data: {
+          sin: {
+            id: sin.id,
+            slug: sin.slug,
+            name: sin.name,
+            nameAr: sin.nameAr,
+            severity: sin.severity,
+            description: sin.description,
+            descriptionAr: sin.descriptionAr,
+          },
+          items: rows.map((row) => ({
+            link: { id: row.id, relevanceScore: row.relevanceScore, note: row.note },
+            quote: this.quotes.toQuoteDto(row.quote, locale),
+          })),
+          alternatives,
+        },
+        meta: buildPageMeta(page, limit, total, {
+          locale,
+          ordering: `variety:md5(seed),floor=${floor}`,
+          seed,
+          countsByType,
+          appliedGrades: allowedGrades,
+        }),
+      };
+    }
+
+    // ── Normal ordering path ───────────────────────────────────────────────────
     const [rows, total, typeGroups, alternatives] = await this.prisma.$transaction([
       this.prisma.sinQuote.findMany({
         where,
@@ -165,25 +257,9 @@ export class SinsService {
           quote: { include: this.quotes.buildQuoteInclude(locale) },
         },
       }),
-      this.prisma.sinQuote.count({ where }),
-      this.prisma.quote.groupBy({
-        by: ['type'],
-        where: { sinLinks: { some: where } },
-        _count: { _all: true },
-      }),
-      this.prisma.goodDeed.findMany({
-        where: { oppositeSinId: sin.id },
-        take: 3,
-        orderBy: { name: 'asc' },
-        select: {
-          id: true,
-          slug: true,
-          name: true,
-          nameAr: true,
-          reward: true,
-          rewardAr: true,
-        },
-      }),
+      countQ,
+      typeGroupsQ,
+      alternativesQ,
     ]);
 
     const countsByType: Record<string, number> = {
@@ -213,7 +289,7 @@ export class SinsService {
             relevanceScore: row.relevanceScore,
             note: row.note,
           },
-          quote: this.quotes.toQuoteDto(row.quote , locale),
+          quote: this.quotes.toQuoteDto(row.quote, locale),
         })),
         alternatives,
       },

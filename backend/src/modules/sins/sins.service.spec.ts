@@ -6,6 +6,16 @@ import { GoodDeedsService } from '../good-deeds/good-deeds.service.js';
 import { QuotesService } from '../quotes/quotes.service.js';
 import { SinsService } from './sins.service.js';
 
+const SIN = {
+  id: 'sin-1',
+  slug: 'ghibah',
+  name: 'Backbiting',
+  nameAr: 'الغيبة',
+  severity: 4,
+  description: null,
+  descriptionAr: null,
+};
+
 describe('SinsService', () => {
   const prisma = {
     sin: {
@@ -28,10 +38,12 @@ describe('SinsService', () => {
 
   const quotes = {
     buildQuoteInclude: vi.fn().mockReturnValue({ source: true }),
-    toQuoteDto: vi.fn().mockImplementation((row) => ({ id: row.id, type: row.type })),
+    toQuoteDto: vi.fn().mockImplementation((row) => ({ id: row?.id, type: row?.type })),
     linkOrderBy: vi.fn().mockReturnValue([
       { relevanceScore: { sort: 'desc', nulls: 'last' } },
     ]),
+    shuffleLinksPage: vi.fn(),
+    getVarietyScoreFloor: vi.fn().mockReturnValue(70),
   };
 
   const goodDeeds = {
@@ -61,16 +73,8 @@ describe('SinsService', () => {
     ).rejects.toBeInstanceOf(NotFoundException);
   });
 
-  it('orders by relevanceScore desc with nulls last', async () => {
-    prisma.sin.findUnique.mockResolvedValue({
-      id: 'sin-1',
-      slug: 'ghibah',
-      name: 'Backbiting',
-      nameAr: 'الغيبة',
-      severity: 4,
-      description: null,
-      descriptionAr: null,
-    });
+  it('orders by relevanceScore desc with nulls last (normal path)', async () => {
+    prisma.sin.findUnique.mockResolvedValue(SIN);
     prisma.sinQuote.findMany.mockResolvedValue([]);
     prisma.sinQuote.count.mockResolvedValue(0);
     prisma.quote.groupBy.mockResolvedValue([]);
@@ -91,15 +95,7 @@ describe('SinsService', () => {
   });
 
   it('does not drop QURAN_VERSE rows when filtering grades=SAHIH', async () => {
-    prisma.sin.findUnique.mockResolvedValue({
-      id: 'sin-1',
-      slug: 'ghibah',
-      name: 'Backbiting',
-      nameAr: 'الغيبة',
-      severity: 4,
-      description: null,
-      descriptionAr: null,
-    });
+    prisma.sin.findUnique.mockResolvedValue(SIN);
     prisma.sinQuote.findMany.mockResolvedValue([]);
     prisma.sinQuote.count.mockResolvedValue(0);
     prisma.quote.groupBy.mockResolvedValue([]);
@@ -118,15 +114,7 @@ describe('SinsService', () => {
   });
 
   it('caps alternatives at 3', async () => {
-    prisma.sin.findUnique.mockResolvedValue({
-      id: 'sin-1',
-      slug: 'ghibah',
-      name: 'Backbiting',
-      nameAr: 'الغيبة',
-      severity: 4,
-      description: null,
-      descriptionAr: null,
-    });
+    prisma.sin.findUnique.mockResolvedValue(SIN);
     prisma.sinQuote.findMany.mockResolvedValue([]);
     prisma.sinQuote.count.mockResolvedValue(0);
     prisma.quote.groupBy.mockResolvedValue([]);
@@ -145,15 +133,7 @@ describe('SinsService', () => {
   });
 
   it('countsByType counts the full filtered set, not the page', async () => {
-    prisma.sin.findUnique.mockResolvedValue({
-      id: 'sin-1',
-      slug: 'ghibah',
-      name: 'Backbiting',
-      nameAr: 'الغيبة',
-      severity: 4,
-      description: null,
-      descriptionAr: null,
-    });
+    prisma.sin.findUnique.mockResolvedValue(SIN);
     prisma.sinQuote.findMany.mockResolvedValue([]);
     prisma.sinQuote.count.mockResolvedValue(12);
     prisma.quote.groupBy.mockResolvedValue([
@@ -171,6 +151,104 @@ describe('SinsService', () => {
       HADITH: 6,
       SCHOLAR_QUOTE: 1,
       BOOK_EXCERPT: 0,
+    });
+  });
+
+  // ─── Shuffle variety mode (P1-2) ──────────────────────────────────────────────
+
+  describe('shuffle=true (variety mode)', () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      // Restore default mocks that beforeEach clears
+      quotes.buildQuoteInclude.mockReturnValue({ source: true });
+      quotes.toQuoteDto.mockImplementation((row) => ({ id: row?.id, type: row?.type }));
+      quotes.linkOrderBy.mockReturnValue([{ relevanceScore: { sort: 'desc', nulls: 'last' } }]);
+      quotes.getVarietyScoreFloor.mockReturnValue(70);
+    });
+
+    it('calls shuffleLinksPage with correct table/parentKey and echoes seed in meta', async () => {
+      prisma.sin.findUnique.mockResolvedValue(SIN);
+      quotes.shuffleLinksPage.mockResolvedValue(['link-a', 'link-b']);
+      prisma.sinQuote.findMany.mockResolvedValue([
+        { id: 'link-a', relevanceScore: 90, note: null, quote: { id: 'q-a', type: 'HADITH' } },
+        { id: 'link-b', relevanceScore: 85, note: null, quote: { id: 'q-b', type: 'QURAN_VERSE' } },
+      ]);
+      prisma.sinQuote.count.mockResolvedValue(2);
+      prisma.quote.groupBy.mockResolvedValue([]);
+      prisma.goodDeed.findMany.mockResolvedValue([]);
+      prisma.$transaction.mockImplementation(async (ops) => Promise.all(ops));
+
+      const result = await service.findQuotesForSin('ghibah', {
+        shuffle: true,
+        seed: 'test-seed-abc',
+      });
+
+      expect(quotes.shuffleLinksPage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          table: '"SinQuote"',
+          parentKey: '"sinId"',
+          parentId: SIN.id,
+          seed: 'test-seed-abc',
+          floor: 70,
+        }),
+      );
+      expect(result.meta.ordering).toMatch(/^variety:md5\(seed\),floor=\d+$/);
+      expect(result.meta.seed).toBe('test-seed-abc');
+    });
+
+    it('defaults seed to today (yyyy-mm-dd) when no seed provided', async () => {
+      prisma.sin.findUnique.mockResolvedValue(SIN);
+      quotes.shuffleLinksPage.mockResolvedValue([]);
+      prisma.sinQuote.findMany.mockResolvedValue([]);
+      prisma.sinQuote.count.mockResolvedValue(0);
+      prisma.quote.groupBy.mockResolvedValue([]);
+      prisma.goodDeed.findMany.mockResolvedValue([]);
+      prisma.$transaction.mockImplementation(async (ops) => Promise.all(ops));
+
+      const result = await service.findQuotesForSin('ghibah', { shuffle: true });
+
+      const today = new Date().toISOString().slice(0, 10);
+      expect(result.meta.seed).toBe(today);
+      expect((quotes.shuffleLinksPage as ReturnType<typeof vi.fn>).mock.calls[0][0].seed).toBe(today);
+    });
+
+    it('re-orders rows to match shuffle ID ordering', async () => {
+      prisma.sin.findUnique.mockResolvedValue(SIN);
+      // shuffleLinksPage says link-b should come first
+      quotes.shuffleLinksPage.mockResolvedValue(['link-b', 'link-a']);
+      // findMany returns them in DB order (a before b)
+      prisma.sinQuote.findMany.mockResolvedValue([
+        { id: 'link-a', relevanceScore: 90, note: null, quote: { id: 'q-a' } },
+        { id: 'link-b', relevanceScore: 85, note: null, quote: { id: 'q-b' } },
+      ]);
+      prisma.sinQuote.count.mockResolvedValue(2);
+      prisma.quote.groupBy.mockResolvedValue([]);
+      prisma.goodDeed.findMany.mockResolvedValue([]);
+      prisma.$transaction.mockImplementation(async (ops) => Promise.all(ops));
+
+      const result = await service.findQuotesForSin('ghibah', {
+        shuffle: true,
+        seed: 's',
+      });
+
+      // Items should be in b, a order (shuffle order)
+      expect(result.data.items[0]?.link.id).toBe('link-b');
+      expect(result.data.items[1]?.link.id).toBe('link-a');
+    });
+
+    it('does NOT call shuffleLinksPage when shuffle=false', async () => {
+      prisma.sin.findUnique.mockResolvedValue(SIN);
+      prisma.sinQuote.findMany.mockResolvedValue([]);
+      prisma.sinQuote.count.mockResolvedValue(0);
+      prisma.quote.groupBy.mockResolvedValue([]);
+      prisma.goodDeed.findMany.mockResolvedValue([]);
+      prisma.$transaction.mockImplementation(async (ops) => Promise.all(ops));
+
+      await service.findQuotesForSin('ghibah', { shuffle: false });
+
+      expect(quotes.shuffleLinksPage).not.toHaveBeenCalled();
+      // Normal ordering: meta.ordering should be the LINK_ORDER constant
+      // (not a variety string)
     });
   });
 });

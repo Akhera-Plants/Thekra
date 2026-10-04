@@ -243,6 +243,86 @@ export class GoodDeedsService {
       },
     };
 
+    // Shared sub-queries (count, type breakdown) — same for both paths
+    const countQ = this.prisma.goodDeedQuote.count({ where });
+    const typeGroupsQ = this.prisma.quote.groupBy({
+      by: ['type'],
+      where: { goodDeedLinks: { some: where } },
+      _count: { _all: true },
+    });
+
+    // Good-deed payload (reused in both response shapes)
+    const goodDeedPayload = {
+      id: deed.id,
+      slug: deed.slug,
+      name: deed.name,
+      nameAr: deed.nameAr,
+      reward: deed.reward,
+      rewardAr: deed.rewardAr,
+      description: deed.description,
+      descriptionAr: deed.descriptionAr,
+      oppositeSin: deed.oppositeSin,
+    };
+
+    // ── Shuffle variety mode (§4.2) ────────────────────────────────────────────
+    // One shared implementation with SinsService.findQuotesForSin — both call
+    // QuotesService.shuffleLinksPage with the appropriate table / parentKey.
+    if (query.shuffle) {
+      const seed = query.seed ?? new Date().toISOString().slice(0, 10);
+      const floor = this.quotes.getVarietyScoreFloor();
+
+      const ids = await this.quotes.shuffleLinksPage({
+        table: '"GoodDeedQuote"',
+        parentKey: '"goodDeedId"',
+        parentId: deed.id,
+        minScore: query.minScore,
+        types: query.type,
+        allowedGrades,
+        seed,
+        floor,
+        page,
+        limit,
+      });
+
+      const [rows, total, typeGroups] = await this.prisma.$transaction([
+        this.prisma.goodDeedQuote.findMany({
+          where: { id: { in: ids } },
+          include: { quote: { include: this.quotes.buildQuoteInclude(locale) } },
+        }),
+        countQ,
+        typeGroupsQ,
+      ]);
+
+      // Re-order to match the shuffle ordering from the raw query
+      if (ids.length > 1) {
+        const order = new Map(ids.map((id, i) => [id, i]));
+        rows.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+      }
+
+      const countsByType: Record<string, number> = {
+        QURAN_VERSE: 0, HADITH: 0, SCHOLAR_QUOTE: 0, BOOK_EXCERPT: 0,
+      };
+      for (const g of typeGroups) countsByType[g.type] = g._count._all;
+
+      return {
+        data: {
+          goodDeed: goodDeedPayload,
+          items: rows.map((row) => ({
+            link: { id: row.id, relevanceScore: row.relevanceScore, note: row.note },
+            quote: this.quotes.toQuoteDto(row.quote, locale),
+          })),
+        },
+        meta: buildPageMeta(page, limit, total, {
+          locale,
+          ordering: `variety:md5(seed),floor=${floor}`,
+          seed,
+          countsByType,
+          appliedGrades: allowedGrades,
+        }),
+      };
+    }
+
+    // ── Normal ordering path ───────────────────────────────────────────────────
     const [rows, total, typeGroups] = await this.prisma.$transaction([
       this.prisma.goodDeedQuote.findMany({
         where,
@@ -253,12 +333,8 @@ export class GoodDeedsService {
           quote: { include: this.quotes.buildQuoteInclude(locale) },
         },
       }),
-      this.prisma.goodDeedQuote.count({ where }),
-      this.prisma.quote.groupBy({
-        by: ['type'],
-        where: { goodDeedLinks: { some: where } },
-        _count: { _all: true },
-      }),
+      countQ,
+      typeGroupsQ,
     ]);
 
     const countsByType: Record<string, number> = {
@@ -273,24 +349,14 @@ export class GoodDeedsService {
 
     return {
       data: {
-        goodDeed: {
-          id: deed.id,
-          slug: deed.slug,
-          name: deed.name,
-          nameAr: deed.nameAr,
-          reward: deed.reward,
-          rewardAr: deed.rewardAr,
-          description: deed.description,
-          descriptionAr: deed.descriptionAr,
-          oppositeSin: deed.oppositeSin,
-        },
+        goodDeed: goodDeedPayload,
         items: rows.map((row) => ({
           link: {
             id: row.id,
             relevanceScore: row.relevanceScore,
             note: row.note,
           },
-          quote: this.quotes.toQuoteDto(row.quote , locale),
+          quote: this.quotes.toQuoteDto(row.quote, locale),
         })),
       },
       meta: buildPageMeta(page, limit, total, {
