@@ -3,11 +3,12 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { QuoteType } from '@prisma/client';
+import { Prisma, QuoteType } from '@prisma/client';
 import { paginated } from '../../common/dto/paginated-result.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { GradePolicy } from '../hadith/grade-policy.js';
 import type { BulkLinkGoodDeedQuotesDto } from './dto/bulk-link-good-deed-quotes.dto.js';
+import type { BulkLinkItemDto } from './dto/bulk-link-item.dto.js';
 import type { BulkLinkSinQuotesDto } from './dto/bulk-link-sin-quotes.dto.js';
 import type { GoodDeedQuotesAdminQueryDto } from './dto/good-deed-quotes-admin-query.dto.js';
 import type { LinkGoodDeedQuoteDto } from './dto/link-good-deed-quote.dto.js';
@@ -27,6 +28,16 @@ const GOOD_DEED_LINK_INCLUDE = {
   goodDeed: { select: { slug: true, name: true, nameAr: true } },
   quote: { select: { id: true, type: true, textAr: true } },
 } as const;
+
+/** Response shape from bulkLink* methods. */
+export interface BulkResult {
+  data: {
+    created: number;
+    updated: number;
+    skipped: number;
+    failed: Array<{ quoteId: string; reason: string }>;
+  };
+}
 
 @Injectable()
 export class ClassificationService {
@@ -110,63 +121,33 @@ export class ClassificationService {
     await this.prisma.sinQuote.delete({ where: { id } });
   }
 
-  async bulkLinkSinQuotes(dto: BulkLinkSinQuotesDto) {
+  async bulkLinkSinQuotes(dto: BulkLinkSinQuotesDto): Promise<BulkResult> {
     await this.assertSinExists(dto.sinId);
 
-    let created = 0;
-    let updated = 0;
-    const skipped = 0;
-    const failed: Array<{ quoteId: string; reason: string }> = [];
-
-    for (const item of dto.links) {
-      try {
-        const quote = await this.prisma.quote.findUnique({ where: { id: item.quoteId } });
-        if (!quote) {
-          failed.push({ quoteId: item.quoteId, reason: 'RELATED_RESOURCE_INVALID' });
-          continue;
-        }
-
-        if (quote.type === QuoteType.HADITH && quote.grade != null) {
-          try {
-            GradePolicy.assertRenderable(quote.grade);
-          } catch {
-            failed.push({ quoteId: item.quoteId, reason: 'GRADE_NOT_PERMITTED' });
-            continue;
-          }
-        }
-
-        const existing = await this.prisma.sinQuote.findUnique({
-          where: { sinId_quoteId: { sinId: dto.sinId, quoteId: item.quoteId } },
-        });
-
-        await this.prisma.sinQuote.upsert({
-          where: { sinId_quoteId: { sinId: dto.sinId, quoteId: item.quoteId } },
-          create: {
-            sinId: dto.sinId,
-            quoteId: item.quoteId,
-            relevanceScore: item.relevanceScore ?? 0,
-            note: item.note ?? null,
-          },
-          update: {
-            ...(item.relevanceScore !== undefined && { relevanceScore: item.relevanceScore }),
-            ...(item.note !== undefined && { note: item.note }),
-          },
-        });
-
-        if (existing) {
-          updated++;
-        } else {
-          created++;
-        }
-      } catch (err) {
-        failed.push({
-          quoteId: item.quoteId,
-          reason: err instanceof Error ? err.message : 'INTERNAL_ERROR',
-        });
-      }
-    }
-
-    return { data: { created, updated, skipped, failed } };
+    return this.bulkLink({
+      links: dto.links,
+      fetchExistingPairs: (quoteIds) =>
+        this.prisma.sinQuote.findMany({
+          where: { sinId: dto.sinId, quoteId: { in: quoteIds } },
+          select: { quoteId: true },
+        }),
+      buildUpserts: (toWrite) =>
+        toWrite.map(({ item }) =>
+          this.prisma.sinQuote.upsert({
+            where: { sinId_quoteId: { sinId: dto.sinId, quoteId: item.quoteId } },
+            create: {
+              sinId: dto.sinId,
+              quoteId: item.quoteId,
+              relevanceScore: item.relevanceScore ?? 0,
+              note: item.note ?? null,
+            },
+            update: {
+              ...(item.relevanceScore !== undefined && { relevanceScore: item.relevanceScore }),
+              ...(item.note !== undefined && { note: item.note }),
+            },
+          }),
+        ),
+    });
   }
 
   // ─── GoodDeed-Quote links ────────────────────────────────────────────────────
@@ -247,61 +228,116 @@ export class ClassificationService {
     await this.prisma.goodDeedQuote.delete({ where: { id } });
   }
 
-  async bulkLinkGoodDeedQuotes(dto: BulkLinkGoodDeedQuotesDto) {
+  async bulkLinkGoodDeedQuotes(dto: BulkLinkGoodDeedQuotesDto): Promise<BulkResult> {
     await this.assertGoodDeedExists(dto.goodDeedId);
 
-    let created = 0;
-    let updated = 0;
-    const skipped = 0;
+    return this.bulkLink({
+      links: dto.links,
+      fetchExistingPairs: (quoteIds) =>
+        this.prisma.goodDeedQuote.findMany({
+          where: { goodDeedId: dto.goodDeedId, quoteId: { in: quoteIds } },
+          select: { quoteId: true },
+        }),
+      buildUpserts: (toWrite) =>
+        toWrite.map(({ item }) =>
+          this.prisma.goodDeedQuote.upsert({
+            where: { goodDeedId_quoteId: { goodDeedId: dto.goodDeedId, quoteId: item.quoteId } },
+            create: {
+              goodDeedId: dto.goodDeedId,
+              quoteId: item.quoteId,
+              relevanceScore: item.relevanceScore ?? 0,
+              note: item.note ?? null,
+            },
+            update: {
+              ...(item.relevanceScore !== undefined && { relevanceScore: item.relevanceScore }),
+              ...(item.note !== undefined && { note: item.note }),
+            },
+          }),
+        ),
+    });
+  }
+
+  // ─── Shared transactional bulk-link implementation (P1-7 / P2-2) ─────────────
+  //
+  // Pre-validates all quotes in two batch queries, classifies each item as
+  // failed / skipped / to-write, then runs every upsert in ONE $transaction so a
+  // mid-batch crash leaves nothing half-written.
+  //
+  // Stable codes only (never raw Prisma messages) are used for failed items:
+  //   RELATED_RESOURCE_INVALID — quoteId not found
+  //   GRADE_NOT_PERMITTED      — MAWDU hadith
+  //
+  // Duplicate quoteId within a single payload: the first occurrence is kept;
+  // subsequent occurrences increment `skipped` (documented in the API contract).
+  private async bulkLink(opts: {
+    links: BulkLinkItemDto[];
+    fetchExistingPairs: (quoteIds: string[]) => Promise<Array<{ quoteId: string }>>;
+    buildUpserts: (
+      toWrite: Array<{ item: BulkLinkItemDto; isUpdate: boolean }>,
+    ) => Prisma.PrismaPromise<unknown>[];
+  }): Promise<BulkResult> {
+    const { links, fetchExistingPairs, buildUpserts } = opts;
     const failed: Array<{ quoteId: string; reason: string }> = [];
+    let skipped = 0;
 
-    for (const item of dto.links) {
-      try {
-        const quote = await this.prisma.quote.findUnique({ where: { id: item.quoteId } });
-        if (!quote) {
-          failed.push({ quoteId: item.quoteId, reason: 'RELATED_RESOURCE_INVALID' });
-          continue;
-        }
-
-        if (quote.type === QuoteType.HADITH && quote.grade != null) {
-          try {
-            GradePolicy.assertRenderable(quote.grade);
-          } catch {
-            failed.push({ quoteId: item.quoteId, reason: 'GRADE_NOT_PERMITTED' });
-            continue;
-          }
-        }
-
-        const existing = await this.prisma.goodDeedQuote.findUnique({
-          where: { goodDeedId_quoteId: { goodDeedId: dto.goodDeedId, quoteId: item.quoteId } },
-        });
-
-        await this.prisma.goodDeedQuote.upsert({
-          where: { goodDeedId_quoteId: { goodDeedId: dto.goodDeedId, quoteId: item.quoteId } },
-          create: {
-            goodDeedId: dto.goodDeedId,
-            quoteId: item.quoteId,
-            relevanceScore: item.relevanceScore ?? 0,
-            note: item.note ?? null,
-          },
-          update: {
-            ...(item.relevanceScore !== undefined && { relevanceScore: item.relevanceScore }),
-            ...(item.note !== undefined && { note: item.note }),
-          },
-        });
-
-        if (existing) {
-          updated++;
-        } else {
-          created++;
-        }
-      } catch (err) {
-        failed.push({
-          quoteId: item.quoteId,
-          reason: err instanceof Error ? err.message : 'INTERNAL_ERROR',
-        });
+    // 1. De-duplicate quoteIds — keep first occurrence, mark duplicates as skipped
+    const seen = new Set<string>();
+    const deduplicated: BulkLinkItemDto[] = [];
+    for (const item of links) {
+      if (seen.has(item.quoteId)) {
+        skipped++;
+      } else {
+        seen.add(item.quoteId);
+        deduplicated.push(item);
       }
     }
+
+    if (deduplicated.length === 0) {
+      return { data: { created: 0, updated: 0, skipped, failed } };
+    }
+
+    const quoteIds = deduplicated.map((i) => i.quoteId);
+
+    // 2. Batch-fetch all referenced quotes (one round trip)
+    const foundQuotes = await this.prisma.quote.findMany({
+      where: { id: { in: quoteIds } },
+      select: { id: true, type: true, grade: true },
+    });
+    const quoteMap = new Map(foundQuotes.map((q) => [q.id, q]));
+
+    // 3. Batch-fetch existing pairs (one round trip)
+    const existingPairs = await fetchExistingPairs(quoteIds);
+    const existingSet = new Set(existingPairs.map((p) => p.quoteId));
+
+    // 4. Classify each item
+    const toWrite: Array<{ item: BulkLinkItemDto; isUpdate: boolean }> = [];
+    for (const item of deduplicated) {
+      const quote = quoteMap.get(item.quoteId);
+      if (!quote) {
+        failed.push({ quoteId: item.quoteId, reason: 'RELATED_RESOURCE_INVALID' });
+        continue;
+      }
+      if (quote.type === QuoteType.HADITH) {
+        try {
+          GradePolicy.assertRenderable(quote.grade);
+        } catch {
+          failed.push({ quoteId: item.quoteId, reason: 'GRADE_NOT_PERMITTED' });
+          continue;
+        }
+      }
+      toWrite.push({ item, isUpdate: existingSet.has(item.quoteId) });
+    }
+
+    // 5. Run all upserts in ONE transaction — nothing is partially written on throw
+    if (toWrite.length > 0) {
+      const ops = buildUpserts(toWrite);
+      // Cast needed: $transaction's tuple overload cannot infer a dynamic array's
+      // element types at compile time; at runtime every element IS a PrismaPromise.
+      await (this.prisma.$transaction as (ops: Prisma.PrismaPromise<unknown>[]) => Promise<unknown[]>)(ops);
+    }
+
+    const created = toWrite.filter((w) => !w.isUpdate).length;
+    const updated = toWrite.filter((w) => w.isUpdate).length;
 
     return { data: { created, updated, skipped, failed } };
   }

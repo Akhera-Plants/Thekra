@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
+  ArrayMinSize,
   IsArray,
   IsUUID,
   ValidateNested,
@@ -12,8 +13,9 @@ export class BulkLinkSinQuotesDto {
   sinId!: string;
 
   @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(100)
   @ValidateNested({ each: true })
   @Type(() => BulkLinkItemDto)
-  @ArrayMaxSize(100)
   links!: BulkLinkItemDto[];
 }

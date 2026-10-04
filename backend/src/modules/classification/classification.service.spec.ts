@@ -236,26 +236,27 @@ describe('ClassificationService', () => {
     });
   });
 
-  // ─── bulkLinkSinQuotes ────────────────────────────────────────────────────────
+  // ─── bulkLinkSinQuotes (P1-7) ─────────────────────────────────────────────────
+  //
+  // Acceptance: duplicate quoteId→skipped; unknown quoteId→failed with stable code;
+  // MAWDU→GRADE_NOT_PERMITTED (code, never raw message); all upserts in $transaction.
 
   describe('bulkLinkSinQuotes', () => {
     it('throws 422 when sinId does not exist', async () => {
       prisma.sin.findUnique.mockResolvedValue(null);
 
       await expect(
-        service.bulkLinkSinQuotes({ sinId: 'missing', links: [] }),
+        service.bulkLinkSinQuotes({ sinId: 'missing', links: [{ quoteId: QUOTE_VERSE.id }] }),
       ).rejects.toBeInstanceOf(UnprocessableEntityException);
     });
 
-    it('reports partial failure for missing quoteId', async () => {
+    it('unknown quoteId → failed with RELATED_RESOURCE_INVALID (not a raw Prisma message)', async () => {
       prisma.sin.findUnique.mockResolvedValue(SIN);
-      prisma.quote.findUnique
-        .mockResolvedValueOnce(QUOTE_VERSE) // first item ok
-        .mockResolvedValueOnce(null);       // second item missing
-      prisma.sinQuote.findUnique.mockResolvedValue(null);
-      prisma.sinQuote.upsert.mockResolvedValue({
-        id: 'link-1', sinId: SIN.id, quoteId: QUOTE_VERSE.id, relevanceScore: 0, note: null,
-      });
+      // Only QUOTE_VERSE found — 'missing-quote' is not in the result
+      prisma.quote.findMany.mockResolvedValue([QUOTE_VERSE]);
+      prisma.sinQuote.findMany.mockResolvedValue([]); // no existing pairs
+      prisma.sinQuote.upsert.mockResolvedValue({ id: 'link-1', sinId: SIN.id, quoteId: QUOTE_VERSE.id, relevanceScore: 0, note: null });
+      prisma.$transaction.mockImplementation((ops: Promise<unknown>[]) => Promise.all(ops));
 
       const result = await service.bulkLinkSinQuotes({
         sinId: SIN.id,
@@ -271,17 +272,16 @@ describe('ClassificationService', () => {
         quoteId: 'missing-quote',
         reason: 'RELATED_RESOURCE_INVALID',
       });
+      // Must be the stable code, never a raw error message
+      expect(result.data.failed[0]?.reason).not.toContain('Prisma');
     });
 
-    it('reports partial failure for MAWDU grade', async () => {
+    it('MAWDU hadith → failed with GRADE_NOT_PERMITTED (stable code)', async () => {
       prisma.sin.findUnique.mockResolvedValue(SIN);
-      prisma.quote.findUnique
-        .mockResolvedValueOnce(QUOTE_VERSE)
-        .mockResolvedValueOnce(QUOTE_MAWDU);
-      prisma.sinQuote.findUnique.mockResolvedValue(null);
-      prisma.sinQuote.upsert.mockResolvedValue({
-        id: 'link-1', sinId: SIN.id, quoteId: QUOTE_VERSE.id, relevanceScore: 0, note: null,
-      });
+      prisma.quote.findMany.mockResolvedValue([QUOTE_VERSE, QUOTE_MAWDU]);
+      prisma.sinQuote.findMany.mockResolvedValue([]);
+      prisma.sinQuote.upsert.mockResolvedValue({ id: 'link-1', sinId: SIN.id, quoteId: QUOTE_VERSE.id, relevanceScore: 0, note: null });
+      prisma.$transaction.mockImplementation((ops: Promise<unknown>[]) => Promise.all(ops));
 
       const result = await service.bulkLinkSinQuotes({
         sinId: SIN.id,
@@ -290,18 +290,43 @@ describe('ClassificationService', () => {
 
       expect(result.data.created).toBe(1);
       expect(result.data.failed).toHaveLength(1);
-      expect(result.data.failed[0]).toMatchObject({ reason: 'GRADE_NOT_PERMITTED' });
+      expect(result.data.failed[0]).toMatchObject({
+        quoteId: QUOTE_MAWDU.id,
+        reason: 'GRADE_NOT_PERMITTED',
+      });
     });
 
-    it('correctly counts created vs updated', async () => {
+    it('duplicate quoteId in one payload → first kept, rest skipped (not failed)', async () => {
       prisma.sin.findUnique.mockResolvedValue(SIN);
-      prisma.quote.findUnique
-        .mockResolvedValueOnce(QUOTE_VERSE)
-        .mockResolvedValueOnce(QUOTE_SAHIH);
-      prisma.sinQuote.findUnique
-        .mockResolvedValueOnce(null)                // first: new link
-        .mockResolvedValueOnce({ id: 'existing' }); // second: existing link
+      prisma.quote.findMany.mockResolvedValue([QUOTE_VERSE]);
+      prisma.sinQuote.findMany.mockResolvedValue([]);
+      prisma.sinQuote.upsert.mockResolvedValue({ id: 'link-1', sinId: SIN.id, quoteId: QUOTE_VERSE.id, relevanceScore: 0, note: null });
+      prisma.$transaction.mockImplementation((ops: Promise<unknown>[]) => Promise.all(ops));
+
+      const result = await service.bulkLinkSinQuotes({
+        sinId: SIN.id,
+        links: [
+          { quoteId: QUOTE_VERSE.id, relevanceScore: 80 },  // first — kept
+          { quoteId: QUOTE_VERSE.id, relevanceScore: 60 },  // duplicate — skipped
+          { quoteId: QUOTE_VERSE.id, relevanceScore: 40 },  // duplicate — skipped
+        ],
+      });
+
+      // One upsert issued (the first occurrence)
+      expect(result.data.created).toBe(1);
+      expect(result.data.skipped).toBe(2);
+      expect(result.data.failed).toHaveLength(0);
+      // Only one upsert should have been added to the transaction
+      expect(prisma.sinQuote.upsert).toHaveBeenCalledTimes(1);
+    });
+
+    it('correctly counts created vs updated using a batch pre-fetch', async () => {
+      prisma.sin.findUnique.mockResolvedValue(SIN);
+      prisma.quote.findMany.mockResolvedValue([QUOTE_VERSE, QUOTE_SAHIH]);
+      // QUOTE_SAHIH already has a link — QUOTE_VERSE is new
+      prisma.sinQuote.findMany.mockResolvedValue([{ quoteId: QUOTE_SAHIH.id }]);
       prisma.sinQuote.upsert.mockResolvedValue({ id: 'x', sinId: SIN.id, quoteId: 'q', relevanceScore: 0, note: null });
+      prisma.$transaction.mockImplementation((ops: Promise<unknown>[]) => Promise.all(ops));
 
       const result = await service.bulkLinkSinQuotes({
         sinId: SIN.id,
@@ -311,6 +336,41 @@ describe('ClassificationService', () => {
       expect(result.data.created).toBe(1);
       expect(result.data.updated).toBe(1);
       expect(result.data.failed).toHaveLength(0);
+    });
+
+    it('runs all upserts in ONE $transaction (nothing written if transaction throws)', async () => {
+      prisma.sin.findUnique.mockResolvedValue(SIN);
+      prisma.quote.findMany.mockResolvedValue([QUOTE_VERSE, QUOTE_SAHIH]);
+      prisma.sinQuote.findMany.mockResolvedValue([]);
+      // Simulate transaction failure
+      const txError = new Error('DB failure');
+      prisma.$transaction.mockRejectedValue(txError);
+
+      await expect(
+        service.bulkLinkSinQuotes({
+          sinId: SIN.id,
+          links: [{ quoteId: QUOTE_VERSE.id }, { quoteId: QUOTE_SAHIH.id }],
+        }),
+      ).rejects.toThrow('DB failure');
+
+      // Transaction was attempted exactly once
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not call $transaction when all items fail validation', async () => {
+      prisma.sin.findUnique.mockResolvedValue(SIN);
+      // No quotes found — all items will fail with RELATED_RESOURCE_INVALID
+      prisma.quote.findMany.mockResolvedValue([]);
+      prisma.sinQuote.findMany.mockResolvedValue([]);
+
+      const result = await service.bulkLinkSinQuotes({
+        sinId: SIN.id,
+        links: [{ quoteId: 'ghost-1' }, { quoteId: 'ghost-2' }],
+      });
+
+      expect(result.data.created).toBe(0);
+      expect(result.data.failed).toHaveLength(2);
+      expect(prisma.$transaction).not.toHaveBeenCalled();
     });
   });
 
@@ -359,5 +419,57 @@ describe('ClassificationService', () => {
     });
   });
 
-});
+  // ─── bulkLinkGoodDeedQuotes (P1-7) ────────────────────────────────────────────
 
+  describe('bulkLinkGoodDeedQuotes', () => {
+    it('duplicate quoteId in payload → first kept, rest skipped', async () => {
+      prisma.goodDeed.findUnique.mockResolvedValue(GOOD_DEED);
+      prisma.quote.findMany.mockResolvedValue([QUOTE_VERSE]);
+      prisma.goodDeedQuote.findMany.mockResolvedValue([]);
+      prisma.goodDeedQuote.upsert.mockResolvedValue({ id: 'gdl-1', goodDeedId: GOOD_DEED.id, quoteId: QUOTE_VERSE.id, relevanceScore: 0, note: null });
+      prisma.$transaction.mockImplementation((ops: Promise<unknown>[]) => Promise.all(ops));
+
+      const result = await service.bulkLinkGoodDeedQuotes({
+        goodDeedId: GOOD_DEED.id,
+        links: [
+          { quoteId: QUOTE_VERSE.id },
+          { quoteId: QUOTE_VERSE.id }, // duplicate
+        ],
+      });
+
+      expect(result.data.created).toBe(1);
+      expect(result.data.skipped).toBe(1);
+      expect(result.data.failed).toHaveLength(0);
+    });
+
+    it('unknown quoteId → failed with RELATED_RESOURCE_INVALID', async () => {
+      prisma.goodDeed.findUnique.mockResolvedValue(GOOD_DEED);
+      prisma.quote.findMany.mockResolvedValue([]); // none found
+      prisma.goodDeedQuote.findMany.mockResolvedValue([]);
+
+      const result = await service.bulkLinkGoodDeedQuotes({
+        goodDeedId: GOOD_DEED.id,
+        links: [{ quoteId: 'no-such-quote' }],
+      });
+
+      expect(result.data.failed).toHaveLength(1);
+      expect(result.data.failed[0]).toMatchObject({ reason: 'RELATED_RESOURCE_INVALID' });
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('MAWDU hadith → GRADE_NOT_PERMITTED (not raw Prisma message)', async () => {
+      prisma.goodDeed.findUnique.mockResolvedValue(GOOD_DEED);
+      prisma.quote.findMany.mockResolvedValue([QUOTE_MAWDU]);
+      prisma.goodDeedQuote.findMany.mockResolvedValue([]);
+
+      const result = await service.bulkLinkGoodDeedQuotes({
+        goodDeedId: GOOD_DEED.id,
+        links: [{ quoteId: QUOTE_MAWDU.id }],
+      });
+
+      expect(result.data.failed[0]).toMatchObject({ reason: 'GRADE_NOT_PERMITTED' });
+      // Must be the stable code, never a raw Prisma or JS error message
+      expect(result.data.failed[0]?.reason).not.toContain('Error');
+    });
+  });
+});
