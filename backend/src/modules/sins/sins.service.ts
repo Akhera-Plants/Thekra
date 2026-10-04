@@ -1,7 +1,6 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, QuoteType } from '@prisma/client';
 import { buildPageMeta, paginated } from '../../common/dto/paginated-result.js';
-import type { QuoteRowForDto } from '../../common/mappers/quote.mapper.js';
 import { normalizeArabic } from '../../common/text/arabic-normalizer.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { GoodDeedsService } from '../good-deeds/good-deeds.service.js';
@@ -208,7 +207,7 @@ export class SinsService {
             relevanceScore: row.relevanceScore,
             note: row.note,
           },
-          quote: this.quotes.toQuoteDto(row.quote as QuoteRowForDto, locale),
+          quote: this.quotes.toQuoteDto(row.quote , locale),
         })),
         alternatives,
       },

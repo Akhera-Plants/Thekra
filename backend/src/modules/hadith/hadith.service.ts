@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { HadithGrade, Prisma, QuoteType, SourceType } from '@prisma/client';
 import { paginated } from '../../common/dto/paginated-result.js';
-import type { QuoteRowForDto } from '../../common/mappers/quote.mapper.js';
 import { normalizeArabic } from '../../common/text/arabic-normalizer.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { QuotesService } from '../quotes/quotes.service.js';
@@ -93,7 +92,7 @@ export class HadithService {
 
     return paginated(
       rows.map((row) =>
-        this.quotes.toQuoteDto(row as QuoteRowForDto, locale),
+        this.quotes.toQuoteDto(row , locale),
       ),
       page,
       limit,

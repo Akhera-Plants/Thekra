@@ -38,6 +38,8 @@ export class SinQuotesAdminController {
     if (created) {
       res.status(HttpStatus.CREATED);
       res.header('Location', `/v1/admin/sin-quotes/${link.id}`);
+    } else {
+      res.status(HttpStatus.OK);
     }
     return { data: link };
   }
@@ -83,6 +85,8 @@ export class GoodDeedQuotesAdminController {
     if (created) {
       res.status(HttpStatus.CREATED);
       res.header('Location', `/v1/admin/good-deed-quotes/${link.id}`);
+    } else {
+      res.status(HttpStatus.OK);
     }
     return { data: link };
   }

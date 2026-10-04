@@ -7,7 +7,6 @@ import { Prisma, QuoteType } from '@prisma/client';
 import { paginated } from '../../common/dto/paginated-result.js';
 import type {
   QuoteDto,
-  QuoteRowForDto,
 } from '../../common/mappers/quote.mapper.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { QuotesService } from '../quotes/quotes.service.js';
@@ -110,7 +109,7 @@ export class QuranService {
 
     return paginated(
       rows.map((row) =>
-        this.quotes.toQuoteDto(row as QuoteRowForDto, locale),
+        this.quotes.toQuoteDto(row , locale),
       ),
       page,
       limit,
@@ -173,7 +172,7 @@ export class QuranService {
       : rows;
 
     const row = sorted[0];
-    const dto = this.quotes.toQuoteDto(row as QuoteRowForDto, locale);
+    const dto = this.quotes.toQuoteDto(row , locale);
     const result: QuoteDto & {
       translations?: Array<{ id: string; languageCode: string; text: string }>;
     } = { ...dto };

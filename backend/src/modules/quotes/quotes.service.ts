@@ -40,8 +40,8 @@ export class QuotesService {
     };
   }
 
-  toQuoteDto(row: QuoteRowForDto, locale: 'ar' | 'en'): QuoteDto {
-    return mapQuoteToDto(row, locale);
+  toQuoteDto(row: unknown, locale: 'ar' | 'en'): QuoteDto {
+    return mapQuoteToDto(row as QuoteRowForDto, locale);
   }
 
   linkOrderBy() {
@@ -72,7 +72,7 @@ export class QuotesService {
     ]);
 
     return paginated(
-      rows.map((row) => this.toQuoteDto(row as QuoteRowForDto, locale)),
+      rows.map((row) => this.toQuoteDto(row , locale)),
       page,
       limit,
       total,
@@ -130,7 +130,7 @@ export class QuotesService {
       });
     }
 
-    const dto = this.toQuoteDto(row as QuoteRowForDto, locale);
+    const dto = this.toQuoteDto(row, locale);
     const result: QuoteDto & {
       translations?: Array<{ id: string; languageCode: string; text: string }>;
       relatedSins?: Array<{
@@ -155,8 +155,8 @@ export class QuotesService {
       }));
     }
 
-    if (includeLinks && 'sinLinks' in row) {
-      const withLinks = row as typeof row & {
+    if (includeLinks) {
+      const withLinks = row as unknown as {
         sinLinks: Array<{
           relevanceScore: number | null;
           sin: { slug: string; name: string; nameAr: string };
@@ -204,7 +204,7 @@ export class QuotesService {
     ]);
 
     return paginated(
-      rows.map((row) => this.toQuoteDto(row as QuoteRowForDto, locale)),
+      rows.map((row) => this.toQuoteDto(row , locale)),
       page,
       limit,
       total,
@@ -270,7 +270,7 @@ export class QuotesService {
       include: this.buildQuoteInclude('ar'),
     });
 
-    return this.toQuoteDto(row as QuoteRowForDto, 'ar');
+    return this.toQuoteDto(row , 'ar');
   }
 
   async adminUpdate(id: string, dto: UpdateQuoteDto): Promise<QuoteDto> {
@@ -299,7 +299,7 @@ export class QuotesService {
       include: this.buildQuoteInclude('ar'),
     });
 
-    return this.toQuoteDto(row as QuoteRowForDto, 'ar');
+    return this.toQuoteDto(row , 'ar');
   }
 
   async adminDelete(id: string): Promise<void> {

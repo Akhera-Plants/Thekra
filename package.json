@@ -8,6 +8,7 @@
     "node": ">=24"
   },
   "scripts": {
+    "db:seed": "pnpm --filter backend db:seed",
     "prisma:generate": "pnpm --filter backend exec prisma generate",
     "prisma:validate": "pnpm --filter backend exec prisma validate",
     "dev:backend": "pnpm --filter backend start:dev",
