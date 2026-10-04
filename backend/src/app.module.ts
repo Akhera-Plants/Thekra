@@ -5,7 +5,10 @@ import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { validateEnv } from './config/env.validation.js';
 import { HealthModule } from './health/health.module.js';
+import { GoodDeedsModule } from './modules/good-deeds/good-deeds.module.js';
+import { HadithModule } from './modules/hadith/hadith.module.js';
 import { QuotesModule } from './modules/quotes/quotes.module.js';
+import { SinsModule } from './modules/sins/sins.module.js';
 import { SourcesModule } from './modules/sources/sources.module.js';
 import { TagsModule } from './modules/tags/tags.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
@@ -42,9 +45,12 @@ import { PrismaModule } from './prisma/prisma.module.js';
     }),
     PrismaModule,
     HealthModule,
+    HadithModule,
     QuotesModule,
-    TagsModule,
     SourcesModule,
+    TagsModule,
+    GoodDeedsModule,
+    SinsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

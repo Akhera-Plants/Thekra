@@ -1,0 +1,31 @@
+export interface OppositeSinSummary {
+  id: string;
+  slug: string;
+  name: string;
+  nameAr: string;
+}
+
+export interface GoodDeedDto {
+  id: string;
+  name: string;
+  nameAr: string;
+  slug: string;
+  category: string | null;
+  description: string | null;
+  descriptionAr: string | null;
+  reward: string | null;
+  rewardAr: string | null;
+  oppositeSin: OppositeSinSummary | null;
+  quoteCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface GoodDeedSummary {
+  id: string;
+  slug: string;
+  name: string;
+  nameAr: string;
+  reward: string | null;
+  rewardAr: string | null;
+}
