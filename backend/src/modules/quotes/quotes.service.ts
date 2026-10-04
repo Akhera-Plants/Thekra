@@ -335,6 +335,24 @@ export class QuotesService {
       throw new NotFoundException({ code: 'RESOURCE_NOT_FOUND', message: 'Quote not found' });
     }
 
+    // After merging the partial update onto the existing record, enforce business
+    // rules that must hold regardless of which fields are in the PATCH body.
+    const mergedGrade = dto.grade !== undefined ? dto.grade : existing.grade;
+    const mergedSurahNumber = dto.surahNumber !== undefined ? dto.surahNumber : existing.surahNumber;
+
+    if (existing.type === QuoteType.HADITH && mergedGrade === null) {
+      throw new UnprocessableEntityException({
+        code: 'HADITH_GRADE_REQUIRED',
+        message: 'Hadith quotes must retain a non-null grade; provide a valid HadithGrade value.',
+      });
+    }
+    if (existing.type === QuoteType.QURAN_VERSE && mergedSurahNumber === null) {
+      throw new UnprocessableEntityException({
+        code: 'QURAN_SURAH_REQUIRED',
+        message: 'Quran verse quotes must retain a non-null surahNumber.',
+      });
+    }
+
     const row = await this.prisma.quote.update({
       where: { id },
       data: {
