@@ -86,4 +86,57 @@ describe('AllExceptionsFilter Prisma→HTTP mapping', () => {
     expect(status).toHaveBeenCalledWith(409);
     expect(json.mock.calls[0][0].error.code).toBe('RESOURCE_ALREADY_EXISTS');
   });
+
+  it('maps PayloadTooLargeError-shaped errors to 413 PAYLOAD_TOO_LARGE', () => {
+    const status = vi.fn();
+    const json = vi.fn();
+    const error = Object.assign(new Error('too large: secret body'), {
+      status: 413,
+      statusCode: 413,
+      expose: true,
+      type: 'entity.too.large',
+    });
+    filter.catch(error, makeHost(status, json) as never);
+    expect(status).toHaveBeenCalledWith(413);
+    expect(json.mock.calls[0][0].error.code).toBe('PAYLOAD_TOO_LARGE');
+    expect(json.mock.calls[0][0].error.message).not.toContain('secret');
+  });
+
+  it('maps entity.parse.failed to 400 MALFORMED_JSON without parser text', () => {
+    const status = vi.fn();
+    const json = vi.fn();
+    const error = Object.assign(new Error('Unexpected token x in JSON at position 0'), {
+      status: 400,
+      expose: true,
+      type: 'entity.parse.failed',
+    });
+    filter.catch(error, makeHost(status, json) as never);
+    expect(status).toHaveBeenCalledWith(400);
+    expect(json.mock.calls[0][0].error.code).toBe('MALFORMED_JSON');
+    expect(json.mock.calls[0][0].error.message).toBe('Malformed request body');
+  });
+
+  it('maps unsupported media type to 415', () => {
+    const status = vi.fn();
+    const json = vi.fn();
+    const error = Object.assign(new Error('charset'), {
+      status: 415,
+      expose: true,
+    });
+    filter.catch(error, makeHost(status, json) as never);
+    expect(status).toHaveBeenCalledWith(415);
+    expect(json.mock.calls[0][0].error.code).toBe('UNSUPPORTED_MEDIA_TYPE');
+  });
+
+  it('maps PrismaClientValidationError to 400 VALIDATION_FAILED', () => {
+    const status = vi.fn();
+    const json = vi.fn();
+    const error = new Prisma.PrismaClientValidationError('Invalid `prisma.sin.update()`', {
+      clientVersion: '6',
+    });
+    filter.catch(error, makeHost(status, json) as never);
+    expect(status).toHaveBeenCalledWith(400);
+    expect(json.mock.calls[0][0].error.code).toBe('VALIDATION_FAILED');
+    expect(json.mock.calls[0][0].error.message).toBe('Request validation failed');
+  });
 });

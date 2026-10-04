@@ -97,10 +97,42 @@ export class AllExceptionsFilter implements ExceptionFilter {
             ? 'VALIDATION_FAILED'
             : this.codeFromStatus(status);
       const details =
-        Array.isArray(obj.message)
-          ? obj.message
-          : (obj.details ?? null);
+        obj.details !== undefined
+          ? obj.details
+          : Array.isArray(obj.message)
+            ? obj.message
+            : null;
       return { status, code, message, details };
+    }
+
+    if (exception instanceof Prisma.PrismaClientValidationError) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        code: 'VALIDATION_FAILED',
+        message: 'Request validation failed',
+        details: null,
+      };
+    }
+
+    const httpLike = exception as {
+      status?: number;
+      statusCode?: number;
+      expose?: boolean;
+      type?: string;
+    };
+    const clientStatus = httpLike.status ?? httpLike.statusCode;
+    if (
+      typeof clientStatus === 'number' &&
+      clientStatus >= 400 &&
+      clientStatus < 500 &&
+      httpLike.expose === true
+    ) {
+      return {
+        status: clientStatus,
+        code: this.codeFromClientStatus(clientStatus, httpLike.type),
+        message: this.genericClientMessage(clientStatus),
+        details: null,
+      };
     }
 
     return {
@@ -109,6 +141,28 @@ export class AllExceptionsFilter implements ExceptionFilter {
       message: 'An unexpected error occurred',
       details: null,
     };
+  }
+
+  private codeFromClientStatus(status: number, type?: string): string {
+    if (status === HttpStatus.PAYLOAD_TOO_LARGE) return 'PAYLOAD_TOO_LARGE';
+    if (status === HttpStatus.UNSUPPORTED_MEDIA_TYPE) {
+      return 'UNSUPPORTED_MEDIA_TYPE';
+    }
+    if (status === HttpStatus.BAD_REQUEST) {
+      return type === 'entity.parse.failed'
+        ? 'MALFORMED_JSON'
+        : 'VALIDATION_FAILED';
+    }
+    return this.codeFromStatus(status);
+  }
+
+  private genericClientMessage(status: number): string {
+    if (status === HttpStatus.PAYLOAD_TOO_LARGE) return 'Request body too large';
+    if (status === HttpStatus.UNSUPPORTED_MEDIA_TYPE) {
+      return 'Unsupported media type';
+    }
+    if (status === HttpStatus.BAD_REQUEST) return 'Malformed request body';
+    return 'Bad request';
   }
 
   private fromPrisma(error: Prisma.PrismaClientKnownRequestError): {
