@@ -1,5 +1,6 @@
-import { IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min, MinLength } from 'class-validator';
+import { IsOptional, IsString, Matches, Max, MaxLength, Min, MinLength } from 'class-validator';
 import { IsOptionalNotNull } from '../../../common/decorators/is-optional-not-null.decorator.js';
+import { IsStrictInt } from '../../../common/decorators/is-strict-int.decorator.js';
 
 /**
  * PATCH /admin/sins/:id
@@ -46,7 +47,7 @@ export class UpdateSinDto {
   descriptionAr?: string | null;
 
   @IsOptional()
-  @IsInt()
+  @IsStrictInt()
   @Min(1)
   @Max(10)
   severity?: number | null;

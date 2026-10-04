@@ -3,7 +3,6 @@ import {
   ArrayMaxSize,
   IsArray,
   IsEnum,
-  IsInt,
   IsOptional,
   IsString,
   IsUUID,
@@ -15,6 +14,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { HadithGrade, QuoteOrigin, QuoteType } from '@prisma/client';
+import { IsStrictInt } from '../../../common/decorators/is-strict-int.decorator.js';
 
 export class TranslationInputDto {
   @Matches(/^[a-z]{2}(-[A-Z]{2})?$/, {
@@ -53,7 +53,7 @@ export class CreateQuoteDto {
   // ── Quran fields ──────────────────────────────────────────────────────────
 
   @IsOptional()
-  @IsInt()
+  @IsStrictInt()
   @Min(1)
   @Max(114)
   surahNumber?: number;
@@ -69,7 +69,7 @@ export class CreateQuoteDto {
   surahNameAr?: string;
 
   @IsOptional()
-  @IsInt()
+  @IsStrictInt()
   @Min(1)
   @Max(286)
   ayahNumber?: number;

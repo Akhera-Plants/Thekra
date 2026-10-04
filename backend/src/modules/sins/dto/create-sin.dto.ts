@@ -1,5 +1,4 @@
 import {
-  IsInt,
   IsOptional,
   IsString,
   Max,
@@ -8,6 +7,7 @@ import {
   MinLength,
   Matches,
 } from 'class-validator';
+import { IsStrictInt } from '../../../common/decorators/is-strict-int.decorator.js';
 
 export class CreateSinDto {
   @IsString()
@@ -43,7 +43,7 @@ export class CreateSinDto {
   descriptionAr?: string;
 
   @IsOptional()
-  @IsInt()
+  @IsStrictInt()
   @Min(1)
   @Max(10)
   severity?: number;

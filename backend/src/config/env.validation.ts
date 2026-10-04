@@ -1,5 +1,6 @@
 import { plainToInstance } from 'class-transformer';
 import {
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
@@ -22,11 +23,11 @@ export class EnvironmentVariables {
   CORS_ORIGINS?: string = 'http://localhost:3000';
 
   @IsOptional()
-  @IsString()
-  NODE_ENV?: string = 'development';
+  @IsIn(['development', 'test', 'production'])
+  NODE_ENV?: 'development' | 'test' | 'production' = 'development';
 
   @IsOptional()
-  @IsString()
+  @IsIn(['trace', 'debug', 'info', 'warn', 'error', 'fatal', 'silent'])
   LOG_LEVEL?: string = 'info';
 
   /**

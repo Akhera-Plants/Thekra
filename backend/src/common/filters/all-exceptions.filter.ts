@@ -31,12 +31,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request & { id?: string }>();
 
-    const requestId =
-      (typeof request.headers['x-request-id'] === 'string'
-        ? request.headers['x-request-id']
-        : undefined) ??
-      request.id ??
-      randomUUID();
+    // P2-12: pino-http sets req.id via genReqId (which already validates the
+    // inbound x-request-id against a safe-character regex before echoing it).
+    // Use that value directly; fall back to a fresh UUID only if the logger
+    // middleware hasn't run yet (e.g., an error thrown during module init).
+    const requestId = request.id ?? randomUUID();
 
     const { status, code, message, details } = this.normalize(exception);
 

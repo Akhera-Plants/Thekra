@@ -1,9 +1,10 @@
 import { Transform } from 'class-transformer';
-import { IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { IsStrictInt } from '../../../common/decorators/is-strict-int.decorator.js';
 
 export class UpdateGoodDeedLinkDto {
   @IsOptional()
-  @IsInt()
+  @IsStrictInt()
   @Min(0)
   @Max(100)
   relevanceScore?: number;

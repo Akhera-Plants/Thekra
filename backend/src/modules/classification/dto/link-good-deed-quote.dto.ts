@@ -1,5 +1,4 @@
 import {
-  IsInt,
   IsOptional,
   IsString,
   IsUUID,
@@ -7,6 +6,7 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
+import { IsStrictInt } from '../../../common/decorators/is-strict-int.decorator.js';
 
 export class LinkGoodDeedQuoteDto {
   @IsUUID()
@@ -16,7 +16,7 @@ export class LinkGoodDeedQuoteDto {
   quoteId!: string;
 
   @IsOptional()
-  @IsInt()
+  @IsStrictInt()
   @Min(0)
   @Max(100)
   relevanceScore?: number;

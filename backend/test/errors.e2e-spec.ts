@@ -131,4 +131,73 @@ describe('Error envelope & HTTP contract (e2e)', () => {
       timestamp: expect.any(String),
     });
   });
+
+  // ── §6  Body coercion guard (P2-16) ────────────────────────────────────────
+  // Body DTO numeric fields must reject string numbers ("5") with 400.
+  // Query string numerics must still be accepted (implicit conversion for query
+  // params is the correct and expected behaviour).
+
+  it('PATCH /v1/admin/sins/:id with {"severity":"5"} (string) → 400', async () => {
+    // Find a sin id to PATCH (ghibah is seeded by seedTestFixtures)
+    const listRes = await request(app.getHttpServer()).get('/v1/sins?limit=1').expect(200);
+    const sinId: string = (listRes.body.data as Array<{ id: string }>)[0].id;
+
+    const res = await request(app.getHttpServer())
+      .patch(`/v1/admin/sins/${sinId}`)
+      .send({ severity: '5' }) // string instead of number
+      .expect(400);
+
+    expect(res.body.error.code).toBe('VALIDATION_FAILED');
+  });
+
+  it('POST /v1/admin/sin-quotes with {"relevanceScore":"50"} (string) → 400', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/v1/admin/sin-quotes')
+      .send({
+        sinId: '00000000-0000-4000-8000-000000000001',
+        quoteId: '00000000-0000-4000-8000-000000000001',
+        relevanceScore: '50', // string instead of number
+      })
+      .expect(400);
+
+    expect(res.body.error.code).toBe('VALIDATION_FAILED');
+  });
+
+  it('GET /v1/sins?severityMin=3 (query string number) → 200', async () => {
+    // Query param string "3" must still be coerced and accepted
+    await request(app.getHttpServer()).get('/v1/sins?severityMin=3').expect(200);
+  });
+
+  it('GET ?page=1&limit=5 (query string numbers) → 200', async () => {
+    await request(app.getHttpServer()).get('/v1/sins?page=1&limit=5').expect(200);
+  });
+
+  // ── §7  Request-id safety (P2-12) ──────────────────────────────────────────
+  // AllExceptionsFilter must use request.id (set by pino-http's validated genReqId)
+  // rather than re-reading the raw header.
+
+  it('error response requestId matches the echoed x-request-id header', async () => {
+    const validId = 'my-safe-req-id';
+    const res = await request(app.getHttpServer())
+      .get('/v1/sins/slug-does-not-exist')
+      .set('x-request-id', validId)
+      .expect(404);
+
+    expect(res.body.error.requestId).toBe(validId);
+    expect(res.headers['x-request-id']).toBe(validId);
+  });
+
+  it('unsafe x-request-id is NOT echoed in error requestId', async () => {
+    const unsafeId = '../../../etc/passwd';
+    const res = await request(app.getHttpServer())
+      .get('/v1/sins/slug-does-not-exist')
+      .set('x-request-id', unsafeId)
+      .expect(404);
+
+    expect(res.body.error.requestId).not.toBe(unsafeId);
+    // Must be a UUID
+    expect(res.body.error.requestId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+    );
+  });
 });
