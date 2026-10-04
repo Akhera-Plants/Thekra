@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Logger } from 'nestjs-pino';
 import { AllExceptionsFilter } from '../common/filters/all-exceptions.filter.js';
 import { ResponseEnvelopeInterceptor } from '../common/interceptors/response-envelope.interceptor.js';
+import { validationExceptionFactory } from '../common/validation/validation-exception.factory.js';
 
 export function configureApp(app: INestApplication): void {
   const config = app.get(ConfigService);
@@ -15,6 +16,7 @@ export function configureApp(app: INestApplication): void {
       forbidNonWhitelisted: true,
       transform: true,
       transformOptions: { enableImplicitConversion: true },
+      exceptionFactory: validationExceptionFactory,
     }),
   );
   app.useGlobalFilters(new AllExceptionsFilter());
