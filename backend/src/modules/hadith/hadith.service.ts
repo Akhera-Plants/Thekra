@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { HadithGrade, Prisma, QuoteType, SourceType } from '@prisma/client';
+import { Prisma, QuoteType, SourceType } from '@prisma/client';
 import { paginated } from '../../common/dto/paginated-result.js';
 import { normalizeArabic } from '../../common/text/arabic-normalizer.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
@@ -16,15 +16,6 @@ export class HadithService {
     private readonly quotes: QuotesService,
   ) {}
 
-  private buildGradeFilter(allowedGrades: HadithGrade[]): Prisma.QuoteWhereInput {
-    if (allowedGrades.includes(HadithGrade.UNGRADED)) {
-      return {
-        OR: [{ grade: { in: allowedGrades } }, { grade: null }],
-      };
-    }
-    return { grade: { in: allowedGrades } };
-  }
-
   async findAll(query: HadithQueryDto) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
@@ -36,7 +27,7 @@ export class HadithService {
 
     const and: Prisma.QuoteWhereInput[] = [
       { type: QuoteType.HADITH },
-      this.buildGradeFilter(allowedGrades),
+      GradePolicy.whereClause(allowedGrades),
     ];
 
     if (query.collectionId) {

@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import { Prisma, QuoteType } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { buildPageMeta, paginated } from '../../common/dto/paginated-result.js';
 import { normalizeArabic } from '../../common/text/arabic-normalizer.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
@@ -232,10 +232,7 @@ export class GoodDeedsService {
       }),
       quote: {
         ...(query.type?.length && { type: { in: query.type } }),
-        OR: [
-          { type: { not: QuoteType.HADITH } },
-          { grade: { in: allowedGrades } },
-        ],
+        ...GradePolicy.whereClause(allowedGrades),
       },
     };
 

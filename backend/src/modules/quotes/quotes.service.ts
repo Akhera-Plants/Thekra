@@ -477,22 +477,9 @@ export class QuotesService {
     }
 
     if (options.allowedGrades) {
-      // Public route: grade policy always applied. Non-HADITH quotes pass through;
-      // HADITH quotes must have a grade in the resolved allowed list.
-      and.push({
-        OR: [
-          { type: { not: QuoteType.HADITH } },
-          { grade: { in: options.allowedGrades } },
-        ],
-      });
+      and.push(GradePolicy.whereClause(options.allowedGrades));
     } else if (query.grades?.length) {
-      // Admin route: apply explicit grade filter only when curator specifies one.
-      and.push({
-        OR: [
-          { type: { not: QuoteType.HADITH } },
-          { grade: { in: query.grades } },
-        ],
-      });
+      and.push(GradePolicy.whereClause(query.grades));
     }
     if (query.sourceId) {
       and.push({ sourceId: query.sourceId });

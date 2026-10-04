@@ -1,5 +1,5 @@
 import { UnprocessableEntityException } from '@nestjs/common';
-import { HadithGrade } from '@prisma/client';
+import { HadithGrade, QuoteType } from '@prisma/client';
 import {
   DEFAULT_ALLOWED_GRADES,
   GradePolicy,
@@ -29,5 +29,45 @@ describe('GradePolicy', () => {
     expect(GradePolicy.resolveAllowedGrades({})).not.toContain(
       HadithGrade.UNGRADED,
     );
+  });
+
+  describe('whereClause', () => {
+    it('passes non-HADITH quotes and filters HADITH by grade', () => {
+      const allowed = [HadithGrade.SAHIH, HadithGrade.HASAN];
+      expect(GradePolicy.whereClause(allowed)).toEqual({
+        OR: [
+          { type: { not: QuoteType.HADITH } },
+          { grade: { in: allowed } },
+        ],
+      });
+    });
+
+    it('includes null-grade HADITH when UNGRADED is allowed', () => {
+      const allowed = [
+        HadithGrade.SAHIH,
+        HadithGrade.HASAN,
+        HadithGrade.UNGRADED,
+      ];
+      expect(GradePolicy.whereClause(allowed)).toEqual({
+        OR: [
+          { type: { not: QuoteType.HADITH } },
+          { grade: { in: allowed } },
+          { type: QuoteType.HADITH, grade: null },
+        ],
+      });
+    });
+
+    it('does not include null-grade HADITH when UNGRADED is not allowed', () => {
+      const clause = GradePolicy.whereClause([
+        HadithGrade.SAHIH,
+        HadithGrade.HASAN,
+      ]);
+      const or = clause.OR as object[];
+      expect(or).toHaveLength(2);
+      expect(or).not.toContainEqual({
+        type: QuoteType.HADITH,
+        grade: null,
+      });
+    });
   });
 });

@@ -1,7 +1,7 @@
 import {
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { HadithGrade } from '@prisma/client';
+import { HadithGrade, Prisma, QuoteType } from '@prisma/client';
 import {
   registerDecorator,
   type ValidationArguments,
@@ -56,6 +56,18 @@ export class GradePolicy {
         message: 'Fabricated (MAWDU) narrations are never served',
       });
     }
+  }
+
+  static whereClause(allowed: HadithGrade[]): Prisma.QuoteWhereInput {
+    return {
+      OR: [
+        { type: { not: QuoteType.HADITH } },
+        { grade: { in: allowed } },
+        ...(allowed.includes(HadithGrade.UNGRADED)
+          ? [{ type: QuoteType.HADITH, grade: null }]
+          : []),
+      ],
+    };
   }
 
   static isAllowed(

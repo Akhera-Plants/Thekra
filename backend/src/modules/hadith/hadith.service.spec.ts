@@ -61,7 +61,16 @@ describe('HadithService', () => {
           where: {
             AND: [
               { type: QuoteType.HADITH },
-              { grade: { in: [HadithGrade.SAHIH, HadithGrade.HASAN] } },
+              {
+                OR: [
+                  { type: { not: QuoteType.HADITH } },
+                  {
+                    grade: {
+                      in: [HadithGrade.SAHIH, HadithGrade.HASAN],
+                    },
+                  },
+                ],
+              },
             ],
           },
         }),
