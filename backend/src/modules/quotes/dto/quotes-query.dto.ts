@@ -1,6 +1,7 @@
 import { HadithGrade, QuoteOrigin, QuoteType } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsEnum,
   IsIn,
   IsInt,
@@ -11,8 +12,10 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
+import { ToBoolean } from '../../../common/decorators/to-boolean.decorator.js';
 import { TransformToArray } from '../../../common/decorators/transform-to-array.decorator.js';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto.js';
+import { NotMawdu } from '../../hadith/grade-policy.js';
 
 export class QuotesQueryDto extends PaginationQueryDto {
   @IsOptional()
@@ -36,7 +39,14 @@ export class QuotesQueryDto extends PaginationQueryDto {
   @IsOptional()
   @TransformToArray()
   @IsEnum(HadithGrade, { each: true })
+  @NotMawdu()
   grades?: HadithGrade[];
+
+  /** Include DAIF and UNGRADED hadiths. MAWDU is never served regardless. */
+  @IsOptional()
+  @ToBoolean()
+  @IsBoolean()
+  includeWeak?: boolean;
 
   @IsOptional()
   @IsUUID()

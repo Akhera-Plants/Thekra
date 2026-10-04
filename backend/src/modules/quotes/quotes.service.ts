@@ -3,7 +3,7 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { Prisma, QuoteOrigin, QuoteType } from '@prisma/client';
+import { Prisma, QuoteOrigin, QuoteType, HadithGrade } from '@prisma/client';
 import { paginated } from '../../common/dto/paginated-result.js';
 import {
   mapQuoteToDto,
@@ -14,6 +14,7 @@ import {
   type QuoteRowForDto,
 } from '../../common/mappers/quote.mapper.js';
 import { normalizeArabic } from '../../common/text/arabic-normalizer.js';
+import { GradePolicy } from '../hadith/grade-policy.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type { AdminQuotesQueryDto } from './dto/admin-quotes-query.dto.js';
 import type { CreateQuoteDto } from './dto/create-quote.dto.js';
@@ -100,7 +101,14 @@ export class QuotesService {
     const sort =
       query.sort ?? (query.q ? 'relevance' : 'newest');
 
-    const where = this.buildSearchWhere(query);
+    // GradePolicy always gates the public route — MAWDU is never served,
+    // DAIF/UNGRADED require explicit opt-in via includeWeak or grades param.
+    const allowedGrades = GradePolicy.resolveAllowedGrades({
+      grades: query.grades,
+      includeWeak: query.includeWeak,
+    });
+
+    const where = this.buildSearchWhere(query, { allowedGrades });
 
     const [rows, total] = await this.prisma.$transaction([
       this.prisma.quote.findMany({
@@ -117,12 +125,13 @@ export class QuotesService {
     ]);
 
     return paginated(
-      rows.map((row) => this.toQuoteDto(row , locale)),
+      rows.map((row) => this.toQuoteDto(row, locale)),
       page,
       limit,
       total,
       {
         locale,
+        appliedGrades: allowedGrades,
         appliedFilters: {
           type: query.type ?? null,
           origin: query.origin ?? null,
@@ -150,6 +159,15 @@ export class QuotesService {
           message: 'Quote not found',
         });
       }
+      // MAWDU (fabricated) hadiths are never served publicly — 404 so the client
+      // cannot even confirm the record exists. DAIF and UNGRADED stay reachable
+      // because they are valid hadiths that carry an explicit grade badge in the UI.
+      if (row.type === QuoteType.HADITH && row.grade === HadithGrade.MAWDU) {
+        throw new NotFoundException({
+          code: 'RESOURCE_NOT_FOUND',
+          message: 'Quote not found',
+        });
+      }
       return this.toQuoteDetailResult(row, locale, includeAllTranslations);
     }
 
@@ -158,6 +176,13 @@ export class QuotesService {
       include: this.buildQuoteInclude(locale, { includeAllTranslations }),
     });
     if (!row) {
+      throw new NotFoundException({
+        code: 'RESOURCE_NOT_FOUND',
+        message: 'Quote not found',
+      });
+    }
+    // MAWDU hadiths are never served publicly — see comment above.
+    if (row.type === QuoteType.HADITH && row.grade === HadithGrade.MAWDU) {
       throw new NotFoundException({
         code: 'RESOURCE_NOT_FOUND',
         message: 'Quote not found',
@@ -408,8 +433,9 @@ export class QuotesService {
   private buildAdminSearchWhere(query: AdminQuotesQueryDto): Prisma.QuoteWhereInput {
     const and: Prisma.QuoteWhereInput[] = [];
 
-    // Base search filters
-    const baseWhere = this.buildSearchWhere(query);
+    // Admin routes must NOT apply the public grade policy — curators need to see
+    // every grade including MAWDU so they can review and correct data.
+    const baseWhere = this.buildSearchWhere(query, { allowedGrades: undefined });
     if (Object.keys(baseWhere).length > 0) {
       and.push(baseWhere);
     }
@@ -430,7 +456,17 @@ export class QuotesService {
     return and.length ? { AND: and } : {};
   }
 
-  private buildSearchWhere(query: QuotesQueryDto): Prisma.QuoteWhereInput {
+  /**
+   * Build a Prisma where-input from common search query params.
+   *
+   * @param allowedGrades  When provided (public routes), always restricts HADITH
+   *   rows to this list — the grade policy is enforced unconditionally.
+   *   Pass `undefined` for admin routes so curators can see every grade (incl. MAWDU).
+   */
+  private buildSearchWhere(
+    query: QuotesQueryDto,
+    options: { allowedGrades?: HadithGrade[] } = {},
+  ): Prisma.QuoteWhereInput {
     const and: Prisma.QuoteWhereInput[] = [];
 
     if (query.type?.length) {
@@ -439,7 +475,18 @@ export class QuotesService {
     if (query.origin) {
       and.push({ origin: query.origin });
     }
-    if (query.grades?.length) {
+
+    if (options.allowedGrades) {
+      // Public route: grade policy always applied. Non-HADITH quotes pass through;
+      // HADITH quotes must have a grade in the resolved allowed list.
+      and.push({
+        OR: [
+          { type: { not: QuoteType.HADITH } },
+          { grade: { in: options.allowedGrades } },
+        ],
+      });
+    } else if (query.grades?.length) {
+      // Admin route: apply explicit grade filter only when curator specifies one.
       and.push({
         OR: [
           { type: { not: QuoteType.HADITH } },
