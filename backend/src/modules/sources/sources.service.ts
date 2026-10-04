@@ -1,8 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { paginated } from '../../common/dto/paginated-result.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import type { CreateSourceDto } from './dto/create-source.dto.js';
 import type { SourcesQueryDto } from './dto/sources-query.dto.js';
+import type { UpdateSourceDto } from './dto/update-source.dto.js';
 import type { SourceDto } from './entities/source.entity.js';
 
 type SourceRowWithCount = {
@@ -87,6 +89,54 @@ export class SourcesService {
     }
 
     return this.toSourceDto(row as SourceRowWithCount);
+  }
+
+  // ─── Admin CRUD ───────────────────────────────────────────────────────────────
+
+  async adminCreate(dto: CreateSourceDto): Promise<SourceDto> {
+    const row = await this.prisma.source.create({
+      data: {
+        name: dto.name,
+        nameAr: dto.nameAr,
+        type: dto.type,
+        author: dto.author,
+        authorAr: dto.authorAr,
+        language: dto.language ?? 'ar',
+        isExternalApi: dto.isExternalApi ?? false,
+        apiProvider: dto.apiProvider,
+        apiBaseUrl: dto.apiBaseUrl,
+      },
+      include: { _count: { select: { quotes: true } } },
+    });
+    return this.toSourceDto(row as SourceRowWithCount);
+  }
+
+  async adminUpdate(id: string, dto: UpdateSourceDto): Promise<SourceDto> {
+    const existing = await this.prisma.source.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException({ code: 'RESOURCE_NOT_FOUND', message: 'Source not found' });
+    }
+    const row = await this.prisma.source.update({
+      where: { id },
+      data: dto,
+      include: { _count: { select: { quotes: true } } },
+    });
+    return this.toSourceDto(row as SourceRowWithCount);
+  }
+
+  async adminDelete(id: string): Promise<void> {
+    const existing = await this.prisma.source.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException({ code: 'RESOURCE_NOT_FOUND', message: 'Source not found' });
+    }
+    const quoteCount = await this.prisma.quote.count({ where: { sourceId: id } });
+    if (quoteCount > 0) {
+      throw new ConflictException({
+        code: 'SOURCE_HAS_QUOTES',
+        message: `Cannot delete source with ${quoteCount} associated quote(s).`,
+      });
+    }
+    await this.prisma.source.delete({ where: { id } });
   }
 
   private buildListWhere(query: SourcesQueryDto): Prisma.SourceWhereInput {

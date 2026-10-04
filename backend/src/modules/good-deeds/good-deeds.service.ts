@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { Prisma, QuoteType } from '@prisma/client';
 import { buildPageMeta, paginated } from '../../common/dto/paginated-result.js';
 import type { QuoteRowForDto } from '../../common/mappers/quote.mapper.js';
@@ -7,7 +7,9 @@ import { PrismaService } from '../../prisma/prisma.service.js';
 import { GradePolicy } from '../hadith/grade-policy.js';
 import { QuotesService } from '../quotes/quotes.service.js';
 import type { GoodDeedQuotesQueryDto } from '../sins/dto/sin-quotes-query.dto.js';
+import type { CreateGoodDeedDto } from './dto/create-good-deed.dto.js';
 import type { GoodDeedsQueryDto } from './dto/good-deeds-query.dto.js';
+import type { UpdateGoodDeedDto } from './dto/update-good-deed.dto.js';
 import type {
   GoodDeedDto,
   GoodDeedSummary,
@@ -125,6 +127,62 @@ export class GoodDeedsService {
       });
     }
     return this.toDto(row);
+  }
+
+  // ─── Admin CRUD ───────────────────────────────────────────────────────────────
+
+  async adminCreate(dto: CreateGoodDeedDto): Promise<GoodDeedDto> {
+    if (dto.oppositeSinId) {
+      const sin = await this.prisma.sin.findUnique({ where: { id: dto.oppositeSinId } });
+      if (!sin) {
+        throw new UnprocessableEntityException({
+          code: 'RELATED_RESOURCE_INVALID',
+          message: 'oppositeSinId does not exist',
+        });
+      }
+    }
+    // Will throw P2002 → 409 if slug is duplicate
+    const row = await this.prisma.goodDeed.create({
+      data: dto,
+      include: {
+        oppositeSin: { select: { id: true, slug: true, name: true, nameAr: true } },
+        _count: { select: { quotes: true } },
+      },
+    });
+    return this.toDto(row);
+  }
+
+  async adminUpdate(id: string, dto: UpdateGoodDeedDto): Promise<GoodDeedDto> {
+    const existing = await this.prisma.goodDeed.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException({ code: 'RESOURCE_NOT_FOUND', message: 'Good deed not found' });
+    }
+    if (dto.oppositeSinId !== undefined && dto.oppositeSinId !== null) {
+      const sin = await this.prisma.sin.findUnique({ where: { id: dto.oppositeSinId } });
+      if (!sin) {
+        throw new UnprocessableEntityException({
+          code: 'RELATED_RESOURCE_INVALID',
+          message: 'oppositeSinId does not exist',
+        });
+      }
+    }
+    const row = await this.prisma.goodDeed.update({
+      where: { id },
+      data: dto,
+      include: {
+        oppositeSin: { select: { id: true, slug: true, name: true, nameAr: true } },
+        _count: { select: { quotes: true } },
+      },
+    });
+    return this.toDto(row);
+  }
+
+  async adminDelete(id: string): Promise<void> {
+    const existing = await this.prisma.goodDeed.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException({ code: 'RESOURCE_NOT_FOUND', message: 'Good deed not found' });
+    }
+    await this.prisma.goodDeed.delete({ where: { id } });
   }
 
   async findByOppositeSinId(sinId: string, take = 3): Promise<GoodDeedSummary[]> {

@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
-import { HadithModule } from '../hadith/hadith.module.js';
 import { QuotesModule } from '../quotes/quotes.module.js';
+import { GoodDeedsAdminController } from './good-deeds.admin.controller.js';
 import { GoodDeedsController } from './good-deeds.controller.js';
 import { GoodDeedsService } from './good-deeds.service.js';
 
 @Module({
-  imports: [QuotesModule, HadithModule],
-  controllers: [GoodDeedsController],
+  imports: [QuotesModule],
+  controllers: [GoodDeedsController, GoodDeedsAdminController],
   providers: [GoodDeedsService],
   exports: [GoodDeedsService],
 })

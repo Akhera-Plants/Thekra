@@ -1,4 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import type { CreateTagDto } from './dto/create-tag.dto.js';
+import type { UpdateTagDto } from './dto/update-tag.dto.js';
 import { Prisma } from '@prisma/client';
 import { paginated } from '../../common/dto/paginated-result.js';
 import { normalizeArabic } from '../../common/text/arabic-normalizer.js';
@@ -77,6 +79,39 @@ export class TagsService {
     }
 
     return this.toTagDto(row as TagRowWithCount);
+  }
+
+  // ─── Admin CRUD ───────────────────────────────────────────────────────────────
+
+  async adminCreate(dto: CreateTagDto): Promise<TagWithQuoteCountDto> {
+    // Will throw P2002 → 409 if slug is duplicate
+    const row = await this.prisma.tag.create({
+      data: dto,
+      include: { _count: { select: { quotes: true } } },
+    });
+    return this.toTagDto(row as TagRowWithCount);
+  }
+
+  async adminUpdate(id: string, dto: UpdateTagDto): Promise<TagWithQuoteCountDto> {
+    const existing = await this.prisma.tag.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException({ code: 'RESOURCE_NOT_FOUND', message: 'Tag not found' });
+    }
+    const row = await this.prisma.tag.update({
+      where: { id },
+      data: dto,
+      include: { _count: { select: { quotes: true } } },
+    });
+    return this.toTagDto(row as TagRowWithCount);
+  }
+
+  async adminDelete(id: string): Promise<void> {
+    const existing = await this.prisma.tag.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException({ code: 'RESOURCE_NOT_FOUND', message: 'Tag not found' });
+    }
+    // QuoteTag rows cascade-delete via onDelete: Cascade in schema
+    await this.prisma.tag.delete({ where: { id } });
   }
 
   private buildListWhere(query: TagsQueryDto): Prisma.TagWhereInput {

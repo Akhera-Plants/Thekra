@@ -1,5 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, QuoteType } from '@prisma/client';
+import {
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
+import { Prisma, QuoteOrigin, QuoteType } from '@prisma/client';
 import { paginated } from '../../common/dto/paginated-result.js';
 import {
   mapQuoteToDto,
@@ -8,8 +12,11 @@ import {
 } from '../../common/mappers/quote.mapper.js';
 import { normalizeArabic } from '../../common/text/arabic-normalizer.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import type { AdminQuotesQueryDto } from './dto/admin-quotes-query.dto.js';
+import type { CreateQuoteDto } from './dto/create-quote.dto.js';
 import type { QuoteDetailQueryDto } from './dto/quote-detail-query.dto.js';
 import type { QuotesQueryDto } from './dto/quotes-query.dto.js';
+import type { UpdateQuoteDto } from './dto/update-quote.dto.js';
 
 const LINK_ORDER_BY = [
   { relevanceScore: { sort: 'desc' as const, nulls: 'last' as const } },
@@ -174,6 +181,222 @@ export class QuotesService {
     }
 
     return result;
+  }
+
+  // ─── Admin CRUD ───────────────────────────────────────────────────────────────
+
+  async adminSearch(query: AdminQuotesQueryDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const locale = query.lang ?? 'ar';
+
+    const where = this.buildAdminSearchWhere(query);
+
+    const [rows, total] = await this.prisma.$transaction([
+      this.prisma.quote.findMany({
+        where,
+        include: this.buildQuoteInclude(locale),
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.quote.count({ where }),
+    ]);
+
+    return paginated(
+      rows.map((row) => this.toQuoteDto(row as QuoteRowForDto, locale)),
+      page,
+      limit,
+      total,
+      { locale },
+    );
+  }
+
+  async adminCreate(dto: CreateQuoteDto): Promise<QuoteDto> {
+    if (dto.origin === QuoteOrigin.API_CACHED) {
+      throw new UnprocessableEntityException({
+        code: 'ORIGIN_RESERVED_FOR_SYNC',
+        message: 'origin=API_CACHED is reserved for the content-sync pipeline',
+      });
+    }
+
+    // Cross-field validation
+    if (dto.type === QuoteType.QURAN_VERSE && dto.surahNumber == null) {
+      throw new UnprocessableEntityException({
+        code: 'VALIDATION_FAILED',
+        message: 'surahNumber is required when type is QURAN_VERSE',
+      });
+    }
+    if (dto.type === QuoteType.HADITH && dto.grade == null) {
+      throw new UnprocessableEntityException({
+        code: 'VALIDATION_FAILED',
+        message: 'grade is required when type is HADITH (use UNGRADED if unknown)',
+      });
+    }
+
+    // Verify sourceId exists
+    const source = await this.prisma.source.findUnique({ where: { id: dto.sourceId } });
+    if (!source) {
+      throw new UnprocessableEntityException({
+        code: 'RELATED_RESOURCE_INVALID',
+        message: 'Source not found',
+      });
+    }
+
+    const row = await this.prisma.quote.create({
+      data: {
+        type: dto.type,
+        origin: dto.origin ?? QuoteOrigin.LOCAL,
+        textAr: dto.textAr,
+        sourceId: dto.sourceId,
+        surahNumber: dto.surahNumber,
+        surahName: dto.surahName,
+        surahNameAr: dto.surahNameAr,
+        ayahNumber: dto.ayahNumber,
+        narrator: dto.narrator,
+        narratorAr: dto.narratorAr,
+        grade: dto.grade,
+        hadithReference: dto.hadithReference,
+        bookTitle: dto.bookTitle,
+        author: dto.author,
+        pageOrChapter: dto.pageOrChapter,
+        translations: dto.translations?.length
+          ? { create: dto.translations }
+          : undefined,
+        tags: dto.tagIds?.length
+          ? { create: dto.tagIds.map((tagId) => ({ tagId })) }
+          : undefined,
+      },
+      include: this.buildQuoteInclude('ar'),
+    });
+
+    return this.toQuoteDto(row as QuoteRowForDto, 'ar');
+  }
+
+  async adminUpdate(id: string, dto: UpdateQuoteDto): Promise<QuoteDto> {
+    const existing = await this.prisma.quote.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException({ code: 'RESOURCE_NOT_FOUND', message: 'Quote not found' });
+    }
+
+    const row = await this.prisma.quote.update({
+      where: { id },
+      data: {
+        textAr: dto.textAr,
+        sourceId: dto.sourceId,
+        surahNumber: dto.surahNumber,
+        surahName: dto.surahName,
+        surahNameAr: dto.surahNameAr,
+        ayahNumber: dto.ayahNumber,
+        narrator: dto.narrator,
+        narratorAr: dto.narratorAr,
+        grade: dto.grade,
+        hadithReference: dto.hadithReference,
+        bookTitle: dto.bookTitle,
+        author: dto.author,
+        pageOrChapter: dto.pageOrChapter,
+      },
+      include: this.buildQuoteInclude('ar'),
+    });
+
+    return this.toQuoteDto(row as QuoteRowForDto, 'ar');
+  }
+
+  async adminDelete(id: string): Promise<void> {
+    const existing = await this.prisma.quote.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException({ code: 'RESOURCE_NOT_FOUND', message: 'Quote not found' });
+    }
+    await this.prisma.quote.delete({ where: { id } });
+  }
+
+  async upsertTranslation(quoteId: string, languageCode: string, text: string) {
+    const quote = await this.prisma.quote.findUnique({ where: { id: quoteId } });
+    if (!quote) {
+      throw new NotFoundException({ code: 'RESOURCE_NOT_FOUND', message: 'Quote not found' });
+    }
+    return this.prisma.translation.upsert({
+      where: { quoteId_languageCode: { quoteId, languageCode } },
+      create: { quoteId, languageCode, text },
+      update: { text },
+    });
+  }
+
+  async createTranslation(quoteId: string, languageCode: string, text: string) {
+    const quote = await this.prisma.quote.findUnique({ where: { id: quoteId } });
+    if (!quote) {
+      throw new NotFoundException({ code: 'RESOURCE_NOT_FOUND', message: 'Quote not found' });
+    }
+    // Will throw P2002 (handled by AllExceptionsFilter → 409) if already exists
+    return this.prisma.translation.create({ data: { quoteId, languageCode, text } });
+  }
+
+  async deleteTranslation(quoteId: string, languageCode: string): Promise<void> {
+    const existing = await this.prisma.translation.findUnique({
+      where: { quoteId_languageCode: { quoteId, languageCode } },
+    });
+    if (!existing) {
+      throw new NotFoundException({ code: 'RESOURCE_NOT_FOUND', message: 'Translation not found' });
+    }
+    await this.prisma.translation.delete({
+      where: { quoteId_languageCode: { quoteId, languageCode } },
+    });
+  }
+
+  async setQuoteTags(quoteId: string, tagIds: string[]) {
+    const quote = await this.prisma.quote.findUnique({ where: { id: quoteId } });
+    if (!quote) {
+      throw new NotFoundException({ code: 'RESOURCE_NOT_FOUND', message: 'Quote not found' });
+    }
+
+    if (tagIds.length > 0) {
+      const tags = await this.prisma.tag.findMany({ where: { id: { in: tagIds } } });
+      if (tags.length !== tagIds.length) {
+        throw new UnprocessableEntityException({
+          code: 'RELATED_RESOURCE_INVALID',
+          message: 'One or more tag IDs not found',
+        });
+      }
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.quoteTag.deleteMany({ where: { quoteId } }),
+      ...tagIds.map((tagId) => this.prisma.quoteTag.create({ data: { quoteId, tagId } })),
+    ]);
+
+    const updatedTags = await this.prisma.tag.findMany({ where: { id: { in: tagIds } } });
+    return updatedTags.map((tag) => ({
+      id: tag.id,
+      slug: tag.slug,
+      name: tag.name,
+      nameAr: tag.nameAr,
+      category: tag.category,
+    }));
+  }
+
+  private buildAdminSearchWhere(query: AdminQuotesQueryDto): Prisma.QuoteWhereInput {
+    const and: Prisma.QuoteWhereInput[] = [];
+
+    // Base search filters
+    const baseWhere = this.buildSearchWhere(query);
+    if (Object.keys(baseWhere).length > 0) {
+      and.push(baseWhere);
+    }
+
+    if (query.unlinkedOnly) {
+      and.push({
+        sinLinks: { none: {} },
+        goodDeedLinks: { none: {} },
+      });
+    }
+
+    if (query.missingTranslation) {
+      and.push({
+        translations: { none: { languageCode: query.missingTranslation } },
+      });
+    }
+
+    return and.length ? { AND: and } : {};
   }
 
   private buildSearchWhere(query: QuotesQueryDto): Prisma.QuoteWhereInput {

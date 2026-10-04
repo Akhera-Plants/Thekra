@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, QuoteType } from '@prisma/client';
 import { buildPageMeta, paginated } from '../../common/dto/paginated-result.js';
 import type { QuoteRowForDto } from '../../common/mappers/quote.mapper.js';
@@ -7,8 +7,10 @@ import { PrismaService } from '../../prisma/prisma.service.js';
 import { GoodDeedsService } from '../good-deeds/good-deeds.service.js';
 import { GradePolicy } from '../hadith/grade-policy.js';
 import { QuotesService } from '../quotes/quotes.service.js';
+import type { CreateSinDto } from './dto/create-sin.dto.js';
 import type { SinQuotesQueryDto } from './dto/sin-quotes-query.dto.js';
 import type { SinsQueryDto } from './dto/sins-query.dto.js';
+import type { UpdateSinDto } from './dto/update-sin.dto.js';
 import type { SinDetailDto, SinDto } from './entities/sin.entity.js';
 
 const ORDERING =
@@ -217,6 +219,47 @@ export class SinsService {
         appliedGrades: allowedGrades,
       }),
     };
+  }
+
+  // ─── Admin CRUD ───────────────────────────────────────────────────────────────
+
+  async adminCreate(dto: CreateSinDto): Promise<SinDto> {
+    // Will throw P2002 → 409 if slug is duplicate (handled by AllExceptionsFilter)
+    const row = await this.prisma.sin.create({
+      data: dto,
+      include: { _count: { select: { quotes: true } } },
+    });
+    return this.toDto(row);
+  }
+
+  async adminUpdate(id: string, dto: UpdateSinDto): Promise<SinDto> {
+    const existing = await this.prisma.sin.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException({ code: 'RESOURCE_NOT_FOUND', message: 'Sin not found' });
+    }
+    const row = await this.prisma.sin.update({
+      where: { id },
+      data: dto,
+      include: { _count: { select: { quotes: true } } },
+    });
+    return this.toDto(row);
+  }
+
+  async adminDelete(id: string, force = false): Promise<void> {
+    const existing = await this.prisma.sin.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException({ code: 'RESOURCE_NOT_FOUND', message: 'Sin not found' });
+    }
+    if (!force) {
+      const linkCount = await this.prisma.sinQuote.count({ where: { sinId: id } });
+      if (linkCount > 0) {
+        throw new ConflictException({
+          code: 'SIN_HAS_LINKS',
+          message: `Sin has ${linkCount} linked quote(s). Pass ?force=true to delete anyway.`,
+        });
+      }
+    }
+    await this.prisma.sin.delete({ where: { id } });
   }
 
   async findGoodDeedsForSin(slug: string, page = 1, limit = 20, locale = 'ar') {
