@@ -1,4 +1,4 @@
-import { ArrayMaxSize, IsArray, IsUUID } from 'class-validator';
+import { ArrayMaxSize, ArrayUnique, IsArray, IsUUID } from 'class-validator';
 import {
   Body,
   Controller,
@@ -27,6 +27,9 @@ class SetTagsDto {
   @IsArray()
   @IsUUID('4', { each: true })
   @ArrayMaxSize(20)
+  /** P2-5: duplicate IDs would cause a misleading 422 ("tag not found") or a P2002
+   * constraint violation; reject them here before they reach the service. */
+  @ArrayUnique()
   tagIds!: string[];
 }
 

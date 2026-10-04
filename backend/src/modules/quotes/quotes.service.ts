@@ -14,7 +14,7 @@ import {
   type QuoteDto,
   type QuoteRowForDto,
 } from '../../common/mappers/quote.mapper.js';
-import { findIdsByNormalizedArabic } from '../../common/text/arabic-search.js';
+import { findIdsByNormalizedArabic, findIdsByNormalizedArabicOrdered } from '../../common/text/arabic-search.js';
 import { GradePolicy } from '../hadith/grade-policy.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type { EnvironmentVariables } from '../../config/env.validation.js';
@@ -214,7 +214,68 @@ export class QuotesService {
       includeWeak: query.includeWeak,
     });
 
-    const where = await this.buildSearchWhere(query, { allowedGrades });
+    // P2-10: for sort=relevance with a text query, pre-fetch ordered Arabic IDs
+    // (exact-normalised matches ranked 0, partial matches ranked 1) so we can
+    // re-use them in buildSearchWhere (avoids a second SQL scan) and sort the
+    // final result set with exact matches first.  Phase 5 replaces this with a
+    // GIN trigram similarity score; for now we fetch all matching rows and apply
+    // pagination in memory — acceptable for Phase 4 dataset sizes.
+    let orderedArabicIds: string[] | undefined;
+    if (sort === 'relevance' && query.q) {
+      orderedArabicIds = await findIdsByNormalizedArabicOrdered(
+        this.prisma,
+        '"Quote"',
+        '"textAr"',
+        query.q,
+      );
+    }
+
+    const where = await this.buildSearchWhere(query, {
+      allowedGrades,
+      precomputedArabicIds: orderedArabicIds,
+    });
+
+    if (sort === 'relevance' && orderedArabicIds !== undefined) {
+      // Fetch all matching rows without DB-level pagination; sort in memory so
+      // exact Arabic matches surface before partial matches, then newest.
+      const allRows = await this.prisma.quote.findMany({
+        where,
+        include: this.buildQuoteInclude(locale),
+        orderBy: [{ createdAt: 'desc' as const }, { id: 'asc' as const }],
+      });
+
+      if (orderedArabicIds.length > 0) {
+        const idRank = new Map(orderedArabicIds.map((id, i) => [id, i]));
+        allRows.sort((a, b) => {
+          const ra = idRank.get(a.id) ?? orderedArabicIds!.length;
+          const rb = idRank.get(b.id) ?? orderedArabicIds!.length;
+          if (ra !== rb) return ra - rb;
+          // Same rank: preserve createdAt desc (DB already ordered this way)
+          return 0;
+        });
+      }
+
+      const total = allRows.length;
+      const pageRows = allRows.slice((page - 1) * limit, page * limit);
+
+      return paginated(
+        pageRows.map((row) => this.toQuoteDto(row, locale)),
+        page,
+        limit,
+        total,
+        {
+          locale,
+          appliedGrades: allowedGrades,
+          appliedFilters: {
+            type: query.type ?? null,
+            origin: query.origin ?? null,
+            grades: query.grades ?? null,
+            tag: query.tag ?? null,
+            q: query.q ?? null,
+          },
+        },
+      );
+    }
 
     const [rows, total] = await this.prisma.$transaction([
       this.prisma.quote.findMany({
@@ -531,6 +592,8 @@ export class QuotesService {
 
     if (tagIds.length > 0) {
       const tags = await this.prisma.tag.findMany({ where: { id: { in: tagIds } } });
+      // tagIds is de-duplicated by @ArrayUnique() on the DTO; a count mismatch
+      // here genuinely means one or more IDs do not exist in the database.
       if (tags.length !== tagIds.length) {
         throw new UnprocessableEntityException({
           code: 'RELATED_RESOURCE_INVALID',
@@ -539,19 +602,26 @@ export class QuotesService {
       }
     }
 
-    await this.prisma.$transaction([
-      this.prisma.quoteTag.deleteMany({ where: { quoteId } }),
-      ...tagIds.map((tagId) => this.prisma.quoteTag.create({ data: { quoteId, tagId } })),
-    ]);
-
-    const updatedTags = await this.prisma.tag.findMany({ where: { id: { in: tagIds } } });
-    return updatedTags.map((tag) => ({
-      id: tag.id,
-      slug: tag.slug,
-      name: tag.name,
-      nameAr: tag.nameAr,
-      category: tag.category,
-    }));
+    // P2-5: delete + createMany + final read in ONE interactive $transaction so
+    // the follow-up read is consistent with the write, and no partial state leaks
+    // out if the batch fails mid-way.
+    return this.prisma.$transaction(async (tx) => {
+      await tx.quoteTag.deleteMany({ where: { quoteId } });
+      if (tagIds.length > 0) {
+        await tx.quoteTag.createMany({ data: tagIds.map((tagId) => ({ quoteId, tagId })) });
+      }
+      const updatedTags = await tx.tag.findMany({
+        where: { id: { in: tagIds } },
+        orderBy: { slug: 'asc' as const },
+      });
+      return updatedTags.map((tag) => ({
+        id: tag.id,
+        slug: tag.slug,
+        name: tag.name,
+        nameAr: tag.nameAr,
+        category: tag.category,
+      }));
+    });
   }
 
   private async buildAdminSearchWhere(query: AdminQuotesQueryDto): Promise<Prisma.QuoteWhereInput> {
@@ -586,10 +656,13 @@ export class QuotesService {
    * @param allowedGrades  When provided (public routes), always restricts HADITH
    *   rows to this list — the grade policy is enforced unconditionally.
    *   Pass `undefined` for admin routes so curators can see every grade (incl. MAWDU).
+   * @param precomputedArabicIds  If the caller already fetched Arabic-search IDs
+   *   (e.g. with `findIdsByNormalizedArabicOrdered` for relevance sorting), pass
+   *   them here to avoid a second DB round-trip. Omit to let this method fetch them.
    */
   private async buildSearchWhere(
     query: QuotesQueryDto,
-    options: { allowedGrades?: HadithGrade[] } = {},
+    options: { allowedGrades?: HadithGrade[]; precomputedArabicIds?: string[] } = {},
   ): Promise<Prisma.QuoteWhereInput> {
     const and: Prisma.QuoteWhereInput[] = [];
 
@@ -635,12 +708,14 @@ export class QuotesService {
     if (query.q) {
       // Arabic field: match via DB-side normalisation (strips tashkeel, folds alef/ya/ta-marbuta)
       // Translation/Latin fields: standard Prisma ILIKE
-      const arabicIds = await findIdsByNormalizedArabic(
-        this.prisma,
-        '"Quote"',
-        '"textAr"',
-        query.q,
-      );
+      const arabicIds =
+        options.precomputedArabicIds ??
+        (await findIdsByNormalizedArabic(
+          this.prisma,
+          '"Quote"',
+          '"textAr"',
+          query.q,
+        ));
       const textFilter: Prisma.QuoteWhereInput[] =
         arabicIds.length > 0 ? [{ id: { in: arabicIds } }] : [];
       if ((query.lang ?? 'ar') !== 'ar') {

@@ -56,3 +56,36 @@ export async function findIdsByNormalizedArabic(
 
   return rows.map((r) => r.id);
 }
+
+/**
+ * P2-10: Like `findIdsByNormalizedArabic` but returns IDs in relevance order:
+ * exact-normalised matches first (CASE rank 0), then partial matches (rank 1).
+ *
+ * Used for `sort=relevance` as a cheap pre-Phase-5 proxy for real ranking.
+ * Phase 5 will replace this with a GIN trigram similarity score.
+ *
+ * The ORDER BY CASE is evaluated server-side in a single SQL scan — no extra
+ * round trips versus `findIdsByNormalizedArabic`.
+ */
+export async function findIdsByNormalizedArabicOrdered(
+  prisma: PrismaService,
+  table: ArabicSearchTable,
+  column: ArabicSearchColumn,
+  query: string,
+): Promise<string[]> {
+  const normalized = normalizeArabic(query);
+  const escaped = escapeIlikePattern(normalized);
+
+  const rows = await prisma.$queryRaw<{ id: string }[]>(
+    Prisma.sql`
+      SELECT id
+      FROM   ${Prisma.raw(table)}
+      WHERE  thekra_normalize_ar(${Prisma.raw(column)}) ILIKE '%' || ${escaped} || '%'
+      ORDER BY
+        CASE WHEN thekra_normalize_ar(${Prisma.raw(column)}) = ${normalized}
+             THEN 0 ELSE 1 END ASC
+    `,
+  );
+
+  return rows.map((r) => r.id);
+}

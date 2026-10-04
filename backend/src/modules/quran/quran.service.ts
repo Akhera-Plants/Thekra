@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Prisma, QuoteType } from '@prisma/client';
 import { paginated } from '../../common/dto/paginated-result.js';
 import type {
@@ -10,6 +11,7 @@ import type {
 } from '../../common/mappers/quote.mapper.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { QuotesService } from '../quotes/quotes.service.js';
+import type { EnvironmentVariables } from '../../config/env.validation.js';
 import type { AyahDetailQueryDto } from './dto/ayah-detail-query.dto.js';
 import type { SurahAyahsQueryDto } from './dto/surah-ayahs-query.dto.js';
 import type { SurahsQueryDto } from './dto/surahs-query.dto.js';
@@ -27,6 +29,7 @@ export class QuranService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly quotes: QuotesService,
+    private readonly config: ConfigService<EnvironmentVariables>,
   ) {}
 
   assertSurahNumber(surahNumber: number): void {
@@ -44,8 +47,10 @@ export class QuranService {
       return { data: this.surahsCache.data };
     }
 
+    // P2-7: Group by surahNumber only — if two providers spell a surah name
+    // differently (Phase 5 content-sync), the same surah must not appear twice.
     const groups = await this.prisma.quote.groupBy({
-      by: ['surahNumber', 'surahName', 'surahNameAr'],
+      by: ['surahNumber'],
       where: {
         type: QuoteType.QURAN_VERSE,
         surahNumber: { not: null },
@@ -54,12 +59,69 @@ export class QuranService {
       orderBy: { surahNumber: 'asc' },
     });
 
-    const data: SurahSummaryDto[] = groups.map((group) => ({
-      surahNumber: group.surahNumber as number,
-      surahName: group.surahName,
-      surahNameAr: group.surahNameAr,
-      ayahCount: group._count._all,
-    }));
+    if (groups.length === 0) {
+      this.surahsCache = { expiresAt: now + SURAHS_CACHE_TTL_MS, data: [] };
+      return { data: [] };
+    }
+
+    // P2-8: read preferred provider from validated config (not process.env).
+    const preferredProvider = this.config.get('QURAN_PREFERRED_PROVIDER');
+
+    // P2-7: pick one name row per surah with a second query.
+    // Preferred-provider rows win; any provider fills gaps.
+    const nameMap = new Map<number, { surahName: string | null; surahNameAr: string | null }>();
+
+    if (preferredProvider) {
+      // First pass: preferred provider covers as many surahs as possible
+      const preferredRows = await this.prisma.quote.findMany({
+        where: {
+          type: QuoteType.QURAN_VERSE,
+          surahNumber: { not: null },
+          apiProvider: preferredProvider,
+        },
+        select: { surahNumber: true, surahName: true, surahNameAr: true },
+        distinct: ['surahNumber'],
+        orderBy: { surahNumber: 'asc' as const },
+      });
+      for (const row of preferredRows) {
+        if (row.surahNumber !== null) {
+          nameMap.set(row.surahNumber, { surahName: row.surahName, surahNameAr: row.surahNameAr });
+        }
+      }
+    }
+
+    // Second pass (or sole pass when no preferred provider): fill remaining gaps
+    const uncovered = groups
+      .map((g) => g.surahNumber as number)
+      .filter((n) => !nameMap.has(n));
+
+    if (uncovered.length > 0) {
+      const fallbackRows = await this.prisma.quote.findMany({
+        where: {
+          type: QuoteType.QURAN_VERSE,
+          surahNumber: { in: uncovered },
+        },
+        select: { surahNumber: true, surahName: true, surahNameAr: true },
+        distinct: ['surahNumber'],
+        orderBy: { surahNumber: 'asc' as const },
+      });
+      for (const row of fallbackRows) {
+        if (row.surahNumber !== null) {
+          nameMap.set(row.surahNumber, { surahName: row.surahName, surahNameAr: row.surahNameAr });
+        }
+      }
+    }
+
+    const data: SurahSummaryDto[] = groups.map((group) => {
+      const sn = group.surahNumber as number;
+      const names = nameMap.get(sn);
+      return {
+        surahNumber: sn,
+        surahName: names?.surahName ?? null,
+        surahNameAr: names?.surahNameAr ?? null,
+        ayahCount: group._count._all,
+      };
+    });
 
     this.surahsCache = {
       expiresAt: now + SURAHS_CACHE_TTL_MS,
@@ -71,6 +133,18 @@ export class QuranService {
 
   async findAyahsBySurah(surahNumber: number, query: SurahAyahsQueryDto) {
     this.assertSurahNumber(surahNumber);
+
+    // P2-9: cross-field validation — fromAyah must not exceed toAyah
+    if (
+      query.fromAyah !== undefined &&
+      query.toAyah !== undefined &&
+      query.fromAyah > query.toAyah
+    ) {
+      throw new BadRequestException({
+        code: 'VALIDATION_FAILED',
+        message: 'fromAyah must not be greater than toAyah',
+      });
+    }
 
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
@@ -134,7 +208,8 @@ export class QuranService {
 
     const locale = query.lang ?? 'ar';
     const includeAllTranslations = query.includeAllTranslations === true;
-    const preferredProvider = process.env.QURAN_PREFERRED_PROVIDER;
+    // P2-8: use validated ConfigService — never read process.env directly
+    const preferredProvider = this.config.get('QURAN_PREFERRED_PROVIDER');
 
     const where: Prisma.QuoteWhereInput = {
       type: QuoteType.QURAN_VERSE,

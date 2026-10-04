@@ -39,6 +39,16 @@ export class EnvironmentVariables {
   @Min(0)
   @Max(100)
   VARIETY_SCORE_FLOOR?: number = 70;
+
+  /**
+   * P2-8: Preferred Quran-verse provider key (e.g. 'quran.com').
+   * When multiple provider rows exist for the same ayah, the preferred provider's
+   * row is returned by findAyah and used for surah names in listSurahs.
+   * Phase 5 will populate this via the content-sync pipeline.
+   */
+  @IsOptional()
+  @IsString()
+  QURAN_PREFERRED_PROVIDER?: string;
 }
 
 export function validateEnv(config: Record<string, unknown>): EnvironmentVariables {
