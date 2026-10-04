@@ -39,7 +39,11 @@ export class SinQuotesAdminQueryDto extends PaginationQueryDto {
   @IsBoolean()
   hasNote?: boolean;
 
+  /**
+   * P2-6: `newest` removed — SinQuote has no createdAt column, so ordering by id
+   * (UUIDv4) is random.  Default is `score` (relevanceScore DESC NULLS LAST, id ASC).
+   */
   @IsOptional()
-  @IsIn(['score', 'newest'])
-  sort?: 'score' | 'newest';
+  @IsIn(['score'])
+  sort?: 'score';
 }

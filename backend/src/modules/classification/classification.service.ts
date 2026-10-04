@@ -29,6 +29,16 @@ const GOOD_DEED_LINK_INCLUDE = {
   quote: { select: { id: true, type: true, textAr: true } },
 } as const;
 
+/**
+ * P2-3: Default admin-list ordering — relevanceScore DESC NULLS LAST, then id ASC.
+ * The NULLS LAST is important: newly created links with score=0 (default) must not
+ * float to the top and displace curated high-score rows.
+ */
+const ADMIN_LINK_ORDER_BY = [
+  { relevanceScore: { sort: 'desc' as const, nulls: 'last' as const } },
+  { id: 'asc' as const },
+];
+
 /** Response shape from bulkLink* methods. */
 export interface BulkResult {
   data: {
@@ -39,86 +49,56 @@ export interface BulkResult {
   };
 }
 
+// ─── P2-2: Binding object for the shared private generic ─────────────────────
+//
+// Both the sin-quote and good-deed-quote sides share the same operations
+// (link / list / update / unlink). This binding parameterises the generic
+// private methods so the logic is written once.
+//
+// `delegate` is typed loosely because TypeScript cannot express a structural
+// union of the two Prisma delegates without resorting to full generic inference;
+// the public methods restore the correct types via explicit cast at the boundary.
+
+interface ClassifyBinding {
+  /** FK column on the link table referencing the parent entity. */
+  parentKey: 'sinId' | 'goodDeedId';
+  /** Name of the compound-unique constraint used in `upsert where`. */
+  compoundKeyName: string;
+  /** Prisma `include` object for detail queries. */
+  include: Record<string, unknown>;
+  /** Validates the parent record exists; throws 422 if not. */
+  assertParent: (id: string) => Promise<void>;
+  /** Prisma model delegate (sinQuote or goodDeedQuote). */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  delegate: Record<string, (...args: any[]) => any>;
+  /** Human-readable entity name for 404 messages. */
+  notFoundMessage: string;
+}
+
 @Injectable()
 export class ClassificationService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // ─── Sin-Quote links ────────────────────────────────────────────────────────
+  // ─── Public API — Sin-Quote links ────────────────────────────────────────────
 
   async linkSinQuote(dto: LinkSinQuoteDto): Promise<{ created: boolean; link: SinLinkDto }> {
-    await this.assertSinExists(dto.sinId);
-    await this.assertQuoteExistsAndGradeAllowed(dto.quoteId);
-
-    const existing = await this.prisma.sinQuote.findUnique({
-      where: { sinId_quoteId: { sinId: dto.sinId, quoteId: dto.quoteId } },
-    });
-
-    const link = await this.prisma.sinQuote.upsert({
-      where: { sinId_quoteId: { sinId: dto.sinId, quoteId: dto.quoteId } },
-      create: {
-        sinId: dto.sinId,
-        quoteId: dto.quoteId,
-        relevanceScore: dto.relevanceScore ?? 0,
-        note: dto.note ?? null,
-      },
-      update: {
-        ...(dto.relevanceScore !== undefined && { relevanceScore: dto.relevanceScore }),
-        ...(dto.note !== undefined && { note: dto.note }),
-      },
-      include: SIN_LINK_INCLUDE,
-    });
-
-    return { created: !existing, link: link as SinLinkDto };
+    return this.doLink<SinLinkDto>(this.sinBinding, dto.sinId, dto);
   }
 
   async listSinQuotes(query: SinQuotesAdminQueryDto) {
-    const page = query.page ?? 1;
-    const limit = query.limit ?? 20;
-
-    const where = this.buildSinQuoteWhere(query);
-    const orderBy =
-      query.sort === 'score'
-        ? [{ relevanceScore: 'desc' as const }, { id: 'asc' as const }]
-        : [{ id: 'desc' as const }];
-
-    const [rows, total] = await this.prisma.$transaction([
-      this.prisma.sinQuote.findMany({
-        where,
-        orderBy,
-        skip: (page - 1) * limit,
-        take: limit,
-        include: SIN_LINK_INCLUDE,
-      }),
-      this.prisma.sinQuote.count({ where }),
-    ]);
-
-    return paginated(rows as SinLinkDto[], page, limit, total);
+    return this.doList<SinLinkDto>(
+      this.sinBinding,
+      query,
+      (q) => this.buildSinQuoteWhere(q),
+    );
   }
 
   async updateSinLink(id: string, dto: UpdateSinLinkDto): Promise<SinLinkDto> {
-    const existing = await this.prisma.sinQuote.findUnique({ where: { id } });
-    if (!existing) {
-      throw new NotFoundException({ code: 'RESOURCE_NOT_FOUND', message: 'Sin-quote link not found' });
-    }
-
-    const updated = await this.prisma.sinQuote.update({
-      where: { id },
-      data: {
-        ...(dto.relevanceScore !== undefined && { relevanceScore: dto.relevanceScore }),
-        ...(dto.note !== undefined && { note: dto.note }),
-      },
-      include: SIN_LINK_INCLUDE,
-    });
-
-    return updated as SinLinkDto;
+    return this.doUpdate<SinLinkDto>(this.sinBinding, id, dto);
   }
 
   async unlinkSinQuote(id: string): Promise<void> {
-    const existing = await this.prisma.sinQuote.findUnique({ where: { id } });
-    if (!existing) {
-      throw new NotFoundException({ code: 'RESOURCE_NOT_FOUND', message: 'Sin-quote link not found' });
-    }
-    await this.prisma.sinQuote.delete({ where: { id } });
+    return this.doUnlink(this.sinBinding, id);
   }
 
   async bulkLinkSinQuotes(dto: BulkLinkSinQuotesDto): Promise<BulkResult> {
@@ -150,82 +130,26 @@ export class ClassificationService {
     });
   }
 
-  // ─── GoodDeed-Quote links ────────────────────────────────────────────────────
+  // ─── Public API — GoodDeed-Quote links ───────────────────────────────────────
 
   async linkGoodDeedQuote(dto: LinkGoodDeedQuoteDto): Promise<{ created: boolean; link: GoodDeedLinkDto }> {
-    await this.assertGoodDeedExists(dto.goodDeedId);
-    await this.assertQuoteExistsAndGradeAllowed(dto.quoteId);
-
-    const existing = await this.prisma.goodDeedQuote.findUnique({
-      where: { goodDeedId_quoteId: { goodDeedId: dto.goodDeedId, quoteId: dto.quoteId } },
-    });
-
-    const link = await this.prisma.goodDeedQuote.upsert({
-      where: { goodDeedId_quoteId: { goodDeedId: dto.goodDeedId, quoteId: dto.quoteId } },
-      create: {
-        goodDeedId: dto.goodDeedId,
-        quoteId: dto.quoteId,
-        relevanceScore: dto.relevanceScore ?? 0,
-        note: dto.note ?? null,
-      },
-      update: {
-        ...(dto.relevanceScore !== undefined && { relevanceScore: dto.relevanceScore }),
-        ...(dto.note !== undefined && { note: dto.note }),
-      },
-      include: GOOD_DEED_LINK_INCLUDE,
-    });
-
-    return { created: !existing, link: link as GoodDeedLinkDto };
+    return this.doLink<GoodDeedLinkDto>(this.goodDeedBinding, dto.goodDeedId, dto);
   }
 
   async listGoodDeedQuotes(query: GoodDeedQuotesAdminQueryDto) {
-    const page = query.page ?? 1;
-    const limit = query.limit ?? 20;
-
-    const where = this.buildGoodDeedQuoteWhere(query);
-    const orderBy =
-      query.sort === 'score'
-        ? [{ relevanceScore: 'desc' as const }, { id: 'asc' as const }]
-        : [{ id: 'desc' as const }];
-
-    const [rows, total] = await this.prisma.$transaction([
-      this.prisma.goodDeedQuote.findMany({
-        where,
-        orderBy,
-        skip: (page - 1) * limit,
-        take: limit,
-        include: GOOD_DEED_LINK_INCLUDE,
-      }),
-      this.prisma.goodDeedQuote.count({ where }),
-    ]);
-
-    return paginated(rows as GoodDeedLinkDto[], page, limit, total);
+    return this.doList<GoodDeedLinkDto>(
+      this.goodDeedBinding,
+      query,
+      (q) => this.buildGoodDeedQuoteWhere(q),
+    );
   }
 
   async updateGoodDeedLink(id: string, dto: UpdateGoodDeedLinkDto): Promise<GoodDeedLinkDto> {
-    const existing = await this.prisma.goodDeedQuote.findUnique({ where: { id } });
-    if (!existing) {
-      throw new NotFoundException({ code: 'RESOURCE_NOT_FOUND', message: 'GoodDeed-quote link not found' });
-    }
-
-    const updated = await this.prisma.goodDeedQuote.update({
-      where: { id },
-      data: {
-        ...(dto.relevanceScore !== undefined && { relevanceScore: dto.relevanceScore }),
-        ...(dto.note !== undefined && { note: dto.note }),
-      },
-      include: GOOD_DEED_LINK_INCLUDE,
-    });
-
-    return updated as GoodDeedLinkDto;
+    return this.doUpdate<GoodDeedLinkDto>(this.goodDeedBinding, id, dto);
   }
 
   async unlinkGoodDeedQuote(id: string): Promise<void> {
-    const existing = await this.prisma.goodDeedQuote.findUnique({ where: { id } });
-    if (!existing) {
-      throw new NotFoundException({ code: 'RESOURCE_NOT_FOUND', message: 'GoodDeed-quote link not found' });
-    }
-    await this.prisma.goodDeedQuote.delete({ where: { id } });
+    return this.doUnlink(this.goodDeedBinding, id);
   }
 
   async bulkLinkGoodDeedQuotes(dto: BulkLinkGoodDeedQuotesDto): Promise<BulkResult> {
@@ -255,6 +179,139 @@ export class ClassificationService {
           }),
         ),
     });
+  }
+
+  // ─── P2-2: Shared private generic operations ─────────────────────────────────
+  //
+  // One implementation path for link / list / update / unlink.
+  // Both sin-quote and good-deed-quote sides are wired in via their binding
+  // objects (sinBinding / goodDeedBinding getters below).
+
+  /**
+   * Creates or updates a parent↔quote link.
+   * The compound-key upsert is idempotent: existing links are updated in-place.
+   */
+  private async doLink<TLinkDto>(
+    binding: ClassifyBinding,
+    parentId: string,
+    dto: { quoteId: string; relevanceScore?: number; note?: string | null },
+  ): Promise<{ created: boolean; link: TLinkDto }> {
+    await binding.assertParent(parentId);
+    await this.assertQuoteExistsAndGradeAllowed(dto.quoteId);
+
+    const compoundWhere = {
+      [binding.compoundKeyName]: { [binding.parentKey]: parentId, quoteId: dto.quoteId },
+    };
+
+    const existing: unknown = await binding.delegate['findUnique']({ where: compoundWhere });
+
+    const link = (await binding.delegate['upsert']({
+      where: compoundWhere,
+      create: {
+        [binding.parentKey]: parentId,
+        quoteId: dto.quoteId,
+        relevanceScore: dto.relevanceScore ?? 0,
+        note: dto.note ?? null,
+      },
+      update: {
+        ...(dto.relevanceScore !== undefined && { relevanceScore: dto.relevanceScore }),
+        ...(dto.note !== undefined && { note: dto.note }),
+      },
+      include: binding.include,
+    })) as TLinkDto;
+
+    return { created: !existing, link };
+  }
+
+  /**
+   * Returns a paginated list of links matching the query.
+   *
+   * P2-3 + P2-6: always orders by relevanceScore DESC NULLS LAST, then id ASC
+   * (the only valid `sort` option is `score` — `newest` was removed in P2-6).
+   */
+  private async doList<TLinkDto>(
+    binding: ClassifyBinding,
+    query: { page?: number; limit?: number },
+    buildWhere: (q: typeof query) => Record<string, unknown>,
+  ) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const where = buildWhere(query);
+
+    // Cast needed: delegate methods return `any`; we embed them in a typed $transaction
+    // tuple so the return value is properly typed as [TLinkDto[], number].
+    const findManyOp = binding.delegate['findMany']({
+      where,
+      orderBy: ADMIN_LINK_ORDER_BY,
+      skip: (page - 1) * limit,
+      take: limit,
+      include: binding.include,
+    }) as Prisma.PrismaPromise<TLinkDto[]>;
+    const countOp = binding.delegate['count']({ where }) as Prisma.PrismaPromise<number>;
+
+    const [rows, total] = await this.prisma.$transaction([findManyOp, countOp]);
+
+    return paginated(rows as TLinkDto[], page, limit, total);
+  }
+
+  /**
+   * Patches an existing link's `relevanceScore` and/or `note`.
+   * Throws 404 if the link id is not found.
+   */
+  private async doUpdate<TLinkDto>(
+    binding: ClassifyBinding,
+    id: string,
+    dto: { relevanceScore?: number; note?: string | null },
+  ): Promise<TLinkDto> {
+    const existing: unknown = await binding.delegate['findUnique']({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException({ code: 'RESOURCE_NOT_FOUND', message: binding.notFoundMessage });
+    }
+
+    return (await binding.delegate['update']({
+      where: { id },
+      data: {
+        ...(dto.relevanceScore !== undefined && { relevanceScore: dto.relevanceScore }),
+        ...(dto.note !== undefined && { note: dto.note }),
+      },
+      include: binding.include,
+    })) as TLinkDto;
+  }
+
+  /**
+   * Deletes an existing link.
+   * Throws 404 if the link id is not found.
+   */
+  private async doUnlink(binding: ClassifyBinding, id: string): Promise<void> {
+    const existing: unknown = await binding.delegate['findUnique']({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException({ code: 'RESOURCE_NOT_FOUND', message: binding.notFoundMessage });
+    }
+    await binding.delegate['delete']({ where: { id } });
+  }
+
+  // ─── Binding objects (constructed per-call — no state) ────────────────────────
+
+  private get sinBinding(): ClassifyBinding {
+    return {
+      parentKey: 'sinId',
+      compoundKeyName: 'sinId_quoteId',
+      include: SIN_LINK_INCLUDE as Record<string, unknown>,
+      assertParent: (id) => this.assertSinExists(id),
+      delegate: this.prisma.sinQuote as unknown as Record<string, (...args: unknown[]) => unknown>,
+      notFoundMessage: 'Sin-quote link not found',
+    };
+  }
+
+  private get goodDeedBinding(): ClassifyBinding {
+    return {
+      parentKey: 'goodDeedId',
+      compoundKeyName: 'goodDeedId_quoteId',
+      include: GOOD_DEED_LINK_INCLUDE as Record<string, unknown>,
+      assertParent: (id) => this.assertGoodDeedExists(id),
+      delegate: this.prisma.goodDeedQuote as unknown as Record<string, (...args: unknown[]) => unknown>,
+      notFoundMessage: 'GoodDeed-quote link not found',
+    };
   }
 
   // ─── Shared transactional bulk-link implementation (P1-7 / P2-2) ─────────────

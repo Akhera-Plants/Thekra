@@ -374,6 +374,117 @@ describe('ClassificationService', () => {
     });
   });
 
+  // ─── listSinQuotes (P2-2 generic / P2-6 ordering) ────────────────────────────
+
+  describe('listSinQuotes', () => {
+    it('calls findMany with relevanceScore DESC NULLS LAST then id ASC (P2-3 / P2-6)', async () => {
+      prisma.sinQuote.findMany.mockResolvedValue([]);
+      prisma.sinQuote.count.mockResolvedValue(0);
+      prisma.$transaction.mockImplementation(async (ops: Promise<unknown>[]) => Promise.all(ops));
+
+      await service.listSinQuotes({});
+
+      expect(prisma.sinQuote.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: [
+            { relevanceScore: { sort: 'desc', nulls: 'last' } },
+            { id: 'asc' },
+          ],
+        }),
+      );
+    });
+
+    it('filters by sinId when provided', async () => {
+      prisma.sinQuote.findMany.mockResolvedValue([]);
+      prisma.sinQuote.count.mockResolvedValue(0);
+      prisma.$transaction.mockImplementation(async (ops: Promise<unknown>[]) => Promise.all(ops));
+
+      await service.listSinQuotes({ sinId: SIN.id });
+
+      expect(prisma.sinQuote.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { AND: [{ sinId: SIN.id }] },
+        }),
+      );
+    });
+  });
+
+  // ─── listGoodDeedQuotes (P2-2 generic / P2-6 ordering) ───────────────────────
+
+  describe('listGoodDeedQuotes', () => {
+    it('calls findMany with relevanceScore DESC NULLS LAST then id ASC (P2-3 / P2-6)', async () => {
+      prisma.goodDeedQuote.findMany.mockResolvedValue([]);
+      prisma.goodDeedQuote.count.mockResolvedValue(0);
+      prisma.$transaction.mockImplementation(async (ops: Promise<unknown>[]) => Promise.all(ops));
+
+      await service.listGoodDeedQuotes({});
+
+      expect(prisma.goodDeedQuote.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: [
+            { relevanceScore: { sort: 'desc', nulls: 'last' } },
+            { id: 'asc' },
+          ],
+        }),
+      );
+    });
+  });
+
+  // ─── updateGoodDeedLink (P2-2 generic) ───────────────────────────────────────
+
+  describe('updateGoodDeedLink', () => {
+    it('throws 404 when link does not exist', async () => {
+      prisma.goodDeedQuote.findUnique.mockResolvedValue(null);
+
+      await expect(service.updateGoodDeedLink('missing', {})).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+    });
+
+    it('updates relevanceScore and note', async () => {
+      prisma.goodDeedQuote.findUnique.mockResolvedValue({ id: 'gdl-1' });
+      const updated = {
+        id: 'gdl-1',
+        goodDeedId: GOOD_DEED.id,
+        quoteId: QUOTE_VERSE.id,
+        relevanceScore: 65,
+        note: 'updated',
+        goodDeed: GOOD_DEED,
+        quote: QUOTE_VERSE,
+      };
+      prisma.goodDeedQuote.update.mockResolvedValue(updated);
+
+      const result = await service.updateGoodDeedLink('gdl-1', {
+        relevanceScore: 65,
+        note: 'updated',
+      });
+
+      expect(result.relevanceScore).toBe(65);
+      expect(result.note).toBe('updated');
+    });
+  });
+
+  // ─── unlinkGoodDeedQuote (P2-2 generic) ──────────────────────────────────────
+
+  describe('unlinkGoodDeedQuote', () => {
+    it('throws 404 when link does not exist', async () => {
+      prisma.goodDeedQuote.findUnique.mockResolvedValue(null);
+
+      await expect(service.unlinkGoodDeedQuote('missing')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+    });
+
+    it('deletes the link (quote survives)', async () => {
+      prisma.goodDeedQuote.findUnique.mockResolvedValue({ id: 'gdl-1' });
+      prisma.goodDeedQuote.delete.mockResolvedValue({ id: 'gdl-1' });
+
+      await service.unlinkGoodDeedQuote('gdl-1');
+
+      expect(prisma.goodDeedQuote.delete).toHaveBeenCalledWith({ where: { id: 'gdl-1' } });
+    });
+  });
+
   // ─── linkGoodDeedQuote ────────────────────────────────────────────────────────
 
   describe('linkGoodDeedQuote', () => {
