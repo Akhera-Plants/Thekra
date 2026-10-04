@@ -1,0 +1,16 @@
+{
+  "app": {
+    "name": "Thekra",
+    "tagline": "A reminder when you need one"
+  },
+  "theme": {
+    "toggle": "Toggle theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "home": {
+    "title": "Thekra",
+    "description": "Placeholder shell while the foundation is built."
+  }
+}

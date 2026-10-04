@@ -94,9 +94,6 @@
   --grade-daif: var(--muted-foreground);
   --intent-sin: var(--foreground);
   --intent-good-deed: var(--foreground);
-  /* Font slots — next/font sets --font-ui / --font-arabic on <html> */
-  --font-ui: var(--font-geist-sans);
-  --font-arabic: var(--font-geist-sans);
 }
 
 .dark {
