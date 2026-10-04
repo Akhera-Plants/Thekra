@@ -27,10 +27,17 @@ export interface ApiEnvelope<T> {
   meta?: PageMeta;
 }
 
+/** Field-level validation detail from backend-plan §2.5. */
+export interface ApiValidationDetail {
+  field: string;
+  constraint: string;
+  message: string;
+}
+
 export interface ApiErrorBody {
   code: string;
   message: string;
-  details?: unknown;
+  details?: ApiValidationDetail[] | null;
   path?: string;
   method?: string;
   requestId?: string;
@@ -40,14 +47,14 @@ export interface ApiErrorBody {
 export class ApiError extends Error {
   readonly code: string;
   readonly status: number;
-  readonly details: unknown;
+  readonly details: ApiValidationDetail[] | null;
   readonly requestId?: string;
 
   constructor(args: {
     code: string;
     message: string;
     status: number;
-    details?: unknown;
+    details?: ApiValidationDetail[] | null;
     requestId?: string;
   }) {
     super(args.message);

@@ -4,8 +4,19 @@ import axios, {
   type InternalAxiosRequestConfig,
 } from 'axios';
 import { env } from '@/lib/env';
-import { ApiError, type ApiEnvelope, type PageMeta } from '@/lib/types/api';
+import {
+  ApiError,
+  type ApiEnvelope,
+  type ApiErrorBody,
+  type ApiValidationDetail,
+  type PageMeta,
+} from '@/lib/types/api';
 import type { LocaleCode } from '@/lib/types/enums';
+
+function asValidationDetails(value: unknown): ApiValidationDetail[] | null {
+  if (!Array.isArray(value)) return null;
+  return value as ApiValidationDetail[];
+}
 
 /** Active UI locale for `?lang=` injection. Updated by i18n once wired (step 4). */
 let activeLocale: LocaleCode = 'ar';
@@ -57,9 +68,7 @@ function attachInterceptors(client: AxiosInstance): void {
       }
 
       const status = error.response?.status ?? 0;
-      const body = error.response?.data as
-        | { error?: { code?: string; message?: string; details?: unknown; requestId?: string } }
-        | undefined;
+      const body = error.response?.data as { error?: ApiErrorBody } | undefined;
       const apiError = body?.error;
 
       return Promise.reject(
@@ -67,7 +76,7 @@ function attachInterceptors(client: AxiosInstance): void {
           code: apiError?.code ?? 'NETWORK_ERROR',
           message: apiError?.message ?? error.message,
           status,
-          details: apiError?.details ?? null,
+          details: asValidationDetails(apiError?.details),
           requestId: apiError?.requestId,
         }),
       );
