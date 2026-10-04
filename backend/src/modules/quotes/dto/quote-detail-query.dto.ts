@@ -1,5 +1,5 @@
-import { Type } from 'class-transformer';
 import { IsBoolean, IsIn, IsOptional } from 'class-validator';
+import { ToBoolean } from '../../../common/decorators/to-boolean.decorator.js';
 
 export class QuoteDetailQueryDto {
   @IsOptional()
@@ -7,12 +7,12 @@ export class QuoteDetailQueryDto {
   lang?: 'ar' | 'en' = 'ar';
 
   @IsOptional()
-  @Type(() => Boolean)
+  @ToBoolean()
   @IsBoolean()
   includeAllTranslations?: boolean = false;
 
   @IsOptional()
-  @Type(() => Boolean)
+  @ToBoolean()
   @IsBoolean()
   includeLinks?: boolean = true;
 }

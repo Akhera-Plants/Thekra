@@ -16,11 +16,11 @@ import { CreateSinDto } from './dto/create-sin.dto.js';
 import { UpdateSinDto } from './dto/update-sin.dto.js';
 import { SinsService } from './sins.service.js';
 import { IsBoolean, IsOptional } from 'class-validator';
-import { Type } from 'class-transformer';
+import { ToBoolean } from '../../common/decorators/to-boolean.decorator.js';
 
 class DeleteSinQueryDto {
   @IsOptional()
-  @Type(() => Boolean)
+  @ToBoolean()
   @IsBoolean()
   force?: boolean;
 }

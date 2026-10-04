@@ -1,5 +1,4 @@
 import { HadithGrade } from '@prisma/client';
-import { Type } from 'class-transformer';
 import {
   IsBoolean,
   IsEnum,
@@ -9,6 +8,7 @@ import {
   IsUUID,
   MaxLength,
 } from 'class-validator';
+import { ToBoolean } from '../../../common/decorators/to-boolean.decorator.js';
 import { TransformToArray } from '../../../common/decorators/transform-to-array.decorator.js';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto.js';
 import { NotMawdu } from '../grade-policy.js';
@@ -34,7 +34,7 @@ export class HadithQueryDto extends PaginationQueryDto {
   grades?: HadithGrade[];
 
   @IsOptional()
-  @Type(() => Boolean)
+  @ToBoolean()
   @IsBoolean()
   includeWeak?: boolean = false;
 

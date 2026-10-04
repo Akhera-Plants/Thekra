@@ -8,6 +8,7 @@ import {
   Max,
   Min,
 } from 'class-validator';
+import { ToBoolean } from '../../../common/decorators/to-boolean.decorator.js';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto.js';
 
 export class SinQuotesAdminQueryDto extends PaginationQueryDto {
@@ -34,7 +35,7 @@ export class SinQuotesAdminQueryDto extends PaginationQueryDto {
   maxScore?: number;
 
   @IsOptional()
-  @Type(() => Boolean)
+  @ToBoolean()
   @IsBoolean()
   hasNote?: boolean;
 

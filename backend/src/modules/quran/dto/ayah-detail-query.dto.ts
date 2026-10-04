@@ -1,10 +1,10 @@
-import { Type } from 'class-transformer';
 import { IsBoolean, IsOptional } from 'class-validator';
+import { ToBoolean } from '../../../common/decorators/to-boolean.decorator.js';
 import { LocaleQueryDto } from '../../../common/dto/locale-query.dto.js';
 
 export class AyahDetailQueryDto extends LocaleQueryDto {
   @IsOptional()
-  @Type(() => Boolean)
+  @ToBoolean()
   @IsBoolean()
   includeAllTranslations?: boolean = false;
 }

@@ -1,11 +1,11 @@
-import { Type } from 'class-transformer';
 import { IsBoolean, IsOptional, IsString, MaxLength } from 'class-validator';
+import { ToBoolean } from '../../../common/decorators/to-boolean.decorator.js';
 import { QuotesQueryDto } from './quotes-query.dto.js';
 
 export class AdminQuotesQueryDto extends QuotesQueryDto {
   /** Filter for quotes not linked to any sin or good deed. */
   @IsOptional()
-  @Type(() => Boolean)
+  @ToBoolean()
   @IsBoolean()
   unlinkedOnly?: boolean;
 
