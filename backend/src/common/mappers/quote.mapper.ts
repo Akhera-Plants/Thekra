@@ -1,10 +1,38 @@
-import type {
-  HadithGrade,
-  QuoteOrigin,
-  QuoteType,
-  SourceType,
-  TagCategory,
-} from '@prisma/client';
+import { Prisma, type HadithGrade, type QuoteOrigin, type QuoteType, type SourceType, type TagCategory } from '@prisma/client';
+
+/** Canonical include for every Quote → QuoteDto projection. */
+export const quoteIncludeForDto = {
+  source: true,
+  translations: true,
+  tags: { include: { tag: true } },
+} satisfies Prisma.QuoteInclude;
+
+/** Detail include: same projection plus related sin / good-deed links. */
+export const quoteDetailIncludeForDto = {
+  source: true,
+  translations: true,
+  tags: { include: { tag: true } },
+  sinLinks: {
+    include: {
+      sin: { select: { slug: true, name: true, nameAr: true } },
+    },
+  },
+  goodDeedLinks: {
+    include: {
+      goodDeed: {
+        select: { slug: true, name: true, nameAr: true },
+      },
+    },
+  },
+} satisfies Prisma.QuoteInclude;
+
+export type QuoteRowForDto = Prisma.QuoteGetPayload<{
+  include: typeof quoteIncludeForDto;
+}>;
+
+export type QuoteDetailRowForDto = Prisma.QuoteGetPayload<{
+  include: typeof quoteDetailIncludeForDto;
+}>;
 
 export interface QuoteSourceDto {
   id: string;
@@ -21,7 +49,7 @@ export interface QuoteTagDto {
   id: string;
   slug: string;
   name: string;
-  nameAr: string;
+  nameAr: string | null;
   category: TagCategory;
 }
 
@@ -55,48 +83,6 @@ export interface QuoteDto {
   createdAt: Date;
   updatedAt: Date;
 }
-
-export type QuoteRowForDto = {
-  id: string;
-  type: QuoteType;
-  origin: QuoteOrigin;
-  textAr: string;
-  surahNumber: number | null;
-  surahName: string | null;
-  surahNameAr: string | null;
-  ayahNumber: number | null;
-  narrator: string | null;
-  narratorAr: string | null;
-  grade: HadithGrade | null;
-  hadithReference: string | null;
-  bookTitle: string | null;
-  author: string | null;
-  pageOrChapter: string | null;
-  externalId: string | null;
-  apiProvider: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-  source: {
-    id: string;
-    name: string;
-    nameAr: string | null;
-    type: SourceType;
-    author: string | null;
-    authorAr: string | null;
-    isExternalApi: boolean;
-    apiProvider: string | null;
-  };
-  translations: Array<{ languageCode: string; text: string }>;
-  tags: Array<{
-    tag: {
-      id: string;
-      slug: string;
-      name: string;
-      nameAr: string;
-      category: TagCategory;
-    };
-  }>;
-};
 
 export function mapQuoteToDto(
   row: QuoteRowForDto,

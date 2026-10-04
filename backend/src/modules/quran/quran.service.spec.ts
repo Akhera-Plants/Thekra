@@ -19,7 +19,7 @@ describe('QuranService', () => {
     buildQuoteInclude: vi.fn().mockReturnValue({ source: true }),
     toQuoteDto: vi.fn().mockImplementation((row) => ({
       id: row.id,
-      ayahNumber: row.ayahNumber,
+      quran: { ayahNumber: row.ayahNumber },
     })),
   };
 
@@ -87,7 +87,7 @@ describe('QuranService', () => {
           where: expect.objectContaining({ surahNumber: 2 }),
         }),
       );
-      expect(result.data.map((d) => d.ayahNumber)).toEqual([1, 2]);
+      expect(result.data.map((d) => d.quran?.ayahNumber)).toEqual([1, 2]);
     });
 
     it('throws when no verses exist for the surah', async () => {

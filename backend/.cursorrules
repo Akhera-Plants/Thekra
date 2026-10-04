@@ -298,6 +298,8 @@ from the monorepo root (equivalent `pnpm <script>` inside `backend/`):
 - [ ] `pnpm --filter backend exec prisma validate` passes — if `schema.prisma` was touched (it almost never
       should be; see "Schema Changes Are Exceptional").
 - [ ] `pnpm --filter backend lint` passes (oxlint).
+- [ ] `pnpm --filter backend exec tsc --noEmit -p tsconfig.json` passes — Vitest strips types, so green
+      tests alone are not enough; this gate catches projection/include drift.
 - [ ] `pnpm --filter backend test` passes, including the §11.1 cases for every touched module.
 - [ ] Every new or changed endpoint has at least one e2e assertion (`pnpm --filter backend test:e2e`) covering
       the envelope shape and its main status code(s).

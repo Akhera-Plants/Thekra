@@ -144,15 +144,9 @@ export class QuranService {
 
     const rows = await this.prisma.quote.findMany({
       where,
-      include: {
-        source: true,
-        translations: includeAllTranslations
-          ? true
-          : locale === 'ar'
-            ? { take: 0 }
-            : { where: { languageCode: locale }, take: 1 },
-        tags: { include: { tag: true } },
-      },
+      include: this.quotes.buildQuoteInclude(locale, {
+        includeAllTranslations,
+      }),
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
     });
 
@@ -172,14 +166,14 @@ export class QuranService {
       : rows;
 
     const row = sorted[0];
-    const dto = this.quotes.toQuoteDto(row , locale);
+    const dto = this.quotes.toQuoteDto(row, locale);
     const result: QuoteDto & {
       translations?: Array<{ id: string; languageCode: string; text: string }>;
     } = { ...dto };
 
     if (includeAllTranslations) {
       result.translations = row.translations.map((t) => ({
-        id: (t as { id: string }).id,
+        id: t.id,
         languageCode: t.languageCode,
         text: t.text,
       }));

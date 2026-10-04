@@ -7,6 +7,9 @@ import { Prisma, QuoteOrigin, QuoteType } from '@prisma/client';
 import { paginated } from '../../common/dto/paginated-result.js';
 import {
   mapQuoteToDto,
+  quoteDetailIncludeForDto,
+  quoteIncludeForDto,
+  type QuoteDetailRowForDto,
   type QuoteDto,
   type QuoteRowForDto,
 } from '../../common/mappers/quote.mapper.js';
@@ -25,23 +28,65 @@ const LINK_ORDER_BY = [
   { id: 'asc' as const },
 ];
 
+function translationsInclude(
+  locale: 'ar' | 'en',
+  includeAllTranslations: boolean,
+) {
+  if (includeAllTranslations) {
+    return true as const;
+  }
+  return locale === 'ar'
+    ? ({ take: 0 } as const)
+    : ({ where: { languageCode: locale }, take: 1 } as const);
+}
+
 @Injectable()
 export class QuotesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  buildQuoteInclude(locale: 'ar' | 'en'): Prisma.QuoteInclude {
+  /**
+   * Locale-filtered include that still projects as `QuoteRowForDto`.
+   * The assertion is confined to this builder: call sites stay cast-free.
+   */
+  buildQuoteInclude(
+    locale: 'ar' | 'en',
+    options?: { includeAllTranslations?: boolean },
+  ): typeof quoteIncludeForDto {
     return {
       source: true,
-      translations:
-        locale === 'ar'
-          ? { take: 0 }
-          : { where: { languageCode: locale }, take: 1 },
+      translations: translationsInclude(
+        locale,
+        options?.includeAllTranslations === true,
+      ),
       tags: { include: { tag: true } },
-    };
+    } as typeof quoteIncludeForDto;
   }
 
-  toQuoteDto(row: unknown, locale: 'ar' | 'en'): QuoteDto {
-    return mapQuoteToDto(row as QuoteRowForDto, locale);
+  private buildQuoteDetailInclude(
+    locale: 'ar' | 'en',
+    includeAllTranslations: boolean,
+  ): typeof quoteDetailIncludeForDto {
+    return {
+      source: true,
+      translations: translationsInclude(locale, includeAllTranslations),
+      tags: { include: { tag: true } },
+      sinLinks: {
+        include: {
+          sin: { select: { slug: true, name: true, nameAr: true } },
+        },
+      },
+      goodDeedLinks: {
+        include: {
+          goodDeed: {
+            select: { slug: true, name: true, nameAr: true },
+          },
+        },
+      },
+    } as typeof quoteDetailIncludeForDto;
+  }
+
+  toQuoteDto(row: QuoteRowForDto, locale: 'ar' | 'en'): QuoteDto {
+    return mapQuoteToDto(row, locale);
   }
 
   linkOrderBy() {
@@ -94,42 +139,38 @@ export class QuotesService {
     const includeLinks = query.includeLinks !== false;
     const includeAllTranslations = query.includeAllTranslations === true;
 
+    if (includeLinks) {
+      const row = await this.prisma.quote.findUnique({
+        where: { id },
+        include: this.buildQuoteDetailInclude(locale, includeAllTranslations),
+      });
+      if (!row) {
+        throw new NotFoundException({
+          code: 'RESOURCE_NOT_FOUND',
+          message: 'Quote not found',
+        });
+      }
+      return this.toQuoteDetailResult(row, locale, includeAllTranslations);
+    }
+
     const row = await this.prisma.quote.findUnique({
       where: { id },
-      include: {
-        source: true,
-        translations: includeAllTranslations
-          ? true
-          : locale === 'ar'
-            ? { take: 0 }
-            : { where: { languageCode: locale }, take: 1 },
-        tags: { include: { tag: true } },
-        ...(includeLinks
-          ? {
-              sinLinks: {
-                include: {
-                  sin: { select: { slug: true, name: true, nameAr: true } },
-                },
-              },
-              goodDeedLinks: {
-                include: {
-                  goodDeed: {
-                    select: { slug: true, name: true, nameAr: true },
-                  },
-                },
-              },
-            }
-          : {}),
-      },
+      include: this.buildQuoteInclude(locale, { includeAllTranslations }),
     });
-
     if (!row) {
       throw new NotFoundException({
         code: 'RESOURCE_NOT_FOUND',
         message: 'Quote not found',
       });
     }
+    return this.toQuoteDetailResult(row, locale, includeAllTranslations);
+  }
 
+  private toQuoteDetailResult(
+    row: QuoteRowForDto | QuoteDetailRowForDto,
+    locale: 'ar' | 'en',
+    includeAllTranslations: boolean,
+  ) {
     const dto = this.toQuoteDto(row, locale);
     const result: QuoteDto & {
       translations?: Array<{ id: string; languageCode: string; text: string }>;
@@ -149,30 +190,20 @@ export class QuotesService {
 
     if (includeAllTranslations) {
       result.translations = row.translations.map((t) => ({
-        id: (t as { id: string }).id,
+        id: t.id,
         languageCode: t.languageCode,
         text: t.text,
       }));
     }
 
-    if (includeLinks) {
-      const withLinks = row as unknown as {
-        sinLinks: Array<{
-          relevanceScore: number | null;
-          sin: { slug: string; name: string; nameAr: string };
-        }>;
-        goodDeedLinks: Array<{
-          relevanceScore: number | null;
-          goodDeed: { slug: string; name: string; nameAr: string };
-        }>;
-      };
-      result.relatedSins = withLinks.sinLinks.map((link) => ({
+    if ('sinLinks' in row && 'goodDeedLinks' in row) {
+      result.relatedSins = row.sinLinks.map((link) => ({
         slug: link.sin.slug,
         name: link.sin.name,
         nameAr: link.sin.nameAr,
         relevanceScore: link.relevanceScore,
       }));
-      result.relatedGoodDeeds = withLinks.goodDeedLinks.map((link) => ({
+      result.relatedGoodDeeds = row.goodDeedLinks.map((link) => ({
         slug: link.goodDeed.slug,
         name: link.goodDeed.name,
         nameAr: link.goodDeed.nameAr,

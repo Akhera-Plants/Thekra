@@ -10,6 +10,7 @@ function makeRow(overrides: Partial<QuoteRowForDto> = {}): QuoteRowForDto {
     type: QuoteType.HADITH,
     origin: QuoteOrigin.LOCAL,
     textAr: 'نص عربي',
+    sourceId: 'src-1',
     surahNumber: null,
     surahName: null,
     surahNameAr: null,
@@ -23,6 +24,7 @@ function makeRow(overrides: Partial<QuoteRowForDto> = {}): QuoteRowForDto {
     pageOrChapter: null,
     externalId: null,
     apiProvider: null,
+    rawPayload: null,
     createdAt: new Date('2025-01-01T00:00:00.000Z'),
     updatedAt: new Date('2025-01-01T00:00:00.000Z'),
     source: {
@@ -32,12 +34,27 @@ function makeRow(overrides: Partial<QuoteRowForDto> = {}): QuoteRowForDto {
       type: SourceType.HADITH_COLLECTION,
       author: null,
       authorAr: null,
+      language: 'ar',
       isExternalApi: false,
       apiProvider: null,
+      apiBaseUrl: null,
+      lastSyncedAt: null,
+      createdAt: new Date('2025-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2025-01-01T00:00:00.000Z'),
     },
-    translations: [{ languageCode: 'en', text: 'English text' }],
+    translations: [
+      {
+        id: 'tr-1',
+        quoteId: '00000000-0000-4000-8000-000000000001',
+        languageCode: 'en',
+        text: 'English text',
+      },
+    ],
     tags: [
       {
+        id: 'qt-1',
+        quoteId: '00000000-0000-4000-8000-000000000001',
+        tagId: 'tag-1',
         tag: {
           id: 'tag-1',
           slug: 'sincerity',
@@ -70,13 +87,9 @@ describe('QuotesService', () => {
         origin: QuoteOrigin.API_CACHED,
         apiProvider: 'quran.com',
         externalId: '49:12',
+        rawPayload: { secret: true },
       });
-      const dto = service.toQuoteDto(
-        { ...row, rawPayload: { secret: true } } as QuoteRowForDto & {
-          rawPayload: unknown;
-        },
-        'en',
-      );
+      const dto = service.toQuoteDto(row, 'en');
       expect(dto).not.toHaveProperty('rawPayload');
       expect(JSON.stringify(dto)).not.toContain('secret');
     });
