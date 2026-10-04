@@ -22,10 +22,18 @@ describe('App bootstrap (e2e)', () => {
     await app.close();
   });
 
-  it('GET /v1 returns the scaffold hello payload inside the envelope', () => {
-    return request(app.getHttpServer())
-      .get('/v1')
-      .expect(200)
-      .expect({ data: 'Hello World!' });
+  it('GET /v1 returns 404 with error envelope (Hello World route removed)', async () => {
+    const res = await request(app.getHttpServer()).get('/v1').expect(404);
+    expect(res.body).toMatchObject({
+      error: {
+        code: expect.any(String),
+        message: expect.any(String),
+      },
+    });
+  });
+
+  it('GET /health is reachable without the /v1 prefix', async () => {
+    const res = await request(app.getHttpServer()).get('/health').expect(200);
+    expect(res.body.data.status).toBe('ok');
   });
 });
