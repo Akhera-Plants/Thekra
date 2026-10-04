@@ -1,8 +1,4 @@
-import {
-  ArrayMaxSize,
-  IsArray,
-  IsUUID,
-} from 'class-validator';
+import { ArrayMaxSize, IsArray, IsUUID } from 'class-validator';
 import {
   Body,
   Controller,
@@ -19,25 +15,23 @@ import {
   Res,
 } from '@nestjs/common';
 import type { Response } from 'express';
+import { LanguageCodePipe } from '../../common/pipes/language-code.pipe.js';
 import { AdminQuotesQueryDto } from './dto/admin-quotes-query.dto.js';
 import { CreateQuoteDto } from './dto/create-quote.dto.js';
+import { CreateTranslationDto } from './dto/create-translation.dto.js';
+import { SetTranslationDto } from './dto/set-translation.dto.js';
 import { UpdateQuoteDto } from './dto/update-quote.dto.js';
 import { QuotesService } from './quotes.service.js';
-
-class SetTranslationDto {
-  text!: string;
-}
-
-class CreateTranslationDto {
-  languageCode!: string;
-  text!: string;
-}
 
 class SetTagsDto {
   @IsArray()
   @IsUUID('4', { each: true })
   @ArrayMaxSize(20)
   tagIds!: string[];
+}
+
+function mapTranslation(t: { id: string; languageCode: string; text: string }) {
+  return { id: t.id, languageCode: t.languageCode, text: t.text };
 }
 
 @Controller('admin/quotes')
@@ -77,28 +71,32 @@ export class QuotesAdminController {
   // ── Translation sub-routes ────────────────────────────────────────────────
 
   @Put(':id/translations/:languageCode')
-  upsertTranslation(
+  async upsertTranslation(
     @Param('id', ParseUUIDPipe) id: string,
-    @Param('languageCode') languageCode: string,
+    @Param('languageCode', LanguageCodePipe) languageCode: string,
     @Body() body: SetTranslationDto,
   ) {
-    return this.quotesService.upsertTranslation(id, languageCode, body.text);
+    const t = await this.quotesService.upsertTranslation(id, languageCode, body.text);
+    return mapTranslation(t);
   }
 
   @Post(':id/translations')
-  @HttpCode(HttpStatus.CREATED)
-  createTranslation(
+  async createTranslation(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: CreateTranslationDto,
+    @Res({ passthrough: true }) res: Response,
   ) {
-    return this.quotesService.createTranslation(id, body.languageCode, body.text);
+    const t = await this.quotesService.createTranslation(id, body.languageCode, body.text);
+    res.status(HttpStatus.CREATED);
+    res.header('Location', `/v1/admin/quotes/${id}/translations/${t.languageCode}`);
+    return mapTranslation(t);
   }
 
   @Delete(':id/translations/:languageCode')
   @HttpCode(HttpStatus.NO_CONTENT)
   deleteTranslation(
     @Param('id', ParseUUIDPipe) id: string,
-    @Param('languageCode') languageCode: string,
+    @Param('languageCode', LanguageCodePipe) languageCode: string,
   ) {
     return this.quotesService.deleteTranslation(id, languageCode);
   }
