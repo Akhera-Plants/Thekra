@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { buildPageMeta, paginated } from '../../common/dto/paginated-result.js';
-import { normalizeArabic } from '../../common/text/arabic-normalizer.js';
+import { findIdsByNormalizedArabic } from '../../common/text/arabic-search.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { GradePolicy } from '../hadith/grade-policy.js';
 import { QuotesService } from '../quotes/quotes.service.js';
@@ -72,10 +72,17 @@ export class GoodDeedsService {
       where.oppositeSin = { slug: query.oppositeSinSlug };
     }
     if (query.q) {
-      const q = normalizeArabic(query.q);
+      // Arabic field: match via DB-side normalisation (strips tashkeel, folds alef/ya/ta-marbuta)
+      // Latin field: standard Prisma ILIKE (no normalisation needed)
+      const arabicIds = await findIdsByNormalizedArabic(
+        this.prisma,
+        '"GoodDeed"',
+        '"nameAr"',
+        query.q,
+      );
       where.OR = [
         { name: { contains: query.q, mode: 'insensitive' } },
-        { nameAr: { contains: q, mode: 'insensitive' } },
+        ...(arabicIds.length > 0 ? [{ id: { in: arabicIds } }] : []),
       ];
     }
 

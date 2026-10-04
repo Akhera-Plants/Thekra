@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, QuoteType, SourceType } from '@prisma/client';
 import { paginated } from '../../common/dto/paginated-result.js';
-import { normalizeArabic } from '../../common/text/arabic-normalizer.js';
+import { findIdsByNormalizedArabic } from '../../common/text/arabic-search.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { QuotesService } from '../quotes/quotes.service.js';
 import type { HadithCollectionsQueryDto } from './dto/hadith-collections-query.dto.js';
@@ -34,11 +34,17 @@ export class HadithService {
       and.push({ sourceId: query.collectionId });
     }
     if (query.narrator) {
-      const narrator = normalizeArabic(query.narrator);
+      // narratorAr: DB-side normalisation; narrator (Latin): standard ILIKE
+      const narratorArIds = await findIdsByNormalizedArabic(
+        this.prisma,
+        '"Quote"',
+        '"narratorAr"',
+        query.narrator,
+      );
       and.push({
         OR: [
           { narrator: { contains: query.narrator, mode: 'insensitive' } },
-          { narratorAr: { contains: narrator, mode: 'insensitive' } },
+          ...(narratorArIds.length > 0 ? [{ id: { in: narratorArIds } }] : []),
         ],
       });
     }
@@ -51,10 +57,15 @@ export class HadithService {
       });
     }
     if (query.q) {
-      const normalized = normalizeArabic(query.q);
-      const textFilter: Prisma.QuoteWhereInput[] = [
-        { textAr: { contains: normalized, mode: 'insensitive' } },
-      ];
+      // textAr: DB-side normalisation; translation text: standard ILIKE
+      const textArIds = await findIdsByNormalizedArabic(
+        this.prisma,
+        '"Quote"',
+        '"textAr"',
+        query.q,
+      );
+      const textFilter: Prisma.QuoteWhereInput[] =
+        textArIds.length > 0 ? [{ id: { in: textArIds } }] : [];
       if (locale !== 'ar') {
         textFilter.push({
           translations: {
@@ -65,7 +76,9 @@ export class HadithService {
           },
         });
       }
-      and.push({ OR: textFilter });
+      if (textFilter.length > 0) {
+        and.push({ OR: textFilter });
+      }
     }
 
     const where: Prisma.QuoteWhereInput = { AND: and };

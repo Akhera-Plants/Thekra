@@ -3,7 +3,7 @@ import type { CreateTagDto } from './dto/create-tag.dto.js';
 import type { UpdateTagDto } from './dto/update-tag.dto.js';
 import { Prisma } from '@prisma/client';
 import { paginated } from '../../common/dto/paginated-result.js';
-import { normalizeArabic } from '../../common/text/arabic-normalizer.js';
+import { findIdsByNormalizedArabic } from '../../common/text/arabic-search.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type { TagDetailQueryDto } from './dto/tag-detail-query.dto.js';
 import type { TagsQueryDto } from './dto/tags-query.dto.js';
@@ -37,7 +37,7 @@ export class TagsService {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
     const locale = query.lang ?? 'ar';
-    const where = this.buildListWhere(query);
+    const where = await this.buildListWhere(query);
 
     const [rows, total] = await this.prisma.$transaction([
       this.prisma.tag.findMany({
@@ -114,7 +114,7 @@ export class TagsService {
     await this.prisma.tag.delete({ where: { id } });
   }
 
-  private buildListWhere(query: TagsQueryDto): Prisma.TagWhereInput {
+  private async buildListWhere(query: TagsQueryDto): Promise<Prisma.TagWhereInput> {
     const and: Prisma.TagWhereInput[] = [];
 
     if (query.category) {
@@ -122,12 +122,19 @@ export class TagsService {
     }
 
     if (query.q) {
-      const normalized = normalizeArabic(query.q);
+      // Arabic field: match via DB-side normalisation (strips tashkeel, folds alef/ya/ta-marbuta)
+      // Latin fields (name, slug): standard Prisma ILIKE
+      const arabicIds = await findIdsByNormalizedArabic(
+        this.prisma,
+        '"Tag"',
+        '"nameAr"',
+        query.q,
+      );
       and.push({
         OR: [
           { name: { contains: query.q, mode: 'insensitive' } },
-          { nameAr: { contains: normalized, mode: 'insensitive' } },
           { slug: { contains: query.q, mode: 'insensitive' } },
+          ...(arabicIds.length > 0 ? [{ id: { in: arabicIds } }] : []),
         ],
       });
     }

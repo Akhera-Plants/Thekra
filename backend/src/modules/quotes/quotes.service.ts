@@ -13,7 +13,7 @@ import {
   type QuoteDto,
   type QuoteRowForDto,
 } from '../../common/mappers/quote.mapper.js';
-import { normalizeArabic } from '../../common/text/arabic-normalizer.js';
+import { findIdsByNormalizedArabic } from '../../common/text/arabic-search.js';
 import { GradePolicy } from '../hadith/grade-policy.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type { AdminQuotesQueryDto } from './dto/admin-quotes-query.dto.js';
@@ -108,7 +108,7 @@ export class QuotesService {
       includeWeak: query.includeWeak,
     });
 
-    const where = this.buildSearchWhere(query, { allowedGrades });
+    const where = await this.buildSearchWhere(query, { allowedGrades });
 
     const [rows, total] = await this.prisma.$transaction([
       this.prisma.quote.findMany({
@@ -246,7 +246,7 @@ export class QuotesService {
     const limit = query.limit ?? 20;
     const locale = query.lang ?? 'ar';
 
-    const where = this.buildAdminSearchWhere(query);
+    const where = await this.buildAdminSearchWhere(query);
 
     const [rows, total] = await this.prisma.$transaction([
       this.prisma.quote.findMany({
@@ -430,12 +430,12 @@ export class QuotesService {
     }));
   }
 
-  private buildAdminSearchWhere(query: AdminQuotesQueryDto): Prisma.QuoteWhereInput {
+  private async buildAdminSearchWhere(query: AdminQuotesQueryDto): Promise<Prisma.QuoteWhereInput> {
     const and: Prisma.QuoteWhereInput[] = [];
 
     // Admin routes must NOT apply the public grade policy — curators need to see
     // every grade including MAWDU so they can review and correct data.
-    const baseWhere = this.buildSearchWhere(query, { allowedGrades: undefined });
+    const baseWhere = await this.buildSearchWhere(query, { allowedGrades: undefined });
     if (Object.keys(baseWhere).length > 0) {
       and.push(baseWhere);
     }
@@ -463,10 +463,10 @@ export class QuotesService {
    *   rows to this list — the grade policy is enforced unconditionally.
    *   Pass `undefined` for admin routes so curators can see every grade (incl. MAWDU).
    */
-  private buildSearchWhere(
+  private async buildSearchWhere(
     query: QuotesQueryDto,
     options: { allowedGrades?: HadithGrade[] } = {},
-  ): Prisma.QuoteWhereInput {
+  ): Promise<Prisma.QuoteWhereInput> {
     const and: Prisma.QuoteWhereInput[] = [];
 
     if (query.type?.length) {
@@ -509,10 +509,16 @@ export class QuotesService {
       }
     }
     if (query.q) {
-      const normalized = normalizeArabic(query.q);
-      const textFilter: Prisma.QuoteWhereInput[] = [
-        { textAr: { contains: normalized, mode: 'insensitive' } },
-      ];
+      // Arabic field: match via DB-side normalisation (strips tashkeel, folds alef/ya/ta-marbuta)
+      // Translation/Latin fields: standard Prisma ILIKE
+      const arabicIds = await findIdsByNormalizedArabic(
+        this.prisma,
+        '"Quote"',
+        '"textAr"',
+        query.q,
+      );
+      const textFilter: Prisma.QuoteWhereInput[] =
+        arabicIds.length > 0 ? [{ id: { in: arabicIds } }] : [];
       if ((query.lang ?? 'ar') !== 'ar') {
         textFilter.push({
           translations: {
@@ -523,7 +529,9 @@ export class QuotesService {
           },
         });
       }
-      and.push({ OR: textFilter });
+      if (textFilter.length > 0) {
+        and.push({ OR: textFilter });
+      }
     }
 
     return and.length ? { AND: and } : {};
