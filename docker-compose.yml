@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: thekra
+      POSTGRES_PASSWORD: thekra_dev_password
+      POSTGRES_DB: thekra
+    ports:
+      - "5432:5432"
+    volumes:
+      - thekra_db_data:/var/lib/postgresql/data
+
+volumes:
+  thekra_db_data:

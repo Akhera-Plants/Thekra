@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+.next/
+out/
+.turbo/
+
+# Prisma generated client (when output is customized)
+backend/generated/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Tests / coverage
+coverage/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor / OS
+.DS_Store
+.idea/
+*.swp

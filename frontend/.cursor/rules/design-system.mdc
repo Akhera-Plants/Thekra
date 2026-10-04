@@ -1,0 +1,294 @@
+---
+description: UI design system, motion, performance and component-architecture standards for the Thekra frontend
+globs: ["src/components/**", "src/features/**/*.tsx", "src/app/**/*.tsx", "src/app/**/*.css"]
+alwaysApply: true
+---
+
+<!--
+Frontmatter note: Cursor's documented Project Rules keys are `description`, `globs` and `alwaysApply`.
+`alwaysApply: true` is the deliberate safety choice — Cursor then injects this rule into every Agent session and
+ignores `globs`, so the standards apply even if glob matching or the array syntax is not honoured. The globs are
+kept only to document the intended scope (relative to `frontend/`, this rule file's project root).
+-->
+
+# Thekra Design System — How Components Must Be Built
+
+## 1. What this file is
+
+This is a **standards file, not a component library**. It defines the visual, motion, performance and
+architecture constraints every UI change must meet. **A component that doesn't meet these constraints is
+incomplete work**, even if it renders and the build passes.
+
+Division of authority — cross-reference, don't duplicate:
+
+- `../docs/plan/frontend-plan.md` already decided the mechanics: shadcn on Tailwind v4 (§3), CSS-variable
+  theming with the 🎨 swap point (§4), fonts (§4.3), i18n/RTL (§5), data layer (§6), accessibility baseline (§7).
+- `.cursorrules` (this project's root) owns general code style: semantic-colour-only rule, `lucide-react`-only
+  icons, layering, state rules, RTL utilities, React/TS hygiene.
+- **This file** owns how things look, move, perform and are structured.
+
+Current repo state: `src/app/globals.css` is still the `create-next-app` default (two hex variables, an Arial
+`body` rule, a `prefers-color-scheme` block). It is replaced by the shadcn token block in `frontend-plan.md` §10
+step 2. If a token you need doesn't exist yet, that step hasn't run — do it (with the user's go-ahead) rather than
+hard-coding a value to work around it.
+
+---
+
+## 2. Scales: spacing, type, radius, elevation
+
+The design is pending, so **rhythm comes from fixed scales**. Then the real palette and fonts can land without
+re-spacing anything.
+
+**Spacing.** Use Tailwind's built-in spacing scale only. Prefer this step set:
+`0.5, 1, 1.5, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24`. Spacing between siblings uses `gap-*` / `space-y-*` on the
+parent, not margins on children. **No arbitrary values** (`mt-[13px]`, `p-[7px]`, `w-[342px]`, `style={{ margin }}`).
+Layout widths use container utilities (`max-w-prose`, `max-w-2xl`, `max-w-5xl`), not pixel widths.
+
+**Type scale.**
+
+| Role | Utilities | Notes |
+| --- | --- | --- |
+| Display (home entry actions) | `text-3xl md:text-4xl font-semibold tracking-tight` | at most one per screen |
+| Heading 1 (page / intent header) | `text-2xl md:text-3xl font-semibold` | exactly one `<h1>` per page |
+| Heading 2 (section) | `text-xl font-semibold` | |
+| Heading 3 (card title) | `text-lg font-medium` | |
+| Body (UI) | `text-base` | `font-sans` (`--font-ui`) |
+| **Arabic content body** (`textAr`, verse, hadith) | `text-lg md:text-xl leading-loose font-arabic` | min 18px and loose leading (§7.3); never `text-justify` on Arabic |
+| Caption / metadata (source, reference, grade label) | `text-sm text-muted-foreground` | `text-xs` only for badges |
+
+Arabic content styling lives once in the shared `ArabicText` component (§4.3). Don't re-specify font/leading
+per component.
+
+**Radius.** Only the `--radius` token family, through `rounded-sm`, `rounded-md`, `rounded-lg`, `rounded-xl`,
+plus `rounded-full` for pills/avatars. Never a one-off `rounded-[6px]`. Cards use `rounded-lg`; inputs and
+buttons inherit the primitive's radius.
+
+**Elevation.** Flat by default. Borders (`border-border`) separate surfaces, not shadows. Use `shadow-xs` or
+`shadow-sm` for cards and `shadow-md`/`shadow-lg` only for overlays (popover, dialog, sheet), as the shadcn
+primitives already do. No custom `box-shadow` values.
+
+---
+
+## 3. Motion & animation
+
+Motion should feel calm. This is a reading app, and people may open it in distress (`frontend-plan.md` §7).
+
+**Micro-interactions** (hover, focus, press) are CSS transitions on **`opacity` and `transform` only**,
+**150–200 ms**, **`ease-out`**:
+
+```tsx
+// pattern
+className="transition-[opacity,transform] duration-150 ease-out hover:opacity-90 active:scale-[0.98]
+           motion-reduce:transition-none motion-reduce:active:scale-100"
+```
+
+Generated `components/ui/*` primitives ship with their own `transition-colors` / `transition-[color,box-shadow]`.
+Those are paint-only, so leave them as generated. Hand-written components follow the opacity/transform rule.
+
+**Meaningful transitions** (the sin/deed picker `Sheet`/`Dialog`, route-level reveals, list entrance) use, in
+order of preference:
+
+1. The `data-[state=open]:animate-in` / `fade-in-0` / `slide-in-from-bottom` classes that shadcn primitives
+   already apply via the installed `tw-animate-css`.
+2. `framer-motion`, only when (1) can't express it, e.g. shared-layout or exit animations of list items. It is
+   **not installed yet** and is not in `frontend-plan.md` §8, so ask the user before adding it the first time.
+   Load it lean (`LazyMotion` + `m` components) and only in client components that need it.
+
+No other animation library (GSAP, react-spring, AOS, Lottie, …).
+
+**`prefers-reduced-motion` is mandatory, not polish** (`frontend-plan.md` §7.2):
+
+```tsx
+// CSS / Tailwind: animate only when the user allows motion
+className="motion-safe:animate-in motion-safe:fade-in-0 motion-reduce:animate-none"
+
+// framer-motion: honour the OS setting once, at the provider level…
+<MotionConfig reducedMotion="user">{children}</MotionConfig>
+// …or per component
+const shouldReduceMotion = useReducedMotion();
+const initial = shouldReduceMotion ? false : { opacity: 0, y: 8 };
+```
+
+With reduced motion: no card entrance animations, no slide/scale transitions, instant state changes (opacity
+fades ≤150 ms are acceptable).
+
+**Never animate layout-triggering properties**: `width`, `height`, `top`, `left`, `right`, `bottom`, `margin`,
+`padding`, `font-size`. It causes jank, and it shifts content, which counts against **CLS**. Use
+`transform: scale/translate` and `opacity` instead. For collapsible content use the `accordion` primitive,
+which ships its own height animation.
+
+---
+
+## 4. Core Web Vitals budget (enforceable rules)
+
+Target: **LCP < 2.5 s, CLS < 0.1, INP < 200 ms** at the 75th percentile, on mobile.
+
+### LCP — Largest Contentful Paint
+
+- The **intent header** on `/sins/[slug]` and `/good-deeds/[slug]` is server-rendered with its data already
+  fetched, and the first page of quotes is prefetched + hydrated (`frontend-plan.md` §2.1, TECHNICAL_PLAN E10).
+  Never move it behind a client-only fetch, a `useEffect`, or a `'use client'` boundary that waits for data.
+- On these screens the LCP element is usually Arabic text, so font loading (CLS section) is part of LCP.
+- Any image uses `next/image` with explicit `width`/`height`, or `fill` inside a container with a fixed aspect
+  ratio (`relative aspect-video`). Only the single real LCP image is prioritised. In Next 16 the `priority` prop
+  is **deprecated**: use `preload`, or `fetchPriority="high"` / `loading="eager"` as the bundled docs
+  (`node_modules/next/dist/docs/01-app/03-api-reference/02-components/image.md`) recommend. Never prioritise
+  more than one image per screen.
+- Keep client bundles small: `'use client'` as low as possible, and `next/dynamic` for below-the-fold or
+  interaction-only UI (e.g. the picker contents, the share sheet).
+
+### CLS — Cumulative Layout Shift
+
+- Every async content area renders a **`Skeleton` matching the real content's geometry** (same height, padding,
+  line count, radius) before data arrives, in `loading.tsx` and in client lists. `QuoteCardSkeleton` mirrors
+  `QuoteCard` per `variant`. Never a height-0 → content jump; never a centred spinner where a list will appear.
+- Fonts load only through `next/font` (`frontend-plan.md` §4.3: Noto Naskh Arabic + Geist placeholders), exposed
+  as `--font-arabic` / `--font-ui`. Keep `display: 'swap'` and the automatic metric-matched fallback
+  (`adjustFontFallback`, default on for `next/font/google`; set it explicitly for `next/font/local`). Then the
+  final fonts can be swapped in without reflowing text. No `<link>` to Google Fonts, no CSS `@import` of fonts.
+- Reserve space for anything that appears later: image boxes, badges, the "load more" button. New pages of
+  results append **below** the viewport; toasts (`sonner`) overlay and never push content.
+- "Another reminder" (shuffle) re-renders the list under a stable heading, with no scroll jump (§7.2).
+
+### INP — Interaction to Next Paint
+
+- Search/filter inputs debounce at **300 ms**. That includes the sin/deed `Command` search (§3.2) before it
+  triggers a fetch, a URL/search-param update, or custom (e.g. Arabic-normalised) filtering. Use one shared
+  debounce helper/hook; don't hand-roll a timer per component.
+- Never run expensive synchronous work (sorting, filtering, grouping a list) directly in a render body. Memoise
+  it with `useMemo`, or move non-urgent updates into `startTransition` / `useDeferredValue`.
+- Prefer CSS over JS whenever CSS can do it: hover/focus states, show/hide (`hidden md:block`, `group-hover:`,
+  `data-[state=…]:`), simple transitions. No `onMouseEnter` state just to change a style.
+- Event handlers do the minimum synchronously (update state, start a mutation). Optimistic UI
+  (`useToggleFavorite`) gives instant feedback without waiting on the network.
+
+---
+
+## 5. Building dynamic and shared components (the pattern; no components are built here)
+
+### 5.1 Dynamic components: one lookup, consumed once
+
+When a component renders differently per a discriminated field (`Quote.type`, `HadithGrade`, `TagCategory`),
+branch through **one config map at the top of the module**, read once. Don't scatter `if` / ternary chains
+through the JSX.
+
+```tsx
+// pattern sketch — not a component
+const QUOTE_TYPE_CONFIG = {
+  QURAN_VERSE:   { icon: BookOpen,   labelKey: 'quote.type.quran',   cardVariant: 'verse' },
+  HADITH:        { icon: ScrollText, labelKey: 'quote.type.hadith',  cardVariant: 'hadith' },
+  SCHOLAR_QUOTE: { icon: Quote,      labelKey: 'quote.type.scholar', cardVariant: 'scholar' },
+  BOOK_EXCERPT:  { icon: BookMarked, labelKey: 'quote.type.book',    cardVariant: 'book' },
+} satisfies Record<QuoteType, QuoteTypeConfig>;
+
+const { icon: TypeIcon, labelKey, cardVariant } = QUOTE_TYPE_CONFIG[quote.type];
+```
+
+`satisfies Record<…>` makes a new enum member a compile error until it's handled. Labels are i18n keys, never
+literal strings. Kind-specific sub-sections (`quote.hadith`, `quote.quran`, `quote.book` — `null` when not
+applicable, per `backend-plan.md` §3.1) render only when non-null.
+
+### 5.2 Shared components are presentational
+
+- Everything in `src/components/shared/**` receives **data and callbacks as props** and **never fetches**. No
+  `useQuery`, no `apiClient`, no store reads for server data. The feature-level hook/component fetches and
+  passes data down. Example: the feature wires `useToggleFavorite` into the shared `FavoriteButton`'s
+  `isFavorite` / `onToggle` props.
+- Every shared visual component that shows async data has **three explicit non-happy states**:
+  - **Loading**: a paired `*Skeleton` component (preferred, e.g. `QuoteCardSkeleton`) or an `isLoading` prop.
+  - **Empty**: the shared `EmptyState` with a translated message (and a next action where one exists).
+  - **Error**: the shared `ErrorState` with a translated message and an `onRetry` callback.
+
+  **Never a silent `return null`** for missing data. A blank region is indistinguishable from a bug.
+- Props are minimal, typed with `ComponentNameProps`, and accept `className` (merged with `cn()`) for layout
+  only: spacing and placement, never colours that override the component's own tokens.
+
+### 5.3 Variants: `class-variance-authority`
+
+Any component with **more than two visual variants** declares them with `class-variance-authority` (installed by
+`shadcn init`, `frontend-plan.md` §3.1). Don't use ad hoc ternary chains of `className` strings.
+
+```ts
+// pattern sketch
+const quoteCardVariants = cva('rounded-lg border border-border bg-card text-card-foreground', {
+  variants: {
+    kind:    { verse: '…', hadith: '…', scholar: '…', book: '…' },
+    density: { compact: 'p-4 gap-2', full: 'p-6 gap-4' },
+  },
+  defaultVariants: { density: 'full' },
+});
+// usage: className={cn(quoteCardVariants({ kind: cardVariant, density }), className)}
+```
+
+Variant class strings use semantic tokens only (`.cursorrules` → Colors). Export `VariantProps<typeof x>` as part
+of the props type rather than redeclaring the union.
+
+### 5.4 One-way dependencies (restated for emphasis)
+
+`features/* → components/shared/* → components/ui/*`, never the reverse (`.cursorrules` → Component Layering).
+If a shared component needs something from a feature, the dependency is upside down. Pass it in as a prop or
+promote the piece to `shared/`.
+
+---
+
+## 6. Accessibility is a hard requirement
+
+- **Keyboard-operable**: every interactive shared component works with Tab (logical order, no positive
+  `tabIndex`), `Enter`/`Space` activation, and `Escape` to close overlays. Use real `<button>`/`<a>` (via the
+  `button` primitive or `asChild`), never a clickable `<div>`.
+- **Focus-visible** always uses the ring token (`focus-visible:ring-2 focus-visible:ring-ring
+  focus-visible:ring-offset-2 ring-offset-background`, or the primitive's built-in equivalent). Never
+  `outline-none` / `focus:outline-none` without a visible replacement.
+- **Contrast** stays WCAG AA (4.5:1 body, 3:1 large text and UI) **even with the current neutral placeholder
+  palette**. Don't use `text-muted-foreground` on `bg-muted` for essential text without checking.
+- **Never colour alone**: hadith grade, quote type, selected/pressed state and errors each pair colour with an
+  icon and/or text label. `GradeBadge` always shows the grade word (e.g. صحيح), with an `aria-label` such as
+  "حديث صحيح". This carries ARCHITECTURE.md's "authenticity is a first-class property" requirement into the UI
+  (`frontend-plan.md` §3.2 `badge`, §7.2).
+- Overlays: `DialogTitle` + `DialogDescription` always present (`VisuallyHidden` if not shown); focus returns to
+  the trigger on close; after a picker selection navigates, focus moves to the page `<h1>` (§7.1).
+- Status changes (filter, shuffle, load more) are announced through an `aria-live="polite"` region.
+- Decorative icons get `aria-hidden`; icon-only buttons get a translated accessible name.
+
+---
+
+## 7. Keeping the system managed over time
+
+- **The one source of visual truth is the token block in `src/app/globals.css`** (between the 🎨 SWAP POINT
+  markers, mapped via `@theme inline`). A component must never locally override a token: no
+  `style={{ '--primary': … }}`, no per-component CSS variables standing in for a colour, no `:root` rules outside
+  `globals.css`. A new semantic need (e.g. a new intent colour) becomes a new token in `globals.css`, with the
+  user's approval, never a one-off value.
+- **Before adding a shadcn primitive**, check the already-planned list in `frontend-plan.md` §3.2 (and what's
+  actually in `src/components/ui/`). If it's planned but missing, add it with the CLI. Deferred ones (`table`,
+  `calendar`, `chart`, `carousel`, `pagination`) need a reason tied to the roadmap phase.
+- **Recommended later (not built now):** a dev-only `/dev/design-preview` route that renders every shared
+  component in every state (loading / empty / error / populated, `ar` + `en`, light + dark). Gate it to
+  development via `src/lib/env.ts` so it 404s in production. Use it for visual regression review before and
+  after the real palette lands. It's cheaper than Storybook now. Storybook is a legitimate phase-8 upgrade if
+  the team wants it. Propose either to the user before building it.
+- A palette or font change that forces a component edit means the component was written wrong
+  (`frontend-plan.md` §4.4). Fix the component so the swap stays values-only.
+
+---
+
+## 8. Never do this (scannable checklist)
+
+- [ ] ❌ Hardcoded hex / rgb / hsl / oklch colours in a component, `style` prop, or arbitrary class.
+- [ ] ❌ Raw Tailwind palette classes (`bg-blue-500`, `text-neutral-800`, `bg-white`, `text-black`).
+- [ ] ❌ Arbitrary pixel spacing or sizing (`mt-[13px]`, `w-[342px]`) or one-off radius (`rounded-[6px]`).
+- [ ] ❌ Any icon library other than `lucide-react`.
+- [ ] ❌ Any animation library beyond `framer-motion` (once approved) and the installed `tw-animate-css`.
+- [ ] ❌ A shared component that fetches its own data.
+- [ ] ❌ A shared component without explicit loading, empty and error handling, or one that silently `return null`s.
+- [ ] ❌ Animating layout-affecting CSS properties (`width`, `height`, `top`, `left`, margins, padding).
+- [ ] ❌ Ignoring `prefers-reduced-motion`.
+- [ ] ❌ A component over ~300 lines (matches `.cursorrules`).
+- [ ] ❌ Scattered `if`/ternary chains on a discriminator instead of one config map; `className` ternary chains
+      instead of `cva` for more than two variants.
+- [ ] ❌ A client-only fetch for the server-rendered intent header; more than one prioritised image per screen;
+      the deprecated `priority` prop on `next/image`.
+- [ ] ❌ An async region without a geometry-matched `Skeleton`; fonts loaded outside `next/font`.
+- [ ] ❌ An undebounced search input that fetches or updates the URL per keystroke.
+- [ ] ❌ Grade, type or state conveyed by colour alone; a suppressed focus ring.
+- [ ] ❌ A locally overridden design token, or a `tailwind.config.*` file.

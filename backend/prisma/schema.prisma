@@ -1,0 +1,224 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SourceType {
+  QURAN
+  HADITH_COLLECTION
+  BOOK
+  SCHOLAR
+  OTHER
+}
+
+enum QuoteType {
+  QURAN_VERSE
+  HADITH
+  SCHOLAR_QUOTE
+  BOOK_EXCERPT
+}
+
+enum QuoteOrigin {
+  LOCAL
+  API_CACHED
+}
+
+enum HadithGrade {
+  SAHIH
+  HASAN
+  DAIF
+  MAWDU
+  UNGRADED
+}
+
+enum TagCategory {
+  SIN
+  GOOD_DEED
+  THEME
+  EMOTION
+}
+
+enum SyncStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  FAILED
+}
+
+model Source {
+  id            String     @id @default(uuid())
+  name          String
+  nameAr        String?
+  type          SourceType
+  author        String?
+  authorAr      String?
+  language      String     @default("ar")
+  isExternalApi Boolean    @default(false)
+  apiProvider   String?
+  apiBaseUrl    String?
+  lastSyncedAt  DateTime?
+  quotes        Quote[]
+  syncLogs      SyncLog[]
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model Quote {
+  id       String      @id @default(uuid())
+  type     QuoteType
+  origin   QuoteOrigin @default(LOCAL)
+  textAr   String
+  sourceId String
+  source   Source      @relation(fields: [sourceId], references: [id])
+
+  surahNumber Int?
+  surahName   String?
+  surahNameAr String?
+  ayahNumber  Int?
+
+  narrator        String?
+  narratorAr      String?
+  grade           HadithGrade?
+  hadithReference String?
+
+  bookTitle     String?
+  author        String?
+  pageOrChapter String?
+
+  externalId  String?
+  apiProvider String?
+  rawPayload  Json?
+
+  translations  Translation[]
+  tags          QuoteTag[]
+  sinLinks      SinQuote[]
+  goodDeedLinks GoodDeedQuote[]
+  favorites     Favorite[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([apiProvider, externalId])
+  @@index([type])
+  @@index([sourceId])
+}
+
+model Translation {
+  id           String @id @default(uuid())
+  quoteId      String
+  quote        Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  languageCode String
+  text         String
+
+  @@unique([quoteId, languageCode])
+}
+
+model Sin {
+  id               String     @id @default(uuid())
+  name             String
+  nameAr           String
+  slug             String     @unique
+  category         String?
+  description      String?
+  descriptionAr    String?
+  severity         Int?
+  quotes           SinQuote[]
+  relatedGoodDeeds GoodDeed[] @relation("OppositeOfSin")
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+}
+
+model GoodDeed {
+  id            String          @id @default(uuid())
+  name          String
+  nameAr        String
+  slug          String          @unique
+  category      String?
+  description   String?
+  descriptionAr String?
+  reward        String?
+  rewardAr      String?
+  oppositeSinId String?
+  oppositeSin   Sin?            @relation("OppositeOfSin", fields: [oppositeSinId], references: [id])
+  quotes        GoodDeedQuote[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+model SinQuote {
+  id             String  @id @default(uuid())
+  sinId          String
+  sin            Sin     @relation(fields: [sinId], references: [id], onDelete: Cascade)
+  quoteId        String
+  quote          Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  relevanceScore Int?    @default(0)
+  note           String?
+
+  @@unique([sinId, quoteId])
+}
+
+model GoodDeedQuote {
+  id             String   @id @default(uuid())
+  goodDeedId     String
+  goodDeed       GoodDeed @relation(fields: [goodDeedId], references: [id], onDelete: Cascade)
+  quoteId        String
+  quote          Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  relevanceScore Int?     @default(0)
+  note           String?
+
+  @@unique([goodDeedId, quoteId])
+}
+
+model Tag {
+  id       String      @id @default(uuid())
+  name     String
+  nameAr   String?
+  slug     String      @unique
+  category TagCategory
+  quotes   QuoteTag[]
+}
+
+model QuoteTag {
+  id      String @id @default(uuid())
+  quoteId String
+  quote   Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  tagId   String
+  tag     Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([quoteId, tagId])
+}
+
+model SyncLog {
+  id              String     @id @default(uuid())
+  sourceId        String
+  source          Source     @relation(fields: [sourceId], references: [id])
+  status          SyncStatus @default(PENDING)
+  startedAt       DateTime   @default(now())
+  finishedAt      DateTime?
+  recordsImported Int?       @default(0)
+  errorMessage    String?
+}
+
+model User {
+  id          String     @id @default(uuid())
+  email       String     @unique
+  displayName String?
+  favorites   Favorite[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Favorite {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quoteId   String
+  quote     Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, quoteId])
+}

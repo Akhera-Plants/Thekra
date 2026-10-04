@@ -1,0 +1,16 @@
+{
+  "name": "thekra",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Thekra (تذكرة) — on-demand Islamic reminder app monorepo (structure + schema phase).",
+  "packageManager": "pnpm@11.7.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "prisma:generate": "pnpm --filter backend exec prisma generate",
+    "prisma:validate": "pnpm --filter backend exec prisma validate",
+    "dev:backend": "pnpm --filter backend start:dev",
+    "dev:frontend": "pnpm --filter frontend dev"
+  }
+}
