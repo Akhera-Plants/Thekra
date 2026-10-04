@@ -79,12 +79,12 @@ export class SinsService {
       ];
     }
 
-    const orderBy: Prisma.SinOrderByWithRelationInput =
+    const orderBy: Prisma.SinOrderByWithRelationInput[] =
       query.sort === 'severity'
-        ? { severity: { sort: 'desc', nulls: 'last' } }
+        ? [{ severity: { sort: 'desc', nulls: 'last' } }, { id: 'asc' }]
         : query.sort === 'quoteCount'
-          ? { quotes: { _count: 'desc' } }
-          : { name: 'asc' };
+          ? [{ quotes: { _count: 'desc' } }, { id: 'asc' }]
+          : [{ name: 'asc' }, { id: 'asc' }];
 
     const [rows, total] = await this.prisma.$transaction([
       this.prisma.sin.findMany({
@@ -165,7 +165,7 @@ export class SinsService {
     const alternativesQ = this.prisma.goodDeed.findMany({
       where: { oppositeSinId: sin.id },
       take: 3,
-      orderBy: { name: 'asc' },
+      orderBy: [{ name: 'asc' }, { id: 'asc' }],
       select: {
         id: true,
         slug: true,
@@ -357,7 +357,7 @@ export class SinsService {
         where,
         skip: (page - 1) * limit,
         take: limit,
-        orderBy: { name: 'asc' },
+        orderBy: [{ name: 'asc' }, { id: 'asc' }],
         include: {
           oppositeSin: {
             select: { id: true, slug: true, name: true, nameAr: true },

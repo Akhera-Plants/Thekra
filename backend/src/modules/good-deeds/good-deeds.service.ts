@@ -86,10 +86,10 @@ export class GoodDeedsService {
       ];
     }
 
-    const orderBy: Prisma.GoodDeedOrderByWithRelationInput =
+    const orderBy: Prisma.GoodDeedOrderByWithRelationInput[] =
       query.sort === 'quoteCount'
-        ? { quotes: { _count: 'desc' } }
-        : { name: 'asc' };
+        ? [{ quotes: { _count: 'desc' } }, { id: 'asc' }]
+        : [{ name: 'asc' }, { id: 'asc' }];
 
     const [rows, total] = await this.prisma.$transaction([
       this.prisma.goodDeed.findMany({
@@ -195,7 +195,7 @@ export class GoodDeedsService {
     const rows = await this.prisma.goodDeed.findMany({
       where: { oppositeSinId: sinId },
       ...(take !== undefined ? { take } : {}),
-      orderBy: { name: 'asc' },
+      orderBy: [{ name: 'asc' }, { id: 'asc' }],
       select: {
         id: true,
         slug: true,

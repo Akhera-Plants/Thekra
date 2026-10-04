@@ -42,7 +42,7 @@ export class TagsService {
     const [rows, total] = await this.prisma.$transaction([
       this.prisma.tag.findMany({
         where,
-        orderBy: { slug: 'asc' },
+        orderBy: [{ slug: 'asc' }, { id: 'asc' }],
         skip: (page - 1) * limit,
         take: limit,
         include: { _count: { select: { quotes: true } } },

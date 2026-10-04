@@ -93,7 +93,7 @@ export class QuranService {
       this.prisma.quote.findMany({
         where,
         include: this.quotes.buildQuoteInclude(locale),
-        orderBy: { ayahNumber: 'asc' },
+        orderBy: [{ ayahNumber: 'asc' as const }, { id: 'asc' as const }],
         skip: (page - 1) * limit,
         take: limit,
       }),

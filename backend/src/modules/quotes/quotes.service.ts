@@ -222,8 +222,8 @@ export class QuotesService {
         include: this.buildQuoteInclude(locale),
         orderBy:
           sort === 'oldest'
-            ? { createdAt: 'asc' }
-            : { createdAt: 'desc' },
+            ? [{ createdAt: 'asc' as const }, { id: 'asc' as const }]
+            : [{ createdAt: 'desc' as const }, { id: 'asc' as const }],
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -358,7 +358,7 @@ export class QuotesService {
       this.prisma.quote.findMany({
         where,
         include: this.buildQuoteInclude(locale),
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ createdAt: 'desc' as const }, { id: 'asc' as const }],
         skip: (page - 1) * limit,
         take: limit,
       }),

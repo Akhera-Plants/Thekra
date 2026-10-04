@@ -52,7 +52,7 @@ export class SourcesService {
     const [rows, total] = await this.prisma.$transaction([
       this.prisma.source.findMany({
         where,
-        orderBy: { name: 'asc' },
+        orderBy: [{ name: 'asc' }, { id: 'asc' }],
         skip: (page - 1) * limit,
         take: limit,
         include: { _count: { select: { quotes: true } } },

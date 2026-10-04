@@ -83,7 +83,7 @@ describe('QuranService', () => {
 
       expect(prisma.quote.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          orderBy: { ayahNumber: 'asc' },
+          orderBy: [{ ayahNumber: 'asc' }, { id: 'asc' }],
           where: expect.objectContaining({ surahNumber: 2 }),
         }),
       );
