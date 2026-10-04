@@ -6,6 +6,8 @@ import { AppService } from './app.service.js';
 import { validateEnv } from './config/env.validation.js';
 import { HealthModule } from './health/health.module.js';
 import { QuotesModule } from './modules/quotes/quotes.module.js';
+import { SourcesModule } from './modules/sources/sources.module.js';
+import { TagsModule } from './modules/tags/tags.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 
 @Module({
@@ -41,6 +43,8 @@ import { PrismaModule } from './prisma/prisma.module.js';
     PrismaModule,
     HealthModule,
     QuotesModule,
+    TagsModule,
+    SourcesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
