@@ -81,7 +81,7 @@ export class SinsService {
 
     const orderBy: Prisma.SinOrderByWithRelationInput =
       query.sort === 'severity'
-        ? { severity: 'desc' }
+        ? { severity: { sort: 'desc', nulls: 'last' } }
         : query.sort === 'quoteCount'
           ? { quotes: { _count: 'desc' } }
           : { name: 'asc' };
@@ -106,7 +106,7 @@ export class SinsService {
     );
   }
 
-  async findBySlug(slug: string): Promise<SinDetailDto> {
+  async findBySlug(slug: string, lang: string = 'ar'): Promise<SinDetailDto & { locale: string }> {
     const row = await this.prisma.sin.findUnique({
       where: { slug },
       include: { _count: { select: { quotes: true } } },
@@ -117,8 +117,10 @@ export class SinsService {
         message: 'Sin not found',
       });
     }
+    // No cap: return all related good deeds on the detail page.
+    // findAlternatives() uses take:3 separately for the quotes list endpoint.
     const relatedGoodDeeds = await this.goodDeeds.findByOppositeSinId(row.id);
-    return { ...this.toDto(row), relatedGoodDeeds };
+    return { ...this.toDto(row), relatedGoodDeeds, locale: lang };
   }
 
   async findAlternatives(sinId: string) {

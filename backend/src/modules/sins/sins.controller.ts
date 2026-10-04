@@ -1,4 +1,5 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
+import { LocaleQueryDto } from '../../common/dto/locale-query.dto.js';
 import { SinGoodDeedsQueryDto } from './dto/sin-good-deeds-query.dto.js';
 import { SinQuotesQueryDto } from './dto/sin-quotes-query.dto.js';
 import { SinsQueryDto } from './dto/sins-query.dto.js';
@@ -14,8 +15,11 @@ export class SinsController {
   }
 
   @Get(':slug')
-  findBySlug(@Param('slug') slug: string) {
-    return this.sinsService.findBySlug(slug);
+  findBySlug(
+    @Param('slug') slug: string,
+    @Query() query: LocaleQueryDto,
+  ) {
+    return this.sinsService.findBySlug(slug, query.lang ?? 'ar');
   }
 
   @Get(':slug/quotes')

@@ -116,7 +116,7 @@ export class GoodDeedsService {
     );
   }
 
-  async findBySlug(slug: string): Promise<GoodDeedDto> {
+  async findBySlug(slug: string, lang: string = 'ar'): Promise<GoodDeedDto & { locale: string }> {
     const row = await this.prisma.goodDeed.findUnique({
       where: { slug },
       include: {
@@ -132,7 +132,7 @@ export class GoodDeedsService {
         message: 'Good deed not found',
       });
     }
-    return this.toDto(row);
+    return { ...this.toDto(row), locale: lang };
   }
 
   // ─── Admin CRUD ───────────────────────────────────────────────────────────────
@@ -191,10 +191,10 @@ export class GoodDeedsService {
     await this.prisma.goodDeed.delete({ where: { id } });
   }
 
-  async findByOppositeSinId(sinId: string, take = 3): Promise<GoodDeedSummary[]> {
+  async findByOppositeSinId(sinId: string, take?: number): Promise<GoodDeedSummary[]> {
     const rows = await this.prisma.goodDeed.findMany({
       where: { oppositeSinId: sinId },
-      take,
+      ...(take !== undefined ? { take } : {}),
       orderBy: { name: 'asc' },
       select: {
         id: true,
