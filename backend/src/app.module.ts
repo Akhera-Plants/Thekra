@@ -1,10 +1,43 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { LoggerModule } from 'nestjs-pino';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
+import { validateEnv } from './config/env.validation.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      cache: true,
+      validate: validateEnv,
+    }),
+    LoggerModule.forRoot({
+      pinoHttp: {
+        level: process.env.LOG_LEVEL ?? 'info',
+        transport:
+          process.env.NODE_ENV !== 'production'
+            ? { target: 'pino-pretty', options: { singleLine: true } }
+            : undefined,
+        redact: [
+          'req.headers.authorization',
+          'req.body.password',
+          'req.body.refreshToken',
+        ],
+        genReqId: (req, res) => {
+          const existing = req.headers['x-request-id'];
+          const id =
+            typeof existing === 'string' && existing.length > 0
+              ? existing
+              : crypto.randomUUID();
+          res.setHeader('x-request-id', id);
+          return id;
+        },
+      },
+    }),
+    PrismaModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
