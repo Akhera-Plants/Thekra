@@ -17,6 +17,7 @@
     "typecheck": "pnpm prisma:generate && pnpm --filter backend exec tsc --noEmit -p tsconfig.json && pnpm --filter frontend exec tsc --noEmit",
     "test": "pnpm --filter backend test",
     "test:e2e": "pnpm --filter backend test:e2e",
-    "build": "pnpm --filter backend build && pnpm --filter frontend build"
+    "build": "pnpm --filter backend build && pnpm --filter frontend build",
+    "check:i18n": "node scripts/check-i18n-keys.mjs"
   }
 }

@@ -58,14 +58,15 @@
 
 ## Phase 7 — Mobile
 
-- [ ] Add `mobile` to pnpm-workspace; Expo scaffold
-- [ ] Core screens (guest flows + favorites)
-- [ ] EAS / store — **blocked** (see BLOCKERS)
+- [x] Add `mobile` to pnpm-workspace; Expo scaffold
+- [x] Core screens (guest flows + favorites)
+- [x] EAS / store — **blocked** (see BLOCKERS)
 
 ## Phase 8 — a11y + i18n polish
 
-- [ ] a11y + ar/en key parity CI; no invent palette (see BLOCKERS)
-- [ ] Final report
+- [x] ar/en key parity CI (`scripts/check-i18n-keys.mjs`, design-tokens, rtl-lint jobs)
+- [x] Final report — [FINAL_REPORT.md](./FINAL_REPORT.md)
+- [x] Real palette/fonts — **blocked** (B-008); neutral tokens kept
 
 ---
 
