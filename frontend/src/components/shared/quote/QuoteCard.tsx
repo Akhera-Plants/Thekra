@@ -15,6 +15,7 @@ import { HadithGrade, QuoteType } from '@/lib/types/enums';
 import { ArabicText } from '../ArabicText';
 import { GradeBadge } from './GradeBadge';
 import { SourceAttribution } from './SourceAttribution';
+import { FavoriteButton } from './FavoriteButton';
 
 // ── Config map (one place for per-type logic) ─────────────────────────────────
 interface QuoteTypeConfig {
@@ -74,6 +75,14 @@ export interface QuoteCardProps extends VariantProps<typeof quoteCardVariants> {
   link?: Pick<QuoteLinkDto, 'relevanceScore' | 'note'> | null;
   /** If provided, wraps the card in a link to the full quote detail. */
   detailHref?: string;
+  /**
+   * When true, renders a FavoriteButton in the card header.
+   * Requires onToggleFavorite to be provided.
+   */
+  showFavoriteButton?: boolean;
+  /** Called when the user taps the favorite button (auth-gated by caller). */
+  onToggleFavorite?: (quoteId: string, currentlyFavorited: boolean) => void;
+  isFavoritePending?: boolean;
   className?: string;
 }
 
@@ -83,9 +92,13 @@ export function QuoteCard({
   link,
   detailHref,
   density,
+  showFavoriteButton = false,
+  onToggleFavorite,
+  isFavoritePending = false,
   className,
 }: QuoteCardProps) {
   const t = useTranslations('quote');
+  const tFav = useTranslations('favorites');
   const config = QUOTE_TYPE_CONFIG[quote.type];
   const { icon: TypeIcon, typeKey, cardVariant } = config;
   const typeLabel = t(`type.${typeKey}`);
@@ -101,7 +114,7 @@ export function QuoteCard({
       className={cn(quoteCardVariants({ kind: cardVariant, density }), className)}
       aria-labelledby={`quote-${quote.id}-text`}
     >
-      {/* Header row: type icon + badge + grade */}
+      {/* Header row: type icon + badge + grade + optional favorite */}
       <header className="flex flex-wrap items-center gap-2">
         <TypeIcon className="size-3.5 text-muted-foreground" aria-hidden />
         <span className="text-xs font-medium text-muted-foreground">
@@ -116,6 +129,19 @@ export function QuoteCard({
         {link?.note && (
           <span className="ms-auto text-xs text-muted-foreground">
             {link.note}
+          </span>
+        )}
+        {/* Favorite button — shown only when feature layer provides the handler */}
+        {showFavoriteButton && onToggleFavorite && (
+          <span className="ms-auto">
+            <FavoriteButton
+              quoteId={quote.id}
+              isFavorite={quote.isFavorite ?? false}
+              isPending={isFavoritePending}
+              label={tFav('add')}
+              labelRemove={tFav('remove')}
+              onToggle={onToggleFavorite}
+            />
           </span>
         )}
       </header>
@@ -167,7 +193,10 @@ export function QuoteCard({
 
   if (detailHref) {
     return (
-      <Link href={detailHref} className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-lg">
+      <Link
+        href={detailHref}
+        className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-lg"
+      >
         {cardContent}
       </Link>
     );
