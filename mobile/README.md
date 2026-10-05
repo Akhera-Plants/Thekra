@@ -1,39 +1,36 @@
-# Thekra Mobile — planned, not yet scaffolded
+# Thekra Mobile (Expo)
 
-This folder is a **placeholder reserved for a later phase**. There is deliberately no code, no
-`package.json`, and no `node_modules` here yet: in phase 1 the mobile app exists only as this plan.
+React Native app consuming the same `/v1` API as the web frontend.
 
-## Planned stack
+## Stack
 
-- **React Native** with **Expo** (managed workflow) and **TypeScript**
-- **Expo Router** for navigation
-- The same data-fetching approach as the web app (React Query over an Axios client)
-- Full **RTL / Arabic-first** layout support, since the primary content is Arabic
+- Expo SDK 57 + **expo-router** (file-based navigation)
+- TanStack Query + AsyncStorage persister, axios, Zustand (auth/session)
+- i18next (`ar` default, `en`), RTL via `I18nManager`
+- Design tokens in `src/lib/tokens.ts` (Phase 8 will swap values only)
 
-The app will be scaffolded with the official Expo template when this phase begins — nothing in this folder
-should be hand-rolled before that.
+## Run
 
-## Relationship to the rest of the monorepo
+From repo root:
 
-The mobile app will **consume exactly the same backend API** as the web frontend (`backend/`, NestJS +
-Prisma + PostgreSQL). It introduces no separate database, no separate content pipeline, and no mobile-only
-business rules: sins, good deeds, quotes, translations, and favorites all come from the same endpoints. Only
-presentation and device concerns (offline caching, notifications, haptics) are mobile-specific.
+```bash
+pnpm install
+EXPO_PUBLIC_API_URL=http://localhost:3001 pnpm --filter mobile start
+```
 
-Once scaffolded, `mobile` will be added to `pnpm-workspace.yaml` so it shares the root pnpm workspace.
+Use a device/simulator with the API reachable (localhost works on iOS simulator; Android emulator may need `10.0.2.2:3001`).
 
-## Planned initial screens
+## Screens
 
-1. **Home** — the two primary entry points, phrased as moments rather than menus, plus quick access to saved
-   content.
-2. **"I'm about to sin"** — pick a sin category, then read the reminders that discourage it (Quran verses,
-   Hadith, scholarly words), ordered by relevance.
-3. **"I want a good deed"** — pick a deed, then read the content that motivates it and describes its reward.
-4. **Favorites** — quotes the user saved, available for re-reading.
-5. **Settings** — Arabic/English language toggle (with RTL switching), translation preferences, and
-   notification preferences.
+Tabs: Home · Browse · Favorites · Settings  
+Core: `sins/[slug]`, `good-deeds/[slug]`, `quotes/[id]`, `feelings/[tagSlug]`  
+Auth: `(auth)/login`, `(auth)/register`
 
-## Out of scope for now
+## Tests
 
-No authentication flow, no offline sync strategy, and no push-notification infrastructure are decided yet;
-they will be specified when this phase is actually started.
+```bash
+pnpm --filter mobile test
+pnpm --filter mobile exec tsc --noEmit
+```
+
+EAS / store submission → see `docs/build/BLOCKERS.md` (B-007).

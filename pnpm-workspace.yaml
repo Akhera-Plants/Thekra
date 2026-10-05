@@ -1,6 +1,7 @@
 packages:
   - "backend"
   - "frontend"
+  - "mobile"
 # Dependency build scripts must be explicitly allow-listed by pnpm >= 10.
 # esbuild/workerd come from the NestJS + Vitest toolchain installed by the
 # Nest CLI; @prisma/engines, prisma and @prisma/client need their install
@@ -8,6 +9,8 @@ packages:
 # unrs-resolver comes from the Next.js ESLint toolchain.
 allowBuilds:
   '@parcel/watcher': true
+  react-native-reanimated: true
+  '@react-native-async-storage/async-storage': true
   '@prisma/client': true
   '@prisma/engines': true
   '@swc/core': true

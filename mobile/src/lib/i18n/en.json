@@ -1,0 +1,142 @@
+{
+  "tabs": {
+    "home": "Home",
+    "browse": "Browse",
+    "favorites": "Favorites",
+    "settings": "Settings"
+  },
+  "home": {
+    "title": "Thekra",
+    "subtitle": "How are you feeling right now?",
+    "sinAction": "I'm tempted by a sin",
+    "sinSubtitle": "Read what helps you resist it",
+    "goodDeedAction": "I want to do a good deed",
+    "goodDeedSubtitle": "Read what motivates and rewards",
+    "continueReading": "Continue reading"
+  },
+  "sinPicker": {
+    "title": "Choose a sin",
+    "searchPlaceholder": "Search...",
+    "recentLabel": "Recently used",
+    "allLabel": "All sins",
+    "empty": "No results"
+  },
+  "reminders": {
+    "title": "Reminders",
+    "anotherReminder": "Another reminder",
+    "alternatives": "Alternative deeds",
+    "filterAll": "All",
+    "filterQuran": "Quran",
+    "filterHadith": "Hadith",
+    "filterScholar": "Scholars",
+    "filterBook": "Books",
+    "empty": "No reminders for this sin yet",
+    "shuffleSeed": "Tap to shuffle"
+  },
+  "goodDeedPicker": {
+    "title": "Choose a good deed",
+    "searchPlaceholder": "Search...",
+    "empty": "No results"
+  },
+  "motivations": {
+    "title": "Motivations",
+    "reward": "Reward",
+    "oppositeSin": "Opposite sin",
+    "empty": "No motivations yet"
+  },
+  "browse": {
+    "title": "Browse",
+    "searchPlaceholder": "Search verses and hadiths...",
+    "filterType": "Type",
+    "filterGrade": "Grade",
+    "tabAll": "All",
+    "tabQuran": "Quran",
+    "tabHadith": "Hadith",
+    "empty": "No results found"
+  },
+  "quoteDetail": {
+    "source": "Source",
+    "provenance": "Provenance",
+    "relatedSins": "Related sins",
+    "relatedGoodDeeds": "Related good deeds",
+    "share": "Share",
+    "favorite": "Save",
+    "unfavorite": "Unsave"
+  },
+  "feelings": {
+    "title": "Browse by feeling",
+    "empty": "No quotes for this feeling"
+  },
+  "favorites": {
+    "title": "Favorites",
+    "empty": "No saved quotes yet",
+    "emptyHint": "Tap the save icon on any quote to add it here",
+    "offlineBanner": "Showing saved content — no connection",
+    "signInPrompt": "Sign in to sync favorites across your devices"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "languageAr": "العربية",
+    "languageEn": "English",
+    "languageRestart": "Requires app restart to take effect",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System",
+    "translations": "Show translations",
+    "weakHadith": "Show weak hadith",
+    "account": "Account",
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "clearCache": "Clear offline cache",
+    "clearCacheConfirm": "This will delete saved content for offline use. Are you sure?",
+    "version": "Version"
+  },
+  "auth": {
+    "loginTitle": "Sign in",
+    "registerTitle": "Create account",
+    "email": "Email",
+    "password": "Password",
+    "loginButton": "Sign in",
+    "registerButton": "Create account",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "register": "Register",
+    "login": "Sign in",
+    "guestNote": "You can use the app without an account. An account is only needed to save and sync favorites."
+  },
+  "grade": {
+    "SAHIH": "Sahih",
+    "HASAN": "Hasan",
+    "DAIF": "Daif",
+    "MAWDU": "Mawdu",
+    "UNGRADED": "Quran"
+  },
+  "quoteType": {
+    "QURAN_VERSE": "Quranic verse",
+    "HADITH": "Hadith",
+    "SCHOLAR_QUOTE": "Scholar quote",
+    "BOOK_EXCERPT": "Book excerpt"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Retry",
+    "back": "Back",
+    "close": "Close",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "ok": "OK",
+    "save": "Save",
+    "delete": "Delete",
+    "search": "Search",
+    "notFound": "Page not found"
+  },
+  "errors": {
+    "network": "Could not reach the server",
+    "unauthorized": "Please sign in first",
+    "notFound": "Content not found",
+    "unknown": "An unexpected error occurred"
+  }
+}
