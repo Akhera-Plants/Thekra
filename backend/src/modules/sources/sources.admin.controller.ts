@@ -12,13 +12,14 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import type { Response } from 'express';
-import { AdminApiKeyGuard } from '../../common/guards/admin-api-key.guard.js';
+import { JwtAuthGuard, Roles, RolesGuard } from '../../common/guards/admin.guard.js';
 import { setCreated } from '../../common/http/set-created.js';
 import { CreateSourceDto } from './dto/create-source.dto.js';
 import { UpdateSourceDto } from './dto/update-source.dto.js';
 import { SourcesService } from './sources.service.js';
 
-@UseGuards(AdminApiKeyGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('ADMIN')
 @Controller('admin/sources')
 export class SourcesAdminController {
   constructor(private readonly sourcesService: SourcesService) {}

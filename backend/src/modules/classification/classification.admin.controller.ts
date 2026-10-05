@@ -14,7 +14,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import type { Response } from 'express';
-import { AdminApiKeyGuard } from '../../common/guards/admin-api-key.guard.js';
+import { JwtAuthGuard, Roles, RolesGuard } from '../../common/guards/admin.guard.js';
 import { ClassificationService } from './classification.service.js';
 import { BulkLinkGoodDeedQuotesDto } from './dto/bulk-link-good-deed-quotes.dto.js';
 import { BulkLinkSinQuotesDto } from './dto/bulk-link-sin-quotes.dto.js';
@@ -27,7 +27,8 @@ import { UpdateSinLinkDto } from './dto/update-sin-link.dto.js';
 
 // ─── Sin-Quote admin endpoints (#48–52) ───────────────────────────────────────
 
-@UseGuards(AdminApiKeyGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('ADMIN')
 @Controller('admin/sin-quotes')
 export class SinQuotesAdminController {
   constructor(private readonly classificationService: ClassificationService) {}
@@ -75,7 +76,8 @@ export class SinQuotesAdminController {
 
 // ─── GoodDeed-Quote admin endpoints (#53–57) ──────────────────────────────────
 
-@UseGuards(AdminApiKeyGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('ADMIN')
 @Controller('admin/good-deed-quotes')
 export class GoodDeedQuotesAdminController {
   constructor(private readonly classificationService: ClassificationService) {}

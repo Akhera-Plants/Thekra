@@ -12,13 +12,14 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import type { Response } from 'express';
-import { AdminApiKeyGuard } from '../../common/guards/admin-api-key.guard.js';
+import { JwtAuthGuard, Roles, RolesGuard } from '../../common/guards/admin.guard.js';
 import { setCreated } from '../../common/http/set-created.js';
 import { CreateTagDto } from './dto/create-tag.dto.js';
 import { UpdateTagDto } from './dto/update-tag.dto.js';
 import { TagsService } from './tags.service.js';
 
-@UseGuards(AdminApiKeyGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('ADMIN')
 @Controller('admin/tags')
 export class TagsAdminController {
   constructor(private readonly tagsService: TagsService) {}

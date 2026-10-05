@@ -14,7 +14,7 @@ import {
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { IsBoolean, IsOptional } from 'class-validator';
-import { AdminApiKeyGuard } from '../../common/guards/admin-api-key.guard.js';
+import { JwtAuthGuard, Roles, RolesGuard } from '../../common/guards/admin.guard.js';
 import { setCreated } from '../../common/http/set-created.js';
 import { ToBoolean } from '../../common/decorators/to-boolean.decorator.js';
 import { CreateSinDto } from './dto/create-sin.dto.js';
@@ -28,7 +28,8 @@ class DeleteSinQueryDto {
   force?: boolean;
 }
 
-@UseGuards(AdminApiKeyGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('ADMIN')
 @Controller('admin/sins')
 export class SinsAdminController {
   constructor(private readonly sinsService: SinsService) {}

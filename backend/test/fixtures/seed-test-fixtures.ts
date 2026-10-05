@@ -29,7 +29,8 @@
  *   });
  */
 
-import { HadithGrade, PrismaClient, QuoteType } from '@prisma/client';
+import { HadithGrade, PrismaClient, QuoteType, UserRole } from '@prisma/client';
+import { hash as argon2hash, argon2id } from 'argon2';
 
 // ── Exported fixed IDs for test-only rows ────────────────────────────────────
 // Prefix 0000…f_ differentiates test rows from the dev seed (0000…00N).
@@ -47,6 +48,12 @@ export const DEED_TEST_1 = 'b0000000-0000-4000-8000-0000000000f1';
 export const DEED_TEST_2 = 'b0000000-0000-4000-8000-0000000000f2';
 export const DEED_TEST_3 = 'b0000000-0000-4000-8000-0000000000f3';
 export const DEED_TEST_4 = 'b0000000-0000-4000-8000-0000000000f4';
+
+/** Fixed-ID test users (separate from dev-seed to avoid clashes) */
+export const TEST_USER_ID  = 'd0000000-0000-4000-8000-0000000000f1';
+export const TEST_ADMIN_ID = 'd0000000-0000-4000-8000-0000000000f2';
+/** Dev password used for both test users (satisfies RegisterDto ≥10 chars) */
+export const TEST_PASSWORD = 'password123456';
 
 // Fixed IDs from dev seed used for FK references (not re-exported — already in seed.ts)
 const SRC_BUKHARI = '10000000-0000-4000-8000-000000000002';
@@ -167,6 +174,37 @@ export async function seedTestFixtures(): Promise<void> {
         where: { slug: deed.slug },
         create: { ...deed, oppositeSinId: SIN_TEST_MANY },
         update: { oppositeSinId: SIN_TEST_MANY },
+      });
+    }
+
+    // 6. Seed test users with hashed passwords for auth e2e tests.
+    const passwordHash = await argon2hash(TEST_PASSWORD, {
+      type: argon2id,
+      memoryCost: 19456,
+      timeCost: 2,
+      parallelism: 1,
+    });
+    const testUsers = [
+      {
+        id: TEST_USER_ID,
+        email: 'e2e-user@thekra.test',
+        displayName: 'E2E Test User',
+        passwordHash,
+        role: UserRole.USER,
+      },
+      {
+        id: TEST_ADMIN_ID,
+        email: 'e2e-admin@thekra.test',
+        displayName: 'E2E Test Admin',
+        passwordHash,
+        role: UserRole.ADMIN,
+      },
+    ];
+    for (const user of testUsers) {
+      await prisma.user.upsert({
+        where: { email: user.email },
+        create: user,
+        update: { passwordHash, role: user.role },
       });
     }
   } finally {

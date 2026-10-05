@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AuthModule } from '../auth/auth.module.js';
 import {
   GoodDeedQuotesAdminController,
   SinQuotesAdminController,
@@ -6,6 +7,7 @@ import {
 import { ClassificationService } from './classification.service.js';
 
 @Module({
+  imports: [AuthModule],
   controllers: [SinQuotesAdminController, GoodDeedQuotesAdminController],
   providers: [ClassificationService],
   exports: [ClassificationService],

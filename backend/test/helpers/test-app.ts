@@ -5,28 +5,11 @@
 
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import request from 'supertest';
 import type { App } from 'supertest/types.js';
 import { AppModule } from '../../src/app.module.js';
 import { configureApp } from '../../src/config/configure-app.js';
 import { PrismaService } from '../../src/prisma/prisma.service.js';
-
-/**
- * D-1: Returns headers required to authenticate admin requests in e2e tests.
- *
- * When ADMIN_API_KEY is set in the test environment (.env.test sets it to
- * `test-admin-key`), every request to /admin/* must include this header.
- * Passing these headers to supertest's `.set()` satisfies the AdminApiKeyGuard.
- *
- * Usage:
- *   request(app.getHttpServer())
- *     .post('/v1/admin/sins')
- *     .set(adminHeaders())
- *     .send({ ... })
- */
-export function adminHeaders(): Record<string, string> {
-  const key = process.env['ADMIN_API_KEY'];
-  return key ? { 'x-admin-key': key } : {};
-}
 
 export interface TestApp {
   app: INestApplication<App>;
@@ -56,4 +39,48 @@ export async function createTestApp(): Promise<TestApp> {
  */
 export async function closeTestApp(app: INestApplication): Promise<void> {
   await app.close();
+}
+
+/**
+ * Phase 4: Logs in as the given user and returns a Bearer token header.
+ *
+ * Usage:
+ *   const headers = await authHeaders(app, 'e2e-admin@thekra.test', 'password123456');
+ *   request(app.getHttpServer()).post('/v1/admin/sins').set(headers).send({ ... })
+ */
+export async function authHeaders(
+  app: INestApplication,
+  email: string,
+  password: string,
+): Promise<Record<string, string>> {
+  const res = await request(app.getHttpServer())
+    .post('/v1/auth/login')
+    .send({ email, password })
+    .expect(200);
+  const token: string = res.body.data.accessToken;
+  return { Authorization: `Bearer ${token}` };
+}
+
+/**
+ * Phase 4: Returns admin Bearer token headers for e2e tests.
+ * Admin is seeded by seedTestFixtures as 'e2e-admin@thekra.test' / TEST_PASSWORD.
+ */
+export async function adminAuthHeaders(app: INestApplication): Promise<Record<string, string>> {
+  return authHeaders(app, 'e2e-admin@thekra.test', 'password123456');
+}
+
+/**
+ * Phase 4: Returns regular user Bearer token headers for e2e tests.
+ */
+export async function userAuthHeaders(app: INestApplication): Promise<Record<string, string>> {
+  return authHeaders(app, 'e2e-user@thekra.test', 'password123456');
+}
+
+/**
+ * D-1 legacy helper (kept for reference; now returns empty object since
+ * AdminApiKeyGuard is no longer on admin routes).
+ * @deprecated Use adminAuthHeaders() instead.
+ */
+export function adminHeaders(): Record<string, string> {
+  return {};
 }

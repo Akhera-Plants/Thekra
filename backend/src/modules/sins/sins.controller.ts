@@ -1,5 +1,8 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { LocaleQueryDto } from '../../common/dto/locale-query.dto.js';
+import { CurrentUser, type JwtPayload } from '../../common/decorators/current-user.decorator.js';
+import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard.js';
+import { FavoritesService } from '../favorites/favorites.service.js';
 import { SinGoodDeedsQueryDto } from './dto/sin-good-deeds-query.dto.js';
 import { SinQuotesQueryDto } from './dto/sin-quotes-query.dto.js';
 import { SinsQueryDto } from './dto/sins-query.dto.js';
@@ -7,7 +10,10 @@ import { SinsService } from './sins.service.js';
 
 @Controller('sins')
 export class SinsController {
-  constructor(private readonly sinsService: SinsService) {}
+  constructor(
+    private readonly sinsService: SinsService,
+    private readonly favoritesService: FavoritesService,
+  ) {}
 
   @Get()
   findAll(@Query() query: SinsQueryDto) {
@@ -22,9 +28,26 @@ export class SinsController {
     return this.sinsService.findBySlug(slug, query.lang ?? 'ar');
   }
 
+  /** #3 GET /sins/:slug/quotes — optional auth for isFavorite enrichment */
   @Get(':slug/quotes')
-  findQuotes(@Param('slug') slug: string, @Query() query: SinQuotesQueryDto) {
-    return this.sinsService.findQuotesForSin(slug, query);
+  @UseGuards(OptionalJwtAuthGuard)
+  async findQuotes(
+    @Param('slug') slug: string,
+    @Query() query: SinQuotesQueryDto,
+    @CurrentUser() user: JwtPayload | undefined,
+  ) {
+    const result = await this.sinsService.findQuotesForSin(slug, query);
+    if (!user) return result;
+
+    // Enrich items with isFavorite when a token is present.
+    const favoriteIds = await this.favoritesService.listQuoteIds(user.sub);
+    const idSet = new Set(favoriteIds);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const items = (result.data.items as any[]).map((item: { link: unknown; quote: { id: string } }) => ({
+      ...item,
+      quote: { ...item.quote, isFavorite: idSet.has(item.quote.id) },
+    }));
+    return { ...result, data: { ...result.data, items } };
   }
 
   @Get(':slug/good-deeds')

@@ -49,6 +49,11 @@ enum SyncStatus {
   FAILED
 }
 
+enum UserRole {
+  USER
+  ADMIN
+}
+
 model Source {
   id            String     @id @default(uuid())
   name          String
@@ -234,12 +239,18 @@ model SyncLog {
 }
 
 model User {
-  id          String     @id @default(uuid())
-  email       String     @unique
-  displayName String?
-  favorites   Favorite[]
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id           String     @id @default(uuid())
+  email        String     @unique
+  displayName  String?
+  /// Phase 4: nullable so existing/OAuth-only users remain valid
+  passwordHash String?
+  /// Phase 4: required by RolesGuard; defaults USER
+  role         UserRole   @default(USER)
+  /// Phase 4: optional, useful for support dashboards
+  lastLoginAt  DateTime?
+  favorites    Favorite[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 }
 
 model Favorite {

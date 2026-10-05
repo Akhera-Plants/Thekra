@@ -22,7 +22,9 @@ import {
   HadithGrade,
   TagCategory,
   SyncStatus,
+  UserRole,
 } from '@prisma/client';
+import { hash as argon2hash, argon2id } from 'argon2';
 import { fileURLToPath } from 'url';
 
 // ── Safety guard ─────────────────────────────────────────────────────────────
@@ -1023,13 +1025,34 @@ export async function seedLinks(): Promise<void> {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // seedUsers — 2 rows
-// Schema does not yet have passwordHash/role — seeded without credentials.
-// Guards: NODE_ENV check above ensures these are never in a production database.
+// Phase 4: passwordHash added via add_auth_fields migration.
+// Dev password for both users: password123456  (10+ chars, satisfies RegisterDto)
+// argon2id OWASP baseline — same params as AuthService.
 // ─────────────────────────────────────────────────────────────────────────────
 export async function seedUsers(): Promise<void> {
+  const DEV_PASSWORD = 'password123456';
+  const passwordHash = await argon2hash(DEV_PASSWORD, {
+    type: argon2id,
+    memoryCost: 19456,
+    timeCost: 2,
+    parallelism: 1,
+  });
+
   const users = [
-    { id: U_USER,  email: 'user@thekra.local',  displayName: 'Thekra User' },
-    { id: U_ADMIN, email: 'admin@thekra.local', displayName: 'Thekra Admin' },
+    {
+      id: U_USER,
+      email: 'user@thekra.local',
+      displayName: 'Thekra User',
+      passwordHash,
+      role: UserRole.USER,
+    },
+    {
+      id: U_ADMIN,
+      email: 'admin@thekra.local',
+      displayName: 'Thekra Admin',
+      passwordHash,
+      role: UserRole.ADMIN,
+    },
   ];
 
   for (const user of users) {
@@ -1037,10 +1060,12 @@ export async function seedUsers(): Promise<void> {
     await prisma.user.upsert({
       where: { email: user.email },
       create: { id, ...fields },
-      update: fields,
+      update: { passwordHash: fields.passwordHash, role: fields.role },
     });
   }
-  console.log(`users: ${users.length} upserted (no passwordHash/role — schema not yet extended)`);
+  console.log(
+    `users: ${users.length} upserted (dev password: ${DEV_PASSWORD}, roles: USER + ADMIN)`,
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -16,7 +16,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import type { Response } from 'express';
-import { AdminApiKeyGuard } from '../../common/guards/admin-api-key.guard.js';
+import { JwtAuthGuard, Roles, RolesGuard } from '../../common/guards/admin.guard.js';
 import { setCreated } from '../../common/http/set-created.js';
 import { LanguageCodePipe } from '../../common/pipes/language-code.pipe.js';
 import { AdminQuotesQueryDto } from './dto/admin-quotes-query.dto.js';
@@ -40,7 +40,8 @@ function mapTranslation(t: { id: string; languageCode: string; text: string }) {
   return { id: t.id, languageCode: t.languageCode, text: t.text };
 }
 
-@UseGuards(AdminApiKeyGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('ADMIN')
 @Controller('admin/quotes')
 export class QuotesAdminController {
   constructor(private readonly quotesService: QuotesService) {}

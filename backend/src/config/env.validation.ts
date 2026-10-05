@@ -9,6 +9,7 @@ import {
   validateSync,
 } from 'class-validator';
 
+
 export class EnvironmentVariables {
   @IsString()
   DATABASE_URL!: string;
@@ -52,15 +53,48 @@ export class EnvironmentVariables {
   QURAN_PREFERRED_PROVIDER?: string;
 
   /**
-   * D-1: Stop-gap admin API key until Phase 4 RolesGuard lands.
-   * When set, every /admin/* request must include the header `x-admin-key: <value>`.
-   * When unset and NODE_ENV=production, all /admin/* routes return 403.
-   * When unset and not production, /admin/* is open (local dev only).
-   * Remove this env var in Phase 4.
+   * D-1: Stop-gap admin API key — kept for backwards compatibility during Phase 4
+   * migration.  AdminApiKeyGuard is no longer on admin routes; this var is unused
+   * by the app itself but kept in validation so existing .env files don't break.
+   * Remove in a follow-up cleanup commit.
    */
   @IsOptional()
   @IsString()
   ADMIN_API_KEY?: string;
+
+  // ── Phase 4: JWT auth ───────────────────────────────────────────────────
+
+  /**
+   * Secret used to sign access tokens.  Required in production.
+   * In development/test a sensible default is supplied.
+   */
+  @IsOptional()
+  @IsString()
+  JWT_ACCESS_SECRET?: string = 'thekra-access-secret-change-in-production';
+
+  /**
+   * Secret used to sign refresh tokens (separate from access so a refresh token
+   * cannot be replayed as an access token).  Required in production.
+   */
+  @IsOptional()
+  @IsString()
+  JWT_REFRESH_SECRET?: string = 'thekra-refresh-secret-change-in-production';
+
+  /**
+   * Access token lifetime as a vercel/ms string (e.g. '15m', '1h').
+   * Default: 15 minutes.
+   */
+  @IsOptional()
+  @IsString()
+  ACCESS_TTL?: string = '15m';
+
+  /**
+   * Refresh token lifetime as a vercel/ms string (e.g. '30d').
+   * Default: 30 days.
+   */
+  @IsOptional()
+  @IsString()
+  REFRESH_TTL?: string = '30d';
 }
 
 export function validateEnv(config: Record<string, unknown>): EnvironmentVariables {
@@ -74,5 +108,20 @@ export function validateEnv(config: Record<string, unknown>): EnvironmentVariabl
       .join('; ');
     throw new Error(`Invalid environment: ${messages}`);
   }
+
+  // Phase 4: JWT secrets must be non-default in production
+  if (validated.NODE_ENV === 'production') {
+    const defaultAccess = 'thekra-access-secret-change-in-production';
+    const defaultRefresh = 'thekra-refresh-secret-change-in-production';
+    if (
+      validated.JWT_ACCESS_SECRET === defaultAccess ||
+      validated.JWT_REFRESH_SECRET === defaultRefresh
+    ) {
+      throw new Error(
+        'Invalid environment: JWT_ACCESS_SECRET and JWT_REFRESH_SECRET must be set to non-default values in production.',
+      );
+    }
+  }
+
   return validated;
 }

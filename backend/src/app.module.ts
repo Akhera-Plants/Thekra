@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LoggerModule } from 'nestjs-pino';
+import { ThrottlerModule } from '@nestjs/throttler';
 import type { IncomingMessage } from 'node:http';
 import { validateEnv } from './config/env.validation.js';
 import { HealthModule } from './health/health.module.js';
@@ -12,6 +13,9 @@ import { QuotesModule } from './modules/quotes/quotes.module.js';
 import { SinsModule } from './modules/sins/sins.module.js';
 import { SourcesModule } from './modules/sources/sources.module.js';
 import { TagsModule } from './modules/tags/tags.module.js';
+import { AuthModule } from './modules/auth/auth.module.js';
+import { UsersModule } from './modules/users/users.module.js';
+import { FavoritesModule } from './modules/favorites/favorites.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 
 /**
@@ -29,6 +33,11 @@ const REQUEST_ID_RE = /^[A-Za-z0-9._-]{1,128}$/;
       cache: true,
       validate: validateEnv,
     }),
+    // Phase 4: throttle auth routes at 10 req/min; global default 120 req/min.
+    // Controller-level @Throttle() overrides the default on /auth/* routes.
+    ThrottlerModule.forRoot([
+      { name: 'default', ttl: 60000, limit: 120 },
+    ]),
     // P2-11: forRootAsync so all logger config comes from the validated
     // ConfigService instead of process.env.  pino-pretty is loaded ONLY in
     // development mode so the devDependency can never be reached in production.
@@ -66,13 +75,18 @@ const REQUEST_ID_RE = /^[A-Za-z0-9._-]{1,128}$/;
     }),
     PrismaModule,
     HealthModule,
-    HadithModule,
-    QuranModule,
+    // Phase 4 modules (§1.12 import order)
+    AuthModule,
+    UsersModule,
+    FavoritesModule,
+    // Core content modules
     QuotesModule,
     SourcesModule,
     TagsModule,
     GoodDeedsModule,
     SinsModule,
+    HadithModule,
+    QuranModule,
     ClassificationModule,
   ],
 })
