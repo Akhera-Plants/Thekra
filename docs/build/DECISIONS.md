@@ -27,3 +27,11 @@ Decisions made without stopping for the owner. Format: context → options → c
 - **Choice:** (b).
 - **Why:** Prompt forbids inventing brand palette/fonts.
 - **Plan:** AUTONOMOUS_BUILD_PROMPT §2.8, Phase 8.
+
+
+## D-BUILD-004 — Phase 3 FE implementation choices
+
+- **proxy.ts** is the next-intl edge entry (no middleware.ts).
+- Browse `force-dynamic` page omits `setRequestLocale` (Turbopack client mis-classify).
+- Vitest node env + enum smoke only (vite version split blocks @vitejs/plugin-react for now).
+- Cross-slice `session-intent.store` shared by sin and good-deed pickers.

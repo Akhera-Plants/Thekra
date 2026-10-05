@@ -16,9 +16,9 @@
 
 ## DevOps (no accounts)
 
-- [ ] `.github/workflows/ci.yml` (lint, typecheck, prisma+drift, unit, e2e+Postgres, build)
-- [ ] `backend/Dockerfile`
-- [ ] Root scripts as needed
+- [x] `.github/workflows/ci.yml` (lint, typecheck, prisma+drift, unit, e2e+Postgres, build) — `a0dab98`
+- [x] `backend/Dockerfile` — `a0dab98`
+- [x] Root scripts as needed — `a0dab98`
 - [ ] Staging / remotes — **blocked** (see BLOCKERS)
 
 ## Phase 3 — Frontend MVP (§10 steps)
@@ -27,14 +27,14 @@
 - [x] Step 2 — shadcn + tokenized `globals.css` *(pre-existing)*
 - [x] Step 3 — next-themes + ThemeToggle *(pre-existing)*
 - [x] Step 4 — next-intl `[locale]` *(pre-existing)*
-- [ ] Step 5 — AppShell, SiteHeader, LocaleSwitcher, Empty/Error/ArabicText
-- [ ] Step 6 — QuoteCard, skeleton, GradeBadge, SourceAttribution
-- [ ] Step 7 — sin-reminder + `/sins`, `/sins/[slug]`
-- [ ] Step 8 — good-deed-motivation mirror + RewardCallout
-- [ ] Step 9 — `/` home wired to both pickers
-- [ ] Step 10 — browse + quran surah + quote detail
-- [ ] Step 11 — `/feelings/[tagSlug]`
-- [ ] Phase 3 done-when evidence recorded below
+- [x] Step 5 — AppShell, SiteHeader, LocaleSwitcher, Empty/Error/ArabicText
+- [x] Step 6 — QuoteCard, skeleton, GradeBadge, SourceAttribution
+- [x] Step 7 — sin-reminder + `/sins`, `/sins/[slug]`
+- [x] Step 8 — good-deed-motivation mirror + RewardCallout
+- [x] Step 9 — `/` home wired to both pickers
+- [x] Step 10 — browse + quran surah + quote detail
+- [x] Step 11 — `/feelings/[tagSlug]`
+- [x] Phase 3 done-when evidence recorded below
 
 ## Phase 4 — Auth + Favorites
 
@@ -72,3 +72,11 @@
 ## Done-when evidence
 
 _(Append actual command output under each phase as it completes.)_
+
+### Phase 3
+- `pnpm --filter frontend lint` → exit 0
+- `pnpm --filter frontend exec tsc --noEmit` → clean
+- `NEXT_PUBLIC_API_URL=http://localhost:3001 pnpm --filter frontend build` → 10 app routes
+- `pnpm --filter frontend test` → 4 passed
+- Commit: (see feat(frontend) Phase 3 MVP)
+
