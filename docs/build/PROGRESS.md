@@ -63,14 +63,16 @@
 - [x] EAS repo prep (`eas.json`, `mobile-release.yml`, `RELEASE.md`) — owner accounts still B-01
 - [x] expo-updates install + `app.config.ts` — channels after B-01 (B-02)
 - [x] Close false B-03 (body refresh proven + mobile unit tests)
+- [x] Bundle Noto Naskh Arabic (OFL) via expo-font + `FontFamily.arabic` (B-04)
 - [ ] EAS / store credentials — **blocked** (B-01 owner accounts)
-- [ ] Arabic font B-04 — pending
+- [ ] Phase 8: replace placeholder Noto Naskh Arabic with the final brand font
 
 ## Phase 8 — a11y + i18n polish
 
 - [x] ar/en key parity CI (`scripts/check-i18n-keys.mjs`, design-tokens, rtl-lint jobs)
 - [x] Final report — [FINAL_REPORT.md](./FINAL_REPORT.md)
 - [x] Real palette/fonts — **blocked** (B-008); neutral tokens kept
+- [ ] Replace placeholder Noto Naskh Arabic with the final brand font (after owner design handoff)
 
 ---
 

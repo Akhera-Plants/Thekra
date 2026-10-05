@@ -46,10 +46,6 @@ See `mobile/RELEASE.md` §4.
 
 ---
 
-## B-04 · Arabic font bundle — *(closing — Phase 7 scope)*
-
-Placeholder Noto Naskh Arabic (OFL) landing in Phase 7; Phase 8 only swaps the brand font.
-
----
+*Closed in this pass: B-03 (false blocker), B-04 (Noto Naskh Arabic placeholder bundled).*
 
 *Last updated: owner BLOCKERS_RESPONSE — October 2026.*

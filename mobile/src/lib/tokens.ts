@@ -88,6 +88,14 @@ export const Spacing = {
 
 // ── Typography ────────────────────────────────────────────────────────────────
 
+/**
+ * PHASE 8 SWAP POINT — change only this string to the final brand Arabic face.
+ * Loaded via expo-font in app/_layout.tsx from assets/fonts/.
+ */
+export const FontFamily = {
+  arabic: 'NotoNaskhArabic',
+} as const;
+
 export const FontSize = {
   xs: 11,
   sm: 13,

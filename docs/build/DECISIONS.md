@@ -46,3 +46,12 @@ Decisions made without stopping for the owner. Format: context → options → c
   are observably unique within the same second.
 - **Plan:** BLOCKERS_RESPONSE B-03; backend-plan §7.1 transport.
 
+## D-BUILD-006 — Arabic font placeholder (B-04)
+
+- **Context:** Owner clarified Phase 7 needs a bundled Arabic face; Phase 8 only swaps the final brand font.
+- **Choice:** Bundle **Noto Naskh Arabic** Regular (SIL OFL 1.1) under `mobile/assets/fonts/`, load via
+  `expo-font` before splash hide, expose as `FontFamily.arabic` in `tokens.ts` (one-line Phase 8 swap).
+- **Web:** Frontend already uses `Noto_Naskh_Arabic` via `next/font/google` in `[locale]/layout.tsx` — no change.
+- **Plan:** BLOCKERS_RESPONSE B-04; mobile-plan Phase 7.
+
+

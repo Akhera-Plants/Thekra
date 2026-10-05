@@ -1,5 +1,5 @@
 /**
- * Root layout — providers: QueryClient + persister, i18n, RTL bootstrap.
+ * Root layout — providers: QueryClient + persister, i18n, RTL bootstrap, Arabic font.
  * This is the first file expo-router mounts.
  */
 
@@ -7,12 +7,13 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, View } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { QueryClientProvider } from '@tanstack/react-query';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import { onlineManager } from '@tanstack/react-query';
 import { I18nextProvider } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
-import { onlineManager } from '@tanstack/react-query';
 
 import {
   createQueryClient,
@@ -24,12 +25,14 @@ import { initI18n, detectDeviceLocale, applyRtlIfNeeded, type SupportedLocale } 
 import i18n from '@/lib/i18n';
 import { setApiLocale } from '@/lib/api-client';
 import { useAuthStore } from '@/lib/stores/auth-store';
-import { Colors } from '@/lib/tokens';
+import { Colors, FontFamily } from '@/lib/tokens';
+
+// Keep splash visible until fonts + bootstrap finish.
+void SplashScreen.preventAutoHideAsync();
 
 const LOCALE_STORAGE_KEY = 'thekra_locale';
 const queryClient = createQueryClient();
 
-// Wire NetInfo into TanStack Query's online manager
 onlineManager.setEventListener((setOnline) => {
   const unsub = NetInfo.addEventListener((state) => {
     setOnline(state.isConnected ?? true);
@@ -41,9 +44,14 @@ export default function RootLayout() {
   const [ready, setReady] = useState(false);
   const rehydrate = useAuthStore((s) => s.rehydrate);
 
+  const [fontsLoaded, fontError] = useFonts({
+    [FontFamily.arabic]: require('../assets/fonts/NotoNaskhArabic-Regular.ttf'),
+  });
+
   useEffect(() => {
+    if (!fontsLoaded && !fontError) return;
+
     async function bootstrap() {
-      // 1. Restore saved locale (or detect from device)
       let locale: SupportedLocale;
       try {
         const stored = await AsyncStorage.getItem(LOCALE_STORAGE_KEY);
@@ -52,13 +60,10 @@ export default function RootLayout() {
         locale = detectDeviceLocale();
       }
 
-      // 2. Init i18n with the resolved locale
       initI18n(locale);
 
-      // 3. Apply RTL direction
       const directionChanged = applyRtlIfNeeded(locale);
       if (directionChanged) {
-        // Direction changed — prompt for restart
         Alert.alert(
           locale === 'ar' ? 'يتطلب إعادة التشغيل' : 'Restart required',
           locale === 'ar'
@@ -67,21 +72,25 @@ export default function RootLayout() {
         );
       }
 
-      // 4. Sync locale with API client
       setApiLocale(locale === 'ar' ? 'ar' : 'en');
-
-      // 5. Rehydrate auth session (reads refresh token from SecureStore)
       await rehydrate();
-
       setReady(true);
+      await SplashScreen.hideAsync();
     }
 
     void bootstrap();
-  }, [rehydrate]);
+  }, [fontsLoaded, fontError, rehydrate]);
 
   if (!ready) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.background }}>
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: Colors.background,
+        }}
+      >
         <ActivityIndicator color={Colors.primary} />
       </View>
     );

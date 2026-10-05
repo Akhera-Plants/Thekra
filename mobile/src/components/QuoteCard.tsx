@@ -21,7 +21,7 @@ import {
   useColorScheme,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Colors, FontSize, LineHeight, Radius, Shadow, Spacing } from '@/lib/tokens';
+import { Colors, FontFamily, FontSize, LineHeight, Radius, Shadow, Spacing } from '@/lib/tokens';
 import { GradeBadge } from './GradeBadge';
 import { QuoteType } from '@/lib/types/enums';
 import type { QuoteDto } from '@/lib/types/api';
@@ -152,6 +152,7 @@ const styles = StyleSheet.create({
   },
 
   arabicText: {
+    fontFamily: FontFamily.arabic,
     fontSize: FontSize.xl,
     lineHeight: FontSize.xl * LineHeight.arabic,
     color: Colors.text,
