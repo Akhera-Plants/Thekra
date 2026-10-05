@@ -8,6 +8,12 @@ import type {
   SurahAyahsQuery,
   TagsQuery,
 } from '@/lib/types/api';
+import type {
+  AdminQuotesQuery,
+  SinQuotesAdminQuery,
+  GoodDeedQuotesAdminQuery,
+  SyncLogsQuery,
+} from '@/lib/types/admin';
 
 export const queryKeys = {
   sins: {
@@ -50,4 +56,36 @@ export const queryKeys = {
     list: (p: SourcesQuery) => ['sources', 'list', p] as const,
   },
   session: ['session'] as const,
+  // ── Admin (Phase 6) ───────────────────────────────────────────────────────
+  adminQuotes: {
+    all: ['admin', 'quotes'] as const,
+    list: (p: AdminQuotesQuery) => ['admin', 'quotes', 'list', p] as const,
+    detail: (id: string) => ['admin', 'quotes', id] as const,
+  },
+  adminSins: {
+    all: ['admin', 'sins'] as const,
+  },
+  adminGoodDeeds: {
+    all: ['admin', 'good-deeds'] as const,
+  },
+  adminSources: {
+    all: ['admin', 'sources'] as const,
+  },
+  adminTags: {
+    all: ['admin', 'tags'] as const,
+  },
+  adminSinQuotes: {
+    all: ['admin', 'sin-quotes'] as const,
+    list: (p: SinQuotesAdminQuery) => ['admin', 'sin-quotes', 'list', p] as const,
+  },
+  adminGoodDeedQuotes: {
+    all: ['admin', 'good-deed-quotes'] as const,
+    list: (p: GoodDeedQuotesAdminQuery) => ['admin', 'good-deed-quotes', 'list', p] as const,
+  },
+  adminSyncLogs: {
+    all: ['admin', 'sync-logs'] as const,
+    list: (p: SyncLogsQuery) => ['admin', 'sync-logs', 'list', p] as const,
+    detail: (id: string) => ['admin', 'sync-logs', id] as const,
+  },
+  adminStats: ['admin', 'stats'] as const,
 } as const;
