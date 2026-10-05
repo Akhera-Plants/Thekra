@@ -28,12 +28,21 @@ and CI EAS builds wait on the accounts above.
 
 ---
 
-## B-02 · expo-updates OTA channels — only EAS channel creation left (after B-01)
+## B-02 · expo-updates — only `eas update:configure` + channel creation left (after B-01)
 
-**Scope:** `eas update:configure` + create channels on the EAS project.
+**Scope:** Create EAS Update channels on the Expo project.
 
-**Repo status:** see next commit (install + `runtimeVersion` + env-driven `updates.url`).
-Until that lands, treat code wiring as in progress; channel creation still needs B-01.
+**Repo status (done):**
+- `expo-updates` installed (SDK-aligned).
+- `mobile/app.config.ts` — `runtimeVersion.policy = appVersion`; `updates.url` only when
+  `EAS_PROJECT_ID` is set (disabled otherwise so Expo Go / dev builds still run).
+- Channels named in `eas.json` (`development`, `staging`, `production`).
+
+**Owner still needs to (after B-01):**
+1. `eas update:configure`
+2. Ensure channels exist (`eas channel:create …` if not auto-created by first build)
+
+See `mobile/RELEASE.md` §4.
 
 ---
 
