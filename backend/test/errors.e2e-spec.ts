@@ -12,7 +12,7 @@ import type { App } from 'supertest/types.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
 import { seedTestFixtures } from './fixtures/seed-test-fixtures.js';
 import { truncateAll } from './helpers/reset-db.js';
-import { closeTestApp, createTestApp } from './helpers/test-app.js';
+import { adminHeaders, closeTestApp, createTestApp } from './helpers/test-app.js';
 
 describe('Error envelope & HTTP contract (e2e)', () => {
   let app: INestApplication<App>;
@@ -56,6 +56,7 @@ describe('Error envelope & HTTP contract (e2e)', () => {
   it('validation error → details array with {field, constraint, message} shape', async () => {
     const res = await request(app.getHttpServer())
       .post('/v1/admin/sin-quotes')
+      .set(adminHeaders())
       .send({ sinId: 'not-a-uuid', quoteId: 'not-a-uuid', relevanceScore: 101 })
       .expect(400);
 
@@ -108,6 +109,7 @@ describe('Error envelope & HTTP contract (e2e)', () => {
 
     const res = await request(app.getHttpServer())
       .post('/v1/admin/sin-quotes')
+      .set(adminHeaders())
       .set('Content-Type', 'application/json')
       .send(largeBody)
       .expect(413);
@@ -144,6 +146,7 @@ describe('Error envelope & HTTP contract (e2e)', () => {
 
     const res = await request(app.getHttpServer())
       .patch(`/v1/admin/sins/${sinId}`)
+      .set(adminHeaders())
       .send({ severity: '5' }) // string instead of number
       .expect(400);
 
@@ -153,6 +156,7 @@ describe('Error envelope & HTTP contract (e2e)', () => {
   it('POST /v1/admin/sin-quotes with {"relevanceScore":"50"} (string) → 400', async () => {
     const res = await request(app.getHttpServer())
       .post('/v1/admin/sin-quotes')
+      .set(adminHeaders())
       .send({
         sinId: '00000000-0000-4000-8000-000000000001',
         quoteId: '00000000-0000-4000-8000-000000000001',

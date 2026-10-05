@@ -50,6 +50,17 @@ export class EnvironmentVariables {
   @IsOptional()
   @IsString()
   QURAN_PREFERRED_PROVIDER?: string;
+
+  /**
+   * D-1: Stop-gap admin API key until Phase 4 RolesGuard lands.
+   * When set, every /admin/* request must include the header `x-admin-key: <value>`.
+   * When unset and NODE_ENV=production, all /admin/* routes return 403.
+   * When unset and not production, /admin/* is open (local dev only).
+   * Remove this env var in Phase 4.
+   */
+  @IsOptional()
+  @IsString()
+  ADMIN_API_KEY?: string;
 }
 
 export function validateEnv(config: Record<string, unknown>): EnvironmentVariables {

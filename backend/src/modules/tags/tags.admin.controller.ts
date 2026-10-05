@@ -9,12 +9,15 @@ import {
   Patch,
   Post,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import type { Response } from 'express';
+import { AdminApiKeyGuard } from '../../common/guards/admin-api-key.guard.js';
 import { CreateTagDto } from './dto/create-tag.dto.js';
 import { UpdateTagDto } from './dto/update-tag.dto.js';
 import { TagsService } from './tags.service.js';
 
+@UseGuards(AdminApiKeyGuard)
 @Controller('admin/tags')
 export class TagsAdminController {
   constructor(private readonly tagsService: TagsService) {}

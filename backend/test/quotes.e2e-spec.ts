@@ -15,7 +15,7 @@ import type { App } from 'supertest/types.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
 import { QF_MAWDU, QF_NULL_GRADE, QF_UNGRADED, seedTestFixtures } from './fixtures/seed-test-fixtures.js';
 import { truncateAll } from './helpers/reset-db.js';
-import { closeTestApp, createTestApp } from './helpers/test-app.js';
+import { adminHeaders, closeTestApp, createTestApp } from './helpers/test-app.js';
 
 // Known IDs from dev seed (see prisma/seed.ts)
 const Q01 = '00000000-0000-4000-8000-000000000001'; // QURAN_VERSE API_CACHED — has rawPayload and relatedSins
@@ -196,6 +196,7 @@ describe('Quotes endpoints (e2e)', () => {
   it('GET /v1/admin/quotes → returns MAWDU quote (admin has no grade filter)', async () => {
     const res = await request(app.getHttpServer())
       .get('/v1/admin/quotes?limit=100')
+      .set(adminHeaders())
       .expect(200);
     const ids: string[] = res.body.data.map((q: { id: string }) => q.id);
     expect(ids).toContain(QF_MAWDU);

@@ -2,6 +2,7 @@
  * E2E spec for admin CRUD endpoints — endpoints #28–#47.
  *
  * Covers smoke + acceptance tests from the review:
+ *   D-1   — AdminApiKeyGuard: no header → 403; correct header → 200; public routes unaffected
  *   P1-1  — translation PUT/POST/DELETE lifecycle; ar → 400; bad code → 400; duplicate POST → 409
  *   P1-4  — null in PATCH body → 400 VALIDATION_FAILED; oppositeSinId=null clears it; note=null clears it
  *   P2-4  — ValidQuoteShape: HADITH without grade → 400 naming the field
@@ -15,7 +16,7 @@ import type { App } from 'supertest/types.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
 import { seedTestFixtures } from './fixtures/seed-test-fixtures.js';
 import { truncateAll } from './helpers/reset-db.js';
-import { closeTestApp, createTestApp } from './helpers/test-app.js';
+import { adminHeaders, closeTestApp, createTestApp } from './helpers/test-app.js';
 
 // From dev seed
 const SRC_BUKHARI = '10000000-0000-4000-8000-000000000002';
@@ -38,6 +39,47 @@ describe('Admin content CRUD (e2e)', () => {
   });
 
   // ════════════════════════════════════════════════════════════════
+  // §0  D-1: AdminApiKeyGuard behaviour
+  // ════════════════════════════════════════════════════════════════
+
+  describe('AdminApiKeyGuard (D-1)', () => {
+    it('GET /v1/admin/quotes without x-admin-key → 403 FORBIDDEN', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/v1/admin/quotes')
+        // no .set(adminHeaders()) — deliberately missing
+        .expect(403);
+      expect(res.body.error.code).toBe('FORBIDDEN');
+    });
+
+    it('GET /v1/admin/quotes with wrong x-admin-key → 403 FORBIDDEN', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/v1/admin/quotes')
+        .set('x-admin-key', 'wrong-key')
+        .expect(403);
+      expect(res.body.error.code).toBe('FORBIDDEN');
+    });
+
+    it('GET /v1/admin/quotes with correct x-admin-key → 200', async () => {
+      await request(app.getHttpServer())
+        .get('/v1/admin/quotes')
+        .set(adminHeaders())
+        .expect(200);
+    });
+
+    it('GET /v1/sins (public route) is unaffected by the guard → 200', async () => {
+      await request(app.getHttpServer())
+        .get('/v1/sins')
+        .expect(200);
+    });
+
+    it('GET /health (public route) is unaffected by the guard → 200', async () => {
+      await request(app.getHttpServer())
+        .get('/health')
+        .expect(200);
+    });
+  });
+
+  // ════════════════════════════════════════════════════════════════
   // §1  SINS  (endpoints #36–#38)
   // ════════════════════════════════════════════════════════════════
 
@@ -47,6 +89,7 @@ describe('Admin content CRUD (e2e)', () => {
     it('POST /v1/admin/sins → 201 with Location header', async () => {
       const res = await request(app.getHttpServer())
         .post('/v1/admin/sins')
+        .set(adminHeaders())
         .send({
           name: 'Test Admin Sin',
           nameAr: 'خطيئة اختبار الإدارة',
@@ -68,6 +111,7 @@ describe('Admin content CRUD (e2e)', () => {
     it('POST /v1/admin/sins with duplicate slug → 409', async () => {
       await request(app.getHttpServer())
         .post('/v1/admin/sins')
+        .set(adminHeaders())
         .send({
           name: 'Test Admin Sin Duplicate',
           nameAr: 'خطيئة اختبار مكررة',
@@ -80,6 +124,7 @@ describe('Admin content CRUD (e2e)', () => {
     it('PATCH /v1/admin/sins/:id → 200 updates the sin', async () => {
       const res = await request(app.getHttpServer())
         .patch(`/v1/admin/sins/${createdSinId}`)
+        .set(adminHeaders())
         .send({ severity: 5 })
         .expect(200);
       expect(res.body.data.severity).toBe(5);
@@ -88,6 +133,7 @@ describe('Admin content CRUD (e2e)', () => {
     it('PATCH /v1/admin/sins/:id with null name → 400 VALIDATION_FAILED (P1-4)', async () => {
       const res = await request(app.getHttpServer())
         .patch(`/v1/admin/sins/${createdSinId}`)
+        .set(adminHeaders())
         .send({ name: null })
         .expect(400);
       expect(res.body.error.code).toBe('VALIDATION_FAILED');
@@ -96,6 +142,7 @@ describe('Admin content CRUD (e2e)', () => {
     it('PATCH /v1/admin/sins/:id with null nameAr → 400 VALIDATION_FAILED (P1-4)', async () => {
       const res = await request(app.getHttpServer())
         .patch(`/v1/admin/sins/${createdSinId}`)
+        .set(adminHeaders())
         .send({ nameAr: null })
         .expect(400);
       expect(res.body.error.code).toBe('VALIDATION_FAILED');
@@ -104,6 +151,7 @@ describe('Admin content CRUD (e2e)', () => {
     it('DELETE /v1/admin/sins/:id with no links → 204', async () => {
       await request(app.getHttpServer())
         .delete(`/v1/admin/sins/${createdSinId}`)
+        .set(adminHeaders())
         .expect(204);
     });
 
@@ -111,6 +159,7 @@ describe('Admin content CRUD (e2e)', () => {
       // ghibah has many quote links — must not delete with force=false
       const res = await request(app.getHttpServer())
         .delete(`/v1/admin/sins/${SIN_GHIBAH_ID}?force=false`)
+        .set(adminHeaders())
         .expect(409);
       expect(res.body.error.code).toBe('SIN_HAS_LINKS');
     });
@@ -128,6 +177,7 @@ describe('Admin content CRUD (e2e)', () => {
       // Create a sin to use as oppositeSinId
       const sinRes = await request(app.getHttpServer())
         .post('/v1/admin/sins')
+        .set(adminHeaders())
         .send({
           name: 'Opposite Sin For Test',
           nameAr: 'خطيئة مقابلة للاختبار',
@@ -139,6 +189,7 @@ describe('Admin content CRUD (e2e)', () => {
     it('POST /v1/admin/good-deeds → 201', async () => {
       const res = await request(app.getHttpServer())
         .post('/v1/admin/good-deeds')
+        .set(adminHeaders())
         .send({
           name: 'Test Admin Deed',
           nameAr: 'عمل صالح اختبار',
@@ -162,6 +213,7 @@ describe('Admin content CRUD (e2e)', () => {
     it('PATCH /v1/admin/good-deeds/:id with oppositeSinId=null → 200 clears it (P1-4)', async () => {
       const res = await request(app.getHttpServer())
         .patch(`/v1/admin/good-deeds/${createdDeedId}`)
+        .set(adminHeaders())
         .send({ oppositeSinId: null })
         .expect(200);
       // oppositeSin becomes null when oppositeSinId is cleared
@@ -171,6 +223,7 @@ describe('Admin content CRUD (e2e)', () => {
     it('PATCH /v1/admin/good-deeds/:id with null name → 400 (P1-4)', async () => {
       const res = await request(app.getHttpServer())
         .patch(`/v1/admin/good-deeds/${createdDeedId}`)
+        .set(adminHeaders())
         .send({ name: null })
         .expect(400);
       expect(res.body.error.code).toBe('VALIDATION_FAILED');
@@ -179,6 +232,7 @@ describe('Admin content CRUD (e2e)', () => {
     it('DELETE /v1/admin/good-deeds/:id → 204', async () => {
       await request(app.getHttpServer())
         .delete(`/v1/admin/good-deeds/${createdDeedId}`)
+        .set(adminHeaders())
         .expect(204);
     });
 
@@ -186,6 +240,7 @@ describe('Admin content CRUD (e2e)', () => {
       // Cleanup opposite sin
       await request(app.getHttpServer())
         .delete(`/v1/admin/sins/${oppositeSinId}`)
+        .set(adminHeaders())
         .catch(() => undefined);
     });
   });
@@ -200,6 +255,7 @@ describe('Admin content CRUD (e2e)', () => {
     it('POST /v1/admin/quotes → 201 for a SCHOLAR_QUOTE', async () => {
       const res = await request(app.getHttpServer())
         .post('/v1/admin/quotes')
+        .set(adminHeaders())
         .send({
           type: 'SCHOLAR_QUOTE',
           textAr: 'نص اقتباس الاختبار من العالم',
@@ -221,6 +277,7 @@ describe('Admin content CRUD (e2e)', () => {
       // Accept either 400 or 422 — the important thing is code='VALIDATION_FAILED' and request is rejected.
       const res = await request(app.getHttpServer())
         .post('/v1/admin/quotes')
+        .set(adminHeaders())
         .send({
           type: 'HADITH',
           textAr: 'نص حديث بدون درجة',
@@ -234,6 +291,7 @@ describe('Admin content CRUD (e2e)', () => {
     it('GET /v1/admin/quotes → 200 with list (no grade filter)', async () => {
       const res = await request(app.getHttpServer())
         .get('/v1/admin/quotes?limit=100')
+        .set(adminHeaders())
         .expect(200);
       expect(Array.isArray(res.body.data)).toBe(true);
       // Admin must see all quotes regardless of grade
@@ -242,6 +300,7 @@ describe('Admin content CRUD (e2e)', () => {
     it('PATCH /v1/admin/quotes/:id → 200 updates author', async () => {
       const res = await request(app.getHttpServer())
         .patch(`/v1/admin/quotes/${createdQuoteId}`)
+        .set(adminHeaders())
         .send({ author: 'Updated Author' })
         .expect(200);
       // author is nested inside the `book` sub-object in the QuoteDto shape
@@ -251,6 +310,7 @@ describe('Admin content CRUD (e2e)', () => {
     it('PATCH /v1/admin/quotes/:id with null textAr → 400 (P1-4)', async () => {
       const res = await request(app.getHttpServer())
         .patch(`/v1/admin/quotes/${createdQuoteId}`)
+        .set(adminHeaders())
         .send({ textAr: null })
         .expect(400);
       expect(res.body.error.code).toBe('VALIDATION_FAILED');
@@ -259,12 +319,14 @@ describe('Admin content CRUD (e2e)', () => {
     it('DELETE /v1/admin/quotes/:id → 204', async () => {
       await request(app.getHttpServer())
         .delete(`/v1/admin/quotes/${createdQuoteId}`)
+        .set(adminHeaders())
         .expect(204);
     });
 
     it('DELETE /v1/admin/quotes/:id again → 404', async () => {
       await request(app.getHttpServer())
         .delete(`/v1/admin/quotes/${createdQuoteId}`)
+        .set(adminHeaders())
         .expect(404);
     });
   });
@@ -277,6 +339,7 @@ describe('Admin content CRUD (e2e)', () => {
     it('PUT /v1/admin/quotes/:id/translations/:lang → creates translation (200)', async () => {
       const res = await request(app.getHttpServer())
         .put(`/v1/admin/quotes/${Q01}/translations/fr`)
+        .set(adminHeaders())
         .send({ text: 'Traduction de test en français' })
         .expect(200);
 
@@ -290,6 +353,7 @@ describe('Admin content CRUD (e2e)', () => {
     it('PUT /v1/admin/quotes/:id/translations/:lang → updates existing translation (200)', async () => {
       const res = await request(app.getHttpServer())
         .put(`/v1/admin/quotes/${Q01}/translations/fr`)
+        .set(adminHeaders())
         .send({ text: 'Traduction mise à jour' })
         .expect(200);
 
@@ -300,6 +364,7 @@ describe('Admin content CRUD (e2e)', () => {
       // Use a new language code not yet added
       const res = await request(app.getHttpServer())
         .post(`/v1/admin/quotes/${Q01}/translations`)
+        .set(adminHeaders())
         .send({ languageCode: 'de', text: 'Deutsche Testübersetzung' })
         .expect(201);
 
@@ -315,6 +380,7 @@ describe('Admin content CRUD (e2e)', () => {
       // 'de' was just created above
       await request(app.getHttpServer())
         .post(`/v1/admin/quotes/${Q01}/translations`)
+        .set(adminHeaders())
         .send({ languageCode: 'de', text: 'Duplicate translation' })
         .expect(409);
     });
@@ -322,6 +388,7 @@ describe('Admin content CRUD (e2e)', () => {
     it('PUT /v1/admin/quotes/:id/translations/ar → 400 (Arabic reserved for textAr) (P1-1)', async () => {
       await request(app.getHttpServer())
         .put(`/v1/admin/quotes/${Q01}/translations/ar`)
+        .set(adminHeaders())
         .send({ text: 'يجب أن يُرفض هذا' })
         .expect(400);
     });
@@ -329,6 +396,7 @@ describe('Admin content CRUD (e2e)', () => {
     it('PUT /v1/admin/quotes/:id/translations/EN → 400 (invalid format — must be lowercase) (P1-1)', async () => {
       await request(app.getHttpServer())
         .put(`/v1/admin/quotes/${Q01}/translations/EN`)
+        .set(adminHeaders())
         .send({ text: 'Bad language code format' })
         .expect(400);
     });
@@ -336,6 +404,7 @@ describe('Admin content CRUD (e2e)', () => {
     it('PUT /v1/admin/quotes/:id/translations/fr with no text → 400', async () => {
       await request(app.getHttpServer())
         .put(`/v1/admin/quotes/${Q01}/translations/fr`)
+        .set(adminHeaders())
         .send({})
         .expect(400);
     });
@@ -343,18 +412,21 @@ describe('Admin content CRUD (e2e)', () => {
     it('DELETE /v1/admin/quotes/:id/translations/fr → 204', async () => {
       await request(app.getHttpServer())
         .delete(`/v1/admin/quotes/${Q01}/translations/fr`)
+        .set(adminHeaders())
         .expect(204);
     });
 
     it('DELETE /v1/admin/quotes/:id/translations/fr again → 404', async () => {
       await request(app.getHttpServer())
         .delete(`/v1/admin/quotes/${Q01}/translations/fr`)
+        .set(adminHeaders())
         .expect(404);
     });
 
     it('PUT /v1/admin/quotes/unknown-uuid/translations/en → 404', async () => {
       await request(app.getHttpServer())
         .put('/v1/admin/quotes/00000000-0000-4000-8000-000000000099/translations/en')
+        .set(adminHeaders())
         .send({ text: 'some text' })
         .expect(404);
     });
@@ -370,6 +442,7 @@ describe('Admin content CRUD (e2e)', () => {
     it('POST /v1/admin/tags → 201', async () => {
       const res = await request(app.getHttpServer())
         .post('/v1/admin/tags')
+        .set(adminHeaders())
         .send({
           name: 'Test Tag',
           nameAr: 'علامة اختبار',
@@ -390,6 +463,7 @@ describe('Admin content CRUD (e2e)', () => {
     it('POST /v1/admin/tags with null name → 400 (P1-4)', async () => {
       const res = await request(app.getHttpServer())
         .post('/v1/admin/tags')
+        .set(adminHeaders())
         .send({
           name: null,
           nameAr: 'علامة اختبار',
@@ -403,6 +477,7 @@ describe('Admin content CRUD (e2e)', () => {
     it('PATCH /v1/admin/tags/:id → 200 updates the tag', async () => {
       const res = await request(app.getHttpServer())
         .patch(`/v1/admin/tags/${createdTagId}`)
+        .set(adminHeaders())
         .send({ name: 'Updated Tag Name' })
         .expect(200);
       expect(res.body.data.name).toBe('Updated Tag Name');
@@ -411,6 +486,7 @@ describe('Admin content CRUD (e2e)', () => {
     it('PATCH /v1/admin/tags/:id with null name → 400 (P1-4)', async () => {
       const res = await request(app.getHttpServer())
         .patch(`/v1/admin/tags/${createdTagId}`)
+        .set(adminHeaders())
         .send({ name: null })
         .expect(400);
       expect(res.body.error.code).toBe('VALIDATION_FAILED');
@@ -419,6 +495,7 @@ describe('Admin content CRUD (e2e)', () => {
     it('DELETE /v1/admin/tags/:id → 204', async () => {
       await request(app.getHttpServer())
         .delete(`/v1/admin/tags/${createdTagId}`)
+        .set(adminHeaders())
         .expect(204);
     });
   });
@@ -433,6 +510,7 @@ describe('Admin content CRUD (e2e)', () => {
     it('POST /v1/admin/sources → 201', async () => {
       const res = await request(app.getHttpServer())
         .post('/v1/admin/sources')
+        .set(adminHeaders())
         .send({
           name: 'Test Source',
           nameAr: 'مصدر اختبار',
@@ -453,6 +531,7 @@ describe('Admin content CRUD (e2e)', () => {
     it('POST /v1/admin/sources with null name → 400 (P1-4)', async () => {
       const res = await request(app.getHttpServer())
         .post('/v1/admin/sources')
+        .set(adminHeaders())
         .send({
           name: null,
           nameAr: 'مصدر',
@@ -465,6 +544,7 @@ describe('Admin content CRUD (e2e)', () => {
     it('PATCH /v1/admin/sources/:id → 200', async () => {
       const res = await request(app.getHttpServer())
         .patch(`/v1/admin/sources/${createdSourceId}`)
+        .set(adminHeaders())
         .send({ name: 'Updated Source Name' })
         .expect(200);
       expect(res.body.data.name).toBe('Updated Source Name');
@@ -473,6 +553,7 @@ describe('Admin content CRUD (e2e)', () => {
     it('PATCH /v1/admin/sources/:id with null name → 400 (P1-4)', async () => {
       const res = await request(app.getHttpServer())
         .patch(`/v1/admin/sources/${createdSourceId}`)
+        .set(adminHeaders())
         .send({ name: null })
         .expect(400);
       expect(res.body.error.code).toBe('VALIDATION_FAILED');
@@ -481,6 +562,7 @@ describe('Admin content CRUD (e2e)', () => {
     it('DELETE /v1/admin/sources/:id → 204', async () => {
       await request(app.getHttpServer())
         .delete(`/v1/admin/sources/${createdSourceId}`)
+        .set(adminHeaders())
         .expect(204);
     });
   });
@@ -493,6 +575,7 @@ describe('Admin content CRUD (e2e)', () => {
     it('PUT /v1/admin/quotes/:id/tags → 200 assigns tags', async () => {
       const res = await request(app.getHttpServer())
         .put(`/v1/admin/quotes/${Q01}/tags`)
+        .set(adminHeaders())
         .send({ tagIds: [TAG_ANGER_ID] })
         .expect(200);
       expect(res.body.data).toBeDefined();
@@ -501,6 +584,7 @@ describe('Admin content CRUD (e2e)', () => {
     it('PUT /v1/admin/quotes/:id/tags with duplicate tagIds → 400 (P2-5)', async () => {
       const res = await request(app.getHttpServer())
         .put(`/v1/admin/quotes/${Q01}/tags`)
+        .set(adminHeaders())
         .send({ tagIds: [TAG_ANGER_ID, TAG_ANGER_ID] })
         .expect(400);
       expect(res.body.error.code).toBe('VALIDATION_FAILED');
@@ -518,6 +602,7 @@ describe('Admin content CRUD (e2e)', () => {
       // Get the first sin-quote link id from the admin listing
       const res = await request(app.getHttpServer())
         .get('/v1/admin/sin-quotes?limit=1&sinId=' + SIN_GHIBAH_ID)
+        .set(adminHeaders())
         .expect(200);
       if (res.body.data.length > 0) {
         linkId = res.body.data[0].id as string;
@@ -528,6 +613,7 @@ describe('Admin content CRUD (e2e)', () => {
       if (!linkId) return; // skip if no link found
       const res = await request(app.getHttpServer())
         .patch(`/v1/admin/sin-quotes/${linkId}`)
+        .set(adminHeaders())
         .send({ note: null })
         .expect(200);
       expect(res.body.data.note).toBeNull();
@@ -539,7 +625,10 @@ describe('Admin content CRUD (e2e)', () => {
   // ════════════════════════════════════════════════════════════════
 
   it('GET /v1/admin/quotes never contains rawPayload', async () => {
-    const res = await request(app.getHttpServer()).get('/v1/admin/quotes').expect(200);
+    const res = await request(app.getHttpServer())
+      .get('/v1/admin/quotes')
+      .set(adminHeaders())
+      .expect(200);
     expect(JSON.stringify(res.body)).not.toContain('rawPayload');
   });
 });

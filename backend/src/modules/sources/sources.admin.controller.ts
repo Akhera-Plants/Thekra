@@ -9,12 +9,15 @@ import {
   Patch,
   Post,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import type { Response } from 'express';
+import { AdminApiKeyGuard } from '../../common/guards/admin-api-key.guard.js';
 import { CreateSourceDto } from './dto/create-source.dto.js';
 import { UpdateSourceDto } from './dto/update-source.dto.js';
 import { SourcesService } from './sources.service.js';
 
+@UseGuards(AdminApiKeyGuard)
 @Controller('admin/sources')
 export class SourcesAdminController {
   constructor(private readonly sourcesService: SourcesService) {}

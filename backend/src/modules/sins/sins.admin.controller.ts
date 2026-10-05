@@ -10,13 +10,15 @@ import {
   Post,
   Query,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import type { Response } from 'express';
+import { IsBoolean, IsOptional } from 'class-validator';
+import { AdminApiKeyGuard } from '../../common/guards/admin-api-key.guard.js';
+import { ToBoolean } from '../../common/decorators/to-boolean.decorator.js';
 import { CreateSinDto } from './dto/create-sin.dto.js';
 import { UpdateSinDto } from './dto/update-sin.dto.js';
 import { SinsService } from './sins.service.js';
-import { IsBoolean, IsOptional } from 'class-validator';
-import { ToBoolean } from '../../common/decorators/to-boolean.decorator.js';
 
 class DeleteSinQueryDto {
   @IsOptional()
@@ -25,6 +27,7 @@ class DeleteSinQueryDto {
   force?: boolean;
 }
 
+@UseGuards(AdminApiKeyGuard)
 @Controller('admin/sins')
 export class SinsAdminController {
   constructor(private readonly sinsService: SinsService) {}
