@@ -66,7 +66,6 @@ export class QuotesAdminController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateQuoteDto,
   ) {
-    // TODO(phase-5): reject edits to provider-owned fields when origin=API_CACHED
     return this.quotesService.adminUpdate(id, dto);
   }
 

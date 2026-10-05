@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Header, Param, Query, UseGuards } from '@nestjs/common';
 import { LocaleQueryDto } from '../../common/dto/locale-query.dto.js';
 import { CurrentUser, type JwtPayload } from '../../common/decorators/current-user.decorator.js';
 import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard.js';
@@ -15,7 +15,9 @@ export class SinsController {
     private readonly favoritesService: FavoritesService,
   ) {}
 
+  /** Phase 5: Cache-Control for the sins catalogue (small, rarely changes). */
   @Get()
+  @Header('Cache-Control', 'public, max-age=60, stale-while-revalidate=30')
   findAll(@Query() query: SinsQueryDto) {
     return this.sinsService.findAll(query);
   }

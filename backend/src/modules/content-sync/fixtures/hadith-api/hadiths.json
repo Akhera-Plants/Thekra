@@ -1,0 +1,62 @@
+{
+  "_fixture_note": "TEST-ONLY — placeholder data, NOT authentic hadith text",
+  "hadiths": {
+    "current_page": 1,
+    "total": 7275,
+    "per_page": 25,
+    "last_page": 291,
+    "data": [
+      {
+        "id": 1,
+        "hadithNumber": "1",
+        "englishNarrator": "Narrated Umar bin Al-Khattab:",
+        "hadithEnglish": "[TEST] I heard the Messenger — placeholder English",
+        "hadithArabic": "إنما الأعمال بالنيات — PLACEHOLDER TEST HADITH",
+        "headingArabic": "باب بدء الوحي",
+        "headingEnglish": "How the Divine Revelation started",
+        "status": "Sahih",
+        "bookSlug": "sahih-bukhari",
+        "volume": "1",
+        "book": {
+          "bookName": "Sahih Bukhari",
+          "writerName": "Imam Bukhari",
+          "bookSlug": "sahih-bukhari",
+          "aboutWriter": null,
+          "writerDied": "256 AH"
+        },
+        "chapter": {
+          "chapterNumber": "1",
+          "chapterEnglish": "Revelation",
+          "chapterArabic": "بدء الوحي",
+          "bookSlug": "sahih-bukhari"
+        }
+      },
+      {
+        "_fixture_note": "Record with DAIF grade for grade-normalisation test",
+        "id": 2,
+        "hadithNumber": "2",
+        "englishNarrator": "Narrated Test Narrator:",
+        "hadithEnglish": "[TEST] A weak narration placeholder",
+        "hadithArabic": "نص عربي — PLACEHOLDER DAIF",
+        "headingArabic": "باب الضعيف",
+        "headingEnglish": "Weak chapter",
+        "status": "Da'if",
+        "bookSlug": "sahih-bukhari",
+        "volume": "1",
+        "book": {
+          "bookName": "Sahih Bukhari",
+          "writerName": "Imam Bukhari",
+          "bookSlug": "sahih-bukhari",
+          "aboutWriter": null,
+          "writerDied": "256 AH"
+        },
+        "chapter": {
+          "chapterNumber": "2",
+          "chapterEnglish": "Weak Narrations",
+          "chapterArabic": "باب الضعيف",
+          "bookSlug": "sahih-bukhari"
+        }
+      }
+    ]
+  }
+}

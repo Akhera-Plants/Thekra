@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LoggerModule } from 'nestjs-pino';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
+import { CacheModule } from '@nestjs/cache-manager';
 import type { IncomingMessage } from 'node:http';
 import { validateEnv } from './config/env.validation.js';
 import { HealthModule } from './health/health.module.js';
@@ -16,6 +18,7 @@ import { TagsModule } from './modules/tags/tags.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { UsersModule } from './modules/users/users.module.js';
 import { FavoritesModule } from './modules/favorites/favorites.module.js';
+import { ContentSyncModule } from './modules/content-sync/content-sync.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 
 /**
@@ -38,6 +41,12 @@ const REQUEST_ID_RE = /^[A-Za-z0-9._-]{1,128}$/;
     ThrottlerModule.forRoot([
       { name: 'default', ttl: 60000, limit: 120 },
     ]),
+    // Phase 5: scheduler for content-sync cron jobs.
+    // Only fires when SYNC_ENABLED=true; local/CI remain unaffected.
+    ScheduleModule.forRoot(),
+    // Phase 5: in-memory response cache with 60-second TTL.
+    // Used by SinsController (list) and QuotesController (search).
+    CacheModule.register({ ttl: 60_000, isGlobal: true }),
     // P2-11: forRootAsync so all logger config comes from the validated
     // ConfigService instead of process.env.  pino-pretty is loaded ONLY in
     // development mode so the devDependency can never be reached in production.
@@ -88,6 +97,8 @@ const REQUEST_ID_RE = /^[A-Za-z0-9._-]{1,128}$/;
     HadithModule,
     QuranModule,
     ClassificationModule,
+    // Phase 5: content-sync pipeline
+    ContentSyncModule,
   ],
 })
 export class AppModule {}

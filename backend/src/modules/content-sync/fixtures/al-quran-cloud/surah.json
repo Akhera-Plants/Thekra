@@ -1,0 +1,46 @@
+{
+  "_fixture_note": "TEST-ONLY — placeholder data, NOT authentic religious text",
+  "code": 200,
+  "status": "OK",
+  "data": {
+    "number": 49,
+    "name": "سورة الحجرات",
+    "englishName": "Al-Hujuraat",
+    "englishNameTranslation": "The Rooms",
+    "numberOfAyahs": 18,
+    "revelationType": "Medinan",
+    "ayahs": [
+      {
+        "number": 5099,
+        "text": "بِسْمِ اللَّهِ — PLACEHOLDER TEST AYAH",
+        "numberInSurah": 1,
+        "juz": 26,
+        "manzil": 7,
+        "page": 515,
+        "ruku": 501,
+        "hizbQuarter": 193,
+        "sajda": false
+      },
+      {
+        "number": 5110,
+        "text": "لِلتَّعَارُفِ — PLACEHOLDER TEST AYAH 2",
+        "numberInSurah": 12,
+        "juz": 26,
+        "manzil": 7,
+        "page": 517,
+        "ruku": 502,
+        "hizbQuarter": 194,
+        "sajda": false
+      }
+    ],
+    "edition": {
+      "identifier": "quran-uthmani",
+      "language": "ar",
+      "name": "القرآن الكريم",
+      "englishName": "Uthmanic",
+      "format": "text",
+      "type": "quran",
+      "direction": "rtl"
+    }
+  }
+}

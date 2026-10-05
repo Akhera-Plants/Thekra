@@ -62,6 +62,112 @@ export class EnvironmentVariables {
   @IsString()
   ADMIN_API_KEY?: string;
 
+  // ── Phase 5: Content-sync ──────────────────────────────────────────────────
+
+  /**
+   * Master kill switch for the scheduled content-sync cron jobs.
+   * Default is false — local and CI must never fire a real provider on a timer.
+   * Set to "true" in staging/production to enable cron jobs.
+   * Manual `POST /v1/admin/content-sync/runs` always works regardless of this flag.
+   */
+  @IsOptional()
+  @IsString()
+  SYNC_ENABLED?: string = 'false';
+
+  /**
+   * Minutes after which a RUNNING SyncLog row is considered stale.
+   * Default: 120. Stale rows are marked FAILED at startup.
+   */
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  SYNC_STALE_AFTER_MINUTES?: number = 120;
+
+  /** Maximum number of HTTP requests per sync run before the run ends cleanly. */
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  SYNC_MAX_REQUESTS_PER_RUN?: number = 2000;
+
+  /** Maximum duration (minutes) for a sync run before it ends cleanly. */
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  SYNC_MAX_DURATION_MINUTES?: number = 30;
+
+  /** Max record-level failures before the run is aborted. */
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  SYNC_MAX_RECORD_FAILURES?: number = 50;
+
+  /** Cron expression for the Quran full-sync. Default: Sunday 03:00 UTC. */
+  @IsOptional()
+  @IsString()
+  SYNC_QURAN_CRON?: string;
+
+  /** Cron expression for the Hadith incremental sync. Default: daily 04:00 UTC. */
+  @IsOptional()
+  @IsString()
+  SYNC_HADITH_CRON?: string;
+
+  // ── Phase 5: Provider API keys (all optional) ──────────────────────────────
+
+  /**
+   * Optional bearer token for Quran.com API.
+   * If absent, requests are made without auth (the API may still work).
+   */
+  @IsOptional()
+  @IsString()
+  QURAN_API_TOKEN?: string;
+
+  /**
+   * Optional client ID for Quran.com API (some auth flows use this).
+   */
+  @IsOptional()
+  @IsString()
+  QURAN_API_CLIENT_ID?: string;
+
+  /**
+   * Base URL for the Quran.com API. Defaults to https://api.quran.com/api/v4.
+   * Override in tests or if the API endpoint changes.
+   */
+  @IsOptional()
+  @IsString()
+  QURAN_API_BASE_URL?: string = 'https://api.quran.com/api/v4';
+
+  /**
+   * Comma-separated list of Quran.com translation resource IDs.
+   * Default: 131 (English Sahih International).
+   */
+  @IsOptional()
+  @IsString()
+  QURAN_TRANSLATION_IDS?: string = '131';
+
+  /**
+   * Which Arabic text field to use from Quran.com: 'text_uthmani' (default)
+   * or 'text_imlaei'.
+   */
+  @IsOptional()
+  @IsIn(['text_uthmani', 'text_imlaei'])
+  QURAN_TEXT_FIELD?: 'text_uthmani' | 'text_imlaei' = 'text_uthmani';
+
+  /**
+   * API key for sunnah.com. Required to run the Sunnah provider.
+   */
+  @IsOptional()
+  @IsString()
+  SUNNAH_API_KEY?: string;
+
+  /**
+   * API key for hadithapi.com (passed as ?apiKey= query param).
+   * Required to run the HadithApi provider.
+   * NEVER stored in rawPayload.
+   */
+  @IsOptional()
+  @IsString()
+  HADITH_API_KEY?: string;
+
   // ── Phase 4: JWT auth ───────────────────────────────────────────────────
 
   /**

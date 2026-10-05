@@ -567,6 +567,37 @@ export class QuotesService {
       throw new NotFoundException({ code: 'RESOURCE_NOT_FOUND', message: 'Quote not found' });
     }
 
+    // Phase 5: For API_CACHED rows, the provider is the authority on certain fields.
+    // Reject curator edits to those fields — the curator must fork the quote instead.
+    // See content-pipeline-plan §2 ("Provider text is read-only for curators").
+    if (existing.origin === QuoteOrigin.API_CACHED) {
+      const PROVIDER_OWNED_FIELDS: (keyof UpdateQuoteDto)[] = [
+        'textAr',
+        'narrator',
+        'narratorAr',
+        'grade',
+        'hadithReference',
+        'surahNumber',
+        'surahName',
+        'surahNameAr',
+        'ayahNumber',
+        'sourceId',
+      ];
+
+      const attempted = PROVIDER_OWNED_FIELDS.filter(
+        (field) => dto[field] !== undefined,
+      );
+
+      if (attempted.length > 0) {
+        throw new UnprocessableEntityException({
+          code: 'FIELD_OWNED_BY_PROVIDER',
+          message:
+            `Cannot edit provider-owned fields on an API_CACHED quote: ${attempted.join(', ')}. ` +
+            'Create a new LOCAL quote instead.',
+        });
+      }
+    }
+
     // After merging the partial update onto the existing record, enforce the same
     // shape rules as @ValidQuoteShape() on CreateQuoteDto.  `type` is immutable
     // so we use the existing row's value; `grade` and `surahNumber` come from

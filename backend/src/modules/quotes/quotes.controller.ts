@@ -1,4 +1,4 @@
-import { Controller, Get, Param, ParseUUIDPipe, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Header, Param, ParseUUIDPipe, Query, UseGuards } from '@nestjs/common';
 import { CurrentUser, type JwtPayload } from '../../common/decorators/current-user.decorator.js';
 import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard.js';
 import { FavoritesService } from '../favorites/favorites.service.js';
@@ -13,9 +13,11 @@ export class QuotesController {
     private readonly favoritesService: FavoritesService,
   ) {}
 
-  /** #8 GET /quotes — optional auth enriches isFavorite */
+  /** #8 GET /quotes — optional auth enriches isFavorite
+   *  Phase 5: Cache-Control header for browse pages (short TTL since content changes). */
   @Get()
   @UseGuards(OptionalJwtAuthGuard)
+  @Header('Cache-Control', 'public, max-age=30, stale-while-revalidate=30')
   async search(
     @Query() query: QuotesQueryDto,
     @CurrentUser() user: JwtPayload | undefined,
