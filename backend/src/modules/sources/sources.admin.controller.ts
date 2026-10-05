@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { AdminApiKeyGuard } from '../../common/guards/admin-api-key.guard.js';
+import { setCreated } from '../../common/http/set-created.js';
 import { CreateSourceDto } from './dto/create-source.dto.js';
 import { UpdateSourceDto } from './dto/update-source.dto.js';
 import { SourcesService } from './sources.service.js';
@@ -28,8 +29,7 @@ export class SourcesAdminController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const source = await this.sourcesService.adminCreate(dto);
-    res.status(HttpStatus.CREATED);
-    res.header('Location', `/v1/admin/sources/${source.id}`);
+    setCreated(res, `/v1/admin/sources/${source.id}`);
     return { data: source };
   }
 

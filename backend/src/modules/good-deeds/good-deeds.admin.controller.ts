@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { AdminApiKeyGuard } from '../../common/guards/admin-api-key.guard.js';
+import { setCreated } from '../../common/http/set-created.js';
 import { CreateGoodDeedDto } from './dto/create-good-deed.dto.js';
 import { UpdateGoodDeedDto } from './dto/update-good-deed.dto.js';
 import { GoodDeedsService } from './good-deeds.service.js';
@@ -28,8 +29,7 @@ export class GoodDeedsAdminController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const deed = await this.goodDeedsService.adminCreate(dto);
-    res.status(HttpStatus.CREATED);
-    res.header('Location', `/v1/admin/good-deeds/${deed.id}`);
+    setCreated(res, `/v1/admin/good-deeds/${deed.id}`);
     return { data: deed };
   }
 

@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { AdminApiKeyGuard } from '../../common/guards/admin-api-key.guard.js';
+import { setCreated } from '../../common/http/set-created.js';
 import { CreateTagDto } from './dto/create-tag.dto.js';
 import { UpdateTagDto } from './dto/update-tag.dto.js';
 import { TagsService } from './tags.service.js';
@@ -28,8 +29,7 @@ export class TagsAdminController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const tag = await this.tagsService.adminCreate(dto);
-    res.status(HttpStatus.CREATED);
-    res.header('Location', `/v1/admin/tags/${tag.id}`);
+    setCreated(res, `/v1/admin/tags/${tag.id}`);
     return { data: tag };
   }
 

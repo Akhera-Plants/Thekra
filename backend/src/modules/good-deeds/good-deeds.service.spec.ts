@@ -1,6 +1,7 @@
 import { Test } from '@nestjs/testing';
 import { QuoteType } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { GradePolicy } from '../hadith/grade-policy.js';
 import { QuotesService } from '../quotes/quotes.service.js';
 import { GoodDeedsService } from './good-deeds.service.js';
 
@@ -27,6 +28,32 @@ describe('GoodDeedsService', () => {
     ]),
     shuffleLinksPage: vi.fn(),
     getVarietyScoreFloor: vi.fn().mockReturnValue(70),
+    // P2-1: new shared helpers — delegate to real GradePolicy so existing
+    // grade-filter tests continue to assert the correct Prisma where clause.
+    buildLinkQuoteFilter: vi.fn().mockImplementation((query: {
+      type?: QuoteType[];
+      grades?: string[];
+      includeWeak?: boolean;
+    }) => {
+      const allowedGrades = GradePolicy.resolveAllowedGrades({
+        grades: query.grades as never,
+        includeWeak: query.includeWeak,
+      });
+      const quoteFilter = {
+        ...(query.type?.length ? { type: { in: query.type } } : {}),
+        ...GradePolicy.whereClause(allowedGrades),
+      };
+      return { quoteFilter, allowedGrades };
+    }),
+    countsByTypeFromGroups: vi.fn().mockImplementation(
+      (groups: Array<{ type: string; _count: { _all: number } }>) => {
+        const result: Record<string, number> = {
+          QURAN_VERSE: 0, HADITH: 0, SCHOLAR_QUOTE: 0, BOOK_EXCERPT: 0,
+        };
+        for (const g of groups) result[g.type] = g._count._all;
+        return result;
+      },
+    ),
   };
 
   let service: GoodDeedsService;
@@ -117,7 +144,22 @@ describe('GoodDeedsService', () => {
       oppositeSin: null,
     };
 
-    beforeEach(() => vi.clearAllMocks());
+    beforeEach(() => {
+      vi.clearAllMocks();
+      quotes.buildQuoteInclude.mockReturnValue({ source: true });
+      quotes.toQuoteDto.mockImplementation((row) => row);
+      quotes.linkOrderBy.mockReturnValue([{ relevanceScore: { sort: 'desc', nulls: 'last' } }]);
+      quotes.getVarietyScoreFloor.mockReturnValue(70);
+      quotes.buildLinkQuoteFilter.mockImplementation((query: { type?: QuoteType[]; grades?: string[]; includeWeak?: boolean }) => {
+        const allowedGrades = GradePolicy.resolveAllowedGrades({ grades: query.grades as never, includeWeak: query.includeWeak });
+        return { quoteFilter: GradePolicy.whereClause(allowedGrades), allowedGrades };
+      });
+      quotes.countsByTypeFromGroups.mockImplementation((groups: Array<{ type: string; _count: { _all: number } }>) => {
+        const result: Record<string, number> = { QURAN_VERSE: 0, HADITH: 0, SCHOLAR_QUOTE: 0, BOOK_EXCERPT: 0 };
+        for (const g of groups) result[g.type] = g._count._all;
+        return result;
+      });
+    });
 
     it('calls shuffleLinksPage with GoodDeedQuote table/parentKey and echoes seed', async () => {
       prisma.goodDeed.findUnique.mockResolvedValue(DEED);

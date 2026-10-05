@@ -15,6 +15,7 @@ import {
 import type { Response } from 'express';
 import { IsBoolean, IsOptional } from 'class-validator';
 import { AdminApiKeyGuard } from '../../common/guards/admin-api-key.guard.js';
+import { setCreated } from '../../common/http/set-created.js';
 import { ToBoolean } from '../../common/decorators/to-boolean.decorator.js';
 import { CreateSinDto } from './dto/create-sin.dto.js';
 import { UpdateSinDto } from './dto/update-sin.dto.js';
@@ -38,8 +39,7 @@ export class SinsAdminController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const sin = await this.sinsService.adminCreate(dto);
-    res.status(HttpStatus.CREATED);
-    res.header('Location', `/v1/admin/sins/${sin.id}`);
+    setCreated(res, `/v1/admin/sins/${sin.id}`);
     return { data: sin };
   }
 

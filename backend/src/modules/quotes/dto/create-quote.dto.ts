@@ -15,6 +15,7 @@ import {
 } from 'class-validator';
 import { HadithGrade, QuoteOrigin, QuoteType } from '@prisma/client';
 import { IsStrictInt } from '../../../common/decorators/is-strict-int.decorator.js';
+import { ValidQuoteShape } from './valid-quote-shape.decorator.js';
 
 export class TranslationInputDto {
   @Matches(/^[a-z]{2}(-[A-Z]{2})?$/, {
@@ -27,6 +28,7 @@ export class TranslationInputDto {
   text!: string;
 }
 
+@ValidQuoteShape()
 export class CreateQuoteDto {
   @IsEnum(QuoteType)
   type!: QuoteType;

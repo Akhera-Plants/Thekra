@@ -17,6 +17,7 @@ import {
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { AdminApiKeyGuard } from '../../common/guards/admin-api-key.guard.js';
+import { setCreated } from '../../common/http/set-created.js';
 import { LanguageCodePipe } from '../../common/pipes/language-code.pipe.js';
 import { AdminQuotesQueryDto } from './dto/admin-quotes-query.dto.js';
 import { CreateQuoteDto } from './dto/create-quote.dto.js';
@@ -50,8 +51,7 @@ export class QuotesAdminController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const quote = await this.quotesService.adminCreate(dto);
-    res.status(HttpStatus.CREATED);
-    res.header('Location', `/v1/admin/quotes/${quote.id}`);
+    setCreated(res, `/v1/admin/quotes/${quote.id}`);
     return { data: quote };
   }
 
@@ -65,6 +65,7 @@ export class QuotesAdminController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateQuoteDto,
   ) {
+    // TODO(phase-5): reject edits to provider-owned fields when origin=API_CACHED
     return this.quotesService.adminUpdate(id, dto);
   }
 
@@ -93,8 +94,7 @@ export class QuotesAdminController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const t = await this.quotesService.createTranslation(id, body.languageCode, body.text);
-    res.status(HttpStatus.CREATED);
-    res.header('Location', `/v1/admin/quotes/${id}/translations/${t.languageCode}`);
+    setCreated(res, `/v1/admin/quotes/${id}/translations/${t.languageCode}`);
     return mapTranslation(t);
   }
 

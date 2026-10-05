@@ -272,9 +272,9 @@ describe('Admin content CRUD (e2e)', () => {
       createdQuoteId = res.body.data.id as string;
     });
 
-    it('POST /v1/admin/quotes with HADITH and no grade → 4xx VALIDATION_FAILED (P2-4 ValidQuoteShape)', async () => {
-      // Plan §P2-4 calls for 400, but current implementation uses 422 via UnprocessableEntityException.
-      // Accept either 400 or 422 — the important thing is code='VALIDATION_FAILED' and request is rejected.
+    it('POST /v1/admin/quotes with HADITH and no grade → 400 VALIDATION_FAILED (P2-4 ValidQuoteShape)', async () => {
+      // P2-4: @ValidQuoteShape() on CreateQuoteDto triggers class-validator →
+      // ValidationPipe → validationExceptionFactory → 400 BadRequestException.
       const res = await request(app.getHttpServer())
         .post('/v1/admin/quotes')
         .set(adminHeaders())
@@ -283,9 +283,12 @@ describe('Admin content CRUD (e2e)', () => {
           textAr: 'نص حديث بدون درجة',
           sourceId: SRC_BUKHARI,
           // grade intentionally omitted → cross-field validation must reject
-        });
-      expect([400, 422]).toContain(res.status);
+        })
+        .expect(400);
       expect(res.body.error.code).toBe('VALIDATION_FAILED');
+      // The error details should mention the missing field
+      const detailMsg = JSON.stringify(res.body.error.details ?? '');
+      expect(detailMsg.toLowerCase()).toMatch(/grade/i);
     });
 
     it('GET /v1/admin/quotes → 200 with list (no grade filter)', async () => {

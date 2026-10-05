@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
   UnprocessableEntityException,
@@ -23,6 +24,13 @@ import type { CreateQuoteDto } from './dto/create-quote.dto.js';
 import type { QuoteDetailQueryDto } from './dto/quote-detail-query.dto.js';
 import type { QuotesQueryDto } from './dto/quotes-query.dto.js';
 import type { UpdateQuoteDto } from './dto/update-quote.dto.js';
+import { checkQuoteShape } from './dto/valid-quote-shape.decorator.js';
+
+/**
+ * Human-readable ordering label echoed in `meta.ordering` for normal (non-shuffle) link pages.
+ * Exported so sins/good-deeds services can reuse the same string.
+ */
+export const LINK_ORDERING_LABEL = 'relevanceScore:desc,grade:asc,createdAt:desc';
 
 const LINK_ORDER_BY = [
   { relevanceScore: { sort: 'desc' as const, nulls: 'last' as const } },
@@ -69,7 +77,8 @@ export class QuotesService {
         locale,
         options?.includeAllTranslations === true,
       ),
-      tags: { include: { tag: true } },
+      // P3-2: stable tag ordering by slug so responses are deterministic.
+      tags: { include: { tag: true }, orderBy: { tag: { slug: 'asc' } } },
     } as typeof quoteIncludeForDto;
   }
 
@@ -80,7 +89,8 @@ export class QuotesService {
     return {
       source: true,
       translations: translationsInclude(locale, includeAllTranslations),
-      tags: { include: { tag: true } },
+      // P3-2: stable tag ordering by slug so responses are deterministic.
+      tags: { include: { tag: true }, orderBy: { tag: { slug: 'asc' } } },
       sinLinks: {
         include: {
           sin: { select: { slug: true, name: true, nameAr: true } },
@@ -102,6 +112,55 @@ export class QuotesService {
 
   linkOrderBy() {
     return LINK_ORDER_BY;
+  }
+
+  /**
+   * P2-1: Build the Prisma `quote` sub-filter (type + grade policy) and resolve
+   * the allowed grade list from a query that carries `grades`, `includeWeak`,
+   * and optionally `type`.  Both sins and good-deeds link pages use the same
+   * filter logic — this centralises it so there is one place to change.
+   *
+   * @returns `{ quoteFilter, allowedGrades }` — splice `quoteFilter` straight
+   *   into the link-table `where.quote` and use `allowedGrades` for the shuffle
+   *   call and `meta.appliedGrades`.
+   */
+  buildLinkQuoteFilter(query: {
+    type?: QuoteType[];
+    grades?: HadithGrade[];
+    includeWeak?: boolean;
+  }): {
+    quoteFilter: Prisma.QuoteWhereInput;
+    allowedGrades: HadithGrade[];
+  } {
+    const allowedGrades = GradePolicy.resolveAllowedGrades({
+      grades: query.grades,
+      includeWeak: query.includeWeak,
+    });
+    const quoteFilter: Prisma.QuoteWhereInput = {
+      ...(query.type?.length ? { type: { in: query.type } } : {}),
+      ...GradePolicy.whereClause(allowedGrades),
+    };
+    return { quoteFilter, allowedGrades };
+  }
+
+  /**
+   * P2-1: Fold a Prisma `groupBy` result into the canonical `countsByType` map
+   * (`{ QURAN_VERSE, HADITH, SCHOLAR_QUOTE, BOOK_EXCERPT }`).  Both sins and
+   * good-deeds pages compute this after the same `quote.groupBy` sub-query.
+   */
+  countsByTypeFromGroups(
+    groups: Array<{ type: string; _count: { _all: number } }>,
+  ): Record<string, number> {
+    const result: Record<string, number> = {
+      QURAN_VERSE: 0,
+      HADITH: 0,
+      SCHOLAR_QUOTE: 0,
+      BOOK_EXCERPT: 0,
+    };
+    for (const g of groups) {
+      result[g.type] = g._count._all;
+    }
+    return result;
   }
 
   /**
@@ -266,12 +325,20 @@ export class QuotesService {
         {
           locale,
           appliedGrades: allowedGrades,
+          // P3-1: echo all non-undefined query filters (not just 5).
           appliedFilters: {
+            q: query.q ?? null,
             type: query.type ?? null,
             origin: query.origin ?? null,
             grades: query.grades ?? null,
+            includeWeak: query.includeWeak ?? null,
+            sourceId: query.sourceId ?? null,
+            surahNumber: query.surahNumber ?? null,
+            ayahNumber: query.ayahNumber ?? null,
+            hasTranslation: query.hasTranslation ?? null,
+            sinSlug: query.sinSlug ?? null,
+            goodDeedSlug: query.goodDeedSlug ?? null,
             tag: query.tag ?? null,
-            q: query.q ?? null,
           },
         },
       );
@@ -299,12 +366,20 @@ export class QuotesService {
       {
         locale,
         appliedGrades: allowedGrades,
+        // P3-1: echo all non-undefined query filters (not just 5).
         appliedFilters: {
+          q: query.q ?? null,
           type: query.type ?? null,
           origin: query.origin ?? null,
           grades: query.grades ?? null,
+          includeWeak: query.includeWeak ?? null,
+          sourceId: query.sourceId ?? null,
+          surahNumber: query.surahNumber ?? null,
+          ayahNumber: query.ayahNumber ?? null,
+          hasTranslation: query.hasTranslation ?? null,
+          sinSlug: query.sinSlug ?? null,
+          goodDeedSlug: query.goodDeedSlug ?? null,
           tag: query.tag ?? null,
-          q: query.q ?? null,
         },
       },
     );
@@ -443,19 +518,9 @@ export class QuotesService {
       });
     }
 
-    // Cross-field validation
-    if (dto.type === QuoteType.QURAN_VERSE && dto.surahNumber == null) {
-      throw new UnprocessableEntityException({
-        code: 'VALIDATION_FAILED',
-        message: 'surahNumber is required when type is QURAN_VERSE',
-      });
-    }
-    if (dto.type === QuoteType.HADITH && dto.grade == null) {
-      throw new UnprocessableEntityException({
-        code: 'VALIDATION_FAILED',
-        message: 'grade is required when type is HADITH (use UNGRADED if unknown)',
-      });
-    }
+    // Cross-field shape rules (HADITH→grade, QURAN_VERSE→surahNumber) are now
+    // enforced by @ValidQuoteShape() on CreateQuoteDto (→ 400 VALIDATION_FAILED).
+    // No duplicate checks here.
 
     // Verify sourceId exists
     const source = await this.prisma.source.findUnique({ where: { id: dto.sourceId } });
@@ -502,21 +567,23 @@ export class QuotesService {
       throw new NotFoundException({ code: 'RESOURCE_NOT_FOUND', message: 'Quote not found' });
     }
 
-    // After merging the partial update onto the existing record, enforce business
-    // rules that must hold regardless of which fields are in the PATCH body.
+    // After merging the partial update onto the existing record, enforce the same
+    // shape rules as @ValidQuoteShape() on CreateQuoteDto.  `type` is immutable
+    // so we use the existing row's value; `grade` and `surahNumber` come from
+    // the PATCH body (if provided) or fall back to the existing values.
+    // P2-4: reuse the pure checkQuoteShape() function → 400 VALIDATION_FAILED.
     const mergedGrade = dto.grade !== undefined ? dto.grade : existing.grade;
     const mergedSurahNumber = dto.surahNumber !== undefined ? dto.surahNumber : existing.surahNumber;
 
-    if (existing.type === QuoteType.HADITH && mergedGrade === null) {
-      throw new UnprocessableEntityException({
-        code: 'HADITH_GRADE_REQUIRED',
-        message: 'Hadith quotes must retain a non-null grade; provide a valid HadithGrade value.',
-      });
-    }
-    if (existing.type === QuoteType.QURAN_VERSE && mergedSurahNumber === null) {
-      throw new UnprocessableEntityException({
-        code: 'QURAN_SURAH_REQUIRED',
-        message: 'Quran verse quotes must retain a non-null surahNumber.',
+    const shapeError = checkQuoteShape({
+      type: existing.type,
+      grade: mergedGrade,
+      surahNumber: mergedSurahNumber,
+    });
+    if (shapeError) {
+      throw new BadRequestException({
+        code: 'VALIDATION_FAILED',
+        message: shapeError,
       });
     }
 

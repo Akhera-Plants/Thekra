@@ -21,6 +21,46 @@
   <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
   [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
+## Thekra Backend — Developer Notes
+
+### Common setup gotchas
+
+**Homebrew Postgres port conflict (macOS)**
+If you have Homebrew's PostgreSQL running, it typically binds to the default
+port **5432** and will conflict with Docker-based Postgres.  Either stop the
+Homebrew service first:
+
+```bash
+brew services stop postgresql@16   # or whatever version you have installed
+```
+
+or change `DATABASE_URL` in `.env` / `.env.test` to point at the Homebrew
+instance directly (no Docker needed).
+
+**Seed the development database**
+
+After `pnpm install` and schema migration (`pnpm prisma migrate dev`), populate
+the database with reference data:
+
+```bash
+pnpm db:seed
+```
+
+**Running e2e tests**
+
+E2E tests target a dedicated `thekra_test` database so they never touch your
+dev data.  Create the database and set `DATABASE_URL` in `.env.test` to point
+at it, then:
+
+```bash
+pnpm test:e2e
+```
+
+The test suite truncates and re-seeds the test database before each file using
+`test/helpers/reset-db.ts` + `test/fixtures/seed-test-fixtures.ts`.
+
+---
+
 ## Description
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.

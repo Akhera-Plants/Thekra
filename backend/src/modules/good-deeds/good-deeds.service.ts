@@ -3,8 +3,7 @@ import { Prisma } from '@prisma/client';
 import { buildPageMeta, paginated } from '../../common/dto/paginated-result.js';
 import { findIdsByNormalizedArabic } from '../../common/text/arabic-search.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
-import { GradePolicy } from '../hadith/grade-policy.js';
-import { QuotesService } from '../quotes/quotes.service.js';
+import { LINK_ORDERING_LABEL, QuotesService } from '../quotes/quotes.service.js';
 import type { GoodDeedQuotesQueryDto } from '../sins/dto/sin-quotes-query.dto.js';
 import type { CreateGoodDeedDto } from './dto/create-good-deed.dto.js';
 import type { GoodDeedsQueryDto } from './dto/good-deeds-query.dto.js';
@@ -14,8 +13,8 @@ import type {
   GoodDeedSummary,
 } from './entities/good-deed.entity.js';
 
-const ORDERING =
-  'relevanceScore:desc,grade:asc,createdAt:desc';
+// P2-1: shared ordering label is now exported from QuotesService.
+// Use LINK_ORDERING_LABEL imported from there.
 
 @Injectable()
 export class GoodDeedsService {
@@ -227,20 +226,16 @@ export class GoodDeedsService {
     const page = query.page ?? 1;
     const limit = query.limit ?? 10;
     const locale = query.lang ?? 'ar';
-    const allowedGrades = GradePolicy.resolveAllowedGrades({
-      grades: query.grades,
-      includeWeak: query.includeWeak,
-    });
+
+    // P2-1: shared filter builder — resolves grade policy + quote type filter.
+    const { quoteFilter, allowedGrades } = this.quotes.buildLinkQuoteFilter(query);
 
     const where: Prisma.GoodDeedQuoteWhereInput = {
       goodDeedId: deed.id,
       ...(query.minScore !== undefined && {
         relevanceScore: { gte: query.minScore },
       }),
-      quote: {
-        ...(query.type?.length && { type: { in: query.type } }),
-        ...GradePolicy.whereClause(allowedGrades),
-      },
+      quote: quoteFilter,
     };
 
     // Shared sub-queries (count, type breakdown) — same for both paths
@@ -299,10 +294,8 @@ export class GoodDeedsService {
         rows.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
       }
 
-      const countsByType: Record<string, number> = {
-        QURAN_VERSE: 0, HADITH: 0, SCHOLAR_QUOTE: 0, BOOK_EXCERPT: 0,
-      };
-      for (const g of typeGroups) countsByType[g.type] = g._count._all;
+      // P2-1: shared helper folds the groupBy result into { QURAN_VERSE, HADITH, ... }.
+      const countsByType = this.quotes.countsByTypeFromGroups(typeGroups);
 
       return {
         data: {
@@ -337,15 +330,8 @@ export class GoodDeedsService {
       typeGroupsQ,
     ]);
 
-    const countsByType: Record<string, number> = {
-      QURAN_VERSE: 0,
-      HADITH: 0,
-      SCHOLAR_QUOTE: 0,
-      BOOK_EXCERPT: 0,
-    };
-    for (const group of typeGroups) {
-      countsByType[group.type] = group._count._all;
-    }
+    // P2-1: shared helper folds the groupBy result into { QURAN_VERSE, HADITH, ... }.
+    const countsByType = this.quotes.countsByTypeFromGroups(typeGroups);
 
     return {
       data: {
@@ -361,7 +347,7 @@ export class GoodDeedsService {
       },
       meta: buildPageMeta(page, limit, total, {
         locale,
-        ordering: ORDERING,
+        ordering: LINK_ORDERING_LABEL,
         countsByType,
         appliedGrades: allowedGrades,
       }),

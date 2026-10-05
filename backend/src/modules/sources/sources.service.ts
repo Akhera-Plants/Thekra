@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { paginated } from '../../common/dto/paginated-result.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
@@ -94,6 +94,14 @@ export class SourcesService {
   // ─── Admin CRUD ───────────────────────────────────────────────────────────────
 
   async adminCreate(dto: CreateSourceDto): Promise<SourceDto> {
+    // P3-4: when isExternalApi=true the caller must provide both apiProvider and apiBaseUrl.
+    if (dto.isExternalApi && (!dto.apiProvider || !dto.apiBaseUrl)) {
+      throw new BadRequestException({
+        code: 'VALIDATION_FAILED',
+        message: 'apiProvider and apiBaseUrl are required when isExternalApi is true',
+      });
+    }
+
     const row = await this.prisma.source.create({
       data: {
         name: dto.name,
@@ -116,6 +124,20 @@ export class SourcesService {
     if (!existing) {
       throw new NotFoundException({ code: 'RESOURCE_NOT_FOUND', message: 'Source not found' });
     }
+
+    // P3-4: after merging the PATCH body onto the existing row, re-validate the
+    // isExternalApi constraint so it holds regardless of which fields are sent.
+    const mergedIsExternalApi =
+      dto.isExternalApi !== undefined ? dto.isExternalApi : existing.isExternalApi;
+    const mergedApiProvider = dto.apiProvider !== undefined ? dto.apiProvider : existing.apiProvider;
+    const mergedApiBaseUrl = dto.apiBaseUrl !== undefined ? dto.apiBaseUrl : existing.apiBaseUrl;
+    if (mergedIsExternalApi && (!mergedApiProvider || !mergedApiBaseUrl)) {
+      throw new BadRequestException({
+        code: 'VALIDATION_FAILED',
+        message: 'apiProvider and apiBaseUrl are required when isExternalApi is true',
+      });
+    }
+
     const row = await this.prisma.source.update({
       where: { id },
       data: dto,
