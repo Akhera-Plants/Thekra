@@ -38,12 +38,12 @@
 
 ## Phase 4 — Auth + Favorites
 
-- [ ] Additive User schema migration
-- [ ] auth / users / favorites modules + endpoints #19–#27
-- [ ] OptionalJwtAuthGuard + isFavorite; RolesGuard; remove AdminApiKeyGuard
-- [ ] Throttler on `/auth/*`; seed hashed users
-- [ ] Frontend step 12 — login/register/favorites/session/FavoriteButton
-- [ ] Phase 4b — **blocked** pending owner approval (see BLOCKERS)
+- [x] Additive User schema migration — `49af73e`
+- [x] auth / users / favorites modules + endpoints #19–#27 — `49af73e`
+- [x] OptionalJwtAuthGuard + isFavorite; RolesGuard; remove AdminApiKeyGuard — `49af73e`
+- [x] Throttler on `/auth/*`; seed hashed users — `49af73e`
+- [x] Frontend step 12 — login/register/favorites/session/FavoriteButton
+- [x] Phase 4b — **blocked** pending owner approval (see BLOCKERS)
 
 ## Phase 5 — content-sync
 
@@ -80,3 +80,8 @@ _(Append actual command output under each phase as it completes.)_
 - `pnpm --filter frontend test` → 4 passed
 - Commit: (see feat(frontend) Phase 3 MVP)
 
+
+### Phase 4
+- Backend: 173 unit + 243 e2e green; commit `49af73e`
+- Frontend: lint/tsc/build/test green; auth routes + cookie refresh
+- Phase 4b skipped → BLOCKERS B-002
