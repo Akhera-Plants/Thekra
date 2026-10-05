@@ -9,6 +9,6 @@ Human actions required. Build continues around these with stubs/fixtures/feature
 | B-003 | Git remote | Local commits + CI workflow file only | `git remote add origin <url>` and push so GitHub Actions runs |
 | B-004 | Vercel staging / PR previews | Frontend builds locally | Create Vercel project; wire repo; set `NEXT_PUBLIC_API_URL` |
 | B-005 | Railway (or similar) API staging | Backend Dockerfile ready | Create Railway/Postgres project; set secrets from `.env.example` |
-| B-006 | Quran.com / Sunnah.com API keys | Phase 5 fixtures only; `SYNC_ENABLED=false` default | Put keys in `backend/.env` (never commit); enable sync in staging |
+| B-006 | Provider API keys + SYNC_ENABLED | Phase 5 built on fixtures; cron off by default | Set `SUNNAH_API_KEY`, `HADITH_API_KEY`, optional `QURAN_API_TOKEN` in `backend/.env`; set `SYNC_ENABLED=true` in staging |
 | B-007 | Expo / EAS / App Store / Play | Mobile scaffold local only | Create Expo/EAS account; configure credentials; submit builds |
 | B-008 | Phase 8 real palette + fonts | Neutral semantic tokens kept | Provide brand CSS variables + Arabic/Latin font files or URLs |

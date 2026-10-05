@@ -47,10 +47,10 @@
 
 ## Phase 5 — content-sync
 
-- [ ] ContentProvider + providers (fixture-tested)
-- [ ] Run executor, scheduler, SyncLog, endpoints #58–#60
-- [ ] Arabic trigram index, CacheModule, helmet/compression
-- [ ] Live provider keys — **blocked** without env (see BLOCKERS)
+- [x] ContentProvider + providers (fixture-tested)
+- [x] Run executor, scheduler, SyncLog, endpoints #58–#60
+- [x] Arabic trigram index, CacheModule, helmet/compression
+- [x] Live provider keys — **blocked** without env (see BLOCKERS)
 
 ## Phase 6 — Admin / curation UI
 
