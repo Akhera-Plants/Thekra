@@ -5,14 +5,14 @@
 
 ## Bootstrap
 
-- [x] Create `PROGRESS.md`, `DECISIONS.md`, `BLOCKERS.md`
+- [x] Create `PROGRESS.md`, `DECISIONS.md`, `BLOCKERS.md` — `b7329f0`
 
 ## Phase 2 leftovers
 
-- [ ] P2-1 — extract shared link-quote query builders into `QuotesService`
-- [ ] P2-4 — `@ValidQuoteShape()` → 400 on create/update quote DTOs
-- [ ] Cheap P3 — appliedFilters echo, tag orderBy slug, `setCreated`, source external-api fields, TODO(phase-5), backend README notes
-- [ ] P0-4 seed corrections — **skipped** (no D-5 ticks; see BLOCKERS)
+- [x] P2-1 — extract shared link-quote query builders into `QuotesService` — `dd04f28`
+- [x] P2-4 — `@ValidQuoteShape()` → 400 on create/update quote DTOs — `dd04f28`
+- [x] Cheap P3 — appliedFilters echo, tag orderBy slug, `setCreated`, source external-api fields, TODO(phase-5), backend README notes — `dd04f28`
+- [x] P0-4 seed corrections — **skipped** (no D-5 ticks; see BLOCKERS)
 
 ## DevOps (no accounts)
 

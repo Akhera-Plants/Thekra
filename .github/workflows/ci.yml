@@ -1,0 +1,164 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '24'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter backend lint
+      - run: pnpm --filter frontend lint
+
+  prisma:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: thekra
+          POSTGRES_PASSWORD: thekra_dev_password
+          POSTGRES_DB: thekra
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U thekra -d thekra"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://thekra:thekra_dev_password@localhost:5432/thekra?schema=public
+      SHADOW_DATABASE_URL: postgresql://thekra:thekra_dev_password@localhost:5432/thekra_shadow?schema=public
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm prisma:validate
+      - run: pnpm prisma:generate
+      - name: Create shadow database
+        run: >
+          PGPASSWORD=thekra_dev_password psql
+          -h localhost -U thekra -d thekra
+          -c "CREATE DATABASE thekra_shadow;"
+      - name: Migration drift check
+        working-directory: backend
+        run: >
+          pnpm exec prisma migrate diff
+          --from-migrations ./prisma/migrations
+          --to-schema-datamodel ./prisma/schema.prisma
+          --shadow-database-url "$SHADOW_DATABASE_URL"
+          --exit-code
+
+  typecheck:
+    runs-on: ubuntu-latest
+    needs: [prisma]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm prisma:generate
+      - run: pnpm --filter backend exec tsc --noEmit -p tsconfig.json
+      - run: pnpm --filter frontend exec tsc --noEmit
+
+  test-unit:
+    runs-on: ubuntu-latest
+    needs: [prisma]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm prisma:generate
+      - run: pnpm --filter backend test
+
+  test-e2e:
+    runs-on: ubuntu-latest
+    needs: [prisma]
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: thekra
+          POSTGRES_PASSWORD: thekra_dev_password
+          POSTGRES_DB: thekra_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U thekra -d thekra_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://thekra:thekra_dev_password@localhost:5432/thekra_test?schema=public
+      NODE_ENV: test
+      LOG_LEVEL: warn
+      ADMIN_API_KEY: test-admin-key
+      VARIETY_SCORE_FLOOR: '70'
+      SYNC_ENABLED: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm prisma:generate
+      - name: Write backend/.env.test
+        run: |
+          cat > backend/.env.test <<EOF
+          DATABASE_URL=${DATABASE_URL}
+          PORT=3001
+          CORS_ORIGINS=http://localhost:3000
+          NODE_ENV=test
+          LOG_LEVEL=warn
+          VARIETY_SCORE_FLOOR=70
+          ADMIN_API_KEY=test-admin-key
+          EOF
+      - working-directory: backend
+        run: pnpm exec prisma migrate deploy
+      - run: pnpm --filter backend test:e2e
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [prisma]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm prisma:generate
+      - run: pnpm --filter backend build
+      - run: pnpm --filter frontend build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:3001

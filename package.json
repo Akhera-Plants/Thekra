@@ -12,6 +12,11 @@
     "prisma:generate": "pnpm --filter backend exec prisma generate",
     "prisma:validate": "pnpm --filter backend exec prisma validate",
     "dev:backend": "pnpm --filter backend start:dev",
-    "dev:frontend": "pnpm --filter frontend dev"
+    "dev:frontend": "pnpm --filter frontend dev",
+    "lint": "pnpm --filter backend lint && pnpm --filter frontend lint",
+    "typecheck": "pnpm prisma:generate && pnpm --filter backend exec tsc --noEmit -p tsconfig.json && pnpm --filter frontend exec tsc --noEmit",
+    "test": "pnpm --filter backend test",
+    "test:e2e": "pnpm --filter backend test:e2e",
+    "build": "pnpm --filter backend build && pnpm --filter frontend build"
   }
 }
