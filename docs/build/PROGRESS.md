@@ -62,8 +62,9 @@
 - [x] Core screens (guest flows + favorites)
 - [x] EAS repo prep (`eas.json`, `mobile-release.yml`, `RELEASE.md`) — owner accounts still B-01
 - [x] expo-updates install + `app.config.ts` — channels after B-01 (B-02)
+- [x] Close false B-03 (body refresh proven + mobile unit tests)
 - [ ] EAS / store credentials — **blocked** (B-01 owner accounts)
-- [ ] Close false B-03 + Arabic font B-04 — pending
+- [ ] Arabic font B-04 — pending
 
 ## Phase 8 — a11y + i18n polish
 

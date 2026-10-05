@@ -46,12 +46,6 @@ See `mobile/RELEASE.md` §4.
 
 ---
 
-## B-03 · Backend refresh-token mobile support — *(closing — false blocker)*
-
-See DECISIONS.md. Body-based refresh already exists; verification tests closing this.
-
----
-
 ## B-04 · Arabic font bundle — *(closing — Phase 7 scope)*
 
 Placeholder Noto Naskh Arabic (OFL) landing in Phase 7; Phase 8 only swaps the brand font.

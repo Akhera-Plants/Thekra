@@ -7,6 +7,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { hash as argon2hash, verify as argon2verify, argon2id } from 'argon2';
 import type { HashOptions } from 'argon2';
+import { randomUUID } from 'node:crypto';
 import type { EnvironmentVariables } from '../../config/env.validation.js';
 import type { JwtPayload } from '../../common/decorators/current-user.decorator.js';
 import { UsersService } from '../users/users.service.js';
@@ -166,10 +167,15 @@ export class AuthService {
       secret: this.accessSecret,
       expiresIn: this.accessTtlSeconds,
     });
-    const refreshToken = this.jwt.sign(jwtPayload, {
-      secret: this.refreshSecret,
-      expiresIn: this.refreshTtlSeconds,
-    });
+    // jti makes each refresh token unique even within the same second so
+    // "rotating" pairs are observably distinct for mobile SecureStore swaps.
+    const refreshToken = this.jwt.sign(
+      { ...jwtPayload, jti: randomUUID() },
+      {
+        secret: this.refreshSecret,
+        expiresIn: this.refreshTtlSeconds,
+      },
+    );
     return { accessToken, refreshToken, expiresIn: this.accessTtlSeconds };
   }
 

@@ -18,8 +18,10 @@ module.exports = {
   moduleNameMapper: {
     // Resolve @/* path alias
     '^@/(.*)$': '<rootDir>/src/$1',
+    // expo-constants pulls this ESM virtual module
+    '^expo/virtual/env$': '<rootDir>/src/__tests__/mocks/expo-env.js',
   },
   transformIgnorePatterns: [
-    '/node_modules/',
+    '/node_modules/(?!(expo-constants|expo-modules-core)/)',
   ],
 };

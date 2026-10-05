@@ -156,6 +156,8 @@ describe('Auth endpoints (e2e)', () => {
         refreshToken: expect.any(String),
         expiresIn: expect.any(Number),
       });
+      // Mobile-style body refresh rotates the refresh token (jti makes each unique).
+      expect(refreshRes.body.data.refreshToken).not.toBe(refreshToken);
     });
 
     it('401 INVALID_REFRESH_TOKEN on garbage token', async () => {

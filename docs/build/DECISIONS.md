@@ -35,3 +35,14 @@ Decisions made without stopping for the owner. Format: context → options → c
 - Browse `force-dynamic` page omits `setRequestLocale` (Turbopack client mis-classify).
 - Vitest node env + enum smoke only (vite version split blocks @vitejs/plugin-react for now).
 - Cross-slice `session-intent.store` shared by sin and good-deed pickers.
+
+## D-BUILD-005 — B-03 was a false blocker
+
+- **Context:** BLOCKERS claimed the API only sets an httpOnly refresh cookie and mobile could not refresh.
+- **Reality:** Cookie jar lives in the **Next.js** `/api/auth/*` route handlers. The Nest API already returns
+  `{ accessToken, refreshToken, expiresIn }` in the body and `POST /v1/auth/refresh` accepts `{ refreshToken }`
+  (see `auth.e2e-spec.ts`). Mobile already persists `refreshToken` in SecureStore.
+- **Choice:** Close B-03; add mobile `performRefresh` unit tests; add `jti` on refresh JWTs so rotated tokens
+  are observably unique within the same second.
+- **Plan:** BLOCKERS_RESPONSE B-03; backend-plan §7.1 transport.
+
