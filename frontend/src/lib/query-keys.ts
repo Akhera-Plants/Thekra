@@ -4,6 +4,9 @@ import type {
   QuotesQuery,
   SinQuotesQuery,
   SinsQuery,
+  SourcesQuery,
+  SurahAyahsQuery,
+  TagsQuery,
 } from '@/lib/types/api';
 
 export const queryKeys = {
@@ -28,6 +31,23 @@ export const queryKeys = {
   favorites: {
     all: ['favorites'] as const,
     quoteIds: ['favorites', 'quote-ids'] as const,
+  },
+  surahs: {
+    all: ['surahs'] as const,
+    ayahs: (number: number, p?: SurahAyahsQuery) =>
+      ['surahs', number, 'ayahs', p] as const,
+  },
+  hadithCollections: {
+    all: ['hadith-collections'] as const,
+  },
+  tags: {
+    all: ['tags'] as const,
+    list: (p: TagsQuery) => ['tags', 'list', p] as const,
+    detail: (slug: string) => ['tags', 'detail', slug] as const,
+  },
+  sources: {
+    all: ['sources'] as const,
+    list: (p: SourcesQuery) => ['sources', 'list', p] as const,
   },
   session: ['session'] as const,
 } as const;

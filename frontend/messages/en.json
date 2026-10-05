@@ -9,8 +9,125 @@
     "dark": "Dark",
     "system": "System"
   },
+  "nav": {
+    "skipToContent": "Skip to main content",
+    "home": "Home",
+    "sins": "Sins",
+    "goodDeeds": "Good Deeds",
+    "browse": "Browse",
+    "back": "Back"
+  },
+  "localeSwitcher": {
+    "label": "Change language",
+    "ar": "العربية",
+    "en": "English"
+  },
   "home": {
     "title": "Thekra",
-    "description": "Placeholder shell while the foundation is built."
+    "tagline": "A reminder when you need one",
+    "sinEntryLabel": "I feel an urge to sin",
+    "sinEntryDescription": "Search for a sin and receive reminders from Quran and Sunnah",
+    "deedEntryLabel": "I want to do a good deed",
+    "deedEntryDescription": "Search for a good deed and get motivation from Quran and Sunnah",
+    "browseLabel": "Browse content"
+  },
+  "sins": {
+    "pageTitle": "Sins",
+    "searchPlaceholder": "Search for a sin…",
+    "noResults": "No matching results",
+    "categoryAll": "All",
+    "openPicker": "Choose a sin"
+  },
+  "sinDetail": {
+    "anotherReminder": "Another reminder",
+    "alternativesHeading": "Suggested alternatives",
+    "noReminders": "No reminders for this sin yet",
+    "typeAll": "All",
+    "typeQuran": "Quran",
+    "typeHadith": "Hadith",
+    "typeScholar": "Scholar quotes",
+    "typeBook": "Books",
+    "severity": "Severity"
+  },
+  "goodDeeds": {
+    "pageTitle": "Good Deeds",
+    "searchPlaceholder": "Search for a good deed…",
+    "noResults": "No matching results",
+    "openPicker": "Choose a good deed"
+  },
+  "goodDeedDetail": {
+    "anotherMotivation": "Another motivation",
+    "rewardHeading": "Reward",
+    "noMotivations": "No reminders for this deed yet",
+    "oppositeSin": "Opposite sin",
+    "typeAll": "All",
+    "typeQuran": "Quran",
+    "typeHadith": "Hadith",
+    "typeScholar": "Scholar quotes",
+    "typeBook": "Books"
+  },
+  "browse": {
+    "pageTitle": "Browse",
+    "tabAll": "All",
+    "tabQuran": "Quran",
+    "tabHadith": "Hadith",
+    "loadMore": "Load more",
+    "noResults": "No results",
+    "filterGrade": "Filter by grade",
+    "filterSurah": "Filter by surah",
+    "filterCollection": "Filter by collection",
+    "allGrades": "All grades",
+    "allSurahs": "All surahs",
+    "allCollections": "All collections"
+  },
+  "surah": {
+    "pageTitle": "Surah {name}",
+    "ayahCount": "{count, plural, one {# ayah} other {# ayahs}}",
+    "back": "Back to browse"
+  },
+  "quote": {
+    "type": {
+      "quran": "Quranic verse",
+      "hadith": "Hadith",
+      "scholar": "Scholar quote",
+      "book": "Book excerpt"
+    },
+    "grade": {
+      "sahih": "Sahih",
+      "hasan": "Hasan",
+      "daif": "Da'if",
+      "mawdu": "Mawdu",
+      "ungraded": "Ungraded"
+    },
+    "narrator": "Narrator",
+    "reference": "Reference",
+    "tags": "Tags",
+    "source": "Source",
+    "weakNotice": "This narration is weak (da'if)",
+    "translation": "Translation",
+    "viewFull": "View full"
+  },
+  "quoteDetail": {
+    "pageTitle": "Quote",
+    "relatedSins": "Related sins",
+    "relatedGoodDeeds": "Related good deeds"
+  },
+  "feelings": {
+    "pageTitle": "Quotes — {tag}",
+    "noQuotes": "No quotes for this topic",
+    "loadMore": "Load more",
+    "back": "Back"
+  },
+  "emptyState": {
+    "default": "Nothing here yet",
+    "noSins": "No sins added yet",
+    "noGoodDeeds": "No good deeds added yet",
+    "noQuotes": "No quotes yet",
+    "noResults": "No matching results"
+  },
+  "errorState": {
+    "default": "Something went wrong",
+    "retry": "Try again",
+    "notFound": "Page not found"
   }
 }

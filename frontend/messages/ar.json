@@ -9,8 +9,125 @@
     "dark": "داكن",
     "system": "حسب النظام"
   },
+  "nav": {
+    "skipToContent": "انتقل إلى المحتوى الرئيسي",
+    "home": "الرئيسية",
+    "sins": "المعاصي",
+    "goodDeeds": "الأعمال الصالحة",
+    "browse": "تصفح",
+    "back": "رجوع"
+  },
+  "localeSwitcher": {
+    "label": "تغيير اللغة",
+    "ar": "العربية",
+    "en": "English"
+  },
   "home": {
     "title": "ذكرى",
-    "description": "واجهة مؤقتة أثناء بناء الطبقة الأساسية."
+    "tagline": "تذكير عند الحاجة",
+    "sinEntryLabel": "أشعر برغبة في معصية",
+    "sinEntryDescription": "ابحث عن معصية واحصل على تذكيرات من القرآن والسنة",
+    "deedEntryLabel": "أريد عمل حسنة",
+    "deedEntryDescription": "ابحث عن عمل صالح واحصل على تحفيز من القرآن والسنة",
+    "browseLabel": "تصفح المحتوى"
+  },
+  "sins": {
+    "pageTitle": "المعاصي",
+    "searchPlaceholder": "ابحث عن معصية…",
+    "noResults": "لا توجد نتائج مطابقة",
+    "categoryAll": "الكل",
+    "openPicker": "اختر معصية"
+  },
+  "sinDetail": {
+    "anotherReminder": "تذكير آخر",
+    "alternativesHeading": "بدائل مقترحة",
+    "noReminders": "لا توجد تذكيرات لهذه المعصية بعد",
+    "typeAll": "الكل",
+    "typeQuran": "قرآن",
+    "typeHadith": "حديث",
+    "typeScholar": "أقوال العلماء",
+    "typeBook": "كتب",
+    "severity": "الخطورة"
+  },
+  "goodDeeds": {
+    "pageTitle": "الأعمال الصالحة",
+    "searchPlaceholder": "ابحث عن عمل صالح…",
+    "noResults": "لا توجد نتائج مطابقة",
+    "openPicker": "اختر عملًا صالحًا"
+  },
+  "goodDeedDetail": {
+    "anotherMotivation": "تحفيز آخر",
+    "rewardHeading": "الثواب",
+    "noMotivations": "لا توجد تذكيرات لهذا العمل بعد",
+    "oppositeSin": "المعصية المقابلة",
+    "typeAll": "الكل",
+    "typeQuran": "قرآن",
+    "typeHadith": "حديث",
+    "typeScholar": "أقوال العلماء",
+    "typeBook": "كتب"
+  },
+  "browse": {
+    "pageTitle": "تصفح",
+    "tabAll": "الكل",
+    "tabQuran": "القرآن",
+    "tabHadith": "الحديث",
+    "loadMore": "تحميل المزيد",
+    "noResults": "لا توجد نتائج",
+    "filterGrade": "تصفية حسب الدرجة",
+    "filterSurah": "تصفية حسب السورة",
+    "filterCollection": "تصفية حسب المجموعة",
+    "allGrades": "كل الدرجات",
+    "allSurahs": "كل السور",
+    "allCollections": "كل المجموعات"
+  },
+  "surah": {
+    "pageTitle": "سورة {name}",
+    "ayahCount": "{count, plural, zero {لا توجد آيات} one {آية واحدة} two {آيتان} few {{count} آيات} many {{count} آية} other {{count} آية}}",
+    "back": "رجوع إلى التصفح"
+  },
+  "quote": {
+    "type": {
+      "quran": "آية قرآنية",
+      "hadith": "حديث",
+      "scholar": "قول عالم",
+      "book": "مقتطف كتاب"
+    },
+    "grade": {
+      "sahih": "صحيح",
+      "hasan": "حسن",
+      "daif": "ضعيف",
+      "mawdu": "موضوع",
+      "ungraded": "غير مُصنَّف"
+    },
+    "narrator": "الراوي",
+    "reference": "المرجع",
+    "tags": "الوسوم",
+    "source": "المصدر",
+    "weakNotice": "هذا الحديث ضعيف",
+    "translation": "الترجمة",
+    "viewFull": "عرض كامل"
+  },
+  "quoteDetail": {
+    "pageTitle": "الاقتباس",
+    "relatedSins": "معاصي ذات صلة",
+    "relatedGoodDeeds": "أعمال مرتبطة"
+  },
+  "feelings": {
+    "pageTitle": "اقتباسات — {tag}",
+    "noQuotes": "لا توجد اقتباسات لهذا الموضوع",
+    "loadMore": "تحميل المزيد",
+    "back": "رجوع"
+  },
+  "emptyState": {
+    "default": "لا يوجد محتوى هنا",
+    "noSins": "لا توجد معاصٍ مضافة بعد",
+    "noGoodDeeds": "لا توجد أعمال صالحة مضافة بعد",
+    "noQuotes": "لا توجد اقتباسات بعد",
+    "noResults": "لا توجد نتائج مطابقة"
+  },
+  "errorState": {
+    "default": "حدث خطأ ما",
+    "retry": "حاول مجددًا",
+    "notFound": "الصفحة غير موجودة"
   }
 }

@@ -252,3 +252,69 @@ export interface QuotesQuery {
   hasTranslation?: string;
   sort?: 'relevance' | 'newest' | 'oldest';
 }
+
+export interface QuoteDetailDto extends QuoteDto {
+  relatedSins: Array<Pick<SinDto, 'id' | 'slug' | 'name' | 'nameAr'>>;
+  relatedGoodDeeds: Array<Pick<GoodDeedDto, 'id' | 'slug' | 'name' | 'nameAr'>>;
+  allTranslations?: Array<{ languageCode: string; text: string }>;
+}
+
+export interface GoodDeedQuotesResponse {
+  goodDeed: Pick<
+    GoodDeedDto,
+    | 'id'
+    | 'slug'
+    | 'name'
+    | 'nameAr'
+    | 'reward'
+    | 'rewardAr'
+    | 'description'
+    | 'descriptionAr'
+  >;
+  items: Array<{ link: QuoteLinkDto; quote: QuoteDto }>;
+}
+
+export interface GoodDeedQuotesMeta extends PageMeta {
+  ordering?: string;
+  countsByType?: Partial<Record<QuoteType, number>>;
+  appliedGrades?: HadithGrade[];
+}
+
+export interface SurahDto {
+  number: number;
+  name: string;
+  nameAr: string;
+  nameTransliteration: string | null;
+  ayahCount: number;
+}
+
+export interface HadithCollectionDto {
+  id: string;
+  name: string;
+  nameAr: string | null;
+  type: SourceType;
+}
+
+export interface TagsQuery {
+  category?: TagCategory;
+  page?: number;
+  limit?: number;
+  q?: string;
+}
+
+export interface SourcesQuery {
+  type?: SourceType;
+  page?: number;
+  limit?: number;
+}
+
+export interface SurahAyahsQuery {
+  page?: number;
+  limit?: number;
+  lang?: LocaleCode;
+}
+
+export interface QuoteDetailQuery {
+  lang?: LocaleCode;
+  includeAllTranslations?: boolean;
+}

@@ -2,6 +2,7 @@ import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { Geist, Geist_Mono, Noto_Naskh_Arabic } from 'next/font/google';
 import { notFound } from 'next/navigation';
+import { AppShell } from '@/components/shared/AppShell';
 import { LocaleSync } from '@/components/shared/LocaleSync';
 import { AppProviders } from '@/lib/providers';
 import { routing } from '@/i18n/routing';
@@ -54,7 +55,7 @@ export default async function LocaleLayout({
         <NextIntlClientProvider messages={messages}>
           <AppProviders>
             <LocaleSync />
-            {children}
+            <AppShell>{children}</AppShell>
           </AppProviders>
         </NextIntlClientProvider>
       </body>
