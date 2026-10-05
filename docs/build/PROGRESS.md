@@ -54,7 +54,7 @@
 
 ## Phase 6 — Admin / curation UI
 
-- [ ] `/admin` curation slice (dashboard, linking workspace, sync console)
+- [x] `/admin` curation slice (dashboard, linking workspace, sync console)
 
 ## Phase 7 — Mobile
 
