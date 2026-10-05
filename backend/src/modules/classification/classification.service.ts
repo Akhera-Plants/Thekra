@@ -34,10 +34,20 @@ const GOOD_DEED_LINK_INCLUDE = {
  * The NULLS LAST is important: newly created links with score=0 (default) must not
  * float to the top and displace curated high-score rows.
  */
-const ADMIN_LINK_ORDER_BY = [
+const ADMIN_LINK_ORDER_BY_SCORE = [
   { relevanceScore: { sort: 'desc' as const, nulls: 'last' as const } },
   { id: 'asc' as const },
 ];
+
+/**
+ * D-2: `sort=newest` ordering — createdAt DESC, then id ASC for total order.
+ * Requires the `createdAt` column added by migration 20261005000002_add_link_timestamps.
+ */
+const ADMIN_LINK_ORDER_BY_NEWEST = [
+  { createdAt: 'desc' as const },
+  { id: 'asc' as const },
+];
+
 
 /** Response shape from bulkLink* methods. */
 export interface BulkResult {
@@ -226,23 +236,28 @@ export class ClassificationService {
   /**
    * Returns a paginated list of links matching the query.
    *
-   * P2-3 + P2-6: always orders by relevanceScore DESC NULLS LAST, then id ASC
-   * (the only valid `sort` option is `score` — `newest` was removed in P2-6).
+   * P2-3: always appends `id ASC` as the final tiebreaker for stable pagination.
+   * D-2: `sort=newest` orders by `createdAt DESC, id ASC` (requires the column
+   *      added by migration 20261005000002_add_link_timestamps).
+   *      Default `sort=score` orders by `relevanceScore DESC NULLS LAST, id ASC`.
    */
   private async doList<TLinkDto>(
     binding: ClassifyBinding,
-    query: { page?: number; limit?: number },
+    query: { page?: number; limit?: number; sort?: 'score' | 'newest' },
     buildWhere: (q: typeof query) => Record<string, unknown>,
   ) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
     const where = buildWhere(query);
 
+    const orderBy =
+      query.sort === 'newest' ? ADMIN_LINK_ORDER_BY_NEWEST : ADMIN_LINK_ORDER_BY_SCORE;
+
     // Cast needed: delegate methods return `any`; we embed them in a typed $transaction
     // tuple so the return value is properly typed as [TLinkDto[], number].
     const findManyOp = binding.delegate['findMany']({
       where,
-      orderBy: ADMIN_LINK_ORDER_BY,
+      orderBy,
       skip: (page - 1) * limit,
       take: limit,
       include: binding.include,

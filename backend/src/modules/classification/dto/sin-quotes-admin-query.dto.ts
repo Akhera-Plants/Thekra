@@ -40,10 +40,11 @@ export class SinQuotesAdminQueryDto extends PaginationQueryDto {
   hasNote?: boolean;
 
   /**
-   * P2-6: `newest` removed — SinQuote has no createdAt column, so ordering by id
-   * (UUIDv4) is random.  Default is `score` (relevanceScore DESC NULLS LAST, id ASC).
+   * D-2: `newest` restored after adding `createdAt DateTime @default(now())` to SinQuote
+   * (migration 20261005000002_add_link_timestamps).  `newest` orders by `createdAt DESC, id ASC`.
+   * Default remains `score` (relevanceScore DESC NULLS LAST, then id ASC).
    */
   @IsOptional()
-  @IsIn(['score'])
-  sort?: 'score';
+  @IsIn(['score', 'newest'])
+  sort?: 'score' | 'newest';
 }

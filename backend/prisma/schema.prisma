@@ -105,6 +105,12 @@ model Quote {
   @@unique([apiProvider, externalId])
   @@index([type])
   @@index([sourceId])
+  /// D-3 / P2-17: grade filter for the hadith grade policy (WHERE grade IN (...)).
+  @@index([grade])
+  /// D-3 / P2-17: combined type+grade for public quote search grade-policy clause.
+  @@index([type, grade])
+  /// D-3 / P2-17: ayah lookups within a surah (quran list/detail).
+  @@index([type, surahNumber, ayahNumber])
 }
 
 model Translation {
@@ -147,18 +153,29 @@ model GoodDeed {
   quotes        GoodDeedQuote[]
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
+
+  /// D-3 / P2-17: supports GET /sins/:slug (relatedGoodDeeds) and /sins/:slug/quotes (alternatives).
+  @@index([oppositeSinId])
 }
 
 model SinQuote {
-  id             String  @id @default(uuid())
+  id             String   @id @default(uuid())
   sinId          String
-  sin            Sin     @relation(fields: [sinId], references: [id], onDelete: Cascade)
+  sin            Sin      @relation(fields: [sinId], references: [id], onDelete: Cascade)
   quoteId        String
-  quote          Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
-  relevanceScore Int?    @default(0)
+  quote          Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  relevanceScore Int?     @default(0)
   note           String?
+  /// D-2: added for admin sort=newest and curator audit trail.
+  createdAt      DateTime @default(now())
+  /// D-2: added for curator audit trail.
+  updatedAt      DateTime @updatedAt
 
   @@unique([sinId, quoteId])
+  /// D-3: quoteId index for reverse lookups (find all sins referencing a quote).
+  @@index([quoteId])
+  /// D-3: composite index supporting the core reminder loop (filter by sin, sort by score).
+  @@index([sinId, relevanceScore(sort: Desc, nulls: Last)])
 }
 
 model GoodDeedQuote {
@@ -169,8 +186,16 @@ model GoodDeedQuote {
   quote          Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
   relevanceScore Int?     @default(0)
   note           String?
+  /// D-2: added for admin sort=newest and curator audit trail.
+  createdAt      DateTime @default(now())
+  /// D-2: added for curator audit trail.
+  updatedAt      DateTime @updatedAt
 
   @@unique([goodDeedId, quoteId])
+  /// D-3: quoteId index for reverse lookups (find all good deeds referencing a quote).
+  @@index([quoteId])
+  /// D-3: composite index supporting the core reminder loop (filter by deed, sort by score).
+  @@index([goodDeedId, relevanceScore(sort: Desc, nulls: Last)])
 }
 
 model Tag {
@@ -180,6 +205,9 @@ model Tag {
   slug     String      @unique
   category TagCategory
   quotes   QuoteTag[]
+
+  /// D-3 / P2-17: filter tags by category (SIN, GOOD_DEED, THEME, EMOTION).
+  @@index([category])
 }
 
 model QuoteTag {
@@ -190,6 +218,8 @@ model QuoteTag {
   tag     Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@unique([quoteId, tagId])
+  /// D-3 / P2-17: reverse lookup — fetch all quotes for a given tag.
+  @@index([tagId])
 }
 
 model SyncLog {
