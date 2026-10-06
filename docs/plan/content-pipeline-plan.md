@@ -646,3 +646,30 @@ ingestion starts they are trivially distinguishable from `API_CACHED` rows and c
 curated core. Real content never arrives via the seed: it arrives either through
 `POST /v1/admin/quotes` (curated) or through a sync run (cached). Keeping that boundary clean is what makes it
 safe to re-run or drop the seed at any time.
+
+---
+
+## 6. Book sources (Phase 5b) — pointer
+
+**Pointer only — the design is [vision-v2-plan.md §4–§5](./vision-v2-plan.md#5-book-import-pipeline-phase-5b).**
+A third way content arrives, besides curation and provider sync: **per-work book importers** under
+`backend/prisma/imports/<work>/`, outside the Nest module tree like this seed. Summary:
+
+- **Never from the owner's PDFs** (scanned or encrypted; OCR is unacceptable for Quran/hadith text). The PDFs
+  stay as verification copies; the same works are imported from clean digital Unicode texts (OpenITI versions,
+  licence CC BY-NC-SA 4.0 for release 2023.1.8 — owner to accept). Per-work availability:
+  [vision-v2 §4.2](./vision-v2-plan.md#4-the-owners-book-folder-and-digital-text-availability).
+- One `Source` per work + edition; narrations become `HADITH` `Quote`s (`UNGRADED` unless the work is a licensed
+  graded collection); prose works become curated `BOOK_EXCERPT`s, not bulk imports; `SyncLog` rows record each run.
+- Idempotent on `@@unique([apiProvider, externalId])` with `apiProvider = 'book:<work>'`. **This needs an
+  amendment to §2.5** ("`LOCAL` rows keep both keys `NULL`") — see
+  [vision-v2 §5.4](./vision-v2-plan.md#54-idempotency-keys--consistency-check-with-content-pipeline-25) for the
+  finding and the owner decision (V9).
+- Importers write content only — never `SinQuote`, `GoodDeedQuote`, `ImanBranchQuote` or `QuoteTag` (§4.3 holds).
+- Tafsir is cached from Quran.com by a new `content-sync` capability into the proposed `Explanation` model
+  ([vision-v2 §3.2](./vision-v2-plan.md#32-quran-tafsir--cached-from-qurancom-verified)).
+
+**Dorar (الدرر السنية):** this plan never relied on a Dorar API, and none exists for «موسوعة الأخلاق والسلوك».
+Dorar's public API covers **hadith-encyclopedia search only**; it may be used as a manual curation aid, the ethics
+encyclopedia is linked to (not copied), and importing its content needs Dorar's written permission
+([vision-v2 §3.1](./vision-v2-plan.md#31-dorar-al-durar-al-saniyya--correcting-the-akhlaq-api-assumption)).

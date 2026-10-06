@@ -5,7 +5,9 @@
 > Each phase below is independently shippable and independently verifiable.
 > Cross-doc: [TECHNICAL_PLAN.md](../TECHNICAL_PLAN.md) · [backend-plan.md](./backend-plan.md) ·
 > [frontend-plan.md](./frontend-plan.md) · [content-pipeline-plan.md](./content-pipeline-plan.md) ·
-> [mobile-plan.md](./mobile-plan.md) · [devops-plan.md](./devops-plan.md)
+> [mobile-plan.md](./mobile-plan.md) · [devops-plan.md](./devops-plan.md) · [silat-rahim-plan.md](./silat-rahim-plan.md)
+> Vision v2 (three paths, شعب الإيمان, explanations, book import; lettered Phases **3b** and **5b**, Phase 4b
+> amended): [vision-v2-plan.md](./vision-v2-plan.md)
 
 ---
 
@@ -16,8 +18,11 @@
 | 1 ✅ | Structure & schema | Monorepo, tooling, authoritative data model | `schema.prisma` |
 | 2 | Core API + seed data | The core loop answerable over HTTP, testable with a REST client | Working `/v1` API |
 | 3 | Frontend MVP | The two core flows usable in a browser, neutral theme | Web app |
+| 3b | Three paths & شعب الإيمان | A third guest path (شعب الإيمان), sin rank (كبيرة/صغيرة), تفسير/شرح explanations, Dorar "read more" links — **proposed** | Branches + explanations |
 | 4 | Auth + Favorites | Saved quotes that survive a device change | Accounts |
+| 4b | Silat ar-Rahim & forgotten deeds | Private kinship reminders via an in-app due list + calendar feed; a guest-visible forgotten deed of the week | Kinship list + ICS feed |
 | 5 | Automated content-sync | Real external content replacing seed data | Populated library |
+| 5b | Book corpus import & tafsir | Classical works imported from clean digital texts (never PDFs/OCR) + cached tafsir — **proposed** | Imported library |
 | 6 | Admin / curation UI | Curating without a REST client | Curation UI |
 | 7 | Mobile app | The product where the moment of need actually happens | iOS + Android |
 | 8 | Design system swap-in | Real palette/branding/fonts + a11y + i18n completeness | Shipping product |
@@ -26,6 +31,13 @@ Sequencing rules that justify this order: **the data must exist before the UI** 
 proven before accounts** (3 before 4, since favorites are the only reason to sign in); **the API must be stable
 before an app-store client** (4 before 7); **the design swap is last** because phases 3–7 are explicitly built to
 make it a token change ([frontend-plan §4.4](./frontend-plan.md#44--exactly-what-changes-on-design-day)).
+**Phase 4b comes after 4** because it is the second (and only other) feature that needs an account; it is
+lettered rather than numbered so that every existing "phase 5…8" reference stays valid.
+**Phase 3b follows 3** because it adds a third guest-first intent on top of the shipped core loop and needs no
+account; **Phase 5b follows 5** because it is content ingestion reusing Phase 5's `SyncLog`, grade mapper and
+providers (and 3b's schema for branch linking and tafsir). Both are lettered for the same reason as 4b. Repo fact:
+phases 3–8 are already largely built, so 3b and 5b are built on top of shipped code
+([vision-v2-plan §11](./vision-v2-plan.md#11-phase-placement)).
 
 ---
 
@@ -77,6 +89,30 @@ both directions have been eyeballed on every route.
 
 ---
 
+## Phase 3b — Three paths, branches of faith, explanations
+
+**Goal:** the owner's updated vision — three guest-first paths (sins with their rank كبيرة/صغيرة, good deeds, and
+the new **شعب الإيمان** path based on al-Bayhaqi's «الجامع لشعب الإيمان» with a شرح chosen by the owner), تفسير/شرح
+explanations under quotes and branches, and "read more" links to Dorar's «موسوعة الأخلاق والسلوك».
+Full design: [vision-v2-plan.md](./vision-v2-plan.md).
+Entry condition: owner approval of the proposed schema (four migrations), the new `iman-branches` module and slice,
+and the `.cursorrules` updates ([vision-v2-plan §15](./vision-v2-plan.md#15-owner-decisions)). Islamic content
+(ranks, شعب, شرح) is entered and verified by the owner — nothing is invented.
+
+| Area | Scope |
+| --- | --- |
+| Schema | **Proposed, requires owner approval:** `SinRank` + `Sin.rank`/`rankSourceId`/`rankReference`; `ImanBranch`, `ImanBranchQuote`, `ImanBranchGoodDeed`, `ImanBranchSin`; `ExplanationKind` + `Explanation`; `ExternalReference` — four migrations, each its own commit, with raw-SQL CHECKs ([vision-v2 §6](./vision-v2-plan.md#6-proposed-schema-additions)). `Sin.severity` is kept. |
+| Backend | New module `iman-branches` (#84–#86 public, #88–#90 and #96 admin); `classification` gains branch links (#91–#95); `quotes` gains explanations (#87, #97–#100); `sources` gains external refs (#101–#103); additive `rank`, `externalRefs`, `relatedBranches` on #1–#3/#6; grade policy on every new read. |
+| Frontend | New slice `features/iman-branches` + `/branches`, `/branches/[number]`; third entry card on `/`; rank badge on sins; explanation accordion on `/quotes/[id]` and branch pages; "read more" links; admin screens for branches, explanations, external refs and sin rank. Contract mirrored in `mobile/src/lib/types/api.ts`. |
+| Content | Owner: path names, the chosen شرح, sin-rank source and each rank, branch titles/summaries, Dorar links; curator links texts. |
+
+**Done when:** see [vision-v2-plan §13](./vision-v2-plan.md#13-done-when) — three entry points in `ar`/`en`;
+`/branches/[n]` shows summary, attributed شرح, ranked texts under the same grade policy as sins, linked deeds and
+sins, and a Dorar link; ranked sins show كبيرة/صغيرة and unranked sins show nothing; quote detail shows تفسير/شرح on
+expand; all admin curation works in the browser; every new endpoint has unit + e2e tests; all gates green.
+
+---
+
 ## Phase 4 — Auth + Favorites
 
 **Goal:** an optional account that makes saved quotes durable across devices, without adding any friction to the
@@ -94,6 +130,43 @@ guest flows.
 persists across a browser restart and a different browser; a second favorite of the same quote is a clean `409`
 with no duplicate row; a `USER` token gets `403` on `/v1/admin/*` and no token gets `401`; an expired token
 degrades endpoints #3/#7 to anonymous instead of `401`; no token or password appears in any log.
+
+---
+
+## Phase 4b — Silat ar-Rahim & forgotten deeds
+
+**Goal:** a signed-in user keeps a private list of relatives (صلة الرحم) with a contact rhythm, sees who is due
+or overdue, and gets reminded by the phone's own calendar via a private subscription feed — no push server, no
+scheduler, no third-party cost. Everyone (guest-first) sees a deterministic "forgotten good deed of the week".
+Full design: [silat-rahim-plan.md](./silat-rahim-plan.md).
+Entry condition: Phase 4 shipped, and the owner has approved the proposed schema, the new module/slice and the
+`ical-generator` dependency ([silat-rahim-plan §12](./silat-rahim-plan.md#12-build-order-for-cursor)).
+
+| Area | Scope |
+| --- | --- |
+| Schema | **Proposed, requires owner approval:** `Relative`, `ContactLog`, `DeedReminder`, enums `KinRelation`/`ReminderFrequency`/`Weekday`/`ContactMethod`, `User.calendarFeedTokenHash`, `User.calendarShowNames` — one migration `add_kinship_reminders` in its own commit ([silat-rahim-plan §4](./silat-rahim-plan.md#4-data-model--proposed-schema-additions)). Forgotten deeds need **no** schema change (a `THEME` tag `forgotten-deeds` on quotes). |
+| Backend | New module `kinship` (endpoints #62–#80: relatives, contacts + undo, due list, deed reminders, feed settings/token, the `text/calendar` feed); `good-deeds` gains the `tag` filter on #5 and `GET /good-deeds/spotlight` (#81); `auth` gains `GET /auth/me/export` and `DELETE /auth/me` (#82–#83); feed-token masking in logs. `nextDueOn` computed on write — **no cron**. |
+| Frontend | New slice `features/kinship` + `/kinship`, `/kinship/[relativeId]`, `/kinship/calendar`; `ForgottenDeedSpotlight` on `/`; forgotten-deeds filter on `/good-deeds`; export/delete in `/settings`; `SignInPrompt` promoted to `components/shared/auth`. |
+| Content | The `forgotten-deeds` tag and the forgotten-deed `GoodDeed`s/quotes — **curated and verified by the owner**; nothing invented. The motivating صلة الرحم text reuses the existing `silat-ar-rahim` deed and endpoint #7. |
+| Privacy | Minimum data (nickname, relation, rhythm, optional short note — no phone/address/email); never logged or in error payloads; generic calendar titles by default; feed token 256-bit, hashed, rotatable, `404` when unknown; cascade delete + export. |
+| DevOps | `PUBLIC_API_URL`, `PUBLIC_SITE_URL` in every environment; no new infrastructure. |
+
+**Done when:** a user adds a relative, sees them due, marks "contacted", undoes it — in `ar` and `en`; the
+`webcal://` feed subscribed in iOS Calendar and Google Calendar shows generic recurring reminders that move after
+"contacted" without duplicating; revoking the link makes it `404`; a guest sees the same forgotten deed of the
+week as everyone else; export returns all kinship data and account deletion leaves none; no token or relative
+name appears in any log; every guest flow still works with no account
+([silat-rahim-plan §13](./silat-rahim-plan.md#13-done-when)).
+
+---
+
+### Phase 4b amendment (vision v2)
+
+Reminders are for **any** `GoodDeed` — صلة الرحم per named relative **and** الصدقة and other acts of worship the
+owner adds — not only forgotten deeds (silat-rahim open decision S3 resolved; no schema change; `422
+DEED_NOT_ELIGIBLE` removed). Added done-when check: a signed-in user puts «الصدقة» on a weekly reminder from
+`/good-deeds/sadaqah` and it appears in the due list and the feed
+([vision-v2-plan §10](./vision-v2-plan.md#10-reminders-for-any-good-deed--phase-4b-amendment)).
 
 ---
 
@@ -117,6 +190,30 @@ doing the work.
 completes; one malformed record is counted as `failed` without aborting the run; a record with no Arabic text is
 `skipped`; grades are normalised correctly and no `MAWDU` row is linkable; the cron fires on schedule in
 staging; the frontend renders `API_CACHED` content with full provenance and no `rawPayload` leak.
+
+---
+
+## Phase 5b — Book corpus import and tafsir
+
+**Goal:** the classical works in the owner's book folder enter the library **from clean digital Unicode texts**
+(OpenITI versions matched to the owner's editions where possible), with the PDFs kept only as verification copies,
+and tafsir is cached from Quran.com — idempotently, auditably, and without ever writing a link.
+Full design: [vision-v2-plan §4–§5](./vision-v2-plan.md#5-book-import-pipeline-phase-5b).
+Entry condition: Phase 3b's schema shipped; owner decisions on editions, licences (OpenITI CC BY-NC-SA 4.0),
+import keys/origin, Albani grades and tafsir resources ([vision-v2 §15](./vision-v2-plan.md#15-owner-decisions)).
+
+| Area | Scope |
+| --- | --- |
+| Importers | `backend/prisma/imports/<work>/` (pure `parse.ts` + synthetic fixtures + spec), shared stream reader/batch upsert/`SyncLog` helper, runner script `import:book`, `--dry-run` sampling for the owner. Pilot work first, then «شعب الإيمان» (~11k narrations, streamed). |
+| Mapping | One `Source` per work + edition; narrations → `HADITH` `Quote` (`UNGRADED` unless a licensed graded collection), keys `book:<work>` / `<edition>:<number>`; prose works → curated `BOOK_EXCERPT`s only; chapter in `rawPayload` + admin `chapter` filter. |
+| Guards | **No PDF/OCR input**; importers never write `SinQuote`/`GoodDeedQuote`/`ImanBranchQuote`/`QuoteTag`; imported text read-only for curators (owner decision on the §2.5 amendment); re-import never overwrites a curator's grade. |
+| Tafsir | `content-sync` `ExplanationProvider` + `QuranComTafsirProvider` → `Explanation` (`API_CACHED`), fixture-tested, manual trigger via #58. |
+| Curation aid | Dorar hadith-search CLI (`dorar:lookup`), manual use only, never in a request path. |
+
+**Done when:** a dry run's samples are checked by the owner against the PDF; a real run gives one `SUCCESS`
+`SyncLog` and a second run creates **zero** rows; imported narrations are invisible on public endpoints by default;
+no link or tag row was written by an importer; a curator filters by source + chapter, grades with a citation and
+links; a tafsir run caches the chosen resource and `/quotes/[id]` shows it; no test touched the network.
 
 ---
 
@@ -150,7 +247,7 @@ Entry condition: phases 2–4 shipped and `/v1` unchanged for a full phase.
 | Screens | Home, Sin picker, Reminders, Deed picker, Motivations, Browse, Quote detail, Emotion entry, Favorites, Settings, Login/Register ([mobile-plan §3](./mobile-plan.md#3-screen-map)). |
 | Platform | `nativewind` with the same semantic token names; `expo-font` with the Arabic family; RTL via `I18nManager` **including the reload-on-locale-change UX**; `i18next` + `expo-localization` over ICU catalogues. |
 | Offline | TanStack Query + `AsyncStorage` persister with an allow-listed key set; `expo-secure-store` for the refresh token; NetInfo → `onlineManager`; paused mutations replayed on reconnect (safe because the favorites endpoints are idempotent). |
-| Native | Share sheet, haptics, deep/universal links, optional keep-awake. **No push notifications** — they contradict the on-demand premise. |
+| Native | Share sheet, haptics, deep/universal links, optional keep-awake. **No push notifications** — they contradict the on-demand premise. The one exception is **on-device local notifications** (`expo-notifications`) for the user-configured Phase 4b kinship/deed reminders ([mobile-plan §3.2](./mobile-plan.md#32-phase-4b-reminders--on-device-local-notifications)) — no push server. |
 | Backend | Ideally zero changes. Anything required is additive and versionless. |
 | DevOps | EAS Build/Submit, `expo-updates` channels, `mobile-release.yml`. |
 

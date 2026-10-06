@@ -9,6 +9,11 @@
 > Cross-doc: [TECHNICAL_PLAN.md](../TECHNICAL_PLAN.md) · [backend-plan.md](./backend-plan.md) ·
 > [frontend-plan.md](./frontend-plan.md) · [mobile-plan.md](./mobile-plan.md) · [devops-plan.md](./devops-plan.md) ·
 > [roadmap.md](./roadmap.md)
+>
+> **Amended by [vision-v2-plan.md §10](./vision-v2-plan.md#10-reminders-for-any-good-deed--phase-4b-amendment):**
+> open decision S3 is resolved — a deed reminder can target **any** `GoodDeed` (الصدقة and the acts of worship the
+> owner adds), not only forgotten deeds. Forgotten deeds keep the spotlight and the catalogue filter. No schema
+> change; only the eligibility check in #72 is dropped.
 
 **The feature in one paragraph.** A signed-in user keeps a private list of relatives (رحم) they want to stay in
 touch with, each with a contact rhythm ("every week", "every month"…). The app shows who is **due this week or
@@ -400,12 +405,14 @@ of the quote projection ([backend/.cursorrules](../../backend/.cursorrules): the
 | # | Endpoint | Request | Response | Codes |
 | --- | --- | --- | --- | --- |
 | 71 | `GET /kinship/deed-reminders` | `today?`, `lang` | `{ data: DeedReminderDto[] }` | `200`, `401` |
-| 72 | `POST /kinship/deed-reminders` | `CreateDeedReminderDto`: `goodDeedSlug`, `frequency`, `intervalDays?`, `preferredWeekday?`, `today?` | `201 { data: DeedReminderDto }` + `Location` | `201`, `400`, `401`, `404` unknown slug, `409 DEED_REMINDER_EXISTS`, `422 DEED_NOT_ELIGIBLE` (deed is not a forgotten deed — [S3](#14-open-decisions)), `422 DEED_REMINDER_LIMIT_REACHED` (cap 50) |
+| 72 | `POST /kinship/deed-reminders` | `CreateDeedReminderDto`: `goodDeedSlug`, `frequency`, `intervalDays?`, `preferredWeekday?`, `today?` | `201 { data: DeedReminderDto }` + `Location` | `201`, `400`, `401`, `404` unknown slug, `409 DEED_REMINDER_EXISTS`, ~~`422 DEED_NOT_ELIGIBLE`~~ (removed — S3 resolved: any deed, [vision-v2 §10](./vision-v2-plan.md#10-reminders-for-any-good-deed--phase-4b-amendment)), `422 DEED_REMINDER_LIMIT_REACHED` (cap 50) |
 | 73 | `PATCH /kinship/deed-reminders/:id` | schedule fields, `isActive?` | `200 { data: DeedReminderDto }` | `200`, `400`, `401`, `404` |
 | 74 | `DELETE /kinship/deed-reminders/:id` | — | `204` | `204`, `401`, `404` |
 | 75 | `POST /kinship/deed-reminders/:id/done` | `doneOn?` (default `today`), `today?` | `200 { data: DeedReminderDto }` | `200`, `400`, `401`, `404` |
 
-Eligibility is checked only at creation. A deed that later loses the tag keeps its existing reminders.
+~~Eligibility is checked only at creation. A deed that later loses the tag keeps its existing reminders.~~
+Superseded: there is no eligibility check — any existing `GoodDeed` slug is accepted
+([vision-v2 §10](./vision-v2-plan.md#10-reminders-for-any-good-deed--phase-4b-amendment)).
 
 ### 5.6 Calendar feed settings and token (76–79)
 
@@ -674,7 +681,7 @@ and [§6](./frontend-plan.md#6-state--data-fetching-plan), [frontend/.cursorrule
 | `/kinship/[relativeId]` | `kinship` | user | Relative detail, contact history, edit, pause/resume, delete (confirm `Dialog`) | #64, #68, #69, #65, #66 |
 | `/kinship/calendar` | `kinship` | user | What the feed is and its privacy trade-off; "create link" → copyable `webcal://` and `https://` links + locally rendered QR; generic/names setting; rotate and revoke (each behind a confirm `Dialog`); "set a default notification for this calendar" guidance | #76–#79 |
 | `/` *(addition)* | `good-deed-motivation` | guest | `ForgottenDeedSpotlight` card: the deed of the week, linking to `/good-deeds/[slug]` | #81 |
-| `/good-deeds?tag=forgotten-deeds` *(addition)* | `good-deed-motivation` | guest | A "الأعمال المنسية" filter chip on the existing catalogue (URL state). A signed-in user also sees "add to my reminders" on a forgotten deed's page. | #5′, #72 |
+| `/good-deeds?tag=forgotten-deeds` *(addition)* | `good-deed-motivation` | guest | A "الأعمال المنسية" filter chip on the existing catalogue (URL state). A signed-in user also sees "add to my reminders" on **every** deed's page (S3 resolved — [vision-v2 §10](./vision-v2-plan.md#10-reminders-for-any-good-deed--phase-4b-amendment)). | #5′, #72 |
 | `/settings` *(addition)* | `components/shared` | user section | "Export my data" (downloads #82) and "Delete my account" (password re-entry, #83) | #82, #83 |
 
 All `/kinship*` routes: Client Components, `dynamic = 'force-dynamic'`, `robots: { index: false }`, generic
@@ -779,7 +786,7 @@ Style and file layout as in [backend-plan §11](./backend-plan.md#11-testing-str
 | `kinship/schedule.ts` | weekly/biweekly/custom add the right days; monthly from the 31st → the 28th of next month; December → January; `preferredWeekday` snaps **forward** 0–6 days, never backward; a new relative with no contact is due `today` (snapped); a backdated contact older than `lastContactedOn` does not move it backwards |
 | `KinshipService` | another user's relative → `NotFoundException` (not forbidden); `CUSTOM` without `intervalDays` → 400; `intervalDays` with `WEEKLY` → 400; `preferredWeekday` with `MONTHLY` → 400; `contactedOn` after `today` → 400; undo restores `lastContactedOn` to the max remaining log (or `null` → due today); cap 200 → `RELATIVE_LIMIT_REACHED`; `today` outside ±1 day of server UTC falls back to the server date; due list orders most-overdue first and merges deed reminders |
 | `@NoContactDetails()` | rejects `+966 50 123 4567`, `0501234567`, `٠٥٠١٢٣٤٥٦٧`, `a@b.co`; accepts «خالتي أم محمد», «جدي» |
-| `DeedRemindersService` | non-member deed → `DEED_NOT_ELIGIBLE`; duplicate → `409`; `done` advances `nextDueOn`; cap 50 |
+| `DeedRemindersService` | any deed accepted (S3 resolved, e.g. `sadaqah`); unknown slug → `404`; duplicate → `409`; `done` advances `nextDueOn`; cap 50 |
 | `CalendarFeedService` | token is ≥32 random bytes base64url; **only** `sha256(token)` is persisted; rotate replaces the hash (old token → not found); revoke nulls it; unknown/revoked/malformed tokens raise the **same** not-found error |
 | `ics/serialize` | CRLF line endings; no line over 75 octets **and no split UTF-8 sequence** in an Arabic `SUMMARY`; `,` `;` `\` and newlines escaped; `UID` identical across two renders after an edit; `RRULE` per frequency matches §7.3; `showNames=false` → **no fixture name appears anywhere in the output**; `note` never appears in either mode; generic grouping counts correctly; an empty list → a valid empty `VCALENDAR` |
 | `GoodDeedsService` (additions) | `tag` filter includes a deed iff a linked, grade-policy-renderable quote carries the tag (a `MAWDU`-only link does **not** qualify); spotlight: same `(tag, period, date)` → same deed; every date in one ISO week → the same deed; the pick function's inputs are only `tag/period/date` (no request/IP/user); a tag with no members → `null` |
@@ -864,7 +871,7 @@ Genuinely open items. Each has a default so implementation is not blocked once t
 | --- | --- | --- | --- |
 | S1 | **How is a deed marked "forgotten"?** | Derived: the deed has a renderable linked quote tagged `forgotten-deeds` (§4.4), with no schema change | It honours "reuse the existing model", but it is indirect. The alternative is a proposed `GoodDeedTag` join (or `GoodDeed.isForgotten`): explicit, but another schema change to approve. |
 | S2 | **Which relations are offered?** Are in-laws (أصهار) included? | The §4.1 list; in-laws are not a separate value (`OTHER` covers them) | Who counts as رحم is a content/fiqh question for the owner; adding an enum value later is additive. |
-| S3 | Can **any** good deed be put on a reminder, or only forgotten deeds? | Forgotten deeds only (`422 DEED_NOT_ELIGIBLE`) | Matches the brief. Opening it up removes one check. |
+| S3 | Can **any** good deed be put on a reminder, or only forgotten deeds? | **Resolved → any `GoodDeed`** (الصدقة and other acts of worship the owner adds); `DEED_NOT_ELIGIBLE` removed. Owner to confirm ([vision-v2 V12](./vision-v2-plan.md#15-owner-decisions)). | The owner's updated vision asks for periodic reminders of sadaqa and other acts of worship, not only forgotten deeds. Details: [vision-v2-plan.md §10](./vision-v2-plan.md#10-reminders-for-any-good-deed--phase-4b-amendment). |
 | S4 | **ICS library or hand-written?** | `ical-generator` (pending approval) | §7.1. Rejecting it means a hand-written serializer with the same tests. |
 | S5 | **QR code on the subscribe screen** | Keep it, rendered locally via a small frontend dependency (`qrcode.react`, pending approval) | Useful when subscribing a phone from a desktop. Dropping it removes a dependency; the copy buttons remain. |
 | S6 | **Alarm in the feed** | `VALARM` at 09:00 local on the due day | Some clients ignore feed alarms anyway. The time could become a user setting later (one column). |

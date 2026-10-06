@@ -63,7 +63,8 @@ backend/src/
     ├── tags/                    # NEW
     ├── auth/                    # NEW
     ├── users/                   # NEW  (thin; owned by auth flows)
-    └── favorites/               # NEW
+    ├── favorites/               # NEW
+    └── kinship/                 # NEW  Phase 4b, PROPOSED (owner approval) — §1.13, silat-rahim-plan.md
 ```
 
 Per-module file convention (same for all): `<name>.module.ts`, `<name>.controller.ts` (and
@@ -193,6 +194,31 @@ Both are `@Public()` and **excluded from the `/v1` prefix** so platform probes k
 })
 export class AppModule {}
 ```
+
+### 1.13 `modules/kinship/` — Phase 4b (proposed)
+
+**Pointer only — the full design is [silat-rahim-plan.md](./silat-rahim-plan.md#6-backend-module-placement).**
+It is a proposed addition requiring owner approval, and the one new module Phase 4b adds.
+
+| Item | Detail |
+| --- | --- |
+| Responsibility | A signed-in user's private kinship list (صلة الرحم), contact logs, forgotten-deed reminders, the due list, and the token-authenticated `text/calendar` feed. `nextDueOn` is computed on write — no scheduler. |
+| Owns (writes) | `Relative`, `ContactLog`, `DeedReminder` (proposed, §9.1); `User.calendarFeed*` only through new `UsersService` methods |
+| Depends on | `users`, `good-deeds` (one-way). `auth → kinship` for the account export only. |
+| Registered | In `app.module.ts` after `FavoritesModule`. |
+
+Forgotten deeds add **no** module: they are a `THEME` tag plus `good-deeds` reads (`tag` filter on #5,
+`GET /good-deeds/spotlight`).
+
+### 1.14 `modules/iman-branches/` — Phase 3b (proposed)
+
+**Pointer only — the full design is [vision-v2-plan.md §8](./vision-v2-plan.md#8-backend-module-placement).**
+A proposed addition requiring owner approval and a `.cursorrules` module-list update; the one new module of
+Phase 3b. Owns `ImanBranch`, `ImanBranchGoodDeed`, `ImanBranchSin`; reads quotes only through `QuotesService`;
+depends on `quotes`, `hadith` (`GradePolicy`), `sources`; `sins`/`good-deeds`/`classification` → `iman-branches`
+(one-way). Phase 3b also extends existing modules without new folders: `classification` (`ImanBranchQuote` links),
+`quotes` (`Explanation`), `sources` (`ExternalReference`), `sins` (`Sin.rank`), `content-sync` (tafsir, Phase 5b).
+Book importers live in `backend/prisma/imports/` (Phase 5b), outside the module tree.
 
 ---
 
@@ -360,6 +386,8 @@ when one is present.
 | 59 | GET | `/admin/sync-logs` | admin |
 | 60 | GET | `/admin/sync-logs/:id` | admin |
 | 61 | GET | `/health`, `/health/ready` (unprefixed) | public |
+| 62–83 | various | **Phase 4b, proposed:** `/kinship/*` (#62–#79), `GET /kinship/calendar/feeds/:token.ics` (#80, `text/calendar`), `GET /good-deeds/spotlight` (#81), `GET /auth/me/export` (#82), `DELETE /auth/me` (#83); plus an additive `tag` filter on #5 — specified in [silat-rahim-plan §5](./silat-rahim-plan.md#5-rest-api) | user / token / public |
+| 84–103 | various | **Phase 3b, proposed:** `/branches` (#84), `/branches/:number` (#85), `/branches/:number/quotes` (#86, optional auth, grade policy as #3), `/quotes/:id/explanations` (#87), `/admin/branches…` (#88–#90, #96), `/admin/branch-quotes…` (#91–#95), `/admin/explanations…` (#97–#100), `/admin/external-refs…` (#101–#103); plus additive `rank`/`externalRefs`/`relatedBranches` on #1–#3/#6 and a `chapter` admin filter — specified in [vision-v2-plan §7](./vision-v2-plan.md#7-rest-api) | public / optional / admin |
 
 ---
 
@@ -971,7 +999,7 @@ modules/auth/
 | --- | --- |
 | Logger | **`nestjs-pino`** (`pino-http` under the hood). JSON logs in production, `pino-pretty` in development. Chosen over Nest's built-in `Logger` because the built-in one emits unstructured strings — unusable for querying once the app is on a hosted platform, and this app has an auditable pipeline (`SyncLog`) worth correlating against. |
 | Correlation | `genReqId` reuses an inbound `x-request-id` or generates one; it appears in every log line and in `error.requestId` (§2.5). |
-| Redaction | `redact: ['req.headers.authorization', 'req.body.password', 'req.body.refreshToken']` — non-negotiable. |
+| Redaction | `redact: ['req.headers.authorization', 'req.body.password', 'req.body.refreshToken']` — non-negotiable. Phase 4b adds masking of the calendar-feed token in the logged URL and `error.path`, plus kinship body fields ([silat-rahim-plan §6.4](./silat-rahim-plan.md#64-logging-and-redaction)). |
 | Levels | `info` for requests, `warn` for `4xx`, `error` for `5xx` and for every `SyncLog` failure, `debug` for provider request/response summaries (never full `rawPayload`). |
 | Health | `GET /health` → `{ status: 'ok', uptime, version }` with no DB call (liveness). `GET /health/ready` → `SELECT 1` and `503 { status: 'error', checks: { database: 'down' } }` on failure (readiness). `@nestjs/terminus` is optional; a 20-line controller is enough for phase 2. |
 | Metrics | Out of scope until phase 5. If added: `prom-client` behind `GET /metrics`, admin-guarded or network-restricted. |
@@ -1019,6 +1047,34 @@ listed in Open Decisions.
 **Also noted, not proposed now:** a normalised-text column + trigram index for Arabic search (§4.4) — that is a
 raw-SQL migration rather than a schema-model change.
 
+### 9.1 Phase 4b, proposed — Silat ar-Rahim & forgotten deeds
+
+**Not pre-approved.** Unlike the phase-4 fields above, these require the owner's explicit approval
+([backend/.cursorrules](../../backend/.cursorrules) "Schema Changes Are Exceptional") and ship as their own
+migration, `prisma migrate dev --name add_kinship_reminders`. The authoritative `prisma` block and the
+per-field justification are in [silat-rahim-plan §4](./silat-rahim-plan.md#4-data-model--proposed-schema-additions).
+They are summarised here, not duplicated:
+
+| Addition | Purpose |
+| --- | --- |
+| `Relative` + enums `KinRelation`, `ReminderFrequency`, `Weekday` | The private kinship list; `nextDueOn @db.Date` computed on write. |
+| `ContactLog` + enum `ContactMethod` | "I contacted them" — restarts the cycle; supports undo. |
+| `DeedReminder` (+ `GoodDeed.deedReminders` back-relation) | Forgotten deeds opted into the reminder schedule. |
+| `User.calendarFeedTokenHash String? @unique`, `User.calendarShowNames Boolean @default(false)` (+ back-relations) | The hashed, rotatable ICS feed token and the names-in-titles opt-in. |
+
+Forgotten deeds themselves need **no** schema change: a `THEME` tag `forgotten-deeds` on the deeds' linked
+quotes ([silat-rahim-plan §4.4](./silat-rahim-plan.md#44-forgotten-deeds-need-no-schema-change)).
+
+### 9.2 Phase 3b, proposed — vision v2
+
+**Not pre-approved**; four migrations, each its own commit (`add_sin_rank`, `add_iman_branches`,
+`add_explanations`, `add_external_references`). The authoritative `prisma` block, raw-SQL CHECKs and per-field
+justification are in [vision-v2-plan §6](./vision-v2-plan.md#6-proposed-schema-additions):
+`SinRank` + `Sin.rank`/`rankSourceId`/`rankReference` (`Sin.severity` kept); `ImanBranch` + `ImanBranchQuote`/
+`ImanBranchGoodDeed`/`ImanBranchSin`; `ExplanationKind` + `Explanation`; `ExternalReference`. Phase 4b's
+`DeedReminder` is unchanged but now accepts any `GoodDeed`
+([vision-v2 §10](./vision-v2-plan.md#10-reminders-for-any-good-deed--phase-4b-amendment)).
+
 ---
 
 ## 10. Dependencies to add (none installed in this task)
@@ -1032,6 +1088,7 @@ raw-SQL migration rather than a schema-model change.
 | 4 | `@nestjs/jwt`, `@nestjs/passport`, `passport`, `passport-jwt`, `@types/passport-jwt` | auth (§7) |
 | 4 | `argon2` | password hashing (§7.1) |
 | 4 | `@nestjs/throttler` | auth rate limiting (§2.7) |
+| 4b | `ical-generator` (`^11`) — **pending owner approval** | RFC 5545 calendar feed: escaping and UTF-8-safe line folding ([silat-rahim-plan §7.1](./silat-rahim-plan.md#71-library-vs-hand-written--recommendation-ical-generator-pending-approval)); the fallback is a hand-written serializer |
 | 5 | `@nestjs/schedule` | cron sync ([content-pipeline-plan §3](./content-pipeline-plan.md#3-sync-job-mechanics)) |
 | 5 | `helmet`, `compression` | hardening |
 | 2–3 | `tsx` *(only if Node 24 native TS stripping proves insufficient for `prisma/seed.ts`)* | seed script |
@@ -1063,6 +1120,8 @@ Must-have cases, per module:
 | `favorites` | duplicate → `409`; delete by `quoteId` of a non-favorited quote → `404` |
 | `content-sync` | idempotent upsert on `(apiProvider, externalId)`; one bad record does not abort the run; `SyncLog` transitions |
 | `common` | Arabic normaliser: `الغيبه` ≡ `الغِيبة`; envelope interceptor passthrough; Prisma→HTTP error mapping table |
+| `kinship` (Phase 4b) | The list in [silat-rahim-plan §11.1](./silat-rahim-plan.md#111-unit-tests-must-have) — `nextDueOn` maths, ownership → `404`, hashed token, ICS folding/escaping, no names in the default feed |
+| `iman-branches`, explanations, external refs, book importers, tafsir (Phases 3b/5b) | The list in [vision-v2-plan §12.1](./vision-v2-plan.md#121-unit-must-have) — grade policy on branch quotes (verse survives `grades=SAHIH`, `MAWDU` never), `MAWDU` quote's explanations → `404`, allow-listed external hosts, idempotent imports that never write link/tag rows |
 
 ### 11.2 E2E tests
 
@@ -1109,6 +1168,11 @@ already in [`test/app.e2e-spec.ts`](../../backend/test/app.e2e-spec.ts).
 9. `classification/` admin controller (endpoints 48–57) + admin CRUD (28–47).
 10. `content-sync/` (endpoints 58–60) — see [content-pipeline-plan.md](./content-pipeline-plan.md).
 11. `auth/` + `users/` + `favorites/` (endpoints 19–27) — phase 4.
+12. `kinship/` + the `good-deeds`/`auth` additions (endpoints 62–83) — phase 4b, after approval; order in
+    [silat-rahim-plan §12](./silat-rahim-plan.md#12-build-order-for-cursor).
+13. `iman-branches/` + the `sins`/`classification`/`quotes`/`sources` additions (endpoints 84–103) — phase 3b,
+    then book importers + tafsir — phase 5b, after approval; order in
+    [vision-v2-plan §17](./vision-v2-plan.md#17-for-cursor--build-order).
 
 Steps 1–9 are phase 2 in the [roadmap](./roadmap.md); each step is independently shippable and testable with a
 REST client before any UI exists.

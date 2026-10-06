@@ -101,7 +101,25 @@ Guest-first is identical to the web: only Favorites sync needs an account
 | Deep links + universal links (`thekra://sins/ghibah`, `https://…/sins/ghibah`) | Lets a shared link open the app on the exact screen. Configure `scheme` in `app.json` in phase 7. |
 | Offline favorites | §6. |
 | Keep-awake while reading (`expo-keep-awake`, opt-in) | Long Arabic passages are read slowly. |
-| Notifications | **Explicitly out of scope.** The product is *on-demand by definition* ([README](../../README.md): "instead of pushing random daily content"). A reminder push would contradict the premise. Revisit only as a user-configured intention reminder, never as a content feed. |
+| Notifications | **Content push stays explicitly out of scope.** The product is *on-demand by definition* ([README](../../README.md): "instead of pushing random daily content"), so a content push would contradict the premise. The one exception is the **user-configured** Phase 4b kinship/forgotten-deed reminders, delivered as **on-device local notifications** (§3.2) — no push server ([TECHNICAL_PLAN F5](../TECHNICAL_PLAN.md#f-mobile)). |
+
+### 3.2 Phase 4b reminders — on-device local notifications
+
+Short note; the feature is designed in [silat-rahim-plan.md](./silat-rahim-plan.md) and not re-designed here.
+In Phase 7 the app reads the same kinship data (`GET /v1/kinship/due`, `/kinship/relatives`,
+`/kinship/deed-reminders`) and **schedules local notifications on the device** with `expo-notifications`. On
+mobile this replaces reliance on the calendar feed, which stays available as an option. Points to settle when
+Phase 7 starts:
+
+- Reschedule after every kinship mutation and on app foreground: cancel this feature's pending notifications
+  (identified by a `data.kind = 'kinship'` marker) and schedule the next occurrences from each row's `nextDueOn`
+  and frequency. **iOS keeps only a limited number of pending local notifications** (commonly cited as 64), so
+  schedule a rolling window rather than every future occurrence.
+- Notification text follows the same privacy default as the feed: **generic unless `calendarShowNames` is on**,
+  because notifications show on the lock screen.
+- Ask for notification permission only when the user turns reminders on, never at launch.
+- On sign-out, cancel all kinship notifications and drop the kinship queries from the persisted cache.
+- Add a `kinship` screen (mirroring `/kinship`) to the §3 screen map at that time.
 
 ---
 

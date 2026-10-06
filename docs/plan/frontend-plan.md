@@ -43,6 +43,8 @@ src/
 │   │   ├── browse/page.tsx
 │   │   ├── favorites/page.tsx
 │   │   ├── login/page.tsx            · register/page.tsx
+│   │   ├── kinship/page.tsx          · kinship/[relativeId]/ · kinship/calendar/   (Phase 4b, proposed)
+│   │   ├── branches/page.tsx         · branches/[number]/   (Phase 3b, proposed — slice features/iman-branches)
 │   │   └── settings/page.tsx
 │   ├── api/auth/[...]/route.ts        httpOnly refresh-cookie handlers (§6.5)
 │   └── globals.css                   🎨 design tokens (the swap point)
@@ -53,7 +55,8 @@ src/
 │   ├── sin-reminder/{components,hooks,types}
 │   ├── good-deed-motivation/{components,hooks,types}
 │   ├── quran-hadith-browser/{components,hooks,types}
-│   └── favorites/{components,hooks,stores}
+│   ├── favorites/{components,hooks,stores}
+│   └── kinship/{components,hooks}    NEW slice, Phase 4b, proposed — silat-rahim-plan.md §9
 ├── lib/                              api client, query setup, types, utils (§6)
 ├── i18n/                             next-intl routing + request config (§5)
 └── messages/                         ar.json, en.json
@@ -84,6 +87,8 @@ never has to be touched again.
 | `/login`, `/register` | `components/shared/auth` | guest | Email+password forms. **Only reachable by choice** — never a gate on the core flows. | `POST /auth/login` (#20), `POST /auth/register` (#19) |
 | `/settings` | `components/shared` | guest | Language toggle (`ar`/`en`), theme toggle, translation-visibility preference, weak-hadith opt-in. | — (local + `GET /auth/me` #22 when signed in) |
 | `/admin/**` | *(phase 6, new slice `features/curation`)* | admin | Curation UI over endpoints #28–#57. Deliberately out of scope until the roadmap's phase 6. | admin endpoints |
+| `/kinship`, `/kinship/[relativeId]`, `/kinship/calendar` | *(Phase 4b, new slice `features/kinship`, proposed)* | **user** (`SignInPrompt` when anonymous, no redirect) | Private صلة الرحم list: due/overdue list with an optimistic "contacted" action, add/edit sheet, contact history, motivating `QuoteCard`, calendar-feed subscription (copyable `webcal://` link + local QR). Also adds `ForgottenDeedSpotlight` on `/` (guest), a forgotten-deeds filter on `/good-deeds`, and export/delete in `/settings`. Full spec: [silat-rahim-plan §9](./silat-rahim-plan.md#9-frontend). | #62–#83, #5, #7 |
+| `/branches`, `/branches/[number]` | *(Phase 3b, new slice `features/iman-branches`, proposed)* | guest | The third path, **شعب الإيمان**: numbered list, then one شعبة with its summary, a collapsed «الشرح» accordion, ranked texts (shared `QuoteCard`, same grade policy), linked deeds and sins, Dorar "read more". Also: a third entry card on `/`, a كبيرة/صغيرة badge on `/sins` and `/sins/[slug]`, a تفسير/شرح accordion on `/quotes/[id]`, "remind me" on every `/good-deeds/[slug]` (Phase 4b amendment), and admin screens. Full spec: [vision-v2-plan §9](./vision-v2-plan.md#9-frontend). | #84–#87, #91–#103, #1–#3, #6 |
 
 Extra route files per segment: `loading.tsx` (Skeleton composition), `error.tsx` (client error boundary with a
 retry), plus a root `not-found.tsx`. `/sins/[slug]` and `/good-deeds/[slug]` also get `generateMetadata` using
@@ -207,7 +212,21 @@ features/quran-hadith-browser/components/
                                        BrowseTabs, QuoteFilters, SurahSelect, CollectionSelect,
                                        GradeFilter, InfiniteQuoteList, QuoteDetail
 features/favorites/components/         FavoritesList, FavoriteButton (re-export of shared), SignInPrompt
+features/kinship/components/           (Phase 4b, proposed) DueList, MarkContactedButton, RelativeFormSheet,
+                                       ContactHistory, DeedReminderList, KinshipMotivation, CalendarSubscribeCard …
+                                       — full list in silat-rahim-plan.md §9.2
 ```
+
+Phase 4b note ([silat-rahim-plan §9.2](./silat-rahim-plan.md#92-feature-slice-featureskinship-new-slice--owner-approval-needed)):
+`SignInPrompt` moves to `components/shared/auth/` because `/kinship` needs it too, and slices never import each
+other. `good-deed-motivation` gains `ForgottenDeedSpotlight` and `ForgottenDeedsFilterChip`.
+
+Phase 3b note ([vision-v2-plan §9.2](./vision-v2-plan.md#92-slices-and-components)): a **new slice
+`features/iman-branches`** (proposed; needs the owner's `frontend/.cursorrules` slice-list update) with
+`BranchList`, `BranchHeader`, `BranchPractices`, `BranchExplanations`, `BranchNav`, `BranchEntryCard`; new
+presentational shared components `components/shared/quote/ExplanationAccordion`,
+`components/shared/ExternalReferenceLinks` and `components/shared/SinRankBadge`; `curation` gains branch,
+explanation and external-ref editors. Contract changes are mirrored in `mobile/src/lib/types/api.ts`.
 
 ---
 
@@ -454,7 +473,8 @@ src/lib/
 │   ├── tags.ts          getTags, getTag
 │   ├── sources.ts       getSources, getSource
 │   ├── auth.ts          login, register, refresh, me, logout
-│   └── favorites.ts     getFavorites, getFavoriteQuoteIds, addFavorite, removeFavorite
+│   ├── favorites.ts     getFavorites, getFavoriteQuoteIds, addFavorite, removeFavorite
+│   └── kinship.ts       Phase 4b, proposed — endpoints #62–#79 (silat-rahim-plan.md §9.3)
 ├── types/
 │   ├── api.ts           QuoteDto, SinDto, GoodDeedDto, SinQuotesResponse, PageMeta, ApiError…
 │   └── enums.ts         QuoteType, QuoteOrigin, HadithGrade, TagCategory, SourceType, SyncStatus
@@ -642,6 +662,7 @@ compliance decoration; it decides whether the app is usable at the moment it is 
 | 3 | `next-intl` | i18n + RTL routing (§5) |
 | 3 | `sonner` | toasts (pulled in by `shadcn add sonner`) |
 | 4 | `react-hook-form`, `zod`, `@hookform/resolvers` | auth + admin forms (pulled in by `shadcn add form`) |
+| 4b | `qrcode.react` (or an equivalent local renderer) — **pending owner approval** | QR for the calendar-feed link, rendered locally and never through a remote QR service ([silat-rahim-plan §15](./silat-rahim-plan.md#15-dependencies-and-configuration)) |
 | 8 | `@axe-core/react` or `axe-playwright` (dev) | accessibility audit pass |
 
 Already present, do not re-add: `@tanstack/react-query`, `axios`, `zustand`, `tailwindcss` v4.
@@ -678,6 +699,10 @@ Minimum bar for phase 3: `pnpm --filter frontend build` and `tsc --noEmit` clean
 10. `quran-hadith-browser`: `/browse`, `/browse/quran/[surahNumber]`, `/quotes/[id]`.
 11. `/feelings/[tagSlug]` (emotion entry).
 12. Phase 4: auth routes, session plumbing, `favorites` slice, `FavoriteButton` activation.
+13. Phase 3b (proposed, after approval): `src/lib` types/api/keys → shared `ExplanationAccordion`,
+    `ExternalReferenceLinks`, `SinRankBadge` → `features/iman-branches` + `/branches`, `/branches/[number]` →
+    home third card → sin/deed/quote-detail additions → `curation` editors — order in
+    [vision-v2-plan §17](./vision-v2-plan.md#17-for-cursor--build-order).
 
 Steps 1–11 are phase 3 in the [roadmap](./roadmap.md); the palette swap-in is phase 8 and, if §4.4 holds, costs
 one file plus fonts.
