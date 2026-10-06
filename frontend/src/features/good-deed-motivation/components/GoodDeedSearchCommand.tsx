@@ -20,7 +20,7 @@ interface GoodDeedSearchCommandProps {
 export function GoodDeedSearchCommand({ onSelect }: GoodDeedSearchCommandProps) {
   const t = useTranslations('goodDeeds');
   const router = useRouter();
-  const { data, isPending } = useGoodDeeds({ limit: 200 });
+  const { data, isPending } = useGoodDeeds({ limit: 100 });
   const deeds = data?.data ?? [];
 
   function handleSelect(deed: GoodDeedDto) {

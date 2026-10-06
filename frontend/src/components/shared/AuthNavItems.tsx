@@ -5,10 +5,10 @@
  */
 'use client';
 
+import { useSyncExternalStore } from 'react';
 import { useTranslations } from 'next-intl';
-import { useRouter } from '@/i18n/navigation';
-import { Link } from '@/i18n/navigation';
 import { toast } from 'sonner';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -17,8 +17,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useSession } from '@/features/auth/hooks/useSession';
+import { Link, useRouter } from '@/i18n/navigation';
 
 function initials(name: string | null, email: string): string {
   if (name) {
@@ -32,26 +32,39 @@ function initials(name: string | null, email: string): string {
   return email[0].toUpperCase();
 }
 
+function GuestAuthLinks({
+  signIn,
+  register,
+}: {
+  signIn: string;
+  register: string;
+}) {
+  return (
+    <div className="flex items-center gap-1">
+      <Button asChild variant="ghost" size="sm">
+        <Link href="/login">{signIn}</Link>
+      </Button>
+      <Button asChild size="sm">
+        <Link href="/register">{register}</Link>
+      </Button>
+    </div>
+  );
+}
+
 export function AuthNavItems() {
   const t = useTranslations('auth');
   const tNav = useTranslations('nav');
   const router = useRouter();
   const { user, isAuthenticated, isLoading, clearSession } = useSession();
+  // Match SSR: guest chrome until after mount (session restore is client-only).
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
 
-  // During session restore, render nothing to avoid flash
-  if (isLoading) return null;
-
-  if (!isAuthenticated) {
-    return (
-      <div className="flex items-center gap-1">
-        <Button asChild variant="ghost" size="sm">
-          <Link href="/login">{t('signIn')}</Link>
-        </Button>
-        <Button asChild size="sm">
-          <Link href="/register">{t('register')}</Link>
-        </Button>
-      </div>
-    );
+  if (!mounted || isLoading || !isAuthenticated) {
+    return <GuestAuthLinks signIn={t('signIn')} register={t('register')} />;
   }
 
   async function handleLogout() {
@@ -89,7 +102,10 @@ export function AuthNavItems() {
           <Link href="/settings">{tNav('settings')}</Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+        <DropdownMenuItem
+          onClick={handleLogout}
+          className="text-destructive focus:text-destructive"
+        >
           {t('logout')}
         </DropdownMenuItem>
       </DropdownMenuContent>

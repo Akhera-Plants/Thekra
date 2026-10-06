@@ -122,13 +122,13 @@ export function DashboardView() {
   const t = useTranslations('admin');
 
   const { data: sinsResult, isLoading: sinsLoading } = useQuery({
-    queryKey: queryKeys.sins.list({ limit: 200 }),
-    queryFn: () => getSins({ limit: 200 }),
+    queryKey: queryKeys.sins.list({ limit: 100 }),
+    queryFn: () => getSins({ limit: 100 }),
   });
 
   const { data: deedsResult, isLoading: deedsLoading } = useQuery({
-    queryKey: queryKeys.goodDeeds.list({ limit: 200 }),
-    queryFn: () => getGoodDeeds({ limit: 200 }),
+    queryKey: queryKeys.goodDeeds.list({ limit: 100 }),
+    queryFn: () => getGoodDeeds({ limit: 100 }),
   });
 
   const lowSins = useMemo(

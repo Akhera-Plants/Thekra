@@ -54,6 +54,28 @@ enum UserRole {
   ADMIN
 }
 
+/// Scholarly rank shown on a sin. Distinct from Sin.severity (editorial weight).
+enum SinRank {
+  KABIRA // كبيرة
+  SAGHIRA // صغيرة
+}
+
+enum ExplanationKind {
+  TAFSIR // تفسير — attached by ayahKey
+  SHARH // شرح — attached by quoteId
+  BRANCH_SHARH // شرح شعبة — attached by imanBranchId
+}
+
+/// Review state of a suggested or curated link.
+/// Public reminder feeds serve ACCEPTED only.
+enum LinkReviewStatus {
+  NOT_REVIEWED
+  UNDER_REVIEW
+  REVIEWED
+  ACCEPTED
+  REJECTED
+}
+
 model Source {
   id            String     @id @default(uuid())
   name          String
@@ -68,8 +90,11 @@ model Source {
   lastSyncedAt  DateTime?
   quotes        Quote[]
   syncLogs      SyncLog[]
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  explanations  Explanation[] @relation("ExplanationSource")
+  imanBranches  ImanBranch[]  @relation("ImanBranchSource")
+  rankedSins    Sin[]         @relation("SinRankSource")
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 }
 
 model Quote {
@@ -94,15 +119,22 @@ model Quote {
   author        String?
   pageOrChapter String?
 
+  /// Public printed location in the cited edition (vision v2 §5.3).
+  /// Corpus commit and chapter stay in rawPayload, which is never serialised.
+  volume String?
+  page   String?
+
   externalId  String?
   apiProvider String?
   rawPayload  Json?
 
   translations  Translation[]
   tags          QuoteTag[]
-  sinLinks      SinQuote[]
-  goodDeedLinks GoodDeedQuote[]
-  favorites     Favorite[]
+  sinLinks        SinQuote[]
+  goodDeedLinks   GoodDeedQuote[]
+  favorites       Favorite[]
+  imanBranchLinks ImanBranchQuote[]
+  explanations    Explanation[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -137,10 +169,18 @@ model Sin {
   description      String?
   descriptionAr    String?
   severity         Int?
+  /// Null until a curator classifies the sin. Never derived from severity.
+  rank             SinRank?
+  rankSourceId     String?
+  rankSource       Source?    @relation("SinRankSource", fields: [rankSourceId], references: [id])
+  rankReference    String?
   quotes           SinQuote[]
   relatedGoodDeeds GoodDeed[] @relation("OppositeOfSin")
+  imanBranches     ImanBranchSin[]
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
+
+  @@index([rank])
 }
 
 model GoodDeed {
@@ -154,10 +194,11 @@ model GoodDeed {
   reward        String?
   rewardAr      String?
   oppositeSinId String?
-  oppositeSin   Sin?            @relation("OppositeOfSin", fields: [oppositeSinId], references: [id])
+  oppositeSin   Sin?                 @relation("OppositeOfSin", fields: [oppositeSinId], references: [id])
   quotes        GoodDeedQuote[]
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  imanBranches  ImanBranchGoodDeed[]
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
 
   /// D-3 / P2-17: supports GET /sins/:slug (relatedGoodDeeds) and /sins/:slug/quotes (alternatives).
   @@index([oppositeSinId])
@@ -169,12 +210,15 @@ model SinQuote {
   sin            Sin      @relation(fields: [sinId], references: [id], onDelete: Cascade)
   quoteId        String
   quote          Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
-  relevanceScore Int?     @default(0)
+  relevanceScore Int?              @default(0)
   note           String?
+  /// Suggested links stay NOT_REVIEWED until a human accepts them.
+  /// Existing curated rows were backfilled to ACCEPTED.
+  reviewStatus   LinkReviewStatus @default(NOT_REVIEWED)
   /// D-2: added for admin sort=newest and curator audit trail.
-  createdAt      DateTime @default(now())
+  createdAt      DateTime         @default(now())
   /// D-2: added for curator audit trail.
-  updatedAt      DateTime @updatedAt
+  updatedAt      DateTime         @updatedAt
 
   @@unique([sinId, quoteId])
   /// D-3: quoteId index for reverse lookups (find all sins referencing a quote).
@@ -189,18 +233,114 @@ model GoodDeedQuote {
   goodDeed       GoodDeed @relation(fields: [goodDeedId], references: [id], onDelete: Cascade)
   quoteId        String
   quote          Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
-  relevanceScore Int?     @default(0)
+  relevanceScore Int?              @default(0)
   note           String?
+  /// Suggested links stay NOT_REVIEWED until a human accepts them.
+  /// Existing curated rows were backfilled to ACCEPTED.
+  reviewStatus   LinkReviewStatus @default(NOT_REVIEWED)
   /// D-2: added for admin sort=newest and curator audit trail.
-  createdAt      DateTime @default(now())
+  createdAt      DateTime         @default(now())
   /// D-2: added for curator audit trail.
-  updatedAt      DateTime @updatedAt
+  updatedAt      DateTime         @updatedAt
 
   @@unique([goodDeedId, quoteId])
   /// D-3: quoteId index for reverse lookups (find all good deeds referencing a quote).
   @@index([quoteId])
   /// D-3: composite index supporting the core reminder loop (filter by deed, sort by score).
   @@index([goodDeedId, relevanceScore(sort: Desc, nulls: Last)])
+}
+
+/// One شعبة of faith. Numbering follows an edition the owner still has to confirm.
+model ImanBranch {
+  id              String               @id @default(uuid())
+  number          Int                  @unique
+  titleAr         String
+  title           String?
+  summaryAr       String?
+  summary         String?
+  sourceId        String?
+  source          Source?              @relation("ImanBranchSource", fields: [sourceId], references: [id])
+  sourceReference String?
+  quotes          ImanBranchQuote[]
+  goodDeeds       ImanBranchGoodDeed[]
+  sins            ImanBranchSin[]
+  explanations    Explanation[]
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+}
+
+/// Curator or suggested link: a quote that teaches this branch.
+model ImanBranchQuote {
+  id             String           @id @default(uuid())
+  imanBranchId   String
+  imanBranch     ImanBranch       @relation(fields: [imanBranchId], references: [id], onDelete: Cascade)
+  quoteId        String
+  quote          Quote            @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  relevanceScore Int?             @default(0)
+  note           String?
+  reviewStatus   LinkReviewStatus @default(NOT_REVIEWED)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@unique([imanBranchId, quoteId])
+  @@index([quoteId])
+  @@index([imanBranchId, relevanceScore(sort: Desc, nulls: Last)])
+}
+
+model ImanBranchGoodDeed {
+  id           String     @id @default(uuid())
+  imanBranchId String
+  imanBranch   ImanBranch @relation(fields: [imanBranchId], references: [id], onDelete: Cascade)
+  goodDeedId   String
+  goodDeed     GoodDeed   @relation(fields: [goodDeedId], references: [id], onDelete: Cascade)
+  sortOrder    Int        @default(0)
+  note         String?
+  createdAt    DateTime   @default(now())
+
+  @@unique([imanBranchId, goodDeedId])
+  @@index([goodDeedId])
+}
+
+model ImanBranchSin {
+  id           String     @id @default(uuid())
+  imanBranchId String
+  imanBranch   ImanBranch @relation(fields: [imanBranchId], references: [id], onDelete: Cascade)
+  sinId        String
+  sin          Sin        @relation(fields: [sinId], references: [id], onDelete: Cascade)
+  sortOrder    Int        @default(0)
+  note         String?
+  createdAt    DateTime   @default(now())
+
+  @@unique([imanBranchId, sinId])
+  @@index([sinId])
+}
+
+/// تفسير / شرح with mandatory attribution. Exactly one target (SQL CHECK).
+model Explanation {
+  id           String          @id @default(uuid())
+  kind         ExplanationKind
+  quoteId      String?
+  quote        Quote?          @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  ayahKey      String?
+  imanBranchId String?
+  imanBranch   ImanBranch?     @relation(fields: [imanBranchId], references: [id], onDelete: Cascade)
+  languageCode String          @default("ar")
+  text         String
+  sourceId     String
+  source       Source          @relation("ExplanationSource", fields: [sourceId], references: [id])
+  reference    String?
+  origin       QuoteOrigin     @default(LOCAL)
+  apiProvider  String?
+  externalId   String?
+  rawPayload   Json?
+  sortOrder    Int             @default(0)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@unique([apiProvider, externalId])
+  @@index([quoteId])
+  @@index([ayahKey, languageCode])
+  @@index([imanBranchId])
 }
 
 model Tag {

@@ -9,10 +9,14 @@ export async function generateMetadata({
   const { surahNumber, locale } = await params;
   try {
     const { data } = await getSurahs();
-    const surah = data.find((s) => String(s.number) === surahNumber);
+    const surah = data.find((s) => String(s.surahNumber) === surahNumber);
     if (!surah) return {};
     const t = await getTranslations({ locale, namespace: 'surah' });
-    return { title: t('pageTitle', { name: surah.nameAr }) };
+    return {
+      title: t('pageTitle', {
+        name: surah.surahNameAr ?? surah.surahName ?? surahNumber,
+      }),
+    };
   } catch {
     return {};
   }
@@ -27,7 +31,7 @@ export default async function SurahPage({
   let surah: Awaited<ReturnType<typeof getSurahs>>['data'][number] | null = null;
   try {
     const { data } = await getSurahs();
-    surah = data.find((s) => String(s.number) === surahNumber) ?? null;
+    surah = data.find((s) => String(s.surahNumber) === surahNumber) ?? null;
   } catch {
     // handle below
   }

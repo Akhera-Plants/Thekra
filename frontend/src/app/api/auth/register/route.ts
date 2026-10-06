@@ -2,12 +2,13 @@
  * Next.js route handler — registration.
  *
  * POST /api/auth/register
- *   Proxies { email, password, name? } to the backend, then sets the
+ *   Proxies { email, password, name? } → backend `displayName`, then sets the
  *   httpOnly refresh cookie (same mechanics as /api/auth/session).
  */
 
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { mapAuthUser } from '@/lib/api/map-auth-user';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 const COOKIE_NAME = 'refresh_token';
@@ -32,11 +33,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
 
-  const { email, password, name } = body as {
+  const { email, password, name, displayName } = body as {
     email?: string;
     password?: string;
     name?: string;
+    displayName?: string;
   };
+  const resolvedDisplayName =
+    typeof displayName === 'string' && displayName.trim()
+      ? displayName.trim()
+      : typeof name === 'string' && name.trim()
+        ? name.trim()
+        : undefined;
 
   if (typeof email !== 'string' || typeof password !== 'string') {
     return NextResponse.json(
@@ -50,7 +58,11 @@ export async function POST(request: Request) {
     backendRes = await fetch(`${API_URL}/v1/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, ...(name ? { name } : {}) }),
+      body: JSON.stringify({
+        email,
+        password,
+        ...(resolvedDisplayName ? { displayName: resolvedDisplayName } : {}),
+      }),
     });
   } catch {
     return NextResponse.json(
@@ -84,5 +96,16 @@ export async function POST(request: Request) {
   const cookieStore = await cookies();
   cookieStore.set({ ...refreshCookieOptions(isSecure), value: refreshToken });
 
-  return NextResponse.json({ data: { accessToken, user } }, { status: 201 });
+  const mappedUser = mapAuthUser(user);
+  if (!mappedUser) {
+    return NextResponse.json(
+      { error: { message: 'Unexpected user payload from backend' } },
+      { status: 502 },
+    );
+  }
+
+  return NextResponse.json(
+    { data: { accessToken, user: mappedUser } },
+    { status: 201 },
+  );
 }

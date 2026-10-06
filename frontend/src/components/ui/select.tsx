@@ -73,8 +73,9 @@ function SelectContent({
         align={align}
         {...props}
       >
-        <SelectScrollUpButton />
+        <SelectScrollUpButton key="scroll-up" />
         <SelectPrimitive.Viewport
+          key="viewport"
           data-position={position}
           className={cn(
             "data-[position=popper]:h-(--radix-select-trigger-height) data-[position=popper]:w-full data-[position=popper]:min-w-(--radix-select-trigger-width)",
@@ -83,7 +84,7 @@ function SelectContent({
         >
           {children}
         </SelectPrimitive.Viewport>
-        <SelectScrollDownButton />
+        <SelectScrollDownButton key="scroll-down" />
       </SelectPrimitive.Content>
     </SelectPrimitive.Portal>
   )

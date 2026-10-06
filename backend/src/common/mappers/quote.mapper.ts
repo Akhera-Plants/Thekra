@@ -76,6 +76,11 @@ export interface QuoteDto {
     author: string | null;
     pageOrChapter: string | null;
   } | null;
+  /** Printed location in the cited edition. Nulls when the edition has no page. */
+  citation: {
+    volume: string | null;
+    page: string | null;
+  };
   source: QuoteSourceDto;
   tags: QuoteTagDto[];
   external: { apiProvider: string | null; externalId: string | null } | null;
@@ -127,6 +132,10 @@ export function mapQuoteToDto(
             pageOrChapter: row.pageOrChapter,
           }
         : null,
+    citation: {
+      volume: row.volume,
+      page: row.page,
+    },
     source: {
       id: row.source.id,
       name: row.source.name,

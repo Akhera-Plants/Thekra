@@ -3,7 +3,17 @@
  * Contract: docs/plan/backend-plan.md §3 admin endpoints (#28–#60).
  */
 
-import type { HadithGrade, QuoteOrigin, QuoteType, SourceType, SyncStatus, TagCategory } from './enums';
+import type {
+  HadithGrade,
+  LinkReviewStatus,
+  QuoteOrigin,
+  QuoteType,
+  SinRank,
+  SourceType,
+  SyncStatus,
+  TagCategory,
+} from './enums';
+import type { SinDto } from './api';
 
 // ── Query params ──────────────────────────────────────────────────────────────
 
@@ -69,11 +79,16 @@ export interface CreateQuoteBody {
   bookTitle?: string;
   author?: string;
   pageOrChapter?: string;
+  volume?: string;
+  page?: string;
   translations?: TranslationInputBody[];
   tagIds?: string[];
 }
 
 export type UpdateQuoteBody = Partial<Omit<CreateQuoteBody, 'type' | 'origin'>>;
+
+/** Admin sin row. Public SinDto omits the editorial severity score. */
+export type AdminSinDto = SinDto & { severity: number | null };
 
 export interface CreateSinBody {
   name: string;
@@ -83,6 +98,9 @@ export interface CreateSinBody {
   description?: string;
   descriptionAr?: string;
   severity?: number;
+  rank?: SinRank | null;
+  rankSourceId?: string | null;
+  rankReference?: string | null;
 }
 
 export type UpdateSinBody = Partial<CreateSinBody>;
@@ -167,6 +185,7 @@ export interface SinQuoteLinkDto {
   quoteId: string;
   relevanceScore: number | null;
   note: string | null;
+  reviewStatus: LinkReviewStatus;
   createdAt: string;
   updatedAt: string;
 }
@@ -177,6 +196,7 @@ export interface GoodDeedQuoteLinkDto {
   quoteId: string;
   relevanceScore: number | null;
   note: string | null;
+  reviewStatus: LinkReviewStatus;
   createdAt: string;
   updatedAt: string;
 }

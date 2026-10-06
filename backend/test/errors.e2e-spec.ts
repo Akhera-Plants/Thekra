@@ -169,9 +169,9 @@ describe('Error envelope & HTTP contract (e2e)', () => {
     expect(res.body.error.code).toBe('VALIDATION_FAILED');
   });
 
-  it('GET /v1/sins?severityMin=3 (query string number) → 200', async () => {
-    // Query param string "3" must still be coerced and accepted
-    await request(app.getHttpServer()).get('/v1/sins?severityMin=3').expect(200);
+  it('GET /v1/sins?severityMin=3 → 400 (severity is not a public filter)', async () => {
+    const res = await request(app.getHttpServer()).get('/v1/sins?severityMin=3').expect(400);
+    expect(res.body.error.code).toBe('VALIDATION_FAILED');
   });
 
   it('GET ?page=1&limit=5 (query string numbers) → 200', async () => {

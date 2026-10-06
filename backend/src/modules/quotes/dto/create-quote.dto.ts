@@ -114,6 +114,18 @@ export class CreateQuoteDto {
   @MaxLength(100)
   pageOrChapter?: string;
 
+  /** Printed volume in the cited edition. Public; not stored only in rawPayload. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  volume?: string;
+
+  /** Printed page (or page range) in the cited edition. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  page?: string;
+
   // ── Translations ──────────────────────────────────────────────────────────
 
   @IsOptional()

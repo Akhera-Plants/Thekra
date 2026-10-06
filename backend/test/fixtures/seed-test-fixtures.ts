@@ -29,7 +29,7 @@
  *   });
  */
 
-import { HadithGrade, PrismaClient, QuoteType, UserRole } from '@prisma/client';
+import { HadithGrade, LinkReviewStatus, PrismaClient, QuoteType, UserRole } from '@prisma/client';
 import { hash as argon2hash, argon2id } from 'argon2';
 
 // ── Exported fixed IDs for test-only rows ────────────────────────────────────
@@ -143,8 +143,14 @@ export async function seedTestFixtures(): Promise<void> {
     for (const { quoteId, note } of testLinks) {
       await prisma.sinQuote.upsert({
         where: { sinId_quoteId: { sinId: SIN_GHIBAH, quoteId } },
-        create: { sinId: SIN_GHIBAH, quoteId, relevanceScore: 90, note },
-        update: { relevanceScore: 90, note },
+        create: {
+          sinId: SIN_GHIBAH,
+          quoteId,
+          relevanceScore: 90,
+          note,
+          reviewStatus: LinkReviewStatus.ACCEPTED,
+        },
+        update: { relevanceScore: 90, note, reviewStatus: LinkReviewStatus.ACCEPTED },
       });
     }
 

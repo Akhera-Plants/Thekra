@@ -23,6 +23,7 @@ import {
   TagCategory,
   SyncStatus,
   UserRole,
+  LinkReviewStatus,
 } from '@prisma/client';
 import { hash as argon2hash, argon2id } from 'argon2';
 import { fileURLToPath } from 'url';
@@ -177,7 +178,40 @@ export async function seedSources(): Promise<void> {
       update: fields,
     });
   }
-  console.log(`sources: ${sources.length} upserted`);
+
+  // Owner-named works (metadata only — no book text).
+  // Dynamic .ts import: `prisma db seed` runs this file with Node type-stripping,
+  // which does not rewrite a `.js` specifier to the `.ts` source.
+  const { APPROVED_WORKS } = (await import(
+    new URL('./imports/approved-works.ts', import.meta.url).href
+  )) as {
+    APPROVED_WORKS: ReadonlyArray<{
+      id: string;
+      name: string;
+      nameAr: string;
+      type: SourceType;
+      author: string;
+      authorAr: string;
+      bookKey: string;
+    }>;
+  };
+  for (const work of APPROVED_WORKS) {
+    const fields = {
+      name: work.name,
+      nameAr: work.nameAr,
+      type: work.type,
+      author: work.author,
+      authorAr: work.authorAr,
+      isExternalApi: false,
+      apiProvider: work.bookKey,
+    };
+    await prisma.source.upsert({
+      where: { id: work.id },
+      create: { id: work.id, ...fields },
+      update: fields,
+    });
+  }
+  console.log(`sources: ${sources.length + APPROVED_WORKS.length} upserted`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -995,16 +1029,24 @@ export async function seedLinks(): Promise<void> {
   for (const link of sinLinks) {
     await prisma.sinQuote.upsert({
       where: { sinId_quoteId: { sinId: link.sinId, quoteId: link.quoteId } },
-      create: link,
-      update: { relevanceScore: link.relevanceScore, note: link.note },
+      create: { ...link, reviewStatus: LinkReviewStatus.ACCEPTED },
+      update: {
+        relevanceScore: link.relevanceScore,
+        note: link.note,
+        reviewStatus: LinkReviewStatus.ACCEPTED,
+      },
     });
   }
 
   for (const link of deedLinks) {
     await prisma.goodDeedQuote.upsert({
       where: { goodDeedId_quoteId: { goodDeedId: link.goodDeedId, quoteId: link.quoteId } },
-      create: link,
-      update: { relevanceScore: link.relevanceScore, note: link.note },
+      create: { ...link, reviewStatus: LinkReviewStatus.ACCEPTED },
+      update: {
+        relevanceScore: link.relevanceScore,
+        note: link.note,
+        reviewStatus: LinkReviewStatus.ACCEPTED,
+      },
     });
   }
 

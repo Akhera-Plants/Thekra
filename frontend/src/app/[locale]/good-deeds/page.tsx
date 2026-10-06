@@ -18,15 +18,15 @@ export default async function GoodDeedsPage({
   const queryClient = createQueryClient();
   try {
     await queryClient.prefetchQuery({
-      queryKey: queryKeys.goodDeeds.list({ limit: 200 }),
-      queryFn: () => getGoodDeeds({ limit: 200 }),
+      queryKey: queryKeys.goodDeeds.list({ limit: 100 }),
+      queryFn: () => getGoodDeeds({ limit: 100 }),
     });
   } catch {
     // API down during build/test
   }
 
   const deedsData = queryClient.getQueryData<Awaited<ReturnType<typeof getGoodDeeds>>>(
-    queryKeys.goodDeeds.list({ limit: 200 }),
+    queryKeys.goodDeeds.list({ limit: 100 }),
   );
   const goodDeeds = (deedsData as Awaited<ReturnType<typeof getGoodDeeds>> | undefined)?.data ?? [];
 

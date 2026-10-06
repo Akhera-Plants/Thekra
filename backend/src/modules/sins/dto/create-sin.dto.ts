@@ -1,12 +1,15 @@
 import {
+  IsEnum,
   IsOptional,
   IsString,
+  IsUUID,
   Max,
   MaxLength,
   Min,
   MinLength,
   Matches,
 } from 'class-validator';
+import { SinRank } from '@prisma/client';
 import { IsStrictInt } from '../../../common/decorators/is-strict-int.decorator.js';
 
 export class CreateSinDto {
@@ -47,4 +50,17 @@ export class CreateSinDto {
   @Min(1)
   @Max(10)
   severity?: number;
+
+  @IsOptional()
+  @IsEnum(SinRank)
+  rank?: SinRank;
+
+  @IsOptional()
+  @IsUUID()
+  rankSourceId?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  rankReference?: string;
 }

@@ -5,7 +5,7 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Prisma, QuoteOrigin, QuoteType, HadithGrade } from '@prisma/client';
+import { HadithGrade, LinkReviewStatus, Prisma, QuoteOrigin, QuoteType } from '@prisma/client';
 import { paginated } from '../../common/dto/paginated-result.js';
 import {
   mapQuoteToDto,
@@ -31,6 +31,12 @@ import { checkQuoteShape } from './dto/valid-quote-shape.decorator.js';
  * Exported so sins/good-deeds services can reuse the same string.
  */
 export const LINK_ORDERING_LABEL = 'relevanceScore:desc,grade:asc,createdAt:desc';
+
+/**
+ * Reminder feeds and public quote↔intent filters.
+ * Suggested links (any other review status) stay hidden until a human accepts them.
+ */
+export const PUBLISHED_LINK_REVIEW_STATUS = LinkReviewStatus.ACCEPTED;
 
 const LINK_ORDER_BY = [
   { relevanceScore: { sort: 'desc' as const, nulls: 'last' as const } },
@@ -92,11 +98,13 @@ export class QuotesService {
       // P3-2: stable tag ordering by slug so responses are deterministic.
       tags: { include: { tag: true }, orderBy: { tag: { slug: 'asc' } } },
       sinLinks: {
+        where: { reviewStatus: PUBLISHED_LINK_REVIEW_STATUS },
         include: {
           sin: { select: { slug: true, name: true, nameAr: true } },
         },
       },
       goodDeedLinks: {
+        where: { reviewStatus: PUBLISHED_LINK_REVIEW_STATUS },
         include: {
           goodDeed: {
             select: { slug: true, name: true, nameAr: true },
@@ -234,6 +242,7 @@ export class QuotesService {
       FROM     ${Prisma.raw(table)} sq
       JOIN     "Quote" q ON sq."quoteId" = q.id
       WHERE    sq.${Prisma.raw(parentKey)} = ${parentId}
+        AND    sq."reviewStatus" = 'ACCEPTED'::"LinkReviewStatus"
       ${minScoreFilter}
       ${typeFilter}
       ${gradeFilter}
@@ -548,6 +557,8 @@ export class QuotesService {
         bookTitle: dto.bookTitle,
         author: dto.author,
         pageOrChapter: dto.pageOrChapter,
+        volume: dto.volume,
+        page: dto.page,
         translations: dto.translations?.length
           ? { create: dto.translations }
           : undefined,
@@ -634,6 +645,8 @@ export class QuotesService {
         bookTitle: dto.bookTitle,
         author: dto.author,
         pageOrChapter: dto.pageOrChapter,
+        volume: dto.volume,
+        page: dto.page,
       },
       include: this.buildQuoteInclude('ar'),
     });
@@ -791,11 +804,23 @@ export class QuotesService {
       });
     }
     if (query.sinSlug) {
-      and.push({ sinLinks: { some: { sin: { slug: query.sinSlug } } } });
+      and.push({
+        sinLinks: {
+          some: {
+            reviewStatus: PUBLISHED_LINK_REVIEW_STATUS,
+            sin: { slug: query.sinSlug },
+          },
+        },
+      });
     }
     if (query.goodDeedSlug) {
       and.push({
-        goodDeedLinks: { some: { goodDeed: { slug: query.goodDeedSlug } } },
+        goodDeedLinks: {
+          some: {
+            reviewStatus: PUBLISHED_LINK_REVIEW_STATUS,
+            goodDeed: { slug: query.goodDeedSlug },
+          },
+        },
       });
     }
     if (query.tag?.length) {

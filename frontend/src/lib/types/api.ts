@@ -8,6 +8,7 @@ import type {
   LocaleCode,
   QuoteOrigin,
   QuoteType,
+  SinRank,
   SourceType,
   TagCategory,
 } from './enums';
@@ -108,6 +109,10 @@ export interface QuoteDto {
     author: string | null;
     pageOrChapter: string | null;
   } | null;
+  citation: {
+    volume: string | null;
+    page: string | null;
+  };
   source: QuoteSourceDto;
   tags: QuoteTagDto[];
   external: { apiProvider: string | null; externalId: string | null } | null;
@@ -124,7 +129,9 @@ export interface SinDto {
   category: string | null;
   description: string | null;
   descriptionAr: string | null;
-  severity: number | null;
+  rank: SinRank | null;
+  rankReference: string | null;
+  rankSource: { id: string; name: string; nameAr: string | null } | null;
   quoteCount: number;
   createdAt: string;
   updatedAt: string;
@@ -173,7 +180,7 @@ export interface SinQuotesResponse {
     | 'slug'
     | 'name'
     | 'nameAr'
-    | 'severity'
+    | 'rank'
     | 'description'
     | 'descriptionAr'
   >;
@@ -195,10 +202,9 @@ export interface SinsQuery {
   limit?: number;
   lang?: LocaleCode;
   category?: string;
-  severityMin?: number;
-  severityMax?: number;
+  rank?: SinRank;
   q?: string;
-  sort?: 'name' | 'severity' | 'quoteCount';
+  sort?: 'name' | 'quoteCount';
 }
 
 export interface SinQuotesQuery {
@@ -281,10 +287,9 @@ export interface GoodDeedQuotesMeta extends PageMeta {
 }
 
 export interface SurahDto {
-  number: number;
-  name: string;
-  nameAr: string;
-  nameTransliteration: string | null;
+  surahNumber: number;
+  surahName: string | null;
+  surahNameAr: string | null;
   ayahCount: number;
 }
 

@@ -1,4 +1,5 @@
 import {
+  IsEnum,
   IsOptional,
   IsString,
   IsUUID,
@@ -6,6 +7,7 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
+import { LinkReviewStatus } from '@prisma/client';
 import { IsStrictInt } from '../../../common/decorators/is-strict-int.decorator.js';
 
 export class LinkGoodDeedQuoteDto {
@@ -25,4 +27,9 @@ export class LinkGoodDeedQuoteDto {
   @IsString()
   @MaxLength(1000)
   note?: string;
+
+  /** Omitted means ACCEPTED. Any other status stays off public feeds. */
+  @IsOptional()
+  @IsEnum(LinkReviewStatus)
+  reviewStatus?: LinkReviewStatus;
 }

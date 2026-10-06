@@ -6,6 +6,7 @@ import { Link } from '@/i18n/navigation';
 import { Input } from '@/components/ui/input';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ArabicText } from '@/components/shared/ArabicText';
+import { SinRankBadge } from '@/components/shared/SinRankBadge';
 import { cn } from '@/lib/utils';
 import type { SinDto } from '@/lib/types/api';
 
@@ -22,6 +23,7 @@ interface SinListProps {
  */
 export function SinList({ sins, className }: SinListProps) {
   const t = useTranslations('sins');
+  const tRank = useTranslations('sinRank');
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
 
@@ -66,9 +68,14 @@ export function SinList({ sins, className }: SinListProps) {
                 href={`/sins/${sin.slug}`}
                 className="flex items-center justify-between gap-3 px-4 py-3 transition-[opacity] duration-150 ease-out hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring motion-reduce:transition-none"
               >
-                <ArabicText as="span" size="base">
-                  {sin.nameAr}
-                </ArabicText>
+                <span className="flex min-w-0 items-center gap-2">
+                  <ArabicText as="span" size="base">
+                    {sin.nameAr}
+                  </ArabicText>
+                  {sin.rank && (
+                    <SinRankBadge rank={sin.rank} label={tRank(sin.rank)} />
+                  )}
+                </span>
                 {sin.name && (
                   <span className="shrink-0 text-sm text-muted-foreground">
                     {sin.name}

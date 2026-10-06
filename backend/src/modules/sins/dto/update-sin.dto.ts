@@ -1,4 +1,15 @@
-import { IsOptional, IsString, Matches, Max, MaxLength, Min, MinLength } from 'class-validator';
+import {
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Matches,
+  Max,
+  MaxLength,
+  Min,
+  MinLength,
+} from 'class-validator';
+import { SinRank } from '@prisma/client';
 import { IsOptionalNotNull } from '../../../common/decorators/is-optional-not-null.decorator.js';
 import { IsStrictInt } from '../../../common/decorators/is-strict-int.decorator.js';
 
@@ -51,4 +62,18 @@ export class UpdateSinDto {
   @Min(1)
   @Max(10)
   severity?: number | null;
+
+  /** Null clears the rank. rankSourceId without a rank is rejected in the service. */
+  @IsOptional()
+  @IsEnum(SinRank)
+  rank?: SinRank | null;
+
+  @IsOptional()
+  @IsUUID()
+  rankSourceId?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  rankReference?: string | null;
 }

@@ -70,7 +70,7 @@ export function QuoteForm({ existing }: QuoteFormProps) {
 
   const { data: sourcesResult } = useQuery({
     queryKey: queryKeys.sources.all,
-    queryFn: () => getSources({ limit: 200 }),
+    queryFn: () => getSources({ limit: 100 }),
   });
   const sources = sourcesResult?.data ?? [];
 

@@ -74,11 +74,15 @@
   "home": {
     "title": "Thekra",
     "tagline": "A reminder when you need one",
-    "sinEntryLabel": "I feel an urge to sin",
+    "sinEntryLabel": "Help me resist a sin",
     "sinEntryDescription": "Search for a sin and receive reminders from Quran and Sunnah",
-    "deedEntryLabel": "I want to do a good deed",
+    "deedEntryLabel": "Guide me to an act of obedience",
     "deedEntryDescription": "Search for a good deed and get motivation from Quran and Sunnah",
     "browseLabel": "Browse content"
+  },
+  "sinRank": {
+    "KABIRA": "Major sin",
+    "SAGHIRA": "Minor sin"
   },
   "sins": {
     "pageTitle": "Sins",
@@ -152,6 +156,9 @@
     "reference": "Reference",
     "tags": "Tags",
     "source": "Source",
+    "volume": "Volume",
+    "page": "Page",
+    "citationMarker": "Source and page",
     "weakNotice": "This narration is weak (da'if)",
     "translation": "Translation",
     "viewFull": "View full"

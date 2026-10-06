@@ -2,6 +2,11 @@ packages:
   - "backend"
   - "frontend"
   - "mobile"
+
+# One React types version. frontend's ^19 was resolving to 19.3.0 while
+# mobile pinned 19.2.x, and the two copies broke frontend tsc.
+overrides:
+  "@types/react": "19.2.18"
 # Dependency build scripts must be explicitly allow-listed by pnpm >= 10.
 # esbuild/workerd come from the NestJS + Vitest toolchain installed by the
 # Nest CLI; @prisma/engines, prisma and @prisma/client need their install

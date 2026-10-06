@@ -159,7 +159,7 @@ export function SourceCrudView() {
 
   const { data, isLoading } = useQuery({
     queryKey: queryKeys.sources.list({}),
-    queryFn: () => getSources({ limit: 200 }),
+    queryFn: () => getSources({ limit: 100 }),
   });
   const sources = data?.data ?? [];
 

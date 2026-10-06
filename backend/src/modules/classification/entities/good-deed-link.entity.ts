@@ -1,4 +1,4 @@
-import type { QuoteType } from '@prisma/client';
+import type { LinkReviewStatus, QuoteType } from '@prisma/client';
 
 export interface GoodDeedLinkDto {
   id: string;
@@ -6,6 +6,7 @@ export interface GoodDeedLinkDto {
   quoteId: string;
   relevanceScore: number | null;
   note: string | null;
+  reviewStatus: LinkReviewStatus;
   goodDeed: {
     slug: string;
     name: string;

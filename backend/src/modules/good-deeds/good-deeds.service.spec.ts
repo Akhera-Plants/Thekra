@@ -122,6 +122,7 @@ describe('GoodDeedsService', () => {
     await service.findQuotesForGoodDeed('hifz-al-lisan', {
       grades: ['SAHIH'] as never,
     });
+    expect(prisma.goodDeedQuote.findMany.mock.calls[0][0].where.reviewStatus).toBe('ACCEPTED');
     expect(prisma.goodDeedQuote.findMany.mock.calls[0][0].where.quote.OR).toEqual([
       { type: { not: QuoteType.HADITH } },
       { grade: { in: ['SAHIH'] } },

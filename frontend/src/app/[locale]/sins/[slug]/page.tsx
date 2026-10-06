@@ -26,7 +26,7 @@ export default async function SinDetailPage({
   const { slug, locale } = await params;
   setRequestLocale(locale);
 
-  const t = await getTranslations('sinDetail');
+  const tRank = await getTranslations('sinRank');
 
   let sin: Awaited<ReturnType<typeof getSin>>['data'] | null = null;
   try {
@@ -54,7 +54,7 @@ export default async function SinDetailPage({
         {sin && (
           <SinHeader
             sin={sin}
-            severityLabel={t('severity')}
+            rankLabel={sin.rank ? tRank(sin.rank) : undefined}
           />
         )}
         <ReminderList sinSlug={slug} />

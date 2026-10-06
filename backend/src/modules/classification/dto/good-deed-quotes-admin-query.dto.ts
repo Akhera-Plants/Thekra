@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
 import {
   IsBoolean,
+  IsEnum,
   IsIn,
   IsInt,
   IsOptional,
@@ -8,6 +9,7 @@ import {
   Max,
   Min,
 } from 'class-validator';
+import { LinkReviewStatus } from '@prisma/client';
 import { ToBoolean } from '../../../common/decorators/to-boolean.decorator.js';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto.js';
 
@@ -47,4 +49,8 @@ export class GoodDeedQuotesAdminQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsIn(['score', 'newest'])
   sort?: 'score' | 'newest';
+
+  @IsOptional()
+  @IsEnum(LinkReviewStatus)
+  reviewStatus?: LinkReviewStatus;
 }

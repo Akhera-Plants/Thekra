@@ -19,15 +19,17 @@ export function SurahView({ surah }: SurahViewProps) {
   const tEmpty = useTranslations('emptyState');
   const tError = useTranslations('errorState');
 
-  const { data, isPending, isError, refetch } = useSurahAyahs(surah.number);
+  const { data, isPending, isError, refetch } = useSurahAyahs(surah.surahNumber);
   const ayahs = data?.data ?? [];
+  const surahLabel =
+    surah.surahNameAr ?? surah.surahName ?? String(surah.surahNumber);
 
   return (
     <div className="flex flex-col gap-6">
       <header className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
           <ArabicText as="h1" size="xl" className="font-semibold">
-            {surah.nameAr}
+            {surahLabel}
           </ArabicText>
           <p className="text-sm text-muted-foreground">
             {tSurah('ayahCount', { count: surah.ayahCount })}
@@ -64,7 +66,7 @@ export function SurahView({ surah }: SurahViewProps) {
       )}
 
       {!isPending && ayahs.length > 0 && (
-        <ul className="flex flex-col gap-4" aria-label={surah.nameAr}>
+        <ul className="flex flex-col gap-4" aria-label={surahLabel}>
           {ayahs.map((ayah) => (
             <li key={ayah.id}>
               <QuoteCard

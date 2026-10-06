@@ -51,7 +51,10 @@ export default async function LocaleLayout({
       suppressHydrationWarning
       className={`${arabicFont.variable} ${uiFont.variable} ${monoFont.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col font-sans">
+      <body
+        suppressHydrationWarning
+        className="flex min-h-full flex-col font-sans"
+      >
         <NextIntlClientProvider messages={messages}>
           <AppProviders>
             <LocaleSync />

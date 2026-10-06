@@ -75,24 +75,16 @@ describe('Sins endpoints (e2e)', () => {
     expect(sins.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('GET /v1/sins?sort=severity → ordered desc, nulls last', async () => {
-    const res = await request(app.getHttpServer()).get('/v1/sins?sort=severity&limit=50').expect(200);
-    const sins: Array<{ severity: number | null }> = res.body.data;
-    // All non-null severities should be in descending order
-    const nonNull = sins.filter((s) => s.severity !== null).map((s) => s.severity as number);
-    for (let i = 1; i < nonNull.length; i++) {
-      expect(nonNull[i]!).toBeLessThanOrEqual(nonNull[i - 1]!);
+  it('GET /v1/sins omits the editorial severity score', async () => {
+    const res = await request(app.getHttpServer()).get('/v1/sins?limit=5').expect(200);
+    for (const sin of res.body.data as Array<Record<string, unknown>>) {
+      expect(sin).not.toHaveProperty('severity');
     }
-    // If any null severity rows exist, they should come after all non-null ones
-    let seenNull = false;
-    for (const sin of sins) {
-      if (sin.severity === null) {
-        seenNull = true;
-      } else if (seenNull) {
-        // A non-null severity after a null → wrong order
-        throw new Error('Non-null severity appeared after null severity — nulls not last');
-      }
-    }
+  });
+
+  it('GET /v1/sins?sort=severity → 400 (public sort has no severity)', async () => {
+    const res = await request(app.getHttpServer()).get('/v1/sins?sort=severity&limit=50').expect(400);
+    expect(res.body.error.code).toBe('VALIDATION_FAILED');
   });
 
   // ── §2  Arabic search (P0-3) ────────────────────────────────────────────────

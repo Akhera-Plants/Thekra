@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { QuoteType } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service.js';
@@ -134,6 +134,7 @@ describe('SinsService', () => {
     });
 
     const call = prisma.sinQuote.findMany.mock.calls[0][0];
+    expect(call.where.reviewStatus).toBe('ACCEPTED');
     expect(call.where.quote.OR).toEqual([
       { type: { not: QuoteType.HADITH } },
       { grade: { in: ['SAHIH'] } },
@@ -286,5 +287,16 @@ describe('SinsService', () => {
       // Normal ordering: meta.ordering should be the LINK_ORDER constant
       // (not a variety string)
     });
+  });
+
+  it('rejects rankSourceId when rank is missing', async () => {
+    await expect(
+      service.adminCreate({
+        name: 'Envy',
+        nameAr: 'الحسد',
+        slug: 'hasad-rank',
+        rankSourceId: '10000000-0000-4000-8000-000000000007',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 });

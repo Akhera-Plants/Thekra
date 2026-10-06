@@ -22,11 +22,16 @@ interface QuoteFiltersProps {
   onSourceChange: (source: string) => void;
 }
 
-const HADITH_GRADES: Array<{ value: HadithGrade; labelKey: string }> = [
-  { value: 'SAHIH', labelKey: 'quote.grade.sahih' },
-  { value: 'HASAN', labelKey: 'quote.grade.hasan' },
-  { value: 'DAIF', labelKey: 'quote.grade.daif' },
-];
+const ALL = '__all__';
+
+const HADITH_GRADES = [
+  { value: 'SAHIH' as const, labelKey: 'grade.sahih' as const },
+  { value: 'HASAN' as const, labelKey: 'grade.hasan' as const },
+  { value: 'DAIF' as const, labelKey: 'grade.daif' as const },
+] satisfies Array<{
+  value: HadithGrade;
+  labelKey: 'grade.sahih' | 'grade.hasan' | 'grade.daif';
+}>;
 
 export function QuoteFilters({
   tab,
@@ -46,9 +51,12 @@ export function QuoteFilters({
 
   return (
     <div className="flex flex-wrap gap-2">
-      {/* Grade filter — shown for all/hadith tabs */}
-      {tab !== 'quran' && (
-        <Select value={grade ?? ''} onValueChange={onGradeChange}>
+      {tab !== 'quran' ? (
+        <Select
+          key="grade"
+          value={grade && grade.length > 0 ? grade : ALL}
+          onValueChange={(v) => onGradeChange(v === ALL ? '' : v)}
+        >
           <SelectTrigger
             className="w-40"
             aria-label={tBrowse('filterGrade')}
@@ -56,19 +64,26 @@ export function QuoteFilters({
             <SelectValue placeholder={tBrowse('allGrades')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">{tBrowse('allGrades')}</SelectItem>
-            {HADITH_GRADES.map((g) => (
-              <SelectItem key={g.value} value={g.value}>
-                {tQuote(g.labelKey)}
-              </SelectItem>
-            ))}
+            {[
+              <SelectItem key="all-grades" value={ALL}>
+                {tBrowse('allGrades')}
+              </SelectItem>,
+              ...HADITH_GRADES.map((g) => (
+                <SelectItem key={g.value} value={g.value}>
+                  {tQuote(g.labelKey)}
+                </SelectItem>
+              )),
+            ]}
           </SelectContent>
         </Select>
-      )}
+      ) : null}
 
-      {/* Surah filter — shown for quran/all tabs */}
-      {tab !== 'hadith' && surahs.length > 0 && (
-        <Select value={surah ?? ''} onValueChange={onSurahChange}>
+      {tab !== 'hadith' && surahs.length > 0 ? (
+        <Select
+          key="surah"
+          value={surah && surah.length > 0 ? surah : ALL}
+          onValueChange={(v) => onSurahChange(v === ALL ? '' : v)}
+        >
           <SelectTrigger
             className="w-48"
             aria-label={tBrowse('filterSurah')}
@@ -76,22 +91,29 @@ export function QuoteFilters({
             <SelectValue placeholder={tBrowse('allSurahs')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">{tBrowse('allSurahs')}</SelectItem>
-            {surahs.map((s) => (
-              <SelectItem key={s.number} value={String(s.number)}>
-                <span dir="rtl" lang="ar" className="font-arabic me-2">
-                  {s.nameAr}
-                </span>
-                <bdi className="text-xs text-muted-foreground">{s.number}</bdi>
-              </SelectItem>
-            ))}
+            {[
+              <SelectItem key="all-surahs" value={ALL}>
+                {tBrowse('allSurahs')}
+              </SelectItem>,
+              ...surahs.map((s) => (
+                <SelectItem
+                  key={`surah-${s.surahNumber}`}
+                  value={String(s.surahNumber)}
+                >
+                  {`${s.surahNameAr ?? s.surahName ?? s.surahNumber} (${s.surahNumber})`}
+                </SelectItem>
+              )),
+            ]}
           </SelectContent>
         </Select>
-      )}
+      ) : null}
 
-      {/* Collection filter — shown for hadith/all tabs */}
-      {tab !== 'quran' && collections.length > 0 && (
-        <Select value={sourceId ?? ''} onValueChange={onSourceChange}>
+      {tab !== 'quran' && collections.length > 0 ? (
+        <Select
+          key="collection"
+          value={sourceId && sourceId.length > 0 ? sourceId : ALL}
+          onValueChange={(v) => onSourceChange(v === ALL ? '' : v)}
+        >
           <SelectTrigger
             className="w-48"
             aria-label={tBrowse('filterCollection')}
@@ -99,21 +121,19 @@ export function QuoteFilters({
             <SelectValue placeholder={tBrowse('allCollections')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">{tBrowse('allCollections')}</SelectItem>
-            {collections.map((c) => (
-              <SelectItem key={c.id} value={c.id}>
-                {c.nameAr ? (
-                  <span dir="rtl" lang="ar" className="font-arabic">
-                    {c.nameAr}
-                  </span>
-                ) : (
-                  c.name
-                )}
-              </SelectItem>
-            ))}
+            {[
+              <SelectItem key="all-collections" value={ALL}>
+                {tBrowse('allCollections')}
+              </SelectItem>,
+              ...collections.map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.nameAr || c.name}
+                </SelectItem>
+              )),
+            ]}
           </SelectContent>
         </Select>
-      )}
+      ) : null}
     </div>
   );
 }

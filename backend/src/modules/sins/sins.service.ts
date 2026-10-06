@@ -1,10 +1,20 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
+import { Prisma, type SinRank } from '@prisma/client';
 import { buildPageMeta, paginated } from '../../common/dto/paginated-result.js';
 import { findIdsByNormalizedArabic } from '../../common/text/arabic-search.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { GoodDeedsService } from '../good-deeds/good-deeds.service.js';
-import { LINK_ORDERING_LABEL, QuotesService } from '../quotes/quotes.service.js';
+import {
+  LINK_ORDERING_LABEL,
+  PUBLISHED_LINK_REVIEW_STATUS,
+  QuotesService,
+} from '../quotes/quotes.service.js';
 import type { CreateSinDto } from './dto/create-sin.dto.js';
 import type { SinQuotesQueryDto } from './dto/sin-quotes-query.dto.js';
 import type { SinsQueryDto } from './dto/sins-query.dto.js';
@@ -14,6 +24,13 @@ import type { SinDetailDto, SinDto } from './entities/sin.entity.js';
 // P2-1: shared ordering label is now exported from QuotesService.
 // Use LINK_ORDERING_LABEL imported from there.
 
+const SIN_READ_INCLUDE = {
+  rankSource: { select: { id: true, name: true, nameAr: true } },
+  _count: {
+    select: { quotes: { where: { reviewStatus: PUBLISHED_LINK_REVIEW_STATUS } } },
+  },
+} satisfies Prisma.SinInclude;
+
 @Injectable()
 export class SinsService {
   constructor(
@@ -22,19 +39,25 @@ export class SinsService {
     private readonly goodDeeds: GoodDeedsService,
   ) {}
 
-  toDto(row: {
-    id: string;
-    name: string;
-    nameAr: string;
-    slug: string;
-    category: string | null;
-    description: string | null;
-    descriptionAr: string | null;
-    severity: number | null;
-    createdAt: Date;
-    updatedAt: Date;
-    _count: { quotes: number };
-  }): SinDto {
+  toDto(
+    row: {
+      id: string;
+      name: string;
+      nameAr: string;
+      slug: string;
+      category: string | null;
+      description: string | null;
+      descriptionAr: string | null;
+      severity: number | null;
+      rank: SinRank | null;
+      rankReference: string | null;
+      rankSource: { id: string; name: string; nameAr: string | null } | null;
+      createdAt: Date;
+      updatedAt: Date;
+      _count: { quotes: number };
+    },
+    options?: { includeSeverity?: boolean },
+  ): SinDto {
     return {
       id: row.id,
       name: row.name,
@@ -43,7 +66,10 @@ export class SinsService {
       category: row.category,
       description: row.description,
       descriptionAr: row.descriptionAr,
-      severity: row.severity,
+      ...(options?.includeSeverity ? { severity: row.severity } : {}),
+      rank: row.rank,
+      rankReference: row.rankReference,
+      rankSource: row.rankSource,
       quoteCount: row._count.quotes,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
@@ -57,12 +83,7 @@ export class SinsService {
     const where: Prisma.SinWhereInput = {};
 
     if (query.category) where.category = query.category;
-    if (query.severityMin !== undefined || query.severityMax !== undefined) {
-      where.severity = {
-        ...(query.severityMin !== undefined && { gte: query.severityMin }),
-        ...(query.severityMax !== undefined && { lte: query.severityMax }),
-      };
-    }
+    if (query.rank) where.rank = query.rank;
     if (query.q) {
       // Arabic field: match via DB-side normalisation (strips tashkeel, folds alef/ya/ta-marbuta)
       // Latin field: standard Prisma ILIKE (no normalisation needed)
@@ -79,11 +100,9 @@ export class SinsService {
     }
 
     const orderBy: Prisma.SinOrderByWithRelationInput[] =
-      query.sort === 'severity'
-        ? [{ severity: { sort: 'desc', nulls: 'last' } }, { id: 'asc' }]
-        : query.sort === 'quoteCount'
-          ? [{ quotes: { _count: 'desc' } }, { id: 'asc' }]
-          : [{ name: 'asc' }, { id: 'asc' }];
+      query.sort === 'quoteCount'
+        ? [{ quotes: { _count: 'desc' } }, { id: 'asc' }]
+        : [{ name: 'asc' }, { id: 'asc' }];
 
     const [rows, total] = await this.prisma.$transaction([
       this.prisma.sin.findMany({
@@ -91,7 +110,7 @@ export class SinsService {
         orderBy,
         skip: (page - 1) * limit,
         take: limit,
-        include: { _count: { select: { quotes: true } } },
+        include: SIN_READ_INCLUDE,
       }),
       this.prisma.sin.count({ where }),
     ]);
@@ -108,7 +127,7 @@ export class SinsService {
   async findBySlug(slug: string, lang: string = 'ar'): Promise<SinDetailDto & { locale: string }> {
     const row = await this.prisma.sin.findUnique({
       where: { slug },
-      include: { _count: { select: { quotes: true } } },
+      include: SIN_READ_INCLUDE,
     });
     if (!row) {
       throw new NotFoundException({
@@ -144,6 +163,7 @@ export class SinsService {
 
     const where: Prisma.SinQuoteWhereInput = {
       sinId: sin.id,
+      reviewStatus: PUBLISHED_LINK_REVIEW_STATUS,
       ...(query.minScore !== undefined && {
         relevanceScore: { gte: query.minScore },
       }),
@@ -219,7 +239,7 @@ export class SinsService {
             slug: sin.slug,
             name: sin.name,
             nameAr: sin.nameAr,
-            severity: sin.severity,
+            rank: sin.rank,
             description: sin.description,
             descriptionAr: sin.descriptionAr,
           },
@@ -265,7 +285,7 @@ export class SinsService {
           slug: sin.slug,
           name: sin.name,
           nameAr: sin.nameAr,
-          severity: sin.severity,
+          rank: sin.rank,
           description: sin.description,
           descriptionAr: sin.descriptionAr,
         },
@@ -291,12 +311,29 @@ export class SinsService {
   // ─── Admin CRUD ───────────────────────────────────────────────────────────────
 
   async adminCreate(dto: CreateSinDto): Promise<SinDto> {
+    await this.assertRankCitation(dto.rank ?? null, dto.rankSourceId ?? null);
     // Will throw P2002 → 409 if slug is duplicate (handled by AllExceptionsFilter)
     const row = await this.prisma.sin.create({
       data: dto,
-      include: { _count: { select: { quotes: true } } },
+      include: SIN_READ_INCLUDE,
     });
-    return this.toDto(row);
+    return this.toDto(row, { includeSeverity: true });
+  }
+
+  async adminList(query: SinsQueryDto) {
+    const result = await this.findAll(query);
+    const rows = await this.prisma.sin.findMany({
+      where: { id: { in: result.data.map((sin) => sin.id) } },
+      select: { id: true, severity: true },
+    });
+    const severityById = new Map(rows.map((row) => [row.id, row.severity]));
+    return {
+      ...result,
+      data: result.data.map((sin) => ({
+        ...sin,
+        severity: severityById.get(sin.id) ?? null,
+      })),
+    };
   }
 
   async adminUpdate(id: string, dto: UpdateSinDto): Promise<SinDto> {
@@ -304,12 +341,55 @@ export class SinsService {
     if (!existing) {
       throw new NotFoundException({ code: 'RESOURCE_NOT_FOUND', message: 'Sin not found' });
     }
+    // Clearing the rank clears its citation so the CHECK stays satisfied.
+    const rankSourceId =
+      dto.rank === null && dto.rankSourceId === undefined ? null : dto.rankSourceId;
+    const rankReference =
+      dto.rank === null && dto.rankReference === undefined ? null : dto.rankReference;
+    const nextRank = dto.rank !== undefined ? dto.rank : existing.rank;
+    const nextSourceId = rankSourceId !== undefined ? rankSourceId : existing.rankSourceId;
+    await this.assertRankCitation(nextRank, nextSourceId);
     const row = await this.prisma.sin.update({
       where: { id },
-      data: dto,
-      include: { _count: { select: { quotes: true } } },
+      data: {
+        name: dto.name,
+        nameAr: dto.nameAr,
+        slug: dto.slug,
+        category: dto.category,
+        description: dto.description,
+        descriptionAr: dto.descriptionAr,
+        severity: dto.severity,
+        rank: dto.rank,
+        rankSourceId,
+        rankReference,
+      },
+      include: SIN_READ_INCLUDE,
     });
-    return this.toDto(row);
+    return this.toDto(row, { includeSeverity: true });
+  }
+
+  /**
+   * A rank citation requires a rank. An unknown source is 422.
+   * Clearing rank while a source remains violates Sin_rank_source_needs_rank.
+   */
+  private async assertRankCitation(
+    rank: SinRank | null,
+    rankSourceId: string | null,
+  ): Promise<void> {
+    if (rankSourceId && !rank) {
+      throw new BadRequestException({
+        code: 'VALIDATION_FAILED',
+        message: 'rankSourceId requires rank',
+      });
+    }
+    if (!rankSourceId) return;
+    const source = await this.prisma.source.findUnique({ where: { id: rankSourceId } });
+    if (!source) {
+      throw new UnprocessableEntityException({
+        code: 'RELATED_RESOURCE_INVALID',
+        message: 'Rank source not found',
+      });
+    }
   }
 
   async adminDelete(id: string, force = false): Promise<void> {
@@ -348,7 +428,11 @@ export class SinsService {
           oppositeSin: {
             select: { id: true, slug: true, name: true, nameAr: true },
           },
-          _count: { select: { quotes: true } },
+          _count: {
+            select: {
+              quotes: { where: { reviewStatus: PUBLISHED_LINK_REVIEW_STATUS } },
+            },
+          },
         },
       }),
       this.prisma.goodDeed.count({ where }),

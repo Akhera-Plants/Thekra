@@ -20,14 +20,14 @@ export default async function SinsPage({
   try {
     await queryClient.prefetchQuery({
       queryKey: queryKeys.sins.list({}),
-      queryFn: () => getSins({ limit: 200 }),
+      queryFn: () => getSins({ limit: 100 }),
     });
   } catch {
     // API down during build/test — show empty state on client
   }
 
   const sinsData = queryClient.getQueryData<{ data: Awaited<ReturnType<typeof getSins>>['data'] }>(
-    queryKeys.sins.list({ limit: 200 }),
+    queryKeys.sins.list({ limit: 100 }),
   );
   const sins = (sinsData as Awaited<ReturnType<typeof getSins>> | undefined)?.data ?? [];
 

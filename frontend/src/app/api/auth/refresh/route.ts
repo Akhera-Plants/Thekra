@@ -11,6 +11,8 @@
 
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { fetchAuthMeFromBackend } from '@/lib/api/fetch-auth-me';
+import { mapAuthUser } from '@/lib/api/map-auth-user';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 const COOKIE_NAME = 'refresh_token';
@@ -68,7 +70,8 @@ export async function POST(request: Request) {
     );
   }
 
-  const { accessToken, refreshToken: newRefreshToken, user } = data.data ?? {};
+  const { accessToken, refreshToken: newRefreshToken, user: userFromRefresh } =
+    data.data ?? {};
 
   if (!accessToken) {
     return NextResponse.json(
@@ -85,5 +88,18 @@ export async function POST(request: Request) {
     cs.set({ ...refreshCookieOptions(isSecure), value: newRefreshToken });
   }
 
-  return NextResponse.json({ data: { accessToken, user } }, { status: 200 });
+  const meRaw =
+    userFromRefresh ?? (await fetchAuthMeFromBackend(accessToken));
+  const mappedUser = mapAuthUser(meRaw);
+  if (!mappedUser) {
+    return NextResponse.json(
+      { error: { message: 'Could not load user after refresh' } },
+      { status: 502 },
+    );
+  }
+
+  return NextResponse.json(
+    { data: { accessToken, user: mappedUser } },
+    { status: 200 },
+  );
 }

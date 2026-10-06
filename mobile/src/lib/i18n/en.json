@@ -8,9 +8,9 @@
   "home": {
     "title": "Thekra",
     "subtitle": "How are you feeling right now?",
-    "sinAction": "I'm tempted by a sin",
+    "sinAction": "Help me resist a sin",
     "sinSubtitle": "Read what helps you resist it",
-    "goodDeedAction": "I want to do a good deed",
+    "goodDeedAction": "Guide me to an act of obedience",
     "goodDeedSubtitle": "Read what motivates and rewards",
     "continueReading": "Continue reading"
   },

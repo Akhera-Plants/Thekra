@@ -144,6 +144,8 @@ function createClient(): AxiosInstance {
     baseURL: `${env.NEXT_PUBLIC_API_URL}/v1`,
     timeout: 10_000,
     headers: { 'Content-Type': 'application/json' },
+    // Nest `TransformToArray` expects `type=A&type=B`, not `type[]=A`.
+    paramsSerializer: { indexes: null },
   });
   attachInterceptors(client);
   return client;

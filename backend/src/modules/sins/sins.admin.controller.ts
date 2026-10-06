@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   HttpCode,
   HttpStatus,
   Param,
@@ -18,6 +19,7 @@ import { JwtAuthGuard, Roles, RolesGuard } from '../../common/guards/admin.guard
 import { setCreated } from '../../common/http/set-created.js';
 import { ToBoolean } from '../../common/decorators/to-boolean.decorator.js';
 import { CreateSinDto } from './dto/create-sin.dto.js';
+import { SinsQueryDto } from './dto/sins-query.dto.js';
 import { UpdateSinDto } from './dto/update-sin.dto.js';
 import { SinsService } from './sins.service.js';
 
@@ -33,6 +35,12 @@ class DeleteSinQueryDto {
 @Controller('admin/sins')
 export class SinsAdminController {
   constructor(private readonly sinsService: SinsService) {}
+
+  /** Admin catalogue. Includes the editorial severity score, which public JSON omits. */
+  @Get()
+  findAll(@Query() query: SinsQueryDto) {
+    return this.sinsService.adminList(query);
+  }
 
   @Post()
   async create(

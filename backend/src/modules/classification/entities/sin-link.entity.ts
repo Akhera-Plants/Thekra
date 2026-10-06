@@ -1,4 +1,4 @@
-import type { QuoteType } from '@prisma/client';
+import type { LinkReviewStatus, QuoteType } from '@prisma/client';
 
 export interface SinLinkDto {
   id: string;
@@ -6,6 +6,7 @@ export interface SinLinkDto {
   quoteId: string;
   relevanceScore: number | null;
   note: string | null;
+  reviewStatus: LinkReviewStatus;
   sin: {
     slug: string;
     name: string;

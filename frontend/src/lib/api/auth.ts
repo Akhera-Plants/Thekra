@@ -8,6 +8,7 @@
  */
 
 import { apiGet, apiPost } from '@/lib/api-client';
+import { mapAuthUser } from '@/lib/api/map-auth-user';
 
 export interface UserDto {
   id: string;
@@ -31,13 +32,18 @@ export interface LoginBody {
 export interface RegisterBody {
   email: string;
   password: string;
+  /** Sent to backend as `displayName`. */
   name?: string;
 }
 
 /** GET /auth/me — requires Bearer token already set on apiClient */
 export async function getMe(): Promise<UserDto> {
-  const { data } = await apiGet<UserDto>('/auth/me');
-  return data;
+  const { data } = await apiGet<unknown>('/auth/me');
+  const user = mapAuthUser(data);
+  if (!user) {
+    throw new Error('Unexpected /auth/me response');
+  }
+  return user;
 }
 
 /**

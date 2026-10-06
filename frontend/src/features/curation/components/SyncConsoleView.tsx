@@ -74,7 +74,7 @@ function TriggerDialog({ open, onClose }: TriggerDialogProps) {
 
   const { data: sourcesResult } = useQuery({
     queryKey: queryKeys.sources.list({}),
-    queryFn: () => getSources({ limit: 200 }),
+    queryFn: () => getSources({ limit: 100 }),
   });
   const externalSources = (sourcesResult?.data ?? []).filter((s) => s.isExternalApi);
 

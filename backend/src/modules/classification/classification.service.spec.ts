@@ -183,10 +183,43 @@ describe('ClassificationService', () => {
 
       expect(prisma.sinQuote.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
-          create: expect.objectContaining({ relevanceScore: 100 }),
+          create: expect.objectContaining({
+            relevanceScore: 100,
+            reviewStatus: 'ACCEPTED',
+          }),
+          update: expect.objectContaining({ reviewStatus: 'ACCEPTED' }),
         }),
       );
       expect(result.link.relevanceScore).toBe(100);
+    });
+
+    it('stores NOT_REVIEWED when the curator asks not to publish the link', async () => {
+      prisma.sin.findUnique.mockResolvedValue(SIN);
+      prisma.quote.findUnique.mockResolvedValue(QUOTE_VERSE);
+      prisma.sinQuote.findUnique.mockResolvedValue(null);
+      prisma.sinQuote.upsert.mockResolvedValue({
+        id: 'link-4',
+        sinId: SIN.id,
+        quoteId: QUOTE_VERSE.id,
+        relevanceScore: 0,
+        note: null,
+        reviewStatus: 'NOT_REVIEWED',
+        sin: SIN,
+        quote: QUOTE_VERSE,
+      });
+
+      await service.linkSinQuote({
+        sinId: SIN.id,
+        quoteId: QUOTE_VERSE.id,
+        reviewStatus: 'NOT_REVIEWED',
+      });
+
+      expect(prisma.sinQuote.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: expect.objectContaining({ reviewStatus: 'NOT_REVIEWED' }),
+          update: expect.objectContaining({ reviewStatus: 'NOT_REVIEWED' }),
+        }),
+      );
     });
   });
 

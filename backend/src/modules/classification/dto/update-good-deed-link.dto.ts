@@ -1,5 +1,6 @@
 import { Transform } from 'class-transformer';
-import { IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { IsEnum, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { LinkReviewStatus } from '@prisma/client';
 import { IsStrictInt } from '../../../common/decorators/is-strict-int.decorator.js';
 
 export class UpdateGoodDeedLinkDto {
@@ -15,4 +16,8 @@ export class UpdateGoodDeedLinkDto {
   @MaxLength(1000)
   @Transform(({ value }: { value: unknown }) => (value === null ? null : value))
   note?: string | null;
+
+  @IsOptional()
+  @IsEnum(LinkReviewStatus)
+  reviewStatus?: LinkReviewStatus;
 }

@@ -23,7 +23,7 @@ import { useRegister } from '../hooks/useRegister';
 const registerSchema = z.object({
   name: z.string().min(1).max(100).optional().or(z.literal('')),
   email: z.string().email(),
-  password: z.string().min(8, { message: 'كلمة المرور 8 أحرف على الأقل' }),
+  password: z.string().min(10, { message: 'كلمة المرور 10 أحرف على الأقل' }),
 });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;

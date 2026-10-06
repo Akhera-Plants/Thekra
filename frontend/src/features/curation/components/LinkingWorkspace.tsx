@@ -119,8 +119,8 @@ export function LinkingWorkspace() {
   const [search, setSearch] = useState('');
 
   const { data: sinsResult } = useQuery({
-    queryKey: queryKeys.sins.list({ limit: 200 }),
-    queryFn: () => getSins({ limit: 200 }),
+    queryKey: queryKeys.sins.list({ limit: 100 }),
+    queryFn: () => getSins({ limit: 100 }),
   });
   const sins = sinsResult?.data ?? [];
 

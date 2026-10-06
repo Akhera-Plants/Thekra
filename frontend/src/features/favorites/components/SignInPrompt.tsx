@@ -16,7 +16,8 @@ interface SignInPromptProps {
 }
 
 export function SignInPrompt({ variant = 'page', className }: SignInPromptProps) {
-  const t = useTranslations('auth');
+  const tAuth = useTranslations('auth');
+  const tFavorites = useTranslations('favorites');
 
   if (variant === 'inline') {
     return (
@@ -25,13 +26,13 @@ export function SignInPrompt({ variant = 'page', className }: SignInPromptProps)
         role="status"
       >
         <Heart className="size-5 text-muted-foreground" aria-hidden />
-        <p className="text-sm text-muted-foreground">{t('signInToFavorite')}</p>
+        <p className="text-sm text-muted-foreground">{tAuth('signInToFavorite')}</p>
         <div className="flex gap-2">
           <Button asChild size="sm" variant="default">
-            <Link href="/login">{t('signIn')}</Link>
+            <Link href="/login">{tAuth('signIn')}</Link>
           </Button>
           <Button asChild size="sm" variant="outline">
-            <Link href="/register">{t('register')}</Link>
+            <Link href="/register">{tAuth('register')}</Link>
           </Button>
         </div>
       </div>
@@ -47,17 +48,17 @@ export function SignInPrompt({ variant = 'page', className }: SignInPromptProps)
         <Heart className="size-8 text-muted-foreground" aria-hidden />
       </div>
       <div className="flex flex-col gap-2">
-        <h2 className="text-xl font-semibold">{t('favoritesSignInTitle')}</h2>
+        <h2 className="text-xl font-semibold">{tFavorites('favoritesSignInTitle')}</h2>
         <p className="max-w-sm text-sm text-muted-foreground">
-          {t('favoritesSignInDescription')}
+          {tFavorites('favoritesSignInDescription')}
         </p>
       </div>
       <div className="flex gap-3">
         <Button asChild size="default">
-          <Link href="/login">{t('signIn')}</Link>
+          <Link href="/login">{tAuth('signIn')}</Link>
         </Button>
         <Button asChild variant="outline">
-          <Link href="/register">{t('register')}</Link>
+          <Link href="/register">{tAuth('register')}</Link>
         </Button>
       </div>
     </div>

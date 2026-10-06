@@ -1,4 +1,11 @@
+import type { SinRank } from '@prisma/client';
 import type { GoodDeedSummary } from '../../good-deeds/entities/good-deed.entity.js';
+
+export interface SinRankSourceDto {
+  id: string;
+  name: string;
+  nameAr: string | null;
+}
 
 export interface SinDto {
   id: string;
@@ -8,7 +15,11 @@ export interface SinDto {
   category: string | null;
   description: string | null;
   descriptionAr: string | null;
-  severity: number | null;
+  /** Present on admin responses only. Public JSON omits this field. */
+  severity?: number | null;
+  rank: SinRank | null;
+  rankReference: string | null;
+  rankSource: SinRankSourceDto | null;
   quoteCount: number;
   createdAt: Date;
   updatedAt: Date;

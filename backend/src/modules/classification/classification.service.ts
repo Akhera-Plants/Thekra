@@ -3,7 +3,7 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { Prisma, QuoteType } from '@prisma/client';
+import { LinkReviewStatus, Prisma, QuoteType } from '@prisma/client';
 import { paginated } from '../../common/dto/paginated-result.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { GradePolicy } from '../hadith/grade-policy.js';
@@ -130,10 +130,12 @@ export class ClassificationService {
               quoteId: item.quoteId,
               relevanceScore: item.relevanceScore ?? 0,
               note: item.note ?? null,
+              reviewStatus: LinkReviewStatus.ACCEPTED,
             },
             update: {
               ...(item.relevanceScore !== undefined && { relevanceScore: item.relevanceScore }),
               ...(item.note !== undefined && { note: item.note }),
+              reviewStatus: LinkReviewStatus.ACCEPTED,
             },
           }),
         ),
@@ -181,10 +183,12 @@ export class ClassificationService {
               quoteId: item.quoteId,
               relevanceScore: item.relevanceScore ?? 0,
               note: item.note ?? null,
+              reviewStatus: LinkReviewStatus.ACCEPTED,
             },
             update: {
               ...(item.relevanceScore !== undefined && { relevanceScore: item.relevanceScore }),
               ...(item.note !== undefined && { note: item.note }),
+              reviewStatus: LinkReviewStatus.ACCEPTED,
             },
           }),
         ),
@@ -204,7 +208,12 @@ export class ClassificationService {
   private async doLink<TLinkDto>(
     binding: ClassifyBinding,
     parentId: string,
-    dto: { quoteId: string; relevanceScore?: number; note?: string | null },
+    dto: {
+      quoteId: string;
+      relevanceScore?: number;
+      note?: string | null;
+      reviewStatus?: LinkReviewStatus;
+    },
   ): Promise<{ created: boolean; link: TLinkDto }> {
     await binding.assertParent(parentId);
     await this.assertQuoteExistsAndGradeAllowed(dto.quoteId);
@@ -222,10 +231,12 @@ export class ClassificationService {
         quoteId: dto.quoteId,
         relevanceScore: dto.relevanceScore ?? 0,
         note: dto.note ?? null,
+        reviewStatus: dto.reviewStatus ?? LinkReviewStatus.ACCEPTED,
       },
       update: {
         ...(dto.relevanceScore !== undefined && { relevanceScore: dto.relevanceScore }),
         ...(dto.note !== undefined && { note: dto.note }),
+        reviewStatus: dto.reviewStatus ?? LinkReviewStatus.ACCEPTED,
       },
       include: binding.include,
     })) as TLinkDto;
@@ -276,7 +287,7 @@ export class ClassificationService {
   private async doUpdate<TLinkDto>(
     binding: ClassifyBinding,
     id: string,
-    dto: { relevanceScore?: number; note?: string | null },
+    dto: { relevanceScore?: number; note?: string | null; reviewStatus?: LinkReviewStatus },
   ): Promise<TLinkDto> {
     const existing: unknown = await binding.delegate['findUnique']({ where: { id } });
     if (!existing) {
@@ -288,6 +299,7 @@ export class ClassificationService {
       data: {
         ...(dto.relevanceScore !== undefined && { relevanceScore: dto.relevanceScore }),
         ...(dto.note !== undefined && { note: dto.note }),
+        ...(dto.reviewStatus !== undefined && { reviewStatus: dto.reviewStatus }),
       },
       include: binding.include,
     })) as TLinkDto;
@@ -457,6 +469,7 @@ export class ClassificationService {
     if (query.maxScore !== undefined) and.push({ relevanceScore: { lte: query.maxScore } });
     if (query.hasNote === true) and.push({ note: { not: null } });
     if (query.hasNote === false) and.push({ note: null });
+    if (query.reviewStatus) and.push({ reviewStatus: query.reviewStatus });
     return and.length ? { AND: and } : {};
   }
 
@@ -468,6 +481,7 @@ export class ClassificationService {
     if (query.maxScore !== undefined) and.push({ relevanceScore: { lte: query.maxScore } });
     if (query.hasNote === true) and.push({ note: { not: null } });
     if (query.hasNote === false) and.push({ note: null });
+    if (query.reviewStatus) and.push({ reviewStatus: query.reviewStatus });
     return and.length ? { AND: and } : {};
   }
 }

@@ -3,7 +3,11 @@ import { Prisma } from '@prisma/client';
 import { buildPageMeta, paginated } from '../../common/dto/paginated-result.js';
 import { findIdsByNormalizedArabic } from '../../common/text/arabic-search.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
-import { LINK_ORDERING_LABEL, QuotesService } from '../quotes/quotes.service.js';
+import {
+  LINK_ORDERING_LABEL,
+  PUBLISHED_LINK_REVIEW_STATUS,
+  QuotesService,
+} from '../quotes/quotes.service.js';
 import type { GoodDeedQuotesQueryDto } from '../sins/dto/sin-quotes-query.dto.js';
 import type { CreateGoodDeedDto } from './dto/create-good-deed.dto.js';
 import type { GoodDeedsQueryDto } from './dto/good-deeds-query.dto.js';
@@ -100,7 +104,11 @@ export class GoodDeedsService {
           oppositeSin: {
             select: { id: true, slug: true, name: true, nameAr: true },
           },
-          _count: { select: { quotes: true } },
+          _count: {
+            select: {
+              quotes: { where: { reviewStatus: PUBLISHED_LINK_REVIEW_STATUS } },
+            },
+          },
         },
       }),
       this.prisma.goodDeed.count({ where }),
@@ -122,7 +130,11 @@ export class GoodDeedsService {
         oppositeSin: {
           select: { id: true, slug: true, name: true, nameAr: true },
         },
-        _count: { select: { quotes: true } },
+        _count: {
+            select: {
+              quotes: { where: { reviewStatus: PUBLISHED_LINK_REVIEW_STATUS } },
+            },
+          },
       },
     });
     if (!row) {
@@ -151,7 +163,11 @@ export class GoodDeedsService {
       data: dto,
       include: {
         oppositeSin: { select: { id: true, slug: true, name: true, nameAr: true } },
-        _count: { select: { quotes: true } },
+        _count: {
+            select: {
+              quotes: { where: { reviewStatus: PUBLISHED_LINK_REVIEW_STATUS } },
+            },
+          },
       },
     });
     return this.toDto(row);
@@ -176,7 +192,11 @@ export class GoodDeedsService {
       data: dto,
       include: {
         oppositeSin: { select: { id: true, slug: true, name: true, nameAr: true } },
-        _count: { select: { quotes: true } },
+        _count: {
+            select: {
+              quotes: { where: { reviewStatus: PUBLISHED_LINK_REVIEW_STATUS } },
+            },
+          },
       },
     });
     return this.toDto(row);
@@ -232,6 +252,7 @@ export class GoodDeedsService {
 
     const where: Prisma.GoodDeedQuoteWhereInput = {
       goodDeedId: deed.id,
+      reviewStatus: PUBLISHED_LINK_REVIEW_STATUS,
       ...(query.minScore !== undefined && {
         relevanceScore: { gte: query.minScore },
       }),

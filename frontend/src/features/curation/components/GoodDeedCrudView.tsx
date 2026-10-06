@@ -77,8 +77,8 @@ function DeedFormDialog({ open, onClose, existing }: DeedFormDialogProps) {
   const isPending = isCreating || isUpdating;
 
   const { data: sinsResult } = useQuery({
-    queryKey: queryKeys.sins.list({ limit: 200 }),
-    queryFn: () => getSins({ limit: 200 }),
+    queryKey: queryKeys.sins.list({ limit: 100 }),
+    queryFn: () => getSins({ limit: 100 }),
   });
   const sins = sinsResult?.data ?? [];
 
@@ -158,8 +158,14 @@ function DeedFormDialog({ open, onClose, existing }: DeedFormDialogProps) {
                 <FormItem className="md:col-span-2">
                   <FormLabel>{t('goodDeeds.fieldOppositeSin')}</FormLabel>
                   <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
+                    onValueChange={(v) =>
+                      field.onChange(v === '__none__' ? '' : v)
+                    }
+                    defaultValue={
+                      field.value && field.value.length > 0
+                        ? field.value
+                        : '__none__'
+                    }
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -167,7 +173,9 @@ function DeedFormDialog({ open, onClose, existing }: DeedFormDialogProps) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">{t('goodDeeds.noOppositeSin')}</SelectItem>
+                      <SelectItem value="__none__">
+                        {t('goodDeeds.noOppositeSin')}
+                      </SelectItem>
                       {sins.map((s) => (
                         <SelectItem key={s.id} value={s.id}>
                           <span dir="rtl">{s.nameAr}</span>
@@ -198,8 +206,8 @@ export function GoodDeedCrudView() {
   const [editing, setEditing] = useState<GoodDeedDto | undefined>();
 
   const { data, isLoading } = useQuery({
-    queryKey: queryKeys.goodDeeds.list({ limit: 200 }),
-    queryFn: () => getGoodDeeds({ limit: 200 }),
+    queryKey: queryKeys.goodDeeds.list({ limit: 100 }),
+    queryFn: () => getGoodDeeds({ limit: 100 }),
   });
   const deeds = data?.data ?? [];
 

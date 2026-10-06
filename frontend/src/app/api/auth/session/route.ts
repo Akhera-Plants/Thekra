@@ -13,6 +13,7 @@
 
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { mapAuthUser } from '@/lib/api/map-auth-user';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 const COOKIE_NAME = 'refresh_token';
@@ -94,8 +95,18 @@ export async function POST(request: Request) {
     value: refreshToken,
   });
 
-  // Return access token + user; password never echoed
-  return NextResponse.json({ data: { accessToken, user } }, { status: 200 });
+  const mappedUser = mapAuthUser(user);
+  if (!mappedUser) {
+    return NextResponse.json(
+      { error: { message: 'Unexpected user payload from backend' } },
+      { status: 502 },
+    );
+  }
+
+  return NextResponse.json(
+    { data: { accessToken, user: mappedUser } },
+    { status: 200 },
+  );
 }
 
 // ── DELETE /api/auth/session (logout) ──────────────────────────────────────

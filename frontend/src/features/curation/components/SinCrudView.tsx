@@ -2,7 +2,7 @@
 
 /**
  * SinCrudView — Sin CRUD table for admin.
- * Uses public GET /sins for listing; admin endpoints for mutations.
+ * Uses GET /admin/sins so the editorial severity score stays off the public API.
  */
 
 import { useState } from 'react';
@@ -12,7 +12,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { queryKeys } from '@/lib/query-keys';
-import { getSins } from '@/lib/api/sins';
+import { adminListSins } from '@/lib/api/admin-sins';
 import { useAdminCreateSin, useAdminUpdateSin, useAdminDeleteSin } from '../hooks/useAdminSins';
 import { AdminDataTable, type ColumnDef } from './AdminDataTable';
 import { Button } from '@/components/ui/button';
@@ -35,7 +35,7 @@ import {
 } from '@/components/ui/form';
 import { ArabicText } from '@/components/shared/ArabicText';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
-import type { SinDto } from '@/lib/types/api';
+import type { AdminSinDto } from '@/lib/types/admin';
 
 const sinSchema = z.object({
   name: z.string().min(1).max(300),
@@ -52,7 +52,7 @@ type SinFormValues = z.infer<typeof sinSchema>;
 interface SinFormDialogProps {
   open: boolean;
   onClose: () => void;
-  existing?: SinDto;
+  existing?: AdminSinDto;
 }
 
 function SinFormDialog({ open, onClose, existing }: SinFormDialogProps) {
@@ -155,17 +155,17 @@ function SinFormDialog({ open, onClose, existing }: SinFormDialogProps) {
 export function SinCrudView() {
   const t = useTranslations('admin');
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editing, setEditing] = useState<SinDto | undefined>();
+  const [editing, setEditing] = useState<AdminSinDto | undefined>();
 
   const { data, isLoading } = useQuery({
-    queryKey: queryKeys.sins.list({ limit: 200 }),
-    queryFn: () => getSins({ limit: 200 }),
+    queryKey: queryKeys.sins.list({ limit: 100 }),
+    queryFn: () => adminListSins({ limit: 100 }),
   });
   const sins = data?.data ?? [];
 
   const { mutate: deleteSin, isPending: isDeleting } = useAdminDeleteSin();
 
-  const columns: ColumnDef<SinDto>[] = [
+  const columns: ColumnDef<AdminSinDto>[] = [
     {
       key: 'nameAr',
       header: t('common.nameAr'),

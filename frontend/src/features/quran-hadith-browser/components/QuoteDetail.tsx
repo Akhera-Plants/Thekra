@@ -48,9 +48,18 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
         </p>
       )}
 
-      {/* Arabic text — primary */}
+      {/* Arabic text — primary. A footnote marker jumps to the citation. */}
       <ArabicText as="blockquote" size="xl" className="border-none ps-0">
         {quote.textAr}
+        {(quote.citation?.volume || quote.citation?.page || quote.book?.pageOrChapter) && (
+          <a
+            href={`#quote-${quote.id}-source`}
+            className="ms-1 inline-block text-sm text-primary underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <sup>(1)</sup>
+            <span className="sr-only">{t('citationMarker')}</span>
+          </a>
+        )}
       </ArabicText>
 
       {/* Translation */}
@@ -68,10 +77,13 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
       {/* Provenance */}
       <SourceAttribution
         quote={quote}
+        citationAnchorId={`quote-${quote.id}-source`}
         labels={{
           narrator: t('narrator'),
           reference: t('reference'),
           source: t('source'),
+          volume: t('volume'),
+          page: t('page'),
         }}
       />
 
@@ -99,7 +111,7 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
           </h2>
           <ul className="flex flex-wrap gap-2">
             {quote.relatedSins.map((sin) => (
-              <li key={sin.id}>
+              <li key={sin.slug}>
                 <Link href={`/sins/${sin.slug}`}>
                   <Badge variant="outline">
                     <span dir="rtl" lang="ar" className="font-arabic">
@@ -121,7 +133,7 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
           </h2>
           <ul className="flex flex-wrap gap-2">
             {quote.relatedGoodDeeds.map((deed) => (
-              <li key={deed.id}>
+              <li key={deed.slug}>
                 <Link href={`/good-deeds/${deed.slug}`}>
                   <Badge variant="outline">
                     <span dir="rtl" lang="ar" className="font-arabic">

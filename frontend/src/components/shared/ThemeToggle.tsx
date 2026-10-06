@@ -1,5 +1,6 @@
 'use client';
 
+import { useSyncExternalStore } from 'react';
 import { Monitor, Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,27 @@ export interface ThemeToggleProps {
 
 export function ThemeToggle({ labels, className }: ThemeToggleProps) {
   const { theme, setTheme } = useTheme();
+  // Server snapshot is false; client snapshot is true. No effect, no hydration mismatch.
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+
+  if (!mounted) {
+    return (
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className={className}
+        aria-label={labels.toggle}
+        disabled
+      >
+        <Sun className="size-4" aria-hidden />
+      </Button>
+    );
+  }
 
   return (
     <DropdownMenu>

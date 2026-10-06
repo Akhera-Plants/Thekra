@@ -177,6 +177,8 @@ export function QuoteCard({
           narrator: t('narrator'),
           reference: t('reference'),
           source: t('source'),
+          volume: t('volume'),
+          page: t('page'),
         }}
       />
 

@@ -74,11 +74,15 @@
   "home": {
     "title": "ذكرى",
     "tagline": "تذكير عند الحاجة",
-    "sinEntryLabel": "أشعر برغبة في معصية",
+    "sinEntryLabel": "أعنّي على ترك معصية",
     "sinEntryDescription": "ابحث عن معصية واحصل على تذكيرات من القرآن والسنة",
-    "deedEntryLabel": "أريد عمل حسنة",
+    "deedEntryLabel": "دُلّني على طاعة",
     "deedEntryDescription": "ابحث عن عمل صالح واحصل على تحفيز من القرآن والسنة",
     "browseLabel": "تصفح المحتوى"
+  },
+  "sinRank": {
+    "KABIRA": "كبيرة",
+    "SAGHIRA": "صغيرة"
   },
   "sins": {
     "pageTitle": "المعاصي",
@@ -152,6 +156,9 @@
     "reference": "المرجع",
     "tags": "الوسوم",
     "source": "المصدر",
+    "volume": "الجزء",
+    "page": "الصفحة",
+    "citationMarker": "الكتاب والصفحة",
     "weakNotice": "هذا الحديث ضعيف",
     "translation": "الترجمة",
     "viewFull": "عرض كامل"

@@ -18,6 +18,21 @@ export const QuoteOrigin = {
 } as const;
 export type QuoteOrigin = (typeof QuoteOrigin)[keyof typeof QuoteOrigin];
 
+export const SinRank = {
+  KABIRA: 'KABIRA',
+  SAGHIRA: 'SAGHIRA',
+} as const;
+export type SinRank = (typeof SinRank)[keyof typeof SinRank];
+
+export const LinkReviewStatus = {
+  NOT_REVIEWED: 'NOT_REVIEWED',
+  UNDER_REVIEW: 'UNDER_REVIEW',
+  REVIEWED: 'REVIEWED',
+  ACCEPTED: 'ACCEPTED',
+  REJECTED: 'REJECTED',
+} as const;
+export type LinkReviewStatus = (typeof LinkReviewStatus)[keyof typeof LinkReviewStatus];
+
 export const HadithGrade = {
   SAHIH: 'SAHIH',
   HASAN: 'HASAN',

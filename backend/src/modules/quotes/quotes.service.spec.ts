@@ -31,6 +31,8 @@ function makeRow(overrides: Partial<QuoteRowForDto> = {}): QuoteRowForDto {
     bookTitle: null,
     author: null,
     pageOrChapter: null,
+    volume: null,
+    page: null,
     externalId: null,
     apiProvider: null,
     rawPayload: null,
@@ -92,6 +94,17 @@ describe('QuotesService', () => {
   });
 
   describe('toQuoteDto', () => {
+    it('exposes volume and page as citation and still omits rawPayload', () => {
+      const dto = service.toQuoteDto(
+        makeRow({ volume: '2', page: '120', rawPayload: { page: 120, secret: true } }),
+        'ar',
+      );
+      expect(dto.citation).toEqual({ volume: '2', page: '120' });
+      expect(dto).not.toHaveProperty('rawPayload');
+      expect(dto).not.toHaveProperty('volume');
+      expect(dto).not.toHaveProperty('page');
+    });
+
     it('never emits rawPayload', () => {
       const row = makeRow({
         origin: QuoteOrigin.API_CACHED,

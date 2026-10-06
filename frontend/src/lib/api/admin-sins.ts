@@ -1,23 +1,26 @@
 /**
  * Admin Sin API helpers.
- * Backend: POST/PATCH/DELETE /admin/sins
- * (GET /sins is used for listing)
+ * Backend: GET/POST/PATCH/DELETE /admin/sins
  */
-import { apiDelete, apiPatch, apiPost } from '@/lib/api-client';
-import type { SinDto } from '@/lib/types/api';
-import type { CreateSinBody, UpdateSinBody } from '@/lib/types/admin';
+import { apiDelete, apiGet, apiPatch, apiPost } from '@/lib/api-client';
+import type { AdminSinDto, CreateSinBody, UpdateSinBody } from '@/lib/types/admin';
+import type { SinsQuery } from '@/lib/types/api';
+
+export async function adminListSins(query: SinsQuery = {}) {
+  return apiGet<AdminSinDto[]>('/admin/sins', { params: query });
+}
 
 export async function adminCreateSin(
   body: CreateSinBody,
-): Promise<{ data: SinDto }> {
-  return apiPost<SinDto>('/admin/sins', body);
+): Promise<{ data: AdminSinDto }> {
+  return apiPost<AdminSinDto>('/admin/sins', body);
 }
 
 export async function adminUpdateSin(
   id: string,
   body: UpdateSinBody,
-): Promise<{ data: SinDto }> {
-  return apiPatch<SinDto>(`/admin/sins/${id}`, body);
+): Promise<{ data: AdminSinDto }> {
+  return apiPatch<AdminSinDto>(`/admin/sins/${id}`, body);
 }
 
 export async function adminDeleteSin(

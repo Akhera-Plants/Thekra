@@ -24,7 +24,7 @@ interface SinSearchCommandProps {
 export function SinSearchCommand({ onSelect }: SinSearchCommandProps) {
   const t = useTranslations('sins');
   const router = useRouter();
-  const { data, isPending } = useSins({ limit: 200 });
+  const { data, isPending } = useSins({ limit: 100 });
   const sins = data?.data ?? [];
 
   function handleSelect(sin: SinDto) {
