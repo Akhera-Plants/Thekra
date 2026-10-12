@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { classifyChapter, topicKey } from './classify.js';
+import { chapterTargets, classifyChapter, topicKey } from './classify.js';
 
 describe('classifyChapter', () => {
   it('reads a prohibition as something to avoid', () => {
@@ -27,6 +27,10 @@ describe('classifyChapter', () => {
       kind: 'AMBIGUOUS',
       explicit: false,
     });
+    expect(chapterTargets('الترغيب في الصدق والترهيب من الكذب')).toEqual([
+      { kind: 'AVOID', topic: 'كذب', explicit: false },
+      { kind: 'DO', topic: 'صدق', explicit: false },
+    ]);
   });
 
   it('treats a kabira heading as avoid, without the ordinal', () => {

@@ -14,7 +14,7 @@ import {
   type PrismaClient,
 } from '@prisma/client';
 import type { ImportOptions } from '../lib/cli.js';
-import { classifyChapter, topicKey, type ChapterClassification } from './classify.js';
+import { chapterTargets, classifyChapter, topicKey, type ChapterClassification } from './classify.js';
 import { sentenceAround, tafsirSupport } from './tafsir-link.js';
 
 interface QuoteChapter {
@@ -118,22 +118,21 @@ export async function runClassify(options: ImportOptions): Promise<void> {
         status: FlagStatus.OPEN,
         details: { chapter: title },
       });
-      continue;
     }
-    if (!chosen.classification.topic || chosen.classification.kind === 'NEUTRAL') continue;
-    const kind = chosen.classification.kind;
-    const key = `${kind}:${topicKey(chosen.classification.topic)}`;
-    const group = groups.get(key) ?? {
-      kind,
-      topic: chosen.classification.topic,
-      nameAr: displayTopic(title),
-      explicit: chosen.classification.explicit,
-      quotes: [],
-    };
-    if (!group.explicit && chosen.classification.explicit) group.explicit = true;
-    if (displayTopic(title).length < group.nameAr.length) group.nameAr = displayTopic(title);
-    group.quotes.push({ id: quote.id, note: `باب ${title} — ${quote.sourceName}` });
-    groups.set(key, group);
+    for (const target of chapterTargets(title)) {
+      const key = `${target.kind}:${topicKey(target.topic)}`;
+      const group = groups.get(key) ?? {
+        kind: target.kind,
+        topic: target.topic,
+        nameAr: displayTopic(title),
+        explicit: target.explicit,
+        quotes: [],
+      };
+      if (!group.explicit && target.explicit) group.explicit = true;
+      if (displayTopic(title).length < group.nameAr.length) group.nameAr = displayTopic(title);
+      group.quotes.push({ id: quote.id, note: `باب ${title} — ${quote.sourceName}` });
+      groups.set(key, group);
+    }
   }
 
   let entitiesCreated = 0;

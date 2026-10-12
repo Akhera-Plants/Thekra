@@ -1540,11 +1540,11 @@ Distinct titles after the OpenITI chapters were included: AVOID 590, DO 884, NEU
 
 Entities created (origin AUTO_CHAPTER): 422 sins, 721 deeds. Curated rows were left as they were (73 sins, 8 deeds). The name is whatever follows the class word, so some names are a whole chapter remainder or a fragment. They need the owner's review before they are treated as settled topics.
 
-Links from chapters: 1939 sin links, 2898 deed links, ACCEPTED when the title had one class word and a topic. Ambiguous titles were flagged and not attached to a single entity. A second classification run created 0 entities, 0 links, and 0 flags.
+Links from chapters: 1939 sin links and 2898 deed links were ACCEPTED when the title had one class word and a topic. A mixed title is linked to each of its topics as NOT_REVIEWED and flagged AMBIGUOUS_CHAPTER. That pass added 97 entities, 160 sin links, and 381 deed links. The run after it created 0 entities, 0 links, and 0 flags.
 
 Al-Sa'di links: 2891, of which 670 are ACCEPTED (the sentence names the subject and the warning or the praise matches). The rest are NOT_REVIEWED with WEAK_TAFSIR_SUPPORT.
 
-Chapter-map suggestions started at 172 unreviewed. 35 were marked reviewed because the rule and the suggested entity's name are the same topic. The rest stay unreviewed because the suggested name is not that topic. Restoring the Riyad OCR text before the OpenITI pass created 355 further suggestions, so 470 remain unreviewed.
+Chapter-map suggestions started at 172 unreviewed. 35 were marked reviewed because the rule and the suggested entity's name are the same topic. The rest stay unreviewed because the suggested name is not that topic. Restoring the Riyad OCR text before the OpenITI pass created 355 further suggestions. 4 more matched the rule later, so 466 remain unreviewed because the suggested name is still not that topic.
 
 A public list hides an entity with 0 published texts until «إظهار الكل». Sins with none: 325. Deeds with none: 515.
 

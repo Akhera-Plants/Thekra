@@ -33,13 +33,21 @@ function firstMarker(text: string, markers: readonly string[]): string | null {
   return found?.marker ?? null;
 }
 
-function topicAfter(text: string, marker: string): string {
+function topicAfter(text: string, marker: string, stops: readonly string[]): string {
   const at = text.indexOf(marker);
-  return text
-    .slice(at + marker.length)
+  let rest = text.slice(at + marker.length).trim();
+  let cut = rest.length;
+  for (const stop of stops) {
+    if (stop === marker) continue;
+    const index = rest.indexOf(stop);
+    if (index > 0 && index < cut) cut = index;
+  }
+  rest = rest.slice(0, cut).replace(/\s*و\s*$/, '');
+  return rest
     .trim()
     .replace(/^(?:من|في|عن|علي)\s+/, '')
     .replace(/^ال(?=\S)/, '')
+    .replace(/[،,]\s*$/, '')
     .split(/\s+[–—-]\s+/)[0]!
     .trim();
 }
@@ -68,9 +76,42 @@ export function classifyChapter(title: string | null | undefined): ChapterClassi
   if (avoid && doing) return { kind: 'AMBIGUOUS', topic: folded, explicit: false };
   const marker = avoid ?? doing;
   if (!marker) return { kind: 'NEUTRAL', topic: null, explicit: false };
-  const topic = topicAfter(folded, marker);
+  const topic = topicAfter(folded, marker, [...AVOID, ...DO_MARKERS]);
   if (topic.replace(/\s/g, '').length < 3) return { kind: 'AMBIGUOUS', topic: folded, explicit: false };
   return { kind: avoid ? 'AVOID' : 'DO', topic, explicit: true };
+}
+
+export interface ChapterTarget {
+  kind: 'AVOID' | 'DO';
+  topic: string;
+  /** False when the title also carries the other class. Those links stay unreviewed. */
+  explicit: boolean;
+}
+
+/** One class yields one target. A mixed title yields both, each unreviewed. */
+export function chapterTargets(title: string | null | undefined): ChapterTarget[] {
+  const classified = classifyChapter(title);
+  if ((classified.kind === 'AVOID' || classified.kind === 'DO') && classified.topic) {
+    return [{ kind: classified.kind, topic: classified.topic, explicit: classified.explicit }];
+  }
+  if (classified.kind !== 'AMBIGUOUS' || !title?.trim()) return [];
+  const folded = foldArabic(title)
+    .replace(/^[0-9]+\s*/, '')
+    .replace(/^(?:كتاب|باب|فصل)\s+/, '')
+    .trim();
+  const stops = [...AVOID, ...DO_MARKERS];
+  const targets: ChapterTarget[] = [];
+  const avoid = firstMarker(folded, AVOID);
+  const doing = firstMarker(folded, DO_MARKERS);
+  if (avoid) {
+    const topic = topicAfter(folded, avoid, stops);
+    if (topic.replace(/\s/g, '').length >= 3) targets.push({ kind: 'AVOID', topic, explicit: false });
+  }
+  if (doing) {
+    const topic = topicAfter(folded, doing, stops);
+    if (topic.replace(/\s/g, '').length >= 3) targets.push({ kind: 'DO', topic, explicit: false });
+  }
+  return targets;
 }
 
 /** Same subject across books: one folded topic, one leading «ال» removed. */
