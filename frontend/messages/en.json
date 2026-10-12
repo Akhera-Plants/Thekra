@@ -139,7 +139,9 @@
     "jumpLabel": "Letter index",
     "noResults": "No matching results",
     "categoryAll": "All",
-    "openPicker": "Choose a sin"
+    "openPicker": "Choose a sin",
+    "showAll": "Show all",
+    "showPublished": "Published only"
   },
   "sinDetail": {
     "anotherReminder": "Another reminder",
@@ -166,7 +168,9 @@
     "quiet": "No published text yet",
     "jumpLabel": "Letter index",
     "noResults": "No matching results",
-    "openPicker": "Choose a good deed"
+    "openPicker": "Choose a good deed",
+    "showAll": "Show all",
+    "showPublished": "Published only"
   },
   "goodDeedDetail": {
     "anotherMotivation": "Another reminder",
@@ -230,6 +234,8 @@
     "weakNotice": "This narration is weak (da'if)",
     "translation": "Translation",
     "viewFull": "View full",
+    "whyVerse": "Why this verse?",
+    "tafsirEmpty": "No text for this verse",
     "report": "Report a mistake",
     "reportReason": "Reason",
     "reportNote": "Note",

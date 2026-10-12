@@ -139,6 +139,9 @@ export function QuoteCard({
             gradeReference: t('gradeReference'),
           }}
         />
+        {link?.note && quote.type === 'QURAN_VERSE' && (locale === 'en' || !/[A-Za-z]/.test(link.note)) && (
+          <p className="text-sm text-muted-foreground">{t('whyVerse')}</p>
+        )}
         {link?.note && (locale === 'en' || !/[A-Za-z]/.test(link.note)) && (
           <p className="leading-relaxed">{link.note}</p>
         )}

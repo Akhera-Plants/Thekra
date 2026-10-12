@@ -207,6 +207,7 @@ export interface SinsQuery {
   rank?: SinRank;
   q?: string;
   sort?: 'name' | 'quoteCount';
+  includeEmpty?: 'true' | 'false';
 }
 
 export interface SinQuotesQuery {
@@ -229,6 +230,7 @@ export interface GoodDeedsQuery {
   q?: string;
   oppositeSinSlug?: string;
   sort?: 'name' | 'quoteCount';
+  includeEmpty?: 'true' | 'false';
 }
 
 export interface GoodDeedQuotesQuery {

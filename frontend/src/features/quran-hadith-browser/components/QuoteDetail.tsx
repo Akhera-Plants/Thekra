@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Link } from '@/i18n/navigation';
 import { ArabicText } from '@/components/shared/ArabicText';
 import { GradeBadge } from '@/components/shared/quote/GradeBadge';
+import { VerseTafsir } from '@/features/quran-hadith-browser/components/VerseTafsir';
 import { ReportMistake } from '@/components/shared/quote/ReportMistake';
 import { SourceAttribution } from '@/components/shared/quote/SourceAttribution';
 import type { QuoteDetailDto } from '@/lib/types/api';
@@ -64,6 +65,8 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
           </a>
         )}
       </ArabicText>
+
+      {quote.type === 'QURAN_VERSE' && <VerseTafsir quoteId={quote.id} />}
 
       {/* Translation */}
       {quote.translation && !arabic && (

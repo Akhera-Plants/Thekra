@@ -139,7 +139,9 @@
     "jumpLabel": "فهرس الحروف",
     "noResults": "لا توجد نتائج مطابقة",
     "categoryAll": "الكل",
-    "openPicker": "اختر معصية"
+    "openPicker": "اختر معصية",
+    "showAll": "إظهار الكل",
+    "showPublished": "المنشور فقط"
   },
   "sinDetail": {
     "anotherReminder": "تذكرة أخرى",
@@ -166,7 +168,9 @@
     "quiet": "لا نص منشور بعد",
     "jumpLabel": "فهرس الحروف",
     "noResults": "لا توجد نتائج مطابقة",
-    "openPicker": "اختر عملًا صالحًا"
+    "openPicker": "اختر عملًا صالحًا",
+    "showAll": "إظهار الكل",
+    "showPublished": "المنشور فقط"
   },
   "goodDeedDetail": {
     "anotherMotivation": "تذكرة أخرى",
@@ -230,6 +234,8 @@
     "weakNotice": "هذا الحديث ضعيف",
     "translation": "الترجمة",
     "viewFull": "عرض كامل",
+    "whyVerse": "لماذا هذه الآية؟",
+    "tafsirEmpty": "لا يوجد نص لهذا الموضع",
     "report": "أبلغ عن خطأ",
     "reportReason": "سبب البلاغ",
     "reportNote": "ملاحظة",
