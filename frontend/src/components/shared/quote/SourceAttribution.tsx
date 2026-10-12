@@ -123,17 +123,33 @@ export function SourceAttribution({
               <FormattedNumber value={page} />
             </span>
           )}
-          {gradeAuthority && (
-            <span className="ms-2">
-              <span className="me-1 font-medium">{labels.gradeAuthority}:</span>
-              <bdi>{gradeAuthority}</bdi>
+          {gradeAuthority && /^(?:رواه البخاري|رواه مسلم|متفق عليه)$/.test(gradeAuthority) ? (
+            <span>
+              <FormattedNumber
+                value={
+                  gradeAuthority === 'متفق عليه'
+                    ? [gradeAuthority, gradeReference].filter(Boolean).join('، ')
+                    : gradeReference?.match(/\d+/)?.[0]
+                      ? `${gradeAuthority}، رقم ${gradeReference.match(/\d+/)?.[0]}`
+                      : gradeAuthority
+                }
+              />
             </span>
-          )}
-          {gradeReference && (
-            <span className="ms-2">
-              <span className="me-1 font-medium">{labels.gradeReference}:</span>
-              <FormattedNumber value={gradeReference} />
-            </span>
+          ) : (
+            <>
+              {gradeAuthority && (
+                <span className="ms-2">
+                  <span className="me-1 font-medium">{labels.gradeAuthority}:</span>
+                  <bdi>{gradeAuthority}</bdi>
+                </span>
+              )}
+              {gradeReference && (
+                <span className="ms-2">
+                  <span className="me-1 font-medium">{labels.gradeReference}:</span>
+                  <FormattedNumber value={gradeReference} />
+                </span>
+              )}
+            </>
           )}
         </span>
       )}

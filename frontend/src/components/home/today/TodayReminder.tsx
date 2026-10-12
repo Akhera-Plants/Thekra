@@ -7,6 +7,12 @@ import { useToggleFavorite } from '@/features/favorites/hooks/useToggleFavorite'
 import { formatDigits } from '@/lib/format/digits';
 import type { QuoteDto } from '@/lib/types/api';
 
+function sahihaynCitation(authority: string, reference: string | null): string {
+  if (authority === 'متفق عليه') return reference ? `${authority}، ${reference}` : authority;
+  const number = reference?.match(/\d+/)?.[0];
+  return number ? `${authority}، رقم ${number}` : authority;
+}
+
 export function TodayReminder({ quote }: { quote: QuoteDto }) {
   const t = useTranslations('home');
   const tFav = useTranslations('favorites');
@@ -42,6 +48,11 @@ export function TodayReminder({ quote }: { quote: QuoteDto }) {
       <blockquote dir="rtl" lang="ar" className="font-arabic-text text-2xl leading-loose text-foreground md:text-3xl">
         {quote.textAr}
       </blockquote>
+      {quote.citation?.gradeAuthority ? (
+        <p className="text-sm text-muted-foreground">
+          <FormattedNumber value={sahihaynCitation(quote.citation.gradeAuthority, quote.citation.gradeReference)} />
+        </p>
+      ) : null}
       {citation ? (
         <p className="text-sm text-muted-foreground">
           <FormattedNumber value={citation} />

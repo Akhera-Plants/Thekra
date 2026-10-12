@@ -20,6 +20,7 @@ import {
   mapQuoteToDto,
   quoteDetailIncludeForDto,
   quoteIncludeForDto,
+  sahihaynMatchInclude,
   type QuoteDetailRowForDto,
   type QuoteDto,
   type QuoteRowForDto,
@@ -95,6 +96,7 @@ export class QuotesService {
       ),
       // P3-2: stable tag ordering by slug so responses are deterministic.
       tags: { include: { tag: true }, orderBy: { tag: { slug: 'asc' } } },
+      matches: sahihaynMatchInclude,
     } as typeof quoteIncludeForDto;
   }
 
@@ -107,6 +109,7 @@ export class QuotesService {
       translations: translationsInclude(locale, includeAllTranslations),
       // P3-2: stable tag ordering by slug so responses are deterministic.
       tags: { include: { tag: true }, orderBy: { tag: { slug: 'asc' } } },
+      matches: sahihaynMatchInclude,
       sinLinks: {
         where: { reviewStatus: PUBLISHED_LINK_REVIEW_STATUS },
         include: {

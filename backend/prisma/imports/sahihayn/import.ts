@@ -26,7 +26,7 @@ import { applyLimit, type ImportOptions } from '../lib/cli.js';
 import { loadCorpus } from '../lib/corpus.js';
 import { loadUthmaniMap } from '../waqfeya/quran.js';
 import { BUKHARI_CORPUS, MUSLIM_CORPUS } from './files.js';
-import { parseSahihayn, type SahihParseResult } from './parse.js';
+import { parseSahihayn, parseShamelaBukhari, type SahihParseResult } from './parse.js';
 
 const AUTHORITY = {
   BUKHARI: 'رواه البخاري',
@@ -140,6 +140,14 @@ async function upsertCorpus(
         normalizedMatn: normalized,
       },
     });
+    await prisma.hadithMatch.deleteMany({
+      where: { referenceHadithId: previous.id, decision: 'CANDIDATE' },
+    });
+  }
+  const keep = new Set(parsed.narrations.map((narration) => narration.number));
+  const stale = existing.filter((row) => !keep.has(row.number)).map((row) => row.id);
+  if (stale.length > 0) {
+    await prisma.referenceHadith.deleteMany({ where: { id: { in: stale } } });
   }
   if (pending.length > 0) {
     await prisma.referenceHadith.createMany({ data: pending });
@@ -315,6 +323,8 @@ async function applyGrades(
     }
     quote.grade = HadithGrade.SAHIH;
     quote.gradeSource = GradeSource.AUTO_SAHIHAYN;
+    quote.gradeAuthority = gradeAuthority;
+    quote.gradeReference = gradeReference;
     const bucket = bySource[sourceKey] ?? { bukhari: 0, muslim: 0, both: 0 };
     if (hasBukhari && hasMuslim) {
       both += 1;
@@ -441,6 +451,7 @@ function parseReport(label: string, parsed: SahihParseResult, cited: number) {
     duplicateNumbers: parsed.duplicateNumbers.length,
     duplicateNumberSample: parsed.duplicateNumbers.slice(0, 12),
     citedTotal: cited,
+    matnStillIsnad: parsed.narrations.filter((row) => /^(?:و?حدثنا|و?حدثني|و?أخبرنا|و?أخبرني)/.test(splitMatn(row.text).matnText)).length,
   };
 }
 
@@ -469,7 +480,7 @@ function samplePairs(quotes: readonly QuoteRow[], byQuote: Map<string, Candidate
 export async function runTakhrij(options: ImportOptions): Promise<void> {
   const bukhariFile = await loadCorpus(BUKHARI_CORPUS);
   const muslimFile = await loadCorpus(MUSLIM_CORPUS);
-  const bukhari = parseSahihayn(bukhariFile.text);
+  const bukhari = parseShamelaBukhari(bukhariFile.text);
   const muslim = parseSahihayn(muslimFile.text);
   console.log(JSON.stringify({
     bukhari: parseReport('Sahih al-Bukhari', bukhari, 7563),

@@ -1,5 +1,7 @@
+import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { parseSahihayn } from './parse.js';
+import { splitMatn } from '../../../src/common/text/matn.js';
+import { parseSahihayn, parseShamelaBukhari } from './parse.js';
 
 const BUKHARI = `#META#Header#End#
 ### | ( باب بدء الوحي )
@@ -47,5 +49,60 @@ describe('parseSahihayn', () => {
     expect(parsed.narrations.find((row) => row.number === 8)?.kitab).toContain('كتاب الإيمان');
     expect(parsed.narrations.some((row) => row.number === 2913)).toBe(true);
     expect(parsed.maxNumber).toBeLessThan(20_000);
+  });
+});
+
+const SHAMELA = `#META#Header#End#
+### | 1 -
+# باب
+### | بدء الوحي
+### | كيف كان بدء الوحي إلى رسول الله صلى الله عليه وسلم؟
+### | 1 -
+# حدثنا الحميدي عبد الله بن الزبير، قال: حدثنا سفيان، قال: سمعت رسول الله صلى الله عليه وسلم يقول: «إنما الأعمال بالنيات»
+### | 69 ms0034 -
+# حدثنا محمد بن بشار، قال: حدثنا يحيى، قال: قال رسول الله صلى الله عليه وسلم: «يسروا ولا تعسروا»
+### | 3261 -
+# حدثني عبد الله بن محمد، قال: قال رسول الله صلى الله عليه وسلم: «الحمى من فيح جهنم فأبردوها بالماء»
+### | 6094 -
+# حدثنا عثمان بن أبي شيبة، قال: قال رسول الله صلى الله عليه وسلم: «إن الصدق يهدي إلى البر»
+### | 7563 -
+# حدثني أحمد بن إشكاب، قال: قال رسول الله صلى الله عليه وسلم: «كلمتان حبيبتان إلى الرحمن»
+`;
+
+describe('parseShamelaBukhari', () => {
+  it('keeps Abdul Baqi numbers and the longer text when 1 is repeated', () => {
+    const parsed = parseShamelaBukhari(SHAMELA);
+    expect(parsed.narrations.map((row) => row.number)).toEqual([1, 69, 3261, 6094, 7563]);
+    expect(parsed.narrations[0]?.text).toContain('إنما الأعمال بالنيات');
+    expect(parsed.narrations[0]?.text).not.toBe('باب');
+    expect(parsed.narrations.find((row) => row.number === 6094)?.text).toContain('إن الصدق يهدي إلى البر');
+    expect(parsed.narrations.find((row) => row.number === 3261)?.text).toContain('الحمى من فيح جهنم');
+    expect(parsed.narrations.find((row) => row.number === 7563)?.text).toContain('كلمتان حبيبتان');
+    expect(parsed.maxNumber).toBe(7563);
+  });
+
+  it('matches the pinned files on the printed anchors', () => {
+    const bukhariPath = new URL('../../../.corpus/0256Bukhari.Sahih.Shamela0001681-ara1', import.meta.url);
+    const muslimPath = new URL('../../../.corpus/0261Muslim.Sahih.JK000109-ara1', import.meta.url);
+    if (!existsSync(bukhariPath) || !existsSync(muslimPath)) return;
+    const bukhari = parseShamelaBukhari(readFileSync(bukhariPath, 'utf8'));
+    const at = (number: number) => bukhari.narrations.find((row) => row.number === number)?.text ?? '';
+    expect(at(1)).toContain('إنما الأعمال بالنيات');
+    expect(at(6094)).toContain('إن الصدق يهدي إلى البر');
+    expect(at(3261)).toContain('الحمى من فيح جهنم');
+    expect(at(7563)).toContain('كلمتان حبيبتان إلى الرحمن');
+    expect(bukhari.maxNumber).toBe(7563);
+
+    const muslim = parseSahihayn(readFileSync(muslimPath, 'utf8'));
+    const muslimAt = (number: number) => muslim.narrations.find((row) => row.number === number)?.text ?? '';
+    expect(muslimAt(8)).toContain('جبريل');
+    expect(muslimAt(2564)).toContain('لا تحاسدوا ولا تناجشوا');
+    expect(muslim.maxNumber).toBe(3033);
+
+    const startsWithIsnad = (text: string) => /^(?:و?حدثنا|و?حدثني|و?أخبرنا|و?أخبرني)/.test(splitMatn(text).matnText);
+    const bukhariBad = bukhari.narrations.filter((row) => startsWithIsnad(row.text)).length;
+    const muslimBad = muslim.narrations.filter((row) => startsWithIsnad(row.text)).length;
+    expect(bukhariBad).toBeLessThan(40);
+    expect(muslimBad).toBeLessThan(60);
   });
 });

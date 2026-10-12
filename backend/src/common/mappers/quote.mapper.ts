@@ -1,11 +1,20 @@
 import { Prisma, type HadithGrade, type QuoteOrigin, type QuoteType, type SourceType, type TagCategory, type TextSource } from '@prisma/client';
+import { STRONG_MATCH_SCORE } from '../text/match-score.js';
 import { formatPrintedReference } from '../text/printed-reference.js';
+
+export const sahihaynMatchInclude = {
+  where: { decision: { not: 'REJECTED' as const }, score: { gte: STRONG_MATCH_SCORE } },
+  orderBy: { score: 'desc' as const },
+  take: 1,
+  include: { referenceHadith: { select: { matnText: true } } },
+} satisfies Prisma.Quote$matchesArgs;
 
 /** Canonical include for every Quote → QuoteDto projection. */
 export const quoteIncludeForDto = {
   source: true,
   translations: true,
   tags: { include: { tag: true } },
+  matches: sahihaynMatchInclude,
 } satisfies Prisma.QuoteInclude;
 
 /** Detail include: same projection plus related sin / good-deed links. */
@@ -13,6 +22,7 @@ export const quoteDetailIncludeForDto = {
   source: true,
   translations: true,
   tags: { include: { tag: true } },
+  matches: sahihaynMatchInclude,
   sinLinks: {
     include: {
       sin: { select: { slug: true, name: true, nameAr: true } },
@@ -107,7 +117,9 @@ export function mapQuoteToDto(
     id: row.id,
     type: row.type,
     origin: row.origin,
-    textAr: row.textAr,
+    textAr: row.gradeSource === 'AUTO_SAHIHAYN'
+      ? (row.matches[0]?.referenceHadith.matnText.trim() || row.textAr)
+      : row.textAr,
     translation: translation
       ? { languageCode: translation.languageCode, text: translation.text }
       : null,

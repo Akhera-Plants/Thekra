@@ -15,6 +15,7 @@ const makeConfigMock = () => ({ get: vi.fn().mockReturnValue(70) });
 
 function makeRow(overrides: Partial<QuoteRowForDto> = {}): QuoteRowForDto {
   return {
+    matches: [],
     id: '00000000-0000-4000-8000-000000000001',
     type: QuoteType.HADITH,
     origin: QuoteOrigin.LOCAL,

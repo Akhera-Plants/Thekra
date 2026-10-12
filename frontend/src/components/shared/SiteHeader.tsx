@@ -98,7 +98,10 @@ export function SiteHeader() {
   }, [home]);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-background">
+    <header className={cn(
+      'sticky top-0 z-40 border-b',
+      home ? 'border-border/40 bg-background/55 backdrop-blur-md' : 'border-border bg-background',
+    )}>
       <div className="mx-auto flex max-w-6xl min-w-0 items-center justify-between gap-3 px-4 py-2">
         <Link
           href="/"
@@ -143,11 +146,9 @@ export function SiteHeader() {
           </SheetContent>
         </Sheet>
       </div>
-      {!home && (
-        <p className="border-t border-border px-4 py-2 text-center text-sm leading-relaxed text-muted-foreground">
-          {tApp('intentionReminder')}
-        </p>
-      )}
+      <p className="border-t border-border/60 px-4 py-2 text-center text-sm leading-relaxed text-muted-foreground">
+        {tApp('intentionReminder')}
+      </p>
     </header>
   );
 }

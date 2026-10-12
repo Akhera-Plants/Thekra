@@ -1301,20 +1301,36 @@ OpenITI/RELEASE `a7b7fe07f523fe04a9dbdb4fa0c4e86968b3d76e`. Files live in `backe
 
 | Book | File | SHA-256 | Parsed | Cited total | Gaps inside the file numbering |
 | --- | --- | --- | --- | --- | --- |
-| Sahih al-Bukhari | `0256Bukhari.Sahih.JK000110-ara1.completed` | `69e95684acfde24171d29dd7ba43ff2c8f9b54ade5e3ab0a73899c06671082b7` | 7,124 | 7,563 (Fath, repetitions counted apart) | 0 missing in 1–7124. Six numbers occur twice (372, 619, 3905, 4537, 4626, 6705); the longer text is kept |
+| Sahih al-Bukhari | `0256Bukhari.Sahih.Shamela0001681-ara1` | `16f95173b9ea1927b577ff85dc7e2a8351b8287e4ea9863782c4c5fc87ac8132` | 7,380 | 7,563 (Fath al-Bari / Abdul Baqi) | 183 numbers absent from the file. Number 1 occurs twice; the longer text is kept |
 | Sahih Muslim | `0261Muslim.Sahih.JK000109-ara1` | `32b8b949d80d22d3db81be52d8749bc191f12510c8afe19868589bc4b08605e8` | 3,027 | 3,033 (Abdul Baqi) | Missing 937, 1065, 1173, 1367, 1683, 1824. 1,914 numbers have a second chain; the longer text is kept |
 
-Two Muslim lines had a hadith number glued to the next one (`# 291429132913 2913` and `# 293429352935 2935`). The parser keeps the last number that is at most 20,000, so those narrations are stored as 2913 and 2935. This corpus is a matching table (`ReferenceHadith`), not public quotes. A second load created 0 rows (7,124 and 3,027 unchanged).
+The first Bukhari load used `0256Bukhari.Sahih.JK000110-ara1.completed` (7,124 rows, sha256 `69e95684acfde24171d29dd7ba43ff2c8f9b54ade5e3ab0a73899c06671082b7`). That file's numbers are not the Fath al-Bari numbering: «إن الصدق يهدي إلى البر» was 5743 there and is 6094 in the standard count. The Shamela file above is the one now stored. Checked in the database after the reload:
+
+| Book | Number | Start of the stored matn |
+| --- | --- | --- |
+| Bukhari | 1 | إنما الأعمال بالنيات |
+| Bukhari | 3261 | الحمى من فيح جهنم |
+| Bukhari | 6094 | إن الصدق يهدي إلى البر |
+| Bukhari | 7563 | كلمتان حبيبتان إلى الرحمن |
+| Muslim | 1 | لا تكذبوا علي (the muqaddima, not the hadith of Jibril) |
+| Muslim | 8 | الإسلام أن تشهد أن لا إله إلا الله (the hadith of Jibril) |
+| Muslim | 2564 | لا تحاسدوا ولا تناجشوا |
+
+Muslim's continuous Abdul Baqi number sits in parentheses in the Halabi print (Aljam3 book 6237, file 16061, «صحيح مسلم (ط. الحلبي) (ت عبد الباقي)»). On the printed page the hadith of Jibril is `١ - (٨)`: the ١ is the first hadith of that chapter, and ٨ is the continuous number. Page 1986 has `٣٢ - (٢٥٦٤)` for «لا تحاسدوا ولا تناجشوا». Publishing the chapter-local ١ as if it were the unique number would collide with the muqaddima and would move 2564. The stored Muslim numbers are the parenthesis numbers. The JK file agrees (Jibril is 8, the envy hadith is 2564, the maximum is 3033).
+
+Two Muslim lines had a hadith number glued to the next one (`# 291429132913 2913` and `# 293429352935 2935`). The parser keeps the last number that is at most 20,000, so those narrations are stored as 2913 and 2935. This corpus is a matching table (`ReferenceHadith`), not public quotes. After the edition switch, a following load created 0 rows (7,380 and 3,027 unchanged).
+
+Footnote markers of the form `\ 1 \` are stripped before the matn is stored. None remain on `ReferenceHadith.matnText`. The isnad/matn split leaves 23 Bukhari rows and 43 Muslim rows whose matn still opens with حدثنا or أخبرنا: the companion's report has no قال, or the words after قال are themselves another chain (`قال: حدثني ناس`). The earlier JK load left 3,319 Bukhari rows and 694 Muslim rows in that state.
 
 ### Matching
 
-For each of 17,725 hadith quotes the matn is split at the last transmission phrase before the Prophet's words, then normalised. Candidates come from a rare-word shortlist, then `pg_trgm` `similarity()` and word overlap are averaged (`trgm+overlap`). The top 5 candidates with a combined score of at least 0.30 are stored. That is 17,322 `HadithMatch` rows. A later run created 0.
+For each of 17,933 hadith quotes the matn is split at the last transmission phrase before the Prophet's words, then normalised. Candidates come from a rare-word shortlist, then `pg_trgm` `similarity()` and word overlap are averaged (`trgm+overlap`). The top 5 candidates with a combined score of at least 0.30 are stored. That is 16,634 `HadithMatch` rows. A later run created 0. A public quote with `AUTO_SAHIHAYN` is shown as the matched matn (no isnad, no footnote markers), and the book it was imported from stays as a second citation.
 
 Strong match is a combined score of at least **0.75**. The quote is then `SAHIH`, `gradeSource = AUTO_SAHIHAYN`, authority «رواه البخاري» / «رواه مسلم» / «متفق عليه», and `gradeReference` like `البخاري 6064` (both books joined with `، `). A `MANUAL` grade is never overwritten. The weak band is 0.48 up to 0.75.
 
 ### Threshold
 
-The calibration sample is the best candidate per quote, taken in quote-id order: 10 at 0.95 or above, 10 from 0.85–0.95, 15 from 0.75–0.85, 15 from 0.72–0.75. All 50 were judged the same narration (an excerpt of that hadith counts as the same). Precision of score ≥ 0.75 on this sample is 35/35.
+The calibration sample below was judged against the previous JK Bukhari file, so the Bukhari numbers in that table are not the numbers now published. «إن الصدق يهدي إلى البر» is row 43 there as Bukhari 5743; the stored standard number is 6094. The sample is the best candidate per quote, taken in quote-id order: 10 at 0.95 or above, 10 from 0.85–0.95, 15 from 0.75–0.85, 15 from 0.72–0.75. All 50 were judged the same narration (an excerpt of that hadith counts as the same). Precision of score ≥ 0.75 on this sample is 35/35.
 
 The cut is 0.75 rather than 0.72 because a pair **outside** that slice is a different narration: Shuab al-Iman «من قام ليلة القدر إيمانا واحتسابا…» scored 0.720 against Bukhari 37 «من قام رمضان إيمانا واحتسابا…». The quote ends with the chapter heading «التماس ليلة القدر من ليالي شهر رمضان», which pulled the short Ramadan narration over the line. At 0.75 that pair stays a weak flag and is not published. The 15 sample pairs below 0.75 were still the same narration, so the cut drops some true matches.
 
@@ -1375,15 +1391,15 @@ Texts below are the normalised matn, clipped.
 
 ### Grades by source book
 
-944 quotes are `AUTO_SAHIHAYN` after the 0.75 cut. Five more matched and stayed `MANUAL` because a curator grade is never overwritten. «Bukhari» means a strong Bukhari match and no strong Muslim match, and the reverse for «Muslim».
+1,008 quotes are `AUTO_SAHIHAYN` after the reload onto the standard numbers (407 Bukhari only, 497 Muslim only, 104 both). Five more matched and stayed `MANUAL`. «Bukhari» means a strong Bukhari match and no strong Muslim match, and the reverse for «Muslim».
 
 | Source | Bukhari | Muslim | Both |
 | --- | --- | --- | --- |
-| الأدب المفرد | 142 | 41 | 34 |
-| الجامع لشعب الإيمان | 97 | 120 | 33 |
-| رياض الصالحين | 109 | 158 | 24 |
-| صحيح الترغيب والترهيب | 53 | 106 | 18 |
-| الزهد والرقائق | 5 | 2 | 2 |
+| الأدب المفرد | 149 | 43 | 37 |
+| الجامع لشعب الإيمان | 109 | 136 | 27 |
+| رياض الصالحين | 121 | 185 | 25 |
+| صحيح الترغيب والترهيب | 26 | 129 | 12 |
+| الزهد والرقائق | 2 | 4 | 3 |
 
 ### What stopped being public
 
@@ -1391,20 +1407,20 @@ Before any match, **903** hadiths were sahih or hasan from a stored authority gr
 
 After the 0.75 cut:
 
-- **164** of those 903 are public again (strong sahihayn match, text already public, no open HIGH flag).
-- **739** are still `AUTHORITY_LEGACY` with a sahih or hasan grade and public text, so the new rule keeps them hidden.
-- **303** further quotes, previously ungraded, are newly public on a strong match.
-- **477** strong matches are unverified OCR (Riyad, Targhib, Zuhd) and stay off the public API until `textVerifiedAt` is set.
-- **467** hadiths are public with `AUTO_SAHIHAYN` in total (164 + 303). Five curated hadiths matched as well and stayed `MANUAL`.
+- **171** of those 903 are public again (strong sahihayn match, text already public, no open HIGH flag).
+- **729** are still `AUTHORITY_LEGACY` with a sahih or hasan grade and public text, so the new rule keeps them hidden.
+- **330** further quotes are newly public on a strong match (501 public `AUTO_SAHIHAYN` rows, minus the 171 that returned).
+- **507** strong matches are unverified OCR and stay off the public API until `textVerifiedAt` is set. 501 + 507 = 1,008.
+- Three of the original 903 are in neither of the first two rows (an open HIGH flag, or a grade that is no longer sahih or hasan). Five curated hadiths matched and stayed `MANUAL`.
 
 ### Flags
 
 | Type | Severity | Open |
 | --- | --- | --- |
-| WEAK_MATCH | MEDIUM | 2,531 |
+| WEAK_MATCH | MEDIUM | 3,046 |
 | OCR_SUSPECT | MEDIUM | 32 |
-| DUPLICATE_DIFFERENT_GRADE | HIGH | 5 |
-| REFERENCE_MISMATCH | HIGH | 4 |
+| DUPLICATE_DIFFERENT_GRADE | HIGH | 11 |
+| REFERENCE_MISMATCH | HIGH | 0 |
 | QURAN_MISMATCH | HIGH | 0 |
 | USER_REPORT | MEDIUM | 1 |
 
@@ -1412,32 +1428,32 @@ After the 0.75 cut:
 
 ### Twenty strong matches
 
-Ordered by `md5(quote id)`, score at least 0.75. The quote text is the start of our row; the reference is the start of the matched matn.
+Ordered by `md5(quote id)`, score at least 0.75, after the standard-number reload. The reference column is the stored matn.
 
 | Score | Citation | Source | Ours | Reference |
 | --- | --- | --- | --- | --- |
-| 0.782 | Bukhari 590 | رياض الصالحين | لو يعلم الناس ما في النداء والصف الأول | لو يعلم الناس ما في النداء والصف الأول ثم لم يجدوا إلا أن يستهموا عليه |
-| 0.782 | Muslim 437 | رياض الصالحين | same quote, second book | لو يعلم الناس ما في النداء والصف الأول |
-| 0.875 | Bukhari 5878 | الأدب المفرد | يسلم الراكب على الماشي والماشي على القاعد والقليل على الكثير | same wording |
-| 0.875 | Bukhari 5879 | الأدب المفرد | same matn | same wording |
-| 0.875 | Muslim 2160 | الأدب المفرد | same matn | same wording |
-| 0.822 | Bukhari 7049 | شعب الإيمان | أتاني جبريل فبشرني أنه من مات لا يشرك بالله شيئا دخل الجنة… وإن سرق وإن زنى | same wording |
-| 0.767 | Bukhari 1180 | شعب الإيمان | أتاني آت من ربي فأخبرني أنه من مات من أمتي لا يشرك بالله شيئا دخل الجنة | same hadith, «آت من ربي» |
-| 0.779 | Bukhari 3684 | شعب الإيمان | عدنا خبابا فقال هاجرنا مع النبي نريد وجه الله | same story |
-| 0.806 | Bukhari 527 | شعب الإيمان | الذي تفوته صلاة العصر كأنما وتر أهله وماله | same wording |
-| 1.000 | Bukhari 6337 | صحيح الترغيب | من أعتق رقبة مسلمة أعتق الله بكل عضو منه عضوا من النار | same wording. OCR, not public |
-| 0.882 | Muslim 2699 | شعب الإيمان | من نفس عن مؤمن كربة من كرب الدنيا نفس الله عنه كربة من كرب يوم القيامة | same wording |
-| 0.750 | Bukhari 210 | صحيح الترغيب | إذا نعس أحدكم في الصلاة فلينم حتى يعلم ما يقرأ | same wording. OCR, not public |
-| 0.919 | Muslim 553 | رياض الصالحين | عرضت علي أعمال أمتي… الأذى يماط عن الطريق | same wording |
-| 0.890 | Muslim 2402 | الأدب المفرد | إن عثمان رجل حيي وإني خشيت إن أذنت له… أن لا يبلغ إلي في حاجته | same wording |
-| 0.836 | Bukhari 6151 | شعب الإيمان | لا تسبوا الأموات فإنهم قد أفضوا إلى ما قدموا | same wording |
-| 0.862 | Bukhari 5669 | الأدب المفرد | ما زال جبريل يوصيني بالجار حتى ظننت أنه سيورثه | same wording |
-| 0.862 | Bukhari 5668 | الأدب المفرد | same matn | word order differs |
-| 0.780 | Bukhari 5676 | الأدب المفرد | على كل مسلم صدقة… فيعمل بيديه | same narration, ours stops earlier |
-| 0.765 | Bukhari 3266 | شعب الإيمان | عقبة بن عمرو لحذيفة ألا تحدثنا ما سمعت من رسول الله | same isnad |
-| 0.801 | Bukhari 7032 | الأدب المفرد | دخل على أعرابي يعوده قال لا بأس عليك طهور إن شاء الله | same story |
+| 0.830 | Bukhari 750 | صحيح الترغيب والترهيب | ما بال أقوام يرفعون أبصارهم | «ما بال أقوام يرفعون أبصارهم إلى السماء في صلاتهم» |
+| 0.766 | Muslim 2549 | شعب الإيمان | أقبل رجل إلى نبي الله… أبايعك على الهجرة | أقبل رجل إلى نبي الله صلى الله عليه وسلم فقال أبايعك على الهجرة والجهاد |
+| 0.785 | Bukhari 3124 | رياض الصالحين | غزا نبي من الأنبياء | غزا نبي من الأنبياء، فقال لقومه: لا يتبعني رجل ملك بضع امرأة |
+| 0.826 | Muslim 1395 | شعب الإيمان | صلاة في مسجدي هذا | صلاة في مسجدي هذا أفضل من ألف صلاة فيما سواه إلا المسجد الحرام |
+| 0.900 | Bukhari 2120 | الأدب المفرد | سموا باسمي ولا تكنوا بكنيتي | «سموا باسمي ولا تكنوا بكنيتي» |
+| 0.755 | Muslim 2124 | رياض الصالحين | لعن الواصلة والمستوصلة | لعن الواصلة والمستوصلة والواشمة والمستوشمة |
+| 0.831 | Muslim 2577 | صحيح الترغيب والترهيب | يا عبادي إني حرمت الظلم على نفسي | يا عبادي إني حرمت الظلم على نفسي وجعلته بينكم محرما |
+| 0.767 | Bukhari 2374 | رياض الصالحين | لأن يحتطب أحدكم حزمة على ظهره | «لأن يحتطب أحدكم حزمة على ظهره، خير له من أن يسأل أحدا» |
+| 0.780 | Muslim 2573 | شعب الإيمان | ما يصيب المؤمن من وصب ولا نصب | ما يصيب المؤمن من وصب ولا نصب ولا سقم ولا حزن |
+| 0.852 | Muslim 2588 | شعب الإيمان | ما نقصت صدقة من مال | ما نقصت صدقة من مال وما زاد الله عبدا بعفو إلا عزا |
+| 0.755 | Bukhari 594 | شعب الإيمان | من ترك صلاة العصر حبط عمله | «من ترك صلاة العصر حبط عمله» |
+| 0.767 | Bukhari 5458 | رياض الصالحين | كان إذا رفع مائدته قال الحمد لله | كان إذا رفع مائدته قال: «الحمد لله كثيرا طيبا مباركا فيه» |
+| 0.791 | Bukhari 5991 | شعب الإيمان | ليس الواصل بالمكافئ | «ليس الواصل بالمكافئ، ولكن الواصل الذي إذا قطعت رحمه وصلها» |
+| 0.770 | Muslim 669 | رياض الصالحين | من غدا إلى المسجد أو راح | من غدا إلى المسجد أو راح أعد الله له في الجنة نزلا |
+| 0.794 | Muslim 2959 | شعب الإيمان | يقول العبد مالي مالي | يقول العبد مالي مالي إنما له من ماله ثلاث |
+| 0.926 | Muslim 720 | صحيح الترغيب والترهيب | يصبح على كل سلامي من أحدكم صدقة | يصبح على كل سلامي من أحدكم صدقة فكل تسبيحة صدقة |
+| 0.920 | Bukhari 7097 | الأدب المفرد | ائذن له وبشره بالجنة | «ائذن له وبشره بالجنة، معها بلاء يصيبه» |
+| 0.788 | Muslim 815 | رياض الصالحين | لا حسد إلا في اثنتين | لا حسد إلا في اثنتين رجل آتاه الله القرآن |
+| 0.752 | Bukhari 2017 | رياض الصالحين | تحروا ليلة القدر في الوتر | «تحروا ليلة القدر في الوتر، من العشر الأواخر من رمضان» |
+| 0.772 | Muslim 118 | رياض الصالحين | بادروا بالأعمال فتنا | بادروا بالأعمال فتنا كقطع الليل المظلم |
 
 ### Re-run
 
-The run after the threshold was fixed created 0 corpus rows, 0 matches, 0 grade writes, and 0 flags.
+The run after the standard numbers were stored, and the in-memory citation was the one just written, created 0 corpus rows, 0 matches, 0 grade writes, and 0 flags.
 

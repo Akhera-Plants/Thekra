@@ -49,7 +49,10 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
 
   return (
     <div className="flex flex-1 flex-col">
-      <section className="mx-auto flex min-h-[calc(100svh-4rem)] w-full max-w-6xl flex-col justify-between gap-8 px-4 py-6 md:px-8 md:py-10">
+      <script
+        dangerouslySetInnerHTML={{ __html: "document.documentElement.dataset.sky='home'" }}
+      />
+      <section className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 py-8 md:px-8 md:py-12">
         <Verse verse={verse} brand={t('title')} />
         <div className="flex flex-col gap-5">
           <HeartSearch />

@@ -45,6 +45,7 @@ export function cleanInline(text: string): string {
     .replace(PAGE_TOKEN, ' ')
     .replace(MILESTONE, ' ')
     .replace(HTML_TAG, ' ')
+    .replace(/\\+\s*\d+\s*\\+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }

@@ -116,3 +116,92 @@ export function parseSahihayn(source: string): SahihParseResult {
     duplicateNumbers: [...new Set(duplicateNumbers)].sort((a, b) => a - b),
   };
 }
+
+const SHAMELA_HADITH = /^### \|\s+(\d+)(?:\s+ms\d+)?\s*-\s*$/;
+const SHAMELA_KITAB = /^### \$+\s*\d+\s*-\s*(كتاب\s+.+)$/;
+const SHAMELA_BAB = /^### \|\s+(باب\b.*)$/;
+const SHAMELA_PAGE = /^### \|\s+\[ص:/;
+
+function finish(byNumber: Map<number, ParsedNarration>, duplicateNumbers: number[]): SahihParseResult {
+  const narrations = [...byNumber.values()].sort((a, b) => a.number - b.number);
+  const maxNumber = narrations.at(-1)?.number ?? 0;
+  const present = new Set(narrations.map((narration) => narration.number));
+  const missing: number[] = [];
+  for (let number = 1; number <= maxNumber; number += 1) {
+    if (!present.has(number)) missing.push(number);
+  }
+  return {
+    narrations,
+    maxNumber,
+    missing,
+    duplicateNumbers: [...new Set(duplicateNumbers)].sort((a, b) => a - b),
+  };
+}
+
+/**
+ * Shamela's Bukhari file (0256Bukhari.Sahih.Shamela0001681) uses Abdul Baqi's
+ * numbering: `### | 6094 -`. A repeated number keeps the longer text, which
+ * drops the short heading that reuses 1 before the first narration.
+ */
+export function parseShamelaBukhari(source: string): SahihParseResult {
+  const lines = source.split(/\r?\n/);
+  const start = lines.findIndex((line) => line.startsWith(HEADER_END)) + 1;
+  let kitab: string | null = null;
+  let bab: string | null = null;
+  const byNumber = new Map<number, ParsedNarration>();
+  const duplicateNumbers: number[] = [];
+  let current: { number: number; parts: string[]; kitab: string | null; bab: string | null } | null = null;
+
+  const flush = (): void => {
+    if (!current) return;
+    const text = cleanNarration(current.parts);
+    if (text) {
+      const narration: ParsedNarration = {
+        number: current.number,
+        kitab: current.kitab,
+        bab: current.bab,
+        text,
+      };
+      const previous = byNumber.get(current.number);
+      if (!previous) byNumber.set(current.number, narration);
+      else {
+        duplicateNumbers.push(current.number);
+        if (text.length > previous.text.length) byNumber.set(current.number, narration);
+      }
+    }
+    current = null;
+  };
+
+  for (let index = Math.max(start, 0); index < lines.length; index += 1) {
+    const raw = lines[index] ?? '';
+    if (raw.startsWith('~~')) {
+      if (current) current.parts.push(raw.slice(2).trim());
+      continue;
+    }
+    const kitabMatch = SHAMELA_KITAB.exec(raw);
+    if (kitabMatch?.[1]) {
+      flush();
+      kitab = heading(kitabMatch[1]);
+      bab = null;
+      continue;
+    }
+    if (SHAMELA_PAGE.test(raw)) continue;
+    const babMatch = SHAMELA_BAB.exec(raw);
+    if (babMatch?.[1]) {
+      flush();
+      bab = heading(babMatch[1]);
+      continue;
+    }
+    const hadith = SHAMELA_HADITH.exec(raw);
+    if (hadith?.[1]) {
+      flush();
+      current = { number: Number(hadith[1]), parts: [], kitab, bab };
+      continue;
+    }
+    if (current && (raw.startsWith('# ') || raw === '#')) {
+      current.parts.push(raw.replace(/^#\s?/, ''));
+    }
+  }
+  flush();
+  return finish(byNumber, duplicateNumbers);
+}

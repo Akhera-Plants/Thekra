@@ -49,6 +49,31 @@ describe('splitMatn', () => {
     expect(splitMatn(narration).matnText.startsWith('« هذا ابن آدم')).toBe(true);
   });
 
+  it('splits a question put to the Prophet when the isnad has no قال رسول الله', () => {
+    const narration =
+      'حدثنا عمرو بن خالد قال حدثنا الليث عن يزيد عن أبي الخير عن عبد الله بن عمرو رضي الله عنهما أن رجلا سأل النبي صلى الله عليه وسلم أي الإسلام خير قال تطعم الطعام وتقرأ السلام على من عرفت ومن لم تعرف';
+    const split = splitMatn(narration);
+    expect(split.matnText.startsWith('حدثنا')).toBe(false);
+    expect(split.matnText).toContain('تطعم الطعام');
+    expect(split.isnadText.startsWith('حدثنا عمرو')).toBe(true);
+  });
+
+  it('splits قالوا يا رسول الله', () => {
+    const narration =
+      'حدثنا سعيد بن يحيى بن سعيد القرشي قال حدثنا أبي قال حدثنا أبو بردة بن عبد الله بن أبي بردة عن أبي بردة عن أبي موسى رضي الله عنه قال قالوا يا رسول الله أي الإسلام أفضل قال من سلم المسلمون من لسانه ويده';
+    const split = splitMatn(narration);
+    expect(split.matnText.startsWith('حدثنا')).toBe(false);
+    expect(split.matnText).toContain('من سلم المسلمون');
+  });
+
+  it('drops a footnote marker from the matn', () => {
+    const narration =
+      'حدثنا عبد الله بن مسلمة قال قال رسول الله صلى الله عليه وسلم لا تحاسدوا ولا تناجشوا \\ 1 \\ وكونوا عباد الله إخوانا';
+    const split = splitMatn(narration);
+    expect(split.matnText).toContain('لا تحاسدوا ولا تناجشوا');
+    expect(split.matnText).not.toContain('\\');
+  });
+
   it('keeps the whole text when no transmission phrase is present', () => {
     const narration = 'هذا متن بلا إسناد طويل يكفي لاختبار الحالة التي لا تظهر فيها صيغة التحديث';
     expect(splitMatn(narration)).toEqual({ isnadText: '', matnText: narration });
