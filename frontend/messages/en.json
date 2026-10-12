@@ -28,7 +28,9 @@
     "intro": "Thekra cites the book and the person who graded a narration. A book is never given one grade for every hadith in it.",
     "openitiTitle": "OpenITI",
     "openitiBody": "Digital texts imported from OpenITI are used under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 licence. Attribution: OpenITI. Thekra does not sell this text and does not run ads on it. If the dataset is shared, it stays under the same licence.",
-    "texts": "texts"
+    "texts": "texts",
+    "imported": "imported",
+    "published": "published"
   },
   "branches": {
     "pageTitle": "The Branches of Faith",

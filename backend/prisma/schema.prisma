@@ -147,6 +147,10 @@ model Source {
   apiProvider   String?
   apiBaseUrl    String?
   lastSyncedAt  DateTime?
+  /// When set, this row is an old id for `canonical`. Quotes live on the canonical source.
+  canonicalId   String?
+  canonical     Source?  @relation("SourceAlias", fields: [canonicalId], references: [id])
+  aliases       Source[] @relation("SourceAlias")
   quotes        Quote[]
   syncLogs      SyncLog[]
   explanations  Explanation[] @relation("ExplanationSource")

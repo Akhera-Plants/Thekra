@@ -168,6 +168,7 @@ export async function seedSources(): Promise<void> {
       isExternalApi: true,
       apiProvider: 'quran.com',
       apiBaseUrl: 'https://api.quran.com/api/v4',
+      canonicalId: SRC_QURAN,
     },
   ];
 
@@ -503,7 +504,7 @@ export async function seedQuotes(): Promise<void> {
         'يَا أَيُّهَا الَّذِينَ آمَنُوا اجْتَنِبُوا كَثِيرًا مِنَ الظَّنِّ إِنَّ بَعْضَ الظَّنِّ إِثْمٌ' +
         ' وَلَا تَجَسَّسُوا وَلَا يَغْتَبْ بَعْضُكُمْ بَعْضًا أَيُحِبُّ أَحَدُكُمْ أَنْ يَأْكُلَ' +
         ' لَحْمَ أَخِيهِ مَيْتًا فَكَرِهْتُمُوهُ',
-      sourceId: SRC_QURAN_COM,
+      sourceId: SRC_QURAN,
       surahNumber: 49,
       surahName: 'Al-Hujurat',
       surahNameAr: 'الحجرات',

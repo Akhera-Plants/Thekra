@@ -35,7 +35,9 @@ export default async function AboutPage({
                   {author ? <span className="text-sm text-muted-foreground">{author}</span> : null}
                 </span>
                 <span className="shrink-0 text-sm text-muted-foreground">
-                  <FormattedNumber value={book.publishedQuoteCount ?? 0} /> {t('texts')}
+                  <FormattedNumber value={book.quoteCount ?? 0} /> {t('imported')}
+                  {' · '}
+                  <FormattedNumber value={book.publishedQuoteCount ?? 0} /> {t('published')}
                 </span>
               </li>
             );

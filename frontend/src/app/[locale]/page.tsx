@@ -153,7 +153,8 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
               {books.map((book, index) => {
                 const title = locale === 'ar' ? book.nameAr : book.name;
                 const author = locale === 'ar' ? book.authorAr : book.author;
-                const count = book.publishedQuoteCount ?? 0;
+                const imported = book.quoteCount ?? 0;
+                const published = book.publishedQuoteCount ?? 0;
                 return (
                   <li key={book.id}>
                     <Link
@@ -167,7 +168,9 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
                       <span className="flex flex-col gap-1 text-sm leading-snug opacity-80">
                         {author ? <span>{author}</span> : null}
                         <span>
-                          <FormattedNumber value={count} /> {tAbout('texts')}
+                          <FormattedNumber value={imported} /> {tAbout('imported')}
+                          {' · '}
+                          <FormattedNumber value={published} /> {tAbout('published')}
                         </span>
                       </span>
                       </span>

@@ -414,6 +414,11 @@ export class ContentSyncService {
     providerKey: string,
   ): Promise<'created' | 'updated'> {
     const { externalId, quote, translations } = mapped;
+    const alias = await this.prisma.source.findUnique({
+      where: { id: quote.sourceId },
+      select: { canonicalId: true },
+    });
+    const sourceId = alias?.canonicalId ?? quote.sourceId;
 
     let isNew = false;
 
@@ -429,6 +434,7 @@ export class ContentSyncService {
         where: { apiProvider_externalId: { apiProvider: providerKey, externalId } },
         create: {
           ...quote,
+          sourceId,
           origin: 'API_CACHED',
           apiProvider: providerKey,
           externalId,
@@ -449,7 +455,7 @@ export class ContentSyncService {
           ayahNumber: quote.ayahNumber,
           rawPayload: quote.rawPayload,
           // sourceId is provider-owned too (the source record represents the collection)
-          sourceId: quote.sourceId,
+          sourceId,
         },
         select: { id: true },
       });

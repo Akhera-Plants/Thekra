@@ -4,6 +4,7 @@ import type { QuoteSourceDto, SourcesQuery } from '@/lib/types/api';
 export interface CatalogSource extends QuoteSourceDto {
   author: string | null;
   authorAr: string | null;
+  quoteCount: number;
   publishedQuoteCount: number;
 }
 

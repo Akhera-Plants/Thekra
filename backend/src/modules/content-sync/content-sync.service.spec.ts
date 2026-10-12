@@ -35,6 +35,7 @@ function makeSource(overrides: Partial<Source> = {}): Source {
     apiProvider: 'quran.com',
     apiBaseUrl: null,
     lastSyncedAt: null,
+    canonicalId: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,

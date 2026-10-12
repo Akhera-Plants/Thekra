@@ -40,6 +40,7 @@ const stubSource: Source = {
   apiProvider: 'quran.com',
   apiBaseUrl: 'https://api.quran.com/api/v4',
   lastSyncedAt: null,
+  canonicalId: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };

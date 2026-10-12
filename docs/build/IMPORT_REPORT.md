@@ -1457,3 +1457,18 @@ Ordered by `md5(quote id)`, score at least 0.75, after the standard-number reloa
 
 The run after the standard numbers were stored, and the in-memory citation was the one just written, created 0 corpus rows, 0 matches, 0 grade writes, and 0 flags.
 
+## Sources cleanup
+
+The two «القرآن الكريم» rows are one public source. Quotes, explanations, chapter maps, branches, and sin ranks that pointed at `10000000-0000-4000-8000-000000000005` (Quran.com) now point at `10000000-0000-4000-8000-000000000001`. The Quran.com row remains, with `canonicalId` set, so `GET /v1/sources/10000000-0000-4000-8000-000000000005` still returns the Quran and the sync log stays on the API source. The catalog hides that alias. A later Quran.com sync writes new verses onto the canonical source.
+
+The four seed rows on «ابن القيم» were not moved. Aljam3 (author 4407, https://aljam3.com/ar/authors/4407) did not return these sentences as his own words in a book I can cite:
+
+| Quote | What the search showed |
+| --- | --- |
+| اللسان سبع إن أطلق أكل | No hit in his books. A close proverb, «مثل اللسان مثل السبع», is quoted by Ibn Allan in الفتوحات الربانية (book 11113, file «الجزء 06», page 373, https://aljam3.com/ar/11113/27007/373), not as Ibn al-Qayyim's sentence. |
+| الغضب جمرة يلقيها الشيطان في قلب ابن آدم | Cited as a hadith (Ahmad / Tirmidhi) in سبل الوقاية من السحر والعين (book 24003, file KTB_0119230, page 28, https://aljam3.com/ar/24003/52122/28). He also quotes that hadith inside الداء والدواء (book 38283, file KTB_0093854, page 122, https://aljam3.com/ar/38283/71255/122). |
+| الغيبة أن تذكر أخاك بما يكره… | The seed names Madarij al-Salikin. The search returned this definition from other authors (Ghazali, via طريق النجاة, book 37731, page 128), not a Madarij page. |
+| إن الغضب إذا تمكن من القلب أعمى صاحبه… | The seed names Al-Jawab al-Kafi. Searching his books for «حجب عنه نور العقل» and «أعمى صاحبه وأصمه» did not return this sentence. |
+
+They stay on the scholar source until a page that contains the sentence is in hand.
+

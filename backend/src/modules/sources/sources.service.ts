@@ -102,10 +102,18 @@ export class SourcesService {
       });
     }
 
+    const canonical = row.canonicalId
+      ? await this.prisma.source.findUnique({
+          where: { id: row.canonicalId },
+          include: { _count: { select: { quotes: true } } },
+        })
+      : null;
+    const shown = canonical ?? row;
+
     const publishedQuoteCount = await this.prisma.quote.count({
-      where: { sourceId: id, ...this.publishedWhere() },
+      where: { sourceId: shown.id, ...this.publishedWhere() },
     });
-    return this.toSourceDto(row as SourceRowWithCount, publishedQuoteCount);
+    return this.toSourceDto(shown as SourceRowWithCount, publishedQuoteCount);
   }
 
   // ─── Admin CRUD ───────────────────────────────────────────────────────────────
@@ -187,6 +195,11 @@ export class SourcesService {
 
     if (query.isExternalApi !== undefined) {
       and.push({ isExternalApi: query.isExternalApi });
+    }
+
+    // An aliased source keeps its id for old links. The catalog shows the canonical row.
+    if (query.isExternalApi !== true) {
+      and.push({ canonicalId: null });
     }
 
     return and.length ? { AND: and } : {};
