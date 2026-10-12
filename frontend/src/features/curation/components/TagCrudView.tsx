@@ -103,7 +103,7 @@ function TagDialog({ open, onClose, existing }: TagDialogProps) {
               <FormField control={form.control} name="nameAr" render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t('common.nameAr')}</FormLabel>
-                  <FormControl><Input dir="rtl" {...field} /></FormControl>
+                  <FormControl><Input dir="rtl" className="font-arabic-ui" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
@@ -170,7 +170,7 @@ export function TagCrudView() {
       key: 'nameAr',
       header: t('common.nameAr'),
       cell: (row) => row.nameAr
-        ? <span className="text-sm font-arabic" dir="rtl">{row.nameAr}</span>
+        ? <span className="font-arabic-ui text-sm" dir="rtl" lang="ar">{row.nameAr}</span>
         : <span className="text-muted-foreground">—</span>,
     },
     {

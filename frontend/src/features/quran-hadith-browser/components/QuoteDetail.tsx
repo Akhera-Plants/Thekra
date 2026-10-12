@@ -1,11 +1,13 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { FormattedNumber } from '@/components/shared/FormattedNumber';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Link } from '@/i18n/navigation';
 import { ArabicText } from '@/components/shared/ArabicText';
 import { GradeBadge } from '@/components/shared/quote/GradeBadge';
+import { ReportMistake } from '@/components/shared/quote/ReportMistake';
 import { SourceAttribution } from '@/components/shared/quote/SourceAttribution';
 import type { QuoteDetailDto } from '@/lib/types/api';
 import { HadithGrade } from '@/lib/types/enums';
@@ -21,6 +23,7 @@ interface QuoteDetailProps {
 export function QuoteDetail({ quote }: QuoteDetailProps) {
   const t = useTranslations('quote');
   const tDetail = useTranslations('quoteDetail');
+  const arabic = useLocale() === 'ar';
 
   const grade = quote.hadith?.grade;
   const isWeak =
@@ -49,21 +52,21 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
       )}
 
       {/* Arabic text — primary. A footnote marker jumps to the citation. */}
-      <ArabicText as="blockquote" size="xl" className="border-none ps-0">
+      <ArabicText as="blockquote" size="xl" face="display" className="border-none ps-0">
         {quote.textAr}
-        {(quote.citation?.volume || quote.citation?.page || quote.book?.pageOrChapter) && (
+        {(quote.citation?.volume || quote.citation?.page || quote.citation?.gradeAuthority || quote.citation?.gradeReference || quote.book?.pageOrChapter) && (
           <a
             href={`#quote-${quote.id}-source`}
             className="ms-1 inline-block text-sm text-primary underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <sup>(1)</sup>
+            <sup>(<FormattedNumber value={1} />)</sup>
             <span className="sr-only">{t('citationMarker')}</span>
           </a>
         )}
       </ArabicText>
 
       {/* Translation */}
-      {quote.translation && (
+      {quote.translation && !arabic && (
         <div className="border-s-2 border-s-border ps-4">
           <p className="text-xs font-medium text-muted-foreground mb-1">
             {t('translation')}
@@ -84,6 +87,8 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
           source: t('source'),
           volume: t('volume'),
           page: t('page'),
+          gradeAuthority: t('gradeAuthority'),
+          gradeReference: t('gradeReference'),
         }}
       />
 
@@ -93,10 +98,14 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
           <span className="text-sm font-medium text-muted-foreground me-1">
             {t('tags')}:
           </span>
-          {quote.tags.map((tag) => (
+          {quote.tags.filter((tag) => (arabic ? Boolean(tag.nameAr) : true)).map((tag) => (
             <Link key={tag.id} href={`/feelings/${tag.slug}`}>
               <Badge variant="secondary">
-                {tag.nameAr ?? tag.name}
+                {tag.nameAr ? (
+                  <span dir="rtl" lang="ar" className="font-arabic-ui">{tag.nameAr}</span>
+                ) : arabic ? null : (
+                  tag.name
+                )}
               </Badge>
             </Link>
           ))}
@@ -114,7 +123,7 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
               <li key={sin.slug}>
                 <Link href={`/sins/${sin.slug}`}>
                   <Badge variant="outline">
-                    <span dir="rtl" lang="ar" className="font-arabic">
+                    <span dir="rtl" lang="ar" className="font-arabic-ui">
                       {sin.nameAr}
                     </span>
                   </Badge>
@@ -136,7 +145,7 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
               <li key={deed.slug}>
                 <Link href={`/good-deeds/${deed.slug}`}>
                   <Badge variant="outline">
-                    <span dir="rtl" lang="ar" className="font-arabic">
+                    <span dir="rtl" lang="ar" className="font-arabic-ui">
                       {deed.nameAr}
                     </span>
                   </Badge>
@@ -146,6 +155,7 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
           </ul>
         </section>
       )}
+      {quote.type === 'HADITH' && <ReportMistake quoteId={quote.id} />}
     </article>
   );
 }

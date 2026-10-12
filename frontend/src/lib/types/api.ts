@@ -112,6 +112,8 @@ export interface QuoteDto {
   citation: {
     volume: string | null;
     page: string | null;
+    gradeAuthority: string | null;
+    gradeReference: string | null;
   };
   source: QuoteSourceDto;
   tags: QuoteTagDto[];
@@ -311,6 +313,7 @@ export interface SourcesQuery {
   type?: SourceType;
   page?: number;
   limit?: number;
+  lang?: LocaleCode;
 }
 
 export interface SurahAyahsQuery {

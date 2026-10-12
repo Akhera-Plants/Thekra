@@ -1,42 +1,54 @@
-import { HydrationBoundary, dehydrate } from '@tanstack/react-query';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
+import { CatalogIndex, type CatalogEntry } from '@/components/shared/editorial/CatalogIndex';
 import { getSins } from '@/lib/api/sins';
-import { createQueryClient } from '@/lib/query-client';
-import { queryKeys } from '@/lib/query-keys';
-import { SinList } from '@/features/sin-reminder/components/SinList';
+import { SinRank } from '@/lib/types/enums';
 
-// Force dynamic so the build succeeds without the API running
 export const dynamic = 'force-dynamic';
 
-export default async function SinsPage({
-  params,
-}: PageProps<'/[locale]/sins'>) {
+function kabiraNumber(reference: string | null): number | null {
+  if (!reference) return null;
+  const match = reference.match(/رقم\s*(\d+)/);
+  return match ? Number(match[1]) : null;
+}
+
+export default async function SinsPage({ params }: PageProps<'/[locale]/sins'>) {
   const { locale } = await params;
   setRequestLocale(locale);
-
   const t = await getTranslations('sins');
 
-  const queryClient = createQueryClient();
+  let sins: Awaited<ReturnType<typeof getSins>>['data'] = [];
   try {
-    await queryClient.prefetchQuery({
-      queryKey: queryKeys.sins.list({}),
-      queryFn: () => getSins({ limit: 100 }),
-    });
+    sins = (await getSins({ limit: 100, lang: locale as 'ar' | 'en' })).data;
   } catch {
-    // API down during build/test — show empty state on client
+    sins = [];
   }
 
-  const sinsData = queryClient.getQueryData<{ data: Awaited<ReturnType<typeof getSins>>['data'] }>(
-    queryKeys.sins.list({ limit: 100 }),
-  );
-  const sins = (sinsData as Awaited<ReturnType<typeof getSins>> | undefined)?.data ?? [];
+  const entries: CatalogEntry[] = sins.map((sin) => {
+    const isKabira = sin.rank === SinRank.KABIRA;
+    const published = sin.quoteCount > 0;
+    return {
+      href: `/sins/${sin.slug}`,
+      nameAr: sin.nameAr,
+      name: sin.name,
+      quoteCount: sin.quoteCount,
+      number: isKabira ? kabiraNumber(sin.rankReference) : null,
+      placement: isKabira && published ? 'both' : isKabira ? 'index' : 'common',
+    };
+  });
 
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-      <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-10">
-        <h1 className="text-2xl font-semibold md:text-3xl">{t('pageTitle')}</h1>
-        <SinList sins={sins} />
-      </div>
-    </HydrationBoundary>
+    <CatalogIndex
+      entries={entries}
+      intent="sin"
+      pageTitle={t('pageTitle')}
+      searchPlaceholder={t('searchPlaceholder')}
+      searchLabel={t('searchPlaceholder')}
+      commonHeading={t('commonHeading')}
+      indexHeading={t('kabairHeading')}
+      indexNote={t('kabairNote')}
+      quietLabel={t('quiet')}
+      noResults={t('noResults')}
+      jumpLabel={t('jumpLabel')}
+    />
   );
 }

@@ -110,7 +110,7 @@ component sits at the top of that file. New files are the last resort.
 imports from inside a `features/*` folder; `components/ui/*` imports nothing app-specific; a feature slice never
 imports another slice's internals — promote the piece to `components/shared/` instead.
 
-Feature folder names are fixed: `sin-reminder`, `good-deed-motivation`, `quran-hadith-browser`, `favorites`.
+Feature folder names are fixed: `sin-reminder`, `good-deed-motivation`, `quran-hadith-browser`, `favorites`, `iman-branches`.
 
 ## Shared Components: Don't Break Existing Consumers
 

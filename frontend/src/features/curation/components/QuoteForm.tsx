@@ -195,7 +195,7 @@ export function QuoteForm({ existing }: QuoteFormProps) {
                   dir="rtl"
                   rows={5}
                   placeholder={t('quotes.textArPlaceholder')}
-                  className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 font-arabic text-lg leading-loose ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  className="flex min-h-32 w-full rounded-md border border-input bg-background px-3 py-2 font-arabic-text text-lg leading-loose ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   {...field}
                 />
               </FormControl>
@@ -234,7 +234,7 @@ export function QuoteForm({ existing }: QuoteFormProps) {
               <FormField control={form.control} name="surahNameAr" render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t('quotes.fieldSurahNameAr')}</FormLabel>
-                  <FormControl><Input dir="rtl" placeholder="البقرة" {...field} /></FormControl>
+                  <FormControl><Input dir="rtl" className="font-arabic-ui" placeholder="البقرة" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
@@ -258,7 +258,7 @@ export function QuoteForm({ existing }: QuoteFormProps) {
               <FormField control={form.control} name="narratorAr" render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t('quotes.fieldNarratorAr')}</FormLabel>
-                  <FormControl><Input dir="rtl" {...field} /></FormControl>
+                  <FormControl><Input dir="rtl" className="font-arabic-ui" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />

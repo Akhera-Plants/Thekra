@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ErrorState } from '@/components/shared/ErrorState';
+import { StaggerReveal } from '@/components/shared/StaggerReveal';
 import { QuoteCard } from '@/components/shared/quote/QuoteCard';
 import { QuoteCardSkeleton } from '@/components/shared/quote/QuoteCardSkeleton';
 import { useFavorites } from '../hooks/useFavorites';
@@ -45,17 +46,20 @@ export function FavoritesList() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      {data.items.map((quote) => (
-        <QuoteCard
-          key={quote.id}
-          quote={quote}
-          detailHref={`/quotes/${quote.id}`}
-          showFavoriteButton
-          isFavoritePending={isPending}
-          onToggleFavorite={toggle}
-        />
-      ))}
+    <div className="flex flex-col gap-4" role="list">
+      <StaggerReveal>
+        {data.items.map((quote) => (
+          <div key={quote.id} role="listitem" className="min-w-0">
+            <QuoteCard
+              quote={quote}
+              detailHref={`/quotes/${quote.id}`}
+              showFavoriteButton
+              isFavoritePending={isPending}
+              onToggleFavorite={toggle}
+            />
+          </div>
+        ))}
+      </StaggerReveal>
     </div>
   );
 }

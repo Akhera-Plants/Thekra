@@ -1,4 +1,5 @@
 import { getTranslations } from 'next-intl/server';
+import { SiteFooter } from './SiteFooter';
 import { SiteHeader } from './SiteHeader';
 
 interface AppShellProps {
@@ -22,9 +23,10 @@ export async function AppShell({ children }: AppShellProps) {
         {t('skipToContent')}
       </a>
       <SiteHeader />
-      <main id="main-content" className="flex flex-1 flex-col">
+      <main id="main-content" className="flex min-w-0 flex-1 flex-col">
         {children}
       </main>
+      <SiteFooter />
     </>
   );
 }

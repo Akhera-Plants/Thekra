@@ -82,6 +82,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm prisma:generate
       - run: pnpm --filter backend exec tsc --noEmit -p tsconfig.json
+      - run: pnpm --filter frontend exec next typegen
       - run: pnpm --filter frontend exec tsc --noEmit
 
   test-unit:

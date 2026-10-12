@@ -127,7 +127,11 @@ export function QuoteFilters({
               </SelectItem>,
               ...collections.map((c) => (
                 <SelectItem key={c.id} value={c.id}>
-                  {c.nameAr || c.name}
+                  {c.nameAr ? (
+                    <span dir="rtl" lang="ar" className="font-arabic-ui">{c.nameAr}</span>
+                  ) : (
+                    c.name
+                  )}
                 </SelectItem>
               )),
             ]}

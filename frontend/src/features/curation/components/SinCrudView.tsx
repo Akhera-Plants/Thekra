@@ -113,7 +113,7 @@ function SinFormDialog({ open, onClose, existing }: SinFormDialogProps) {
               <FormField control={form.control} name="nameAr" render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t('common.nameAr')}</FormLabel>
-                  <FormControl><Input dir="rtl" {...field} /></FormControl>
+                  <FormControl><Input dir="rtl" className="font-arabic-ui" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />

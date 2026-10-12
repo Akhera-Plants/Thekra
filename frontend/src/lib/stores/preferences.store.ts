@@ -6,10 +6,13 @@ interface PreferencesState {
   includeWeakHadith: boolean;
   arabicNumerals: boolean;
   fontScale: number; // 1 = default, 1.2 = large, 1.5 = xl
+  /** When true, hides purely decorative accents (e.g. the card corner motif). Default false. */
+  reduceDecoration: boolean;
   setShowTranslation: (v: boolean) => void;
   setIncludeWeakHadith: (v: boolean) => void;
   setArabicNumerals: (v: boolean) => void;
   setFontScale: (v: number) => void;
+  setReduceDecoration: (v: boolean) => void;
 }
 
 export const usePreferencesStore = create<PreferencesState>()(
@@ -19,10 +22,12 @@ export const usePreferencesStore = create<PreferencesState>()(
       includeWeakHadith: false,
       arabicNumerals: true,
       fontScale: 1,
+      reduceDecoration: false,
       setShowTranslation: (showTranslation) => set({ showTranslation }),
       setIncludeWeakHadith: (includeWeakHadith) => set({ includeWeakHadith }),
       setArabicNumerals: (arabicNumerals) => set({ arabicNumerals }),
       setFontScale: (fontScale) => set({ fontScale }),
+      setReduceDecoration: (reduceDecoration) => set({ reduceDecoration }),
     }),
     { name: 'thekra-preferences' },
   ),

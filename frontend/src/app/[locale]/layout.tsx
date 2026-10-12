@@ -1,17 +1,13 @@
+import type { Metadata } from 'next';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
-import { getMessages, setRequestLocale } from 'next-intl/server';
-import { Geist, Geist_Mono, Noto_Naskh_Arabic } from 'next/font/google';
+import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server';
+import { Geist, Geist_Mono } from 'next/font/google';
 import { notFound } from 'next/navigation';
 import { AppShell } from '@/components/shared/AppShell';
 import { LocaleSync } from '@/components/shared/LocaleSync';
+import { amiriQuran, thmanyahDisplay, thmanyahSans, thmanyahText } from '@/lib/fonts';
 import { AppProviders } from '@/lib/providers';
 import { routing } from '@/i18n/routing';
-
-const arabicFont = Noto_Naskh_Arabic({
-  subsets: ['arabic'],
-  variable: '--font-arabic',
-  display: 'swap',
-});
 
 const uiFont = Geist({
   subsets: ['latin'],
@@ -24,6 +20,14 @@ const monoFont = Geist_Mono({
   variable: '--font-geist-mono',
   display: 'swap',
 });
+
+export async function generateMetadata({
+  params,
+}: LayoutProps<'/[locale]'>): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'app' });
+  return { title: t('name') };
+}
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -49,11 +53,11 @@ export default async function LocaleLayout({
       lang={locale}
       dir={dir}
       suppressHydrationWarning
-      className={`${arabicFont.variable} ${uiFont.variable} ${monoFont.variable} h-full antialiased`}
+      className={`${thmanyahDisplay.variable} ${thmanyahText.variable} ${thmanyahSans.variable} ${amiriQuran.variable} ${uiFont.variable} ${monoFont.variable} h-full antialiased`}
     >
       <body
         suppressHydrationWarning
-        className="flex min-h-full flex-col font-sans"
+        className={`flex min-h-full flex-col ${locale === 'ar' ? 'font-arabic-ui' : 'font-sans'}`}
       >
         <NextIntlClientProvider messages={messages}>
           <AppProviders>

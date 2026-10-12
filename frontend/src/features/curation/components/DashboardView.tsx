@@ -44,7 +44,7 @@ function CoverageCard({
       className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3 transition-[opacity] duration-150 ease-out hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none"
     >
       <div className="flex min-w-0 flex-col">
-        <span className="truncate text-base font-arabic" dir="rtl">{nameAr}</span>
+        <span className="truncate font-arabic-ui text-base" dir="rtl" lang="ar">{nameAr}</span>
         <span className="truncate text-xs text-muted-foreground">{name}</span>
       </div>
       <div className="flex shrink-0 items-center gap-2">

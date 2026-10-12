@@ -40,7 +40,11 @@ export function AdminGuard({ children }: AdminGuardProps) {
     );
   }
 
-  if (!user || user.role !== 'ADMIN') {
+  if (!user) {
+    return null;
+  }
+
+  if (user.role !== 'ADMIN' && user.role !== 'REVIEWER') {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
         <ShieldOff className="h-12 w-12 text-muted-foreground" aria-hidden />

@@ -3,12 +3,15 @@ import { cn } from '@/lib/utils';
 
 interface QuoteCardSkeletonProps {
   density?: 'compact' | 'full';
+  /** Pass the same `intent` the real QuoteCard will render with, so the top border thickness matches. */
+  intent?: 'sin' | 'good-deed' | 'iman-branch';
   className?: string;
 }
 
 /** Geometry-matched skeleton for QuoteCard — prevents layout shift during loading. */
 export function QuoteCardSkeleton({
   density = 'full',
+  intent,
   className,
 }: QuoteCardSkeletonProps) {
   const padding = density === 'compact' ? 'p-4' : 'p-5 md:p-6';
@@ -17,6 +20,7 @@ export function QuoteCardSkeleton({
     <div
       className={cn(
         'flex flex-col gap-3 rounded-lg border border-border bg-card',
+        intent ? 'border-t-[3px]' : null,
         padding,
         className,
       )}

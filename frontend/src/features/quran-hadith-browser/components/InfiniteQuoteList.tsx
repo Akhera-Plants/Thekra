@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { StaggerReveal } from '@/components/shared/StaggerReveal';
 import { QuoteCard, QuoteCardSkeleton } from '@/components/shared/quote';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ErrorState } from '@/components/shared/ErrorState';
@@ -27,7 +28,9 @@ export function InfiniteQuoteList({ params }: InfiniteQuoteListProps) {
   } = useQuoteSearch(params);
 
   const pages = data?.pages ?? [];
-  const quotes = pages.flatMap((p) => p.data ?? []);
+  const firstPage = pages[0]?.data ?? [];
+  const rest = pages.slice(1).flatMap((p) => p.data ?? []);
+  const quotes = [...firstPage, ...rest];
 
   if (isPending) {
     return (
@@ -55,16 +58,26 @@ export function InfiniteQuoteList({ params }: InfiniteQuoteListProps) {
 
   return (
     <section className="flex flex-col gap-4">
-      <ul className="flex flex-col gap-4" aria-label="quotes">
-        {quotes.map((quote) => (
-          <li key={quote.id}>
+      <div className="flex flex-col gap-4" role="list" aria-label="quotes">
+        <StaggerReveal>
+          {firstPage.map((quote) => (
+            <div key={quote.id} role="listitem" className="min-w-0">
+              <QuoteCard
+                quote={quote}
+                detailHref={`/quotes/${quote.id}`}
+              />
+            </div>
+          ))}
+        </StaggerReveal>
+        {rest.map((quote) => (
+          <div key={quote.id} role="listitem" className="min-w-0">
             <QuoteCard
               quote={quote}
               detailHref={`/quotes/${quote.id}`}
             />
-          </li>
+          </div>
         ))}
-      </ul>
+      </div>
       {hasNextPage && (
         <div className="flex justify-center py-4">
           <Button

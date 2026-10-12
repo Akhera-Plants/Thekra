@@ -1,3 +1,4 @@
+import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { HadithGrade } from '@/lib/types/enums';
 
@@ -8,29 +9,58 @@ interface GradeBadgeProps {
   className?: string;
 }
 
-const GRADE_CLASSES: Record<HadithGrade, string> = {
-  [HadithGrade.SAHIH]: 'bg-grade-sahih/10 text-grade-sahih border-grade-sahih/30',
-  [HadithGrade.HASAN]: 'bg-grade-hasan/10 text-grade-hasan border-grade-hasan/30',
-  [HadithGrade.DAIF]: 'bg-grade-daif/10 text-grade-daif border-grade-daif/30',
-  [HadithGrade.MAWDU]: 'bg-muted text-muted-foreground border-border',
-  [HadithGrade.UNGRADED]: 'bg-muted text-muted-foreground border-border',
-};
+interface GradeSealConfig {
+  /** Filled seal colours — background + a readable foreground pair, never a tint-only pattern. */
+  classes: string;
+  /** Sahih/Hasan get a tiny confirming checkmark; Da'if/Mawdu never do (never alarming, never over-asserted). */
+  showCheck: boolean;
+}
+
+const GRADE_SEAL_CONFIG = {
+  [HadithGrade.SAHIH]: {
+    classes: 'bg-grade-sahih text-grade-sahih-foreground ring-grade-sahih/35',
+    showCheck: true,
+  },
+  [HadithGrade.HASAN]: {
+    classes: 'bg-grade-hasan text-grade-hasan-foreground ring-grade-hasan/35',
+    showCheck: true,
+  },
+  [HadithGrade.DAIF]: {
+    classes: 'bg-grade-daif text-grade-daif-foreground ring-grade-daif/35',
+    showCheck: false,
+  },
+  [HadithGrade.MAWDU]: {
+    classes: 'bg-grade-mawdu text-grade-mawdu-foreground ring-grade-mawdu/35',
+    showCheck: false,
+  },
+  [HadithGrade.UNGRADED]: {
+    classes: 'bg-muted text-muted-foreground ring-border',
+    showCheck: false,
+  },
+} satisfies Record<HadithGrade, GradeSealConfig>;
 
 /**
- * Shows the hadith grade as a text badge — never colour alone (plan §7.2 + ARCHITECTURE §1).
- * `aria-label` carries the full phrase, e.g. "حديث صحيح".
+ * Shows the hadith grade as a small circular "seal" — never colour alone
+ * (plan §7.2 + ARCHITECTURE §1 + design-language-sakina.md §Card/Badge redesign).
+ * `aria-label` carries the grade phrase, e.g. "حديث صحيح"; the word is also always
+ * rendered as visible text, never implied by colour or icon alone.
  */
 export function GradeBadge({ grade, label, className }: GradeBadgeProps) {
+  const { classes, showCheck } = GRADE_SEAL_CONFIG[grade];
+
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium',
-        GRADE_CLASSES[grade],
+        'inline-flex h-7 min-w-7 items-center justify-center gap-0.5 rounded-full px-1.5 text-xs font-semibold ring-2',
+        classes,
         className,
       )}
       aria-label={label}
     >
-      {label}
+      {showCheck && <Check className="size-3 shrink-0" aria-hidden />}
+      <span aria-hidden className="leading-none">
+        {label}
+      </span>
     </span>
   );
 }

@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { ArrowRight } from 'lucide-react';
+import { StaggerReveal } from '@/components/shared/StaggerReveal';
 import { QuoteCard, QuoteCardSkeleton } from '@/components/shared/quote';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ErrorState } from '@/components/shared/ErrorState';
@@ -66,16 +67,18 @@ export function SurahView({ surah }: SurahViewProps) {
       )}
 
       {!isPending && ayahs.length > 0 && (
-        <ul className="flex flex-col gap-4" aria-label={surahLabel}>
-          {ayahs.map((ayah) => (
-            <li key={ayah.id}>
-              <QuoteCard
-                quote={ayah}
-                detailHref={`/quotes/${ayah.id}`}
-              />
-            </li>
-          ))}
-        </ul>
+        <div className="flex flex-col gap-4" role="list" aria-label={surahLabel}>
+          <StaggerReveal>
+            {ayahs.map((ayah) => (
+              <div key={ayah.id} role="listitem" className="min-w-0">
+                <QuoteCard
+                  quote={ayah}
+                  detailHref={`/quotes/${ayah.id}`}
+                />
+              </div>
+            ))}
+          </StaggerReveal>
+        </div>
       )}
     </div>
   );

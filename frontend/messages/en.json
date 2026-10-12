@@ -1,7 +1,8 @@
 {
   "app": {
     "name": "Thekra",
-    "tagline": "A reminder when you need one"
+    "tagline": "For whoever has a heart",
+    "intentionReminder": "I want nothing from this except Allah."
   },
   "theme": {
     "toggle": "Toggle theme",
@@ -13,11 +14,33 @@
     "skipToContent": "Skip to main content",
     "home": "Home",
     "sins": "Sins",
-    "goodDeeds": "Good Deeds",
+    "goodDeeds": "Good deeds",
+    "menu": "Menu",
     "browse": "Browse",
+    "branches": "The Branches of Faith",
+    "about": "Sources",
     "favorites": "Favorites",
     "settings": "Settings",
     "back": "Back"
+  },
+  "about": {
+    "pageTitle": "Sources",
+    "intro": "Thekra cites the book and the person who graded a narration. A book is never given one grade for every hadith in it.",
+    "openitiTitle": "OpenITI",
+    "openitiBody": "Digital texts imported from OpenITI are used under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 licence. Attribution: OpenITI. Thekra does not sell this text and does not run ads on it. If the dataset is shared, it stays under the same licence.",
+    "texts": "texts"
+  },
+  "branches": {
+    "pageTitle": "The Branches of Faith",
+    "empty": "No branches have been entered yet",
+    "quotes": "Texts",
+    "noQuotes": "No accepted texts for this branch yet",
+    "pending": "These texts are still being reviewed.",
+    "volume": "Vol.",
+    "summary": "Summary",
+    "explanations": "From the book",
+    "goodDeeds": "Acts of obedience",
+    "sins": "Sins"
   },
   "localeSwitcher": {
     "label": "Change language",
@@ -73,12 +96,32 @@
   },
   "home": {
     "title": "Thekra",
-    "tagline": "A reminder when you need one",
-    "sinEntryLabel": "Help me resist a sin",
-    "sinEntryDescription": "Search for a sin and receive reminders from Quran and Sunnah",
-    "deedEntryLabel": "Guide me to an act of obedience",
-    "deedEntryDescription": "Search for a good deed and get motivation from Quran and Sunnah",
-    "browseLabel": "Browse content"
+    "tagline": "For whoever has a heart",
+    "sinEntryLabel": "Help me leave a sin",
+    "sinEntryDescription": "What weighs on the heart, and a text that reminds you.",
+    "deedEntryLabel": "Point me to a good deed",
+    "deedEntryDescription": "A small deed that draws you nearer.",
+    "branchEntryLabel": "The Branches of Faith",
+    "branchEntryDescription": "Seventy-seven branches.",
+    "todayHeading": "Today's reminder",
+    "save": "Save",
+    "share": "Share",
+    "shared": "Copied",
+    "heavyHeading": "What weighs on your heart?",
+    "deedHeading": "A good deed for today",
+    "branchesHeading": "The branches of faith",
+    "branchToday": "Today's branch",
+    "sourcesHeading": "Where this comes from",
+    "volumeLabel": "Volume",
+    "browseLabel": "Or browse the texts",
+    "searchPlaceholder": "What is on your heart?",
+    "searchLabel": "Search for a sin or a good deed",
+    "searching": "Searching…",
+    "noResults": "Nothing by that name.",
+    "searchError": "The search did not go through.",
+    "retry": "Try again",
+    "sinKind": "Sin",
+    "deedKind": "Good deed"
   },
   "sinRank": {
     "KABIRA": "Major sin",
@@ -86,15 +129,26 @@
   },
   "sins": {
     "pageTitle": "Sins",
-    "searchPlaceholder": "Search for a sin…",
+    "searchPlaceholder": "What is weighing on you?",
+    "commonHeading": "Often opened",
+    "kabairHeading": "Major sins — from al-Dhahabi's al-Kabair",
+    "kabairNote": "The order is the book's. Each narration is graded on its own.",
+    "quiet": "No published text yet",
+    "jumpLabel": "Letter index",
     "noResults": "No matching results",
     "categoryAll": "All",
     "openPicker": "Choose a sin"
   },
   "sinDetail": {
     "anotherReminder": "Another reminder",
-    "alternativesHeading": "Suggested alternatives",
-    "noReminders": "No reminders for this sin yet",
+    "previous": "Previous",
+    "next": "Next",
+    "showAll": "Show all",
+    "showOne": "Show one",
+    "of": "of",
+    "browse": "Browse the texts",
+    "alternativesHeading": "Instead",
+    "noReminders": "These texts are still being reviewed",
     "typeAll": "All",
     "typeQuran": "Quran",
     "typeHadith": "Hadith",
@@ -103,15 +157,25 @@
     "severity": "Severity"
   },
   "goodDeeds": {
-    "pageTitle": "Good Deeds",
-    "searchPlaceholder": "Search for a good deed…",
+    "pageTitle": "Good deeds",
+    "searchPlaceholder": "Which deed are you looking for?",
+    "commonHeading": "Often opened",
+    "indexHeading": "The other deeds",
+    "quiet": "No published text yet",
+    "jumpLabel": "Letter index",
     "noResults": "No matching results",
     "openPicker": "Choose a good deed"
   },
   "goodDeedDetail": {
-    "anotherMotivation": "Another motivation",
-    "rewardHeading": "Reward",
-    "noMotivations": "No reminders for this deed yet",
+    "anotherMotivation": "Another reminder",
+    "previous": "Previous",
+    "next": "Next",
+    "showAll": "Show all",
+    "showOne": "Show one",
+    "of": "of",
+    "browse": "Browse the texts",
+    "rewardHeading": "The reward",
+    "noMotivations": "These texts are still being reviewed",
     "oppositeSin": "Opposite sin",
     "typeAll": "All",
     "typeQuran": "Quran",
@@ -158,10 +222,24 @@
     "source": "Source",
     "volume": "Volume",
     "page": "Page",
+    "gradeAuthority": "Graded by",
+    "gradeReference": "Grade reference",
     "citationMarker": "Source and page",
     "weakNotice": "This narration is weak (da'if)",
     "translation": "Translation",
-    "viewFull": "View full"
+    "viewFull": "View full",
+    "report": "Report a mistake",
+    "reportReason": "Reason",
+    "reportNote": "Note",
+    "reportSend": "Send",
+    "reportSent": "Report received",
+    "reportReasons": {
+      "TEXT": "The text is corrupt",
+      "ISNAD": "The chain is wrong",
+      "GRADE": "The citation is wrong",
+      "CLASSIFICATION": "The classification is wrong",
+      "OTHER": "Something else"
+    }
   },
   "quoteDetail": {
     "pageTitle": "Quote",
@@ -201,7 +279,42 @@
       "goodDeeds": "Good Deeds",
       "sources": "Sources",
       "tags": "Tags",
-      "sync": "Content Sync"
+      "sync": "Content Sync",
+      "flags": "Flags"
+    },
+    "flags": {
+      "title": "Flags",
+      "empty": "No open flags",
+      "type": "Type",
+      "severity": "Severity",
+      "status": "Status",
+      "all": "All",
+      "open": "Open",
+      "confirm": "Confirm match",
+      "reject": "Reject match",
+      "resolve": "Resolve",
+      "dismiss": "Dismiss",
+      "note": "Note",
+      "candidates": "Bukhari and Muslim candidates",
+      "quote": "Text",
+      "types": {
+        "WEAK_MATCH": "Uncertain match",
+        "DUPLICATE_DIFFERENT_GRADE": "Duplicate with a different grade",
+        "QURAN_MISMATCH": "Quran text does not match",
+        "OCR_SUSPECT": "Suspect text",
+        "REFERENCE_MISMATCH": "Number does not match",
+        "USER_REPORT": "Report"
+      },
+      "severities": {
+        "HIGH": "High",
+        "MEDIUM": "Medium",
+        "LOW": "Low"
+      },
+      "decisions": {
+        "CANDIDATE": "Candidate",
+        "CONFIRMED": "Confirmed",
+        "REJECTED": "Rejected"
+      }
     },
     "common": {
       "nameEn": "Name (English)",

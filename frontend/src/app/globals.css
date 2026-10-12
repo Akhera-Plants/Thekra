@@ -10,7 +10,12 @@
   --font-sans: var(--font-ui);
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-ui);
-  --font-arabic: var(--font-arabic);
+  /* Existing `font-arabic` stays the reading face. Display and UI are separate static families. */
+  --font-arabic: var(--font-arabic-text);
+  --font-arabic-text: var(--font-arabic-text);
+  --font-arabic-display: var(--font-arabic-display);
+  --font-arabic-ui: var(--font-arabic-ui);
+  --font-quran: var(--font-quran);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -28,6 +33,7 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -40,11 +46,22 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  /* Grade (authenticity) tokens — hue families reused from the intent tokens below */
   --color-grade-sahih: var(--grade-sahih);
+  --color-grade-sahih-foreground: var(--grade-sahih-foreground);
   --color-grade-hasan: var(--grade-hasan);
+  --color-grade-hasan-foreground: var(--grade-hasan-foreground);
   --color-grade-daif: var(--grade-daif);
+  --color-grade-daif-foreground: var(--grade-daif-foreground);
+  --color-grade-mawdu: var(--grade-mawdu);
+  --color-grade-mawdu-foreground: var(--grade-mawdu-foreground);
+  /* Path-intent tokens — which flow a quote/card is being viewed in (sin / good-deed / iman-branch) */
   --color-intent-sin: var(--intent-sin);
+  --color-intent-sin-foreground: var(--intent-sin-foreground);
   --color-intent-good-deed: var(--intent-good-deed);
+  --color-intent-good-deed-foreground: var(--intent-good-deed-foreground);
+  --color-intent-iman-branch: var(--intent-iman-branch);
+  --color-intent-iman-branch-foreground: var(--intent-iman-branch-foreground);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -52,29 +69,72 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  /* Sakina motion system (design-system.mdc §3, docs/plan/design-language-sakina.md §Motion) */
+  --animate-breathe: breathe 5s ease-in-out infinite;
+  @keyframes breathe {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.015);
+    }
+  }
+  --animate-reveal-up: reveal-up 200ms ease-out both;
+  @keyframes reveal-up {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  --animate-heart-beat: heart-beat 420ms ease-out 1;
+  @keyframes heart-beat {
+    0% {
+      transform: scale(1);
+    }
+    20% {
+      transform: scale(1.2);
+    }
+    40% {
+      transform: scale(0.94);
+    }
+    60% {
+      transform: scale(1.08);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
 }
 
 /* 🎨 ---------- SWAP POINT: the real palette replaces ONLY these values ---------- */
+/* Sakina (سكينة) — see docs/plan/design-language-sakina.md for the full rationale,
+   token table and contrast report. Source of truth for every value below. */
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --background: oklch(0.975 0.012 75);
+  --foreground: oklch(0.24 0.025 50);
+  --card: oklch(0.99 0.008 75);
+  --card-foreground: oklch(0.24 0.025 50);
+  --popover: oklch(0.99 0.008 75);
+  --popover-foreground: oklch(0.24 0.025 50);
+  --primary: oklch(0.4 0.07 185);
+  --primary-foreground: oklch(0.98 0.01 75);
+  --secondary: oklch(0.93 0.02 75);
+  --secondary-foreground: oklch(0.3 0.03 50);
+  --muted: oklch(0.94 0.015 75);
+  --muted-foreground: oklch(0.48 0.02 55);
+  --accent: oklch(0.9 0.025 75);
+  --accent-foreground: oklch(0.28 0.035 50);
+  --destructive: oklch(0.5 0.11 35);
+  --destructive-foreground: oklch(0.98 0.01 75);
+  --border: oklch(0.88 0.015 70);
+  --input: oklch(0.88 0.015 70);
+  --ring: oklch(0.55 0.08 185);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -88,33 +148,44 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-  /* Thekra-specific semantic tokens (neutral placeholders until design day) */
-  --grade-sahih: var(--primary);
-  --grade-hasan: var(--primary);
-  --grade-daif: var(--muted-foreground);
-  --intent-sin: var(--foreground);
-  --intent-good-deed: var(--foreground);
+  /* Path-intent tokens — the "which flow is this card in" accent (design-language-sakina.md §Tokens) */
+  --intent-sin: oklch(0.4 0.07 185); /* Deep Teal — Sin Path (shares the primary teal: calm, trust) */
+  --intent-sin-foreground: oklch(0.98 0.01 75);
+  --intent-good-deed: oklch(0.64 0.13 55); /* Honey Amber — Good Deed Path (hope, reward, warmth) */
+  --intent-good-deed-foreground: oklch(0.22 0.03 50);
+  --intent-iman-branch: oklch(0.3 0.05 265); /* Night Indigo — Iman Branch Path (contemplation) */
+  --intent-iman-branch-foreground: oklch(0.96 0.01 75);
+  /* Grade (authenticity) tokens — reuse the intent/destructive hue families, never new colours */
+  --grade-sahih: var(--intent-sin);
+  --grade-sahih-foreground: var(--intent-sin-foreground);
+  --grade-hasan: var(--intent-good-deed);
+  --grade-hasan-foreground: var(--intent-good-deed-foreground);
+  --grade-daif: oklch(0.62 0.02 60); /* Muted Terracotta-gray — de-emphasized, never alarming */
+  --grade-daif-foreground: var(--foreground);
+  --grade-mawdu: var(--destructive); /* admin-only; public reads never show it (unchanged policy) */
+  --grade-mawdu-foreground: var(--destructive-foreground);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --background: oklch(0.19 0.012 50);
+  --foreground: oklch(0.94 0.012 75);
+  --card: oklch(0.22 0.014 50);
+  --card-foreground: oklch(0.94 0.012 75);
+  --popover: oklch(0.22 0.014 50);
+  --popover-foreground: oklch(0.94 0.012 75);
+  --primary: oklch(0.62 0.09 185);
+  --primary-foreground: oklch(0.15 0.01 50);
+  --secondary: oklch(0.28 0.015 50);
+  --secondary-foreground: oklch(0.9 0.015 75);
+  --muted: oklch(0.26 0.014 50);
+  --muted-foreground: oklch(0.68 0.015 70);
+  --accent: oklch(0.31 0.02 50);
+  --accent-foreground: oklch(0.92 0.018 75);
+  --destructive: oklch(0.58 0.12 35);
+  --destructive-foreground: oklch(0.15 0.01 50);
+  --border: oklch(0.32 0.016 50);
+  --input: oklch(0.32 0.016 50);
+  --ring: oklch(0.62 0.09 185);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -128,11 +199,20 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
-  --grade-sahih: var(--primary);
-  --grade-hasan: var(--primary);
-  --grade-daif: var(--muted-foreground);
-  --intent-sin: var(--foreground);
-  --intent-good-deed: var(--foreground);
+  --intent-sin: oklch(0.62 0.09 185);
+  --intent-sin-foreground: oklch(0.15 0.01 50);
+  --intent-good-deed: oklch(0.72 0.14 55);
+  --intent-good-deed-foreground: oklch(0.18 0.02 50);
+  --intent-iman-branch: oklch(0.55 0.08 265);
+  --intent-iman-branch-foreground: oklch(0.14 0.02 50);
+  --grade-sahih: var(--intent-sin);
+  --grade-sahih-foreground: var(--intent-sin-foreground);
+  --grade-hasan: var(--intent-good-deed);
+  --grade-hasan-foreground: var(--intent-good-deed-foreground);
+  --grade-daif: oklch(0.55 0.015 60);
+  --grade-daif-foreground: oklch(0.98 0.01 75); /* near-parchment: AA requires a lighter fg than var(--foreground) here */
+  --grade-mawdu: var(--destructive);
+  --grade-mawdu-foreground: var(--destructive-foreground);
 }
 /* 🎨 ---------------------------- END SWAP POINT ---------------------------- */
 
@@ -146,4 +226,132 @@
   html {
     @apply font-sans;
   }
+  /* Arabic page and card titles use the display face. :where keeps this under utilities. */
+  html[lang='ar'] :where(h1, h2) {
+    font-family: var(--font-arabic-display);
+    line-height: 1.45;
+    font-synthesis: none;
+  }
+  :where(.font-arabic, .font-arabic-text, .font-arabic-display, .font-arabic-ui) {
+    font-synthesis: none;
+  }
 }
+
+.home-press {
+  transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.home-press:active {
+  transform: scale(0.98);
+}
+@media (hover: hover) and (pointer: fine) {
+  .home-press:hover {
+    background: color-mix(in oklch, currentColor 7%, transparent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-press,
+  .home-press:active {
+    transition: none;
+    transform: none;
+  }
+}
+
+/* Turning from one reminder to the next. Opacity stays readable so the line is never blank. */
+.reader-turn {
+  animation: reader-turn 220ms ease-out;
+}
+@keyframes reader-turn {
+  from {
+    opacity: 0.45;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reader-turn {
+    animation: none;
+  }
+}
+
+/* Home sky. The lamp arrives once; the page itself is already readable. */
+html[data-sky='home'] {
+  --background: oklch(0.93 0.018 230);
+  --foreground: oklch(0.26 0.04 255);
+  --card: oklch(0.95 0.015 225);
+  --card-foreground: oklch(0.26 0.04 255);
+  --muted: oklch(0.88 0.02 230);
+  --muted-foreground: oklch(0.4 0.03 250);
+  --border: oklch(0.8 0.02 235);
+  --input: oklch(0.8 0.02 235);
+  --ring: oklch(0.42 0.06 255);
+  --primary: oklch(0.32 0.05 255);
+  --primary-foreground: oklch(0.97 0.01 90);
+  background: var(--background);
+  caret-color: var(--foreground);
+  scrollbar-color: oklch(0.55 0.03 250) transparent;
+}
+html[data-sky='home'] ::selection {
+  background: oklch(0.78 0.06 80 / 0.55);
+}
+html.dark[data-sky='home'] {
+  --background: oklch(0.17 0.04 258);
+  --foreground: oklch(0.93 0.02 85);
+  --card: oklch(0.21 0.04 258);
+  --card-foreground: oklch(0.93 0.02 85);
+  --muted: oklch(0.24 0.035 258);
+  --muted-foreground: oklch(0.78 0.02 85);
+  --border: oklch(0.32 0.03 255);
+  --input: oklch(0.32 0.03 255);
+  --ring: oklch(0.82 0.04 85);
+  --primary: oklch(0.9 0.03 85);
+  --primary-foreground: oklch(0.18 0.04 258);
+  scrollbar-color: oklch(0.45 0.03 255) transparent;
+}
+html.dark[data-sky='home'] ::selection {
+  background: oklch(0.72 0.08 75 / 0.45);
+}
+html[data-sky='home'] body {
+  background: transparent;
+}
+html[data-sky='home'] body::before {
+  content: '';
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: -1;
+  height: 72vh;
+  pointer-events: none;
+  background: radial-gradient(ellipse 68% 70% at 50% 0%, oklch(0.97 0.05 85 / 0.95), transparent 68%);
+  animation: sky-light 1.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+html.dark[data-sky='home'] body::before {
+  background: radial-gradient(ellipse 70% 72% at 50% 0%, oklch(0.62 0.1 75 / 0.5), transparent 64%);
+}
+@keyframes sky-light {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-sky='home'] body::before {
+    animation: none;
+  }
+}
+.book-cloth-a {
+  background: oklch(0.32 0.05 255);
+  color: oklch(0.95 0.02 85);
+}
+.book-cloth-b {
+  background: oklch(0.4 0.06 55);
+  color: oklch(0.97 0.02 85);
+}
+.book-cloth-c {
+  background: oklch(0.34 0.05 185);
+  color: oklch(0.95 0.02 90);
+}
+

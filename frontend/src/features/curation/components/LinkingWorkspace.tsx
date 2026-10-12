@@ -304,7 +304,7 @@ export function LinkingWorkspace() {
           <SelectContent>
             {sins.map((s) => (
               <SelectItem key={s.id} value={s.id}>
-                <span dir="rtl">{s.nameAr}</span>
+                <span dir="rtl" lang="ar" className="font-arabic-ui">{s.nameAr}</span>
                 {' '}
                 <span className="text-muted-foreground">({s.quoteCount})</span>
               </SelectItem>

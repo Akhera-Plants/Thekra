@@ -1,14 +1,12 @@
-import { HydrationBoundary, dehydrate } from '@tanstack/react-query';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
+import { Link } from '@/i18n/navigation';
+import { ArabicText } from '@/components/shared/ArabicText';
+import { GoodDeedReader } from '@/features/good-deed-motivation/components/GoodDeedReader';
 import { getGoodDeed, getGoodDeedQuotes } from '@/lib/api/good-deeds';
-import { createQueryClient } from '@/lib/query-client';
-import { queryKeys } from '@/lib/query-keys';
 import type { LocaleCode } from '@/lib/types/enums';
-import { GoodDeedHeader } from '@/features/good-deed-motivation/components/GoodDeedHeader';
-import { RewardCallout } from '@/features/good-deed-motivation/components/RewardCallout';
-import { OppositeSinLink } from '@/features/good-deed-motivation/components/OppositeSinLink';
-import { MotivationList } from '@/features/good-deed-motivation/components/MotivationList';
+
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({
   params,
@@ -27,51 +25,71 @@ export default async function GoodDeedDetailPage({
 }: PageProps<'/[locale]/good-deeds/[slug]'>) {
   const { slug, locale } = await params;
   setRequestLocale(locale);
-
   const t = await getTranslations('goodDeedDetail');
 
-  let goodDeed: Awaited<ReturnType<typeof getGoodDeed>>['data'] | null = null;
+  let deed: Awaited<ReturnType<typeof getGoodDeed>>['data'];
   try {
-    const result = await getGoodDeed(slug, locale as LocaleCode);
-    goodDeed = result.data;
+    deed = (await getGoodDeed(slug, locale as LocaleCode)).data;
   } catch {
     notFound();
   }
 
-  const queryClient = createQueryClient();
-  const quotesParams = { page: 1, limit: 10 };
+  let quotes: Awaited<ReturnType<typeof getGoodDeedQuotes>> | null = null;
   try {
-    await queryClient.prefetchQuery({
-      queryKey: queryKeys.goodDeeds.quotes(slug, quotesParams),
-      queryFn: () => getGoodDeedQuotes(slug, quotesParams),
-    });
+    quotes = await getGoodDeedQuotes(slug, { page: 1, limit: 20, lang: locale as LocaleCode });
   } catch {
-    // show loading state on client
+    quotes = null;
   }
 
+  const items = (quotes?.data.items ?? []).map((item) => ({
+    id: item.quote.id,
+    quote: item.quote,
+    note: item.link.note,
+  }));
+
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-      <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-8 px-4 py-10">
-        {goodDeed && (
-          <>
-            <GoodDeedHeader goodDeed={goodDeed} />
-            {goodDeed.rewardAr && (
-              <RewardCallout
-                rewardAr={goodDeed.rewardAr}
-                reward={goodDeed.reward}
-                heading={t('rewardHeading')}
-              />
-            )}
-            {goodDeed.oppositeSin && (
-              <OppositeSinLink
-                oppositeSin={goodDeed.oppositeSin}
-                label={t('oppositeSin')}
-              />
-            )}
-          </>
+    <article className="mx-auto flex w-full max-w-prose min-w-0 flex-1 flex-col gap-10 px-5 py-12 md:px-8 md:py-16">
+      <header className="flex flex-col gap-3">
+        <h1 className="font-arabic-display text-4xl leading-tight lg:text-5xl">{deed.nameAr}</h1>
+        {locale === 'en' && deed.name && (
+          <p className="text-sm text-muted-foreground">{deed.name}</p>
         )}
-        <MotivationList goodDeedSlug={slug} />
-      </div>
-    </HydrationBoundary>
+        {deed.descriptionAr && <p className="text-muted-foreground">{deed.descriptionAr}</p>}
+        {deed.rewardAr && (
+          <aside className="border-t border-intent-good-deed pt-3" aria-label={t('rewardHeading')}>
+            <p className="text-sm text-intent-good-deed">{t('rewardHeading')}</p>
+            <ArabicText size="lg">{deed.rewardAr}</ArabicText>
+            {locale === 'en' && deed.reward && (
+              <p className="text-sm text-muted-foreground">{deed.reward}</p>
+            )}
+          </aside>
+        )}
+      </header>
+
+      {items.length === 0 ? (
+        <div className="flex flex-col gap-4 border-t border-border pt-8">
+          <p>{t('noMotivations')}</p>
+          <Link
+            href={deed.oppositeSin ? `/sins/${deed.oppositeSin.slug}` : '/browse'}
+            className="inline-flex min-h-11 w-fit items-center border-b-2 border-intent-sin text-intent-sin focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            {deed.oppositeSin ? deed.oppositeSin.nameAr : t('browse')}
+          </Link>
+        </div>
+      ) : (
+        <GoodDeedReader items={items} total={quotes?.meta?.total ?? items.length} slug={slug} />
+      )}
+
+      {deed.oppositeSin && (
+        <p className="text-sm text-muted-foreground">
+          <Link
+            href={`/sins/${deed.oppositeSin.slug}`}
+            className="underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            {deed.oppositeSin.nameAr}
+          </Link>
+        </p>
+      )}
+    </article>
   );
 }

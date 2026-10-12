@@ -1,6 +1,16 @@
+'use client';
+
+import { useLocale } from 'next-intl';
+import { FormattedNumber } from '@/components/shared/FormattedNumber';
 import { cn } from '@/lib/utils';
 import type { QuoteDto } from '@/lib/types/api';
 import { QuoteType } from '@/lib/types/enums';
+
+function visible(value: string | null | undefined, arabic: boolean): string | null {
+  if (!value) return null;
+  if (arabic && /[A-Za-z]/.test(value)) return null;
+  return value;
+}
 
 interface SourceAttributionProps {
   quote: Pick<QuoteDto, 'type' | 'source' | 'quran' | 'hadith' | 'book' | 'citation'>;
@@ -11,6 +21,8 @@ interface SourceAttributionProps {
     source: string;
     volume: string;
     page: string;
+    gradeAuthority: string;
+    gradeReference: string;
   };
   /** When set, the footer is the target of a footnote jump. */
   citationAnchorId?: string;
@@ -27,8 +39,18 @@ export function SourceAttribution({
   citationAnchorId,
   className,
 }: SourceAttributionProps) {
+  const arabic = useLocale() === 'ar';
   const { type, source, quran, hadith, book, citation } = quote;
-  const hasPrintedLocation = Boolean(citation?.volume || citation?.page);
+  const bookTitle = visible(book?.bookTitle, arabic);
+  const bookAuthor = visible(book?.author, arabic);
+  const pageOrChapter = visible(book?.pageOrChapter, arabic);
+  const gradeAuthority = visible(citation?.gradeAuthority, arabic);
+  const gradeReference = visible(citation?.gradeReference, arabic);
+  const volume = visible(citation?.volume, arabic);
+  const page = visible(citation?.page, arabic);
+  const sourceName = arabic ? source.nameAr : (source.nameAr ?? source.name);
+  const sourceNameLatin = sourceName && arabic && /[A-Za-z]/.test(sourceName) ? null : sourceName;
+  const hasPrintedLocation = Boolean(volume || page || gradeAuthority || gradeReference);
 
   return (
     <footer
@@ -38,13 +60,15 @@ export function SourceAttribution({
       {type === QuoteType.QURAN_VERSE && quran && (
         <span>
           {quran.surahNameAr && (
-            <span dir="rtl" lang="ar" className="font-arabic">
+            <span dir="rtl" lang="ar" className="font-arabic-ui">
               {quran.surahNameAr}
             </span>
           )}
           {quran.surahNumber && quran.ayahNumber && (
             <bdi className="ms-1">
-              {quran.surahNumber}:{quran.ayahNumber}
+              <FormattedNumber value={quran.surahNumber} />
+              :
+              <FormattedNumber value={quran.ayahNumber} />
             </bdi>
           )}
         </span>
@@ -55,15 +79,15 @@ export function SourceAttribution({
           {hadith.narratorAr && (
             <span>
               <span className="me-1 font-medium">{labels.narrator}:</span>
-              <span dir="rtl" lang="ar" className="font-arabic">
+              <span dir="rtl" lang="ar" className="font-arabic-ui">
                 {hadith.narratorAr}
               </span>
             </span>
           )}
-          {hadith.reference && (
+          {visible(hadith.reference, arabic) && (
             <span>
               <span className="me-1 font-medium">{labels.reference}:</span>
-              <bdi>{hadith.reference}</bdi>
+              <FormattedNumber value={hadith.reference ?? ''} />
             </span>
           )}
         </>
@@ -71,15 +95,15 @@ export function SourceAttribution({
 
       {(type === QuoteType.SCHOLAR_QUOTE || type === QuoteType.BOOK_EXCERPT) && (
         <>
-          {book?.bookTitle && (
+          {bookTitle && (
             <span>
-              <bdi>{book.bookTitle}</bdi>
-              {book.author && <bdi className="ms-1">— {book.author}</bdi>}
+              <bdi>{bookTitle}</bdi>
+              {bookAuthor && <bdi className="ms-1">— {bookAuthor}</bdi>}
             </span>
           )}
-          {book?.pageOrChapter && (
+          {pageOrChapter && (
             <span>
-              <bdi>{book.pageOrChapter}</bdi>
+              <FormattedNumber value={pageOrChapter} />
             </span>
           )}
         </>
@@ -87,31 +111,41 @@ export function SourceAttribution({
 
       {hasPrintedLocation && (
         <span>
-          {citation?.volume && (
+          {volume && (
             <span>
               <span className="me-1 font-medium">{labels.volume}:</span>
-              <bdi>{citation.volume}</bdi>
+              <FormattedNumber value={volume} />
             </span>
           )}
-          {citation?.page && (
-            <span className={citation.volume ? 'ms-2' : undefined}>
+          {page && (
+            <span className={volume ? 'ms-2' : undefined}>
               <span className="me-1 font-medium">{labels.page}:</span>
-              <bdi>{citation.page}</bdi>
+              <FormattedNumber value={page} />
+            </span>
+          )}
+          {gradeAuthority && (
+            <span className="ms-2">
+              <span className="me-1 font-medium">{labels.gradeAuthority}:</span>
+              <bdi>{gradeAuthority}</bdi>
+            </span>
+          )}
+          {gradeReference && (
+            <span className="ms-2">
+              <span className="me-1 font-medium">{labels.gradeReference}:</span>
+              <FormattedNumber value={gradeReference} />
             </span>
           )}
         </span>
       )}
 
-      <span className="mt-0.5">
-        <span className="me-1 font-medium">{labels.source}:</span>
-        {source.nameAr ? (
-          <span dir="rtl" lang="ar" className="font-arabic">
-            {source.nameAr}
+      {sourceNameLatin ? (
+        <span className="mt-0.5">
+          <span className="me-1 font-medium">{labels.source}:</span>
+          <span dir={arabic || source.nameAr ? 'rtl' : undefined} lang={arabic || source.nameAr ? 'ar' : undefined} className="font-arabic-ui">
+            {sourceNameLatin}
           </span>
-        ) : (
-          <bdi>{source.name}</bdi>
-        )}
-      </span>
+        </span>
+      ) : null}
     </footer>
   );
 }

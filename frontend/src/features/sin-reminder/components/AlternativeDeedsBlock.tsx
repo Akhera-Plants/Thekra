@@ -1,5 +1,5 @@
 import { Link } from '@/i18n/navigation';
-import { ArabicText } from '@/components/shared/ArabicText';
+import { CatalogName } from '@/components/shared/CatalogName';
 import type { GoodDeedSummaryDto } from '@/lib/types/api';
 
 interface AlternativeDeedsBlockProps {
@@ -19,27 +19,17 @@ export function AlternativeDeedsBlock({
 
   return (
     <section aria-labelledby="alternatives-heading" className="mt-6">
-      <h2
-        id="alternatives-heading"
-        className="mb-3 text-lg font-semibold text-foreground"
-      >
+      <h2 id="alternatives-heading" className="mb-3 font-arabic-display text-2xl text-intent-good-deed">
         {heading}
       </h2>
-      <ul className="flex flex-col gap-2">
+      <ul className="flex flex-col">
         {alternatives.map((deed) => (
-          <li key={deed.id}>
+          <li key={deed.id} className="border-b border-border">
             <Link
               href={`/good-deeds/${deed.slug}`}
-              className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3 transition-[opacity] duration-150 ease-out hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 motion-reduce:transition-none"
+              className="flex min-h-16 min-w-0 items-center py-3 text-intent-good-deed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-safe:transition-[transform,background-color] motion-safe:duration-200 motion-safe:hover:translate-x-1 motion-safe:hover:bg-muted/50 motion-safe:rtl:hover:-translate-x-1 motion-reduce:transition-none"
             >
-              <ArabicText as="span" size="base">
-                {deed.nameAr}
-              </ArabicText>
-              {deed.name && (
-                <span className="shrink-0 text-sm text-muted-foreground">
-                  {deed.name}
-                </span>
-              )}
+              <CatalogName nameAr={deed.nameAr} name={deed.name} />
             </Link>
           </li>
         ))}

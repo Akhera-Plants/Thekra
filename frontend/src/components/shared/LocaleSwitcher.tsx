@@ -19,9 +19,10 @@ export function LocaleSwitcher({ label, className }: LocaleSwitcherProps) {
     <Link
       href={pathname}
       locale={otherLocale}
+      data-locale-switch=""
       aria-label={label}
       className={cn(
-        'text-sm text-muted-foreground transition-[opacity,transform] duration-150 ease-out hover:text-foreground hover:opacity-90 motion-reduce:transition-none',
+        'inline-flex min-h-11 items-center px-2 text-base text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         className,
       )}
     >

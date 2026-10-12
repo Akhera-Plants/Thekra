@@ -23,14 +23,20 @@ Division of authority — cross-reference, don't duplicate:
 
 - `../docs/plan/frontend-plan.md` already decided the mechanics: shadcn on Tailwind v4 (§3), CSS-variable
   theming with the 🎨 swap point (§4), fonts (§4.3), i18n/RTL (§5), data layer (§6), accessibility baseline (§7).
+- `../docs/plan/design-language-sakina.md` is the decided real palette, motion system and card/badge redesign
+  spec — name, rationale, the full token table (light + dark) and a computed WCAG contrast report. **The numeric
+  source of truth is `src/app/globals.css`**; that document explains and summarizes the same numbers, it does not
+  re-decide them. It also carries the page-by-page rollout order for routes this design hasn't reached yet.
 - `.cursorrules` (this project's root) owns general code style: semantic-colour-only rule, `lucide-react`-only
   icons, layering, state rules, RTL utilities, React/TS hygiene.
 - **This file** owns how things look, move, perform and are structured.
 
-Current repo state: `src/app/globals.css` is still the `create-next-app` default (two hex variables, an Arial
-`body` rule, a `prefers-color-scheme` block). It is replaced by the shadcn token block in `frontend-plan.md` §10
-step 2. If a token you need doesn't exist yet, that step hasn't run — do it (with the user's go-ahead) rather than
-hard-coding a value to work around it.
+Current repo state: `src/app/globals.css` carries the real **Sakina (سكينة)** palette between the 🎨 SWAP POINT
+markers — warm-parchment base, teal primary/`--intent-sin`, amber `--intent-good-deed`, indigo
+`--intent-iman-branch`, muted-terracotta `--destructive`/`--grade-mawdu`; see `design-language-sakina.md` for the
+full table and rationale. It is no longer the neutral `create-next-app` placeholder. If a token you need doesn't
+exist yet, raise it with the owner rather than hard-coding a value to work around it — the token list is decided,
+not open for silent extension.
 
 ---
 
@@ -239,8 +245,12 @@ promote the piece to `shared/`.
 - **Focus-visible** always uses the ring token (`focus-visible:ring-2 focus-visible:ring-ring
   focus-visible:ring-offset-2 ring-offset-background`, or the primitive's built-in equivalent). Never
   `outline-none` / `focus:outline-none` without a visible replacement.
-- **Contrast** stays WCAG AA (4.5:1 body, 3:1 large text and UI) **even with the current neutral placeholder
-  palette**. Don't use `text-muted-foreground` on `bg-muted` for essential text without checking.
+- **Contrast** stays WCAG AA (4.5:1 body, 3:1 large text and UI) **with the real Sakina palette** — every
+  foreground/background pair in `globals.css` has a computed ratio in `design-language-sakina.md` §4; two
+  dark-mode pairs (`destructive`/`grade-mawdu` text, and `intent-iman-branch` text once it's wired up) land at
+  ~4.1–4.4:1 — above the 3:1 large-text/UI floor but under the 4.5:1 small-text one, flagged there with the
+  mitigation (don't set that exact pairing in `text-xs` body copy). Don't use `text-muted-foreground` on
+  `bg-muted` for essential text without checking.
 - **Never colour alone**: hadith grade, quote type, selected/pressed state and errors each pair colour with an
   icon and/or text label. `GradeBadge` always shows the grade word (e.g. صحيح), with an `aria-label` such as
   "حديث صحيح". This carries ARCHITECTURE.md's "authenticity is a first-class property" requirement into the UI

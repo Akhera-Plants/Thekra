@@ -136,7 +136,7 @@ function DeedFormDialog({ open, onClose, existing }: DeedFormDialogProps) {
               <FormField control={form.control} name="nameAr" render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t('common.nameAr')}</FormLabel>
-                  <FormControl><Input dir="rtl" {...field} /></FormControl>
+                  <FormControl><Input dir="rtl" className="font-arabic-ui" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
@@ -178,7 +178,7 @@ function DeedFormDialog({ open, onClose, existing }: DeedFormDialogProps) {
                       </SelectItem>
                       {sins.map((s) => (
                         <SelectItem key={s.id} value={s.id}>
-                          <span dir="rtl">{s.nameAr}</span>
+                          <span dir="rtl" lang="ar" className="font-arabic-ui">{s.nameAr}</span>
                         </SelectItem>
                       ))}
                     </SelectContent>

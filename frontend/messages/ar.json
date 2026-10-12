@@ -1,7 +1,8 @@
 {
   "app": {
     "name": "ذكرى",
-    "tagline": "تذكير عند الحاجة"
+    "tagline": "لمن كان له قلب",
+    "intentionReminder": "لا أريد بهذا غير وجه الله."
   },
   "theme": {
     "toggle": "تغيير المظهر",
@@ -13,11 +14,33 @@
     "skipToContent": "انتقل إلى المحتوى الرئيسي",
     "home": "الرئيسية",
     "sins": "المعاصي",
-    "goodDeeds": "الأعمال الصالحة",
+    "goodDeeds": "الطاعات",
+    "menu": "القائمة",
     "browse": "تصفح",
+    "branches": "شُعب الإيمان",
+    "about": "المصادر",
     "favorites": "المفضلة",
     "settings": "الإعدادات",
     "back": "رجوع"
+  },
+  "about": {
+    "pageTitle": "المصادر",
+    "intro": "كل كتاب باسمه، وكل رواية بحكمها. لا نجعل للكتاب كله درجة واحدة.",
+    "openitiTitle": "النصوص المفتوحة",
+    "openitiBody": "ما نُقل من المجموعة المفتوحة يُنسب إلى أصحابه، ولا يُباع، ولا يُوضع عليه إعلان. إن أُعيد نشره بقي على الشرط نفسه.",
+    "texts": "نص"
+  },
+  "branches": {
+    "pageTitle": "شُعب الإيمان",
+    "empty": "لم تُدخل الشعب بعد",
+    "quotes": "النصوص",
+    "noQuotes": "لا نصوص مقبولة لهذه الشعبة بعد",
+    "pending": "النصوص قيد المراجعة.",
+    "volume": "ج",
+    "summary": "الخلاصة",
+    "explanations": "من الكتاب",
+    "goodDeeds": "الطاعات",
+    "sins": "المعاصي"
   },
   "localeSwitcher": {
     "label": "تغيير اللغة",
@@ -26,11 +49,11 @@
   },
   "auth": {
     "loginTitle": "تسجيل الدخول",
-    "loginSubtitle": "أدخل بريدك الإلكتروني وكلمة المرور للمتابعة",
-    "registerTitle": "إنشاء حساب",
-    "registerSubtitle": "أنشئ حسابًا للوصول إلى المفضلة",
+    "loginSubtitle": "ادخل بريدك وكلمة المرور.",
+    "registerTitle": "حساب جديد",
+    "registerSubtitle": "حساب لتحفظ ما يهمك.",
     "email": "البريد الإلكتروني",
-    "emailPlaceholder": "example@email.com",
+    "emailPlaceholder": "بريدك",
     "password": "كلمة المرور",
     "passwordPlaceholder": "••••••••",
     "name": "الاسم",
@@ -49,7 +72,7 @@
     "noAccount": "ليس لديك حساب؟",
     "hasAccount": "لديك حساب بالفعل؟",
     "userMenu": "قائمة المستخدم",
-    "signInToFavorite": "سجّل دخولك لحفظ الاقتباسات في المفضلة"
+    "signInToFavorite": "ادخل حسابك لتحفظ هذا النص"
   },
   "favorites": {
     "pageTitle": "المفضلة",
@@ -59,11 +82,11 @@
     "removed": "تم الحذف من المفضلة",
     "error": "حدث خطأ. حاول مجددًا.",
     "authRequired": "سجّل دخولك لحفظ المفضلة",
-    "empty": "لا توجد اقتباسات محفوظة بعد",
-    "signInToSave": "سجّل دخولك لحفظ هذا الاقتباس.",
+    "empty": "ما حفظت شيئًا بعد",
+    "signInToSave": "ادخل حسابك لتحفظ هذا النص.",
     "signIn": "تسجيل الدخول",
-    "favoritesSignInTitle": "احفظ ما يُلهمك",
-    "favoritesSignInDescription": "أنشئ حسابًا لحفظ الاقتباسات التي تُحرّكك وإيجادها لاحقًا."
+    "favoritesSignInTitle": "احفظ ما يطمئنك",
+    "favoritesSignInDescription": "ادخل حسابك لتجد ما حفظته متى شئت."
   },
   "settings": {
     "pageTitle": "الإعدادات",
@@ -73,12 +96,32 @@
   },
   "home": {
     "title": "ذكرى",
-    "tagline": "تذكير عند الحاجة",
+    "tagline": "لمن كان له قلب",
     "sinEntryLabel": "أعنّي على ترك معصية",
-    "sinEntryDescription": "ابحث عن معصية واحصل على تذكيرات من القرآن والسنة",
+    "sinEntryDescription": "ما يثقل القلب، ونص يذكرك.",
     "deedEntryLabel": "دُلّني على طاعة",
-    "deedEntryDescription": "ابحث عن عمل صالح واحصل على تحفيز من القرآن والسنة",
-    "browseLabel": "تصفح المحتوى"
+    "deedEntryDescription": "عمل صغير يقرّبك.",
+    "branchEntryLabel": "شُعب الإيمان",
+    "branchEntryDescription": "سبع وسبعون شعبة.",
+    "todayHeading": "تذكرة اليوم",
+    "save": "احفظ",
+    "share": "انشر",
+    "shared": "نُسخ النص",
+    "heavyHeading": "ما الذي يثقل قلبك؟",
+    "deedHeading": "طاعة لهذا اليوم",
+    "branchesHeading": "شُعب الإيمان",
+    "branchToday": "شعبة اليوم",
+    "sourcesHeading": "من أين نأخذ؟",
+    "volumeLabel": "المجلد",
+    "browseLabel": "أو تصفّح النصوص",
+    "searchPlaceholder": "ما الذي في قلبك الآن؟",
+    "searchLabel": "ابحث عن معصية أو طاعة",
+    "searching": "أبحث…",
+    "noResults": "لا شيء بهذا الاسم.",
+    "searchError": "تعذّر البحث.",
+    "retry": "حاول مرة أخرى",
+    "sinKind": "معصية",
+    "deedKind": "طاعة"
   },
   "sinRank": {
     "KABIRA": "كبيرة",
@@ -86,15 +129,26 @@
   },
   "sins": {
     "pageTitle": "المعاصي",
-    "searchPlaceholder": "ابحث عن معصية…",
+    "searchPlaceholder": "ما الذي يثقل قلبك الآن؟",
+    "commonHeading": "الأكثر بحثًا",
+    "kabairHeading": "الكبائر — من كتاب الكبائر للذهبي",
+    "kabairNote": "الترتيب من الكتاب. الدرجة على كل رواية وحدها.",
+    "quiet": "لا نص منشور بعد",
+    "jumpLabel": "فهرس الحروف",
     "noResults": "لا توجد نتائج مطابقة",
     "categoryAll": "الكل",
     "openPicker": "اختر معصية"
   },
   "sinDetail": {
-    "anotherReminder": "تذكير آخر",
-    "alternativesHeading": "بدائل مقترحة",
-    "noReminders": "لا توجد تذكيرات لهذه المعصية بعد",
+    "anotherReminder": "تذكرة أخرى",
+    "previous": "السابقة",
+    "next": "التالية",
+    "showAll": "عرض الكل",
+    "showOne": "عرض تذكرة واحدة",
+    "of": "من",
+    "browse": "تصفّح النصوص",
+    "alternativesHeading": "بدلًا من ذلك",
+    "noReminders": "النصوص قيد المراجعة",
     "typeAll": "الكل",
     "typeQuran": "قرآن",
     "typeHadith": "حديث",
@@ -103,15 +157,25 @@
     "severity": "الخطورة"
   },
   "goodDeeds": {
-    "pageTitle": "الأعمال الصالحة",
-    "searchPlaceholder": "ابحث عن عمل صالح…",
+    "pageTitle": "الطاعات",
+    "searchPlaceholder": "أي طاعة تبحث عنها؟",
+    "commonHeading": "الأكثر بحثًا",
+    "indexHeading": "سائر الطاعات",
+    "quiet": "لا نص منشور بعد",
+    "jumpLabel": "فهرس الحروف",
     "noResults": "لا توجد نتائج مطابقة",
     "openPicker": "اختر عملًا صالحًا"
   },
   "goodDeedDetail": {
-    "anotherMotivation": "تحفيز آخر",
-    "rewardHeading": "الثواب",
-    "noMotivations": "لا توجد تذكيرات لهذا العمل بعد",
+    "anotherMotivation": "تذكرة أخرى",
+    "previous": "السابقة",
+    "next": "التالية",
+    "showAll": "عرض الكل",
+    "showOne": "عرض تذكرة واحدة",
+    "of": "من",
+    "browse": "تصفّح النصوص",
+    "rewardHeading": "الأجر",
+    "noMotivations": "النصوص قيد المراجعة",
     "oppositeSin": "المعصية المقابلة",
     "typeAll": "الكل",
     "typeQuran": "قرآن",
@@ -158,13 +222,27 @@
     "source": "المصدر",
     "volume": "الجزء",
     "page": "الصفحة",
+    "gradeAuthority": "الحكم",
+    "gradeReference": "مرجع الحكم",
     "citationMarker": "الكتاب والصفحة",
     "weakNotice": "هذا الحديث ضعيف",
     "translation": "الترجمة",
-    "viewFull": "عرض كامل"
+    "viewFull": "عرض كامل",
+    "report": "أبلغ عن خطأ",
+    "reportReason": "سبب البلاغ",
+    "reportNote": "ملاحظة",
+    "reportSend": "إرسال",
+    "reportSent": "وصلنا بلاغك",
+    "reportReasons": {
+      "TEXT": "النص محرّف",
+      "ISNAD": "الإسناد غير صحيح",
+      "GRADE": "التخريج غير صحيح",
+      "CLASSIFICATION": "التصنيف غير صحيح",
+      "OTHER": "غير ذلك"
+    }
   },
   "quoteDetail": {
-    "pageTitle": "الاقتباس",
+    "pageTitle": "النص",
     "relatedSins": "معاصي ذات صلة",
     "relatedGoodDeeds": "أعمال مرتبطة"
   },
@@ -201,12 +279,47 @@
       "goodDeeds": "الأعمال الصالحة",
       "sources": "المصادر",
       "tags": "الوسوم",
-      "sync": "مزامنة المحتوى"
+      "sync": "مزامنة المحتوى",
+      "flags": "البلاغات"
+    },
+    "flags": {
+      "title": "البلاغات",
+      "empty": "لا بلاغات مفتوحة",
+      "type": "النوع",
+      "severity": "الشدة",
+      "status": "الحالة",
+      "all": "الكل",
+      "open": "فتح",
+      "confirm": "تأكيد المطابقة",
+      "reject": "رفض المطابقة",
+      "resolve": "حل",
+      "dismiss": "تجاهل",
+      "note": "ملاحظة",
+      "candidates": "روايات البخاري ومسلم",
+      "quote": "النص",
+      "types": {
+        "WEAK_MATCH": "مطابقة غير محسومة",
+        "DUPLICATE_DIFFERENT_GRADE": "تكرار بدرجة مختلفة",
+        "QURAN_MISMATCH": "نص قرآني غير مطابق",
+        "OCR_SUSPECT": "نص مشكوك",
+        "REFERENCE_MISMATCH": "رقم غير مطابق",
+        "USER_REPORT": "بلاغ"
+      },
+      "severities": {
+        "HIGH": "عالية",
+        "MEDIUM": "متوسطة",
+        "LOW": "منخفضة"
+      },
+      "decisions": {
+        "CANDIDATE": "مرشحة",
+        "CONFIRMED": "مؤكدة",
+        "REJECTED": "مرفوضة"
+      }
     },
     "common": {
       "nameEn": "الاسم (إنجليزي)",
       "nameAr": "الاسم (عربي)",
-      "slug": "المعرّف (slug)",
+      "slug": "المسار",
       "category": "الفئة",
       "type": "النوع",
       "quotes": "اقتباسات",

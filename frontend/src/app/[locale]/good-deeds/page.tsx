@@ -1,9 +1,7 @@
-import { HydrationBoundary, dehydrate } from '@tanstack/react-query';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
+import { CatalogIndex, type CatalogEntry } from '@/components/shared/editorial/CatalogIndex';
 import { getGoodDeeds } from '@/lib/api/good-deeds';
-import { createQueryClient } from '@/lib/query-client';
-import { queryKeys } from '@/lib/query-keys';
-import { GoodDeedList } from '@/features/good-deed-motivation/components/GoodDeedList';
+import type { LocaleCode } from '@/lib/types/enums';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,30 +10,48 @@ export default async function GoodDeedsPage({
 }: PageProps<'/[locale]/good-deeds'>) {
   const { locale } = await params;
   setRequestLocale(locale);
-
   const t = await getTranslations('goodDeeds');
 
-  const queryClient = createQueryClient();
+  let deeds: Awaited<ReturnType<typeof getGoodDeeds>>['data'] = [];
   try {
-    await queryClient.prefetchQuery({
-      queryKey: queryKeys.goodDeeds.list({ limit: 100 }),
-      queryFn: () => getGoodDeeds({ limit: 100 }),
-    });
+    deeds = (await getGoodDeeds({ limit: 100, lang: locale as LocaleCode })).data;
   } catch {
-    // API down during build/test
+    deeds = [];
   }
 
-  const deedsData = queryClient.getQueryData<Awaited<ReturnType<typeof getGoodDeeds>>>(
-    queryKeys.goodDeeds.list({ limit: 100 }),
-  );
-  const goodDeeds = (deedsData as Awaited<ReturnType<typeof getGoodDeeds>> | undefined)?.data ?? [];
+  const published = deeds.filter((deed) => deed.quoteCount > 0);
+  const quiet = deeds.filter((deed) => deed.quoteCount === 0);
+  const entries: CatalogEntry[] = [
+    ...published.map((deed) => ({
+      href: `/good-deeds/${deed.slug}`,
+      nameAr: deed.nameAr,
+      name: deed.name,
+      quoteCount: deed.quoteCount,
+      number: null,
+      placement: 'common' as const,
+    })),
+    ...quiet.map((deed, index) => ({
+      href: `/good-deeds/${deed.slug}`,
+      nameAr: deed.nameAr,
+      name: deed.name,
+      quoteCount: deed.quoteCount,
+      number: index + 1,
+      placement: 'index' as const,
+    })),
+  ];
 
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-      <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-10">
-        <h1 className="text-2xl font-semibold md:text-3xl">{t('pageTitle')}</h1>
-        <GoodDeedList goodDeeds={goodDeeds} />
-      </div>
-    </HydrationBoundary>
+    <CatalogIndex
+      entries={entries}
+      intent="good-deed"
+      pageTitle={t('pageTitle')}
+      searchPlaceholder={t('searchPlaceholder')}
+      searchLabel={t('searchPlaceholder')}
+      commonHeading={t('commonHeading')}
+      indexHeading={t('indexHeading')}
+      quietLabel={t('quiet')}
+      noResults={t('noResults')}
+      jumpLabel={t('jumpLabel')}
+    />
   );
 }

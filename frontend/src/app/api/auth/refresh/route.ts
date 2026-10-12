@@ -6,7 +6,9 @@
  *   access token via the backend. Returns { data: { accessToken, user } }.
  *   On success, rotates the refresh cookie with a new value from the backend.
  *
- * Called by the client-side single-flight 401 interceptor only.
+ * Also called on every page load to restore a session. No cookie means a guest,
+ * which is a normal empty result — not an error — so the browser does not log
+ * a failed request for signed-out visitors.
  */
 
 import { cookies } from 'next/headers';
@@ -34,10 +36,7 @@ export async function POST(request: Request) {
   const refreshToken = cookieStore.get(COOKIE_NAME)?.value;
 
   if (!refreshToken) {
-    return NextResponse.json(
-      { error: { code: 'UNAUTHENTICATED', message: 'No refresh token' } },
-      { status: 401 },
-    );
+    return NextResponse.json({ data: null }, { status: 200 });
   }
 
   let backendRes: Response;

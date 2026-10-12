@@ -54,7 +54,7 @@ export function FavoriteButton({
       <Heart
         className={cn(
           'size-4 transition-colors duration-150',
-          isFavorite && 'fill-current text-destructive',
+          isFavorite && 'motion-safe:animate-heart-beat fill-current text-destructive',
         )}
         aria-hidden
       />

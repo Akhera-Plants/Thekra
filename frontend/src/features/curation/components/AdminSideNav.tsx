@@ -17,6 +17,7 @@ import {
   Database,
   Tag,
   RefreshCcw,
+  Flag,
 } from 'lucide-react';
 
 interface NavItem {
@@ -34,6 +35,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/admin/sources', labelKey: 'nav.sources', icon: Database },
   { href: '/admin/tags', labelKey: 'nav.tags', icon: Tag },
   { href: '/admin/sync', labelKey: 'nav.sync', icon: RefreshCcw },
+  { href: '/admin/flags', labelKey: 'nav.flags', icon: Flag },
 ];
 
 export function AdminSideNav() {
