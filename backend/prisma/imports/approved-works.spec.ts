@@ -6,10 +6,12 @@ describe('APPROVED_WORKS', () => {
     expect(APPROVED_WORKS.map((work) => work.bookKey).sort()).toEqual([
       'book:adab-al-mufrad',
       'book:dhahabi-kabair',
+      'book:ibn-ashur-tahrir',
       'book:ibn-mubarak-zuhd',
       'book:ibn-qudama-minhaj',
       'book:mundhiri-targhib',
       'book:nawawi-riyad',
+      'book:sadi-tafsir',
       'book:shuab-iman',
     ]);
   });

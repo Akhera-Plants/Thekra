@@ -1,9 +1,15 @@
 import { PrismaClient } from '@prisma/client';
 import { runAdabMufradImport } from './adab-mufrad/import.js';
+import { publishSahihayn } from './sahihayn/publish.js';
 import { runTakhrij } from './sahihayn/import.js';
 import { runKabairImport } from './kabair/import.js';
 import { parseArgs, type ImportOptions } from './lib/cli.js';
 import { runShuabImport } from './shuab/import.js';
+import { runClassify } from './classify/import.js';
+import { runQuranImport } from './quran/import.js';
+import { runAshurImport } from './tafsir/ashur-import.js';
+import { runSadiImport } from './tafsir/sadi.js';
+import { runDigitalImport } from './digital/import.js';
 import { runMinhajImport, runRiyadImport, runTarghibImport, runZuhdImport } from './waqfeya/import.js';
 
 const WORKS: Record<string, (options: ImportOptions) => Promise<void>> = {
@@ -14,7 +20,13 @@ const WORKS: Record<string, (options: ImportOptions) => Promise<void>> = {
   riyad: runRiyadImport,
   zuhd: runZuhdImport,
   minhaj: runMinhajImport,
+  digital: runDigitalImport,
   takhrij: runTakhrij,
+  sahihayn: publishSahihayn,
+  quran: runQuranImport,
+  classify: runClassify,
+  sadi: runSadiImport,
+  ashur: runAshurImport,
 };
 
 const USAGE = `usage: import:book <${Object.keys(WORKS).join('|')}> [--dry-run] [--limit N]`;

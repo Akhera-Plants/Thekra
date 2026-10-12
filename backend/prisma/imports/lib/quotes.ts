@@ -24,6 +24,8 @@ export interface BookQuoteRow {
   rawPayload: Prisma.InputJsonValue;
   /** OpenITI rows are DIGITAL. Waqfeya OCR rows pass OCR. Re-import never writes textVerifiedAt. */
   textSource?: TextSource;
+  /** Book prose is a BOOK_EXCERPT. Narrations stay HADITH. */
+  type?: QuoteType;
 }
 
 export interface UpsertOutcome {
@@ -55,7 +57,7 @@ export async function upsertBookQuotes(
     const previous = existing.get(`${row.apiProvider}|${row.externalId}`);
     const gradeFields = { grade: row.grade, gradeAuthority: row.gradeAuthority, gradeReference: row.gradeReference };
     const importerFields = {
-      type: QuoteType.HADITH,
+      type: row.type ?? QuoteType.HADITH,
       origin: QuoteOrigin.LOCAL,
       textAr: row.textAr,
       sourceId: row.sourceId,

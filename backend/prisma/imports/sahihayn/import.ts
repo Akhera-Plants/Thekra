@@ -509,7 +509,7 @@ export async function runTakhrij(options: ImportOptions): Promise<void> {
   }
 
   const rawQuotes = await options.prisma.quote.findMany({
-    where: { type: QuoteType.HADITH },
+    where: { type: QuoteType.HADITH, gradeSource: { not: GradeSource.SAHIHAYN } },
     select: {
       id: true,
       textAr: true,
