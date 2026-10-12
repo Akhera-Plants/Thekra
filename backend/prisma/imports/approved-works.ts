@@ -41,25 +41,67 @@ export const APPROVED_WORKS = [
   {
     id: '10000000-0000-4000-8000-000000000008',
     bookKey: 'book:mundhiri-targhib',
-    name: 'Al-Targhib wa al-Tarhib',
-    nameAr: 'الترغيب والترهيب',
+    name: "Sahih al-Targhib wa al-Tarhib (Maktabat al-Ma'arif)",
+    nameAr: 'صحيح الترغيب والترهيب',
     type: SourceType.HADITH_COLLECTION,
     author: 'Abd al-Azim al-Mundhiri',
     authorAr: 'عبد العظيم المنذري',
     role: 'related-narration',
-    /** Grades come from a named grader per narration, not from the book title. */
+    /**
+     * Ma'arif edition (al-Albani). Grade each narration from his margin word
+     * (صحيح / حسن / صحيح لغيره / حسن لغيره). Never a whole-book grade.
+     */
+    gradeBy: null,
+  },
+  {
+    id: '10000000-0000-4000-8000-000000000010',
+    bookKey: 'book:shuab-iman',
+    name: "Al-Jami' li-Shu'ab al-Iman (al-Rushd ed.)",
+    nameAr: 'الجامع لشعب الإيمان (ط الرشد)',
+    type: SourceType.HADITH_COLLECTION,
+    author: 'Ahmad ibn al-Husayn al-Bayhaqi',
+    authorAr: 'البيهقي',
+    role: 'narration',
+    /** Ungraded collection: narrations import as UNGRADED until a curator grades them. */
     gradeBy: null,
   },
   {
     id: '10000000-0000-4000-8000-000000000009',
     bookKey: 'book:nawawi-riyad',
-    name: 'Riyad al-Salihin',
+    name: 'Riyad al-Salihin (Halabi)',
     nameAr: 'رياض الصالحين',
     type: SourceType.HADITH_COLLECTION,
     author: 'Yahya ibn Sharaf al-Nawawi',
     authorAr: 'يحيى بن شرف النووي',
     role: 'related-narration',
-    /** Nawawi's takhrij notes are not auto-mapped to a grade. */
+    /**
+     * Halabi edition. Only «متفق عليه» / «رواه البخاري» / «رواه مسلم» become
+     * SAHIH, with gradeAuthority «الصحيحان». Every other takhrij stays UNGRADED.
+     */
+    gradeBy: null,
+  },
+  {
+    id: '10000000-0000-4000-8000-000000000011',
+    bookKey: 'book:ibn-mubarak-zuhd',
+    name: "Al-Zuhd wa al-Raqa'iq (Dar al-Mi'raj)",
+    nameAr: 'الزهد والرقائق',
+    type: SourceType.HADITH_COLLECTION,
+    author: "Abd Allah ibn al-Mubarak",
+    authorAr: 'عبد الله بن المبارك',
+    role: 'narration',
+    /** Narrations stay UNGRADED. No chapter links. */
+    gradeBy: null,
+  },
+  {
+    id: '10000000-0000-4000-8000-000000000012',
+    bookKey: 'book:ibn-qudama-minhaj',
+    name: 'Mukhtasar Minhaj al-Qasidin',
+    nameAr: 'مختصر منهاج القاصدين',
+    type: SourceType.BOOK,
+    author: 'Ahmad ibn Qudama al-Maqdisi',
+    authorAr: 'أحمد بن قدامة المقدسي',
+    role: 'source-only',
+    /** Prose. The importer records the Source and the file, not quotes. */
     gradeBy: null,
   },
 ] as const;

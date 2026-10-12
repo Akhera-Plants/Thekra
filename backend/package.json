@@ -8,6 +8,7 @@
   "type": "module",
   "scripts": {
     "db:seed": "prisma db seed",
+    "import:book": "node --env-file=.env --experimental-strip-types prisma/imports/run.ts",
     "build": "nest build",
     "deploy": "nest deploy",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
