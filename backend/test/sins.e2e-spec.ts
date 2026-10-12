@@ -35,7 +35,7 @@ describe('Sins endpoints (e2e)', () => {
   // ── §1  GET /v1/sins — list ─────────────────────────────────────────────────
 
   it('GET /v1/sins → 200 with envelope and pagination meta', async () => {
-    const res = await request(app.getHttpServer()).get('/v1/sins').expect(200);
+    const res = await request(app.getHttpServer()).get('/v1/sins?includeEmpty=true').expect(200);
 
     expect(res.body).toMatchObject({
       data: expect.any(Array),
@@ -47,8 +47,10 @@ describe('Sins endpoints (e2e)', () => {
       },
     });
     expect(Array.isArray(res.body.data)).toBe(true);
-    // At minimum the 8 dev-seed sins + test sin
+    // At minimum the 8 dev-seed sins + test sin. The default list hides a sin with no public text.
     expect(res.body.meta.total).toBeGreaterThanOrEqual(8);
+    const published = await request(app.getHttpServer()).get('/v1/sins').expect(200);
+    expect(published.body.meta.total).toBeLessThanOrEqual(res.body.meta.total);
   });
 
   it('GET /v1/sins → each item has required fields', async () => {

@@ -72,6 +72,11 @@ export class GoodDeedsService {
     const where: Prisma.GoodDeedWhereInput = {};
 
     if (query.category) where.category = query.category;
+    if (query.includeEmpty !== 'true') {
+      where.quotes = {
+        some: { reviewStatus: PUBLISHED_LINK_REVIEW_STATUS, quote: GradePolicy.readerClause() },
+      };
+    }
     if (query.oppositeSinSlug) {
       where.oppositeSin = { slug: query.oppositeSinSlug };
     }

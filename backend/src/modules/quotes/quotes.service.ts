@@ -268,7 +268,7 @@ export class QuotesService {
     const textFilter = Prisma.sql`AND (q."textSource"::text <> 'OCR' OR q."textVerifiedAt" IS NOT NULL)
       AND (
         q.type::text <> 'HADITH'
-        OR q."gradeSource"::text IN ('AUTO_SAHIHAYN', 'MANUAL')
+        OR q."gradeSource"::text IN ('SAHIHAYN', 'AUTO_SAHIHAYN', 'MANUAL')
       )
       AND NOT EXISTS (
         SELECT 1 FROM "QuoteFlag" f
@@ -1003,9 +1003,14 @@ export class QuotesService {
       { kind: ExplanationKind.SHARH, quoteId: quote.id },
     ];
     if (quote.type === QuoteType.QURAN_VERSE && quote.surahNumber && quote.ayahNumber) {
+      const key = `${quote.surahNumber}:${quote.ayahNumber}`;
+      or.push({ kind: ExplanationKind.TAFSIR, ayahKey: key });
       or.push({
         kind: ExplanationKind.TAFSIR,
-        ayahKey: `${quote.surahNumber}:${quote.ayahNumber}`,
+        AND: [
+          { ayahKey: { startsWith: `${quote.surahNumber}:` } },
+          { ayahKey: { contains: '-' } },
+        ],
       });
     }
 
@@ -1029,8 +1034,19 @@ export class QuotesService {
       },
     });
 
+    const surah = quote.surahNumber;
+    const ayah = quote.ayahNumber;
+    const covering = rows.filter((row) => {
+      if (row.kind !== ExplanationKind.TAFSIR || !row.ayahKey || surah == null || ayah == null) return row.kind !== ExplanationKind.TAFSIR;
+      const match = /^(\d+):(\d+)(?:-(\d+))?$/.exec(row.ayahKey);
+      if (!match) return false;
+      const start = Number(match[2]);
+      const end = match[3] ? Number(match[3]) : start;
+      return Number(match[1]) === surah && ayah >= start && ayah <= end;
+    });
+
     return {
-      data: rows.map((row) => ({
+      data: covering.map((row) => ({
         id: row.id,
         kind: row.kind,
         languageCode: row.languageCode,

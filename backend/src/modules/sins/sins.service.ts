@@ -85,6 +85,11 @@ export class SinsService {
 
     if (query.category) where.category = query.category;
     if (query.rank) where.rank = query.rank;
+    if (query.includeEmpty !== 'true') {
+      where.quotes = {
+        some: { reviewStatus: PUBLISHED_LINK_REVIEW_STATUS, quote: GradePolicy.readerClause() },
+      };
+    }
     if (query.q) {
       // Arabic field: match via DB-side normalisation (strips tashkeel, folds alef/ya/ta-marbuta)
       // Latin field: standard Prisma ILIKE (no normalisation needed)

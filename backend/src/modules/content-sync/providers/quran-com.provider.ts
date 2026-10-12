@@ -93,15 +93,9 @@ export class QuranComProvider implements ContentProvider {
       (this.config.get<string>('QURAN_TEXT_FIELD') as 'text_uthmani' | 'text_imlaei') ??
       'text_uthmani';
 
-    const surahFrom = cursor.surahFrom ?? 1;
     const surahTo = cursor.surahTo ?? 114;
-
-    // Determine which surah we are currently on
-    // We iterate surahs sequentially; page-within-surah restarts per surah.
-    // The cursor.page encodes the *global* page: we re-derive surah+page from it.
-    // For simplicity: each page fetches a single surah's verses (all pages).
-    // The "batch" here is one page within one surah.
-    const currentSurah = surahFrom + Math.floor((cursor.page - 1) / 1);
+    const currentSurah = cursor.surahFrom ?? 1;
+    const page = cursor.page ?? 1;
     if (currentSurah > surahTo) {
       return { records: [], nextCursor: null };
     }
@@ -121,7 +115,7 @@ export class QuranComProvider implements ContentProvider {
       fields: textField,
       translations: translationIds,
       per_page: 50,
-      page: 1, // fetch entire surah at once (surahs are ≤286 verses)
+      page,
     };
 
     const config: AxiosRequestConfig = { headers, params, timeout: 15_000 };
@@ -138,12 +132,11 @@ export class QuranComProvider implements ContentProvider {
 
     const { verses, pagination } = resp.data;
 
-    const nextSurah = currentSurah + 1;
     const nextCursor: ProviderCursor | null =
-      nextSurah <= surahTo
-        ? { ...cursor, page: cursor.page + 1, surahFrom: nextSurah }
-        : pagination.next_page !== null
-          ? { ...cursor, page: cursor.page + 1 }
+      pagination.next_page !== null
+        ? { ...cursor, surahFrom: currentSurah, page: pagination.next_page }
+        : currentSurah + 1 <= surahTo
+          ? { ...cursor, surahFrom: currentSurah + 1, page: 1 }
           : null;
 
     this.logger.log(
@@ -184,6 +177,7 @@ export class QuranComProvider implements ContentProvider {
       externalId: verse.verse_key,
       quote: {
         type: QuoteType.QURAN_VERSE,
+        textSource: 'DIGITAL',
         textAr,
         sourceId: source.id,
         surahNumber: verse.chapter_id,

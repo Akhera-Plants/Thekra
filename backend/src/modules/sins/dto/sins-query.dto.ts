@@ -31,4 +31,9 @@ export class SinsQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsIn(['name', 'quoteCount'])
   sort?: 'name' | 'quoteCount' = 'name';
+
+  /** «true» keeps sins that have no published text. The public list hides them. */
+  @IsOptional()
+  @IsIn(['true', 'false'])
+  includeEmpty?: 'true' | 'false';
 }

@@ -62,10 +62,12 @@ enum UserRole {
   REVIEWER
 }
 
-/// Who the public grade came from. Only AUTO_SAHIHAYN and MANUAL may be published.
+/// Who the public grade came from. SAHIHAYN, AUTO_SAHIHAYN, and MANUAL may be published.
 enum GradeSource {
   AUTHORITY_LEGACY
   AUTO_SAHIHAYN
+  /// The two Sahihs themselves, not a match from another book.
+  SAHIHAYN
   MANUAL
 }
 
@@ -87,6 +89,10 @@ enum FlagType {
   OCR_SUSPECT
   REFERENCE_MISMATCH
   USER_REPORT
+  /// A chapter title is both a warning and an encouragement, or names no topic.
+  AMBIGUOUS_CHAPTER
+  /// Al-Sa'di mentions the subject without a matching warning or praise.
+  WEAK_TAFSIR_SUPPORT
 }
 
 enum FlagSeverity {
@@ -110,6 +116,12 @@ enum FlagStatus {
 enum SinRank {
   KABIRA // كبيرة
   SAGHIRA // صغيرة
+}
+
+/// CURATED rows were entered by hand. AUTO_CHAPTER rows come from a book chapter.
+enum EntityOrigin {
+  CURATED
+  AUTO_CHAPTER
 }
 
 enum ExplanationKind {
@@ -239,7 +251,7 @@ model Quote {
   @@index([gradeSource])
 }
 
-/// Matching corpus for Sahih al-Bukhari and Sahih Muslim. Not a public Quote.
+/// Numbered corpus for Sahih al-Bukhari and Sahih Muslim. Public Quotes link here.
 model ReferenceHadith {
   id             String        @id @default(uuid())
   book           ReferenceBook
@@ -314,6 +326,7 @@ model Sin {
   severity         Int?
   /// Null until a curator classifies the sin. Never derived from severity.
   rank             SinRank?
+  origin           EntityOrigin @default(CURATED)
   rankSourceId     String?
   rankSource       Source?    @relation("SinRankSource", fields: [rankSourceId], references: [id])
   rankReference    String?
@@ -337,6 +350,7 @@ model GoodDeed {
   descriptionAr String?
   reward        String?
   rewardAr      String?
+  origin        EntityOrigin @default(CURATED)
   oppositeSinId String?
   oppositeSin   Sin?                 @relation("OppositeOfSin", fields: [oppositeSinId], references: [id])
   quotes        GoodDeedQuote[]

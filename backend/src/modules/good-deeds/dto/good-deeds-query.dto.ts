@@ -24,4 +24,9 @@ export class GoodDeedsQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsIn(['name', 'quoteCount'])
   sort?: 'name' | 'quoteCount' = 'name';
+
+  /** «true» keeps deeds that have no published text. The public list hides them. */
+  @IsOptional()
+  @IsIn(['true', 'false'])
+  includeEmpty?: 'true' | 'false';
 }

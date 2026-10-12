@@ -93,7 +93,7 @@ export class GradePolicy {
         {
           OR: [
             { type: { not: QuoteType.HADITH } },
-            { gradeSource: { in: [GradeSource.AUTO_SAHIHAYN, GradeSource.MANUAL] } },
+            { gradeSource: { in: [GradeSource.SAHIHAYN, GradeSource.AUTO_SAHIHAYN, GradeSource.MANUAL] } },
           ],
         },
         { flags: { none: { status: FlagStatus.OPEN, severity: FlagSeverity.HIGH } } },
@@ -107,7 +107,9 @@ export class GradePolicy {
 
   static isPublishable(row: { type: QuoteType; gradeSource: GradeSource }): boolean {
     if (row.type !== QuoteType.HADITH) return true;
-    return row.gradeSource === GradeSource.AUTO_SAHIHAYN || row.gradeSource === GradeSource.MANUAL;
+    return row.gradeSource === GradeSource.SAHIHAYN
+      || row.gradeSource === GradeSource.AUTO_SAHIHAYN
+      || row.gradeSource === GradeSource.MANUAL;
   }
 
   static whereClause(allowed: HadithGrade[]): Prisma.QuoteWhereInput {

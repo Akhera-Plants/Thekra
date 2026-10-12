@@ -35,7 +35,7 @@ describe('Good-deeds endpoints (e2e)', () => {
   // ── §1  GET /v1/good-deeds — list ─────────────────────────────────────────
 
   it('GET /v1/good-deeds → 200 with envelope and pagination', async () => {
-    const res = await request(app.getHttpServer()).get('/v1/good-deeds').expect(200);
+    const res = await request(app.getHttpServer()).get('/v1/good-deeds?includeEmpty=true').expect(200);
     expect(res.body).toMatchObject({
       data: expect.any(Array),
       meta: {
@@ -46,6 +46,8 @@ describe('Good-deeds endpoints (e2e)', () => {
       },
     });
     expect(res.body.meta.total).toBeGreaterThanOrEqual(8);
+    const published = await request(app.getHttpServer()).get('/v1/good-deeds').expect(200);
+    expect(published.body.meta.total).toBeLessThanOrEqual(res.body.meta.total);
   });
 
   it('GET /v1/good-deeds → each item has required fields', async () => {

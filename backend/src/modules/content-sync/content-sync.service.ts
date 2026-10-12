@@ -456,6 +456,7 @@ export class ContentSyncService {
           rawPayload: quote.rawPayload,
           // sourceId is provider-owned too (the source record represents the collection)
           sourceId,
+          textSource: quote.textSource,
         },
         select: { id: true },
       });
