@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma, QuoteType } from '@prisma/client';
+import { GradePolicy } from '../hadith/grade-policy.js';
 import { paginated } from '../../common/dto/paginated-result.js';
 import type {
   QuoteDto,
@@ -52,8 +53,10 @@ export class QuranService {
     const groups = await this.prisma.quote.groupBy({
       by: ['surahNumber'],
       where: {
-        type: QuoteType.QURAN_VERSE,
-        surahNumber: { not: null },
+        AND: [
+          { type: QuoteType.QURAN_VERSE, surahNumber: { not: null } },
+          GradePolicy.readerClause(),
+        ],
       },
       _count: { _all: true },
       orderBy: { surahNumber: 'asc' },
@@ -75,9 +78,14 @@ export class QuranService {
       // First pass: preferred provider covers as many surahs as possible
       const preferredRows = await this.prisma.quote.findMany({
         where: {
-          type: QuoteType.QURAN_VERSE,
-          surahNumber: { not: null },
-          apiProvider: preferredProvider,
+          AND: [
+            {
+              type: QuoteType.QURAN_VERSE,
+              surahNumber: { not: null },
+              apiProvider: preferredProvider,
+            },
+            GradePolicy.readerClause(),
+          ],
         },
         select: { surahNumber: true, surahName: true, surahNameAr: true },
         distinct: ['surahNumber'],
@@ -98,8 +106,10 @@ export class QuranService {
     if (uncovered.length > 0) {
       const fallbackRows = await this.prisma.quote.findMany({
         where: {
-          type: QuoteType.QURAN_VERSE,
-          surahNumber: { in: uncovered },
+          AND: [
+            { type: QuoteType.QURAN_VERSE, surahNumber: { in: uncovered } },
+            GradePolicy.readerClause(),
+          ],
         },
         select: { surahNumber: true, surahName: true, surahNameAr: true },
         distinct: ['surahNumber'],
@@ -151,16 +161,21 @@ export class QuranService {
     const locale = query.lang ?? 'ar';
 
     const where: Prisma.QuoteWhereInput = {
-      type: QuoteType.QURAN_VERSE,
-      surahNumber,
-      ...(query.fromAyah !== undefined || query.toAyah !== undefined
-        ? {
-            ayahNumber: {
-              ...(query.fromAyah !== undefined && { gte: query.fromAyah }),
-              ...(query.toAyah !== undefined && { lte: query.toAyah }),
-            },
-          }
-        : {}),
+      AND: [
+        {
+          type: QuoteType.QURAN_VERSE,
+          surahNumber,
+          ...(query.fromAyah !== undefined || query.toAyah !== undefined
+            ? {
+                ayahNumber: {
+                  ...(query.fromAyah !== undefined && { gte: query.fromAyah }),
+                  ...(query.toAyah !== undefined && { lte: query.toAyah }),
+                },
+              }
+            : {}),
+        },
+        GradePolicy.readerClause(),
+      ],
     };
 
     const [rows, total] = await this.prisma.$transaction([
@@ -212,9 +227,10 @@ export class QuranService {
     const preferredProvider = this.config.get('QURAN_PREFERRED_PROVIDER');
 
     const where: Prisma.QuoteWhereInput = {
-      type: QuoteType.QURAN_VERSE,
-      surahNumber,
-      ayahNumber,
+      AND: [
+        { type: QuoteType.QURAN_VERSE, surahNumber, ayahNumber },
+        GradePolicy.readerClause(),
+      ],
     };
 
     const rows = await this.prisma.quote.findMany({

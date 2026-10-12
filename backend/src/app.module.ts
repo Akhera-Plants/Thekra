@@ -10,8 +10,10 @@ import { HealthModule } from './health/health.module.js';
 import { ClassificationModule } from './modules/classification/classification.module.js';
 import { GoodDeedsModule } from './modules/good-deeds/good-deeds.module.js';
 import { HadithModule } from './modules/hadith/hadith.module.js';
+import { ImanBranchesModule } from './modules/iman-branches/iman-branches.module.js';
 import { QuranModule } from './modules/quran/quran.module.js';
 import { QuotesModule } from './modules/quotes/quotes.module.js';
+import { ReviewModule } from './modules/review/review.module.js';
 import { SinsModule } from './modules/sins/sins.module.js';
 import { SourcesModule } from './modules/sources/sources.module.js';
 import { TagsModule } from './modules/tags/tags.module.js';
@@ -90,10 +92,12 @@ const REQUEST_ID_RE = /^[A-Za-z0-9._-]{1,128}$/;
     FavoritesModule,
     // Core content modules
     QuotesModule,
+    ReviewModule,
     SourcesModule,
     TagsModule,
     GoodDeedsModule,
     SinsModule,
+    ImanBranchesModule,
     HadithModule,
     QuranModule,
     ClassificationModule,

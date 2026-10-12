@@ -1,4 +1,5 @@
-import { IsBoolean, IsOptional, IsString, MaxLength } from 'class-validator';
+import { TextSource } from '@prisma/client';
+import { IsBoolean, IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
 import { ToBoolean } from '../../../common/decorators/to-boolean.decorator.js';
 import { QuotesQueryDto } from './quotes-query.dto.js';
 
@@ -14,4 +15,15 @@ export class AdminQuotesQueryDto extends QuotesQueryDto {
   @IsString()
   @MaxLength(10)
   missingTranslation?: string;
+
+  /** DIGITAL, OCR, or MANUAL. */
+  @IsOptional()
+  @IsEnum(TextSource)
+  textSource?: TextSource;
+
+  /** OCR rows a reviewer has not yet compared with the PDF page. */
+  @IsOptional()
+  @ToBoolean()
+  @IsBoolean()
+  unverifiedOnly?: boolean;
 }

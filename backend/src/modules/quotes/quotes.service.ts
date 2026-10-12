@@ -5,7 +5,16 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { HadithGrade, LinkReviewStatus, Prisma, QuoteOrigin, QuoteType } from '@prisma/client';
+import {
+  ExplanationKind,
+  GradeSource,
+  HadithGrade,
+  LinkReviewStatus,
+  Prisma,
+  QuoteOrigin,
+  QuoteType,
+  TextSource,
+} from '@prisma/client';
 import { paginated } from '../../common/dto/paginated-result.js';
 import {
   mapQuoteToDto,
@@ -16,6 +25,7 @@ import {
   type QuoteRowForDto,
 } from '../../common/mappers/quote.mapper.js';
 import { findIdsByNormalizedArabic, findIdsByNormalizedArabicOrdered } from '../../common/text/arabic-search.js';
+import { parsePrintedReference, utcDayNumber } from '../../common/text/printed-reference.js';
 import { GradePolicy } from '../hadith/grade-policy.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type { EnvironmentVariables } from '../../config/env.validation.js';
@@ -58,9 +68,9 @@ function translationsInclude(
 }
 
 /** Link tables that support the variety shuffle query. */
-export type ShuffleLinkTable = '"SinQuote"' | '"GoodDeedQuote"';
+export type ShuffleLinkTable = '"SinQuote"' | '"GoodDeedQuote"' | '"ImanBranchQuote"';
 /** Foreign-key column in the link table that references the parent. */
-export type ShuffleParentKey = '"sinId"' | '"goodDeedId"';
+export type ShuffleParentKey = '"sinId"' | '"goodDeedId"' | '"imanBranchId"';
 
 @Injectable()
 export class QuotesService {
@@ -118,6 +128,25 @@ export class QuotesService {
     return mapQuoteToDto(row, locale);
   }
 
+  /** The same published sahih or hasan text for every reader on one UTC day. */
+  async reminderOfTheDay(locale: 'ar' | 'en', now = new Date()) {
+    const where: Prisma.QuoteWhereInput = {
+      AND: [
+        { grade: { in: [HadithGrade.SAHIH, HadithGrade.HASAN] } },
+        GradePolicy.readerClause(),
+      ],
+    };
+    const total = await this.prisma.quote.count({ where });
+    if (total === 0) return { data: null };
+    const row = await this.prisma.quote.findFirst({
+      where,
+      orderBy: { id: 'asc' },
+      skip: utcDayNumber(now) % total,
+      include: this.buildQuoteInclude(locale),
+    });
+    return { data: row ? this.toQuoteDto(row, locale) : null };
+  }
+
   linkOrderBy() {
     return LINK_ORDER_BY;
   }
@@ -145,8 +174,11 @@ export class QuotesService {
       includeWeak: query.includeWeak,
     });
     const quoteFilter: Prisma.QuoteWhereInput = {
-      ...(query.type?.length ? { type: { in: query.type } } : {}),
-      ...GradePolicy.whereClause(allowedGrades),
+      AND: [
+        ...(query.type?.length ? [{ type: { in: query.type } }] : []),
+        GradePolicy.whereClause(allowedGrades),
+        GradePolicy.readerClause(),
+      ],
     };
     return { quoteFilter, allowedGrades };
   }
@@ -230,6 +262,17 @@ export class QuotesService {
       OR q.grade::text IN (${Prisma.join(allowedGrades)})
       ${nullGradeClause}
     )`;
+    const textFilter = Prisma.sql`AND (q."textSource"::text <> 'OCR' OR q."textVerifiedAt" IS NOT NULL)
+      AND (
+        q.type::text <> 'HADITH'
+        OR q."gradeSource"::text IN ('AUTO_SAHIHAYN', 'MANUAL')
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM "QuoteFlag" f
+        WHERE f."quoteId" = q.id
+          AND f.status = 'OPEN'::"FlagStatus"
+          AND f.severity = 'HIGH'::"FlagSeverity"
+      )`;
 
     // ORDER BY strategy (see §4.2):
     //   Column 1 — band: high-band (score >= floor) = 0, low-band = 1.
@@ -246,6 +289,7 @@ export class QuotesService {
       ${minScoreFilter}
       ${typeFilter}
       ${gradeFilter}
+      ${textFilter}
       ORDER BY
         CASE WHEN COALESCE(sq."relevanceScore", -1) >= ${floor} THEN 0 ELSE 1 END ASC,
         CASE WHEN COALESCE(sq."relevanceScore", -1) >= ${floor}
@@ -301,6 +345,7 @@ export class QuotesService {
     const where = await this.buildSearchWhere(query, {
       allowedGrades,
       precomputedArabicIds: orderedArabicIds,
+      publicText: true,
     });
 
     if (sort === 'relevance' && orderedArabicIds !== undefined) {
@@ -413,12 +458,7 @@ export class QuotesService {
       // MAWDU (fabricated) hadiths are never served publicly — 404 so the client
       // cannot even confirm the record exists. DAIF and UNGRADED stay reachable
       // because they are valid hadiths that carry an explicit grade badge in the UI.
-      if (row.type === QuoteType.HADITH && row.grade === HadithGrade.MAWDU) {
-        throw new NotFoundException({
-          code: 'RESOURCE_NOT_FOUND',
-          message: 'Quote not found',
-        });
-      }
+      await this.assertPublicQuote(row);
       return this.toQuoteDetailResult(row, locale, includeAllTranslations);
     }
 
@@ -432,14 +472,36 @@ export class QuotesService {
         message: 'Quote not found',
       });
     }
-    // MAWDU hadiths are never served publicly — see comment above.
-    if (row.type === QuoteType.HADITH && row.grade === HadithGrade.MAWDU) {
+    await this.assertPublicQuote(row);
+    return this.toQuoteDetailResult(row, locale, includeAllTranslations);
+  }
+
+  /**
+   * A missing quote, a fabricated hadith, unverified OCR, a legacy grade,
+   * and an open high-severity flag all look the same from the public API.
+   */
+  private async assertPublicQuote(row: {
+    id: string;
+    type: QuoteType;
+    grade: HadithGrade | null;
+    gradeSource: GradeSource;
+    textSource: TextSource;
+    textVerifiedAt: Date | null;
+  }): Promise<void> {
+    const hidden = await this.prisma.quoteFlag.count({
+      where: { quoteId: row.id, status: 'OPEN', severity: 'HIGH' },
+    });
+    if (
+      (row.type === QuoteType.HADITH && row.grade === HadithGrade.MAWDU)
+      || !GradePolicy.isPublicText(row)
+      || !GradePolicy.isPublishable(row)
+      || hidden > 0
+    ) {
       throw new NotFoundException({
         code: 'RESOURCE_NOT_FOUND',
         message: 'Quote not found',
       });
     }
-    return this.toQuoteDetailResult(row, locale, includeAllTranslations);
   }
 
   private toQuoteDetailResult(
@@ -519,6 +581,39 @@ export class QuotesService {
     );
   }
 
+  /** Proofread mark: the reviewer compared textAr with the PDF page. */
+  async markTextVerified(id: string): Promise<QuoteDto> {
+    const existing = await this.prisma.quote.findUnique({ where: { id }, select: { id: true } });
+    if (!existing) {
+      throw new NotFoundException({ code: 'RESOURCE_NOT_FOUND', message: 'Quote not found' });
+    }
+    const row = await this.prisma.quote.update({
+      where: { id },
+      data: { textVerifiedAt: new Date() },
+      include: this.buildQuoteInclude('ar'),
+    });
+    return this.toQuoteDto(row, 'ar');
+  }
+
+  private printedReference(dto: {
+    hadithReference?: string;
+    referenceNumber?: number;
+    referenceLabel?: string;
+  }): { referenceNumber?: number | null; referenceLabel?: string | null } {
+    if (
+      dto.hadithReference === undefined &&
+      dto.referenceNumber === undefined &&
+      dto.referenceLabel === undefined
+    ) {
+      return {};
+    }
+    const parsed = parsePrintedReference(dto.hadithReference);
+    return {
+      referenceNumber: dto.referenceNumber ?? parsed.referenceNumber,
+      referenceLabel: dto.referenceLabel ?? parsed.referenceLabel,
+    };
+  }
+
   async adminCreate(dto: CreateQuoteDto): Promise<QuoteDto> {
     if (dto.origin === QuoteOrigin.API_CACHED) {
       throw new UnprocessableEntityException({
@@ -554,11 +649,15 @@ export class QuotesService {
         narratorAr: dto.narratorAr,
         grade: dto.grade,
         hadithReference: dto.hadithReference,
+        ...this.printedReference(dto),
         bookTitle: dto.bookTitle,
         author: dto.author,
         pageOrChapter: dto.pageOrChapter,
         volume: dto.volume,
         page: dto.page,
+        gradeAuthority: dto.gradeAuthority,
+        gradeReference: dto.gradeReference,
+        gradeSource: dto.type === QuoteType.HADITH ? GradeSource.MANUAL : undefined,
         translations: dto.translations?.length
           ? { create: dto.translations }
           : undefined,
@@ -588,6 +687,8 @@ export class QuotesService {
         'narratorAr',
         'grade',
         'hadithReference',
+        'referenceNumber',
+        'referenceLabel',
         'surahNumber',
         'surahName',
         'surahNameAr',
@@ -642,11 +743,17 @@ export class QuotesService {
         narratorAr: dto.narratorAr,
         grade: dto.grade,
         hadithReference: dto.hadithReference,
+        ...this.printedReference(dto),
         bookTitle: dto.bookTitle,
         author: dto.author,
         pageOrChapter: dto.pageOrChapter,
         volume: dto.volume,
         page: dto.page,
+        gradeAuthority: dto.gradeAuthority,
+        gradeReference: dto.gradeReference,
+        ...(dto.grade !== undefined && existing.type === QuoteType.HADITH
+          ? { gradeSource: GradeSource.MANUAL }
+          : {}),
       },
       include: this.buildQuoteInclude('ar'),
     });
@@ -758,6 +865,13 @@ export class QuotesService {
       });
     }
 
+    if (query.textSource) {
+      and.push({ textSource: query.textSource });
+    }
+    if (query.unverifiedOnly) {
+      and.push({ textSource: TextSource.OCR, textVerifiedAt: null });
+    }
+
     return and.length ? { AND: and } : {};
   }
 
@@ -773,7 +887,7 @@ export class QuotesService {
    */
   private async buildSearchWhere(
     query: QuotesQueryDto,
-    options: { allowedGrades?: HadithGrade[]; precomputedArabicIds?: string[] } = {},
+    options: { allowedGrades?: HadithGrade[]; precomputedArabicIds?: string[]; publicText?: boolean } = {},
   ): Promise<Prisma.QuoteWhereInput> {
     const and: Prisma.QuoteWhereInput[] = [];
 
@@ -788,6 +902,9 @@ export class QuotesService {
       and.push(GradePolicy.whereClause(options.allowedGrades));
     } else if (query.grades?.length) {
       and.push(GradePolicy.whereClause(query.grades));
+    }
+    if (options.publicText) {
+      and.push(GradePolicy.readerClause());
     }
     if (query.sourceId) {
       and.push({ sourceId: query.sourceId });
@@ -857,5 +974,109 @@ export class QuotesService {
     }
 
     return and.length ? { AND: and } : {};
+  }
+
+  /** Public explanations. A fabricated hadith stays 404, same as quote detail. */
+  async listPublicExplanations(quoteId: string, lang: 'ar' | 'en' = 'ar') {
+    const quote = await this.prisma.quote.findUnique({
+      where: { id: quoteId },
+      select: {
+        id: true,
+        type: true,
+        grade: true,
+        surahNumber: true,
+        ayahNumber: true,
+        gradeSource: true,
+        textSource: true,
+        textVerifiedAt: true,
+      },
+    });
+    if (!quote) {
+      throw new NotFoundException({ code: 'RESOURCE_NOT_FOUND', message: 'Quote not found' });
+    }
+    await this.assertPublicQuote(quote);
+
+    const or: Prisma.ExplanationWhereInput[] = [
+      { kind: ExplanationKind.SHARH, quoteId: quote.id },
+    ];
+    if (quote.type === QuoteType.QURAN_VERSE && quote.surahNumber && quote.ayahNumber) {
+      or.push({
+        kind: ExplanationKind.TAFSIR,
+        ayahKey: `${quote.surahNumber}:${quote.ayahNumber}`,
+      });
+    }
+
+    const rows = await this.prisma.explanation.findMany({
+      where: {
+        OR: or,
+        languageCode: { in: lang === 'ar' ? ['ar'] : ['ar', lang] },
+      },
+      orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
+      include: {
+        source: {
+          select: {
+            id: true,
+            name: true,
+            nameAr: true,
+            type: true,
+            author: true,
+            authorAr: true,
+          },
+        },
+      },
+    });
+
+    return {
+      data: rows.map((row) => ({
+        id: row.id,
+        kind: row.kind,
+        languageCode: row.languageCode,
+        text: row.text,
+        reference: row.reference,
+        origin: row.origin,
+        source: row.source,
+      })),
+    };
+  }
+
+  /** Public mistake report. No account and no personal data are stored. */
+  async report(quoteId: string, reason: string, note?: string) {
+    const quote = await this.prisma.quote.findUnique({
+      where: { id: quoteId },
+      select: { id: true, type: true },
+    });
+    if (!quote || quote.type !== QuoteType.HADITH) {
+      throw new NotFoundException({ code: 'RESOURCE_NOT_FOUND', message: 'Quote not found' });
+    }
+    const entry = { reason, note: note?.trim() || null };
+    const open = await this.prisma.quoteFlag.findFirst({
+      where: { quoteId, type: 'USER_REPORT', source: 'USER', status: 'OPEN' },
+    });
+    if (!open) {
+      await this.prisma.quoteFlag.create({
+        data: {
+          quoteId,
+          type: 'USER_REPORT',
+          severity: 'MEDIUM',
+          source: 'USER',
+          details: { reports: [entry] },
+        },
+      });
+      return { data: { accepted: true } };
+    }
+    const details = open.details;
+    const previous = details && typeof details === 'object' && !Array.isArray(details)
+      && Array.isArray((details as { reports?: unknown }).reports)
+      ? (details as { reports: unknown[] }).reports
+      : [];
+    const reports = [...previous, entry];
+    await this.prisma.quoteFlag.update({
+      where: { id: open.id },
+      data: {
+        details: { reports } as Prisma.InputJsonValue,
+        severity: reports.length >= 3 ? 'HIGH' : 'MEDIUM',
+      },
+    });
+    return { data: { accepted: true } };
   }
 }

@@ -6,6 +6,7 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { Prisma, type SinRank } from '@prisma/client';
+import { GradePolicy } from '../hadith/grade-policy.js';
 import { buildPageMeta, paginated } from '../../common/dto/paginated-result.js';
 import { findIdsByNormalizedArabic } from '../../common/text/arabic-search.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
@@ -27,7 +28,7 @@ import type { SinDetailDto, SinDto } from './entities/sin.entity.js';
 const SIN_READ_INCLUDE = {
   rankSource: { select: { id: true, name: true, nameAr: true } },
   _count: {
-    select: { quotes: { where: { reviewStatus: PUBLISHED_LINK_REVIEW_STATUS } } },
+    select: { quotes: { where: { reviewStatus: PUBLISHED_LINK_REVIEW_STATUS, quote: GradePolicy.readerClause() } } },
   },
 } satisfies Prisma.SinInclude;
 
@@ -430,7 +431,7 @@ export class SinsService {
           },
           _count: {
             select: {
-              quotes: { where: { reviewStatus: PUBLISHED_LINK_REVIEW_STATUS } },
+              quotes: { where: { reviewStatus: PUBLISHED_LINK_REVIEW_STATUS, quote: GradePolicy.readerClause() } },
             },
           },
         },

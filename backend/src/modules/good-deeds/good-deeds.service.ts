@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { GradePolicy } from '../hadith/grade-policy.js';
 import { buildPageMeta, paginated } from '../../common/dto/paginated-result.js';
 import { findIdsByNormalizedArabic } from '../../common/text/arabic-search.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
@@ -106,7 +107,7 @@ export class GoodDeedsService {
           },
           _count: {
             select: {
-              quotes: { where: { reviewStatus: PUBLISHED_LINK_REVIEW_STATUS } },
+              quotes: { where: { reviewStatus: PUBLISHED_LINK_REVIEW_STATUS, quote: GradePolicy.readerClause() } },
             },
           },
         },
@@ -132,7 +133,7 @@ export class GoodDeedsService {
         },
         _count: {
             select: {
-              quotes: { where: { reviewStatus: PUBLISHED_LINK_REVIEW_STATUS } },
+              quotes: { where: { reviewStatus: PUBLISHED_LINK_REVIEW_STATUS, quote: GradePolicy.readerClause() } },
             },
           },
       },
@@ -165,7 +166,7 @@ export class GoodDeedsService {
         oppositeSin: { select: { id: true, slug: true, name: true, nameAr: true } },
         _count: {
             select: {
-              quotes: { where: { reviewStatus: PUBLISHED_LINK_REVIEW_STATUS } },
+              quotes: { where: { reviewStatus: PUBLISHED_LINK_REVIEW_STATUS, quote: GradePolicy.readerClause() } },
             },
           },
       },
@@ -194,7 +195,7 @@ export class GoodDeedsService {
         oppositeSin: { select: { id: true, slug: true, name: true, nameAr: true } },
         _count: {
             select: {
-              quotes: { where: { reviewStatus: PUBLISHED_LINK_REVIEW_STATUS } },
+              quotes: { where: { reviewStatus: PUBLISHED_LINK_REVIEW_STATUS, quote: GradePolicy.readerClause() } },
             },
           },
       },

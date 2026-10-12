@@ -5,6 +5,7 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { GradePolicy } from '../hadith/grade-policy.js';
 import { paginated } from '../../common/dto/paginated-result.js';
 import {
   mapQuoteToDto,
@@ -28,7 +29,12 @@ export class FavoritesService {
 
     const where: Prisma.FavoriteWhereInput = {
       userId,
-      ...(query.type ? { quote: { type: query.type } } : {}),
+      quote: {
+        AND: [
+          ...(query.type ? [{ type: query.type }] : []),
+          GradePolicy.readerClause(),
+        ],
+      },
     };
 
     const [rows, total] = await this.prisma.$transaction([
@@ -57,7 +63,7 @@ export class FavoritesService {
    */
   async listQuoteIds(userId: string): Promise<string[]> {
     const rows = await this.prisma.favorite.findMany({
-      where: { userId },
+      where: { userId, quote: GradePolicy.readerClause() },
       select: { quoteId: true },
     });
     return rows.map((r) => r.quoteId);
@@ -75,9 +81,21 @@ export class FavoritesService {
     // Verify quote exists first
     const quote = await this.prisma.quote.findUnique({
       where: { id: quoteId },
-      select: { id: true },
+      select: {
+        id: true,
+        type: true,
+        gradeSource: true,
+        textSource: true,
+        textVerifiedAt: true,
+        flags: { where: { status: 'OPEN', severity: 'HIGH' }, select: { id: true }, take: 1 },
+      },
     });
-    if (!quote) {
+    if (
+      !quote
+      || !GradePolicy.isPublicText(quote)
+      ||       !GradePolicy.isPublishable(quote)
+      || quote.flags.length > 0
+    ) {
       throw new UnprocessableEntityException({
         code: 'RELATED_RESOURCE_INVALID',
         message: `Quote '${quoteId}' does not exist.`,

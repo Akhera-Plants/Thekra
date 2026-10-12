@@ -1,4 +1,5 @@
-import { Prisma, type HadithGrade, type QuoteOrigin, type QuoteType, type SourceType, type TagCategory } from '@prisma/client';
+import { Prisma, type HadithGrade, type QuoteOrigin, type QuoteType, type SourceType, type TagCategory, type TextSource } from '@prisma/client';
+import { formatPrintedReference } from '../text/printed-reference.js';
 
 /** Canonical include for every Quote → QuoteDto projection. */
 export const quoteIncludeForDto = {
@@ -80,9 +81,13 @@ export interface QuoteDto {
   citation: {
     volume: string | null;
     page: string | null;
+    gradeAuthority: string | null;
+    gradeReference: string | null;
   };
   source: QuoteSourceDto;
   tags: QuoteTagDto[];
+  textSource: TextSource;
+  textVerifiedAt: Date | null;
   external: { apiProvider: string | null; externalId: string | null } | null;
   isFavorite?: boolean;
   createdAt: Date;
@@ -121,7 +126,13 @@ export function mapQuoteToDto(
             narrator: row.narrator,
             narratorAr: row.narratorAr,
             grade: row.grade,
-            reference: row.hadithReference,
+            reference: formatPrintedReference({
+              locale,
+              workAr: row.source.nameAr,
+              workEn: row.source.name,
+              referenceNumber: row.referenceNumber,
+              referenceLabel: row.referenceLabel,
+            }),
           }
         : null,
     book:
@@ -135,6 +146,8 @@ export function mapQuoteToDto(
     citation: {
       volume: row.volume,
       page: row.page,
+      gradeAuthority: row.gradeAuthority,
+      gradeReference: row.gradeReference,
     },
     source: {
       id: row.source.id,
@@ -153,6 +166,8 @@ export function mapQuoteToDto(
       nameAr: tag.nameAr,
       category: tag.category,
     })),
+    textSource: row.textSource,
+    textVerifiedAt: row.textVerifiedAt,
     external:
       row.origin === 'API_CACHED'
         ? { apiProvider: row.apiProvider, externalId: row.externalId }

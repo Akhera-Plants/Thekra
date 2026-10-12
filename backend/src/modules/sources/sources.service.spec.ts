@@ -43,6 +43,7 @@ describe('SourcesService', () => {
         apiBaseUrl: null,
         lastSyncedAt: synced,
         quoteCount: 10,
+        publishedQuoteCount: 10,
       });
     });
   });

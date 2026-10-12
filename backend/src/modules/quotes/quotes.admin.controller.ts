@@ -61,6 +61,11 @@ export class QuotesAdminController {
     return this.quotesService.adminSearch(query);
   }
 
+  @Post(':id/text-verification')
+  markTextVerified(@Param('id', ParseUUIDPipe) id: string) {
+    return this.quotesService.markTextVerified(id);
+  }
+
   @Patch(':id')
   update(
     @Param('id', ParseUUIDPipe) id: string,

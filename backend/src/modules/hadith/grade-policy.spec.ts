@@ -1,5 +1,5 @@
 import { UnprocessableEntityException } from '@nestjs/common';
-import { HadithGrade, QuoteType } from '@prisma/client';
+import { GradeSource, HadithGrade, QuoteType, TextSource } from '@prisma/client';
 import {
   DEFAULT_ALLOWED_GRADES,
   GradePolicy,
@@ -29,6 +29,32 @@ describe('GradePolicy', () => {
     expect(GradePolicy.resolveAllowedGrades({})).not.toContain(
       HadithGrade.UNGRADED,
     );
+  });
+
+  describe('publicTextClause', () => {
+    it('hides unverified OCR and keeps verified OCR', () => {
+      expect(GradePolicy.isPublicText({ textSource: TextSource.OCR, textVerifiedAt: null })).toBe(false);
+      expect(
+        GradePolicy.isPublicText({ textSource: TextSource.OCR, textVerifiedAt: new Date() }),
+      ).toBe(true);
+      expect(GradePolicy.isPublicText({ textSource: TextSource.DIGITAL, textVerifiedAt: null })).toBe(true);
+      expect(GradePolicy.isPublicText({ textSource: TextSource.MANUAL, textVerifiedAt: null })).toBe(true);
+      expect(GradePolicy.publicTextClause()).toEqual({
+        OR: [{ textSource: { not: TextSource.OCR } }, { textVerifiedAt: { not: null } }],
+      });
+    });
+  });
+
+  describe('readerClause', () => {
+    it('publishes a hadith only from a sahihayn match or a manual grade, and hides an open high flag', () => {
+      expect(GradePolicy.isPublishable({ type: QuoteType.HADITH, gradeSource: GradeSource.AUTO_SAHIHAYN })).toBe(true);
+      expect(GradePolicy.isPublishable({ type: QuoteType.HADITH, gradeSource: GradeSource.MANUAL })).toBe(true);
+      expect(GradePolicy.isPublishable({ type: QuoteType.HADITH, gradeSource: GradeSource.AUTHORITY_LEGACY })).toBe(false);
+      expect(GradePolicy.isPublishable({ type: QuoteType.QURAN_VERSE, gradeSource: GradeSource.AUTHORITY_LEGACY })).toBe(true);
+      expect(GradePolicy.readerClause()).toEqual({
+        AND: [GradePolicy.publicTextClause(), GradePolicy.publishableClause()],
+      });
+    });
   });
 
   describe('whereClause', () => {

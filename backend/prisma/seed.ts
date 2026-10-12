@@ -19,6 +19,7 @@ import {
   SourceType,
   QuoteType,
   QuoteOrigin,
+  GradeSource,
   HadithGrade,
   TagCategory,
   SyncStatus,
@@ -478,6 +479,18 @@ export async function seedGoodDeeds(): Promise<void> {
 // API_CACHED rows: Q01 (quran.com / 49:12), Q09 (sunnah.com / muslim:2589)
 // Both carry rawPayload to prove the serialiser never leaks it to end users.
 // ─────────────────────────────────────────────────────────────────────────────
+function printedFromLegacy(value: string | undefined): {
+  referenceNumber: number | null;
+  referenceLabel: string | null;
+} {
+  if (!value) return { referenceNumber: null, referenceLabel: null };
+  const slash = value.match(/(\d+\/\d+)\s*$/);
+  if (slash?.[1]) return { referenceNumber: null, referenceLabel: slash[1] };
+  const match = value.match(/(\d+)\s*(?:\(([^)]+)\))?\s*$/);
+  if (!match?.[1]) return { referenceNumber: null, referenceLabel: null };
+  return { referenceNumber: Number(match[1]), referenceLabel: match[2] ?? null };
+}
+
 export async function seedQuotes(): Promise<void> {
   // Define each quote. Fields absent for a type stay undefined (Prisma ignores them).
   const quotes = [
@@ -771,10 +784,13 @@ export async function seedQuotes(): Promise<void> {
   let apiCachedCount = 0;
   for (const quote of quotes) {
     const { id, ...fields } = quote;
+    const printed = printedFromLegacy('hadithReference' in quote ? quote.hadithReference : undefined);
+    // Curated seed rows are manual entries. Imported authority grades stay AUTHORITY_LEGACY.
+    const gradeSource = quote.type === QuoteType.HADITH ? { gradeSource: GradeSource.MANUAL } : {};
     await prisma.quote.upsert({
       where: { id },
-      create: { id, ...fields },
-      update: fields,
+      create: { id, ...fields, ...printed, ...gradeSource },
+      update: { ...fields, ...printed, ...gradeSource },
     });
     if (quote.origin === QuoteOrigin.API_CACHED) apiCachedCount++;
   }

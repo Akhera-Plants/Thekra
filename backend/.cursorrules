@@ -66,6 +66,7 @@ src/common/            cross-cutting: dto/, interceptors/, filters/, pipes/, dec
 src/health/            GET /health, GET /health/ready (unprefixed)
 src/modules/quran/          src/modules/hadith/         src/modules/sins/
 src/modules/good-deeds/     src/modules/classification/ src/modules/content-sync/
+src/modules/iman-branches/
 src/modules/quotes/         src/modules/sources/        src/modules/tags/
 src/modules/auth/           src/modules/users/          src/modules/favorites/
 ```

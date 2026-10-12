@@ -1,7 +1,15 @@
 import {
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { HadithGrade, Prisma, QuoteType } from '@prisma/client';
+import {
+  FlagSeverity,
+  FlagStatus,
+  GradeSource,
+  HadithGrade,
+  Prisma,
+  QuoteType,
+  TextSource,
+} from '@prisma/client';
 import {
   registerDecorator,
   type ValidationArguments,
@@ -56,6 +64,50 @@ export class GradePolicy {
         message: 'Fabricated (MAWDU) narrations are never served',
       });
     }
+  }
+
+  /**
+   * Unverified OCR is not public, including when includeWeak is set.
+   * Kept off whereClause so an admin grade filter does not hide OCR rows.
+   */
+  static publicTextClause(): Prisma.QuoteWhereInput {
+    return {
+      OR: [
+        { textSource: { not: TextSource.OCR } },
+        { textVerifiedAt: { not: null } },
+      ],
+    };
+  }
+
+  static isPublicText(row: { textSource: TextSource; textVerifiedAt: Date | null }): boolean {
+    return row.textSource !== TextSource.OCR || row.textVerifiedAt !== null;
+  }
+
+  /**
+   * A hadith is publishable only from a sahihayn match or a manual grade.
+   * An open high-severity flag hides every quote type.
+   */
+  static publishableClause(): Prisma.QuoteWhereInput {
+    return {
+      AND: [
+        {
+          OR: [
+            { type: { not: QuoteType.HADITH } },
+            { gradeSource: { in: [GradeSource.AUTO_SAHIHAYN, GradeSource.MANUAL] } },
+          ],
+        },
+        { flags: { none: { status: FlagStatus.OPEN, severity: FlagSeverity.HIGH } } },
+      ],
+    };
+  }
+
+  static readerClause(): Prisma.QuoteWhereInput {
+    return { AND: [this.publicTextClause(), this.publishableClause()] };
+  }
+
+  static isPublishable(row: { type: QuoteType; gradeSource: GradeSource }): boolean {
+    if (row.type !== QuoteType.HADITH) return true;
+    return row.gradeSource === GradeSource.AUTO_SAHIHAYN || row.gradeSource === GradeSource.MANUAL;
   }
 
   static whereClause(allowed: HadithGrade[]): Prisma.QuoteWhereInput {

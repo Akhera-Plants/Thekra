@@ -131,7 +131,7 @@ describe('QuranService', () => {
       expect(result.data[1].surahName).toBe('Al-Baqarah');
       // First findMany call must filter by preferred provider
       const firstFindCall = prisma.quote.findMany.mock.calls[0][0];
-      expect(firstFindCall.where.apiProvider).toBe('quran.com');
+      expect(firstFindCall.where.AND[0].apiProvider).toBe('quran.com');
     });
 
     it('P2-8: uses ConfigService (not process.env) to resolve QURAN_PREFERRED_PROVIDER', async () => {
@@ -181,7 +181,9 @@ describe('QuranService', () => {
       expect(prisma.quote.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           orderBy: [{ ayahNumber: 'asc' }, { id: 'asc' }],
-          where: expect.objectContaining({ surahNumber: 2 }),
+          where: expect.objectContaining({
+            AND: expect.arrayContaining([expect.objectContaining({ surahNumber: 2 })]),
+          }),
         }),
       );
       expect(result.data.map((d) => d.quran?.ayahNumber)).toEqual([1, 2]);

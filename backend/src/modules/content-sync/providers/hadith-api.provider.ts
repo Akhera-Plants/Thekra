@@ -145,7 +145,7 @@ export class HadithApiProvider implements ContentProvider {
     }
 
     const externalId = `${h.bookSlug}:${h.hadithNumber}`;
-    const hadithReference = `${h.book.bookName} ${h.hadithNumber}`;
+    const referenceNumber = Number.parseInt(String(h.hadithNumber), 10);
 
     // Strip narrator prefix ("Narrated X:") from englishNarrator
     const narrator = h.englishNarrator
@@ -168,7 +168,9 @@ export class HadithApiProvider implements ContentProvider {
         narrator,
         narratorAr: null,
         grade,
-        hadithReference,
+        hadithReference: null,
+        referenceNumber: Number.isInteger(referenceNumber) ? referenceNumber : null,
+        referenceLabel: Number.isInteger(referenceNumber) ? null : String(h.hadithNumber),
         bookTitle: null,
         author: null,
         pageOrChapter: null,

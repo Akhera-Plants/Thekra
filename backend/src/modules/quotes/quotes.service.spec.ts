@@ -1,7 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
-import { HadithGrade, QuoteOrigin, QuoteType, SourceType, TagCategory } from '@prisma/client';
+import { GradeSource, HadithGrade, QuoteOrigin, QuoteType, SourceType, TagCategory, TextSource } from '@prisma/client';
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type { QuoteRowForDto } from '../../common/mappers/quote.mapper.js';
@@ -28,14 +28,24 @@ function makeRow(overrides: Partial<QuoteRowForDto> = {}): QuoteRowForDto {
     narratorAr: 'أنس',
     grade: 'SAHIH',
     hadithReference: 'Bukhari 13',
+    referenceNumber: 13,
+    referenceLabel: null,
     bookTitle: null,
     author: null,
     pageOrChapter: null,
     volume: null,
     page: null,
+    gradeAuthority: null,
+    gradeReference: null,
     externalId: null,
     apiProvider: null,
     rawPayload: null,
+    textSource: TextSource.MANUAL,
+    textVerifiedAt: null,
+    gradeSource: GradeSource.MANUAL,
+    legacyGrade: null,
+    legacyGradeAuthority: null,
+    legacyGradeReference: null,
     createdAt: new Date('2025-01-01T00:00:00.000Z'),
     updatedAt: new Date('2025-01-01T00:00:00.000Z'),
     source: {
@@ -99,7 +109,12 @@ describe('QuotesService', () => {
         makeRow({ volume: '2', page: '120', rawPayload: { page: 120, secret: true } }),
         'ar',
       );
-      expect(dto.citation).toEqual({ volume: '2', page: '120' });
+      expect(dto.citation).toEqual({
+        volume: '2',
+        page: '120',
+        gradeAuthority: null,
+        gradeReference: null,
+      });
       expect(dto).not.toHaveProperty('rawPayload');
       expect(dto).not.toHaveProperty('volume');
       expect(dto).not.toHaveProperty('page');
@@ -171,6 +186,7 @@ function makePrismaMock() {
     // $transaction with an array of promises: resolve each promise and return results
     $transaction: vi.fn((arr: Promise<unknown>[]) => Promise.all(arr)),
     quote: { findMany, count, findUnique },
+    quoteFlag: { count: vi.fn().mockResolvedValue(0) },
   };
   return { mock, findMany, count, findUnique };
 }
@@ -252,6 +268,26 @@ describe('QuotesService — grade policy (P0-2)', () => {
     await expect(
       svc.findById('00000000-0000-4000-8000-000000000001', {}),
     ).rejects.toThrow(NotFoundException);
+  });
+
+  it('findById() — unverified OCR is 404, including a SAHIH hadith', async () => {
+    findUnique.mockResolvedValue(
+      makeRow({ textSource: TextSource.OCR, textVerifiedAt: null, grade: HadithGrade.SAHIH }),
+    );
+
+    await expect(
+      svc.findById('00000000-0000-4000-8000-000000000001', {}),
+    ).rejects.toThrow(NotFoundException);
+  });
+
+  it('findById() — verified OCR is served', async () => {
+    findUnique.mockResolvedValue(
+      makeRow({ textSource: TextSource.OCR, textVerifiedAt: new Date('2026-10-11T00:00:00.000Z') }),
+    );
+
+    await expect(
+      svc.findById('00000000-0000-4000-8000-000000000001', {}),
+    ).resolves.toBeDefined();
   });
 
   it('findById() — DAIF hadith is still served (carries grade badge)', async () => {

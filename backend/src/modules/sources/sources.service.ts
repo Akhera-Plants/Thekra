@@ -2,6 +2,7 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException }
 import { Prisma } from '@prisma/client';
 import { paginated } from '../../common/dto/paginated-result.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { GradePolicy } from '../hadith/grade-policy.js';
 import type { CreateSourceDto } from './dto/create-source.dto.js';
 import type { SourcesQueryDto } from './dto/sources-query.dto.js';
 import type { UpdateSourceDto } from './dto/update-source.dto.js';
@@ -26,7 +27,7 @@ type SourceRowWithCount = {
 export class SourcesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  toSourceDto(row: SourceRowWithCount): SourceDto {
+  toSourceDto(row: SourceRowWithCount, publishedQuoteCount = row._count.quotes): SourceDto {
     return {
       id: row.id,
       name: row.name,
@@ -40,6 +41,13 @@ export class SourcesService {
       apiBaseUrl: row.apiBaseUrl,
       lastSyncedAt: row.lastSyncedAt,
       quoteCount: row._count.quotes,
+      publishedQuoteCount,
+    };
+  }
+
+  private publishedWhere(): Prisma.QuoteWhereInput {
+    return {
+      AND: [GradePolicy.readerClause(), GradePolicy.whereClause(GradePolicy.defaultAllowedGrades())],
     };
   }
 
@@ -49,7 +57,7 @@ export class SourcesService {
     const locale = query.lang ?? 'ar';
     const where = this.buildListWhere(query);
 
-    const [rows, total] = await this.prisma.$transaction([
+    const [rows, total, published] = await this.prisma.$transaction([
       this.prisma.source.findMany({
         where,
         orderBy: [{ name: 'asc' }, { id: 'asc' }],
@@ -58,10 +66,16 @@ export class SourcesService {
         include: { _count: { select: { quotes: true } } },
       }),
       this.prisma.source.count({ where }),
+      this.prisma.quote.groupBy({
+        by: ['sourceId'],
+        where: this.publishedWhere(),
+        _count: { _all: true },
+      }),
     ]);
+    const publishedBySource = new Map(published.map((row) => [row.sourceId, row._count._all]));
 
     return paginated(
-      rows.map((row) => this.toSourceDto(row as SourceRowWithCount)),
+      rows.map((row) => this.toSourceDto(row as SourceRowWithCount, publishedBySource.get(row.id) ?? 0)),
       page,
       limit,
       total,
@@ -88,7 +102,10 @@ export class SourcesService {
       });
     }
 
-    return this.toSourceDto(row as SourceRowWithCount);
+    const publishedQuoteCount = await this.prisma.quote.count({
+      where: { sourceId: id, ...this.publishedWhere() },
+    });
+    return this.toSourceDto(row as SourceRowWithCount, publishedQuoteCount);
   }
 
   // ─── Admin CRUD ───────────────────────────────────────────────────────────────

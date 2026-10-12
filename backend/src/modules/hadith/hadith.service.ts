@@ -28,6 +28,7 @@ export class HadithService {
     const and: Prisma.QuoteWhereInput[] = [
       { type: QuoteType.HADITH },
       GradePolicy.whereClause(allowedGrades),
+      GradePolicy.readerClause(),
     ];
 
     if (query.collectionId) {
@@ -49,11 +50,13 @@ export class HadithService {
       });
     }
     if (query.reference) {
+      const asNumber = Number(query.reference);
       and.push({
-        hadithReference: {
-          contains: query.reference,
-          mode: 'insensitive',
-        },
+        OR: [
+          { hadithReference: { contains: query.reference, mode: 'insensitive' } },
+          { referenceLabel: { contains: query.reference, mode: 'insensitive' } },
+          ...(Number.isInteger(asNumber) ? [{ referenceNumber: asNumber }] : []),
+        ],
       });
     }
     if (query.q) {
@@ -118,7 +121,7 @@ export class HadithService {
     const rows = await this.prisma.source.findMany({
       where: { type: SourceType.HADITH_COLLECTION },
       orderBy: { name: 'asc' },
-      include: { _count: { select: { quotes: true } } },
+      include: { _count: { select: { quotes: { where: GradePolicy.readerClause() } } } },
     });
 
     const data: HadithCollectionDto[] = rows.map((row) => ({

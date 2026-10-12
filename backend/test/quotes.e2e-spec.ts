@@ -9,13 +9,14 @@
  *   P1-9 — rawPayload never in response
  */
 
+import { GradeSource, HadithGrade, QuoteType } from '@prisma/client';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import type { App } from 'supertest/types.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
-import { QF_MAWDU, QF_NULL_GRADE, QF_UNGRADED, seedTestFixtures } from './fixtures/seed-test-fixtures.js';
+import { QF_MAWDU, QF_NULL_GRADE, QF_OCR, QF_OCR_VERIFIED, QF_UNGRADED, seedTestFixtures } from './fixtures/seed-test-fixtures.js';
 import { truncateAll } from './helpers/reset-db.js';
-import { adminAuthHeaders, closeTestApp, createTestApp } from './helpers/test-app.js';
+import { adminAuthHeaders, closeTestApp, createTestApp, userAuthHeaders } from './helpers/test-app.js';
 
 // Known IDs from dev seed (see prisma/seed.ts)
 const Q01 = '00000000-0000-4000-8000-000000000001'; // QURAN_VERSE API_CACHED — has rawPayload and relatedSins
@@ -205,6 +206,129 @@ describe('Quotes endpoints (e2e)', () => {
   });
 
   // ── §5  Arabic search on quotes (P0-3) ─────────────────────────────────────
+
+  it('public routes hide unverified OCR and keep a verified OCR quote', async () => {
+    const listed = await request(app.getHttpServer()).get('/v1/quotes?limit=100&includeWeak=true').expect(200);
+    const ids: string[] = listed.body.data.map((quote: { id: string }) => quote.id);
+    expect(ids).not.toContain(QF_OCR);
+    expect(ids).toContain(QF_OCR_VERIFIED);
+
+    await request(app.getHttpServer()).get(`/v1/quotes/${QF_OCR}`).expect(404);
+    await request(app.getHttpServer()).get(`/v1/quotes/${QF_OCR}/explanations`).expect(404);
+    await request(app.getHttpServer()).get(`/v1/quotes/${QF_OCR_VERIFIED}`).expect(200);
+
+    const hadith = await request(app.getHttpServer()).get('/v1/hadith?limit=100&includeWeak=true').expect(200);
+    const hadithIds: string[] = hadith.body.data.map((quote: { id: string }) => quote.id);
+    expect(hadithIds).not.toContain(QF_OCR);
+
+    const sinQuotes = await request(app.getHttpServer())
+      .get('/v1/sins/ghibah/quotes?limit=50&includeWeak=true')
+      .expect(200);
+    const sinIds: string[] = sinQuotes.body.data.items.map((item: { quote: { id: string } }) => item.quote.id);
+    expect(sinIds).not.toContain(QF_OCR);
+
+    const userHdrs = await userAuthHeaders(app);
+    await request(app.getHttpServer()).post('/v1/favorites').set(userHdrs).send({ quoteId: QF_OCR }).expect(422);
+
+    const admin = await request(app.getHttpServer())
+      .get('/v1/admin/quotes?textSource=OCR&unverifiedOnly=true&limit=100')
+      .set(adminHdrs)
+      .expect(200);
+    const adminIds: string[] = admin.body.data.map((quote: { id: string }) => quote.id);
+    expect(adminIds).toContain(QF_OCR);
+    expect(adminIds).not.toContain(QF_OCR_VERIFIED);
+
+    const verified = await request(app.getHttpServer())
+      .post(`/v1/admin/quotes/${QF_OCR}/text-verification`)
+      .set(adminHdrs)
+      .expect(201);
+    expect(verified.body.data.textVerifiedAt).toEqual(expect.any(String));
+    await request(app.getHttpServer()).get(`/v1/quotes/${QF_OCR}`).expect(200);
+
+    await prisma.quote.update({ where: { id: QF_OCR }, data: { textVerifiedAt: null } });
+    await request(app.getHttpServer()).get(`/v1/quotes/${QF_OCR}`).expect(404);
+  });
+
+  it('hides a legacy grade and an open high flag, and accepts a public report', async () => {
+    const sourceId = '10000000-0000-4000-8000-000000000002';
+    const legacyId = '00000000-0000-4000-8000-0000000000f8';
+    const autoId = '00000000-0000-4000-8000-0000000000f9';
+    const highId = '00000000-0000-4000-8000-0000000000fa';
+    await prisma.quote.createMany({
+      data: [
+        {
+          id: legacyId,
+          type: QuoteType.HADITH,
+          textAr: 'حديث محفوظ درجته القديمة ولا يُنشر حتى يطابق الصحيحين',
+          sourceId,
+          grade: HadithGrade.SAHIH,
+          gradeSource: GradeSource.AUTHORITY_LEGACY,
+          gradeAuthority: 'الألباني',
+        },
+        {
+          id: autoId,
+          type: QuoteType.HADITH,
+          textAr: 'حديث طابقت متنه رواية في الصحيحين فهو منشور',
+          sourceId,
+          grade: HadithGrade.SAHIH,
+          gradeSource: GradeSource.AUTO_SAHIHAYN,
+          gradeAuthority: 'رواه البخاري',
+          gradeReference: 'البخاري 1',
+        },
+        {
+          id: highId,
+          type: QuoteType.HADITH,
+          textAr: 'حديث طابق الصحيحين لكن عليه بلاغ عالٍ مفتوح فيختفي',
+          sourceId,
+          grade: HadithGrade.SAHIH,
+          gradeSource: GradeSource.AUTO_SAHIHAYN,
+          gradeAuthority: 'رواه مسلم',
+        },
+      ],
+    });
+    await prisma.quoteFlag.create({
+      data: {
+        quoteId: highId,
+        type: 'QURAN_MISMATCH',
+        severity: 'HIGH',
+        source: 'AUTO',
+        details: { keys: ['2:255'] },
+      },
+    });
+
+    const listed = await request(app.getHttpServer()).get('/v1/quotes?limit=100').expect(200);
+    const ids: string[] = listed.body.data.map((quote: { id: string }) => quote.id);
+    expect(ids).not.toContain(legacyId);
+    expect(ids).toContain(autoId);
+    expect(ids).not.toContain(highId);
+    await request(app.getHttpServer()).get(`/v1/quotes/${legacyId}`).expect(404);
+    await request(app.getHttpServer()).get(`/v1/quotes/${legacyId}/explanations`).expect(404);
+    await request(app.getHttpServer()).get(`/v1/quotes/${highId}`).expect(404);
+    await request(app.getHttpServer()).get(`/v1/quotes/${autoId}`).expect(200);
+    await request(app.getHttpServer()).get('/v1/hadith?limit=100').expect(200).expect((res) => {
+      const hadithIds = res.body.data.map((quote: { id: string }) => quote.id);
+      expect(hadithIds).not.toContain(legacyId);
+      expect(hadithIds).not.toContain(highId);
+      expect(hadithIds).toContain(autoId);
+    });
+
+    const userHdrs = await userAuthHeaders(app);
+    await request(app.getHttpServer()).get('/v1/review/flags').set(userHdrs).expect(403);
+    await request(app.getHttpServer()).get('/v1/review/flags').set(adminHdrs).expect(200);
+
+    for (let index = 0; index < 3; index += 1) {
+      await request(app.getHttpServer())
+        .post(`/v1/quotes/${autoId}/reports`)
+        .send({ reason: 'TEXT', note: 'لفظة غير واضحة' })
+        .expect(201);
+    }
+    const flag = await prisma.quoteFlag.findFirst({
+      where: { quoteId: autoId, type: 'USER_REPORT', status: 'OPEN' },
+    });
+    expect(flag?.severity).toBe('HIGH');
+    expect(JSON.stringify(flag?.details)).not.toMatch(/[0-9]{1,3}(\.[0-9]{1,3}){3}/);
+    await request(app.getHttpServer()).get(`/v1/quotes/${autoId}`).expect(404);
+  });
 
   it('GET /v1/quotes?q=يغتب → finds Q01 (Quran verse with that Arabic root)', async () => {
     // Q01 text contains "يَغْتَب" in tashkeel; normalised search should match "يغتب"

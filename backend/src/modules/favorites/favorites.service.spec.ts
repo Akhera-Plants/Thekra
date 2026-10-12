@@ -3,7 +3,7 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { GradeSource, Prisma, QuoteType, TextSource } from '@prisma/client';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { FavoritesService } from './favorites.service.js';
 import type { PrismaService } from '../../prisma/prisma.service.js';
@@ -20,7 +20,14 @@ function makePrisma(overrides?: Record<string, unknown>): PrismaService {
       deleteMany: vi.fn(),
     },
     quote: {
-      findUnique: vi.fn().mockResolvedValue({ id: 'quote-uuid-1' }),
+      findUnique: vi.fn().mockResolvedValue({
+        id: 'quote-uuid-1',
+        type: QuoteType.HADITH,
+        gradeSource: GradeSource.MANUAL,
+        textSource: TextSource.MANUAL,
+        textVerifiedAt: null,
+        flags: [],
+      }),
     },
     ...overrides,
   } as unknown as PrismaService;

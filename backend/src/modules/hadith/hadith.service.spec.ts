@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 import { HadithGrade, QuoteType } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { QuotesService } from '../quotes/quotes.service.js';
+import { GradePolicy } from './grade-policy.js';
 import { HadithService } from './hadith.service.js';
 
 describe('HadithService', () => {
@@ -71,6 +72,7 @@ describe('HadithService', () => {
                   },
                 ],
               },
+              GradePolicy.readerClause(),
             ],
           },
         }),

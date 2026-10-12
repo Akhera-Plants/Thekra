@@ -147,9 +147,8 @@ describe('QuotesService.buildLinkQuoteFilter (P2-1)', () => {
     expect(allowedGrades).toContain('SAHIH');
     expect(allowedGrades).toContain('HASAN');
     expect(allowedGrades).not.toContain('MAWDU');
-    // quoteFilter.OR should allow non-HADITH types to pass through
-    const or = (quoteFilter as { OR?: unknown[] }).OR;
-    expect(Array.isArray(or)).toBe(true);
+    const and = (quoteFilter as { AND?: Array<{ OR?: unknown[] }> }).AND ?? [];
+    expect(and.some((clause) => Array.isArray(clause.OR))).toBe(true);
   });
 
   it('includes DAIF when includeWeak=true', () => {
@@ -160,12 +159,14 @@ describe('QuotesService.buildLinkQuoteFilter (P2-1)', () => {
 
   it('adds a type filter when type array is provided', () => {
     const { quoteFilter } = svc.buildLinkQuoteFilter({ type: [QuoteType.HADITH] });
-    expect((quoteFilter as { type?: { in: string[] } }).type?.in).toContain('HADITH');
+    const and = (quoteFilter as { AND?: Array<{ type?: { in: string[] } }> }).AND ?? [];
+    expect(and.some((clause) => clause.type?.in.includes('HADITH'))).toBe(true);
   });
 
   it('omits type key when type array is empty', () => {
     const { quoteFilter } = svc.buildLinkQuoteFilter({ type: [] });
-    expect((quoteFilter as Record<string, unknown>).type).toBeUndefined();
+    const and = (quoteFilter as { AND?: Array<{ type?: unknown }> }).AND ?? [];
+    expect(and.some((clause) => clause.type !== undefined)).toBe(false);
   });
 });
 

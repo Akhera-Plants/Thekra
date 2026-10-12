@@ -13,4 +13,6 @@ export interface SourceDto {
   apiBaseUrl: string | null;
   lastSyncedAt: Date | null;
   quoteCount: number;
+  /** Texts a public reader can open: default grades, and no unverified OCR. */
+  publishedQuoteCount: number;
 }

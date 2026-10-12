@@ -97,6 +97,16 @@ export class CreateQuoteDto {
   @MaxLength(200)
   hadithReference?: string;
 
+  @IsOptional()
+  @IsStrictInt()
+  @Min(1)
+  referenceNumber?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  referenceLabel?: string;
+
   // ── Book / Scholar fields ─────────────────────────────────────────────────
 
   @IsOptional()
@@ -125,6 +135,18 @@ export class CreateQuoteDto {
   @IsString()
   @MaxLength(40)
   page?: string;
+
+  /** Named grader, e.g. الألباني. Not a whole-book grade. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  gradeAuthority?: string;
+
+  /** Where that grader ruled, e.g. صحيح الأدب المفرد 123. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(300)
+  gradeReference?: string;
 
   // ── Translations ──────────────────────────────────────────────────────────
 

@@ -19,10 +19,10 @@ import { escapeIlikePattern, normalizeArabic } from './arabic-normalizer.js';
 import type { PrismaService } from '../../prisma/prisma.service.js';
 
 /** Tables that have Arabic fields searched via this helper. */
-export type ArabicSearchTable = '"Sin"' | '"GoodDeed"' | '"Tag"' | '"Quote"';
+export type ArabicSearchTable = '"Sin"' | '"GoodDeed"' | '"Tag"' | '"Quote"' | '"ImanBranch"';
 
 /** Arabic columns that can be searched via this helper. */
-export type ArabicSearchColumn = '"nameAr"' | '"textAr"' | '"narratorAr"';
+export type ArabicSearchColumn = '"nameAr"' | '"textAr"' | '"narratorAr"' | '"titleAr"';
 
 /**
  * Returns the `id` values of rows in `table` whose `column` – after applying

@@ -441,6 +441,8 @@ export class ContentSyncService {
           narratorAr: quote.narratorAr,
           grade: quote.grade,
           hadithReference: quote.hadithReference,
+          referenceNumber: quote.referenceNumber,
+          referenceLabel: quote.referenceLabel,
           surahNumber: quote.surahNumber,
           surahName: quote.surahName,
           surahNameAr: quote.surahNameAr,

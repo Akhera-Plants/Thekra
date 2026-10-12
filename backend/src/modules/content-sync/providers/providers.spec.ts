@@ -257,10 +257,11 @@ describe('SunnahProvider.mapToQuote', () => {
     expect(result.translations[0].languageCode).toBe('en');
   });
 
-  it('maps hadithReference as "{Collection} {hadithNumber}"', () => {
+  it('stores the printed number instead of an English reference string', () => {
     const fixture = loadFixture('sunnah/hadith.json');
     const result = provider.mapToQuote(fixture.hadiths[0], stubSource);
-    expect(result.quote.hadithReference).toBe('Bukhari 13');
+    expect(result.quote.referenceNumber).toBe(13);
+    expect(result.quote.hadithReference).toBeNull();
   });
 
   it('throws SkipRecordError when no Arabic entry', () => {
@@ -325,9 +326,10 @@ describe('HadithApiProvider.mapToQuote', () => {
     expect(() => provider.mapToQuote(hadith, stubSource)).toThrowError(SkipRecordError);
   });
 
-  it('maps hadithReference as "{bookName} {hadithNumber}"', () => {
+  it('stores the printed number instead of an English reference string', () => {
     const fixture = loadFixture('hadith-api/hadiths.json');
     const result = provider.mapToQuote(fixture.hadiths.data[0], stubSource);
-    expect(result.quote.hadithReference).toBe('Sahih Bukhari 1');
+    expect(result.quote.referenceNumber).toBe(1);
+    expect(result.quote.hadithReference).toBeNull();
   });
 });

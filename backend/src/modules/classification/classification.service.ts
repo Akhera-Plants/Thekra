@@ -29,6 +29,11 @@ const GOOD_DEED_LINK_INCLUDE = {
   quote: { select: { id: true, type: true, textAr: true } },
 } as const;
 
+const BRANCH_LINK_INCLUDE = {
+  imanBranch: { select: { number: true, titleAr: true, title: true } },
+  quote: { select: { id: true, type: true, textAr: true } },
+} as const;
+
 /**
  * P2-3: Default admin-list ordering — relevanceScore DESC NULLS LAST, then id ASC.
  * The NULLS LAST is important: newly created links with score=0 (default) must not
@@ -71,7 +76,7 @@ export interface BulkResult {
 
 interface ClassifyBinding {
   /** FK column on the link table referencing the parent entity. */
-  parentKey: 'sinId' | 'goodDeedId';
+  parentKey: 'sinId' | 'goodDeedId' | 'imanBranchId';
   /** Name of the compound-unique constraint used in `upsert where`. */
   compoundKeyName: string;
   /** Prisma `include` object for detail queries. */
@@ -330,6 +335,44 @@ export class ClassificationService {
     };
   }
 
+  async linkBranchQuote(dto: {
+    imanBranchId: string;
+    quoteId: string;
+    relevanceScore?: number;
+    note?: string | null;
+    reviewStatus?: LinkReviewStatus;
+  }) {
+    return this.doLink(this.branchBinding, dto.imanBranchId, dto);
+  }
+
+  async listBranchQuotes(query: {
+    page?: number;
+    limit?: number;
+    sort?: 'score' | 'newest';
+    imanBranchId?: string;
+    quoteId?: string;
+    reviewStatus?: LinkReviewStatus;
+  }) {
+    return this.doList(this.branchBinding, query, () => {
+      const and: Record<string, unknown>[] = [];
+      if (query.imanBranchId) and.push({ imanBranchId: query.imanBranchId });
+      if (query.quoteId) and.push({ quoteId: query.quoteId });
+      if (query.reviewStatus) and.push({ reviewStatus: query.reviewStatus });
+      return and.length ? { AND: and } : {};
+    });
+  }
+
+  async updateBranchLink(
+    id: string,
+    dto: { relevanceScore?: number; note?: string | null; reviewStatus?: LinkReviewStatus },
+  ) {
+    return this.doUpdate(this.branchBinding, id, dto);
+  }
+
+  async unlinkBranchQuote(id: string): Promise<void> {
+    return this.doUnlink(this.branchBinding, id);
+  }
+
   private get goodDeedBinding(): ClassifyBinding {
     return {
       parentKey: 'goodDeedId',
@@ -338,6 +381,17 @@ export class ClassificationService {
       assertParent: (id) => this.assertGoodDeedExists(id),
       delegate: this.prisma.goodDeedQuote as unknown as Record<string, (...args: unknown[]) => unknown>,
       notFoundMessage: 'GoodDeed-quote link not found',
+    };
+  }
+
+  private get branchBinding(): ClassifyBinding {
+    return {
+      parentKey: 'imanBranchId',
+      compoundKeyName: 'imanBranchId_quoteId',
+      include: BRANCH_LINK_INCLUDE as Record<string, unknown>,
+      assertParent: (id) => this.assertBranchExists(id),
+      delegate: this.prisma.imanBranchQuote as unknown as Record<string, (...args: unknown[]) => unknown>,
+      notFoundMessage: 'Branch-quote link not found',
     };
   }
 
@@ -434,6 +488,16 @@ export class ClassificationService {
       throw new UnprocessableEntityException({
         code: 'RELATED_RESOURCE_INVALID',
         message: 'Sin not found',
+      });
+    }
+  }
+
+  private async assertBranchExists(branchId: string): Promise<void> {
+    const branch = await this.prisma.imanBranch.findUnique({ where: { id: branchId } });
+    if (!branch) {
+      throw new UnprocessableEntityException({
+        code: 'RELATED_RESOURCE_INVALID',
+        message: 'Branch not found',
       });
     }
   }

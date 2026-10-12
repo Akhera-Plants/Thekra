@@ -35,6 +35,13 @@ enum HadithGrade {
   UNGRADED
 }
 
+/// Where Quote.textAr came from. OCR stays off public routes until textVerifiedAt is set.
+enum TextSource {
+  DIGITAL
+  OCR
+  MANUAL
+}
+
 enum TagCategory {
   SIN
   GOOD_DEED
@@ -52,6 +59,51 @@ enum SyncStatus {
 enum UserRole {
   USER
   ADMIN
+  REVIEWER
+}
+
+/// Who the public grade came from. Only AUTO_SAHIHAYN and MANUAL may be published.
+enum GradeSource {
+  AUTHORITY_LEGACY
+  AUTO_SAHIHAYN
+  MANUAL
+}
+
+enum ReferenceBook {
+  BUKHARI
+  MUSLIM
+}
+
+enum MatchDecision {
+  CANDIDATE
+  CONFIRMED
+  REJECTED
+}
+
+enum FlagType {
+  WEAK_MATCH
+  DUPLICATE_DIFFERENT_GRADE
+  QURAN_MISMATCH
+  OCR_SUSPECT
+  REFERENCE_MISMATCH
+  USER_REPORT
+}
+
+enum FlagSeverity {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum FlagOrigin {
+  AUTO
+  USER
+}
+
+enum FlagStatus {
+  OPEN
+  RESOLVED
+  DISMISSED
 }
 
 /// Scholarly rank shown on a sin. Distinct from Sin.severity (editorial weight).
@@ -76,6 +128,13 @@ enum LinkReviewStatus {
   REJECTED
 }
 
+/// A book's own chapter, mapped to one entity after the owner reviews it once.
+enum ChapterMapTarget {
+  SIN
+  GOOD_DEED
+  IMAN_BRANCH
+}
+
 model Source {
   id            String     @id @default(uuid())
   name          String
@@ -93,6 +152,7 @@ model Source {
   explanations  Explanation[] @relation("ExplanationSource")
   imanBranches  ImanBranch[]  @relation("ImanBranchSource")
   rankedSins    Sin[]         @relation("SinRankSource")
+  chapterMaps   ChapterEntityMap[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 }
@@ -113,6 +173,11 @@ model Quote {
   narrator        String?
   narratorAr      String?
   grade           HadithGrade?
+  /// Printed number in Source. Public text is formatted from this, not from the legacy string.
+  referenceNumber Int?
+  /// Odd printed marks such as (أ), or a volume/page locator such as 5/428.
+  referenceLabel  String?
+  /// Legacy free-text reference. Public responses do not read it.
   hadithReference String?
 
   bookTitle     String?
@@ -124,9 +189,24 @@ model Quote {
   volume String?
   page   String?
 
+  /// Who assigned Quote.grade, and where. Never inferred for a whole book.
+  gradeAuthority String?
+  gradeReference String?
+  /// AUTHORITY_LEGACY stays stored and is not published. AUTO_SAHIHAYN and MANUAL are.
+  gradeSource    GradeSource @default(AUTHORITY_LEGACY)
+  /// Previous authority grade, kept when a sahihayn match replaces it.
+  legacyGrade          HadithGrade?
+  legacyGradeAuthority String?
+  legacyGradeReference String?
+
   externalId  String?
   apiProvider String?
   rawPayload  Json?
+
+  /// DIGITAL: OpenITI and other keyed digital text. OCR: Document AI, hidden
+  /// until textVerifiedAt. MANUAL: seed, API, and curator entry (the default).
+  textSource     TextSource @default(MANUAL)
+  textVerifiedAt DateTime?
 
   translations  Translation[]
   tags          QuoteTag[]
@@ -135,6 +215,8 @@ model Quote {
   favorites       Favorite[]
   imanBranchLinks ImanBranchQuote[]
   explanations    Explanation[]
+  matches         HadithMatch[]
+  flags           QuoteFlag[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -148,6 +230,63 @@ model Quote {
   @@index([type, grade])
   /// D-3 / P2-17: ayah lookups within a surah (quran list/detail).
   @@index([type, surahNumber, ayahNumber])
+  /// Public routes hide OCR rows until textVerifiedAt is set.
+  @@index([textSource, textVerifiedAt])
+  @@index([gradeSource])
+}
+
+/// Matching corpus for Sahih al-Bukhari and Sahih Muslim. Not a public Quote.
+model ReferenceHadith {
+  id             String        @id @default(uuid())
+  book           ReferenceBook
+  number         Int
+  kitab          String?
+  bab            String?
+  isnadText      String
+  matnText       String
+  normalizedMatn String
+  matches        HadithMatch[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@unique([book, number])
+  @@index([book])
+}
+
+model HadithMatch {
+  id                String          @id @default(uuid())
+  quoteId           String
+  quote             Quote           @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  referenceHadithId String
+  referenceHadith   ReferenceHadith @relation(fields: [referenceHadithId], references: [id], onDelete: Cascade)
+  score             Float
+  method            String
+  decision          MatchDecision   @default(CANDIDATE)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@unique([quoteId, referenceHadithId])
+  @@index([quoteId])
+  @@index([score])
+}
+
+model QuoteFlag {
+  id         String       @id @default(uuid())
+  quoteId    String
+  quote      Quote        @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  type       FlagType
+  severity   FlagSeverity
+  source     FlagOrigin
+  status     FlagStatus   @default(OPEN)
+  details    Json?
+  note       String?
+  resolvedBy String?
+  resolvedAt DateTime?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@index([status, severity])
+  @@index([quoteId, type, status])
 }
 
 model Translation {
@@ -177,6 +316,7 @@ model Sin {
   quotes           SinQuote[]
   relatedGoodDeeds GoodDeed[] @relation("OppositeOfSin")
   imanBranches     ImanBranchSin[]
+  chapterMaps      ChapterEntityMap[]
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
 
@@ -197,6 +337,7 @@ model GoodDeed {
   oppositeSin   Sin?                 @relation("OppositeOfSin", fields: [oppositeSinId], references: [id])
   quotes        GoodDeedQuote[]
   imanBranches  ImanBranchGoodDeed[]
+  chapterMaps   ChapterEntityMap[]
   createdAt     DateTime             @default(now())
   updatedAt     DateTime             @updatedAt
 
@@ -265,8 +406,35 @@ model ImanBranch {
   goodDeeds       ImanBranchGoodDeed[]
   sins            ImanBranchSin[]
   explanations    Explanation[]
+  chapterMaps     ChapterEntityMap[]
   createdAt       DateTime             @default(now())
   updatedAt       DateTime             @updatedAt
+}
+
+/// Owner-reviewed map from a book's own chapter to one sin, deed, or branch.
+/// An importer may turn a reviewed row into ACCEPTED links, using the chapter title as the note.
+/// Similarity suggestions never write this table as reviewed.
+model ChapterEntityMap {
+  id             String           @id @default(uuid())
+  sourceId       String
+  source         Source           @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  chapterKey     String
+  chapterTitleAr String
+  targetType     ChapterMapTarget
+  sinId          String?
+  sin            Sin?             @relation(fields: [sinId], references: [id], onDelete: Cascade)
+  goodDeedId     String?
+  goodDeed       GoodDeed?        @relation(fields: [goodDeedId], references: [id], onDelete: Cascade)
+  imanBranchId   String?
+  imanBranch     ImanBranch?      @relation(fields: [imanBranchId], references: [id], onDelete: Cascade)
+  reviewed       Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([sourceId, chapterKey])
+  @@index([sinId])
+  @@index([goodDeedId])
+  @@index([imanBranchId])
 }
 
 /// Curator or suggested link: a quote that teaches this branch.

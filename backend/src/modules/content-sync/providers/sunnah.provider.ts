@@ -131,7 +131,7 @@ export class SunnahProvider implements ContentProvider {
     }
 
     const externalId = `${hadith.collection}:${hadith.hadithNumber}`;
-    const hadithReference = `${capitalize(hadith.collection)} ${hadith.hadithNumber}`;
+    const referenceNumber = Number.parseInt(String(hadith.hadithNumber), 10);
 
     const translations: { languageCode: string; text: string }[] = enEntry?.body
       ? [{ languageCode: 'en', text: enEntry.body }]
@@ -150,7 +150,9 @@ export class SunnahProvider implements ContentProvider {
         narrator: enEntry ? extractNarrator(enEntry.body) : null,
         narratorAr: extractNarratorAr(arEntry.body),
         grade,
-        hadithReference,
+        hadithReference: null,
+        referenceNumber: Number.isInteger(referenceNumber) ? referenceNumber : null,
+        referenceLabel: Number.isInteger(referenceNumber) ? null : String(hadith.hadithNumber),
         bookTitle: null,
         author: null,
         pageOrChapter: null,
@@ -183,10 +185,6 @@ export class SunnahProvider implements ContentProvider {
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function capitalize(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
 
 /**
  * Heuristic: extract narrator from the English hadith body.

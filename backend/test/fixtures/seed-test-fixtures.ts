@@ -29,7 +29,7 @@
  *   });
  */
 
-import { HadithGrade, LinkReviewStatus, PrismaClient, QuoteType, UserRole } from '@prisma/client';
+import { GradeSource, HadithGrade, LinkReviewStatus, PrismaClient, QuoteType, TextSource, UserRole } from '@prisma/client';
 import { hash as argon2hash, argon2id } from 'argon2';
 
 // ── Exported fixed IDs for test-only rows ────────────────────────────────────
@@ -41,6 +41,10 @@ export const QF_MAWDU = '00000000-0000-4000-8000-0000000000f1';
 export const QF_UNGRADED = '00000000-0000-4000-8000-0000000000f2';
 /** HADITH with grade=null — same treatment as UNGRADED */
 export const QF_NULL_GRADE = '00000000-0000-4000-8000-0000000000f3';
+/** SAHIH OCR hadith — hidden until textVerifiedAt is set. 0f4 is Q_DAIF in branches.e2e. */
+export const QF_OCR = '00000000-0000-4000-8000-0000000000f6';
+/** SAHIH OCR hadith already compared with the PDF page */
+export const QF_OCR_VERIFIED = '00000000-0000-4000-8000-0000000000f7';
 
 /** Sin with 4 opposite good deeds — for P1-8 detail assertions */
 export const SIN_TEST_MANY = 'a0000000-0000-4000-8000-0000000000f1';
@@ -100,9 +104,10 @@ export async function seedTestFixtures(): Promise<void> {
         textAr: 'هَذَا حَدِيثٌ مَوْضُوعٌ لِأَغْرَاضِ الِاخْتِبَارِ فَقَطْ',
         sourceId: SRC_BUKHARI,
         grade: HadithGrade.MAWDU,
+        gradeSource: GradeSource.MANUAL,
         hadithReference: 'TEST-MAWDU',
       },
-      update: { grade: HadithGrade.MAWDU },
+      update: { grade: HadithGrade.MAWDU, gradeSource: GradeSource.MANUAL },
     });
 
     // 2. UNGRADED hadith — visible only with includeWeak=true
@@ -114,9 +119,62 @@ export async function seedTestFixtures(): Promise<void> {
         textAr: 'هَذَا حَدِيثٌ غَيْرُ مُصَنَّفٍ لِأَغْرَاضِ الِاخْتِبَارِ فَقَطْ',
         sourceId: SRC_BUKHARI,
         grade: HadithGrade.UNGRADED,
+        gradeSource: GradeSource.MANUAL,
         hadithReference: 'TEST-UNGRADED',
       },
-      update: { grade: HadithGrade.UNGRADED },
+      update: { grade: HadithGrade.UNGRADED, gradeSource: GradeSource.MANUAL },
+    });
+
+    await prisma.quote.upsert({
+      where: { id: QF_OCR },
+      create: {
+        id: QF_OCR,
+        type: QuoteType.HADITH,
+        textAr: 'نَصٌّ مَسْرُودٌ بِالتَّعَرُّفِ الضَّوْئِيِّ لِأَغْرَاضِ الِاخْتِبَارِ فَقَطْ',
+        sourceId: SRC_BUKHARI,
+        grade: HadithGrade.SAHIH,
+        gradeSource: GradeSource.MANUAL,
+        hadithReference: 'TEST-OCR',
+        textSource: TextSource.OCR,
+        volume: '1',
+        page: '12',
+      },
+      update: { textSource: TextSource.OCR, textVerifiedAt: null, grade: HadithGrade.SAHIH, gradeSource: GradeSource.MANUAL },
+    });
+
+    await prisma.quote.upsert({
+      where: { id: QF_OCR_VERIFIED },
+      create: {
+        id: QF_OCR_VERIFIED,
+        type: QuoteType.HADITH,
+        textAr: 'نَصٌّ مَسْرُودٌ بِالتَّعَرُّفِ الضَّوْئِيِّ وَقَدْ رُوجِعَ لِأَغْرَاضِ الِاخْتِبَارِ',
+        sourceId: SRC_BUKHARI,
+        grade: HadithGrade.SAHIH,
+        gradeSource: GradeSource.MANUAL,
+        hadithReference: 'TEST-OCR-VERIFIED',
+        textSource: TextSource.OCR,
+        textVerifiedAt: new Date('2026-10-11T00:00:00.000Z'),
+        volume: '1',
+        page: '13',
+      },
+      update: {
+        textSource: TextSource.OCR,
+        textVerifiedAt: new Date('2026-10-11T00:00:00.000Z'),
+        grade: HadithGrade.SAHIH,
+        gradeSource: GradeSource.MANUAL,
+      },
+    });
+
+    await prisma.sinQuote.upsert({
+      where: { sinId_quoteId: { sinId: SIN_GHIBAH, quoteId: QF_OCR } },
+      create: {
+        sinId: SIN_GHIBAH,
+        quoteId: QF_OCR,
+        relevanceScore: 90,
+        note: 'Test-only: unverified OCR linked to ghibah — must stay hidden',
+        reviewStatus: LinkReviewStatus.ACCEPTED,
+      },
+      update: { relevanceScore: 90, reviewStatus: LinkReviewStatus.ACCEPTED },
     });
 
     // 3. HADITH with grade=null — schema allows it (grade HadithGrade?); treated same as UNGRADED
@@ -128,9 +186,10 @@ export async function seedTestFixtures(): Promise<void> {
         textAr: 'هَذَا حَدِيثٌ بِدُونِ دَرَجَةٍ لِأَغْرَاضِ الِاخْتِبَارِ فَقَطْ',
         sourceId: SRC_BUKHARI,
         hadithReference: 'TEST-NULL-GRADE',
+        gradeSource: GradeSource.MANUAL,
         // grade intentionally omitted → null
       },
-      update: { grade: null },
+      update: { grade: null, gradeSource: GradeSource.MANUAL },
     });
 
     // 4. Link MAWDU + UNGRADED to ghibah with high relevance so grade-filter specs
