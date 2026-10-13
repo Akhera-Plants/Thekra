@@ -27,6 +27,7 @@ import {
 } from '../../common/mappers/quote.mapper.js';
 import { findIdsByNormalizedArabic, findIdsByNormalizedArabicOrdered } from '../../common/text/arabic-search.js';
 import { parsePrintedReference, utcDayNumber } from '../../common/text/printed-reference.js';
+import { autoLinkExclusion } from '../classification/public-taxonomy.js';
 import { GradePolicy } from '../hadith/grade-policy.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type { EnvironmentVariables } from '../../config/env.validation.js';
@@ -111,13 +112,21 @@ export class QuotesService {
       tags: { include: { tag: true }, orderBy: { tag: { slug: 'asc' } } },
       matches: sahihaynMatchInclude,
       sinLinks: {
-        where: { reviewStatus: PUBLISHED_LINK_REVIEW_STATUS },
+        where: {
+          reviewStatus: PUBLISHED_LINK_REVIEW_STATUS,
+          sin: { origin: 'CURATED' },
+          ...autoLinkExclusion(),
+        },
         include: {
           sin: { select: { slug: true, name: true, nameAr: true } },
         },
       },
       goodDeedLinks: {
-        where: { reviewStatus: PUBLISHED_LINK_REVIEW_STATUS },
+        where: {
+          reviewStatus: PUBLISHED_LINK_REVIEW_STATUS,
+          goodDeed: { origin: 'CURATED' },
+          ...autoLinkExclusion(),
+        },
         include: {
           goodDeed: {
             select: { slug: true, name: true, nameAr: true },
@@ -289,6 +298,10 @@ export class QuotesService {
       JOIN     "Quote" q ON sq."quoteId" = q.id
       WHERE    sq.${Prisma.raw(parentKey)} = ${parentId}
         AND    sq."reviewStatus" = 'ACCEPTED'::"LinkReviewStatus"
+        AND    NOT (
+          sq.note LIKE 'باب %'
+          OR (sq.note LIKE '%تفسير السعدي%' AND COALESCE(sq."relevanceScore", 0) = 0)
+        )
       ${minScoreFilter}
       ${typeFilter}
       ${gradeFilter}
@@ -928,7 +941,8 @@ export class QuotesService {
         sinLinks: {
           some: {
             reviewStatus: PUBLISHED_LINK_REVIEW_STATUS,
-            sin: { slug: query.sinSlug },
+            sin: { slug: query.sinSlug, origin: 'CURATED' },
+            ...autoLinkExclusion(),
           },
         },
       });
@@ -938,7 +952,8 @@ export class QuotesService {
         goodDeedLinks: {
           some: {
             reviewStatus: PUBLISHED_LINK_REVIEW_STATUS,
-            goodDeed: { slug: query.goodDeedSlug },
+            goodDeed: { slug: query.goodDeedSlug, origin: 'CURATED' },
+            ...autoLinkExclusion(),
           },
         },
       });

@@ -1,6 +1,12 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { GradePolicy } from '../hadith/grade-policy.js';
+import {
+  autoLinkExclusion,
+  isAutoChapter,
+  publicAcceptedLinkWhere,
+  readerLinkNote,
+} from '../classification/public-taxonomy.js';
 import { buildPageMeta, paginated } from '../../common/dto/paginated-result.js';
 import { findIdsByNormalizedArabic } from '../../common/text/arabic-search.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
@@ -69,13 +75,12 @@ export class GoodDeedsService {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
     const locale = query.lang ?? 'ar';
-    const where: Prisma.GoodDeedWhereInput = {};
+    const where: Prisma.GoodDeedWhereInput = { origin: 'CURATED' };
+    const linkWhere = publicAcceptedLinkWhere();
 
     if (query.category) where.category = query.category;
     if (query.includeEmpty !== 'true') {
-      where.quotes = {
-        some: { reviewStatus: PUBLISHED_LINK_REVIEW_STATUS, quote: GradePolicy.readerClause() },
-      };
+      where.quotes = { some: linkWhere };
     }
     if (query.oppositeSinSlug) {
       where.oppositeSin = { slug: query.oppositeSinSlug };
@@ -95,10 +100,38 @@ export class GoodDeedsService {
       ];
     }
 
-    const orderBy: Prisma.GoodDeedOrderByWithRelationInput[] =
-      query.sort === 'quoteCount'
-        ? [{ quotes: { _count: 'desc' } }, { id: 'asc' }]
-        : [{ name: 'asc' }, { id: 'asc' }];
+    const orderBy: Prisma.GoodDeedOrderByWithRelationInput[] = [{ name: 'asc' }, { id: 'asc' }];
+    const include = {
+      oppositeSin: {
+        select: { id: true, slug: true, name: true, nameAr: true },
+      },
+      _count: {
+        select: {
+          quotes: { where: linkWhere },
+        },
+      },
+    };
+
+    if (query.sort === 'quoteCount') {
+      const ranked = await this.prisma.goodDeed.findMany({
+        where,
+        select: { id: true, _count: { select: { quotes: { where: linkWhere } } } },
+      });
+      ranked.sort((a, b) => b._count.quotes - a._count.quotes || a.id.localeCompare(b.id));
+      const pageIds = ranked.slice((page - 1) * limit, page * limit).map((row) => row.id);
+      const rows = pageIds.length === 0
+        ? []
+        : await this.prisma.goodDeed.findMany({ where: { id: { in: pageIds } }, include });
+      const order = new Map(pageIds.map((id, index) => [id, index]));
+      rows.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+      return paginated(
+        rows.map((row) => this.toDto(row)),
+        page,
+        limit,
+        ranked.length,
+        { locale },
+      );
+    }
 
     const [rows, total] = await this.prisma.$transaction([
       this.prisma.goodDeed.findMany({
@@ -106,16 +139,7 @@ export class GoodDeedsService {
         orderBy,
         skip: (page - 1) * limit,
         take: limit,
-        include: {
-          oppositeSin: {
-            select: { id: true, slug: true, name: true, nameAr: true },
-          },
-          _count: {
-            select: {
-              quotes: { where: { reviewStatus: PUBLISHED_LINK_REVIEW_STATUS, quote: GradePolicy.readerClause() } },
-            },
-          },
-        },
+        include,
       }),
       this.prisma.goodDeed.count({ where }),
     ]);
@@ -138,12 +162,12 @@ export class GoodDeedsService {
         },
         _count: {
             select: {
-              quotes: { where: { reviewStatus: PUBLISHED_LINK_REVIEW_STATUS, quote: GradePolicy.readerClause() } },
+              quotes: { where: publicAcceptedLinkWhere() },
             },
           },
       },
     });
-    if (!row) {
+    if (!row || isAutoChapter(row.origin)) {
       throw new NotFoundException({
         code: 'RESOURCE_NOT_FOUND',
         message: 'Good deed not found',
@@ -218,7 +242,7 @@ export class GoodDeedsService {
 
   async findByOppositeSinId(sinId: string, take?: number): Promise<GoodDeedSummary[]> {
     const rows = await this.prisma.goodDeed.findMany({
-      where: { oppositeSinId: sinId },
+      where: { oppositeSinId: sinId, origin: 'CURATED' },
       ...(take !== undefined ? { take } : {}),
       orderBy: [{ name: 'asc' }, { id: 'asc' }],
       select: {
@@ -242,7 +266,7 @@ export class GoodDeedsService {
         },
       },
     });
-    if (!deed) {
+    if (!deed || isAutoChapter(deed.origin)) {
       throw new NotFoundException({
         code: 'RESOURCE_NOT_FOUND',
         message: 'Good deed not found',
@@ -259,6 +283,7 @@ export class GoodDeedsService {
     const where: Prisma.GoodDeedQuoteWhereInput = {
       goodDeedId: deed.id,
       reviewStatus: PUBLISHED_LINK_REVIEW_STATUS,
+      ...autoLinkExclusion(),
       ...(query.minScore !== undefined && {
         relevanceScore: { gte: query.minScore },
       }),
@@ -328,7 +353,7 @@ export class GoodDeedsService {
         data: {
           goodDeed: goodDeedPayload,
           items: rows.map((row) => ({
-            link: { id: row.id, relevanceScore: row.relevanceScore, note: row.note },
+            link: { id: row.id, relevanceScore: row.relevanceScore, note: readerLinkNote(row.note) },
             quote: this.quotes.toQuoteDto(row.quote, locale),
           })),
         },
@@ -367,7 +392,7 @@ export class GoodDeedsService {
           link: {
             id: row.id,
             relevanceScore: row.relevanceScore,
-            note: row.note,
+            note: readerLinkNote(row.note),
           },
           quote: this.quotes.toQuoteDto(row.quote, locale),
         })),

@@ -7,6 +7,12 @@ import {
 } from '@nestjs/common';
 import { Prisma, type SinRank } from '@prisma/client';
 import { GradePolicy } from '../hadith/grade-policy.js';
+import {
+  autoLinkExclusion,
+  isAutoChapter,
+  publicAcceptedLinkWhere,
+  readerLinkNote,
+} from '../classification/public-taxonomy.js';
 import { buildPageMeta, paginated } from '../../common/dto/paginated-result.js';
 import { findIdsByNormalizedArabic } from '../../common/text/arabic-search.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
@@ -28,7 +34,7 @@ import type { SinDetailDto, SinDto } from './entities/sin.entity.js';
 const SIN_READ_INCLUDE = {
   rankSource: { select: { id: true, name: true, nameAr: true } },
   _count: {
-    select: { quotes: { where: { reviewStatus: PUBLISHED_LINK_REVIEW_STATUS, quote: GradePolicy.readerClause() } } },
+    select: { quotes: { where: publicAcceptedLinkWhere() } },
   },
 } satisfies Prisma.SinInclude;
 
@@ -77,18 +83,20 @@ export class SinsService {
     };
   }
 
-  async findAll(query: SinsQueryDto) {
+  async findAll(query: SinsQueryDto, scope: 'public' | 'admin' = 'public') {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
     const locale = query.lang ?? 'ar';
     const where: Prisma.SinWhereInput = {};
+    const linkWhere = scope === 'public'
+      ? publicAcceptedLinkWhere()
+      : { reviewStatus: PUBLISHED_LINK_REVIEW_STATUS, quote: GradePolicy.readerClause() };
 
+    if (scope === 'public') where.origin = 'CURATED';
     if (query.category) where.category = query.category;
     if (query.rank) where.rank = query.rank;
     if (query.includeEmpty !== 'true') {
-      where.quotes = {
-        some: { reviewStatus: PUBLISHED_LINK_REVIEW_STATUS, quote: GradePolicy.readerClause() },
-      };
+      where.quotes = { some: linkWhere };
     }
     if (query.q) {
       // Arabic field: match via DB-side normalisation (strips tashkeel, folds alef/ya/ta-marbuta)
@@ -106,9 +114,34 @@ export class SinsService {
     }
 
     const orderBy: Prisma.SinOrderByWithRelationInput[] =
-      query.sort === 'quoteCount'
+      query.sort === 'quoteCount' && scope === 'admin'
         ? [{ quotes: { _count: 'desc' } }, { id: 'asc' }]
         : [{ name: 'asc' }, { id: 'asc' }];
+    const include = {
+      ...SIN_READ_INCLUDE,
+      _count: { select: { quotes: { where: linkWhere } } },
+    };
+
+    if (query.sort === 'quoteCount' && scope === 'public') {
+      const ranked = await this.prisma.sin.findMany({
+        where,
+        select: { id: true, _count: { select: { quotes: { where: linkWhere } } } },
+      });
+      ranked.sort((a, b) => b._count.quotes - a._count.quotes || a.id.localeCompare(b.id));
+      const pageIds = ranked.slice((page - 1) * limit, page * limit).map((row) => row.id);
+      const rows = pageIds.length === 0
+        ? []
+        : await this.prisma.sin.findMany({ where: { id: { in: pageIds } }, include });
+      const order = new Map(pageIds.map((id, index) => [id, index]));
+      rows.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+      return paginated(
+        rows.map((row) => this.toDto(row)),
+        page,
+        limit,
+        ranked.length,
+        { locale },
+      );
+    }
 
     const [rows, total] = await this.prisma.$transaction([
       this.prisma.sin.findMany({
@@ -116,7 +149,7 @@ export class SinsService {
         orderBy,
         skip: (page - 1) * limit,
         take: limit,
-        include: SIN_READ_INCLUDE,
+        include,
       }),
       this.prisma.sin.count({ where }),
     ]);
@@ -135,7 +168,7 @@ export class SinsService {
       where: { slug },
       include: SIN_READ_INCLUDE,
     });
-    if (!row) {
+    if (!row || isAutoChapter(row.origin)) {
       throw new NotFoundException({
         code: 'RESOURCE_NOT_FOUND',
         message: 'Sin not found',
@@ -153,7 +186,7 @@ export class SinsService {
 
   async findQuotesForSin(slug: string, query: SinQuotesQueryDto) {
     const sin = await this.prisma.sin.findUnique({ where: { slug } });
-    if (!sin) {
+    if (!sin || isAutoChapter(sin.origin)) {
       throw new NotFoundException({
         code: 'RESOURCE_NOT_FOUND',
         message: 'Sin not found',
@@ -170,6 +203,7 @@ export class SinsService {
     const where: Prisma.SinQuoteWhereInput = {
       sinId: sin.id,
       reviewStatus: PUBLISHED_LINK_REVIEW_STATUS,
+      ...autoLinkExclusion(),
       ...(query.minScore !== undefined && {
         relevanceScore: { gte: query.minScore },
       }),
@@ -184,7 +218,7 @@ export class SinsService {
       _count: { _all: true },
     });
     const alternativesQ = this.prisma.goodDeed.findMany({
-      where: { oppositeSinId: sin.id },
+      where: { oppositeSinId: sin.id, origin: 'CURATED' },
       take: 3,
       orderBy: [{ name: 'asc' }, { id: 'asc' }],
       select: {
@@ -250,7 +284,7 @@ export class SinsService {
             descriptionAr: sin.descriptionAr,
           },
           items: rows.map((row) => ({
-            link: { id: row.id, relevanceScore: row.relevanceScore, note: row.note },
+            link: { id: row.id, relevanceScore: row.relevanceScore, note: readerLinkNote(row.note) },
             quote: this.quotes.toQuoteDto(row.quote, locale),
           })),
           alternatives,
@@ -299,7 +333,7 @@ export class SinsService {
           link: {
             id: row.id,
             relevanceScore: row.relevanceScore,
-            note: row.note,
+            note: readerLinkNote(row.note),
           },
           quote: this.quotes.toQuoteDto(row.quote, locale),
         })),
@@ -327,7 +361,7 @@ export class SinsService {
   }
 
   async adminList(query: SinsQueryDto) {
-    const result = await this.findAll(query);
+    const result = await this.findAll(query, 'admin');
     const rows = await this.prisma.sin.findMany({
       where: { id: { in: result.data.map((sin) => sin.id) } },
       select: { id: true, severity: true },
@@ -417,13 +451,13 @@ export class SinsService {
 
   async findGoodDeedsForSin(slug: string, page = 1, limit = 20, locale = 'ar') {
     const sin = await this.prisma.sin.findUnique({ where: { slug } });
-    if (!sin) {
+    if (!sin || isAutoChapter(sin.origin)) {
       throw new NotFoundException({
         code: 'RESOURCE_NOT_FOUND',
         message: 'Sin not found',
       });
     }
-    const where = { oppositeSinId: sin.id };
+    const where = { oppositeSinId: sin.id, origin: 'CURATED' as const };
     const [rows, total] = await this.prisma.$transaction([
       this.prisma.goodDeed.findMany({
         where,
@@ -436,7 +470,7 @@ export class SinsService {
           },
           _count: {
             select: {
-              quotes: { where: { reviewStatus: PUBLISHED_LINK_REVIEW_STATUS, quote: GradePolicy.readerClause() } },
+              quotes: { where: publicAcceptedLinkWhere() },
             },
           },
         },

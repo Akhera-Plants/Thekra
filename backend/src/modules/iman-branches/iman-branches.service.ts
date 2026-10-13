@@ -110,10 +110,12 @@ export class ImanBranchesService {
           },
         },
         goodDeeds: {
+          where: { goodDeed: { origin: 'CURATED' } },
           orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
           include: { goodDeed: { select: { slug: true, name: true, nameAr: true } } },
         },
         sins: {
+          where: { sin: { origin: 'CURATED' } },
           orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
           include: { sin: { select: { slug: true, name: true, nameAr: true, rank: true } } },
         },
