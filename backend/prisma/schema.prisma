@@ -42,6 +42,24 @@ enum TextSource {
   MANUAL
 }
 
+/// A heading in a printed book. The reviewer's taxonomy is built from these rows.
+enum BookLevel {
+  KITAB
+  BAB
+  FASL
+  TARGHIB
+  TARHIB
+  KABIRA
+  BRANCH
+  OTHER
+}
+
+enum SectionItemKind {
+  AYAH
+  HADITH
+  AUTHOR_TEXT
+}
+
 enum TagCategory {
   SIN
   GOOD_DEED
@@ -169,6 +187,7 @@ model Source {
   imanBranches  ImanBranch[]  @relation("ImanBranchSource")
   rankedSins    Sin[]         @relation("SinRankSource")
   chapterMaps   ChapterEntityMap[]
+  bookSections  BookSection[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 }
@@ -233,6 +252,7 @@ model Quote {
   explanations    Explanation[]
   matches         HadithMatch[]
   flags           QuoteFlag[]
+  sectionItems    SectionItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -249,6 +269,47 @@ model Quote {
   /// Public routes hide OCR rows until textVerifiedAt is set.
   @@index([textSource, textVerifiedAt])
   @@index([gradeSource])
+}
+
+/// One heading in a book, in the order the author printed it.
+model BookSection {
+  id       String        @id @default(uuid())
+  sourceId String
+  source   Source        @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  parentId String?
+  parent   BookSection?  @relation("BookSectionTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children BookSection[] @relation("BookSectionTree")
+  level    BookLevel
+  /// Printed number, when the heading has one. Null for an unnumbered bab.
+  number   String?
+  titleAr  String
+  /// Position in the book, starting at 1.
+  order    Int
+  volume   String?
+  page     String?
+  items    SectionItem[]
+
+  @@unique([sourceId, order])
+  @@index([parentId])
+}
+
+/// One ayah, narration, or author paragraph inside a section, in the author's order.
+model SectionItem {
+  id        String          @id @default(uuid())
+  sectionId String
+  section   BookSection     @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  /// Position inside the section, starting at 1.
+  order     Int
+  kind      SectionItemKind
+  /// Hadith and author text, and the canonical Quran verse for an ayah.
+  quoteId   String?
+  quote     Quote?          @relation(fields: [quoteId], references: [id], onDelete: SetNull)
+  /// Verse key, for example 49:12. ayahTo equals ayahFrom for a single verse.
+  ayahFrom  String?
+  ayahTo    String?
+
+  @@unique([sectionId, order])
+  @@index([quoteId])
 }
 
 /// Numbered corpus for Sahih al-Bukhari and Sahih Muslim. Public Quotes link here.

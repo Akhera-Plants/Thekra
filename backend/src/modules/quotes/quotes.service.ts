@@ -503,6 +503,7 @@ export class QuotesService {
     gradeSource: GradeSource;
     textSource: TextSource;
     textVerifiedAt: Date | null;
+    apiProvider: string | null;
   }): Promise<void> {
     const hidden = await this.prisma.quoteFlag.count({
       where: { quoteId: row.id, status: 'OPEN', severity: 'HIGH' },
@@ -511,6 +512,7 @@ export class QuotesService {
       (row.type === QuoteType.HADITH && row.grade === HadithGrade.MAWDU)
       || !GradePolicy.isPublicText(row)
       || !GradePolicy.isPublishable(row)
+      || (row.apiProvider === 'book-structure' && row.type === QuoteType.BOOK_EXCERPT)
       || hidden > 0
     ) {
       throw new NotFoundException({
@@ -1007,6 +1009,7 @@ export class QuotesService {
         gradeSource: true,
         textSource: true,
         textVerifiedAt: true,
+        apiProvider: true,
       },
     });
     if (!quote) {

@@ -10,6 +10,7 @@ import { runQuranImport } from './quran/import.js';
 import { runAshurImport } from './tafsir/ashur-import.js';
 import { runSadiImport } from './tafsir/sadi.js';
 import { runDigitalImport } from './digital/import.js';
+import { runStructureImport } from './structure/import.js';
 import { runMinhajImport, runRiyadImport, runTarghibImport, runZuhdImport } from './waqfeya/import.js';
 
 const WORKS: Record<string, (options: ImportOptions) => Promise<void>> = {
@@ -25,6 +26,7 @@ const WORKS: Record<string, (options: ImportOptions) => Promise<void>> = {
   sahihayn: publishSahihayn,
   quran: runQuranImport,
   classify: runClassify,
+  structure: runStructureImport,
   sadi: runSadiImport,
   ashur: runAshurImport,
 };

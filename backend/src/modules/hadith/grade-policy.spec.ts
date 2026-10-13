@@ -53,7 +53,11 @@ describe('GradePolicy', () => {
       expect(GradePolicy.isPublishable({ type: QuoteType.HADITH, gradeSource: GradeSource.AUTHORITY_LEGACY })).toBe(false);
       expect(GradePolicy.isPublishable({ type: QuoteType.QURAN_VERSE, gradeSource: GradeSource.AUTHORITY_LEGACY })).toBe(true);
       expect(GradePolicy.readerClause()).toEqual({
-        AND: [GradePolicy.publicTextClause(), GradePolicy.publishableClause()],
+        AND: [
+          GradePolicy.publicTextClause(),
+          GradePolicy.publishableClause(),
+          { NOT: { apiProvider: 'book-structure', type: QuoteType.BOOK_EXCERPT } },
+        ],
       });
     });
   });

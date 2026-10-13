@@ -102,7 +102,14 @@ export class GradePolicy {
   }
 
   static readerClause(): Prisma.QuoteWhereInput {
-    return { AND: [this.publicTextClause(), this.publishableClause()] };
+    return {
+      AND: [
+        this.publicTextClause(),
+        this.publishableClause(),
+        // The book-structure import stores the author's commentary here. It is not a public text.
+        { NOT: { apiProvider: 'book-structure', type: QuoteType.BOOK_EXCERPT } },
+      ],
+    };
   }
 
   static isPublishable(row: { type: QuoteType; gradeSource: GradeSource }): boolean {
