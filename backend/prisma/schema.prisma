@@ -140,6 +140,31 @@ enum SinRank {
 enum EntityOrigin {
   CURATED
   AUTO_CHAPTER
+  TAXONOMY
+}
+
+/// Why a quote is linked to a topic.
+enum LinkBasis {
+  CHAPTER
+  CHAPTER_AYAH
+  TAKHRIJ
+  AUTHOR_CITATION
+  REVIEWER_SECTION
+  AI_ITEM
+  KEYWORD_PROPOSAL
+  MANUAL
+}
+
+/// Who classified the link: the book's own tabwib, the reviewer, or the item pass.
+enum ClassifiedBy {
+  BOOK
+  REVIEWER
+  AI
+}
+
+enum TopicSide {
+  AVOID
+  DO
 }
 
 enum ExplanationKind {
@@ -288,6 +313,8 @@ model BookSection {
   volume   String?
   page     String?
   items    SectionItem[]
+  sinQuotes SinQuote[]
+  goodDeedQuotes GoodDeedQuote[]
 
   @@unique([sourceId, order])
   @@index([parentId])
@@ -376,6 +403,15 @@ model Translation {
   @@unique([quoteId, languageCode])
 }
 
+model TopicDomain {
+  key        String     @id
+  nameAr     String
+  nameEn     String
+  order      Int
+  sins       Sin[]
+  goodDeeds  GoodDeed[]
+}
+
 model Sin {
   id               String     @id @default(uuid())
   name             String
@@ -388,17 +424,31 @@ model Sin {
   /// Null until a curator classifies the sin. Never derived from severity.
   rank             SinRank?
   origin           EntityOrigin @default(CURATED)
+  domainKey        String?
+  domain           TopicDomain? @relation(fields: [domainKey], references: [key])
+  isContemporary   Boolean      @default(false)
+  /// Hidden topics stay out of every public response until the owner unhides them.
+  isHidden         Boolean      @default(false)
+  /// False topics stay usable (tark-lillah) and are omitted from lists.
+  isListed         Boolean      @default(true)
+  taxonomyOrder    Int          @default(0)
+  oppositeGoodDeedId String?
+  oppositeGoodDeed   GoodDeed?  @relation("OppositeOfGoodDeed", fields: [oppositeGoodDeedId], references: [id])
   rankSourceId     String?
   rankSource       Source?    @relation("SinRankSource", fields: [rankSourceId], references: [id])
   rankReference    String?
   quotes           SinQuote[]
   relatedGoodDeeds GoodDeed[] @relation("OppositeOfSin")
+  derivationsFrom  TopicDerivation[] @relation("DerivationFromSin")
+  derivationsTo    TopicDerivation[] @relation("DerivationToSin")
   imanBranches     ImanBranchSin[]
   chapterMaps      ChapterEntityMap[]
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
 
   @@index([rank])
+  @@index([domainKey])
+  @@index([oppositeGoodDeedId])
 }
 
 model GoodDeed {
@@ -412,16 +462,25 @@ model GoodDeed {
   reward        String?
   rewardAr      String?
   origin        EntityOrigin @default(CURATED)
+  domainKey     String?
+  domain        TopicDomain? @relation(fields: [domainKey], references: [key])
+  isContemporary Boolean     @default(false)
+  isHidden      Boolean      @default(false)
+  isListed      Boolean      @default(true)
+  taxonomyOrder Int          @default(0)
   oppositeSinId String?
   oppositeSin   Sin?                 @relation("OppositeOfSin", fields: [oppositeSinId], references: [id])
+  oppositeOf    Sin[]                @relation("OppositeOfGoodDeed")
   quotes        GoodDeedQuote[]
+  derivationsFrom TopicDerivation[] @relation("DerivationFromDeed")
+  derivationsTo   TopicDerivation[] @relation("DerivationToDeed")
   imanBranches  ImanBranchGoodDeed[]
   chapterMaps   ChapterEntityMap[]
   createdAt     DateTime             @default(now())
   updatedAt     DateTime             @updatedAt
 
-  /// D-3 / P2-17: supports GET /sins/:slug (relatedGoodDeeds) and /sins/:slug/quotes (alternatives).
   @@index([oppositeSinId])
+  @@index([domainKey])
 }
 
 model SinQuote {
@@ -432,9 +491,11 @@ model SinQuote {
   quote          Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
   relevanceScore Int?              @default(0)
   note           String?
-  /// Suggested links stay NOT_REVIEWED until a human accepts them.
-  /// Existing curated rows were backfilled to ACCEPTED.
   reviewStatus   LinkReviewStatus @default(NOT_REVIEWED)
+  basis          LinkBasis        @default(MANUAL)
+  classifiedBy   ClassifiedBy     @default(BOOK)
+  sectionId      String?
+  section        BookSection?     @relation(fields: [sectionId], references: [id], onDelete: SetNull)
   /// D-2: added for admin sort=newest and curator audit trail.
   createdAt      DateTime         @default(now())
   /// D-2: added for curator audit trail.
@@ -445,6 +506,8 @@ model SinQuote {
   @@index([quoteId])
   /// D-3: composite index supporting the core reminder loop (filter by sin, sort by score).
   @@index([sinId, relevanceScore(sort: Desc, nulls: Last)])
+  @@index([sectionId])
+  @@index([classifiedBy])
 }
 
 model GoodDeedQuote {
@@ -455,9 +518,11 @@ model GoodDeedQuote {
   quote          Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
   relevanceScore Int?              @default(0)
   note           String?
-  /// Suggested links stay NOT_REVIEWED until a human accepts them.
-  /// Existing curated rows were backfilled to ACCEPTED.
   reviewStatus   LinkReviewStatus @default(NOT_REVIEWED)
+  basis          LinkBasis        @default(MANUAL)
+  classifiedBy   ClassifiedBy     @default(BOOK)
+  sectionId      String?
+  section        BookSection?     @relation(fields: [sectionId], references: [id], onDelete: SetNull)
   /// D-2: added for admin sort=newest and curator audit trail.
   createdAt      DateTime         @default(now())
   /// D-2: added for curator audit trail.
@@ -468,6 +533,39 @@ model GoodDeedQuote {
   @@index([quoteId])
   /// D-3: composite index supporting the core reminder loop (filter by deed, sort by score).
   @@index([goodDeedId, relevanceScore(sort: Desc, nulls: Last)])
+  @@index([sectionId])
+  @@index([classifiedBy])
+}
+
+/// A contemporary topic draws its public texts from one or more classical topics.
+/// Exactly one "from" and one "to" are set (SQL CHECK). Either side may be a sin or a deed.
+model TopicDerivation {
+  id              String    @id @default(uuid())
+  fromSinId       String?
+  fromSin         Sin?      @relation("DerivationFromSin", fields: [fromSinId], references: [id], onDelete: Cascade)
+  fromGoodDeedId  String?
+  fromGoodDeed    GoodDeed? @relation("DerivationFromDeed", fields: [fromGoodDeedId], references: [id], onDelete: Cascade)
+  toSinId         String?
+  toSin           Sin?      @relation("DerivationToSin", fields: [toSinId], references: [id], onDelete: Cascade)
+  toGoodDeedId    String?
+  toGoodDeed      GoodDeed? @relation("DerivationToDeed", fields: [toGoodDeedId], references: [id], onDelete: Cascade)
+
+  @@index([fromSinId])
+  @@index([fromGoodDeedId])
+  @@index([toSinId])
+  @@index([toGoodDeedId])
+}
+
+/// Deferred akhlaq label. One row per virtue and the topic it names.
+model TopicLabel {
+  id       String    @id @default(uuid())
+  labelKey String
+  labelAr  String
+  side     TopicSide
+  slug     String
+
+  @@unique([labelKey, side, slug])
+  @@index([slug])
 }
 
 /// One شعبة of faith. Numbering follows an edition the owner still has to confirm.
