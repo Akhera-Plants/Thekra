@@ -35,7 +35,7 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
     getCatalogSources({ limit: 100, lang }).then((result) => result.data).catch(() => []),
   ]);
 
-  const heavy = sins.filter((sin) => sin.quoteCount > 0);
+  const heavy = sins.filter((sin) => sin.quoteCount > 0).slice(0, 8);
   const publishedDeeds = deeds
     .filter((deed) => deed.quoteCount > 0)
     .slice()

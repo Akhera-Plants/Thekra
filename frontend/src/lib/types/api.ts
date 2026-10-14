@@ -137,6 +137,8 @@ export interface SinDto {
   quoteCount: number;
   createdAt: string;
   updatedAt: string;
+  isContemporary?: boolean;
+  branches?: { number: number; titleAr: string }[];
 }
 
 export interface GoodDeedSummaryDto {
@@ -167,12 +169,29 @@ export interface GoodDeedDto {
   quoteCount: number;
   createdAt: string;
   updatedAt: string;
+  isContemporary?: boolean;
+  branches?: { number: number; titleAr: string }[];
 }
 
 export interface QuoteLinkDto {
   id: string;
   relevanceScore: number | null;
   note: string | null;
+  classifiedBy?: string;
+  reviewLabel?: string | null;
+  band?: 'ayah' | 'sahihayn' | 'other';
+}
+
+export interface TopicText {
+  link: QuoteLinkDto;
+  quote: QuoteDto;
+}
+
+export interface TopicGroup {
+  slug: string;
+  nameAr: string;
+  side: 'AVOID' | 'DO';
+  items: TopicText[];
 }
 
 export interface SinQuotesResponse {
@@ -186,10 +205,9 @@ export interface SinQuotesResponse {
     | 'description'
     | 'descriptionAr'
   >;
-  items: Array<{
-    link: QuoteLinkDto;
-    quote: QuoteDto;
-  }>;
+  items: TopicText[];
+  companion?: { items: TopicText[] };
+  derived?: TopicGroup[];
   alternatives: GoodDeedSummaryDto[];
 }
 
@@ -281,7 +299,9 @@ export interface GoodDeedQuotesResponse {
     | 'description'
     | 'descriptionAr'
   >;
-  items: Array<{ link: QuoteLinkDto; quote: QuoteDto }>;
+  items: TopicText[];
+  companion?: { items: TopicText[] };
+  derived?: TopicGroup[];
 }
 
 export interface GoodDeedQuotesMeta extends PageMeta {

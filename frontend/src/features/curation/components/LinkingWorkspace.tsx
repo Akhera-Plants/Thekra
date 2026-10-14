@@ -22,6 +22,7 @@ import {
   useAdminLinkSinQuote,
   useAdminSinQuotes,
   useAdminBulkLinkSinQuotes,
+  useAdminRevokeSinGroup,
 } from '../hooks/useAdminClassification';
 import { AdminDataTable, type ColumnDef } from './AdminDataTable';
 import { Button } from '@/components/ui/button';
@@ -167,6 +168,11 @@ export function LinkingWorkspace() {
   // ── Mutations ─────────────────────────────────────────────────────────────
   const { mutate: linkOne, isPending: isLinking } = useAdminLinkSinQuote();
   const { mutate: bulkLink, isPending: isBulking } = useAdminBulkLinkSinQuotes();
+  const { mutate: revokeGroup, isPending: isRevoking } = useAdminRevokeSinGroup();
+  const [classifiedBy, setClassifiedBy] = useState<'BOOK' | 'REVIEWER' | 'AI'>('REVIEWER');
+  const { data: groupData } = useAdminSinQuotes(
+    selectedSinId ? { sinId: selectedSinId, classifiedBy, limit: 1 } : {},
+  );
 
   function handleLink(quoteId: string) {
     const row = getRow(quoteId);
@@ -312,6 +318,35 @@ export function LinkingWorkspace() {
           </SelectContent>
         </Select>
       </div>
+
+      {selectedSinId ? (
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="classified-by" className="text-sm font-medium">{t('linking.classifiedBy')}</label>
+            <Select value={classifiedBy} onValueChange={(value) => setClassifiedBy(value as 'BOOK' | 'REVIEWER' | 'AI')}>
+              <SelectTrigger id="classified-by" className="w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="BOOK">{t('linking.classifiedBook')}</SelectItem>
+                <SelectItem value="REVIEWER">{t('linking.classifiedReviewer')}</SelectItem>
+                <SelectItem value="AI">{t('linking.classifiedAi')}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <p className="text-sm text-muted-foreground">{groupData?.meta?.total ?? 0}</p>
+          {classifiedBy !== 'BOOK' ? (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isRevoking}
+              onClick={() => revokeGroup({ sinId: selectedSinId, classifiedBy })}
+            >
+              {t('linking.revokeGroup')}
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
 
       {selectedSin && (
         <>

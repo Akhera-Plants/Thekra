@@ -534,6 +534,7 @@ export class ClassificationService {
     if (query.hasNote === true) and.push({ note: { not: null } });
     if (query.hasNote === false) and.push({ note: null });
     if (query.reviewStatus) and.push({ reviewStatus: query.reviewStatus });
+    if (query.classifiedBy) and.push({ classifiedBy: query.classifiedBy });
     return and.length ? { AND: and } : {};
   }
 
@@ -546,6 +547,25 @@ export class ClassificationService {
     if (query.hasNote === true) and.push({ note: { not: null } });
     if (query.hasNote === false) and.push({ note: null });
     if (query.reviewStatus) and.push({ reviewStatus: query.reviewStatus });
+    if (query.classifiedBy) and.push({ classifiedBy: query.classifiedBy });
     return and.length ? { AND: and } : {};
+  }
+
+  async revokeSinGroup(sinId: string, classifiedBy: 'REVIEWER' | 'AI') {
+    await this.assertSinExists(sinId);
+    const result = await this.prisma.sinQuote.updateMany({
+      where: { sinId, classifiedBy, reviewStatus: { not: 'REJECTED' } },
+      data: { reviewStatus: 'REJECTED' },
+    });
+    return { revoked: result.count };
+  }
+
+  async revokeGoodDeedGroup(goodDeedId: string, classifiedBy: 'REVIEWER' | 'AI') {
+    await this.assertGoodDeedExists(goodDeedId);
+    const result = await this.prisma.goodDeedQuote.updateMany({
+      where: { goodDeedId, classifiedBy, reviewStatus: { not: 'REJECTED' } },
+      data: { reviewStatus: 'REJECTED' },
+    });
+    return { revoked: result.count };
   }
 }

@@ -34,6 +34,9 @@ describe('SinsService', () => {
     goodDeed: {
       findMany: vi.fn(),
     },
+    goodDeedQuote: {
+      findMany: vi.fn().mockResolvedValue([]),
+    },
     $transaction: vi.fn(),
   };
 
@@ -100,7 +103,7 @@ describe('SinsService', () => {
     ).rejects.toBeInstanceOf(NotFoundException);
   });
 
-  it('orders by relevanceScore desc with nulls last (normal path)', async () => {
+  it('loads the reading fields and pages them in the ayah, Sahihayn, hadith order', async () => {
     prisma.sin.findUnique.mockResolvedValue(SIN);
     prisma.sinQuote.findMany.mockResolvedValue([]);
     prisma.sinQuote.count.mockResolvedValue(0);
@@ -109,14 +112,9 @@ describe('SinsService', () => {
     prisma.$transaction.mockImplementation(async (ops) => Promise.all(ops));
 
     await service.findQuotesForSin('ghibah', {});
-    expect(quotes.linkOrderBy).toHaveBeenCalled();
     expect(prisma.sinQuote.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        orderBy: expect.arrayContaining([
-          expect.objectContaining({
-            relevanceScore: { sort: 'desc', nulls: 'last' },
-          }),
-        ]),
+        select: expect.objectContaining({ basis: true, quoteId: true }),
       }),
     );
   });

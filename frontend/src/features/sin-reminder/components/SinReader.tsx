@@ -1,22 +1,24 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { ReminderReader, type ReaderItem } from '@/components/shared/editorial/ReminderReader';
+import { ReminderReader, type ReaderItem, type ReaderSection } from '@/components/shared/editorial/ReminderReader';
 import { getSinQuotes } from '@/lib/api/sins';
 
 interface SinReaderProps {
   slug: string;
   items: ReaderItem[];
   total: number;
+  sections?: ReaderSection[];
 }
 
-export function SinReader({ slug, items, total }: SinReaderProps) {
+export function SinReader({ slug, items, total, sections }: SinReaderProps) {
   const t = useTranslations('sinDetail');
 
   return (
     <ReminderReader
       items={items}
       total={total}
+      sections={sections}
       intent="sin"
       labels={{
         another: t('anotherReminder'),

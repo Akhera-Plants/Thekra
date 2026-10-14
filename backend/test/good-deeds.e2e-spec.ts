@@ -142,16 +142,15 @@ describe('Good-deeds endpoints (e2e)', () => {
     // DAIF/UNGRADED can appear when includeWeak=true
   });
 
-  it('GET /v1/good-deeds/hifz-al-lisan/quotes → items ordered by relevanceScore desc', async () => {
+  it('GET /v1/good-deeds/hifz-al-lisan/quotes → ayah, then Sahihayn, then other texts', async () => {
     const res = await request(app.getHttpServer())
       .get('/v1/good-deeds/hifz-al-lisan/quotes?limit=50')
       .expect(200);
-    const scores: Array<number | null> = res.body.data.items.map(
-      (i: { link: { relevanceScore: number | null } }) => i.link.relevanceScore,
-    );
-    const nonNull = scores.filter((s): s is number => s !== null);
-    for (let i = 1; i < nonNull.length; i++) {
-      expect(nonNull[i]!).toBeLessThanOrEqual(nonNull[i - 1]!);
+    const items = res.body.data.items as Array<{ link: { band?: string; relevanceScore: number | null } }>;
+    const rank = (band: string | undefined) => (band === 'ayah' ? 0 : band === 'sahihayn' ? 1 : 2);
+    const bands = items.map((item) => rank(item.link.band));
+    for (let i = 1; i < bands.length; i += 1) {
+      expect(bands[i]).toBeGreaterThanOrEqual(bands[i - 1] ?? 0);
     }
   });
 

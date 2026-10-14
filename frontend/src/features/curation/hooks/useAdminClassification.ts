@@ -10,6 +10,7 @@ import {
   adminUpdateSinLink,
   adminUnlinkSinQuote,
   adminBulkLinkSinQuotes,
+  adminRevokeSinGroup,
   adminListGoodDeedQuotes,
   adminLinkGoodDeedQuote,
   adminUnlinkGoodDeedQuote,
@@ -72,6 +73,19 @@ export function useAdminUnlinkSinQuote() {
       toast.success(t('linking.unlinkSuccess'));
     },
     onError: () => toast.error(t('linking.unlinkError')),
+  });
+}
+
+export function useAdminRevokeSinGroup() {
+  const qc = useQueryClient();
+  const t = useTranslations('admin');
+  return useMutation({
+    mutationFn: adminRevokeSinGroup,
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.adminSinQuotes.all });
+      toast.success(t('linking.revokeSuccess'));
+    },
+    onError: () => toast.error(t('linking.revokeError')),
   });
 }
 

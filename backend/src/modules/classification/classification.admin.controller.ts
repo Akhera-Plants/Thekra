@@ -21,6 +21,7 @@ import { BulkLinkSinQuotesDto } from './dto/bulk-link-sin-quotes.dto.js';
 import { GoodDeedQuotesAdminQueryDto } from './dto/good-deed-quotes-admin-query.dto.js';
 import { LinkGoodDeedQuoteDto } from './dto/link-good-deed-quote.dto.js';
 import { LinkSinQuoteDto } from './dto/link-sin-quote.dto.js';
+import { RevokeGoodDeedGroupDto, RevokeSinGroupDto } from './dto/revoke-link-group.dto.js';
 import { SinQuotesAdminQueryDto } from './dto/sin-quotes-admin-query.dto.js';
 import { UpdateGoodDeedLinkDto } from './dto/update-good-deed-link.dto.js';
 import { UpdateSinLinkDto } from './dto/update-sin-link.dto.js';
@@ -72,6 +73,12 @@ export class SinQuotesAdminController {
   bulkLinkSinQuotes(@Body() dto: BulkLinkSinQuotesDto) {
     return this.classificationService.bulkLinkSinQuotes(dto);
   }
+
+  @Post('revoke')
+  @HttpCode(HttpStatus.OK)
+  revokeSinGroup(@Body() dto: RevokeSinGroupDto) {
+    return this.classificationService.revokeSinGroup(dto.sinId, dto.classifiedBy);
+  }
 }
 
 // ─── GoodDeed-Quote admin endpoints (#53–57) ──────────────────────────────────
@@ -120,5 +127,11 @@ export class GoodDeedQuotesAdminController {
   @HttpCode(HttpStatus.OK)
   bulkLinkGoodDeedQuotes(@Body() dto: BulkLinkGoodDeedQuotesDto) {
     return this.classificationService.bulkLinkGoodDeedQuotes(dto);
+  }
+
+  @Post('revoke')
+  @HttpCode(HttpStatus.OK)
+  revokeGoodDeedGroup(@Body() dto: RevokeGoodDeedGroupDto) {
+    return this.classificationService.revokeGoodDeedGroup(dto.goodDeedId, dto.classifiedBy);
   }
 }

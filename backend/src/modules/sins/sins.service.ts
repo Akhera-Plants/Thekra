@@ -8,8 +8,18 @@ import {
 import { Prisma, type SinRank } from '@prisma/client';
 import { GradePolicy } from '../hadith/grade-policy.js';
 import {
+  dedupeReading,
+  pageReadingIds,
+  READING_ORDER,
+  READING_SELECT,
+  sinHasPublicText,
+  visibleOrigins,
+  readingTier,
+  type ReadingRow,
+} from '../classification/reading.js';
+import {
   autoLinkExclusion,
-  isAutoChapter,
+  isPublicTopic,
   publicAcceptedLinkWhere,
   readerLinkNote,
 } from '../classification/public-taxonomy.js';
@@ -18,7 +28,6 @@ import { findIdsByNormalizedArabic } from '../../common/text/arabic-search.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { GoodDeedsService } from '../good-deeds/good-deeds.service.js';
 import {
-  LINK_ORDERING_LABEL,
   PUBLISHED_LINK_REVIEW_STATUS,
   QuotesService,
 } from '../quotes/quotes.service.js';
@@ -27,9 +36,6 @@ import type { SinQuotesQueryDto } from './dto/sin-quotes-query.dto.js';
 import type { SinsQueryDto } from './dto/sins-query.dto.js';
 import type { UpdateSinDto } from './dto/update-sin.dto.js';
 import type { SinDetailDto, SinDto } from './entities/sin.entity.js';
-
-// P2-1: shared ordering label is now exported from QuotesService.
-// Use LINK_ORDERING_LABEL imported from there.
 
 const SIN_READ_INCLUDE = {
   rankSource: { select: { id: true, name: true, nameAr: true } },
@@ -91,27 +97,33 @@ export class SinsService {
     const linkWhere = scope === 'public'
       ? publicAcceptedLinkWhere()
       : { reviewStatus: PUBLISHED_LINK_REVIEW_STATUS, quote: GradePolicy.readerClause() };
+    const and: Prisma.SinWhereInput[] = [];
 
-    if (scope === 'public') where.origin = 'CURATED';
-    if (query.category) where.category = query.category;
-    if (query.rank) where.rank = query.rank;
-    if (query.includeEmpty !== 'true') {
+    if (scope === 'public') {
+      where.origin = visibleOrigins();
+      where.isHidden = false;
+      where.isListed = true;
+      if (query.includeEmpty !== 'true') and.push(sinHasPublicText());
+    } else if (query.includeEmpty !== 'true') {
       where.quotes = { some: linkWhere };
     }
+    if (query.category) where.category = query.category;
+    if (query.rank) where.rank = query.rank;
     if (query.q) {
-      // Arabic field: match via DB-side normalisation (strips tashkeel, folds alef/ya/ta-marbuta)
-      // Latin field: standard Prisma ILIKE (no normalisation needed)
       const arabicIds = await findIdsByNormalizedArabic(
         this.prisma,
         '"Sin"',
         '"nameAr"',
         query.q,
       );
-      where.OR = [
-        { name: { contains: query.q, mode: 'insensitive' } },
-        ...(arabicIds.length > 0 ? [{ id: { in: arabicIds } }] : []),
-      ];
+      and.push({
+        OR: [
+          { name: { contains: query.q, mode: 'insensitive' } },
+          ...(arabicIds.length > 0 ? [{ id: { in: arabicIds } }] : []),
+        ],
+      });
     }
+    if (and.length > 0) where.AND = and;
 
     const orderBy: Prisma.SinOrderByWithRelationInput[] =
       query.sort === 'quoteCount' && scope === 'admin'
@@ -125,17 +137,22 @@ export class SinsService {
     if (query.sort === 'quoteCount' && scope === 'public') {
       const ranked = await this.prisma.sin.findMany({
         where,
-        select: { id: true, _count: { select: { quotes: { where: linkWhere } } } },
+        select: { id: true, isContemporary: true, _count: { select: { quotes: { where: linkWhere } } } },
       });
+      const extra = await this.derivedSinCounts(ranked.filter((row) => row.isContemporary).map((row) => row.id));
+      for (const row of ranked) {
+        if (row.isContemporary) row._count.quotes += extra.get(row.id) ?? 0;
+      }
       ranked.sort((a, b) => b._count.quotes - a._count.quotes || a.id.localeCompare(b.id));
       const pageIds = ranked.slice((page - 1) * limit, page * limit).map((row) => row.id);
+      const counts = new Map(ranked.map((row) => [row.id, row._count.quotes]));
       const rows = pageIds.length === 0
         ? []
         : await this.prisma.sin.findMany({ where: { id: { in: pageIds } }, include });
       const order = new Map(pageIds.map((id, index) => [id, index]));
       rows.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
       return paginated(
-        rows.map((row) => this.toDto(row)),
+        rows.map((row) => this.toDto({ ...row, _count: { quotes: counts.get(row.id) ?? row._count.quotes } })),
         page,
         limit,
         ranked.length,
@@ -154,8 +171,14 @@ export class SinsService {
       this.prisma.sin.count({ where }),
     ]);
 
+    const extra = scope === 'public'
+      ? await this.derivedSinCounts(rows.filter((row) => row.isContemporary).map((row) => row.id))
+      : new Map<string, number>();
     return paginated(
-      rows.map((row) => this.toDto(row)),
+      rows.map((row) => this.toDto({
+        ...row,
+        _count: { quotes: row._count.quotes + (extra.get(row.id) ?? 0) },
+      })),
       page,
       limit,
       total,
@@ -163,21 +186,54 @@ export class SinsService {
     );
   }
 
+  private async derivedSinCounts(ids: string[]): Promise<Map<string, number>> {
+    if (ids.length === 0) return new Map();
+    const linkWhere = publicAcceptedLinkWhere();
+    const rows = await this.prisma.topicDerivation.findMany({
+      where: { fromSinId: { in: ids } },
+      select: {
+        fromSinId: true,
+        toSin: { select: { isHidden: true, _count: { select: { quotes: { where: linkWhere } } } } },
+        toGoodDeed: { select: { _count: { select: { quotes: { where: linkWhere } } } } },
+      },
+    });
+    const counts = new Map<string, number>();
+    for (const row of rows) {
+      if (!row.fromSinId || row.toSin?.isHidden) continue;
+      const count = (row.toSin?._count.quotes ?? 0) + (row.toGoodDeed?._count.quotes ?? 0);
+      counts.set(row.fromSinId, (counts.get(row.fromSinId) ?? 0) + count);
+    }
+    return counts;
+  }
+
   async findBySlug(slug: string, lang: string = 'ar'): Promise<SinDetailDto & { locale: string }> {
     const row = await this.prisma.sin.findUnique({
       where: { slug },
-      include: SIN_READ_INCLUDE,
+      include: {
+        ...SIN_READ_INCLUDE,
+        imanBranches: {
+          orderBy: { sortOrder: 'asc' },
+          include: { imanBranch: { select: { number: true, titleAr: true } } },
+        },
+      },
     });
-    if (!row || isAutoChapter(row.origin)) {
+    if (!isPublicTopic(row)) {
       throw new NotFoundException({
         code: 'RESOURCE_NOT_FOUND',
         message: 'Sin not found',
       });
     }
-    // No cap: return all related good deeds on the detail page.
-    // findAlternatives() uses take:3 separately for the quotes list endpoint.
     const relatedGoodDeeds = await this.goodDeeds.findByOppositeSinId(row.id);
-    return { ...this.toDto(row), relatedGoodDeeds, locale: lang };
+    return {
+      ...this.toDto(row),
+      relatedGoodDeeds,
+      locale: lang,
+      isContemporary: row.isContemporary,
+      branches: row.imanBranches.map((link) => ({
+        number: link.imanBranch.number,
+        titleAr: link.imanBranch.titleAr,
+      })),
+    };
   }
 
   async findAlternatives(sinId: string) {
@@ -186,7 +242,7 @@ export class SinsService {
 
   async findQuotesForSin(slug: string, query: SinQuotesQueryDto) {
     const sin = await this.prisma.sin.findUnique({ where: { slug } });
-    if (!sin || isAutoChapter(sin.origin)) {
+    if (!isPublicTopic(sin)) {
       throw new NotFoundException({
         code: 'RESOURCE_NOT_FOUND',
         message: 'Sin not found',
@@ -218,7 +274,7 @@ export class SinsService {
       _count: { _all: true },
     });
     const alternativesQ = this.prisma.goodDeed.findMany({
-      where: { oppositeSinId: sin.id, origin: 'CURATED' },
+      where: { oppositeSinId: sin.id, origin: visibleOrigins(), isHidden: false, isListed: true },
       take: 3,
       orderBy: [{ name: 'asc' }, { id: 'asc' }],
       select: {
@@ -299,24 +355,24 @@ export class SinsService {
       };
     }
 
-    // ── Normal ordering path ───────────────────────────────────────────────────
+    const ranked = await this.prisma.sinQuote.findMany({ where, select: READING_SELECT });
+    const ids = pageReadingIds(ranked as ReadingRow[], page, limit);
     const [rows, total, typeGroups, alternatives] = await this.prisma.$transaction([
       this.prisma.sinQuote.findMany({
-        where,
-        orderBy: this.quotes.linkOrderBy(),
-        skip: (page - 1) * limit,
-        take: limit,
-        include: {
-          quote: { include: this.quotes.buildQuoteInclude(locale) },
-        },
+        where: { id: { in: ids.length > 0 ? ids : ['00000000-0000-0000-0000-000000000000'] } },
+        include: { quote: { include: this.quotes.buildQuoteInclude(locale) } },
       }),
       countQ,
       typeGroupsQ,
       alternativesQ,
     ]);
-
-    // P2-1: shared helper folds the groupBy result into { QURAN_VERSE, HADITH, ... }.
+    const order = new Map(ids.map((id, index) => [id, index]));
+    rows.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
     const countsByType = this.quotes.countsByTypeFromGroups(typeGroups);
+    const companion = await this.rewardForSin(sin, where.quote, page, limit, locale);
+    const derived = sin.isContemporary
+      ? await this.derivedSinTexts(sin.id, where.quote, page, limit, locale)
+      : [];
 
     return {
       data: {
@@ -328,24 +384,148 @@ export class SinsService {
           rank: sin.rank,
           description: sin.description,
           descriptionAr: sin.descriptionAr,
+          isContemporary: sin.isContemporary,
         },
-        items: rows.map((row) => ({
-          link: {
-            id: row.id,
-            relevanceScore: row.relevanceScore,
-            note: readerLinkNote(row.note),
-          },
-          quote: this.quotes.toQuoteDto(row.quote, locale),
-        })),
+        items: ids.length === 0 ? [] : rows.map((row) => this.presentSinItem(row, locale)),
+        companion,
+        derived,
         alternatives,
       },
       meta: buildPageMeta(page, limit, total, {
         locale,
-        ordering: LINK_ORDERING_LABEL,
+        ordering: READING_ORDER,
         countsByType,
         appliedGrades: allowedGrades,
       }),
     };
+  }
+
+  private presentSinItem(
+    row: {
+      id: string;
+      relevanceScore: number | null;
+      note: string | null;
+      classifiedBy?: string;
+      basis?: string;
+      quote: Parameters<QuotesService['toQuoteDto']>[0] & { type: string; sourceId?: string | null };
+    },
+    locale: 'ar' | 'en',
+  ) {
+    const classifiedBy = row.classifiedBy ?? 'BOOK';
+    const band = row.basis
+      ? readingTier({ basis: row.basis, quote: { type: row.quote.type, sourceId: row.quote.sourceId ?? null } })
+      : null;
+    return {
+      link: {
+        id: row.id,
+        relevanceScore: row.relevanceScore,
+        note: readerLinkNote(row.note),
+        classifiedBy,
+        reviewLabel: classifiedBy === 'BOOK' ? null : 'تصنيف المراجعة',
+        ...(band == null ? {} : { band: band === 0 ? 'ayah' : band === 1 ? 'sahihayn' : 'other' }),
+      },
+      quote: this.quotes.toQuoteDto(row.quote, locale),
+    };
+  }
+
+  private async rewardForSin(
+    sin: { oppositeGoodDeedId: string | null },
+    quote: Prisma.SinQuoteWhereInput['quote'],
+    page: number,
+    limit: number,
+    locale: 'ar' | 'en',
+  ) {
+    const deeds = await this.prisma.goodDeed.findMany({
+      where: {
+        origin: visibleOrigins(),
+        isHidden: false,
+        OR: [
+          ...(sin.oppositeGoodDeedId ? [{ id: sin.oppositeGoodDeedId }] : []),
+          { slug: 'tark-lillah' },
+        ],
+      },
+      select: { id: true },
+    });
+    if (deeds.length === 0) return { items: [] as ReturnType<SinsService['presentSinItem']>[] };
+    const ranked = await this.prisma.goodDeedQuote.findMany({
+      where: {
+        goodDeedId: { in: deeds.map((deed) => deed.id) },
+        reviewStatus: PUBLISHED_LINK_REVIEW_STATUS,
+        ...autoLinkExclusion(),
+        quote,
+      },
+      select: READING_SELECT,
+    });
+    const pageRows = dedupeReading(ranked as ReadingRow[]).slice((page - 1) * limit, page * limit);
+    if (pageRows.length === 0) return { items: [] as ReturnType<SinsService['presentSinItem']>[] };
+    const full = await this.prisma.goodDeedQuote.findMany({
+      where: { id: { in: pageRows.map((row) => row.id) } },
+      include: { quote: { include: this.quotes.buildQuoteInclude(locale) } },
+    });
+    const order = new Map(pageRows.map((row, index) => [row.id, index]));
+    full.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+    return { items: full.map((row) => this.presentSinItem(row, locale)) };
+  }
+
+  private async derivedSinTexts(
+    sinId: string,
+    quote: Prisma.SinQuoteWhereInput['quote'],
+    page: number,
+    limit: number,
+    locale: 'ar' | 'en',
+  ) {
+    const links = await this.prisma.topicDerivation.findMany({
+      where: { fromSinId: sinId },
+      select: {
+        toSin: { select: { id: true, slug: true, nameAr: true, isHidden: true } },
+        toGoodDeed: { select: { id: true, slug: true, nameAr: true } },
+      },
+    });
+    const groups = [];
+    for (const link of links) {
+      if (link.toSin && !link.toSin.isHidden) {
+        const items = await this.pageTopicQuotes('sin', link.toSin.id, quote, page, limit, locale);
+        groups.push({ slug: link.toSin.slug, nameAr: link.toSin.nameAr, side: 'AVOID' as const, items });
+      }
+      if (link.toGoodDeed) {
+        const items = await this.pageTopicQuotes('deed', link.toGoodDeed.id, quote, page, limit, locale);
+        groups.push({ slug: link.toGoodDeed.slug, nameAr: link.toGoodDeed.nameAr, side: 'DO' as const, items });
+      }
+    }
+    return groups;
+  }
+
+  private async pageTopicQuotes(
+    side: 'sin' | 'deed',
+    id: string,
+    quote: Prisma.SinQuoteWhereInput['quote'],
+    page: number,
+    limit: number,
+    locale: 'ar' | 'en',
+  ) {
+    const where = {
+      ...(side === 'sin' ? { sinId: id } : { goodDeedId: id }),
+      reviewStatus: PUBLISHED_LINK_REVIEW_STATUS,
+      ...autoLinkExclusion(),
+      quote,
+    };
+    const ranked = side === 'sin'
+      ? await this.prisma.sinQuote.findMany({ where, select: READING_SELECT })
+      : await this.prisma.goodDeedQuote.findMany({ where, select: READING_SELECT });
+    const ids = pageReadingIds(ranked as ReadingRow[], page, limit);
+    if (ids.length === 0) return [];
+    const rows = side === 'sin'
+      ? await this.prisma.sinQuote.findMany({
+        where: { id: { in: ids } },
+        include: { quote: { include: this.quotes.buildQuoteInclude(locale) } },
+      })
+      : await this.prisma.goodDeedQuote.findMany({
+        where: { id: { in: ids } },
+        include: { quote: { include: this.quotes.buildQuoteInclude(locale) } },
+      });
+    const order = new Map(ids.map((linkId, index) => [linkId, index]));
+    rows.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+    return rows.map((row) => this.presentSinItem(row, locale));
   }
 
   // ─── Admin CRUD ───────────────────────────────────────────────────────────────
@@ -451,13 +631,13 @@ export class SinsService {
 
   async findGoodDeedsForSin(slug: string, page = 1, limit = 20, locale = 'ar') {
     const sin = await this.prisma.sin.findUnique({ where: { slug } });
-    if (!sin || isAutoChapter(sin.origin)) {
+    if (!isPublicTopic(sin)) {
       throw new NotFoundException({
         code: 'RESOURCE_NOT_FOUND',
         message: 'Sin not found',
       });
     }
-    const where = { oppositeSinId: sin.id, origin: 'CURATED' as const };
+    const where = { oppositeSinId: sin.id, origin: visibleOrigins(), isHidden: false, isListed: true };
     const [rows, total] = await this.prisma.$transaction([
       this.prisma.goodDeed.findMany({
         where,

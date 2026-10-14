@@ -2,8 +2,18 @@ import { Injectable, NotFoundException, UnprocessableEntityException } from '@ne
 import { Prisma } from '@prisma/client';
 import { GradePolicy } from '../hadith/grade-policy.js';
 import {
+  dedupeReading,
+  deedHasPublicText,
+  pageReadingIds,
+  READING_ORDER,
+  READING_SELECT,
+  visibleOrigins,
+  readingTier,
+  type ReadingRow,
+} from '../classification/reading.js';
+import {
   autoLinkExclusion,
-  isAutoChapter,
+  isPublicTopic,
   publicAcceptedLinkWhere,
   readerLinkNote,
 } from '../classification/public-taxonomy.js';
@@ -11,7 +21,6 @@ import { buildPageMeta, paginated } from '../../common/dto/paginated-result.js';
 import { findIdsByNormalizedArabic } from '../../common/text/arabic-search.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import {
-  LINK_ORDERING_LABEL,
   PUBLISHED_LINK_REVIEW_STATUS,
   QuotesService,
 } from '../quotes/quotes.service.js';
@@ -23,9 +32,6 @@ import type {
   GoodDeedDto,
   GoodDeedSummary,
 } from './entities/good-deed.entity.js';
-
-// P2-1: shared ordering label is now exported from QuotesService.
-// Use LINK_ORDERING_LABEL imported from there.
 
 @Injectable()
 export class GoodDeedsService {
@@ -75,30 +81,34 @@ export class GoodDeedsService {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
     const locale = query.lang ?? 'ar';
-    const where: Prisma.GoodDeedWhereInput = { origin: 'CURATED' };
+    const where: Prisma.GoodDeedWhereInput = {
+      origin: visibleOrigins(),
+      isHidden: false,
+      isListed: true,
+    };
     const linkWhere = publicAcceptedLinkWhere();
+    const and: Prisma.GoodDeedWhereInput[] = [];
 
     if (query.category) where.category = query.category;
-    if (query.includeEmpty !== 'true') {
-      where.quotes = { some: linkWhere };
-    }
+    if (query.includeEmpty !== 'true') and.push(deedHasPublicText());
     if (query.oppositeSinSlug) {
-      where.oppositeSin = { slug: query.oppositeSinSlug };
+      where.oppositeSin = { slug: query.oppositeSinSlug, isHidden: false };
     }
     if (query.q) {
-      // Arabic field: match via DB-side normalisation (strips tashkeel, folds alef/ya/ta-marbuta)
-      // Latin field: standard Prisma ILIKE (no normalisation needed)
       const arabicIds = await findIdsByNormalizedArabic(
         this.prisma,
         '"GoodDeed"',
         '"nameAr"',
         query.q,
       );
-      where.OR = [
-        { name: { contains: query.q, mode: 'insensitive' } },
-        ...(arabicIds.length > 0 ? [{ id: { in: arabicIds } }] : []),
-      ];
+      and.push({
+        OR: [
+          { name: { contains: query.q, mode: 'insensitive' } },
+          ...(arabicIds.length > 0 ? [{ id: { in: arabicIds } }] : []),
+        ],
+      });
     }
+    if (and.length > 0) where.AND = and;
 
     const orderBy: Prisma.GoodDeedOrderByWithRelationInput[] = [{ name: 'asc' }, { id: 'asc' }];
     const include = {
@@ -144,8 +154,12 @@ export class GoodDeedsService {
       this.prisma.goodDeed.count({ where }),
     ]);
 
+    const extra = await this.derivedDeedCounts(rows.filter((row) => row.isContemporary).map((row) => row.id));
     return paginated(
-      rows.map((row) => this.toDto(row)),
+      rows.map((row) => this.toDto({
+        ...row,
+        _count: { quotes: row._count.quotes + (extra.get(row.id) ?? 0) },
+      })),
       page,
       limit,
       total,
@@ -153,12 +167,36 @@ export class GoodDeedsService {
     );
   }
 
-  async findBySlug(slug: string, lang: string = 'ar'): Promise<GoodDeedDto & { locale: string }> {
+  private async derivedDeedCounts(ids: string[]): Promise<Map<string, number>> {
+    if (ids.length === 0) return new Map();
+    const linkWhere = publicAcceptedLinkWhere();
+    const rows = await this.prisma.topicDerivation.findMany({
+      where: { fromGoodDeedId: { in: ids } },
+      select: {
+        fromGoodDeedId: true,
+        toSin: { select: { isHidden: true, _count: { select: { quotes: { where: linkWhere } } } } },
+        toGoodDeed: { select: { _count: { select: { quotes: { where: linkWhere } } } } },
+      },
+    });
+    const counts = new Map<string, number>();
+    for (const row of rows) {
+      if (!row.fromGoodDeedId || row.toSin?.isHidden) continue;
+      const count = (row.toSin?._count.quotes ?? 0) + (row.toGoodDeed?._count.quotes ?? 0);
+      counts.set(row.fromGoodDeedId, (counts.get(row.fromGoodDeedId) ?? 0) + count);
+    }
+    return counts;
+  }
+
+  async findBySlug(slug: string, lang: string = 'ar') {
     const row = await this.prisma.goodDeed.findUnique({
       where: { slug },
       include: {
         oppositeSin: {
           select: { id: true, slug: true, name: true, nameAr: true },
+        },
+        imanBranches: {
+          orderBy: { sortOrder: 'asc' },
+          include: { imanBranch: { select: { number: true, titleAr: true } } },
         },
         _count: {
             select: {
@@ -167,13 +205,21 @@ export class GoodDeedsService {
           },
       },
     });
-    if (!row || isAutoChapter(row.origin)) {
+    if (!isPublicTopic(row)) {
       throw new NotFoundException({
         code: 'RESOURCE_NOT_FOUND',
         message: 'Good deed not found',
       });
     }
-    return { ...this.toDto(row), locale: lang };
+    return {
+      ...this.toDto(row),
+      locale: lang,
+      isContemporary: row.isContemporary,
+      branches: row.imanBranches.map((link) => ({
+        number: link.imanBranch.number,
+        titleAr: link.imanBranch.titleAr,
+      })),
+    };
   }
 
   // ─── Admin CRUD ───────────────────────────────────────────────────────────────
@@ -242,7 +288,7 @@ export class GoodDeedsService {
 
   async findByOppositeSinId(sinId: string, take?: number): Promise<GoodDeedSummary[]> {
     const rows = await this.prisma.goodDeed.findMany({
-      where: { oppositeSinId: sinId, origin: 'CURATED' },
+      where: { oppositeSinId: sinId, origin: visibleOrigins(), isHidden: false, isListed: true },
       ...(take !== undefined ? { take } : {}),
       orderBy: [{ name: 'asc' }, { id: 'asc' }],
       select: {
@@ -266,7 +312,7 @@ export class GoodDeedsService {
         },
       },
     });
-    if (!deed || isAutoChapter(deed.origin)) {
+    if (!isPublicTopic(deed)) {
       throw new NotFoundException({
         code: 'RESOURCE_NOT_FOUND',
         message: 'Good deed not found',
@@ -367,42 +413,162 @@ export class GoodDeedsService {
       };
     }
 
-    // ── Normal ordering path ───────────────────────────────────────────────────
+    const ranked = await this.prisma.goodDeedQuote.findMany({ where, select: READING_SELECT });
+    const ids = pageReadingIds(ranked as ReadingRow[], page, limit);
     const [rows, total, typeGroups] = await this.prisma.$transaction([
       this.prisma.goodDeedQuote.findMany({
-        where,
-        orderBy: this.quotes.linkOrderBy(),
-        skip: (page - 1) * limit,
-        take: limit,
-        include: {
-          quote: { include: this.quotes.buildQuoteInclude(locale) },
-        },
+        where: { id: { in: ids.length > 0 ? ids : ['00000000-0000-0000-0000-000000000000'] } },
+        include: { quote: { include: this.quotes.buildQuoteInclude(locale) } },
       }),
       countQ,
       typeGroupsQ,
     ]);
-
-    // P2-1: shared helper folds the groupBy result into { QURAN_VERSE, HADITH, ... }.
+    const order = new Map(ids.map((id, index) => [id, index]));
+    rows.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
     const countsByType = this.quotes.countsByTypeFromGroups(typeGroups);
+    const companion = await this.warningForDeed(deed.oppositeSin?.id ?? null, where.quote, page, limit, locale);
+    const derived = deed.isContemporary
+      ? await this.derivedDeedTexts(deed.id, where.quote, page, limit, locale)
+      : [];
 
     return {
       data: {
-        goodDeed: goodDeedPayload,
-        items: rows.map((row) => ({
-          link: {
-            id: row.id,
-            relevanceScore: row.relevanceScore,
-            note: readerLinkNote(row.note),
-          },
-          quote: this.quotes.toQuoteDto(row.quote, locale),
-        })),
+        goodDeed: { ...goodDeedPayload, isContemporary: deed.isContemporary },
+        items: ids.length === 0 ? [] : rows.map((row) => this.presentDeedItem(row, locale)),
+        companion,
+        derived,
       },
       meta: buildPageMeta(page, limit, total, {
         locale,
-        ordering: LINK_ORDERING_LABEL,
+        ordering: READING_ORDER,
         countsByType,
         appliedGrades: allowedGrades,
       }),
     };
+  }
+
+  private presentDeedItem(
+    row: {
+      id: string;
+      relevanceScore: number | null;
+      note: string | null;
+      classifiedBy?: string;
+      basis?: string;
+      quote: Parameters<QuotesService['toQuoteDto']>[0] & { type: string; sourceId?: string | null };
+    },
+    locale: 'ar' | 'en',
+  ) {
+    const classifiedBy = row.classifiedBy ?? 'BOOK';
+    const band = row.basis
+      ? readingTier({ basis: row.basis, quote: { type: row.quote.type, sourceId: row.quote.sourceId ?? null } })
+      : null;
+    return {
+      link: {
+        id: row.id,
+        relevanceScore: row.relevanceScore,
+        note: readerLinkNote(row.note),
+        classifiedBy,
+        reviewLabel: classifiedBy === 'BOOK' ? null : 'تصنيف المراجعة',
+        ...(band == null ? {} : { band: band === 0 ? 'ayah' : band === 1 ? 'sahihayn' : 'other' }),
+      },
+      quote: this.quotes.toQuoteDto(row.quote, locale),
+    };
+  }
+
+  private async warningForDeed(
+    oppositeSinId: string | null,
+    quote: Prisma.GoodDeedQuoteWhereInput['quote'],
+    page: number,
+    limit: number,
+    locale: 'ar' | 'en',
+  ) {
+    if (!oppositeSinId) return { items: [] as ReturnType<GoodDeedsService['presentDeedItem']>[] };
+    const ranked = await this.prisma.sinQuote.findMany({
+      where: {
+        sinId: oppositeSinId,
+        reviewStatus: PUBLISHED_LINK_REVIEW_STATUS,
+        ...autoLinkExclusion(),
+        quote,
+      },
+      select: READING_SELECT,
+    });
+    const pageRows = dedupeReading(ranked as ReadingRow[]).slice((page - 1) * limit, page * limit);
+    if (pageRows.length === 0) return { items: [] as ReturnType<GoodDeedsService['presentDeedItem']>[] };
+    const full = await this.prisma.sinQuote.findMany({
+      where: { id: { in: pageRows.map((row) => row.id) } },
+      include: { quote: { include: this.quotes.buildQuoteInclude(locale) } },
+    });
+    const order = new Map(pageRows.map((row, index) => [row.id, index]));
+    full.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+    return { items: full.map((row) => this.presentDeedItem(row, locale)) };
+  }
+
+  private async derivedDeedTexts(
+    deedId: string,
+    quote: Prisma.GoodDeedQuoteWhereInput['quote'],
+    page: number,
+    limit: number,
+    locale: 'ar' | 'en',
+  ) {
+    const links = await this.prisma.topicDerivation.findMany({
+      where: { fromGoodDeedId: deedId },
+      select: {
+        toSin: { select: { id: true, slug: true, nameAr: true, isHidden: true } },
+        toGoodDeed: { select: { id: true, slug: true, nameAr: true } },
+      },
+    });
+    const groups = [];
+    for (const link of links) {
+      if (link.toSin && !link.toSin.isHidden) {
+        groups.push({
+          slug: link.toSin.slug,
+          nameAr: link.toSin.nameAr,
+          side: 'AVOID' as const,
+          items: await this.pageDeedSource('sin', link.toSin.id, quote, page, limit, locale),
+        });
+      }
+      if (link.toGoodDeed) {
+        groups.push({
+          slug: link.toGoodDeed.slug,
+          nameAr: link.toGoodDeed.nameAr,
+          side: 'DO' as const,
+          items: await this.pageDeedSource('deed', link.toGoodDeed.id, quote, page, limit, locale),
+        });
+      }
+    }
+    return groups;
+  }
+
+  private async pageDeedSource(
+    side: 'sin' | 'deed',
+    id: string,
+    quote: Prisma.GoodDeedQuoteWhereInput['quote'],
+    page: number,
+    limit: number,
+    locale: 'ar' | 'en',
+  ) {
+    const where = {
+      ...(side === 'sin' ? { sinId: id } : { goodDeedId: id }),
+      reviewStatus: PUBLISHED_LINK_REVIEW_STATUS,
+      ...autoLinkExclusion(),
+      quote,
+    };
+    const ranked = side === 'sin'
+      ? await this.prisma.sinQuote.findMany({ where, select: READING_SELECT })
+      : await this.prisma.goodDeedQuote.findMany({ where, select: READING_SELECT });
+    const ids = pageReadingIds(ranked as ReadingRow[], page, limit);
+    if (ids.length === 0) return [];
+    const rows = side === 'sin'
+      ? await this.prisma.sinQuote.findMany({
+        where: { id: { in: ids } },
+        include: { quote: { include: this.quotes.buildQuoteInclude(locale) } },
+      })
+      : await this.prisma.goodDeedQuote.findMany({
+        where: { id: { in: ids } },
+        include: { quote: { include: this.quotes.buildQuoteInclude(locale) } },
+      });
+    const order = new Map(ids.map((linkId, index) => [linkId, index]));
+    rows.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+    return rows.map((row) => this.presentDeedItem(row, locale));
   }
 }

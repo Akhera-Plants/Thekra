@@ -3,7 +3,9 @@ import { notFound } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
 import { FormattedNumber } from '@/components/shared/FormattedNumber';
 import { AlternativeDeedsBlock } from '@/features/sin-reminder/components/AlternativeDeedsBlock';
+import type { ReaderItem, ReaderSection } from '@/components/shared/editorial/ReminderReader';
 import { SinReader } from '@/features/sin-reminder/components/SinReader';
+import { interleaveReading } from '@/lib/reading';
 import { getSin, getSinQuotes } from '@/lib/api/sins';
 import { SinRank, type LocaleCode } from '@/lib/types/enums';
 
@@ -43,11 +45,25 @@ export default async function SinDetailPage({
     quotes = null;
   }
 
-  const items = (quotes?.data.items ?? []).map((item) => ({
+  const toReader = (item: { quote: { id: string }; link: { note: string | null; reviewLabel?: string | null } }): ReaderItem => ({
     id: item.quote.id,
-    quote: item.quote,
+    quote: item.quote as ReaderItem['quote'],
     note: item.link.note,
-  }));
+    reviewLabel: item.link.reviewLabel,
+  });
+  const warning = (quotes?.data.items ?? []).map(toReader);
+  const reward = (quotes?.data.companion?.items ?? []).map(toReader);
+  const derived = quotes?.data.derived ?? [];
+  const sections: ReaderSection[] = [
+    ...(warning.length > 0 ? [{ heading: t('warningHeading'), items: warning }] : []),
+    ...(reward.length > 0 ? [{ heading: t('rewardHeading'), items: reward }] : []),
+    ...derived.filter((group) => group.items.length > 0).map((group) => ({
+      heading: group.nameAr,
+      items: group.items.map(toReader),
+    })),
+  ];
+  const derivedItems = derived.flatMap((group) => group.items.map(toReader));
+  const items = interleaveReading(warning, reward).concat(derivedItems);
   const alternatives = quotes?.data.alternatives ?? [];
   const onward = alternatives[0];
 
@@ -66,6 +82,16 @@ export default async function SinDetailPage({
             <FormattedNumber value={sin.rankReference} />
           </p>
         )}
+        {sin.branches && sin.branches.length > 0 ? (
+          <ul className="flex flex-col gap-1 text-sm text-muted-foreground">
+            {sin.branches.map((branch) => (
+              <li key={branch.number}>{branch.titleAr}</li>
+            ))}
+          </ul>
+        ) : null}
+        {sin.isContemporary ? (
+          <p className="text-sm text-muted-foreground">{t('contemporaryNote')}</p>
+        ) : null}
       </header>
 
       {items.length === 0 ? (
@@ -79,7 +105,7 @@ export default async function SinDetailPage({
           </Link>
         </div>
       ) : (
-        <SinReader items={items} total={quotes?.meta?.total ?? items.length} slug={slug} />
+        <SinReader items={items} sections={sections} total={items.length} slug={slug} />
       )}
 
       <AlternativeDeedsBlock alternatives={alternatives} heading={t('alternativesHeading')} />

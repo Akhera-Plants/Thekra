@@ -16,6 +16,9 @@ describe('GoodDeedsService', () => {
       findMany: vi.fn(),
       count: vi.fn(),
     },
+    sinQuote: {
+      findMany: vi.fn().mockResolvedValue([]),
+    },
     quote: { groupBy: vi.fn() },
     $transaction: vi.fn(),
   };
@@ -127,7 +130,7 @@ describe('GoodDeedsService', () => {
       { type: { not: QuoteType.HADITH } },
       { grade: { in: ['SAHIH'] } },
     ]);
-    expect(quotes.linkOrderBy).toHaveBeenCalled();
+    expect(prisma.goodDeedQuote.findMany.mock.calls[0][0].select.basis).toBe(true);
   });
 
   // ─── Shuffle variety mode (P1-2) ──────────────────────────────────────────────

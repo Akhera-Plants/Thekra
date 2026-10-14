@@ -9,7 +9,7 @@ import {
   Max,
   Min,
 } from 'class-validator';
-import { LinkReviewStatus } from '@prisma/client';
+import { ClassifiedBy, LinkReviewStatus } from '@prisma/client';
 import { ToBoolean } from '../../../common/decorators/to-boolean.decorator.js';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto.js';
 
@@ -53,4 +53,8 @@ export class SinQuotesAdminQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsEnum(LinkReviewStatus)
   reviewStatus?: LinkReviewStatus;
+
+  @IsOptional()
+  @IsEnum(ClassifiedBy)
+  classifiedBy?: ClassifiedBy;
 }

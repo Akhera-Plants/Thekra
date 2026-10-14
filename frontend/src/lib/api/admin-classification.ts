@@ -52,6 +52,10 @@ export async function adminBulkLinkSinQuotes(
   return apiPost<BulkLinkResult>('/admin/sin-quotes/bulk', body);
 }
 
+export async function adminRevokeSinGroup(body: { sinId: string; classifiedBy: 'REVIEWER' | 'AI' }) {
+  return apiPost<{ revoked: number }>('/admin/sin-quotes/revoke', body);
+}
+
 // ── GoodDeed-Quote links ──────────────────────────────────────────────────────
 
 export async function adminListGoodDeedQuotes(

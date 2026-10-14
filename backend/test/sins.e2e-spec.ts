@@ -18,6 +18,33 @@ import { QF_MAWDU, QF_UNGRADED, SIN_TEST_MANY, seedTestFixtures } from './fixtur
 import { truncateAll } from './helpers/reset-db.js';
 import { closeTestApp, createTestApp } from './helpers/test-app.js';
 
+function assertReadingBands(items: Array<{ link: { band?: string; relevanceScore: number | null } }>) {
+  const rank = (band: string | undefined) => (band === 'ayah' ? 0 : band === 'sahihayn' ? 1 : 2);
+  const bands = items.map((item) => rank(item.link.band));
+  for (let i = 1; i < bands.length; i += 1) {
+    expect(bands[i]).toBeGreaterThanOrEqual(bands[i - 1] ?? 0);
+  }
+  let previous: number | null = null;
+  let previousBand = -1;
+  let seenNull = false;
+  for (const item of items) {
+    const band = rank(item.link.band);
+    const score = item.link.relevanceScore;
+    if (band !== previousBand) {
+      previous = null;
+      previousBand = band;
+      seenNull = false;
+    }
+    if (score == null) {
+      seenNull = true;
+      continue;
+    }
+    if (seenNull) throw new Error('Non-null relevanceScore after null');
+    if (previous != null) expect(score).toBeLessThanOrEqual(previous);
+    previous = score;
+  }
+}
+
 describe('Sins endpoints (e2e)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
@@ -203,27 +230,11 @@ describe('Sins endpoints (e2e)', () => {
     expect(quoteIds).not.toContain(QF_MAWDU);
   });
 
-  it('GET /v1/sins/ghibah/quotes → items ordered by relevanceScore desc, nulls last', async () => {
+  it('GET /v1/sins/ghibah/quotes → ayah, then Sahihayn, then other texts; score desc inside a band', async () => {
     const res = await request(app.getHttpServer())
       .get('/v1/sins/ghibah/quotes?limit=50')
       .expect(200);
-    const scores: Array<number | null> = res.body.data.items.map(
-      (i: { link: { relevanceScore: number | null } }) => i.link.relevanceScore,
-    );
-    // All non-null scores should be in descending order
-    const nonNull = scores.filter((s): s is number => s !== null);
-    for (let i = 1; i < nonNull.length; i++) {
-      expect(nonNull[i]!).toBeLessThanOrEqual(nonNull[i - 1]!);
-    }
-    // Nulls must appear after all non-null values
-    let seenNull = false;
-    for (const score of scores) {
-      if (score === null) {
-        seenNull = true;
-      } else if (seenNull) {
-        throw new Error('Non-null relevanceScore after null — nulls not last');
-      }
-    }
+    assertReadingBands(res.body.data.items);
   });
 
   // ── §5  MAWDU → 422 (P1-3) ─────────────────────────────────────────────────
@@ -270,17 +281,11 @@ describe('Sins endpoints (e2e)', () => {
     }
   });
 
-  it('GET /v1/sins/ghibah/quotes?shuffle=false → normal relevanceScore desc order', async () => {
+  it('GET /v1/sins/ghibah/quotes?shuffle=false → the reading order, not a shuffle', async () => {
     const res = await request(app.getHttpServer())
       .get('/v1/sins/ghibah/quotes?shuffle=false&limit=50')
       .expect(200);
-    const scores: Array<number | null> = res.body.data.items.map(
-      (i: { link: { relevanceScore: number | null } }) => i.link.relevanceScore,
-    );
-    const nonNull = scores.filter((s): s is number => s !== null);
-    for (let i = 1; i < nonNull.length; i++) {
-      expect(nonNull[i]!).toBeLessThanOrEqual(nonNull[i - 1]!);
-    }
+    assertReadingBands(res.body.data.items);
   });
 
   // ── §7  GET /v1/sins/:slug/good-deeds ──────────────────────────────────────

@@ -38,6 +38,7 @@ export interface SinQuotesAdminQuery {
   quoteId?: string;
   page?: number;
   limit?: number;
+  classifiedBy?: 'BOOK' | 'REVIEWER' | 'AI';
 }
 
 export interface GoodDeedQuotesAdminQuery {

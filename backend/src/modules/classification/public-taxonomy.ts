@@ -9,6 +9,15 @@ export function isAutoChapter(origin: string | null | undefined): boolean {
   return origin === EntityOrigin.AUTO_CHAPTER;
 }
 
+/** Listed pages use isListed as well. A hidden topic, including a leftover kabira, is not public. */
+export function isPublicTopic<T extends { origin?: string | null; isHidden?: boolean | null }>(
+  row: T | null | undefined,
+): row is T {
+  if (!row || row.isHidden) return false;
+  const origin = row.origin ?? EntityOrigin.CURATED;
+  return origin === EntityOrigin.CURATED || origin === EntityOrigin.TAXONOMY;
+}
+
 /** A chapter note is «باب …». A Sa'di match cites «تفسير السعدي» and has no curator score. */
 export function autoLinkExclusion() {
   return {

@@ -12,12 +12,19 @@ export interface ReaderItem {
   id: string;
   quote: QuoteDto;
   note?: string | null;
+  reviewLabel?: string | null;
+}
+
+export interface ReaderSection {
+  heading: string;
+  items: ReaderItem[];
 }
 
 interface ReminderReaderProps {
   items: ReaderItem[];
   total: number;
   intent: QuoteCardIntent;
+  sections?: ReaderSection[];
   labels: {
     another: string;
     previous: string;
@@ -34,10 +41,16 @@ interface ReminderReaderProps {
  * One reminder in a page frame, the way a book shows one passage.
  * «عرض الكل» opens the same set as a list.
  */
+function ReviewLine({ label }: { label?: string | null }) {
+  if (!label) return null;
+  return <p className="pb-2 text-xs text-muted-foreground">{label}</p>;
+}
+
 export function ReminderReader({
   items,
   total,
   intent,
+  sections,
   labels,
   onAnother,
 }: ReminderReaderProps) {
@@ -76,18 +89,26 @@ export function ReminderReader({
         >
           {labels.showOne}
         </button>
-        <ul className="flex flex-col">
-          {list.map((item) => (
-            <li key={item.id}>
-              <QuoteCard
-                quote={item.quote}
-                link={item.note ? { relevanceScore: null, note: item.note } : null}
-                detailHref={`/quotes/${item.quote.id}`}
-                intent={intent}
-              />
-            </li>
-          ))}
-        </ul>
+        {(sections ?? [{ heading: '', items: list }]).map((section) => (
+          <section key={section.heading || 'texts'} className="flex flex-col">
+            {section.heading ? (
+              <h2 className="pt-6 font-arabic-display text-2xl">{section.heading}</h2>
+            ) : null}
+            <ul className="flex flex-col">
+              {section.items.map((item) => (
+                <li key={`${section.heading}-${item.id}`}>
+                  <QuoteCard
+                    quote={item.quote}
+                    link={item.note ? { relevanceScore: null, note: item.note } : null}
+                    detailHref={`/quotes/${item.quote.id}`}
+                    intent={intent}
+                  />
+                  <ReviewLine label={item.reviewLabel} />
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
       </div>
     );
   }
@@ -102,6 +123,7 @@ export function ReminderReader({
           intent={intent}
           density="full"
         />
+        <ReviewLine label={current.reviewLabel} />
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">

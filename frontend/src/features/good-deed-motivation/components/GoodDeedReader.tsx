@@ -1,22 +1,24 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { ReminderReader, type ReaderItem } from '@/components/shared/editorial/ReminderReader';
+import { ReminderReader, type ReaderItem, type ReaderSection } from '@/components/shared/editorial/ReminderReader';
 import { getGoodDeedQuotes } from '@/lib/api/good-deeds';
 
 interface GoodDeedReaderProps {
   slug: string;
   items: ReaderItem[];
   total: number;
+  sections?: ReaderSection[];
 }
 
-export function GoodDeedReader({ slug, items, total }: GoodDeedReaderProps) {
+export function GoodDeedReader({ slug, items, total, sections }: GoodDeedReaderProps) {
   const t = useTranslations('goodDeedDetail');
 
   return (
     <ReminderReader
       items={items}
       total={total}
+      sections={sections}
       intent="good-deed"
       labels={{
         another: t('anotherMotivation'),

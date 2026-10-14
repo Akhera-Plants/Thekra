@@ -28,4 +28,6 @@ export interface SinDto {
 export type SinDetailDto = SinDto & {
   relatedGoodDeeds: GoodDeedSummary[];
   locale: string;
+  isContemporary: boolean;
+  branches: { number: number; titleAr: string }[];
 };
