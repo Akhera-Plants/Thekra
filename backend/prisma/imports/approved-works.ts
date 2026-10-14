@@ -127,4 +127,16 @@ export const APPROVED_WORKS = [
     /** Prose. The importer records the Source and the file, not quotes. */
     gradeBy: null,
   },
+  {
+    id: '10000000-0000-4000-8000-000000000015',
+    bookKey: 'book:munajjid-qulub',
+    name: 'Silsilat A\'mal al-Qulub',
+    nameAr: 'سلسلة أعمال القلوب',
+    type: SourceType.BOOK,
+    author: 'Muhammad Salih al-Munajjid',
+    authorAr: 'محمد صالح المنجد',
+    role: 'citation-only',
+    /** Copyrighted. The importer stores citations and a page attribution, never his prose. */
+    gradeBy: null,
+  },
 ] as const;

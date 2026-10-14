@@ -6,6 +6,7 @@ import { normalizeArabic } from '../../../src/common/text/arabic-normalizer.js';
 import { readBlocks, type OpenitiBlock } from '../lib/openiti.js';
 import { parseTarghib } from '../waqfeya/parse.js';
 import { extractCitations, type VerseCitation } from './citations.js';
+import { splitKabairBlock } from './kabair.js';
 
 export type BookLevel = 'KITAB' | 'BAB' | 'FASL' | 'TARGHIB' | 'TARHIB' | 'KABIRA' | 'BRANCH' | 'OTHER';
 export type ItemKind = 'AYAH' | 'HADITH' | 'AUTHOR_TEXT';
@@ -19,6 +20,8 @@ export interface ParsedItem {
   text: string | null;
   ayahFrom: string | null;
   ayahTo: string | null;
+  /** Set when the item must point at an existing quote and no new wording is stored. */
+  quoteId?: string | null;
 }
 
 export interface ParsedSection {
@@ -270,16 +273,45 @@ export function parseOpenitiBook(
     }
     hadith.v = null;
 
+    if (book === 'kabair') {
+      for (const piece of splitKabairBlock(block.text)) {
+        if (piece.kind === 'BRACE') {
+          section.items.push({
+            kind: 'AYAH',
+            line: block.line,
+            hadithNumber: null,
+            text: piece.text,
+            ayahFrom: null,
+            ayahTo: null,
+          });
+          continue;
+        }
+        section.items.push({
+          kind: piece.kind,
+          line: block.line,
+          hadithNumber: null,
+          text: piece.text,
+          ayahFrom: null,
+          ayahTo: null,
+        });
+      }
+      for (const cite of cites) section.items.push(ayahItem(block.line, cite));
+      continue;
+    }
+
     const residue = block.text
       .replace(/\[[^\]]*\]/g, ' ')
       .replace(/\{[^}]*\}/g, ' ')
       .replace(/قال الله تعالى|وقال تعالى|لقول الله تعالى|لقوله تعالى|قوله تعالى/g, ' ');
     const citationOnly = cites.length > 0 && arabicLetters(residue) < 25;
-    const prophet = (book === 'kabair' || book === 'minhaj')
+    const prophet = book === 'minhaj'
       && PROPHET.test(block.text)
       && arabicLetters(block.text) >= 40;
+    const tarkNarration = book === 'zuhd'
+      && section.titleAr.includes('ترك شيئا')
+      && /^(?:أنا|حدثنا|أخبرنا|سمعت)\s/.test(block.text.trim());
 
-    if (prophet) {
+    if (prophet || tarkNarration) {
       section.items.push({
         kind: 'HADITH',
         line: block.line,

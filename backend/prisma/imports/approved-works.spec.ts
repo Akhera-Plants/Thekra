@@ -9,6 +9,7 @@ describe('APPROVED_WORKS', () => {
       'book:ibn-ashur-tahrir',
       'book:ibn-mubarak-zuhd',
       'book:ibn-qudama-minhaj',
+      'book:munajjid-qulub',
       'book:mundhiri-targhib',
       'book:nawawi-riyad',
       'book:sadi-tafsir',

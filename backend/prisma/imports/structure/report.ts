@@ -87,7 +87,7 @@ function reference(item: ParsedItem): string {
   return 'نص المؤلف';
 }
 
-export function structureReport(books: readonly BookReport[]): string {
+function structureReport(books: readonly BookReport[], leftovers: readonly string[]): string {
   const lines: string[] = [
     '# Book structure',
     '',
@@ -137,12 +137,19 @@ export function structureReport(books: readonly BookReport[]): string {
       lines.push('');
     }
   }
+  lines.push('## Leftovers', '');
+  if (leftovers.length === 0) {
+    lines.push('No quote of these books remains outside a section.');
+  } else {
+    lines.push(...leftovers);
+  }
+  lines.push('');
   return `${lines.join('\n')}\n`;
 }
 
-export function writeStructureDocs(books: readonly BookReport[]): void {
+export function writeStructureDocs(books: readonly BookReport[], leftovers: readonly string[] = []): void {
   const dir = join(DOCS, 'sections');
   mkdirSync(dir, { recursive: true });
   for (const book of books) writeFileSync(join(dir, `${book.key}.tsv`), sectionTsv(book));
-  writeFileSync(join(DOCS, 'structure-report.md'), structureReport(books));
+  writeFileSync(join(DOCS, 'structure-report.md'), structureReport(books, leftovers));
 }

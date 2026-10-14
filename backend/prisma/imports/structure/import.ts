@@ -34,6 +34,19 @@ import {
   type ParsedSection,
 } from './parse.js';
 import { writeStructureDocs, type BookReport } from './report.js';
+import { resolveKabairBraces } from './kabair.js';
+import {
+  loadMunajjidText,
+  MUNAJJID_COMMIT,
+  MUNAJJID_DATASET,
+  MUNAJJID_SHA256,
+  MUNAJJID_SOURCE_ID,
+  munajjidAttribution,
+  munajjidProvenance,
+  MUNAJJID_CHAPTERS,
+  parseMunajjid,
+} from './munajjid.js';
+import { absorbOrphans, deleteIbnQayyim, type Leftover } from './repair.js';
 
 const QURAN_SOURCE_ID = '10000000-0000-4000-8000-000000000001';
 const BUKHARI_SOURCE_ID = '10000000-0000-4000-8000-000000000002';
@@ -143,7 +156,7 @@ function compact(sections: readonly ParsedSection[]): ParsedSection[] {
   return kept;
 }
 
-function jobs(): BookJob[] {
+function jobs(prisma: PrismaClient): BookJob[] {
   const openiti = (key: OpenitiBook, titleAr: string, sourceId: string, bookKey: BookKey | null, spec: CorpusSpec): BookJob => ({
     key,
     titleAr,
@@ -159,8 +172,8 @@ function jobs(): BookJob[] {
           title: branch.headingText,
         }))
         : [];
-      const sections = parseOpenitiBook(corpus.text, key, branches);
-      return { sections: compact(sections), corpus };
+      const sections = compact(parseOpenitiBook(corpus.text, key, branches));
+      return { sections: key === 'kabair' ? resolveKabairBraces(sections) : sections, corpus };
     },
   });
 
@@ -207,6 +220,28 @@ function jobs(): BookJob[] {
       load: async () => {
         const corpus = await loadCorpus(MUSLIM_CORPUS);
         return { sections: compact(parseMuslimBook(corpus.text)), corpus };
+      },
+    },
+    {
+      key: 'munajjid',
+      titleAr: 'سلسلة أعمال القلوب',
+      sourceId: MUNAJJID_SOURCE_ID,
+      bookKey: 'book:munajjid-qulub',
+      restoreBab: false,
+      load: async () => {
+        const text = await loadMunajjidText();
+        const corpus: CorpusFile = {
+          spec: {
+            repo: MUNAJJID_DATASET,
+            path: 'aljam3/38380/71356',
+            commit: MUNAJJID_COMMIT,
+            sha256: MUNAJJID_SHA256,
+          },
+          versionUri: 'KTB_0118440.txt',
+          corpusUri: `huggingface/${MUNAJJID_DATASET}`,
+          text: '',
+        };
+        return { sections: await parseMunajjid(prisma, text), corpus };
       },
     },
   ];
@@ -260,7 +295,7 @@ function pickNumbered(
   if (requireOverlap && text && arabicLetters(text) >= 80) {
     const score = overlap(text, best.textAr);
     const ratio = lengthRatio(text, wordsOf(best.textAr));
-    if (score < 0.4 || ratio > 2.2) return null;
+    if (score < 0.55 || ratio > 2.2) return null;
   }
   return best;
 }
@@ -580,10 +615,88 @@ async function persist(
   return { sectionIds, createdSections, createdItems };
 }
 
+function verseKeyList(raw: Prisma.JsonValue | null): string[] {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return [];
+  const keys = (raw as { verseKeys?: unknown }).verseKeys;
+  return Array.isArray(keys) ? keys.filter((key): key is string => typeof key === 'string' && /^\d+:\d+$/.test(key)) : [];
+}
+
+async function expandTarghibAyahs(
+  prisma: PrismaClient,
+  planned: PlannedItem[][],
+  verses: Map<string, string>,
+): Promise<PlannedItem[][]> {
+  const ids = [...new Set(planned.flat().flatMap((item) => (item.quoteId ? [item.quoteId] : [])))];
+  const rows: Array<{ id: string; rawPayload: Prisma.JsonValue | null }> = [];
+  for (let start = 0; start < ids.length; start += 500) {
+    rows.push(...await prisma.quote.findMany({
+      where: { id: { in: ids.slice(start, start + 500) } },
+      select: { id: true, rawPayload: true },
+    }));
+  }
+  const keysOf = new Map(rows.map((row) => [row.id, verseKeyList(row.rawPayload)]));
+  return planned.map((items) => items.flatMap((item) => {
+    const keys = item.kind === 'HADITH' && item.quoteId ? keysOf.get(item.quoteId) ?? [] : [];
+    return [
+      item,
+      ...keys.map((key): PlannedItem => ({
+        kind: 'AYAH',
+        quoteId: verses.get(key) ?? null,
+        ayahFrom: key,
+        ayahTo: key,
+        line: item.line,
+        text: null,
+        hadithNumber: null,
+      })),
+    ];
+  }));
+}
+
+async function stampMunajjid(prisma: PrismaClient, planned: PlannedItem[][]): Promise<void> {
+  for (let index = 0; index < planned.length; index += 1) {
+    const chapter = MUNAJJID_CHAPTERS[index];
+    const item = planned[index]?.find((row) => row.kind === 'AUTHOR_TEXT' && row.quoteId);
+    if (!chapter || !item?.quoteId) continue;
+    const pageTo = (MUNAJJID_CHAPTERS[index + 1]?.page ?? 334) - 1;
+    await prisma.quote.update({
+      where: { id: item.quoteId },
+      data: {
+        textAr: '',
+        rawPayload: {
+          pageFrom: chapter.page,
+          pageTo,
+          attribution: munajjidAttribution(chapter.page),
+          ...munajjidProvenance(),
+        },
+      },
+    });
+  }
+}
+
+function leftoverLines(title: string, rows: readonly Leftover[]): string[] {
+  if (rows.length === 0) return [`- ${title}: 0`];
+  const counts = new Map<string, Array<number | null>>();
+  for (const row of rows) {
+    const list = counts.get(row.reason) ?? [];
+    list.push(row.referenceNumber);
+    counts.set(row.reason, list);
+  }
+  const lines = [`- ${title}: ${rows.length}`];
+  for (const [reason, numbers] of counts) {
+    const shown = numbers.slice(0, 15).map((number) => (number == null ? 'بلا رقم' : String(number))).join('، ');
+    const more = numbers.length > 15 ? '، …' : '';
+    lines.push(`  - ${numbers.length} — ${reason} (${shown}${more})`);
+  }
+  return lines;
+}
+
 export async function runStructureImport({ prisma }: ImportOptions): Promise<void> {
+  const removedQayyim = await deleteIbnQayyim(prisma);
+  console.log(`ابن القيم: deletedQuotes=${removedQayyim}`);
   const verses = await verseIds(prisma);
   const reports: BookReport[] = [];
-  for (const job of jobs()) {
+  const leftoverNotes: string[] = [];
+  for (const job of jobs(prisma)) {
     if (job.bookKey) await ensureSource(prisma, approvedWork(job.bookKey));
     const loaded = await job.load();
     const sections = loaded.sections;
@@ -616,7 +729,18 @@ export async function runStructureImport({ prisma }: ImportOptions): Promise<voi
         };
       }
       if (item.kind === 'HADITH') {
-        const strict = job.key === 'riyad';
+        if (item.quoteId) {
+          return {
+            kind: 'HADITH',
+            quoteId: item.quoteId,
+            ayahFrom: null,
+            ayahTo: null,
+            line: item.line,
+            text: null,
+            hadithNumber: item.hadithNumber,
+          };
+        }
+        const strict = job.key === 'riyad' || job.key === 'shuab';
         const numberedQuote = item.hadithNumber != null
           ? pickNumbered(numbered.get(item.hadithNumber), item.text, strict)
           : null;
@@ -625,7 +749,7 @@ export async function runStructureImport({ prisma }: ImportOptions): Promise<voi
           : null;
         const found = numberedQuote
           ?? createdEarlier
-          ?? (item.hadithNumber == null && item.text ? pickByText(indexed, item.text, false) : null);
+          ?? (item.hadithNumber == null && item.text ? pickByText(indexed, item.text, job.key === 'kabair') : null);
         if (found) {
           return {
             kind: 'HADITH',
@@ -642,7 +766,7 @@ export async function runStructureImport({ prisma }: ImportOptions): Promise<voi
           : `openiti:${sectionIndex + 1}:${itemIndex + 1}`;
         fresh.push({
           externalId,
-          textAr: item.text || '—',
+          textAr: item.text ?? '—',
           type: QuoteType.HADITH,
           textSource: TextSource.DIGITAL,
           referenceNumber: item.hadithNumber,
@@ -660,10 +784,12 @@ export async function runStructureImport({ prisma }: ImportOptions): Promise<voi
           externalId,
         };
       }
-      const externalId = `author:${job.key}:${sectionIndex + 1}:${itemIndex + 1}`;
+      const externalId = item.kind === 'AUTHOR_TEXT' && job.key === 'munajjid'
+        ? `author:munajjid:${sectionIndex + 1}:attribution`
+        : `author:${job.key}:${sectionIndex + 1}:${itemIndex + 1}`;
       fresh.push({
         externalId,
-        textAr: item.text || '—',
+        textAr: item.text ?? '—',
         type: QuoteType.BOOK_EXCERPT,
         textSource: TextSource.DIGITAL,
         referenceNumber: null,
@@ -690,7 +816,9 @@ export async function runStructureImport({ prisma }: ImportOptions): Promise<voi
         item.quoteId = made.get(`${provider}|${item.externalId}`) ?? null;
       }
     }
-    const plain: PlannedItem[][] = planned.map((items) => items.map((item) => ({
+    if (job.key === 'munajjid') await stampMunajjid(prisma, planned);
+    const expanded = job.key === 'targhib' ? await expandTarghibAyahs(prisma, planned, verses) : planned;
+    const plain: PlannedItem[][] = expanded.map((items) => items.map((item) => ({
       kind: item.kind,
       quoteId: item.quoteId,
       ayahFrom: item.ayahFrom,
@@ -702,6 +830,20 @@ export async function runStructureImport({ prisma }: ImportOptions): Promise<voi
 
     let babUpdates = 0;
     if (job.restoreBab) babUpdates = await restoreBabTitles(prisma, sections, plain);
+    if (job.key === 'targhib') {
+      plain.forEach((items, index) => {
+        const section = sections[index];
+        if (!section) return;
+        section.items = items.map((item) => ({
+          kind: item.kind,
+          line: item.line,
+          hadithNumber: item.hadithNumber,
+          text: item.text,
+          ayahFrom: item.ayahFrom,
+          ayahTo: item.ayahTo,
+        }));
+      });
+    }
 
     const outcome = await withRunLog(prisma, job.sourceId, async () => {
       const written = await persist(prisma, job.sourceId, sections, plain);
@@ -724,6 +866,9 @@ export async function runStructureImport({ prisma }: ImportOptions): Promise<voi
       titleAr: job.titleAr,
       sections: sections.map((section, index) => ({ id: outcome.sectionIds[index] ?? '', parsed: section })),
     });
+    const left = await absorbOrphans(prisma, job.sourceId, job.key);
+    leftoverNotes.push(...leftoverLines(job.titleAr, left));
+    console.log(`${job.titleAr}: leftovers=${left.length}`);
   }
-  writeStructureDocs(reports);
+  writeStructureDocs(reports, leftoverNotes);
 }

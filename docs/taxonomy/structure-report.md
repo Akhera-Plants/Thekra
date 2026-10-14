@@ -155,7 +155,7 @@ Sections: 549.
 
 | Kind | Items |
 | --- | ---: |
-| AYAH | 0 |
+| AYAH | 657 |
 | HADITH | 2849 |
 | AUTHOR_TEXT | 0 |
 
@@ -225,9 +225,9 @@ Sections: 127.
 
 | Kind | Items |
 | --- | ---: |
-| AYAH | 0 |
-| HADITH | 233 |
-| AUTHOR_TEXT | 281 |
+| AYAH | 205 |
+| HADITH | 370 |
+| AUTHOR_TEXT | 648 |
 
 ### ذكر أن من شرب الخمر لا يكون مؤمنا حين يشربها
 
@@ -236,8 +236,11 @@ Sections: 127.
 - parent: الكبيرة التاسعة عشر شرب الخمر
 - corpus line: 1335
 
-- HADITH بلا رقم — line 1336 — عن أبي هريرة عن النبي صلى الله عليه وسلم لا يسرق السارق حين يسرق وهو مؤمن ولا يز
-- HADITH بلا رقم — line 1341 — منه الإيمان كما يخلع الإنسان القميص من رأسه وفيه من شرب الخمر ممسيا أصبح مشركا و
+- AUTHOR_TEXT نص المؤلف — line 1336 — عن أبي هريرة عن النبي صلى الله عليه وسلم لا يسرق السارق حين يسرق وهو مؤمن ولا يز
+- HADITH بلا رقم — line 1336 — وفي الحديث من زنى أو شرب الخمر نزع الله
+- AUTHOR_TEXT نص المؤلف — line 1341 — منه الإيمان كما يخلع الإنسان القميص من رأسه وفيه من شرب الخمر ممسيا أصبح مشركا و
+- HADITH بلا رقم — line 1341 — قال رسول الله صلى الله عليه وسلم لا يدخل الجنة مدمن خمر ولا مؤمن بسحر ولا قاطع ر
+- HADITH بلا رقم — line 1341 — وقال رسول الله صلى الله عليه وسلم إن الله بعثني رحمة وهدى للعالمين بعثني لأمحق ا
 
 ### فصل
 
@@ -247,7 +250,7 @@ Sections: 127.
 - corpus line: 1418
 
 - AUTHOR_TEXT نص المؤلف — line 1419 — والحشيشة المصنوعة من ورق القنب حرام كالخمر يحد شاربها كما يحد شارب الخمر وهي أخب
-- HADITH بلا رقم — line 1434 — حتى يشتد والمزر وهو من الذرة والشعير ينبذ حتى يشتد قال وكان رسول الله صلى الله ع
+- AUTHOR_TEXT نص المؤلف — line 1434 — حتى يشتد والمزر وهو من الذرة والشعير ينبذ حتى يشتد قال وكان رسول الله صلى الله ع
 - AUTHOR_TEXT نص المؤلف — line 1442 — فآكلها وزارعها حلالا
 - AUTHOR_TEXT نص المؤلف — line 1443 — فتلك على الشقي مصيبتان
 - AUTHOR_TEXT نص المؤلف — line 1444 — فوالله ما فرح إبليس بمثل فرحه بالحشيشة لأنه زينها للأنفس الخسيسة فاستحلوها واستر
@@ -264,8 +267,13 @@ Sections: 127.
 - parent: —
 - corpus line: 1970
 
-- HADITH بلا رقم — line 1971 — وهو داخل في قول الله تعالى {إنما السبيل على الذين يظلمون الناس ويبغون في الأرض ب
-- HADITH بلا رقم — line 1983 — وفي حديث المرأة التي طهرت نفسها بالرجم لقد تابت توبة لو تابها صاحب مكس لغفر له أ
+- AUTHOR_TEXT نص المؤلف — line 1971 — وهو داخل في قول الله تعالى
+- AYAH 42:42 — line 1971
+- AUTHOR_TEXT نص المؤلف — line 1971 — والمكاس من أكبر أعوان الظلمة بل هو من الظلمة أنفسهم فإنه يأخذ ما لا يستحق ويعطيه
+- AUTHOR_TEXT نص المؤلف — line 1983 — وفي حديث المرأة التي طهرت نفسها بالرجم لقد تابت توبة لو تابها صاحب مكس لغفر له أ
+- HADITH بلا رقم — line 1983 — وعن جابر أن رجلا قال يا رسول الله إن الخمر كانت تجارتي وإني جمعت من بيعها مالا ف
+- AYAH 5:100 — line 1983
+- HADITH بلا رقم — line 1983 — قال عطاء والحسن الحلال والحرام فنسأل الله العفو والعافية
 - AUTHOR_TEXT نص المؤلف — line 1996 — أين من حصن الحصون المشيدة واحترس وعمر الحدائق فبالغ وغرس ونصب لنفسه سرير العز وج
 - AUTHOR_TEXT نص المؤلف — line 2002 — تبني وتجمع والآثار تندرس
 - AUTHOR_TEXT نص المؤلف — line 2003 — وتأمل اللبث والأعمار تختلس ... ذا اللب فكر فما في العيش من طمع
@@ -289,8 +297,17 @@ Sections: 127.
 - parent: —
 - corpus line: 2120
 
-- HADITH بلا رقم — line 2121 — قال الله تعالى {ولا تقتلوا أنفسكم إن الله كان بكم رحيما ومن يفعل ذلك عدوانا وظلم
-- HADITH بلا رقم — line 2140 — بنفسه حرمت عليه الجنة مخرج في الصحيحين وعن أبي هريرة رضي الله عنه قال قال رسول ا
+- AUTHOR_TEXT نص المؤلف — line 2121 — قال الله تعالى
+- AYAH 4:29 — line 2121
+- AYAH 4:30 — line 2121
+- AUTHOR_TEXT نص المؤلف — line 2121 — قال الواحدي في تفسير هذه الآية ولاتقتلوا أنفسكم أي لا يقتل بعضكم بعضا لأنكم أهل 
+- AUTHOR_TEXT نص المؤلف — line 2121 — مع العدوان أن يعدو ما أمر الله به وكان ذلك على الله يسيرا أي أنه قادر على إيقاع 
+- HADITH بلا رقم — line 2121 — وعن جندب بن عبد الله عن النبي صلى الله عليه وسلم أنه قال كان فيمن كان قبلكم رجل 
+- AUTHOR_TEXT نص المؤلف — line 2140 — بنفسه حرمت عليه الجنة مخرج في الصحيحين
+- HADITH بلا رقم — line 2140 — وعن أبي هريرة رضي الله عنه قال
+- HADITH بلا رقم — line 2140 — قال رسول الله صلى الله عليه وسلم من قتل نفسه بحديدة فحديدته في يده يتوجأ بها في 
+- HADITH بلا رقم — line 2140 — قال رسول الله صلى الله عليه وسلم لعن المؤمن كقتله ومن قذف مؤمنا بكفر فهو كقتله و
+- HADITH بلا رقم — line 2140 — وفي الحديث الصحيح عن الرجل الذي آلمته الجراح فاستعجل الموت فقتل نفسه بذباب سيفه 
 - AUTHOR_TEXT نص المؤلف — line 2151 — ابن آدم كيف تظن أعمالك مشيدة وأنت تعلم أنها مكيدة وكيف تترك معاملة المولى وتعلم 
 
 ### الكبيرة الثالثة والأربعون النمام
@@ -300,11 +317,23 @@ Sections: 127.
 - parent: —
 - corpus line: 2840
 
-- HADITH بلا رقم — line 2841 — وهو من ينقل الحديث بين الناس على جهة الإفساد بينهم هذا بيانها وأما أحكامها فهي ح
+- AUTHOR_TEXT نص المؤلف — line 2841 — وهو من ينقل الحديث بين الناس على جهة الإفساد بينهم هذا بيانها وأما أحكامها فهي ح
+- AYAH 68:10 — line 2841
+- AYAH 68:11 — line 2841
+- HADITH بلا رقم — line 2841 — وفي الصحيحين أن رسول الله صلى الله عليه وسلم قال لا يدخل الجنة نمام
+- HADITH بلا رقم — line 2841 — وفي الحديث أن رسول الله صلى الله عليه وسلم مر بقبرين قال إنهما ليعذبان وما يعذبا
+- HADITH بلا رقم — line 2841 — وعن أبي هريرة رضي الله عنه قال
+- HADITH بلا رقم — line 2841 — قال رسول الله صلى الله عليه وسلم تجدون شر الناس ذا الوجهين الذي يأتي هؤلاء بوجه 
 - AUTHOR_TEXT نص المؤلف — line 2859 — الإيماء أو نحوها وسواء كان من الأقوال أو الأعمال وسواء كان عيبا أو غيره فحقيقة ا
-- AUTHOR_TEXT نص المؤلف — line 2880 — دل على أنه ولد الزنا إستنباطا من قول الله تعالى {عتل بعد ذلك زنيم} والزنيم هو ال
-- AUTHOR_TEXT نص المؤلف — line 2892 — روي أن رجلا رأى غلاما يباع وهو ينادي عليه ليس به عيب إلا أنه نمام فقط فاستخف بال
+- AUTHOR_TEXT نص المؤلف — line 2859 — الخامس أن لا يحمله ما حكي له على التجسس والبحث عن تحقق ذلك قال الله سبحانه وتعال
+- AUTHOR_TEXT نص المؤلف — line 2859 — السادس أن لا يرضى لنفسه ما نهى النمام عنه فلا يحكي نميمته وقد جاء أن رجلا ذكر لع
+- AUTHOR_TEXT نص المؤلف — line 2880 — دل على أنه ولد الزنا إستنباطا من قول الله تعالى
+- AUTHOR_TEXT نص المؤلف — line 2880 — والزنيم هو الدعي
+- HADITH بلا رقم — line 2880 — وروي أن بعض السلف الصالحين زار أخا له وذكر له عن بعض إخوانه شيئا يكرهه فقال له ي
+- HADITH بلا رقم — line 2880 — يعني امرأة أبي لهب إنها كانت تنقل الحديث بالنميمة سمى النميمة حطبا لأنها سبب الع
+- HADITH بلا رقم — line 2892 — روي أن رجلا رأى غلاما يباع وهو ينادي عليه ليس به عيب إلا أنه نمام فقط فاستخف بال
 - AUTHOR_TEXT نص المؤلف — line 2903 — إلى حلقه قام وأخذ الموسى منها وذبحها به فجاء أهلها فرأوها مقتولة فقتلوه فوقع الق
+- AYAH 49:6 — line 2903
 - AUTHOR_TEXT نص المؤلف — line 2908 — يا من أسره الهوى فما يستطيع له فكاكا يا غافلا عن التلف وقد أدركه إدراكا يا مغرور
 - AUTHOR_TEXT نص المؤلف — line 2911 — بكيت فما تبكي شباب صباك
 - AUTHOR_TEXT نص المؤلف — line 2912 — كفاك نذير الشيب فيك كفاك ... ألم تر أن الشيب قد قام ناعيا
@@ -455,8 +484,8 @@ Sections: 99.
 | Kind | Items |
 | --- | ---: |
 | AYAH | 348 |
-| HADITH | 1604 |
-| AUTHOR_TEXT | 525 |
+| HADITH | 1608 |
+| AUTHOR_TEXT | 521 |
 
 ### باب ما جاء في فضل العبادة
 
@@ -1079,4 +1108,286 @@ No items under this heading.
 - HADITH 533 — line 39720 — حدثني هارون بن سعيد الأيلي وأحمد بن عيسى قالا حدثنا بن وهب أخبرني عمرو وهو بن ال
 - HADITH 533 — line 39727 — حدثنا زهير بن حرب ومحمد بن المثنى كلاهما عن الضحاك قال بن المثنى حدثنا الضحاك بن
 - HADITH 533 — line 39732 — وحدثناه إسحاق بن إبراهيم الحنظلي حدثنا أبو بكر الخفي وعبد الملك بن الصباح كلاهما
+
+## سلسلة أعمال القلوب (`munajjid`)
+
+Sections: 12.
+
+| Level | Sections |
+| --- | ---: |
+| KITAB | 12 |
+
+| Kind | Items |
+| --- | ---: |
+| AYAH | 576 |
+| HADITH | 6 |
+| AUTHOR_TEXT | 12 |
+
+### الإخلاص
+
+- id: `c9ee5ff0-aa5a-4754-a492-2deb0af2143d`
+- level: KITAB 7
+- parent: —
+- corpus line: 1
+
+- AYAH 98:5 — line 1
+- AYAH 39:3 — line 1
+- AYAH 39:14 — line 1
+- AYAH 6:162 — line 1
+- AYAH 6:163 — line 1
+- AYAH 18:110 — line 1
+- AYAH 4:125 — line 1
+- AYAH 18:28 — line 1
+- AYAH 30:38 — line 1
+- AYAH 92:17 — line 1
+- AYAH 92:18 — line 1
+- AYAH 92:19 — line 1
+- AYAH 92:20 — line 1
+- AYAH 92:21 — line 1
+- AYAH 11:15 — line 1
+- AYAH 11:16 — line 1
+- AYAH 17:18 — line 1
+- AYAH 8:47 — line 1
+- AYAH 76:4 — line 1
+- AYAH 4:114 — line 1
+- AYAH 3:152 — line 1
+- HADITH بلا رقم — line 1
+- AYAH 25:23 — line 1
+- AYAH 8:29 — line 1
+- AYAH 9:92 — line 1
+- AYAH 12:24 — line 1
+- AYAH 37:41 — line 1
+- AYAH 37:42 — line 1
+- AYAH 37:43 — line 1
+- AYAH 7:55 — line 1
+- AYAH 25:74 — line 1
+- AYAH 21:73 — line 1
+- AYAH 9:79 — line 1
+- AYAH 17:18 — line 1
+- AUTHOR_TEXT نص المؤلف — line 1
+
+### الرجاء
+
+- id: `4ddc317c-75ea-446d-ab29-9cebbfcf470d`
+- level: KITAB 68
+- parent: —
+- corpus line: 3
+
+- AYAH 4:123 — line 3
+- AYAH 12:87 — line 3
+- AYAH 7:169 — line 3
+- AYAH 18:36 — line 3
+- AYAH 18:36 — line 3
+- AYAH 71:13 — line 3
+- AYAH 45:14 — line 3
+- AYAH 40:46 — line 3
+- AYAH 18:110 — line 3
+- AYAH 29:5 — line 3
+- AYAH 29:5 — line 3
+- AYAH 42:30 — line 3
+- AYAH 6:129 — line 3
+- AYAH 10:107 — line 3
+- AYAH 35:2 — line 3
+- AYAH 29:41 — line 3
+- AYAH 19:81 — line 3
+- AYAH 19:82 — line 3
+- AYAH 24:39 — line 3
+- AYAH 14:8 — line 3
+- AYAH 25:23 — line 3
+- AYAH 1:5 — line 3
+- AYAH 2:218 — line 3
+- AYAH 4:48 — line 3
+- AYAH 39:53 — line 3
+- AYAH 4:48 — line 3
+- AYAH 6:12 — line 3
+- AYAH 6:54 — line 3
+- AYAH 9:102 — line 3
+- AYAH 9:103 — line 3
+- AYAH 12:87 — line 3
+- AYAH 4:123 — line 3
+- AYAH 11:114 — line 3
+- AYAH 41:30 — line 3
+- AUTHOR_TEXT نص المؤلف — line 3
+
+### الشكر
+
+- id: `b0b7678d-637d-4347-b005-5cddb53d16d4`
+- level: KITAB 153
+- parent: —
+- corpus line: 6
+
+- AYAH 2:152 — line 6
+- AYAH 4:147 — line 6
+- AYAH 6:53 — line 6
+- AYAH 76:3 — line 6
+- AYAH 27:40 — line 6
+- AYAH 14:7 — line 6
+- AYAH 39:7 — line 6
+- AYAH 3:143 — line 6
+- AYAH 3:144 — line 6
+- AYAH 9:28 — line 6
+- AYAH 6:41 — line 6
+- AYAH 3:129 — line 6
+- AYAH 2:212 — line 6
+- AYAH 9:15 — line 6
+- AYAH 3:145 — line 6
+- AYAH 3:144 — line 6
+- AYAH 7:17 — line 6
+- AYAH 11:40 — line 6
+- AYAH 38:24 — line 6
+- AYAH 17:3 — line 6
+- AYAH 2:172 — line 6
+- AYAH 7:144 — line 6
+- AYAH 31:14 — line 6
+- AYAH 39:7 — line 6
+- AYAH 16:120 — line 6
+- AYAH 16:121 — line 6
+- AYAH 16:78 — line 6
+- AYAH 3:123 — line 6
+- AYAH 2:152 — line 6
+- AYAH 93:11 — line 6
+- AYAH 22:37 — line 6
+- AYAH 35:3 — line 6
+- AYAH 16:72 — line 6
+- AYAH 14:34 — line 6
+- AYAH 31:20 — line 6
+- AYAH 14:32 — line 6
+- AYAH 14:33 — line 6
+- AYAH 14:34 — line 6
+- AYAH 16:14 — line 6
+- AYAH 16:15 — line 6
+- AYAH 16:16 — line 6
+- AYAH 16:17 — line 6
+- AYAH 16:18 — line 6
+- AYAH 16:81 — line 6
+- AYAH 49:17 — line 6
+- AYAH 2:243 — line 6
+- AYAH 28:78 — line 6
+- AYAH 56:19 — line 6
+- AYAH 15:22 — line 6
+- AYAH 56:68 — line 6
+- AYAH 56:69 — line 6
+- AYAH 56:70 — line 6
+- AYAH 46:15 — line 6
+- AYAH 14:7 — line 6
+- HADITH بلا رقم — line 6
+- AYAH 6:165 — line 6
+- AYAH 2:60 — line 6
+- AYAH 2:172 — line 6
+- AYAH 93:11 — line 6
+- AYAH 55:13 — line 6
+- AYAH 57:22 — line 6
+- AYAH 57:23 — line 6
+- AUTHOR_TEXT نص المؤلف — line 6
+
+### التوكل
+
+- id: `a6db50ee-a510-4124-ae95-6475790b829c`
+- level: KITAB 200
+- parent: —
+- corpus line: 8
+
+- AYAH 5:23 — line 8
+- AYAH 1:5 — line 8
+- AYAH 9:129 — line 8
+- HADITH بلا رقم — line 8
+- AYAH 8:2 — line 8
+- AYAH 60:4 — line 8
+- AYAH 60:4 — line 8
+- AYAH 3:173 — line 8
+- AYAH 39:38 — line 8
+- AYAH 3:122 — line 8
+- AYAH 27:79 — line 8
+- AYAH 11:123 — line 8
+- AYAH 25:58 — line 8
+- AYAH 3:159 — line 8
+- AYAH 5:23 — line 8
+- AYAH 67:29 — line 8
+- AYAH 5:23 — line 8
+- AYAH 65:2 — line 8
+- AYAH 65:3 — line 8
+- AYAH 11:123 — line 8
+- AYAH 9:129 — line 8
+- AYAH 10:71 — line 8
+- AYAH 10:71 — line 8
+- AYAH 42:10 — line 8
+- AYAH 3:121 — line 8
+- AYAH 3:122 — line 8
+- AYAH 3:160 — line 8
+- AYAH 5:11 — line 8
+- AYAH 9:25 — line 8
+- AYAH 8:61 — line 8
+- AYAH 3:159 — line 8
+- AYAH 42:36 — line 8
+- AYAH 65:2 — line 8
+- AYAH 65:3 — line 8
+- AYAH 12:66 — line 8
+- AYAH 12:67 — line 8
+- AYAH 16:41 — line 8
+- AYAH 16:42 — line 8
+- AYAH 9:40 — line 8
+- AYAH 6:89 — line 8
+- AYAH 8:64 — line 8
+- AYAH 11:123 — line 8
+- AYAH 13:30 — line 8
+- AYAH 73:9 — line 8
+- AYAH 42:10 — line 8
+- AYAH 1:5 — line 8
+- AYAH 8:64 — line 8
+- AYAH 3:111 — line 8
+- AYAH 67:15 — line 8
+- AYAH 62:10 — line 8
+- AYAH 73:20 — line 8
+- AYAH 62:9 — line 8
+- AYAH 62:10 — line 8
+- AYAH 9:129 — line 8
+- AYAH 40:44 — line 8
+- AYAH 19:25 — line 8
+- AYAH 8:64 — line 8
+- AYAH 5:67 — line 8
+- AYAH 7:56 — line 8
+- AYAH 8:69 — line 8
+- AYAH 8:69 — line 8
+- HADITH بلا رقم — line 8
+- AYAH 62:10 — line 8
+- AYAH 3:173 — line 8
+- AYAH 3:174 — line 8
+- AYAH 33:22 — line 8
+- AYAH 12:66 — line 8
+- AYAH 12:67 — line 8
+- AYAH 58:10 — line 8
+- AYAH 2:197 — line 8
+- AUTHOR_TEXT نص المؤلف — line 8
+
+### الورع
+
+- id: `4c8826fe-675b-4fe0-a1d4-8de0b09c454f`
+- level: KITAB 315
+- parent: —
+- corpus line: 12
+
+- AYAH 1:5 — line 12
+- AYAH 23:51 — line 12
+- AYAH 74:4 — line 12
+- AYAH 2:187 — line 12
+- AYAH 2:229 — line 12
+- AUTHOR_TEXT نص المؤلف — line 12
+
+## Leftovers
+
+- الأدب المفرد: 0
+- رياض الصالحين: 0
+- صحيح الترغيب والترهيب: 0
+- الكبائر: 131
+  - 131 — superseded when the kabira was split into the author's prose, verse keys, and prophetic reports (بلا رقم، بلا رقم، بلا رقم، بلا رقم، بلا رقم، بلا رقم، بلا رقم، بلا رقم، بلا رقم، بلا رقم، بلا رقم، بلا رقم، بلا رقم، بلا رقم، بلا رقم، …)
+- مختصر منهاج القاصدين: 86
+  - 86 — no sectioned quote shares its number or its wording (48، 57، 3، 58، 63، 39، 64، 65، 76، 91، 92، 135، 136، 147، 2، …)
+- الزهد والرقائق: 17
+  - 17 — no sectioned quote shares its number or its wording (177، 188، 265، 391، 553، 560، 642، 657، 757، 772، 833، 862، 177، 367، 861، …)
+- الجامع لشعب الإيمان: 2
+  - 2 — no sectioned quote shares its number or its wording (424، 3447)
+- صحيح البخاري: 1
+  - 1 — no sectioned quote shares its number or its wording (بلا رقم)
+- صحيح مسلم: 0
+- سلسلة أعمال القلوب: 0
 
