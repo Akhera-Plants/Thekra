@@ -138,6 +138,7 @@
     "quiet": "No published text yet",
     "jumpLabel": "Letter index",
     "noResults": "No matching results",
+    "contemporary": "Contemporary",
     "categoryAll": "All",
     "openPicker": "Choose a sin",
     "showAll": "Show all",
@@ -171,6 +172,7 @@
     "quiet": "No published text yet",
     "jumpLabel": "Letter index",
     "noResults": "No matching results",
+    "contemporary": "Contemporary",
     "openPicker": "Choose a good deed",
     "showAll": "Show all",
     "showPublished": "Published only"

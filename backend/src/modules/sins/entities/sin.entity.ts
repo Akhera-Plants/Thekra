@@ -20,6 +20,9 @@ export interface SinDto {
   rank: SinRank | null;
   rankReference: string | null;
   rankSource: SinRankSourceDto | null;
+  domainKey: string | null;
+  taxonomyOrder: number | null;
+  isContemporary: boolean;
   quoteCount: number;
   createdAt: Date;
   updatedAt: Date;

@@ -58,6 +58,9 @@ export class GoodDeedsService {
       name: string;
       nameAr: string;
     } | null;
+    domainKey: string | null;
+    taxonomyOrder: number | null;
+    isContemporary: boolean;
     _count: { quotes: number };
   }): GoodDeedDto {
     return {
@@ -71,6 +74,9 @@ export class GoodDeedsService {
       reward: row.reward,
       rewardAr: row.rewardAr,
       oppositeSin: row.oppositeSin,
+      domainKey: row.domainKey,
+      taxonomyOrder: row.taxonomyOrder,
+      isContemporary: row.isContemporary,
       quoteCount: row._count.quotes,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,

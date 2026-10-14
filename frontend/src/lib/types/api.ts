@@ -134,10 +134,12 @@ export interface SinDto {
   rank: SinRank | null;
   rankReference: string | null;
   rankSource: { id: string; name: string; nameAr: string | null } | null;
+  domainKey?: string | null;
+  taxonomyOrder?: number | null;
+  isContemporary?: boolean;
   quoteCount: number;
   createdAt: string;
   updatedAt: string;
-  isContemporary?: boolean;
   branches?: { number: number; titleAr: string }[];
 }
 
@@ -166,10 +168,12 @@ export interface GoodDeedDto {
     name: string;
     nameAr: string;
   } | null;
+  domainKey?: string | null;
+  taxonomyOrder?: number | null;
+  isContemporary?: boolean;
   quoteCount: number;
   createdAt: string;
   updatedAt: string;
-  isContemporary?: boolean;
   branches?: { number: number; titleAr: string }[];
 }
 

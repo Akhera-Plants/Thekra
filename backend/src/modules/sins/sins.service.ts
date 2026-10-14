@@ -65,6 +65,9 @@ export class SinsService {
       rank: SinRank | null;
       rankReference: string | null;
       rankSource: { id: string; name: string; nameAr: string | null } | null;
+      domainKey: string | null;
+      taxonomyOrder: number | null;
+      isContemporary: boolean;
       createdAt: Date;
       updatedAt: Date;
       _count: { quotes: number };
@@ -83,6 +86,9 @@ export class SinsService {
       rank: row.rank,
       rankReference: row.rankReference,
       rankSource: row.rankSource,
+      domainKey: row.domainKey,
+      taxonomyOrder: row.taxonomyOrder,
+      isContemporary: row.isContemporary,
       quoteCount: row._count.quotes,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,

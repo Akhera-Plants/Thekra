@@ -16,6 +16,9 @@ export interface GoodDeedDto {
   reward: string | null;
   rewardAr: string | null;
   oppositeSin: OppositeSinSummary | null;
+  domainKey: string | null;
+  taxonomyOrder: number | null;
+  isContemporary: boolean;
   quoteCount: number;
   createdAt: Date;
   updatedAt: Date;
