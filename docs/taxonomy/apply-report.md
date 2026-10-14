@@ -1,0 +1,487 @@
+# Taxonomy apply report
+
+The reviewer taxonomy in `backend/prisma/taxonomy/taxonomy.yaml` and `docs/taxonomy/content-map.tsv` was applied as written. Names, slugs, domains, and section decisions were not redesigned.
+
+## Phase 1 — structure
+
+```
+ ibn_qayyim_sources = 0
+ ibn_qayyim_quotes  = 0
+```
+
+Hadith quotes with no section item:
+
+| Book | Hadith outside every section |
+| --- | ---: |
+| رياض الصالحين | 0 |
+| صحيح الترغيب والترهيب | 0 |
+| مختصر منهاج القاصدين | 0 |
+| الأدب المفرد | 0 |
+| صحيح مسلم | 0 |
+| الجامع لشعب الإيمان | 0 |
+| سلسلة أعمال القلوب | 0 |
+| الزهد والرقائق | 17 |
+| الكبائر | 67 |
+| صحيح البخاري | 1 |
+
+The structure importer's leftover counts, re-measured in this session, are kabair 131, minhaj 86, zuhd 17, shuab 2, bukhari 1, and 0 for the other books. Those leftovers are the ones already explained in `docs/taxonomy/structure-report.md`. Riyad has no hadith outside a section.
+
+Kabira 43 (`الكبيرة الثالثة والأربعون`) begins with an AUTHOR_TEXT definition («وهو من ينقل الحديث بين الناس على جهة الإفساد بينهم…»), then AYAH 68:10, AYAH 68:11, then the hadith «وفي الصحيحين أن رسول الله صلى الله عليه وسلم قال لا يدخل الجنة نمام».
+
+سلسلة أعمال القلوب: 12 sections, and every AUTHOR_TEXT item stores 0 characters. Ayah and hadith items per chapter:
+
+| Order | Chapter | Page | Ayah | Hadith |
+| --- | --- | ---: | ---: | ---: |
+| 1 | الإخلاص | 7 | 33 | 1 |
+| 2 | الخوف | 36 | 68 | 0 |
+| 3 | الرجاء | 68 | 34 | 0 |
+| 4 | الرضا | 91 | 45 | 1 |
+| 5 | الصبر | 122 | 77 | 0 |
+| 6 | الشكر | 153 | 61 | 1 |
+| 7 | التفكر | 177 | 41 | 1 |
+| 8 | التوكل | 200 | 68 | 2 |
+| 9 | المحبة | 233 | 28 | 0 |
+| 10 | المحاسبة | 257 | 40 | 0 |
+| 11 | التقوى | 285 | 76 | 0 |
+| 12 | الورع | 315 | 5 | 0 |
+
+## Phase 3 — match totals against section 3.2
+
+This session re-ran `import:taxonomy`. Coverage is computed before the write, so the line is the same match the first apply produced:
+
+```
+coverage: targhib 339/512, zuhd 59/85, minhaj 113/140, unmapped 381
+items: ghibah 51, kadhib 18, khiyana 5, salah 125, salat-fi-jamaah 168, siyam 108, dhikr 964, dhikr-akhira 215, adha-muslimin 22
+links planned: 12828, proposals: 1314, skipped items: 0
+```
+
+Section 3.2 expected Targhib 338/512, Zuhd 59/85, Minhaj 113/140, and 384 unmapped sections. The differences are Targhib +1 and unmapped −3, both inside 2%. The three sections the unmapped file still lists, and the YAML now matches, are:
+
+- رياض الصالحين: باب توقير العلماء والكبار وأهل الفضل وتقديمهم على غيرهم ورفع مجالسهم وإظهار مرتبتهم
+- رياض الصالحين: باب وجوب طاعة ولاة الأمر في غير معصية وتحريم طاعتهم في المعصية
+- صحيح الترغيب والترهيب: الترهيب من قوله لمسلم : یا کافر ! (Persian yeh)
+
+The anchored item counts match section 3.2 exactly.
+
+The first write, from the apply that produced `abd26fd`:
+
+```
+taxonomy write: created=12862 updated=703 deleted=12206
+taxonomy topics write: created=291 updated=446 deleted=11678
+taxonomy links write: created=12571 updated=257 deleted=528
+```
+
+The idempotent re-run in this session:
+
+```
+taxonomy write: created=0 updated=0 deleted=0
+taxonomy topics write: created=0 updated=0 deleted=0
+taxonomy links write: created=0 updated=0 deleted=0
+```
+
+Database after that re-run: 89 sins (84 shown, 5 hidden) and 79 good deeds (77 shown, 2 hidden), all `origin = TAXONOMY`. `AUTO_CHAPTER` rows: 0. Domains 12, labels 20, derivations 24. Hidden sins: `tasweer` (kabira 48 merged here), `firar-zahf`, `kabira-35`, `kabira-57`, `kabira-67`. Hidden deeds: `jihad`, `kaffarat`. Kabira 64 has no row. `tark-lillah` is shown and `isListed = false`.
+
+Links now in the database (12,854 = 12,828 planned + 26 MANUAL rows the importer left in place):
+
+| Basis | classifiedBy | reviewStatus | Count |
+| --- | --- | --- | ---: |
+| CHAPTER | BOOK | ACCEPTED | 5815 |
+| CHAPTER_AYAH | BOOK | ACCEPTED | 1376 |
+| TAKHRIJ | BOOK | ACCEPTED | 408 |
+| TAKHRIJ | REVIEWER | ACCEPTED | 79 |
+| AUTHOR_CITATION | BOOK | ACCEPTED | 481 |
+| REVIEWER_SECTION | REVIEWER | ACCEPTED | 890 |
+| AI_ITEM | AI | ACCEPTED | 67 |
+| KEYWORD_PROPOSAL | AI | NOT_REVIEWED | 3712 |
+| MANUAL | BOOK | ACCEPTED | 26 |
+
+## Per topic
+
+`public` is the count of ACCEPTED links whose quote passes the public reader clause. Contemporary topics have no texts of their own; their pages add the public texts of the topics they derive from, which is why the catalog shows counts for them while this column is 0.
+
+| domain | side | slug | name | rank | visibility | CHAPTER | CHAPTER_AYAH | TAKHRIJ | AUTHOR_CITATION | REVIEWER_SECTION | AI_ITEM | KEYWORD_PROPOSAL | MANUAL | BOOK | REVIEWER | AI | public |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| iman | AVOID | amn-makr | الأمن من مكر الله واليأس من رحمته | KABIRA | shown | 8 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 11 | 0 | 0 | 3 |
+| iman | AVOID | bida | البدع ومحدثات الأمور | — | shown | 12 | 5 | 0 | 0 | 0 | 0 | 12 | 0 | 17 | 0 | 12 | 5 |
+| iman | AVOID | hilf-bighayr-allah | الحلف بغير الله | — | shown | 10 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 10 | 0 | 1 | 0 |
+| iman | AVOID | sabb-sahaba | سبّ الصحابة | KABIRA | shown | 4 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 0 | 3 |
+| iman | AVOID | shirk | الشرك بالله | KABIRA | shown | 1 | 7 | 0 | 0 | 0 | 0 | 33 | 0 | 8 | 0 | 33 | 7 |
+| iman | AVOID | sihr-kahana | السحر وإتيان الكهان والعرافين | KABIRA | shown | 29 | 8 | 1 | 0 | 0 | 0 | 28 | 0 | 38 | 0 | 28 | 9 |
+| iman | AVOID | takdhib-qadar | التكذيب بالقدر | KABIRA | shown | 10 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 15 | 0 | 0 | 5 |
+| iman | AVOID | tatayyur | التطيّر وتعليق التمائم | — | shown | 9 | 1 | 0 | 0 | 0 | 0 | 11 | 0 | 10 | 0 | 11 | 1 |
+| iman | DO | dhikr-akhira | التشويق إلى الجنة وتذكّر الآخرة | — | shown | 110 | 102 | 32 | 0 | 68 | 5 | 395 | 0 | 221 | 91 | 400 | 146 |
+| iman | DO | iman-ghayb | الإيمان بالملائكة والرسل والكتب | — | shown | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| iman | DO | mahabbat-allah | محبة الله ورسوله وتعظيمهما | — | shown | 31 | 30 | 1 | 25 | 0 | 0 | 14 | 0 | 87 | 0 | 14 | 63 |
+| iman | DO | sunna | اتباع السنة | — | shown | 21 | 18 | 4 | 0 | 9 | 0 | 6 | 0 | 43 | 9 | 6 | 24 |
+| iman | DO | tawhid | التوحيد وإفراد الله بالعبادة | — | shown | 0 | 0 | 0 | 0 | 5 | 1 | 20 | 0 | 0 | 5 | 21 | 0 |
+| qalb | AVOID | ghadab | الغضب | — | shown | 22 | 16 | 1 | 0 | 0 | 0 | 17 | 1 | 40 | 0 | 17 | 25 |
+| qalb | AVOID | hasad | الحسد والغل | — | shown | 15 | 16 | 0 | 0 | 0 | 2 | 44 | 2 | 33 | 0 | 46 | 25 |
+| qalb | AVOID | istihana-saghair | الاستهانة بالصغائر | — | shown | 2 | 1 | 1 | 0 | 23 | 0 | 1 | 0 | 3 | 24 | 1 | 10 |
+| qalb | AVOID | kibr | الكبر والعُجب | KABIRA | shown | 43 | 13 | 5 | 0 | 6 | 0 | 32 | 0 | 61 | 6 | 32 | 20 |
+| qalb | AVOID | riya | الرياء | KABIRA | shown | 46 | 19 | 2 | 0 | 0 | 0 | 5 | 1 | 68 | 0 | 5 | 24 |
+| qalb | AVOID | tul-amal | التعلق بالدنيا وطول الأمل | — | shown | 68 | 14 | 0 | 0 | 0 | 0 | 0 | 0 | 82 | 0 | 0 | 15 |
+| qalb | DO | haya | الحياء | — | shown | 10 | 0 | 2 | 0 | 0 | 4 | 18 | 0 | 12 | 0 | 22 | 2 |
+| qalb | DO | husn-khuluq | حسن الخلق والحلم والرفق | — | shown | 58 | 6 | 9 | 0 | 3 | 0 | 49 | 0 | 73 | 3 | 49 | 15 |
+| qalb | DO | ikhlas | الإخلاص | — | shown | 88 | 9 | 4 | 33 | 2 | 1 | 19 | 1 | 135 | 2 | 20 | 48 |
+| qalb | DO | kaff-al-ghadab | كظم الغيظ | — | shown | 4 | 2 | 1 | 0 | 1 | 0 | 0 | 2 | 9 | 1 | 0 | 6 |
+| qalb | DO | khawf-raja | الخوف من الله ورجاؤه | — | shown | 209 | 43 | 14 | 82 | 2 | 0 | 22 | 0 | 348 | 2 | 22 | 142 |
+| qalb | DO | muhasaba | محاسبة النفس | — | shown | 0 | 0 | 0 | 35 | 2 | 0 | 0 | 0 | 35 | 2 | 0 | 36 |
+| qalb | DO | muraqaba | مراقبة الله والتقوى | — | shown | 42 | 17 | 1 | 97 | 10 | 0 | 3 | 0 | 156 | 11 | 3 | 117 |
+| qalb | DO | sabr | الصبر والرضا بالقضاء | — | shown | 96 | 17 | 17 | 101 | 12 | 1 | 58 | 0 | 231 | 12 | 59 | 140 |
+| qalb | DO | salamat-sadr | سلامة الصدر ومحبة الخير للناس | — | shown | 1 | 0 | 0 | 0 | 0 | 1 | 2 | 0 | 1 | 0 | 3 | 0 |
+| qalb | DO | shukr | شكر النعم | — | shown | 12 | 10 | 0 | 55 | 7 | 0 | 0 | 0 | 77 | 7 | 0 | 69 |
+| qalb | DO | sidq | الصدق | — | shown | 100 | 20 | 10 | 0 | 0 | 1 | 98 | 0 | 130 | 0 | 99 | 29 |
+| qalb | DO | tark-lillah | أجر من ترك شيئًا لله | — | shown | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 |
+| qalb | DO | tawadu | التواضع | — | shown | 92 | 12 | 3 | 0 | 8 | 0 | 5 | 0 | 107 | 8 | 5 | 15 |
+| qalb | DO | tawakkul | اليقين والتوكل على الله | — | shown | 30 | 3 | 0 | 48 | 4 | 0 | 18 | 0 | 81 | 4 | 18 | 53 |
+| qalb | DO | tawba | التوبة والاستغفار | — | shown | 124 | 82 | 9 | 0 | 35 | 0 | 114 | 0 | 215 | 35 | 114 | 109 |
+| qalb | DO | wara | الورع وترك الشبهات | — | shown | 15 | 2 | 5 | 5 | 17 | 0 | 6 | 0 | 24 | 20 | 6 | 15 |
+| qalb | DO | zuhd | الزهد والقناعة وتذكّر الموت | — | shown | 296 | 31 | 24 | 0 | 20 | 0 | 1 | 0 | 349 | 22 | 1 | 60 |
+| ibadat | AVOID | hajr-quran | هجر القرآن ونسيانه | — | shown | 3 | 0 | 2 | 0 | 0 | 0 | 3 | 0 | 5 | 0 | 3 | 2 |
+| ibadat | AVOID | iftar-ramadan | الفطر في رمضان بلا عذر | KABIRA | shown | 2 | 3 | 1 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 0 | 4 |
+| ibadat | AVOID | tanazzuh-bawl | عدم التنزّه من البول | KABIRA | shown | 8 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 10 | 0 | 0 | 2 |
+| ibadat | AVOID | tark-as-salah | ترك الصلاة والتهاون بها | KABIRA | shown | 91 | 20 | 7 | 0 | 12 | 0 | 5 | 2 | 118 | 14 | 5 | 29 |
+| ibadat | AVOID | tark-hajj | ترك الحج مع القدرة | KABIRA | shown | 7 | 2 | 1 | 0 | 0 | 0 | 0 | 0 | 10 | 0 | 0 | 3 |
+| ibadat | DO | dhikr | ذكر الله | — | shown | 803 | 136 | 12 | 0 | 30 | 2 | 54 | 2 | 950 | 33 | 56 | 161 |
+| ibadat | DO | dua | الدعاء | — | shown | 38 | 15 | 2 | 0 | 17 | 0 | 174 | 0 | 55 | 17 | 174 | 21 |
+| ibadat | DO | hajj | الحج والعمرة | — | shown | 42 | 4 | 1 | 0 | 6 | 1 | 282 | 0 | 47 | 6 | 283 | 7 |
+| ibadat | DO | jumua | يوم الجمعة وصلاتها | — | shown | 36 | 2 | 4 | 0 | 6 | 0 | 90 | 0 | 41 | 7 | 90 | 6 |
+| ibadat | DO | kaffarat | الكفارات والعتق | — | hidden | 9 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 0 | 3 |
+| ibadat | DO | nawafil | النوافل وقيام الليل | — | shown | 123 | 12 | 20 | 0 | 25 | 0 | 87 | 0 | 154 | 26 | 87 | 36 |
+| ibadat | DO | quran | تلاوة القرآن وتعاهده | — | shown | 75 | 15 | 7 | 0 | 15 | 0 | 143 | 0 | 97 | 15 | 143 | 29 |
+| ibadat | DO | salah | المحافظة على الصلاة | — | shown | 120 | 12 | 15 | 0 | 42 | 0 | 7 | 0 | 141 | 48 | 7 | 31 |
+| ibadat | DO | salat-ala-nabi | الصلاة على النبي ﷺ | — | shown | 22 | 2 | 0 | 0 | 0 | 0 | 10 | 0 | 24 | 0 | 10 | 2 |
+| ibadat | DO | salat-fi-jamaah | صلاة الجماعة والمشي إلى المساجد | — | shown | 167 | 12 | 13 | 0 | 8 | 0 | 65 | 2 | 194 | 8 | 65 | 27 |
+| ibadat | DO | siyam | الصيام | — | shown | 105 | 10 | 6 | 0 | 21 | 0 | 146 | 0 | 120 | 22 | 146 | 16 |
+| ibadat | DO | tahara | الطهارة والوضوء | — | shown | 43 | 1 | 8 | 0 | 19 | 0 | 96 | 0 | 52 | 19 | 96 | 14 |
+| ibadat | DO | zakah | أداء الزكاة | — | shown | 23 | 8 | 2 | 0 | 3 | 0 | 37 | 0 | 33 | 3 | 37 | 13 |
+| lisan | AVOID | dhul-wajhayn | ذو الوجهين والنفاق في التعامل | — | shown | 6 | 2 | 1 | 0 | 0 | 0 | 4 | 0 | 9 | 0 | 4 | 3 |
+| lisan | AVOID | ghibah | الغيبة | — | shown | 42 | 11 | 6 | 0 | 5 | 0 | 10 | 6 | 64 | 6 | 10 | 23 |
+| lisan | AVOID | jidal | الجدال والمراء | KABIRA | shown | 8 | 6 | 0 | 0 | 0 | 0 | 8 | 0 | 14 | 0 | 8 | 6 |
+| lisan | AVOID | kadhib | الكذب | KABIRA | shown | 23 | 10 | 1 | 0 | 0 | 3 | 12 | 0 | 34 | 0 | 15 | 10 |
+| lisan | AVOID | namimah | النميمة | KABIRA | shown | 16 | 5 | 0 | 0 | 0 | 0 | 7 | 0 | 21 | 0 | 7 | 5 |
+| lisan | AVOID | qadhf | قذف المحصنات | KABIRA | shown | 3 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 0 | 4 |
+| lisan | AVOID | sabb-lan | السبّ واللعن والفحش | KABIRA | shown | 39 | 8 | 2 | 0 | 6 | 11 | 35 | 0 | 49 | 6 | 46 | 13 |
+| lisan | AVOID | shahadat-zur | شهادة الزور | KABIRA | shown | 7 | 5 | 2 | 0 | 0 | 0 | 5 | 0 | 14 | 0 | 5 | 7 |
+| lisan | AVOID | sukhriya | احتقار الناس والسخرية منهم والشماتة | — | shown | 12 | 6 | 0 | 0 | 0 | 0 | 3 | 0 | 18 | 0 | 3 | 6 |
+| lisan | AVOID | yamin-ghamus | اليمين الكاذبة | KABIRA | shown | 24 | 4 | 0 | 0 | 0 | 1 | 2 | 0 | 28 | 0 | 3 | 4 |
+| lisan | DO | amr-maruf | الأمر بالمعروف والنهي عن المنكر | — | shown | 34 | 19 | 11 | 0 | 6 | 0 | 0 | 0 | 59 | 11 | 0 | 31 |
+| lisan | DO | hifz-al-lisan | حفظ اللسان والصمت إلا عن خير | — | shown | 70 | 8 | 5 | 0 | 0 | 1 | 9 | 1 | 84 | 0 | 10 | 14 |
+| lisan | DO | islah-bayn-nas | الإصلاح بين الناس | — | shown | 27 | 4 | 0 | 0 | 4 | 0 | 6 | 0 | 31 | 4 | 6 | 4 |
+| lisan | DO | kalam-tayyib | الكلمة الطيبة وطلاقة الوجه | — | shown | 13 | 10 | 3 | 0 | 9 | 0 | 4 | 0 | 24 | 11 | 4 | 13 |
+| lisan | DO | nasiha | النصيحة | — | shown | 4 | 3 | 0 | 0 | 0 | 0 | 5 | 0 | 7 | 0 | 5 | 3 |
+| lisan | DO | tathabbut | التثبّت في نقل الأخبار | — | shown | 3 | 2 | 0 | 0 | 0 | 0 | 2 | 0 | 5 | 0 | 2 | 2 |
+| usra | AVOID | dayyuth | الدياثة وقلّة الغيرة على الأهل | KABIRA | shown | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 1 |
+| usra | AVOID | intisab | الانتساب إلى غير الأب | KABIRA | shown | 15 | 1 | 2 | 0 | 0 | 0 | 3 | 0 | 18 | 0 | 3 | 3 |
+| usra | AVOID | nushuz | إفساد الحياة الزوجية وعصيان الزوج | KABIRA | shown | 18 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 20 | 0 | 0 | 2 |
+| usra | AVOID | qat-al-rahim | قطيعة الرحم | KABIRA | shown | 10 | 7 | 0 | 0 | 0 | 0 | 4 | 2 | 19 | 0 | 4 | 9 |
+| usra | AVOID | uquq | عقوق الوالدين | KABIRA | shown | 23 | 17 | 0 | 0 | 0 | 0 | 7 | 0 | 40 | 0 | 7 | 17 |
+| usra | AVOID | zulm-zawja | ظلم الزوجة والميل بين الزوجات | — | shown | 2 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 1 |
+| usra | DO | birr-al-walidayn | بر الوالدين | — | shown | 54 | 10 | 3 | 0 | 0 | 0 | 78 | 0 | 67 | 0 | 78 | 13 |
+| usra | DO | husn-ishra | حسن العشرة بين الزوجين | — | shown | 43 | 6 | 1 | 0 | 3 | 0 | 0 | 0 | 50 | 3 | 0 | 7 |
+| usra | DO | kafalat-yatim | كفالة اليتيم والإحسان إلى الضعفاء | — | shown | 33 | 5 | 6 | 0 | 0 | 0 | 31 | 0 | 44 | 0 | 31 | 12 |
+| usra | DO | nafaqa-ahl | النفقة على الأهل وتربية الأولاد | — | shown | 21 | 9 | 1 | 0 | 3 | 0 | 2 | 0 | 31 | 3 | 2 | 11 |
+| usra | DO | nikah | الزواج والعفة | — | shown | 4 | 2 | 0 | 0 | 0 | 0 | 31 | 0 | 6 | 0 | 31 | 2 |
+| usra | DO | silat-ar-rahim | صلة الرحم | — | shown | 42 | 12 | 3 | 0 | 2 | 0 | 34 | 0 | 57 | 2 | 34 | 15 |
+| mujtama | AVOID | adha-jar | أذى الجار | KABIRA | shown | 27 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 30 | 0 | 0 | 3 |
+| mujtama | AVOID | adha-muslimin | أذى الناس وترويعهم | KABIRA | shown | 37 | 10 | 0 | 0 | 6 | 0 | 3 | 0 | 47 | 6 | 3 | 10 |
+| mujtama | AVOID | baghy-fakhr | البغي والفخر والتعالي | KABIRA | shown | 6 | 5 | 1 | 0 | 0 | 1 | 21 | 0 | 12 | 0 | 22 | 6 |
+| mujtama | AVOID | ghadr | الغدر ونقض العهد وإخلاف الوعد | KABIRA | shown | 8 | 2 | 0 | 0 | 0 | 0 | 20 | 0 | 10 | 0 | 20 | 2 |
+| mujtama | AVOID | hijran | الهجر والتدابر والتقاطع | — | shown | 16 | 4 | 2 | 0 | 0 | 4 | 6 | 0 | 22 | 0 | 10 | 6 |
+| mujtama | AVOID | khiyana | الخيانة | KABIRA | shown | 10 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 0 | 2 |
+| mujtama | AVOID | mann | المنّ بالعطية | KABIRA | shown | 8 | 3 | 1 | 0 | 0 | 0 | 182 | 0 | 12 | 0 | 182 | 4 |
+| mujtama | AVOID | niyaha | النياحة والتسخّط عند المصيبة | KABIRA | shown | 57 | 5 | 7 | 0 | 0 | 0 | 10 | 0 | 69 | 0 | 10 | 12 |
+| mujtama | AVOID | su-dhann | سوء الظن بالناس | — | shown | 1 | 1 | 2 | 0 | 7 | 0 | 14 | 0 | 3 | 8 | 14 | 4 |
+| mujtama | AVOID | tadhib-hayawan | تعذيب الحيوان والضعفاء | — | shown | 13 | 4 | 0 | 0 | 0 | 0 | 6 | 0 | 17 | 0 | 6 | 4 |
+| mujtama | AVOID | tajassus | التجسس وتتبّع عورات الناس | KABIRA | shown | 8 | 2 | 1 | 0 | 0 | 0 | 1 | 0 | 11 | 0 | 1 | 3 |
+| mujtama | AVOID | zulm | الظلم | KABIRA | shown | 58 | 13 | 10 | 0 | 2 | 4 | 34 | 0 | 81 | 2 | 38 | 23 |
+| mujtama | DO | adl | العدل ورد المظالم | — | shown | 36 | 8 | 8 | 0 | 7 | 1 | 10 | 0 | 51 | 8 | 11 | 17 |
+| mujtama | DO | afw | العفو والصفح | — | shown | 19 | 6 | 4 | 0 | 0 | 0 | 10 | 0 | 29 | 0 | 10 | 11 |
+| mujtama | DO | amana-wafa | أداء الأمانة والوفاء بالعهد | — | shown | 26 | 8 | 0 | 0 | 2 | 0 | 13 | 0 | 34 | 2 | 13 | 8 |
+| mujtama | DO | haqq-jar | إكرام الجار | — | shown | 10 | 2 | 1 | 0 | 0 | 1 | 32 | 0 | 13 | 0 | 33 | 4 |
+| mujtama | DO | hubb-fillah | الحب في الله والصحبة الصالحة | — | shown | 76 | 16 | 7 | 0 | 7 | 2 | 2 | 0 | 99 | 7 | 4 | 27 |
+| mujtama | DO | ikram-dayf | إكرام الضيف | — | shown | 10 | 4 | 1 | 0 | 0 | 0 | 30 | 0 | 15 | 0 | 30 | 5 |
+| mujtama | DO | imatat-adha | إماطة الأذى عن الطريق | — | shown | 11 | 0 | 2 | 0 | 0 | 0 | 4 | 0 | 13 | 0 | 4 | 2 |
+| mujtama | DO | iyadat-marid | عيادة المريض واتباع الجنائز | — | shown | 39 | 0 | 7 | 0 | 35 | 0 | 34 | 0 | 44 | 37 | 34 | 9 |
+| mujtama | DO | qada-hawaij | قضاء حوائج الناس والتيسير على المعسر | — | shown | 27 | 24 | 6 | 0 | 9 | 0 | 11 | 0 | 56 | 10 | 11 | 31 |
+| mujtama | DO | rahma-khalq | الرحمة بالخلق والحيوان | — | shown | 50 | 7 | 11 | 0 | 0 | 0 | 3 | 0 | 68 | 0 | 3 | 18 |
+| mujtama | DO | salam | إفشاء السلام | — | shown | 55 | 5 | 7 | 0 | 17 | 0 | 132 | 0 | 65 | 19 | 132 | 12 |
+| mujtama | DO | satr-muslim | ستر المسلم | — | shown | 9 | 2 | 0 | 0 | 1 | 0 | 5 | 0 | 11 | 1 | 5 | 3 |
+| mujtama | DO | taawun | التعاون على البر والتقوى | — | shown | 4 | 2 | 3 | 0 | 3 | 0 | 1 | 0 | 9 | 3 | 1 | 5 |
+| mujtama | DO | tawqir-kibar | توقير العلماء والكبار وأهل الفضل | — | shown | 12 | 2 | 1 | 0 | 0 | 0 | 0 | 0 | 15 | 0 | 0 | 3 |
+| mal | AVOID | akl-haram | أكل الحرام والمكوس | KABIRA | shown | 10 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 13 | 0 | 0 | 3 |
+| mal | AVOID | akl-mal-yatim | أكل مال اليتيم | KABIRA | shown | 7 | 9 | 1 | 0 | 0 | 0 | 2 | 0 | 17 | 0 | 2 | 10 |
+| mal | AVOID | bukhl | البخل والشح | KABIRA | shown | 69 | 6 | 1 | 0 | 0 | 1 | 23 | 0 | 76 | 0 | 24 | 11 |
+| mal | AVOID | ghish | الغش والخداع وبخس الكيل | KABIRA | shown | 17 | 5 | 0 | 0 | 0 | 0 | 14 | 0 | 22 | 0 | 14 | 5 |
+| mal | AVOID | ihtikar | الاحتكار | — | shown | 1 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 1 | 0 | 1 | 0 |
+| mal | AVOID | israf | الإسراف وإضاعة المال | — | shown | 2 | 0 | 1 | 0 | 12 | 0 | 5 | 0 | 2 | 13 | 5 | 1 |
+| mal | AVOID | man-ajr | منع الأجير أجره | — | shown | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
+| mal | AVOID | man-zakah | منع الزكاة | KABIRA | shown | 34 | 10 | 0 | 0 | 0 | 0 | 4 | 0 | 44 | 0 | 4 | 10 |
+| mal | AVOID | masala | سؤال الناس من غير حاجة | — | shown | 45 | 2 | 4 | 0 | 1 | 0 | 13 | 0 | 50 | 2 | 13 | 6 |
+| mal | AVOID | mutl | المماطلة في الحقوق والديون | — | shown | 22 | 12 | 1 | 0 | 2 | 0 | 20 | 0 | 35 | 2 | 20 | 13 |
+| mal | AVOID | qimar | القمار والميسر | KABIRA | shown | 0 | 3 | 0 | 0 | 0 | 0 | 6 | 0 | 3 | 0 | 6 | 3 |
+| mal | AVOID | riba | الربا | KABIRA | shown | 11 | 4 | 0 | 0 | 0 | 0 | 16 | 0 | 15 | 0 | 16 | 4 |
+| mal | AVOID | rishwa | الرشوة | KABIRA | shown | 9 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 10 | 0 | 0 | 1 |
+| mal | AVOID | sariqa | السرقة والغصب والغلول | KABIRA | shown | 16 | 5 | 0 | 0 | 0 | 0 | 31 | 0 | 21 | 0 | 31 | 5 |
+| mal | DO | iqtisad | الاقتصاد في الإنفاق | — | shown | 16 | 4 | 5 | 0 | 0 | 0 | 10 | 0 | 25 | 0 | 10 | 9 |
+| mal | DO | kasb-halal | الكسب الحلال وطلب الرزق | — | shown | 73 | 12 | 7 | 0 | 1 | 0 | 9 | 0 | 92 | 1 | 9 | 21 |
+| mal | DO | sadaqah | الصدقة والإنفاق في الخير | — | shown | 138 | 25 | 9 | 0 | 9 | 0 | 100 | 2 | 174 | 9 | 100 | 37 |
+| mal | DO | samaha | السماحة في البيع والشراء | — | shown | 23 | 8 | 2 | 0 | 6 | 0 | 1 | 0 | 33 | 6 | 1 | 11 |
+| shahawat | AVOID | isbal-harir | الإسبال ولبس الحرير والذهب للرجال | KABIRA | shown | 43 | 4 | 3 | 0 | 6 | 0 | 35 | 0 | 48 | 8 | 35 | 7 |
+| shahawat | AVOID | khamr | الخمر والمسكرات والمخدّرات | KABIRA | shown | 34 | 12 | 0 | 0 | 0 | 0 | 47 | 0 | 46 | 0 | 47 | 12 |
+| shahawat | AVOID | liwat | اللواط | KABIRA | shown | 11 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 14 | 0 | 0 | 3 |
+| shahawat | AVOID | malahi | اللهو المحرّم | — | shown | 2 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 2 | 0 | 12 | 0 |
+| shahawat | AVOID | nazar-muharram | النظر المحرّم والخلوة بالأجنبية | — | shown | 10 | 5 | 1 | 0 | 0 | 0 | 7 | 0 | 16 | 0 | 7 | 6 |
+| shahawat | AVOID | tabarruj | التبرّج وتغيير خلق الله | — | shown | 12 | 3 | 2 | 0 | 3 | 0 | 8 | 0 | 17 | 3 | 8 | 5 |
+| shahawat | AVOID | tashabbuh | تشبّه الرجال بالنساء والنساء بالرجال | KABIRA | shown | 11 | 1 | 1 | 0 | 0 | 0 | 4 | 0 | 13 | 0 | 4 | 1 |
+| shahawat | AVOID | tasweer | تصوير ذوات الأرواح | KABIRA | hidden | 6 | 1 | 3 | 0 | 22 | 0 | 0 | 0 | 7 | 25 | 0 | 7 |
+| shahawat | AVOID | zina | الزنا | KABIRA | shown | 50 | 8 | 1 | 0 | 0 | 0 | 27 | 0 | 59 | 0 | 27 | 9 |
+| shahawat | DO | ghadd-basar | غضّ البصر | — | shown | 9 | 1 | 0 | 0 | 0 | 0 | 3 | 0 | 10 | 0 | 3 | 1 |
+| shahawat | DO | iffa | العفّة وحفظ الفرج | — | shown | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 1 | 0 |
+| dima | AVOID | firar-zahf | الفرار من الزحف والتولي يوم القتال | KABIRA | hidden | 28 | 10 | 1 | 0 | 0 | 0 | 0 | 0 | 39 | 0 | 0 | 11 |
+| dima | AVOID | intihar | قتل الإنسان نفسه | KABIRA | shown | 10 | 3 | 0 | 0 | 0 | 1 | 6 | 0 | 13 | 0 | 7 | 3 |
+| dima | AVOID | qatl | قتل النفس | KABIRA | shown | 24 | 11 | 0 | 0 | 0 | 0 | 14 | 0 | 35 | 0 | 14 | 11 |
+| dima | AVOID | zulm-raiyya | خيانة الأمانة في الولاية والقضاء | KABIRA | shown | 25 | 7 | 1 | 0 | 0 | 14 | 14 | 0 | 33 | 0 | 28 | 9 |
+| dima | DO | jihad | الجهاد في سبيل الله | — | hidden | 157 | 24 | 23 | 0 | 19 | 0 | 30 | 0 | 203 | 20 | 30 | 51 |
+| dima | DO | taat-wulat | طاعة ولاة الأمر في المعروف | — | shown | 11 | 1 | 4 | 0 | 0 | 0 | 0 | 0 | 16 | 0 | 0 | 5 |
+| ilm | AVOID | kitman-ilm | كتمان العلم وطلبه للدنيا | KABIRA | shown | 36 | 5 | 0 | 0 | 2 | 0 | 0 | 0 | 41 | 2 | 0 | 5 |
+| ilm | AVOID | qawl-bila-amal | أن تقول ما لا تفعل | — | shown | 2 | 3 | 0 | 0 | 7 | 0 | 0 | 0 | 5 | 7 | 0 | 5 |
+| ilm | DO | nashr-ilm | نشر العلم والدلالة على الخير | — | shown | 16 | 12 | 2 | 0 | 7 | 0 | 3 | 0 | 29 | 8 | 3 | 14 |
+| ilm | DO | talab-ilm | طلب العلم | — | shown | 52 | 18 | 6 | 0 | 0 | 0 | 103 | 0 | 76 | 0 | 103 | 24 |
+| raqami | AVOID | alab-mulhiya | الألعاب التي تُلهي عن الواجبات | — | shown | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| raqami | AVOID | ghibah-raqamiya | الغيبة في المجموعات والتعليقات | — | shown | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| raqami | AVOID | idaat-al-waqt | إضاعة الوقت واللغو | — | shown | 5 | 1 | 0 | 0 | 0 | 0 | 15 | 0 | 6 | 0 | 15 | 1 |
+| raqami | AVOID | ishaat | نشر الشائعات والأخبار دون تثبّت | — | shown | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| raqami | AVOID | istirad | الاستعراض والتباهي بالنشر | — | shown | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| raqami | AVOID | murahanat | المراهنات الإلكترونية | — | shown | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| raqami | AVOID | nazar-shashat | النظر المحرّم عبر الشاشات | — | shown | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| raqami | AVOID | tanammur | السخرية والتنمّر على الإنترنت | — | shown | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| raqami | AVOID | tashhir | التشهير وكشف عيوب الناس على المنصات | — | shown | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| raqami | AVOID | waqt-tawasul | إضاعة الوقت على وسائل التواصل | — | shown | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| raqami | DO | ightinam-waqt | اغتنام الوقت والمبادرة إلى الخير | — | shown | 198 | 41 | 20 | 0 | 4 | 0 | 11 | 0 | 259 | 4 | 11 | 62 |
+| raqami | DO | nashr-khayr-raqami | نشر الخير والعلم النافع على المنصات | — | shown | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| raqami | DO | silah-raqamiya | صلة الرحم بالتواصل والرسائل | — | shown | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| adab | DO | adab-libas | آداب اللباس والزينة | — | shown | 0 | 0 | 1 | 0 | 50 | 0 | 0 | 0 | 0 | 51 | 0 | 5 |
+| adab | DO | adab-majlis | آداب المجلس والاستئذان | — | shown | 0 | 0 | 0 | 0 | 16 | 0 | 0 | 0 | 0 | 16 | 0 | 1 |
+| adab | DO | adab-masjid | آداب المسجد | — | shown | 0 | 0 | 1 | 0 | 23 | 0 | 0 | 0 | 0 | 24 | 0 | 1 |
+| adab | DO | adab-safar | آداب السفر | — | shown | 0 | 0 | 3 | 0 | 49 | 0 | 0 | 0 | 0 | 52 | 0 | 8 |
+| adab | DO | adab-taam | آداب الطعام والشراب | — | shown | 0 | 0 | 6 | 0 | 79 | 3 | 0 | 0 | 0 | 85 | 3 | 8 |
+| — | AVOID | kabira-35 | المحلل والمحلل له | KABIRA | hidden | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| — | AVOID | kabira-57 | إباق العبد | KABIRA | hidden | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 |
+| — | AVOID | kabira-67 | الإضرار في الوصية | KABIRA | hidden | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 |
+
+### Shown topics with fewer than 3 direct public texts
+
+Contemporary rows are filled from their derivations. `tark-lillah` is the unlisted reward pool. The other rows with 0 stay off the public catalogs.
+
+| domain | side | slug | name | rank | visibility | CHAPTER | CHAPTER_AYAH | TAKHRIJ | AUTHOR_CITATION | REVIEWER_SECTION | AI_ITEM | KEYWORD_PROPOSAL | MANUAL | BOOK | REVIEWER | AI | public |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| iman | AVOID | hilf-bighayr-allah | الحلف بغير الله | — | shown | 10 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 10 | 0 | 1 | 0 |
+| iman | AVOID | tatayyur | التطيّر وتعليق التمائم | — | shown | 9 | 1 | 0 | 0 | 0 | 0 | 11 | 0 | 10 | 0 | 11 | 1 |
+| iman | DO | iman-ghayb | الإيمان بالملائكة والرسل والكتب | — | shown | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| iman | DO | tawhid | التوحيد وإفراد الله بالعبادة | — | shown | 0 | 0 | 0 | 0 | 5 | 1 | 20 | 0 | 0 | 5 | 21 | 0 |
+| qalb | DO | haya | الحياء | — | shown | 10 | 0 | 2 | 0 | 0 | 4 | 18 | 0 | 12 | 0 | 22 | 2 |
+| qalb | DO | salamat-sadr | سلامة الصدر ومحبة الخير للناس | — | shown | 1 | 0 | 0 | 0 | 0 | 1 | 2 | 0 | 1 | 0 | 3 | 0 |
+| qalb | DO | tark-lillah | أجر من ترك شيئًا لله | — | shown | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 |
+| ibadat | AVOID | hajr-quran | هجر القرآن ونسيانه | — | shown | 3 | 0 | 2 | 0 | 0 | 0 | 3 | 0 | 5 | 0 | 3 | 2 |
+| ibadat | AVOID | tanazzuh-bawl | عدم التنزّه من البول | KABIRA | shown | 8 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 10 | 0 | 0 | 2 |
+| ibadat | DO | salat-ala-nabi | الصلاة على النبي ﷺ | — | shown | 22 | 2 | 0 | 0 | 0 | 0 | 10 | 0 | 24 | 0 | 10 | 2 |
+| lisan | DO | tathabbut | التثبّت في نقل الأخبار | — | shown | 3 | 2 | 0 | 0 | 0 | 0 | 2 | 0 | 5 | 0 | 2 | 2 |
+| usra | AVOID | dayyuth | الدياثة وقلّة الغيرة على الأهل | KABIRA | shown | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 1 |
+| usra | AVOID | nushuz | إفساد الحياة الزوجية وعصيان الزوج | KABIRA | shown | 18 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 20 | 0 | 0 | 2 |
+| usra | AVOID | zulm-zawja | ظلم الزوجة والميل بين الزوجات | — | shown | 2 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 1 |
+| usra | DO | nikah | الزواج والعفة | — | shown | 4 | 2 | 0 | 0 | 0 | 0 | 31 | 0 | 6 | 0 | 31 | 2 |
+| mujtama | AVOID | ghadr | الغدر ونقض العهد وإخلاف الوعد | KABIRA | shown | 8 | 2 | 0 | 0 | 0 | 0 | 20 | 0 | 10 | 0 | 20 | 2 |
+| mujtama | AVOID | khiyana | الخيانة | KABIRA | shown | 10 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 0 | 2 |
+| mujtama | DO | imatat-adha | إماطة الأذى عن الطريق | — | shown | 11 | 0 | 2 | 0 | 0 | 0 | 4 | 0 | 13 | 0 | 4 | 2 |
+| mal | AVOID | ihtikar | الاحتكار | — | shown | 1 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 1 | 0 | 1 | 0 |
+| mal | AVOID | israf | الإسراف وإضاعة المال | — | shown | 2 | 0 | 1 | 0 | 12 | 0 | 5 | 0 | 2 | 13 | 5 | 1 |
+| mal | AVOID | man-ajr | منع الأجير أجره | — | shown | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
+| mal | AVOID | rishwa | الرشوة | KABIRA | shown | 9 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 10 | 0 | 0 | 1 |
+| shahawat | AVOID | malahi | اللهو المحرّم | — | shown | 2 | 0 | 0 | 0 | 0 | 0 | 12 | 0 | 2 | 0 | 12 | 0 |
+| shahawat | AVOID | tashabbuh | تشبّه الرجال بالنساء والنساء بالرجال | KABIRA | shown | 11 | 1 | 1 | 0 | 0 | 0 | 4 | 0 | 13 | 0 | 4 | 1 |
+| shahawat | DO | ghadd-basar | غضّ البصر | — | shown | 9 | 1 | 0 | 0 | 0 | 0 | 3 | 0 | 10 | 0 | 3 | 1 |
+| shahawat | DO | iffa | العفّة وحفظ الفرج | — | shown | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 1 | 0 |
+| raqami | AVOID | alab-mulhiya | الألعاب التي تُلهي عن الواجبات | — | shown | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| raqami | AVOID | ghibah-raqamiya | الغيبة في المجموعات والتعليقات | — | shown | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| raqami | AVOID | idaat-al-waqt | إضاعة الوقت واللغو | — | shown | 5 | 1 | 0 | 0 | 0 | 0 | 15 | 0 | 6 | 0 | 15 | 1 |
+| raqami | AVOID | ishaat | نشر الشائعات والأخبار دون تثبّت | — | shown | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| raqami | AVOID | istirad | الاستعراض والتباهي بالنشر | — | shown | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| raqami | AVOID | murahanat | المراهنات الإلكترونية | — | shown | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| raqami | AVOID | nazar-shashat | النظر المحرّم عبر الشاشات | — | shown | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| raqami | AVOID | tanammur | السخرية والتنمّر على الإنترنت | — | shown | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| raqami | AVOID | tashhir | التشهير وكشف عيوب الناس على المنصات | — | shown | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| raqami | AVOID | waqt-tawasul | إضاعة الوقت على وسائل التواصل | — | shown | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| raqami | DO | nashr-khayr-raqami | نشر الخير والعلم النافع على المنصات | — | shown | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| raqami | DO | silah-raqamiya | صلة الرحم بالتواصل والرسائل | — | shown | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| adab | DO | adab-majlis | آداب المجلس والاستئذان | — | shown | 0 | 0 | 0 | 0 | 16 | 0 | 0 | 0 | 0 | 16 | 0 | 1 |
+| adab | DO | adab-masjid | آداب المسجد | — | shown | 0 | 0 | 1 | 0 | 23 | 0 | 0 | 0 | 0 | 24 | 0 | 1 |
+
+## Samples
+
+Stable sample: `order by md5(id) limit 20`. Text is the first 80 characters.
+
+### 20 ACCEPTED links
+
+| side | slug | basis | classifiedBy | note | text |
+| --- | --- | --- | --- | --- | --- |
+| DO | khawf-raja | CHAPTER | BOOK | من باب: باب ما جاء في الحزن والبكاء — الزهد والرقائق | ) ١٣٦ ) أخبرنا مسعر قال : حدثنا شيخ أنه سمع جابر بن عبد عبد الله عبید عبد لهيعة  |
+| DO | zuhd | CHAPTER | BOOK | من باب: الترغيب في الزهد — صحيح الترغيب والترهيب | ٣٢٥٧ - (٤٥) وعن عوف بن مالك رضي الله عنه قال : قام رسول الله صلى الله عليه وسلم  |
+| DO | dhikr | CHAPTER | BOOK | من باب: الترغيب في التسبيح والتكبير — صحيح الترغيب والترهيب | ١٥٤٤ - (٨) وعن مصـ بن سعد قال : حدثني أبي قال : كنا عند رسول الله فقال : (۱) تعق |
+| AVOID | riba | CHAPTER_AYAH | BOOK | أورده المنذري في باب: الترهيب من الربا — صحيح الترغيب والترهيب | وَلَا يَحْسَبَنَّ ٱلَّذِينَ يَبْخَلُونَ بِمَآ ءَاتَىٰهُمُ ٱللَّهُ مِن فَضْلِهِۦ |
+| DO | sidq | CHAPTER | BOOK | من باب: ترغيب المرأة في الصدقة من مال زوجها — صحيح الترغيب والترهيب | ٩٤٢ - (٥) وعن عائشة عن النبي صلى الله عليه وسلم قال : إذا تصدقت المرأة من بيت زو |
+| AVOID | adha-muslimin | CHAPTER_AYAH | BOOK | أورده الذهبي في باب: فصل — الكبائر | وَٱصْبِرْ نَفْسَكَ مَعَ ٱلَّذِينَ يَدْعُونَ رَبَّهُم بِٱلْغَدَوٰةِ وَٱلْعَشِىِّ  |
+| DO | tawadu | CHAPTER | BOOK | من باب: باب التواضع — الزهد والرقائق | أخبركم أبو عمر بن حيويه قال: حدثنا يحيى قال: حدثنا الحسين قال: أخبرنا عبد الله ق |
+| DO | dhikr | CHAPTER | BOOK | من باب: باب فضل ذكر الله عز وجل — الزهد والرقائق | أخبركم أبو عمر بن حيويه قال: حدثنا يحيى قال: حدثنا الحسين، قال: أخبرنا الهيثم بن |
+| DO | kafalat-yatim | CHAPTER | BOOK | من باب: باب ملاطفة اليتيم والبنات وسائر الضعفة والمساكين والمنكسرين والإحسان إليهم والشفقة | وعن أنس - رضي الله عنه - عن النبي - صلى الله عليه وسلم - قال: «من عال (1) جاريتي |
+| AVOID | ghibah | CHAPTER | BOOK | من باب: باب تحريم سماع الغيبة وأمر من سمع غيبة محرمة بردها والإنكار على قائلها — رياض الصا | وعن عتبان بن مالك - رضي الله عنه - في حديثه الطويل المشهور الذي تقدم في باب الرج |
+| DO | khawf-raja | CHAPTER_AYAH | BOOK | أورده المنذري في باب: الترغيب في الخوف ، وفضله — صحيح الترغيب والترهيب | قَالَ ٱللَّهُ إِنِّى مُنَزِّلُهَا عَلَيْكُمْ ۖ فَمَن يَكْفُرْ بَعْدُ مِنكُمْ فَإ |
+| DO | jumua | CHAPTER | BOOK | من باب: الترغيب في صلاة الجمعة — صحيح الترغيب والترهيب | ٦٩٧ - (١٥) وعن أبي هريرة رضي الله عنه ؛ أن رسول الله عنه ؛ أن رسول الله صلى الله |
+| DO | tawadu | TAKHRIJ | BOOK | رواه البخاري (1517) — ورد في باب: الترغيب في التواضع في الحج والتبذل ولبس الدون من الثياب  | حج على رحل وكانت زاملته» |
+| DO | hubb-fillah | CHAPTER_AYAH | BOOK | أورده النووي في باب: باب فضل الحب في الله والحث عليه وإعلام الرجل من يحبه، أنه يحبه، وماذا | مُّحَمَّدٌ رَّسُولُ ٱللَّهِ ۚ وَٱلَّذِينَ مَعَهُۥٓ أَشِدَّآءُ عَلَى ٱلْكُفَّارِ |
+| DO | amr-maruf | CHAPTER | BOOK | من باب: باب في الأمر بالمعروف والنهي عن المنكر — رياض الصالحين | السابع: عن أبي سعيد الخدري - رضي الله عنه - عن النبي - صلى الله عليه وسلم - قال: |
+| AVOID | bida | CHAPTER | BOOK | من باب: الترهيب من ترك السنة وارتكاب البدع والأهواء — صحيح الترغيب والترهيب | ٥١ - (٣) وعن معاوية رضي الله عنه قال : قام فينا رسول الله صلى الله عليه وسلم فقا |
+| DO | hifz-al-lisan | CHAPTER | BOOK | من باب: الترغيب في الصمت إلا عن خير ، والترهيب من كثرة الكلام — صحيح الترغيب والترهيب | ٢٨٥٠ - (١) عن أبي موسى رضي الله عنه قال : قلتُ : يا رسول الله ! أَيُّ المسلمينَ  |
+| DO | tawba | CHAPTER_AYAH | BOOK | أورده المنذري في باب: الترغيب في التوبة والمبادرة بها وإتباع السيئة الحسنة — صحيح الترغيب  | هَلْ يَنظُرُونَ إِلَّآ أَن تَأْتِيَهُمُ ٱلْمَلَـٰٓئِكَةُ أَوْ يَأْتِىَ رَبُّكَ  |
+| AVOID | mutl | TAKHRIJ | BOOK | رواه مسلم (1619) — ورد في باب: الترهيب من الدين من صحيح الترغيب والترهيب | كان يؤتى بالرجل الميت عليه الدين فيسأل هل ترك لدينه من قضاء فإن حدث أنه ترك وفاء |
+| DO | dhikr | CHAPTER | BOOK | من باب: باب فضل ذكر الله عز وجل — الزهد والرقائق | حدثنا الحسين، أخبرنا ابن المبارك، أخبرنا يحيى بن عبيد الله قال: سمعت أبي يقول: س |
+
+### 20 REVIEWER_SECTION links
+
+| side | slug | note | text |
+| --- | --- | --- | --- |
+| DO | nawafil | تصنيف المراجع حسب موضوع الباب: باب استحباب الاضطجاع بعد ركعتي الفجر على جنبه الأيمن والحث  | وعنها، قالت: كان النبي - صلى الله عليه وسلم - يصلي فيما بين أن يفرغ من صلاة العش |
+| AVOID | sabb-lan | تصنيف المراجع حسب موضوع الباب: باب النهي عن سب الريح، وبيان ما يقال عند هبوبها — رياض الصا | عن أبي المنذر أبي بن كعب - رضي الله عنه - قال: قال رسول الله - صلى الله عليه وسل |
+| DO | salam | تصنيف المراجع حسب موضوع الباب: باب تحريم ابتدائنا الكافر بالسلام وكيفية الرد عليهم واستحبا | وعن أنس - رضي الله عنه - قال: قال رسول الله - صلى الله عليه وسلم: «إذا سلم عليكم |
+| AVOID | istihana-saghair | تصنيف المراجع حسب موضوع الباب: الترهيب من مواقعة الحدود — صحيح الترغيب والترهيب | أُحِلَّ لَكُمْ لَيْلَةَ ٱلصِّيَامِ ٱلرَّفَثُ إِلَىٰ نِسَآئِكُمْ ۚ هُنَّ لِبَاسٌ |
+| DO | sabr | تصنيف المراجع حسب موضوع الباب: باب جواز قول المريض: أنا وجع، أو شديد الوجع أو موعوك أو وار | عن ابن مسعود - رضي الله عنه - قال: دخلت على النبي - صلى الله عليه وسلم - وهو يوع |
+| DO | adab-safar | تصنيف المراجع حسب موضوع الباب: الترغيب في الدلجة — صحيح الترغيب والترهيب | ٣١٢٥ - (٤) وعن أبي هريرة رضي الله عنه قال : قال رسول الله صلى الله عليه وسلم ( إ |
+| DO | nashr-ilm | تصنيف المراجع حسب موضوع الباب: باب الوعظ والاقتصاد فيه — رياض الصالحين | وعن معاوية بن الحكم السلمي - رضي الله عنه - قال: بينا أنا أصلي مع رسول الله - صل |
+| DO | tahara | تصنيف المراجع حسب موضوع الباب: الترهيب من تأخير الغُسل لغير عذر — صحيح الترغيب والترهيب | يَـٰٓأَيُّهَا ٱلَّذِينَ ءَامَنُوا۟ تُوبُوٓا۟ إِلَى ٱللَّهِ تَوْبَةً نَّصُوحًا عَ |
+| DO | adab-libas | تصنيف المراجع حسب موضوع الباب: باب استحباب الثوب الأبيض، وجواز الأحمر والأخضر والأصفر والأ | وعن سمرة - رضي الله عنه - قال: قال رسول الله - صلى الله عليه وسلم: «البسوا البيا |
+| DO | qada-hawaij | تصنيف المراجع حسب موضوع الباب: الترغيب في قضاء حوائج — صحيح الترغيب والترهيب | ٢٦١٨ - (٥) وعن ابن عباس رضي الله عنهما قال : قال رسول الله « ما مِنْ عبد وَإِذْ  |
+| DO | kalam-tayyib | تصنيف المراجع حسب موضوع الباب: الترغيب في طلاقة الوجه — صحيح الترغيب والترهيب | ٢٦٩٣ - (۱) عن عبد الله بْنِ عَمْرِو بن العاصي رضي الله عنهما : أنَّ رجلاً سأل رس |
+| DO | dua | تصنيف المراجع حسب موضوع الباب: باب استحباب الدعاء في السفر — رياض الصالحين | وعن أبي هريرة - رضي الله عنه - قال: قال رسول الله - صلى الله عليه وسلم: «ثلاث دع |
+| DO | adab-taam | تصنيف المراجع حسب موضوع الباب: الترغيب في التسمية على الطعام — صحيح الترغيب والترهيب | ۲۱۰۹ - (۳) وعن حذيفة - هو ابن اليمان - رضي الله عنه قال : كنا إذا حضرنا مع رسول  |
+| DO | tawba | تصنيف المراجع حسب موضوع الباب: باب توبة داود وذكر الأنبياء صلوات الله عليهم — الزهد والرقا | أخبركم أبو عمر بن حيويه، وأبو بكر الوراق قالا: أخبرنا يحيى قال: حدثنا الحسين، قا |
+| DO | dhikr-akhira | تصنيف المراجع حسب موضوع الباب: باب أحاديث الدجال وأشراط الساعة وغيرها — رياض الصالحين | رَّبَّنَآ إِنِّىٓ أَسْكَنتُ مِن ذُرِّيَّتِى بِوَادٍ غَيْرِ ذِى زَرْعٍ عِندَ بَي |
+| DO | dhikr-akhira | تصنيف المراجع حسب موضوع الباب: باب أحاديث الدجال وأشراط الساعة وغيرها — رياض الصالحين | وعنه - رضي الله عنه: {كنتم خير أمة أخرجت للناس} [البقرة: 110] قال: خير الناس للن |
+| DO | dhikr-akhira | تصنيف المراجع حسب موضوع الباب: باب أحاديث الدجال وأشراط الساعة وغيرها — رياض الصالحين | وَأَقِيمُوا۟ ٱلصَّلَوٰةَ وَءَاتُوا۟ ٱلزَّكَوٰةَ ۚ وَمَا تُقَدِّمُوا۟ لِأَنفُسِكُ |
+| DO | zuhd | تصنيف المراجع حسب موضوع الباب: باب الموعظة عند القبر — رياض الصالحين | عن علي - رضي الله عنه - قال: كنا في جنازة في بقيع الغرقد، فأتانا رسول الله - صلى |
+| AVOID | israf | تصنيف المراجع حسب موضوع الباب: الترهيب من الإمعان في التشيع — صحيح الترغيب والترهيب | ٢١٤٨ - (١٥) وروي عن أبي أمامة رضي الله عنه قال : قال رسول الله صلى الله عليه وسل |
+| DO | dhikr | تصنيف المراجع حسب موضوع الباب: الترغيب في التكبير في العيد وذكر فضله — صحيح الترغيب والتره | ۱۰۸۷ - (۱) وعن أبي هريرة رضي الله عنه قال : قال رسول الله صلى الله عليه وسلم : م |
+
+### Every AI_ITEM (67, all ACCEPTED, classifiedBy AI, note «تصنيف آلي حسب محتوى النص»)
+
+| side | slug | reviewStatus | text |
+| --- | --- | --- | --- |
+| AVOID | baghy-fakhr | ACCEPTED | ٢٩٦٥ - (۸) وعن أبي هريرة رضي الله عنه عن النبي صلى الله عليه وسلم أَنَّه قال : « |
+| AVOID | bukhl | ACCEPTED | وَلَا يَحْسَبَنَّ ٱلَّذِينَ يَبْخَلُونَ بِمَآ ءَاتَىٰهُمُ ٱللَّهُ مِن فَضْلِهِۦ |
+| AVOID | hasad | ACCEPTED | ۲۸۸۷ - (۳) وعن ضمرة بن ثعلبة رضي الله عنه قال : قال رسول الله لا يزال الناس بخير |
+| AVOID | hasad | ACCEPTED | ٢٨٨٨ - (٤) وعن [ ابن ] (١) الزبير رضي الله عنه ؛ أنَّ رسول الله صلى الله عليه وس |
+| AVOID | hijran | ACCEPTED | ٢٧٦٣ - (۹) وعن جابر رضي الله عنه قال : سمعت النبي صلى الله عليه وسلم يقول : إن ا |
+| AVOID | hijran | ACCEPTED | ٢٧٦٠ - (٦) وعن ابن عباس رضي الله عنهما قال : قال رسول الله عنهما قال : قال رسول  |
+| AVOID | hijran | ACCEPTED | ٢٧٦٢ - (٨) وعن أبي حراش حدرد بن أبي حدرد الأسلمي رضي الله عنه ؛ أنَّه صحيح سمع ا |
+| AVOID | hijran | ACCEPTED | ٢٧٦١ - (٧) وعن فضالة بن عبيد رضي يد رضي الله عنه ؛ أن رسول الله صلى الله عليه وس |
+| AVOID | intihar | ACCEPTED | ۲۷۹۰ - (۱۳) وعن ثابت بن الصَّحاكِ رضي الله عنه قال : قال رسول الله صلى الله عليه |
+| AVOID | kadhib | ACCEPTED | ٢٢٤٥ - (٦) وعن عبد الله بن حباب عن أبيه رضي الله عنه قال : كنا قُعوداً على باب ا |
+| AVOID | kadhib | ACCEPTED | ٢٢٤٤ - (٥) وعن النعمان بن بشير رضي الله عنهما قال : خرج علينا رسولُ الله الله ون |
+| AVOID | kadhib | ACCEPTED | ٢٢٤٦ - (۷) وعن أبي سعيد الخدري رضي الله عنه عن النبي صلى الله عليه وسلم قال : يك |
+| AVOID | sabb-lan | ACCEPTED | ۲۷۸۸ - (۱۱) وعن جُرمُود الجهني رضي ) عنه قال : قلت : يا رسول الله ! أوصني ؟ قال  |
+| AVOID | sabb-lan | ACCEPTED | ٢٧٩٤ - (١٧) وعن عمران بن حصين رضي . بينما رسول الله صلى الله عليه وسلم في بعض أس |
+| AVOID | sabb-lan | ACCEPTED | ٢٦٣٥ - (١١) وعن أنس رضي الله عنه قال : قال رسول الله صلى الله عليه وسلم ما كانَ  |
+| AVOID | sabb-lan | ACCEPTED | ٢٧٩٣ - (١٦) وعن عبدالله بن مسعود رضي الله عنه قال : سمعت رسول الله يقول : إن الل |
+| AVOID | sabb-lan | ACCEPTED | ٢٧٨٣ - (٦) وعن عبد الله بن عمرو رضي الله عنهما قال : قال رسول الله صلى الله عليه |
+| AVOID | sabb-lan | ACCEPTED | ۲۷۸۰ - (۸) وعن عائشة رضي الله عنها قالت : مر النبي بأبي بكر وهو يلْعَنُ بعض رقيق |
+| AVOID | sabb-lan | ACCEPTED | ٢٧٩١ - (١٤) وعن سلمة بن الأكوع رضي الله عنه قال : كنا إذا رأينا الرجُلَ يلعن أخا |
+| AVOID | sabb-lan | ACCEPTED | ۲۷۹۰ - (۱۳) وعن ثابت بن الصَّحاكِ رضي الله عنه قال : قال رسول الله صلى الله عليه |
+| AVOID | sabb-lan | ACCEPTED | ٢٧٨٤ - (۷) وعن أبي هريرة رضي الله عنه ؛ أنَّ رسول الله صلى الله عليه وسلم قال :  |
+| AVOID | sabb-lan | ACCEPTED | ۲۷۸۹ - (۱۲) وعن سمرة بن جندب رضي لا تلاعنوا بلعنة الله ، ولا بغضبه ، ولا بالنار  |
+| AVOID | sabb-lan | ACCEPTED | ٢٧٨٦ - (۹) وعن أبي الدرداء رضي الله عنه قال : قال رسول الله الله لا يكون اللعانو |
+| AVOID | yamin-ghamus | ACCEPTED | ۲۷۹۰ - (۱۳) وعن ثابت بن الصَّحاكِ رضي الله عنه قال : قال رسول الله صلى الله عليه |
+| AVOID | zulm | ACCEPTED | ٢٢٤٩ - (٢) وعن عبد الرحمن بن عبد الله بن مسعود عن أبيه عن رسول الله قال : « مَثَ |
+| AVOID | zulm | ACCEPTED | ٢٢٤٦ - (۷) وعن أبي سعيد الخدري رضي الله عنه عن النبي صلى الله عليه وسلم قال : يك |
+| AVOID | zulm | ACCEPTED | ٢٢٤٤ - (٥) وعن النعمان بن بشير رضي الله عنهما قال : خرج علينا رسولُ الله الله ون |
+| AVOID | zulm | ACCEPTED | ٢٢٤٨ - (١) عن ابن عمر رضي الله عنهما قال : سمعت رسول الله يقول : مَنْ حالت شفاعَ |
+| AVOID | zulm-raiyya | ACCEPTED | ۲۱۷۹ - (۱۱) وعن أبي هريرة أيضاً ؛ أن رسول الله صلى الله عليه وسلم قال : ويل للأم |
+| AVOID | zulm-raiyya | ACCEPTED | ٢١٧٤ - (٦) وعن أبي هريرة رضي الله عنه قال شريك : لا أدري رفعه أم لا - قال : الإم |
+| AVOID | zulm-raiyya | ACCEPTED | ٢٢٤٧ - (٨) وعن علقمة بن أبي وقاص الليثي : أنّه مرَّ برجل مِنْ أهل المدينةِ له شَ |
+| AVOID | zulm-raiyya | ACCEPTED | ٢٢٤٠ - (١) عن أبي هريرة رضي الله عنه قال : قال رسول الله صلى الله عليه وسلم : مَ |
+| AVOID | zulm-raiyya | ACCEPTED | ٢١٧٥ - (۷) وعن أبي أمامة رضي الله عنه عن النبي صلى الله عليه وسلم ؛ أنه قال : ما |
+| AVOID | zulm-raiyya | ACCEPTED | ٢٢٤٣ - (٤) ورواه الترمذي والنسائي من حديث كعب بن عجرة قال : قال رسول الله صلى ال |
+| AVOID | zulm-raiyya | ACCEPTED | ٢١٧٦ - (۸) وعن أبي ذر رضي الله عنه قال : قلت : يا رسول الله ! ألا تَسْتعْمِلني ق |
+| AVOID | zulm-raiyya | ACCEPTED | ۲۱۸۱ - (۱۳) وعن عبد الرحمن بن سمرة رضي الله عنه قال : قال لي رسولُ الله : يا عبد |
+| AVOID | zulm-raiyya | ACCEPTED | ٢٢٤٦ - (۷) وعن أبي سعيد الخدري رضي الله عنه عن النبي صلى الله عليه وسلم قال : يك |
+| AVOID | zulm-raiyya | ACCEPTED | ۲۱۷۸ - (۱۰) وعن أبي هريرة رضي الله عنه ؛ أنَّ رسول الله صلى الله عليه وسلم قال : |
+| AVOID | zulm-raiyya | ACCEPTED | ٢٢٤١ - (۲) وعنِ ابْنِ عَبَّاس رضي الله عنهما قال : قال رسول الله مَن بَدا جَفا ، |
+| AVOID | zulm-raiyya | ACCEPTED | ٢٢٤٢ - (۳) وعن جابر بن عبد الله أن النبي صلى الله عليه وسلم قال لكعب بن عجرة : أ |
+| AVOID | zulm-raiyya | ACCEPTED | ٢٢٤٤ - (٥) وعن النعمان بن بشير رضي الله عنهما قال : خرج علينا رسولُ الله الله ون |
+| AVOID | zulm-raiyya | ACCEPTED | ٢٢٤٥ - (٦) وعن عبد الله بن حباب عن أبيه رضي الله عنه قال : كنا قُعوداً على باب ا |
+| DO | adab-taam | ACCEPTED | ٢١٦٨ - (۳) وعن ابن عباس رضي الله عنهما ؛ أنَّ النبي صلى الله عليه وسلم قال : مَن |
+| DO | adab-taam | ACCEPTED | ٢١٦٧ - (۲) ورواه ابن ماجه أيضاً عن فاطمة رضي الله عنها بنحوه . ( الغَمَرُ ) بفتح |
+| DO | adab-taam | ACCEPTED | ٢١٦٦ - (١) وعن أبي هريرة رضي الله عنه قال : قال رسول الله صلى الله عليه وسلم : م |
+| DO | adl | ACCEPTED | ٢٢٤٨ - (١) عن ابن عمر رضي الله عنهما قال : سمعت رسول الله يقول : مَنْ حالت شفاعَ |
+| DO | dhikr | ACCEPTED | ۲۲۳۹ - (۳) وعن أبي مَجْلَز - واسمه لاحق بن حميد ـ قال : مَنْ خَافَ مِنْ أميرِ ظُ |
+| DO | dhikr | ACCEPTED | ٣٤٩١ - (٣) وعن أبي موسى رضي الله عنه ؛ أن رسول الله صلى الله عليه وسلم قال : « إ |
+| DO | dhikr-akhira | ACCEPTED | ٣٤٨٧ - (٤) وعن عبادة بن الصامت رضي الله عنه ؛ أن النبي صلى الله عليه وسلم قال :  |
+| DO | dhikr-akhira | ACCEPTED | ٣٤٨٦ - (٣) وعن أبي هريرة رضي الله عنه قال : قال رسول الله صلى الله عليه وسلم يعن |
+| DO | dhikr-akhira | ACCEPTED | ٣٤٨٥ - (٢) وعن أنس رضي الله عنه قال : قال رسول الله « مَنْ أَحَبَّ لِقاءَ الله أ |
+| DO | dhikr-akhira | ACCEPTED | إِنَّ ٱلَّذِينَ كَفَرُوا۟ لَوْ أَنَّ لَهُم مَّا فِى ٱلْأَرْضِ جَمِيعًا وَمِثْلَه |
+| DO | dhikr-akhira | ACCEPTED | ٣٤٨٨ - (٥) وعن فضالة بن عبيد رضي الله عنه ؛ أنَّ رسول الله صلى الله عليه وسلم قا |
+| DO | hajj | ACCEPTED | وَأَذِّن فِى ٱلنَّاسِ بِٱلْحَجِّ يَأْتُوكَ رِجَالًا وَعَلَىٰ كُلِّ ضَامِرٍ يَأْت |
+| DO | haqq-jar | ACCEPTED | ٣٠١٥ - (٦) وعن عبدالله بن عمرو رضي - الله عنهما قال : قال رسول الله خيرُ الأصحاب |
+| DO | haya | ACCEPTED | ٢٦٣٦ - (١٢) وعن ابن عمر رضي الله عنهما قال : قال رسول الله صلى الله عليه وسلم :  |
+| DO | haya | ACCEPTED | ٢٦٣٢ - (٨) وعن زيد بن طلحة بن ركانة يرفعه ؛ قال : قال رسول الله « إِنَّ لِكُلِّ  |
+| DO | haya | ACCEPTED | ٢٦٣٨ - (١٤) وعن عبد الله . بن مسعود رضي الله عنه قال : قال رسول الله استحيوا من  |
+| DO | haya | ACCEPTED | ٢٦٣٥ - (١١) وعن أنس رضي الله عنه قال : قال رسول الله صلى الله عليه وسلم ما كانَ  |
+| DO | hifz-al-lisan | ACCEPTED | ٢٢٤٧ - (٨) وعن علقمة بن أبي وقاص الليثي : أنّه مرَّ برجل مِنْ أهل المدينةِ له شَ |
+| DO | hubb-fillah | ACCEPTED | ٣٠١٥ - (٦) وعن عبدالله بن عمرو رضي - الله عنهما قال : قال رسول الله خيرُ الأصحاب |
+| DO | hubb-fillah | ACCEPTED | ٣٠١٤ - (٥) وعن أنس بن مالك رضي الله عنه قال : قال رسول الله صلى الله عليه وسلم : |
+| DO | ikhlas | ACCEPTED | ٢٢٥٠ - (١) عن رجل من أهل المدينة قال : كتب معاوية إلى عائشةَ : أَنِ اكْتُبي إليَ |
+| DO | sabr | ACCEPTED | ٣٤٩١ - (٣) وعن أبي موسى رضي الله عنه ؛ أن رسول الله صلى الله عليه وسلم قال : « إ |
+| DO | salamat-sadr | ACCEPTED | ۲۸۸۹ - (٥) وعن عبد الله بن عمرو رضي الله عنهما قال : قيل : يا رسول الله ! أَيُّ  |
+| DO | sidq | ACCEPTED | ۲۸۸۹ - (٥) وعن عبد الله بن عمرو رضي الله عنهما قال : قيل : يا رسول الله ! أَيُّ  |
+| DO | tawhid | ACCEPTED | ۲۲۳۹ - (۳) وعن أبي مَجْلَز - واسمه لاحق بن حميد ـ قال : مَنْ خَافَ مِنْ أميرِ ظُ |
+
+### Low-confidence ITEM texts (not linked)
+
+| quoteId | section | reason |
+| --- | --- | --- |
+| bf7465ed-abfc-4a1d-924c-05ff719b7977 | الترغيب في ا | إحالة «فذكره» بلا متن يُقرأ |
+|  | باب في. . . | لا نص حديث أو آية في الباب |
+|  | باب في | لا نص حديث أو آية في الباب |
+
+### 20 KEYWORD_PROPOSAL rows (all NOT_REVIEWED)
+
+| side | slug | note | text |
+| --- | --- | --- | --- |
+| AVOID | tark-as-salah | اقتراح من عنوان الباب: باب ترك الصلاة قبل العيد وبعدها في المصلى ) — صحيح مسلم | وحدثنيه عمرو الناقد حدثنا بن إدريس ح وحدثني أبو بكر بن نافع ومحمد بن بشار جميعا  |
+| DO | hajj | اقتراح من عنوان الباب: باب وضع الصبي في الحجر — صحيح البخاري | «وضع صبيا في حجره يحنكه، فبال عليه، فدعا بماء فأتبعه» |
+| AVOID | uquq | اقتراح من عنوان الباب: باب: عقوق الوالدين من الكبائر — صحيح البخاري | ذكر رسول الله صلى الله عليه وسلم الكبائر، أو سئل عن الكبائر فقال: " الشرك بالله، |
+| DO | jihad | اقتراح من عنوان الباب: باب فضل الشهادة في سبيل الله تعالى ) — صحيح مسلم | ما من نفس تموت لها عند الله خير يسرها أنها ترجع إلى الدنيا ولا أن لها الدنيا وما |
+| DO | hajj | اقتراح من عنوان الباب: باب قتل الخوارج والملحدين بعد إقامة الحجة عليهم — صحيح البخاري | «يخرج في هذه الأمة - ولم يقل منها - قوم تحقرون صلاتكم مع صلاتهم، يقرءون القرآن ل |
+| DO | dhikr-akhira | اقتراح من عنوان الباب: باب: «الجنة أقرب إلى أحدكم من شراك نعله، والنار مثل ذلك» — صحيح الب | " أصدق بيت قاله الشاعر: [البحر الطويل] ألا كل شيء ما خلا الله باطل " |
+| AVOID | tabarruj | اقتراح من عنوان الباب: باب تحريم فعل الواصلة والمستوصلة والواشمة والمستوشمة والنامصة والمت | عن ذلك فلعن الواصلة والمستوصلة |
+| AVOID | baghy-fakhr | اقتراح من عنوان الباب: باب قول الله تعالى: {إن الله يأمر بالعدل والإحسان، وإيتاء ذي القربى | «أما الله فقد شفاني، وأما أنا فأكره أن أثير على الناس شرا» قالت: ولبيد بن أعصم،  |
+| DO | dhikr-akhira | اقتراح من عنوان الباب: باب ما جاء في صفة الجنة وأنها مخلوقة — صحيح البخاري | بينا نحن عند رسول الله صلى الله عليه وسلم، إذ قال: " بينا أنا نائم رأيتني في الج |
+| DO | ghadd-basar | اقتراح من عنوان الباب: باب حدثنا مسدد قال: حدثنا يزيد بن زريع قال: حدثنا عبد الرحمن، عن سع | حدثنا أحمد بن يونس قال: حدثنا زهير قال: حدثنا كنانة مولى صفية، عن أبي هريرة قال: |
+| DO | dhikr-akhira | اقتراح من عنوان الباب: باب قوله: {فلا يخرجنكما من الجنة فتشقى} [طه: 117] — صحيح البخاري | ثُمَّ نُكِسُوا۟ عَلَىٰ رُءُوسِهِمْ لَقَدْ عَلِمْتَ مَا هَـٰٓؤُلَآءِ يَنطِقُونَ |
+| AVOID | shirk | اقتراح من عنوان الباب: باب رؤيا أهل السجون والفساد والشرك — صحيح البخاري | «لو لبثت في السجن ما لبث يوسف، ثم أتاني الداعي لأجبته» |
+| DO | salam | اقتراح من عنوان الباب: باب فضل السلام — الأدب المفرد | حدثنا عبد العزيز بن عبد الله قال: حدثني محمد بن جعفر بن أبي كثير، عن يعقوب بن زي |
+| DO | salat-fi-jamaah | اقتراح من عنوان الباب: باب من جلس في المسجد ينتظر الصلاة وفضل المساجد — صحيح البخاري | سئل أنس بن مالك هل اتخذ رسول الله صلى الله عليه وسلم خاتما؟ فقال: نعم أخر ليلة ص |
+| AVOID | mann | اقتراح من عنوان الباب: باب {فما لكم في المنافقين فئتين والله أركسهم بما كسبوا} [النساء: 88 | ۞ فَمَا لَكُمْ فِى ٱلْمُنَـٰفِقِينَ فِئَتَيْنِ وَٱللَّهُ أَرْكَسَهُم بِمَا كَسَب |
+| DO | haqq-jar | اقتراح من عنوان الباب: باب شكاية الجار — الأدب المفرد | حدثنا مخلد بن مالك قال: حدثنا أبو زهير عبد الرحمن بن مغراء قال: حدثنا الفضل يعني |
+| DO | dhikr-akhira | اقتراح من عنوان الباب: باب: يدخل الجنة سبعون ألفا بغير حساب — صحيح البخاري | " يدخل أهل الجنة الجنة وأهل النار النار، ثم يقوم مؤذن بينهم: يا أهل النار لا موت |
+| DO | hajj | اقتراح من عنوان الباب: باب لا يحج البيت مشرك ولا يطوف بالبيت عريان وبيان يوم الحج الأكبر ) | بعثني أبو بكر الصديق في الحجة التي أمره عليها رسول الله صلى الله عليه وسلم قبل ح |
+| DO | hajj | اقتراح من عنوان الباب: باب الحجامة والقيء للصائم — صحيح البخاري | سئل أنس بن مالك رضي الله عنه: أكنتم تكرهون الحجامة للصائم؟ قال: «لا، إلا من أجل  |
+| DO | sadaqah | اقتراح من عنوان الباب: باب فضل النفقة والصدقة على الأقربين والزوج والأولاد والوالدين ولو ك | فذكرت ذلك لرسول الله صلى الله عليه وسلم فقال لو أعطيتها أخوالك كان أعظم لأجرك |
+
+## Checks run for the catalog phase
+
+Backend `tsc --noEmit`: exit 0. `oxlint --type-aware src/ test/`: exit 0, with the existing unbound-method warnings. Unit tests: 49 files, 415 passed. Frontend `tsc --noEmit` and `eslint .`: exit 0. E2e: 16 files, 256 passed, against `thekra_test`.
+
+Structure re-run, every book `createdSections=0 createdItems=0`. Leftovers unchanged: kabair 131, minhaj 86, zuhd 17, shuab 2, bukhari 1.
+
+Screenshots at 1440×900 and 390×900 are in `docs/design/after/` for `/sins`, `/sins/ghibah`, `/good-deeds`, `/good-deeds/silat-ar-rahim`, and `/sins/waqt-tawasul`.
+
+`frontend/Thmanyah-Font-Family (1)/دليل جماليات خط ثمانية.pdf` is tracked (18,682,772 bytes). It was left in place.
