@@ -11,6 +11,7 @@ import { runAshurImport } from './tafsir/ashur-import.js';
 import { runSadiImport } from './tafsir/sadi.js';
 import { runDigitalImport } from './digital/import.js';
 import { runStructureImport } from './structure/import.js';
+import { runTaxonomyImport } from './taxonomy/import.js';
 import { runMinhajImport, runRiyadImport, runTarghibImport, runZuhdImport } from './waqfeya/import.js';
 
 const WORKS: Record<string, (options: ImportOptions) => Promise<void>> = {
@@ -27,6 +28,7 @@ const WORKS: Record<string, (options: ImportOptions) => Promise<void>> = {
   quran: runQuranImport,
   classify: runClassify,
   structure: runStructureImport,
+  taxonomy: runTaxonomyImport,
   sadi: runSadiImport,
   ashur: runAshurImport,
 };
