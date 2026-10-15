@@ -26,6 +26,7 @@ import { applyLimit, type ImportOptions } from '../lib/cli.js';
 import { loadCorpus } from '../lib/corpus.js';
 import { loadUthmaniMap } from '../waqfeya/quran.js';
 import { BUKHARI_CORPUS, MUSLIM_CORPUS } from './files.js';
+import { applyManualSahihaynMatches } from './manual-matches.js';
 import { parseSahihayn, parseShamelaBukhari, type SahihParseResult } from './parse.js';
 
 const AUTHORITY = {
@@ -257,6 +258,36 @@ function bestByBook(rows: readonly Candidate[]): Map<ReferenceBook, Candidate> {
   return best;
 }
 
+async function confirmedByQuote(
+  prisma: PrismaClient,
+  quoteIds: readonly string[],
+): Promise<Map<string, Candidate[]>> {
+  const out = new Map<string, Candidate[]>();
+  if (quoteIds.length === 0) return out;
+  const rows = await prisma.hadithMatch.findMany({
+    where: { quoteId: { in: [...quoteIds] }, decision: 'CONFIRMED' },
+    select: {
+      quoteId: true,
+      referenceHadithId: true,
+      score: true,
+      referenceHadith: { select: { book: true, number: true, normalizedMatn: true } },
+    },
+  });
+  for (const row of rows) {
+    const list = out.get(row.quoteId) ?? [];
+    list.push({
+      quoteId: row.quoteId,
+      referenceId: row.referenceHadithId,
+      book: row.referenceHadith.book,
+      number: row.referenceHadith.number,
+      score: row.score,
+      normalized: row.referenceHadith.normalizedMatn,
+    });
+    out.set(row.quoteId, list);
+  }
+  return out;
+}
+
 async function applyGrades(
   prisma: PrismaClient,
   quotes: readonly QuoteRow[],
@@ -268,10 +299,13 @@ async function applyGrades(
   let muslim = 0;
   let both = 0;
   const bySource: Record<string, { bukhari: number; muslim: number; both: number }> = {};
+  const confirmed = await confirmedByQuote(prisma, quotes.map((quote) => quote.id));
   for (const quote of quotes) {
-    const candidates = byQuote.get(quote.id) ?? [];
-    const perBook = bestByBook(candidates);
-    const strong = [...perBook.values()].filter((row) => row.score >= STRONG_MATCH_SCORE);
+    /** Auto band stays at 0.75; a human-CONFIRMED match is strong regardless of score. */
+    const strong = [...bestByBook([
+      ...(byQuote.get(quote.id) ?? []).filter((row) => row.score >= STRONG_MATCH_SCORE),
+      ...(confirmed.get(quote.id) ?? []),
+    ]).values()];
     const sourceKey = quote.sourceNameAr ?? quote.sourceName;
     if (quote.gradeSource === GradeSource.MANUAL) {
       if (strong.length > 0) keptManual += 1;
@@ -618,6 +652,8 @@ export async function runTakhrij(options: ImportOptions): Promise<void> {
   }
   const matchesCreated = await storeMatches(options.prisma, flat);
   const grades = await applyGrades(options.prisma, quotes, byQuote);
+  /** After auto grades so a CONFIRMED near-match keeps Bukhari first and the Sunan ruling second. */
+  const manual = await applyManualSahihaynMatches(options.prisma);
   const uthmani = await loadUthmaniMap(options.prisma, join(import.meta.dirname, '..', '..', '..', '.corpus', 'waqfeya', 'uthmani.json'));
   const flags = await applyFlags(options.prisma, quotes, byQuote, uthmani);
 
@@ -631,9 +667,10 @@ export async function runTakhrij(options: ImportOptions): Promise<void> {
     hiddenBefore,
     quotes: quotes.length,
     matchesCreated,
+    manual,
     grades,
     flags,
     sample,
   }, null, 2));
-  console.log(JSON.stringify({ corpus, hiddenBefore, matchesCreated, grades, flags }, null, 2));
+  console.log(JSON.stringify({ corpus, hiddenBefore, matchesCreated, manual, grades, flags }, null, 2));
 }

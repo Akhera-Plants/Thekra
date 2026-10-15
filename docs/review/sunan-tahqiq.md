@@ -302,22 +302,59 @@ Public hadith (publishable gradeSource + OCR gate + no open HIGH flag): **after 
 - `citesSahihayn` extended (`وفى/وفي/في` + quotes + `خرجه`/`خرّجاه`/`أخرجه`). Wrongly flagged rows still open after fix: **0**.
 - Second `sunan-tahqiq` run: `graded=0 flagged=0 unchanged=239 revert=0 revealedOcr=0`.
 
-#### Arnaut spot-check (Aljam3, Arnaut editions)
+#### Arnaut spot-check (Aljam3, Arnaut editions) — all 20
 
-Sample of 20 published refs in `docs/review/sunan-arnaut-sample.json`. Checked against:
-- سنن أبي داود (ت الأرناؤوط) https://aljam3.com/ar/6272 — e.g. **4385** «قطع في مجن»: footnote «إسناده صحيح» (matches stored SAHIH).
-- سنن ابن ماجه (ت الأرناؤوط) https://aljam3.com/ar/6252 — e.g. **3942** «لا ترجعوا بعدي كفارا»: footnote «إسناده صحيح», and the edition also cites Bukhari/Muslim for the same matn (near-match case below).
+Sample: `docs/review/sunan-arnaut-sample.json`. Editions:
+- سنن أبي داود (ت الأرناؤوط) https://aljam3.com/ar/6272
+- سنن ابن ماجه (ت الأرناؤوط) https://aljam3.com/ar/6252
+
+| # | book | stored | Arnaʾūt printed verdict (verbatim) | match |
+|---|---|---|---|---|
+| 515 | أبو داود | SAHIH | حديث صحيح، وهذا إسناده جيد | yes |
+| 1395 | أبو داود | HASAN | حديث صحيح دون ذكر الأربعين يوماً فحسن | yes |
+| 3221 | أبو داود | HASAN | إسناده حسن من أجل هانئ مولى عثمان بن عفان | yes |
+| 481 | أبو داود | HASAN | حسن لغيره وهذا إسناد ضعيف | yes |
+| 4385 | أبو داود | SAHIH | إسناده صحيح | yes |
+| 3607 | ابن ماجه | HASAN | إسناده حسن | yes |
+| 5004 | أبو داود | SAHIH | إسناده صحيح | yes |
+| 3825 | ابن ماجه | SAHIH | إسناده صحيح | yes |
+| 1536 | أبو داود | HASAN | حسن لغيره، وهذا إسناد ضعيف لجهالة أبي جعفر | yes |
+| 3131 | أبو داود | HASAN | إسناده حسن | yes |
+| 3825 | ابن ماجه | SAHIH | إسناده صحيح | yes |
+| 3669 | ابن ماجه | SAHIH | إسناده صحيح | yes |
+| 1424 | ابن ماجه | SAHIH | إسناده صحيح | yes |
+| 3768 | أبو داود | HASAN | إسناده حسن في الشواهد | yes |
+| 460 | ابن ماجه | SAHIH | إسناده صحيح | yes |
+| 3619 | ابن ماجه | SAHIH | إسناده صحيح | yes |
+| 3878 | أبو داود | SAHIH | إسناده قوي من أجل عبد الله بن عثمان بن خثيم | yes |
+| 1080 | ابن ماجه | SAHIH | صحيح لغيره، وهذا إسناد ضعيف | yes |
+| 1148 | ابن ماجه | SAHIH | صحيح لغيره، وهذا إسناد حسن | yes |
+| 1307 | أبو داود | SAHIH | إسناده صحيح | yes |
+
+**Mismatches unpublished:** none (0 / 20).
 
 #### Near Sahihayn matches (0.60–0.75) — threshold not changed
 
-Full list: `docs/review/sunan-near-matches.json` (4 rows by `pg_trgm` on full `textAr`; reviewer’s earlier 22 used matn-only scoring). Side-by-side:
+Full list: `docs/review/sunan-near-matches.json` (4 rows by `pg_trgm` on full `textAr`). Matn comparison: **all four are the same hadith** as the listed Bukhari candidate (including Ibn Majah 1331 ↔ Bukhari 1152 «لا تكن مثل فلان كان يقوم الليل»).
 
-| sunan id | score | sunan ref | best Sahihayn |
-|---|---:|---|---|
-| 5a5caabf-… | 0.663 | ابن ماجه 3942/3943 | BUKHARI:7080 «لا ترجعوا بعدي كفارا…» |
-| 51e8997c-… | 0.653 | ابن ماجه 1331 | BUKHARI:1152 |
-| ecd877fd-… | 0.653 | ابن ماجه 1331 | BUKHARI:1152 |
-| 479248e3-… | 0.605 | أبو داود 4385 / ابن ماجه 2584 | BUKHARI:6796 «قطع… في مجن» |
+| sunan id | score | sunan ref | best Sahihayn | action |
+|---|---:|---|---|---|
+| 5a5caabf-… | 0.663 | ابن ماجه 3942/3943 | BUKHARI:7080 «لا ترجعوا بعدي كفارا…» | MANUAL CONFIRMED → AUTO_SAHIHAYN |
+| 51e8997c-… | 0.653 | ابن ماجه 1331 | BUKHARI:1152 | MANUAL CONFIRMED → AUTO_SAHIHAYN |
+| ecd877fd-… | 0.653 | ابن ماجه 1331 | BUKHARI:1152 | MANUAL CONFIRMED → AUTO_SAHIHAYN |
+| 479248e3-… | 0.605 | أبو داود 4385 / ابن ماجه 2584 | BUKHARI:6796 «قطع… في مجن» | MANUAL CONFIRMED → AUTO_SAHIHAYN |
+
+Applied via `backend/prisma/imports/sahihayn/manual-matches.ts` (`HadithMatch.decision=CONFIRMED`, `method=manual`). `gradeReference` = Bukhari citation first, Sunan ruling kept as second citation. `OUTSIDE_SAHIHAYN` closed. **0.75 threshold unchanged.**
+
+##### Before → after (near-match upgrade)
+
+| metric | before | after |
+|---|---:|---:|
+| `SUNAN_TAHQIQ` | 239 | **235** |
+| `AUTO_SAHIHAYN` | 702 | **706** |
+| open `OUTSIDE_SAHIHAYN` | 239 | **235** |
+
+Per quote: all four left `SUNAN_TAHQIQ` + open «ليس من الصحيحين» and became `AUTO_SAHIHAYN` / `رواه البخاري` with Bukhari number first and the Sunan ref second (e.g. `البخاري 7080، سنن ابن ماجه، رقم 3942، …`). E2E: Ibn Majah 3942 and Abu Dawud 4385 no longer set `outsideSahihayn` (UI «ليس من الصحيحين»).
 
 ### English tafsir
 

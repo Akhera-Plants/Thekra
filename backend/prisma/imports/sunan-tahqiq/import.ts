@@ -245,8 +245,11 @@ export async function runSunanTahqiq(options: ImportOptions): Promise<void> {
     : await options.prisma.hadithMatch.findMany({
       where: {
         quoteId: { in: quotes.map((quote) => quote.id) },
-        score: { gte: STRONG_MATCH_SCORE },
         decision: { not: 'REJECTED' },
+        OR: [
+          { score: { gte: STRONG_MATCH_SCORE } },
+          { decision: 'CONFIRMED' },
+        ],
       },
       select: { quoteId: true },
     })).map((row) => row.quoteId));

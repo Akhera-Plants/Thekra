@@ -339,6 +339,101 @@ describe('Quotes endpoints (e2e)', () => {
     expect(ids).toContain(Q01);
   });
 
+  it('manual Sahihayn near-matches drop «ليس من الصحيحين» for Ibn Majah 3942 and Abu Dawud 4385', async () => {
+    const { applyManualSahihaynMatches } = await import('../prisma/imports/sahihayn/manual-matches.js');
+    const SRC = '10000000-0000-4000-8000-000000000002';
+    const ibnMajah3942 = '5a5caabf-9db3-47bd-8d4b-45a60cc33333';
+    const abuDawud4385 = '479248e3-bfaa-49c2-b7bd-a2ccb1531c1f';
+
+    await prisma.referenceHadith.upsert({
+      where: { book_number: { book: 'BUKHARI', number: 7080 } },
+      create: {
+        book: 'BUKHARI',
+        number: 7080,
+        matnText: 'لا ترجعوا بعدي كفارا يضرب بعضكم رقاب بعض',
+        isnadText: '',
+        normalizedMatn: 'لا ترجعوا بعدي كفارا يضرب بعضكم رقاب بعض',
+      },
+      update: {},
+    });
+    await prisma.referenceHadith.upsert({
+      where: { book_number: { book: 'BUKHARI', number: 6796 } },
+      create: {
+        book: 'BUKHARI',
+        number: 6796,
+        matnText: 'قطع النبي صلى الله عليه وسلم في مجن ثمنه ثلاثة دراهم',
+        isnadText: '',
+        normalizedMatn: 'قطع النبي صلى الله عليه وسلم في مجن ثمنه ثلاثة دراهم',
+      },
+      update: {},
+    });
+
+    for (const row of [
+      {
+        id: ibnMajah3942,
+        textAr: 'وقال رسول الله صلى الله عليه وسلم لا ترجعوا بعدي كفارا يضرب بعضكم رقاب بعض',
+        gradeReference: 'سنن ابن ماجه، رقم 3942، سنن ابن ماجه، رقم 3943',
+      },
+      {
+        id: abuDawud4385,
+        textAr: 'وعن ابن عمر رضي الله عنهما أن النبي صلى الله عليه وسلم قطع في مجن قيمته ثلاثة دراهم',
+        gradeReference: 'سنن أبي داود، رقم 4385، سنن ابن ماجه، رقم 2584',
+      },
+    ]) {
+      await prisma.quote.upsert({
+        where: { id: row.id },
+        create: {
+          id: row.id,
+          type: QuoteType.HADITH,
+          textAr: row.textAr,
+          sourceId: SRC,
+          grade: HadithGrade.SAHIH,
+          gradeSource: GradeSource.SUNAN_TAHQIQ,
+          gradeAuthority: 'شعيب الأرنؤوط',
+          gradeReference: row.gradeReference,
+        },
+        update: {
+          textAr: row.textAr,
+          grade: HadithGrade.SAHIH,
+          gradeSource: GradeSource.SUNAN_TAHQIQ,
+          gradeAuthority: 'شعيب الأرنؤوط',
+          gradeReference: row.gradeReference,
+        },
+      });
+      await prisma.quoteFlag.deleteMany({ where: { quoteId: row.id, type: 'OUTSIDE_SAHIHAYN' } });
+      await prisma.quoteFlag.create({
+        data: {
+          quoteId: row.id,
+          type: 'OUTSIDE_SAHIHAYN',
+          severity: 'LOW',
+          source: 'AUTO',
+          note: 'ليس من الصحيحين',
+        },
+      });
+    }
+
+    const before3942 = await request(app.getHttpServer()).get(`/v1/quotes/${ibnMajah3942}`).expect(200);
+    const before4385 = await request(app.getHttpServer()).get(`/v1/quotes/${abuDawud4385}`).expect(200);
+    // Public DTO maps SUNAN_TAHQIQ → outsideSahihayn; the UI then shows «ليس من الصحيحين».
+    expect(before3942.body.data.hadith.outsideSahihayn).toBe(true);
+    expect(before4385.body.data.hadith.outsideSahihayn).toBe(true);
+
+    const result = await applyManualSahihaynMatches(prisma);
+    expect(result.missing).not.toContain(ibnMajah3942);
+    expect(result.missing).not.toContain(abuDawud4385);
+    expect(result.applied).toBeGreaterThanOrEqual(2);
+
+    const after3942 = await request(app.getHttpServer()).get(`/v1/quotes/${ibnMajah3942}`).expect(200);
+    const after4385 = await request(app.getHttpServer()).get(`/v1/quotes/${abuDawud4385}`).expect(200);
+    expect(after3942.body.data.hadith.outsideSahihayn).toBe(false);
+    expect(after4385.body.data.hadith.outsideSahihayn).toBe(false);
+
+    const flags = await prisma.quoteFlag.count({
+      where: { quoteId: { in: [ibnMajah3942, abuDawud4385] }, type: 'OUTSIDE_SAHIHAYN' },
+    });
+    expect(flags).toBe(0);
+  });
+
   it('an importer OCR-gate run leaves allow-listed verification and clears accidental stamps', async () => {
     const { clearUnapprovedOcrVerification, OWNER_REVEALED_TARGHIB_IDS } = await import(
       '../prisma/imports/lib/ocr-gate.js'
