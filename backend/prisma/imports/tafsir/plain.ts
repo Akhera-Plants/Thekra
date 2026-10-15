@@ -1,4 +1,4 @@
-/** Quran.com tafsir HTML is display markup. The stored text is Arabic only. */
+/** Quran.com tafsir HTML is display markup. Strip tags; keep the language of the resource. */
 export function plainTafsir(html: string): string {
   return html
     .replace(/<br\s*\/?>/gi, '\n')
