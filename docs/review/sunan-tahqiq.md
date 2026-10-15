@@ -258,3 +258,84 @@
 9. **السعدي الإنجليزي (IIPH عبر tafsirs.org): هل يُقبل مع ملاحظة الحقوق وOCR، أم يُحذف حتى ترخيص؟** التحقق: آية فيها تفسير سعدي في `/en` يجب أن تظهر إنجليزيًا لا عربيًا.
 10. **التحرير والتنوير بالإنجليزية: لا مصدر.** هل يُبحث عن طبعة مدفوعة/مرخّصة، أم يُخفى العمل من `/en` حتى يوجد نص، أم يُقبل الفراغ الحالي؟
 11. هل تُترجم جمل المنذري/المنجد الحرة، ومتون ابن رجب بلا مقابل في ملف الستة، أم تبقى عربية؟
+
+## Audit fixes
+
+Executed from `docs/review/sunan-tahqiq-review.md` (steps 0–5). Threshold 0.75 unchanged. Taxonomy untouched.
+
+### Before → after (hadith `gradeSource` × `grade`)
+
+| gradeSource | grade | before (audit) | after |
+|---|---|---:|---:|
+| IBN_RAJAB | SAHIH | 992 | **0** |
+| SUNAN_TAHQIQ | SAHIH | 135 | 133 |
+| SUNAN_TAHQIQ | HASAN | 132 | 106 |
+| SUNAN_TAHQIQ total | | 267 | **239** (Arnaut only) |
+| AUTHORITY_LEGACY | UNGRADED | — | 17967 |
+| AUTHORITY_LEGACY | SAHIH | — | 676 |
+| AUTHORITY_LEGACY | HASAN | — | 167 |
+| AUTHORITY_LEGACY | DAIF | — | 203 |
+| SAHIHAYN | SAHIH | 10405 | 10405 |
+| AUTO_SAHIHAYN | SAHIH | 702 | 702 |
+| MANUAL | DAIF | 1 | 1 |
+
+Public hadith (publishable gradeSource + OCR gate + no open HIGH flag): **after = 11167**. Before the Ibn Rajab demotion, ~992 OCR-verified IBN_RAJAB rows were also public; those are no longer.
+
+### Ibn Rajab remediation
+
+- 903 rows with Ibn Rajab book `sourceId` → `UNGRADED` / `AUTHORITY_LEGACY`, cleared `gradeAuthority` / `gradeReference` / `textVerifiedAt`. Topic links kept.
+- **89** upgraded rows from other books restored to `AUTHORITY_LEGACY` (review said 76; count had grown). Sample before→after printed by importer (`remediation.restoredSample`). Targhib recovered grade from `rawPayload.gradeToken`; Adab from `rawPayload.albani`; Riyad/Shu'ab → UNGRADED.
+- `OUTSIDE_SAHIHAYN` flags removed from demoted rows: **976**.
+- Remaining `gradeSource=IBN_RAJAB`: **0**.
+- Extractor rejects critique markers; unit tests cover the audit examples.
+- Sahihayn TAKHRIJ path: **3** strong matches (≥0.75) linked Bukhari/Muslim quotes to the same topics (`basis=TAKHRIJ`, note «رواه … — أورده ابن رجب في …»). Second `ibn-rajab` run: `created=0`, `linked=0`, `remediation.restored=0`.
+
+### OCR gate
+
+- `textVerifiedAt` OCR rows **before audit ~985**; **after = 50** (owner-revealed Targhib only).
+- Allow-list: `backend/prisma/imports/lib/ocr-gate.ts` (`OWNER_REVEALED_TARGHIB_IDS`, length 50).
+- Sunan importer no longer stamps verification; it only clears unapproved stamps. E2E: importer OCR-gate leaves allow-listed stamp unchanged.
+
+### Sunan tahqiq
+
+- Scholar: **Shu'ayb al-Arna'ut only**. Bashar removed from `SUNAN_SCHOLAR_NAMES`. Bashar-only rows reverted (`revert=41` on first Arnaut-only run). `byScholar` after: `{ "شعيب الأرنؤوط": 239 }`. Tirmidhi gets no Sunan grade from this file (no Arnaut grades there).
+- `citesSahihayn` extended (`وفى/وفي/في` + quotes + `خرجه`/`خرّجاه`/`أخرجه`). Wrongly flagged rows still open after fix: **0**.
+- Second `sunan-tahqiq` run: `graded=0 flagged=0 unchanged=239 revert=0 revealedOcr=0`.
+
+#### Arnaut spot-check (Aljam3, Arnaut editions)
+
+Sample of 20 published refs in `docs/review/sunan-arnaut-sample.json`. Checked against:
+- سنن أبي داود (ت الأرناؤوط) https://aljam3.com/ar/6272 — e.g. **4385** «قطع في مجن»: footnote «إسناده صحيح» (matches stored SAHIH).
+- سنن ابن ماجه (ت الأرناؤوط) https://aljam3.com/ar/6252 — e.g. **3942** «لا ترجعوا بعدي كفارا»: footnote «إسناده صحيح», and the edition also cites Bukhari/Muslim for the same matn (near-match case below).
+
+#### Near Sahihayn matches (0.60–0.75) — threshold not changed
+
+Full list: `docs/review/sunan-near-matches.json` (4 rows by `pg_trgm` on full `textAr`; reviewer’s earlier 22 used matn-only scoring). Side-by-side:
+
+| sunan id | score | sunan ref | best Sahihayn |
+|---|---:|---|---|
+| 5a5caabf-… | 0.663 | ابن ماجه 3942/3943 | BUKHARI:7080 «لا ترجعوا بعدي كفارا…» |
+| 51e8997c-… | 0.653 | ابن ماجه 1331 | BUKHARI:1152 |
+| ecd877fd-… | 0.653 | ابن ماجه 1331 | BUKHARI:1152 |
+| 479248e3-… | 0.605 | أبو داود 4385 / ابن ماجه 2584 | BUKHARI:6796 «قطع… في مجن» |
+
+### English tafsir
+
+- Deleted **1968** tafsirs.org / IIPH English Sa'di rows; removed `sadi-en` importer.
+- Imported Al-Mukhtasar (QuranEnc): **6236** en + **6236** ar. Keys `english_mokhtasar` / `arabic_mokhtasar`, pinned SHA-256 in `mukhtasar.ts`. Attribution QuranEnc.com. Owner still confirms redistribution before launch.
+- `/en` VerseTafsir lists **only** Al-Mukhtasar. Sa'di and Tahrir on `/ar` only (no empty English headings). Ibn Kathir en remains cached, not listed.
+- Untranslated scripture on `/en` keeps Arabic with note «No verified translation available» / «لا توجد ترجمة معتمدة».
+
+### Verification runs (each step)
+
+| check | result |
+|---|---|
+| `pnpm typecheck` | pass |
+| `pnpm lint` | pass (existing unbound-method warnings only) |
+| `pnpm test` | 435 unit tests pass |
+| `pnpm test:e2e` | 257 e2e tests pass |
+| `import:book sunan-tahqiq` (2nd) | graded=0 flagged=0 unchanged=239 |
+| `import:book ibn-rajab` (2nd) | created=0 linked=0 restored=0 |
+| `import:book mukhtasar` (2nd) | en/ar unchanged=6236, deletedSadiEn=0 |
+
+Commits on `master` pushed to `origin` after each step (0–5).
