@@ -19,6 +19,7 @@ backend/generated/
 
 # Tests / coverage
 coverage/
+frontend/test-results/
 
 # Logs
 *.log
