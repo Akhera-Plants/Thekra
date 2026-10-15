@@ -256,7 +256,8 @@
       "GRADE": "The citation is wrong",
       "CLASSIFICATION": "The classification is wrong",
       "OTHER": "Something else"
-    }
+    },
+    "noVerifiedTranslation": "No verified translation available"
   },
   "quoteDetail": {
     "pageTitle": "Quote",

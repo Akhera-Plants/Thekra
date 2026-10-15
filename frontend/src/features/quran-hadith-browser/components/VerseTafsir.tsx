@@ -29,13 +29,22 @@ const WORKS_AR: ReadonlyArray<{
   },
 ];
 
-/** English UI: Sa'di and Tahrir only — not a substitute tafsir. */
-const WORKS_EN = WORKS_AR;
+/** English UI lists only Al-Mukhtasar. Sa'di and Tahrir stay on /ar. */
+const WORKS_EN: ReadonlyArray<{
+  titleAr: string;
+  titleEn: string;
+  match: (source: ExplanationRow['source']) => boolean;
+}> = [
+  {
+    titleAr: 'المختصر في تفسير القرآن الكريم',
+    titleEn: 'Al-Mukhtasar fi Tafsir al-Qur\'an',
+    match: (source) => /mukhtasar|مختصر/i.test(source.name) || source.nameAr === 'المختصر في تفسير القرآن الكريم',
+  },
+];
 
 function pickRows(all: ExplanationRow[], match: (source: ExplanationRow['source']) => boolean, locale: string): ExplanationRow[] {
   const forWork = all.filter((row) => match(row.source));
   if (locale === 'en') {
-    // Never fall back to Arabic under English UI.
     return forWork.filter((row) => row.languageCode === 'en');
   }
   const preferred = forWork.filter((row) => row.languageCode === locale);

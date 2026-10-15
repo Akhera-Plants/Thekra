@@ -101,11 +101,7 @@ export const APPROVED_WORKS = [
     author: "Abd al-Rahman al-Sa'di",
     authorAr: 'عبد الرحمن السعدي',
     role: 'tafsir',
-    /**
-     * Arabic: Quran.com tafsir resource 91.
-     * English: tafsirs.org / IIPH 2018 (Nasiruddin al-Khattab). Import: `sadi-en`.
-     * The owner checks both providers' redistribution terms.
-     */
+    /** Arabic only (Quran.com resource 91). Not listed on /en. */
     gradeBy: null,
   },
   {
@@ -117,7 +113,19 @@ export const APPROVED_WORKS = [
     author: 'Muhammad al-Tahir ibn Ashur',
     authorAr: 'محمد الطاهر بن عاشور',
     role: 'tafsir',
-    /** Arabic only in corpus. No free English edition found for import. */
+    /** Arabic only. Not listed on /en. */
+    gradeBy: null,
+  },
+  {
+    id: '10000000-0000-4000-8000-000000000025',
+    bookKey: 'book:mukhtasar-tafsir',
+    name: 'Al-Mukhtasar fi Tafsir al-Qur\'an — Tafsir Center for Quranic Studies',
+    nameAr: 'المختصر في تفسير القرآن الكريم',
+    type: SourceType.BOOK,
+    author: 'Tafsir Center for Quranic Studies',
+    authorAr: 'مركز تفسير للدراسات القرآنية',
+    role: 'tafsir',
+    /** QuranEnc english_mokhtasar / arabic_mokhtasar. Owner confirms redistribution. */
     gradeBy: null,
   },
   {
@@ -129,7 +137,7 @@ export const APPROVED_WORKS = [
     author: 'Hafiz Ibn Kathir',
     authorAr: 'الحافظ ابن كثير',
     role: 'tafsir',
-    /** Quran.com English resource 169. Interim only; English UI prefers Sa'di when present. */
+    /** Cached but hidden from /en accordion. */
     gradeBy: null,
   },
   {

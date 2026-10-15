@@ -10,7 +10,7 @@ import { runQuranImport } from './quran/import.js';
 import { runAshurImport } from './tafsir/ashur-import.js';
 import { runIbnKathirEnImport } from './tafsir/ibn-kathir-en.js';
 import { runSadiImport } from './tafsir/sadi.js';
-import { runSadiEnImport } from './tafsir/sadi-en.js';
+import { runMukhtasarImport } from './tafsir/mukhtasar.js';
 import { runDigitalImport } from './digital/import.js';
 import { runStructureImport } from './structure/import.js';
 import { runTaxonomyImport } from './taxonomy/import.js';
@@ -38,7 +38,7 @@ const WORKS: Record<string, (options: ImportOptions) => Promise<void>> = {
   translations: runTranslations,
   'ibn-rajab': runIbnRajab,
   sadi: runSadiImport,
-  'sadi-en': runSadiEnImport,
+  mukhtasar: runMukhtasarImport,
   ashur: runAshurImport,
   'ibn-kathir-en': runIbnKathirEnImport,
 };

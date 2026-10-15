@@ -256,7 +256,8 @@
       "GRADE": "التخريج غير صحيح",
       "CLASSIFICATION": "التصنيف غير صحيح",
       "OTHER": "غير ذلك"
-    }
+    },
+    "noVerifiedTranslation": "لا توجد ترجمة معتمدة"
   },
   "quoteDetail": {
     "pageTitle": "النص",
