@@ -338,4 +338,44 @@ describe('Quotes endpoints (e2e)', () => {
     const ids: string[] = res.body.data.map((q: { id: string }) => q.id);
     expect(ids).toContain(Q01);
   });
+
+  it('an importer OCR-gate run leaves allow-listed verification and clears accidental stamps', async () => {
+    const { clearUnapprovedOcrVerification, OWNER_REVEALED_TARGHIB_IDS } = await import(
+      '../prisma/imports/lib/ocr-gate.js'
+    );
+    const allowId = OWNER_REVEALED_TARGHIB_IDS[0];
+    const stamped = new Date('2026-10-14T20:00:00.000Z');
+    await prisma.quote.update({ where: { id: QF_OCR }, data: { textVerifiedAt: stamped } });
+    await prisma.quote.upsert({
+      where: { id: allowId },
+      create: {
+        id: allowId,
+        type: QuoteType.HADITH,
+        textAr: 'نص مسح ضوئي أظهره المالك للاختبار فقط ولا يُعاد ختمه بالمستورِد',
+        sourceId: '10000000-0000-4000-8000-000000000002',
+        grade: HadithGrade.SAHIH,
+        gradeSource: GradeSource.SUNAN_TAHQIQ,
+        textSource: 'OCR',
+        textVerifiedAt: stamped,
+      },
+      update: { textSource: 'OCR', textVerifiedAt: stamped, gradeSource: GradeSource.SUNAN_TAHQIQ },
+    });
+
+    const beforeAllow = await prisma.quote.findUnique({ where: { id: allowId }, select: { textVerifiedAt: true } });
+    expect(beforeAllow?.textVerifiedAt?.toISOString()).toBe(stamped.toISOString());
+
+    const cleared = await clearUnapprovedOcrVerification(prisma);
+    expect(cleared).toBeGreaterThanOrEqual(1);
+
+    const afterOcr = await prisma.quote.findUnique({ where: { id: QF_OCR }, select: { textVerifiedAt: true } });
+    const afterAllow = await prisma.quote.findUnique({ where: { id: allowId }, select: { textVerifiedAt: true } });
+    expect(afterOcr?.textVerifiedAt).toBeNull();
+    expect(afterAllow?.textVerifiedAt?.toISOString()).toBe(stamped.toISOString());
+
+    // Second importer-style pass must not change the allow-listed stamp.
+    const clearedAgain = await clearUnapprovedOcrVerification(prisma);
+    expect(clearedAgain).toBe(0);
+    const still = await prisma.quote.findUnique({ where: { id: allowId }, select: { textVerifiedAt: true } });
+    expect(still?.textVerifiedAt?.toISOString()).toBe(stamped.toISOString());
+  });
 });

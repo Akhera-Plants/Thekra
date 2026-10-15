@@ -1,9 +1,9 @@
 /**
  * Publishes a hadith that already sits on an accepted topic when Shu'ayb
- * al-Arna'ut or Bashar Awad Ma'ruf graded that narration sahih or hasan.
+ * al-Arna'ut graded that narration sahih or hasan.
  * Sahihayn and manual grades are left alone. A low OUTSIDE_SAHIHAYN flag
  * marks the row as outside the two Sahihs. Re-running writes nothing when
- * the grade and the flag are already in place.
+ * the grade and the flag are already in place. Never stamps textVerifiedAt.
  */
 import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -21,6 +21,7 @@ import {
 import { STRONG_MATCH_SCORE, combinedScore, wordOverlap } from '../../../src/common/text/match-score.js';
 import { splitMatn } from '../../../src/common/text/matn.js';
 import { normalizeMatn } from '../../../src/common/text/normalize-matn.js';
+import { clearUnapprovedOcrVerification } from '../lib/ocr-gate.js';
 import {
   OUTSIDE_SAHIHAYN_NOTE,
   SUNAN_SCHOLAR_NAMES,
@@ -409,23 +410,10 @@ export async function runSunanTahqiq(options: ImportOptions): Promise<void> {
     });
   }
 
-  const targhibOcr = publish.filter((row) => (
-    row.quote.sourceNameAr === 'صحيح الترغيب والترهيب'
-    && row.quote.textSource === 'OCR'
-    && row.quote.textVerifiedAt === null
-  ));
-  let revealedOcr = 0;
-  if (!options.dryRun && targhibOcr.length > 0) {
-    const revealed = await options.prisma.quote.updateMany({
-      where: { id: { in: targhibOcr.map((row) => row.quote.id) }, textVerifiedAt: null },
-      data: { textVerifiedAt: new Date() },
-    });
-    revealedOcr = revealed.count;
-  }
+  const clearedOcr = options.dryRun ? 0 : await clearUnapprovedOcrVerification(options.prisma);
   const hiddenOcr = publish.filter((row) => (
     row.quote.textSource === 'OCR'
     && row.quote.textVerifiedAt === null
-    && row.quote.sourceNameAr !== 'صحيح الترغيب والترهيب'
   )).length;
   const byGrade: Record<string, number> = {};
   const byScholar: Record<string, number> = {};
@@ -445,7 +433,8 @@ export async function runSunanTahqiq(options: ImportOptions): Promise<void> {
     flagged,
     unchanged,
     hiddenOcr,
-    revealedOcr,
+    revealedOcr: 0,
+    clearedOcr,
     byGrade,
     byScholar,
     samples,
