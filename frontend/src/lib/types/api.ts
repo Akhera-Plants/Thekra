@@ -103,6 +103,8 @@ export interface QuoteDto {
     narratorAr: string | null;
     grade: HadithGrade | null;
     reference: string | null;
+    /** True when the grade is a sunan tahqiq, not Bukhari or Muslim. */
+    outsideSahihayn: boolean;
   } | null;
   book: {
     bookTitle: string | null;
@@ -193,6 +195,7 @@ export interface TopicText {
 
 export interface TopicGroup {
   slug: string;
+  name?: string | null;
   nameAr: string;
   side: 'AVOID' | 'DO';
   items: TopicText[];

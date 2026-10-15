@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { apiGet } from '@/lib/api-client';
 
 interface ExplanationRow {
@@ -10,6 +10,36 @@ interface ExplanationRow {
   reference: string | null;
   languageCode: string;
   source: { nameAr: string | null; name: string };
+}
+
+const WORKS_AR: ReadonlyArray<{
+  titleAr: string;
+  titleEn: string;
+  match: (source: ExplanationRow['source']) => boolean;
+}> = [
+  {
+    titleAr: 'تفسير السعدي',
+    titleEn: "Tafsir al-Sa'di",
+    match: (source) => source.nameAr === 'تفسير السعدي' || /sa'?di/i.test(source.name),
+  },
+  {
+    titleAr: 'التحرير والتنوير',
+    titleEn: 'Al-Tahrir wa al-Tanwir',
+    match: (source) => source.nameAr === 'التحرير والتنوير' || /tahrir/i.test(source.name),
+  },
+];
+
+/** English UI: Sa'di and Tahrir only — not a substitute tafsir. */
+const WORKS_EN = WORKS_AR;
+
+function pickRows(all: ExplanationRow[], match: (source: ExplanationRow['source']) => boolean, locale: string): ExplanationRow[] {
+  const forWork = all.filter((row) => match(row.source));
+  if (locale === 'en') {
+    // Never fall back to Arabic under English UI.
+    return forWork.filter((row) => row.languageCode === 'en');
+  }
+  const preferred = forWork.filter((row) => row.languageCode === locale);
+  return preferred.length > 0 ? preferred : forWork;
 }
 
 function Disclosure({
@@ -41,42 +71,69 @@ function Disclosure({
         <p className="pt-2 text-sm text-muted-foreground">{emptyLabel}</p>
       ) : (
         <div className="flex flex-col gap-4 pt-3">
-          {rows.map((row) => (
-            <figure key={row.id} className="flex flex-col gap-2">
-              <blockquote dir="rtl" lang="ar" className="font-arabic-ui text-base leading-loose">
-                {row.text}
-              </blockquote>
-              <figcaption dir="rtl" lang="ar" className="text-sm text-muted-foreground">
-                {row.reference ?? row.source.nameAr ?? title}
-              </figcaption>
-            </figure>
-          ))}
+          {rows.map((row) => {
+            const arabic = row.languageCode === 'ar' || /[\u0600-\u06FF]/.test(row.text);
+            const caption = arabic
+              ? (row.reference ?? row.source.nameAr ?? title)
+              : (row.source.name || row.reference || title);
+            return (
+              <figure key={row.id} className="flex flex-col gap-2">
+                <blockquote
+                  dir={arabic ? 'rtl' : 'ltr'}
+                  lang={arabic ? 'ar' : 'en'}
+                  className={arabic ? 'font-arabic-ui text-base leading-loose' : 'text-base leading-relaxed'}
+                >
+                  {row.text}
+                </blockquote>
+                <figcaption
+                  dir={/[\u0600-\u06FF]/.test(caption) ? 'rtl' : 'ltr'}
+                  lang={/[\u0600-\u06FF]/.test(caption) ? 'ar' : 'en'}
+                  className="text-sm text-muted-foreground"
+                >
+                  {caption}
+                </figcaption>
+              </figure>
+            );
+          })}
         </div>
       )}
     </details>
   );
 }
 
-/** Collapsed tafsir under a verse. The text is fetched the first time either one opens. */
+/** Collapsed tafsir under a verse. Fetched the first time any accordion opens. */
 export function VerseTafsir({ quoteId }: { quoteId: string }) {
   const t = useTranslations('quote');
+  const locale = useLocale();
+  const arabic = locale === 'ar';
   const [rows, setRows] = useState<ExplanationRow[] | null>(null);
   const [failed, setFailed] = useState(false);
 
   function load() {
     if (rows || failed) return;
-    void apiGet<ExplanationRow[]>(`/quotes/${quoteId}/explanations`, { params: { lang: 'ar' } })
-      .then((result) => setRows(result.data.filter((row) => row.languageCode === 'ar')))
+    void apiGet<ExplanationRow[]>(`/quotes/${quoteId}/explanations`, { params: { lang: locale } })
+      .then((result) => setRows(result.data))
       .catch(() => setFailed(true));
   }
 
-  const sadi = rows?.filter((row) => row.source.nameAr === 'تفسير السعدي') ?? [];
-  const ashur = rows?.filter((row) => row.source.nameAr === 'التحرير والتنوير') ?? [];
+  const works = arabic ? WORKS_AR : WORKS_EN;
 
   return (
     <div className="flex flex-col">
-      <Disclosure title="تفسير السعدي" rows={sadi} loaded={rows !== null} failed={failed} emptyLabel={t('tafsirEmpty')} onOpen={load} />
-      <Disclosure title="التحرير والتنوير" rows={ashur} loaded={rows !== null} failed={failed} emptyLabel={t('tafsirEmpty')} onOpen={load} />
+      {works.map((work) => {
+        const forWork = rows ? pickRows(rows, work.match, locale) : [];
+        return (
+          <Disclosure
+            key={work.titleEn}
+            title={arabic ? work.titleAr : work.titleEn}
+            rows={forWork}
+            loaded={rows !== null}
+            failed={failed}
+            emptyLabel={t('tafsirEmpty')}
+            onOpen={load}
+          />
+        );
+      })}
     </div>
   );
 }

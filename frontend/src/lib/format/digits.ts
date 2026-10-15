@@ -1,8 +1,12 @@
 const ARABIC_INDIC = '٠١٢٣٤٥٦٧٨٩';
 
-/** Maps Latin digits when `arabic` is set. One helper for every count, rank, and reference. */
-export function formatDigits(value: string | number, arabic: boolean): string {
-  const text = String(value);
-  if (!arabic) return text;
-  return text.replace(/\d/g, (digit) => ARABIC_INDIC[Number(digit)] ?? digit);
+/**
+ * Western digits only (0–9), in both locales.
+ * Also folds Arabic-Indic digits that may already sit in stored strings.
+ */
+export function formatDigits(value: string | number, _arabic = false): string {
+  return String(value).replace(/[0-9٠-٩]/g, (digit) => {
+    const index = ARABIC_INDIC.indexOf(digit);
+    return index >= 0 ? String(index) : digit;
+  });
 }

@@ -6,8 +6,9 @@ import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 import type { QuoteDto, QuoteLinkDto } from '@/lib/types/api';
 import { HadithGrade, QuoteType } from '@/lib/types/enums';
-import { ArabicText } from '../ArabicText';
+import { englishLinkNote } from '@/lib/format/provenance';
 import { GradeBadge } from './GradeBadge';
+import { QuoteBody } from './QuoteBody';
 import { SourceAttribution } from './SourceAttribution';
 import { FavoriteButton } from './FavoriteButton';
 import { ReportMistake } from './ReportMistake';
@@ -98,14 +99,8 @@ export function QuoteCard({
       aria-labelledby={`quote-${quote.id}-text`}
     >
       <div id={`quote-${quote.id}-text`}>
-        <ArabicText as="blockquote" size="xl" face="display" className="border-none ps-0">
-          {quote.textAr}
-        </ArabicText>
+        <QuoteBody quote={quote} />
       </div>
-
-      {quote.translation && locale === 'en' && (
-        <p className="text-sm text-muted-foreground">{quote.translation.text}</p>
-      )}
 
       <div className="flex flex-col gap-2 border-t border-border pt-3 text-sm text-muted-foreground">
         <div className="flex flex-wrap items-center gap-2">
@@ -126,7 +121,8 @@ export function QuoteCard({
             </span>
           )}
         </div>
-        {isWeak && <p role="note">{t('weakNotice')}</p>}
+          {isWeak && <p role="note">{t('weakNotice')}</p>}
+          {isHadith && quote.hadith?.outsideSahihayn && <p role="note">{t('outsideSahihayn')}</p>}
         <SourceAttribution
           quote={quote}
           labels={{
@@ -143,7 +139,7 @@ export function QuoteCard({
           <p className="text-sm text-muted-foreground">{t('whyVerse')}</p>
         )}
         {link?.note && (locale === 'en' || !/[A-Za-z]/.test(link.note)) && (
-          <p className="leading-relaxed">{link.note}</p>
+          <p className="leading-relaxed">{locale === 'en' ? englishLinkNote(link.note) : link.note}</p>
         )}
         {detailHref && (
           <span className="text-muted-foreground underline-offset-2 group-hover:underline">

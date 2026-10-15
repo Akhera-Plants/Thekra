@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   Select,
   SelectContent,
@@ -44,6 +44,8 @@ export function QuoteFilters({
 }: QuoteFiltersProps) {
   const tBrowse = useTranslations('browse');
   const tQuote = useTranslations('quote');
+  const locale = useLocale();
+  const arabic = locale === 'ar';
   const { data: surahsData } = useSurahs();
   const { data: collectionsData } = useHadithCollections();
   const surahs = surahsData?.data ?? [];
@@ -100,7 +102,7 @@ export function QuoteFilters({
                   key={`surah-${s.surahNumber}`}
                   value={String(s.surahNumber)}
                 >
-                  {`${s.surahNameAr ?? s.surahName ?? s.surahNumber} (${s.surahNumber})`}
+                  {`${arabic ? (s.surahNameAr ?? s.surahName) : (s.surahName ?? s.surahNameAr) ?? s.surahNumber} (${s.surahNumber})`}
                 </SelectItem>
               )),
             ]}
@@ -127,8 +129,8 @@ export function QuoteFilters({
               </SelectItem>,
               ...collections.map((c) => (
                 <SelectItem key={c.id} value={c.id}>
-                  {c.nameAr ? (
-                    <span dir="rtl" lang="ar" className="font-arabic-ui">{c.nameAr}</span>
+                  {arabic || !c.name ? (
+                    c.nameAr ? <span dir="rtl" lang="ar" className="font-arabic-ui">{c.nameAr}</span> : c.name
                   ) : (
                     c.name
                   )}

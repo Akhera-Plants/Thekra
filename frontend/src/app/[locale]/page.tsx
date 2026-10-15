@@ -73,10 +73,12 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
                     href={`/sins/${sin.slug}`}
                     className="home-press flex min-h-28 flex-col justify-between rounded-xl bg-foreground/6 px-4 py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    <span className="font-arabic-display text-2xl leading-snug">{sin.nameAr}</span>
+                    <span className={`text-2xl leading-snug ${locale === 'ar' || !sin.name ? 'font-arabic-display' : 'font-semibold'}`}>
+                      {locale === 'en' ? (sin.name || sin.nameAr) : sin.nameAr}
+                    </span>
                     <span className="text-sm text-muted-foreground">
                       <FormattedNumber value={sin.quoteCount} />{' '}
-                      {locale === 'ar' ? reminderWord(sin.quoteCount) : 'reminders'}
+                      {reminderWord(sin.quoteCount, locale)}
                     </span>
                   </Link>
                 </li>
@@ -92,7 +94,9 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
               href={`/good-deeds/${deed.slug}`}
               className="home-press flex flex-col gap-3 rounded-xl bg-foreground/6 px-5 py-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <span className="font-arabic-display text-3xl leading-snug">{deed.nameAr}</span>
+              <span className={`text-3xl leading-snug ${locale === 'ar' || !deed.name ? 'font-arabic-display' : 'font-semibold'}`}>
+                {locale === 'en' ? (deed.name || deed.nameAr) : deed.nameAr}
+              </span>
               {reward ? <span className="text-base leading-relaxed text-muted-foreground">{reward}</span> : null}
             </Link>
           </section>
@@ -106,7 +110,7 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
               className="home-press max-w-prose font-arabic-display text-2xl leading-snug focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:text-3xl"
             >
               {t('branchToday')} <FormattedNumber value={todayBranch.number} />
-              <span className="ms-3">{todayBranch.titleAr}</span>
+              <span className="ms-3">{locale === 'en' ? (todayBranch.title || todayBranch.titleAr) : todayBranch.titleAr}</span>
             </Link>
             <div className="flex flex-col gap-6">
               {BRANCH_VOLUMES.map((volume) => {

@@ -5,8 +5,8 @@ import { FormattedNumber } from '@/components/shared/FormattedNumber';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Link } from '@/i18n/navigation';
-import { ArabicText } from '@/components/shared/ArabicText';
 import { GradeBadge } from '@/components/shared/quote/GradeBadge';
+import { QuoteBody } from '@/components/shared/quote/QuoteBody';
 import { VerseTafsir } from '@/features/quran-hadith-browser/components/VerseTafsir';
 import { ReportMistake } from '@/components/shared/quote/ReportMistake';
 import { SourceAttribution } from '@/components/shared/quote/SourceAttribution';
@@ -52,9 +52,11 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
         </p>
       )}
 
-      {/* Arabic text — primary. A footnote marker jumps to the citation. */}
-      <ArabicText as="blockquote" size="xl" face="display" className="border-none ps-0">
-        {quote.textAr}
+      {quote.type === 'HADITH' && quote.hadith?.outsideSahihayn && (
+        <p className="text-sm text-muted-foreground" role="note">{t('outsideSahihayn')}</p>
+      )}
+
+      <QuoteBody quote={quote}>
         {(quote.citation?.volume || quote.citation?.page || quote.citation?.gradeAuthority || quote.citation?.gradeReference || quote.book?.pageOrChapter) && (
           <a
             href={`#quote-${quote.id}-source`}
@@ -64,19 +66,9 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
             <span className="sr-only">{t('citationMarker')}</span>
           </a>
         )}
-      </ArabicText>
+      </QuoteBody>
 
       {quote.type === 'QURAN_VERSE' && <VerseTafsir quoteId={quote.id} />}
-
-      {/* Translation */}
-      {quote.translation && !arabic && (
-        <div className="border-s-2 border-s-border ps-4">
-          <p className="text-xs font-medium text-muted-foreground mb-1">
-            {t('translation')}
-          </p>
-          <p className="text-base text-foreground">{quote.translation.text}</p>
-        </div>
-      )}
 
       <Separator />
 
@@ -101,12 +93,12 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
           <span className="text-sm font-medium text-muted-foreground me-1">
             {t('tags')}:
           </span>
-          {quote.tags.filter((tag) => (arabic ? Boolean(tag.nameAr) : true)).map((tag) => (
+          {quote.tags.filter((tag) => (arabic ? Boolean(tag.nameAr) : Boolean(tag.name || tag.nameAr))).map((tag) => (
             <Link key={tag.id} href={`/feelings/${tag.slug}`}>
               <Badge variant="secondary">
-                {tag.nameAr ? (
-                  <span dir="rtl" lang="ar" className="font-arabic-ui">{tag.nameAr}</span>
-                ) : arabic ? null : (
+                {arabic || !tag.name ? (
+                  tag.nameAr ? <span dir="rtl" lang="ar" className="font-arabic-ui">{tag.nameAr}</span> : null
+                ) : (
                   tag.name
                 )}
               </Badge>
@@ -126,9 +118,11 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
               <li key={sin.slug}>
                 <Link href={`/sins/${sin.slug}`}>
                   <Badge variant="outline">
-                    <span dir="rtl" lang="ar" className="font-arabic-ui">
-                      {sin.nameAr}
-                    </span>
+                    {arabic || !sin.name ? (
+                      <span dir="rtl" lang="ar" className="font-arabic-ui">{sin.nameAr}</span>
+                    ) : (
+                      sin.name
+                    )}
                   </Badge>
                 </Link>
               </li>
@@ -148,9 +142,11 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
               <li key={deed.slug}>
                 <Link href={`/good-deeds/${deed.slug}`}>
                   <Badge variant="outline">
-                    <span dir="rtl" lang="ar" className="font-arabic-ui">
-                      {deed.nameAr}
-                    </span>
+                    {arabic || !deed.name ? (
+                      <span dir="rtl" lang="ar" className="font-arabic-ui">{deed.nameAr}</span>
+                    ) : (
+                      deed.name
+                    )}
                   </Badge>
                 </Link>
               </li>

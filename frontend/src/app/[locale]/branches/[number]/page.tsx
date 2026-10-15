@@ -45,17 +45,23 @@ export default async function BranchDetailPage({
         <p className="font-arabic-display text-2xl text-intent-iman-branch">
           <FormattedNumber value={detail.number} />
         </p>
-        <ArabicText as="h1" face="display" size="xl" className="text-4xl lg:text-5xl">
-          {detail.titleAr}
-        </ArabicText>
-        {locale === 'en' && detail.title && (
-          <p className="text-sm text-muted-foreground">{detail.title}</p>
+        {locale === 'en' && detail.title ? (
+          <h1 className="text-4xl font-semibold leading-tight lg:text-5xl">{detail.title}</h1>
+        ) : (
+          <ArabicText as="h1" face="display" size="xl" className="text-4xl lg:text-5xl">
+            {detail.titleAr}
+          </ArabicText>
         )}
-        {detail.summaryAr && (
+        {locale === 'en' && detail.title && detail.titleAr ? (
+          <p dir="rtl" lang="ar" className="font-arabic-ui text-sm text-muted-foreground">{detail.titleAr}</p>
+        ) : null}
+        {locale === 'en' && detail.summary ? (
+          <p className="text-muted-foreground">{detail.summary}</p>
+        ) : detail.summaryAr ? (
           <ArabicText size="base" className="text-muted-foreground">
             {detail.summaryAr}
           </ArabicText>
-        )}
+        ) : null}
       </header>
 
       {detail.explanations.length > 0 && (
@@ -104,7 +110,11 @@ export default async function BranchDetailPage({
             href={`/branches/${detail.prev.number}`}
             className="min-w-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <ArabicText as="span" size="sm">{detail.prev.titleAr}</ArabicText>
+            {locale === 'en' && detail.prev.title ? (
+              <span className="text-sm">{detail.prev.title}</span>
+            ) : (
+              <ArabicText as="span" size="sm">{detail.prev.titleAr}</ArabicText>
+            )}
           </Link>
         ) : (
           <span />
@@ -114,7 +124,11 @@ export default async function BranchDetailPage({
             href={`/branches/${detail.next.number}`}
             className="min-w-0 text-end focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <ArabicText as="span" size="sm">{detail.next.titleAr}</ArabicText>
+            {locale === 'en' && detail.next.title ? (
+              <span className="text-sm">{detail.next.title}</span>
+            ) : (
+              <ArabicText as="span" size="sm">{detail.next.titleAr}</ArabicText>
+            )}
           </Link>
         ) : (
           <span />

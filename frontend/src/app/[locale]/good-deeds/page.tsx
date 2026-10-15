@@ -28,6 +28,7 @@ export default async function GoodDeedsPage({ params }: PageProps<'/[locale]/goo
   const entries: TopicEntry[] = deeds.map((deed) => ({
     href: `/good-deeds/${deed.slug}`,
     nameAr: deed.nameAr,
+    name: deed.name,
     quoteCount: deed.quoteCount,
     domainKey: deed.domainKey ?? null,
     taxonomyOrder: deed.taxonomyOrder ?? null,

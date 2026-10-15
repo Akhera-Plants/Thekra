@@ -10,23 +10,29 @@ interface CatalogNameProps {
   badge?: ReactNode;
 }
 
-/**
- * A catalogue row reads downward: the Arabic name, then the English gloss.
- * A side-by-side pair fights for the row and reads as a generated table.
- */
+/** Primary label follows the UI language. Arabic stays the fallback. */
 export function CatalogName({ nameAr, name, badge }: CatalogNameProps) {
   const locale = useLocale();
+  const arabic = locale === 'ar';
+  const label = arabic ? nameAr : (name || nameAr);
+  const labelArabic = /[\u0600-\u06FF]/.test(label);
 
   return (
     <span className="flex min-w-0 flex-1 flex-col items-start gap-0.5 text-start">
       <span className="flex min-w-0 flex-wrap items-center gap-2">
-        <ArabicText as="span" size="base" className="min-w-0">
-          {nameAr}
-        </ArabicText>
+        {labelArabic ? (
+          <ArabicText as="span" size="base" className="min-w-0">
+            {label}
+          </ArabicText>
+        ) : (
+          <span className="min-w-0 font-medium">{label}</span>
+        )}
         {badge}
       </span>
-      {locale === 'en' && name ? (
-        <span className="text-sm text-muted-foreground">{name}</span>
+      {!arabic && name && nameAr && name !== nameAr ? (
+        <span dir="rtl" lang="ar" className="font-arabic-ui text-sm text-muted-foreground">
+          {nameAr}
+        </span>
       ) : null}
     </span>
   );

@@ -1,3 +1,6 @@
+'use client';
+
+import { useLocale } from 'next-intl';
 import { cn } from '@/lib/utils';
 import type { GoodDeedDto } from '@/lib/types/api';
 import { ArabicText } from '@/components/shared/ArabicText';
@@ -11,22 +14,37 @@ interface GoodDeedHeaderProps {
 }
 
 export function GoodDeedHeader({ goodDeed, className }: GoodDeedHeaderProps) {
+  const locale = useLocale();
+  const arabic = locale === 'ar';
+  const title = arabic ? goodDeed.nameAr : (goodDeed.name || goodDeed.nameAr);
+  const description = arabic
+    ? goodDeed.descriptionAr
+    : (goodDeed.description || goodDeed.descriptionAr);
+  const titleArabic = /[\u0600-\u06FF]/.test(title);
+
   return (
     <header className={cn('flex flex-col gap-3', className)}>
-      <ArabicText as="h1" size="xl" className="font-semibold">
-        {goodDeed.nameAr}
-      </ArabicText>
-      {goodDeed.name && (
-        <span className="text-sm text-muted-foreground">{goodDeed.name}</span>
-      )}
-      {goodDeed.descriptionAr && (
-        <ArabicText size="base" className="text-muted-foreground">
-          {goodDeed.descriptionAr}
+      {titleArabic ? (
+        <ArabicText as="h1" size="xl" className="font-semibold">
+          {title}
         </ArabicText>
+      ) : (
+        <h1 className="text-xl font-semibold">{title}</h1>
       )}
-      {!goodDeed.descriptionAr && goodDeed.description && (
-        <p className="text-sm text-muted-foreground">{goodDeed.description}</p>
-      )}
+      {!arabic && goodDeed.name && goodDeed.nameAr && goodDeed.name !== goodDeed.nameAr ? (
+        <span dir="rtl" lang="ar" className="font-arabic-ui text-sm text-muted-foreground">
+          {goodDeed.nameAr}
+        </span>
+      ) : null}
+      {description ? (
+        /[\u0600-\u06FF]/.test(description) ? (
+          <ArabicText size="base" className="text-muted-foreground">
+            {description}
+          </ArabicText>
+        ) : (
+          <p className="text-sm text-muted-foreground">{description}</p>
+        )
+      ) : null}
     </header>
   );
 }

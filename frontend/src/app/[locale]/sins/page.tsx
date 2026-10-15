@@ -25,6 +25,7 @@ export default async function SinsPage({ params }: PageProps<'/[locale]/sins'>) 
   const entries: TopicEntry[] = sins.map((sin) => ({
     href: `/sins/${sin.slug}`,
     nameAr: sin.nameAr,
+    name: sin.name,
     quoteCount: sin.quoteCount,
     domainKey: sin.domainKey ?? null,
     taxonomyOrder: sin.taxonomyOrder ?? null,

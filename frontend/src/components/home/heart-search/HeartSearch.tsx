@@ -10,6 +10,7 @@ import type { LocaleCode } from '@/lib/types/enums';
 interface Hit {
   href: string;
   nameAr: string;
+  name: string;
   kind: string;
 }
 
@@ -64,11 +65,13 @@ export function HeartSearch() {
               ...sins.data.map((sin) => ({
                 href: `/sins/${sin.slug}`,
                 nameAr: sin.nameAr,
+                name: sin.name,
                 kind: t('sinKind'),
               })),
               ...deeds.data.map((deed) => ({
                 href: `/good-deeds/${deed.slug}`,
                 nameAr: deed.nameAr,
+                name: deed.name,
                 kind: t('deedKind'),
               })),
             ],
@@ -157,9 +160,13 @@ export function HeartSearch() {
                   if (event.key === 'Escape') inputRef.current?.focus();
                 }}
               >
-                <span dir="rtl" lang="ar" className="min-w-0 font-arabic-text text-lg">
-                  {hit.nameAr}
-                </span>
+                {locale === 'en' && hit.name ? (
+                  <span className="min-w-0 text-lg font-medium">{hit.name}</span>
+                ) : (
+                  <span dir="rtl" lang="ar" className="min-w-0 font-arabic-text text-lg">
+                    {hit.nameAr}
+                  </span>
+                )}
                 <span className="shrink-0 text-sm text-muted-foreground">{hit.kind}</span>
               </Link>
             </li>

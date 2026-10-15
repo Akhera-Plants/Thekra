@@ -240,6 +240,7 @@
     "gradeReference": "Grade reference",
     "citationMarker": "Source and page",
     "weakNotice": "This narration is weak (da'if)",
+    "outsideSahihayn": "Not from the two Sahihs",
     "translation": "Translation",
     "viewFull": "View full",
     "whyVerse": "Why this verse?",
@@ -319,7 +320,8 @@
         "QURAN_MISMATCH": "Quran text does not match",
         "OCR_SUSPECT": "Suspect text",
         "REFERENCE_MISMATCH": "Number does not match",
-        "USER_REPORT": "Report"
+        "USER_REPORT": "Report",
+        "OUTSIDE_SAHIHAYN": "Outside the two Sahihs"
       },
       "severities": {
         "HIGH": "High",

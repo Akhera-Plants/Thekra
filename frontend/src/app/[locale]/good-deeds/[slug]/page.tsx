@@ -16,7 +16,8 @@ export async function generateMetadata({
   const { slug, locale } = await params;
   try {
     const { data } = await getGoodDeed(slug, locale as LocaleCode);
-    return { title: `${data.nameAr} — ذكرى` };
+    const title = locale === 'en' ? (data.name || data.nameAr) : data.nameAr;
+    return { title: `${title} — ${locale === 'en' ? 'Thekra' : 'ذكرى'}` };
   } catch {
     return {};
   }
@@ -56,29 +57,34 @@ export default async function GoodDeedDetailPage({
     ...(virtue.length > 0 ? [{ heading: t('virtueHeading'), items: virtue }] : []),
     ...(neglect.length > 0 ? [{ heading: t('neglectHeading'), items: neglect }] : []),
     ...derived.filter((group) => group.items.length > 0).map((group) => ({
-      heading: group.nameAr,
+      heading: locale === 'en' ? (group.name || group.nameAr) : group.nameAr,
       items: group.items.map(toReader),
     })),
   ];
   const items = interleaveReading(virtue, neglect).concat(derived.flatMap((group) => group.items.map(toReader)));
+  const heading = locale === 'en' ? (deed.name || deed.nameAr) : deed.nameAr;
+  const description = locale === 'en' ? (deed.description || deed.descriptionAr) : deed.descriptionAr;
+  const reward = locale === 'en' ? (deed.reward || deed.rewardAr) : deed.rewardAr;
+  const opposite = deed.oppositeSin
+    ? (locale === 'en' ? (deed.oppositeSin.name || deed.oppositeSin.nameAr) : deed.oppositeSin.nameAr)
+    : null;
 
   return (
     <article className="mx-auto flex w-full max-w-prose min-w-0 flex-1 flex-col gap-10 px-5 py-12 md:px-8 md:py-16">
       <header className="flex flex-col gap-3">
-        <h1 className="font-arabic-display text-4xl leading-tight lg:text-5xl">{deed.nameAr}</h1>
-        {locale === 'en' && deed.name && (
-          <p className="text-sm text-muted-foreground">{deed.name}</p>
-        )}
-        {deed.descriptionAr && <p className="text-muted-foreground">{deed.descriptionAr}</p>}
-        {deed.rewardAr && (
+        <h1 className={`text-4xl leading-tight lg:text-5xl ${/[\u0600-\u06FF]/.test(heading) ? 'font-arabic-display' : 'font-semibold'}`}>
+          {heading}
+        </h1>
+        {locale === 'en' && deed.name && deed.nameAr && deed.name !== deed.nameAr ? (
+          <p dir="rtl" lang="ar" className="font-arabic-ui text-sm text-muted-foreground">{deed.nameAr}</p>
+        ) : null}
+        {description ? <p className="text-muted-foreground">{description}</p> : null}
+        {reward ? (
           <aside className="border-t border-intent-good-deed pt-3" aria-label={t('rewardHeading')}>
             <p className="text-sm text-intent-good-deed">{t('rewardHeading')}</p>
-            <ArabicText size="lg">{deed.rewardAr}</ArabicText>
-            {locale === 'en' && deed.reward && (
-              <p className="text-sm text-muted-foreground">{deed.reward}</p>
-            )}
+            {/[\u0600-\u06FF]/.test(reward) ? <ArabicText size="lg">{reward}</ArabicText> : <p className="text-lg">{reward}</p>}
           </aside>
-        )}
+        ) : null}
         {deed.branches && deed.branches.length > 0 ? (
           <ul className="flex flex-col gap-1 text-sm text-muted-foreground">
             {deed.branches.map((branch) => (
@@ -98,23 +104,23 @@ export default async function GoodDeedDetailPage({
             href={deed.oppositeSin ? `/sins/${deed.oppositeSin.slug}` : '/browse'}
             className="inline-flex min-h-11 w-fit items-center border-b-2 border-intent-sin text-intent-sin focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            {deed.oppositeSin ? deed.oppositeSin.nameAr : t('browse')}
+            {opposite ?? t('browse')}
           </Link>
         </div>
       ) : (
         <GoodDeedReader items={items} sections={sections} total={items.length} slug={slug} />
       )}
 
-      {deed.oppositeSin && (
+      {deed.oppositeSin && opposite ? (
         <p className="text-sm text-muted-foreground">
           <Link
             href={`/sins/${deed.oppositeSin.slug}`}
             className="underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            {deed.oppositeSin.nameAr}
+            {opposite}
           </Link>
         </p>
-      )}
+      ) : null}
     </article>
   );
 }

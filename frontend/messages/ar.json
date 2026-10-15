@@ -240,6 +240,7 @@
     "gradeReference": "مرجع الحكم",
     "citationMarker": "الكتاب والصفحة",
     "weakNotice": "هذا الحديث ضعيف",
+    "outsideSahihayn": "ليس من الصحيحين",
     "translation": "الترجمة",
     "viewFull": "عرض كامل",
     "whyVerse": "لماذا هذه الآية؟",
@@ -319,7 +320,8 @@
         "QURAN_MISMATCH": "نص قرآني غير مطابق",
         "OCR_SUSPECT": "نص مشكوك",
         "REFERENCE_MISMATCH": "رقم غير مطابق",
-        "USER_REPORT": "بلاغ"
+        "USER_REPORT": "بلاغ",
+        "OUTSIDE_SAHIHAYN": "ليس من الصحيحين"
       },
       "severities": {
         "HIGH": "عالية",

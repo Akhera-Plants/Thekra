@@ -7,6 +7,7 @@ import type { ReaderItem, ReaderSection } from '@/components/shared/editorial/Re
 import { SinReader } from '@/features/sin-reminder/components/SinReader';
 import { interleaveReading } from '@/lib/reading';
 import { getSin, getSinQuotes } from '@/lib/api/sins';
+import { englishProvenance } from '@/lib/format/provenance';
 import { SinRank, type LocaleCode } from '@/lib/types/enums';
 
 export const dynamic = 'force-dynamic';
@@ -17,7 +18,8 @@ export async function generateMetadata({
   const { slug, locale } = await params;
   try {
     const { data } = await getSin(slug, locale as LocaleCode);
-    return { title: `${data.nameAr} — ذكرى` };
+    const title = locale === 'en' ? (data.name || data.nameAr) : data.nameAr;
+    return { title: `${title} — ${locale === 'en' ? 'Thekra' : 'ذكرى'}` };
   } catch {
     return {};
   }
@@ -58,7 +60,7 @@ export default async function SinDetailPage({
     ...(warning.length > 0 ? [{ heading: t('warningHeading'), items: warning }] : []),
     ...(reward.length > 0 ? [{ heading: t('rewardHeading'), items: reward }] : []),
     ...derived.filter((group) => group.items.length > 0).map((group) => ({
-      heading: group.nameAr,
+      heading: locale === 'en' ? (group.name || group.nameAr) : group.nameAr,
       items: group.items.map(toReader),
     })),
   ];
@@ -66,20 +68,29 @@ export default async function SinDetailPage({
   const items = interleaveReading(warning, reward).concat(derivedItems);
   const alternatives = quotes?.data.alternatives ?? [];
   const onward = alternatives[0];
+  const heading = locale === 'en' ? (sin.name || sin.nameAr) : sin.nameAr;
+  const description = locale === 'en' ? (sin.description || sin.descriptionAr) : sin.descriptionAr;
+  const onwardName = onward
+    ? (locale === 'en' ? (onward.name || onward.nameAr) : onward.nameAr)
+    : null;
 
   return (
     <article className="mx-auto flex w-full max-w-prose min-w-0 flex-1 flex-col gap-10 px-5 py-12 md:px-8 md:py-16">
       <header className="flex flex-col gap-3">
-        <h1 className="font-arabic-display text-4xl leading-tight lg:text-5xl">{sin.nameAr}</h1>
-        {locale === 'en' && sin.name && (
-          <p className="text-sm text-muted-foreground">{sin.name}</p>
-        )}
-        {sin.descriptionAr && <p className="text-muted-foreground">{sin.descriptionAr}</p>}
+        <h1 className={`text-4xl leading-tight lg:text-5xl ${/[\u0600-\u06FF]/.test(heading) ? 'font-arabic-display' : 'font-semibold'}`}>
+          {heading}
+        </h1>
+        {locale === 'en' && sin.name && sin.nameAr && sin.name !== sin.nameAr ? (
+          <p dir="rtl" lang="ar" className="font-arabic-ui text-sm text-muted-foreground">{sin.nameAr}</p>
+        ) : null}
+        {description ? <p className="text-muted-foreground">{description}</p> : null}
         {sin.rank === SinRank.KABIRA && sin.rankReference && (
           <p className="text-sm text-muted-foreground">
             {tRank(sin.rank)}
             {' — '}
-            <FormattedNumber value={sin.rankReference} />
+            <FormattedNumber
+              value={locale === 'en' ? (englishProvenance(sin.rankReference) ?? sin.rankReference) : sin.rankReference}
+            />
           </p>
         )}
         {sin.branches && sin.branches.length > 0 ? (
@@ -101,7 +112,7 @@ export default async function SinDetailPage({
             href={onward ? `/good-deeds/${onward.slug}` : '/browse'}
             className="inline-flex min-h-11 w-fit items-center border-b-2 border-intent-good-deed text-intent-good-deed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            {onward ? onward.nameAr : t('browse')}
+            {onwardName ?? t('browse')}
           </Link>
         </div>
       ) : (

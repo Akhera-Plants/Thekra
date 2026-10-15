@@ -5,6 +5,7 @@ import { FormattedNumber } from '@/components/shared/FormattedNumber';
 import { cn } from '@/lib/utils';
 import type { QuoteDto } from '@/lib/types/api';
 import { QuoteType } from '@/lib/types/enums';
+import { englishProvenance } from '@/lib/format/provenance';
 
 function visible(value: string | null | undefined, arabic: boolean): string | null {
   if (!value) return null;
@@ -41,15 +42,17 @@ export function SourceAttribution({
 }: SourceAttributionProps) {
   const arabic = useLocale() === 'ar';
   const { type, source, quran, hadith, book, citation } = quote;
-  const bookTitle = visible(book?.bookTitle, arabic);
-  const bookAuthor = visible(book?.author, arabic);
+  const bookTitle = arabic ? visible(book?.bookTitle, true) : englishProvenance(book?.bookTitle);
+  const bookAuthor = arabic ? visible(book?.author, true) : englishProvenance(book?.author);
   const pageOrChapter = visible(book?.pageOrChapter, arabic);
-  const gradeAuthority = visible(citation?.gradeAuthority, arabic);
-  const gradeReference = visible(citation?.gradeReference, arabic);
+  const gradeAuthority = arabic ? visible(citation?.gradeAuthority, true) : englishProvenance(citation?.gradeAuthority);
+  const gradeReference = arabic ? visible(citation?.gradeReference, true) : englishProvenance(citation?.gradeReference);
   const volume = visible(citation?.volume, arabic);
   const page = visible(citation?.page, arabic);
-  const sourceName = arabic ? source.nameAr : (source.nameAr ?? source.name);
-  const sourceNameLatin = sourceName && arabic && /[A-Za-z]/.test(sourceName) ? null : sourceName;
+  const sourceName = arabic ? source.nameAr : (source.name || source.nameAr);
+  const sourceInArabic = Boolean(sourceName && /[\u0600-\u06FF]/.test(sourceName));
+  const surahName = arabic ? quran?.surahNameAr : (quran?.surahName || quran?.surahNameAr);
+  const narrator = arabic ? hadith?.narratorAr : (hadith?.narrator || hadith?.narratorAr);
   const hasPrintedLocation = Boolean(volume || page || gradeAuthority || gradeReference);
 
   return (
@@ -59,9 +62,9 @@ export function SourceAttribution({
     >
       {type === QuoteType.QURAN_VERSE && quran && (
         <span>
-          {quran.surahNameAr && (
-            <span dir="rtl" lang="ar" className="font-arabic-ui">
-              {quran.surahNameAr}
+          {surahName && (
+            <span dir={arabic ? 'rtl' : undefined} lang={arabic ? 'ar' : 'en'} className={arabic ? 'font-arabic-ui' : undefined}>
+              {surahName}
             </span>
           )}
           {quran.surahNumber && quran.ayahNumber && (
@@ -76,11 +79,11 @@ export function SourceAttribution({
 
       {type === QuoteType.HADITH && hadith && (
         <>
-          {hadith.narratorAr && (
+          {narrator && (
             <span>
               <span className="me-1 font-medium">{labels.narrator}:</span>
-              <span dir="rtl" lang="ar" className="font-arabic-ui">
-                {hadith.narratorAr}
+              <span dir={arabic ? 'rtl' : undefined} lang={arabic ? 'ar' : undefined} className={arabic ? 'font-arabic-ui' : undefined}>
+                {arabic ? narrator : englishProvenance(narrator)}
               </span>
             </span>
           )}
@@ -123,16 +126,17 @@ export function SourceAttribution({
               <FormattedNumber value={page} />
             </span>
           )}
-          {gradeAuthority && /^(?:رواه البخاري|رواه مسلم|متفق عليه)$/.test(gradeAuthority) ? (
+          {citation?.gradeAuthority && /^(?:رواه البخاري|رواه مسلم|متفق عليه)$/.test(citation.gradeAuthority) ? (
             <span>
               <FormattedNumber
-                value={
-                  gradeAuthority === 'متفق عليه'
-                    ? [gradeAuthority, gradeReference].filter(Boolean).join('، ')
-                    : gradeReference?.match(/\d+/)?.[0]
-                      ? `${gradeAuthority}، رقم ${gradeReference.match(/\d+/)?.[0]}`
-                      : gradeAuthority
-                }
+                value={(() => {
+                  const line = citation.gradeAuthority === 'متفق عليه'
+                    ? [citation.gradeAuthority, citation.gradeReference].filter(Boolean).join('، ')
+                    : citation.gradeReference?.match(/\d+/)?.[0]
+                      ? `${citation.gradeAuthority}، رقم ${citation.gradeReference.match(/\d+/)?.[0]}`
+                      : citation.gradeAuthority;
+                  return arabic ? line : (englishProvenance(line) ?? line);
+                })()}
               />
             </span>
           ) : (
@@ -154,11 +158,11 @@ export function SourceAttribution({
         </span>
       )}
 
-      {sourceNameLatin ? (
+      {sourceName && !(arabic && /[A-Za-z]/.test(sourceName)) ? (
         <span className="mt-0.5">
           <span className="me-1 font-medium">{labels.source}:</span>
-          <span dir={arabic || source.nameAr ? 'rtl' : undefined} lang={arabic || source.nameAr ? 'ar' : undefined} className="font-arabic-ui">
-            {sourceNameLatin}
+          <span dir={sourceInArabic ? 'rtl' : 'ltr'} lang={sourceInArabic ? 'ar' : 'en'} className={sourceInArabic ? 'font-arabic-ui' : undefined}>
+            {sourceName}
           </span>
         </span>
       ) : null}

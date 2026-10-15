@@ -79,14 +79,20 @@ export default async function BranchesPage({
                           <span className="w-10 shrink-0 font-arabic-display text-xl text-intent-iman-branch">
                             <FormattedNumber value={branch.number} />
                           </span>
-                          <ArabicText
-                            as="span"
-                            face="display"
-                            size="base"
-                            className={cn('min-w-0 max-w-[70%]', quiet && 'text-muted-foreground')}
-                          >
-                            {branch.titleAr}
-                          </ArabicText>
+                          {locale === 'en' && branch.title ? (
+                            <span className={cn('min-w-0 max-w-[70%] font-medium', quiet && 'text-muted-foreground')}>
+                              {branch.title}
+                            </span>
+                          ) : (
+                            <ArabicText
+                              as="span"
+                              face="display"
+                              size="base"
+                              className={cn('min-w-0 max-w-[70%]', quiet && 'text-muted-foreground')}
+                            >
+                              {branch.titleAr}
+                            </ArabicText>
+                          )}
                           <span aria-hidden className="mb-1 min-w-4 flex-1 border-b border-dotted border-border" />
                           <span className="shrink-0 text-sm text-muted-foreground">
                             <FormattedNumber value={branch.quoteCount} />

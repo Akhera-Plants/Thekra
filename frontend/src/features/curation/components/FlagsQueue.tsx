@@ -39,7 +39,7 @@ interface FlagDetail extends FlagRow {
   quote: FlagRow['quote'] & { matches: MatchRow[] };
 }
 
-const TYPES = ['', 'WEAK_MATCH', 'DUPLICATE_DIFFERENT_GRADE', 'QURAN_MISMATCH', 'OCR_SUSPECT', 'REFERENCE_MISMATCH', 'USER_REPORT'];
+const TYPES = ['', 'WEAK_MATCH', 'DUPLICATE_DIFFERENT_GRADE', 'QURAN_MISMATCH', 'OCR_SUSPECT', 'REFERENCE_MISMATCH', 'USER_REPORT', 'OUTSIDE_SAHIHAYN'];
 const SEVERITIES = ['', 'HIGH', 'MEDIUM', 'LOW'];
 
 export function FlagsQueue() {

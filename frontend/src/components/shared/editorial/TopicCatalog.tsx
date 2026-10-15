@@ -1,31 +1,33 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/navigation';
-import { ArabicText } from '@/components/shared/ArabicText';
+import { FormattedNumber } from '@/components/shared/FormattedNumber';
 import { reminderWord } from '@/lib/day';
 import { cn } from '@/lib/utils';
 
 const SEARCH_DEBOUNCE_MS = 150;
 
 export const TOPIC_DOMAINS = [
-  { key: 'iman', ar: 'الإيمان والعقيدة' },
-  { key: 'qalb', ar: 'أعمال القلوب' },
-  { key: 'ibadat', ar: 'العبادات' },
-  { key: 'lisan', ar: 'اللسان والكلام' },
-  { key: 'usra', ar: 'الأسرة والأرحام' },
-  { key: 'mujtama', ar: 'الناس والمجتمع' },
-  { key: 'mal', ar: 'المال والمعاملات' },
-  { key: 'shahawat', ar: 'الشهوات والجسد' },
-  { key: 'dima', ar: 'الدماء والولايات' },
-  { key: 'ilm', ar: 'العلم والدعوة' },
-  { key: 'raqami', ar: 'الوقت والحياة الرقمية' },
-  { key: 'adab', ar: 'الآداب والسنن اليومية' },
+  { key: 'iman', ar: 'الإيمان والعقيدة', en: 'Faith and creed' },
+  { key: 'qalb', ar: 'أعمال القلوب', en: 'Deeds of the heart' },
+  { key: 'ibadat', ar: 'العبادات', en: 'Acts of worship' },
+  { key: 'lisan', ar: 'اللسان والكلام', en: 'Speech and the tongue' },
+  { key: 'usra', ar: 'الأسرة والأرحام', en: 'Family and kinship' },
+  { key: 'mujtama', ar: 'الناس والمجتمع', en: 'People and society' },
+  { key: 'mal', ar: 'المال والمعاملات', en: 'Wealth and dealings' },
+  { key: 'shahawat', ar: 'الشهوات والجسد', en: 'Desires and the body' },
+  { key: 'dima', ar: 'الدماء والولايات', en: 'Bloodshed and authority' },
+  { key: 'ilm', ar: 'العلم والدعوة', en: 'Knowledge and daʿwah' },
+  { key: 'raqami', ar: 'الوقت والحياة الرقمية', en: 'Time and digital life' },
+  { key: 'adab', ar: 'الآداب والسنن اليومية', en: 'Daily manners and sunan' },
 ] as const;
 
 export interface TopicEntry {
   href: string;
   nameAr: string;
+  name?: string | null;
   quoteCount: number;
   domainKey: string | null;
   taxonomyOrder: number | null;
@@ -54,6 +56,8 @@ export function TopicCatalog({
   kabiraLabel,
   contemporaryLabel,
 }: TopicCatalogProps) {
+  const locale = useLocale();
+  const arabic = locale === 'ar';
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState('');
   const [debounced, setDebounced] = useState('');
@@ -70,7 +74,11 @@ export function TopicCatalog({
 
   const filtered = useMemo(() => {
     if (!debounced) return entries;
-    return entries.filter((entry) => entry.nameAr.includes(debounced));
+    const needle = debounced.toLowerCase();
+    return entries.filter((entry) =>
+      entry.nameAr.includes(debounced)
+      || (entry.name?.toLowerCase().includes(needle) ?? false),
+    );
   }, [entries, debounced]);
 
   const groups = TOPIC_DOMAINS.map((domain) => ({
@@ -82,7 +90,9 @@ export function TopicCatalog({
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-5 py-12 md:px-8 md:py-16">
-      <h1 className="font-arabic-display text-4xl leading-tight lg:text-5xl">{pageTitle}</h1>
+      <h1 className={cn('text-4xl leading-tight lg:text-5xl', arabic ? 'font-arabic-display' : 'font-semibold')}>
+        {pageTitle}
+      </h1>
       <input
         ref={inputRef}
         type="search"
@@ -90,38 +100,51 @@ export function TopicCatalog({
         onChange={(event) => setQuery(event.target.value)}
         placeholder={searchPlaceholder}
         aria-label={searchLabel}
-        className="min-h-11 w-full border-b border-border bg-transparent font-arabic-ui text-lg outline-none placeholder:text-muted-foreground focus-visible:border-foreground"
+        className={cn(
+          'min-h-11 w-full border-b border-border bg-transparent text-lg outline-none placeholder:text-muted-foreground focus-visible:border-foreground',
+          arabic ? 'font-arabic-ui' : undefined,
+        )}
       />
       {groups.length === 0 ? <p className="text-muted-foreground">{noResults}</p> : null}
       {groups.map((group) => (
         <section key={group.key} className="flex flex-col">
-          <h2 className="font-arabic-display text-2xl">{group.ar}</h2>
+          <h2 className={cn('text-2xl', arabic ? 'font-arabic-display' : 'font-semibold')}>
+            {arabic ? group.ar : group.en}
+          </h2>
           <ul>
-            {group.entries.map((entry) => (
-              <li key={entry.href}>
-                <Link
-                  href={entry.href}
-                  className="flex min-h-16 items-baseline gap-3 border-b border-border py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  <ArabicText as="span" face="display" size="base" className="min-w-0">
-                    {entry.nameAr}
-                  </ArabicText>
-                  {entry.kabira ? (
-                    <span className={cn('shrink-0 text-sm underline decoration-2 underline-offset-4', color)}>
-                      {kabiraLabel}
+            {group.entries.map((entry) => {
+              const label = arabic ? entry.nameAr : (entry.name || entry.nameAr);
+              const labelArabic = /[\u0600-\u06FF]/.test(label);
+              return (
+                <li key={entry.href}>
+                  <Link
+                    href={entry.href}
+                    className="flex min-h-16 items-baseline gap-3 border-b border-border py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <span
+                      dir={labelArabic ? 'rtl' : 'ltr'}
+                      lang={labelArabic ? 'ar' : 'en'}
+                      className={cn('min-w-0 text-base', labelArabic ? 'font-arabic-display' : 'font-medium')}
+                    >
+                      {label}
                     </span>
-                  ) : null}
-                  {entry.contemporary ? (
-                    <span className="shrink-0 text-sm text-muted-foreground">{contemporaryLabel}</span>
-                  ) : null}
-                  <span aria-hidden className="mb-1 min-w-4 flex-1 border-b border-dotted border-border" />
-                  <span className="shrink-0 text-sm text-muted-foreground">
-                    {String(entry.quoteCount).replace(/\d/g, (digit) => '٠١٢٣٤٥٦٧٨٩'[Number(digit)] ?? digit)}{' '}
-                    {reminderWord(entry.quoteCount)}
-                  </span>
-                </Link>
-              </li>
-            ))}
+                    {entry.kabira ? (
+                      <span className={cn('shrink-0 text-sm underline decoration-2 underline-offset-4', color)}>
+                        {kabiraLabel}
+                      </span>
+                    ) : null}
+                    {entry.contemporary ? (
+                      <span className="shrink-0 text-sm text-muted-foreground">{contemporaryLabel}</span>
+                    ) : null}
+                    <span aria-hidden className="mb-1 min-w-4 flex-1 border-b border-dotted border-border" />
+                    <span className="shrink-0 text-sm text-muted-foreground">
+                      <FormattedNumber value={entry.quoteCount} />{' '}
+                      {reminderWord(entry.quoteCount, locale)}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </section>
       ))}

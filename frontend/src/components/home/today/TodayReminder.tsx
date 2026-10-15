@@ -3,8 +3,11 @@
 import { useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { FormattedNumber } from '@/components/shared/FormattedNumber';
+import { QuoteBody } from '@/components/shared/quote/QuoteBody';
+import { QuoteType } from '@/lib/types/enums';
 import { useToggleFavorite } from '@/features/favorites/hooks/useToggleFavorite';
 import { formatDigits } from '@/lib/format/digits';
+import { englishProvenance } from '@/lib/format/provenance';
 import type { QuoteDto } from '@/lib/types/api';
 
 function sahihaynCitation(authority: string, reference: string | null): string {
@@ -28,8 +31,15 @@ export function TodayReminder({ quote }: { quote: QuoteDto }) {
     },
   });
 
+  const english =
+    locale === 'en' &&
+    quote.translation &&
+    (quote.type === QuoteType.HADITH || quote.type === QuoteType.QURAN_VERSE)
+      ? quote.translation.text
+      : null;
+
   async function share() {
-    const text = [quote.textAr, formatDigits(citation ?? '', locale === 'ar')].filter(Boolean).join('\n');
+    const text = [english ?? quote.textAr, formatDigits(citation ?? '')].filter(Boolean).join('\n');
     if (typeof navigator.share === 'function') {
       try {
         await navigator.share({ text });
@@ -45,12 +55,16 @@ export function TodayReminder({ quote }: { quote: QuoteDto }) {
   return (
     <section className="flex max-w-prose flex-col gap-6">
       <h2 className="font-arabic-display text-3xl leading-tight md:text-4xl">{t('todayHeading')}</h2>
-      <blockquote dir="rtl" lang="ar" className="font-arabic-text text-2xl leading-loose text-foreground md:text-3xl">
-        {quote.textAr}
-      </blockquote>
+      <QuoteBody quote={quote} size="hero" />
       {quote.citation?.gradeAuthority ? (
         <p className="text-sm text-muted-foreground">
-          <FormattedNumber value={sahihaynCitation(quote.citation.gradeAuthority, quote.citation.gradeReference)} />
+          <FormattedNumber
+            value={
+              locale === 'en'
+                ? (englishProvenance(sahihaynCitation(quote.citation.gradeAuthority, quote.citation.gradeReference)) ?? '')
+                : sahihaynCitation(quote.citation.gradeAuthority, quote.citation.gradeReference)
+            }
+          />
         </p>
       ) : null}
       {citation ? (
