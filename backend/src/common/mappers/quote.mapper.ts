@@ -147,7 +147,7 @@ export function mapQuoteToDto(
               referenceNumber: row.referenceNumber,
               referenceLabel: row.referenceLabel,
             }),
-            outsideSahihayn: row.gradeSource === GradeSource.SUNAN_TAHQIQ || row.gradeSource === GradeSource.IBN_RAJAB,
+            outsideSahihayn: row.gradeSource === GradeSource.SUNAN_TAHQIQ,
           }
         : null,
     book:

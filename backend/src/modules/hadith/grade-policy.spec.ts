@@ -51,7 +51,7 @@ describe('GradePolicy', () => {
       expect(GradePolicy.isPublishable({ type: QuoteType.HADITH, gradeSource: GradeSource.AUTO_SAHIHAYN })).toBe(true);
       expect(GradePolicy.isPublishable({ type: QuoteType.HADITH, gradeSource: GradeSource.MANUAL })).toBe(true);
       expect(GradePolicy.isPublishable({ type: QuoteType.HADITH, gradeSource: GradeSource.SUNAN_TAHQIQ })).toBe(true);
-      expect(GradePolicy.isPublishable({ type: QuoteType.HADITH, gradeSource: GradeSource.IBN_RAJAB })).toBe(true);
+      expect(GradePolicy.isPublishable({ type: QuoteType.HADITH, gradeSource: GradeSource.IBN_RAJAB })).toBe(false);
       expect(GradePolicy.isPublishable({ type: QuoteType.HADITH, gradeSource: GradeSource.AUTHORITY_LEGACY })).toBe(false);
       expect(GradePolicy.isPublishable({ type: QuoteType.QURAN_VERSE, gradeSource: GradeSource.AUTHORITY_LEGACY })).toBe(true);
       expect(GradePolicy.readerClause()).toEqual({

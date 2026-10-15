@@ -11,6 +11,10 @@ export interface RajabPassage {
 
 const JUNK = /طبقات الحفاظ|شذرات الذهب|حقوق الطبع|بروتوكول|ترجمة رقم|البدر الطالع|المنهج الأحمد|الجوهر المنضد|الإمام العالم الصالح|انظر بسط|زوائد الهيثمي|في المصنف/;
 const WEAK_MARK = /إسناد[هه]?\s*ضعيف|اسناد ضعيف|لا يصح|لم يصح|لا يثبت|لم يثبت|ضعيف|نكار|وجوه ضعيفة|الصحيح وقفه|روي موقوفا|موقوف|مرسل|منقطع/;
+/** Author critique / commentary — never treat as a prophetic report. */
+const CRITIQUE_MARK =
+  /باطلة|منكرة|وهذا يدل|وقد أشكل|إخواني|وفي حديثه زيادة|\([هـه٠-٩0-9]{1,3}\)|（[هـه٠-٩0-9]{1,3}）/;
+const COMMENTARY_CUT = /(?:وقد|وهذا|قال ابن)/;
 const PRIOR_CUE = /قال\s+رسول|قال\s+النبي|عن\s+النبي|مرفوع|صلى\s+الله\s+عليه|خرجه|خرج\s/;
 
 function leadPattern(): RegExp {
@@ -47,11 +51,22 @@ function clean(text: string): string {
     .trim();
 }
 
+/** Cut the matn at the closing quote, or at author commentary that follows it. */
+export function stopMatn(raw: string): string {
+  const closed = raw.match(/^([^»]{12,420})»/);
+  if (closed?.[1]) return clean(closed[1]);
+  const cut = COMMENTARY_CUT.exec(raw);
+  if (cut?.index != null && cut.index >= 18) return clean(raw.slice(0, cut.index));
+  const sentence = raw.match(/^([^.]{18,340})/);
+  return sentence?.[1] ? clean(sentence[1]) : clean(raw.slice(0, 340));
+}
+
 function keepMatn(text: string, around: string): boolean {
   if (text.length < 24 || text.length > 420) return false;
   if (/^(?:وسلم|صلى الله عليه)/.test(text)) return false;
   if ((text.match(/[\u0621-\u064A]/g) ?? []).length < 20) return false;
   if (JUNK.test(text) || WEAK_MARK.test(text) || WEAK_MARK.test(around)) return false;
+  if (CRITIQUE_MARK.test(text) || CRITIQUE_MARK.test(around)) return false;
   if ((text.match(/[0-9]/g) ?? []).length > 6) return false;
   return true;
 }
@@ -62,8 +77,7 @@ function matnAfter(compact: string, at: number): string | null {
   if (quoted?.[1]) return clean(quoted[1]);
   const paren = rest.match(/^\s*\(([^)]{12,280})\)/);
   if (paren?.[1]) return clean(paren[1]);
-  const sentence = rest.match(/^([^.]{18,340})/);
-  return sentence?.[1] ? clean(sentence[1]) : null;
+  return stopMatn(rest.replace(/^\s+/, ''));
 }
 
 function priorClause(compact: string, index: number): string {
@@ -71,6 +85,7 @@ function priorClause(compact: string, index: number): string {
   const cut = Math.max(slice.lastIndexOf('.'), slice.lastIndexOf('۔'), slice.lastIndexOf('。'));
   return cut >= 0 ? slice.slice(cut + 1) : slice;
 }
+
 function passagesOnPage(compact: string): string[] {
   const found: string[] = [];
   for (const match of compact.matchAll(leadPattern())) {
@@ -105,8 +120,8 @@ const BODY_START: Record<string, RegExp> = {
 };
 
 /**
- * Prophetic reports from the author's text. A report Ibn Rajab marks weak
- * in the same place is left out: the presumption of soundness stops there.
+ * Prophetic reports from the author's text for topic selection.
+ * Ibn Rajab does not grade; weak marks and critique are left out.
  */
 export function extractRajabPassages(
   bookKey: string,

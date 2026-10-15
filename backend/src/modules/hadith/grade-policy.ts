@@ -28,13 +28,12 @@ export const WEAK_OPT_IN_GRADES: HadithGrade[] = [
 
 export const NEVER_SERVE: HadithGrade[] = [HadithGrade.MAWDU];
 
-/** Hadith grade sources a public route may serve. AUTHORITY_LEGACY is stored and hidden. */
+/** Hadith grade sources a public route may serve. AUTHORITY_LEGACY and IBN_RAJAB stay stored and hidden. */
 export const PUBLISHABLE_GRADE_SOURCES: readonly GradeSource[] = [
   GradeSource.SAHIHAYN,
   GradeSource.AUTO_SAHIHAYN,
   GradeSource.MANUAL,
   GradeSource.SUNAN_TAHQIQ,
-  GradeSource.IBN_RAJAB,
 ];
 
 export class GradePolicy {
@@ -93,9 +92,9 @@ export class GradePolicy {
   }
 
   /**
-   * A hadith is publishable from a sahihayn match, a manual grade, a sunan
-   * tahqiq grade (Arna'ut or Bashar, sahih or hasan), or Ibn Rajab's books. An open high-severity
-   * flag hides every quote type. OUTSIDE_SAHIHAYN is low and does not hide.
+   * A hadith is publishable from a sahihayn match, a manual grade, or a sunan
+   * tahqiq grade (Arna'ut, sahih or hasan). Ibn Rajab is selection only — never a grade.
+   * An open high-severity flag hides every quote type. OUTSIDE_SAHIHAYN is low and does not hide.
    */
   static publishableClause(): Prisma.QuoteWhereInput {
     return {
