@@ -33,6 +33,17 @@ describe('citesSahihayn', () => {
     expect(citesSahihayn('رواه البخاري.')).toBe(true);
     expect(citesSahihayn('من كان آخر كلامه لا إله إلا الله دخل الجنة')).toBe(false);
   });
+
+  it('recognises وفى/وفي/في with optional quotes and خرجه / خرّجاه forms', () => {
+    expect(citesSahihayn('وفى "الصحيحين" عن ابن عمر… إن أحدكم إذا مات عرض عليه…')).toBe(true);
+    expect(citesSahihayn('وفي «الصحيحين» عن أبي هريرة')).toBe(true);
+    expect(citesSahihayn('في الصحيحين')).toBe(true);
+    expect(citesSahihayn('خرجه البخاري في كتاب الجنائز')).toBe(true);
+    expect(citesSahihayn('خرجه مسلم')).toBe(true);
+    expect(citesSahihayn('خرّجاه')).toBe(true);
+    expect(citesSahihayn('أخرجه البخاري')).toBe(true);
+    expect(citesSahihayn('أخرجه مسلم')).toBe(true);
+  });
 });
 
 describe('decideSunanRuling', () => {
@@ -47,14 +58,9 @@ describe('decideSunanRuling', () => {
     });
   });
 
-  it('stores the stronger grade and cites only the scholar who gave it', () => {
-    const ruling = decideSunanRuling([
-      hit({ rawGrade: 'Sahih' }),
-      hit({ scholar: 'Bashar Awad Maarouf', book: 'tirmidhi', number: 4, rawGrade: 'Hasan Sahih' }),
-    ]);
-    expect(ruling?.grade).toBe(HadithGrade.SAHIH);
-    expect(ruling?.gradeAuthority).toBe('شعيب الأرنؤوط');
-    expect(ruling?.gradeReference).toBe('سنن أبي داود، رقم 1');
+  it('lists only Arnaut as a Sunan scholar key', async () => {
+    const { SUNAN_SCHOLAR_NAMES } = await import('./sunan-tahqiq.js');
+    expect(Object.keys(SUNAN_SCHOLAR_NAMES)).toEqual(['Shuaib Al Arnaut']);
   });
 
   it('keeps a sahih hit when a close narration is daif, and still refuses a mawquf on its own', () => {

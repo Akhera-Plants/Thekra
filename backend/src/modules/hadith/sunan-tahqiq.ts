@@ -1,12 +1,15 @@
 import { HadithGrade } from '@prisma/client';
 
-/** Printed Arabic names. The edition file's Latin labels never reach a public field. */
+/** Printed Arabic name. The edition file's Latin labels never reach a public field. */
 export const ARNAUT_NAME = 'شعيب الأرنؤوط';
-export const BASHAR_NAME = 'بشار عواد معروف';
 
+/**
+ * Owner decision: Shu'ayb al-Arna'ut is the only Sunan grader used for publish.
+ * Bashar Awad Ma'ruf is not used — the Tirmidhi file's Bashar field often repeats
+ * Tirmidhi's own verdict.
+ */
 export const SUNAN_SCHOLAR_NAMES = {
   'Shuaib Al Arnaut': ARNAUT_NAME,
-  'Bashar Awad Maarouf': BASHAR_NAME,
 } as const;
 
 export type SunanScholarKey = keyof typeof SUNAN_SCHOLAR_NAMES;
@@ -20,7 +23,7 @@ export const SUNAN_BOOK_TITLES = {
 export type SunanBookKey = keyof typeof SUNAN_BOOK_TITLES;
 
 /**
- * Grades these two scholars use for a prophetic narration that is sahih or hasan.
+ * Grades Arna'ut uses for a prophetic narration that is sahih or hasan.
  * «Sahih Muquf» and «Hasan Maqtu» contain those words and are refused: they are
  * not a prophetic grade. Weak, fabricated, and isnad-only labels are refused too.
  */
@@ -32,16 +35,41 @@ const APPROPRIATE: Record<string, HadithGrade> = {
   'hasan lighairihi': HadithGrade.HASAN,
 };
 
-const SCHOLAR_ORDER: readonly SunanScholarKey[] = ['Shuaib Al Arnaut', 'Bashar Awad Maarouf'];
+const SCHOLAR_ORDER: readonly SunanScholarKey[] = ['Shuaib Al Arnaut'];
 const BOOK_ORDER: readonly SunanBookKey[] = ['abudawud', 'ibnmajah', 'tirmidhi'];
 
 export const OUTSIDE_SAHIHAYN_NOTE = 'ليس من الصحيحين';
 
-/** The author already placed the narration in Bukhari, Muslim, or both. */
-const SAHIHAYN_CITATION = /متفق عليه|رواه البخاري|رواه مسلم|في الصحيحين|أخرجاه/;
+/** Strip tashkeel and shadda so OCR variants still match. */
+export function stripArabicMarks(text: string): string {
+  return text.replace(/[\u064B-\u065F\u0670]/g, '');
+}
+
+/**
+ * The author already placed the narration in Bukhari, Muslim, or both.
+ * Covers «وفى / وفي / في» + optional quotes around «الصحيحين», and
+ * خرجه / خرّجاه / أخرجه for each Sahih.
+ */
+const SAHIHAYN_CITATION = new RegExp([
+  'متفق عليه',
+  'رواه البخاري',
+  'رواه مسلم',
+  'في الصحيحين',
+  'أخرجاه',
+  'وفى\\s*[«"\'"]?\\s*الصحيحين',
+  'وفي\\s*[«"\'"]?\\s*الصحيحين',
+  'في\\s*[«"\'"]?\\s*الصحيحين',
+  'خر[ّ]?جه\\s+البخاري',
+  'خر[ّ]?جه\\s+مسلم',
+  'خر[ّ]?جاه',
+  'خرجهما',
+  'أخرجه\\s+البخاري',
+  'أخرجه\\s+مسلم',
+  'أخرجهما',
+].join('|'));
 
 export function citesSahihayn(text: string): boolean {
-  return SAHIHAYN_CITATION.test(text);
+  return SAHIHAYN_CITATION.test(stripArabicMarks(text));
 }
 
 export function foldGradeLabel(raw: string): string {
@@ -72,7 +100,7 @@ export interface SunanRuling {
 /**
  * Close narrations often differ by a few words and carry different grades.
  * A da'if or mawquf hit does not cancel a sahih or hasan hit. The stored grade
- * is the stronger accepted one, and the citation names only the scholars and
+ * is the stronger accepted one, and the citation names only Arna'ut and the
  * books that gave that grade.
  */
 export function decideSunanRuling(hits: readonly SunanHit[]): SunanRuling | null {
