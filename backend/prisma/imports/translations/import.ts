@@ -150,7 +150,7 @@ export async function runTranslations(options: ImportOptions): Promise<void> {
   if (options.dryRun) return;
 
   await inTransactionBatches(options.prisma, creates, async (tx, batch) => {
-    await tx.translation.createMany({ data: batch, skipDuplicates: true });
+    await tx.translation.createMany({ data: [...batch], skipDuplicates: true });
   });
   await inTransactionBatches(options.prisma, updates, async (tx, batch) => {
     for (const row of batch) await tx.translation.update({ where: { id: row.id }, data: { text: row.text } });
