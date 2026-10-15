@@ -338,6 +338,12 @@ async function applyGrades(
     }
     bySource[sourceKey] = bucket;
   }
+  await prisma.quoteFlag.deleteMany({
+    where: {
+      type: FlagType.OUTSIDE_SAHIHAYN,
+      quote: { gradeSource: { in: [GradeSource.SAHIHAYN, GradeSource.AUTO_SAHIHAYN] } },
+    },
+  });
   return { graded, keptManual, bukhari, muslim, both, bySource };
 }
 

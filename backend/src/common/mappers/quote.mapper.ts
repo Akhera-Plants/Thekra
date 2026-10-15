@@ -1,4 +1,4 @@
-import { Prisma, type HadithGrade, type QuoteOrigin, type QuoteType, type SourceType, type TagCategory, type TextSource } from '@prisma/client';
+import { GradeSource, Prisma, type HadithGrade, type QuoteOrigin, type QuoteType, type SourceType, type TagCategory, type TextSource } from '@prisma/client';
 import { STRONG_MATCH_SCORE } from '../text/match-score.js';
 import { formatPrintedReference } from '../text/printed-reference.js';
 
@@ -81,6 +81,8 @@ export interface QuoteDto {
     narratorAr: string | null;
     grade: HadithGrade | null;
     reference: string | null;
+    /** True when the public grade is a sunan tahqiq, not Bukhari or Muslim. */
+    outsideSahihayn: boolean;
   } | null;
   book: {
     bookTitle: string | null;
@@ -145,6 +147,7 @@ export function mapQuoteToDto(
               referenceNumber: row.referenceNumber,
               referenceLabel: row.referenceLabel,
             }),
+            outsideSahihayn: row.gradeSource === GradeSource.SUNAN_TAHQIQ || row.gradeSource === GradeSource.IBN_RAJAB,
           }
         : null,
     book:

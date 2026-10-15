@@ -483,19 +483,19 @@ export class SinsService {
     const links = await this.prisma.topicDerivation.findMany({
       where: { fromSinId: sinId },
       select: {
-        toSin: { select: { id: true, slug: true, nameAr: true, isHidden: true } },
-        toGoodDeed: { select: { id: true, slug: true, nameAr: true } },
+        toSin: { select: { id: true, slug: true, name: true, nameAr: true, isHidden: true } },
+        toGoodDeed: { select: { id: true, slug: true, name: true, nameAr: true } },
       },
     });
     const groups = [];
     for (const link of links) {
       if (link.toSin && !link.toSin.isHidden) {
         const items = await this.pageTopicQuotes('sin', link.toSin.id, quote, page, limit, locale);
-        groups.push({ slug: link.toSin.slug, nameAr: link.toSin.nameAr, side: 'AVOID' as const, items });
+        groups.push({ slug: link.toSin.slug, name: link.toSin.name, nameAr: link.toSin.nameAr, side: 'AVOID' as const, items });
       }
       if (link.toGoodDeed) {
         const items = await this.pageTopicQuotes('deed', link.toGoodDeed.id, quote, page, limit, locale);
-        groups.push({ slug: link.toGoodDeed.slug, nameAr: link.toGoodDeed.nameAr, side: 'DO' as const, items });
+        groups.push({ slug: link.toGoodDeed.slug, name: link.toGoodDeed.name, nameAr: link.toGoodDeed.nameAr, side: 'DO' as const, items });
       }
     }
     return groups;

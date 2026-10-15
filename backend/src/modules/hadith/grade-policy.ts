@@ -28,6 +28,15 @@ export const WEAK_OPT_IN_GRADES: HadithGrade[] = [
 
 export const NEVER_SERVE: HadithGrade[] = [HadithGrade.MAWDU];
 
+/** Hadith grade sources a public route may serve. AUTHORITY_LEGACY is stored and hidden. */
+export const PUBLISHABLE_GRADE_SOURCES: readonly GradeSource[] = [
+  GradeSource.SAHIHAYN,
+  GradeSource.AUTO_SAHIHAYN,
+  GradeSource.MANUAL,
+  GradeSource.SUNAN_TAHQIQ,
+  GradeSource.IBN_RAJAB,
+];
+
 export class GradePolicy {
   static defaultAllowedGrades(): HadithGrade[] {
     return [...DEFAULT_ALLOWED_GRADES];
@@ -84,8 +93,9 @@ export class GradePolicy {
   }
 
   /**
-   * A hadith is publishable only from a sahihayn match or a manual grade.
-   * An open high-severity flag hides every quote type.
+   * A hadith is publishable from a sahihayn match, a manual grade, a sunan
+   * tahqiq grade (Arna'ut or Bashar, sahih or hasan), or Ibn Rajab's books. An open high-severity
+   * flag hides every quote type. OUTSIDE_SAHIHAYN is low and does not hide.
    */
   static publishableClause(): Prisma.QuoteWhereInput {
     return {
@@ -93,7 +103,7 @@ export class GradePolicy {
         {
           OR: [
             { type: { not: QuoteType.HADITH } },
-            { gradeSource: { in: [GradeSource.SAHIHAYN, GradeSource.AUTO_SAHIHAYN, GradeSource.MANUAL] } },
+            { gradeSource: { in: [...PUBLISHABLE_GRADE_SOURCES] } },
           ],
         },
         { flags: { none: { status: FlagStatus.OPEN, severity: FlagSeverity.HIGH } } },
@@ -114,9 +124,7 @@ export class GradePolicy {
 
   static isPublishable(row: { type: QuoteType; gradeSource: GradeSource }): boolean {
     if (row.type !== QuoteType.HADITH) return true;
-    return row.gradeSource === GradeSource.SAHIHAYN
-      || row.gradeSource === GradeSource.AUTO_SAHIHAYN
-      || row.gradeSource === GradeSource.MANUAL;
+    return PUBLISHABLE_GRADE_SOURCES.includes(row.gradeSource);
   }
 
   static whereClause(allowed: HadithGrade[]): Prisma.QuoteWhereInput {

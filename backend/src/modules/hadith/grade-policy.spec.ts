@@ -46,10 +46,12 @@ describe('GradePolicy', () => {
   });
 
   describe('readerClause', () => {
-    it('publishes a hadith only from a sahihayn match or a manual grade, and hides an open high flag', () => {
+    it('publishes a hadith from a sahihayn match, a manual grade, or a sunan tahqiq grade, and hides an open high flag', () => {
       expect(GradePolicy.isPublishable({ type: QuoteType.HADITH, gradeSource: GradeSource.SAHIHAYN })).toBe(true);
       expect(GradePolicy.isPublishable({ type: QuoteType.HADITH, gradeSource: GradeSource.AUTO_SAHIHAYN })).toBe(true);
       expect(GradePolicy.isPublishable({ type: QuoteType.HADITH, gradeSource: GradeSource.MANUAL })).toBe(true);
+      expect(GradePolicy.isPublishable({ type: QuoteType.HADITH, gradeSource: GradeSource.SUNAN_TAHQIQ })).toBe(true);
+      expect(GradePolicy.isPublishable({ type: QuoteType.HADITH, gradeSource: GradeSource.IBN_RAJAB })).toBe(true);
       expect(GradePolicy.isPublishable({ type: QuoteType.HADITH, gradeSource: GradeSource.AUTHORITY_LEGACY })).toBe(false);
       expect(GradePolicy.isPublishable({ type: QuoteType.QURAN_VERSE, gradeSource: GradeSource.AUTHORITY_LEGACY })).toBe(true);
       expect(GradePolicy.readerClause()).toEqual({

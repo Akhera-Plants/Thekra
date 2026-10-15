@@ -80,13 +80,19 @@ enum UserRole {
   REVIEWER
 }
 
-/// Who the public grade came from. SAHIHAYN, AUTO_SAHIHAYN, and MANUAL may be published.
+/// Who the public grade came from. AUTHORITY_LEGACY stays stored and hidden.
 enum GradeSource {
   AUTHORITY_LEGACY
   AUTO_SAHIHAYN
   /// The two Sahihs themselves, not a match from another book.
   SAHIHAYN
   MANUAL
+  /// Shu'ayb al-Arna'ut or Bashar Awad Ma'ruf graded the narration sahih or hasan.
+  /// It is not a Sahihayn grade, and the quote carries an OUTSIDE_SAHIHAYN flag.
+  SUNAN_TAHQIQ
+  /// A narration Ibn Rajab included in one of the eight imported books.
+  /// The owner treats that inclusion as sahih unless Ibn Rajab himself marks it weak.
+  IBN_RAJAB
 }
 
 enum ReferenceBook {
@@ -111,6 +117,8 @@ enum FlagType {
   AMBIGUOUS_CHAPTER
   /// Al-Sa'di mentions the subject without a matching warning or praise.
   WEAK_TAFSIR_SUPPORT
+  /// A published sunan grade. Low severity: it marks the narration as outside the two Sahihs and does not hide it.
+  OUTSIDE_SAHIHAYN
 }
 
 enum FlagSeverity {
@@ -252,7 +260,7 @@ model Quote {
   /// Who assigned Quote.grade, and where. Never inferred for a whole book.
   gradeAuthority String?
   gradeReference String?
-  /// AUTHORITY_LEGACY stays stored and is not published. AUTO_SAHIHAYN and MANUAL are.
+  /// AUTHORITY_LEGACY stays stored and is not published. SAHIHAYN, AUTO_SAHIHAYN, MANUAL, SUNAN_TAHQIQ, and IBN_RAJAB are.
   gradeSource    GradeSource @default(AUTHORITY_LEGACY)
   /// Previous authority grade, kept when a sahihayn match replaces it.
   legacyGrade          HadithGrade?

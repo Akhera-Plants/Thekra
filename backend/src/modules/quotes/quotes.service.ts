@@ -28,7 +28,7 @@ import {
 import { findIdsByNormalizedArabic, findIdsByNormalizedArabicOrdered } from '../../common/text/arabic-search.js';
 import { parsePrintedReference, utcDayNumber } from '../../common/text/printed-reference.js';
 import { autoLinkExclusion } from '../classification/public-taxonomy.js';
-import { GradePolicy } from '../hadith/grade-policy.js';
+import { GradePolicy, PUBLISHABLE_GRADE_SOURCES } from '../hadith/grade-policy.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type { EnvironmentVariables } from '../../config/env.validation.js';
 import type { AdminQuotesQueryDto } from './dto/admin-quotes-query.dto.js';
@@ -277,7 +277,7 @@ export class QuotesService {
     const textFilter = Prisma.sql`AND (q."textSource"::text <> 'OCR' OR q."textVerifiedAt" IS NOT NULL)
       AND (
         q.type::text <> 'HADITH'
-        OR q."gradeSource"::text IN ('SAHIHAYN', 'AUTO_SAHIHAYN', 'MANUAL')
+        OR q."gradeSource"::text IN (${Prisma.join(PUBLISHABLE_GRADE_SOURCES)})
       )
       AND NOT EXISTS (
         SELECT 1 FROM "QuoteFlag" f

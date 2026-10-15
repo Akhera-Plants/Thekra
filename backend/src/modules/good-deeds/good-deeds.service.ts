@@ -519,8 +519,8 @@ export class GoodDeedsService {
     const links = await this.prisma.topicDerivation.findMany({
       where: { fromGoodDeedId: deedId },
       select: {
-        toSin: { select: { id: true, slug: true, nameAr: true, isHidden: true } },
-        toGoodDeed: { select: { id: true, slug: true, nameAr: true } },
+        toSin: { select: { id: true, slug: true, name: true, nameAr: true, isHidden: true } },
+        toGoodDeed: { select: { id: true, slug: true, name: true, nameAr: true } },
       },
     });
     const groups = [];
@@ -528,6 +528,7 @@ export class GoodDeedsService {
       if (link.toSin && !link.toSin.isHidden) {
         groups.push({
           slug: link.toSin.slug,
+          name: link.toSin.name,
           nameAr: link.toSin.nameAr,
           side: 'AVOID' as const,
           items: await this.pageDeedSource('sin', link.toSin.id, quote, page, limit, locale),
@@ -536,6 +537,7 @@ export class GoodDeedsService {
       if (link.toGoodDeed) {
         groups.push({
           slug: link.toGoodDeed.slug,
+          name: link.toGoodDeed.name,
           nameAr: link.toGoodDeed.nameAr,
           side: 'DO' as const,
           items: await this.pageDeedSource('deed', link.toGoodDeed.id, quote, page, limit, locale),

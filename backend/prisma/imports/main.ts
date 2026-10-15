@@ -8,10 +8,15 @@ import { runShuabImport } from './shuab/import.js';
 import { runClassify } from './classify/import.js';
 import { runQuranImport } from './quran/import.js';
 import { runAshurImport } from './tafsir/ashur-import.js';
+import { runIbnKathirEnImport } from './tafsir/ibn-kathir-en.js';
 import { runSadiImport } from './tafsir/sadi.js';
+import { runSadiEnImport } from './tafsir/sadi-en.js';
 import { runDigitalImport } from './digital/import.js';
 import { runStructureImport } from './structure/import.js';
 import { runTaxonomyImport } from './taxonomy/import.js';
+import { runSunanTahqiq } from './sunan-tahqiq/import.js';
+import { runTranslations } from './translations/import.js';
+import { runIbnRajab } from './ibn-rajab/import.js';
 import { runMinhajImport, runRiyadImport, runTarghibImport, runZuhdImport } from './waqfeya/import.js';
 
 const WORKS: Record<string, (options: ImportOptions) => Promise<void>> = {
@@ -29,8 +34,13 @@ const WORKS: Record<string, (options: ImportOptions) => Promise<void>> = {
   classify: runClassify,
   structure: runStructureImport,
   taxonomy: runTaxonomyImport,
+  'sunan-tahqiq': runSunanTahqiq,
+  translations: runTranslations,
+  'ibn-rajab': runIbnRajab,
   sadi: runSadiImport,
+  'sadi-en': runSadiEnImport,
   ashur: runAshurImport,
+  'ibn-kathir-en': runIbnKathirEnImport,
 };
 
 const USAGE = `usage: import:book <${Object.keys(WORKS).join('|')}> [--dry-run] [--limit N]`;
