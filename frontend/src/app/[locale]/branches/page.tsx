@@ -2,9 +2,9 @@ import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { getBranches } from '@/lib/api/branches';
 import { BRANCH_VOLUMES } from '@/lib/branch-volumes';
-import { ArabicText } from '@/components/shared/ArabicText';
 import { FormattedNumber } from '@/components/shared/FormattedNumber';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { QuoteBody } from '@/components/shared/quote/QuoteBody';
 import { SourceAttribution } from '@/components/shared/quote/SourceAttribution';
 import { getBranchesHadith } from '@/lib/texts/edition';
 import { cn } from '@/lib/utils';
@@ -22,7 +22,7 @@ export default async function BranchesPage({
   let branches: Awaited<ReturnType<typeof getBranches>>['data'] = [];
   const [list, hadith] = await Promise.all([
     getBranches({ limit: 100, lang: locale }).catch(() => null),
-    getBranchesHadith(),
+    getBranchesHadith(locale === 'en' ? 'en' : 'ar'),
   ]);
   branches = list?.data ?? [];
 
@@ -32,7 +32,7 @@ export default async function BranchesPage({
         <h1 className="font-arabic-display text-4xl leading-tight lg:text-6xl">{t('pageTitle')}</h1>
         {hadith && (
           <div className="flex flex-col gap-3">
-            <ArabicText size="lg">{hadith.textAr}</ArabicText>
+            <QuoteBody quote={hadith} size="xl" />
             <SourceAttribution
               quote={hadith}
               labels={{
@@ -79,19 +79,21 @@ export default async function BranchesPage({
                           <span className="w-10 shrink-0 font-arabic-display text-xl text-intent-iman-branch">
                             <FormattedNumber value={branch.number} />
                           </span>
-                          {locale === 'en' && branch.title ? (
+                          {locale === 'en' ? (
                             <span className={cn('min-w-0 max-w-[70%] font-medium', quiet && 'text-muted-foreground')}>
-                              {branch.title}
+                              {branch.title || t('branchFallback', { number: branch.number })}
                             </span>
                           ) : (
-                            <ArabicText
-                              as="span"
-                              face="display"
-                              size="base"
-                              className={cn('min-w-0 max-w-[70%]', quiet && 'text-muted-foreground')}
+                            <span
+                              dir="rtl"
+                              lang="ar"
+                              className={cn(
+                                'min-w-0 max-w-[70%] font-arabic-display',
+                                quiet && 'text-muted-foreground',
+                              )}
                             >
                               {branch.titleAr}
-                            </ArabicText>
+                            </span>
                           )}
                           <span aria-hidden className="mb-1 min-w-4 flex-1 border-b border-dotted border-border" />
                           <span className="shrink-0 text-sm text-muted-foreground">

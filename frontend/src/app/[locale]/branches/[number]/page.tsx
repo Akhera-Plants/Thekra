@@ -45,8 +45,10 @@ export default async function BranchDetailPage({
         <p className="font-arabic-display text-2xl text-intent-iman-branch">
           <FormattedNumber value={detail.number} />
         </p>
-        {locale === 'en' && detail.title ? (
-          <h1 className="text-4xl font-semibold leading-tight lg:text-5xl">{detail.title}</h1>
+        {locale === 'en' ? (
+          <h1 className="text-4xl font-semibold leading-tight lg:text-5xl">
+            {detail.title || t('branchFallback', { number: detail.number })}
+          </h1>
         ) : (
           <ArabicText as="h1" face="display" size="xl" className="text-4xl lg:text-5xl">
             {detail.titleAr}

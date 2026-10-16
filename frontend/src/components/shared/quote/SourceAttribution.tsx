@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import type { QuoteDto } from '@/lib/types/api';
 import { QuoteType } from '@/lib/types/enums';
 import { englishProvenance } from '@/lib/format/provenance';
+import { formatGradeCitation } from '@/lib/format/grade-citation';
 
 function visible(value: string | null | undefined, arabic: boolean): string | null {
   if (!value) return null;
@@ -41,19 +42,24 @@ export function SourceAttribution({
   className,
 }: SourceAttributionProps) {
   const arabic = useLocale() === 'ar';
+  const locale = arabic ? 'ar' : 'en';
   const { type, source, quran, hadith, book, citation } = quote;
   const bookTitle = arabic ? visible(book?.bookTitle, true) : englishProvenance(book?.bookTitle);
   const bookAuthor = arabic ? visible(book?.author, true) : englishProvenance(book?.author);
   const pageOrChapter = visible(book?.pageOrChapter, arabic);
-  const gradeAuthority = arabic ? visible(citation?.gradeAuthority, true) : englishProvenance(citation?.gradeAuthority);
-  const gradeReference = arabic ? visible(citation?.gradeReference, true) : englishProvenance(citation?.gradeReference);
   const volume = visible(citation?.volume, arabic);
   const page = visible(citation?.page, arabic);
+  const gradeLine = formatGradeCitation({
+    locale,
+    gradeAuthority: citation?.gradeAuthority,
+    gradeReference: citation?.gradeReference,
+    grade: hadith?.grade,
+  });
   const sourceName = arabic ? source.nameAr : (source.name || source.nameAr);
   const sourceInArabic = Boolean(sourceName && /[\u0600-\u06FF]/.test(sourceName));
   const surahName = arabic ? quran?.surahNameAr : (quran?.surahName || quran?.surahNameAr);
   const narrator = arabic ? hadith?.narratorAr : (hadith?.narrator || hadith?.narratorAr);
-  const hasPrintedLocation = Boolean(volume || page || gradeAuthority || gradeReference);
+  const hasPrintedLocation = Boolean(volume || page || gradeLine);
 
   return (
     <footer
@@ -87,12 +93,18 @@ export function SourceAttribution({
               </span>
             </span>
           )}
-          {visible(hadith.reference, arabic) && (
-            <span>
-              <span className="me-1 font-medium">{labels.reference}:</span>
-              <FormattedNumber value={hadith.reference ?? ''} />
-            </span>
-          )}
+          {(() => {
+            const raw = hadith.reference?.trim();
+            if (!raw) return null;
+            if (arabic && /[A-Za-z]/.test(raw)) return null;
+            const display = arabic ? raw : (englishProvenance(raw) ?? raw);
+            return (
+              <span>
+                <span className="me-1 font-medium">{labels.reference}:</span>
+                <FormattedNumber value={display} />
+              </span>
+            );
+          })()}
         </>
       )}
 
@@ -113,7 +125,7 @@ export function SourceAttribution({
       )}
 
       {hasPrintedLocation && (
-        <span>
+        <span className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
           {volume && (
             <span>
               <span className="me-1 font-medium">{labels.volume}:</span>
@@ -121,40 +133,17 @@ export function SourceAttribution({
             </span>
           )}
           {page && (
-            <span className={volume ? 'ms-2' : undefined}>
+            <span>
               <span className="me-1 font-medium">{labels.page}:</span>
               <FormattedNumber value={page} />
             </span>
           )}
-          {citation?.gradeAuthority && /^(?:رواه البخاري|رواه مسلم|متفق عليه)$/.test(citation.gradeAuthority) ? (
-            <span>
-              <FormattedNumber
-                value={(() => {
-                  const line = citation.gradeAuthority === 'متفق عليه'
-                    ? [citation.gradeAuthority, citation.gradeReference].filter(Boolean).join('، ')
-                    : citation.gradeReference?.match(/\d+/)?.[0]
-                      ? `${citation.gradeAuthority}، رقم ${citation.gradeReference.match(/\d+/)?.[0]}`
-                      : citation.gradeAuthority;
-                  return arabic ? line : (englishProvenance(line) ?? line);
-                })()}
-              />
-            </span>
-          ) : (
+          {gradeLine ? (
             <>
-              {gradeAuthority && (
-                <span className="ms-2">
-                  <span className="me-1 font-medium">{labels.gradeAuthority}:</span>
-                  <bdi>{gradeAuthority}</bdi>
-                </span>
-              )}
-              {gradeReference && (
-                <span className="ms-2">
-                  <span className="me-1 font-medium">{labels.gradeReference}:</span>
-                  <FormattedNumber value={gradeReference} />
-                </span>
-              )}
+              {(volume || page) ? <span aria-hidden="true">·</span> : null}
+              <FormattedNumber value={gradeLine} />
             </>
-          )}
+          ) : null}
         </span>
       )}
 

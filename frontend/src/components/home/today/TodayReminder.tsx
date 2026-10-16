@@ -7,21 +7,21 @@ import { QuoteBody } from '@/components/shared/quote/QuoteBody';
 import { QuoteType } from '@/lib/types/enums';
 import { useToggleFavorite } from '@/features/favorites/hooks/useToggleFavorite';
 import { formatDigits } from '@/lib/format/digits';
-import { englishProvenance } from '@/lib/format/provenance';
+import { formatGradeCitation } from '@/lib/format/grade-citation';
 import type { QuoteDto } from '@/lib/types/api';
-
-function sahihaynCitation(authority: string, reference: string | null): string {
-  if (authority === 'متفق عليه') return reference ? `${authority}، ${reference}` : authority;
-  const number = reference?.match(/\d+/)?.[0];
-  return number ? `${authority}، رقم ${number}` : authority;
-}
 
 export function TodayReminder({ quote }: { quote: QuoteDto }) {
   const t = useTranslations('home');
   const tFav = useTranslations('favorites');
   const locale = useLocale();
   const [copied, setCopied] = useState(false);
-  const citation = quote.hadith?.reference ?? null;
+  const gradeLine = formatGradeCitation({
+    locale: locale === 'en' ? 'en' : 'ar',
+    gradeAuthority: quote.citation?.gradeAuthority,
+    gradeReference: quote.citation?.gradeReference,
+    grade: quote.hadith?.grade,
+  });
+  const sourceLine = quote.hadith?.reference ?? null;
   const { toggle, isPending } = useToggleFavorite({
     labels: {
       added: tFav('added'),
@@ -39,7 +39,9 @@ export function TodayReminder({ quote }: { quote: QuoteDto }) {
       : null;
 
   async function share() {
-    const text = [english ?? quote.textAr, formatDigits(citation ?? '')].filter(Boolean).join('\n');
+    const text = [english ?? quote.textAr, formatDigits(gradeLine ?? sourceLine ?? '')]
+      .filter(Boolean)
+      .join('\n');
     if (typeof navigator.share === 'function') {
       try {
         await navigator.share({ text });
@@ -56,20 +58,14 @@ export function TodayReminder({ quote }: { quote: QuoteDto }) {
     <section className="flex max-w-prose flex-col gap-6">
       <h2 className="font-arabic-display text-3xl leading-tight md:text-4xl">{t('todayHeading')}</h2>
       <QuoteBody quote={quote} size="hero" />
-      {quote.citation?.gradeAuthority ? (
+      {gradeLine ? (
         <p className="text-sm text-muted-foreground">
-          <FormattedNumber
-            value={
-              locale === 'en'
-                ? (englishProvenance(sahihaynCitation(quote.citation.gradeAuthority, quote.citation.gradeReference)) ?? '')
-                : sahihaynCitation(quote.citation.gradeAuthority, quote.citation.gradeReference)
-            }
-          />
+          <FormattedNumber value={gradeLine} />
         </p>
       ) : null}
-      {citation ? (
+      {sourceLine && sourceLine !== gradeLine ? (
         <p className="text-sm text-muted-foreground">
-          <FormattedNumber value={citation} />
+          <FormattedNumber value={sourceLine} />
         </p>
       ) : null}
       <div className="flex flex-wrap items-center gap-4">

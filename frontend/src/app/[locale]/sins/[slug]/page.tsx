@@ -77,7 +77,11 @@ export default async function SinDetailPage({
   return (
     <article className="mx-auto flex w-full max-w-prose min-w-0 flex-1 flex-col gap-10 px-5 py-12 md:px-8 md:py-16">
       <header className="flex flex-col gap-3">
-        <h1 className={`text-4xl leading-tight lg:text-5xl ${/[\u0600-\u06FF]/.test(heading) ? 'font-arabic-display' : 'font-semibold'}`}>
+        <h1
+          lang={/[\u0600-\u06FF]/.test(heading) ? 'ar' : undefined}
+          dir={/[\u0600-\u06FF]/.test(heading) ? 'rtl' : undefined}
+          className={`text-4xl leading-tight lg:text-5xl ${/[\u0600-\u06FF]/.test(heading) ? 'font-arabic-display' : 'font-semibold'}`}
+        >
           {heading}
         </h1>
         {locale === 'en' && sin.name && sin.nameAr && sin.name !== sin.nameAr ? (
@@ -96,7 +100,11 @@ export default async function SinDetailPage({
         {sin.branches && sin.branches.length > 0 ? (
           <ul className="flex flex-col gap-1 text-sm text-muted-foreground">
             {sin.branches.map((branch) => (
-              <li key={branch.number}>{branch.titleAr}</li>
+              <li key={branch.number} lang={locale === 'en' ? 'en' : 'ar'} dir={locale === 'en' ? 'ltr' : 'rtl'}>
+                {locale === 'en'
+                  ? (branch.title || `Branch ${branch.number}`)
+                  : branch.titleAr}
+              </li>
             ))}
           </ul>
         ) : null}
@@ -112,7 +120,13 @@ export default async function SinDetailPage({
             href={onward ? `/good-deeds/${onward.slug}` : '/browse'}
             className="inline-flex min-h-11 w-fit items-center border-b-2 border-intent-good-deed text-intent-good-deed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            {onwardName ?? t('browse')}
+            {onwardName ? (
+              <span lang={/[\u0600-\u06FF]/.test(onwardName) ? 'ar' : undefined} dir={/[\u0600-\u06FF]/.test(onwardName) ? 'rtl' : undefined}>
+                {onwardName}
+              </span>
+            ) : (
+              t('browse')
+            )}
           </Link>
         </div>
       ) : (

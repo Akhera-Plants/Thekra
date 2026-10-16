@@ -142,7 +142,7 @@ export interface SinDto {
   quoteCount: number;
   createdAt: string;
   updatedAt: string;
-  branches?: { number: number; titleAr: string }[];
+  branches?: { number: number; titleAr: string; title?: string | null }[];
 }
 
 export interface GoodDeedSummaryDto {
@@ -176,7 +176,7 @@ export interface GoodDeedDto {
   quoteCount: number;
   createdAt: string;
   updatedAt: string;
-  branches?: { number: number; titleAr: string }[];
+  branches?: { number: number; titleAr: string; title?: string | null }[];
 }
 
 export interface QuoteLinkDto {

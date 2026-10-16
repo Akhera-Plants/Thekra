@@ -93,7 +93,10 @@ export async function runShuabImport({ prisma, dryRun, limit }: ImportOptions): 
       (written) => recordProgress(prisma, runId, written),
     );
 
-    const allCounts = { ...branchCounts, ...counts };
+    const { applyBranchTitlesEn } = await import('./branch-titles-en.js');
+    const titlesEn = await applyBranchTitlesEn(prisma);
+
+    const allCounts = { ...branchCounts, ...counts, titlesEnUpdated: titlesEn.updated };
     const summary = formatSummary(allCounts, [corpus]);
     console.log(summary);
     return { recordsImported: counts.quotesCreated + counts.quotesUpdated, summary };

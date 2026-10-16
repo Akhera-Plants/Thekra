@@ -20,7 +20,7 @@ type SourceRowWithCount = {
   apiProvider: string | null;
   apiBaseUrl: string | null;
   lastSyncedAt: Date | null;
-  _count: { quotes: number };
+  _count: { quotes: number; explanations?: number };
 };
 
 @Injectable()
@@ -28,6 +28,7 @@ export class SourcesService {
   constructor(private readonly prisma: PrismaService) {}
 
   toSourceDto(row: SourceRowWithCount, publishedQuoteCount = row._count.quotes): SourceDto {
+    const imported = row._count.quotes + (row._count.explanations ?? 0);
     return {
       id: row.id,
       name: row.name,
@@ -40,7 +41,7 @@ export class SourcesService {
       apiProvider: row.apiProvider,
       apiBaseUrl: row.apiBaseUrl,
       lastSyncedAt: row.lastSyncedAt,
-      quoteCount: row._count.quotes,
+      quoteCount: imported,
       publishedQuoteCount,
     };
   }
@@ -63,7 +64,7 @@ export class SourcesService {
         orderBy: [{ name: 'asc' }, { id: 'asc' }],
         skip: (page - 1) * limit,
         take: limit,
-        include: { _count: { select: { quotes: true } } },
+        include: { _count: { select: { quotes: true, explanations: true } } },
       }),
       this.prisma.source.count({ where }),
       this.prisma.quote.groupBy({
@@ -92,7 +93,7 @@ export class SourcesService {
   async findById(id: string) {
     const row = await this.prisma.source.findUnique({
       where: { id },
-      include: { _count: { select: { quotes: true } } },
+      include: { _count: { select: { quotes: true, explanations: true } } },
     });
 
     if (!row) {
@@ -105,7 +106,7 @@ export class SourcesService {
     const canonical = row.canonicalId
       ? await this.prisma.source.findUnique({
           where: { id: row.canonicalId },
-          include: { _count: { select: { quotes: true } } },
+          include: { _count: { select: { quotes: true, explanations: true } } },
         })
       : null;
     const shown = canonical ?? row;

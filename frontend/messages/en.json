@@ -42,7 +42,8 @@
     "summary": "Summary",
     "explanations": "From the book",
     "goodDeeds": "Acts of obedience",
-    "sins": "Sins"
+    "sins": "Sins",
+    "branchFallback": "Branch {number}"
   },
   "localeSwitcher": {
     "label": "Change language",

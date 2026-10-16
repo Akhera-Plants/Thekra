@@ -141,14 +141,11 @@ export class SinsService {
     };
 
     if (query.sort === 'quoteCount' && scope === 'public') {
+      // Rank by each topic's own public texts — not texts inherited via TopicDerivation.
       const ranked = await this.prisma.sin.findMany({
         where,
-        select: { id: true, isContemporary: true, _count: { select: { quotes: { where: linkWhere } } } },
+        select: { id: true, _count: { select: { quotes: { where: linkWhere } } } },
       });
-      const extra = await this.derivedSinCounts(ranked.filter((row) => row.isContemporary).map((row) => row.id));
-      for (const row of ranked) {
-        if (row.isContemporary) row._count.quotes += extra.get(row.id) ?? 0;
-      }
       ranked.sort((a, b) => b._count.quotes - a._count.quotes || a.id.localeCompare(b.id));
       const pageIds = ranked.slice((page - 1) * limit, page * limit).map((row) => row.id);
       const counts = new Map(ranked.map((row) => [row.id, row._count.quotes]));
@@ -177,14 +174,8 @@ export class SinsService {
       this.prisma.sin.count({ where }),
     ]);
 
-    const extra = scope === 'public'
-      ? await this.derivedSinCounts(rows.filter((row) => row.isContemporary).map((row) => row.id))
-      : new Map<string, number>();
     return paginated(
-      rows.map((row) => this.toDto({
-        ...row,
-        _count: { quotes: row._count.quotes + (extra.get(row.id) ?? 0) },
-      })),
+      rows.map((row) => this.toDto(row)),
       page,
       limit,
       total,
@@ -219,7 +210,7 @@ export class SinsService {
         ...SIN_READ_INCLUDE,
         imanBranches: {
           orderBy: { sortOrder: 'asc' },
-          include: { imanBranch: { select: { number: true, titleAr: true } } },
+          include: { imanBranch: { select: { number: true, titleAr: true, title: true } } },
         },
       },
     });
@@ -238,6 +229,7 @@ export class SinsService {
       branches: row.imanBranches.map((link) => ({
         number: link.imanBranch.number,
         titleAr: link.imanBranch.titleAr,
+        title: link.imanBranch.title,
       })),
     };
   }

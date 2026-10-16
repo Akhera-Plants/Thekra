@@ -95,9 +95,14 @@ The full `select slug,"nameAr",rank,"rankReference" from "Sin" order by slug` ou
   («قال», a quotation mark, an aya brace, «وهو/وهي» clause, «فأما/فإذا/إما»), verbatim.
 - **27–29 have no ordinal in this corpus.** Each is a bare «وهو باب في …» line. They are the only such headings
   between 26 and 30, so they are numbered by position. **Owner: verify in the PDF.**
-- **Fields.** `sourceReference` = «جV صP — <heading text up to the end of the title>». `title`, `summaryAr` and
+- **Fields.** `sourceReference` = «جV صP — <heading text up to the end of the title>». `summaryAr` and
   `summary` are left null. Branch 31 («الكفارات الواجبات بالجنايات») contains no numbered narration in the book,
   so it has 0 links.
+- **English `title` (backfill).** All 77 `ImanBranch.title` values are filled from the standard published English
+  list of al-Bayhaqi's seventy-seven Shuʿab al-Īmān chapter headings (Darussalam / IIPH tradition matching this
+  Rushd-edition numbering). Source of the English wording: `backend/prisma/imports/shuab/branch-titles-en.ts`
+  (`BRANCH_TITLES_EN`); applied idempotently by `applyBranchTitlesEn` (never overwrites a non-null owner edit;
+  never machine-translated). Until a title exists, the `/en` UI shows «Branch N», never `titleAr`.
 
 **Branches for owner review:**
 
@@ -547,8 +552,9 @@ the pattern shown):
   - **Consequence to note:** once Albani grades are stored, they also count as "set", so a later re-import
     will not change them (`gradeKept`). To re-grade after correcting the mapping, clear the importer's grade
     fields first.
-- **ImanBranch.** Upserted by `number`. `titleAr` and `sourceReference` are importer-owned; `title`,
-  `summaryAr` and `summary` are never written.
+- **ImanBranch.** Upserted by `number`. `titleAr` and `sourceReference` are importer-owned; `summaryAr`
+  and `summary` are never written. English `title` is filled only when still null (`applyBranchTitlesEn`,
+  §3.2) — never overwrites an owner edit.
 - **ImanBranchQuote.** Upserted on `(imanBranchId, quoteId)`; the update is empty.
 - **Sin.**
   - Ranks on existing sins are written only when `rank` is null or already sourced from al-Kabair.

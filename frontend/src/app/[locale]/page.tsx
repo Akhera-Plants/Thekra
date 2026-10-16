@@ -45,7 +45,11 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
   const reward = deed ? (locale === 'ar' ? deed.rewardAr : deed.reward) : null;
   const orderedBranches = branches.slice().sort((a, b) => a.number - b.number);
   const todayBranch = orderedBranches.length > 0 ? orderedBranches[day % orderedBranches.length] : null;
-  const books = sources.filter((source) => (locale === 'ar' ? source.nameAr : source.name));
+  const books = sources.filter((source) => {
+    if (source.name === 'Ibn Kathir (Abridged)') return false;
+    return locale === 'ar' ? source.nameAr : source.name;
+  });
+  const tBranches = await getTranslations('branches');
 
   return (
     <div className="flex flex-1 flex-col">
@@ -53,7 +57,7 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
         dangerouslySetInnerHTML={{ __html: "document.documentElement.dataset.sky='home'" }}
       />
       <section className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 py-8 md:px-8 md:py-12">
-        <Verse verse={verse} brand={t('title')} />
+        <Verse verse={verse} brand={t('title')} locale={locale} />
         <div className="flex flex-col gap-5">
           <HeartSearch />
           <PathLinks />
@@ -73,7 +77,11 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
                     href={`/sins/${sin.slug}`}
                     className="home-press flex min-h-28 flex-col justify-between rounded-xl bg-foreground/6 px-4 py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    <span className={`text-2xl leading-snug ${locale === 'ar' || !sin.name ? 'font-arabic-display' : 'font-semibold'}`}>
+                    <span
+                      lang={locale === 'en' && sin.name ? 'en' : 'ar'}
+                      dir={locale === 'en' && sin.name ? 'ltr' : 'rtl'}
+                      className={`text-2xl leading-snug ${locale === 'ar' || !sin.name ? 'font-arabic-display' : 'font-semibold'}`}
+                    >
                       {locale === 'en' ? (sin.name || sin.nameAr) : sin.nameAr}
                     </span>
                     <span className="text-sm text-muted-foreground">
@@ -94,7 +102,11 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
               href={`/good-deeds/${deed.slug}`}
               className="home-press flex flex-col gap-3 rounded-xl bg-foreground/6 px-5 py-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <span className={`text-3xl leading-snug ${locale === 'ar' || !deed.name ? 'font-arabic-display' : 'font-semibold'}`}>
+              <span
+                lang={locale === 'en' && deed.name ? 'en' : 'ar'}
+                dir={locale === 'en' && deed.name ? 'ltr' : 'rtl'}
+                className={`text-3xl leading-snug ${locale === 'ar' || !deed.name ? 'font-arabic-display' : 'font-semibold'}`}
+              >
                 {locale === 'en' ? (deed.name || deed.nameAr) : deed.nameAr}
               </span>
               {reward ? <span className="text-base leading-relaxed text-muted-foreground">{reward}</span> : null}
@@ -110,7 +122,15 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
               className="home-press max-w-prose font-arabic-display text-2xl leading-snug focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:text-3xl"
             >
               {t('branchToday')} <FormattedNumber value={todayBranch.number} />
-              <span className="ms-3">{locale === 'en' ? (todayBranch.title || todayBranch.titleAr) : todayBranch.titleAr}</span>
+              <span
+                className={`ms-3 ${locale === 'en' ? 'font-semibold' : 'font-arabic-display'}`}
+                lang={locale === 'en' ? 'en' : 'ar'}
+                dir={locale === 'en' ? 'ltr' : 'rtl'}
+              >
+                {locale === 'en'
+                  ? (todayBranch.title || tBranches('branchFallback', { number: todayBranch.number }))
+                  : todayBranch.titleAr}
+              </span>
             </Link>
             <div className="flex flex-col gap-6">
               {BRANCH_VOLUMES.map((volume) => {
@@ -153,30 +173,30 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
         {books.length > 0 ? (
           <section className="flex flex-col gap-6">
             <h2 className="font-arabic-display text-3xl leading-tight md:text-4xl">{t('sourcesHeading')}</h2>
-            <ul className="flex flex-wrap items-end gap-4">
+            <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
               {books.map((book, index) => {
                 const title = locale === 'ar' ? book.nameAr : book.name;
                 const author = locale === 'ar' ? book.authorAr : book.author;
                 const imported = book.quoteCount ?? 0;
                 const published = book.publishedQuoteCount ?? 0;
                 return (
-                  <li key={book.id}>
+                  <li key={book.id} className="min-w-0">
                     <Link
                       href="/about"
-                      className={`home-press flex w-36 items-stretch overflow-hidden rounded-sm text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${CLOTH[index % CLOTH.length]}`}
-                      style={{ minHeight: `${11 + (index % 3) * 1.15}rem` }}
+                      title={title ?? undefined}
+                      className={`home-press flex h-44 w-full items-stretch overflow-hidden rounded-sm text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${CLOTH[index % CLOTH.length]}`}
                     >
                       <span className="w-2 shrink-0 bg-black/25" aria-hidden />
-                      <span className="flex flex-1 flex-col justify-between px-3 py-3">
-                      <span className="font-arabic-display text-lg leading-snug">{title}</span>
-                      <span className="flex flex-col gap-1 text-sm leading-snug opacity-80">
-                        {author ? <span>{author}</span> : null}
-                        <span>
-                          <FormattedNumber value={imported} /> {tAbout('imported')}
-                          {' · '}
-                          <FormattedNumber value={published} /> {tAbout('published')}
+                      <span className="flex min-w-0 flex-1 flex-col justify-between px-3 py-3">
+                        <span className="line-clamp-2 font-arabic-display text-lg leading-snug">{title}</span>
+                        <span className="flex flex-col gap-1 text-sm leading-snug opacity-80">
+                          {author ? <span className="line-clamp-1">{author}</span> : null}
+                          <span>
+                            <FormattedNumber value={imported} /> {tAbout('imported')}
+                            {' · '}
+                            <FormattedNumber value={published} /> {tAbout('published')}
+                          </span>
                         </span>
-                      </span>
                       </span>
                     </Link>
                   </li>

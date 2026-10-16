@@ -160,12 +160,9 @@ export class GoodDeedsService {
       this.prisma.goodDeed.count({ where }),
     ]);
 
-    const extra = await this.derivedDeedCounts(rows.filter((row) => row.isContemporary).map((row) => row.id));
+    // List quoteCount is the topic's own public texts only (no TopicDerivation inflation).
     return paginated(
-      rows.map((row) => this.toDto({
-        ...row,
-        _count: { quotes: row._count.quotes + (extra.get(row.id) ?? 0) },
-      })),
+      rows.map((row) => this.toDto(row)),
       page,
       limit,
       total,
@@ -202,7 +199,7 @@ export class GoodDeedsService {
         },
         imanBranches: {
           orderBy: { sortOrder: 'asc' },
-          include: { imanBranch: { select: { number: true, titleAr: true } } },
+          include: { imanBranch: { select: { number: true, titleAr: true, title: true } } },
         },
         _count: {
             select: {
@@ -224,6 +221,7 @@ export class GoodDeedsService {
       branches: row.imanBranches.map((link) => ({
         number: link.imanBranch.number,
         titleAr: link.imanBranch.titleAr,
+        title: link.imanBranch.title,
       })),
     };
   }

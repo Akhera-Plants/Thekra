@@ -6,7 +6,7 @@ import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 import type { QuoteDto, QuoteLinkDto } from '@/lib/types/api';
 import { HadithGrade, QuoteType } from '@/lib/types/enums';
-import { englishLinkNote } from '@/lib/format/provenance';
+import { publicLinkNote } from '@/lib/format/link-note';
 import { GradeBadge } from './GradeBadge';
 import { QuoteBody } from './QuoteBody';
 import { SourceAttribution } from './SourceAttribution';
@@ -135,12 +135,18 @@ export function QuoteCard({
             gradeReference: t('gradeReference'),
           }}
         />
-        {link?.note && quote.type === 'QURAN_VERSE' && (locale === 'en' || !/[A-Za-z]/.test(link.note)) && (
-          <p className="text-sm text-muted-foreground">{t('whyVerse')}</p>
-        )}
-        {link?.note && (locale === 'en' || !/[A-Za-z]/.test(link.note)) && (
-          <p className="leading-relaxed">{locale === 'en' ? englishLinkNote(link.note) : link.note}</p>
-        )}
+        {(() => {
+          const note = publicLinkNote(link?.note, locale === 'en' ? 'en' : 'ar');
+          if (!note) return null;
+          return (
+            <>
+              {quote.type === 'QURAN_VERSE' ? (
+                <p className="text-sm text-muted-foreground">{t('whyVerse')}</p>
+              ) : null}
+              <p className="leading-relaxed">{note}</p>
+            </>
+          );
+        })()}
         {detailHref && (
           <span className="text-muted-foreground underline-offset-2 group-hover:underline">
             {t('viewFull')}

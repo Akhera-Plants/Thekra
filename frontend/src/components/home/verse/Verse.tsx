@@ -5,13 +5,18 @@ import type { HeroVerse } from '@/lib/texts/edition';
 export function Verse({
   verse,
   brand,
+  locale,
 }: {
   verse: HeroVerse | null;
   brand: string;
+  locale: string;
 }) {
   if (!verse) {
     return <h1 className="font-arabic-display text-4xl leading-tight text-foreground">{brand}</h1>;
   }
+
+  const english = locale === 'en';
+  const citationName = english ? verse.surahNameEn : verse.surahNameAr;
 
   return (
     <header className="flex flex-col items-end gap-3 text-end">
@@ -24,8 +29,27 @@ export function Verse({
       >
         {verse.text}
       </h1>
-      <p className="text-sm text-muted-foreground">
-        {verse.surahName} <FormattedNumber value={verse.ayah} />
+      {english && verse.translationEn ? (
+        <p dir="ltr" lang="en" className="max-w-prose text-start text-base leading-relaxed text-muted-foreground md:text-lg">
+          {verse.translationEn}
+        </p>
+      ) : null}
+      <p
+        className="text-sm text-muted-foreground"
+        dir={english ? 'ltr' : undefined}
+        lang={english ? 'en' : 'ar'}
+      >
+        {english ? (
+          <>
+            {citationName} 50:
+            <FormattedNumber value={verse.ayah} />
+          </>
+        ) : (
+          <>
+            <span className="font-arabic-ui">{citationName}</span>{' '}
+            <FormattedNumber value={verse.ayah} />
+          </>
+        )}
       </p>
     </header>
   );

@@ -26,7 +26,9 @@ export function LocaleSwitcher({ label, className }: LocaleSwitcherProps) {
         className,
       )}
     >
-      {otherLabel}
+      <span lang={otherLocale === 'ar' ? 'ar' : 'en'} dir={otherLocale === 'ar' ? 'rtl' : 'ltr'}>
+        {otherLabel}
+      </span>
     </Link>
   );
 }

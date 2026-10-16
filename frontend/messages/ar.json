@@ -42,7 +42,8 @@
     "summary": "الخلاصة",
     "explanations": "من الكتاب",
     "goodDeeds": "الطاعات",
-    "sins": "المعاصي"
+    "sins": "المعاصي",
+    "branchFallback": "الشعبة {number}"
   },
   "localeSwitcher": {
     "label": "تغيير اللغة",

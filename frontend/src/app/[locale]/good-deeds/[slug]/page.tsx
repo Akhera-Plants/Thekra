@@ -72,7 +72,11 @@ export default async function GoodDeedDetailPage({
   return (
     <article className="mx-auto flex w-full max-w-prose min-w-0 flex-1 flex-col gap-10 px-5 py-12 md:px-8 md:py-16">
       <header className="flex flex-col gap-3">
-        <h1 className={`text-4xl leading-tight lg:text-5xl ${/[\u0600-\u06FF]/.test(heading) ? 'font-arabic-display' : 'font-semibold'}`}>
+        <h1
+          lang={/[\u0600-\u06FF]/.test(heading) ? 'ar' : undefined}
+          dir={/[\u0600-\u06FF]/.test(heading) ? 'rtl' : undefined}
+          className={`text-4xl leading-tight lg:text-5xl ${/[\u0600-\u06FF]/.test(heading) ? 'font-arabic-display' : 'font-semibold'}`}
+        >
           {heading}
         </h1>
         {locale === 'en' && deed.name && deed.nameAr && deed.name !== deed.nameAr ? (
@@ -88,7 +92,11 @@ export default async function GoodDeedDetailPage({
         {deed.branches && deed.branches.length > 0 ? (
           <ul className="flex flex-col gap-1 text-sm text-muted-foreground">
             {deed.branches.map((branch) => (
-              <li key={branch.number}>{branch.titleAr}</li>
+              <li key={branch.number} lang={locale === 'en' ? 'en' : 'ar'} dir={locale === 'en' ? 'ltr' : 'rtl'}>
+                {locale === 'en'
+                  ? (branch.title || `Branch ${branch.number}`)
+                  : branch.titleAr}
+              </li>
             ))}
           </ul>
         ) : null}
@@ -104,7 +112,13 @@ export default async function GoodDeedDetailPage({
             href={deed.oppositeSin ? `/sins/${deed.oppositeSin.slug}` : '/browse'}
             className="inline-flex min-h-11 w-fit items-center border-b-2 border-intent-sin text-intent-sin focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            {opposite ?? t('browse')}
+            {opposite ? (
+              <span lang={/[\u0600-\u06FF]/.test(opposite) ? 'ar' : undefined} dir={/[\u0600-\u06FF]/.test(opposite) ? 'rtl' : undefined}>
+                {opposite}
+              </span>
+            ) : (
+              t('browse')
+            )}
           </Link>
         </div>
       ) : (
@@ -117,7 +131,9 @@ export default async function GoodDeedDetailPage({
             href={`/sins/${deed.oppositeSin.slug}`}
             className="underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            {opposite}
+            <span lang={/[\u0600-\u06FF]/.test(opposite) ? 'ar' : undefined} dir={/[\u0600-\u06FF]/.test(opposite) ? 'rtl' : undefined}>
+              {opposite}
+            </span>
           </Link>
         </p>
       ) : null}
