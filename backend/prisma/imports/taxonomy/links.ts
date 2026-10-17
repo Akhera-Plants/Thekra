@@ -116,8 +116,8 @@ export function parseContentMap(text: string): ContentRow[] {
   }
   const counts = { TOPICS: 0, ITEM: 0, SKIP: 0 };
   for (const row of rows) counts[row.decision] += 1;
-  if (rows.length !== 384 || counts.TOPICS !== 305 || counts.ITEM !== 15 || counts.SKIP !== 64) {
-    throw new Error(`content-map is ${rows.length} rows (${counts.TOPICS}/${counts.ITEM}/${counts.SKIP}), expected 384 (305/15/64)`);
+  if (rows.length !== 384 || counts.TOPICS !== 302 || counts.ITEM !== 15 || counts.SKIP !== 67) {
+    throw new Error(`content-map is ${rows.length} rows (${counts.TOPICS}/${counts.ITEM}/${counts.SKIP}), expected 384 (302/15/67)`);
   }
   return rows;
 }

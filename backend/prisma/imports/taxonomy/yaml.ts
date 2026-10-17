@@ -38,10 +38,18 @@ export interface AkhlaqLabel {
   topics: string[];
 }
 
+export interface TopicPair {
+  avoid: string;
+  do: string;
+  /** Optional shared Arabic title for the paired page. */
+  ar: string | null;
+}
+
 export interface TaxonomyFile {
   domains: Domain[];
   topics: Topic[];
   akhlaq: AkhlaqLabel[];
+  pairs: TopicPair[];
 }
 
 const DOMAIN_KEYS = new Set(['key', 'ar']);
@@ -50,6 +58,7 @@ const TOPIC_KEYS = new Set([
   'minhaj', 'munajjid', 'kw', 'branches', 'contemporary', 'hidden', 'listed', 'derivedFrom', 'sideCheck',
 ]);
 const AKHLAQ_KEYS = new Set(['key', 'ar', 'pair', 'balance', 'topics', 'note']);
+const PAIR_KEYS = new Set(['avoid', 'do', 'ar']);
 
 function unwrap(line: string): string {
   const start = line.indexOf('{');
@@ -115,12 +124,14 @@ export function parseTaxonomy(text: string): TaxonomyFile {
   const domains: Domain[] = [];
   const topics: Topic[] = [];
   const akhlaq: AkhlaqLabel[] = [];
-  let section: 'domains' | 'topics' | 'akhlaq' | null = null;
+  const pairs: TopicPair[] = [];
+  let section: 'domains' | 'topics' | 'akhlaq' | 'pairs' | null = null;
   for (const line of text.split('\n')) {
     const trimmed = line.trim();
     if (trimmed.startsWith('domains:')) section = 'domains';
     else if (trimmed.startsWith('topics:')) section = 'topics';
     else if (trimmed.startsWith('akhlaq:')) section = 'akhlaq';
+    else if (trimmed.startsWith('pairs:')) section = 'pairs';
     else if (trimmed.startsWith('- {') && section === 'domains') {
       const fields = parseFlow(unwrap(line), DOMAIN_KEYS);
       domains.push({ key: requireString(fields, 'key'), nameAr: requireString(fields, 'ar'), order: domains.length + 1 });
@@ -159,13 +170,25 @@ export function parseTaxonomy(text: string): TaxonomyFile {
         ar: requireString(fields, 'ar'),
         topics: parseArray(fields['topics']),
       });
+    } else if (trimmed.startsWith('- {') && section === 'pairs') {
+      const fields = parseFlow(unwrap(line), PAIR_KEYS);
+      pairs.push({
+        avoid: requireString(fields, 'avoid'),
+        do: requireString(fields, 'do'),
+        ar: fields['ar'] ?? null,
+      });
     }
   }
-  validate(domains, topics, akhlaq);
-  return { domains, topics, akhlaq };
+  validate(domains, topics, akhlaq, pairs);
+  return { domains, topics, akhlaq, pairs };
 }
 
-function validate(domains: Domain[], topics: Topic[], akhlaq: AkhlaqLabel[]): void {
+function validate(
+  domains: Domain[],
+  topics: Topic[],
+  akhlaq: AkhlaqLabel[],
+  pairs: TopicPair[],
+): void {
   const domainKeys = new Set(domains.map((domain) => domain.key));
   const bySlug = new Map(topics.map((topic) => [topic.slug, topic]));
   if (bySlug.size !== topics.length) throw new Error('Duplicate topic slug');
@@ -195,6 +218,20 @@ function validate(domains: Domain[], topics: Topic[], akhlaq: AkhlaqLabel[]): vo
     for (const slug of label.topics) {
       if (!bySlug.has(slug)) throw new Error(`Akhlaq ${label.key} names unknown topic ${slug}`);
     }
+  }
+  const pairSlugs = new Set<string>();
+  for (const pair of pairs) {
+    const avoid = bySlug.get(pair.avoid);
+    const deed = bySlug.get(pair.do);
+    if (!avoid) throw new Error(`Pair avoid ${pair.avoid} does not exist`);
+    if (!deed) throw new Error(`Pair do ${pair.do} does not exist`);
+    if (avoid.side !== 'AVOID') throw new Error(`Pair avoid ${pair.avoid} is not AVOID`);
+    if (deed.side !== 'DO') throw new Error(`Pair do ${pair.do} is not DO`);
+    if (pairSlugs.has(pair.avoid) || pairSlugs.has(pair.do)) {
+      throw new Error(`Pair ${pair.avoid}/${pair.do} reuses a slug already in pairs`);
+    }
+    pairSlugs.add(pair.avoid);
+    pairSlugs.add(pair.do);
   }
 }
 

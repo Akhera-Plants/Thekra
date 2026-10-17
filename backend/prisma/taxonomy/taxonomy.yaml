@@ -117,7 +117,7 @@ topics:
   - { slug: zulm-raiyya, ar: خيانة الأمانة في الولاية والقضاء, en: Betrayal by those in authority, side: AVOID, domain: dima, opposite: adl, kabair: [16, 31], riyad: [81, 83], targhib: [تولي السلطنة], kw: [غش الرعية, القاضي, الإمارة] }
 
   # ibadat
-  - { slug: tark-as-salah, ar: ترك الصلاة والتهاون بها, en: Abandoning prayer, side: AVOID, domain: ibadat, opposite: salah, kabair: [4, 65, 66], targhib: [ترك الصلاة, ترك حضور الجماعة, ترك الجمعة, فوات العصر, نوم الإنسان إلى الصباح, إتمام الركوع, رفع المأموم رأسه, الالتفات في الصلاة, المرور بين يدي المصلي], kw: [ترك الصلاة, تارك الصلاة] }
+  - { slug: tark-as-salah, ar: ترك الصلاة والتهاون بها, en: Abandoning prayer, side: AVOID, domain: ibadat, opposite: salah, kabair: [4, 65, 66], targhib: [ترك الصلاة, ترك حضور الجماعة, ترك الجمعة, فوات العصر, نوم الإنسان إلى الصباح], kw: [ترك الصلاة, تارك الصلاة] }
   - { slug: iftar-ramadan, ar: الفطر في رمضان بلا عذر, en: Breaking the Ramadan fast without excuse, side: AVOID, domain: ibadat, opposite: siyam, kabair: [6], targhib: [إفطار شيء من رمضان], kw: [أفطر يوما من رمضان] }
   - { slug: tark-hajj, ar: ترك الحج مع القدرة, en: Neglecting Hajj despite ability, side: AVOID, domain: ibadat, opposite: hajj, kabair: [7], targhib: [قدر على الحج فلم يحج] }
   - { slug: tanazzuh-bawl, ar: عدم التنزّه من البول, en: Carelessness with impurity, side: AVOID, domain: ibadat, opposite: tahara, kabair: [36], targhib: [إصابة البول] }
@@ -167,6 +167,7 @@ topics:
 
   # ibadat
   - { slug: salah, ar: المحافظة على الصلاة, en: Guarding the prayers, side: DO, domain: ibadat, opposite: tark-as-salah, branches: [21], riyad: [187, 188, 193], targhib: [الصلوات الخمس, الصلاة في أول وقتها, المحافظة على الصبح والعصر, الصلاة مطلقا, الأذان, المؤذن, جلوس المرء في مصلاه], zuhd: [فخر الارض], kw: [المحافظة على الصلاة, الصلوات الخمس] }
+  - { slug: adab-salah, ar: الخشوع وآداب الصلاة, en: Humility and etiquette in prayer, side: DO, sideCheck: false, domain: ibadat, targhib: [إتمام الركوع, رفع المأموم رأسه, الالتفات في الصلاة, المرور بين يدي المصلي, الخشوع], kw: [الخشوع في الصلاة] }
   - { slug: salat-fi-jamaah, ar: صلاة الجماعة والمشي إلى المساجد, en: Congregational prayer, side: DO, domain: ibadat, opposite: tark-as-salah, riyad: [189, 190, 191, 192, 194], targhib: [صلاة الجماعة, الصف الأول, المشي إلى المساجد, انتظار الصلاة, المساجد, وصل الصفوف, صلاة العشاء والصبح], zuhd: [المشي إلى الصلاة, المشي إلى المسجد], kw: [الجماعة, المساجد] }
   - { slug: nawafil, ar: النوافل وقيام الليل, en: Voluntary prayers and night prayer, side: DO, domain: ibadat, riyad: [195, 196, 197, 199, 200, 201, 202, 203, 204, 205, 206, 208, 209, 212, 213, 214], targhib: [قيام الليل, صلاة الضحى, النافلة, ثنتي عشرة ركعة], kw: [قيام الليل, التهجد, الوتر, الضحى, النوافل] }
   - { slug: jumua, ar: يوم الجمعة وصلاتها, en: Friday and its prayer, side: DO, domain: ibadat, riyad: [210], targhib: [صلاة الجمعة, التبكير إلى الجمعة], kw: [الجمعة] }
@@ -264,3 +265,48 @@ akhlaq:
 
 # Sections deliberately NOT mapped (owner decision): biographies (عامر بن عبد قيس، صلة بن أشيم، أويس، عمر بن عبد العزيز،
 # توبة داود), «قتل الحيات والوزغ», and fiqh-detail etiquette chapters listed in docs/taxonomy/unmapped-sections.tsv.
+
+# ───── Paired pages (owner decision): a sin and its opposite deed are ONE topic page with two sides ─────
+# Both slugs open the same page; lists show the pair once. title = the deed-side root unless set here.
+pairs:
+  - { avoid: shirk, do: tawhid }
+  - { avoid: tatayyur, do: tawakkul }
+  - { avoid: amn-makr, do: khawf-raja }
+  - { avoid: bida, do: sunna }
+  - { avoid: riya, do: ikhlas }
+  - { avoid: kibr, do: tawadu }
+  - { avoid: hasad, do: salamat-sadr }
+  - { avoid: ghadab, do: kaff-al-ghadab }
+  - { avoid: tul-amal, do: zuhd }
+  - { avoid: istihana-saghair, do: tawba }
+  - { avoid: ghibah, do: hifz-al-lisan }
+  - { avoid: namimah, do: islah-bayn-nas }
+  - { avoid: kadhib, do: sidq }
+  - { avoid: sabb-lan, do: kalam-tayyib }
+  - { avoid: uquq, do: birr-al-walidayn }
+  - { avoid: qat-al-rahim, do: silat-ar-rahim }
+  - { avoid: zulm-zawja, do: husn-ishra }
+  - { avoid: zulm, do: adl }
+  - { avoid: adha-jar, do: haqq-jar }
+  - { avoid: adha-muslimin, do: imatat-adha }
+  - { avoid: tajassus, do: satr-muslim }
+  - { avoid: khiyana, do: amana-wafa }
+  - { avoid: tadhib-hayawan, do: rahma-khalq }
+  - { avoid: niyaha, do: sabr }
+  - { avoid: akl-mal-yatim, do: kafalat-yatim }
+  - { avoid: ghish, do: samaha }
+  - { avoid: akl-haram, do: kasb-halal }
+  - { avoid: bukhl, do: sadaqah }
+  - { avoid: man-zakah, do: zakah }
+  - { avoid: israf, do: iqtisad }
+  - { avoid: zina, do: iffa }
+  - { avoid: nazar-muharram, do: ghadd-basar }
+  - { avoid: tabarruj, do: haya }
+  - { avoid: tark-as-salah, do: salah, ar: الصلاة }
+  - { avoid: iftar-ramadan, do: siyam }
+  - { avoid: tark-hajj, do: hajj }
+  - { avoid: tanazzuh-bawl, do: tahara }
+  - { avoid: hajr-quran, do: quran }
+  - { avoid: kitman-ilm, do: talab-ilm }
+  - { avoid: qawl-bila-amal, do: amr-maruf }
+  - { avoid: idaat-al-waqt, do: ightinam-waqt }

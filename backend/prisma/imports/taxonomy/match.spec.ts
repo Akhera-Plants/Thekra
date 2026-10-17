@@ -75,10 +75,17 @@ describe('taxonomy yaml', () => {
 
   it('applies every topic and keeps opposites cross-side', () => {
     expect(taxonomy.domains).toHaveLength(12);
-    expect(taxonomy.topics).toHaveLength(165);
+    expect(taxonomy.topics).toHaveLength(166);
     expect(taxonomy.topics.filter((topic) => topic.side === 'AVOID')).toHaveLength(86);
-    expect(taxonomy.topics.filter((topic) => topic.side === 'DO')).toHaveLength(79);
+    expect(taxonomy.topics.filter((topic) => topic.side === 'DO')).toHaveLength(80);
     expect(taxonomy.akhlaq).toHaveLength(10);
+    expect(taxonomy.pairs).toHaveLength(41);
+    expect(taxonomy.topics.find((topic) => topic.slug === 'adab-salah')?.ar).toBe('الخشوع وآداب الصلاة');
+    expect(taxonomy.pairs.find((pair) => pair.avoid === 'tark-as-salah')).toMatchObject({
+      do: 'salah',
+      ar: 'الصلاة',
+    });
+
     const ghadr = taxonomy.topics.find((topic) => topic.slug === 'ghadr');
     expect(ghadr?.riyadPhrases).toEqual(['تحريم الغدر']);
     const tasweer = taxonomy.topics.find((topic) => topic.slug === 'tasweer');
