@@ -99,9 +99,13 @@ export default async function BranchDetailPage({
             another: tDetail('anotherReminder'),
             previous: tDetail('previous'),
             next: tDetail('next'),
-            showAll: tDetail('showAll'),
-            showOne: tDetail('showOne'),
+            showMore: tDetail('showMore'),
             of: tDetail('of'),
+            tabAll: tDetail('typeAll'),
+            tabVerses: tDetail('typeVerses'),
+            tabHadith: tDetail('typeHadith'),
+            tabsLabel: tDetail('tabsLabel'),
+            closeHighlight: tDetail('closeHighlight'),
           }}
         />
       )}

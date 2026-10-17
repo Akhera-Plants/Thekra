@@ -24,9 +24,13 @@ export function GoodDeedReader({ slug, items, total, sections }: GoodDeedReaderP
         another: t('anotherMotivation'),
         previous: t('previous'),
         next: t('next'),
-        showAll: t('showAll'),
-        showOne: t('showOne'),
+        showMore: t('showMore'),
         of: t('of'),
+        tabAll: t('typeAll'),
+        tabVerses: t('typeVerses'),
+        tabHadith: t('typeHadith'),
+        tabsLabel: t('tabsLabel'),
+        closeHighlight: t('closeHighlight'),
       }}
       onAnother={async () => {
         const result = await getGoodDeedQuotes(slug, {
