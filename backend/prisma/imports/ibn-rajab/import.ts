@@ -1,7 +1,7 @@
 /**
- * Ibn Rajab is a source of SELECTION and topic links, never of GRADE.
- * Passages stay OCR/UNGRADED. A strong Sahihayn match (0.75) links the
- * Bukhari/Muslim quote to the same topics — that is the only public path.
+ * Ibn Rajab is a source of SELECTION, never of GRADE and never of whole-book topics.
+ * Passages stay OCR/UNGRADED. Topic links come only from taxonomy chapter maps /
+ * TAKHRIJ from correctly mapped sections — not from RAJAB_BOOKS.
  */
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -9,12 +9,10 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   BookLevel,
-  ClassifiedBy,
   FlagType,
   GradeSource,
   HadithGrade,
   LinkBasis,
-  LinkReviewStatus,
   QuoteOrigin,
   QuoteType,
   ReferenceBook,
@@ -27,7 +25,8 @@ import { combinedScore, wordOverlap, STRONG_MATCH_SCORE, MATCH_METHOD } from '..
 import { normalizeMatn } from '../../../src/common/text/normalize-matn.js';
 import type { ImportOptions } from '../lib/cli.js';
 import { RAJAB_BOOKS } from './books.js';
-import { extractRajabPassages, type RajabTopic } from './extract.js';
+import { extractRajabPassages } from './extract.js';
+
 
 const CORPUS = join(dirname(fileURLToPath(import.meta.url)), '../../../.corpus/ibn-rajab');
 const PROVIDER = 'ibn-rajab';
@@ -198,69 +197,41 @@ async function remediateGrades(prisma: PrismaClient): Promise<{
   return { rajabBookRows: rajabRows.length, restored, flagsRemoved };
 }
 
-async function linkTopic(
-  prisma: PrismaClient,
-  quoteId: string,
-  topic: RajabTopic,
-  topicIds: { sins: Map<string, string>; deeds: Map<string, string> },
-  note: string,
-  basis: LinkBasis,
-  sectionId: string | null,
-): Promise<boolean> {
-  const id = (topic.side === 'sin' ? topicIds.sins : topicIds.deeds).get(topic.slug);
-  if (!id) throw new Error(`Missing topic ${topic.slug}`);
-  if (topic.side === 'sin') {
-    const have = await prisma.sinQuote.findUnique({
-      where: { sinId_quoteId: { sinId: id, quoteId } },
-      select: { id: true },
-    });
-    if (have) return false;
-    await prisma.sinQuote.create({
-      data: {
-        sinId: id,
-        quoteId,
-        note,
-        reviewStatus: LinkReviewStatus.ACCEPTED,
-        basis,
-        classifiedBy: ClassifiedBy.REVIEWER,
-        sectionId,
-      },
-    });
-    return true;
-  }
-  const have = await prisma.goodDeedQuote.findUnique({
-    where: { goodDeedId_quoteId: { goodDeedId: id, quoteId } },
-    select: { id: true },
-  });
-  if (have) return false;
-  await prisma.goodDeedQuote.create({
-    data: {
-      goodDeedId: id,
-      quoteId,
-      note,
-      reviewStatus: LinkReviewStatus.ACCEPTED,
-      basis,
-      classifiedBy: ClassifiedBy.REVIEWER,
-      sectionId,
-    },
-  });
-  return true;
+/**
+ * Delete every SinQuote/GoodDeedQuote whose note starts with «من كتاب » and
+ * whose basis is REVIEWER_SECTION (the whole-book linking error).
+ */
+export async function removeWholeBookLinks(prisma: PrismaClient): Promise<{
+  before: number;
+  deletedSin: number;
+  deletedDeed: number;
+  after: number;
+}> {
+  const sinWhere = { basis: LinkBasis.REVIEWER_SECTION, note: { startsWith: 'من كتاب ' } };
+  const deedWhere = { basis: LinkBasis.REVIEWER_SECTION, note: { startsWith: 'من كتاب ' } };
+  const before =
+    (await prisma.sinQuote.count({ where: sinWhere })) +
+    (await prisma.goodDeedQuote.count({ where: deedWhere }));
+  const deletedSin = (await prisma.sinQuote.deleteMany({ where: sinWhere })).count;
+  const deletedDeed = (await prisma.goodDeedQuote.deleteMany({ where: deedWhere })).count;
+  const after =
+    (await prisma.sinQuote.count({ where: sinWhere })) +
+    (await prisma.goodDeedQuote.count({ where: deedWhere }));
+  console.log(
+    JSON.stringify({
+      wholeBookLinks: { before, deletedSin, deletedDeed, after },
+    }),
+  );
+  return { before, deletedSin, deletedDeed, after };
 }
 
-/** Strong Sahihayn matches → link the published Bukhari/Muslim quote to the same topics. */
-async function linkSahihaynViaTakhrij(
+/** Strong Sahihayn matches → record HadithMatch only (no topic links from the book). */
+async function matchSahihayn(
   prisma: PrismaClient,
-  topicIds: { sins: Map<string, string>; deeds: Map<string, string> },
-): Promise<{ matches: number; linked: number; samples: Array<{ rajabId: string; sahihaynId: string; book: string; number: number; score: number }> }> {
+): Promise<{ matches: number; samples: Array<{ rajabId: string; book: string; number: number; score: number }> }> {
   const rajabQuotes = await prisma.quote.findMany({
     where: { apiProvider: PROVIDER },
-    select: {
-      id: true,
-      textAr: true,
-      bookTitle: true,
-      sinLinks: { select: { sin: { select: { slug: true } }, sectionId: true } },
-      goodDeedLinks: { select: { goodDeed: { select: { slug: true } }, sectionId: true } },
-    },
+    select: { id: true, textAr: true },
   });
 
   const refs = await prisma.referenceHadith.findMany({
@@ -283,29 +254,10 @@ async function linkSahihaynViaTakhrij(
     }
   }
 
-  const sahihayn = await prisma.quote.findMany({
-    where: { apiProvider: 'sahihayn', gradeSource: GradeSource.SAHIHAYN },
-    select: { id: true, externalId: true },
-  });
-  const sahihaynByKey = new Map(sahihayn.map((row) => [row.externalId, row.id]));
-
   let matches = 0;
-  let linked = 0;
-  const samples: Array<{ rajabId: string; sahihaynId: string; book: string; number: number; score: number }> = [];
+  const samples: Array<{ rajabId: string; book: string; number: number; score: number }> = [];
 
   for (const quote of rajabQuotes) {
-    const topics: Array<{ topic: RajabTopic; sectionId: string | null }> = [
-      ...quote.sinLinks.map((link) => ({
-        topic: { slug: link.sin.slug, side: 'sin' as const },
-        sectionId: link.sectionId,
-      })),
-      ...quote.goodDeedLinks.map((link) => ({
-        topic: { slug: link.goodDeed.slug, side: 'deed' as const },
-        sectionId: link.sectionId,
-      })),
-    ];
-    if (topics.length === 0) continue;
-
     const normalized = normalizeMatn(quote.textAr);
     if (normalized.length < 25) continue;
     const words = wordsOf(normalized);
@@ -339,31 +291,9 @@ async function linkSahihaynViaTakhrij(
       update: { score: best.score, method: MATCH_METHOD },
     });
     matches += 1;
-
-    const key = `${best.entry.book}:${best.entry.number}`;
-    const sahihaynId = sahihaynByKey.get(key);
-    if (!sahihaynId) continue;
-
-    const bookName = best.entry.book === ReferenceBook.BUKHARI ? 'البخاري' : 'مسلم';
-    const rajabBook = quote.bookTitle ?? 'كتب ابن رجب';
-    const note = `رواه ${bookName} (${best.entry.number}) — أورده ابن رجب في ${rajabBook}`;
-
-    for (const { topic, sectionId } of topics) {
-      const made = await linkTopic(
-        prisma,
-        sahihaynId,
-        topic,
-        topicIds,
-        note,
-        LinkBasis.TAKHRIJ,
-        sectionId,
-      );
-      if (made) linked += 1;
-    }
     if (samples.length < 12) {
       samples.push({
         rajabId: quote.id,
-        sahihaynId,
         book: best.entry.book,
         number: best.entry.number,
         score: best.score,
@@ -371,7 +301,7 @@ async function linkSahihaynViaTakhrij(
     }
   }
 
-  return { matches, linked, samples };
+  return { matches, samples };
 }
 
 export async function runIbnRajab(options: ImportOptions): Promise<void> {
@@ -379,15 +309,9 @@ export async function runIbnRajab(options: ImportOptions): Promise<void> {
     ? { rajabBookRows: 0, restored: [], flagsRemoved: 0 }
     : await remediateGrades(options.prisma);
 
-  const sins = new Map((await options.prisma.sin.findMany({ select: { id: true, slug: true } })).map((row) => [row.slug, row.id]));
-  const deeds = new Map((await options.prisma.goodDeed.findMany({ select: { id: true, slug: true } })).map((row) => [row.slug, row.id]));
-  const topicIds = { sins, deeds };
-  const topicId = (topic: RajabTopic): string => {
-    const id = (topic.side === 'sin' ? sins : deeds).get(topic.slug);
-    if (!id) throw new Error(`Missing topic ${topic.slug}`);
-    return id;
-  };
-  void topicId;
+  const wholeBook = options.dryRun
+    ? { before: 0, deletedSin: 0, deletedDeed: 0, after: 0 }
+    : await removeWholeBookLinks(options.prisma);
 
   const stored = await options.prisma.quote.findMany({
     where: { type: QuoteType.HADITH },
@@ -410,7 +334,7 @@ export async function runIbnRajab(options: ImportOptions): Promise<void> {
 
   let created = 0;
   let reused = 0;
-  let linked = 0;
+  const linked = 0;
   const byBook: Record<string, number> = {};
 
   for (const book of RAJAB_BOOKS) {
@@ -437,7 +361,7 @@ export async function runIbnRajab(options: ImportOptions): Promise<void> {
       create: { sourceId: book.id, level: BookLevel.BAB, titleAr: book.nameAr, order: 1 },
       update: { titleAr: book.nameAr },
     });
-    const passages = extractRajabPassages(book.key, bytes.toString('utf8'), book.topics);
+    const passages = extractRajabPassages(book.key, bytes.toString('utf8'));
     const limited = options.limit === null ? passages : passages.slice(0, options.limit);
     byBook[book.key] = limited.length;
     const last = await options.prisma.sectionItem.findFirst({
@@ -459,7 +383,7 @@ export async function runIbnRajab(options: ImportOptions): Promise<void> {
       else {
         const match = bestMatch(normalized, wordsOf(normalized), byWord);
         if (match) {
-          // Reuse any existing narration for topic selection. Never change its grade.
+          // Reuse any existing narration. Never change its grade.
           quote = { id: match.id, gradeSource: match.gradeSource };
           reused += 1;
         } else if (!options.dryRun) {
@@ -510,30 +434,12 @@ export async function runIbnRajab(options: ImportOptions): Promise<void> {
           });
         }
       }
-
-      for (const topic of passage.topics) {
-        if (options.dryRun) {
-          linked += 1;
-          continue;
-        }
-        const note = `من كتاب ${book.nameAr}`;
-        const made = await linkTopic(
-          options.prisma,
-          quote.id,
-          topic,
-          topicIds,
-          note,
-          LinkBasis.REVIEWER_SECTION,
-          section.id,
-        );
-        if (made) linked += 1;
-      }
     }
   }
 
   const takhrij = options.dryRun
-    ? { matches: 0, linked: 0, samples: [] }
-    : await linkSahihaynViaTakhrij(options.prisma, topicIds);
+    ? { matches: 0, samples: [] }
+    : await matchSahihayn(options.prisma);
 
   const remainingIbn = await options.prisma.quote.count({ where: { gradeSource: GradeSource.IBN_RAJAB } });
 
@@ -542,6 +448,7 @@ export async function runIbnRajab(options: ImportOptions): Promise<void> {
     reused,
     linked,
     byBook,
+    wholeBookLinks: wholeBook,
     remediation: {
       rajabBookRows: remediation.rajabBookRows,
       restored: remediation.restored.length,

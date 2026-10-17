@@ -1,5 +1,3 @@
-import type { RajabTopic } from './extract.js';
-
 export interface RajabBook {
   key: string;
   id: string;
@@ -7,7 +5,6 @@ export interface RajabBook {
   nameAr: string;
   file: string;
   sha256: string;
-  topics: readonly RajabTopic[];
 }
 
 /** Digitized editions already saved under backend/.corpus/ibn-rajab. The hash stops a silent file change. */
@@ -19,7 +16,6 @@ export const RAJAB_BOOKS: readonly RajabBook[] = [
     nameAr: 'ذم الخمر',
     file: 'khamr.txt',
     sha256: 'af337092606ecb4e446c53b925ae2952b00aebc97708a284e40d9610d1a79a60',
-    topics: [{ slug: 'khamr', side: 'sin' }],
   },
   {
     key: 'yatba',
@@ -28,7 +24,6 @@ export const RAJAB_BOOKS: readonly RajabBook[] = [
     nameAr: 'شرح حديث يتبع الميت ثلاثة',
     file: 'yatba.txt',
     sha256: '0393edd1184a56ebd9b6574f77d5763ac847f453f53d840a821900ba80176c65',
-    topics: [{ slug: 'zuhd', side: 'deed' }],
   },
   {
     key: 'istinshaq',
@@ -37,10 +32,6 @@ export const RAJAB_BOOKS: readonly RajabBook[] = [
     nameAr: 'استنشاق نسيم الأنس',
     file: 'istinshaq.txt',
     sha256: 'e8b7562545c0feaf41ccc2b860c888c2493cdfbb3639f005fe80c19310cc9fb1',
-    topics: [
-      { slug: 'dhikr', side: 'deed' },
-      { slug: 'mahabbat-allah', side: 'deed' },
-    ],
   },
   {
     key: 'mahajja',
@@ -49,7 +40,6 @@ export const RAJAB_BOOKS: readonly RajabBook[] = [
     nameAr: 'المحجة في سير الدلجة',
     file: 'mahajja.txt',
     sha256: '5ead4a301e571e17a8c5495c48115ddecadbe6480118c18afec6ff0e697cd135',
-    topics: [{ slug: 'tawakkul', side: 'deed' }],
   },
   {
     key: 'ikhtiyar',
@@ -58,10 +48,6 @@ export const RAJAB_BOOKS: readonly RajabBook[] = [
     nameAr: 'اختيار الأولى',
     file: 'ikhtiyar.txt',
     sha256: 'bbdc20eb95cdf6a6c9de4d9e22f9fd8bb5c2f3438edb72ac761c05e0ea6285b2',
-    topics: [
-      { slug: 'salat-fi-jamaah', side: 'deed' },
-      { slug: 'tahara', side: 'deed' },
-    ],
   },
   {
     key: 'takhweef',
@@ -70,7 +56,6 @@ export const RAJAB_BOOKS: readonly RajabBook[] = [
     nameAr: 'التخويف من النار',
     file: 'takhweef.txt',
     sha256: 'c2a553c4f870471f8dc5699ec93e1831aac35efbbfc66e4b0c5fc05ee07b966b',
-    topics: [{ slug: 'dhikr-akhira', side: 'deed' }],
   },
   {
     key: 'qubur',
@@ -79,10 +64,6 @@ export const RAJAB_BOOKS: readonly RajabBook[] = [
     nameAr: 'أهوال القبور',
     file: 'qubur.txt',
     sha256: '96ba32257915a1ca2846303dc6466d868281b82485c80f1ce9530278025f58fa',
-    topics: [
-      { slug: 'dhikr-akhira', side: 'deed' },
-      { slug: 'zuhd', side: 'deed' },
-    ],
   },
   {
     key: 'lataif',
@@ -91,6 +72,5 @@ export const RAJAB_BOOKS: readonly RajabBook[] = [
     nameAr: 'لطائف المعارف',
     file: 'lataif.txt',
     sha256: '2b471170acdbac5c4f901a038c5822ac9ea72de51377155eda02ea4e63425ab4',
-    topics: [],
   },
 ];

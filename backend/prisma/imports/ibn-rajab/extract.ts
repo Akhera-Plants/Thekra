@@ -1,12 +1,6 @@
-export interface RajabTopic {
-  slug: string;
-  side: 'sin' | 'deed';
-}
-
 export interface RajabPassage {
   text: string;
   page: number;
-  topics: RajabTopic[];
 }
 
 const JUNK = /طبقات الحفاظ|شذرات الذهب|حقوق الطبع|بروتوكول|ترجمة رقم|البدر الطالع|المنهج الأحمد|الجوهر المنضد|الإمام العالم الصالح|انظر بسط|زوائد الهيثمي|في المصنف/;
@@ -19,27 +13,6 @@ const PRIOR_CUE = /قال\s+رسول|قال\s+النبي|عن\s+النبي|مر�
 
 function leadPattern(): RegExp {
   return /(?:قال\s+رسول\s+الله|قال\s+النبي|عن\s+النبي|مرفوعاً|مرفوعًا|قوله\s+صلى\s+الله\s+عليه|خرج\s+(?:البخاري|مسلم|الترمذي|أبو داود|ابو داود|النسائي|ابن ماجه|أحمد|احمد|ابن حبان|الحاكم)[^.]{0,80}?قال)\s*(?:صلى\s+الله\s+عليه\s*(?:وسلم|وآله)\s*)?(?:قال\s*)?[:：]?\s*/g;
-}
-
-const LATAIF_RULES: ReadonlyArray<{ test: RegExp; topics: readonly RajabTopic[] }> = [
-  { test: /عاشوراء/, topics: [{ slug: 'siyam', side: 'deed' }] },
-  { test: /قدوم الحاج|يوم عرفة|ذي الحجة|ذِي الحجة|التشريق/, topics: [{ slug: 'hajj', side: 'deed' }] },
-  { test: /ليلة القدر|قيام الليل|السبع الأواخر|العشر الأواخر|العشر الأوسط/, topics: [{ slug: 'nawafil', side: 'deed' }] },
-  { test: /الجود|الصدقة/, topics: [{ slug: 'sadaqah', side: 'deed' }] },
-  { test: /التوبة|الاستغفار/, topics: [{ slug: 'tawba', side: 'deed' }] },
-  { test: /التذكير بالله|مجالس الوعظ|ذكر الله/, topics: [{ slug: 'dhikr', side: 'deed' }] },
-  { test: /وفاة النبي|ذكر الموت/, topics: [{ slug: 'zuhd', side: 'deed' }] },
-  { test: /مولد رسول|مولده عليه/, topics: [{ slug: 'mahabbat-allah', side: 'deed' }] },
-  { test: /صيام|الصوم|رمضان|شعبان|المحرم/, topics: [{ slug: 'siyam', side: 'deed' }] },
-];
-
-/** The first heading on the page chooses the topic. A page without one keeps the previous council. */
-export function lataifTopics(page: string, previous: readonly RajabTopic[]): RajabTopic[] {
-  const head = page.replace(/\s+/g, ' ').slice(0, 220);
-  for (const rule of LATAIF_RULES) {
-    if (rule.test.test(head)) return [...rule.topics];
-  }
-  return [...previous];
 }
 
 function clean(text: string): string {
@@ -120,18 +93,13 @@ const BODY_START: Record<string, RegExp> = {
 };
 
 /**
- * Prophetic reports from the author's text for topic selection.
- * Ibn Rajab does not grade; weak marks and critique are left out.
+ * Prophetic reports from the author's text for selection / Sahihayn matching.
+ * No topic links — chapter mapping does not exist yet; TAKHRIJ comes from taxonomy sections.
  */
-export function extractRajabPassages(
-  bookKey: string,
-  text: string,
-  topics: readonly RajabTopic[],
-): RajabPassage[] {
+export function extractRajabPassages(bookKey: string, text: string): RajabPassage[] {
   const pages = text.split('PAGE_SEPARATOR');
   const start = BODY_START[bookKey];
   let begun = false;
-  let carry: RajabTopic[] = [...topics];
   const seen = new Set<string>();
   const passages: RajabPassage[] = [];
   pages.forEach((page, index) => {
@@ -140,13 +108,10 @@ export function extractRajabPassages(
       if (!start?.test(compact)) return;
       begun = true;
     }
-    const pageTopics = bookKey === 'lataif' ? lataifTopics(compact, carry) : carry;
-    if (bookKey === 'lataif') carry = pageTopics;
-    if (pageTopics.length === 0) return;
     for (const report of passagesOnPage(compact)) {
       if (seen.has(report)) continue;
       seen.add(report);
-      passages.push({ text: report, page: index + 1, topics: pageTopics });
+      passages.push({ text: report, page: index + 1 });
     }
   });
   return passages;
