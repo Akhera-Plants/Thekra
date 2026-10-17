@@ -125,6 +125,13 @@ export interface QuoteDto {
   updatedAt: string;
 }
 
+export interface TopicPairDto {
+  avoid: string;
+  do: string;
+  titleAr: string;
+  titleEn: string;
+}
+
 export interface SinDto {
   id: string;
   name: string;
@@ -139,6 +146,7 @@ export interface SinDto {
   domainKey?: string | null;
   taxonomyOrder?: number | null;
   isContemporary?: boolean;
+  pair?: TopicPairDto | null;
   quoteCount: number;
   createdAt: string;
   updatedAt: string;
@@ -173,6 +181,7 @@ export interface GoodDeedDto {
   domainKey?: string | null;
   taxonomyOrder?: number | null;
   isContemporary?: boolean;
+  pair?: TopicPairDto | null;
   quoteCount: number;
   createdAt: string;
   updatedAt: string;

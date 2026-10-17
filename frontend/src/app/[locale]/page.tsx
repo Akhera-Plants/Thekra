@@ -1,30 +1,95 @@
-import { setRequestLocale, getTranslations } from 'next-intl/server';
-import { Link } from '@/i18n/navigation';
+import { setRequestLocale } from 'next-intl/server';
+import { BranchSky } from '@/components/home/branch-sky/BranchSky';
+import { Bookshelf, type ShelfBook } from '@/components/home/bookshelf/Bookshelf';
+import { DeedOfTheDay, type FeaturedDeed } from '@/components/home/deed-feature/DeedOfTheDay';
+import { HeartIndex, type IndexTopic } from '@/components/home/heart-index/HeartIndex';
 import { HeartSearch } from '@/components/home/heart-search/HeartSearch';
 import { PathLinks } from '@/components/home/path-links/PathLinks';
 import { TodayReminder } from '@/components/home/today/TodayReminder';
 import { Verse } from '@/components/home/verse/Verse';
-import { FormattedNumber } from '@/components/shared/FormattedNumber';
 import { getBranches } from '@/lib/api/branches';
 import { getGoodDeeds } from '@/lib/api/good-deeds';
 import { getReminderOfTheDay } from '@/lib/api/quotes';
 import { getSins } from '@/lib/api/sins';
-import { getCatalogSources } from '@/lib/api/sources';
-import { BRANCH_VOLUMES } from '@/lib/branch-volumes';
-import { reminderWord, utcDayNumber } from '@/lib/day';
+import { getCatalogSources, type CatalogSource } from '@/lib/api/sources';
+import { utcDayNumber } from '@/lib/day';
 import { getQafVerse } from '@/lib/texts/edition';
-import type { LocaleCode } from '@/lib/types/enums';
+import type { GoodDeedDto, SinDto } from '@/lib/types/api';
 
 export const dynamic = 'force-dynamic';
 
-const CLOTH = ['book-cloth-a', 'book-cloth-b', 'book-cloth-c'] as const;
+const INDEX_SIZE = 12;
+const CONTEMPORARY_SIZE = 6;
+
+/** Ibn Kathir (Abridged) is imported for review but not shown to readers. */
+function isHiddenSource(source: CatalogSource): boolean {
+  return /ibn kathir/i.test(source.name) || /ابن كثير/.test(source.nameAr ?? '');
+}
+
+function topicName(
+  topic: Pick<SinDto, 'name' | 'nameAr'> & { pair?: SinDto['pair'] },
+  lang: 'ar' | 'en',
+): string | null {
+  if (topic.pair) return (lang === 'ar' ? topic.pair.titleAr : topic.pair.titleEn).trim() || null;
+  const name = lang === 'ar' ? topic.nameAr : topic.name;
+  return name?.trim() || null;
+}
+
+/** Topics ranked by their own texts. Contemporary topics borrow texts, so they get their own line. */
+function pickTopics(sins: SinDto[], lang: 'ar' | 'en') {
+  const topics: IndexTopic[] = [];
+  const contemporary: Array<Pick<IndexTopic, 'slug' | 'name'>> = [];
+  for (const sin of sins) {
+    const name = topicName(sin, lang);
+    if (!name) continue;
+    if (sin.isContemporary) contemporary.push({ slug: sin.slug, name });
+    else if (sin.quoteCount > 0) topics.push({ slug: sin.slug, name, count: sin.quoteCount });
+  }
+  topics.sort((a, b) => b.count - a.count);
+  return { topics: topics.slice(0, INDEX_SIZE), contemporary: contemporary.slice(0, CONTEMPORARY_SIZE) };
+}
+
+/** Today's deed rotates through the published deeds that carry a reward line. */
+function pickDeed(deeds: GoodDeedDto[], lang: 'ar' | 'en', day: number): FeaturedDeed | null {
+  const published = deeds.filter((deed) => deed.quoteCount > 0 && topicName(deed, lang));
+  const reward = (deed: GoodDeedDto) => (lang === 'ar' ? deed.rewardAr : deed.reward)?.trim() || null;
+  const withReward = published.filter((deed) => reward(deed));
+  const pool = (withReward.length > 0 ? withReward : published).toSorted((a, b) => a.slug.localeCompare(b.slug));
+  const deed = pool[day % Math.max(pool.length, 1)];
+  if (!deed) return null;
+  const description = (lang === 'ar' ? deed.descriptionAr : deed.description)?.trim() || null;
+  return {
+    slug: deed.slug,
+    name: topicName(deed, lang) ?? '',
+    line: reward(deed) ?? description,
+    count: deed.quoteCount,
+  };
+}
+
+function pickBooks(sources: CatalogSource[], lang: 'ar' | 'en'): ShelfBook[] {
+  const books: Array<ShelfBook & { quran: boolean }> = [];
+  for (const source of sources) {
+    const published = source.publishedQuoteCount ?? 0;
+    if (published <= 0 || isHiddenSource(source)) continue;
+    const title = (lang === 'ar' ? source.nameAr : source.name)?.trim();
+    if (!title) continue;
+    books.push({
+      id: source.id,
+      title,
+      author: (lang === 'ar' ? source.authorAr : source.author)?.trim() || null,
+      published,
+      quran: source.type === 'QURAN',
+    });
+  }
+  return books
+    .toSorted((a, b) => Number(b.quran) - Number(a.quran) || b.published - a.published)
+    .map((book) => ({ id: book.id, title: book.title, author: book.author, published: book.published }));
+}
 
 export default async function HomePage({ params }: PageProps<'/[locale]'>) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const lang = locale as LocaleCode;
-  const t = await getTranslations('home');
-  const tAbout = await getTranslations('about');
+  const lang = locale === 'en' ? 'en' : 'ar';
 
   const [verse, reminder, sins, deeds, branches, sources] = await Promise.all([
     getQafVerse(),
@@ -35,176 +100,46 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
     getCatalogSources({ limit: 100, lang }).then((result) => result.data).catch(() => []),
   ]);
 
-  const heavy = sins.filter((sin) => sin.quoteCount > 0).slice(0, 8);
-  const publishedDeeds = deeds
-    .filter((deed) => deed.quoteCount > 0)
-    .slice()
-    .sort((a, b) => a.slug.localeCompare(b.slug));
   const day = utcDayNumber();
-  const deed = publishedDeeds.length > 0 ? publishedDeeds[day % publishedDeeds.length] : null;
-  const reward = deed ? (locale === 'ar' ? deed.rewardAr : deed.reward) : null;
-  const orderedBranches = branches.slice().sort((a, b) => a.number - b.number);
-  const todayBranch = orderedBranches.length > 0 ? orderedBranches[day % orderedBranches.length] : null;
-  const books = sources.filter((source) => {
-    if (source.name === 'Ibn Kathir (Abridged)') return false;
-    return locale === 'ar' ? source.nameAr : source.name;
-  });
-  const tBranches = await getTranslations('branches');
+  const { topics, contemporary } = pickTopics(sins, lang);
+  const deed = pickDeed(deeds, lang, day);
+  const orderedBranches = branches.toSorted((a, b) => a.number - b.number);
+  const todayBranch = orderedBranches[day % Math.max(orderedBranches.length, 1)] ?? null;
+  const books = pickBooks(sources, lang);
 
   return (
-    <div className="flex flex-1 flex-col">
-      <script
-        dangerouslySetInnerHTML={{ __html: "document.documentElement.dataset.sky='home'" }}
-      />
-      <section className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 py-8 md:px-8 md:py-12">
-        <Verse verse={verse} brand={t('title')} locale={locale} />
-        <div className="flex flex-col gap-5">
-          <HeartSearch />
-          <PathLinks />
+    <div className="flex flex-1 flex-col overflow-x-clip">
+      {/*
+       * Above the fold (1440×900 and 390×844): search + paths.
+       * The verse is small and secondary — brand inscription, not hero.
+       * No page-specific colour script; the home page uses shared tokens only.
+       */}
+      <section className="mx-auto flex w-full max-w-4xl flex-col items-center gap-5 px-4 pt-[clamp(2rem,6vh,4.5rem)] pb-10 md:px-8">
+        {/* Search — the primary action, prominent at top */}
+        <HeartSearch />
+        {/* Paths — the three doors into the content */}
+        <PathLinks />
+        {/* Verse — small inscription, brand anchor, secondary */}
+        <div className="pt-2 w-full">
+          <Verse verse={verse} locale={locale} />
         </div>
       </section>
 
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-20 px-4 py-16 md:gap-28 md:px-8 md:py-24">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-28 px-4 pb-32 md:gap-40 md:px-8">
         {reminder ? <TodayReminder quote={reminder} /> : null}
-
-        {heavy.length > 0 ? (
-          <section className="flex flex-col gap-6">
-            <h2 className="font-arabic-display text-3xl leading-tight md:text-4xl">{t('heavyHeading')}</h2>
-            <ul className="grid grid-cols-2 gap-3 md:grid-cols-3">
-              {heavy.map((sin) => (
-                <li key={sin.id}>
-                  <Link
-                    href={`/sins/${sin.slug}`}
-                    className="home-press flex min-h-28 flex-col justify-between rounded-xl bg-foreground/6 px-4 py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    <span
-                      lang={locale === 'en' && sin.name ? 'en' : 'ar'}
-                      dir={locale === 'en' && sin.name ? 'ltr' : 'rtl'}
-                      className={`text-2xl leading-snug ${locale === 'ar' || !sin.name ? 'font-arabic-display' : 'font-semibold'}`}
-                    >
-                      {locale === 'en' ? (sin.name || sin.nameAr) : sin.nameAr}
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      <FormattedNumber value={sin.quoteCount} />{' '}
-                      {reminderWord(sin.quoteCount, locale)}
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
+        <HeartIndex topics={topics} contemporary={contemporary} />
+        {deed ? <DeedOfTheDay deed={deed} lang={lang} /> : null}
+        {todayBranch ? (
+          <BranchSky
+            branches={orderedBranches}
+            today={{
+              number: todayBranch.number,
+              title: (lang === 'ar' ? todayBranch.titleAr : todayBranch.title)?.trim() || null,
+            }}
+            lang={lang}
+          />
         ) : null}
-
-        {deed ? (
-          <section className="flex max-w-prose flex-col gap-4">
-            <h2 className="font-arabic-display text-3xl leading-tight md:text-4xl">{t('deedHeading')}</h2>
-            <Link
-              href={`/good-deeds/${deed.slug}`}
-              className="home-press flex flex-col gap-3 rounded-xl bg-foreground/6 px-5 py-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <span
-                lang={locale === 'en' && deed.name ? 'en' : 'ar'}
-                dir={locale === 'en' && deed.name ? 'ltr' : 'rtl'}
-                className={`text-3xl leading-snug ${locale === 'ar' || !deed.name ? 'font-arabic-display' : 'font-semibold'}`}
-              >
-                {locale === 'en' ? (deed.name || deed.nameAr) : deed.nameAr}
-              </span>
-              {reward ? <span className="text-base leading-relaxed text-muted-foreground">{reward}</span> : null}
-            </Link>
-          </section>
-        ) : null}
-
-        {orderedBranches.length > 0 && todayBranch ? (
-          <section className="flex flex-col gap-8">
-            <h2 className="font-arabic-display text-3xl leading-tight md:text-4xl">{t('branchesHeading')}</h2>
-            <Link
-              href={`/branches/${todayBranch.number}`}
-              className="home-press max-w-prose font-arabic-display text-2xl leading-snug focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:text-3xl"
-            >
-              {t('branchToday')} <FormattedNumber value={todayBranch.number} />
-              <span
-                className={`ms-3 ${locale === 'en' ? 'font-semibold' : 'font-arabic-display'}`}
-                lang={locale === 'en' ? 'en' : 'ar'}
-                dir={locale === 'en' ? 'ltr' : 'rtl'}
-              >
-                {locale === 'en'
-                  ? (todayBranch.title || tBranches('branchFallback', { number: todayBranch.number }))
-                  : todayBranch.titleAr}
-              </span>
-            </Link>
-            <div className="flex flex-col gap-6">
-              {BRANCH_VOLUMES.map((volume) => {
-                const rows = orderedBranches.filter(
-                  (branch) => branch.number >= volume.from && branch.number <= volume.to,
-                );
-                if (rows.length === 0) return null;
-                return (
-                  <div key={volume.volume} className="flex flex-col gap-2">
-                    <p className="text-sm text-muted-foreground">
-                      {t('volumeLabel')} <FormattedNumber value={volume.volume} />
-                    </p>
-                    <ol className="flex flex-wrap gap-1.5">
-                      {rows.map((branch) => {
-                        const today = branch.number === todayBranch.number;
-                        return (
-                          <li key={branch.id}>
-                            <Link
-                              href={`/branches/${branch.number}`}
-                              aria-current={today ? 'true' : undefined}
-                              className={
-                                today
-                                  ? 'home-press inline-flex size-11 items-center justify-center rounded-lg bg-foreground text-sm text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
-                                  : 'home-press inline-flex size-11 items-center justify-center rounded-lg text-sm text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
-                              }
-                            >
-                              <FormattedNumber value={branch.number} />
-                            </Link>
-                          </li>
-                        );
-                      })}
-                    </ol>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-        ) : null}
-
-        {books.length > 0 ? (
-          <section className="flex flex-col gap-6">
-            <h2 className="font-arabic-display text-3xl leading-tight md:text-4xl">{t('sourcesHeading')}</h2>
-            <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-              {books.map((book, index) => {
-                const title = locale === 'ar' ? book.nameAr : book.name;
-                const author = locale === 'ar' ? book.authorAr : book.author;
-                const imported = book.quoteCount ?? 0;
-                const published = book.publishedQuoteCount ?? 0;
-                return (
-                  <li key={book.id} className="min-w-0">
-                    <Link
-                      href="/about"
-                      title={title ?? undefined}
-                      className={`home-press flex h-44 w-full items-stretch overflow-hidden rounded-sm text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${CLOTH[index % CLOTH.length]}`}
-                    >
-                      <span className="w-2 shrink-0 bg-black/25" aria-hidden />
-                      <span className="flex min-w-0 flex-1 flex-col justify-between px-3 py-3">
-                        <span className="line-clamp-2 font-arabic-display text-lg leading-snug">{title}</span>
-                        <span className="flex flex-col gap-1 text-sm leading-snug opacity-80">
-                          {author ? <span className="line-clamp-1">{author}</span> : null}
-                          <span>
-                            <FormattedNumber value={imported} /> {tAbout('imported')}
-                            {' · '}
-                            <FormattedNumber value={published} /> {tAbout('published')}
-                          </span>
-                        </span>
-                      </span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
-        ) : null}
+        <Bookshelf books={books} lang={lang} />
       </div>
     </div>
   );

@@ -35,6 +35,7 @@ import type { CreateSinDto } from './dto/create-sin.dto.js';
 import type { SinQuotesQueryDto } from './dto/sin-quotes-query.dto.js';
 import type { SinsQueryDto } from './dto/sins-query.dto.js';
 import type { UpdateSinDto } from './dto/update-sin.dto.js';
+import { isPairedSlug, pairForSlug } from '../taxonomy/topic-pairs.js';
 import type { SinDetailDto, SinDto } from './entities/sin.entity.js';
 
 const SIN_READ_INCLUDE = {
@@ -74,6 +75,7 @@ export class SinsService {
     },
     options?: { includeSeverity?: boolean },
   ): SinDto {
+    const pair = pairForSlug(row.slug);
     return {
       id: row.id,
       name: row.name,
@@ -89,6 +91,9 @@ export class SinsService {
       domainKey: row.domainKey,
       taxonomyOrder: row.taxonomyOrder,
       isContemporary: row.isContemporary,
+      pair: pair
+        ? { avoid: pair.avoid, do: pair.do, titleAr: pair.titleAr, titleEn: pair.titleEn }
+        : null,
       quoteCount: row._count.quotes,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
@@ -367,7 +372,15 @@ export class SinsService {
     const order = new Map(ids.map((id, index) => [id, index]));
     rows.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
     const countsByType = this.quotes.countsByTypeFromGroups(typeGroups);
-    const companion = await this.rewardForSin(sin, where.quote, page, limit, locale);
+    const primaryItems = ids.length === 0 ? [] : rows.map((row) => this.presentSinItem(row, locale));
+    const companion = await this.rewardForSin(
+      sin,
+      where.quote,
+      page,
+      limit,
+      locale,
+      new Set(primaryItems.map((item) => item.quote.id)),
+    );
     const derived = sin.isContemporary
       ? await this.derivedSinTexts(sin.id, where.quote, page, limit, locale)
       : [];
@@ -384,7 +397,7 @@ export class SinsService {
           descriptionAr: sin.descriptionAr,
           isContemporary: sin.isContemporary,
         },
-        items: ids.length === 0 ? [] : rows.map((row) => this.presentSinItem(row, locale)),
+        items: primaryItems,
         companion,
         derived,
         alternatives,
@@ -427,20 +440,24 @@ export class SinsService {
   }
 
   private async rewardForSin(
-    sin: { oppositeGoodDeedId: string | null },
+    sin: { slug: string; oppositeGoodDeedId: string | null },
     quote: Prisma.SinQuoteWhereInput['quote'],
     page: number,
     limit: number,
     locale: 'ar' | 'en',
+    excludeQuoteIds: ReadonlySet<string> = new Set(),
   ) {
+    const paired = isPairedSlug(sin.slug);
     const deeds = await this.prisma.goodDeed.findMany({
       where: {
         origin: visibleOrigins(),
         isHidden: false,
-        OR: [
-          ...(sin.oppositeGoodDeedId ? [{ id: sin.oppositeGoodDeedId }] : []),
-          { slug: 'tark-lillah' },
-        ],
+        OR: paired
+          ? (sin.oppositeGoodDeedId ? [{ id: sin.oppositeGoodDeedId }] : [])
+          : [
+              ...(sin.oppositeGoodDeedId ? [{ id: sin.oppositeGoodDeedId }] : []),
+              { slug: 'tark-lillah' },
+            ],
       },
       select: { id: true },
     });
@@ -451,6 +468,7 @@ export class SinsService {
         reviewStatus: PUBLISHED_LINK_REVIEW_STATUS,
         ...autoLinkExclusion(),
         quote,
+        ...(excludeQuoteIds.size > 0 ? { quoteId: { notIn: [...excludeQuoteIds] } } : {}),
       },
       select: READING_SELECT,
     });

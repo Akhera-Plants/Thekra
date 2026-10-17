@@ -1,3 +1,5 @@
+import type { TopicPairDto } from '../../sins/entities/sin.entity.js';
+
 export interface OppositeSinSummary {
   id: string;
   slug: string;
@@ -19,6 +21,8 @@ export interface GoodDeedDto {
   domainKey: string | null;
   taxonomyOrder: number | null;
   isContemporary: boolean;
+  /** Set when taxonomy.yaml lists this slug under pairs:. */
+  pair: TopicPairDto | null;
   quoteCount: number;
   createdAt: Date;
   updatedAt: Date;

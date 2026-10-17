@@ -18,7 +18,9 @@ export async function generateMetadata({
   const { slug, locale } = await params;
   try {
     const { data } = await getSin(slug, locale as LocaleCode);
-    const title = locale === 'en' ? (data.name || data.nameAr) : data.nameAr;
+    const title = data.pair
+      ? (locale === 'en' ? data.pair.titleEn : data.pair.titleAr)
+      : (locale === 'en' ? (data.name || data.nameAr) : data.nameAr);
     return { title: `${title} — ${locale === 'en' ? 'Thekra' : 'ذكرى'}` };
   } catch {
     return {};
@@ -40,9 +42,14 @@ export default async function SinDetailPage({
     notFound();
   }
 
+  const paired = Boolean(sin.pair);
   let quotes: Awaited<ReturnType<typeof getSinQuotes>> | null = null;
   try {
-    quotes = await getSinQuotes(slug, { page: 1, limit: 20, lang: locale as LocaleCode });
+    quotes = await getSinQuotes(slug, {
+      page: 1,
+      limit: paired ? 50 : 20,
+      lang: locale as LocaleCode,
+    });
   } catch {
     quotes = null;
   }
@@ -54,11 +61,18 @@ export default async function SinDetailPage({
     reviewLabel: item.link.reviewLabel,
   });
   const warning = (quotes?.data.items ?? []).map(toReader);
-  const reward = (quotes?.data.companion?.items ?? []).map(toReader);
+  const seen = new Set(warning.map((item) => item.id));
+  const reward = (quotes?.data.companion?.items ?? [])
+    .map(toReader)
+    .filter((item) => !seen.has(item.id));
   const derived = quotes?.data.derived ?? [];
   const sections: ReaderSection[] = [
-    ...(warning.length > 0 ? [{ heading: t('warningHeading'), items: warning }] : []),
-    ...(reward.length > 0 ? [{ heading: t('rewardHeading'), items: reward }] : []),
+    ...(warning.length > 0
+      ? [{ heading: paired ? t('pairWarningHeading') : t('warningHeading'), items: warning }]
+      : []),
+    ...(reward.length > 0
+      ? [{ heading: paired ? t('pairRewardHeading') : t('rewardHeading'), items: reward }]
+      : []),
     ...derived.filter((group) => group.items.length > 0).map((group) => ({
       heading: locale === 'en' ? (group.name || group.nameAr) : group.nameAr,
       items: group.items.map(toReader),
@@ -66,9 +80,11 @@ export default async function SinDetailPage({
   ];
   const derivedItems = derived.flatMap((group) => group.items.map(toReader));
   const items = interleaveReading(warning, reward).concat(derivedItems);
-  const alternatives = quotes?.data.alternatives ?? [];
+  const alternatives = paired ? [] : (quotes?.data.alternatives ?? []);
   const onward = alternatives[0];
-  const heading = locale === 'en' ? (sin.name || sin.nameAr) : sin.nameAr;
+  const heading = paired
+    ? (locale === 'en' ? sin.pair!.titleEn : sin.pair!.titleAr)
+    : (locale === 'en' ? (sin.name || sin.nameAr) : sin.nameAr);
   const description = locale === 'en' ? (sin.description || sin.descriptionAr) : sin.descriptionAr;
   const onwardName = onward
     ? (locale === 'en' ? (onward.name || onward.nameAr) : onward.nameAr)

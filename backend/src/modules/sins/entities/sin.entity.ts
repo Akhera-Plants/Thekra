@@ -7,6 +7,13 @@ export interface SinRankSourceDto {
   nameAr: string | null;
 }
 
+export interface TopicPairDto {
+  avoid: string;
+  do: string;
+  titleAr: string;
+  titleEn: string;
+}
+
 export interface SinDto {
   id: string;
   name: string;
@@ -23,6 +30,8 @@ export interface SinDto {
   domainKey: string | null;
   taxonomyOrder: number | null;
   isContemporary: boolean;
+  /** Set when taxonomy.yaml lists this slug under pairs:. */
+  pair: TopicPairDto | null;
   quoteCount: number;
   createdAt: Date;
   updatedAt: Date;

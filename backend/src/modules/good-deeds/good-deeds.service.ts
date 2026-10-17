@@ -25,6 +25,7 @@ import {
   QuotesService,
 } from '../quotes/quotes.service.js';
 import type { GoodDeedQuotesQueryDto } from '../sins/dto/sin-quotes-query.dto.js';
+import { pairForSlug } from '../taxonomy/topic-pairs.js';
 import type { CreateGoodDeedDto } from './dto/create-good-deed.dto.js';
 import type { GoodDeedsQueryDto } from './dto/good-deeds-query.dto.js';
 import type { UpdateGoodDeedDto } from './dto/update-good-deed.dto.js';
@@ -63,6 +64,7 @@ export class GoodDeedsService {
     isContemporary: boolean;
     _count: { quotes: number };
   }): GoodDeedDto {
+    const pair = pairForSlug(row.slug);
     return {
       id: row.id,
       name: row.name,
@@ -77,6 +79,9 @@ export class GoodDeedsService {
       domainKey: row.domainKey,
       taxonomyOrder: row.taxonomyOrder,
       isContemporary: row.isContemporary,
+      pair: pair
+        ? { avoid: pair.avoid, do: pair.do, titleAr: pair.titleAr, titleEn: pair.titleEn }
+        : null,
       quoteCount: row._count.quotes,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
@@ -430,7 +435,15 @@ export class GoodDeedsService {
     const order = new Map(ids.map((id, index) => [id, index]));
     rows.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
     const countsByType = this.quotes.countsByTypeFromGroups(typeGroups);
-    const companion = await this.warningForDeed(deed.oppositeSin?.id ?? null, where.quote, page, limit, locale);
+    const primaryItems = ids.length === 0 ? [] : rows.map((row) => this.presentDeedItem(row, locale));
+    const companion = await this.warningForDeed(
+      deed.oppositeSin?.id ?? null,
+      where.quote,
+      page,
+      limit,
+      locale,
+      new Set(primaryItems.map((item) => item.quote.id)),
+    );
     const derived = deed.isContemporary
       ? await this.derivedDeedTexts(deed.id, where.quote, page, limit, locale)
       : [];
@@ -438,7 +451,7 @@ export class GoodDeedsService {
     return {
       data: {
         goodDeed: { ...goodDeedPayload, isContemporary: deed.isContemporary },
-        items: ids.length === 0 ? [] : rows.map((row) => this.presentDeedItem(row, locale)),
+        items: primaryItems,
         companion,
         derived,
       },
@@ -485,6 +498,7 @@ export class GoodDeedsService {
     page: number,
     limit: number,
     locale: 'ar' | 'en',
+    excludeQuoteIds: ReadonlySet<string> = new Set(),
   ) {
     if (!oppositeSinId) return { items: [] as ReturnType<GoodDeedsService['presentDeedItem']>[] };
     const ranked = await this.prisma.sinQuote.findMany({
@@ -493,6 +507,7 @@ export class GoodDeedsService {
         reviewStatus: PUBLISHED_LINK_REVIEW_STATUS,
         ...autoLinkExclusion(),
         quote,
+        ...(excludeQuoteIds.size > 0 ? { quoteId: { notIn: [...excludeQuoteIds] } } : {}),
       },
       select: READING_SELECT,
     });

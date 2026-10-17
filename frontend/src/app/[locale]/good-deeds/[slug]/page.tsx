@@ -16,7 +16,9 @@ export async function generateMetadata({
   const { slug, locale } = await params;
   try {
     const { data } = await getGoodDeed(slug, locale as LocaleCode);
-    const title = locale === 'en' ? (data.name || data.nameAr) : data.nameAr;
+    const title = data.pair
+      ? (locale === 'en' ? data.pair.titleEn : data.pair.titleAr)
+      : (locale === 'en' ? (data.name || data.nameAr) : data.nameAr);
     return { title: `${title} — ${locale === 'en' ? 'Thekra' : 'ذكرى'}` };
   } catch {
     return {};
@@ -37,9 +39,14 @@ export default async function GoodDeedDetailPage({
     notFound();
   }
 
+  const paired = Boolean(deed.pair);
   let quotes: Awaited<ReturnType<typeof getGoodDeedQuotes>> | null = null;
   try {
-    quotes = await getGoodDeedQuotes(slug, { page: 1, limit: 20, lang: locale as LocaleCode });
+    quotes = await getGoodDeedQuotes(slug, {
+      page: 1,
+      limit: paired ? 50 : 20,
+      lang: locale as LocaleCode,
+    });
   } catch {
     quotes = null;
   }
@@ -51,21 +58,31 @@ export default async function GoodDeedDetailPage({
     reviewLabel: item.link.reviewLabel,
   });
   const virtue = (quotes?.data.items ?? []).map(toReader);
-  const neglect = (quotes?.data.companion?.items ?? []).map(toReader);
+  const seen = new Set(virtue.map((item) => item.id));
+  const neglect = (quotes?.data.companion?.items ?? [])
+    .map(toReader)
+    .filter((item) => !seen.has(item.id));
   const derived = quotes?.data.derived ?? [];
+  // Visitor came via the deed URL: open on the virtue side first.
   const sections: ReaderSection[] = [
-    ...(virtue.length > 0 ? [{ heading: t('virtueHeading'), items: virtue }] : []),
-    ...(neglect.length > 0 ? [{ heading: t('neglectHeading'), items: neglect }] : []),
+    ...(virtue.length > 0
+      ? [{ heading: paired ? t('pairVirtueHeading') : t('virtueHeading'), items: virtue }]
+      : []),
+    ...(neglect.length > 0
+      ? [{ heading: paired ? t('pairNeglectHeading') : t('neglectHeading'), items: neglect }]
+      : []),
     ...derived.filter((group) => group.items.length > 0).map((group) => ({
       heading: locale === 'en' ? (group.name || group.nameAr) : group.nameAr,
       items: group.items.map(toReader),
     })),
   ];
   const items = interleaveReading(virtue, neglect).concat(derived.flatMap((group) => group.items.map(toReader)));
-  const heading = locale === 'en' ? (deed.name || deed.nameAr) : deed.nameAr;
+  const heading = paired
+    ? (locale === 'en' ? deed.pair!.titleEn : deed.pair!.titleAr)
+    : (locale === 'en' ? (deed.name || deed.nameAr) : deed.nameAr);
   const description = locale === 'en' ? (deed.description || deed.descriptionAr) : deed.descriptionAr;
-  const reward = locale === 'en' ? (deed.reward || deed.rewardAr) : deed.rewardAr;
-  const opposite = deed.oppositeSin
+  const reward = paired ? null : (locale === 'en' ? (deed.reward || deed.rewardAr) : deed.rewardAr);
+  const opposite = !paired && deed.oppositeSin
     ? (locale === 'en' ? (deed.oppositeSin.name || deed.oppositeSin.nameAr) : deed.oppositeSin.nameAr)
     : null;
 
