@@ -1,0 +1,32 @@
+# Reviewer map: Sahih al-Bukhari / Sahih Muslim chapters (BookSection ids from docs/taxonomy/sections/{bukhari,muslim}.tsv)
+# → taxonomy topics. Every hadith item under a listed bab is linked ACCEPTED, basis CHAPTER, classifiedBy REVIEWER,
+# note «من باب: <title> — <book>». Chapters NOT listed here produce no public link (keyword proposals stay unreviewed).
+# Filled topic by topic by the reviewer. Batch 1: prayer.
+
+sections:
+  # ── salah (DO: guarding the prayers) ──
+  - { id: d1db5aac-8ff5-434e-a4c0-d4ab3f44db84, book: bukhari, title: باب مواقيت الصلاة وفضلها, topics: [salah] }
+  - { id: 55d67708-950a-440f-aa03-5b6dc82b339e, book: bukhari, title: باب الصلاة كفارة, topics: [salah] }
+  - { id: 789a720e-e384-4be6-b62d-98028db81088, book: bukhari, title: باب فضل الصلاة لوقتها, topics: [salah] }
+  - { id: 44df69bb-69a9-44e9-855a-d989632452ba, book: bukhari, title: باب الصلوات الخمس كفارة, topics: [salah] }
+  - { id: 0c73e99c-7abf-45e3-b1f3-3ac3ecae1c2e, book: bukhari, title: باب فضل صلاة العصر, topics: [salah] }
+  - { id: 7efb087d-e90d-49af-9378-79ac7787ebe8, book: bukhari, title: باب فضل صلاة الفجر, topics: [salah] }
+  - { id: 11daed66-ba5d-44d2-b988-e147bcd3bcef, book: muslim, title: باب الصلوات الخمس والجمعة إلى الجمعة ورمضان إلى رمضان, topics: [salah] }
+  - { id: 65dde9d0-83f4-4f7d-8890-bfd8ee26f219, book: muslim, title: باب فضل صلاتي الصبح والعصر والمحافظة عليهما, topics: [salah] }
+  - { id: bc3dbd6c-66f1-4493-9ec8-58b0cb20cf0d, book: muslim, title: باب فضل الوضوء والصلاة عقبه, topics: [salah, tahara] }
+
+  # ── tark-as-salah (AVOID: abandoning / neglecting the prayer) ──
+  - { id: 34e6ee06-f9d8-44c3-80e2-8b3bbfbc73cc, book: bukhari, title: باب تضييع الصلاة عن وقتها, topics: [tark-as-salah] }
+  - { id: 764886eb-b536-4124-8497-d4a77a7e95a7, book: bukhari, title: باب إثم من فاتته العصر, topics: [tark-as-salah] }
+  - { id: a5e40326-edac-4a9b-af8e-27eee100d2ab, book: bukhari, title: باب من ترك العصر, topics: [tark-as-salah] }
+  - { id: f2507e24-a631-4277-9897-f857eff3a740, book: muslim, title: باب بيان إطلاق اسم الكفر على من ترك الصلاة, topics: [tark-as-salah] }
+  - { id: ad911a70-2ddc-4994-a49a-d45d975963aa, book: muslim, title: باب التغليظ في تفويت صلاة العصر, topics: [tark-as-salah] }
+  - { id: cdc37e46-34f3-4fd9-aebd-87e97ca753f6, book: muslim, title: باب كراهية تأخير الصلاة عن وقتها المختار, topics: [tark-as-salah] }
+
+  # ── salat-fi-jamaah ──
+  - { id: 842d7ee6-910b-4dbb-8ba8-081143d2fc3e, book: bukhari, title: باب فضل صلاة الفجر في جماعة, topics: [salat-fi-jamaah] }
+  - { id: e6db7fd0-811f-450a-babd-d7273db5c8b4, book: bukhari, title: باب فضل العشاء في الجماعة, topics: [salat-fi-jamaah] }
+  - { id: 606543f8-a11e-49eb-8dc9-969c37aea8fa, book: bukhari, title: باب من جلس في المسجد ينتظر الصلاة وفضل المساجد, topics: [salat-fi-jamaah] }
+  - { id: 671b9403-483d-43db-9b40-cdafe92a936c, book: muslim, title: باب فضل صلاة العشاء والصبح في جماعة, topics: [salat-fi-jamaah] }
+  - { id: 329728bc-3a4e-41fa-bd92-aa8a660e9d57, book: muslim, title: باب فضل صلاة الجماعة وانتظار الصلاة, topics: [salat-fi-jamaah] }
+  - { id: 2821a073-e558-45af-ad2a-8676872f68c5, book: muslim, title: باب فضل الجلوس في مصلاه بعد الصبح وفضل المساجد, topics: [salat-fi-jamaah] }

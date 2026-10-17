@@ -23,6 +23,7 @@ import {
   type BookKey,
   type MatchSection,
 } from './match.js';
+import { loadSahihaynMap } from './sahihayn-map.js';
 import { loadTaxonomy, topicBySlug, type TaxonomyFile, type Topic } from './yaml.js';
 
 const KABAIR_SOURCE_ID = '10000000-0000-4000-8000-000000000007';
@@ -726,10 +727,16 @@ export async function runTaxonomyImport(options: ImportOptions): Promise<void> {
   const content = loadContentMap(join(docsPath(), 'content-map.tsv'));
   const missing = content.filter((row) => !sections.some((section) => section.id === row.sectionId));
   if (missing.length > 0) throw new Error(`content-map section ids missing from the database: ${missing.slice(0, 5).map((row) => row.sectionId).join(', ')}`);
+  const sahihaynMap = loadSahihaynMap();
+  for (const row of sahihaynMap) {
+    for (const slug of row.topics) {
+      if (!topics.has(slug)) throw new Error(`sahihayn-map ${row.id} names unknown slug ${slug}`);
+    }
+  }
   const quoteIds = sections.flatMap((section) => section.items.flatMap((item) => item.quoteId ? [item.quoteId] : []));
   const strong = await strongMatches(options.prisma, quoteIds);
   const sahihayn = await sahihaynQuotes(options.prisma, strong);
-  const built = buildLinks(topics, sections, content, strong, sahihayn);
+  const built = buildLinks(topics, sections, content, strong, sahihayn, sahihaynMap);
   const titles = new Map(sections.filter((section) => section.book === 'kabair' && section.level === 'KABIRA' && section.kabiraNumber !== null).map((section) => [section.kabiraNumber as number, section.titleAr]));
   console.log(`coverage: targhib ${report.targhib.matched}/${report.targhib.eligible}, zuhd ${report.zuhd.matched}/${report.zuhd.eligible}, minhaj ${report.minhaj.matched}/${report.minhaj.eligible}, unmapped ${report.unmapped}`);
   console.log(`items: ${Object.entries(report.items).map(([slug, count]) => `${slug} ${count}`).join(', ')}`);

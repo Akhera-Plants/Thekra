@@ -12,6 +12,7 @@ import {
 import { ITEM_DECISIONS } from './decisions.js';
 import type { MatchSection } from './match.js';
 import { keywordSide } from './match.js';
+import type { SahihaynMapRow } from './sahihayn-map.js';
 import type { Topic, TopicSide } from './yaml.js';
 
 export interface LinkItem {
@@ -171,11 +172,13 @@ export function buildLinks(
   content: readonly ContentRow[],
   strong: ReadonlyMap<string, readonly StrongHit[]>,
   sahihayn: ReadonlyMap<string, string>,
+  sahihaynMap: readonly SahihaynMapRow[] = [],
 ): LinkBuild {
   const byId = new Map(sections.map((section) => [section.id, section]));
   const direct: DesiredLink[] = [];
   let skippedItems = 0;
   const proposals: ProposalRow[] = [];
+  const mappedTopics = new Map(sahihaynMap.map((row) => [row.id, row.topics]));
 
   for (const section of sections) {
     if (section.anchorSlugs.length > 0) {
@@ -194,24 +197,61 @@ export function buildLinks(
         },
       );
     }
+    const reviewed = mappedTopics.get(section.id) ?? [];
+    const reviewedSet = new Set(reviewed);
     if (section.keywordSlugs.length > 0) {
-      proposals.push({
-        sectionId: section.id,
-        title: section.titleAr,
-        slugs: section.keywordSlugs.join(','),
-        side: keywordSide(section.titleAr),
-        items: section.ayah + section.hadith + section.author,
-      });
-      skippedItems += pushItemLinks(
-        direct,
-        section,
-        topics,
-        section.keywordSlugs,
-        () => 'KEYWORD_PROPOSAL',
-        'AI',
-        'NOT_REVIEWED',
-        () => keywordNote(section),
-      );
+      const remaining = section.keywordSlugs.filter((slug) => !reviewedSet.has(slug));
+      if (remaining.length > 0) {
+        proposals.push({
+          sectionId: section.id,
+          title: section.titleAr,
+          slugs: remaining.join(','),
+          side: keywordSide(section.titleAr),
+          items: section.ayah + section.hadith + section.author,
+        });
+        skippedItems += pushItemLinks(
+          direct,
+          section,
+          topics,
+          remaining,
+          () => 'KEYWORD_PROPOSAL',
+          'AI',
+          'NOT_REVIEWED',
+          () => keywordNote(section),
+        );
+      }
+    }
+  }
+
+  for (const row of sahihaynMap) {
+    const section = byId.get(row.id);
+    if (!section) throw new Error(`sahihayn-map section ${row.id} is not in the database`);
+    if (section.book !== row.book) {
+      throw new Error(`sahihayn-map ${row.id} book is ${section.book}, expected ${row.book}`);
+    }
+    for (const item of section.items) {
+      if (item.kind !== 'HADITH') continue;
+      if (!item.quoteId) {
+        skippedItems += 1;
+        continue;
+      }
+      for (const slug of row.topics) {
+        const topic = topicOf(topics, slug);
+        direct.push({
+          side: topic.side,
+          slug,
+          quoteId: item.quoteId,
+          basis: 'CHAPTER',
+          classifiedBy: 'REVIEWER',
+          reviewStatus: 'ACCEPTED',
+          note: chapterNote(section, topics, row.topics),
+          relevanceScore: item.score,
+          sectionId: section.id,
+          sectionOrder: section.order,
+          itemOrder: item.order,
+          priority: linkPriority('CHAPTER'),
+        });
+      }
     }
   }
 
