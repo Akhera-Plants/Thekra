@@ -15,7 +15,7 @@ export const buttonVariants = cva(
     'ease-[cubic-bezier(0.23,1,0.32,1)]',
     'active:scale-[0.97] motion-reduce:active:scale-100',
     'disabled:pointer-events-none disabled:opacity-50',
-    'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+    'focus-visible:ring-1 focus-visible:ring-ring/40 focus-visible:ring-offset-0',
     "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   ].join(' '),
   {
@@ -35,9 +35,9 @@ export const buttonVariants = cva(
         branch: '',
       },
       size: {
-        sm: 'min-h-11 h-11 px-3 text-xs md:h-8 md:min-h-8',
-        md: 'min-h-11 h-11 px-4 text-sm md:h-10 md:min-h-10',
-        lg: 'min-h-11 h-11 px-5 text-base',
+        sm: 'min-h-11 h-11 px-3 text-sm font-medium md:h-8 md:min-h-8',
+        md: 'min-h-11 h-11 px-4 text-sm font-medium md:h-10 md:min-h-10',
+        lg: 'min-h-11 h-11 px-5 text-sm font-medium',
       },
       iconOnly: {
         true: 'aspect-square px-0',

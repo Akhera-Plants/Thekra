@@ -54,11 +54,10 @@ export default async function GoodDeedDetailPage({
     quotes = null;
   }
 
-  const toReader = (item: { quote: { id: string }; link: { note: string | null; reviewLabel?: string | null } }): ReaderItem => ({
+  const toReader = (item: { quote: { id: string }; link: { note: string | null } }): ReaderItem => ({
     id: item.quote.id,
     quote: item.quote as ReaderItem['quote'],
     note: item.link.note,
-    reviewLabel: item.link.reviewLabel,
   });
   const virtue = (quotes?.data.items ?? []).map(toReader);
   const seen = new Set(virtue.map((item) => item.id));

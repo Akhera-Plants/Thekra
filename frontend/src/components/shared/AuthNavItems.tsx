@@ -79,7 +79,7 @@ export function AuthNavItems() {
         <button
           type="button"
           aria-label={t('userMenu')}
-          className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background"
+          className="rounded-full focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/40"
         >
           <Avatar className="size-8">
             <AvatarFallback className="text-xs">

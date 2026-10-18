@@ -13,7 +13,6 @@ export interface ReaderItem {
   id: string;
   quote: QuoteDto;
   note?: string | null;
-  reviewLabel?: string | null;
 }
 
 export interface ReaderSection {
@@ -37,11 +36,6 @@ interface ReminderReaderProps {
     tabHadith: string;
     tabsLabel: string;
   };
-}
-
-function ReviewLine({ label }: { label?: string | null }) {
-  if (!label) return null;
-  return <p className="pb-2 text-xs text-muted-foreground">{label}</p>;
 }
 
 function matchesFilter(item: ReaderItem, filter: TypeFilter): boolean {
@@ -171,7 +165,9 @@ export function ReminderReader({
         {shownSections.map((section) => (
           <section key={section.heading || 'texts'} className="flex flex-col gap-8 md:gap-9">
             {section.heading ? (
-              <h2 className="font-arabic-display text-2xl">{section.heading}</h2>
+              <h2 className="font-arabic-display text-[21px] font-semibold md:text-2xl">
+                {section.heading}
+              </h2>
             ) : null}
             <ul className="flex flex-col gap-8 md:gap-9">
               {section.items.map((item) => (
@@ -182,7 +178,6 @@ export function ReminderReader({
                     detailHref={`/quotes/${item.quote.id}`}
                     intent={intent}
                   />
-                  <ReviewLine label={item.reviewLabel} />
                 </li>
               ))}
             </ul>

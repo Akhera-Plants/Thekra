@@ -18,23 +18,23 @@ interface GradeSealConfig {
 
 const GRADE_SEAL_CONFIG = {
   [HadithGrade.SAHIH]: {
-    classes: 'bg-grade-sahih text-grade-sahih-foreground ring-grade-sahih/35',
+    classes: 'bg-grade-sahih text-grade-sahih-foreground',
     showCheck: true,
   },
   [HadithGrade.HASAN]: {
-    classes: 'bg-grade-hasan text-grade-hasan-foreground ring-grade-hasan/35',
+    classes: 'bg-grade-hasan text-grade-hasan-foreground',
     showCheck: true,
   },
   [HadithGrade.DAIF]: {
-    classes: 'bg-grade-daif text-grade-daif-foreground ring-grade-daif/35',
+    classes: 'bg-grade-daif text-grade-daif-foreground',
     showCheck: false,
   },
   [HadithGrade.MAWDU]: {
-    classes: 'bg-grade-mawdu text-grade-mawdu-foreground ring-grade-mawdu/35',
+    classes: 'bg-grade-mawdu text-grade-mawdu-foreground',
     showCheck: false,
   },
   [HadithGrade.UNGRADED]: {
-    classes: 'bg-muted text-muted-foreground ring-border',
+    classes: 'bg-muted text-muted-foreground',
     showCheck: false,
   },
 } satisfies Record<HadithGrade, GradeSealConfig>;
@@ -51,7 +51,7 @@ export function GradeBadge({ grade, label, className }: GradeBadgeProps) {
   return (
     <span
       className={cn(
-        'inline-flex h-7 min-w-7 items-center justify-center gap-0.5 rounded-full px-1.5 text-xs font-semibold ring-2',
+        'inline-flex h-7 min-w-7 items-center justify-center gap-0.5 rounded-full px-1.5 text-xs font-semibold',
         classes,
         className,
       )}

@@ -193,7 +193,6 @@ export interface QuoteLinkDto {
   relevanceScore: number | null;
   note: string | null;
   classifiedBy?: string;
-  reviewLabel?: string | null;
   band?: 'ayah' | 'sahihayn' | 'other';
 }
 

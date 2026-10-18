@@ -29,7 +29,7 @@
   },
   "about": {
     "pageTitle": "About Thekra",
-    "lead": "For whoever has a heart.",
+    "lead": "Every book named, every narration graded.",
     "intro": "Thekra cites the book and the person who graded a narration. A book is never given one grade for every hadith in it.",
     "methodologyTitle": "Content methodology",
     "methodologyBody": "Every text names its source. A verse shows its surah and ayah; a hadith shows its book, number, and the grade given by the authority that graded it. Quoted words stay distinct from any explanation Thekra adds.",
@@ -112,7 +112,6 @@
   },
   "home": {
     "title": "Thekra",
-    "tagline": "For whoever has a heart",
     "sinEntryLabel": "Help me leave a sin",
     "sinEntryDescription": "A reminder that restrains you, and hope that helps you.",
     "deedEntryLabel": "Help me do a good deed",

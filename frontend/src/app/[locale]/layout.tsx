@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Geist_Mono, Source_Sans_3 } from 'next/font/google';
 import { notFound } from 'next/navigation';
 import { AppShell } from '@/components/shared/AppShell';
 import { LocaleSync } from '@/components/shared/LocaleSync';
@@ -9,10 +9,12 @@ import { amiri, amiriQuran, plexArabic, thmanyahDisplay, thmanyahSans, thmanyahT
 import { AppProviders } from '@/lib/providers';
 import { routing } from '@/i18n/routing';
 
-const uiFont = Geist({
+/** Adobe Source Sans 3 — English UI and reading text. */
+const uiFont = Source_Sans_3({
   subsets: ['latin'],
   variable: '--font-ui',
   display: 'swap',
+  weight: ['400', '500', '600', '700'],
 });
 
 const monoFont = Geist_Mono({

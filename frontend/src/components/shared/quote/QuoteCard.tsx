@@ -101,8 +101,8 @@ function ContextLink({
       href={href}
       className={cn(
         'inline-flex min-h-11 w-fit items-center gap-1.5 self-start',
-        'text-sm underline-offset-4 hover:underline',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'text-sm font-medium underline-offset-4 hover:underline',
+        'focus-visible:outline-none focus-visible:border-b focus-visible:border-current',
         muted
           ? 'text-muted-foreground hover:text-foreground'
           : 'text-primary',
@@ -187,7 +187,7 @@ export function QuoteCard({
             <span
               className={cn(
                 'inline-flex min-h-8 items-center gap-1.5 rounded-full px-2.5 py-1',
-                'bg-primary/10 text-xs font-medium text-primary',
+                'bg-primary/10 text-[12px] font-medium text-primary md:text-[13px]',
                 arabic && 'font-arabic-ui',
               )}
             >
@@ -201,7 +201,7 @@ export function QuoteCard({
                   <span
                     className={cn(
                       'inline-flex max-w-full flex-wrap items-center gap-x-2 rounded-full',
-                      'border border-border/70 bg-background/80 px-2.5 py-1 text-sm text-foreground',
+                      'border border-border/70 bg-background/80 px-2.5 py-1 text-[12px] text-foreground md:text-[13px]',
                       arabic && 'font-arabic-ui',
                     )}
                   >
@@ -237,7 +237,7 @@ export function QuoteCard({
                     dir={sourceDir}
                     lang={sourceLang}
                     className={cn(
-                      'text-xs text-muted-foreground',
+                      'text-[12px] text-muted-foreground md:text-[13px]',
                       sourceDir === 'rtl' && 'font-arabic-ui',
                     )}
                   >
@@ -259,7 +259,7 @@ export function QuoteCard({
                       <span
                         className={cn(
                           'inline-flex max-w-full flex-wrap items-center gap-x-2 rounded-full',
-                          'border border-border/70 bg-background/80 px-2.5 py-1 text-sm text-foreground',
+                          'border border-border/70 bg-background/80 px-2.5 py-1 text-[12px] text-foreground md:text-[13px]',
                           arabic && 'font-arabic-ui',
                         )}
                       >
@@ -298,7 +298,7 @@ export function QuoteCard({
                     dir={arabic ? 'rtl' : undefined}
                     lang={arabic ? 'ar' : undefined}
                     className={cn(
-                      'text-xs text-muted-foreground',
+                      'text-[12px] text-muted-foreground md:text-[13px]',
                       arabic && 'font-arabic-ui',
                     )}
                   >
@@ -424,7 +424,7 @@ export function QuoteCard({
                         </span>
                       ) : null}
                       {pageOrChapter ? (
-                        <span className="inline-flex rounded-full bg-background/70 px-2 py-0.5 ring-1 ring-border/60">
+                        <span className="inline-flex rounded-full bg-background/70 px-2 py-0.5 text-[12px] md:text-[13px]">
                           <FormattedNumber value={pageOrChapter} />
                         </span>
                       ) : null}

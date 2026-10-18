@@ -485,7 +485,6 @@ export class GoodDeedsService {
         relevanceScore: row.relevanceScore,
         note: readerLinkNote(row.note),
         classifiedBy,
-        reviewLabel: classifiedBy === 'BOOK' ? null : 'تصنيف المراجعة',
         ...(band == null ? {} : { band: band === 0 ? 'ayah' : band === 1 ? 'sahihayn' : 'other' }),
       },
       quote: this.quotes.toQuoteDto(row.quote, locale),

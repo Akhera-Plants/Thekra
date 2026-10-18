@@ -57,11 +57,10 @@ export default async function SinDetailPage({
     quotes = null;
   }
 
-  const toReader = (item: { quote: { id: string }; link: { note: string | null; reviewLabel?: string | null } }): ReaderItem => ({
+  const toReader = (item: { quote: { id: string }; link: { note: string | null } }): ReaderItem => ({
     id: item.quote.id,
     quote: item.quote as ReaderItem['quote'],
     note: item.link.note,
-    reviewLabel: item.link.reviewLabel,
   });
   const warning = (quotes?.data.items ?? []).map(toReader);
   const seen = new Set(warning.map((item) => item.id));
