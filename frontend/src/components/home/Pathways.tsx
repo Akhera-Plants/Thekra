@@ -1,6 +1,6 @@
+import { ArrowLeft, BookOpen, DoorOpen, Leaf, Sprout } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
-import { SiteIcon } from '@/components/shared/site-icons';
 
 export async function Pathways() {
   const t = await getTranslations('home');
@@ -11,7 +11,7 @@ export async function Pathways() {
         <div>
           <p className="eyebrow">
             <span className="tiny-sprout">
-              <SiteIcon name="leaf" />
+              <Leaf className="size-4" aria-hidden />
             </span>{' '}
             {t('eyebrow')}
           </p>
@@ -23,7 +23,7 @@ export async function Pathways() {
         <Link className="pathway pathway-return" href="/sins">
           <span className="pathway-top">
             <span className="pathway-icon">
-              <SiteIcon name="door" />
+              <DoorOpen className="size-7" aria-hidden />
             </span>
             <span className="pathway-overline">{t('sinOverline')}</span>
           </span>
@@ -32,7 +32,7 @@ export async function Pathways() {
           <span className="pathway-cta">
             {t('sinCta')}{' '}
             <span className="pathway-arrow">
-              <SiteIcon name="arrow" />
+              <ArrowLeft className="size-[19px] rtl:-scale-x-100" aria-hidden />
             </span>
           </span>
           <svg className="pathway-flourish" viewBox="0 0 150 160" fill="none" aria-hidden>
@@ -47,7 +47,7 @@ export async function Pathways() {
         <Link className="pathway pathway-good" href="/good-deeds">
           <span className="pathway-top">
             <span className="pathway-icon">
-              <SiteIcon name="sprout" />
+              <Sprout className="size-7" aria-hidden />
             </span>
             <span className="pathway-overline">{t('deedOverline')}</span>
           </span>
@@ -56,7 +56,7 @@ export async function Pathways() {
           <span className="pathway-cta">
             {t('deedCta')}{' '}
             <span className="pathway-arrow">
-              <SiteIcon name="arrow" />
+              <ArrowLeft className="size-[19px] rtl:-scale-x-100" aria-hidden />
             </span>
           </span>
         </Link>
@@ -64,7 +64,7 @@ export async function Pathways() {
         <Link className="pathway pathway-faith" href="/branches">
           <span className="pathway-top">
             <span className="pathway-icon">
-              <SiteIcon name="book" />
+              <BookOpen className="size-7" aria-hidden />
             </span>
             <span className="pathway-overline">{t('branchOverline')}</span>
           </span>
@@ -73,7 +73,7 @@ export async function Pathways() {
           <span className="pathway-cta">
             {t('branchCta')}{' '}
             <span className="pathway-arrow">
-              <SiteIcon name="arrow" />
+              <ArrowLeft className="size-[19px] rtl:-scale-x-100" aria-hidden />
             </span>
           </span>
         </Link>

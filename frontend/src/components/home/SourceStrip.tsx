@@ -93,12 +93,20 @@ export function SourceStrip({ locale }: SourceStripProps) {
     media.addEventListener('change', sync);
     document.addEventListener('visibilitychange', onVisibility);
     window.addEventListener('resize', sync);
+    const observer =
+      typeof ResizeObserver !== 'undefined'
+        ? new ResizeObserver(() => {
+            sync();
+          })
+        : null;
+    observer?.observe(viewport);
 
     return () => {
       stop();
       media.removeEventListener('change', sync);
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('resize', sync);
+      observer?.disconnect();
     };
   }, [locale]);
 

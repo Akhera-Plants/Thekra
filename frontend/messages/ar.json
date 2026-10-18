@@ -177,7 +177,8 @@
     "reflectionCta": "تأمّل المعنى",
     "reflectionAuthorFallback": "من أهل العلم",
     "sourcesLead": "من كتاب الله، وصحيح السنّة، وكلام أهل العلم.",
-    "sourcesAria": "مصادر النصوص"
+    "sourcesAria": "مصادر النصوص",
+    "readingPairLabel": "تذكرة وباب من الخير"
   },
   "sinRank": {
     "KABIRA": "كبيرة",

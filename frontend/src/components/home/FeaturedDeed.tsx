@@ -1,6 +1,6 @@
+import { ArrowLeft } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
-import { SiteIcon } from '@/components/shared/site-icons';
 
 export interface FeaturedDeedData {
   slug: string;
@@ -28,7 +28,7 @@ export async function FeaturedDeed({ deed }: FeaturedDeedProps) {
         <h2 id="featured-deed-title">{deed.name}</h2>
         {deed.line ? <p id="featured-deed-summary">{deed.line}</p> : null}
         <span className="card-action">
-          {t('deedCardCta')} <SiteIcon name="arrow" />
+          {t('deedCardCta')} <ArrowLeft className="size-[18px] rtl:-scale-x-100" aria-hidden />
         </span>
       </div>
       <svg className="olive-drawing" viewBox="0 0 112 170" fill="none" aria-hidden>

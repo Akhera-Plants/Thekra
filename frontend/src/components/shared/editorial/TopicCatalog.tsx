@@ -1,19 +1,19 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useRef, useState, useTransition } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState, useTransition, type ComponentType } from 'react';
+import { ArrowLeft, BookOpen, DoorOpen, Search, Sprout } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 import { Link, usePathname, useRouter } from '@/i18n/navigation';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
-import { SiteIcon, type SiteIconName } from '@/components/shared/site-icons';
 import { FormattedNumber } from '@/components/shared/FormattedNumber';
 
-const SEARCH_DEBOUNCE_MS = 150;
+const SEARCH_DEBOUNCE_MS = 300;
 
-const INTENT_ICON: Record<'sin' | 'good-deed' | 'branch', SiteIconName> = {
-  sin: 'door',
-  'good-deed': 'sprout',
-  branch: 'book',
+const INTENT_ICON: Record<'sin' | 'good-deed' | 'branch', ComponentType<{ className?: string; 'aria-hidden'?: boolean }>> = {
+  sin: DoorOpen,
+  'good-deed': Sprout,
+  branch: BookOpen,
 };
 
 export const TOPIC_DOMAINS = [
@@ -67,23 +67,28 @@ export function TopicCatalog(props: TopicCatalogProps) {
 
 function TopicCatalogWithSearch(props: TopicCatalogProps) {
   const searchParams = useSearchParams();
+  const qParam = searchParams.get('q') ?? '';
+  // Remount when the URL query changes (back/forward) so local state stays in sync
+  // without setState-in-effect.
+  return <TopicCatalogSearchInner key={qParam} initialQuery={qParam} {...props} />;
+}
+
+function TopicCatalogSearchInner({
+  initialQuery,
+  ...props
+}: TopicCatalogProps & { initialQuery: string }) {
+  const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
   const [, startTransition] = useTransition();
-  const qParam = searchParams.get('q') ?? '';
-  const [query, setQuery] = useState(qParam);
-  const [debounced, setDebounced] = useState(qParam.trim());
-
-  useEffect(() => {
-    setQuery(qParam);
-    setDebounced(qParam.trim());
-  }, [qParam]);
+  const [query, setQuery] = useState(initialQuery);
+  const [debounced, setDebounced] = useState(initialQuery.trim());
 
   useEffect(() => {
     const timer = setTimeout(() => {
       const next = query.trim();
       setDebounced(next);
-      if (next === qParam.trim()) return;
+      if (next === initialQuery.trim()) return;
       const params = new URLSearchParams(searchParams.toString());
       if (next) params.set('q', next);
       else params.delete('q');
@@ -93,7 +98,7 @@ function TopicCatalogWithSearch(props: TopicCatalogProps) {
       });
     }, SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(timer);
-  }, [query, pathname, qParam, router, searchParams, startTransition]);
+  }, [query, pathname, initialQuery, router, searchParams, startTransition]);
 
   return (
     <TopicCatalogShell
@@ -135,7 +140,7 @@ function TopicCatalogShell({
   const tCrumbs = useTranslations('breadcrumbs');
   const tCatalog = useTranslations('catalog');
   const inputRef = useRef<HTMLInputElement>(null);
-  const icon = INTENT_ICON[intent];
+  const Icon = INTENT_ICON[intent];
 
   useEffect(() => {
     if (window.matchMedia('(min-width: 1024px)').matches) inputRef.current?.focus();
@@ -201,7 +206,7 @@ function TopicCatalogShell({
           }}
         >
           <label className="search-field">
-            <SiteIcon name="search" />
+            <Search className="size-[19px]" aria-hidden />
             <input
               ref={inputRef}
               id="topic-search"
@@ -215,7 +220,7 @@ function TopicCatalogShell({
             />
           </label>
           <button className="solid-button" type="submit">
-            {tCatalog('search')} <SiteIcon name="arrow" />
+            {tCatalog('search')} <ArrowLeft className="size-[18px] rtl:-scale-x-100" aria-hidden />
           </button>
         </form>
 
@@ -232,7 +237,7 @@ function TopicCatalogShell({
               const meta = topicMeta(entry);
               return (
                 <Link key={entry.href} href={entry.href} className="topic-item">
-                  <SiteIcon name={icon} />
+                  <Icon className="size-[26px]" aria-hidden />
                   <span>
                     <strong>{label}</strong>
                     {meta ? <small>{meta}</small> : null}
@@ -242,7 +247,7 @@ function TopicCatalogShell({
                       </small>
                     ) : null}
                   </span>
-                  <SiteIcon name="arrow" className="topic-arrow" />
+                  <ArrowLeft className="topic-arrow size-[18px] rtl:-scale-x-100" aria-hidden />
                 </Link>
               );
             })}

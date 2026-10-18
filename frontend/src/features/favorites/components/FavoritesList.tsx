@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { ErrorState } from '@/components/shared/ErrorState';
-import { SiteIcon } from '@/components/shared/site-icons';
+import { ArrowLeft, Bookmark } from 'lucide-react';
 import { StaggerReveal } from '@/components/shared/StaggerReveal';
 import { QuoteCard } from '@/components/shared/quote/QuoteCard';
 import { QuoteCardSkeleton } from '@/components/shared/quote/QuoteCardSkeleton';
@@ -46,11 +46,12 @@ export function FavoritesList() {
     return (
       <div className="saved-list">
         <div className="empty-state">
-          <SiteIcon name="bookmark" />
+          <Bookmark className="size-[34px]" aria-hidden />
           <h2>{t('favorites.empty')}</h2>
           <p>{t('favorites.emptyHint')}</p>
           <Link className="solid-button" href="/#paths">
-            {t('favorites.choosePath')} <SiteIcon name="arrow" />
+            {t('favorites.choosePath')}{' '}
+            <ArrowLeft className="size-[18px] rtl:-scale-x-100" aria-hidden />
           </Link>
         </div>
       </div>

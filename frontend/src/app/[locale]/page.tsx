@@ -1,4 +1,4 @@
-import { setRequestLocale } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { FeaturedDeed } from '@/components/home/FeaturedDeed';
 import { FeaturedReminder } from '@/components/home/FeaturedReminder';
 import { Moments } from '@/components/home/Moments';
@@ -23,19 +23,8 @@ function topicName(
   return name?.trim() || null;
 }
 
-/** Today's deed rotates through published deeds that carry a reward line. Prefer parents when present. */
+/** Today's deed rotates through published deeds that carry a reward line. */
 function pickDeed(deeds: GoodDeedDto[], lang: 'ar' | 'en', day: number) {
-  const preferred = deeds.find((d) => d.slug === 'birr-al-walidayn' && d.quoteCount > 0);
-  if (preferred) {
-    const description = (lang === 'ar' ? preferred.descriptionAr : preferred.description)?.trim() || null;
-    const reward = (lang === 'ar' ? preferred.rewardAr : preferred.reward)?.trim() || null;
-    return {
-      slug: preferred.slug,
-      name: topicName(preferred, lang) ?? '',
-      line: reward ?? description,
-    };
-  }
-
   const published = deeds.filter((deed) => deed.quoteCount > 0 && topicName(deed, lang));
   const reward = (deed: GoodDeedDto) => (lang === 'ar' ? deed.rewardAr : deed.reward)?.trim() || null;
   const withReward = published.filter((deed) => reward(deed));
@@ -61,6 +50,7 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
   const { locale } = await params;
   setRequestLocale(locale);
   const lang = locale === 'en' ? 'en' : 'ar';
+  const t = await getTranslations('home');
   const day = utcDayNumber();
 
   const [reminder, deeds, scholars] = await Promise.all([
@@ -83,10 +73,12 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
       <Pathways />
       <OrnamentalDivider />
       <Moments />
-      <section className="reading-pair" aria-label={lang === 'ar' ? 'تذكرة وباب من الخير' : 'Reminder and a door to good'}>
-        {reminder ? <FeaturedReminder quote={reminder} /> : null}
-        {deed ? <FeaturedDeed deed={deed} /> : null}
-      </section>
+      {(reminder || deed) ? (
+        <section className="reading-pair" aria-label={t('readingPairLabel')}>
+          {reminder ? <FeaturedReminder quote={reminder} /> : null}
+          {deed ? <FeaturedDeed deed={deed} /> : null}
+        </section>
+      ) : null}
       {reflection ? <Reflection quote={reflection} locale={lang} /> : null}
       <SourceStrip locale={lang} />
     </div>

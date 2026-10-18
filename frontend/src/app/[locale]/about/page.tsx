@@ -2,7 +2,7 @@ import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { FormattedNumber } from '@/components/shared/FormattedNumber';
-import { SiteIcon } from '@/components/shared/site-icons';
+import { ArrowLeft } from 'lucide-react';
 import { getCatalogSources } from '@/lib/api/sources';
 import type { LocaleCode } from '@/lib/types/enums';
 
@@ -73,13 +73,13 @@ export default async function AboutPage({
 
       <nav className="about-paths" aria-label={tNav('main')}>
         <Link className="solid-button" href="/sins">
-          {tCrumbs('sins')} <SiteIcon name="arrow" />
+          {tCrumbs('sins')} <ArrowLeft className="size-[18px] rtl:-scale-x-100" aria-hidden />
         </Link>
         <Link className="outline-button" href="/good-deeds">
-          {tCrumbs('goodDeeds')} <SiteIcon name="arrow" />
+          {tCrumbs('goodDeeds')} <ArrowLeft className="size-[18px] rtl:-scale-x-100" aria-hidden />
         </Link>
         <Link className="outline-button" href="/branches">
-          {tCrumbs('branches')} <SiteIcon name="arrow" />
+          {tCrumbs('branches')} <ArrowLeft className="size-[18px] rtl:-scale-x-100" aria-hidden />
         </Link>
       </nav>
     </div>

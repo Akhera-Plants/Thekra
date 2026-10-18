@@ -1,19 +1,19 @@
+import { ArrowLeft, Heart, MessageCircle, Pause, Sun, type LucideIcon } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
-import { SiteIcon, type SiteIconName } from '@/components/shared/site-icons';
 
 export interface MomentLink {
   href: string;
   labelKey: 'momentAnger' | 'momentPrayer' | 'momentBackbiting' | 'momentKindness';
-  icon: SiteIconName;
+  icon: LucideIcon;
 }
 
 /** Curated moment links mapped to real topic slugs (not prototype sample IDs). */
 export const DEFAULT_MOMENTS: MomentLink[] = [
-  { href: '/sins/ghadab', labelKey: 'momentAnger', icon: 'pause' },
-  { href: '/good-deeds/salah', labelKey: 'momentPrayer', icon: 'sun' },
-  { href: '/sins/ghibah', labelKey: 'momentBackbiting', icon: 'message' },
-  { href: '/good-deeds/kalam-tayyib', labelKey: 'momentKindness', icon: 'heart' },
+  { href: '/sins/ghadab', labelKey: 'momentAnger', icon: Pause },
+  { href: '/good-deeds/salah', labelKey: 'momentPrayer', icon: Sun },
+  { href: '/sins/ghibah', labelKey: 'momentBackbiting', icon: MessageCircle },
+  { href: '/good-deeds/kalam-tayyib', labelKey: 'momentKindness', icon: Heart },
 ];
 
 interface MomentsProps {
@@ -30,17 +30,20 @@ export async function Moments({ moments = DEFAULT_MOMENTS }: MomentsProps) {
         <p>{t('momentsLead')}</p>
       </div>
       <div className="moments-list">
-        {moments.map((moment) => (
-          <Link key={moment.href} className="moment" href={moment.href}>
-            <span className="moment-symbol">
-              <SiteIcon name={moment.icon} />
-            </span>
-            <span>{t(moment.labelKey)}</span>
-            <span className="link-arrow">
-              <SiteIcon name="arrow" />
-            </span>
-          </Link>
-        ))}
+        {moments.map((moment) => {
+          const Icon = moment.icon;
+          return (
+            <Link key={moment.href} className="moment" href={moment.href}>
+              <span className="moment-symbol">
+                <Icon className="size-[18px]" aria-hidden />
+              </span>
+              <span>{t(moment.labelKey)}</span>
+              <span className="link-arrow">
+                <ArrowLeft className="size-[17px] rtl:-scale-x-100" aria-hidden />
+              </span>
+            </Link>
+          );
+        })}
       </div>
     </section>
   );

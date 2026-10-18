@@ -1,9 +1,10 @@
 'use client';
 
-import { Fragment, useState } from 'react';
+import { Fragment } from 'react';
+import { ArrowLeft, Bookmark, BookMarked, BookOpen } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
-import { SiteIcon } from '@/components/shared/site-icons';
+import { useFavoriteQuoteIds } from '@/features/favorites/hooks/useFavoriteQuoteIds';
 import { useToggleFavorite } from '@/features/favorites/hooks/useToggleFavorite';
 import { formatDigits } from '@/lib/format/digits';
 import { formatGradeCitation } from '@/lib/format/grade-citation';
@@ -35,6 +36,7 @@ export function FeaturedReminder({ quote }: FeaturedReminderProps) {
   const t = useTranslations('home');
   const tFav = useTranslations('favorites');
   const locale = useLocale() === 'en' ? 'en' : 'ar';
+  const { ids } = useFavoriteQuoteIds();
   const { toggle, isPending } = useToggleFavorite({
     labels: {
       added: tFav('added'),
@@ -48,7 +50,7 @@ export function FeaturedReminder({ quote }: FeaturedReminderProps) {
   const english = locale === 'en' && scripture ? (quote.translation?.text ?? null) : null;
   const { text } = splitChain(quote.textAr);
   const isQuran = quote.type === QuoteType.QURAN_VERSE;
-  const saved = quote.isFavorite ?? false;
+  const saved = ids.has(quote.id) || Boolean(quote.isFavorite);
 
   const sourceName =
     (locale === 'ar' ? quote.source?.nameAr : quote.source?.name)?.trim() ||
@@ -73,7 +75,6 @@ export function FeaturedReminder({ quote }: FeaturedReminderProps) {
       ? (englishProvenance(rawReference) ?? rawReference)
       : rawReference;
   const meta = [gradeLine, sourceLine].filter(Boolean).join(' · ');
-
   const body = english ?? text;
 
   return (
@@ -88,7 +89,7 @@ export function FeaturedReminder({ quote }: FeaturedReminderProps) {
           disabled={isPending}
           onClick={() => toggle(quote.id, saved)}
         >
-          <SiteIcon name="bookmark" />
+          <Bookmark className="size-[19px]" aria-hidden />
         </button>
       </div>
       <p className={isQuran ? 'quran featured-verse' : 'featured-verse'} lang={english ? 'en' : 'ar'}>
@@ -96,14 +97,18 @@ export function FeaturedReminder({ quote }: FeaturedReminderProps) {
       </p>
       <div className="reading-bottom">
         <div className="source-stamp">
-          <SiteIcon name={isQuran ? 'quran' : 'book'} />
+          {isQuran ? (
+            <BookMarked className="size-6" aria-hidden />
+          ) : (
+            <BookOpen className="size-6" aria-hidden />
+          )}
           <span>
             <strong>{sourceName}</strong>
             {meta ? <small>{formatDigits(meta)}</small> : null}
           </span>
         </div>
         <Link className="outline-button" href={`/quotes/${quote.id}`}>
-          {t('readFull')} <SiteIcon name="arrow" />
+          {t('readFull')} <ArrowLeft className="size-[18px] rtl:-scale-x-100" aria-hidden />
         </Link>
       </div>
     </article>
