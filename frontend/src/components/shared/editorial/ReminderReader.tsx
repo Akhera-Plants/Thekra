@@ -165,7 +165,7 @@ export function ReminderReader({
         {shownSections.map((section) => (
           <section key={section.heading || 'texts'} className="flex flex-col gap-8 md:gap-9">
             {section.heading ? (
-              <h2 className="font-arabic-display text-[21px] font-semibold md:text-2xl">
+              <h2 className="font-arabic-display text-[22px] font-semibold md:text-[26px]">
                 {section.heading}
               </h2>
             ) : null}

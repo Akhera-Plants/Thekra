@@ -1,21 +1,13 @@
 import type { Metadata } from 'next';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server';
-import { Geist_Mono, Source_Sans_3 } from 'next/font/google';
+import { Geist_Mono } from 'next/font/google';
 import { notFound } from 'next/navigation';
 import { AppShell } from '@/components/shared/AppShell';
 import { LocaleSync } from '@/components/shared/LocaleSync';
 import { amiri, amiriQuran, plexArabic, thmanyahDisplay, thmanyahSans, thmanyahText } from '@/lib/fonts';
 import { AppProviders } from '@/lib/providers';
 import { routing } from '@/i18n/routing';
-
-/** Adobe Source Sans 3 — English UI and reading text. */
-const uiFont = Source_Sans_3({
-  subsets: ['latin'],
-  variable: '--font-ui',
-  display: 'swap',
-  weight: ['400', '500', '600', '700'],
-});
 
 const monoFont = Geist_Mono({
   subsets: ['latin'],
@@ -55,11 +47,11 @@ export default async function LocaleLayout({
       lang={locale}
       dir={dir}
       suppressHydrationWarning
-      className={`${thmanyahDisplay.variable} ${thmanyahText.variable} ${thmanyahSans.variable} ${plexArabic.variable} ${amiri.variable} ${amiriQuran.variable} ${uiFont.variable} ${monoFont.variable} h-full antialiased`}
+      className={`${thmanyahDisplay.variable} ${thmanyahText.variable} ${thmanyahSans.variable} ${plexArabic.variable} ${amiri.variable} ${amiriQuran.variable} ${monoFont.variable} h-full antialiased`}
     >
       <body
         suppressHydrationWarning
-        className={`flex min-h-full flex-col ${locale === 'ar' ? 'font-arabic-ui' : 'font-sans'}`}
+        className={`flex min-h-full flex-col ${locale === 'ar' ? 'font-arabic-ui' : 'font-amiri'}`}
       >
         <NextIntlClientProvider messages={messages}>
           <AppProviders>

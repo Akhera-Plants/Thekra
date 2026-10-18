@@ -8,9 +8,10 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-ui);
+  /* English UI/reading uses Amiri — same literary register as Thmanyah/Amiri Arabic. */
+  --font-sans: var(--font-amiri);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-ui);
+  --font-heading: var(--font-amiri);
   /* Existing `font-arabic` stays the reading face. Display and UI are separate static families. */
   --font-arabic: var(--font-arabic-text);
   --font-arabic-text: var(--font-arabic-text);

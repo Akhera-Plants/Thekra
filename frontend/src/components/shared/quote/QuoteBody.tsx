@@ -38,10 +38,10 @@ export function QuoteBody({ quote, size = 'xl', className, children }: QuoteBody
         dir="ltr"
         lang="en"
         className={cn(
-          'max-w-[68ch] border-none ps-0 text-start font-sans font-normal text-foreground leading-[1.7]',
+          'max-w-[68ch] border-none ps-0 text-start font-amiri font-normal text-foreground leading-[1.75]',
           size === 'hero'
-            ? 'text-[17px] md:text-xl'
-            : 'text-base md:text-[17px]',
+            ? 'text-[19px] md:text-[22px]'
+            : 'text-[17px] md:text-[19px]',
           className,
         )}
       >
