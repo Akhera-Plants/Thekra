@@ -15,6 +15,8 @@ import {
   adminSetQuoteTags,
 } from '@/lib/api/admin-quotes';
 import type { AdminQuotesQuery, CreateQuoteBody, UpdateQuoteBody } from '@/lib/types/admin';
+import { getQuote } from '@/lib/api/quotes';
+import { ApiError } from '@/lib/types/api';
 
 export function useAdminQuotes(query: AdminQuotesQuery = {}) {
   return useQuery({
@@ -23,10 +25,24 @@ export function useAdminQuotes(query: AdminQuotesQuery = {}) {
   });
 }
 
+/**
+ * GET /admin/quotes/:id does not exist on the backend (404). Until it does:
+ * the table seeds this cache entry with the row before navigating (see QuoteListView),
+ * and a cold load falls back to the public detail route (works for published texts only).
+ */
 export function useAdminQuote(id: string) {
   return useQuery({
     queryKey: queryKeys.adminQuotes.detail(id),
-    queryFn: () => adminGetQuote(id),
+    queryFn: async () => {
+      try {
+        return await adminGetQuote(id);
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 404) {
+          return getQuote(id, { includeAllTranslations: true });
+        }
+        throw error;
+      }
+    },
     enabled: !!id,
   });
 }

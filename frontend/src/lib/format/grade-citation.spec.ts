@@ -10,7 +10,7 @@ describe('formatGradeCitation', () => {
         gradeReference: 'سنن أبي داود، رقم 5186',
         grade: 'SAHIH',
       }),
-    ).toBe("Sunan Abi Dawud 5186 — graded sahih by Shu'ayb al-Arna'ut");
+    ).toBe("Sunan Abi Dawud 5186 · graded sahih by Shu'ayb al-Arna'ut");
   });
 
   it('puts the Sunan book and number before the Arnaut grader (ar)', () => {
@@ -21,7 +21,7 @@ describe('formatGradeCitation', () => {
         gradeReference: 'سنن أبي داود، رقم 5186',
         grade: 'SAHIH',
       }),
-    ).toBe('سنن أبي داود، رقم 5186 — صحّحه شعيب الأرنؤوط');
+    ).toBe('سنن أبي داود، رقم 5186 · صحّحه شعيب الأرنؤوط');
   });
 
   it('keeps Sahihayn short form', () => {
@@ -43,5 +43,16 @@ describe('formatGradeCitation', () => {
     });
     expect(line?.startsWith("Shu'ayb")).toBe(false);
     expect(line).toMatch(/^Sunan Ibn Majah 3942/);
+  });
+
+  it('names a hasan grade by the grader that gave it', () => {
+    expect(
+      formatGradeCitation({
+        locale: 'en',
+        gradeAuthority: 'شعيب الأرنؤوط',
+        gradeReference: 'سنن أبي داود، رقم 5186',
+        grade: 'HASAN',
+      }),
+    ).toBe("Sunan Abi Dawud 5186 · graded hasan by Shu'ayb al-Arna'ut");
   });
 });

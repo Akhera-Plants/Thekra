@@ -6,7 +6,7 @@
  */
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -16,7 +16,6 @@ import { getSources } from '@/lib/api/sources';
 import { useAdminSyncLogs, useAdminTriggerSync } from '../hooks/useAdminSync';
 import { AdminDataTable, type ColumnDef } from './AdminDataTable';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
   Dialog,
@@ -42,15 +41,13 @@ import {
 } from '@/components/ui/select';
 import { RefreshCcw, Play } from 'lucide-react';
 import type { SyncLogDto } from '@/lib/types/admin';
-import { SyncStatus } from '@/lib/types/enums';
+import type { SyncStatus } from '@/lib/types/enums';
 import { cn } from '@/lib/utils';
-
-const STATUS_BADGE: Record<SyncStatus, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; label: string }> = {
-  [SyncStatus.PENDING]: { variant: 'outline', label: 'Pending' },
-  [SyncStatus.RUNNING]: { variant: 'secondary', label: 'Running' },
-  [SyncStatus.SUCCESS]: { variant: 'default', label: 'Success' },
-  [SyncStatus.FAILED]: { variant: 'destructive', label: 'Failed' },
-};
+import { adminLabel, sourceName } from '@/lib/format/admin-labels';
+import { formatDigits } from '@/lib/format/digits';
+import { PageHeader } from './kit/PageHeader';
+import { StatusBadge, SYNC_STATUS_TONE } from './kit/StatusBadge';
+import { formatCount } from './kit/format';
 
 const triggerSchema = z.object({
   sourceId: z.string().uuid({ message: 'Select a source' }),
@@ -70,6 +67,7 @@ interface TriggerDialogProps {
 
 function TriggerDialog({ open, onClose }: TriggerDialogProps) {
   const t = useTranslations('admin');
+  const locale = useLocale();
   const { mutateAsync: trigger, isPending } = useAdminTriggerSync();
 
   const { data: sourcesResult } = useQuery({
@@ -127,7 +125,7 @@ function TriggerDialog({ open, onClose }: TriggerDialogProps) {
                   <SelectContent>
                     {externalSources.map((s) => (
                       <SelectItem key={s.id} value={s.id}>
-                        {s.name} {s.apiProvider && <span className="text-muted-foreground">({s.apiProvider})</span>}
+                        {sourceName(s, locale)} {s.apiProvider && <span className="text-muted-foreground">({s.apiProvider})</span>}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -194,9 +192,15 @@ function TriggerDialog({ open, onClose }: TriggerDialogProps) {
 
 export function SyncConsoleView() {
   const t = useTranslations('admin');
+  const locale = useLocale();
+  const dateFormat = new Intl.DateTimeFormat(locale === 'en' ? 'en-GB' : 'ar', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+    numberingSystem: 'latn',
+  });
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const { data, isLoading, refetch, isFetching } = useAdminSyncLogs({});
+  const { data, isLoading, isError, refetch, isFetching } = useAdminSyncLogs({});
   const logs = data?.data ?? [];
 
   const columns: ColumnDef<SyncLogDto>[] = [
@@ -215,14 +219,12 @@ export function SyncConsoleView() {
     {
       key: 'status',
       header: t('sync.colStatus'),
-      cell: (row) => {
-        const cfg = STATUS_BADGE[row.status as SyncStatus] ?? { variant: 'outline' as const, label: row.status };
-        return (
-          <Badge variant={cfg.variant} className="whitespace-nowrap text-xs">
-            {cfg.label}
-          </Badge>
-        );
-      },
+      cell: (row) => (
+        <StatusBadge
+          tone={SYNC_STATUS_TONE[row.status as SyncStatus] ?? 'neutral'}
+          label={adminLabel('syncStatus', row.status, locale)}
+        />
+      ),
       className: 'whitespace-nowrap',
     },
     {
@@ -230,7 +232,7 @@ export function SyncConsoleView() {
       header: t('sync.colStarted'),
       cell: (row) => (
         <span className="text-sm text-muted-foreground">
-          {new Date(row.startedAt).toLocaleString()}
+          {dateFormat.format(new Date(row.startedAt))}
         </span>
       ),
     },
@@ -239,7 +241,7 @@ export function SyncConsoleView() {
       header: t('sync.colDuration'),
       cell: (row) =>
         row.durationMs != null ? (
-          <span className="text-sm">{(row.durationMs / 1000).toFixed(1)}s</span>
+          <span className="text-sm tabular-nums">{formatDigits((row.durationMs / 1000).toFixed(1))}{locale === 'en' ? 's' : ' ث'}</span>
         ) : (
           <span className="text-muted-foreground">—</span>
         ),
@@ -247,7 +249,7 @@ export function SyncConsoleView() {
     {
       key: 'imported',
       header: t('sync.colImported'),
-      cell: (row) => <Badge variant="secondary" className="text-xs">{row.recordsImported}</Badge>,
+      cell: (row) => <span className="tabular-nums">{formatCount(row.recordsImported)}</span>,
       className: 'w-20',
     },
     {
@@ -263,13 +265,12 @@ export function SyncConsoleView() {
   ];
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">{t('sync.title')}</h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">{t('sync.subtitle')}</p>
-        </div>
-        <div className="flex items-center gap-2">
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        title={t('sync.title')}
+        description={t('sync.subtitle')}
+        actions={
+        <>
           <Button
             variant="outline"
             size="sm"
@@ -279,17 +280,20 @@ export function SyncConsoleView() {
           >
             <RefreshCcw className={cn('h-4 w-4', isFetching && 'animate-spin')} aria-hidden />
           </Button>
-          <Button size="sm" onClick={() => setDialogOpen(true)}>
-            <Play className="me-2 h-4 w-4" aria-hidden />
+          <Button size="sm" className="desk-press" onClick={() => setDialogOpen(true)}>
+            <Play data-icon="inline-start" aria-hidden />
             {t('sync.triggerRun')}
           </Button>
-        </div>
-      </div>
+        </>
+        }
+      />
 
       <AdminDataTable
         columns={columns}
         data={logs}
         isLoading={isLoading}
+        isError={isError}
+        onRetry={() => void refetch()}
         emptyMessage={t('sync.empty')}
         rowKey={(r) => r.id}
       />

@@ -8,7 +8,8 @@
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { adminLabel, sourceName } from '@/lib/format/admin-labels';
 import { useRouter } from '@/i18n/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/query-keys';
@@ -65,6 +66,7 @@ interface QuoteFormProps {
 
 export function QuoteForm({ existing }: QuoteFormProps) {
   const t = useTranslations('admin');
+  const locale = useLocale();
   const router = useRouter();
   const isEdit = !!existing;
 
@@ -149,7 +151,7 @@ export function QuoteForm({ existing }: QuoteFormProps) {
                   </FormControl>
                   <SelectContent>
                     {Object.values(QuoteType).map((v) => (
-                      <SelectItem key={v} value={v}>{v}</SelectItem>
+                      <SelectItem key={v} value={v}>{adminLabel('quoteType', v, locale)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -173,7 +175,7 @@ export function QuoteForm({ existing }: QuoteFormProps) {
                   </FormControl>
                   <SelectContent>
                     {sources.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                      <SelectItem key={s.id} value={s.id}>{sourceName(s, locale)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -271,7 +273,7 @@ export function QuoteForm({ existing }: QuoteFormProps) {
                     </FormControl>
                     <SelectContent>
                       {Object.values(HadithGrade).map((g) => (
-                        <SelectItem key={g} value={g}>{g}</SelectItem>
+                        <SelectItem key={g} value={g}>{adminLabel('grade', g, locale)}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

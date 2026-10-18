@@ -1,11 +1,13 @@
 import { englishProvenance } from '@/lib/format/provenance';
 
 const SAHIHAYN = /^(?:رواه البخاري|رواه مسلم|متفق عليه)$/;
+/** Book reference, then who graded it. */
+const GRADER_SEPARATOR = ' · ';
 
 /**
  * Book + number first, grader second. Sahihayn keep their short form.
- * SUNAN_TAHQIQ: «Sunan Abi Dawud 5186 — graded sahih by Shu'ayb al-Arna'ut»
- * / «سنن أبي داود، رقم 5186 — صحّحه شعيب الأرنؤوط».
+ * SUNAN_TAHQIQ: «Sunan Abi Dawud 5186 · graded sahih by Shu'ayb al-Arna'ut»
+ * / «سنن أبي داود، رقم 5186 · صحّحه شعيب الأرنؤوط». The grader is never the book.
  */
 export function formatGradeCitation(input: {
   locale: 'ar' | 'en';
@@ -30,7 +32,7 @@ export function formatGradeCitation(input: {
   if (authority && reference) {
     if (input.locale === 'ar') {
       const verb = input.grade === 'HASAN' ? 'حسّنه' : /الأرنؤوط|أرنؤوط/.test(authority) ? 'صحّحه' : 'حكمه';
-      return `${reference} — ${verb} ${authority}`;
+      return `${reference}${GRADER_SEPARATOR}${verb} ${authority}`;
     }
     const book = formatEnglishBookRef(reference);
     const grader = englishProvenance(authority) ?? authority;
@@ -40,7 +42,7 @@ export function formatGradeCitation(input: {
         : /Arna'ut|أرنؤوط/.test(authority) || /Arna'ut/.test(grader)
           ? 'graded sahih by'
           : 'graded by';
-    return `${book} — ${verb} ${grader}`;
+    return `${book}${GRADER_SEPARATOR}${verb} ${grader}`;
   }
 
   const alone = reference ?? authority;

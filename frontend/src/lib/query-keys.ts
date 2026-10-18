@@ -88,4 +88,13 @@ export const queryKeys = {
     detail: (id: string) => ['admin', 'sync-logs', id] as const,
   },
   adminStats: ['admin', 'stats'] as const,
+  // Review desk (flags, counts, proposals, publish probe)
+  adminReview: {
+    all: ['admin', 'review'] as const,
+    flags: (p: object) => ['admin', 'review', 'flags', p] as const,
+    flag: (id: string) => ['admin', 'review', 'flag', id] as const,
+    count: (scope: string, p: object) => ['admin', 'review', 'count', scope, p] as const,
+    proposals: (kind: string, p: object) => ['admin', 'review', 'proposals', kind, p] as const,
+    publicState: (quoteId: string) => ['admin', 'review', 'public-state', quoteId] as const,
+  },
 } as const;

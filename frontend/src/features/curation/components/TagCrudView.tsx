@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -13,7 +13,6 @@ import { adminCreateTag, adminUpdateTag, adminDeleteTag } from '@/lib/api/admin-
 import { AdminDataTable, type ColumnDef } from './AdminDataTable';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -39,6 +38,11 @@ import {
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import type { QuoteTagDto } from '@/lib/types/api';
 import { TagCategory } from '@/lib/types/enums';
+import { adminLabel } from '@/lib/format/admin-labels';
+import { PageHeader } from './kit/PageHeader';
+import { RowActions } from './kit/RowActions';
+import { formatCount } from './kit/format';
+
 
 const tagSchema = z.object({
   name: z.string().min(1).max(200),
@@ -57,6 +61,7 @@ interface TagDialogProps {
 
 function TagDialog({ open, onClose, existing }: TagDialogProps) {
   const t = useTranslations('admin');
+  const locale = useLocale();
   const isEdit = !!existing;
   const qc = useQueryClient();
 
@@ -123,7 +128,7 @@ function TagDialog({ open, onClose, existing }: TagDialogProps) {
                     </FormControl>
                     <SelectContent>
                       {Object.values(TagCategory).map((v) => (
-                        <SelectItem key={v} value={v}>{v}</SelectItem>
+                        <SelectItem key={v} value={v}>{adminLabel('tagCategory', v, locale)}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -146,11 +151,12 @@ function TagDialog({ open, onClose, existing }: TagDialogProps) {
 
 export function TagCrudView() {
   const t = useTranslations('admin');
+  const locale = useLocale();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<QuoteTagDto | undefined>();
   const qc = useQueryClient();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: queryKeys.tags.list({}),
     queryFn: () => getTags({}),
   });
@@ -165,12 +171,12 @@ export function TagCrudView() {
     onError: () => toast.error(t('tags.deleteError')),
   });
 
-  const columns: ColumnDef<QuoteTagDto>[] = [
+  const allColumns: ColumnDef<QuoteTagDto>[] = [
     {
       key: 'nameAr',
       header: t('common.nameAr'),
       cell: (row) => row.nameAr
-        ? <span className="font-arabic-ui text-sm" dir="rtl" lang="ar">{row.nameAr}</span>
+        ? <span className="font-medium" dir="rtl" lang="ar">{row.nameAr}</span>
         : <span className="text-muted-foreground">—</span>,
     },
     {
@@ -186,43 +192,49 @@ export function TagCrudView() {
     {
       key: 'category',
       header: t('common.category'),
-      cell: (row) => <Badge variant="outline" className="text-xs">{row.category}</Badge>,
+      cell: (row) => <span className="text-muted-foreground">{adminLabel('tagCategory', row.category, locale)}</span>,
     },
     {
       key: 'actions',
-      header: '',
+      header: <span className="sr-only">{t('table.actions')}</span>,
       cell: (row) => (
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={t('common.edit')}
-            onClick={() => { setEditing(row); setDialogOpen(true); }}>
-            <Pencil className="h-3.5 w-3.5" aria-hidden />
-          </Button>
-          <Button
-            variant="ghost" size="icon"
-            className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
-            aria-label={t('common.delete')} disabled={isDeleting}
-            onClick={() => { if (window.confirm(t('common.confirmDelete'))) del(row.id); }}
-          >
-            <Trash2 className="h-3.5 w-3.5" aria-hidden />
-          </Button>
-        </div>
+        <RowActions
+          label={t('table.actions')}
+          primary={[{ label: t('common.edit'), icon: Pencil, onSelect: () => { setEditing(row); setDialogOpen(true); } }]}
+          destructive={{
+            label: t('common.delete'),
+            icon: Trash2,
+            disabled: isDeleting,
+            onSelect: () => del(row.id),
+            confirmTitle: t('common.confirmDelete'),
+            confirmBody: row.nameAr ?? row.name,
+            confirmLabel: t('common.delete'),
+            cancelLabel: t('common.cancel'),
+          }}
+        />
       ),
-      className: 'w-20',
+      className: 'w-10',
     },
   ];
 
+  // English names are data, edited in the dialog; the Arabic desk does not show them as a column.
+  const columns = allColumns.filter((column) => locale === 'en' || column.key !== 'name');
+
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">{t('tags.title')}</h1>
-        <Button size="sm" onClick={() => { setEditing(undefined); setDialogOpen(true); }}>
-          <Plus className="me-2 h-4 w-4" aria-hidden />
-          {t('tags.newTag')}
-        </Button>
-      </div>
-      <AdminDataTable columns={columns} data={tags} isLoading={isLoading}
-        emptyMessage={t('tags.empty')} rowKey={(r) => r.id} />
-      <TagDialog open={dialogOpen} onClose={() => { setDialogOpen(false); setEditing(undefined); }} existing={editing} />
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        title={t('tags.title')}
+        meta={isLoading ? undefined : formatCount(tags.length)}
+        actions={
+          <Button size="sm" className="desk-press" onClick={() => { setEditing(undefined); setDialogOpen(true); }}>
+            <Plus data-icon="inline-start" aria-hidden />
+            {t('tags.newTag')}
+          </Button>
+        }
+      />
+      <AdminDataTable columns={columns} data={tags} isLoading={isLoading} isError={isError}
+        onRetry={() => void refetch()} emptyMessage={t('tags.empty')} rowKey={(r) => r.id} />
+      <TagDialog key={editing?.id ?? 'new'} open={dialogOpen} onClose={() => { setDialogOpen(false); setEditing(undefined); }} existing={editing} />
     </div>
   );
 }

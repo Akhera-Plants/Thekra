@@ -1,6 +1,7 @@
 import { setRequestLocale } from 'next-intl/server';
 import { getTranslations } from 'next-intl/server';
 import { QuoteForm } from '@/features/curation/components/QuoteForm';
+import { PageHeader } from '@/features/curation/components/kit/PageHeader';
 
 export default async function AdminQuoteNewPage({
   params,
@@ -13,7 +14,7 @@ export default async function AdminQuoteNewPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold">{t('quotes.newQuote')}</h1>
+      <PageHeader title={t('quotes.newQuote')} />
       <QuoteForm />
     </div>
   );

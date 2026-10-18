@@ -30,6 +30,8 @@ export interface AdminQuotesQuery {
   goodDeedSlug?: string;
   unlinkedOnly?: boolean;
   missingTranslation?: string;
+  /** OCR texts whose textVerifiedAt is still null. */
+  unverifiedOnly?: boolean;
   sort?: 'relevance' | 'newest' | 'oldest';
 }
 
@@ -221,4 +223,101 @@ export interface SyncLogDto {
     name: string;
     apiProvider: string | null;
   };
+}
+
+// ── Review desk (QuoteFlag / HadithMatch) — GET/POST /review/* ──────────────────
+
+import type {
+  ClassifiedBy,
+  FlagSeverity,
+  FlagStatus,
+  FlagType,
+  LinkBasis,
+  MatchDecision,
+  ReferenceBook,
+  TextSource,
+} from '@/lib/format/admin-labels';
+import type { QuoteDto } from './api';
+
+/** GET /admin/quotes rows also carry the text provenance fields. */
+export type AdminQuoteDto = QuoteDto & {
+  textSource?: TextSource;
+  textVerifiedAt?: string | null;
+};
+
+export interface FlagsQuery {
+  page?: number;
+  limit?: number;
+  type?: FlagType;
+  severity?: FlagSeverity;
+  status?: FlagStatus;
+  sourceId?: string;
+}
+
+export interface FlagQuoteDto {
+  id: string;
+  textAr: string;
+  grade: HadithGrade | null;
+  gradeSource: string | null;
+  gradeAuthority: string | null;
+  gradeReference: string | null;
+  source: { id: string; name: string; nameAr: string | null };
+}
+
+export interface FlagDto {
+  id: string;
+  quoteId: string;
+  type: FlagType;
+  severity: FlagSeverity;
+  source: 'AUTO' | 'USER';
+  status: FlagStatus;
+  details: unknown;
+  note: string | null;
+  resolvedBy: string | null;
+  resolvedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  quote: FlagQuoteDto;
+}
+
+export interface HadithMatchDto {
+  id: string;
+  quoteId: string;
+  referenceHadithId: string;
+  score: number;
+  method: string;
+  decision: MatchDecision;
+  referenceHadith: {
+    id: string;
+    book: ReferenceBook;
+    number: number;
+    kitab: string | null;
+    bab: string | null;
+    matnText: string;
+    isnadText: string;
+  };
+}
+
+export interface FlagDetailDto extends FlagDto {
+  quote: FlagQuoteDto & {
+    legacyGrade: HadithGrade | null;
+    legacyGradeAuthority: string | null;
+    legacyGradeReference: string | null;
+    matches: HadithMatchDto[];
+  };
+}
+
+/** GET /admin/sin-quotes and /admin/good-deed-quotes rows (all link columns + topic + quote). */
+export interface ProposedLinkDto {
+  id: string;
+  quoteId: string;
+  relevanceScore: number | null;
+  note: string | null;
+  reviewStatus: LinkReviewStatus;
+  basis: LinkBasis;
+  classifiedBy: ClassifiedBy;
+  createdAt: string;
+  sin?: { slug: string; name: string; nameAr: string };
+  goodDeed?: { slug: string; name: string; nameAr: string };
+  quote: { id: string; type: QuoteType; textAr: string };
 }

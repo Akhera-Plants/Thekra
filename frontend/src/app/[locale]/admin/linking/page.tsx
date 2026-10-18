@@ -1,5 +1,6 @@
+import { Suspense } from 'react';
 import { setRequestLocale } from 'next-intl/server';
-import { LinkingWorkspace } from '@/features/curation/components/LinkingWorkspace';
+import { LinkingView } from '@/features/curation/components/LinkingView';
 
 export default async function AdminLinkingPage({
   params,
@@ -8,5 +9,10 @@ export default async function AdminLinkingPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  return <LinkingWorkspace />;
+  // LinkingView keeps tab / kind / sin in the URL (useSearchParams) — needs a Suspense boundary.
+  return (
+    <Suspense>
+      <LinkingView />
+    </Suspense>
+  );
 }

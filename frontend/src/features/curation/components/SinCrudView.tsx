@@ -6,7 +6,7 @@
  */
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -17,7 +17,6 @@ import { useAdminCreateSin, useAdminUpdateSin, useAdminDeleteSin } from '../hook
 import { AdminDataTable, type ColumnDef } from './AdminDataTable';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -33,9 +32,12 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { ArabicText } from '@/components/shared/ArabicText';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import type { AdminSinDto } from '@/lib/types/admin';
+import { PageHeader } from './kit/PageHeader';
+import { RowActions } from './kit/RowActions';
+import { formatCount } from './kit/format';
+
 
 const sinSchema = z.object({
   name: z.string().min(1).max(300),
@@ -154,10 +156,12 @@ function SinFormDialog({ open, onClose, existing }: SinFormDialogProps) {
 
 export function SinCrudView() {
   const t = useTranslations('admin');
+  const tRank = useTranslations('sinRank');
+  const locale = useLocale();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<AdminSinDto | undefined>();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: queryKeys.sins.list({ limit: 100 }),
     queryFn: () => adminListSins({ limit: 100 }),
   });
@@ -165,11 +169,16 @@ export function SinCrudView() {
 
   const { mutate: deleteSin, isPending: isDeleting } = useAdminDeleteSin();
 
-  const columns: ColumnDef<AdminSinDto>[] = [
+  const allColumns: ColumnDef<AdminSinDto>[] = [
     {
       key: 'nameAr',
       header: t('common.nameAr'),
-      cell: (row) => <ArabicText as="span" size="sm">{row.nameAr}</ArabicText>,
+      cell: (row) => (
+        <span className="flex items-baseline gap-2">
+          <span dir="rtl" lang="ar" className="font-medium">{row.nameAr}</span>
+          {row.rank ? <span className="text-xs text-muted-foreground">{tRank(row.rank)}</span> : null}
+        </span>
+      ),
     },
     {
       key: 'name',
@@ -184,67 +193,70 @@ export function SinCrudView() {
     {
       key: 'severity',
       header: t('sins.fieldSeverity'),
-      cell: (row) => row.severity != null
-        ? <Badge variant="outline" className="text-xs">{row.severity}</Badge>
-        : <span className="text-muted-foreground">—</span>,
+      cell: (row) => <span className="tabular-nums text-muted-foreground">{row.severity != null ? formatCount(row.severity) : '—'}</span>,
       className: 'w-20',
     },
     {
       key: 'quoteCount',
-      header: t('common.quotes'),
-      cell: (row) => <Badge variant="secondary" className="text-xs">{row.quoteCount}</Badge>,
+      header: t('quotesDesk.title'),
+      cell: (row) => (
+        <span className={row.quoteCount === 0 ? 'font-medium text-destructive tabular-nums' : 'tabular-nums'}>
+          {formatCount(row.quoteCount)}
+        </span>
+      ),
       className: 'w-20',
     },
     {
       key: 'actions',
-      header: '',
+      header: <span className="sr-only">{t('table.actions')}</span>,
       cell: (row) => (
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost" size="icon" className="h-8 w-8"
-            aria-label={t('common.edit')}
-            onClick={() => { setEditing(row); setDialogOpen(true); }}
-          >
-            <Pencil className="h-3.5 w-3.5" aria-hidden />
-          </Button>
-          <Button
-            variant="ghost" size="icon"
-            className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
-            aria-label={t('common.delete')}
-            disabled={isDeleting}
-            onClick={() => {
-              if (window.confirm(t('common.confirmDelete'))) {
-                deleteSin({ id: row.id });
-              }
-            }}
-          >
-            <Trash2 className="h-3.5 w-3.5" aria-hidden />
-          </Button>
-        </div>
+        <RowActions
+          label={t('table.actions')}
+          primary={[{ label: t('common.edit'), icon: Pencil, onSelect: () => { setEditing(row); setDialogOpen(true); } }]}
+          destructive={{
+            label: t('common.delete'),
+            icon: Trash2,
+            disabled: isDeleting,
+            onSelect: () => deleteSin({ id: row.id }),
+            confirmTitle: t('common.confirmDelete'),
+            confirmBody: row.nameAr,
+            confirmLabel: t('common.delete'),
+            cancelLabel: t('common.cancel'),
+          }}
+        />
       ),
-      className: 'w-20',
+      className: 'w-10',
     },
   ];
 
+  // English names are data, edited in the dialog; the Arabic desk does not show them as a column.
+  const columns = allColumns.filter((column) => locale === 'en' || column.key !== 'name');
+
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">{t('sins.title')}</h1>
-        <Button size="sm" onClick={() => { setEditing(undefined); setDialogOpen(true); }}>
-          <Plus className="me-2 h-4 w-4" aria-hidden />
-          {t('sins.newSin')}
-        </Button>
-      </div>
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        title={t('sins.title')}
+        meta={isLoading ? undefined : formatCount(sins.length)}
+        actions={
+          <Button size="sm" className="desk-press" onClick={() => { setEditing(undefined); setDialogOpen(true); }}>
+            <Plus data-icon="inline-start" aria-hidden />
+            {t('sins.newSin')}
+          </Button>
+        }
+      />
 
       <AdminDataTable
         columns={columns}
         data={sins}
         isLoading={isLoading}
+        isError={isError}
+        onRetry={() => void refetch()}
         emptyMessage={t('sins.empty')}
         rowKey={(r) => r.id}
       />
 
       <SinFormDialog
+        key={editing?.id ?? 'new'}
         open={dialogOpen}
         onClose={() => { setDialogOpen(false); setEditing(undefined); }}
         existing={editing}

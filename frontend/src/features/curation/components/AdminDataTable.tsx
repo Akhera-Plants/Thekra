@@ -1,22 +1,14 @@
 'use client';
 
 /**
- * AdminDataTable — generic table for curation CRUD pages.
- * Accepts column definitions and a data array; renders a shadcn table.
+ * AdminDataTable — the CRUD pages' table. Kept as a thin adapter over the desk kit's
+ * DataTable so existing call sites (sins, good deeds, sources, tags, sync, linking)
+ * share the same density, states and type without rewriting their column defs.
  */
 
 import React from 'react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Skeleton } from '@/components/ui/skeleton';
-import { EmptyState } from '@/components/shared/EmptyState';
-import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
+import { DataTable } from './kit/DataTable';
 
 export interface ColumnDef<T> {
   key: string;
@@ -29,63 +21,42 @@ interface AdminDataTableProps<T> {
   columns: ColumnDef<T>[];
   data: T[];
   isLoading?: boolean;
+  isError?: boolean;
+  onRetry?: () => void;
   emptyMessage?: string;
   className?: string;
   rowKey: (row: T) => string;
 }
 
-const SKELETON_ROWS = 5;
-
 export function AdminDataTable<T>({
   columns,
   data,
   isLoading = false,
-  emptyMessage = 'No items',
+  isError = false,
+  onRetry,
+  emptyMessage,
   className,
   rowKey,
 }: AdminDataTableProps<T>) {
+  const t = useTranslations('admin.table');
+  const tError = useTranslations('errorState');
   return (
-    <div className={cn('rounded-lg border border-border', className)}>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            {columns.map((col) => (
-              <TableHead key={col.key} className={col.className}>
-                {col.header}
-              </TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {isLoading ? (
-            Array.from({ length: SKELETON_ROWS }).map((_, i) => (
-              <TableRow key={i}>
-                {columns.map((col) => (
-                  <TableCell key={col.key}>
-                    <Skeleton className="h-4 w-full" />
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))
-          ) : data.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={columns.length}>
-                <EmptyState message={emptyMessage} />
-              </TableCell>
-            </TableRow>
-          ) : (
-            data.map((row) => (
-              <TableRow key={rowKey(row)}>
-                {columns.map((col) => (
-                  <TableCell key={col.key} className={col.className}>
-                    {col.cell(row)}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </div>
+    <DataTable
+      className={className}
+      columns={columns.map((column) => ({ id: column.key, header: column.header, cell: column.cell, className: column.className }))}
+      rows={data}
+      rowKey={rowKey}
+      isLoading={isLoading}
+      isError={isError}
+      onRetry={onRetry}
+      skeletonRows={6}
+      labels={{
+        expand: t('expand'),
+        collapse: t('collapse'),
+        empty: emptyMessage ?? tError('default'),
+        error: tError('default'),
+        retry: t('retry'),
+      }}
+    />
   );
 }

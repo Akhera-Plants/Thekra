@@ -33,3 +33,6 @@ yarn-error.log*
 .idea/
 *.swp
 *.tsbuildinfo
+
+# Local design prototype reference (not shipped)
+thekra-source/

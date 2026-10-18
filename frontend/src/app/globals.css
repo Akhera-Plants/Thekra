@@ -112,107 +112,155 @@
 }
 
 /* 🎨 ---------- SWAP POINT: the real palette replaces ONLY these values ---------- */
-/* Sakina (سكينة) — see docs/plan/design-language-sakina.md for the full rationale,
-   token table and contrast report. Source of truth for every value below. */
+/* Scholar's Desk palette — see docs/design/color-system.md for full rationale.
+   Source world: a scholar reading a printed classical Arabic book by lamp-light at night.
+   Neutral: near-achromatic printed-paper / carbon-ink (chroma ≤ 0.008, not cream/brown).
+   One brand accent: verdigris — patina of the brass desk lamp, copper inkwell, book finials.
+   Three path tones: equal lightness, all from the desk world, never large fills.
+   ONE palette for all pages — no page overrides. */
+
+/* ── Neutral tonal scale (near-achromatic, printed-paper / carbon-ink) ──────
+   n-50  = page white    n-100 = card paper    n-200 = recessed surface
+   n-300 = hairline rule n-500 = soft ink      n-900 = carbon ink
+   All have chroma ≤ 0.008 so they read as true neutral, not cream or brown. */
+
+/* ── Accent tonal scale (Verdigris — patina of the brass desk lamp) ────────
+   a-400 = light accent   a-600 = dark accent
+   hue 195 (blue-green), chroma 0.075–0.085, specific to the desk world. */
+
+/* ── Path-intent tones (equal L, one per path, never large fills) ──────────
+   Sin    = Verdigris copper / introspection (same hue as accent)
+   Deed   = Amber lamp glow / warmth, reward, action
+   Branch = Ink slate / depth of printed text, contemplation                */
+
 :root {
   --radius: 0.625rem;
-  --background: oklch(0.975 0.012 75);
-  --foreground: oklch(0.24 0.025 50);
-  --card: oklch(0.99 0.008 75);
-  --card-foreground: oklch(0.24 0.025 50);
-  --popover: oklch(0.99 0.008 75);
-  --popover-foreground: oklch(0.24 0.025 50);
-  --primary: oklch(0.4 0.07 185);
-  --primary-foreground: oklch(0.98 0.01 75);
-  --secondary: oklch(0.93 0.02 75);
-  --secondary-foreground: oklch(0.3 0.03 50);
-  --muted: oklch(0.94 0.015 75);
-  --muted-foreground: oklch(0.48 0.02 55);
-  --accent: oklch(0.9 0.025 75);
-  --accent-foreground: oklch(0.28 0.035 50);
-  --destructive: oklch(0.5 0.11 35);
-  --destructive-foreground: oklch(0.98 0.01 75);
-  --border: oklch(0.88 0.015 70);
-  --input: oklch(0.88 0.015 70);
-  --ring: oklch(0.55 0.08 185);
+  /* Neutral ramp mapped to semantic roles */
+  --background: oklch(0.98 0.004 90);       /* n-50  — page white (printed paper, not cream) */
+  --foreground: oklch(0.18 0.007 255);      /* n-900 — carbon ink (not warm-brown) */
+  --card: oklch(0.97 0.004 90);             /* n-100 — card paper (one step below page) */
+  --card-foreground: oklch(0.18 0.007 255);
+  --popover: oklch(0.97 0.004 90);
+  --popover-foreground: oklch(0.18 0.007 255);
+  --secondary: oklch(0.92 0.005 90);        /* n-200 — recessed surface */
+  --secondary-foreground: oklch(0.26 0.007 255);
+  --muted: oklch(0.92 0.005 90);            /* n-200 — same recessed surface */
+  --muted-foreground: oklch(0.44 0.007 90); /* n-500 — soft ink (≥4.5:1 on n-50 and n-200) */
+  --accent: oklch(0.92 0.005 90);           /* n-200 — hover/emphasis fill (muted surface) */
+  --accent-foreground: oklch(0.22 0.007 255);
+  --border: oklch(0.87 0.006 90);           /* n-300 — hairline rule on paper */
+  --input: oklch(0.87 0.006 90);
+  /* Brand accent — Verdigris (brass desk lamp patina, copper inkwell) */
+  --primary: oklch(0.42 0.075 195);         /* a-400 light */
+  --primary-foreground: oklch(0.98 0.004 90); /* page white on verdigris */
+  --ring: oklch(0.42 0.075 195);            /* focus ring = accent */
+  /* Destructive — muted terracotta, not alarm-red */
+  --destructive: oklch(0.50 0.10 30);
+  --destructive-foreground: oklch(0.98 0.004 90);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-  /* Path-intent tokens — the "which flow is this card in" accent (design-language-sakina.md §Tokens) */
-  --intent-sin: oklch(0.4 0.07 185); /* Deep Teal — Sin Path (shares the primary teal: calm, trust) */
-  --intent-sin-foreground: oklch(0.98 0.01 75);
-  --intent-good-deed: oklch(0.64 0.13 55); /* Honey Amber — Good Deed Path (hope, reward, warmth) */
-  --intent-good-deed-foreground: oklch(0.22 0.03 50);
-  --intent-iman-branch: oklch(0.3 0.05 265); /* Night Indigo — Iman Branch Path (contemplation) */
-  --intent-iman-branch-foreground: oklch(0.96 0.01 75);
-  /* Grade (authenticity) tokens — reuse the intent/destructive hue families, never new colours */
+  /* Sidebar = same paper as the canvas. Mapped, not new colours. */
+  --sidebar: var(--background);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--muted);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+  /* Path-intent tokens — three tones at equal lightness, from the desk world.
+     Used only for path identity (card borders, gradient tints, icon colour).
+     Never applied as a large solid fill. */
+  --intent-sin: oklch(0.42 0.075 195);           /* Verdigris — introspection, same as accent */
+  --intent-sin-foreground: oklch(0.98 0.004 90); /* Page white on verdigris */
+  --intent-good-deed: oklch(0.44 0.10 58);       /* Amber lamp glow — warmth, reward */
+  --intent-good-deed-foreground: oklch(0.98 0.004 90); /* Page white on amber (7.6:1 ✅) */
+  --intent-iman-branch: oklch(0.42 0.07 262);    /* Ink slate — depth, text, contemplation */
+  --intent-iman-branch-foreground: oklch(0.98 0.004 90); /* Page white on ink-slate */
+  /* Grade (authenticity) tokens — reuse path hue families, never new colours */
   --grade-sahih: var(--intent-sin);
   --grade-sahih-foreground: var(--intent-sin-foreground);
   --grade-hasan: var(--intent-good-deed);
   --grade-hasan-foreground: var(--intent-good-deed-foreground);
-  --grade-daif: oklch(0.62 0.02 60); /* Muted Terracotta-gray — de-emphasized, never alarming */
-  --grade-daif-foreground: var(--foreground);
-  --grade-mawdu: var(--destructive); /* admin-only; public reads never show it (unchanged policy) */
+  --grade-daif: oklch(0.60 0.007 90);       /* Near-neutral soft grey — de-emphasised, not alarming */
+  --grade-daif-foreground: oklch(0.18 0.007 255); /* Carbon ink on grey (4.8:1 ✅) */
+  --grade-mawdu: var(--destructive);        /* Admin-only; public reads never show it */
   --grade-mawdu-foreground: var(--destructive-foreground);
+  /* Reading-environment tokens — used on home and any reading page */
+  --folio: oklch(0.99 0.003 90);            /* Folio card: brightest paper (above card) */
+  --folio-edge: oklch(0.85 0.006 90);       /* Folio border: neutral hairline */
+  --folio-ink: oklch(0.18 0.007 255);       /* Folio text: carbon ink */
+  --thread: oklch(0.42 0.075 195 / 0.40);  /* Branch diagram rail: verdigris thread */
+  --star: oklch(0.44 0.007 90 / 0.35);     /* Inactive branch dot: soft ink dot */
+  --star-lit: oklch(0.44 0.10 58);          /* Active branch dot: amber lamp */
+  --star-lit-glow: oklch(0.75 0.10 65 / 0.55); /* Glow on active dot */
+  --shelf: oklch(0.38 0.008 255);           /* Bookshelf plank: near-neutral dark */
+  --spine-shade: oklch(0 0 0 / 0.30);
+  --spine-sheen: oklch(1 0 0 / 0.10);
 }
 
 .dark {
-  --background: oklch(0.19 0.012 50);
-  --foreground: oklch(0.94 0.012 75);
-  --card: oklch(0.22 0.014 50);
-  --card-foreground: oklch(0.94 0.012 75);
-  --popover: oklch(0.22 0.014 50);
-  --popover-foreground: oklch(0.94 0.012 75);
-  --primary: oklch(0.62 0.09 185);
-  --primary-foreground: oklch(0.15 0.01 50);
-  --secondary: oklch(0.28 0.015 50);
-  --secondary-foreground: oklch(0.9 0.015 75);
-  --muted: oklch(0.26 0.014 50);
-  --muted-foreground: oklch(0.68 0.015 70);
-  --accent: oklch(0.31 0.02 50);
-  --accent-foreground: oklch(0.92 0.018 75);
-  --destructive: oklch(0.58 0.12 35);
-  --destructive-foreground: oklch(0.15 0.01 50);
-  --border: oklch(0.32 0.016 50);
-  --input: oklch(0.32 0.016 50);
-  --ring: oklch(0.62 0.09 185);
+  /* Near-achromatic dark: carbon-ink / slate neutral, not warm-brown or navy */
+  --background: oklch(0.18 0.007 255);      /* Carbon ink background — printed-book dark */
+  --foreground: oklch(0.97 0.004 90);       /* Page white text */
+  --card: oklch(0.22 0.007 255);            /* Slightly lighter surface */
+  --card-foreground: oklch(0.97 0.004 90);
+  --popover: oklch(0.22 0.007 255);
+  --popover-foreground: oklch(0.97 0.004 90);
+  --secondary: oklch(0.26 0.007 255);       /* Recessed surface */
+  --secondary-foreground: oklch(0.90 0.005 90);
+  --muted: oklch(0.26 0.007 255);
+  --muted-foreground: oklch(0.68 0.006 90); /* Soft page text (6.4:1 on bg ✅) */
+  --accent: oklch(0.30 0.007 255);
+  --accent-foreground: oklch(0.93 0.005 90);
+  --border: oklch(0.32 0.007 255);          /* Visible but quiet rule */
+  --input: oklch(0.32 0.007 255);
+  /* Verdigris accent — lighter in dark mode for legibility */
+  --primary: oklch(0.65 0.08 195);          /* a-600 dark */
+  --primary-foreground: oklch(0.18 0.007 255); /* Carbon on verdigris (5.9:1 ✅) */
+  --ring: oklch(0.65 0.08 195);
+  --destructive: oklch(0.58 0.10 30);
+  --destructive-foreground: oklch(0.18 0.007 255);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
-  --intent-sin: oklch(0.62 0.09 185);
-  --intent-sin-foreground: oklch(0.15 0.01 50);
-  --intent-good-deed: oklch(0.72 0.14 55);
-  --intent-good-deed-foreground: oklch(0.18 0.02 50);
-  --intent-iman-branch: oklch(0.55 0.08 265);
-  --intent-iman-branch-foreground: oklch(0.14 0.02 50);
+  --sidebar: var(--background);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--muted);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+  /* Path-intent tones — lighter in dark mode (equal L≈0.65), all AA ✅ */
+  --intent-sin: oklch(0.65 0.08 195);            /* Verdigris lighter */
+  --intent-sin-foreground: oklch(0.18 0.007 255); /* Carbon on verdigris (5.9:1 ✅) */
+  --intent-good-deed: oklch(0.67 0.11 58);        /* Amber lighter */
+  --intent-good-deed-foreground: oklch(0.18 0.007 255); /* Carbon on amber (6.1:1 ✅) */
+  --intent-iman-branch: oklch(0.65 0.08 262);     /* Ink-slate lighter */
+  --intent-iman-branch-foreground: oklch(0.18 0.007 255); /* Carbon on slate (5.7:1 ✅) */
   --grade-sahih: var(--intent-sin);
   --grade-sahih-foreground: var(--intent-sin-foreground);
   --grade-hasan: var(--intent-good-deed);
   --grade-hasan-foreground: var(--intent-good-deed-foreground);
-  --grade-daif: oklch(0.55 0.015 60);
-  --grade-daif-foreground: oklch(0.98 0.01 75); /* near-parchment: AA requires a lighter fg than var(--foreground) here */
+  --grade-daif: oklch(0.52 0.007 90);       /* Near-neutral — de-emphasised */
+  --grade-daif-foreground: oklch(0.97 0.004 90); /* Page white on grey (5.1:1 ✅) */
   --grade-mawdu: var(--destructive);
   --grade-mawdu-foreground: var(--destructive-foreground);
+  /* Reading-environment tokens — dark overrides, system-surface based (no sky blue) */
+  --folio: oklch(0.24 0.007 255);           /* Folio card: one step above card — same neutral family */
+  --folio-edge: oklch(0.34 0.007 255);      /* Folio border: neutral hairline */
+  --folio-ink: oklch(0.97 0.004 90);        /* Folio text: page white */
+  --thread: oklch(0.65 0.08 195 / 0.40);   /* Branch rail: verdigris thread */
+  --star: oklch(0.97 0.004 90 / 0.28);     /* Inactive dot: faint page-white */
+  --star-lit: oklch(0.67 0.11 58);          /* Active dot: amber */
+  --star-lit-glow: oklch(0.75 0.10 62 / 0.50); /* Glow */
+  --shelf: oklch(0.30 0.007 255);           /* Bookshelf plank: dark neutral */
 }
 /* 🎨 ---------------------------- END SWAP POINT ---------------------------- */
 
@@ -276,82 +324,118 @@
   }
 }
 
-/* Home sky. The lamp arrives once; the page itself is already readable. */
-html[data-sky='home'] {
-  --background: oklch(0.93 0.018 230);
-  --foreground: oklch(0.26 0.04 255);
-  --card: oklch(0.95 0.015 225);
-  --card-foreground: oklch(0.26 0.04 255);
-  --muted: oklch(0.88 0.02 230);
-  --muted-foreground: oklch(0.4 0.03 250);
-  --border: oklch(0.8 0.02 235);
-  --input: oklch(0.8 0.02 235);
-  --ring: oklch(0.42 0.06 255);
-  --primary: oklch(0.32 0.05 255);
-  --primary-foreground: oklch(0.97 0.01 90);
-  background: var(--background);
-  caret-color: var(--foreground);
-  scrollbar-color: oklch(0.55 0.03 250) transparent;
+/* Bookshelf spine cloth — three surface colours matching the path-intent tones.
+   These are page-agnostic. Dark versions of the path tones for printed-book feel. */
+.book-cloth-a {
+  background: oklch(0.32 0.06 262); /* Ink-slate dark — branches */
+  color: oklch(0.97 0.004 90);
 }
-html[data-sky='home'] ::selection {
-  background: oklch(0.78 0.06 80 / 0.55);
+.book-cloth-b {
+  background: oklch(0.38 0.09 58);  /* Amber dark — good deeds */
+  color: oklch(0.97 0.004 90);
 }
-html.dark[data-sky='home'] {
-  --background: oklch(0.17 0.04 258);
-  --foreground: oklch(0.93 0.02 85);
-  --card: oklch(0.21 0.04 258);
-  --card-foreground: oklch(0.93 0.02 85);
-  --muted: oklch(0.24 0.035 258);
-  --muted-foreground: oklch(0.78 0.02 85);
-  --border: oklch(0.32 0.03 255);
-  --input: oklch(0.32 0.03 255);
-  --ring: oklch(0.82 0.04 85);
-  --primary: oklch(0.9 0.03 85);
-  --primary-foreground: oklch(0.18 0.04 258);
-  scrollbar-color: oklch(0.45 0.03 255) transparent;
+.book-cloth-c {
+  background: oklch(0.34 0.07 195); /* Verdigris dark — sins */
+  color: oklch(0.97 0.004 90);
 }
-html.dark[data-sky='home'] ::selection {
-  background: oklch(0.72 0.08 75 / 0.45);
+
+
+/* ── Admin desk (مكتب التحقيق) motion — see .interface-design/system.md ──
+   Press feedback 140ms; folio (row expansion) 180ms opacity+transform only. */
+.desk-press {
+  transition: transform 140ms cubic-bezier(0.23, 1, 0.32, 1);
 }
-html[data-sky='home'] body {
-  background: transparent;
+.desk-press:active {
+  transform: scale(0.97);
 }
-html[data-sky='home'] body::before {
-  content: '';
-  position: fixed;
-  inset: 0 0 auto 0;
-  z-index: -1;
-  height: 72vh;
-  pointer-events: none;
-  background: radial-gradient(ellipse 68% 70% at 50% 0%, oklch(0.97 0.05 85 / 0.95), transparent 68%);
-  animation: sky-light 1.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+.desk-folio {
+  animation: desk-folio 180ms cubic-bezier(0.23, 1, 0.32, 1);
 }
-html.dark[data-sky='home'] body::before {
-  background: radial-gradient(ellipse 70% 72% at 50% 0%, oklch(0.62 0.1 75 / 0.5), transparent 64%);
-}
-@keyframes sky-light {
+@keyframes desk-folio {
   from {
     opacity: 0;
+    transform: translateY(-4px);
   }
   to {
     opacity: 1;
+    transform: none;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  html[data-sky='home'] body::before {
-    animation: none;
+  .desk-press,
+  .desk-press:active {
+    transition: none;
+    transform: none;
+  }
+  .desk-folio {
+    animation: desk-fade 120ms ease-out;
   }
 }
-.book-cloth-a {
-  background: oklch(0.32 0.05 255);
-  color: oklch(0.95 0.02 85);
-}
-.book-cloth-b {
-  background: oklch(0.4 0.06 55);
-  color: oklch(0.97 0.02 85);
-}
-.book-cloth-c {
-  background: oklch(0.34 0.05 185);
-  color: oklch(0.95 0.02 90);
+@keyframes desk-fade {
+  from {
+    opacity: 0;
+  }
 }
 
+/* ── Home: reading environment (ذكرى) ─────────────────────────────────────
+   Reading-environment tokens now live in :root / .dark (shared, not home-only).
+   Motion classes and utility classes remain here for use by home components. */
+
+/* Book index leaders: «الغيبة ........ 25». */
+.home-leader {
+  flex: 1 1 auto;
+  min-width: 1.5rem;
+  align-self: last baseline;
+  border-bottom: 1px dotted color-mix(in oklch, currentColor 35%, transparent);
+  translate: 0 -0.3em;
+}
+
+/* Spines carry their title the way a shelf does: vertical. */
+.home-spine-text {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+
+/* Path doors: press feedback; hover only brightens the door's own edge. */
+.home-door {
+  transition:
+    transform 160ms cubic-bezier(0.23, 1, 0.32, 1),
+    border-color 200ms ease;
+}
+.home-door:active {
+  transform: scale(0.985);
+}
+@media (hover: hover) and (pointer: fine) {
+  .home-door:hover {
+    border-color: color-mix(in oklch, var(--door) 70%, transparent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-door,
+  .home-door:active {
+    transition: border-color 200ms ease;
+    transform: none;
+  }
+}
+
+/* A spine lifts a little off the shelf under a fine pointer; a press settles it. */
+.home-spine {
+  transition: transform 200ms cubic-bezier(0.23, 1, 0.32, 1);
+  touch-action: manipulation;
+}
+.home-spine:active {
+  transform: scale(0.98);
+}
+@media (hover: hover) and (pointer: fine) {
+  .home-spine:hover {
+    transform: translateY(-6px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-spine,
+  .home-spine:hover,
+  .home-spine:active {
+    transition: none;
+    transform: none;
+  }
+}

@@ -6,6 +6,7 @@
  *   POST/GET/PATCH/DELETE /admin/good-deed-quotes
  *   POST /admin/good-deed-quotes/bulk
  */
+import type { AxiosRequestConfig } from 'axios';
 import { apiDelete, apiGet, apiPatch, apiPost } from '@/lib/api-client';
 import type {
   SinQuoteLinkDto,
@@ -23,7 +24,7 @@ import type { PageMeta } from '@/lib/types/api';
 export async function adminListSinQuotes(
   query: SinQuotesAdminQuery = {},
 ): Promise<{ data: SinQuoteLinkDto[]; meta?: PageMeta }> {
-  return apiGet<SinQuoteLinkDto[]>('/admin/sin-quotes', { params: query });
+  return apiGet<SinQuoteLinkDto[]>('/admin/sin-quotes', { params: query, skipLang: true } as AxiosRequestConfig);
 }
 
 export async function adminLinkSinQuote(body: {
@@ -61,7 +62,7 @@ export async function adminRevokeSinGroup(body: { sinId: string; classifiedBy: '
 export async function adminListGoodDeedQuotes(
   query: GoodDeedQuotesAdminQuery = {},
 ): Promise<{ data: GoodDeedQuoteLinkDto[]; meta?: PageMeta }> {
-  return apiGet<GoodDeedQuoteLinkDto[]>('/admin/good-deed-quotes', { params: query });
+  return apiGet<GoodDeedQuoteLinkDto[]>('/admin/good-deed-quotes', { params: query, skipLang: true } as AxiosRequestConfig);
 }
 
 export async function adminLinkGoodDeedQuote(body: {

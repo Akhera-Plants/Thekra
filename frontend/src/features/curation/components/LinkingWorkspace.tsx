@@ -13,7 +13,7 @@
  */
 
 import { useState, useMemo } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/query-keys';
 import { getSins } from '@/lib/api/sins';
@@ -40,19 +40,14 @@ import { ArabicText } from '@/components/shared/ArabicText';
 import { GradeBadge } from '@/components/shared/quote/GradeBadge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Info, Link2 } from 'lucide-react';
+import { adminLabel } from '@/lib/format/admin-labels';
+import { formatDigits } from '@/lib/format/digits';
 import type { QuoteDto } from '@/lib/types/api';
 import type { SinQuoteLinkDto } from '@/lib/types/admin';
 
 // ── Rubric ────────────────────────────────────────────────────────────────────
 
 const SCORE_OPTIONS = [100, 80, 60, 40, 20] as const;
-const RUBRIC: Record<number, string> = {
-  100: 'Direct, explicit prohibition or command',
-  80: 'Strong, clear evidence',
-  60: 'Relevant but indirect',
-  40: 'Tangential / thematic',
-  20: 'Very weak connection',
-};
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
@@ -92,9 +87,9 @@ function ScoreSelect({
           </button>
         </TooltipTrigger>
         <TooltipContent className="max-w-xs">
-          <ul className="text-xs space-y-1">
+          <ul className="flex flex-col gap-1 text-xs">
             {SCORE_OPTIONS.map((s) => (
-              <li key={s}><strong>{s}</strong> — {RUBRIC[s]}</li>
+              <li key={s}><strong className="tabular-nums">{s}</strong> — {t(`linking.rubric${s}`)}</li>
             ))}
           </ul>
         </TooltipContent>
@@ -112,11 +107,12 @@ interface LinkRowState {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export function LinkingWorkspace() {
+export function LinkingWorkspace({ initialSinId = '' }: { initialSinId?: string }) {
   const t = useTranslations('admin');
+  const locale = useLocale();
 
   // ── Sin picker ────────────────────────────────────────────────────────────
-  const [selectedSinId, setSelectedSinId] = useState<string>('');
+  const [selectedSinId, setSelectedSinId] = useState<string>(initialSinId);
   const [search, setSearch] = useState('');
 
   const { data: sinsResult } = useQuery({
@@ -239,7 +235,7 @@ export function LinkingWorkspace() {
       header: t('quotes.colGrade'),
       cell: (row) =>
         row.hadith?.grade ? (
-          <GradeBadge grade={row.hadith.grade} label={row.hadith.grade} />
+          <GradeBadge grade={row.hadith.grade} label={adminLabel('grade', row.hadith.grade, locale)} />
         ) : null,
     },
     {
@@ -293,10 +289,7 @@ export function LinkingWorkspace() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold">{t('linking.title')}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t('linking.subtitle')}</p>
-      </div>
+      <p className="text-sm text-muted-foreground">{t('linking.subtitle')}</p>
 
       {/* Sin picker */}
       <div className="flex flex-col gap-2">
@@ -312,7 +305,7 @@ export function LinkingWorkspace() {
               <SelectItem key={s.id} value={s.id}>
                 <span dir="rtl" lang="ar" className="font-arabic-ui">{s.nameAr}</span>
                 {' '}
-                <span className="text-muted-foreground">({s.quoteCount})</span>
+                <span className="text-muted-foreground tabular-nums">({formatDigits(s.quoteCount)})</span>
               </SelectItem>
             ))}
           </SelectContent>
@@ -334,7 +327,7 @@ export function LinkingWorkspace() {
               </SelectContent>
             </Select>
           </div>
-          <p className="text-sm text-muted-foreground">{groupData?.meta?.total ?? 0}</p>
+          <p className="text-sm text-muted-foreground tabular-nums">{formatDigits(groupData?.meta?.total ?? 0)}</p>
           {classifiedBy !== 'BOOK' ? (
             <Button
               type="button"
@@ -356,7 +349,9 @@ export function LinkingWorkspace() {
               <ArabicText as="h2" size="base" className="font-medium">
                 {selectedSin.nameAr}
               </ArabicText>
-              <Badge variant="outline">{selectedSin.quoteCount} linked</Badge>
+              <Badge variant="outline" className="tabular-nums">
+                {formatDigits(selectedSin.quoteCount)} {t('common.quotes')}
+              </Badge>
             </div>
 
             <div className="flex items-center gap-2">

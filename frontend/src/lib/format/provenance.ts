@@ -36,6 +36,9 @@ const PEOPLE: ReadonlyArray<[RegExp, string]> = [
   [/المنذري/g, 'al-Mundhiri'],
   [/ابن المبارك/g, 'Ibn al-Mubarak'],
   [/الذهبي/g, 'al-Dhahabi'],
+  [/النووي/g, 'al-Nawawi'],
+  [/ابن كثير/g, 'Ibn Kathir'],
+  [/السعدي/g, "al-Sa'di"],
 ];
 
 const PHRASES: ReadonlyArray<[RegExp, string]> = [
