@@ -2,6 +2,7 @@ import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
 import { ArabicText } from '@/components/shared/ArabicText';
+import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import type { ReaderItem, ReaderSection } from '@/components/shared/editorial/ReminderReader';
 import { GoodDeedReader } from '@/features/good-deed-motivation/components/GoodDeedReader';
 import { interleaveReading } from '@/lib/reading';
@@ -31,6 +32,8 @@ export default async function GoodDeedDetailPage({
   const { slug, locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations('goodDeedDetail');
+  const tNav = await getTranslations('nav');
+  const tCrumbs = await getTranslations('breadcrumbs');
 
   let deed: Awaited<ReturnType<typeof getGoodDeed>>['data'];
   try {
@@ -63,7 +66,6 @@ export default async function GoodDeedDetailPage({
     .map(toReader)
     .filter((item) => !seen.has(item.id));
   const derived = quotes?.data.derived ?? [];
-  // Visitor came via the deed URL: open on the virtue side first.
   const sections: ReaderSection[] = [
     ...(virtue.length > 0
       ? [{ heading: paired ? t('pairVirtueHeading') : t('virtueHeading'), items: virtue }]
@@ -87,73 +89,83 @@ export default async function GoodDeedDetailPage({
     : null;
 
   return (
-    <article className="mx-auto flex w-full max-w-prose min-w-0 flex-1 flex-col gap-10 px-5 py-12 md:px-8 md:py-16">
-      <header className="flex flex-col gap-3">
-        <h1
-          lang={/[\u0600-\u06FF]/.test(heading) ? 'ar' : undefined}
-          dir={/[\u0600-\u06FF]/.test(heading) ? 'rtl' : undefined}
-          className={`text-4xl leading-tight lg:text-5xl ${/[\u0600-\u06FF]/.test(heading) ? 'font-arabic-display' : 'font-semibold'}`}
-        >
-          {heading}
-        </h1>
-        {locale === 'en' && deed.name && deed.nameAr && deed.name !== deed.nameAr ? (
-          <p dir="rtl" lang="ar" className="font-arabic-ui text-sm text-muted-foreground">{deed.nameAr}</p>
-        ) : null}
-        {description ? <p className="text-muted-foreground">{description}</p> : null}
-        {reward ? (
-          <aside className="border-t border-intent-good-deed pt-3" aria-label={t('rewardHeading')}>
-            <p className="text-sm text-intent-good-deed">{t('rewardHeading')}</p>
-            {/[\u0600-\u06FF]/.test(reward) ? <ArabicText size="lg">{reward}</ArabicText> : <p className="text-lg">{reward}</p>}
-          </aside>
-        ) : null}
-        {deed.branches && deed.branches.length > 0 ? (
-          <ul className="flex flex-col gap-1 text-sm text-muted-foreground">
-            {deed.branches.map((branch) => (
-              <li key={branch.number} lang={locale === 'en' ? 'en' : 'ar'} dir={locale === 'en' ? 'ltr' : 'rtl'}>
-                {locale === 'en'
-                  ? (branch.title || `Branch ${branch.number}`)
-                  : branch.titleAr}
-              </li>
-            ))}
-          </ul>
-        ) : null}
-        {deed.isContemporary ? (
-          <p className="text-sm text-muted-foreground">{t('contemporaryNote')}</p>
-        ) : null}
-      </header>
+    <div className="page-width inner-page topic-page">
+      <Breadcrumbs
+        ariaLabel={tNav('breadcrumbs')}
+        items={[
+          { label: tCrumbs('home'), href: '/' },
+          { label: tCrumbs('goodDeeds'), href: '/good-deeds' },
+          { label: heading },
+        ]}
+      />
 
-      {items.length === 0 ? (
-        <div className="flex flex-col gap-4 border-t border-border pt-8">
-          <p>{t('noMotivations')}</p>
-          <Link
-            href={deed.oppositeSin ? `/sins/${deed.oppositeSin.slug}` : '/browse'}
-            className="inline-flex min-h-11 w-fit items-center border-b-2 border-intent-sin text-intent-sin focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      <article className="flex min-w-0 flex-1 flex-col gap-10">
+        <header className="page-heading">
+          <p className="eyebrow">{tCrumbs('goodDeeds')}</p>
+          <h1
+            id="page-title"
+            tabIndex={-1}
+            lang={/[\u0600-\u06FF]/.test(heading) ? 'ar' : undefined}
+            dir={/[\u0600-\u06FF]/.test(heading) ? 'rtl' : undefined}
           >
-            {opposite ? (
+            {heading}
+          </h1>
+          {locale === 'en' && deed.name && deed.nameAr && deed.name !== deed.nameAr ? (
+            <p dir="rtl" lang="ar" className="page-lead">{deed.nameAr}</p>
+          ) : null}
+          {description ? <p className="page-lead">{description}</p> : null}
+          {reward ? (
+            <aside className="next-step" aria-label={t('rewardHeading')}>
+              <strong>{t('rewardHeading')}</strong>
+              {/[\u0600-\u06FF]/.test(reward) ? <ArabicText size="lg">{reward}</ArabicText> : <p>{reward}</p>}
+            </aside>
+          ) : null}
+          {deed.branches && deed.branches.length > 0 ? (
+            <ul className="flex flex-col gap-1 text-sm text-muted-foreground">
+              {deed.branches.map((branch) => (
+                <li key={branch.number} lang={locale === 'en' ? 'en' : 'ar'} dir={locale === 'en' ? 'ltr' : 'rtl'}>
+                  {locale === 'en'
+                    ? (branch.title || `Branch ${branch.number}`)
+                    : branch.titleAr}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {deed.isContemporary ? (
+            <p className="page-lead">{t('contemporaryNote')}</p>
+          ) : null}
+        </header>
+
+        {items.length === 0 ? (
+          <div className="next-step">
+            <p>{t('noMotivations')}</p>
+            <Link
+              href={deed.oppositeSin ? `/sins/${deed.oppositeSin.slug}` : '/good-deeds'}
+              className="text-link"
+            >
+              {opposite ? (
+                <span lang={/[\u0600-\u06FF]/.test(opposite) ? 'ar' : undefined} dir={/[\u0600-\u06FF]/.test(opposite) ? 'rtl' : undefined}>
+                  {opposite}
+                </span>
+              ) : (
+                tCrumbs('goodDeeds')
+              )}
+            </Link>
+          </div>
+        ) : (
+          <GoodDeedReader items={items} sections={sections} total={items.length} slug={slug} />
+        )}
+
+        {deed.oppositeSin && opposite ? (
+          <p className="page-footnote">
+            <Link href={`/sins/${deed.oppositeSin.slug}`} className="text-link">
               <span lang={/[\u0600-\u06FF]/.test(opposite) ? 'ar' : undefined} dir={/[\u0600-\u06FF]/.test(opposite) ? 'rtl' : undefined}>
                 {opposite}
               </span>
-            ) : (
-              t('browse')
-            )}
-          </Link>
-        </div>
-      ) : (
-        <GoodDeedReader items={items} sections={sections} total={items.length} slug={slug} />
-      )}
-
-      {deed.oppositeSin && opposite ? (
-        <p className="text-sm text-muted-foreground">
-          <Link
-            href={`/sins/${deed.oppositeSin.slug}`}
-            className="underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <span lang={/[\u0600-\u06FF]/.test(opposite) ? 'ar' : undefined} dir={/[\u0600-\u06FF]/.test(opposite) ? 'rtl' : undefined}>
-              {opposite}
-            </span>
-          </Link>
-        </p>
-      ) : null}
-    </article>
+            </Link>
+          </p>
+        ) : null}
+      </article>
+    </div>
   );
 }

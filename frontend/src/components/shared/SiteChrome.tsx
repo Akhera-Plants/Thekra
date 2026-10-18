@@ -14,8 +14,8 @@ interface SiteChromeProps {
 
 /**
  * Chooses the chrome by route segment (one level below /[locale]).
- * Public routes get the site header/footer; the admin desk renders its own shell.
- * This is a layout decision, not CSS hiding: the public chrome is not rendered at all.
+ * Public routes get the site header/footer inside `.site-public` (prototype layout).
+ * The admin desk renders its own shell without public chrome.
  */
 export function SiteChrome({ header, footer, skipLink, children }: SiteChromeProps) {
   const segment = useSelectedLayoutSegment();
@@ -25,13 +25,13 @@ export function SiteChrome({ header, footer, skipLink, children }: SiteChromePro
   }
 
   return (
-    <>
+    <div className="site-public flex min-h-full flex-1 flex-col">
       {skipLink}
       {header}
       <main id="main-content" className="flex min-w-0 flex-1 flex-col">
         {children}
       </main>
       {footer}
-    </>
+    </div>
   );
 }

@@ -1,13 +1,20 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useLocale } from 'next-intl';
-import { Link } from '@/i18n/navigation';
+import { Suspense, useEffect, useMemo, useRef, useState, useTransition } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
+import { useSearchParams } from 'next/navigation';
+import { Link, usePathname, useRouter } from '@/i18n/navigation';
+import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
+import { SiteIcon, type SiteIconName } from '@/components/shared/site-icons';
 import { FormattedNumber } from '@/components/shared/FormattedNumber';
-import { reminderWord } from '@/lib/day';
-import { cn } from '@/lib/utils';
 
 const SEARCH_DEBOUNCE_MS = 150;
+
+const INTENT_ICON: Record<'sin' | 'good-deed' | 'branch', SiteIconName> = {
+  sin: 'door',
+  'good-deed': 'sprout',
+  branch: 'book',
+};
 
 export const TOPIC_DOMAINS = [
   { key: 'iman', ar: 'الإيمان والعقيدة', en: 'Faith and creed' },
@@ -37,117 +44,213 @@ export interface TopicEntry {
 
 interface TopicCatalogProps {
   entries: TopicEntry[];
-  intent: 'sin' | 'good-deed';
+  intent: 'sin' | 'good-deed' | 'branch';
   pageTitle: string;
+  eyebrow: string;
+  lead: string;
+  pathHref: string;
+  pathLabel: string;
   searchPlaceholder: string;
   searchLabel: string;
   noResults: string;
-  kabiraLabel: string;
-  contemporaryLabel: string;
+  kabiraLabel?: string;
+  contemporaryLabel?: string;
 }
 
-export function TopicCatalog({
+export function TopicCatalog(props: TopicCatalogProps) {
+  return (
+    <Suspense fallback={<TopicCatalogShell {...props} query="" />}>
+      <TopicCatalogWithSearch {...props} />
+    </Suspense>
+  );
+}
+
+function TopicCatalogWithSearch(props: TopicCatalogProps) {
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
+  const [, startTransition] = useTransition();
+  const qParam = searchParams.get('q') ?? '';
+  const [query, setQuery] = useState(qParam);
+  const [debounced, setDebounced] = useState(qParam.trim());
+
+  useEffect(() => {
+    setQuery(qParam);
+    setDebounced(qParam.trim());
+  }, [qParam]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const next = query.trim();
+      setDebounced(next);
+      if (next === qParam.trim()) return;
+      const params = new URLSearchParams(searchParams.toString());
+      if (next) params.set('q', next);
+      else params.delete('q');
+      const qs = params.toString();
+      startTransition(() => {
+        router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      });
+    }, SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [query, pathname, qParam, router, searchParams, startTransition]);
+
+  return (
+    <TopicCatalogShell
+      {...props}
+      query={query}
+      debounced={debounced}
+      onQueryChange={setQuery}
+    />
+  );
+}
+
+interface ShellProps extends TopicCatalogProps {
+  query: string;
+  debounced?: string;
+  onQueryChange?: (value: string) => void;
+}
+
+function TopicCatalogShell({
   entries,
   intent,
   pageTitle,
+  eyebrow,
+  lead,
+  pathHref: _pathHref,
+  pathLabel,
   searchPlaceholder,
   searchLabel,
   noResults,
   kabiraLabel,
   contemporaryLabel,
-}: TopicCatalogProps) {
+  query,
+  debounced = '',
+  onQueryChange,
+}: ShellProps) {
+  void _pathHref;
   const locale = useLocale();
   const arabic = locale === 'ar';
+  const tNav = useTranslations('nav');
+  const tCrumbs = useTranslations('breadcrumbs');
+  const tCatalog = useTranslations('catalog');
   const inputRef = useRef<HTMLInputElement>(null);
-  const [query, setQuery] = useState('');
-  const [debounced, setDebounced] = useState('');
-  const color = intent === 'sin' ? 'decoration-intent-sin' : 'decoration-intent-good-deed';
+  const icon = INTENT_ICON[intent];
 
   useEffect(() => {
     if (window.matchMedia('(min-width: 1024px)').matches) inputRef.current?.focus();
   }, []);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setDebounced(query.trim()), SEARCH_DEBOUNCE_MS);
-    return () => clearTimeout(timer);
-  }, [query]);
+  const domainOrder = useMemo(() => {
+    const order = new Map<string, number>();
+    TOPIC_DOMAINS.forEach((domain, index) => order.set(domain.key, index));
+    return order;
+  }, []);
 
   const filtered = useMemo(() => {
-    if (!debounced) return entries;
     const needle = debounced.toLowerCase();
-    return entries.filter((entry) =>
-      entry.nameAr.includes(debounced)
-      || (entry.name?.toLowerCase().includes(needle) ?? false),
-    );
-  }, [entries, debounced]);
+    const list = !debounced
+      ? entries
+      : entries.filter(
+          (entry) =>
+            entry.nameAr.includes(debounced)
+            || (entry.name?.toLowerCase().includes(needle) ?? false),
+        );
+    return [...list].sort((a, b) => {
+      const da = a.domainKey ? (domainOrder.get(a.domainKey) ?? 99) : 99;
+      const db = b.domainKey ? (domainOrder.get(b.domainKey) ?? 99) : 99;
+      if (da !== db) return da - db;
+      return (a.taxonomyOrder ?? 0) - (b.taxonomyOrder ?? 0);
+    });
+  }, [debounced, domainOrder, entries]);
 
-  const groups = TOPIC_DOMAINS.map((domain) => ({
-    ...domain,
-    entries: filtered
-      .filter((entry) => entry.domainKey === domain.key)
-      .sort((a, b) => (a.taxonomyOrder ?? 0) - (b.taxonomyOrder ?? 0)),
-  })).filter((group) => group.entries.length > 0);
+  function topicMeta(entry: TopicEntry): string | null {
+    const parts: string[] = [];
+    const domain = TOPIC_DOMAINS.find((item) => item.key === entry.domainKey);
+    if (domain) parts.push(arabic ? domain.ar : domain.en);
+    if (entry.kabira && kabiraLabel) parts.push(kabiraLabel);
+    if (entry.contemporary && contemporaryLabel) parts.push(contemporaryLabel);
+    return parts.length > 0 ? parts.join(' · ') : null;
+  }
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-5 py-12 md:px-8 md:py-16">
-      <h1 className={cn('text-4xl leading-tight lg:text-5xl', arabic ? 'font-arabic-display' : 'font-semibold')}>
-        {pageTitle}
-      </h1>
-      <input
-        ref={inputRef}
-        type="search"
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-        placeholder={searchPlaceholder}
-        aria-label={searchLabel}
-        className={cn(
-          'min-h-11 w-full border-b border-border bg-transparent text-lg outline-none placeholder:text-muted-foreground focus-visible:border-foreground',
-          arabic ? 'font-arabic-ui' : undefined,
-        )}
+    <div className="page-width inner-page path-page">
+      <Breadcrumbs
+        ariaLabel={tNav('breadcrumbs')}
+        items={[
+          { label: tCrumbs('home'), href: '/' },
+          { label: pathLabel },
+        ]}
       />
-      {groups.length === 0 ? <p className="text-muted-foreground">{noResults}</p> : null}
-      {groups.map((group) => (
-        <section key={group.key} className="flex flex-col">
-          <h2 className={cn('text-2xl', arabic ? 'font-arabic-display' : 'font-semibold')}>
-            {arabic ? group.ar : group.en}
-          </h2>
-          <ul>
-            {group.entries.map((entry) => {
+
+      <header className="page-heading">
+        <p className="eyebrow">{eyebrow}</p>
+        <h1 id="page-title" tabIndex={-1}>
+          {pageTitle}
+        </h1>
+        <p className="page-lead">{lead}</p>
+      </header>
+
+      <section className="catalog-section" aria-label={pathLabel}>
+        <form
+          className="page-search"
+          role="search"
+          onSubmit={(event) => {
+            event.preventDefault();
+            onQueryChange?.(query);
+          }}
+        >
+          <label className="search-field">
+            <SiteIcon name="search" />
+            <input
+              ref={inputRef}
+              id="topic-search"
+              name="q"
+              type="search"
+              value={query}
+              onChange={(event) => onQueryChange?.(event.target.value)}
+              placeholder={searchPlaceholder}
+              aria-label={searchLabel}
+              autoComplete="off"
+            />
+          </label>
+          <button className="solid-button" type="submit">
+            {tCatalog('search')} <SiteIcon name="arrow" />
+          </button>
+        </form>
+
+        <p className="results-count" id="results-count" role="status">
+          {tCatalog('results', { count: filtered.length })}
+        </p>
+
+        {filtered.length === 0 ? (
+          <p className="empty-state">{noResults || tCatalog('empty')}</p>
+        ) : (
+          <div className="topic-list" id="topic-results">
+            {filtered.map((entry) => {
               const label = arabic ? entry.nameAr : (entry.name || entry.nameAr);
-              const labelArabic = /[\u0600-\u06FF]/.test(label);
+              const meta = topicMeta(entry);
               return (
-                <li key={entry.href}>
-                  <Link
-                    href={entry.href}
-                    className="flex min-h-16 items-baseline gap-3 border-b border-border py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    <span
-                      dir={labelArabic ? 'rtl' : 'ltr'}
-                      lang={labelArabic ? 'ar' : 'en'}
-                      className={cn('min-w-0 text-base', labelArabic ? 'font-arabic-display' : 'font-medium')}
-                    >
-                      {label}
-                    </span>
-                    {entry.kabira ? (
-                      <span className={cn('shrink-0 text-sm underline decoration-2 underline-offset-4', color)}>
-                        {kabiraLabel}
-                      </span>
+                <Link key={entry.href} href={entry.href} className="topic-item">
+                  <SiteIcon name={icon} />
+                  <span>
+                    <strong>{label}</strong>
+                    {meta ? <small>{meta}</small> : null}
+                    {!meta && entry.quoteCount > 0 ? (
+                      <small>
+                        <FormattedNumber value={entry.quoteCount} />
+                      </small>
                     ) : null}
-                    {entry.contemporary ? (
-                      <span className="shrink-0 text-sm text-muted-foreground">{contemporaryLabel}</span>
-                    ) : null}
-                    <span aria-hidden className="mb-1 min-w-4 flex-1 border-b border-dotted border-border" />
-                    <span className="shrink-0 text-sm text-muted-foreground">
-                      <FormattedNumber value={entry.quoteCount} />{' '}
-                      {reminderWord(entry.quoteCount, locale)}
-                    </span>
-                  </Link>
-                </li>
+                  </span>
+                  <SiteIcon name="arrow" className="topic-arrow" />
+                </Link>
               );
             })}
-          </ul>
-        </section>
-      ))}
+          </div>
+        )}
+
+        <p className="page-footnote">{tCatalog('footnote')}</p>
+      </section>
     </div>
   );
 }

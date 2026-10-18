@@ -9,6 +9,8 @@ export default async function GoodDeedsPage({ params }: PageProps<'/[locale]/goo
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations('goodDeeds');
+  const tHome = await getTranslations('home');
+  const tCrumbs = await getTranslations('breadcrumbs');
 
   let deeds: Awaited<ReturnType<typeof getGoodDeeds>>['data'] = [];
   try {
@@ -41,10 +43,13 @@ export default async function GoodDeedsPage({ params }: PageProps<'/[locale]/goo
       entries={entries}
       intent="good-deed"
       pageTitle={t('pageTitle')}
+      eyebrow={tHome('deedOverline')}
+      lead={tHome('deedEntryDescription')}
+      pathHref="/good-deeds"
+      pathLabel={tCrumbs('goodDeeds')}
       searchPlaceholder={t('searchPlaceholder')}
       searchLabel={t('searchPlaceholder')}
       noResults={t('noResults')}
-      kabiraLabel=""
       contemporaryLabel={t('contemporary')}
     />
   );

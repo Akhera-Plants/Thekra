@@ -1,5 +1,8 @@
 import { setRequestLocale, getTranslations } from 'next-intl/server';
+import { Link } from '@/i18n/navigation';
+import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { FormattedNumber } from '@/components/shared/FormattedNumber';
+import { SiteIcon } from '@/components/shared/site-icons';
 import { getCatalogSources } from '@/lib/api/sources';
 import type { LocaleCode } from '@/lib/types/enums';
 
@@ -11,44 +14,74 @@ export default async function AboutPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations('about');
+  const tNav = await getTranslations('nav');
+  const tCrumbs = await getTranslations('breadcrumbs');
   const sources = await getCatalogSources({ limit: 100, lang: locale as LocaleCode })
     .then((result) => result.data)
     .catch(() => []);
   const books = sources.filter((source) => (locale === 'ar' ? source.nameAr : source.name));
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-10 px-4 py-10">
-      <header className="flex max-w-prose flex-col gap-3">
-        <h1 className="font-arabic-display text-3xl md:text-4xl">{t('pageTitle')}</h1>
-        <p className="text-base leading-relaxed text-muted-foreground">{t('intro')}</p>
+    <div className="page-width inner-page about-page">
+      <Breadcrumbs
+        ariaLabel={tNav('breadcrumbs')}
+        items={[
+          { label: tCrumbs('home'), href: '/' },
+          { label: tCrumbs('about') },
+        ]}
+      />
+
+      <header className="page-heading">
+        <h1 id="page-title" tabIndex={-1}>{t('pageTitle')}</h1>
+        <p className="page-lead">{t('lead')}</p>
       </header>
 
+      <div className="about-copy">
+        <p>{t('intro')}</p>
+        <p>{t('openitiBody')}</p>
+
+        <section id="content-methodology" className="content-methodology">
+          <h2>{t('methodologyTitle')}</h2>
+          <p>{t('methodologyBody')}</p>
+        </section>
+      </div>
+
       {books.length > 0 ? (
-        <ul className="flex flex-col">
-          {books.map((book) => {
-            const title = locale === 'ar' ? book.nameAr : book.name;
-            const author = locale === 'ar' ? book.authorAr : book.author;
-            return (
-              <li key={book.id} className="flex items-baseline justify-between gap-4 border-b border-border py-4">
-                <span className="flex min-w-0 flex-col gap-1">
-                  <span className="font-arabic-display text-xl">{title}</span>
-                  {author ? <span className="text-sm text-muted-foreground">{author}</span> : null}
-                </span>
-                <span className="shrink-0 text-sm text-muted-foreground">
-                  <FormattedNumber value={book.quoteCount ?? 0} /> {t('imported')}
-                  {' · '}
-                  <FormattedNumber value={book.publishedQuoteCount ?? 0} /> {t('published')}
-                </span>
-              </li>
-            );
-          })}
-        </ul>
+        <section className="about-copy" aria-label={t('openitiTitle')}>
+          <h2>{t('openitiTitle')}</h2>
+          <ul>
+            {books.map((book) => {
+              const title = locale === 'ar' ? book.nameAr : book.name;
+              const author = locale === 'ar' ? book.authorAr : book.author;
+              return (
+                <li key={book.id}>
+                  <p>
+                    <strong>{title}</strong>
+                    {author ? <> — {author}</> : null}
+                  </p>
+                  <p>
+                    <FormattedNumber value={book.quoteCount ?? 0} /> {t('imported')}
+                    {' · '}
+                    <FormattedNumber value={book.publishedQuoteCount ?? 0} /> {t('published')}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
       ) : null}
 
-      <section className="flex max-w-prose flex-col gap-2">
-        <h2 className="font-arabic-display text-xl">{t('openitiTitle')}</h2>
-        <p className="text-sm leading-relaxed text-muted-foreground">{t('openitiBody')}</p>
-      </section>
+      <nav className="about-paths" aria-label={tNav('main')}>
+        <Link className="solid-button" href="/sins">
+          {tCrumbs('sins')} <SiteIcon name="arrow" />
+        </Link>
+        <Link className="outline-button" href="/good-deeds">
+          {tCrumbs('goodDeeds')} <SiteIcon name="arrow" />
+        </Link>
+        <Link className="outline-button" href="/branches">
+          {tCrumbs('branches')} <SiteIcon name="arrow" />
+        </Link>
+      </nav>
     </div>
   );
 }

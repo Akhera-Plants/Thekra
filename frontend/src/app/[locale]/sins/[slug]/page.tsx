@@ -1,6 +1,7 @@
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
+import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { FormattedNumber } from '@/components/shared/FormattedNumber';
 import { AlternativeDeedsBlock } from '@/features/sin-reminder/components/AlternativeDeedsBlock';
 import type { ReaderItem, ReaderSection } from '@/components/shared/editorial/ReminderReader';
@@ -34,6 +35,8 @@ export default async function SinDetailPage({
   setRequestLocale(locale);
   const t = await getTranslations('sinDetail');
   const tRank = await getTranslations('sinRank');
+  const tNav = await getTranslations('nav');
+  const tCrumbs = await getTranslations('breadcrumbs');
 
   let sin: Awaited<ReturnType<typeof getSin>>['data'];
   try {
@@ -91,65 +94,75 @@ export default async function SinDetailPage({
     : null;
 
   return (
-    <article className="mx-auto flex w-full max-w-prose min-w-0 flex-1 flex-col gap-10 px-5 py-12 md:px-8 md:py-16">
-      <header className="flex flex-col gap-3">
-        <h1
-          lang={/[\u0600-\u06FF]/.test(heading) ? 'ar' : undefined}
-          dir={/[\u0600-\u06FF]/.test(heading) ? 'rtl' : undefined}
-          className={`text-4xl leading-tight lg:text-5xl ${/[\u0600-\u06FF]/.test(heading) ? 'font-arabic-display' : 'font-semibold'}`}
-        >
-          {heading}
-        </h1>
-        {locale === 'en' && sin.name && sin.nameAr && sin.name !== sin.nameAr ? (
-          <p dir="rtl" lang="ar" className="font-arabic-ui text-sm text-muted-foreground">{sin.nameAr}</p>
-        ) : null}
-        {description ? <p className="text-muted-foreground">{description}</p> : null}
-        {sin.rank === SinRank.KABIRA && sin.rankReference && (
-          <p className="text-sm text-muted-foreground">
-            {tRank(sin.rank)}
-            {' — '}
-            <FormattedNumber
-              value={locale === 'en' ? (englishProvenance(sin.rankReference) ?? sin.rankReference) : sin.rankReference}
-            />
-          </p>
-        )}
-        {sin.branches && sin.branches.length > 0 ? (
-          <ul className="flex flex-col gap-1 text-sm text-muted-foreground">
-            {sin.branches.map((branch) => (
-              <li key={branch.number} lang={locale === 'en' ? 'en' : 'ar'} dir={locale === 'en' ? 'ltr' : 'rtl'}>
-                {locale === 'en'
-                  ? (branch.title || `Branch ${branch.number}`)
-                  : branch.titleAr}
-              </li>
-            ))}
-          </ul>
-        ) : null}
-        {sin.isContemporary ? (
-          <p className="text-sm text-muted-foreground">{t('contemporaryNote')}</p>
-        ) : null}
-      </header>
+    <div className="page-width inner-page topic-page">
+      <Breadcrumbs
+        ariaLabel={tNav('breadcrumbs')}
+        items={[
+          { label: tCrumbs('home'), href: '/' },
+          { label: tCrumbs('sins'), href: '/sins' },
+          { label: heading },
+        ]}
+      />
 
-      {items.length === 0 ? (
-        <div className="flex flex-col gap-4 border-t border-border pt-8">
-          <p>{t('noReminders')}</p>
-          <Link
-            href={onward ? `/good-deeds/${onward.slug}` : '/browse'}
-            className="inline-flex min-h-11 w-fit items-center border-b-2 border-intent-good-deed text-intent-good-deed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      <article className="flex min-w-0 flex-1 flex-col gap-10">
+        <header className="page-heading">
+          <p className="eyebrow">{tCrumbs('sins')}</p>
+          <h1
+            id="page-title"
+            tabIndex={-1}
+            lang={/[\u0600-\u06FF]/.test(heading) ? 'ar' : undefined}
+            dir={/[\u0600-\u06FF]/.test(heading) ? 'rtl' : undefined}
           >
-            {onwardName ? (
-              <span lang={/[\u0600-\u06FF]/.test(onwardName) ? 'ar' : undefined} dir={/[\u0600-\u06FF]/.test(onwardName) ? 'rtl' : undefined}>
-                {onwardName}
-              </span>
-            ) : (
-              t('browse')
-            )}
-          </Link>
-        </div>
-      ) : (
-        <SinReader items={items} sections={sections} total={items.length} slug={slug} />
-      )}
+            {heading}
+          </h1>
+          {locale === 'en' && sin.name && sin.nameAr && sin.name !== sin.nameAr ? (
+            <p dir="rtl" lang="ar" className="page-lead">{sin.nameAr}</p>
+          ) : null}
+          {description ? <p className="page-lead">{description}</p> : null}
+          {sin.rank === SinRank.KABIRA && sin.rankReference && (
+            <p className="page-lead">
+              {tRank(sin.rank)}
+              {' — '}
+              <FormattedNumber
+                value={locale === 'en' ? (englishProvenance(sin.rankReference) ?? sin.rankReference) : sin.rankReference}
+              />
+            </p>
+          )}
+          {sin.branches && sin.branches.length > 0 ? (
+            <ul className="flex flex-col gap-1 text-sm text-muted-foreground">
+              {sin.branches.map((branch) => (
+                <li key={branch.number} lang={locale === 'en' ? 'en' : 'ar'} dir={locale === 'en' ? 'ltr' : 'rtl'}>
+                  {locale === 'en'
+                    ? (branch.title || `Branch ${branch.number}`)
+                    : branch.titleAr}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {sin.isContemporary ? (
+            <p className="page-lead">{t('contemporaryNote')}</p>
+          ) : null}
+        </header>
 
-      <AlternativeDeedsBlock alternatives={alternatives} heading={t('alternativesHeading')} />
-    </article>
+        {items.length === 0 ? (
+          <div className="next-step">
+            <p>{t('noReminders')}</p>
+            <Link href={onward ? `/good-deeds/${onward.slug}` : '/sins'} className="text-link">
+              {onwardName ? (
+                <span lang={/[\u0600-\u06FF]/.test(onwardName) ? 'ar' : undefined} dir={/[\u0600-\u06FF]/.test(onwardName) ? 'rtl' : undefined}>
+                  {onwardName}
+                </span>
+              ) : (
+                tCrumbs('sins')
+              )}
+            </Link>
+          </div>
+        ) : (
+          <SinReader items={items} sections={sections} total={items.length} slug={slug} />
+        )}
+
+        <AlternativeDeedsBlock alternatives={alternatives} heading={t('alternativesHeading')} />
+      </article>
+    </div>
   );
 }

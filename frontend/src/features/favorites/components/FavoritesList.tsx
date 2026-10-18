@@ -1,8 +1,9 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { EmptyState } from '@/components/shared/EmptyState';
+import { Link } from '@/i18n/navigation';
 import { ErrorState } from '@/components/shared/ErrorState';
+import { SiteIcon } from '@/components/shared/site-icons';
 import { StaggerReveal } from '@/components/shared/StaggerReveal';
 import { QuoteCard } from '@/components/shared/quote/QuoteCard';
 import { QuoteCardSkeleton } from '@/components/shared/quote/QuoteCardSkeleton';
@@ -23,7 +24,7 @@ export function FavoritesList() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-8 md:gap-9" aria-busy="true">
+      <div className="saved-list" aria-busy="true">
         {[...Array(3)].map((_, i) => (
           <QuoteCardSkeleton key={i} />
         ))}
@@ -42,11 +43,22 @@ export function FavoritesList() {
   }
 
   if (!data?.items.length) {
-    return <EmptyState message={t('favorites.empty')} />;
+    return (
+      <div className="saved-list">
+        <div className="empty-state">
+          <SiteIcon name="bookmark" />
+          <h2>{t('favorites.empty')}</h2>
+          <p>{t('favorites.emptyHint')}</p>
+          <Link className="solid-button" href="/#paths">
+            {t('favorites.choosePath')} <SiteIcon name="arrow" />
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="flex flex-col gap-8 md:gap-9" role="list">
+    <div className="saved-list" role="list">
       <StaggerReveal>
         {data.items.map((quote) => (
           <div key={quote.id} role="listitem" className="min-w-0">

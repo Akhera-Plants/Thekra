@@ -18,14 +18,21 @@
     "menu": "Menu",
     "browse": "Browse",
     "branches": "The Branches of Faith",
-    "about": "Sources",
+    "about": "About Thekra",
     "favorites": "Favorites",
     "settings": "Settings",
-    "back": "Back"
+    "back": "Back",
+    "main": "Main navigation",
+    "sinsShort": "Leaving a sin",
+    "goodDeedsShort": "Doing good",
+    "breadcrumbs": "Breadcrumb"
   },
   "about": {
-    "pageTitle": "Sources",
+    "pageTitle": "About Thekra",
+    "lead": "For whoever has a heart.",
     "intro": "Thekra cites the book and the person who graded a narration. A book is never given one grade for every hadith in it.",
+    "methodologyTitle": "Content methodology",
+    "methodologyBody": "Every text names its source. A verse shows its surah and ayah; a hadith shows its book, number, and the grade given by the authority that graded it. Quoted words stay distinct from any explanation Thekra adds.",
     "openitiTitle": "OpenITI",
     "openitiBody": "Digital texts imported from OpenITI are used under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 licence. Attribution: OpenITI. Thekra does not sell this text and does not run ads on it. If the dataset is shared, it stays under the same licence.",
     "texts": "texts",
@@ -35,6 +42,7 @@
   "branches": {
     "pageTitle": "The Branches of Faith",
     "empty": "No branches have been entered yet",
+    "searchPlaceholder": "Search the branches of faith…",
     "quotes": "Texts",
     "noQuotes": "No accepted texts for this branch yet",
     "pending": "These texts are still being reviewed.",
@@ -79,6 +87,7 @@
   },
   "favorites": {
     "pageTitle": "Favorites",
+    "lead": "Texts you return to when you need them.",
     "add": "Add to favorites",
     "remove": "Remove from favorites",
     "added": "Added to favorites",
@@ -86,10 +95,14 @@
     "error": "Something went wrong. Try again.",
     "authRequired": "Sign in to save favorites",
     "empty": "No saved quotes yet",
+    "emptyHint": "Save a text beside any reminder to find it here.",
+    "choosePath": "Choose a path",
     "signInToSave": "Sign in to save this quote.",
     "signIn": "Sign in",
     "favoritesSignInTitle": "Save what inspires you",
-    "favoritesSignInDescription": "Create an account to save quotes that move you and find them later."
+    "favoritesSignInDescription": "Create an account to save quotes that move you and find them later.",
+    "emptyTitle": "Nothing saved yet",
+    "emptyBody": "Save a reminder to find it again whenever you need it."
   },
   "settings": {
     "pageTitle": "Settings",
@@ -101,12 +114,12 @@
     "title": "Thekra",
     "tagline": "For whoever has a heart",
     "sinEntryLabel": "Help me leave a sin",
-    "sinEntryDescription": "What weighs on the heart, and a text that reminds you.",
-    "deedEntryLabel": "Point me to a good deed",
-    "deedEntryDescription": "A small deed that draws you nearer.",
+    "sinEntryDescription": "A reminder that restrains you, and hope that helps you.",
+    "deedEntryLabel": "Help me do a good deed",
+    "deedEntryDescription": "Know its virtue, and take the first step.",
     "branchEntryLabel": "The Branches of Faith",
-    "branchEntryDescription": "Seventy-seven branches.",
-    "todayHeading": "Today's reminder",
+    "branchEntryDescription": "Meanings that build the heart and the deed.",
+    "todayHeading": "A chosen reminder",
     "save": "Save",
     "share": "Share",
     "shared": "Copied",
@@ -114,7 +127,7 @@
     "deedHeading": "A good deed for today",
     "branchesHeading": "The branches of faith",
     "branchToday": "Today's branch",
-    "sourcesHeading": "Where this comes from",
+    "sourcesHeading": "Reminders you can source",
     "volumeLabel": "Volume",
     "browseLabel": "Or browse the texts",
     "searchPlaceholder": "What is on your heart?",
@@ -140,7 +153,31 @@
     "branchesMap": "Seventy-seven branches in thirteen volumes; branch {number} is today’s.",
     "publishedCount": "{count, plural, one {# text published} other {# texts published}}",
     "sourcesNote": "The books whose texts you read here, and how many of each are published.",
-    "sourcesAll": "About the sources"
+    "sourcesAll": "About the sources",
+    "eyebrow": "A reminder for every step",
+    "entryTitle": "Which door of good will you choose?",
+    "sinOverline": "A door of return",
+    "sinCta": "Choose a topic",
+    "deedOverline": "A step toward good",
+    "deedCta": "Choose a deed",
+    "branchOverline": "Reading at ease",
+    "branchCta": "Begin reading",
+    "momentsHeading": "In moments like these",
+    "momentsLead": "From your day, to what helps you.",
+    "momentAnger": "Before you reply in anger",
+    "momentPrayer": "When prayer feels heavy",
+    "momentBackbiting": "Before you spread talk about someone",
+    "momentKindness": "When you want to lift someone’s spirit",
+    "readFull": "Read the full text",
+    "quranSource": "The Noble Quran",
+    "hadithSource": "The Prophetic Sunnah",
+    "deedCardEyebrow": "A door of good",
+    "deedCardCta": "Read about its virtue",
+    "reflectionHeading": "A word worth pausing for",
+    "reflectionCta": "Reflect on the meaning",
+    "reflectionAuthorFallback": "A scholar",
+    "sourcesLead": "From the Book of Allah, authentic Sunnah, and the words of the scholars.",
+    "sourcesAria": "Text sources"
   },
   "sinRank": {
     "KABIRA": "Major sin",
@@ -755,5 +792,28 @@
       "reason": "Why proposed",
       "total": "{count} links"
     }
+  },
+  "footer": {
+    "blurbLine1": "From the Quran and Sunnah,",
+    "blurbLine2": "to a step that helps you do good.",
+    "pathsHeading": "Paths of Thekra",
+    "aboutHeading": "About the project",
+    "methodology": "Content methodology",
+    "copyright": "© 2026 Thekra",
+    "sourceNote": "Every text names its source."
+  },
+  "catalog": {
+    "search": "Search",
+    "results": "Topics: {count}",
+    "footnote": "Choose a topic to read its texts with their sources.",
+    "empty": "No matching topics."
+  },
+  "breadcrumbs": {
+    "home": "Home",
+    "sins": "Leaving a sin",
+    "goodDeeds": "Doing good",
+    "branches": "Branches of Faith",
+    "favorites": "Favorites",
+    "about": "About Thekra"
   }
 }

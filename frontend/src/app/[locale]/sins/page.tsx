@@ -9,6 +9,8 @@ export default async function SinsPage({ params }: PageProps<'/[locale]/sins'>) 
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations('sins');
+  const tHome = await getTranslations('home');
+  const tCrumbs = await getTranslations('breadcrumbs');
   const tRank = await getTranslations('sinRank');
 
   let sins: Awaited<ReturnType<typeof getSins>>['data'] = [];
@@ -38,6 +40,10 @@ export default async function SinsPage({ params }: PageProps<'/[locale]/sins'>) 
       entries={entries}
       intent="sin"
       pageTitle={t('pageTitle')}
+      eyebrow={tHome('sinOverline')}
+      lead={tHome('sinEntryDescription')}
+      pathHref="/sins"
+      pathLabel={tCrumbs('sins')}
       searchPlaceholder={t('searchPlaceholder')}
       searchLabel={t('searchPlaceholder')}
       noResults={t('noResults')}

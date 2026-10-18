@@ -1,5 +1,6 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import type { Metadata } from 'next';
+import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { FavoritesList } from '@/features/favorites/components/FavoritesList';
 import { FavoritesGuard } from '@/features/favorites/components/FavoritesGuard';
 
@@ -20,11 +21,24 @@ export default async function FavoritesPage({ params }: FavoritesPageProps) {
   setRequestLocale(locale);
 
   const t = await getTranslations({ locale, namespace: 'favorites' });
+  const tNav = await getTranslations({ locale, namespace: 'nav' });
+  const tCrumbs = await getTranslations({ locale, namespace: 'breadcrumbs' });
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-semibold">{t('pageTitle')}</h1>
-      {/* FavoritesGuard renders SignInPrompt for guests, FavoritesList for users */}
+    <div className="page-width inner-page favorites-page">
+      <Breadcrumbs
+        ariaLabel={tNav('breadcrumbs')}
+        items={[
+          { label: tCrumbs('home'), href: '/' },
+          { label: tCrumbs('favorites') },
+        ]}
+      />
+
+      <header className="page-heading">
+        <h1 id="page-title" tabIndex={-1}>{t('pageTitle')}</h1>
+        <p className="page-lead">{t('lead')}</p>
+      </header>
+
       <FavoritesGuard>
         <FavoritesList />
       </FavoritesGuard>

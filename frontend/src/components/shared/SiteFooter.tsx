@@ -2,17 +2,39 @@ import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 
 export async function SiteFooter() {
+  const tApp = await getTranslations('app');
   const tNav = await getTranslations('nav');
+  const tFooter = await getTranslations('footer');
 
   return (
-    <footer className="mt-auto border-t border-border">
-      <div className="mx-auto flex w-full max-w-6xl min-w-0 flex-col gap-3 px-4 py-6 text-sm text-muted-foreground">
-        <Link
-          href="/about"
-          className="self-start underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          {tNav('about')}
-        </Link>
+    <footer className="site-footer">
+      <div className="footer-main page-width">
+        <div className="footer-brand">
+          <Link href="/" className="footer-logo">
+            {tApp('name')} <span>{tApp('tagline')}</span>
+          </Link>
+          <p>
+            {tFooter('blurbLine1')}
+            <br />
+            {tFooter('blurbLine2')}
+          </p>
+        </div>
+        <nav className="footer-links" aria-labelledby="footer-paths">
+          <h2 id="footer-paths">{tFooter('pathsHeading')}</h2>
+          <Link href="/sins">{tNav('sinsShort')}</Link>
+          <Link href="/good-deeds">{tNav('goodDeedsShort')}</Link>
+          <Link href="/branches">{tNav('branches')}</Link>
+        </nav>
+        <nav className="footer-links" aria-labelledby="footer-about">
+          <h2 id="footer-about">{tFooter('aboutHeading')}</h2>
+          <Link href="/about">{tNav('about')}</Link>
+          <Link href="/about#content-methodology">{tFooter('methodology')}</Link>
+          <Link href="/favorites">{tNav('favorites')}</Link>
+        </nav>
+      </div>
+      <div className="footer-bottom page-width">
+        <span>{tFooter('copyright')}</span>
+        <span>{tFooter('sourceNote')}</span>
       </div>
     </footer>
   );

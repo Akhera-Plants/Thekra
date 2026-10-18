@@ -18,14 +18,21 @@
     "menu": "القائمة",
     "browse": "تصفح",
     "branches": "شُعب الإيمان",
-    "about": "المصادر",
+    "about": "عن ذِكرى",
     "favorites": "المفضلة",
     "settings": "الإعدادات",
-    "back": "رجوع"
+    "back": "رجوع",
+    "main": "التنقل الرئيسي",
+    "sinsShort": "ترك معصية",
+    "goodDeedsShort": "فعل طاعة",
+    "breadcrumbs": "مسار التنقل"
   },
   "about": {
-    "pageTitle": "المصادر",
+    "pageTitle": "عن ذِكرى",
+    "lead": "لمن كان له قلب.",
     "intro": "كل كتاب باسمه، وكل رواية بحكمها. لا نجعل للكتاب كله درجة واحدة.",
+    "methodologyTitle": "منهجية المحتوى",
+    "methodologyBody": "المصدر مبيّن مع كل نصّ. الآية باسم سورتها ورقمها، والحديث باسم كتابه ورقمه ودرجته عند من حكم عليه. وتبقى الكلمات المنقولة متميزة عن أي شرح.",
     "openitiTitle": "النصوص المفتوحة",
     "openitiBody": "ما نُقل من المجموعة المفتوحة يُنسب إلى أصحابه، ولا يُباع، ولا يُوضع عليه إعلان. إن أُعيد نشره بقي على الشرط نفسه.",
     "texts": "نص",
@@ -35,6 +42,7 @@
   "branches": {
     "pageTitle": "شُعب الإيمان",
     "empty": "لم تُدخل الشعب بعد",
+    "searchPlaceholder": "ابحث في أبواب القراءة…",
     "quotes": "النصوص",
     "noQuotes": "لا نصوص مقبولة لهذه الشعبة بعد",
     "pending": "النصوص قيد المراجعة.",
@@ -79,6 +87,7 @@
   },
   "favorites": {
     "pageTitle": "المفضلة",
+    "lead": "نصوصٌ تعود إليها حين تحتاج.",
     "add": "أضف إلى المفضلة",
     "remove": "إزالة من المفضلة",
     "added": "تمت الإضافة إلى المفضلة",
@@ -86,10 +95,14 @@
     "error": "حدث خطأ. حاول مجددًا.",
     "authRequired": "سجّل دخولك لحفظ المفضلة",
     "empty": "ما حفظت شيئًا بعد",
+    "emptyHint": "اضغط علامة الحفظ بجانب أي نص، لتجده هنا.",
+    "choosePath": "اختر بابًا من الخير",
     "signInToSave": "ادخل حسابك لتحفظ هذا النص.",
     "signIn": "تسجيل الدخول",
     "favoritesSignInTitle": "احفظ ما يطمئنك",
-    "favoritesSignInDescription": "ادخل حسابك لتجد ما حفظته متى شئت."
+    "favoritesSignInDescription": "ادخل حسابك لتجد ما حفظته متى شئت.",
+    "emptyTitle": "ما حفظت شيئًا بعد",
+    "emptyBody": "احفظ تذكرة لتعود إليها متى شئت."
   },
   "settings": {
     "pageTitle": "الإعدادات",
@@ -101,12 +114,12 @@
     "title": "ذكرى",
     "tagline": "لمن كان له قلب",
     "sinEntryLabel": "أعنّي على ترك معصية",
-    "sinEntryDescription": "ما يثقل القلب، ونص يذكرك.",
-    "deedEntryLabel": "دُلّني على طاعة",
-    "deedEntryDescription": "عمل صغير يقرّبك.",
-    "branchEntryLabel": "شُعب الإيمان",
-    "branchEntryDescription": "سبع وسبعون شعبة.",
-    "todayHeading": "تذكرة اليوم",
+    "sinEntryDescription": "تذكير يردعك، ورجاء يعينك.",
+    "deedEntryLabel": "أعنّي على فعل طاعة",
+    "deedEntryDescription": "اعرف فضلها، وخذ أول خطوة.",
+    "branchEntryLabel": "شُعَب الإيمان",
+    "branchEntryDescription": "معانٍ تبني القلب والعمل.",
+    "todayHeading": "تذكرة مختارة",
     "save": "احفظ",
     "share": "انشر",
     "shared": "نُسخ النص",
@@ -114,7 +127,7 @@
     "deedHeading": "طاعة لهذا اليوم",
     "branchesHeading": "شُعب الإيمان",
     "branchToday": "شعبة اليوم",
-    "sourcesHeading": "من أين نأخذ؟",
+    "sourcesHeading": "تذكير تعرف مصدره",
     "volumeLabel": "المجلد",
     "browseLabel": "أو تصفّح النصوص",
     "searchPlaceholder": "ما الذي في قلبك الآن؟",
@@ -140,7 +153,31 @@
     "branchesMap": "سبع وسبعون شعبة في ثلاثة عشر مجلدًا، والشعبة {number} هي شعبة اليوم.",
     "publishedCount": "{count, plural, zero {لا نصوص منشورة} one {نص واحد منشور} two {نصّان منشوران} few {# نصوص منشورة} many {# نصًا منشورًا} other {# نص منشور}}",
     "sourcesNote": "الكتب التي تقرأ نصوصها هنا، وعدد ما نُشر من كلٍّ منها.",
-    "sourcesAll": "عن المصادر"
+    "sourcesAll": "عن المصادر",
+    "eyebrow": "لكلّ خطوةٍ تذكرة",
+    "entryTitle": "أيَّ بابٍ من الخير تختار؟",
+    "sinOverline": "بابٌ للرجوع",
+    "sinCta": "اختر موضوعًا",
+    "deedOverline": "خطوةٌ إلى الخير",
+    "deedCta": "اختر طاعةً",
+    "branchOverline": "قراءةٌ على مهل",
+    "branchCta": "ابدأ القراءة",
+    "momentsHeading": "في لحظاتٍ مثل هذه",
+    "momentsLead": "من يومك، إلى ما يعينك.",
+    "momentAnger": "قبل أن تردّ وأنت غاضب",
+    "momentPrayer": "حين تتثاقل عن الصلاة",
+    "momentBackbiting": "قبل أن تنشر كلامًا عن شخص",
+    "momentKindness": "حين تريد جبر خاطر أحد",
+    "readFull": "اقرأ النص كاملًا",
+    "quranSource": "القرآن الكريم",
+    "hadithSource": "السنّة النبوية",
+    "deedCardEyebrow": "بابٌ من الخير",
+    "deedCardCta": "اقرأ في فضله",
+    "reflectionHeading": "كلمة تستحق الوقوف",
+    "reflectionCta": "تأمّل المعنى",
+    "reflectionAuthorFallback": "من أهل العلم",
+    "sourcesLead": "من كتاب الله، وصحيح السنّة، وكلام أهل العلم.",
+    "sourcesAria": "مصادر النصوص"
   },
   "sinRank": {
     "KABIRA": "كبيرة",
@@ -755,5 +792,28 @@
       "reason": "سبب الاقتراح",
       "total": "{count} رابط"
     }
+  },
+  "footer": {
+    "blurbLine1": "من القرآن والسنّة،",
+    "blurbLine2": "إلى خطوةٍ تُعين على الخير.",
+    "pathsHeading": "أبواب ذِكرى",
+    "aboutHeading": "عن المشروع",
+    "methodology": "منهجية المحتوى",
+    "copyright": "© ٢٠٢٦ ذِكرى",
+    "sourceNote": "المصدر مبيّن مع كل نصّ."
+  },
+  "catalog": {
+    "search": "بحث",
+    "results": "المواضيع: {count}",
+    "footnote": "اختر موضوعًا لتقرأ نصوصه مع مصادرها.",
+    "empty": "لا مواضيع مطابقة."
+  },
+  "breadcrumbs": {
+    "home": "الرئيسية",
+    "sins": "ترك معصية",
+    "goodDeeds": "فعل طاعة",
+    "branches": "شُعَب الإيمان",
+    "favorites": "المفضلة",
+    "about": "عن ذِكرى"
   }
 }
