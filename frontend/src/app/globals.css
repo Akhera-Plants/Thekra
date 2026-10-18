@@ -276,26 +276,6 @@
   }
 }
 
-/* Turning from one reminder to the next. Opacity stays readable so the line is never blank. */
-.reader-turn {
-  animation: reader-turn 220ms ease-out;
-}
-@keyframes reader-turn {
-  from {
-    opacity: 0.45;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .reader-turn {
-    animation: none;
-  }
-}
-
 /* Bookshelf spine cloth — three surface colours matching the path-intent tones.
    These are page-agnostic. Dark versions of the path tones for printed-book feel. */
 .book-cloth-a {

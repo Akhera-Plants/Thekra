@@ -153,7 +153,7 @@ export default async function GoodDeedDetailPage({
             </Link>
           </div>
         ) : (
-          <GoodDeedReader items={items} sections={sections} total={items.length} slug={slug} />
+          <GoodDeedReader items={items} sections={sections} total={items.length} />
         )}
 
         {deed.oppositeSin && opposite ? (

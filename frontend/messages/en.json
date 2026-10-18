@@ -200,13 +200,8 @@
     "showPublished": "Published only"
   },
   "sinDetail": {
-    "anotherReminder": "Another reminder",
-    "previous": "Previous",
-    "next": "Next",
     "showAll": "Show all",
     "showMore": "Show more",
-    "showOne": "Show one",
-    "of": "of",
     "browse": "Browse the texts",
     "alternativesHeading": "Instead",
     "noReminders": "These texts are still being reviewed",
@@ -222,7 +217,6 @@
     "typeScholar": "Scholar quotes",
     "typeBook": "Books",
     "tabsLabel": "Filter texts",
-    "closeHighlight": "Close reminder",
     "severity": "Severity"
   },
   "goodDeeds": {
@@ -239,13 +233,8 @@
     "showPublished": "Published only"
   },
   "goodDeedDetail": {
-    "anotherMotivation": "Another reminder",
-    "previous": "Previous",
-    "next": "Next",
     "showAll": "Show all",
     "showMore": "Show more",
-    "showOne": "Show one",
-    "of": "of",
     "browse": "Browse the texts",
     "rewardHeading": "The reward",
     "noMotivations": "These texts are still being reviewed",
@@ -261,8 +250,7 @@
     "typeHadith": "Hadith",
     "typeScholar": "Scholar quotes",
     "typeBook": "Books",
-    "tabsLabel": "Filter texts",
-    "closeHighlight": "Close reminder"
+    "tabsLabel": "Filter texts"
   },
   "browse": {
     "pageTitle": "Browse",

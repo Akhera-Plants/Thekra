@@ -158,7 +158,7 @@ export default async function SinDetailPage({
             </Link>
           </div>
         ) : (
-          <SinReader items={items} sections={sections} total={items.length} slug={slug} />
+          <SinReader items={items} sections={sections} total={items.length} />
         )}
 
         <AlternativeDeedsBlock alternatives={alternatives} heading={t('alternativesHeading')} />

@@ -1,6 +1,6 @@
 'use client';
 
-import { Shuffle, ChevronDown, Plus } from 'lucide-react';
+import { ChevronDown, Plus } from 'lucide-react';
 import { Button } from '@/components/shared/kit/button';
 import type { ButtonSize, ButtonTone, ButtonVariant } from '@/components/shared/kit/button';
 import { SegmentTabs } from '@/components/shared/kit/segment-tabs';
@@ -63,15 +63,6 @@ export function KitSpecimen() {
           <Button
             type="button"
             variant="outline"
-            tone="sin"
-            size="md"
-            icon={<Shuffle aria-hidden />}
-          >
-            Shuffle
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
             tone="neutral"
             size="md"
             icon={<ChevronDown aria-hidden />}
@@ -113,12 +104,6 @@ export function KitSpecimen() {
               تسجيل الدخول
             </Button>
             <span className="text-muted-foreground">ghost · neutral — secondary nav</span>
-          </li>
-          <li className="flex items-center gap-3 rounded-xl border border-border px-4 py-3">
-            <Button type="button" variant="outline" tone="sin" size="md" icon={<Shuffle aria-hidden />}>
-              تذكرة أخرى
-            </Button>
-            <span className="text-muted-foreground">outline · sin — reader shuffle</span>
           </li>
           <li className="flex items-center gap-3 rounded-xl border border-border px-4 py-3">
             <Button type="button" variant="outline" tone="deed" size="md">

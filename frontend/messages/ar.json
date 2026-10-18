@@ -200,13 +200,8 @@
     "showPublished": "المنشور فقط"
   },
   "sinDetail": {
-    "anotherReminder": "تذكرة أخرى",
-    "previous": "السابقة",
-    "next": "التالية",
     "showAll": "عرض الكل",
     "showMore": "عرض المزيد",
-    "showOne": "عرض تذكرة واحدة",
-    "of": "من",
     "browse": "تصفّح النصوص",
     "alternativesHeading": "بدلًا من ذلك",
     "noReminders": "النصوص قيد المراجعة",
@@ -222,7 +217,6 @@
     "typeScholar": "أقوال العلماء",
     "typeBook": "كتب",
     "tabsLabel": "تصفية النصوص",
-    "closeHighlight": "إغلاق التذكرة",
     "severity": "الخطورة"
   },
   "goodDeeds": {
@@ -239,13 +233,8 @@
     "showPublished": "المنشور فقط"
   },
   "goodDeedDetail": {
-    "anotherMotivation": "تذكرة أخرى",
-    "previous": "السابقة",
-    "next": "التالية",
     "showAll": "عرض الكل",
     "showMore": "عرض المزيد",
-    "showOne": "عرض تذكرة واحدة",
-    "of": "من",
     "browse": "تصفّح النصوص",
     "rewardHeading": "الأجر",
     "noMotivations": "النصوص قيد المراجعة",
@@ -261,8 +250,7 @@
     "typeHadith": "الأحاديث",
     "typeScholar": "أقوال العلماء",
     "typeBook": "كتب",
-    "tabsLabel": "تصفية النصوص",
-    "closeHighlight": "إغلاق التذكرة"
+    "tabsLabel": "تصفية النصوص"
   },
   "browse": {
     "pageTitle": "تصفح",

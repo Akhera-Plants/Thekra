@@ -107,16 +107,11 @@ export default async function BranchDetailPage({
             total={detail.quoteCount || readerItems.length}
             intent="iman-branch"
             labels={{
-              another: tDetail('anotherReminder'),
-              previous: tDetail('previous'),
-              next: tDetail('next'),
               showMore: tDetail('showMore'),
-              of: tDetail('of'),
               tabAll: tDetail('typeAll'),
               tabVerses: tDetail('typeVerses'),
               tabHadith: tDetail('typeHadith'),
               tabsLabel: tDetail('tabsLabel'),
-              closeHighlight: tDetail('closeHighlight'),
             }}
           />
         )}

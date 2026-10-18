@@ -252,8 +252,6 @@ export interface SinQuotesQuery {
   grades?: HadithGrade[];
   includeWeak?: boolean;
   minScore?: number;
-  shuffle?: boolean;
-  seed?: string;
 }
 
 export interface GoodDeedsQuery {
@@ -275,8 +273,6 @@ export interface GoodDeedQuotesQuery {
   grades?: HadithGrade[];
   includeWeak?: boolean;
   minScore?: number;
-  shuffle?: boolean;
-  seed?: string;
 }
 
 export interface QuotesQuery {
