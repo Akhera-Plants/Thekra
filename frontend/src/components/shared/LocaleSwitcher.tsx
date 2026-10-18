@@ -13,7 +13,8 @@ export function LocaleSwitcher({ label, className }: LocaleSwitcherProps) {
   const locale = useLocale();
   const pathname = usePathname();
   const otherLocale = locale === 'ar' ? 'en' : 'ar';
-  const otherLabel = otherLocale === 'ar' ? 'العربية' : 'English';
+  /** Short labels: Arabic stays native; English is just "En". */
+  const otherLabel = otherLocale === 'ar' ? 'العربية' : 'En';
 
   return (
     <Link

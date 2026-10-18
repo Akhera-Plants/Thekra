@@ -3,7 +3,7 @@
 import { useId, useState } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import {
-  ArrowLeft,
+  ArrowRight,
   BookOpen,
   ChevronDown,
   Info,
@@ -110,7 +110,7 @@ function ContextLink({
       )}
     >
       {label}
-      <ArrowLeft className="size-3.5 shrink-0" aria-hidden />
+      <ArrowRight className="size-3.5 shrink-0 rtl:-scale-x-100" aria-hidden />
     </Link>
   );
 }

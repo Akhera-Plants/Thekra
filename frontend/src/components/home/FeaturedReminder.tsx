@@ -1,9 +1,10 @@
 'use client';
 
 import { Fragment } from 'react';
-import { ArrowLeft, Bookmark, BookMarked, BookOpen } from 'lucide-react';
+import { Bookmark, BookMarked, BookOpen } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
+import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { useFavoriteQuoteIds } from '@/features/favorites/hooks/useFavoriteQuoteIds';
 import { useToggleFavorite } from '@/features/favorites/hooks/useToggleFavorite';
 import { formatDigits } from '@/lib/format/digits';
@@ -108,7 +109,7 @@ export function FeaturedReminder({ quote }: FeaturedReminderProps) {
           </span>
         </div>
         <Link className="outline-button" href={`/quotes/${quote.id}`}>
-          {t('readFull')} <ArrowLeft className="size-[18px] rtl:-scale-x-100" aria-hidden />
+          {t('readFull')} <DirectionalArrow className="size-[18px]" />
         </Link>
       </div>
     </article>

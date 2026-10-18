@@ -3,7 +3,8 @@
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { ErrorState } from '@/components/shared/ErrorState';
-import { ArrowLeft, Bookmark } from 'lucide-react';
+import { Bookmark } from 'lucide-react';
+import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { StaggerReveal } from '@/components/shared/StaggerReveal';
 import { QuoteCard } from '@/components/shared/quote/QuoteCard';
 import { QuoteCardSkeleton } from '@/components/shared/quote/QuoteCardSkeleton';
@@ -50,8 +51,7 @@ export function FavoritesList() {
           <h2>{t('favorites.empty')}</h2>
           <p>{t('favorites.emptyHint')}</p>
           <Link className="solid-button" href="/#paths">
-            {t('favorites.choosePath')}{' '}
-            <ArrowLeft className="size-[18px] rtl:-scale-x-100" aria-hidden />
+            {t('favorites.choosePath')} <DirectionalArrow className="size-[18px]" />
           </Link>
         </div>
       </div>

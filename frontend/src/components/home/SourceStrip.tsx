@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useSyncExternalStore } from 'react';
 import { useTranslations } from 'next-intl';
+import LogoLoop from '@/components/shared/react-bits/LogoLoop';
 
 const SOURCE_NAMES_AR = [
   'القرآن الكريم',
@@ -23,102 +24,32 @@ interface SourceStripProps {
   locale: 'ar' | 'en';
 }
 
+function usePrefersReducedMotion() {
+  return useSyncExternalStore(
+    (onStoreChange) => {
+      const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+      media.addEventListener('change', onStoreChange);
+      return () => media.removeEventListener('change', onStoreChange);
+    },
+    () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    () => false,
+  );
+}
+
 /**
- * Informational source marquee. Ports setupSourceStrip(): only fully-visible
- * wordmarks are shown while moving; reduced-motion gets a static list.
+ * Informational source wordmarks via React Bits LogoLoop.
+ * Reduced motion → static complete list (CURSOR_HANDOFF).
  */
 export function SourceStrip({ locale }: SourceStripProps) {
   const t = useTranslations('home');
   const names = locale === 'en' ? SOURCE_NAMES_EN : SOURCE_NAMES_AR;
-  const stripRef = useRef<HTMLDivElement>(null);
+  const reduceMotion = usePrefersReducedMotion();
 
-  useEffect(() => {
-    const strip = stripRef.current;
-    if (!strip) return;
-
-    const viewport = strip.querySelector<HTMLElement>('.source-window');
-    if (!viewport) return;
-
-    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
-    let frame = 0;
-
-    function stop() {
-      if (frame && window.cancelAnimationFrame) window.cancelAnimationFrame(frame);
-      frame = 0;
-    }
-
-    function marks() {
-      return [...strip!.querySelectorAll<HTMLElement>('.source-mark')];
-    }
-
-    function measure() {
-      const bounds = viewport!.getBoundingClientRect();
-      const items = marks();
-      const states = items.map((mark) => {
-        const box = mark.getBoundingClientRect();
-        return String(box.left >= bounds.left + 8 && box.right <= bounds.right - 8);
-      });
-      items.forEach((mark, index) => {
-        if (mark.dataset.full !== states[index]) mark.dataset.full = states[index];
-      });
-    }
-
-    function tick() {
-      measure();
-      frame = window.requestAnimationFrame(tick);
-    }
-
-    function sync() {
-      stop();
-      strip!.classList.remove('is-moving');
-      marks().forEach((mark) => mark.removeAttribute('data-full'));
-      if (media.matches || !window.requestAnimationFrame) return;
-      if (viewport!.getBoundingClientRect().width <= 0) return;
-      strip!.classList.add('is-moving');
-      measure();
-      frame = window.requestAnimationFrame(tick);
-    }
-
-    function onVisibility() {
-      if (document.hidden) {
-        strip!.dataset.inactive = 'true';
-        stop();
-      } else {
-        delete strip!.dataset.inactive;
-        sync();
-      }
-    }
-
-    sync();
-    media.addEventListener('change', sync);
-    document.addEventListener('visibilitychange', onVisibility);
-    window.addEventListener('resize', sync);
-    const observer =
-      typeof ResizeObserver !== 'undefined'
-        ? new ResizeObserver(() => {
-            sync();
-          })
-        : null;
-    observer?.observe(viewport);
-
-    return () => {
-      stop();
-      media.removeEventListener('change', sync);
-      document.removeEventListener('visibilitychange', onVisibility);
-      window.removeEventListener('resize', sync);
-      observer?.disconnect();
-    };
-  }, [locale]);
-
-  const group = (hidden: boolean, key: string) => (
-    <ul className="source-group" aria-hidden={hidden || undefined} key={key}>
-      {names.map((name) => (
-        <li className="source-mark" key={`${key}-${name}`}>
-          <span className="source-mark-title">{name}</span>
-        </li>
-      ))}
-    </ul>
-  );
+  const logos = names.map((name) => ({
+    node: <span className="source-mark-title">{name}</span>,
+    title: name,
+    ariaLabel: name,
+  }));
 
   return (
     <section className="sources-section" aria-labelledby="sources-title">
@@ -128,15 +59,37 @@ export function SourceStrip({ locale }: SourceStripProps) {
           <p>{t('sourcesLead')}</p>
         </div>
       </div>
-      <div className="sources-marquee" ref={stripRef} aria-label={t('sourcesAria')}>
-        <p className="sr-only">{names.join('، ')}</p>
-        <div className="source-window" aria-hidden>
-          <div className="source-track">
-            {group(false, 'a')}
-            {group(true, 'b')}
+
+      <p className="sr-only">{names.join(locale === 'ar' ? '، ' : ', ')}</p>
+
+      {reduceMotion ? (
+        <ul className="source-group" aria-label={t('sourcesAria')}>
+          {names.map((name) => (
+            <li className="source-mark" key={name}>
+              <span className="source-mark-title">{name}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div className="sources-marquee is-moving" aria-label={t('sourcesAria')} aria-hidden>
+          <div className="source-window">
+            <LogoLoop
+              logos={logos}
+              speed={55}
+              direction={locale === 'ar' ? 'right' : 'left'}
+              gap={40}
+              logoHeight={48}
+              fadeOut
+              fadeOutColor="var(--page)"
+              intro={false}
+              draggable={false}
+              scaleOnHover={false}
+              pauseOnHover={false}
+              ariaLabel={t('sourcesAria')}
+            />
           </div>
         </div>
-      </div>
+      )}
     </section>
   );
 }

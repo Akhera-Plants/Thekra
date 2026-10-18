@@ -1,11 +1,12 @@
 'use client';
 
 import { Suspense, useEffect, useMemo, useRef, useState, useTransition, type ComponentType } from 'react';
-import { ArrowLeft, BookOpen, DoorOpen, Search, Sprout } from 'lucide-react';
+import { BookOpen, DoorOpen, Search, Sprout } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 import { Link, usePathname, useRouter } from '@/i18n/navigation';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
+import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { FormattedNumber } from '@/components/shared/FormattedNumber';
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -220,7 +221,7 @@ function TopicCatalogShell({
             />
           </label>
           <button className="solid-button" type="submit">
-            {tCatalog('search')} <ArrowLeft className="size-[18px] rtl:-scale-x-100" aria-hidden />
+            {tCatalog('search')} <DirectionalArrow className="size-[18px]" />
           </button>
         </form>
 
@@ -247,7 +248,7 @@ function TopicCatalogShell({
                       </small>
                     ) : null}
                   </span>
-                  <ArrowLeft className="topic-arrow size-[18px] rtl:-scale-x-100" aria-hidden />
+                  <DirectionalArrow className="topic-arrow size-[18px]" />
                 </Link>
               );
             })}

@@ -1,6 +1,7 @@
-import { ArrowLeft, Heart, MessageCircle, Pause, Sun, type LucideIcon } from 'lucide-react';
+import { Heart, MessageCircle, Pause, Sun, type LucideIcon } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
+import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 
 export interface MomentLink {
   href: string;
@@ -39,7 +40,7 @@ export async function Moments({ moments = DEFAULT_MOMENTS }: MomentsProps) {
               </span>
               <span>{t(moment.labelKey)}</span>
               <span className="link-arrow">
-                <ArrowLeft className="size-[17px] rtl:-scale-x-100" aria-hidden />
+                <DirectionalArrow className="size-[17px]" />
               </span>
             </Link>
           );

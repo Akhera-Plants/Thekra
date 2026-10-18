@@ -2,7 +2,7 @@ import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { FormattedNumber } from '@/components/shared/FormattedNumber';
-import { ArrowLeft } from 'lucide-react';
+import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { getCatalogSources } from '@/lib/api/sources';
 import type { LocaleCode } from '@/lib/types/enums';
 
@@ -73,13 +73,13 @@ export default async function AboutPage({
 
       <nav className="about-paths" aria-label={tNav('main')}>
         <Link className="solid-button" href="/sins">
-          {tCrumbs('sins')} <ArrowLeft className="size-[18px] rtl:-scale-x-100" aria-hidden />
+          {tCrumbs('sins')} <DirectionalArrow className="size-[18px]" />
         </Link>
         <Link className="outline-button" href="/good-deeds">
-          {tCrumbs('goodDeeds')} <ArrowLeft className="size-[18px] rtl:-scale-x-100" aria-hidden />
+          {tCrumbs('goodDeeds')} <DirectionalArrow className="size-[18px]" />
         </Link>
         <Link className="outline-button" href="/branches">
-          {tCrumbs('branches')} <ArrowLeft className="size-[18px] rtl:-scale-x-100" aria-hidden />
+          {tCrumbs('branches')} <DirectionalArrow className="size-[18px]" />
         </Link>
       </nav>
     </div>

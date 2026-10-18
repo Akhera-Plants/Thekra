@@ -1,6 +1,6 @@
-import { ArrowLeft } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
+import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import type { QuoteDto } from '@/lib/types/api';
 
 interface ReflectionProps {
@@ -33,7 +33,7 @@ export async function Reflection({ quote, locale }: ReflectionProps) {
             {work ? <span>{work}</span> : null}
           </p>
           <Link className="outline-button" href={`/quotes/${quote.id}`}>
-            {t('reflectionCta')} <ArrowLeft className="size-[18px] rtl:-scale-x-100" aria-hidden />
+            {t('reflectionCta')} <DirectionalArrow className="size-[18px]" />
           </Link>
         </div>
       </div>

@@ -1,6 +1,7 @@
-import { ArrowLeft, BookOpen, DoorOpen, Leaf, Sprout } from 'lucide-react';
+import { BookOpen, DoorOpen, Leaf, Sprout } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
+import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 
 export async function Pathways() {
   const t = await getTranslations('home');
@@ -32,7 +33,7 @@ export async function Pathways() {
           <span className="pathway-cta">
             {t('sinCta')}{' '}
             <span className="pathway-arrow">
-              <ArrowLeft className="size-[19px] rtl:-scale-x-100" aria-hidden />
+              <DirectionalArrow className="size-[19px]" />
             </span>
           </span>
           <svg className="pathway-flourish" viewBox="0 0 150 160" fill="none" aria-hidden>
@@ -56,7 +57,7 @@ export async function Pathways() {
           <span className="pathway-cta">
             {t('deedCta')}{' '}
             <span className="pathway-arrow">
-              <ArrowLeft className="size-[19px] rtl:-scale-x-100" aria-hidden />
+              <DirectionalArrow className="size-[19px]" />
             </span>
           </span>
         </Link>
@@ -73,7 +74,7 @@ export async function Pathways() {
           <span className="pathway-cta">
             {t('branchCta')}{' '}
             <span className="pathway-arrow">
-              <ArrowLeft className="size-[19px] rtl:-scale-x-100" aria-hidden />
+              <DirectionalArrow className="size-[19px]" />
             </span>
           </span>
         </Link>
