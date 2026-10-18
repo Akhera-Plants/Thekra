@@ -5,7 +5,7 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import { notFound } from 'next/navigation';
 import { AppShell } from '@/components/shared/AppShell';
 import { LocaleSync } from '@/components/shared/LocaleSync';
-import { amiriQuran, thmanyahDisplay, thmanyahSans, thmanyahText } from '@/lib/fonts';
+import { amiri, amiriQuran, plexArabic, thmanyahDisplay, thmanyahSans, thmanyahText } from '@/lib/fonts';
 import { AppProviders } from '@/lib/providers';
 import { routing } from '@/i18n/routing';
 
@@ -53,7 +53,7 @@ export default async function LocaleLayout({
       lang={locale}
       dir={dir}
       suppressHydrationWarning
-      className={`${thmanyahDisplay.variable} ${thmanyahText.variable} ${thmanyahSans.variable} ${amiriQuran.variable} ${uiFont.variable} ${monoFont.variable} h-full antialiased`}
+      className={`${thmanyahDisplay.variable} ${thmanyahText.variable} ${thmanyahSans.variable} ${plexArabic.variable} ${amiri.variable} ${amiriQuran.variable} ${uiFont.variable} ${monoFont.variable} h-full antialiased`}
     >
       <body
         suppressHydrationWarning

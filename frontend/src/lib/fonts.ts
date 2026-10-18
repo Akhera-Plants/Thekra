@@ -10,6 +10,29 @@ export const amiriQuran = Amiri_Quran({
   variable: '--font-quran',
 });
 
+/** IBM Plex Sans Arabic — public site UI (thekra-source). */
+export const plexArabic = localFont({
+  display: 'swap',
+  adjustFontFallback: false,
+  preload: true,
+  variable: '--font-plex',
+  src: [
+    { path: '../fonts/plex/plex-regular.ttf', weight: '400', style: 'normal' },
+    { path: '../fonts/plex/plex-medium.ttf', weight: '500', style: 'normal' },
+    { path: '../fonts/plex/plex-semibold.ttf', weight: '600', style: 'normal' },
+    { path: '../fonts/plex/plex-semibold.ttf', weight: '700', style: 'normal' },
+  ],
+});
+
+/** Amiri — Quran reading and source-book wordmarks on the public site. */
+export const amiri = localFont({
+  display: 'swap',
+  adjustFontFallback: false,
+  preload: false,
+  variable: '--font-amiri',
+  src: [{ path: '../fonts/plex/amiri.ttf', weight: '400', style: 'normal' }],
+});
+
 /**
  * Thmanyah static faces. Each weight is a real file (including 600 → Bold)
  * so Tailwind's font-semibold does not synthesize a bold.
