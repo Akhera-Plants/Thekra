@@ -23,7 +23,7 @@ export function LocaleSwitcher({ label, className }: LocaleSwitcherProps) {
       data-locale-switch=""
       aria-label={label}
       className={cn(
-        'inline-flex min-h-11 items-center px-2 text-base text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'inline-flex min-h-11 items-center px-2 text-[15px] text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/40 md:text-base',
         className,
       )}
     >

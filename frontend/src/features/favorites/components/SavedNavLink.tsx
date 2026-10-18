@@ -22,7 +22,7 @@ export function SavedNavLink() {
       className="nav-link saved-nav"
       aria-current={current ? 'page' : undefined}
     >
-      <Bookmark className="size-[17px]" aria-hidden />
+      <Bookmark className="size-[18px]" aria-hidden />
       <span>{tNav('favorites')}</span>
       {count > 0 ? <span className="saved-count">{formatDigits(count)}</span> : null}
     </Link>
