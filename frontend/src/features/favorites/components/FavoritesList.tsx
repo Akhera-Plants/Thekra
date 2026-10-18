@@ -23,7 +23,7 @@ export function FavoritesList() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-4" aria-busy="true">
+      <div className="flex flex-col gap-8 md:gap-9" aria-busy="true">
         {[...Array(3)].map((_, i) => (
           <QuoteCardSkeleton key={i} />
         ))}
@@ -46,7 +46,7 @@ export function FavoritesList() {
   }
 
   return (
-    <div className="flex flex-col gap-4" role="list">
+    <div className="flex flex-col gap-8 md:gap-9" role="list">
       <StaggerReveal>
         {data.items.map((quote) => (
           <div key={quote.id} role="listitem" className="min-w-0">

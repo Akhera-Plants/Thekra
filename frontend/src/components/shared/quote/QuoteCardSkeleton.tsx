@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 
 interface QuoteCardSkeletonProps {
   density?: 'compact' | 'full';
-  /** Pass the same `intent` the real QuoteCard will render with, so the top border thickness matches. */
+  /** Kept for API parity with QuoteCard; chrome no longer uses a top accent. */
   intent?: 'sin' | 'good-deed' | 'iman-branch';
   className?: string;
 }
@@ -11,34 +11,31 @@ interface QuoteCardSkeletonProps {
 /** Geometry-matched skeleton for QuoteCard — prevents layout shift during loading. */
 export function QuoteCardSkeleton({
   density = 'full',
-  intent,
   className,
 }: QuoteCardSkeletonProps) {
-  const padding = density === 'compact' ? 'p-4' : 'p-5 md:p-6';
+  const padding =
+    density === 'compact' ? 'gap-4 px-4 py-4 md:px-5 md:py-5' : 'gap-5 px-5 py-5 md:gap-6 md:px-7 md:py-7';
 
   return (
     <div
       className={cn(
-        'flex flex-col gap-3 rounded-lg border border-border bg-card',
-        intent ? 'border-t-[3px]' : null,
+        'flex flex-col rounded-[1.35rem] border border-border/80 bg-card',
+        'shadow-[0_1px_2px_oklch(0.18_0.007_255_/_0.04)]',
         padding,
         className,
       )}
       aria-hidden
     >
-      {/* Type badge row */}
-      <div className="flex items-center gap-2">
-        <Skeleton className="size-3.5 rounded-full" />
-        <Skeleton className="h-3 w-16 rounded-full" />
+      <div className="flex flex-col items-start gap-2">
+        <Skeleton className="h-7 w-28 rounded-full" />
+        <Skeleton className="h-7 w-40 rounded-full" />
       </div>
-      {/* Arabic text lines */}
-      <div className="flex flex-col gap-2">
-        <Skeleton className="h-6 w-full rounded-md" />
-        <Skeleton className="h-6 w-4/5 rounded-md" />
-        <Skeleton className="h-6 w-3/5 rounded-md" />
+      <div className="flex flex-col gap-2.5">
+        <Skeleton className="h-7 w-full rounded-md" />
+        <Skeleton className="h-7 w-[92%] rounded-md" />
+        <Skeleton className="h-7 w-3/4 rounded-md" />
       </div>
-      {/* Source row */}
-      <Skeleton className="h-4 w-1/3 rounded-full" />
+      <Skeleton className="h-11 w-full rounded-2xl" />
     </div>
   );
 }

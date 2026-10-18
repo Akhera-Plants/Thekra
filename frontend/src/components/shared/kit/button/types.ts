@@ -3,7 +3,14 @@ import type { VariantProps } from 'class-variance-authority';
 import type { buttonVariants } from './variants';
 
 export type ButtonVariant = 'solid' | 'outline' | 'ghost' | 'link';
-export type ButtonTone = 'primary' | 'neutral' | 'sin' | 'deed' | 'branch';
+/** Path tones + desk tones. `neutral` ≈ nexa `default`; `destructive` for delete/fail. */
+export type ButtonTone =
+  | 'primary'
+  | 'neutral'
+  | 'destructive'
+  | 'sin'
+  | 'deed'
+  | 'branch';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 export type ButtonIconPosition = 'start' | 'end';
 

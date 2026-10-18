@@ -9,7 +9,7 @@ import { useSyncExternalStore } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/shared/kit/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,10 +41,10 @@ function GuestAuthLinks({
 }) {
   return (
     <div className="flex items-center gap-1">
-      <Button asChild variant="ghost" size="sm">
+      <Button asChild variant="ghost" tone="neutral" size="sm">
         <Link href="/login">{signIn}</Link>
       </Button>
-      <Button asChild size="sm">
+      <Button asChild variant="solid" tone="primary" size="sm">
         <Link href="/register">{register}</Link>
       </Button>
     </div>

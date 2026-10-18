@@ -47,7 +47,7 @@ export function SurahView({ surah }: SurahViewProps) {
       </header>
 
       {isPending && (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-8 md:gap-9">
           {Array.from({ length: 5 }).map((_, i) => (
             <QuoteCardSkeleton key={i} />
           ))}
@@ -67,7 +67,7 @@ export function SurahView({ surah }: SurahViewProps) {
       )}
 
       {!isPending && ayahs.length > 0 && (
-        <div className="flex flex-col gap-4" role="list" aria-label={surahLabel}>
+        <div className="flex flex-col gap-8 md:gap-9" role="list" aria-label={surahLabel}>
           <StaggerReveal>
             {ayahs.map((ayah) => (
               <div key={ayah.id} role="listitem" className="min-w-0">

@@ -248,7 +248,7 @@
   "quote": {
     "type": {
       "quran": "آية قرآنية",
-      "hadith": "حديث",
+      "hadith": "حديث نبوي",
       "scholar": "قول عالم",
       "book": "مقتطف كتاب"
     },
@@ -272,7 +272,9 @@
     "outsideSahihayn": "ليس من الصحيحين",
     "translation": "الترجمة",
     "viewFull": "عرض كامل",
+    "viewContext": "عرض السياق كاملًا",
     "whyVerse": "لماذا هذه الآية؟",
+    "whyHadith": "لماذا هذا الحديث؟",
     "tafsirEmpty": "لا يوجد نص لهذا الموضع",
     "report": "أبلغ عن خطأ",
     "reportReason": "سبب البلاغ",

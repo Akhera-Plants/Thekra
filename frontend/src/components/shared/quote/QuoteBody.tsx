@@ -22,12 +22,15 @@ interface QuoteBodyProps {
  * The Arabic stays in the response; English replaces it on screen when a
  * translation from the confirming source is present. Scholar text stays Arabic.
  * No machine translation — missing English keeps Arabic with a short note.
+ *
+ * Quran uses Amiri Quran (`font-quran`); hadith and other Arabic use Thmanyah reading.
  */
 export function QuoteBody({ quote, size = 'xl', className, children }: QuoteBodyProps) {
   const locale = useLocale();
   const t = useTranslations('quote');
   const scripture = quote.type === QuoteType.HADITH || quote.type === QuoteType.QURAN_VERSE;
   const english = locale === 'en' && scripture && quote.translation?.text;
+  const isQuran = quote.type === QuoteType.QURAN_VERSE;
 
   if (english) {
     return (
@@ -36,7 +39,9 @@ export function QuoteBody({ quote, size = 'xl', className, children }: QuoteBody
         lang="en"
         className={cn(
           'border-none ps-0 text-foreground',
-          size === 'hero' ? 'text-2xl leading-relaxed md:text-3xl' : 'text-xl leading-relaxed md:text-2xl',
+          size === 'hero'
+            ? 'text-2xl leading-relaxed md:text-3xl'
+            : 'text-xl leading-relaxed md:text-2xl',
           className,
         )}
       >
@@ -51,8 +56,15 @@ export function QuoteBody({ quote, size = 'xl', className, children }: QuoteBody
       <ArabicText
         as="blockquote"
         size="xl"
-        face="display"
-        className={cn('border-none ps-0', size === 'hero' && 'text-2xl leading-loose md:text-3xl', className)}
+        face={isQuran ? 'quran' : 'text'}
+        className={cn(
+          'border-none ps-0 overflow-visible py-0.5 text-start',
+          size === 'hero' &&
+            (isQuran
+              ? 'text-2xl leading-[2.15] md:text-3xl'
+              : 'text-2xl leading-loose md:text-3xl'),
+          className,
+        )}
       >
         {quote.textAr}
         {children}

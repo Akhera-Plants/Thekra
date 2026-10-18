@@ -34,7 +34,7 @@ export function InfiniteQuoteList({ params }: InfiniteQuoteListProps) {
 
   if (isPending) {
     return (
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-8 md:gap-9">
         {Array.from({ length: 5 }).map((_, i) => (
           <QuoteCardSkeleton key={i} />
         ))}
@@ -57,8 +57,8 @@ export function InfiniteQuoteList({ params }: InfiniteQuoteListProps) {
   }
 
   return (
-    <section className="flex flex-col gap-4">
-      <div className="flex flex-col gap-4" role="list" aria-label="quotes">
+    <section className="flex flex-col gap-8 md:gap-9">
+      <div className="flex flex-col gap-8 md:gap-9" role="list" aria-label="quotes">
         <StaggerReveal>
           {firstPage.map((quote) => (
             <div key={quote.id} role="listitem" className="min-w-0">

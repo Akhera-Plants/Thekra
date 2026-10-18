@@ -336,13 +336,13 @@ export function ReminderReader({
         </div>
       ) : null}
 
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-8 md:gap-9">
         {shownSections.map((section) => (
-          <section key={section.heading || 'texts'} className="flex flex-col">
+          <section key={section.heading || 'texts'} className="flex flex-col gap-8 md:gap-9">
             {section.heading ? (
-              <h2 className="pt-6 font-arabic-display text-2xl">{section.heading}</h2>
+              <h2 className="font-arabic-display text-2xl">{section.heading}</h2>
             ) : null}
-            <ul className="flex flex-col">
+            <ul className="flex flex-col gap-8 md:gap-9">
               {section.items.map((item) => (
                 <li key={`${section.heading}-${item.id}`}>
                   <QuoteCard

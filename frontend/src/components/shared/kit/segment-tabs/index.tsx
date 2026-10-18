@@ -32,35 +32,18 @@ function SegmentTabs({
       <TabsList
         aria-label={ariaLabel}
         data-variant={variant}
-        className={cn(
-          segmentListVariants({ variant, size }),
-          // Override the stock TabsList height/padding so our segment chrome wins.
-          'h-auto w-full max-w-full justify-stretch rounded-xl p-0',
-          variant === 'segment' && 'p-1.5',
-          variant === 'underline' && 'rounded-none bg-transparent',
-          size === 'hugged' && 'w-fit',
-          listClassName,
-        )}
+        className={cn(segmentListVariants({ variant, size }), listClassName)}
       >
         {visible.map((item) => (
           <TabsTrigger
             key={item.value}
             value={item.value}
             disabled={item.disabled}
-            className={cn(
-              segmentTriggerVariants({ variant, size }),
-              // Stock trigger paints its own active surface — clear it for ours.
-              'h-auto flex-none border-0 bg-transparent shadow-none data-active:shadow-sm',
-              'dark:data-active:border-transparent dark:data-active:bg-background',
-              size === 'filled' && 'flex-1',
-            )}
+            className={segmentTriggerVariants({ variant, size })}
           >
-            <span>{item.label}</span>
+            <span className="leading-none">{item.label}</span>
             {item.count !== undefined && item.count !== null ? (
-              <span className="inline-flex items-center gap-1.5 text-xs tabular-nums text-muted-foreground">
-                <span aria-hidden className="opacity-40">
-                  ·
-                </span>
+              <span className="leading-none text-xs tabular-nums text-current/55">
                 {typeof item.count === 'number' ? (
                   <FormattedNumber value={item.count} />
                 ) : (

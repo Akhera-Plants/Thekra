@@ -6,10 +6,11 @@ interface ArabicTextProps {
   /** Defaults to 'lg' (18px min per plan §7.3). Use 'xl' for verse/hadith bodies. */
   size?: 'sm' | 'base' | 'lg' | 'xl';
   /**
-   * Which Thmanyah face. Headings default to display; everything else to the
+   * Which face. Headings default to display; everything else to the
    * reading (text) face. `ui` is the sans face for short labels.
+   * `quran` is Amiri Quran for Uthmani verse text (diacritics + marks).
    */
-  face?: 'text' | 'display' | 'ui';
+  face?: 'text' | 'display' | 'ui' | 'quran';
   className?: string;
 }
 
@@ -24,6 +25,7 @@ const faceClasses = {
   text: 'font-arabic-text leading-loose',
   display: 'font-arabic-display leading-relaxed',
   ui: 'font-arabic-ui leading-normal',
+  quran: 'font-quran leading-[2]',
 } as const;
 
 /**

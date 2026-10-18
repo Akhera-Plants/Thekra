@@ -248,7 +248,7 @@
   "quote": {
     "type": {
       "quran": "Quranic verse",
-      "hadith": "Hadith",
+      "hadith": "Prophetic hadith",
       "scholar": "Scholar quote",
       "book": "Book excerpt"
     },
@@ -272,7 +272,9 @@
     "outsideSahihayn": "Not from the two Sahihs",
     "translation": "Translation",
     "viewFull": "View full",
+    "viewContext": "View full context",
     "whyVerse": "Why this verse?",
+    "whyHadith": "Why this hadith?",
     "tafsirEmpty": "No text for this verse",
     "report": "Report a mistake",
     "reportReason": "Reason",
