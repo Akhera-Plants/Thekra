@@ -48,9 +48,30 @@ async function getJson<T>(url: string): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+/** Arabic + English chapter names keyed by surah number (1–114). */
 async function loadChapters(): Promise<Map<number, Chapter>> {
-  const body = await getJson<{ chapters: Chapter[] }>(`${API}/chapters?language=ar`);
-  return new Map(body.chapters.map((chapter) => [chapter.id, chapter]));
+  const [ar, en] = await Promise.all([
+    getJson<{ chapters: Chapter[] }>(`${API}/chapters?language=ar`),
+    getJson<{ chapters: Chapter[] }>(`${API}/chapters?language=en`),
+  ]);
+  const byId = new Map<number, Chapter>();
+  for (const chapter of ar.chapters) {
+    byId.set(chapter.id, {
+      id: chapter.id,
+      name_arabic: chapter.name_arabic,
+      name_simple: chapter.name_simple,
+    });
+  }
+  for (const chapter of en.chapters) {
+    const current = byId.get(chapter.id);
+    if (!current) continue;
+    // Prefer the English endpoint's simple name when present.
+    byId.set(chapter.id, {
+      ...current,
+      name_simple: chapter.name_simple || current.name_simple,
+    });
+  }
+  return byId;
 }
 
 async function loadVerses(limit: number | null): Promise<Verse[]> {
@@ -83,7 +104,16 @@ export async function runQuranImport(options: ImportOptions): Promise<void> {
 
   const existing = await options.prisma.quote.findMany({
     where: { type: QuoteType.QURAN_VERSE, sourceId: QURAN_SOURCE_ID },
-    select: { id: true, surahNumber: true, ayahNumber: true, textAr: true, apiProvider: true, externalId: true },
+    select: {
+      id: true,
+      surahNumber: true,
+      ayahNumber: true,
+      surahName: true,
+      surahNameAr: true,
+      textAr: true,
+      apiProvider: true,
+      externalId: true,
+    },
   });
   const byExternal = new Map(existing.filter((row) => row.externalId).map((row) => [row.externalId, row]));
   const byAyah = new Map(
@@ -96,6 +126,9 @@ export async function runQuranImport(options: ImportOptions): Promise<void> {
   const writes: Array<{ id: string | null; dropId: string | null; verse: Verse }> = [];
   for (const verse of verses) {
     const chapterId = chapterOf(verse);
+    const chapter = chapters.get(chapterId);
+    const expectedName = chapter?.name_simple ?? null;
+    const expectedNameAr = chapter?.name_arabic ?? null;
     const api = byExternal.get(verse.verse_key);
     const ayah = byAyah.get(`${chapterId}:${verse.verse_number}`);
     const row = ayah ?? api ?? null;
@@ -110,6 +143,8 @@ export async function runQuranImport(options: ImportOptions): Promise<void> {
       && row.textAr === verse.text_uthmani
       && row.externalId === verse.verse_key
       && row.apiProvider === PROVIDER
+      && row.surahName === expectedName
+      && row.surahNameAr === expectedNameAr
       && dropId === null;
     if (!same) {
       updated += 1;
