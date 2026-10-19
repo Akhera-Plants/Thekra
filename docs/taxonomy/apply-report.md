@@ -498,6 +498,9 @@ Batch from `docs/taxonomy/CURSOR_FIX_LINKS_PRAYER.md` (steps 1–5). Counts from
 | 2 | Taxonomy re-apply (adab-salah + content-map) | — | topics created 1; links created 96, updated 100, deleted 88. Second `import:taxonomy`: 0/0/0 |
 | 3 | Sahihayn CHAPTER map (batch 1, 21 chapters) | proposals 1315 | links created 32, updated 18 (KEYWORD→CHAPTER); proposals 1308. Reviewer CHAPTER links now 50. Second run: 0/0/0 |
 | 4 | Paired pages | — | no link writes (UI + `pair` on API). Second taxonomy: 0/0/0 |
+| 4b | Wrong surah names (`surahNameAr='الناس'` AND `surahNumber<>114`) | 1852 | 0. Quran import: created 0 updated 1853 unchanged 4383. Second run: 0/0/6236. Spot-check 4:102 → «النساء» / An-Nisa |
+| 4c | AYAH links from al-Kabair «فصل» under a kabira | 23 | 0 remaining. Taxonomy: deleted 20 (3 already absent from desired set). Second run: 0/0/0. Hadith under those فصل kept |
+| 4d | Export `docs/taxonomy/ayah-review.tsv` | — | 491 rows (zuhd / minhaj / munajjid; AUTHOR_CITATION + REVIEWER_SECTION). No public data change |
 
 Muslim 82 TAKHRIJ to `salat-fi-jamaah` came from a false HadithMatch (Riyad «باب فضل الصف الأول…» quote matched Muslim 82). Match deleted; link no longer recreates.
 
@@ -598,3 +601,9 @@ Public ACCEPTED texts after dedupe by quote id:
 - `salah-390-light.png` / `salah-390-dark.png`
 
 Both URLs open the paired page titled «الصلاة»; `/sins/tark-as-salah` opens on «ما جاء في التحذير», `/good-deeds/salah` on «الفضل والثواب». Kabira badge remains on the sin entry path.
+
+### Steps 4b–4d (follow-up)
+
+- **4b:** Importer `same` check now includes `surahName` / `surahNameAr`; chapters loaded from Quran.com `?language=ar` and `?language=en`.
+- **4c:** `skipKabairFaslAyah` in `taxonomy/links.ts` — AYAH under `kabair` + `FASL` are not planned; existing ACCEPTED links removed on re-apply.
+- **4d:** Reviewer file `docs/taxonomy/ayah-review.tsv` (linkId, side, topic, verse key/name/snippet, book, section, opening vs after first hadith). Await decisions; do not edit these links until then.

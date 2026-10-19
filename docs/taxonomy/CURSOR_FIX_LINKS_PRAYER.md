@@ -6,6 +6,11 @@ reviewer's files — apply them. If a number below does not match your DB, STOP 
 
 ---
 
+FIRST read docs/handoff/ui-port-session-context.md. The public UI described there is final: extend those files,
+never revert them. In particular keep ReminderReader as tabs + paginated list + «show more» (no shuffle, no
+highlight), no public «تصنيف المراجعة», DirectionalArrow, Amiri for English, quiet focus. Step 4 (paired pages) must be
+built inside that existing reader and page structure — only the data it receives and the page title/parts change.
+
 The owner opened /sins/tark-as-salah («ترك الصلاة والتهاون بها») and found wrong texts under «أجر من تركها لله»,
 e.g. «لا يصبر على لأواء المدينة…» (Muslim 1378) and «إذا نعس أحدكم في الصلاة فليرقد…» (Muslim 786), and only 3 public
 hadith on abandoning prayer. The reviewer traced it in the DB. Causes and fixes:
@@ -54,6 +59,25 @@ hadith on abandoning prayer. The reviewer traced it in the DB. Causes and fixes:
   · Lists (/sins, /good-deeds, home index) show the pair once, under the side being listed.
   · Contemporary topics and unpaired topics are unchanged.
 - The tabs on the page (الكل / الآيات / الأحاديث) count the deduplicated pair.
+
+## 4b. Wrong surah names on 1,852 verses (data bug)
+- Quote rows of type QURAN_VERSE have correct surahNumber/ayahNumber but surahNameAr «الناس» / surahName «An-Nas» for
+  whole surahs (e.g. all 176 verses of surah 4 and all 286 of surah 2). The API then shows «الناس 102» for النساء 102.
+- Backfill surahName / surahNameAr for all 6,236 verses from the Quran.com chapters endpoint
+  (GET https://api.quran.com/api/v4/chapters?language=ar and ?language=en) by surahNumber; fix the Quran importer so it
+  sets the name per verse from its own chapter. Acceptance: SELECT count(*) WHERE surahNameAr='الناس' AND surahNumber<>114
+  returns 0; /v1/quotes for 4:102 shows «النساء».
+
+## 4c. Verses from al-Kabair story sub-sections
+- 23 AYAH links come from al-Kabair «فصل» sub-sections that hold stories and exhortation (e.g. يس 12 and الأنبياء 105 under
+  ترك الصلاة). Keep AYAH links only from the KABIRA section itself (the opening before its فصل sub-sections); delete the
+  AYAH links whose sectionId is a فصل under a kabira. Hadith items from those فصل stay as they are.
+
+## 4d. Export the remaining verse links for the reviewer (no change to public data)
+- Write docs/taxonomy/ayah-review.tsv: one row per ACCEPTED verse link whose source is al-Zuhd, Mukhtasar Minhaj,
+  al-Munajjid (AUTHOR_CITATION) or REVIEWER_SECTION: linkId, side, topic slug, topic name, verse key, surah name,
+  first 120 chars of the verse, book, section title, position in section (opening / after first hadith).
+  The reviewer will return a decision per row; do not change these links now.
 
 ## 5. Report — append «Prayer audit» to docs/taxonomy/apply-report.md
 - Counts before/after: links deleted in step 1, links re-created in step 2, links added in step 3, proposals removed.

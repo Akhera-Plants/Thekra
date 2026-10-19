@@ -1,0 +1,35 @@
+---
+description: Preserve the polished public UI port — do not revert or redesign without asking
+alwaysApply: true
+---
+
+# Public UI: preserve current design
+
+The owner redesigned and polished the public site. **Do not change, simplify, or revert that UI unless they explicitly ask.**
+
+## Canonical handoff (read before public UI work)
+
+`docs/handoff/ui-port-session-context.md`
+
+That file is the source of truth for decisions, protected files, and the “do not reintroduce” checklist.
+
+## Hard rules
+
+1. Prefer extending admin / taxonomy / content work; leave public chrome alone unless asked.
+2. If a design conflict appears, **ask** — never silently revert the UI commits listed in the handoff.
+3. Screenshots under `docs/design/after/` are reference only; do not rewrite product code to match an old screenshot without checking the handoff.
+
+## Do not reintroduce
+
+- Shuffle / «تذكرة أخرى» on topic readers
+- Public «تصنيف المراجعة» under quotes
+- `ArrowLeft` + RTL scale for forward nav (use `DirectionalArrow`: `ArrowRight` + `rtl:-scale-x-100`)
+- Locale label `English` (use `En`)
+- Dark ink on green pathway-return overline/icon
+- Source Sans 3 as English UI font (Amiri is current)
+- Heavy `focus-visible:ring-3` double frames on inputs/badges
+- Duplicate unvocalized tagline as home/about lead
+
+## Quote cards / readers
+
+Keep current `QuoteCard` / `ReminderReader` / Amiri EN / quieter focus / LogoLoop source strip as shipped. Only change when the owner requests a specific UI change.
