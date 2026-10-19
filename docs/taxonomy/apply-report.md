@@ -508,13 +508,20 @@ Muslim 82 TAKHRIJ to `salat-fi-jamaah` came from a false HadithMatch (Riyad «ب
 
 ### Prayer pair (`tark-as-salah` ↔ `salah`, title «الصلاة»)
 
-Public ACCEPTED texts after dedupe by quote id:
+Public pair tabs on the page (deduped; SAHIH/HASAN public filter), after steps 4b–4c:
+
+| Tab | Count |
+| --- | ---: |
+| الكل | 78 |
+| الآيات | 32 |
+| الأحاديث | 46 |
+
+ACCEPTED rows in DB (all grades, before public filter), after 4c verse removals:
 
 | Part | Total | QURAN_VERSE | HADITH | BOOK_EXCERPT |
 | --- | ---: | ---: | ---: | ---: |
-| ما جاء في التحذير (AVOID) | 95 | 20 | 72 | 3 |
-| الفضل والثواب (DO, deduped) | 170 | 14 | 156 | 0 |
-| Pair total (deduped) | 265 |  |  |  |
+| ما جاء في التحذير (AVOID) | 93 | 18 | 72 | 3 |
+| الفضل والثواب (DO) | 171 | 14 | 157 | 0 |
 
 #### Public Sahihayn hadith on the pair (book + number)
 
@@ -593,7 +600,7 @@ Public ACCEPTED texts after dedupe by quote id:
 
 ### Screenshots
 
-`docs/design/after/topics/`:
+Refreshed after steps 4b–4d into `docs/design/after/topics/` (1440×900 and 390×844, light + dark):
 
 - `tark-as-salah-1440-light.png` / `tark-as-salah-1440-dark.png`
 - `tark-as-salah-390-light.png` / `tark-as-salah-390-dark.png`
