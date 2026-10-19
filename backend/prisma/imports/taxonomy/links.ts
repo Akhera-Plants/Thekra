@@ -127,6 +127,14 @@ export function loadContentMap(path: string): ContentRow[] {
   return parseContentMap(readFileSync(path, 'utf8'));
 }
 
+/**
+ * Al-Kabair «فصل» sub-sections hold stories and exhortation. Keep AYAH links only
+ * from the KABIRA opening itself; hadith under those فصل stays.
+ */
+export function skipKabairFaslAyah(section: Pick<ReadySection, 'book' | 'level'>, kind: LinkItem['kind']): boolean {
+  return section.book === 'kabair' && section.level === 'FASL' && kind === 'AYAH';
+}
+
 function pushItemLinks(
   out: DesiredLink[],
   section: ReadySection,
@@ -140,6 +148,10 @@ function pushItemLinks(
   let skipped = 0;
   for (const item of section.items) {
     if (item.kind === 'AUTHOR_TEXT') continue;
+    if (skipKabairFaslAyah(section, item.kind)) {
+      skipped += 1;
+      continue;
+    }
     if (!item.quoteId) {
       skipped += 1;
       continue;
