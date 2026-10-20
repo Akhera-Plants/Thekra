@@ -34,6 +34,7 @@ export const PUBLISHABLE_GRADE_SOURCES: readonly GradeSource[] = [
   GradeSource.AUTO_SAHIHAYN,
   GradeSource.MANUAL,
   GradeSource.SUNAN_TAHQIQ,
+  GradeSource.HADEETHENC,
 ];
 
 export class GradePolicy {
@@ -92,8 +93,9 @@ export class GradePolicy {
   }
 
   /**
-   * A hadith is publishable from a sahihayn match, a manual grade, or a sunan
-   * tahqiq grade (Arna'ut, sahih or hasan). Ibn Rajab is selection only — never a grade.
+   * A hadith is publishable from a sahihayn match, a manual grade, a sunan
+   * tahqiq grade (Arna'ut, sahih or hasan), or HadeethEnc (صحيح / حسن).
+   * Ibn Rajab is selection only — never a grade.
    * An open high-severity flag hides every quote type. OUTSIDE_SAHIHAYN is low and does not hide.
    */
   static publishableClause(): Prisma.QuoteWhereInput {

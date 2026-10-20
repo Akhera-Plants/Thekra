@@ -92,6 +92,9 @@ enum GradeSource {
   SUNAN_TAHQIQ
   /// Kept for stored rows. Ibn Rajab is selection only — never publishable as a grade.
   IBN_RAJAB
+  /// موسوعة الأحاديث النبوية (HadeethEnc). Publishable when grade is SAHIH or HASAN.
+  /// Never overwrites SAHIHAYN / AUTO_SAHIHAYN / SUNAN_TAHQIQ / MANUAL.
+  HADEETHENC
 }
 
 enum ReferenceBook {
@@ -178,6 +181,12 @@ enum ExplanationKind {
   TAFSIR // تفسير — attached by ayahKey
   SHARH // شرح — attached by quoteId
   BRANCH_SHARH // شرح شعبة — attached by imanBranchId
+  /// فوائد — HadeethEnc hints; attached by quoteId
+  FAWAID
+  /// غريب — HadeethEnc word meanings; attached by quoteId
+  GHARIB
+  /// Long classical sharh (Fath al-Bari / Nawawi); quote page only, never lists
+  SHARH_LONG
 }
 
 /// Review state of a suggested or curated link.
@@ -259,7 +268,7 @@ model Quote {
   /// Who assigned Quote.grade, and where. Never inferred for a whole book.
   gradeAuthority String?
   gradeReference String?
-  /// AUTHORITY_LEGACY and IBN_RAJAB stay stored and are not published. SAHIHAYN, AUTO_SAHIHAYN, MANUAL, and SUNAN_TAHQIQ are.
+  /// AUTHORITY_LEGACY and IBN_RAJAB stay stored and are not published. SAHIHAYN, AUTO_SAHIHAYN, MANUAL, SUNAN_TAHQIQ, and HADEETHENC are.
   gradeSource    GradeSource @default(AUTHORITY_LEGACY)
   /// Previous authority grade, kept when a sahihayn match replaces it.
   legacyGrade          HadithGrade?

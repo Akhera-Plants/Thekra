@@ -17,6 +17,7 @@ import { runTaxonomyImport } from './taxonomy/import.js';
 import { runSunanTahqiq } from './sunan-tahqiq/import.js';
 import { runTranslations } from './translations/import.js';
 import { runIbnRajab } from './ibn-rajab/import.js';
+import { runHadeethencImport } from './hadeethenc/import.js';
 import { runMinhajImport, runRiyadImport, runTarghibImport, runZuhdImport } from './waqfeya/import.js';
 
 const WORKS: Record<string, (options: ImportOptions) => Promise<void>> = {
@@ -41,6 +42,7 @@ const WORKS: Record<string, (options: ImportOptions) => Promise<void>> = {
   mukhtasar: runMukhtasarImport,
   ashur: runAshurImport,
   'ibn-kathir-en': runIbnKathirEnImport,
+  hadeethenc: runHadeethencImport,
 };
 
 const USAGE = `usage: import:book <${Object.keys(WORKS).join('|')}> [--dry-run] [--limit N]`;

@@ -46,7 +46,8 @@ export type GradeSource =
   | 'SAHIHAYN'
   | 'MANUAL'
   | 'SUNAN_TAHQIQ'
-  | 'IBN_RAJAB';
+  | 'IBN_RAJAB'
+  | 'HADEETHENC';
 export type ReferenceBook = 'BUKHARI' | 'MUSLIM';
 export type PublishReason =
   | 'OCR_UNVERIFIED'
@@ -57,7 +58,13 @@ export type PublishReason =
   | 'UNKNOWN';
 
 /** Grade sources the reader policy accepts for hadith (backend grade-policy.ts). */
-export const APPROVED_GRADE_SOURCES = ['SAHIHAYN', 'AUTO_SAHIHAYN', 'MANUAL', 'SUNAN_TAHQIQ'] as const;
+export const APPROVED_GRADE_SOURCES = [
+  'SAHIHAYN',
+  'AUTO_SAHIHAYN',
+  'MANUAL',
+  'SUNAN_TAHQIQ',
+  'HADEETHENC',
+] as const;
 
 export const FLAG_TYPES: FlagType[] = [
   'WEAK_MATCH',
@@ -169,6 +176,7 @@ const TABLES = {
     MANUAL: { ar: 'حكم المراجِع', en: 'Reviewer grade' },
     SUNAN_TAHQIQ: { ar: 'تحقيق الأرنؤوط', en: "Arna'ut tahqiq" },
     IBN_RAJAB: { ar: 'ابن رجب', en: 'Ibn Rajab' },
+    HADEETHENC: { ar: 'موسوعة الأحاديث النبوية', en: 'Hadeeth Encyclopedia' },
   } satisfies LabelTable<GradeSource>,
   textSource: {
     DIGITAL: { ar: 'رقمي', en: 'Digital' },

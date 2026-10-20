@@ -29,6 +29,25 @@ export function formatGradeCitation(input: {
     return input.locale === 'en' ? (englishProvenance(line) ?? line) : line;
   }
 
+  if (authority && /موسوعة الأحاديث النبوية|HadeethEnc|Hadeeth Encyclopedia/i.test(authority)) {
+    const gradeWord =
+      input.grade === 'HASAN'
+        ? input.locale === 'ar'
+          ? 'حسن'
+          : 'Good'
+        : input.locale === 'ar'
+          ? 'صحيح'
+          : 'Authentic';
+    if (input.locale === 'ar') {
+      return reference
+        ? `حكم موسوعة الأحاديث النبوية: ${gradeWord} — ${reference}`
+        : `حكم موسوعة الأحاديث النبوية: ${gradeWord}`;
+    }
+    return reference
+      ? `Hadeeth Encyclopedia ruling: ${gradeWord} — ${reference}`
+      : `Hadeeth Encyclopedia ruling: ${gradeWord}`;
+  }
+
   if (authority && reference) {
     if (input.locale === 'ar') {
       const verb = input.grade === 'HASAN' ? 'حسّنه' : /الأرنؤوط|أرنؤوط/.test(authority) ? 'صحّحه' : 'حكمه';

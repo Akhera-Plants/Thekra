@@ -141,6 +141,18 @@ export const APPROVED_WORKS = [
     gradeBy: null,
   },
   {
+    id: '10000000-0000-4000-8000-000000000026',
+    bookKey: 'book:hadeethenc',
+    name: 'Hadith Encyclopedia — HadeethEnc',
+    nameAr: 'موسوعة الأحاديث النبوية — HadeethEnc',
+    type: SourceType.HADITH_COLLECTION,
+    author: 'Hadith Encyclopedia',
+    authorAr: 'موسوعة الأحاديث النبوية',
+    role: 'narration',
+    /** Official API hadeethenc.com. Grade صحيح/حسن is publishable as HADEETHENC. */
+    gradeBy: null,
+  },
+  {
     id: '10000000-0000-4000-8000-000000000012',
     bookKey: 'book:ibn-qudama-minhaj',
     name: 'Mukhtasar Minhaj al-Qasidin',

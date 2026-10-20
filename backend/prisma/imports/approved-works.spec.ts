@@ -6,6 +6,7 @@ describe('APPROVED_WORKS', () => {
     expect(APPROVED_WORKS.map((work) => work.bookKey).sort()).toEqual([
       'book:adab-al-mufrad',
       'book:dhahabi-kabair',
+      'book:hadeethenc',
       'book:ibn-ashur-tahrir',
       'book:ibn-kathir-en',
       'book:ibn-mubarak-zuhd',

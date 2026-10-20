@@ -55,4 +55,26 @@ describe('formatGradeCitation', () => {
       }),
     ).toBe("Sunan Abi Dawud 5186 · graded hasan by Shu'ayb al-Arna'ut");
   });
+
+  it('formats a HadeethEnc citation line (ar)', () => {
+    expect(
+      formatGradeCitation({
+        locale: 'ar',
+        gradeAuthority: 'موسوعة الأحاديث النبوية',
+        gradeReference: 'صحيح مسلم (1/ 545) (791).',
+        grade: 'SAHIH',
+      }),
+    ).toBe('حكم موسوعة الأحاديث النبوية: صحيح — صحيح مسلم (1/ 545) (791).');
+  });
+
+  it('formats a HadeethEnc citation line (en)', () => {
+    expect(
+      formatGradeCitation({
+        locale: 'en',
+        gradeAuthority: 'موسوعة الأحاديث النبوية',
+        gradeReference: 'Sahih Muslim 791',
+        grade: 'HASAN',
+      }),
+    ).toBe('Hadeeth Encyclopedia ruling: Good — Sahih Muslim 791');
+  });
 });
