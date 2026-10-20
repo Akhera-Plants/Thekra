@@ -82,6 +82,13 @@ const MARFU_CUES: RegExp[] = [
   // «خليلي صلى الله عليه وسلم» / «حبي صلى الله عليه وسلم» / «أصحاب محمد صلى الله عليه وسلم»
   /صلي\s+الله\s+عليه(?:\s+و(?:اله\s+)?سلم)?/,
   /عليه\s+الصلاه\s+والسلام/,
+  // حكم الرفع: a Companion's «نهينا» / «أمرنا» / «من السنة» is the Prophet's ruling.
+  new RegExp(`${EDGE}[وف]?نهينا${EDGE_END}`),
+  new RegExp(`${EDGE}[وف]?امرنا${EDGE_END}`),
+  new RegExp(`${EDGE}[وف]?امر\\s+الناس${EDGE_END}`),
+  /كنا\s+ن(?:ؤمر|ومر)/,
+  /كنا\s+ننهي/,
+  /من\s+السنه/,
 ];
 
 /**
@@ -313,7 +320,7 @@ export function classifyNarration(text: string): AtharClassification {
   };
 }
 
-export type AtharStoryRejectReason = 'short' | 'frame-only' | 'ocr' | 'mid-dialogue';
+export type AtharStoryRejectReason = 'short' | 'frame-only' | 'ocr' | 'mid-dialogue' | 'content';
 
 export type AtharAttributionKind = 'SAID' | 'NARRATED';
 
@@ -340,6 +347,10 @@ const STORY_CUTS: RegExp[] = [
   /(?:^|\s)و?(?:حدثنا|حدثني|اخبرنا|اخبرني|انبانا)\s/,
   /هكذا\s+جاء/,
   /هذا\s+اسناد/,
+  /(?:^|\s)و?هذا\s+موقوف/,
+  /(?:^|\s)و?هذا\s+مرسل/,
+  /(?:^|\s)و?هذا\s+منقطع/,
+  /(?:^|\s)و?اسناده(?:\s|$)/,
   /(?:^|\s)و?رواه\s/,
   /(?:^|\s)و?روي(?:\s|$)/,
   /اخرج[هة]\s/,
@@ -422,14 +433,35 @@ function isMidDialogue(body: string): boolean {
 function attributionOf(body: string): AtharAttributionKind {
   const t = body.replace(/^[«"\s]+/, '');
   // The frame speaker is only reporting what someone else said or did.
-  if (/^(?:دخل|اتي|مر|خرج|جاء|لقي|سالت|سئل|بينما|بينا)\s+/.test(t)) return 'NARRATED';
+  if (/^(?:دخل|اتي|مر|خرج|جاء|لقي|سالت|سئل|بينما|بينا|قام)\s+/.test(t)) return 'NARRATED';
+  if (/^مررنا\s+/.test(t)) return 'NARRATED';
   if (/^رايت\s+(?!ان|ما\s)/.test(t)) return 'NARRATED';
-  if (/^(?:ف)?(?:قال|قالت|يقول)\s+/.test(t)) return 'NARRATED';
+  if (/^(?:ف)?(?:قال|قالت|يقول)\s+(?:لي\s+)?/.test(t)) return 'NARRATED';
   if (/^ما\s+(?:اكل|دخل|كان|قال|خرج|مر|شبع|لبس)\s+/.test(t)) return 'NARRATED';
   if (/^(?:كان|كانت)\s+(?!ي|ت|ن|ربما|الرجل|المؤمن|الانسان|العبد|احد)/.test(t)) {
     return 'NARRATED';
   }
+  // The framed speaker only asks, and another person answers.
+  if (/^.{0,100}[؟?][،,\s«"]*(?:قال|قالت|فقال|فقالت)\s*[:：]/.test(t)) return 'NARRATED';
   return 'SAID';
+}
+
+/** Phrases that keep an athar off the public list (istighatha, Isra'iliyyat). */
+const CONTENT_EXCLUSIONS: { label: string; pattern: RegExp }[] = [
+  { label: 'أعينوا عباد الله', pattern: /اعينوا\s+عباد\s+الله/ },
+  { label: 'يا فلان أغثني', pattern: /يا\s+(?!الله(?:\s|$))[\u0600-\u06FF]+\s+اغثني/ },
+  { label: 'العمالقة', pattern: /العمالقه/ },
+  { label: 'بني إسرائيل', pattern: /بني\s+اسرائيل/ },
+  { label: 'في الكتب الأولى', pattern: /في\s+الكتب\s+الاولي/ },
+];
+
+/** Cue that makes the narration unpublishable, or null when it may stay. */
+export function atharContentCue(text: string): string | null {
+  const folded = foldArabic(text);
+  for (const item of CONTENT_EXCLUSIONS) {
+    if (item.pattern.test(folded)) return item.label;
+  }
+  return null;
 }
 
 function rejected(reason: AtharStoryRejectReason): AtharStoryRejected {
@@ -479,6 +511,7 @@ export function extractAtharStory(text: string): AtharStoryResult {
   if (isOnlyFrame(bodyFolded)) return rejected('frame-only');
   if (body.length < 25) return rejected('short');
   if (isMidDialogue(bodyFolded)) return rejected('mid-dialogue');
+  if (atharContentCue(bodyFolded)) return rejected('content');
 
   return {
     kept: true,

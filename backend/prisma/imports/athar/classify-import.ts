@@ -6,6 +6,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  atharContentCue,
   classifyNarration,
   extractAtharStory,
   matchAtharSpeaker,
@@ -55,8 +56,10 @@ export async function runAtharClassify(options: ImportOptions): Promise<void> {
     'frame-only': 0,
     ocr: 0,
     'mid-dialogue': 0,
+    content: 0,
   };
   const unlistedMap = new Map<string, { count: number; examples: string[] }>();
+  const contentExcluded: string[] = [];
 
   for (const row of rows) {
     // Prefer full text so prophetic attribution in the isnad (`سمعنا رسول الله`)
@@ -77,6 +80,18 @@ export async function runAtharClassify(options: ImportOptions): Promise<void> {
       if (!story.kept) {
         storyReject[story.reason] += 1;
         isAthar = false;
+        if (story.reason === 'content') {
+          const excerpt = text.replace(/\s+/g, ' ').trim();
+          contentExcluded.push(
+            [
+              tsvEscape(atharContentCue(text) ?? ''),
+              tsvEscape(row.apiProvider ?? ''),
+              String(row.referenceNumber ?? ''),
+              tsvEscape(classified.speakerRaw ?? ''),
+              tsvEscape(excerpt),
+            ].join('\t'),
+          );
+        }
       } else {
         athar += 1;
         storyKept += 1;
@@ -128,7 +143,16 @@ export async function runAtharClassify(options: ImportOptions): Promise<void> {
       `${tsvEscape(speaker)}\t${info.count}\t${tsvEscape(info.examples[0] ?? '')}\t${tsvEscape(info.examples[1] ?? '')}`,
     );
   }
-  if (!options.dryRun) writeFileSync(tsvPath, `${lines.join('\n')}\n`, 'utf8');
+  const contentPath = resolve(outDir, 'athar-content-excluded.tsv');
+  contentExcluded.sort();
+  if (!options.dryRun) {
+    writeFileSync(tsvPath, `${lines.join('\n')}\n`, 'utf8');
+    writeFileSync(
+      contentPath,
+      `cue\tprovider\tnumber\tspeaker\ttext\n${contentExcluded.join('\n')}${contentExcluded.length ? '\n' : ''}`,
+      'utf8',
+    );
+  }
 
   console.log(
     `athar classify: total=${rows.length} marfu=${marfu} athar=${athar} reject=${reject}` +
@@ -136,7 +160,9 @@ export async function runAtharClassify(options: ImportOptions): Promise<void> {
       ` storyKept=${storyKept}` +
       ` storyReject short=${storyReject.short} frame-only=${storyReject['frame-only']}` +
       ` ocr=${storyReject.ocr} mid-dialogue=${storyReject['mid-dialogue']}` +
-      ` tsv=${tsvPath}`,
+      ` content=${storyReject.content}` +
+      ` tsv=${tsvPath}` +
+      ` contentTsv=${contentPath}`,
   );
 }
 
