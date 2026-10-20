@@ -55,6 +55,15 @@ describe('GradePolicy', () => {
       expect(GradePolicy.isPublishable({ type: QuoteType.HADITH, gradeSource: GradeSource.IBN_RAJAB })).toBe(false);
       expect(GradePolicy.isPublishable({ type: QuoteType.HADITH, gradeSource: GradeSource.AUTHORITY_LEGACY })).toBe(false);
       expect(GradePolicy.isPublishable({ type: QuoteType.QURAN_VERSE, gradeSource: GradeSource.AUTHORITY_LEGACY })).toBe(true);
+      // Athar stay hidden until ATHAR_PUBLIC_ENABLED=true (audit gate).
+      expect(
+        GradePolicy.isPublishable({
+          type: QuoteType.HADITH,
+          gradeSource: GradeSource.AUTHORITY_LEGACY,
+          isAthar: true,
+          atharSpeakerKey: 'umar',
+        }),
+      ).toBe(false);
       expect(GradePolicy.readerClause()).toEqual({
         AND: [
           GradePolicy.publicTextClause(),
@@ -64,6 +73,7 @@ describe('GradePolicy', () => {
       });
     });
   });
+
 
   describe('whereClause', () => {
     it('passes non-HADITH quotes and filters HADITH by grade', () => {

@@ -37,6 +37,13 @@ export const PUBLISHABLE_GRADE_SOURCES: readonly GradeSource[] = [
   GradeSource.HADEETHENC,
 ];
 
+/**
+ * Listed athar stay off the public site until the classifier audit passes
+ * (docs/build/CURSOR / SHUAB_ATHAR_REPORT «Athar audit»). Data + ReminderReader
+ * UI remain; flip to true only after the precision check.
+ */
+export const ATHAR_PUBLIC_ENABLED = process.env['ATHAR_PUBLIC_ENABLED'] === 'true';
+
 export class GradePolicy {
   static defaultAllowedGrades(): HadithGrade[] {
     return [...DEFAULT_ALLOWED_GRADES];
@@ -99,16 +106,17 @@ export class GradePolicy {
    * An open high-severity flag hides every quote type. OUTSIDE_SAHIHAYN is low and does not hide.
    */
   static publishableClause(): Prisma.QuoteWhereInput {
+    const hadithOr: Prisma.QuoteWhereInput[] = [
+      { type: { not: QuoteType.HADITH } },
+      { gradeSource: { in: [...PUBLISHABLE_GRADE_SOURCES] } },
+    ];
+    if (ATHAR_PUBLIC_ENABLED) {
+      // Listed athar (Companion / senior Successor) — never graded as hadith.
+      hadithOr.push({ isAthar: true, atharSpeakerKey: { not: null } });
+    }
     return {
       AND: [
-        {
-          OR: [
-            { type: { not: QuoteType.HADITH } },
-            { gradeSource: { in: [...PUBLISHABLE_GRADE_SOURCES] } },
-            // Listed athar (Companion / senior Successor) — never graded as hadith.
-            { isAthar: true, atharSpeakerKey: { not: null } },
-          ],
-        },
+        { OR: hadithOr },
         { flags: { none: { status: FlagStatus.OPEN, severity: FlagSeverity.HIGH } } },
       ],
     };
@@ -132,7 +140,7 @@ export class GradePolicy {
     atharSpeakerKey?: string | null;
   }): boolean {
     if (row.type !== QuoteType.HADITH) return true;
-    if (row.isAthar && row.atharSpeakerKey) return true;
+    if (ATHAR_PUBLIC_ENABLED && row.isAthar && row.atharSpeakerKey) return true;
     return PUBLISHABLE_GRADE_SOURCES.includes(row.gradeSource);
   }
 
