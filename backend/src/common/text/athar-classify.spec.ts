@@ -150,18 +150,14 @@ const SAMPLES: Array<{
     text: 'قال أبو هريرة: أوصاني خليلي بثلاث لا أدعهن',
   },
   {
+    // Audit: any explicit Prophet mention is MARFU (even Companion reflections).
     id: 26,
-    kind: 'ATHAR',
-    speakerKey: 'aisha',
+    kind: 'MARFU',
     text: 'عن عائشة رضي الله عنها قالت: كان أحب العمل إلى رسول الله أدومه',
   },
-  // Sample 26 is tricky — contains رسول الله but the speaker is Aisha about him.
-  // Classifier treats «رسول الله» in the saying as MARFU when paired with عن النبي patterns;
-  // this wording is ATHAR of Aisha reporting preference — if it flips to MARFU, document it.
   {
     id: 27,
-    kind: 'ATHAR',
-    speakerKey: 'hudhayfa',
+    kind: 'MARFU',
     text: 'قال حذيفة: كان الناس يسألون رسول الله عن الخير وكنت أسأله عن الشر',
   },
   {

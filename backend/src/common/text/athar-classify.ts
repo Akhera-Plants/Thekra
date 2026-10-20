@@ -41,8 +41,9 @@ export function stripOcrNoise(input: string): string {
     .replace(/\|+/g, ' ')
     .replace(/\{\s*\}/g, ' ')
     .replace(/[\$#~^]+/g, ' ')
-    .replace(/(?:^|\s)\d{1,4}(?:\s|$)/g, ' ')
-    .replace(/\(\s*\d+\s*\)/g, ' ')
+    // ASCII and Arabic-Indic digits (footnote marks like «( ٢٥٧ )»)
+    .replace(/(?:^|\s)[\d\u0660-\u0669]{1,4}(?:\s|$)/g, ' ')
+    .replace(/\(\s*[\d\u0660-\u0669]+\s*\)/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -78,31 +79,46 @@ const MARFU_CUES: RegExp[] = [
   new RegExp(`${PROPHET_NAME}\\s+${SALAWAT}\\s*(?:قال|يقول)?`),
   /صلي الله عليه وسلم\s*(?:قال|يقول)/,
   new RegExp(`${PROPHET_NAME}\\s+${SALAWAT}`),
+  // «خليلي صلى الله عليه وسلم» / «حبي صلى الله عليه وسلم» / «أصحاب محمد صلى الله عليه وسلم»
+  /صلي\s+الله\s+عليه(?:\s+و(?:اله\s+)?سلم)?/,
+  /عليه\s+الصلاه\s+والسلام/,
 ];
 
 /**
- * A person name in an isnad/quote frame: no commas, no nested «عن».
- * e.g. ميمون بن ابي شبيب، الحسن، عمر بن الخطاب
+ * A person name in an isnad/quote frame: no commas / semicolons (Arabic أو لاتينية).
+ * e.g. ميمون بن ابي شبيب، الحسن، عمر بن الخطاب، عبد الله
+ * Extra tokens require بن/ابن/بنت, or a plain name word that is not the
+ * preposition «لـ» (قال حذيفة لسلمان — speaker is حذيفة only).
  */
+// Block particles / verbs that are not part of a person name.
+const NAME_CHUNK = '(?!ل|عن|ان|قال|يقول|قالت|سمعت|ثنا|انا)[^\\s،,؛:：«»"\\[\\]|]+';
 const PERSON =
-  '(?:ال|ابن|ابي|أبو|ام)?[\\u0600-\\u06FF]+(?:\\s+(?:بن|ابن|بنت|ابي|أبو|ام)?[\\u0600-\\u06FF]+){0,5}';
+  `(?:ال|ابن|ابي|أبو|ام)?${NAME_CHUNK}` +
+  `(?:\\s+(?:بن|ابن|بنت)\\s+(?:ال|ابي|أبو|ام)?${NAME_CHUNK}|\\s+(?:ال|ابي|أبو|ام)?${NAME_CHUNK}){0,5}`;
 
 /** رضي الله عنه / رحمها الله between the name and قال (after foldArabic). */
 const HONORIFIC =
-  '(?:\\s+رضي\\s+الله\\s+عن[هها]|\\s+رضي\\s+الله\\s+عنهم|\\s+رحمه\\s+الله|\\s+رحمها\\s+الله)?';
+  '(?:\\s+رضي\\s+الله\\s+عن[هها]|\\s+رضي\\s+الله\\s+عنهم|\\s+رحمه\\s+الله|\\s+رحمها\\s+الله|\\s+رضوان\\s+الله\\s+عليه)?';
 
 /**
- * Quote introducer: «قال فلان:» / «يقول فلان «» / «قالت فلان:» / «عن فلان قال:».
- * Name stops before colon, quote mark, or «لـ» (قال حذيفة لسلمان).
+ * Quote introducer: «قال فلان:» / «فقال فلان:» / «عن فلان قال:».
+ * Also «أن أبا بكر قال لعمر:» (speaker = أبو بكر, not عمر).
  * Must have a quote delimiter — never a bare isnad «قال».
  */
+const QALA = 'ف?(?:قال|يقول|قالت)';
 const QUOTE_INTRO = new RegExp(
-  `(?:^|[\\s،,])(?:قال|يقول|قالت)\\s+(${PERSON})${HONORIFIC}(?:\\s+ل(?:ـ)?${PERSON})?\\s*([:：]|«|"|”|„)`,
+  `(?:^|[\\s،,])(?:${QALA})\\s+(${PERSON})${HONORIFIC}(?:\\s+ل(?:ـ)?${PERSON})?\\s*([:：]|«|"|”|„)`,
+  'g',
+);
+
+/** «أن أبا بكر قال لعمر بن الخطاب: …» — speaker is أبو بكر. */
+const SAID_TO_INTRO = new RegExp(
+  `(?:^|[\\s،,])ان\\s+(${PERSON})${HONORIFIC}\\s+${QALA}\\s+ل(?:ـ)?${PERSON}\\s*([:：]|«|"|”|„)`,
   'g',
 );
 
 const AN_QALA_INTRO = new RegExp(
-  `(?:^|[\\s،,])عن\\s+(${PERSON})${HONORIFIC}\\s+(?:قال|يقول|قالت)\\s*([:：]|«|"|”|„)`,
+  `(?:^|[\\s،,])عن\\s+(${PERSON})${HONORIFIC}\\s*(?:،|,)?\\s*${QALA}\\s*([:：]|«|"|”|„)`,
   'g',
 );
 
@@ -119,8 +135,10 @@ interface QuoteHit {
 
 function cleanSpeaker(raw: string): string {
   return raw
+    .replace(/[،,؛]+/g, ' ')
     .replace(/\s+/g, ' ')
-    .replace(/\s+(?:رضي الله عنه|رضي الله عنها|رحمه الله|رحمها الله)\s*$/g, '')
+    .replace(/^ل+/, '')
+    .replace(/\s+(?:رضي الله عنه|رضي الله عنها|رحمه الله|رحمها الله|رضوان الله عليه)\s*$/g, '')
     .trim();
 }
 
@@ -141,6 +159,7 @@ function findQuoteHits(text: string): QuoteHit[] {
   };
 
   collect(QUOTE_INTRO, 1);
+  collect(SAID_TO_INTRO, 1);
   collect(AN_QALA_INTRO, 1);
 
   // «سمعت وهب بن منبه يقول: …»
@@ -179,6 +198,27 @@ function isEmptySaying(saying: string): boolean {
   return arabicLetters(stripped) < 12;
 }
 
+/** After «قال فلان:» the next token is another isnad stamp — no real saying. */
+function isIsnadContinuation(saying: string): boolean {
+  // No JS `\b` on Arabic — anchor on whitespace / end.
+  return /^(?:و)?(?:حدثنا|حدثني|اخبرنا|اخبرني|انا|ثنا)(?:\s|$)/.test(saying.trim());
+}
+
+/**
+ * Bare short ism («علي»، «عمر») when the chain already has «علي بن عثام» etc.
+ * — that قال علي is the transmitter, not the Companion.
+ */
+function isAmbiguousShortSpeaker(speakerRaw: string, folded: string, hitIndex: number): boolean {
+  const core = foldArabic(speakerRaw);
+  if (/\s/.test(core)) return false;
+  if (!/^(علي|عمر|حسن|انس|مجاهد|قتاده)$/.test(core)) return false;
+  const before = folded.slice(0, hitIndex);
+  const foreignNasab = new RegExp(
+    `${core}\\s+بن\\s+(?!ابي\\s+طالب|ابي\\s+طالب|الخطاب|مالك|جبر|دعامه)`,
+  );
+  return foreignNasab.test(before);
+}
+
 /** Chain that ends with «عن فلان» / «عن فلان قال» and no quote body. */
 function isChainOnly(folded: string): boolean {
   if (/عن\s+[\u0600-\u06FF\s]{2,40}(?:قال|يقول|قالت)?\s*$/.test(folded) && !/[:：«"]/.test(folded)) {
@@ -202,6 +242,8 @@ function isMarfu(folded: string): boolean {
   for (const cue of MARFU_CUES) {
     if (cue.test(folded)) return true;
   }
+  // Explicit Prophet mention anywhere → prophetic report (audit: none stay ATHAR).
+  if (new RegExp(PROPHET_NAME).test(folded)) return true;
   return false;
 }
 
@@ -230,34 +272,43 @@ export function classifyNarration(text: string): AtharClassification {
     return { kind: 'REJECT', speakerRaw: null, saying: null };
   }
 
-  // Last introducer wins (the person whose words follow).
+  // Among real sayings, prefer the last that is ≥ half the longest (so
+  // «سمعت وهب يقول:…» beats an earlier «عن محمد قال: سمعت وهب…», while a
+  // short late gloss «قال ابن عمر: فقال كعب…» loses to the long كعب matn).
   hits.sort((a, b) => a.index - b.index);
-  const last = hits[hits.length - 1]!;
-  const saying = extractSaying(folded, last.sayingStart);
+  const viable: Array<{ hit: QuoteHit; saying: string }> = [];
+  for (const hit of hits) {
+    if (isAmbiguousShortSpeaker(hit.speakerRaw, folded, hit.index)) continue;
+    const candidate = extractSaying(folded, hit.sayingStart);
+    if (isEmptySaying(candidate) || isIsnadContinuation(candidate)) continue;
+    viable.push({ hit, saying: candidate });
+  }
 
-  if (isEmptySaying(saying)) {
+  if (viable.length === 0) {
     return { kind: 'REJECT', speakerRaw: null, saying: null };
   }
 
-  // Prophetic content inside the saying still → MARFU.
-  if (isMarfu(saying) || new RegExp(PROPHET_NAME).test(saying)) {
-    // Mention of the Prophet in the attributed speech of a Companion about him
-    // (e.g. عائشة: كان أحب العمل إلى رسول الله) stays ATHAR only when the
-    // introducer is not a marfu cue and the saying is ABOUT him, not FROM him.
-    // Audit rule: explicit prophetic attribution cues already caught; bare
-    // «رسول الله» in a Companion's reflection is allowed as ATHAR.
-    if (
-      /قال\s+(?:رسول الله|النبي)|عن\s+(?:رسول الله|النبي)|سمعت\s+(?:رسول الله|النبي)|رفعه|يرفعه|مرفوعا/.test(
-        saying,
-      )
-    ) {
-      return { kind: 'MARFU', speakerRaw: null, saying: null };
+  const maxLen = Math.max(...viable.map((v) => v.saying.length));
+  const threshold = Math.max(40, Math.floor(maxLen * 0.5));
+  let chosen = viable[0]!;
+  for (let i = viable.length - 1; i >= 0; i--) {
+    const v = viable[i]!;
+    if (v.saying.length >= threshold) {
+      chosen = v;
+      break;
     }
+  }
+  const saying = chosen.saying;
+
+  // Saying that still names the Prophet → MARFU (isMarfu on the full text
+  // already covered most cases; re-check the saying alone for safety).
+  if (isMarfu(saying)) {
+    return { kind: 'MARFU', speakerRaw: null, saying: null };
   }
 
   return {
     kind: 'ATHAR',
-    speakerRaw: last.speakerRaw,
+    speakerRaw: chosen.hit.speakerRaw,
     saying,
   };
 }
@@ -277,6 +328,8 @@ function coreName(folded: string): string {
   return folded
     .replace(/^(?:عن|قال|يقول|قالت)\s+/g, '')
     .replace(/\s+(?:قال|يقول|قالت)$/g, '')
+    // أبا بكر / أبي بكر → أبو بكر for YAML matching
+    .replace(/^(?:ابا|ابي|ابو)\s+/, 'ابو ')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -289,33 +342,51 @@ export function matchAtharSpeaker(
   if (!speakerRaw) return null;
   const folded = foldArabic(speakerRaw);
   const core = coreName(folded);
+  const coreHasNasab = /(?:^|\s)(?:بن|ابن|بنت)\s/.test(core);
   let best: AtharSpeakerMatch | null = null;
   let bestLen = 0;
   for (const entry of speakers) {
-    for (const form of entry.forms) {
-      const ff = foldArabic(form);
+    const entryForms = entry.forms.map((form) => foldArabic(form)).filter(Boolean);
+    const entryFull = entryForms.filter((form) => /(?:بن|ابن|بنت)\s/.test(form));
+    for (const ff of entryForms) {
       const formCore = coreName(ff);
       if (!ff) continue;
-      // Exact / substring on the full form, or on the name core after stripping
-      // «عن/قال». Never let a longer form swallow a shorter speaker
-      // («بن عمرو» must not claim «بن عمر»).
-      // Prefer formCore ⊆ core (speaker contains the form), not reverse —
-      // so «الحسن بن الحر» does not match form «الحسن» via core.includes(formCore)
-      // when we require the form to be the head of the speaker name.
+      const formIsShort = !/\s/.test(formCore);
+      // Short ism («عمار»، «علي»، «حذيفة») — exact core only. Never claim
+      // «عمار بن سعيد», «حذيفة المرعشي», etc. via a bare given name.
+      if (formIsShort) {
+        if (core !== formCore && folded !== ff) continue;
+        if (coreHasNasab) {
+          const nasabOk = entryFull.some(
+            (full) => core === full || core.startsWith(`${full} `) || full.startsWith(core),
+          );
+          if (!nasabOk) continue;
+        }
+      }
+      // Extra tokens after a form are only OK when the full core is itself an
+      // entry form, or the rest is an honorific — never «أبو سعيد الخراز» →
+      // أبو سعيد الخدري, or «أبو بكر الرازي» → أبو بكر الصديق.
+      const restAfterForm = core.startsWith(`${formCore} `)
+        ? core.slice(formCore.length + 1)
+        : '';
+      const restIsHonorific = /^(?:رضي|رحم|رضوان)/.test(restAfterForm);
+      const coreIsListedForm = entryForms.some((f) => coreName(f) === core);
+      const prefixOk =
+        !formIsShort &&
+        formCore.length >= 3 &&
+        restAfterForm.length > 0 &&
+        (restIsHonorific || coreIsListedForm);
       const hit =
         folded === ff ||
         core === formCore ||
-        (formCore.length >= 3 && (core === formCore || core.startsWith(`${formCore} `) || core.endsWith(` ${formCore}`)));
-      // Also allow short kunya/shuhra exact containment when lengths are close.
-      const loose =
-        formCore.length >= 4 &&
-        core.length >= formCore.length &&
-        (core.includes(formCore) && formCore.length / core.length >= 0.5);
-      if (!hit && !loose) continue;
+        prefixOk ||
+        (!formIsShort && formCore.length >= 3 && core.endsWith(` ${formCore}`));
+      // No fuzzy includes — nisba collisions were too common.
+      if (!hit) continue;
       const score = Math.max(
         folded === ff ? ff.length + 2 : 0,
         core === formCore ? formCore.length + 2 : 0,
-        hit || loose ? formCore.length : 0,
+        hit ? formCore.length : 0,
       );
       if (score > bestLen) {
         bestLen = score;

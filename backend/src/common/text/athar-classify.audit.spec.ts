@@ -79,6 +79,73 @@ describe('athar audit — prophetic reports are MARFU (c)', () => {
         .kind,
     ).toBe('MARFU');
   });
+
+  it('Anas narrating مر رسول الله … فقال is MARFU (bare Prophet mention)', () => {
+    const text =
+      "عن أنس بن مالك قال: مر رسول الله على قبة فقال: 'يا أنس لمن هذه القبة'. قلت: لفلان. قال: 'كل بناء وبال على أهله يوم القيامة'";
+    expect(classifyNarration(text).kind).toBe('MARFU');
+  });
+
+  it('أوصاني خليلي صلى الله عليه وسلم is MARFU', () => {
+    const text =
+      'عن أبي ذر قال: أوصاني خليلي صلى الله عليه وسلم: «إذا صنعت مرقا فأكثر ماءها»';
+    expect(classifyNarration(text).kind).toBe('MARFU');
+  });
+});
+
+describe('athar audit — speaker YAML matching', () => {
+  const speakers = loadAtharSpeakers();
+
+  it('does not map عمار بن سعيد to ammar (عمار بن ياسر)', () => {
+    expect(matchAtharSpeaker('عمار بن سعيد', speakers)?.key).not.toBe('ammar');
+  });
+
+  it('does not map علي بن ثابت to ali', () => {
+    expect(matchAtharSpeaker('علي بن ثابت', speakers)?.key).not.toBe('ali');
+  });
+
+  it('still maps عمار بن ياسر and علي بن أبي طالب', () => {
+    expect(matchAtharSpeaker('عمار بن ياسر', speakers)?.key).toBe('ammar');
+    expect(matchAtharSpeaker('علي بن أبي طالب', speakers)?.key).toBe('ali');
+  });
+
+  it('does not map حذيفة المرعشي to hudhayfa (حذيفة بن اليمان)', () => {
+    expect(matchAtharSpeaker('حذيفة المرعشي', speakers)?.key).not.toBe('hudhayfa');
+    expect(matchAtharSpeaker('حذيفة', speakers)?.key).toBe('hudhayfa');
+  });
+
+  it('does not map أبو سعيد الخراز / أبو بكر الرازي to Companions', () => {
+    expect(matchAtharSpeaker('أبو سعيد الخراز', speakers)?.key).not.toBe('abu-said');
+    expect(matchAtharSpeaker('أبا بكر الرازي', speakers)?.key).not.toBe('abu-bakr');
+    expect(matchAtharSpeaker('أبو سعيد الخدري', speakers)?.key).toBe('abu-said');
+    expect(matchAtharSpeaker('أبو بكر الصديق', speakers)?.key).toBe('abu-bakr');
+  });
+});
+
+describe('athar audit — قال لـ and isnad-only saying', () => {
+  const speakers = loadAtharSpeakers();
+
+  it('أبو بكر قال لعمر is abu-bakr, not umar', () => {
+    const text =
+      'أخبرنا إسماعيل بن أبي خالد، عن زبيد أن أبا بكر قال لعمر بن الخطاب: «إني موصيك بوصية إن حفظتها: إن لله تعالى حقا بالنهار لا يقبله بالليل»';
+    const result = classifyNarration(text);
+    expect(result.kind).toBe('ATHAR');
+    expect(matchAtharSpeaker(result.speakerRaw, speakers)?.key).toBe('abu-bakr');
+  });
+
+  it('rejects مجاهد قال followed only by وحدثنا isnad', () => {
+    const text =
+      'حدثنا فضيل، عن منصور، عن مجاهد قال: وحدثنا حماد بن زيد، عن أبي الجوزاء';
+    expect(classifyNarration(text).kind).toBe('REJECT');
+  });
+
+  it('عن كعب، قال wins over a later قال ابن عمر gloss', () => {
+    const text =
+      'عن سالم بن عبد الله بن عمر، عن أبيه، عن كعب، قال: «قالت الملائكة وذكروا أعمال بني آدم وما يأتون من الذنوب، فاختاروا هاروت وماروت، فنزلا فلا تسرقوا ولا تزنيا» قال ابن عمر: فقال كعب: «فوالله ما أمسيا حتى أتيا ما حرم الله»';
+    const result = classifyNarration(text);
+    expect(result.kind).toBe('ATHAR');
+    expect(foldArabic(result.speakerRaw ?? '')).toContain(foldArabic('كعب'));
+  });
 });
 
 describe('athar audit — OCR noise (d)', () => {
