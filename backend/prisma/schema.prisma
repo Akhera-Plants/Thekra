@@ -3,8 +3,11 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Neon pooled URL goes in DATABASE_URL; set DIRECT_URL to the direct
+  // (non-pooler) connection for `prisma migrate deploy`. Locally both may match.
+  directUrl = env("DIRECT_URL")
 }
 
 enum SourceType {

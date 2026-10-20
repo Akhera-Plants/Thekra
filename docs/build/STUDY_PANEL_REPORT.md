@@ -59,4 +59,26 @@ Passages are often keyed `# [N]` in Fath / Abd al-Baqi numbering, but:
 
 ## Phase 4 — deploy prep
 
-_(filled when Phase 4 lands)_
+NestJS on Vercel is viable (official zero-config via `backend/src/main.ts` + Fluid Functions; docs checked 2026-10-20). Files added:
+
+| File | Role |
+| --- | --- |
+| `docs/deploy/VERCEL.md` | Owner steps: Neon Marketplace, two projects, env table, migrate, restore, domain, Hobby note, Render fallback |
+| `backend/vercel.json` | Monorepo install + `prisma generate` / `migrate deploy` / `nest build` |
+| `frontend/vercel.json` | Monorepo install + Next build |
+| `scripts/db-push-to-neon.sh` | `pg_dump` local → `pg_restore` Neon (URLs from env only) |
+| `backend/prisma/schema.prisma` | `directUrl = env("DIRECT_URL")` for Neon migrations |
+
+Local production builds: `pnpm --filter frontend build` ✓ · `pnpm --filter backend build` ✓
+
+### Gates (Phase 4)
+
+| Check | Result |
+| --- | --- |
+| frontend / backend `tsc` | pass |
+| lint | pass (pre-existing warnings only) |
+| frontend unit | 25 passed |
+| backend unit | 446 passed |
+| backend e2e | 258 passed |
+| taxonomy importer re-run | `created=0 updated=0 deleted=0` |
+| frontend + backend production build | pass |

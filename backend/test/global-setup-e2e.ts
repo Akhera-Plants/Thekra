@@ -49,6 +49,8 @@ export async function setup(): Promise<void> {
 
   const envVars = parseEnvFile(envPath);
   const databaseUrl = envVars['DATABASE_URL'] ?? process.env['DATABASE_URL'] ?? '';
+  const directUrl =
+    envVars['DIRECT_URL'] ?? process.env['DIRECT_URL'] ?? databaseUrl;
 
   if (!databaseUrl) {
     throw new Error(
@@ -79,7 +81,7 @@ export async function setup(): Promise<void> {
   console.log('[global-setup-e2e] Running prisma migrate deploy…');
   execSync('./node_modules/.bin/prisma migrate deploy', {
     cwd: rootDir,
-    env: { ...process.env, DATABASE_URL: databaseUrl },
+    env: { ...process.env, DATABASE_URL: databaseUrl, DIRECT_URL: directUrl },
     stdio: 'inherit',
     shell: '/bin/sh',
   });
