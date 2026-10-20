@@ -340,7 +340,9 @@ export function QuoteCard({
                       'font-arabic-ui',
                     )}
                   >
-                    — {quote.atharSpeakerAr}
+                    {quote.atharAttributionKind === 'NARRATED'
+                      ? `رواه ${quote.atharSpeakerAr}`
+                      : `— ${quote.atharSpeakerAr}`}
                   </p>
                 ) : null}
                 {quote.isAthar ? (
@@ -353,8 +355,8 @@ export function QuoteCard({
                     )}
                   >
                     {arabic
-                      ? `أثر، وليس حديثًا${hadithRef ? ` · ${hadithRef}` : quietSource ? ` · ${quietSource}` : ''}`
-                      : `A saying, not a hadith${hadithRef ? ` · ${hadithRef}` : quietSource ? ` · ${quietSource}` : ''}`}
+                      ? `أثر، وليس حديثًا${hadithRef ? ` · ${hadithRef}` : ''}`
+                      : `A saying, not a hadith${hadithRef ? ` · ${hadithRef}` : ''}`}
                   </p>
                 ) : null}
                 {isWeak ? (

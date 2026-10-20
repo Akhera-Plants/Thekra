@@ -24,6 +24,8 @@ function makeRow(overrides: Partial<QuoteRowForDto> = {}): QuoteRowForDto {
     isAthar: false,
     atharSpeakerKey: null,
     atharSpeakerAr: null,
+    atharTextAr: null,
+    atharAttributionKind: null,
     sourceId: 'src-1',
     surahNumber: null,
     surahName: null,

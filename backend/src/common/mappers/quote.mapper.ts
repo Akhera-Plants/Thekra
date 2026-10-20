@@ -106,6 +106,9 @@ export interface QuoteDto {
   isAthar: boolean;
   atharSpeakerKey: string | null;
   atharSpeakerAr: string | null;
+  /** Clean story (no chain). Null when the row is not a kept athar. */
+  atharTextAr: string | null;
+  atharAttributionKind: 'SAID' | 'NARRATED' | null;
   external: { apiProvider: string | null; externalId: string | null } | null;
   isFavorite?: boolean;
   createdAt: Date;
@@ -113,6 +116,9 @@ export interface QuoteDto {
 }
 
 function publicTextAr(row: QuoteRowForDto): string {
+  if (row.isAthar && row.atharTextAr && row.atharTextAr.trim().length > 0) {
+    return row.atharTextAr.trim();
+  }
   if (row.gradeSource === GradeSource.AUTO_SAHIHAYN) {
     return row.matches[0]?.referenceHadith.matnText.trim() || row.matnAr || row.textAr;
   }
@@ -221,6 +227,8 @@ export function mapQuoteToDto(
     isAthar: row.isAthar,
     atharSpeakerKey: row.atharSpeakerKey,
     atharSpeakerAr: row.atharSpeakerAr,
+    atharTextAr: row.atharTextAr,
+    atharAttributionKind: row.atharAttributionKind,
     external:
       row.origin === 'API_CACHED'
         ? { apiProvider: row.apiProvider, externalId: row.externalId }

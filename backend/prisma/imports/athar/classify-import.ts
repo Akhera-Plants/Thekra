@@ -5,7 +5,13 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { classifyNarration, matchAtharSpeaker } from '../../../src/common/text/athar-classify.js';
+import {
+  classifyNarration,
+  extractAtharStory,
+  matchAtharSpeaker,
+  type AtharAttributionKind,
+  type AtharStoryRejectReason,
+} from '../../../src/common/text/athar-classify.js';
 import type { ImportOptions } from '../lib/cli.js';
 import { loadAtharSpeakers } from './speakers.js';
 
@@ -29,6 +35,8 @@ export async function runAtharClassify(options: ImportOptions): Promise<void> {
       isAthar: true,
       atharSpeakerKey: true,
       atharSpeakerAr: true,
+      atharTextAr: true,
+      atharAttributionKind: true,
       referenceNumber: true,
       apiProvider: true,
     },
@@ -41,6 +49,13 @@ export async function runAtharClassify(options: ImportOptions): Promise<void> {
   let listed = 0;
   let unlisted = 0;
   let updated = 0;
+  let storyKept = 0;
+  const storyReject: Record<AtharStoryRejectReason, number> = {
+    short: 0,
+    'frame-only': 0,
+    ocr: 0,
+    'mid-dialogue': 0,
+  };
   const unlistedMap = new Map<string, { count: number; examples: string[] }>();
 
   for (const row of rows) {
@@ -51,26 +66,37 @@ export async function runAtharClassify(options: ImportOptions): Promise<void> {
     let isAthar = classified.kind === 'ATHAR';
     let atharSpeakerKey: string | null = null;
     let atharSpeakerAr: string | null = null;
+    let atharTextAr: string | null = null;
+    let atharAttributionKind: AtharAttributionKind | null = null;
 
     if (classified.kind === 'REJECT') {
       reject += 1;
       isAthar = false;
     } else if (isAthar) {
-      athar += 1;
-      const matched = matchAtharSpeaker(classified.speakerRaw, speakers);
-      if (matched) {
-        atharSpeakerKey = matched.key;
-        atharSpeakerAr = matched.ar;
-        listed += 1;
+      const story = extractAtharStory(text);
+      if (!story.kept) {
+        storyReject[story.reason] += 1;
+        isAthar = false;
       } else {
-        unlisted += 1;
-        const key = classified.speakerRaw?.trim() || '(unknown)';
-        const bucket = unlistedMap.get(key) ?? { count: 0, examples: [] };
-        bucket.count += 1;
-        if (bucket.examples.length < 2) {
-          bucket.examples.push(`${row.apiProvider}#${row.referenceNumber ?? row.id}`);
+        athar += 1;
+        storyKept += 1;
+        atharTextAr = story.text;
+        atharAttributionKind = story.attribution;
+        const matched = matchAtharSpeaker(story.speakerRaw, speakers);
+        if (matched) {
+          atharSpeakerKey = matched.key;
+          atharSpeakerAr = matched.ar;
+          listed += 1;
+        } else {
+          unlisted += 1;
+          const key = story.speakerRaw.trim() || '(unknown)';
+          const bucket = unlistedMap.get(key) ?? { count: 0, examples: [] };
+          bucket.count += 1;
+          if (bucket.examples.length < 2) {
+            bucket.examples.push(`${row.apiProvider}#${row.referenceNumber ?? row.id}`);
+          }
+          unlistedMap.set(key, bucket);
         }
-        unlistedMap.set(key, bucket);
       }
     } else {
       marfu += 1;
@@ -79,12 +105,14 @@ export async function runAtharClassify(options: ImportOptions): Promise<void> {
     if (
       row.isAthar !== isAthar ||
       row.atharSpeakerKey !== atharSpeakerKey ||
-      row.atharSpeakerAr !== atharSpeakerAr
+      row.atharSpeakerAr !== atharSpeakerAr ||
+      row.atharTextAr !== atharTextAr ||
+      row.atharAttributionKind !== atharAttributionKind
     ) {
       if (!options.dryRun) {
         await options.prisma.quote.update({
           where: { id: row.id },
-          data: { isAthar, atharSpeakerKey, atharSpeakerAr },
+          data: { isAthar, atharSpeakerKey, atharSpeakerAr, atharTextAr, atharAttributionKind },
         });
       }
       updated += 1;
@@ -105,6 +133,9 @@ export async function runAtharClassify(options: ImportOptions): Promise<void> {
   console.log(
     `athar classify: total=${rows.length} marfu=${marfu} athar=${athar} reject=${reject}` +
       ` listed=${listed} unlisted=${unlisted} updated=${updated}` +
+      ` storyKept=${storyKept}` +
+      ` storyReject short=${storyReject.short} frame-only=${storyReject['frame-only']}` +
+      ` ocr=${storyReject.ocr} mid-dialogue=${storyReject['mid-dialogue']}` +
       ` tsv=${tsvPath}`,
   );
 }

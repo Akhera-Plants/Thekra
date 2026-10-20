@@ -123,6 +123,10 @@ export interface QuoteDto {
   isAthar?: boolean;
   atharSpeakerKey?: string | null;
   atharSpeakerAr?: string | null;
+  /** Story with the chain cut. The card shows this, never the isnad. */
+  atharTextAr?: string | null;
+  /** SAID → «— speaker». NARRATED → «رواه speaker». */
+  atharAttributionKind?: 'SAID' | 'NARRATED' | null;
   external: { apiProvider: string | null; externalId: string | null } | null;
   isFavorite?: boolean;
   createdAt: string;

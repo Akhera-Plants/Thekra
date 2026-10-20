@@ -313,6 +313,181 @@ export function classifyNarration(text: string): AtharClassification {
   };
 }
 
+export type AtharStoryRejectReason = 'short' | 'frame-only' | 'ocr' | 'mid-dialogue';
+
+export type AtharAttributionKind = 'SAID' | 'NARRATED';
+
+export interface AtharStoryKept {
+  kept: true;
+  text: string;
+  speakerRaw: string;
+  attribution: AtharAttributionKind;
+}
+
+export interface AtharStoryRejected {
+  kept: false;
+  reason: AtharStoryRejectReason;
+  text: null;
+  speakerRaw: null;
+  attribution: null;
+}
+
+export type AtharStoryResult = AtharStoryKept | AtharStoryRejected;
+
+/** Junk that ends the story: a new chain, the author's note, a heading. */
+const STORY_CUTS: RegExp[] = [
+  /قال\s*[:：]?\s*و(?:حدثنا|حدثني|اخبرنا|اخبرني|انبانا|ثنا)\s/,
+  /(?:^|\s)و?(?:حدثنا|حدثني|اخبرنا|اخبرني|انبانا)\s/,
+  /هكذا\s+جاء/,
+  /هذا\s+اسناد/,
+  /(?:^|\s)و?رواه\s/,
+  /(?:^|\s)و?روي(?:\s|$)/,
+  /اخرج[هة]\s/,
+  /فصل\s+في/,
+  /(?:^|\s)باب\s+/,
+];
+
+const STORY_OCR = /[\[\]{}|~$^]|:\s*:|PageV\d+P\d+|\[\s*\$\s*\]/i;
+
+function foldWithMap(input: string): { folded: string; toOrig: number[] } {
+  const chars: string[] = [];
+  const rawMap: number[] = [];
+  for (let i = 0; i < input.length; i++) {
+    const ch = input[i]!;
+    if (/[\u064B-\u0652\u0670\u06D6-\u06ED\u0640]/.test(ch)) continue;
+    let out = ch;
+    if (/[أإآٱ]/.test(ch)) out = 'ا';
+    else if (ch === 'ى') out = 'ي';
+    else if (ch === 'ة') out = 'ه';
+    chars.push(out);
+    rawMap.push(i);
+  }
+  let folded = '';
+  const toOrig: number[] = [];
+  let prevSpace = false;
+  for (let i = 0; i < chars.length; i++) {
+    const space = /\s/.test(chars[i]!);
+    if (space) {
+      if (prevSpace || folded.length === 0) continue;
+      folded += ' ';
+      toOrig.push(rawMap[i]!);
+      prevSpace = true;
+      continue;
+    }
+    folded += chars[i];
+    toOrig.push(rawMap[i]!);
+    prevSpace = false;
+  }
+  if (folded.endsWith(' ')) {
+    folded = folded.slice(0, -1);
+    toOrig.pop();
+  }
+  return { folded, toOrig };
+}
+
+function frameAt(folded: string, matchIndex: number): number {
+  const rel = folded.slice(matchIndex).search(/[^\s،,]/);
+  return matchIndex + (rel < 0 ? 0 : rel);
+}
+
+/** «عن غيلان قال: قال مطرف:» — the first frame only hands off to the speaker. */
+function isHandoff(folded: string, hit: QuoteHit, next: QuoteHit): boolean {
+  const between = folded.slice(hit.sayingStart, next.index).replace(/[«»"“”„:：\s]/g, '');
+  return between.length === 0;
+}
+
+function earliestCut(region: string): number {
+  let cut = region.length;
+  for (const pattern of STORY_CUTS) {
+    const at = region.search(pattern);
+    if (at >= 0 && at < cut) cut = at;
+  }
+  return cut;
+}
+
+function isOnlyFrame(body: string): boolean {
+  const t = body.replace(/[«»"“”„]/g, '').trim();
+  if (!t) return true;
+  return /^(?:ف?(?:قال|يقول|قالت)|سمعت)\s+\S.{0,50}$/.test(t) && !/[:：]/.test(t);
+}
+
+/** «سبحان الله وما له؟ قالت:…» or a dangling «وما يبقى…؟». */
+function isMidDialogue(body: string): boolean {
+  const t = body.replace(/^[«"\s]+/, '');
+  if (/^[^«"]{0,48}[؟?][»"\s]*(?:قالت|قال|فقال|فقالت)\s*[:：]/.test(t)) return true;
+  if (/^و(?:ما|هل|اين|كيف)\s+\S/.test(t) && /[؟?]\s*$/.test(t) && t.length < 60) return true;
+  return false;
+}
+
+function attributionOf(body: string): AtharAttributionKind {
+  const t = body.replace(/^[«"\s]+/, '');
+  // The frame speaker is only reporting what someone else said or did.
+  if (/^(?:دخل|اتي|مر|خرج|جاء|لقي|سالت|سئل|بينما|بينا)\s+/.test(t)) return 'NARRATED';
+  if (/^رايت\s+(?!ان|ما\s)/.test(t)) return 'NARRATED';
+  if (/^(?:ف)?(?:قال|قالت|يقول)\s+/.test(t)) return 'NARRATED';
+  if (/^ما\s+(?:اكل|دخل|كان|قال|خرج|مر|شبع|لبس)\s+/.test(t)) return 'NARRATED';
+  if (/^(?:كان|كانت)\s+(?!ي|ت|ن|ربما|الرجل|المؤمن|الانسان|العبد|احد)/.test(t)) {
+    return 'NARRATED';
+  }
+  return 'SAID';
+}
+
+function rejected(reason: AtharStoryRejectReason): AtharStoryRejected {
+  return { kept: false, reason, text: null, speakerRaw: null, attribution: null };
+}
+
+/**
+ * Story text for display: from the first real speaker frame through the
+ * narration, stopping before a new chain, an author's note, a heading, or a
+ * footnote. Several speakers inside one story stay.
+ */
+export function extractAtharStory(text: string): AtharStoryResult {
+  const cleaned = stripOcrNoise(text.replace(/\s+/g, ' ').trim());
+  if (!cleaned) return rejected('short');
+
+  const { folded, toOrig } = foldWithMap(cleaned);
+  const hits = findQuoteHits(folded).sort((a, b) => a.index - b.index);
+  if (hits.length === 0) return rejected('frame-only');
+
+  let start = hits[0]!;
+  for (let i = 0; i < hits.length - 1; i++) {
+    const hit = hits[i]!;
+    const next = hits[i + 1]!;
+    if (!isHandoff(folded, hit, next)) break;
+    start = next;
+  }
+
+  const origin = frameAt(folded, start.index);
+  const region = folded.slice(start.sayingStart);
+  const cutRel = earliestCut(region);
+  const cutAbs = start.sayingStart + cutRel;
+  const origStart = toOrig[origin] ?? 0;
+  const origEnd = cutAbs >= folded.length ? cleaned.length : (toOrig[cutAbs] ?? cleaned.length);
+  const story = cleaned
+    .slice(origStart, origEnd)
+    .replace(/[«»"“”„\s]+$/g, '')
+    .trim();
+  const bodyStart = toOrig[start.sayingStart] ?? origStart;
+  const body = cleaned
+    .slice(bodyStart, origEnd)
+    .replace(/^[«»"“”„:：\s]+/, '')
+    .replace(/[«»"“”„\s]+$/g, '')
+    .trim();
+  const bodyFolded = foldArabic(body);
+
+  if (STORY_OCR.test(story) || STORY_OCR.test(body)) return rejected('ocr');
+  if (isOnlyFrame(bodyFolded)) return rejected('frame-only');
+  if (body.length < 25) return rejected('short');
+  if (isMidDialogue(bodyFolded)) return rejected('mid-dialogue');
+
+  return {
+    kept: true,
+    text: story,
+    speakerRaw: start.speakerRaw,
+    attribution: attributionOf(bodyFolded),
+  };
+}
+
 export interface AtharSpeakerEntry {
   key: string;
   ar: string;
