@@ -1,238 +1,425 @@
 speaker	count	example1	example2
-(unknown)	7122	book:shuab-iman#3488	book:shuab-iman#2196
+(unknown)	13351	book:ibn-abi-dunya:cuqubat#107	book:shuab-iman#3488
+الله عز وجل	102	book:shuab-iman#3493	book:shuab-iman#10368
 البيهقي رحمه الله	94	book:shuab-iman#1934	book:shuab-iman#362
-الله عز وجل	93	book:shuab-iman#3493	book:shuab-iman#10368
+عبد الله	60	book:shuab-iman#6769	book:shuab-iman#9886
 الشيخ	52	book:shuab-iman#6166	book:shuab-iman#9405
-عبد الله	46	book:shuab-iman#6769	book:shuab-iman#9886
+سفيان	49	book:ibn-abi-dunya:muhasabatnafs#29	book:ibn-abi-dunya:ciyal#445
+له	31	book:ibn-abi-dunya:muhtadarin#154	book:shuab-iman#8153
 الشيخ احمد	31	book:shuab-iman#4311	book:shuab-iman#4662
 الحليمي رحمه الله	30	book:shuab-iman#2019	book:shuab-iman#3685
-سفيان	28	book:shuab-iman#6288	book:shuab-iman#9606
+لي	26	book:ibn-abi-dunya:cuzla#150	book:shuab-iman#863
+لقمان لابنه	26	book:ibn-abi-dunya:ikhwan#51	book:ibn-abi-dunya:caqlwafadluh#27
 الامام احمد	24	book:shuab-iman#5631	book:shuab-iman#7126
+الله تعالي	24	book:ibn-qudama-minhaj#148	book:ibn-qudama-minhaj#149
 احمد	23	book:ibn-mubarak-zuhd#148	book:shuab-iman#3359
 البيهقي رضي الله عنه	22	book:shuab-iman#2731	book:shuab-iman#2508
-الله تعالي	18	book:ibn-qudama-minhaj#148	book:ibn-qudama-minhaj#149
+بعض الحكماء	22	book:shuab-iman#6570	book:ibn-abi-dunya:zuhd#539
+الله تبارك وتعالي	22	book:shuab-iman#6519	book:shuab-iman#8634
+الله	19	book:ibn-abi-dunya:cuqubat#98	book:ibn-abi-dunya:riqqawabuka#309
 الامام احمد رحمه الله	18	book:shuab-iman#5579	book:shuab-iman#3434
 البخاري	17	book:shuab-iman#5128	book:shuab-iman#9246
 ابو عبد الله	17	book:shuab-iman#3717	book:shuab-iman#3543
-له	16	book:shuab-iman#8153	book:shuab-iman#4313
-ابو عبيد	15	book:shuab-iman#4718	book:shuab-iman#7922
-الله تبارك وتعالي	14	book:shuab-iman#6519	book:shuab-iman#8634
-لي	14	book:shuab-iman#863	book:shuab-iman#1622
+ابو حازم	17	book:shuab-iman#1770	book:shuab-iman#6500
+ابو عبيد	16	book:shuab-iman#4718	book:shuab-iman#7922
+لابنه	16	book:ibn-mubarak-zuhd#892	book:shuab-iman#4297
+الاحنف بن قيس	16	book:shuab-iman#8102	book:ibn-mubarak-zuhd#1402
+رجل	15	book:ibn-abi-dunya:qanaca#65	book:ibn-abi-dunya:samt#346
+الرجل	15	book:ibn-abi-dunya:muhasabatnafs#105	book:shuab-iman#10257
+ابي	14	book:shuab-iman#7541	book:ibn-abi-dunya:qasramal#61
+مالك بن دينار	12	book:shuab-iman#7901	book:ibn-abi-dunya:juc#98
 ابن صاعد	12	book:ibn-mubarak-zuhd#949	book:ibn-mubarak-zuhd#419
-لقمان لابنه	12	book:shuab-iman#6884	book:ibn-mubarak-zuhd#1060
-الاحنف بن قيس	11	book:shuab-iman#8102	book:ibn-mubarak-zuhd#1402
-الله	11	book:shuab-iman#3699	book:ibn-mubarak-zuhd#1032
-ابو حازم	10	book:shuab-iman#1770	book:shuab-iman#6500
-الفضيل بن عياض	9	book:shuab-iman#5315	book:shuab-iman#1686
-مالك	9	book:shuab-iman#4014	book:shuab-iman#1997
-كعب	9	book:ibn-mubarak-zuhd#453	book:ibn-mubarak-zuhd#1055
+مالك	12	book:ibn-abi-dunya:qasramal#279	book:shuab-iman#4014
+معاويه	12	book:ibn-abi-dunya:hilm#31	book:ibn-abi-dunya:hammwahuzn#160
+ابراهيم بن ادهم	11	book:shuab-iman#6576	book:ibn-abi-dunya:hammwahuzn#31
+الفضيل بن عياض	11	book:shuab-iman#5315	book:shuab-iman#1686
+كعب	11	book:ibn-abi-dunya:cuqubat#324	book:ibn-mubarak-zuhd#453
+محمد	10	book:shuab-iman#2894	book:ibn-abi-dunya:qasramal#214
+ابو بكر	10	book:ibn-abi-dunya:ictibarwaacqab#15	book:shuab-iman#10087
+بشر بن الحارث	10	book:shuab-iman#1045	book:shuab-iman#5317
+بعضهم	10	book:ibn-qudama-minhaj#48	book:ibn-qudama-minhaj#76
+جعفر	9	book:ibn-abi-dunya:qadahawaij#28	book:ibn-abi-dunya:muhtadarin#124
+سفيان بن عيينه	9	book:ibn-abi-dunya:caqlwafadluh#52	book:ibn-mubarak-zuhd#76
 ذو النون	9	book:shuab-iman#7479	book:shuab-iman#7036
+ابن السماك	9	book:ibn-abi-dunya:zuhd#480	book:ibn-abi-dunya:zuhd#315
+الفضيل	9	book:shuab-iman#9585	book:shuab-iman#9027
 ابو احمد	8	book:shuab-iman#8212	book:shuab-iman#9869
-الرجل	8	book:shuab-iman#10257	book:ibn-mubarak-zuhd#617
-الفضيل	8	book:shuab-iman#9585	book:shuab-iman#9027
-بعضهم	8	book:ibn-qudama-minhaj#48	book:ibn-qudama-minhaj#76
-لابنه	7	book:ibn-mubarak-zuhd#892	book:shuab-iman#4297
+سفيان الثوري	8	book:shuab-iman#6520	book:shuab-iman#3902
+لهم	8	book:ibn-abi-dunya:cuzla#66	book:ibn-mubarak-zuhd#812
+ثابت	7	book:shuab-iman#5546	book:shuab-iman#5705
+ابيه	7	book:ibn-mubarak-zuhd#712	book:ibn-mubarak-zuhd#1366
+وهب بن منبه	7	book:shuab-iman#8647	book:ibn-abi-dunya:zuhd#155
+رجل للحسن	7	book:ibn-abi-dunya:ikhwan#204	book:ibn-abi-dunya:juc#225
+يعقوب	7	book:shuab-iman#3131	book:shuab-iman#510
 الشيخ احمد رحمه الله	7	book:shuab-iman#4010	book:shuab-iman#4925
-ابي	7	book:shuab-iman#7541	book:shuab-iman#2971
+ايوب	7	book:shuab-iman#5619	book:shuab-iman#4370
+ابيه،	7	book:ibn-abi-dunya:ictibarwaacqab#41	book:ibn-abi-dunya:zuhd#421
+ابن المبارك	7	book:ibn-abi-dunya:qasramal#185	book:shuab-iman#1602
 الحليمي	7	book:shuab-iman#10313	book:shuab-iman#3329
-رجل	7	book:shuab-iman#7789	book:ibn-mubarak-zuhd#354
-محمد	6	book:shuab-iman#2894	book:ibn-mubarak-zuhd#937
-ثابت	6	book:shuab-iman#5546	book:shuab-iman#5705
+لنفسه	7	book:ibn-abi-dunya:qasramal#59	book:ibn-abi-dunya:muhasabatnafs#99
+يحيي	6	book:ibn-abi-dunya:dhammghiba#105	book:shuab-iman#7600
+الاعمش	6	book:ibn-mubarak-zuhd#1099	book:shuab-iman#8101
+العبد	6	book:shuab-iman#6771	book:shuab-iman#3062
 ابو داود	6	book:shuab-iman#4799	book:shuab-iman#5600
 الامام احمد رحمه الله تعالي	6	book:shuab-iman#1152	book:shuab-iman#2
-يعقوب	6	book:shuab-iman#3131	book:shuab-iman#510
-ايوب	6	book:shuab-iman#5619	book:shuab-iman#4370
+عبد الله بن المبارك	6	book:shuab-iman#8365	book:ibn-abi-dunya:zuhd#103
+سليمان	6	book:ibn-mubarak-zuhd#823	book:shuab-iman#9193
+سعيد بن العاص	6	book:ibn-abi-dunya:ciyal#170	book:ibn-abi-dunya:ciyal#312
+ابليس	6	book:shuab-iman#1779	book:ibn-abi-dunya:makaidshaytan#44
+بعض العلماء	5	book:shuab-iman#6508	book:ibn-abi-dunya:cuzla#93
+الاصمعي	5	book:shuab-iman#5518	book:ibn-abi-dunya:zuhd#470
+ابن عون	5	book:ibn-abi-dunya:tawba#63	book:shuab-iman#6930
 شعبه	5	book:shuab-iman#5484	book:shuab-iman#7123
-سفيان الثوري	5	book:shuab-iman#6520	book:shuab-iman#3902
-بشر بن الحارث	5	book:shuab-iman#1045	book:shuab-iman#5317
-ابيه	5	book:ibn-mubarak-zuhd#712	book:ibn-mubarak-zuhd#1366
-ابو بكر	5	book:shuab-iman#10087	book:ibn-mubarak-zuhd#827
-العبد	5	book:shuab-iman#6771	book:shuab-iman#3062
+مسعر	5	book:ibn-abi-dunya:mudaratnas#134	book:shuab-iman#8182
+فضيل بن عياض	5	book:ibn-abi-dunya:hammwahuzn#29	book:ibn-abi-dunya:dhammmalahi#57
+ابو قلابه	5	book:shuab-iman#7983	book:shuab-iman#3149
+داود الطائي	5	book:ibn-abi-dunya:muhasabatnafs#44	book:ibn-abi-dunya:zuhd#371
+في دعائه	5	book:ibn-abi-dunya:qanaca#100	book:shuab-iman#836
+لك	5	book:ibn-abi-dunya:warac#182	book:ibn-abi-dunya:dhammmalahi#134
+المنكر؟	5	book:shuab-iman#7185	book:ibn-abi-dunya:cuqubat#37
+ابو جعفر	5	book:shuab-iman#8958	book:shuab-iman#4972
 تعالي	5	book:ibn-qudama-minhaj#13	book:ibn-mubarak-zuhd#5
+ابو سليمان	5	book:shuab-iman#5529	book:shuab-iman#380
+في خطبته	5	book:ibn-abi-dunya:zuhd#364	book:ibn-abi-dunya:zuhd#52
+لي ابي	5	book:ibn-abi-dunya:riqqawabuka#170	book:ibn-abi-dunya:cuzla#3
 الزهري	5	book:shuab-iman#1016	book:shuab-iman#10452
-الاصمعي	4	book:shuab-iman#5518	book:shuab-iman#5321
-ابراهيم بن ادهم	4	book:shuab-iman#6576	book:shuab-iman#5314
-مالك بن دينار	4	book:shuab-iman#7901	book:shuab-iman#5304
+ابراهيم	5	book:ibn-abi-dunya:samt#88	book:ibn-abi-dunya:qasramal#292
+قلت	5	book:ibn-abi-dunya:sifatnar#119	book:shuab-iman#8869
+ابراهيم التيمي	5	book:ibn-abi-dunya:zuhd#234	book:ibn-mubarak-zuhd#506
+ابو عبد الرحمن	5	book:shuab-iman#9220	book:shuab-iman#2017
+له الملك	4	book:ibn-abi-dunya:cuqubat#206	book:ibn-mubarak-zuhd#448
 الحسين	4	book:ibn-mubarak-zuhd#1489	book:ibn-mubarak-zuhd#1598
+بلال بن سعد	4	book:ibn-abi-dunya:hammwahuzn#55	book:shuab-iman#674
 بشر	4	book:shuab-iman#7478	book:shuab-iman#147
-الاعمش	4	book:ibn-mubarak-zuhd#1099	book:shuab-iman#8101
-ابو قلابه	4	book:shuab-iman#7983	book:shuab-iman#3149
-لهم	4	book:ibn-mubarak-zuhd#812	book:ibn-mubarak-zuhd#1561
-سفيان بن عيينه	4	book:ibn-mubarak-zuhd#76	book:shuab-iman#1570
+حماد	4	book:ibn-mubarak-zuhd#1012	book:ibn-abi-dunya:samt#125
+لها	4	book:ibn-mubarak-zuhd#1457	book:shuab-iman#7295
+محمد بن الحسين	4	book:ibn-abi-dunya:qasramal#268	book:ibn-abi-dunya:cuzla#133
+طلحه بن عبيد الله	4	book:ibn-abi-dunya:cuzla#24	book:ibn-abi-dunya:cuzla#111
+عبد الرحمن	4	book:shuab-iman#7785	book:shuab-iman#9612
+عثمان	4	book:shuab-iman#2033	book:ibn-abi-dunya:warac#230
+خلف	4	book:ibn-abi-dunya:qiradayf#14	book:ibn-abi-dunya:sabr#62
+الخليل بن احمد	4	book:ibn-abi-dunya:istinacmacruf#125	book:ibn-abi-dunya:zuhd#414
+الملك	4	book:ibn-abi-dunya:rasailfitawakkul#21	book:shuab-iman#4302
 الثوري	4	book:shuab-iman#923	book:shuab-iman#7238
-سليمان	4	book:ibn-mubarak-zuhd#823	book:shuab-iman#9193
 محمد بن المنكدر	4	book:shuab-iman#5299	book:shuab-iman#7545
+الاوزاعي،	4	book:ibn-abi-dunya:ikhlaswaniyya#28	book:ibn-abi-dunya:zuhd#44
 قيس بن ابي حازم	4	book:ibn-mubarak-zuhd#993	book:ibn-mubarak-zuhd#295
+معاويه بن قره	4	book:ibn-abi-dunya:warac#179	book:shuab-iman#6620
+يزيد	4	book:shuab-iman#3077	book:ibn-abi-dunya:hammwahuzn#60
+سفيان،	4	book:ibn-abi-dunya:zuhd#109	book:shuab-iman#6490
+ما	4	book:ibn-abi-dunya:maqtalcali#117	book:ibn-abi-dunya:cuqubat#285
 البيهقي رحمه الله تعالي	4	book:shuab-iman#140	book:shuab-iman#95
-جعفر	4	book:shuab-iman#1649	book:shuab-iman#5080
+ابن جريج	4	book:shuab-iman#8473	book:ibn-abi-dunya:caqlwafadluh#81
 الجنيد	4	book:shuab-iman#6521	book:shuab-iman#5352
+ابو سعيد	4	book:shuab-iman#10290	book:ibn-abi-dunya:amrbimacruf#9
 اعرابي	4	book:shuab-iman#8038	book:shuab-iman#3896
-ابن المبارك	4	book:shuab-iman#1602	book:shuab-iman#867
-ابيه،	4	book:shuab-iman#10187	book:shuab-iman#1060
+بكر بن خنيس	3	book:ibn-abi-dunya:sabr#193	book:ibn-abi-dunya:juc#157
+لي رجل من عقلاء الهند	3	book:ibn-abi-dunya:sabr#150	book:ibn-abi-dunya:juc#155
+ربكم	3	book:ibn-abi-dunya:samt#14	book:shuab-iman#1009
 عطاء،	3	book:shuab-iman#9173	book:shuab-iman#8773
 ابو محمد	3	book:ibn-mubarak-zuhd#213	book:ibn-mubarak-zuhd#201
+حدثني ابي	3	book:ibn-abi-dunya:maqtalcali#78	book:ibn-abi-dunya:maqtalcali#83
 حميد بن هلال	3	book:ibn-mubarak-zuhd#79	book:ibn-mubarak-zuhd#1431
-لها	3	book:ibn-mubarak-zuhd#1457	book:shuab-iman#7295
-يحيي	3	book:shuab-iman#7600	book:shuab-iman#914
-عبد الرحمن	3	book:shuab-iman#7785	book:shuab-iman#9612
-ابن عون	3	book:shuab-iman#6930	book:shuab-iman#175
+لبعضهم	3	book:shuab-iman#9161	book:ibn-abi-dunya:ikhwan#205
+ابو سليمان الداراني	3	book:ibn-abi-dunya:ikhwan#217	book:shuab-iman#5333
+الربيع	3	book:shuab-iman#3216	book:ibn-abi-dunya:qubur#132
+لرجل	3	book:ibn-abi-dunya:samt#117	book:ibn-abi-dunya:dhammmalahi#136
+الاشجعي،	3	book:ibn-abi-dunya:juc#123	book:ibn-abi-dunya:ciyal#160
+عطاء	3	book:ibn-abi-dunya:hilmmucawiya#20	book:shuab-iman#3847
+يوسف	3	book:ibn-abi-dunya:hammwahuzn#115	book:ibn-abi-dunya:amrbimacruf#72
+يونس	3	book:ibn-abi-dunya:cuqubat#172	book:ibn-abi-dunya:muhtadarin#252
+حكيم من الحكماء	3	book:shuab-iman#426	book:ibn-abi-dunya:kalamlayali#20
 طلحه	3	book:ibn-mubarak-zuhd#315	book:shuab-iman#4776
 ابن ابي مليكه	3	book:ibn-mubarak-zuhd#1504	book:ibn-mubarak-zuhd#1145
 لقمان	3	book:shuab-iman#4669	book:shuab-iman#910
 الحافظ	3	book:shuab-iman#9363	book:ibn-mubarak-zuhd#92
-في دعائه	3	book:shuab-iman#836	book:shuab-iman#1121
 جعفر بن محمد	3	book:shuab-iman#7991	book:shuab-iman#4082
+مالك بن دينار،	3	book:ibn-abi-dunya:hammwahuzn#33	book:shuab-iman#7190
+عيسي ابن مريم	3	book:ibn-abi-dunya:zuhd#166	book:ibn-abi-dunya:zuhd#522
+ثنا	3	book:ibn-abi-dunya:caqlwafadluh#15	book:ibn-abi-dunya:caqlwafadluh#13
 احدهما	3	book:shuab-iman#3558	book:shuab-iman#6962
 الناس	3	book:shuab-iman#5319	book:ibn-mubarak-zuhd#972
+ابو بكر بن عياش	3	book:shuab-iman#4361	book:ibn-abi-dunya:zuhd#29
 في هذه الايه	3	book:shuab-iman#351	book:shuab-iman#387
 جرير	3	book:shuab-iman#8232	book:ibn-mubarak-zuhd#436
-معاويه بن قره	3	book:shuab-iman#6620	book:ibn-mubarak-zuhd#1326
-سفيان،	3	book:shuab-iman#6490	book:shuab-iman#1195
+مسلم بن يسار	3	book:ibn-abi-dunya:cuzla#176	book:ibn-mubarak-zuhd#1081
+جبريل	3	book:ibn-abi-dunya:riqqawabuka#408	book:ibn-abi-dunya:cuqubat#150
 ابي اسحاق، عن ابي الاحوص، عن عبد الله	3	book:ibn-mubarak-zuhd#757	book:ibn-mubarak-zuhd#59
-قلت	3	book:shuab-iman#8869	book:shuab-iman#2987
-ابن جريج	3	book:shuab-iman#8473	book:shuab-iman#5003
+لاصحابه	3	book:ibn-abi-dunya:muhtadarin#182	book:ibn-abi-dunya:zuhd#340
 في التفسير	3	book:shuab-iman#5122	book:shuab-iman#5036
-ابو سعيد	3	book:shuab-iman#10290	book:shuab-iman#7166
+هشام	3	book:ibn-abi-dunya:dhammbaghy#12	book:ibn-abi-dunya:warac#46
+ميمون بن مهران	3	book:shuab-iman#2878	book:ibn-abi-dunya:qiradayf#38
+يحيي بن سعيد،	3	book:ibn-abi-dunya:maradwakaffarat#183	book:ibn-abi-dunya:ciyal#513
+عون بن عبد الله	3	book:ibn-abi-dunya:tawba#182	book:ibn-mubarak-zuhd#341
+محمد بن واسع	3	book:ibn-abi-dunya:zuhd#431	book:ibn-abi-dunya:qadahawaij#67
+داود	3	book:ibn-abi-dunya:riqqawabuka#389	book:shuab-iman#9560
+ابن ابي الدنيا	3	book:ibn-abi-dunya:tawba#72	book:shuab-iman#4094
+له موسي	3	book:ibn-abi-dunya:tawba#56	book:ibn-abi-dunya:makaidshaytan#47
 نافع	3	book:shuab-iman#2834	book:shuab-iman#5837
-ابو عبد الرحمن	3	book:shuab-iman#9220	book:shuab-iman#2017
-رجل للحسن	3	book:shuab-iman#691	book:shuab-iman#5415
-بلال بن سعد	3	book:shuab-iman#674	book:ibn-mubarak-zuhd#133
-ابن السماك	3	book:shuab-iman#6754	book:shuab-iman#10421
+عبد الله رضي الله عنه	3	book:ibn-abi-dunya:samt#543	book:ibn-abi-dunya:samt#76
+صالح	3	book:shuab-iman#1760	book:ibn-abi-dunya:mujabudacwa#62
+بكر بن عبد الله	3	book:ibn-abi-dunya:mudaratnas#51	book:ibn-abi-dunya:mudaratnas#53
+الاوزاعي	3	book:ibn-abi-dunya:hilm#121	book:shuab-iman#9196
+وهيب بن الورد	3	book:ibn-abi-dunya:cuzla#169	book:shuab-iman#10283
+في كلامه	2	book:ibn-abi-dunya:riqqawabuka#235	book:ibn-abi-dunya:zuhd#348
 البيهقي	2	book:shuab-iman#159	book:shuab-iman#1298
 هشيم	2	book:shuab-iman#2945	book:shuab-iman#2957
 ابن طاوس، عن ابيه	2	book:ibn-mubarak-zuhd#580	book:ibn-mubarak-zuhd#577
+زياد النميري،	2	book:ibn-abi-dunya:juc#257	book:ibn-abi-dunya:juc#127
 في ايه اخري	2	book:shuab-iman#274	book:shuab-iman#6440
+عروه	2	book:shuab-iman#2474	book:ibn-abi-dunya:maradwakaffarat#167
+ابن القريه	2	book:shuab-iman#4348	book:ibn-abi-dunya:caqlwafadluh#25
+ابن جريج، عن عطاء،	2	book:ibn-abi-dunya:maradwakaffarat#110	book:shuab-iman#8771
 الشيخ رضي الله عنه	2	book:shuab-iman#6108	book:shuab-iman#4911
 الفضيل لسفيان بن عيينه	2	book:shuab-iman#7908	book:shuab-iman#7909
 ابي المهزم	2	book:ibn-mubarak-zuhd#1595	book:ibn-mubarak-zuhd#1199
-الربيع	2	book:shuab-iman#3216	book:shuab-iman#10457
 الشافعي	2	book:shuab-iman#10217	book:shuab-iman#3438
+ابي عثمان النهدي	2	book:ibn-abi-dunya:qasramal#21	book:ibn-mubarak-zuhd#1415
+فضيل	2	book:shuab-iman#4822	book:ibn-abi-dunya:samt#385
+ابو الصهباء صله بن اشيم	2	book:ibn-abi-dunya:muhasabatnafs#133	book:ibn-mubarak-zuhd#986
 احدكم	2	book:ibn-mubarak-zuhd#1119	book:shuab-iman#644
+الوليد بن عقبه	2	book:shuab-iman#5300	book:ibn-abi-dunya:muhasabatnafs#118
+عبد العزيز بن ابي رواد	2	book:ibn-abi-dunya:juc#247	book:ibn-abi-dunya:juc#107
 سهل بن عبد الله	2	book:shuab-iman#6462	book:shuab-iman#4703
 يوم القيامه	2	book:shuab-iman#7560	book:shuab-iman#4775
+ابو معاويه الاسود	2	book:ibn-abi-dunya:hammwahuzn#168	book:ibn-abi-dunya:zuhd#553
 سليمان بن داود لابنه	2	book:shuab-iman#8037	book:shuab-iman#7135
+حفص بن حميد	2	book:ibn-abi-dunya:caqlwafadluh#87	book:shuab-iman#880
+الناس كذب الا في ثلاث	2	book:ibn-abi-dunya:samt#500	book:ibn-abi-dunya:mudaratnas#162
 بعض السلف	2	book:ibn-mubarak-zuhd#48	book:ibn-mubarak-zuhd#62
-حماد	2	book:ibn-mubarak-zuhd#1012	book:shuab-iman#4595
-عبد الله بن المبارك	2	book:shuab-iman#8365	book:shuab-iman#4825
+الاعمش، عن ابراهيم التيمي،	2	book:ibn-abi-dunya:zuhd#128	book:shuab-iman#10167
+محمد ابن الحنفيه	2	book:ibn-abi-dunya:muhasabatnafs#67	book:ibn-abi-dunya:muhasabatnafs#69
+وهو يعذب	2	book:ibn-abi-dunya:sabr#192	book:ibn-abi-dunya:sabr#176
+خليد العصري	2	book:ibn-abi-dunya:qasramal#152	book:shuab-iman#10302
 شقيق	2	book:shuab-iman#9601	book:shuab-iman#1862
 بديل	2	book:ibn-mubarak-zuhd#245	book:ibn-mubarak-zuhd#198
+صعصعه بن صوحان	2	book:ibn-abi-dunya:samt#697	book:ibn-abi-dunya:samt#719
+محمد بن واسع وهو في الموت	2	book:ibn-abi-dunya:muhtadarin#181	book:ibn-abi-dunya:muhasabatnafs#36
+الله تعالي للملائكه	2	book:shuab-iman#160	book:ibn-abi-dunya:maradwakaffarat#76
+موسي	2	book:ibn-mubarak-zuhd#210	book:ibn-abi-dunya:matarwaracd#40
 سعيد بن عبد العزيز	2	book:shuab-iman#6686	book:shuab-iman#10450
-مسعر	2	book:shuab-iman#8182	book:shuab-iman#4917
+لي عبد الواحد بن زيد	2	book:ibn-abi-dunya:sabr#146	book:ibn-abi-dunya:hammwahuzn#41
+زرعه	2	book:ibn-abi-dunya:tawakkul#28	book:ibn-abi-dunya:rasailfitawakkul#28
 هشام بن حسان،	2	book:shuab-iman#2904	book:shuab-iman#1999
 مالك بن الحارث، عن عبد الرحمن بن يزيد	2	book:ibn-mubarak-zuhd#1083	book:ibn-mubarak-zuhd#1390
 خالد بن معدان	2	book:ibn-mubarak-zuhd#871	book:ibn-mubarak-zuhd#446
-المنكر؟	2	book:shuab-iman#7185	book:shuab-iman#7161
+اسماء بن خارجه	2	book:ibn-abi-dunya:qadahawaij#61	book:ibn-abi-dunya:qadahawaij#62
 الفريابي	2	book:shuab-iman#5976	book:shuab-iman#7147
-ابو جعفر	2	book:shuab-iman#8958	book:shuab-iman#4972
-عثمان	2	book:shuab-iman#2033	book:ibn-mubarak-zuhd#1133
-ابو سليمان	2	book:shuab-iman#5529	book:shuab-iman#380
+لنا	2	book:ibn-abi-dunya:ciyal#314	book:ibn-mubarak-zuhd#878
+الله عز وجل للملائكه	2	book:shuab-iman#88	book:ibn-abi-dunya:cuqubat#222
+بعضهم لبعض	2	book:ibn-abi-dunya:sifatnar#251	book:ibn-abi-dunya:cuqubat#227
 في اول النهار	2	book:shuab-iman#396	book:shuab-iman#590
+بعض رجاله	2	book:ibn-abi-dunya:juc#194	book:ibn-abi-dunya:juc#226
 لي معروف الكرخي	2	book:shuab-iman#4708	book:shuab-iman#4707
+عكرمه	2	book:ibn-mubarak-zuhd#1615	book:ibn-abi-dunya:cuqubat#226
 حبيب بن ابي ثابت	2	book:ibn-mubarak-zuhd#404	book:shuab-iman#6159
 مكحول	2	book:ibn-mubarak-zuhd#1135	book:shuab-iman#7499
+ايوب السختياني	2	book:shuab-iman#1008	book:ibn-abi-dunya:muhasabatnafs#28
 لقومه	2	book:ibn-mubarak-zuhd#12	book:ibn-mubarak-zuhd#124
 ثابت،	2	book:shuab-iman#10177	book:shuab-iman#1023
+ابي اسحاق	2	book:ibn-mubarak-zuhd#975	book:ibn-abi-dunya:maqtalcali#90
 قسامه بن زهير	2	book:ibn-mubarak-zuhd#327	book:ibn-mubarak-zuhd#343
 الله عز وجل لعبده يوم القيامه	2	book:shuab-iman#4291	book:shuab-iman#4288
+للملائكه	2	book:shuab-iman#9344	book:ibn-abi-dunya:dhammmalahi#72
+بعض الحكماء لابنه	2	book:ibn-abi-dunya:cuzla#90	book:shuab-iman#5217
 للاحنف بن قيس	2	book:shuab-iman#6386	book:shuab-iman#10326
 الحليمي رحمه الله تعالي	2	book:shuab-iman#142	book:shuab-iman#22
-ابو سليمان الداراني	2	book:shuab-iman#5333	book:shuab-iman#6836
+ثابت البناني،	2	book:ibn-abi-dunya:zuhd#75	book:shuab-iman#10253
 في اسناده	2	book:shuab-iman#7305	book:shuab-iman#8322
 ربك عز وجل	2	book:shuab-iman#2007	book:shuab-iman#507
 الشافعي رحمه الله	2	book:shuab-iman#8201	book:shuab-iman#6518
+ابن عون،	2	book:ibn-abi-dunya:mudaratnas#139	book:ibn-abi-dunya:maradwakaffarat#182
 لابنته	2	book:shuab-iman#10209	book:shuab-iman#5781
+رجل من الانصار	2	book:shuab-iman#6087	book:ibn-abi-dunya:zuhd#543
 رجل لحاتم الاصم	2	book:shuab-iman#1274	book:shuab-iman#6858
+بعض اصحابه	2	book:shuab-iman#830	book:ibn-abi-dunya:shukr#116
+كان ي	2	book:ibn-abi-dunya:shukr#170	book:ibn-abi-dunya:shukr#56
+وهو ساجد	2	book:ibn-abi-dunya:riqqawabuka#130	book:ibn-abi-dunya:cuzla#117
+ربه تبارك وتعالي	2	book:shuab-iman#568	book:ibn-abi-dunya:ikhwan#9
+له ابنه	2	book:ibn-abi-dunya:muhtadarin#103	book:ibn-abi-dunya:muhtadarin#123
+عامر	2	book:ibn-abi-dunya:dhammghiba#18	book:ibn-abi-dunya:samt#156
+وقيل	2	book:ibn-abi-dunya:hilmmucawiya#17	book:ibn-abi-dunya:zuhd#170
 لي سفيان الثوري	2	book:shuab-iman#8972	book:shuab-iman#8974
 الوليد	2	book:shuab-iman#8086	book:shuab-iman#7870
 ابو الزبير	2	book:shuab-iman#7985	book:shuab-iman#2229
 له قائل	2	book:ibn-mubarak-zuhd#1501	book:ibn-mubarak-zuhd#1142
+عبد الواحد	2	book:shuab-iman#2590	book:ibn-abi-dunya:muhtadarin#203
+لمولاه	2	book:ibn-abi-dunya:dhammghiba#132	book:ibn-abi-dunya:samt#268
+الله تبارك وتعالي لملائكته	2	book:ibn-abi-dunya:tawakkul#13	book:ibn-abi-dunya:rasailfitawakkul#13
+ابي مسهر، عن خالد بن يزيد بن صبيح	2	book:ibn-abi-dunya:muhtadarin#71	book:ibn-abi-dunya:muhtadarin#253
+الله عز وجل لموسي	2	book:shuab-iman#9014	book:ibn-abi-dunya:cuqubat#246
+يحيي بن سعيد	2	book:shuab-iman#7912	book:ibn-abi-dunya:qadahawaij#75
+اخبرنا ابن جريج	2	book:ibn-abi-dunya:maqtalcali#63	book:shuab-iman#1950
+الله جل وعز	2	book:shuab-iman#4378	book:ibn-abi-dunya:sifatnar#37
 عباس بن ذريح	2	book:ibn-mubarak-zuhd#189	book:ibn-mubarak-zuhd#200
+يزيد بن ابي حبيب	2	book:ibn-mubarak-zuhd#40	book:ibn-abi-dunya:mudaratnas#131
+لقمان الحكيم	2	book:ibn-abi-dunya:sabr#41	book:ibn-abi-dunya:warac#51
 ابو بشر	2	book:ibn-mubarak-zuhd#1614	book:shuab-iman#4915
+بعض اهل العلم	2	book:shuab-iman#5348	book:ibn-abi-dunya:kalamlayali#15
 منصور، عن ابراهيم	2	book:ibn-mubarak-zuhd#1328	book:ibn-mubarak-zuhd#1257
+عبيد الله	2	book:ibn-abi-dunya:riqqawabuka#175	book:shuab-iman#6063
+يزيد الرقاشي	2	book:ibn-abi-dunya:riqqawabuka#186	book:ibn-abi-dunya:sifatjanna#359
+بعض الحكماء،	2	book:shuab-iman#4227	book:ibn-abi-dunya:tawakkul#46
+الصلتان العبدي	2	book:ibn-abi-dunya:kalamlayali#43	book:ibn-abi-dunya:zuhd#445
 القاسم بن منبه	2	book:shuab-iman#5342	book:shuab-iman#1396
-ابراهيم التيمي	2	book:ibn-mubarak-zuhd#506	book:ibn-mubarak-zuhd#551
+لي زرعه	2	book:ibn-abi-dunya:zuhd#476	book:ibn-abi-dunya:zuhd#276
+عبد الواحد بن زيد	2	book:shuab-iman#474	book:ibn-abi-dunya:zuhd#211
 ابي اسحاق،	2	book:shuab-iman#6692	book:shuab-iman#10592
+ادم لابنه	2	book:ibn-abi-dunya:riqqawabuka#331	book:ibn-abi-dunya:riqqawabuka#330
 قائل	2	book:shuab-iman#5221	book:shuab-iman#149
+جعفر بن برقان،	2	book:ibn-abi-dunya:zuhd#104	book:shuab-iman#8039
+ابيه، وخيثمه،	2	book:ibn-abi-dunya:fadailramadan#28	book:ibn-abi-dunya:fadailramadan#35
 ابو نصر	2	book:shuab-iman#10441	book:shuab-iman#8412
 ابو عبيده	2	book:shuab-iman#10143	book:shuab-iman#1963
 وكيع	2	book:shuab-iman#8229	book:shuab-iman#7981
+يحيي بن ابي كثير	2	book:ibn-abi-dunya:cuqubat#308	book:shuab-iman#9020
 في قوله	2	book:shuab-iman#453	book:shuab-iman#292
 ابو حفص	2	book:shuab-iman#6831	book:shuab-iman#4762
 عبد الوهاب	2	book:shuab-iman#8463	book:shuab-iman#3093
 هذا	2	book:shuab-iman#4451	book:ibn-mubarak-zuhd#1057
 يحيي بن عبد الرحمن بن حاطب، عن ابيه،	2	book:shuab-iman#1951	book:shuab-iman#1952
-الملك	2	book:shuab-iman#4302	book:shuab-iman#2526
+الاعمش، عن ابراهيم،	2	book:ibn-abi-dunya:zuhd#517	book:ibn-abi-dunya:dhammghiba#89
+بعض التابعين	2	book:shuab-iman#5013	book:ibn-abi-dunya:dhammmalahi#138
+ابن شبرمه	2	book:ibn-abi-dunya:rasailfitawakkul#6	book:ibn-abi-dunya:tawakkul#6
+لي رجل	2	book:ibn-abi-dunya:kalamlayali#33	book:ibn-abi-dunya:zuhd#435
+حبيب	2	book:ibn-abi-dunya:mujabudacwa#130	book:ibn-mubarak-zuhd#1368
+هشام بن عروه، عن ابيه،	2	book:shuab-iman#10416	book:ibn-abi-dunya:caqlwafadluh#53
+للمراه	2	book:shuab-iman#9215	book:ibn-abi-dunya:makaidshaytan#37
+اسماعيل	2	book:ibn-abi-dunya:ikhwan#161	book:ibn-abi-dunya:ciyal#340
+ابراهيم،	2	book:shuab-iman#8420	book:ibn-abi-dunya:fadailramadan#56
 في قول الله تعالي	2	book:ibn-mubarak-zuhd#328	book:ibn-mubarak-zuhd#320
 كعب الاحبار	2	book:ibn-mubarak-zuhd#1441	book:shuab-iman#7004
+رجل لاخيه	2	book:ibn-mubarak-zuhd#311	book:ibn-abi-dunya:sifatnar#201
 بعض الفقهاء	2	book:shuab-iman#1774	book:shuab-iman#4275
+هلال	2	book:ibn-abi-dunya:ikhwan#171	book:ibn-abi-dunya:mudaratnas#89
+منصور	2	book:shuab-iman#2313	book:ibn-abi-dunya:fadailramadan#53
 للرجل	2	book:shuab-iman#2451	book:shuab-iman#8111
+لي ابو عبد الله البراثي	2	book:ibn-abi-dunya:riqqawabuka#68	book:ibn-abi-dunya:hammwahuzn#98
 ابو العباس	2	book:shuab-iman#6207	book:shuab-iman#7720
-ابليس	2	book:shuab-iman#1779	book:shuab-iman#5390
+رجل للاحنف بن قيس	2	book:ibn-abi-dunya:sabr#191	book:ibn-abi-dunya:ciyal#134
 له بعض جلسائه	2	book:ibn-mubarak-zuhd#355	book:shuab-iman#4686
+الامير	2	book:ibn-abi-dunya:mujabudacwa#55	book:shuab-iman#2941
+سعد بن مسعود التجيبي	2	book:ibn-mubarak-zuhd#583	book:ibn-abi-dunya:zuhd#185
 مصعب	2	book:shuab-iman#2505	book:shuab-iman#1179
+شريح	2	book:shuab-iman#7129	book:ibn-abi-dunya:zuhd#236
+ابن داود	2	book:ibn-abi-dunya:samt#160	book:ibn-abi-dunya:dhammghiba#22
 عبد الله بن عامر بن ربيعه	2	book:ibn-mubarak-zuhd#220	book:shuab-iman#769
+لي داود الطائي	2	book:ibn-abi-dunya:cuzla#38	book:ibn-abi-dunya:mudaratnas#124
+بعض اهل النار لبعض	2	book:ibn-abi-dunya:dhammghiba#49	book:ibn-abi-dunya:samt#186
+موسي الجهني،	2	book:ibn-abi-dunya:zuhd#230	book:ibn-abi-dunya:zuhd#409
+رجل لمعروف	2	book:ibn-abi-dunya:rasailfitawakkul#37	book:ibn-abi-dunya:tawakkul#37
+لي سفيان	2	book:ibn-abi-dunya:mudaratnas#122	book:ibn-abi-dunya:cuzla#43
+رجل لعيسي ابن مريم	2	book:shuab-iman#6502	book:ibn-abi-dunya:warac#124
+محمد بن واسع،	2	book:ibn-abi-dunya:juc#49	book:ibn-abi-dunya:muhasabatnafs#37
+الراعي	2	book:ibn-abi-dunya:qasramal#187	book:shuab-iman#4908
 محمد بن كعب القرظي	2	book:ibn-mubarak-zuhd#58	book:ibn-mubarak-zuhd#268
+لنا عطاء بن ابي رباح	2	book:shuab-iman#4728	book:ibn-abi-dunya:samt#78
+زياد	2	book:ibn-abi-dunya:mujabudacwa#52	book:ibn-abi-dunya:muhtadarin#313
+وهب بن منبه،	2	book:ibn-abi-dunya:riqqawabuka#313	book:ibn-abi-dunya:maradwakaffarat#221
 له ربه	2	book:shuab-iman#6685	book:shuab-iman#2858
 ثابت البناني	2	book:ibn-mubarak-zuhd#1263	book:shuab-iman#10252
+لي مفضل بن يونس	2	book:ibn-abi-dunya:kalamlayali#31	book:ibn-abi-dunya:zuhd#433
 عنبسه بن سعيد	2	book:ibn-mubarak-zuhd#1146	book:ibn-mubarak-zuhd#1505
+اكثم بن صيفي	2	book:ibn-abi-dunya:ikhwan#94	book:ibn-abi-dunya:hilm#16
+المنكر؟،	2	book:ibn-abi-dunya:amrbimacruf#71	book:ibn-abi-dunya:amrbimacruf#21
+الحكم	2	book:ibn-abi-dunya:ciyal#549	book:ibn-abi-dunya:riqqawabuka#286
+مورق العجلي	2	book:ibn-abi-dunya:samt#118	book:shuab-iman#4675
+وهب	2	book:ibn-abi-dunya:caqlwafadluh#47	book:shuab-iman#960
 في مواعظه	2	book:ibn-mubarak-zuhd#485	book:shuab-iman#1219
 بعض شيوخنا	2	book:shuab-iman#469	book:shuab-iman#10305
-مسلم بن يسار	2	book:ibn-mubarak-zuhd#1081	book:ibn-mubarak-zuhd#1322
+ابو واقد الليثي	2	book:shuab-iman#10200	book:ibn-abi-dunya:zuhd#89
 مسلم	2	book:shuab-iman#997	book:shuab-iman#6618
+معاويه،	2	book:ibn-abi-dunya:hilm#13	book:ibn-abi-dunya:hilm#32
 عند فطره	2	book:shuab-iman#3621	book:shuab-iman#3614
+متمثلا	2	book:ibn-abi-dunya:muhtadarin#314	book:ibn-abi-dunya:muhtadarin#330
+ابن ابي الهذيل	2	book:ibn-abi-dunya:qasramal#274	book:shuab-iman#565
+منذر الثوري، عن محمد ابن الحنفيه،	2	book:ibn-abi-dunya:hilm#108	book:shuab-iman#7751
+فضيل بن عياض،	2	book:ibn-abi-dunya:zuhd#373	book:ibn-abi-dunya:zuhd#122
+رجل لمالك بن دينار	2	book:shuab-iman#8108	book:ibn-abi-dunya:juc#197
 احمد رحمه الله	2	book:shuab-iman#7650	book:shuab-iman#6600
-الاوزاعي،	2	book:shuab-iman#8077	book:shuab-iman#6752
+اصحابنا	2	book:ibn-abi-dunya:dhammghiba#152	book:ibn-abi-dunya:samt#288
+القبله	2	book:ibn-abi-dunya:qubur#125	book:ibn-abi-dunya:qubur#124
 ميمون بن مهران،	2	book:shuab-iman#7134	book:shuab-iman#10374
-له الملك	2	book:ibn-mubarak-zuhd#448	book:shuab-iman#1482
+في موعظته	2	book:shuab-iman#10300	book:ibn-abi-dunya:qasramal#146
+لاهل النار	2	book:ibn-abi-dunya:sifatnar#96	book:ibn-abi-dunya:sifatnar#252
+الليث	2	book:ibn-abi-dunya:ciyal#622	book:shuab-iman#5658
 حبيب بن ابي ثابت، عن عروه بن عامر	2	book:ibn-mubarak-zuhd#149	book:ibn-mubarak-zuhd#1362
 العلماء	2	book:shuab-iman#217	book:ibn-qudama-minhaj#104
 اياس بن معاويه	2	book:shuab-iman#7103	book:shuab-iman#4368
 صاحب الغريبين	2	book:shuab-iman#9323	book:shuab-iman#7822
 رجل، عن وهب بن منبه	2	book:ibn-mubarak-zuhd#56	book:ibn-mubarak-zuhd#298
-ابراهيم	2	book:shuab-iman#9526	book:ibn-mubarak-zuhd#1437
 عبد الرحمن بن ابي اميه	2	book:ibn-mubarak-zuhd#832	book:ibn-mubarak-zuhd#781
+خالد بن صفوان	2	book:shuab-iman#7969	book:ibn-abi-dunya:zuhd#328
 ابي اسحاق، عن عبد الرحمن بن يزيد	2	book:shuab-iman#5688	book:shuab-iman#660
+بشر بن منصور، عن ثور، عن خالد بن معدان،	2	book:ibn-abi-dunya:juc#205	book:ibn-abi-dunya:juc#40
+فرقد السبخي	2	book:ibn-abi-dunya:juc#317	book:ibn-abi-dunya:caqlwafadluh#56
 الفتي	2	book:ibn-mubarak-zuhd#1494	book:ibn-mubarak-zuhd#1496
 لي ابو سلمه بن عبد الرحمن	2	book:ibn-mubarak-zuhd#1024	book:ibn-mubarak-zuhd#1293
+كعب بن مالك في بعض اشعاره	2	book:ibn-abi-dunya:kalamlayali#36	book:ibn-abi-dunya:zuhd#438
+سليمان التيمي	2	book:ibn-abi-dunya:muhasabatnafs#142	book:ibn-abi-dunya:zuhd#547
+لي قائل في منامي	2	book:ibn-abi-dunya:tawakkul#53	book:ibn-abi-dunya:rasailfitawakkul#55
+رجل من العباد لابنه	2	book:ibn-abi-dunya:tawba#28	book:shuab-iman#6801
+لي عابد كان بالبحرين يوما	2	book:ibn-abi-dunya:tawakkul#35	book:ibn-abi-dunya:rasailfitawakkul#34
 حاتم	2	book:shuab-iman#6459	book:shuab-iman#5323
 الضحاك	2	book:ibn-mubarak-zuhd#75	book:shuab-iman#6577
 الله لملائكته	2	book:shuab-iman#9472	book:shuab-iman#3012
-ربكم	2	book:shuab-iman#1009	book:shuab-iman#3291
-بعض العلماء	1	book:shuab-iman#6508	
+صالح المري	2	book:ibn-abi-dunya:muhasabatnafs#127	book:ibn-mubarak-zuhd#261
 للجاريه	1	book:shuab-iman#6007	
 وكان كثيرا ما يدعو بهما	1	book:shuab-iman#224	
+الناس في الكذب الا في الثلاث	1	book:ibn-abi-dunya:ciyal#574	
 السحت اهو في الحكم؟	1	book:shuab-iman#5116	
 الاحنف لابنه	1	book:shuab-iman#4553	
+شهر بن حوشب، عن عباده بن الصامت،	1	book:ibn-abi-dunya:zuhd#6	
+عبد الله بن ثعلبه	1	book:ibn-abi-dunya:tawba#98	
 البخاري و	1	book:shuab-iman#2064	
-بعض الحكماء	1	book:shuab-iman#6570	
 في اخره	1	book:shuab-iman#7313	
-عروه	1	book:shuab-iman#2474	
-ابن القريه	1	book:shuab-iman#4348	
+ابي بشر، عن بكر بن عبد الله المزني،	1	book:ibn-abi-dunya:zuhd#451	
 رب العالمين،	1	book:shuab-iman#8881	
 في روايه جعفر بن محمد	1	book:shuab-iman#10132	
+صالح المري ، عن جعفر بن زيد العبدي	1	book:ibn-abi-dunya:qasramal#325	
+ابو وهب محمد بن مزاحم	1	book:ibn-abi-dunya:cuzla#129	
+يا موسي لا يزال لسانك رطبا من ذكري	1	book:ibn-abi-dunya:shukr#39	
 له احدهم	1	book:shuab-iman#9993	
 عبد الله، انه	1	book:shuab-iman#1861	
 مسلم بن قتيبه	1	book:shuab-iman#8141	
+بلي	1	book:ibn-abi-dunya:maqtalcali#94	
 عطاء بن السائب، عن ميسره	1	book:shuab-iman#10264	
+عبد الرحمن بن زيد	1	book:ibn-abi-dunya:juc#101	
+سفيان الثوري رحمه الله	1	book:ibn-abi-dunya:cuzla#165	
 ابي الورد، عن وهب بن منبه	1	book:shuab-iman#6554	
 الشيخ رحمه الله	1	book:shuab-iman#9658	
 محمد بن جحاده، انه	1	book:shuab-iman#2049	
+المحزونين لاي شيء حزنوا؟	1	book:ibn-abi-dunya:hammwahuzn#76	
+لا اشرب مرقدا ابدا،	1	book:ibn-abi-dunya:maradwakaffarat#139	
+فذكر الثلاثه ابيات	1	book:ibn-abi-dunya:qubur#110	
 الاعمش، عن زيد بن وهب	1	book:shuab-iman#940	
+ثور بن يزيد، عن خالد بن معدان،	1	book:ibn-abi-dunya:makaidshaytan#24	
+رجل من قريش	1	book:ibn-abi-dunya:caqlwafadluh#54	
 الحجاج بن فرافصه	1	book:ibn-mubarak-zuhd#621	
-لبعضهم	1	book:shuab-iman#9161	
+ابن صوحان لابن زيد	1	book:ibn-abi-dunya:mudaratnas#23	
+عبد الملك بن مروان	1	book:ibn-abi-dunya:warac#140	
+ابن سعد	1	book:ibn-abi-dunya:qasramal#278	
 فعل الله ذلك بنا وبكم	1	book:shuab-iman#9687	
+الزبير	1	book:ibn-abi-dunya:maqtalcali#131	
 لهم حين انفق كل شيء عنده	1	book:shuab-iman#9258	
+السري بن يحيي	1	book:ibn-abi-dunya:cuzla#49	
 محمد بن محمد بن رجاء	1	book:shuab-iman#10116	
 القواريري	1	book:shuab-iman#1079	
 حسان	1	book:shuab-iman#3112	
 عبد الله بن جعفر ذي الجناحين	1	book:shuab-iman#10415	
 شهاب بن خراش، عن نصير بن ابي الاشعث،	1	book:shuab-iman#3529	
+ابي اسحاق الهمداني،	1	book:ibn-abi-dunya:fadailramadan#30	
 ابن ابي الحواري،	1	book:shuab-iman#4138	
 الملائكه	1	book:ibn-mubarak-zuhd#1357	
-فضيل	1	book:shuab-iman#4822	
+جعفر قيل لهشام ما اللهفان	1	book:ibn-abi-dunya:istinacmacruf#80	
+الربيع بن بره	1	book:ibn-abi-dunya:qasramal#160	
 معاني خطابه،	1	book:shuab-iman#1362	
 محمد بن عجلان، عن عون بن عبد الله	1	book:ibn-mubarak-zuhd#286	
-الوليد بن عقبه	1	book:shuab-iman#5300	
+اذا قعد	1	book:ibn-abi-dunya:zuhd#407	
+لعبد الرحمن بن صالح انما	1	book:ibn-abi-dunya:istinacmacruf#153	
+قلت فما انهارها افي اخدود	1	book:ibn-abi-dunya:sifatjanna#145	
+صالح بن ابي شعيب،	1	book:ibn-abi-dunya:zuhd#63	
+للخشف	1	book:ibn-abi-dunya:zuhd#175	
 لي ابو عبد الله الزيدي	1	book:shuab-iman#10428	
 الله تبارك وتعالي يوم القيامه ايها الناس	1	book:shuab-iman#4777	
 البخاري رحمه الله، و	1	book:shuab-iman#2309	
@@ -240,9 +427,14 @@ speaker	count	example1	example2
 يرحمك الله فليقل يهديكم الله ويصلح بالكم	1	book:shuab-iman#8892	
 ابي عثمان	1	book:ibn-mubarak-zuhd#1046	
 قاسم بن عثمان	1	book:shuab-iman#4017	
+ابي المتوكل الناجي	1	book:ibn-abi-dunya:qasramal#10	
 رجل من غفار	1	book:ibn-mubarak-zuhd#340	
+ابي الاغر، عن وهب بن منبه	1	book:ibn-abi-dunya:caqlwafadluh#24	
 ابن ابي حسين، عن شهر بن حوشب	1	book:ibn-mubarak-zuhd#564	
+هذا؟	1	book:ibn-abi-dunya:cuqubat#63	
+الرجل ما هو فيه مما يكره	1	book:ibn-abi-dunya:samt#214	
 بعض العقلاء	1	book:shuab-iman#4564	
+عيينه بن حصن	1	book:ibn-abi-dunya:hilm#35	
 له ابو جعفر	1	book:shuab-iman#1931	
 ابو سليمان الخطابي رحمه الله	1	book:shuab-iman#9141	
 ابراهيم بن ميسره، عن طاوس	1	book:ibn-mubarak-zuhd#727	
@@ -251,144 +443,234 @@ speaker	count	example1	example2
 وهب بن منبه انه	1	book:shuab-iman#357	
 الشيخ محمد بن عثمان القيسي	1	book:shuab-iman#9657	
 رجل اراه ابا شعبه، عن ابن فارس	1	book:shuab-iman#4909	
+بعض اعوان الحجاج	1	book:ibn-abi-dunya:sabr#123	
 ابو عبيد، و	1	book:shuab-iman#4234	
 الصغاني، عن ابن ابي مريم،	1	book:shuab-iman#3161	
 عرفط العبدي،	1	book:shuab-iman#5018	
 لقمان بن عامر ان ابا الدرداء	1	book:ibn-mubarak-zuhd#547	
+يونس بن ميسره الجبلاني،	1	book:ibn-abi-dunya:zuhd#107	
+له الناس	1	book:ibn-abi-dunya:cuzla#113	
 ابي ادريس الخولاني، انه	1	book:ibn-mubarak-zuhd#1548	
 لي عطاء	1	book:shuab-iman#1063	
 محمد بن ابي طلحه	1	book:shuab-iman#10532	
+مالك بن دينار لاصحابه	1	book:ibn-abi-dunya:juc#111	
 ابن طاووس عن ابيه	1	book:ibn-mubarak-zuhd#532	
 الامام احمد البيهقي رحمه الله يعني	1	book:shuab-iman#746	
+عوف بن النعمان في الجاهليه الجهلاء	1	book:ibn-abi-dunya:samt#465	
 سلم بن العلاء،	1	book:shuab-iman#4921	
 ابراهيم التيمي، عن الحارث بن سويد	1	book:ibn-mubarak-zuhd#1363	
 طاوس	1	book:shuab-iman#2228	
 الايمان،	1	book:shuab-iman#9261	
-وهب بن منبه	1	book:shuab-iman#8647	
+ما تقول	1	book:ibn-abi-dunya:qubur#150	
+الله للذين عن شماله	1	book:ibn-abi-dunya:maradwakaffarat#98	
+زهير البابي	1	book:ibn-abi-dunya:tawakkul#48	
+معروف	1	book:ibn-abi-dunya:maradwakaffarat#177	
+شيء من الشعر،	1	book:ibn-abi-dunya:samt#633	
+المنكر،؟	1	book:ibn-abi-dunya:amrbimacruf#40	
+ابو ايوب الانصاري	1	book:ibn-abi-dunya:cuzla#96	
 صاحب له	1	book:shuab-iman#1956	
 بعض السلف انه	1	book:shuab-iman#4241	
+احمد بن ابي الحواري،	1	book:ibn-abi-dunya:zuhd#132	
 للجبل	1	book:ibn-mubarak-zuhd#317	
+له لقمان	1	book:ibn-abi-dunya:caqlwafadluh#95	
 شعبه بن الحجاج، عن ابي اسحاق	1	book:ibn-mubarak-zuhd#11	
+جليس لعون بن عبد الله	1	book:ibn-abi-dunya:hammwahuzn#129	
 حميد بن زنجويه، عن جعفر	1	book:shuab-iman#2342	
+عباده بن كلب،	1	book:ibn-abi-dunya:hilm#24	
 بدر المغازلي	1	book:shuab-iman#8042	
 حصين، عن عكرمه	1	book:shuab-iman#6324	
+قلت اني معتكف	1	book:ibn-abi-dunya:istinacmacruf#85	
 فرعون	1	book:shuab-iman#8946	
+الربيع بن ابي راشد	1	book:ibn-abi-dunya:cuzla#34	
+سالم بن ابي الجعد، عن عبيد بن عمير،	1	book:ibn-abi-dunya:zuhd#88	
+ابن السماك عند وفاته	1	book:ibn-abi-dunya:muhtadarin#347	
+ابو العبيدين	1	book:ibn-abi-dunya:juc#215	
 عبدي،	1	book:shuab-iman#9250	
 الحليمي في معناه	1	book:shuab-iman#7574	
 هلال يعني الوزان، عن عبد الله بن عكيم	1	book:ibn-mubarak-zuhd#32	
+لي ابو معاويه الاسود	1	book:ibn-abi-dunya:riqqawabuka#71	
 لاوليائه	1	book:shuab-iman#9008	
 لي خالي	1	book:ibn-qudama-minhaj#72	
+بكر بن عبد الله المزني	1	book:ibn-abi-dunya:dhammghiba#62	
+له صاحبه	1	book:ibn-abi-dunya:samt#83	
+ابن مسلم	1	book:ibn-abi-dunya:qadahawaij#70	
+جويبر، عن الضحاك،	1	book:ibn-abi-dunya:maradwakaffarat#86	
 البخاري رحمه الله و	1	book:shuab-iman#587	
 ما نجوت وما امنتك بعد	1	book:shuab-iman#827	
 عبد الله بن عبيد	1	book:ibn-mubarak-zuhd#708	
+لي طلحه بن مصرف	1	book:ibn-abi-dunya:ikhwan#87	
 نافع،	1	book:shuab-iman#6163	
+بعض الفرس	1	book:ibn-abi-dunya:qiradayf#62	
 للعجوز من عجائز حيه	1	book:shuab-iman#7294	
+هذا الامر بعدما زعموا ان قد امنوا؟	1	book:ibn-abi-dunya:zuhd#148	
 هلال بن يساف، عن ابي عبيده بن عبد الله	1	book:ibn-mubarak-zuhd#1156	
+لي ابراهيم	1	book:ibn-abi-dunya:qanaca#43	
 العجب،	1	book:shuab-iman#7910	
-الله تعالي للملائكه	1	book:shuab-iman#160	
+يزيد بن حاتم،	1	book:ibn-abi-dunya:ciyal#194	
+قبل ان يرفع	1	book:ibn-abi-dunya:zuhd#33	
+الطبيب	1	book:ibn-abi-dunya:muhtadarin#88	
 ابن طاوس عن ابيه	1	book:ibn-mubarak-zuhd#535	
-موسي	1	book:ibn-mubarak-zuhd#210	
+الله لمن شاء من ملائكته	1	book:ibn-abi-dunya:tawba#77	
+ابي جعفر، انه	1	book:ibn-abi-dunya:ikhwan#92	
+رجل من بني اميه	1	book:ibn-abi-dunya:ikhwan#195	
 بكير	1	book:ibn-mubarak-zuhd#848	
+ابيه، عن مسعر بن كدام،	1	book:ibn-abi-dunya:zuhd#356	
 رجل لمسلم بن سيار	1	book:shuab-iman#998	
 له صله	1	book:shuab-iman#1870	
 في فاتحه الكتاب	1	book:shuab-iman#2137	
 يزيد بن قوذر، عن كعب الاحبار، انه	1	book:shuab-iman#2445	
+خليد بن دعلج، عن معاويه بن قره رفعه	1	book:ibn-abi-dunya:caqlwafadluh#14	
 ثابت، عن ابي عثمان،	1	book:shuab-iman#10171	
 رجل لاحنف بن قيس	1	book:shuab-iman#7670	
+عقبه بن سنان ان اكثم بن صيفي	1	book:ibn-abi-dunya:caqlwafadluh#44	
 لي السري	1	book:shuab-iman#7353	
 سفيان، عن منصور، عن ابراهيم،	1	book:shuab-iman#6302	
 فيه يخاطب ربه عز وجل	1	book:shuab-iman#7262	
+ذو القرنين ما استطيع ذلك	1	book:ibn-abi-dunya:qubur#154	
+سعيد بن العاص رحمه الله لابنه	1	book:ibn-abi-dunya:samt#395	
+سليمان الخواص ،	1	book:ibn-abi-dunya:amrbimacruf#61	
 ابي حازم	1	book:ibn-mubarak-zuhd#587	
+ابي سلمه الثقفي ، عن وهب بن منبه	1	book:ibn-abi-dunya:sifatnar#123	
 محمد بن ذكوان، عن رجل، عن كعب	1	book:shuab-iman#5280	
+عند الموت	1	book:ibn-abi-dunya:muhtadarin#188	
 ابو هارون	1	book:shuab-iman#907	
 لي النضر بن شميل	1	book:shuab-iman#8180	
 عطاء بن يسار، عن عبد الله بن سلام	1	book:ibn-mubarak-zuhd#1242	
+لي قادم الديلمي	1	book:ibn-abi-dunya:riqqawabuka#135	
 بعض الشعراء	1	book:shuab-iman#3258	
+نبي من الانبياء لمن معه	1	book:ibn-abi-dunya:makaidshaytan#51	
+خصاف، وخصيف، وعبد الكريم بن مالك،	1	book:ibn-abi-dunya:samt#192	
 شيخ الاسلام	1	book:ibn-mubarak-zuhd#267	
+عابد بالبحرين	1	book:ibn-abi-dunya:hammwahuzn#49	
 مقبل بن عبد الله، عن عطاء بن يزيد الليثي	1	book:ibn-mubarak-zuhd#183	
 الخنا،	1	book:shuab-iman#8162	
 حالهم فحمد الله ثم	1	book:shuab-iman#8934	
+اسحاق بن سويد	1	book:ibn-abi-dunya:warac#76	
 لايوب	1	book:shuab-iman#1281	
+الناس سبع سنين ثم ارسله كفرت طائفه منهم	1	book:ibn-abi-dunya:matarwaracd#67	
+لبعض الامم	1	book:ibn-abi-dunya:samt#185	
 ابيت،	1	book:shuab-iman#348	
 اهلك من مات منهم بعدك،	1	book:ibn-mubarak-zuhd#1472	
 يزيد النحوي	1	book:shuab-iman#5893	
-الله عز وجل للملائكه	1	book:shuab-iman#88	
+فجعل	1	book:ibn-abi-dunya:juc#304	
 خالد	1	book:shuab-iman#7523	
 مسعر بن كدام	1	book:shuab-iman#1581	
+عبد العزيز، عن ابيه	1	book:ibn-abi-dunya:muhtadarin#75	
 زيد بن شراحه	1	book:ibn-mubarak-zuhd#870	
 الرب عز وجل	1	book:shuab-iman#2317	
+وخرج اخر ف	1	book:ibn-abi-dunya:qubur#93	
 اين الحمادون الذين كانوا يحمدون ربهم	1	book:shuab-iman#2976	
 شرا فشجب اهلك نفسه	1	book:shuab-iman#4717	
 محمد بن مالك، عن البراء بن عازب	1	book:shuab-iman#399	
+محمد بن سوقه،	1	book:ibn-abi-dunya:zuhd#306	
+المنهال بن عبد الملك، مولي بني اميه،	1	book:ibn-abi-dunya:ictibarwaacqab#72	
 سلمه بن كهيل، عن زر، عن يزيد بن حليل	1	book:ibn-mubarak-zuhd#1427	
 ابن جريج في بعض الروايات	1	book:shuab-iman#9427	
+ابو محرز الطفاوي	1	book:ibn-abi-dunya:zuhd#183	
+رجل ببعض بلاد الشام في بعض السواحل	1	book:ibn-abi-dunya:riqqawabuka#181	
 الرفيق للرفيق	1	book:shuab-iman#9129	
 لاصحاب الحديث	1	book:shuab-iman#4729	
-حكيم من الحكماء	1	book:shuab-iman#426	
+معاويه، لعرابه بن اوس بم سدت قومك؟	1	book:ibn-abi-dunya:hilm#39	
+ينزل البلاء ليستخرج الدعاء	1	book:ibn-abi-dunya:shukr#130	
 ابو الاسود الدؤلي لبنيه	1	book:shuab-iman#8335	
 انا احي واميت	1	book:ibn-mubarak-zuhd#1052	
 ضمره بن ربيعه	1	book:shuab-iman#3010	
 الملك الموكل	1	book:ibn-mubarak-zuhd#723	
+صالح بن مسمار	1	book:ibn-abi-dunya:shukr#123	
+ابو عصمه	1	book:ibn-abi-dunya:sifatnar#20	
 ذكر الله؟	1	book:shuab-iman#682	
 الطفيل	1	book:shuab-iman#8411	
+ابو بكره	1	book:ibn-abi-dunya:matarwaracd#45	
+الماجشون	1	book:ibn-abi-dunya:samt#525	
+فقلت لمن هذا القصر	1	book:ibn-abi-dunya:qubur#209	
+فان هذا والله بيتك	1	book:ibn-abi-dunya:qubur#105	
 رجل، عن شريح،	1	book:shuab-iman#8170	
 ابن المقفع	1	book:shuab-iman#9040	
 بلال بن سعد، ان ابا الدرداء	1	book:ibn-mubarak-zuhd#1395	
 ابي الخلد،	1	book:shuab-iman#4101	
-عكرمه	1	book:ibn-mubarak-zuhd#1615	
+ابن المبارك، عن جعفر بن سليمان،	1	book:ibn-abi-dunya:zuhd#537	
 ابن الاعرابي،	1	book:shuab-iman#4847	
 الشيخ ابو محمد بن ابي جمره	1	book:ibn-mubarak-zuhd#777	
-ايوب السختياني	1	book:shuab-iman#1008	
+بعض الفقهاء،	1	book:ibn-abi-dunya:maradwakaffarat#223	
 مره	1	book:shuab-iman#4683	
+الربيع بن عبد الرحمن	1	book:ibn-abi-dunya:hammwahuzn#118	
 بعض الطائيين، عن رافع الخير الطائي	1	book:ibn-mubarak-zuhd#626	
 رب ارنيٓ انظر اليك	1	book:ibn-mubarak-zuhd#227	
 اذا لبس ثوبا	1	book:shuab-iman#5870	
+اياس	1	book:ibn-abi-dunya:riqqawabuka#39	
 المنكر، فرق ما بين المؤمنين والمؤمنات لانه	1	book:shuab-iman#7152	
+رجل لبشر بن الحارث	1	book:ibn-abi-dunya:hammwahuzn#164	
+ابيها،	1	book:ibn-abi-dunya:matarwaracd#6	
 عبد ربه بن سليمان، عن عبد الله بن محيريز	1	book:ibn-mubarak-zuhd#396	
-ابي اسحاق	1	book:ibn-mubarak-zuhd#975	
+ثوبان	1	book:ibn-abi-dunya:qanaca#1	
+لكرز بن وبره	1	book:ibn-abi-dunya:cuzla#59	
 علان بن عبد الصمد ببعض معناه غير انه	1	book:shuab-iman#3780	
-ابو الصهباء صله بن اشيم	1	book:ibn-mubarak-zuhd#986	
+المنهال ، عن شهر ، عن كعب	1	book:ibn-abi-dunya:sifatnar#175	
+سلم بن ميمون الخواص،	1	book:ibn-abi-dunya:zuhd#374	
+رجل من عبد القيس	1	book:ibn-abi-dunya:zuhd#256	
+عبد الرحمن البجلي، وغيره،	1	book:ibn-abi-dunya:zuhd#367	
+نعم يا ابه	1	book:ibn-abi-dunya:maqtalcali#43	
+مطر	1	book:ibn-abi-dunya:ikhwan#182	
 البخيل من هو؟،	1	book:shuab-iman#10401	
 ربه عز وجل،	1	book:shuab-iman#1011	
-للملائكه	1	book:shuab-iman#9344	
+سمره بن جندب، وكان داهيه	1	book:ibn-abi-dunya:samt#508	
 محمد بن رافع، عن عبد الرزاق الا انه	1	book:shuab-iman#1825	
 لربه عز وجل	1	book:ibn-mubarak-zuhd#884	
 اسرائيل ونسيت السابعه	1	book:shuab-iman#2194	
 سعيد	1	book:shuab-iman#10722	
 الله سبحانه وتعالي	1	book:ibn-mubarak-zuhd#1473	
+الكلبي،	1	book:ibn-abi-dunya:zuhd#123	
 ابو نصر وهو عبد الوهاب	1	book:shuab-iman#4308	
 نجاه هذا الامر	1	book:shuab-iman#91	
+زياد النميري لما حضرته الوفاه	1	book:ibn-abi-dunya:muhtadarin#207	
 في الحمال كالملك المتوج، و	1	book:shuab-iman#10529	
 ابو عيسي هذا حديث حسن صحيح	1	book:shuab-iman#5949	
 له رجل	1	book:ibn-mubarak-zuhd#440	
+رجل لسفيان الثوري	1	book:ibn-abi-dunya:cuzla#94	
 عن عكرمه، لم يذكر بينهما احد	1	book:shuab-iman#5522	
 المطلب بن حنطب	1	book:ibn-mubarak-zuhd#454	
+عامر بن عبد الله	1	book:ibn-abi-dunya:muhasabatnafs#146	
+اولا و	1	book:ibn-abi-dunya:shukr#25	
 في مناجاته	1	book:shuab-iman#4201	
 رجل لحماد بن زيد الحديث	1	book:shuab-iman#10669	
 صالح بن احمد بن حنبل	1	book:shuab-iman#4164	
 ابي اسحاق بمعناه غير انه	1	book:shuab-iman#8552	
+سفيان الثوري رحمه الله لرجل	1	book:ibn-abi-dunya:cuzla#128	
 ابو عبد الرحمن السلمي الحبيب،	1	book:shuab-iman#1412	
+وبه الاكياس	1	book:ibn-abi-dunya:cuzla#105	
+غير اسحاق	1	book:ibn-abi-dunya:mujabudacwa#48	
 له مولي له وهو يعظه	1	book:shuab-iman#10451	
 حين حضرته الوفاه	1	book:ibn-mubarak-zuhd#1114	
 هلال بن يساف	1	book:ibn-mubarak-zuhd#150	
 هو	1	book:shuab-iman#6783	
 ابن شهاب	1	book:shuab-iman#8225	
 هذا لمعرفته بما فيها	1	book:shuab-iman#4835	
+الغناء؟	1	book:ibn-abi-dunya:dhammmalahi#46	
 الاعمي	1	book:shuab-iman#9599	
+لي حبيب ابو محمد	1	book:ibn-abi-dunya:sabr#164	
 الوليد بن كثير،	1	book:shuab-iman#8488	
+رجل لابي تميمه كيف اصبحت	1	book:ibn-abi-dunya:shukr#40	
 المغيره،	1	book:shuab-iman#6385	
 ابي يونس مولي تغلب	1	book:ibn-mubarak-zuhd#866	
+عبد الرحمن بن ميسره وكان قد قرا الكتاب	1	book:ibn-abi-dunya:qubur#158	
+الافوه بن مالك الازدي	1	book:ibn-abi-dunya:hilm#20	
+الاسود بن شيبان،	1	book:ibn-abi-dunya:zuhd#481	
+رجل لقومه	1	book:ibn-abi-dunya:samt#450	
 سيار، عن عائذ الله	1	book:ibn-mubarak-zuhd#45	
+وهيب	1	book:ibn-abi-dunya:zuhd#294	
 محمد بن شداد	1	book:shuab-iman#5598	
-رجل من الانصار	1	book:shuab-iman#6087	
 ميمون، فقلت له	1	book:shuab-iman#4625	
 همام	1	book:shuab-iman#10620	
-بعض اصحابه	1	book:shuab-iman#830	
+ابي قطن، عن حزم، عن مالك بن دينار	1	book:ibn-abi-dunya:muhtadarin#186	
+يزيد بن ميسره،	1	book:ibn-abi-dunya:zuhd#326	
 ابي العلاء	1	book:ibn-mubarak-zuhd#1430	
 له ملكها	1	book:shuab-iman#4369	
 الليث، انه	1	book:shuab-iman#6328	
 عبد الله واصدقك، او احدث وتصدقني	1	book:shuab-iman#2216	
+سيار ابو الحكم	1	book:ibn-abi-dunya:hammwahuzn#165	
 معروف الكرخي	1	book:shuab-iman#4705	
+سفيان الثوري لبكر العابد	1	book:ibn-abi-dunya:zuhd#124	
+عبد الله بن ابي نوح	1	book:ibn-abi-dunya:shukr#138	
 لامي	1	book:ibn-mubarak-zuhd#642	
 جعفر بن برقان، عن ميمون بن مهران	1	book:ibn-mubarak-zuhd#49	
 مغيره،	1	book:shuab-iman#7543	
@@ -398,259 +680,441 @@ speaker	count	example1	example2
 ابي الخليل، او	1	book:ibn-mubarak-zuhd#221	
 عمل يدخله الجنه؟	1	book:shuab-iman#3103	
 ابو القاسم	1	book:shuab-iman#3739	
-ربه تبارك وتعالي	1	book:shuab-iman#568	
+معصيه الا ان لسانه لا يفتر من ذكر الله؟	1	book:ibn-abi-dunya:tawba#148	
+ابو جحيفه	1	book:ibn-abi-dunya:juc#4	
 لي ذو النون	1	book:shuab-iman#9061	
+بعض حكماء الشعراء	1	book:ibn-abi-dunya:zuhd#312	
+عبد الكريم بن ابي اميه	1	book:ibn-abi-dunya:samt#155	
+ابو هاشم	1	book:ibn-abi-dunya:zuhd#325	
 عبد الرحمن بن حساس، او	1	book:ibn-mubarak-zuhd#1243	
+الاحنف بن قيس رحمه الله	1	book:ibn-abi-dunya:samt#338	
+ابي غراره،	1	book:ibn-abi-dunya:zuhd#317	
+له عثمان	1	book:ibn-abi-dunya:muhtadarin#325	
+اسماعيل بن ابي خالد عن قيس بن ابي حازم	1	book:ibn-abi-dunya:makaidshaytan#5	
 لك قومك؟	1	book:ibn-mubarak-zuhd#1051	
+روح بن حاتم	1	book:ibn-abi-dunya:zuhd#271	
 داود بن رشيد	1	book:shuab-iman#4225	
+فيناديهم منادي	1	book:ibn-abi-dunya:qubur#72	
+الطريق وناموا الليل، فمتي يقطعون سفرهم؟	1	book:ibn-abi-dunya:amrbimacruf#51	
 ابان، يرويه عن بعضهم،	1	book:shuab-iman#8417	
 ما عند هذا خير، فادبر، ف	1	book:ibn-mubarak-zuhd#1464	
+ما فعل ضاربي	1	book:ibn-abi-dunya:maqtalcali#33	
 رجل قاعد معه	1	book:shuab-iman#10145	
 ثابت البناني، عن عبد الرحمن بن ابي ليلي	1	book:ibn-mubarak-zuhd#1283	
 يزيد بن الوليد الناقض	1	book:shuab-iman#4755	
 احدهما في حديثه	1	book:shuab-iman#2780	
+رجل ونظر الي بناء لبعض الملوك ف	1	book:ibn-abi-dunya:qasramal#315	
+ابو عبد الرحمن السلمي	1	book:ibn-abi-dunya:zuhd#219	
 غالب بن عجرد	1	book:ibn-mubarak-zuhd#321	
+ابقيت شيئا جعلت الحمد الله كله عز وجل	1	book:ibn-abi-dunya:shukr#105	
+شهاده ان لا اله الا الله ف	1	book:ibn-abi-dunya:qubur#113	
 ابي السليل	1	book:ibn-mubarak-zuhd#424	
+الخليل بن احمد،	1	book:ibn-abi-dunya:hilm#46	
+محمد بن الحسين، عن حكيم بن جعفر،	1	book:ibn-abi-dunya:zuhd#262	
 عبد الله بن العباس	1	book:shuab-iman#9123	
 خلاء قط الا،	1	book:shuab-iman#4154	
 له الملكان	1	book:shuab-iman#9470	
 عرفجه	1	book:shuab-iman#3003	
 قتيبه، وغيره	1	book:shuab-iman#8196	
+مسعر يرجو الثواب بذلك	1	book:ibn-abi-dunya:shukr#75	
+بعض رجاله،	1	book:ibn-abi-dunya:juc#128	
 صالح بن كيسان، عن ابن شهاب،	1	book:shuab-iman#5007	
+فرعون لقومه	1	book:ibn-abi-dunya:cuqubat#244	
 جعفر بن ابي المغيره، عن شهر بن حوشب	1	book:ibn-mubarak-zuhd#1529	
+له بعد	1	book:ibn-abi-dunya:makaidshaytan#59	
+لي ابن عيينه	1	book:ibn-abi-dunya:zuhd#71	
 بعض الصالحين	1	book:shuab-iman#4274	
-عبد الواحد	1	book:shuab-iman#2590	
+قلت لجبريل لمن هذا القصر	1	book:ibn-abi-dunya:sifatjanna#173	
 سيار، حدثنا عبيد الله بن شميط	1	book:shuab-iman#690	
+ابو عوانه	1	book:ibn-abi-dunya:zuhd#403	
 عن ابي حازم، ولم يذكر قوله	1	book:shuab-iman#2692	
+ابي حين حضرته الوفاه	1	book:ibn-abi-dunya:muhtadarin#26	
 له روح	1	book:shuab-iman#3662	
 احدهمآ انيٓ ارينيٓ اعصر خمرا و	1	book:ibn-mubarak-zuhd#1170	
 عبد الله بن ادريس	1	book:shuab-iman#1251	
 كعب الاحبار انه	1	book:ibn-mubarak-zuhd#876	
+سيار ابي الحكم،	1	book:ibn-abi-dunya:zuhd#65	
 اهلك الذين هم اهلك،	1	book:ibn-mubarak-zuhd#204	
 الثوري، وبلغني عن محمد بن يحيي انه	1	book:shuab-iman#8367	
 في الزياده	1	book:shuab-iman#8916	
 ما هي؟	1	book:ibn-qudama-minhaj#64	
+الان؟	1	book:ibn-abi-dunya:samt#586	
 الشيخ ابو الصباح الايلي	1	book:shuab-iman#5724	
+ابيها نعيم بن ابي المتئد ؛	1	book:ibn-abi-dunya:cuzla#82	
+مغضب اليمامي	1	book:ibn-abi-dunya:mujabudacwa#121	
 ضمره بن حبيب، ان ابا الدرداء	1	book:ibn-mubarak-zuhd#922	
 في قوله عز وجل	1	book:shuab-iman#353	
 ابو اسامه	1	book:shuab-iman#6498	
 ابي حيان، عن ابيه	1	book:ibn-mubarak-zuhd#438	
 عياض بن غطيف، وكذلك	1	book:shuab-iman#3294	
+عوف ، عن ابي السليل	1	book:ibn-abi-dunya:qasramal#259	
+هشام، عن ابن ابي حسين	1	book:ibn-abi-dunya:muhtadarin#335	
+فيما انزل	1	book:ibn-abi-dunya:tawba#32	
 اسماعيل بن ابراهيم	1	book:shuab-iman#10389	
 الله له	1	book:shuab-iman#2382	
 عبد الله بن خبيق انه	1	book:shuab-iman#985	
 ابو الفضل	1	book:shuab-iman#4873	
+التبسم	1	book:ibn-abi-dunya:qubur#66	
 ابو عبيد ومنه الحديث الاخر	1	book:shuab-iman#2377	
 سعد بن مسعود، ان ابا الدرداء	1	book:ibn-mubarak-zuhd#263	
+الاخر	1	book:ibn-abi-dunya:cuqubat#223	
 ابو الوليد	1	book:shuab-iman#8994	
 العباس	1	book:shuab-iman#6044	
+لي نصر بن يحيي بن ابي كثير	1	book:ibn-abi-dunya:mudaratnas#135	
+لي مستورد المدني	1	book:ibn-abi-dunya:hammwahuzn#134	
+فروه الاعمي مولي سعد بن ابي اميه المقرئ	1	book:ibn-abi-dunya:mujabudacwa#116	
+رقبه بن مسقله	1	book:ibn-abi-dunya:cuqubat#122	
+شميط يعني ابن عجلان	1	book:ibn-abi-dunya:riqqawabuka#79	
 ابو حازم لجلسائه وحلف لهم	1	book:shuab-iman#1531	
 يحيي بن ابي كثير، عن زيد بن سلام، عن جده	1	book:ibn-mubarak-zuhd#774	
+التسعه الذين عقروا الناقه بعضهم لبعض	1	book:ibn-abi-dunya:cuqubat#136	
 بكر	1	book:ibn-mubarak-zuhd#1343	
-الله عز وجل لموسي	1	book:shuab-iman#9014	
-يحيي بن سعيد	1	book:shuab-iman#7912	
+فبكي معاويه وبكي القوم ثم	1	book:ibn-abi-dunya:maqtalcali#105	
+ابو سفيان	1	book:ibn-abi-dunya:muhtadarin#292	
+احدهم	1	book:ibn-abi-dunya:samt#65	
+داود سمعت صالح المري	1	book:ibn-abi-dunya:qubur#76	
 عن صالح عن عروه اصح	1	book:shuab-iman#5770	
+ومروه بالوصيه ولقنوه	1	book:ibn-abi-dunya:ciyal#196	
 حبيب بن ابي ثابت، عن يحيي بن جعده	1	book:ibn-mubarak-zuhd#1333	
 البيهقي رضي الله عنه وارضاه	1	book:shuab-iman#1734	
 كثيرا	1	book:shuab-iman#9544	
+سريج	1	book:ibn-abi-dunya:dhammmalahi#90	
 في بعض اسفار التوراه	1	book:shuab-iman#1053	
+ابو سعد	1	book:ibn-abi-dunya:riqqawabuka#111	
 حبيب بن ابي ثابت،	1	book:shuab-iman#10198	
 ابيه، عن سيار الشامي	1	book:ibn-mubarak-zuhd#868	
-ابو بكر بن عياش	1	book:shuab-iman#4361	
-الله جل وعز	1	book:shuab-iman#4378	
+درع الخولاني، عن ابي شيبه المهري،	1	book:ibn-abi-dunya:zuhd#425	
+ومن اغرب من الميت من الاحياء	1	book:ibn-abi-dunya:qubur#51	
+عبد الرحمن بن كعب ابن مالك عن ابيه	1	book:ibn-abi-dunya:shukr#133	
+سبحان الله ما رابك الي هذا	1	book:ibn-abi-dunya:maqtalcali#93	
+عثمان بن اليمان	1	book:ibn-abi-dunya:dhammmalahi#148	
 عباد بن راشد	1	book:shuab-iman#10276	
 محمد بن اسحاق	1	book:ibn-mubarak-zuhd#891	
 ذلك بعد صلاه الفجر وصلاه العصر،	1	book:shuab-iman#3372	
+لنا صالح المري	1	book:ibn-abi-dunya:samt#432	
 للحارث بن قيس	1	book:ibn-mubarak-zuhd#769	
 ابو عبد الله احمد بن حنبل	1	book:shuab-iman#7128	
 ابو يزيد	1	book:shuab-iman#1719	
+وهذا اعجب الي	1	book:ibn-abi-dunya:ciyal#78	
+يحيي اما سمعت ما	1	book:ibn-abi-dunya:istinacmacruf#133	
 في الماعون	1	book:shuab-iman#3033	
 حدثنا ابن عيينه بهذا الاسناد نحوه	1	book:ibn-mubarak-zuhd#1294	
 لنا شيخ	1	book:shuab-iman#4485	
 الاعمش عن شقيق	1	book:shuab-iman#941	
 لنا عبد الرحمن بن حسان	1	book:shuab-iman#8127	
-يزيد بن ابي حبيب	1	book:ibn-mubarak-zuhd#40	
+رجل لمحمد بن واسع	1	book:ibn-abi-dunya:zuhd#134	
+الله تعالي له	1	book:ibn-abi-dunya:cuqubat#118	
+حصين	1	book:ibn-abi-dunya:juc#206	
+الفضيل بن عياض،	1	book:ibn-abi-dunya:amrbimacruf#53	
+فما شانك انت	1	book:ibn-abi-dunya:qubur#155	
+لهم ابو طالب	1	book:ibn-abi-dunya:dhammbaghy#11	
+لنفسه النفيسه	1	book:ibn-abi-dunya:muhasabatnafs#8	
 بعض العلماء، انه	1	book:shuab-iman#4171	
-بعض اهل العلم	1	book:shuab-iman#5348	
+الوليد بن عقبه حين حضره الموت	1	book:ibn-abi-dunya:muhtadarin#109	
+سهل ابي الاسد،	1	book:ibn-abi-dunya:zuhd#167	
 ثابت بن عبيد،	1	book:shuab-iman#7852	
 عبدي حتي تخرج نفسه، او	1	book:shuab-iman#6668	
 جعفر بن محمد لسفيان الثوري	1	book:shuab-iman#10422	
 عون بن عبد الله بن عتبه	1	book:shuab-iman#10296	
 له الاعرابي	1	book:shuab-iman#8115	
+محمد بن الوليد،	1	book:ibn-abi-dunya:zuhd#428	
+الرسول و	1	book:ibn-abi-dunya:istinacmacruf#116	
 المغيره بن عبد الرحمن بن عبيد،	1	book:shuab-iman#8189	
+سمعت صالح بن مسمار	1	book:ibn-abi-dunya:shukr#199	
+اذا حدث بهذا	1	book:ibn-abi-dunya:sifatnar#169	
 عبد الرحمن بن عدي عن يزيد بن ميسره	1	book:ibn-mubarak-zuhd#329	
 شبيب	1	book:shuab-iman#4035	
-بعض الحكماء،	1	book:shuab-iman#4227	
+نصر ابن يحيي بن ابي كثير	1	book:ibn-abi-dunya:cuzla#30	
 سماك، عن ابي الربيع،	1	book:shuab-iman#10205	
+طريق الناس ، فبكي ، ثم	1	book:ibn-abi-dunya:cuzla#31	
+لحرسه	1	book:ibn-abi-dunya:mujabudacwa#90	
+طوفه رد بصره فنظر اليه؟	1	book:ibn-abi-dunya:juc#170	
+الزبير بن ابي بكر فيما اجاز لي و	1	book:ibn-abi-dunya:maqtalcali#121	
 الافريقي لابي جعفر	1	book:shuab-iman#7040	
 في الاسنادين	1	book:shuab-iman#10355	
-يزيد	1	book:shuab-iman#3077	
+لي منصور	1	book:ibn-abi-dunya:qanaca#48	
 سماك، عن ابي الربيع	1	book:ibn-mubarak-zuhd#619	
+لي بعض العلماء	1	book:ibn-abi-dunya:zuhd#545	
+مروان	1	book:ibn-abi-dunya:ciyal#310	
 عطاء الخراساني	1	book:ibn-mubarak-zuhd#489	
 جعفر بن محمد،	1	book:shuab-iman#9128	
 موتانا؟	1	book:shuab-iman#9296	
 محمد بن النضر الحارثي،	1	book:shuab-iman#1657	
+بعض الماضين	1	book:ibn-abi-dunya:samt#39	
+ابو سفيان بن الحارث لما حضره الموت لاهله	1	book:ibn-abi-dunya:muhtadarin#134	
 صعصعه بن صوحان العبدي لابن اخيه	1	book:shuab-iman#7752	
 ابن جريج،	1	book:shuab-iman#8431	
+السري بن ينعم،	1	book:ibn-abi-dunya:juc#94	
 عبد الرحمن بن مهدي	1	book:shuab-iman#1758	
-عبد الواحد بن زيد	1	book:shuab-iman#474	
+بشار	1	book:ibn-abi-dunya:muhtadarin#50	
+بشر ابن منصور لرجل	1	book:ibn-abi-dunya:cuzla#102	
 سليمان، عن ابي رزين	1	book:ibn-mubarak-zuhd#622	
+النزال بن سبره، عن ابي مسعود	1	book:ibn-abi-dunya:muhtadarin#168	
 رجل للحسن البصري	1	book:shuab-iman#1562	
+وهو يجود بنفسه	1	book:ibn-abi-dunya:muhtadarin#70	
 بعض اصحابنا انه	1	book:shuab-iman#132	
+معدان	1	book:ibn-abi-dunya:zuhd#475	
+فبلغ ذلك كعبا ف	1	book:ibn-abi-dunya:sifatjanna#44	
+بعض البصريين	1	book:ibn-abi-dunya:makaidshaytan#30	
+وكان كثيرا ما يردد هذا الكلام	1	book:ibn-abi-dunya:riqqawabuka#182	
 ابي سليمان الخطابي البستي رحمه الله انه	1	book:shuab-iman#293	
 في قول الله	1	book:ibn-mubarak-zuhd#1222	
+بشيئين من الدنيا	1	book:ibn-abi-dunya:samt#749	
+خصاف، وخصيف، وعبد الكريم بن مالك	1	book:ibn-abi-dunya:dhammghiba#55	
 القاسم، عن عبد الله	1	book:ibn-mubarak-zuhd#83	
+الامر والنهي،	1	book:ibn-abi-dunya:amrbimacruf#109	
+اشعث،	1	book:ibn-abi-dunya:zuhd#74	
+سمعت ابن الحنفيه،	1	book:ibn-abi-dunya:fadailramadan#40	
+لاذنه	1	book:ibn-abi-dunya:qadahawaij#63	
+خالد بن صفوان رحمه الله	1	book:ibn-abi-dunya:samt#398	
 ابن المهاجر الرقي،	1	book:shuab-iman#10265	
-جعفر بن برقان،	1	book:shuab-iman#8039	
 سهل بن عبد الله،	1	book:shuab-iman#8107	
 فروخ	1	book:shuab-iman#10705	
+ابيه، عن العلاء بن المنذر،	1	book:ibn-abi-dunya:zuhd#372	
+رجل ممن حوله	1	book:ibn-abi-dunya:muhtadarin#133	
 في سجوده	1	book:shuab-iman#3557	
 يقولون	1	book:shuab-iman#8864	
 الشيخ الارجوان	1	book:shuab-iman#5907	
 ابي رزين	1	book:shuab-iman#5842	
 موسي بن ابي عيسي	1	book:ibn-mubarak-zuhd#473	
+اكثر ما يدخل الناس الجنه؟	1	book:ibn-abi-dunya:warac#135	
+صفوان بن سليم	1	book:ibn-abi-dunya:makaidshaytan#65	
+سعد بن ابي وقاص ؛	1	book:ibn-abi-dunya:cuzla#57	
+لا ادري	1	book:ibn-abi-dunya:shukr#74	
+مورق	1	book:ibn-abi-dunya:samt#575	
+يزيد بن ميسره	1	book:ibn-abi-dunya:samt#513	
 شهر بن حوشب، عن عباده بن الصامت	1	book:ibn-mubarak-zuhd#500	
 لنا ابو عبد الله	1	book:shuab-iman#7986	
+عباد بن ماهان، مولي الكريزين	1	book:ibn-abi-dunya:qiradayf#30	
+ابي سلام	1	book:ibn-abi-dunya:sifatnar#97	
 اسحاق	1	book:shuab-iman#9198	
 لي ابن ابنه	1	book:shuab-iman#2056	
+عون بن عبد الله، ويحيي	1	book:ibn-abi-dunya:muhasabatnafs#107	
 في مرض موته	1	book:shuab-iman#9678	
 عند افطاره	1	book:shuab-iman#3620	
 ابي زيد محمد بن حسان،	1	book:shuab-iman#4732	
+لي فضيل الرقاشي وانا اساله	1	book:ibn-abi-dunya:warac#143	
 الجنه، فاذا صرفت ابصارهم تلقاء اصحاب النار	1	book:shuab-iman#375	
+عبد الله بن ابي زكريا	1	book:ibn-abi-dunya:samt#713	
 لي رجاء بن حيوه	1	book:shuab-iman#9194	
+الله تبارك وتعالي له	1	book:ibn-abi-dunya:riqqawabuka#307	
+ابو هاشم الزاهد	1	book:ibn-abi-dunya:zuhd#49	
+عطاء بن ابي رباح،	1	book:ibn-abi-dunya:fadailramadan#49	
 هشام،	1	book:shuab-iman#2420	
 ابي الاحوص، عن عبد الله	1	book:ibn-mubarak-zuhd#736	
+طالوت لبنته	1	book:ibn-abi-dunya:cuqubat#251	
+سمعت اخي سفيان بن سعيد الثوري	1	book:ibn-abi-dunya:shukr#139	
+سفيان بن عيينه، عن ابن شبرمه	1	book:ibn-abi-dunya:muhtadarin#272	
 الشيخ احمد ويروي من وجه اخر كما	1	book:shuab-iman#4597	
 سهل	1	book:shuab-iman#8117	
 ابي اسماء الرحبي، عن ثوبان	1	book:ibn-mubarak-zuhd#683	
+حماد بن سلمه،	1	book:ibn-abi-dunya:fadailramadan#27	
+يزيد بن صعصعه بن صرخان لابن زيد	1	book:ibn-abi-dunya:hilm#107	
+لي بشر بن الحارث	1	book:ibn-abi-dunya:mudaratnas#133	
 عبد الكريم الجزري	1	book:shuab-iman#4752	
+محمد بن المنكدر،	1	book:ibn-abi-dunya:zuhd#98	
 ابي عبد الرحمن الحبلي	1	book:ibn-mubarak-zuhd#1256	
+ابو حازم لبعض اولئك الامراء	1	book:ibn-abi-dunya:samt#423	
 المسيح	1	book:shuab-iman#1660	
 التصوف ما هو؟	1	book:shuab-iman#8142	
-عبيد الله	1	book:shuab-iman#6063	
+لي صالح بن عبد الكريم	1	book:ibn-abi-dunya:riqqawabuka#122	
+واصل مولي ابي عيينه، ان ابا الدرداء،	1	book:ibn-abi-dunya:qanaca#32	
 ابي البختري	1	book:ibn-mubarak-zuhd#771	
 اضاعه المال	1	book:shuab-iman#6125	
 الغلام شاتين، وعن الجاريه شاه،	1	book:shuab-iman#8259	
+قلت لمحمد ما يعني ما وقي به الرجل عرضه	1	book:ibn-abi-dunya:istinacmacruf#9	
+اوفي بن دلهم، عن العلاء،	1	book:ibn-abi-dunya:zuhd#28	
+عبد الملك بن ميسره	1	book:ibn-abi-dunya:sifatjanna#323	
 ابي عبيده	1	book:ibn-mubarak-zuhd#1490	
 فضيل بن غزوان الضبي،	1	book:shuab-iman#8615	
 الحلي والاقداح المفضضه فنهتنا عنها	1	book:shuab-iman#5966	
 ابن الاعرابي	1	book:shuab-iman#4759	
 محمد بن المنكدر، غير انه	1	book:shuab-iman#7758	
+دهركم،	1	book:ibn-abi-dunya:ictibarwaacqab#40	
+لبعض من مر به	1	book:ibn-abi-dunya:sabr#97	
+طريق الناس، فبكي ثم	1	book:ibn-abi-dunya:mudaratnas#123	
 حفص	1	book:shuab-iman#10243	
-حفص بن حميد	1	book:shuab-iman#880	
-بعض التابعين	1	book:shuab-iman#5013	
 عثمان بن ابي سوده	1	book:ibn-mubarak-zuhd#1346	
 لي بلال بن سعد	1	book:ibn-mubarak-zuhd#1378	
 سلمه بن كهيل، عن مصعب بن سعد، عن سعد	1	book:ibn-mubarak-zuhd#828	
+ليث، عن رجل، عن وهب بن منبه،	1	book:ibn-abi-dunya:maradwakaffarat#93	
+الاعمش عن ابن عون، عن ابراهيم	1	book:ibn-abi-dunya:ikhlaswaniyya#53	
 ابن معين في ابي جعفر الرازي	1	book:ibn-mubarak-zuhd#216	
+دانيال	1	book:ibn-abi-dunya:qanaca#147	
+فانطقها الله ف	1	book:ibn-abi-dunya:shukr#35	
 كعب الاحبار،	1	book:shuab-iman#3445	
+موسي بن عقبه،	1	book:ibn-abi-dunya:zuhd#334	
 معاويه بن سلام	1	book:shuab-iman#2156	
+رجل لسلمه الاسواري وهو في الموت	1	book:ibn-abi-dunya:muhtadarin#258	
+رجل من ال جعونه	1	book:ibn-abi-dunya:hilm#34	
 اتباع الجنائز	1	book:shuab-iman#8875	
 يحيي بن معين	1	book:shuab-iman#7315	
-هشام بن عروه، عن ابيه،	1	book:shuab-iman#10416	
+السري بن يحيي، عن ابي المنذر	1	book:ibn-abi-dunya:makaidshaytan#17	
 ابي كثير الزبيدي	1	book:ibn-mubarak-zuhd#862	
+لي حين يريد ان يفارقني	1	book:ibn-abi-dunya:samt#462	
 لاخته	1	book:shuab-iman#4007	
+احدهما لصاحبه اوصني؟	1	book:ibn-abi-dunya:hammwahuzn#121	
+حدثنا عبد الله بن يزيد	1	book:ibn-abi-dunya:sifatnar#31	
 الله سماني لك؟	1	book:shuab-iman#2014	
+احدهما لصاحبه	1	book:ibn-abi-dunya:dhammbaghy#25	
 جعفر بن محمد، عن ابيه،	1	book:shuab-iman#3247	
 ابي اسحاق عن ابي الاحوص عن بن مسعود	1	book:ibn-mubarak-zuhd#363	
 زبيد اليامي	1	book:ibn-mubarak-zuhd#256	
-للمراه	1	book:shuab-iman#9215	
 السدي، عن ابي مالك	1	book:ibn-mubarak-zuhd#1518	
 ابي السليل، عن غنيم بن قيس	1	book:ibn-mubarak-zuhd#3	
 وقال	1	book:shuab-iman#5637	
 عبد الله في هذه الايه	1	book:ibn-mubarak-zuhd#22	
+ذلك بكيت، ف	1	book:ibn-abi-dunya:ictibarwaacqab#71	
 رجل لابي عبد الله الساجي وانا اسمع	1	book:shuab-iman#9592	
+شيخ من بني تميم عن وهب بن منبه	1	book:ibn-abi-dunya:shukr#169	
+فمكث بعد ذلك ثلاثا لم يطعم شيئا	1	book:ibn-abi-dunya:muhasabatnafs#148	
 ثلاث ايات في القران،	1	book:ibn-mubarak-zuhd#1413	
+راسه	1	book:ibn-abi-dunya:qubur#238	
 المنكر،	1	book:shuab-iman#7162	
 الحميدي	1	book:shuab-iman#10156	
-بكر بن خنيس	1	book:shuab-iman#1756	
-ابراهيم،	1	book:shuab-iman#8420	
+الله له يوم القيامه	1	book:ibn-abi-dunya:samt#351	
 الاسود بن شيبان السدوسي،	1	book:ibn-mubarak-zuhd#518	
+طلحه بن زيد، عن ابراهيم بن ابي عبله،	1	book:ibn-abi-dunya:ciyal#352	
 حديث الحارث بن عميره الحارثي	1	book:ibn-mubarak-zuhd#831	
 زرزر رجل من اهل مكه صالح	1	book:shuab-iman#1942	
 موسي بن خلف،	1	book:shuab-iman#1941	
 ابو الفضل احمد بن سلمه	1	book:shuab-iman#5060	
 رجلا من اهل الكتاب وهو	1	book:shuab-iman#1097	
+منصور بن زاذان	1	book:ibn-abi-dunya:dhammghiba#163	
 سعد بن ابي وقاص، انه	1	book:shuab-iman#4468	
 ابراهيم بن ميسره عن طاووس	1	book:ibn-mubarak-zuhd#728	
-رجل لاخيه	1	book:ibn-mubarak-zuhd#311	
+الحويرث بن نصر العامري، عن شهر بن حوشب،	1	book:ibn-abi-dunya:zuhd#410	
+الزهري، عن عبيد الله بن عبد الله،	1	book:ibn-abi-dunya:ikhlaswaniyya#38	
 همام، عن كعب	1	book:ibn-mubarak-zuhd#1053	
+رجل لخالد بن صفوان	1	book:ibn-abi-dunya:ikhwan#64	
+فقلت لابيك لم فعل به ذلك	1	book:ibn-abi-dunya:maqtalcali#80	
 امراتين وجدتا تسحقان،	1	book:shuab-iman#5078	
 الكلبي	1	book:shuab-iman#2705	
 ابن خزيمه، انه	1	book:shuab-iman#5524	
 عن ابن شبرمه انه سمعه وهو يحدث	1	book:shuab-iman#4589	
+الم تكن قلت انك من اهل النار	1	book:ibn-abi-dunya:qubur#139	
 عطاء بن السائب، عن ابي عبد الله الجدلي	1	book:ibn-mubarak-zuhd#450	
-منصور	1	book:shuab-iman#2313	
+سميط بن عجلان	1	book:ibn-abi-dunya:cuzla#92	
+الوليد ابي هشام، عن بديل العقيلي،	1	book:ibn-abi-dunya:juc#258	
+عند افاقته	1	book:ibn-abi-dunya:muhtadarin#128	
+رجع الي قلبه، فان كان له	1	book:ibn-abi-dunya:samt#422	
+ابي جمره،	1	book:ibn-abi-dunya:maradwakaffarat#102	
+فمر بعض اخوانه بقبره ف	1	book:ibn-abi-dunya:qubur#90	
+لذلك الرجل	1	book:ibn-abi-dunya:muhtadarin#132	
+عثمان بن حكيم الاودي	1	book:ibn-abi-dunya:ikhwan#45	
 عثمان بن حيان	1	book:ibn-mubarak-zuhd#525	
+المعتمر بن سليمان، عن ابيه،	1	book:ibn-abi-dunya:cuqubat#67	
 حين يصبح	1	book:shuab-iman#4078	
 عبدي، حين يلقاني فاجزيه بها	1	book:shuab-iman#4077	
+سليمان بن يزيد العدوي	1	book:ibn-abi-dunya:kalamlayali#64	
 زرزر رجل من اهل مكه صالح، قلت لعطاء	1	book:shuab-iman#8507	
-ميمون بن مهران	1	book:shuab-iman#2878	
 سعد بن ابراهيم	1	book:ibn-mubarak-zuhd#1250	
 يحيي بن زياد القرافي في قوله	1	book:shuab-iman#6816	
 عبيد بن عمير	1	book:ibn-mubarak-zuhd#1066	
 سليمان بن موسي، يرفع الحديث،	1	book:ibn-mubarak-zuhd#620	
 ربه عز وجل	1	book:shuab-iman#328	
+محمد بن واسع لرجل	1	book:ibn-abi-dunya:kalamlayali#29	
 ميمون بن سياه	1	book:shuab-iman#1538	
+بعض اهل المدينه انه	1	book:ibn-abi-dunya:sifatnar#239	
+شيخ، له	1	book:ibn-abi-dunya:ictibarwaacqab#73	
+محمد بن عبد الله الحذاء،	1	book:ibn-abi-dunya:zuhd#289	
+اوجه نضرا	1	book:ibn-abi-dunya:qubur#207	
 خيثمه، عن الحريث بن قيس	1	book:ibn-mubarak-zuhd#29	
 سلمه بن تمام، عن داود بن ابي صالح	1	book:ibn-mubarak-zuhd#110	
+غيبه الرافضه،	1	book:ibn-abi-dunya:samt#225	
 سفيان، حدثنا عوف بن ابي جميله،	1	book:shuab-iman#2746	
 سهل بن هارون	1	book:shuab-iman#9718	
+ليث، عن محمد بن واسع	1	book:ibn-abi-dunya:ikhlaswaniyya#12	
+بدر	1	book:ibn-abi-dunya:kalamlayali#8	
 ابي بكر بن حفص	1	book:ibn-mubarak-zuhd#566	
 اخبرنا عبد الرحمن بن مهدي	1	book:ibn-mubarak-zuhd#57	
+ثابت، ف	1	book:ibn-abi-dunya:qadahawaij#103	
 يحيي بن ابي كثير،	1	book:shuab-iman#8505	
+مجاشع	1	book:ibn-abi-dunya:mujabudacwa#96	
 حماد بن سعيد بن ابي عطيه المذبوح	1	book:ibn-mubarak-zuhd#414	
-اخبرنا ابن جريج	1	book:shuab-iman#1950	
+بعض حكماء الهند	1	book:ibn-abi-dunya:sabr#155	
+ممن انتم	1	book:ibn-abi-dunya:maqtalcali#92	
 علامه	1	book:shuab-iman#4634	
 جعفر،	1	book:shuab-iman#8834	
+سليمان بن عبد الملك	1	book:ibn-abi-dunya:samt#696	
 طريف بن شهاب	1	book:ibn-mubarak-zuhd#808	
 الناس في؟	1	book:shuab-iman#8137	
 الحليمي رضي الله عنه	1	book:shuab-iman#2230	
+عاصم بن كليب، عن سلمه بن نباته،	1	book:ibn-abi-dunya:zuhd#99	
 هشام بن عروه، اخبرني ابي،	1	book:shuab-iman#8169	
 عبدان،	1	book:shuab-iman#4076	
+رستم	1	book:ibn-abi-dunya:qasramal#34	
+غيبه الرافضه	1	book:ibn-abi-dunya:dhammghiba#88	
+وجهه	1	book:ibn-abi-dunya:mujabudacwa#29	
 بعض الصحابه انه	1	book:ibn-qudama-minhaj#57	
 لمكحول	1	book:ibn-mubarak-zuhd#625	
 صاحب اليمين	1	book:shuab-iman#6648	
+حدثنا سعيد بن يحيي الاموي	1	book:ibn-abi-dunya:maqtalcali#18	
+ويخبرونه،	1	book:ibn-abi-dunya:samt#86	
 فيه	1	book:shuab-iman#2524	
 مثل ذلك	1	book:shuab-iman#3373	
-لنا	1	book:ibn-mubarak-zuhd#878	
+لصاحبه	1	book:ibn-abi-dunya:samt#358	
 السائب بن يزيد،	1	book:shuab-iman#4411	
 ابن محيريز	1	book:shuab-iman#7020	
 في متنه،	1	book:shuab-iman#2855	
 عبد الله بن دينار	1	book:shuab-iman#4748	
-سعد بن مسعود التجيبي	1	book:ibn-mubarak-zuhd#583	
-شريح	1	book:shuab-iman#7129	
+استغفر الله	1	book:ibn-abi-dunya:shukr#201	
+بعض اهل الحكم	1	book:ibn-abi-dunya:zuhd#417	
 رجل لمالك بن مغول	1	book:shuab-iman#7897	
 باصبعه يدعو الا ظننت انه يستجاب له	1	book:shuab-iman#2020	
+ابي عوانه،	1	book:ibn-abi-dunya:ikhwan#106	
 لابيه	1	book:ibn-mubarak-zuhd#197	
 الاعمش، عن مالك بن الحارث، عن ابي خالد،	1	book:shuab-iman#2993	
 الاكل متكئا؟	1	book:shuab-iman#5575	
 الجريري	1	book:ibn-mubarak-zuhd#895	
+رجل من القوم	1	book:ibn-abi-dunya:mujabudacwa#67	
 سليمان، عن ابي وائل	1	book:ibn-mubarak-zuhd#830	
 عبد الله بمثله غير انه	1	book:ibn-mubarak-zuhd#1043	
+لي كهمس ابو عبد الله	1	book:ibn-abi-dunya:warac#156	
+مالك بن مغول، سمع ابا السفر	1	book:ibn-abi-dunya:muhtadarin#39	
 محمد بن قتيبه	1	book:shuab-iman#1647	
+بشر بن منصور، عن ثور بن يزيد،	1	book:ibn-abi-dunya:juc#314	
+ابي سليمان الداراني،	1	book:ibn-abi-dunya:zuhd#274	
 عبد الله فبقيت حتي ذكر	1	book:shuab-iman#5876	
 زيد بن الحباب شرحبيل و	1	book:shuab-iman#6559	
 الشيخ ابو بكر	1	book:shuab-iman#8539	
-مالك بن دينار،	1	book:shuab-iman#7190	
+وافد اهل الجنه	1	book:ibn-abi-dunya:sifatjanna#336	
+ذكوان المكي، عن عطاء، انه	1	book:ibn-abi-dunya:ciyal#61	
+سفيان بن عيينه، عن ابيه،	1	book:ibn-abi-dunya:hammwahuzn#172	
 خالد بن مهاجر	1	book:ibn-mubarak-zuhd#151	
 القعنبي	1	book:shuab-iman#6193	
+سمعته ينشد	1	book:ibn-abi-dunya:qubur#170	
 ابو عيسي	1	book:shuab-iman#6707	
+للبحر الشرقي	1	book:ibn-abi-dunya:cuqubat#280	
+ابنه	1	book:ibn-abi-dunya:muhtadarin#155	
 في قول الله عز وجل	1	book:ibn-mubarak-zuhd#167	
 الله تبارك وتعالي يوم القيامه	1	book:shuab-iman#8577	
+ابراهيم بن بشار ، عن ابن عيينه ؛	1	book:ibn-abi-dunya:cuzla#134	
+محارب	1	book:ibn-abi-dunya:ikhwan#28	
 محمد بن سوقه، عن ابراهيم	1	book:ibn-mubarak-zuhd#246	
+كلام الحكماء	1	book:ibn-abi-dunya:samt#725	
+عبد العزيز بن مروان	1	book:ibn-abi-dunya:qadahawaij#107	
 افلح، غير انه	1	book:shuab-iman#4973	
 ذنوبهم المجرمون ذلك ان كفار مكه	1	book:shuab-iman#271	
-رجل لعيسي ابن مريم	1	book:shuab-iman#6502	
+المبارك بن سعيد، عن رجل،	1	book:ibn-abi-dunya:juc#253	
 هشام بن عروه، عن ابيه	1	book:shuab-iman#5706	
 ابي سنان الشيباني، عن ابي وائل	1	book:ibn-mubarak-zuhd#165	
 احدهما للاخر هجرا هتك ستره الله عز وجل	1	book:shuab-iman#4661	
 سماك بن فضل، عن وهب بن منبه	1	book:ibn-mubarak-zuhd#307	
 محمد بن واسع، عن شتير، وسمير اصح	1	book:shuab-iman#987	
+يوسف للساقي	1	book:ibn-abi-dunya:cuqubat#158	
 اهل جهنم	1	book:ibn-mubarak-zuhd#1271	
 ابو عبيد الهروي	1	book:shuab-iman#6292	
 سعد بن ابراهيم، عن ابيه، انه	1	book:ibn-mubarak-zuhd#405	
+خالي اخيها،	1	book:ibn-abi-dunya:muhtadarin#341	
+ذنب لي ذكرته فبكيت	1	book:ibn-abi-dunya:tawba#155	
+داود بن المغيره،	1	book:ibn-abi-dunya:ikhlaswaniyya#34	
+كعب، ف	1	book:ibn-abi-dunya:matarwaracd#104	
 ائمه لا يهتدون بهديه، ولا يستنون بسنته،	1	book:shuab-iman#7096	
+لابنتيه	1	book:ibn-abi-dunya:muhtadarin#57	
+ابيه عن وهب بن منبه	1	book:ibn-abi-dunya:shukr#119	
+سفيان الثوري عن رجل، عن عطاء بن يسار	1	book:ibn-abi-dunya:makaidshaytan#66	
+جعفر بن سليمان،	1	book:ibn-abi-dunya:zuhd#127	
 لي يونس بن عبيد	1	book:shuab-iman#226	
 بحير بن سعد، وقال عن عقبه بن عامر،	1	book:shuab-iman#1947	
 عن موسي بن عقبه	1	book:shuab-iman#3606	
@@ -662,108 +1126,188 @@ speaker	count	example1	example2
 عبدي؟	1	book:shuab-iman#9249	
 لي استاذي ابو عثمان	1	book:shuab-iman#6471	
 عبيد الله القرشي، عن عبد الله بن عكيم	1	book:shuab-iman#834	
-محمد بن الحسين	1	book:shuab-iman#10321	
 عون لابي اسحاق	1	book:shuab-iman#2887	
+ابيه، عن جده، وقد ادرك الجاهليه،	1	book:ibn-abi-dunya:dhammbaghy#8	
 باصبعيه كذا ومد بصره الي السماء	1	book:shuab-iman#4199	
+لامراته	1	book:ibn-abi-dunya:samt#661	
+كسري لوزيره	1	book:ibn-abi-dunya:hilm#29	
+فخرجت ولم اغلسه	1	book:ibn-abi-dunya:qubur#129	
 عاش ابن ادم حتي اكل الجديد بالخلق	1	book:shuab-iman#5597	
 الله عز وجل في الجنه	1	book:shuab-iman#376	
+عبد الله بن المبارك، عن ابي كنانه،	1	book:ibn-abi-dunya:ictibarwaacqab#23	
+صفوان	1	book:ibn-abi-dunya:mujabudacwa#61	
 كعب انه	1	book:shuab-iman#3465	
 ابو بكر الهذلي لما نزلت هذه الايه	1	book:shuab-iman#374	
+معتمر	1	book:ibn-abi-dunya:cuqubat#166	
 سليمان يعني التيمي	1	book:shuab-iman#4258	
 الوليد بن العيزار، عن ابي الاحوص	1	book:ibn-mubarak-zuhd#874	
 قره العجلي	1	book:ibn-mubarak-zuhd#1483	
+ربيع	1	book:ibn-abi-dunya:juc#108	
+ابيه، عن جده،	1	book:ibn-abi-dunya:zuhd#218	
 قومك يا موسي	1	book:shuab-iman#10606	
 حماد، عن محمد بن واسع، عن مسلم بن يسار،	1	book:shuab-iman#9112	
+رجاء بن ابي سلمه، عن عقبه بن ابي زينب،	1	book:ibn-abi-dunya:rasailfitawakkul#59	
+رجل لداود	1	book:ibn-abi-dunya:warac#9	
 الرحمن	1	book:shuab-iman#8192	
-لنا عطاء بن ابي رباح	1	book:shuab-iman#4728	
+حسن بن حسن	1	book:ibn-abi-dunya:makaidshaytan#6	
+رجل لداود الطائي	1	book:ibn-abi-dunya:ikhwan#43	
+فضيل بن عياض وشهد جنازه ف	1	book:ibn-abi-dunya:qubur#68	
 عيسي	1	book:shuab-iman#904	
-عطاء	1	book:shuab-iman#3847	
+سلام	1	book:ibn-abi-dunya:tawba#102	
+لي عباده بن الصامت	1	book:ibn-abi-dunya:cuqubat#347	
 عقيل، عن ابن شهاب، ان ابا هريره	1	book:ibn-mubarak-zuhd#375	
+قلي؟	1	book:ibn-abi-dunya:samt#146	
+الناس ويشكون؟ ف	1	book:ibn-abi-dunya:cuqubat#274	
 سماك بن حرب، عن مصعب بن سعد، عن ابيه،	1	book:shuab-iman#7556	
 يوسف بن اسباط	1	book:shuab-iman#922	
+ابي التياح	1	book:ibn-abi-dunya:ikhlaswaniyya#37	
 ابن عيينه	1	book:shuab-iman#9559	
+الاخر فما دينك	1	book:ibn-abi-dunya:qubur#133	
+عبد الرحمن بن ابي ليلي رحمهما الله	1	book:ibn-abi-dunya:samt#124	
 ابي قبيل، عن تبيع انه	1	book:shuab-iman#6094	
 بقيه	1	book:shuab-iman#10378	
-بعض الحكماء لابنه	1	book:shuab-iman#5217	
+عبد الله بن المبارك،	1	book:ibn-abi-dunya:zuhd#512	
+لي رجل من العباد	1	book:ibn-abi-dunya:rasailfitawakkul#52	
+ابيه، عن زيد بن ارقم،	1	book:ibn-abi-dunya:maradwakaffarat#198	
+حصين،	1	book:ibn-abi-dunya:zuhd#202	
+ابراهيم بن الاشعث	1	book:ibn-abi-dunya:ikhlaswaniyya#44	
+احد من اصحابه عباده	1	book:ibn-abi-dunya:caqlwafadluh#4	
 المؤمنون	1	book:ibn-mubarak-zuhd#1365	
+عبد الله بن رباح الانصاري، عن كعب	1	book:ibn-abi-dunya:warac#147	
 ابراهيم بن ميسره، عن طاووس،	1	book:shuab-iman#8616	
 ابي عبد الله مولي شداد بن الهاد	1	book:ibn-mubarak-zuhd#706	
+لي عبد الواحد بن زيد يوما	1	book:ibn-abi-dunya:juc#213	
+في بكائه	1	book:ibn-abi-dunya:cuqubat#205	
+فضيل بن عياض، عن سفيان الثوري،	1	book:ibn-abi-dunya:zuhd#231	
+قلت ما النصيف	1	book:ibn-abi-dunya:sifatjanna#181	
 شبيب بن شيبه	1	book:shuab-iman#8093	
 لي العلاء بن زياد	1	book:shuab-iman#953	
+سفيان لي	1	book:ibn-abi-dunya:ciyal#448	
+ابي عاصم العباداني،	1	book:ibn-abi-dunya:samt#622	
 محمد بن السماك، عن الاعمش، عن ابراهيم،	1	book:shuab-iman#3281	
 اذا فرغ من الطعام	1	book:shuab-iman#5636	
+محمد بن ابي بكر	1	book:ibn-abi-dunya:qasramal#335	
 عوف الاعرابي،	1	book:shuab-iman#2828	
 لي جبريل	1	book:shuab-iman#8947	
+عقله، فان	1	book:ibn-abi-dunya:caqlwafadluh#19	
 حين ياوي الي فراشه وهو طاهر	1	book:shuab-iman#4389	
+انا عبد الله بن المبارك ؛	1	book:ibn-abi-dunya:cuzla#27	
 سعد بن ابراهيم، عن ابيه	1	book:ibn-mubarak-zuhd#1251	
+ايوب،	1	book:ibn-abi-dunya:fadailramadan#52	
+رجل لجعفر بن محمد،	1	book:ibn-abi-dunya:hilm#44	
+احمد بن عاصم	1	book:ibn-abi-dunya:tawba#75	
+رجل لمعاويه	1	book:ibn-abi-dunya:mudaratnas#36	
 ابو عوانه في حديثه	1	book:shuab-iman#5151	
 لي ابن جريج	1	book:shuab-iman#10697	
 عبيد بن بن المغيره	1	book:ibn-mubarak-zuhd#134	
 القاضي في روايته	1	book:shuab-iman#8469	
 عامر بن عبد الله بن قيس	1	book:shuab-iman#4372	
+سمعت عتبه بن غزوان يخطب ف	1	book:ibn-abi-dunya:sifatjanna#226	
 ابي نوفل بن ابي العقرب	1	book:ibn-mubarak-zuhd#415	
 عبد الرحمن بن عثمان التيمي	1	book:ibn-mubarak-zuhd#1276	
 يوما	1	book:shuab-iman#4684	
+ابراهيم الصائغ حين امر به ابو مسلم فقتل	1	book:ibn-abi-dunya:muhtadarin#323	
 خلف بن حوشب	1	book:ibn-mubarak-zuhd#270	
 سليمان، عن ابي وائل، عن يسار بن نمير	1	book:ibn-mubarak-zuhd#538	
+ابو معاويه بن الاسود	1	book:ibn-abi-dunya:qadahawaij#83	
 بدر بن عثمان، عن عمه،	1	book:shuab-iman#10128	
+شهاده ان لا اله الا الله منذ سبعين سنه	1	book:ibn-abi-dunya:qubur#109	
 رجل من قريش،	1	book:shuab-iman#8635	
+قيس بن سعد	1	book:ibn-abi-dunya:qiradayf#17	
 روح	1	book:shuab-iman#3663	
+محمد بن رافع	1	book:ibn-abi-dunya:hammwahuzn#14	
 الزهري، عن عروه	1	book:shuab-iman#770	
 له سفيان	1	book:shuab-iman#7027	
 محمد بن يحيي بن حبان	1	book:ibn-mubarak-zuhd#36	
 خالد الربعي،	1	book:shuab-iman#8722	
 سعيد وهو ابن اربع وثمانين سنه	1	book:shuab-iman#5069	
+شيطاني	1	book:ibn-abi-dunya:makaidshaytan#18	
 الخشوع في الصلاه	1	book:shuab-iman#2899	
+هشام بن حسان ، عن اوفي بن دلهم ؛	1	book:ibn-abi-dunya:cuzla#153	
 فذكر ذلك لمحمد، ف	1	book:shuab-iman#10287	
+لمحمد	1	book:ibn-abi-dunya:riqqawabuka#108	
 ابراهيم المكي، عن وهب بن منبه	1	book:ibn-mubarak-zuhd#579	
+حرمله بن يحيي ، عن ابن وهب ؛	1	book:ibn-abi-dunya:cuzla#58	
 الراهب	1	book:ibn-mubarak-zuhd#1465	
+امه،	1	book:ibn-abi-dunya:ictibarwaacqab#37	
 لي ذلك	1	book:shuab-iman#5146	
 ويرفع صوته	1	book:shuab-iman#4276	
-ثابت البناني،	1	book:shuab-iman#10253	
+الرعد ما هو؟	1	book:ibn-abi-dunya:matarwaracd#108	
+لي خزيل الطبيب وسقاني شربه من دواء	1	book:ibn-abi-dunya:maradwakaffarat#258	
 سليمان الاعمش، عن شقيق بن سلمه	1	book:ibn-mubarak-zuhd#187	
+يا رب فعن افضلهم منزله	1	book:ibn-abi-dunya:sifatjanna#35	
+لي ابو مالك يوما	1	book:ibn-abi-dunya:muhasabatnafs#81	
+داود لابنه	1	book:ibn-abi-dunya:ciyal#619	
+ابن غزيه ؛	1	book:ibn-abi-dunya:cuzla#28	
 الحكم بن عتيبه	1	book:ibn-mubarak-zuhd#682	
-ابو واقد الليثي	1	book:shuab-iman#10200	
-ابن ابي الدنيا	1	book:shuab-iman#4094	
+لبعض	1	book:ibn-abi-dunya:riqqawabuka#272	
+الريح العقيم،	1	book:ibn-abi-dunya:matarwaracd#142	
 رجل يوما للحسن	1	book:shuab-iman#8478	
 ذا؟	1	book:ibn-mubarak-zuhd#491	
 في الليل	1	book:shuab-iman#4270	
 بلال بن سعد، عن معضد	1	book:ibn-mubarak-zuhd#264	
 كلمه يخفيها مني جهده	1	book:shuab-iman#8632	
+وعم ذلك	1	book:ibn-abi-dunya:qubur#153	
 الثالث	1	book:shuab-iman#6704	
 ابي سفيان الحميري	1	book:shuab-iman#6917	
 يوسف الصفار	1	book:shuab-iman#9516	
 ابو مسعود	1	book:shuab-iman#10267	
 لي ابو قلابه	1	book:shuab-iman#1202	
+بكر العابد	1	book:ibn-abi-dunya:hammwahuzn#28	
 فما تركتها بعد	1	book:shuab-iman#8859	
+لاخوانه	1	book:ibn-abi-dunya:sabr#142	
+ابو المنهال	1	book:ibn-abi-dunya:ictibarwaacqab#44	
+يزيد بن مذكور	1	book:ibn-abi-dunya:hammwahuzn#161	
+شعيب	1	book:ibn-abi-dunya:warac#161	
+لها تكلمي ف	1	book:ibn-abi-dunya:sifatjanna#38	
 ابيه، عن سهل بن سعد،	1	book:shuab-iman#8504	
+السري بن ينعم، وكان من عباد اهل الشام	1	book:ibn-abi-dunya:zuhd#173	
+مولاي فلان	1	book:ibn-abi-dunya:qubur#123	
 حسان بن عطيه	1	book:ibn-mubarak-zuhd#792	
 عقوبه العالم؟	1	book:ibn-mubarak-zuhd#1514	
 رجل،	1	book:shuab-iman#8430	
+الربيع بن خيثم	1	book:ibn-abi-dunya:hilm#38	
+ذكرك فارحنا منه كيف شئت	1	book:ibn-abi-dunya:mujabudacwa#95	
+سلم بن ميمون،	1	book:ibn-abi-dunya:zuhd#389	
+اذا سجد	1	book:ibn-abi-dunya:ikhlaswaniyya#32	
+بهيم العجلي	1	book:ibn-abi-dunya:zuhd#302	
+سابق البربري رحمه الله	1	book:ibn-abi-dunya:zuhd#465	
+ابو شيبه	1	book:ibn-abi-dunya:cuqubat#299	
 محمد لابراهيم	1	book:shuab-iman#648	
-وهب	1	book:shuab-iman#960	
+صفوان بن محرز	1	book:ibn-abi-dunya:muhasabatnafs#134	
 ابن بكير، قيل لمالك	1	book:shuab-iman#6259	
 سدره المنتهي؟	1	book:ibn-mubarak-zuhd#1223	
 لي خثيم	1	book:shuab-iman#8976	
+ابي طالب، عن عطيه	1	book:ibn-abi-dunya:tawba#190	
 هكذا، ومنهم من	1	book:shuab-iman#3198	
 مالك،	1	book:shuab-iman#2923	
-رجل لمالك بن دينار	1	book:shuab-iman#8108	
+صالح بن حي	1	book:ibn-abi-dunya:sifatnar#51	
+حكيم بن حزام لاهله	1	book:ibn-abi-dunya:juc#208	
 عباده بن الصامت	1	book:shuab-iman#5065	
 بهز	1	book:shuab-iman#911	
+سعيد، عن سعيد بن ابي برده،	1	book:ibn-abi-dunya:ictibarwaacqab#4	
 وائل، عن داود،	1	book:shuab-iman#9109	
+فما بال الطعام	1	book:ibn-abi-dunya:sifatjanna#120	
+حالكم كيف كانت؟	1	book:ibn-abi-dunya:zuhd#366	
+وهيب بن الورد رحمه الله	1	book:ibn-abi-dunya:samt#49	
 مسور بن مخرمه	1	book:ibn-mubarak-zuhd#171	
+ابراهيم التيمي رحمه الله	1	book:ibn-abi-dunya:samt#421	
 عزم، فهو حرام، وان	1	book:ibn-qudama-minhaj#63	
 عاصم	1	book:ibn-mubarak-zuhd#783	
-صالح	1	book:shuab-iman#1760	
+يمينه وعن يساره،	1	book:ibn-abi-dunya:zuhd#45	
 جويبر، عن الضحاك	1	book:ibn-mubarak-zuhd#1093	
 ابن جريج، عن عبيد الله بن يزيد	1	book:shuab-iman#5463	
 الصلاه، والذكر	1	book:shuab-iman#5308	
 وما قيل فيه	1	book:shuab-iman#8629	
 يوسف بن ماهك	1	book:ibn-mubarak-zuhd#1166	
 الاربعه	1	book:shuab-iman#358	
+ابي مسلم الخولاني، انه	1	book:ibn-abi-dunya:juc#219	
 ابي سنان الشيباني عن ابي وائل	1	book:ibn-mubarak-zuhd#153	
 الحكم بن هشام	1	book:shuab-iman#5216	
 رجل لابن واسع	1	book:shuab-iman#8599	
+ابراهيم بن اسحاق، عن وهب بن منبه،	1	book:ibn-abi-dunya:zuhd#524	
+ابن اشوع، عن ربيعه بن الابيض،	1	book:ibn-abi-dunya:matarwaracd#125	
+فضل الرقاشي	1	book:ibn-abi-dunya:riqqawabuka#80	
 محمد بن الفضل البلخي	1	book:shuab-iman#5324	
 سلمه بن وردان،	1	book:shuab-iman#2285	
 حفصه بنت سيرين، عن الربيع بن زياد	1	book:ibn-mubarak-zuhd#428	
@@ -771,303 +1315,576 @@ speaker	count	example1	example2
 ابن ابي ليلي	1	book:shuab-iman#3782	
 للعرب	1	book:shuab-iman#4829	
 يوسف بن راشد	1	book:shuab-iman#3855	
+هل تدري من امينه قلت لا	1	book:ibn-abi-dunya:qubur#20	
+مقاتل بن حيان	1	book:ibn-abi-dunya:caqlwafadluh#39	
 اسحاق بن موسي	1	book:shuab-iman#6726	
 الفراء	1	book:shuab-iman#8425	
 محمد بن النضر الحارثي	1	book:shuab-iman#1695	
-ابن ابي الهذيل	1	book:shuab-iman#565	
+لكم	1	book:ibn-abi-dunya:muhtadarin#121	
+خيرا فغنم او سكت فسلم	1	book:ibn-abi-dunya:samt#439	
 ابو سليمان الخطابي رحمه الله في معني هذا	1	book:shuab-iman#8538	
 كذا وكذا، و	1	book:shuab-iman#7591	
 ابي جعفر العبادي، انه	1	book:shuab-iman#8674	
+لي الاوزاعي	1	book:ibn-abi-dunya:sabr#94	
 خالد الحذاء، عن عكرمه	1	book:shuab-iman#5613	
+شعيب بن حرب،	1	book:ibn-abi-dunya:ikhwan#209	
+شيخ، من فزاره	1	book:ibn-abi-dunya:zuhd#555	
 وهو في مجلس معاويه	1	book:shuab-iman#10162	
+الرعد،	1	book:ibn-abi-dunya:matarwaracd#95	
 المروزي	1	book:shuab-iman#3009	
 المعتمر بن سليمان	1	book:shuab-iman#2950	
-معاويه	1	book:shuab-iman#7084	
 رجل ليحيي بن كثير	1	book:shuab-iman#8624	
 يوما اطلبوا الخير من حسان الوجوه	1	book:shuab-iman#3265	
 ابن مريم،	1	book:shuab-iman#8486	
 في ذي القعده	1	book:shuab-iman#3466	
 لي في المنام	1	book:shuab-iman#2415	
 من وراء هذا الكلام	1	book:shuab-iman#1765	
+الرجل منهم	1	book:ibn-abi-dunya:cuqubat#350	
 ذلك مرارا، قلت	1	book:shuab-iman#9197	
 رب العالمين انه	1	book:shuab-iman#9487	
 الشطرنج،	1	book:shuab-iman#6102	
+اهلك،	1	book:ibn-abi-dunya:ictibarwaacqab#7	
 رجل يوم القادسيه	1	book:shuab-iman#4003	
+عبد الله بن مرزوق في مرضه	1	book:ibn-abi-dunya:muhtadarin#326	
+عطاء بن السائب، عن ابي البختري، وميسره،	1	book:ibn-abi-dunya:zuhd#360	
+محمد و	1	book:ibn-abi-dunya:sifatjanna#36	
 احمد بن عاصم الانطاكي	1	book:shuab-iman#4341	
 ابراهيم بن مهاجر، عن ابراهيم	1	book:ibn-mubarak-zuhd#1521	
+اليوم قلنا فما الخبر	1	book:ibn-abi-dunya:maqtalcali#97	
 لله، واذا عمل عمل لله، واذا نوي نوي لله	1	book:shuab-iman#6485	
+له اصحابه اين كنت اليوم	1	book:ibn-abi-dunya:qubur#11	
 عون، عن عبيد الله بن عبد الله	1	book:ibn-mubarak-zuhd#87	
+لي سماك بن سلمه	1	book:ibn-abi-dunya:cuzla#144	
 الله عز وجل في القيامه	1	book:shuab-iman#6660	
 ابي اسحاق عن ابي الاحوص عن عبد الله	1	book:ibn-mubarak-zuhd#347	
+فخرج الشجاع حتي رجع من حيث بدا ف	1	book:ibn-abi-dunya:istinacmacruf#56	
 في بعض قوله	1	book:ibn-mubarak-zuhd#191	
-في موعظته	1	book:shuab-iman#10300	
+بعض الاشياخ	1	book:ibn-abi-dunya:makaidshaytan#31	
 الله تعالي فيما يعيب به احبار بني اسرائيل	1	book:ibn-mubarak-zuhd#445	
 هشام الدستوائي	1	book:shuab-iman#1772	
+قريبه الذماريه،	1	book:ibn-abi-dunya:ictibarwaacqab#35	
 عبيد الله بن شميط	1	book:shuab-iman#6842	
+سلم بن قتيبه	1	book:ibn-abi-dunya:qadahawaij#111	
 مسلم ابي عبد الله	1	book:ibn-mubarak-zuhd#164	
+الرب تبارك وتعالي لعلماء بني اسرائيل	1	book:ibn-abi-dunya:cuqubat#252	
 وي	1	book:shuab-iman#139	
+وهيب المكي	1	book:ibn-abi-dunya:zuhd#108	
 سليمان بن موسي	1	book:ibn-mubarak-zuhd#434	
+له ابو بكر	1	book:ibn-abi-dunya:qadahawaij#41	
+الله لها عز وجل تفتقي لعبدي عما شاء	1	book:ibn-abi-dunya:sifatjanna#55	
 ابن شهاب، فذكره باسناده نحوه غير انه	1	book:shuab-iman#9086	
 ابو عبد الله احمد بن حنبل حين حدثه	1	book:shuab-iman#3474	
+عبد الله بن ابي زكريا الدمشقي	1	book:ibn-abi-dunya:samt#552	
 محمد بن مسلم موصولا، غير انه	1	book:shuab-iman#10351	
 شيء،	1	book:shuab-iman#4722	
-لي ابي	1	book:shuab-iman#1618	
+الربيع بن سليمان عن ابن جبير،	1	book:ibn-abi-dunya:hammwahuzn#167	
 خيثمه بن عبد الرحمن، عن عدي بن حاتم	1	book:ibn-mubarak-zuhd#373	
+ساعطيكم خيرا مما اعطيكتم ف	1	book:ibn-abi-dunya:sifatjanna#88	
+ثم يتبعه، و	1	book:ibn-abi-dunya:samt#640	
 شهر بن حوشب، عن عباده بن الصامت يرفعه	1	book:ibn-mubarak-zuhd#545	
 لنا التيمي	1	book:shuab-iman#10172	
 عبد الله بن المبارك، عن وهيب بن الورد	1	book:shuab-iman#10266	
 البر والاثم،	1	book:shuab-iman#6888	
+اذهب فانظر اليها فذهب فنظر اليها ف	1	book:ibn-abi-dunya:sifatjanna#241	
 انه	1	book:shuab-iman#2343	
 لي الاصمعي	1	book:shuab-iman#1279	
 ابن المصفي	1	book:shuab-iman#6290	
 الهيثمي	1	book:ibn-mubarak-zuhd#528	
+مطلب	1	book:ibn-abi-dunya:riqqawabuka#334	
+اسماعيل بن ابي خالد، عن قيس	1	book:ibn-abi-dunya:samt#19	
 ابراهيم بن سعد، انه	1	book:shuab-iman#5350	
+مالك بن مغول،	1	book:ibn-abi-dunya:zuhd#434	
+حازم بن حسين، عن مالك بن دينار،	1	book:ibn-abi-dunya:tawba#191	
 اذا اوي الي فراشه	1	book:shuab-iman#4072	
 ابيه، او عن لقمان، انه	1	book:shuab-iman#8644	
 سعيد بن ابي هلال الليثي،	1	book:shuab-iman#8527	
+قيس بن ابي حازم،	1	book:ibn-abi-dunya:maradwakaffarat#203	
 شيخنا	1	book:shuab-iman#7106	
 القاسم عن عبد الله	1	book:ibn-mubarak-zuhd#74	
 ابو واقد	1	book:shuab-iman#10201	
 ملك الروم	1	book:shuab-iman#4712	
-هشام	1	book:shuab-iman#1822	
+خالد بن يزيد بن معاويه	1	book:ibn-abi-dunya:zuhd#471	
+لي ابو زرعه	1	book:ibn-abi-dunya:qasramal#65	
+الرجل اذا سئل عن الرجل	1	book:ibn-abi-dunya:samt#686	
+له سعيد	1	book:ibn-abi-dunya:cuzla#53	
 ابي يونس	1	book:shuab-iman#580	
+ربيط بني اسرائيل	1	book:ibn-abi-dunya:samt#562	
 رويم	1	book:shuab-iman#9607	
 هذه الم	1	book:shuab-iman#9506	
-يحيي بن سعيد،	1	book:shuab-iman#1885	
+تبارك اسمه	1	book:ibn-abi-dunya:sabr#132	
+لبنيه	1	book:ibn-abi-dunya:muhtadarin#118	
+الاسود	1	book:ibn-abi-dunya:muhasabatnafs#66	
+ربكم عز وجل	1	book:ibn-abi-dunya:matarwaracd#43	
 بشر بن المبارك الراسبي،	1	book:shuab-iman#5481	
+سفيان بن سعيد،	1	book:ibn-abi-dunya:zuhd#51	
+الاعمش،	1	book:ibn-abi-dunya:ikhlaswaniyya#11	
 الجبار تعالي	1	book:shuab-iman#347	
+لي عابد من اهل الشام	1	book:ibn-abi-dunya:sabr#147	
 جده ابي امه وهب بن منبه اليماني،	1	book:shuab-iman#3703	
+سمعت ابا معاويه الاسود اليمان العابد	1	book:ibn-abi-dunya:shukr#141	
 ابن جريج، عن سفيان الثوري ، عن ابي حازم	1	book:ibn-mubarak-zuhd#324	
+له حسان	1	book:ibn-abi-dunya:qasramal#73	
 لصاحب اليمين	1	book:shuab-iman#9474	
 رجل للسري السقطي	1	book:shuab-iman#488	
+ملكك، وملك اهل بيتك،	1	book:ibn-abi-dunya:ictibarwaacqab#8	
+ابو السوار العدوي	1	book:ibn-abi-dunya:sabr#134	
 الامام احمد البيهقي رحمه الله	1	book:shuab-iman#1443	
+لها تكلمي	1	book:ibn-abi-dunya:sifatjanna#39	
+ابو جعفر جائزه لا تشبه جوائز الامراء	1	book:ibn-abi-dunya:fadailramadan#21	
+عبد الكريم بن ابي اميه،	1	book:ibn-abi-dunya:dhammghiba#17	
 ابي حيان، عن ابي الزنباع، عن ابي الدهقان	1	book:ibn-mubarak-zuhd#1401	
+الاوزاعي، عن بلال بن سعد،	1	book:ibn-abi-dunya:ikhlaswaniyya#26	
+ادم	1	book:ibn-abi-dunya:cuqubat#106	
 في تفسير قوله	1	book:shuab-iman#8492	
 قال مالك	1	book:shuab-iman#4012	
 مسدد في التحلم	1	book:shuab-iman#4439	
 محمد بن جحاده	1	book:ibn-mubarak-zuhd#811	
+عبيد الله بن العباس لابن اخيه	1	book:ibn-abi-dunya:qadahawaij#39	
 عيوب الناس	1	book:shuab-iman#10688	
 الاعمش، عن خيثمه،	1	book:shuab-iman#9190	
-داود	1	book:shuab-iman#9560	
 عبد الله بن ابي بكر	1	book:shuab-iman#8919	
 سهيل بن حسان الكلبي	1	book:ibn-mubarak-zuhd#388	
+لاخر	1	book:ibn-abi-dunya:warac#99	
+سفيان بن عيينه،	1	book:ibn-abi-dunya:juc#90	
 بشر بن موسي	1	book:shuab-iman#1910	
+الكفء،	1	book:ibn-abi-dunya:ciyal#121	
 القاضي	1	book:shuab-iman#402	
+فاتاه الوحي ان يا موسي الان شكرتني	1	book:ibn-abi-dunya:shukr#6	
+مسلمه بن عبد الملك لحاضن بنيه	1	book:ibn-abi-dunya:ciyal#343	
+ما يقر احدهم ينادي حتي يدخل حفرته	1	book:ibn-abi-dunya:qubur#26	
+ثم ننصرف الي منازلنا فيلقانا احباؤنا ف	1	book:ibn-abi-dunya:sifatjanna#253	
+فقلتك هذا ابني والله قد ليست الارض عنه	1	book:ibn-abi-dunya:qubur#269	
+اخي عبد الرحمن بن سلمه	1	book:ibn-abi-dunya:samt#521	
+عبد الرحمن بن ابي ليلي	1	book:ibn-abi-dunya:qadahawaij#81	
 وقد ساله رجل، ف	1	book:shuab-iman#8663	
-الخليل بن احمد	1	book:shuab-iman#6211	
+العوام	1	book:ibn-abi-dunya:cuqubat#266	
+الله تعالي ذكره	1	book:ibn-abi-dunya:riqqawabuka#411	
 كذا؟ ولكن	1	book:shuab-iman#7745	
 بشير	1	book:shuab-iman#2385	
 لابي	1	book:shuab-iman#9068	
-خالد بن صفوان	1	book:shuab-iman#7969	
-لنفسه	1	book:shuab-iman#1241	
+له ادبر فادبر،	1	book:ibn-abi-dunya:caqlwafadluh#10	
 رحمه الله	1	book:shuab-iman#146	
 شيء	1	book:shuab-iman#946	
 رجل لابن المبارك	1	book:ibn-qudama-minhaj#18	
 بعض الحكماء في مناجاته	1	book:shuab-iman#1039	
+الحكم بن عبد الله الارزق	1	book:ibn-abi-dunya:caqlwafadluh#36	
 لنا ذات يوم	1	book:shuab-iman#1816	
+في كتابه	1	book:ibn-abi-dunya:dhammmalahi#85	
+وهو يكيد بنفسه، وقائل	1	book:ibn-abi-dunya:muhtadarin#100	
 ابن انعم، عن ابن ابي جبله	1	book:ibn-mubarak-zuhd#1284	
+ابو خيره النحوي	1	book:ibn-abi-dunya:sabr#160	
+بلال حين حضرته الوفاه	1	book:ibn-abi-dunya:muhtadarin#294	
 ام عبد الله بنت خالد بن سعدان، عن ابيها،	1	book:shuab-iman#8306	
+احدهما لصاحبه تعلم بشيء غفر الله لنا ف	1	book:ibn-abi-dunya:sifatjanna#242	
+لسليمان بن عبد الملك	1	book:ibn-abi-dunya:zuhd#415	
+ابن خربوذ	1	book:ibn-abi-dunya:dhammbaghy#16	
+هو ان اسقيه من الماء احوج	1	book:ibn-abi-dunya:istinacmacruf#58	
 عيسي ابن مريم انه	1	book:ibn-mubarak-zuhd#627	
+حديث	1	book:ibn-abi-dunya:zuhd#55	
+لجبريل	1	book:ibn-abi-dunya:sifatnar#219	
+رياح القيسي	1	book:ibn-abi-dunya:tawba#180	
+لي بكير بن عبد الله بن الاشج	1	book:ibn-abi-dunya:cuzla#9	
+عبد الله بن الاجلح الكندي،	1	book:ibn-abi-dunya:ictibarwaacqab#34	
+ابو المغيره البصري	1	book:ibn-abi-dunya:zuhd#323	
 الله عز وجل كما	1	book:ibn-mubarak-zuhd#488	
+عبد الرحمن رجل من صنعاء	1	book:ibn-abi-dunya:shukr#127	
 الله عز وجل يوم القيامه	1	book:shuab-iman#8752	
+عبد الرحمن بن الحكم	1	book:ibn-abi-dunya:qasramal#312	
+ابي يحيي،	1	book:ibn-abi-dunya:maradwakaffarat#62	
 الناس كذبا الا ثلاث	1	book:shuab-iman#10585	
+جبريل، عن الله تبارك وتعالي	1	book:ibn-abi-dunya:warac#1	
 ابي جمره الضبعي انه اخبره،	1	book:ibn-mubarak-zuhd#943	
+شهر بن حوشب	1	book:ibn-abi-dunya:shukr#188	
 خلف بن تميم في حديثه	1	book:ibn-mubarak-zuhd#1450	
-الامير	1	book:shuab-iman#2941	
+جعفر بن سليمان، عن غالب القطان،	1	book:ibn-abi-dunya:cuqubat#163	
+لي الحارث بن شهاب	1	book:ibn-abi-dunya:cuzla#151	
 حسين	1	book:ibn-mubarak-zuhd#429	
 محمد بن يحيي الذهلي، انه	1	book:shuab-iman#4577	
+رجل للربيع بن خثيم	1	book:ibn-abi-dunya:samt#734	
+بعض ما تصنع، اي من العباده	1	book:ibn-abi-dunya:muhasabatnafs#109	
 طاووس	1	book:shuab-iman#2961	
+المسعودي، عن عون بن عبد الله	1	book:ibn-abi-dunya:warac#148	
 المحبه	1	book:shuab-iman#468	
+رجل ممن اعطاه الله الحكمه	1	book:ibn-abi-dunya:cuzla#171	
+لي خليد بن دعلج	1	book:ibn-abi-dunya:samt#430	
+عبد العزيز	1	book:ibn-abi-dunya:ciyal#41	
 هلال بن ابي ميمونه، عن رفاعه الجهني	1	book:ibn-mubarak-zuhd#865	
+وهب بن منبه رحمه الله	1	book:ibn-abi-dunya:samt#605	
+فقال الحجاج ابو تراب لاصلبنه	1	book:ibn-abi-dunya:maqtalcali#85	
 الاعمش، عن خيثمه	1	book:ibn-mubarak-zuhd#996	
 موسي بن عبد الله بن يزيد الانصاري	1	book:ibn-mubarak-zuhd#395	
 شهر، عن ام الدرداء	1	book:shuab-iman#8186	
+الفضل الرقاشي	1	book:ibn-abi-dunya:hammwahuzn#71	
 صدقه بن يسار،	1	book:shuab-iman#4260	
 سلمه بن وهرام، عن طاوس،	1	book:shuab-iman#8172	
+عن بعض اهل العلم	1	book:ibn-abi-dunya:caqlwafadluh#104	
+اذا دخل شهر رمضان	1	book:ibn-abi-dunya:fadailramadan#31	
+صيفي بن رباح التميمي لبنيه	1	book:ibn-abi-dunya:dhammbaghy#23	
+ربه، تبارك وتعالي	1	book:ibn-abi-dunya:ikhwan#99	
 ابن شوذب	1	book:shuab-iman#1226	
 ابن السماك فجاءت العجوز ف	1	book:shuab-iman#902	
 الرب تبارك وتعالي	1	book:shuab-iman#9466	
 هشام هذا، فكيف نحن؟	1	book:shuab-iman#1759	
 خيثمه بن عبد الرحمن عن عدی بن حاتم	1	book:ibn-mubarak-zuhd#357	
+سلام بن مسكين، عن مالك بن دينار،	1	book:ibn-abi-dunya:zuhd#497	
+فاخذت الصبي وانضم القبر	1	book:ibn-abi-dunya:qubur#135	
+يحيي فاجبته وما نقول ف	1	book:ibn-abi-dunya:shukr#157	
+قيس بن خالد الجهني،	1	book:ibn-abi-dunya:fadailramadan#26	
+فاخذوا والله حتي نفدت عن اخرها	1	book:ibn-abi-dunya:ikhwan#188	
+هاشم المروزي، عن ابن ابي رواد، او غيره	1	book:ibn-abi-dunya:muhtadarin#250	
 ابو عثمان	1	book:shuab-iman#3577	
 المغيره	1	book:shuab-iman#6065	
+ابراهيم بن محمد بن المنتشر،	1	book:ibn-abi-dunya:zuhd#184	
+ابي طالب، عن عطيه،	1	book:ibn-abi-dunya:riqqawabuka#24	
+ابي يزيد الرقي، عن يوسف بن اسباط،	1	book:ibn-abi-dunya:zuhd#498	
+رجل من الجن	1	book:ibn-abi-dunya:makaidshaytan#15	
 الزهري، ويحيي بن ابي كثير	1	book:ibn-mubarak-zuhd#761	
+رجل لعطاء بن السائب	1	book:ibn-abi-dunya:fadailramadan#45	
+الحجاج	1	book:ibn-abi-dunya:ciyal#157	
+لي عبد الله الرازي	1	book:ibn-abi-dunya:zuhd#165	
+عبد الله بن مصعب الزبيري للمهدي	1	book:ibn-abi-dunya:qadahawaij#93	
 ابي جعفر	1	book:ibn-mubarak-zuhd#697	
 فيما خطب	1	book:shuab-iman#1790	
+فضيل بن عياض لابي تراب	1	book:ibn-abi-dunya:zuhd#355	
+لا	1	book:ibn-abi-dunya:qubur#156	
 الرجل للرجل	1	book:shuab-iman#621	
-حبيب	1	book:ibn-mubarak-zuhd#1368	
+شهاب بن خراش، عن العوام بن حوشب،	1	book:ibn-abi-dunya:riqqawabuka#113	
+فما شكر الرجلين	1	book:ibn-abi-dunya:shukr#126	
+رجل ببلاد الشام في بعض تلك السواحل	1	book:ibn-abi-dunya:riqqawabuka#49	
+له ابي	1	book:ibn-abi-dunya:cuzla#75	
+يحيي بن سعيد، عن القاسم،	1	book:ibn-abi-dunya:maradwakaffarat#99	
 عثمان بن ابي سوده،	1	book:shuab-iman#8610	
 سعد بن ابراهيم، عن طلق بن حبيب	1	book:ibn-mubarak-zuhd#302	
 رجل، عن سليمان بن حبيب	1	book:ibn-mubarak-zuhd#61	
-في خطبته	1	book:shuab-iman#10126	
+محمد بن كناسه الاسدي	1	book:ibn-abi-dunya:juc#171	
+هشام بن عروه او غيره، عن عروه	1	book:ibn-abi-dunya:caqlwafadluh#12	
 ابو احمد بن عدي ابن واقد	1	book:shuab-iman#9661	
 لي ابن المبارك	1	book:shuab-iman#9036	
+الشهيق الذي يعتري الباكي بعد البكاء؟	1	book:ibn-abi-dunya:hammwahuzn#101	
+ثم رفع راسه فنظر الي ف	1	book:ibn-abi-dunya:qubur#98	
 ابو عبيد قوله	1	book:shuab-iman#9302	
 ما شاء الله فقد سلم لامر الله	1	book:shuab-iman#9030	
+لي حفص بن غياث	1	book:ibn-abi-dunya:mujabudacwa#112	
 الشيطان	1	book:shuab-iman#5443	
-خليد العصري	1	book:shuab-iman#10302	
+لي بدير الخلق	1	book:ibn-abi-dunya:hammwahuzn#63	
+لنا ابو بكر بن ابي الدنيا	1	book:ibn-abi-dunya:cuzla#203	
+ميمون	1	book:ibn-abi-dunya:sabr#19	
 خالد بن مخلد، عن سليمان بن بلال،	1	book:shuab-iman#5627	
-له موسي	1	book:shuab-iman#6267	
+لي بعض العباد	1	book:ibn-abi-dunya:hammwahuzn#59	
 الروح الامين	1	book:shuab-iman#6515	
+عبد الملك بن مروان لمؤدب بنيه	1	book:ibn-abi-dunya:ciyal#339	
+رجل من الازد غاب ابن له	1	book:ibn-abi-dunya:ciyal#166	
 ابي اسحاق، عن عبد الرحمن بن الاسود،	1	book:shuab-iman#8546	
 الاختصار في الصلاه	1	book:shuab-iman#2853	
 عبد الله بن زبيد الايامي	1	book:ibn-mubarak-zuhd#1562	
 يحيي بن صاعد	1	book:ibn-mubarak-zuhd#24	
 ابي فاطمه، وكذلك	1	book:shuab-iman#2268	
+سلمه الاسواري يوما لفتي اطال الجلوس معه	1	book:ibn-abi-dunya:juc#134	
 لي ابو سليمان	1	book:shuab-iman#7753	
 ابن وهب ابو عبد الله	1	book:shuab-iman#5153	
+يقولون انك خير الناس واني شر الناس	1	book:ibn-abi-dunya:qubur#112	
 في الشهداء	1	book:shuab-iman#8830	
-الاعمش، عن ابراهيم التيمي،	1	book:shuab-iman#10167	
+الحكيم	1	book:ibn-abi-dunya:tawba#94	
+الزهري،	1	book:ibn-abi-dunya:zuhd#91	
+الحمد لله فسماه الله عبدا شكورا	1	book:ibn-abi-dunya:shukr#203	
+وكانت منازلهم الي جانب المقابر	1	book:ibn-abi-dunya:qubur#12	
 حسان بن عطيه رضي الله عنه	1	book:shuab-iman#715	
 لقمان ابنه	1	book:shuab-iman#1015	
+قلت وكيف وانت تقول قد لحق بعمله	1	book:ibn-abi-dunya:qubur#77	
+بلي يا رب	1	book:ibn-abi-dunya:shukr#5	
 قولا حسنا، وعمل عملا سيئا فلا تاخذوا عنه	1	book:shuab-iman#1776	
 لي ابي حين حضرته الوفاه	1	book:shuab-iman#977	
+عبد الله بن المبارك ، عن سفيان الثوري	1	book:ibn-abi-dunya:qasramal#96	
+عتبه بن ابي سفيان لمؤدب ولده	1	book:ibn-abi-dunya:ciyal#341	
+سعيد بن عبد العزيز،	1	book:ibn-abi-dunya:zuhd#119	
+لي ابو عبد الله النباجي	1	book:ibn-abi-dunya:zuhd#472	
+محمد بن الحسين،	1	book:ibn-abi-dunya:tawakkul#51	
 سفيان، عن منصور، عن هلال، عن ابي عبيده	1	book:shuab-iman#679	
 عبد الرزاق	1	book:shuab-iman#1518	
 سعيد رفعه	1	book:shuab-iman#9333	
+لي سليمان بن عبد قيس	1	book:ibn-abi-dunya:qasramal#56	
+ميمون ابن مهران	1	book:ibn-abi-dunya:caqlwafadluh#67	
 الشيخ الصالح	1	book:shuab-iman#4272	
 ابو سليمان الخطابي	1	book:shuab-iman#7341	
-يحيي بن ابي كثير	1	book:shuab-iman#9020	
 عباد	1	book:shuab-iman#7784	
+ابي عيسي	1	book:ibn-abi-dunya:muhtadarin#187	
+بالتكذيب بالقدر	1	book:ibn-abi-dunya:muhtadarin#351	
+الله عز وجل لملك الموت	1	book:ibn-abi-dunya:warac#150	
+رجل من اهل الكوفه	1	book:ibn-abi-dunya:rasailfitawakkul#32	
+ابو عبيد الله	1	book:ibn-abi-dunya:qadahawaij#84	
+عبد الله بن خبيق الانطاكي	1	book:ibn-abi-dunya:caqlwafadluh#65	
+عبد الخالق بن موسي اللقيطي،	1	book:ibn-abi-dunya:juc#227	
 الحارث الغنوي	1	book:shuab-iman#882	
+زيد بن وهب،	1	book:ibn-abi-dunya:fadailramadan#55	
+خالد بن عبد الله القسري لبنيه	1	book:ibn-abi-dunya:qadahawaij#66	
 ابن ابي مريم	1	book:shuab-iman#4222	
+سالم بن ابي حفصه	1	book:ibn-abi-dunya:warac#163	
+ابي سنان، عن وهب،	1	book:ibn-abi-dunya:juc#231	
+لك القوم فهل تدري من انا قلت ومن انت	1	book:ibn-abi-dunya:qubur#189	
 الحافظ ابو جناده	1	book:shuab-iman#6391	
 امر، ثم	1	book:shuab-iman#1527	
 خالد الربعي	1	book:shuab-iman#1061	
+شيخ له	1	book:ibn-abi-dunya:caqlwafadluh#22	
+طعمه	1	book:ibn-abi-dunya:ikhwan#166	
+وكان داود	1	book:ibn-abi-dunya:cuzla#21	
+بناء لا بد منه	1	book:ibn-abi-dunya:qasramal#249	
+قبيصه	1	book:ibn-abi-dunya:juc#298	
+لاوليائه في القيامه	1	book:ibn-abi-dunya:juc#38	
 ابن ابي الحواري	1	book:shuab-iman#905	
 هشام بن عبد الملك لابي حازم	1	book:shuab-iman#7021	
 الضحاك انه	1	book:shuab-iman#8863	
+الشاعر	1	book:ibn-abi-dunya:muhasabatnafs#116	
 كذا، رواه غيره، عن النضر بن شيبان، ف	1	book:shuab-iman#3342	
+بكر بن خنيس، عن شعيب بن سليمان، او غيره	1	book:ibn-abi-dunya:zuhd#237	
 البيهقي رحمه الله في كتابه	1	book:shuab-iman#848	
+ولدان المسلمين اين هم يوم القيامه؟	1	book:ibn-abi-dunya:ciyal#204	
 علامه من يحب الله، وعلامه من يحبه الله	1	book:shuab-iman#413	
 محارب بن دثار	1	book:shuab-iman#6227	
+هشام بن محمد عن ابيه	1	book:ibn-abi-dunya:maqtalcali#64	
+فانه	1	book:ibn-abi-dunya:qubur#119	
+الا اعطيكم افضل من ذلك	1	book:ibn-abi-dunya:sifatjanna#87	
 لي شيئا حتي فرغت، ف	1	book:shuab-iman#6351	
 الشيخ احمد رضي الله عنه	1	book:shuab-iman#4456	
 محمد بن ابي بكر،	1	book:shuab-iman#10279	
 ابن معين في المسعودي	1	book:ibn-mubarak-zuhd#822	
 محمد بن سوقه عن ابراهيم	1	book:ibn-mubarak-zuhd#232	
+لي زياد القيسي يوما، ونحن بالدير	1	book:ibn-abi-dunya:juc#132	
+لي بعد	1	book:ibn-abi-dunya:riqqawabuka#97	
 لفضل يوم الجمعه وعظمه	1	book:shuab-iman#8861	
+لي منصور بن المعتمر	1	book:ibn-abi-dunya:qadahawaij#87	
 الجبار	1	book:shuab-iman#2006	
 الوقوف بالجبل ولم لم يكن في الحرم؟،	1	book:shuab-iman#3790	
+اكثم بن صيفي،	1	book:ibn-abi-dunya:hilm#94	
+الضحاك بن مخلد	1	book:ibn-abi-dunya:riqqawabuka#296	
+رافع بن حفص المدني	1	book:ibn-abi-dunya:dhammmalahi#59	
+رجل من قريش من بني اميه	1	book:ibn-abi-dunya:qasramal#220	
 وقد	1	book:shuab-iman#3713	
-ابي عثمان النهدي	1	book:ibn-mubarak-zuhd#1415	
 ابو اسحاق	1	book:shuab-iman#6613	
 جعفر بن سليمان	1	book:shuab-iman#792	
-عون بن عبد الله	1	book:ibn-mubarak-zuhd#341	
+عوانه بن الحكم الكلبي	1	book:ibn-abi-dunya:maqtalcali#19	
 لابن ادم	1	book:shuab-iman#1592	
-رجل من العباد لابنه	1	book:shuab-iman#6801	
 له الوكيل	1	book:shuab-iman#10442	
+يعني الوالي في الجنه اشتهي العين في	1	book:ibn-abi-dunya:sifatjanna#351	
+فاوسعني علما ما شئت	1	book:ibn-abi-dunya:shukr#148	
+ثابت ف	1	book:ibn-abi-dunya:istinacmacruf#163	
 حصين، عن ابي مالك،	1	book:shuab-iman#8455	
+ابو يحيي	1	book:ibn-abi-dunya:juc#106	
 العلاء، عن ابي وائل، عن عبد الله	1	book:shuab-iman#197	
+لي ابو جعفر	1	book:ibn-abi-dunya:ikhwan#192	
+فيسالونه حتي تنتهي رغبتهم وفوق رغبتهم	1	book:ibn-abi-dunya:sifatjanna#91	
 بعض الشعراء فذكر البيتين	1	book:shuab-iman#10433	
 عائذ المزني	1	book:shuab-iman#10672	
+شقيق ، عن عبد الله	1	book:ibn-abi-dunya:sifatnar#142	
+شعيب بن مالك بن يزيد الانصاري،	1	book:ibn-abi-dunya:juc#221	
+حالكم، كيف كانت؟	1	book:ibn-abi-dunya:ictibarwaacqab#39	
 سالم، عن يزيد السكسكي،	1	book:shuab-iman#2528	
+قلي؟،	1	book:ibn-abi-dunya:dhammghiba#8	
 يونس بن سيف	1	book:ibn-mubarak-zuhd#34	
-الاوزاعي	1	book:shuab-iman#9196	
 عبد الجبار	1	book:ibn-mubarak-zuhd#1447	
+رجل من اهل صنعاء، عن وهب بن منبه،	1	book:ibn-abi-dunya:juc#195	
+فما جزاء تلك النعمه	1	book:ibn-abi-dunya:shukr#98	
+الهيثم بن جمار، عن محمد بن يحيي	1	book:ibn-abi-dunya:caqlwafadluh#43	
+كذا وكذا	1	book:ibn-abi-dunya:ciyal#497	
+شيخ من فزاره	1	book:ibn-abi-dunya:zuhd#520	
 لي ابراهيم بن ادهم	1	book:shuab-iman#6504	
 الرضا	1	book:shuab-iman#232	
+لي ابو الجلد	1	book:ibn-abi-dunya:sifatnar#249	
 لك امير المؤمنين	1	book:ibn-mubarak-zuhd#472	
+ابي ايوب الزنادي ، عن الاوزاعي ؛	1	book:ibn-abi-dunya:cuzla#35	
+داوود الطائي	1	book:ibn-abi-dunya:muhasabatnafs#43	
+ابيه ، عن عثمان بن ابي العاص ؛	1	book:ibn-abi-dunya:cuzla#83	
+لي اسماء بن خارجه	1	book:ibn-abi-dunya:qanaca#45	
+ابوك	1	book:ibn-abi-dunya:juc#297	
 قال	1	book:ibn-mubarak-zuhd#139	
 صوم الجمعه، وان لا يكلم ذلك اليوم احدا؟	1	book:shuab-iman#7171	
+اذا استسقي المطر	1	book:ibn-abi-dunya:matarwaracd#82	
+لتخبريني	1	book:ibn-abi-dunya:qubur#97	
+بعضهم في تفسير العزله	1	book:ibn-abi-dunya:samt#37	
+يزيد بن ميسره الحمصي، وكان قد قرا الكتب،	1	book:ibn-abi-dunya:zuhd#216	
 زبيد	1	book:ibn-mubarak-zuhd#184	
+ذاك ذهاب الحلي	1	book:ibn-abi-dunya:qubur#268	
 لصاحبي	1	book:shuab-iman#9153	
 سلمه بن نبيط	1	book:ibn-mubarak-zuhd#1391	
+له عبد الله	1	book:ibn-abi-dunya:warac#189	
 عن الشهوات	1	book:shuab-iman#5338	
-الاشجعي،	1	book:shuab-iman#7546	
 شيخ مولي للديل،	1	book:ibn-mubarak-zuhd#730	
+باصبعه	1	book:ibn-abi-dunya:ciyal#607	
 ابراهيم، عن عبد الله مثله،	1	book:shuab-iman#2395	
 عباد المنقري	1	book:shuab-iman#5220	
+لاصحابه كثيرا	1	book:ibn-abi-dunya:ciyal#379	
+هذا لشيء عاينه؟	1	book:ibn-abi-dunya:muhtadarin#317	
+فلان وسقط من كتاب الشيخ اسم الرجل	1	book:ibn-abi-dunya:caqlwafadluh#58	
 ابو عبد الله يعني احمد بن حنبل	1	book:shuab-iman#4861	
 ابيه، عن ماهان الحنفي	1	book:shuab-iman#706	
-الليث	1	book:shuab-iman#5658	
+الصلت	1	book:ibn-abi-dunya:hammwahuzn#133	
+شبهوه بالحشر الي الله اما سمعته	1	book:ibn-abi-dunya:qubur#59	
 محلم	1	book:ibn-mubarak-zuhd#779	
+هشام بن محمد	1	book:ibn-abi-dunya:maqtalcali#15	
 ابراهيم بن حبيب، فحدثت به ابي، ف	1	book:shuab-iman#6473	
+سفيان، عن ابيه، عن عكرمه	1	book:ibn-abi-dunya:qiradayf#7	
+الحمد لله الحمد لله ف	1	book:ibn-abi-dunya:shukr#144	
+لاخوته	1	book:ibn-abi-dunya:istinacmacruf#99	
+هي	1	book:ibn-abi-dunya:maradwakaffarat#19	
+يحيي بن بسطام	1	book:ibn-abi-dunya:juc#141	
+عبد الله بن محمد	1	book:ibn-abi-dunya:hilm#90	
+له الحديث	1	book:ibn-abi-dunya:makaidshaytan#52	
+الحجاج لحطيط	1	book:ibn-abi-dunya:sabr#98	
+يا ادم اردت ان اشكر	1	book:ibn-abi-dunya:shukr#162	
+الحواريون لعيسي ابن مريم	1	book:ibn-abi-dunya:juc#68	
+لبعض الملوك	1	book:ibn-abi-dunya:zuhd#47	
 غير ذلك رزقهم الخرق في معاشهم	1	book:shuab-iman#6141	
-يوسف	1	book:shuab-iman#861	
+خليد بن دعلج، عن يونس بن عبيد،	1	book:ibn-abi-dunya:caqlwafadluh#16	
+وجعل	1	book:ibn-abi-dunya:shukr#137	
+يوسف بن عطيه، عن محمد بن واسع،	1	book:ibn-abi-dunya:ikhlaswaniyya#36	
+زبير	1	book:ibn-abi-dunya:maqtalcali#128	
+ذلك يشتكي الي الناس، انما	1	book:ibn-abi-dunya:juc#12	
+ابن عجلان في الجاهليه	1	book:ibn-abi-dunya:muhtadarin#270	
 بما يعرف ويعمل بما ينكر	1	book:shuab-iman#6463	
 ابي الاحوص	1	book:ibn-mubarak-zuhd#88	
 عن يحيي بن سعيد، و	1	book:shuab-iman#5144	
+هذه المراه،	1	book:ibn-abi-dunya:cuqubat#315	
 محمد بن ابي عتيق، وموسي بن عقبه	1	book:shuab-iman#7466	
+من اكل طعاما ف	1	book:ibn-abi-dunya:shukr#48	
+يا لها من نعمه لو يعلم العباد شكرها	1	book:ibn-abi-dunya:shukr#13	
+لسباع الموصلي	1	book:ibn-abi-dunya:zuhd#110	
+يونس بن عبيد	1	book:ibn-abi-dunya:warac#47	
 شييم بن بيتان عن شفي بن ماتع الاصبحي	1	book:ibn-mubarak-zuhd#791	
 اسحاق بن عبيد الله المدني،	1	book:shuab-iman#3623	
 اسماعيل بن ابي خالد، عن قيس بن ابي حازم	1	book:ibn-mubarak-zuhd#1604	
+اتهزؤ بي وانت رب العزه	1	book:ibn-abi-dunya:sifatjanna#32	
 ابو زكريا	1	book:shuab-iman#8595	
+قلت وكم كانت سنه يوم قتل	1	book:ibn-abi-dunya:maqtalcali#125	
+معيقيب	1	book:ibn-abi-dunya:warac#229	
 حبيب بن عبيد الرحبي	1	book:ibn-mubarak-zuhd#1442	
 في هذه الروايه، و	1	book:shuab-iman#6814	
+زياد بن عبد الله عن المجالد بن سعيد	1	book:ibn-abi-dunya:maqtalcali#17	
 ابو بكر البيهقي رضي الله عنه	1	book:shuab-iman#2153	
+عيسي ابن مريم لبني اسرائيل	1	book:ibn-abi-dunya:tawba#124	
 ابراهيم بن عبيد بن رفاعه	1	book:ibn-mubarak-zuhd#834	
+ابي مسهر، عن مزاحم بن زفر،	1	book:ibn-abi-dunya:zuhd#368	
 الرجل لاخيه	1	book:shuab-iman#7896	
 رجل لامراته في اول الشهر	1	book:shuab-iman#2146	
 الاشجعي	1	book:shuab-iman#4561	
 عاصم الاحول، عن ابي عثمان النهدي،	1	book:shuab-iman#8394	
 المسور بن مخرمه	1	book:shuab-iman#10150	
 عبد الملك بن عطاء،	1	book:shuab-iman#8454	
+ابو برزه	1	book:ibn-abi-dunya:sifatnar#186	
+فيه مقامي	1	book:ibn-abi-dunya:qubur#104	
+سفيان يعني الثوري متمثلا	1	book:ibn-abi-dunya:juc#161	
 لي رجل من اهل مكه	1	book:ibn-mubarak-zuhd#94	
+عبد الله بن خبيق	1	book:ibn-abi-dunya:caqlwafadluh#66	
+عبد العزيز بن جوران، عن وهب بن منبه،	1	book:ibn-abi-dunya:zuhd#64	
 محمد بن مسلم	1	book:ibn-mubarak-zuhd#397	
+رجل مره	1	book:ibn-abi-dunya:sabr#130	
 سعيد بن ابي هلال انه	1	book:shuab-iman#361	
 محمد بن حجاده	1	book:ibn-mubarak-zuhd#760	
+الله للملكين اللذين يكتبان عمله	1	book:ibn-abi-dunya:maradwakaffarat#97	
 نوره	1	book:shuab-iman#5971	
 برد بن سنان، و	1	book:shuab-iman#10092	
-محمد بن واسع	1	book:shuab-iman#1109	
+صفوان بن محرز،	1	book:ibn-abi-dunya:riqqawabuka#359	
 الحاكم	1	book:shuab-iman#1843	
+فيك من الخير اذا رضي كذلك	1	book:ibn-abi-dunya:ciyal#356	
+عامر بن مره ؛	1	book:ibn-abi-dunya:cuzla#99	
+لحوشب	1	book:ibn-abi-dunya:juc#48	
 الاوزاعي، عن حسان بن عطيه	1	book:ibn-mubarak-zuhd#1013	
+حدثنا بعض اصحابنا	1	book:ibn-abi-dunya:ikhwan#59	
 ربه تبارك وتعالي انه	1	book:shuab-iman#2494	
 احمد رحمه الله تعالي	1	book:shuab-iman#74	
+عبده	1	book:ibn-abi-dunya:ciyal#277	
+في جوف الليل	1	book:ibn-abi-dunya:hammwahuzn#147	
+ابو عبيده الخواص	1	book:ibn-abi-dunya:juc#42	
 العلاء بن المسيب، عن ابي الضحي	1	book:ibn-mubarak-zuhd#1111	
-وهيب بن الورد	1	book:shuab-iman#10283	
-لك	1	book:shuab-iman#7352	
+منصور بن زاذان، رحمه الله	1	book:ibn-abi-dunya:samt#299	
+صاحباه	1	book:ibn-abi-dunya:qasramal#36	
+حدثنا ابراهيم بن عيينه	1	book:ibn-abi-dunya:istinacmacruf#179	
+قيل لنباش اخر ما كان سبب توبتك	1	book:ibn-abi-dunya:qubur#100	
+بطحاء العذري	1	book:ibn-abi-dunya:hilmmucawiya#10	
 الاعمش، عن جامع بن شداد، عن مغيث بن سمي،	1	book:shuab-iman#6708	
 ابي عوانه بهذا المعني، وزاد	1	book:shuab-iman#2724	
 لغلمانه	1	book:shuab-iman#10729	
 عبد الله بن ضمره السلولي، عن كعب	1	book:ibn-mubarak-zuhd#111	
+عبد الله بن جعفر	1	book:ibn-abi-dunya:qadahawaij#42	
 فيما ذهب	1	book:ibn-mubarak-zuhd#951	
 ابو عثمان لاهل المجلس	1	book:shuab-iman#8110	
+هارون بن زيد،	1	book:ibn-abi-dunya:zuhd#561	
+حدثني عون بن عبد الله بن عتبه،	1	book:ibn-abi-dunya:zuhd#342	
 والاول اصح	1	book:shuab-iman#8441	
 فليح	1	book:shuab-iman#1634	
 الابله؟	1	book:shuab-iman#1307	
 لابنه كدام	1	book:shuab-iman#4869	
+له حممه	1	book:ibn-abi-dunya:riqqawabuka#298	
 عبد الرحمن بن عدي، عن يزيد بن ميسره	1	book:ibn-mubarak-zuhd#346	
+الرب	1	book:ibn-abi-dunya:tawba#39	
 ابو اسحاق الخواص	1	book:shuab-iman#5349	
 لي خيثمه	1	book:ibn-mubarak-zuhd#600	
 عباده بن الصامت الله عنه	1	book:ibn-mubarak-zuhd#408	
 لرجل من همدان	1	book:shuab-iman#4214	
 اسمي؟	1	book:shuab-iman#3134	
+ابو حازم لما حضره الموت	1	book:ibn-abi-dunya:muhtadarin#153	
 الحافظ في روايته	1	book:shuab-iman#4954	
 محمد بن السماك	1	book:shuab-iman#8118	
 ابن شوذب،	1	book:shuab-iman#8730	
+سفيان، عن زبيد،	1	book:ibn-abi-dunya:ikhlaswaniyya#24	
 احمد بن سليم	1	book:shuab-iman#1707	
 ابن المبارك في كلام الفرس	1	book:shuab-iman#7863	
-عيسي ابن مريم	1	book:shuab-iman#5340	
+الخليل بن احمد لاخ له	1	book:ibn-abi-dunya:ikhwan#89	
+يزيد بن الوليد الناقص	1	book:ibn-abi-dunya:dhammmalahi#52	
+لي عابد بفلسطين	1	book:ibn-abi-dunya:sabr#182	
 الصغاني	1	book:shuab-iman#6800	
 شقيق البلخي	1	book:ibn-mubarak-zuhd#982	
 الحجر الاسود	1	book:shuab-iman#6992	
-سعيد بن العاص	1	book:shuab-iman#8187	
 مولي لهذيل،	1	book:ibn-mubarak-zuhd#318	
+هؤلاء	1	book:ibn-abi-dunya:matarwaracd#13	
 ابو سليمان معني الارفاه	1	book:shuab-iman#6049	
+للناس	1	book:ibn-abi-dunya:zuhd#116	
+الجلد بن ايوب ، عن معاويه بن قره	1	book:ibn-abi-dunya:qasramal#130	
 ابيه، غير انه	1	book:shuab-iman#3885	
+سليمان بن رستم الضبي	1	book:ibn-abi-dunya:caqlwafadluh#71	
 حبيب بن عبيد	1	book:ibn-mubarak-zuhd#1345	
-ابن جريج، عن عطاء،	1	book:shuab-iman#8771	
+ابو لحيم الكلابي	1	book:ibn-abi-dunya:qiradayf#40	
 فذكره	1	book:shuab-iman#1879	
+ابو مسهر رحمه الله	1	book:ibn-abi-dunya:samt#695	
 يزيد بن قودز، عن كعب الاحبار، انه	1	book:shuab-iman#3643	
-الراعي	1	book:shuab-iman#4908	
+ابو معاويه	1	book:ibn-abi-dunya:cuqubat#192	
+المهلب لبنيه	1	book:ibn-abi-dunya:samt#717	
 الله تعالي لمن شاء من ملائكته	1	book:shuab-iman#6822	
+سمعت الخليل بن احمد	1	book:ibn-abi-dunya:istinacmacruf#181	
+راهب للشيطان وقد بدا له	1	book:ibn-abi-dunya:makaidshaytan#38	
 سماك عن ابي الربيع	1	book:ibn-mubarak-zuhd#574	
-منذر الثوري، عن محمد ابن الحنفيه،	1	book:shuab-iman#7751	
-صالح المري	1	book:ibn-mubarak-zuhd#261	
+لنا هاشم بن القاسم	1	book:ibn-abi-dunya:ikhwan#46	
+قائلهم	1	book:ibn-abi-dunya:cuqubat#186	
+فبكي الفرزدق ثم انشا	1	book:ibn-abi-dunya:qubur#44	
 ابو عمير	1	book:shuab-iman#3969	
+التوجيه	1	book:ibn-abi-dunya:muhtadarin#257	
 بيت من الشعر	1	book:ibn-mubarak-zuhd#359	
 يوم يجازي العباد باعمالهم	1	book:shuab-iman#6412	
+عبد الملك بن مروان في مرضه	1	book:ibn-abi-dunya:muhtadarin#102	
+النعمان بن ابي عياش الزرقي،	1	book:ibn-abi-dunya:maradwakaffarat#242	
 احدهم لصاحبه	1	book:shuab-iman#2408	
 ابراهيم، عن بعض اصحاب عبد الله،	1	book:ibn-mubarak-zuhd#1201	
 رجل من الحكماء	1	book:shuab-iman#8716	
+رجل، من اهل الكوفه	1	book:ibn-abi-dunya:tawakkul#32	
 ابن جريج، سمعت عطاء	1	book:shuab-iman#2659	
+في السحاب شيئا؟	1	book:ibn-abi-dunya:matarwaracd#5	
 الله عز وجل لملائكته	1	book:shuab-iman#6651	
 له يحيي بن معين	1	book:shuab-iman#2901	
+خالد القسري لرجل من قريش	1	book:ibn-abi-dunya:qadahawaij#40	
 قبل ان يقوم	1	book:shuab-iman#619	
+سمعت سلم بن ميمون	1	book:ibn-abi-dunya:cuzla#51	
+له اقبل، ثم	1	book:ibn-abi-dunya:caqlwafadluh#9	
+سهم	1	book:ibn-abi-dunya:dhammbaghy#15	
+لليهودي	1	book:ibn-abi-dunya:hilmmucawiya#37	
 رجل لعثمان بن ابي العاص	1	book:ibn-mubarak-zuhd#720	
 عبد الله بن محمد التيمي،	1	book:shuab-iman#8719	
-مورق العجلي	1	book:shuab-iman#4675	
+داود الطائي لعقبه بن موسي،	1	book:ibn-abi-dunya:hammwahuzn#54	
 العاطس في جواب التشميت	1	book:shuab-iman#8890	
+واصبح وقد ابيض شعره حتي صار كانه نعامه	1	book:ibn-abi-dunya:qubur#95	
+في	1	book:ibn-abi-dunya:sifatjanna#31	
+شيخ، من قريش	1	book:ibn-abi-dunya:ictibarwaacqab#28	
 ابن ابي نجيح، عن ابيه	1	book:ibn-mubarak-zuhd#308	
+لاخر من هذا الميت ف	1	book:ibn-abi-dunya:qubur#36	
+هل تشتهون شيئا فازيدكم	1	book:ibn-abi-dunya:sifatjanna#100	
+له الرجل	1	book:ibn-abi-dunya:qasramal#57	
+عبد الرحمن بن زبيد الايامي،	1	book:ibn-abi-dunya:zuhd#408	
 عبد الله بن ابي مليكه،	1	book:shuab-iman#9122	
+الاعمش لرجل	1	book:ibn-abi-dunya:juc#96	

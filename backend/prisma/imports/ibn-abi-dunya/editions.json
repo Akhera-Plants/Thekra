@@ -1,0 +1,447 @@
+{
+  "commit": "01a1544130e0236850ef2698923ad01575c5bd7c",
+  "repo": "0300AH",
+  "works": [
+    {
+      "key": "Ahwal",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.Ahwal/0281IbnAbiDunya.Ahwal.JK011304-ara1",
+      "versionUri": "0281IbnAbiDunya.Ahwal.JK011304-ara1",
+      "sha256": "8ac31522bd7e82c2999ce5727220d6a8fe478fe9b2788ac727293a4f685c7151",
+      "bytes": 191416
+    },
+    {
+      "key": "AmrBiMacruf",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.AmrBiMacruf/0281IbnAbiDunya.AmrBiMacruf.Shamela0008207-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.AmrBiMacruf.Shamela0008207-ara1.mARkdown",
+      "sha256": "caf3c5d25e4f37d83c0d9e67ec7af96ec46736cc3f642c65ea18bcbf8d5bcaf4",
+      "bytes": 82962
+    },
+    {
+      "key": "Awliya",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.Awliya/0281IbnAbiDunya.Awliya.JK000042-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.Awliya.JK000042-ara1.mARkdown",
+      "sha256": "bf1048ca3ada62b4866b9edbb571ee939a0a7e22e76f55277758a6c247c411fa",
+      "bytes": 103813
+    },
+    {
+      "key": "CaqlWaFadluh",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.CaqlWaFadluh/0281IbnAbiDunya.CaqlWaFadluh.Shia001944-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.CaqlWaFadluh.Shia001944-ara1.mARkdown",
+      "sha256": "f0f64780a1fde251bf0f7bb267919740919295b4cd8002cc2b9527f424d97a25",
+      "bytes": 47719
+    },
+    {
+      "key": "Ciyal",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.Ciyal/0281IbnAbiDunya.Ciyal.Shamela0013075-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.Ciyal.Shamela0013075-ara1.mARkdown",
+      "sha256": "57ea0de678db690e0380ac776089f5746a6622799984d9beb3335855f61ebe0f",
+      "bytes": 318427
+    },
+    {
+      "key": "CumrWaShayb",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.CumrWaShayb/0281IbnAbiDunya.CumrWaShayb.JK000045-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.CumrWaShayb.JK000045-ara1.mARkdown",
+      "sha256": "dc3ec96f347b0b66530e28c6fcac832220e84131c5f22f42b1c7382c600e8727",
+      "bytes": 42356
+    },
+    {
+      "key": "Cuqubat",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.Cuqubat/0281IbnAbiDunya.Cuqubat.Shamela0008266-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.Cuqubat.Shamela0008266-ara1.mARkdown",
+      "sha256": "c426983d7998b1607e98725f7c78368c02dd8fe77da6ca783c071bf719a356d0",
+      "bytes": 266685
+    },
+    {
+      "key": "Cuzla",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.Cuzla/0281IbnAbiDunya.Cuzla.JK009187-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.Cuzla.JK009187-ara1.mARkdown",
+      "sha256": "472d862f627d2ee9dc4460f6938d1f2a1cfc357688a38cb90a67ba666a3dc046",
+      "bytes": 129890
+    },
+    {
+      "key": "DhammBaghy",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.DhammBaghy/0281IbnAbiDunya.DhammBaghy.Shamela0008228-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.DhammBaghy.Shamela0008228-ara1.mARkdown",
+      "sha256": "fcb981d145d9b22b4f0c3b1e0b794eb9b7da1daa91bc2b71aa9740a0922c191c",
+      "bytes": 35482
+    },
+    {
+      "key": "DhammDunya",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.DhammDunya/0281IbnAbiDunya.DhammDunya.Shamela0021546-ara1",
+      "versionUri": "0281IbnAbiDunya.DhammDunya.Shamela0021546-ara1",
+      "sha256": "5a7adaf948459a0e88ea8d6b8731c58f98ebb43b1d1a43f4ebdbd902884894b2",
+      "bytes": 276693
+    },
+    {
+      "key": "DhammGhiba",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.DhammGhiba/0281IbnAbiDunya.DhammGhiba.Shamela0008241-ara1",
+      "versionUri": "0281IbnAbiDunya.DhammGhiba.Shamela0008241-ara1",
+      "sha256": "41a4965e780bfe6d13044c8b5928b8c6c0866bf893e72fe9557f8a5ad999b3ba",
+      "bytes": 79934
+    },
+    {
+      "key": "DhammMalahi",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.DhammMalahi/0281IbnAbiDunya.DhammMalahi.Shamela0008230-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.DhammMalahi.Shamela0008230-ara1.mARkdown",
+      "sha256": "e46d657e395b54006e803c6601de44c4e83628d3d5c349f28643d80ea131c85d",
+      "bytes": 102462
+    },
+    {
+      "key": "DhammMuskir",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.DhammMuskir/0281IbnAbiDunya.DhammMuskir.JK000635-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.DhammMuskir.JK000635-ara1.mARkdown",
+      "sha256": "e16f8d6b0eeed7090259f0baa2447fed0903c9996eaf56360ddaca5450091995",
+      "bytes": 39336
+    },
+    {
+      "key": "DhikrMawt",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.DhikrMawt/0281IbnAbiDunya.DhikrMawt.ShamAY0038152-ara1",
+      "versionUri": "0281IbnAbiDunya.DhikrMawt.ShamAY0038152-ara1",
+      "sha256": "2315a9cbfc68158ee9035e06c14d75b00fe8581c20d49c174d33b1420b3f98d3",
+      "bytes": 5972
+    },
+    {
+      "key": "FadailRamadan",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.FadailRamadan/0281IbnAbiDunya.FadailRamadan.Shamela0010799-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.FadailRamadan.Shamela0010799-ara1.mARkdown",
+      "sha256": "6602eb052cd554103b19f076704630afbf43674b1bf074a102d7eb09ffd6fc2b",
+      "bytes": 38971
+    },
+    {
+      "key": "FadlCashrDhiHijja",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.FadlCashrDhiHijja/0281IbnAbiDunya.FadlCashrDhiHijja.ShamAY0038170-ara1",
+      "versionUri": "0281IbnAbiDunya.FadlCashrDhiHijja.ShamAY0038170-ara1",
+      "sha256": "88a142ddf5be87bf8fafe7672560fc3d14e2bd5534dab138b6766253331980f9",
+      "bytes": 17284
+    },
+    {
+      "key": "FarajBacdaShidda",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.FarajBacdaShidda/0281IbnAbiDunya.FarajBacdaShidda.JK011399-ara1",
+      "versionUri": "0281IbnAbiDunya.FarajBacdaShidda.JK011399-ara1",
+      "sha256": "baf68f715e3247ba5552ba3bbaf5fd71a448ed45fff2171717bf10bd5d0dc3ad",
+      "bytes": 101275
+    },
+    {
+      "key": "HammWaHuzn",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.HammWaHuzn/0281IbnAbiDunya.HammWaHuzn.Shamela0013076-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.HammWaHuzn.Shamela0013076-ara1.mARkdown",
+      "sha256": "ef9199e27940d59abd5c664dd1eac079c5ea95a10d9ae23c69ff673d0da3e3ea",
+      "bytes": 84598
+    },
+    {
+      "key": "Hawatif",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.Hawatif/0281IbnAbiDunya.Hawatif.JK000050-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.Hawatif.JK000050-ara1.mARkdown",
+      "sha256": "c8ff912420a54b9fe9b3bed7c2711ea3d410131f1974cdb52975ef86d2fb1599",
+      "bytes": 172155
+    },
+    {
+      "key": "Hilm",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.Hilm/0281IbnAbiDunya.Hilm.Shamela0013014-ara1",
+      "versionUri": "0281IbnAbiDunya.Hilm.Shamela0013014-ara1",
+      "sha256": "45625abb40e999ec0214f545fcf87b83e132b2b0de2b3e64016e13f486af0936",
+      "bytes": 60527
+    },
+    {
+      "key": "HilmMucawiya",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.HilmMucawiya/0281IbnAbiDunya.HilmMucawiya.Shamela0026874-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.HilmMucawiya.Shamela0026874-ara1.mARkdown",
+      "sha256": "27395cbc1699eacbd5d46e77cdf4cbca5a4c486a9c69152db2ff2da73983eeb9",
+      "bytes": 30384
+    },
+    {
+      "key": "HusnZannBiLlah",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.HusnZannBiLlah/0281IbnAbiDunya.HusnZannBiLlah.JK000018-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.HusnZannBiLlah.JK000018-ara1.mARkdown",
+      "sha256": "27dd28f7c34ddd1685247e8b7cd6fc206c19db0d5bdd0aa2e82e43be63dc46f9",
+      "bytes": 95880
+    },
+    {
+      "key": "IctibarWaAcqab",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.IctibarWaAcqab/0281IbnAbiDunya.IctibarWaAcqab.Shamela0012996-ara1",
+      "versionUri": "0281IbnAbiDunya.IctibarWaAcqab.Shamela0012996-ara1",
+      "sha256": "4792d8189ec165f64ff9f25153ed825418cdcfac94b1effab7c6da3cbb096fbc",
+      "bytes": 82685
+    },
+    {
+      "key": "IkhlasWaNiyya",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.IkhlasWaNiyya/0281IbnAbiDunya.IkhlasWaNiyya.Shamela0006225-ara1",
+      "versionUri": "0281IbnAbiDunya.IkhlasWaNiyya.Shamela0006225-ara1",
+      "sha256": "2f40f801e51c390ba440300508ec576547f0fa3a6c1c047e42268cae01e1aab4",
+      "bytes": 23310
+    },
+    {
+      "key": "Ikhwan",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.Ikhwan/0281IbnAbiDunya.Ikhwan.Shamela0012990-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.Ikhwan.Shamela0012990-ara1.mARkdown",
+      "sha256": "67c9fcc260127543f3598af4502c47bdc0875388eb757482e358434018314baf",
+      "bytes": 96056
+    },
+    {
+      "key": "IshrafFiManazil",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.IshrafFiManazil/0281IbnAbiDunya.IshrafFiManazil.JK001039-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.IshrafFiManazil.JK001039-ara1.mARkdown",
+      "sha256": "cfa52b9af8c5f124378da5371aa0a8bbe3c5bbc8e6529dfd2c0a569cda5d9d22",
+      "bytes": 279291
+    },
+    {
+      "key": "IslahMal",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.IslahMal/0281IbnAbiDunya.IslahMal.JK001040-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.IslahMal.JK001040-ara1.mARkdown",
+      "sha256": "9d2b85d71ca8cba84321e4bf77d29679fc2b620bb0a585980467a6de295cae10",
+      "bytes": 202607
+    },
+    {
+      "key": "IstinacMacruf",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.IstinacMacruf/0281IbnAbiDunya.IstinacMacruf.Shamela0006022-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.IstinacMacruf.Shamela0006022-ara1.mARkdown",
+      "sha256": "552b6a61db67d1d0bb7555b091d64e52b1526f1f05589991ce80925c639c8dcd",
+      "bytes": 100563
+    },
+    {
+      "key": "Juc",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.Juc/0281IbnAbiDunya.Juc.Shamela0009306-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.Juc.Shamela0009306-ara1.mARkdown",
+      "sha256": "f9c6400acc92cf07a1bddb8aafea38ef4c803a5256473d19a16cf953b169bfed",
+      "bytes": 156263
+    },
+    {
+      "key": "KalamLayali",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.KalamLayali/0281IbnAbiDunya.KalamLayali.Shamela0008242-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.KalamLayali.Shamela0008242-ara1.mARkdown",
+      "sha256": "cda0095e50bc097f3b94984a0f1b25bee21fbb4663f64947ea30e315050bb232",
+      "bytes": 37342
+    },
+    {
+      "key": "MakaidShaytan",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.MakaidShaytan/0281IbnAbiDunya.MakaidShaytan.Shamela0008061-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.MakaidShaytan.Shamela0008061-ara1.mARkdown",
+      "sha256": "a2816f4aeacf8fc11ca5b7b78831f4d72e79a4c28bf82e69d3c4349e7c4d5265",
+      "bytes": 62765
+    },
+    {
+      "key": "MakarimAkhlaq",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.MakarimAkhlaq/0281IbnAbiDunya.MakarimAkhlaq.JK000015-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.MakarimAkhlaq.JK000015-ara1.mARkdown",
+      "sha256": "b0ab2df7fd2da9f75c44da9bd3b5198ef34f449409e021995b526593cf6f8172",
+      "bytes": 277427
+    },
+    {
+      "key": "ManCashaBacdaMawt",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.ManCashaBacdaMawt/0281IbnAbiDunya.ManCashaBacdaMawt.JK000908-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.ManCashaBacdaMawt.JK000908-ara1.mARkdown",
+      "sha256": "f213981ccc470d062d0f92d24d249f2102c8933d2d6a9f597d91cf4a6d1bce0a",
+      "bytes": 76536
+    },
+    {
+      "key": "Manamat",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.Manamat/0281IbnAbiDunya.Manamat.JK000038-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.Manamat.JK000038-ara1.mARkdown",
+      "sha256": "e14b98214af514e32dcc91b3e430e1785468daf325a4f118330877434342396b",
+      "bytes": 221230
+    },
+    {
+      "key": "MaqtalCali",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.MaqtalCali/0281IbnAbiDunya.MaqtalCali.Shamela0012751-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.MaqtalCali.Shamela0012751-ara1.mARkdown",
+      "sha256": "c36975e31efa35ac34af798d71dd0c8ae3ac2df86bb649f247339835f5180f1e",
+      "bytes": 106056
+    },
+    {
+      "key": "MaradWaKaffarat",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.MaradWaKaffarat/0281IbnAbiDunya.MaradWaKaffarat.Shamela0013064-ara1",
+      "versionUri": "0281IbnAbiDunya.MaradWaKaffarat.Shamela0013064-ara1",
+      "sha256": "a9e9c019705f5d351c669a992a9dab812e93df223b4ebc2dd2e0634a4dd9f4e4",
+      "bytes": 145128
+    },
+    {
+      "key": "MatarWaRacd",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.MatarWaRacd/0281IbnAbiDunya.MatarWaRacd.Shamela0008273-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.MatarWaRacd.Shamela0008273-ara1.mARkdown",
+      "sha256": "215ca7d3c00ef35227465574717fc82fc955c4497d96e74b99f5d320723e56f5",
+      "bytes": 93521
+    },
+    {
+      "key": "MudaratNas",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.MudaratNas/0281IbnAbiDunya.MudaratNas.Shamela0013152-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.MudaratNas.Shamela0013152-ara1.mARkdown",
+      "sha256": "a22c692cedae03befdf29578f476bd14d630a6d7987d7b524cae88812941a0bd",
+      "bytes": 85241
+    },
+    {
+      "key": "MuhasabatNafs",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.MuhasabatNafs/0281IbnAbiDunya.MuhasabatNafs.Shamela0012739-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.MuhasabatNafs.Shamela0012739-ara1.mARkdown",
+      "sha256": "165fadd1392ce02471cc9352309acc4e874b54e49fe577a690eb471245f25856",
+      "bytes": 91977
+    },
+    {
+      "key": "Muhtadarin",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.Muhtadarin/0281IbnAbiDunya.Muhtadarin.Shamela0013058-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.Muhtadarin.Shamela0013058-ara1.mARkdown",
+      "sha256": "1db01c95547d5fed87c65406178192e67389cdfcd85c6a82feb03fdc2a0842e8",
+      "bytes": 223332
+    },
+    {
+      "key": "MujabuDacwa",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.MujabuDacwa/0281IbnAbiDunya.MujabuDacwa.Shamela0012936-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.MujabuDacwa.Shamela0012936-ara1.mARkdown",
+      "sha256": "435b6d1e8d34fc052ae03c997440e57431d84072c2890007862a0416fe191771",
+      "bytes": 118686
+    },
+    {
+      "key": "Mutamannin",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.Mutamannin/0281IbnAbiDunya.Mutamannin.JK001194-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.Mutamannin.JK001194-ara1.mARkdown",
+      "sha256": "7b402b00cd6a229c816745a4a62b703a72e7d9e51a5b93dbb79f2ee8eb840b29",
+      "bytes": 71027
+    },
+    {
+      "key": "QadaHawaij",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.QadaHawaij/0281IbnAbiDunya.QadaHawaij.Shamela0013149-ara1",
+      "versionUri": "0281IbnAbiDunya.QadaHawaij.Shamela0013149-ara1",
+      "sha256": "4e31a8dab096b888c68f1b181e244c3dc1f1ae12f4d4b2ceabf864eae84d5a37",
+      "bytes": 81714
+    },
+    {
+      "key": "Qanaca",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.Qanaca/0281IbnAbiDunya.Qanaca.Shamela0022347-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.Qanaca.Shamela0022347-ara1.mARkdown",
+      "sha256": "0ac9ac63a1135094ed17f5e52b45407a56c0e39e0106c2a87db171d6e83c811a",
+      "bytes": 93285
+    },
+    {
+      "key": "QasrAmal",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.QasrAmal/0281IbnAbiDunya.QasrAmal.JK009174-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.QasrAmal.JK009174-ara1.mARkdown",
+      "sha256": "9f3b89d777b974897179eb37d2bc53a40f5206be897a39e7f5c936c648d943d0",
+      "bytes": 201304
+    },
+    {
+      "key": "QiraDayf",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.QiraDayf/0281IbnAbiDunya.QiraDayf.Shamela0011030-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.QiraDayf.Shamela0011030-ara1.mARkdown",
+      "sha256": "a814a3e924c6a446f80272e1ea0b6fd8b1dea12a0465452aed6716a6a7333d70",
+      "bytes": 52700
+    },
+    {
+      "key": "Qubur",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.Qubur/0281IbnAbiDunya.Qubur.Shamela0010628-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.Qubur.Shamela0010628-ara1.mARkdown",
+      "sha256": "f956e89e75a93687c1dc5b77278162c607b7be14d301f703ea0db9bd82412ad4",
+      "bytes": 165318
+    },
+    {
+      "key": "RasailFiTawakkul",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.RasailFiTawakkul/0281IbnAbiDunya.RasailFiTawakkul.ShamAY0038149-ara1",
+      "versionUri": "0281IbnAbiDunya.RasailFiTawakkul.ShamAY0038149-ara1",
+      "sha256": "7b25c7a35e734a7664f7b0f8dd5456b26f9d309736e06041377deed17ea81886",
+      "bytes": 38034
+    },
+    {
+      "key": "Rida",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.Rida/0281IbnAbiDunya.Rida.JK000700-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.Rida.JK000700-ara1.mARkdown",
+      "sha256": "ae832a452b633268da05b81ebb716c1fc9021187529f3106fe8289ce594da536",
+      "bytes": 65160
+    },
+    {
+      "key": "RiqqaWaBuka",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.RiqqaWaBuka/0281IbnAbiDunya.RiqqaWaBuka.Shamela0008256-ara1.completed",
+      "versionUri": "0281IbnAbiDunya.RiqqaWaBuka.Shamela0008256-ara1.completed",
+      "sha256": "56b23a9698fb215eaf1e828cb958ba1257161881800400e7c80cca1799b303a7",
+      "bytes": 232562
+    },
+    {
+      "key": "Sabr",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.Sabr/0281IbnAbiDunya.Sabr.Shamela0008259-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.Sabr.Shamela0008259-ara1.mARkdown",
+      "sha256": "7d1bbe01614279a765273328d4ad8be4c6a03a6ffded1f5714394ba22739d252",
+      "bytes": 125469
+    },
+    {
+      "key": "Samt",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.Samt/0281IbnAbiDunya.Samt.Shamela0013039-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.Samt.Shamela0013039-ara1.mARkdown",
+      "sha256": "eda09f169b75c50527571c4d4ce5e8f4e1d019baa96868c7f62af165b08c2304",
+      "bytes": 325991
+    },
+    {
+      "key": "Shukr",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.Shukr/0281IbnAbiDunya.Shukr.Shia001937-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.Shukr.Shia001937-ara1.mARkdown",
+      "sha256": "de47d6c7f03a30d2c14382f7082efbb504314caec568a9646077a4cef60cb5b7",
+      "bytes": 112774
+    },
+    {
+      "key": "SifatJanna",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.SifatJanna/0281IbnAbiDunya.SifatJanna.Shamela0012737-ara1",
+      "versionUri": "0281IbnAbiDunya.SifatJanna.Shamela0012737-ara1",
+      "sha256": "d26c91e5ebdaf9c4d3d4be71bf0d5f1b68b2f2ebea92931aadc293d0fd9d4b6c",
+      "bytes": 224043
+    },
+    {
+      "key": "SifatNar",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.SifatNar/0281IbnAbiDunya.SifatNar.JK009172-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.SifatNar.JK009172-ara1.mARkdown",
+      "sha256": "8d4b33d4d3ef2be4c9f22e5e126b1298be982a4b9e6d1f00adc2ca7177003a78",
+      "bytes": 144502
+    },
+    {
+      "key": "Tahajjud",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.Tahajjud/0281IbnAbiDunya.Tahajjud.JK001127-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.Tahajjud.JK001127-ara1.mARkdown",
+      "sha256": "53c01220bc0257661fdb392591275658a3f191a1ee2d8efc215683bfc2060d4d",
+      "bytes": 260694
+    },
+    {
+      "key": "TawaducWaKhumul",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.TawaducWaKhumul/0281IbnAbiDunya.TawaducWaKhumul.JK000002-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.TawaducWaKhumul.JK000002-ara1.mARkdown",
+      "sha256": "69af785edaf18c0fcfca35fc62539c2e2e1ec09e3f63f42a1b5f2b5f849b67f0",
+      "bytes": 106934
+    },
+    {
+      "key": "Tawakkul",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.Tawakkul/0281IbnAbiDunya.Tawakkul.Shamela0008254-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.Tawakkul.Shamela0008254-ara1.mARkdown",
+      "sha256": "e6ce91cecac9a036ad112a965055e336005ac32fe5e47f951d2645cd53087373",
+      "bytes": 37712
+    },
+    {
+      "key": "Tawba",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.Tawba/0281IbnAbiDunya.Tawba.Shamela0008253-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.Tawba.Shamela0008253-ara1.mARkdown",
+      "sha256": "c41f92b8e8ca48bfccfee2507c0f3d9a5ab9299b56fb0e6c96b15e3f9923ef45",
+      "bytes": 107372
+    },
+    {
+      "key": "Wajal",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.Wajal/0281IbnAbiDunya.Wajal.JK000070-ara1.mARkdown",
+      "versionUri": "0281IbnAbiDunya.Wajal.JK000070-ara1.mARkdown",
+      "sha256": "0169541aa32a49bbbdd4f2d22172d3a1621de906e366e026877b46fc1a7ef3e6",
+      "bytes": 47373
+    },
+    {
+      "key": "Warac",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.Warac/0281IbnAbiDunya.Warac.Shamela0013078-ara1",
+      "versionUri": "0281IbnAbiDunya.Warac.Shamela0013078-ara1",
+      "sha256": "09eec4244db9247e9a3a31ddf4bf2fe647d3a874a0c0e8d6b7a4b91f2e41f974",
+      "bytes": 110954
+    },
+    {
+      "key": "Yaqin",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.Yaqin/0281IbnAbiDunya.Yaqin.JK011449-ara1",
+      "versionUri": "0281IbnAbiDunya.Yaqin.JK011449-ara1",
+      "sha256": "d53c65f3eeb61ca817bf0cb50db921116f5fd26675cad5ecbe3955369c6acdd4",
+      "bytes": 29939
+    },
+    {
+      "key": "Zuhd",
+      "path": "data/0281IbnAbiDunya/0281IbnAbiDunya.Zuhd/0281IbnAbiDunya.Zuhd.Shamela0008216-ara1",
+      "versionUri": "0281IbnAbiDunya.Zuhd.Shamela0008216-ara1",
+      "sha256": "cb365c3eaeda4a5dd12cca48e08f01391299fe78d7397781a7c04e41096d6919",
+      "bytes": 373224
+    }
+  ]
+}

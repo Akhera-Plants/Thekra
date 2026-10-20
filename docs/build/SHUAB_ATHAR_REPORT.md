@@ -104,4 +104,41 @@ Playwright: dropped stale «القائمة» / `English` expectations; locale sw
 
 ## Phase 4 — Ibn Abi al-Dunya
 
-_(pending)_
+OpenITI pin: `0300AH@01a1544130e0236850ef2698923ad01575c5bd7c` (63 works under `0281IbnAbiDunya`).
+
+| Metric | Value |
+| --- | ---: |
+| Sources (one per work) | 63 |
+| BookSection | 2140 |
+| SectionItem | 19652 |
+| Quotes created | 18712 |
+| — HADITH | 8890 |
+| Listed athar (after classifier) | 550 |
+| Strong takhrij matches (≥ 0.75) | 176 |
+| Sin / deed / branch links | **0** (structure only) |
+
+- CLI: `pnpm --filter backend import:book ibn-abi-dunya`
+- Parser handles both `### N -` headings and `# N -` paragraph numbers
+- Reviewer TSVs: `docs/taxonomy/sections/ibn-abi-dunya/<Key>.tsv` + `_index.tsv`
+- Athar classifier already scopes `book:ibn-abi-dunya*`; re-run after import: `updated=8158` then `updated=0`
+- Takhrij run on all HADITH (matn); no topic / chapter maps for these sources
+
+### Gates (Phase 4)
+
+| Check | Result |
+| --- | --- |
+| frontend / backend `tsc` | pass |
+| lint | pass (pre-existing warnings only) |
+| frontend unit | 25 passed |
+| backend unit | 478 passed (incl. Dunya parse samples) |
+| backend e2e | 258 passed |
+| `ibn-abi-dunya` re-run | `createdSections=0 createdItems=0` |
+| `athar` re-run | `updated=0` |
+| Playwright | 2 passed |
+
+### Screenshots
+
+Under `docs/design/after/shuab-athar/`:
+
+- Branch 1 + ghibah: 1440/390 × ar/en (athar tab clicked when present)
+- `home-auth-hidden-1440-ar.png` — no sign-in / favorites / save chrome
