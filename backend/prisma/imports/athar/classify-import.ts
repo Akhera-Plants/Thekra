@@ -37,19 +37,25 @@ export async function runAtharClassify(options: ImportOptions): Promise<void> {
 
   let marfu = 0;
   let athar = 0;
+  let reject = 0;
   let listed = 0;
   let unlisted = 0;
   let updated = 0;
   const unlistedMap = new Map<string, { count: number; examples: string[] }>();
 
   for (const row of rows) {
-    const text = (row.matnAr && row.matnAr.trim()) || row.textAr;
+    // Prefer full text so prophetic attribution in the isnad (`سمعنا رسول الله`)
+    // is not lost when matnAr was split off the chain.
+    const text = row.textAr || row.matnAr || '';
     const classified = classifyNarration(text);
     let isAthar = classified.kind === 'ATHAR';
     let atharSpeakerKey: string | null = null;
     let atharSpeakerAr: string | null = null;
 
-    if (isAthar) {
+    if (classified.kind === 'REJECT') {
+      reject += 1;
+      isAthar = false;
+    } else if (isAthar) {
       athar += 1;
       const matched = matchAtharSpeaker(classified.speakerRaw, speakers);
       if (matched) {
@@ -97,7 +103,7 @@ export async function runAtharClassify(options: ImportOptions): Promise<void> {
   if (!options.dryRun) writeFileSync(tsvPath, `${lines.join('\n')}\n`, 'utf8');
 
   console.log(
-    `athar classify: total=${rows.length} marfu=${marfu} athar=${athar}` +
+    `athar classify: total=${rows.length} marfu=${marfu} athar=${athar} reject=${reject}` +
       ` listed=${listed} unlisted=${unlisted} updated=${updated}` +
       ` tsv=${tsvPath}`,
   );
