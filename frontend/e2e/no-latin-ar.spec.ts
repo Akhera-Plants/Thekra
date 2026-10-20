@@ -57,16 +57,16 @@ test('Arabic pages contain no Latin letters except the language switch', async (
 
   await expectArabic(page, '/branches');
   await expectArabic(page, '/branches/1');
-  await expectArabic(page, '/favorites');
   await expectArabic(page, '/about');
 
   const today = await page.request.get('http://127.0.0.1:3001/v1/quotes/today?lang=ar');
   const body = (await today.json()) as { data?: { id?: string } | null };
   if (body.data?.id) await expectArabic(page, `/quotes/${body.data.id}`);
 
+  // Current header has no separate «القائمة» drawer — chrome is inline (handoff).
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
-  await page.getByRole('button', { name: 'القائمة' }).click();
-  expect(latinLeaks(await visibleCopy(page)), 'mobile menu').toEqual([]);
-  await expect(page.locator('[data-locale-switch]').last()).toHaveText('English');
+  await page.waitForLoadState('networkidle');
+  expect(latinLeaks(await visibleCopy(page)), 'mobile header').toEqual([]);
+  await expect(page.locator('[data-locale-switch]').last()).toHaveText('En');
 });

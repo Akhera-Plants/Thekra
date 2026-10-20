@@ -22,6 +22,7 @@ import { formatGradeCitation } from '@/lib/format/grade-citation';
 import { Button } from '@/components/shared/kit/button';
 import { GradeBadge } from './GradeBadge';
 import { QuoteBody } from './QuoteBody';
+import { accountsEnabled } from '@/lib/accounts';
 import { FavoriteButton } from './FavoriteButton';
 import { ReportMistake } from './ReportMistake';
 
@@ -150,7 +151,9 @@ export function QuoteCard({
   const note = publicLinkNote(link?.note, arabic ? 'ar' : 'en');
   const hasDisclosure = Boolean(note);
   const showViewLink = Boolean(detailHref);
-  const showFavorite = Boolean(showFavoriteButton && onToggleFavorite);
+  const showFavorite = Boolean(
+    accountsEnabled() && showFavoriteButton && onToggleFavorite,
+  );
 
   const surahName = arabic
     ? quote.quran?.surahNameAr

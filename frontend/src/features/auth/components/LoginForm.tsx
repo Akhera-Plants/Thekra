@@ -27,7 +27,12 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-export function LoginForm() {
+interface LoginFormProps {
+  /** Where to go after a successful sign-in. Defaults to home. */
+  redirectTo?: string;
+}
+
+export function LoginForm({ redirectTo = '/' }: LoginFormProps) {
   const t = useTranslations('auth');
   const router = useRouter();
   const { mutateAsync: login, isPending } = useLogin();
@@ -41,7 +46,8 @@ export function LoginForm() {
     try {
       await login(values);
       toast.success(t('loginSuccess'));
-      router.push('/');
+      router.push(redirectTo);
+      router.refresh();
     } catch (err) {
       const message =
         err instanceof ApiError ? err.message : t('loginError');

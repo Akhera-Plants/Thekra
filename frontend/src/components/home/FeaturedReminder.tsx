@@ -7,6 +7,7 @@ import { Link } from '@/i18n/navigation';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { useFavoriteQuoteIds } from '@/features/favorites/hooks/useFavoriteQuoteIds';
 import { useToggleFavorite } from '@/features/favorites/hooks/useToggleFavorite';
+import { accountsEnabled } from '@/lib/accounts';
 import { formatDigits } from '@/lib/format/digits';
 import { formatGradeCitation } from '@/lib/format/grade-citation';
 import { englishProvenance } from '@/lib/format/provenance';
@@ -37,6 +38,7 @@ export function FeaturedReminder({ quote }: FeaturedReminderProps) {
   const t = useTranslations('home');
   const tFav = useTranslations('favorites');
   const locale = useLocale() === 'en' ? 'en' : 'ar';
+  const showSave = accountsEnabled();
   const { ids } = useFavoriteQuoteIds();
   const { toggle, isPending } = useToggleFavorite({
     labels: {
@@ -82,16 +84,18 @@ export function FeaturedReminder({ quote }: FeaturedReminderProps) {
     <article className="featured-reminder">
       <div className="section-topline">
         <h2>{t('todayHeading')}</h2>
-        <button
-          type="button"
-          className="icon-button save-button"
-          aria-label={saved ? tFav('remove') : tFav('add')}
-          aria-pressed={saved}
-          disabled={isPending}
-          onClick={() => toggle(quote.id, saved)}
-        >
-          <Bookmark className="size-[19px]" aria-hidden />
-        </button>
+        {showSave ? (
+          <button
+            type="button"
+            className="icon-button save-button"
+            aria-label={saved ? tFav('remove') : tFav('add')}
+            aria-pressed={saved}
+            disabled={isPending}
+            onClick={() => toggle(quote.id, saved)}
+          >
+            <Bookmark className="size-[19px]" aria-hidden />
+          </button>
+        ) : null}
       </div>
       <p className={isQuran ? 'quran featured-verse' : 'featured-verse'} lang={english ? 'en' : 'ar'}>
         {english ? <EnglishWithHonorific text={body} /> : body}

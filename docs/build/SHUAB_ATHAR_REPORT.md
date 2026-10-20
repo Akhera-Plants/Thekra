@@ -76,7 +76,31 @@ Screenshots of branch + `/sins/ghibah` (1440/390, ar/en) — captured after Phas
 
 ## Phase 3 — hide accounts
 
-_(pending)_
+Flag: `NEXT_PUBLIC_ACCOUNTS_ENABLED=false` (default in `frontend/.env.example`).
+
+Hidden when flag is off:
+- Header sign-in / register (`AuthNavItems`)
+- Favorites nav (`SavedNavLink`) + footer favorites link
+- Home featured-reminder save button
+- QuoteCard favorite button
+- `/login`, `/register`, `/favorites`, `/settings` redirect home
+
+Admin: `/admin` shows `LoginForm` inline when unauthenticated (`redirectTo=/admin`). Report-mistake stays.
+
+Playwright: dropped stale «القائمة» / `English` expectations; locale switch expects `En`. About page no longer leaks Latin from HadeethEnc `nameAr` (pure «موسوعة الأحاديث النبوية»).
+
+### Gates (Phase 3)
+
+| Check | Result |
+| --- | --- |
+| frontend / backend `tsc` | pass |
+| lint | pass (pre-existing warnings only) |
+| frontend unit | 25 passed |
+| backend unit | 476 passed |
+| backend e2e | 258 passed |
+| Playwright | 2 passed |
+| `import:book athar` re-run | `updated=0` |
+| Hidden-auth smoke | no sign-in/register/favorites/save on home; `/login` → `/`; `/admin` has email login |
 
 ## Phase 4 — Ibn Abi al-Dunya
 

@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useSession } from '@/features/auth/hooks/useSession';
+import { accountsEnabled } from '@/lib/accounts';
 import { Link, useRouter } from '@/i18n/navigation';
 
 function initials(name: string | null, email: string): string {
@@ -74,6 +75,10 @@ export function AuthNavItems() {
     () => true,
     () => false,
   );
+
+  if (!accountsEnabled()) {
+    return null;
+  }
 
   if (!mounted || isLoading || !isAuthenticated) {
     return <GuestAuthLinks signIn={t('signIn')} register={t('register')} />;

@@ -1,10 +1,12 @@
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
+import { accountsEnabled } from '@/lib/accounts';
 
 export async function SiteFooter() {
   const tApp = await getTranslations('app');
   const tNav = await getTranslations('nav');
   const tFooter = await getTranslations('footer');
+  const showAccounts = accountsEnabled();
 
   return (
     <footer className="site-footer">
@@ -29,7 +31,7 @@ export async function SiteFooter() {
           <h2 id="footer-about">{tFooter('aboutHeading')}</h2>
           <Link href="/about">{tNav('about')}</Link>
           <Link href="/about#content-methodology">{tFooter('methodology')}</Link>
-          <Link href="/favorites">{tNav('favorites')}</Link>
+          {showAccounts ? <Link href="/favorites">{tNav('favorites')}</Link> : null}
         </nav>
       </div>
       <div className="footer-bottom page-width">

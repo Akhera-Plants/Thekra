@@ -6,6 +6,7 @@ import { Link, usePathname } from '@/i18n/navigation';
 import { formatDigits } from '@/lib/format/digits';
 import { useFavoriteQuoteIds } from '@/features/favorites/hooks/useFavoriteQuoteIds';
 import { useSession } from '@/features/auth/hooks/useSession';
+import { accountsEnabled } from '@/lib/accounts';
 
 /** Favorites nav item with live count — lives in features (shared chrome must not fetch). */
 export function SavedNavLink() {
@@ -15,6 +16,10 @@ export function SavedNavLink() {
   const { ids } = useFavoriteQuoteIds();
   const current = pathname === '/favorites' || pathname.startsWith('/favorites/');
   const count = isAuthenticated && ids.size > 0 ? ids.size : 0;
+
+  if (!accountsEnabled()) {
+    return null;
+  }
 
   return (
     <Link

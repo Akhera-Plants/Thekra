@@ -4,16 +4,18 @@
  * AdminGuard — client-side guard that redirects non-admin users.
  *
  * Route-level protection: the backend already enforces ADMIN via JWT guard.
- * This guard provides client-side feedback (forbidden page, redirect to login)
+ * This guard provides client-side feedback (forbidden page, admin login entry)
  * so the UX is clean — it is not a security boundary.
+ *
+ * When public accounts chrome is hidden, /login redirects home — so unauthenticated
+ * admins sign in here on /admin instead.
  */
 
-import { useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { useRouter } from '@/i18n/navigation';
 import { useSession } from '@/features/auth/hooks/useSession';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ShieldOff } from 'lucide-react';
+import { LoginForm } from '@/features/auth/components/LoginForm';
 
 interface AdminGuardProps {
   children: React.ReactNode;
@@ -21,14 +23,8 @@ interface AdminGuardProps {
 
 export function AdminGuard({ children }: AdminGuardProps) {
   const { user, isLoading } = useSession();
-  const router = useRouter();
   const t = useTranslations('admin');
-
-  useEffect(() => {
-    if (!isLoading && user === null) {
-      router.replace('/login');
-    }
-  }, [isLoading, user, router]);
+  const tAuth = useTranslations('auth');
 
   if (isLoading) {
     return (
@@ -41,7 +37,15 @@ export function AdminGuard({ children }: AdminGuardProps) {
   }
 
   if (!user) {
-    return null;
+    return (
+      <div className="mx-auto flex w-full max-w-sm flex-col gap-6 px-4 py-12">
+        <div className="flex flex-col gap-2 text-center">
+          <h1 className="text-2xl font-semibold">{tAuth('loginTitle')}</h1>
+          <p className="text-sm text-muted-foreground">{tAuth('loginSubtitle')}</p>
+        </div>
+        <LoginForm redirectTo="/admin" />
+      </div>
+    );
   }
 
   if (user.role !== 'ADMIN' && user.role !== 'REVIEWER') {

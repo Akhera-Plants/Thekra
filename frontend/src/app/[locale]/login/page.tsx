@@ -1,7 +1,9 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import type { Metadata } from 'next';
+import { redirect } from '@/i18n/navigation';
 import { Link } from '@/i18n/navigation';
 import { LoginForm } from '@/features/auth/components/LoginForm';
+import { accountsEnabled } from '@/lib/accounts';
 
 interface LoginPageProps {
   params: Promise<{ locale: string }>;
@@ -16,6 +18,10 @@ export async function generateMetadata({ params }: LoginPageProps): Promise<Meta
 export default async function LoginPage({ params }: LoginPageProps) {
   const { locale } = await params;
   setRequestLocale(locale);
+
+  if (!accountsEnabled()) {
+    redirect({ href: '/', locale });
+  }
 
   const t = await getTranslations({ locale, namespace: 'auth' });
 

@@ -143,8 +143,8 @@ export const APPROVED_WORKS = [
   {
     id: '10000000-0000-4000-8000-000000000026',
     bookKey: 'book:hadeethenc',
-    name: 'Hadith Encyclopedia — HadeethEnc',
-    nameAr: 'موسوعة الأحاديث النبوية — HadeethEnc',
+    name: 'Hadith Encyclopedia',
+    nameAr: 'موسوعة الأحاديث النبوية',
     type: SourceType.HADITH_COLLECTION,
     author: 'Hadith Encyclopedia',
     authorAr: 'موسوعة الأحاديث النبوية',
