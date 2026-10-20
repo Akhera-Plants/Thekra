@@ -222,6 +222,7 @@ export async function runSunanTahqiq(options: ImportOptions): Promise<void> {
     select: {
       id: true,
       textAr: true,
+      matnAr: true,
       grade: true,
       gradeSource: true,
       gradeAuthority: true,
@@ -237,7 +238,9 @@ export async function runSunanTahqiq(options: ImportOptions): Promise<void> {
   const quotes: QuoteRow[] = applyLimit(stored, options.limit).map((row) => ({
     ...row,
     sourceNameAr: row.source.nameAr,
-    matn: normalizeMatn(splitMatn(row.textAr).matnText || row.textAr),
+    matn: normalizeMatn(
+      (row.matnAr && row.matnAr.trim()) || splitMatn(row.textAr).matnText || row.textAr,
+    ),
   }));
   console.log(`linked quotes ${quotes.length}`);
   const sahihaynQuoteIds = new Set((quotes.length === 0

@@ -553,6 +553,7 @@ export async function runTakhrij(options: ImportOptions): Promise<void> {
     select: {
       id: true,
       textAr: true,
+      matnAr: true,
       grade: true,
       gradeSource: true,
       gradeAuthority: true,
@@ -583,7 +584,9 @@ export async function runTakhrij(options: ImportOptions): Promise<void> {
     rawPayload: row.rawPayload,
     sourceName: row.source.name,
     sourceNameAr: row.source.nameAr,
-    matn: normalizeMatn(splitMatn(row.textAr).matnText || row.textAr),
+    matn: normalizeMatn(
+      (row.matnAr && row.matnAr.trim()) || splitMatn(row.textAr).matnText || row.textAr,
+    ),
   }));
 
   const references = await options.prisma.referenceHadith.findMany({

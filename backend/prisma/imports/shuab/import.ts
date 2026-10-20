@@ -3,7 +3,8 @@
  * every narration as an UNGRADED Quote, linked ACCEPTED to the branch the author
  * placed it under (owner rule: the book's own structure is the classification).
  */
-import { HadithGrade, LinkReviewStatus, type Prisma } from '@prisma/client';
+import { ClassifiedBy, HadithGrade, LinkBasis, LinkReviewStatus, type Prisma } from '@prisma/client';
+import { splitMatn } from '../../../src/common/text/matn.js';
 import { inTransactionBatches } from '../lib/batch.js';
 import { applyLimit, pickRandom, preview, type ImportOptions } from '../lib/cli.js';
 import { loadCorpus, provenanceOf, type CorpusSpec } from '../lib/corpus.js';
@@ -109,8 +110,11 @@ function toQuoteRow(
   apiProvider: string,
   provenance: ReturnType<typeof provenanceOf>,
 ): BookQuoteRow {
+  const { matnText } = splitMatn(narration.textAr);
+  const matnAr = matnText.trim() || narration.textAr;
   const rawPayload: Prisma.InputJsonObject = {
     ...provenance,
+    fullTextAr: narration.textAr,
     chapterTitle: narration.chapterTitle,
     branchNumber: narration.branchNumber,
     corpusLine: narration.line,
@@ -122,6 +126,7 @@ function toQuoteRow(
     externalId: shuabExternalId(narration),
     sourceId,
     textAr: narration.textAr,
+    matnAr,
     referenceNumber: narration.number,
     volume: narration.volume === null ? null : String(narration.volume),
     page: narration.page === null ? null : String(narration.page),
@@ -178,6 +183,8 @@ async function upsertBranchLinks(
         relevanceScore: LINK_RELEVANCE,
         note: `من الشعبة ${link.branchNumber} في الكتاب`,
         reviewStatus: LinkReviewStatus.ACCEPTED,
+        basis: LinkBasis.CHAPTER,
+        classifiedBy: ClassifiedBy.BOOK,
       },
       // A curator may have re-scored, re-noted or rejected the link: never overwrite it.
       update: {},

@@ -14,6 +14,8 @@ export interface BookQuoteRow {
   externalId: string;
   sourceId: string;
   textAr: string;
+  /** Matn only when the importer stripped an isnad. */
+  matnAr?: string | null;
   referenceNumber: number | null;
   referenceLabel?: string | null;
   volume: string | null;
@@ -26,6 +28,8 @@ export interface BookQuoteRow {
   textSource?: TextSource;
   /** Book prose is a BOOK_EXCERPT. Narrations stay HADITH. */
   type?: QuoteType;
+  isAthar?: boolean;
+  atharSpeakerKey?: string | null;
 }
 
 export interface UpsertOutcome {
@@ -60,6 +64,9 @@ export async function upsertBookQuotes(
       type: row.type ?? QuoteType.HADITH,
       origin: QuoteOrigin.LOCAL,
       textAr: row.textAr,
+      matnAr: row.matnAr ?? null,
+      isAthar: row.isAthar ?? false,
+      atharSpeakerKey: row.atharSpeakerKey ?? null,
       sourceId: row.sourceId,
       referenceNumber: row.referenceNumber,
       referenceLabel: row.referenceLabel ?? null,

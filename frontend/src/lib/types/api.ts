@@ -116,9 +116,12 @@ export interface QuoteDto {
     page: string | null;
     gradeAuthority: string | null;
     gradeReference: string | null;
+    alsoIn?: string | null;
   };
   source: QuoteSourceDto;
   tags: QuoteTagDto[];
+  isAthar?: boolean;
+  atharSpeakerKey?: string | null;
   external: { apiProvider: string | null; externalId: string | null } | null;
   isFavorite?: boolean;
   createdAt: string;

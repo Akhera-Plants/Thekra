@@ -20,6 +20,9 @@ function makeRow(overrides: Partial<QuoteRowForDto> = {}): QuoteRowForDto {
     type: QuoteType.HADITH,
     origin: QuoteOrigin.LOCAL,
     textAr: 'نص عربي',
+    matnAr: null,
+    isAthar: false,
+    atharSpeakerKey: null,
     sourceId: 'src-1',
     surahNumber: null,
     surahName: null,
@@ -116,7 +119,9 @@ describe('QuotesService', () => {
         page: '120',
         gradeAuthority: null,
         gradeReference: null,
+        alsoIn: null,
       });
+      expect(dto.isAthar).toBe(false);
       expect(dto).not.toHaveProperty('rawPayload');
       expect(dto).not.toHaveProperty('volume');
       expect(dto).not.toHaveProperty('page');

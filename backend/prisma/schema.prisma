@@ -282,6 +282,14 @@ model Quote {
   apiProvider String?
   rawPayload  Json?
 
+  /// Matn only (isnad stripped). Full edition text may remain in textAr and/or rawPayload.fullTextAr.
+  matnAr String?
+
+  /// Athar (Companion / Successor saying), not a prophetic hadith. Never graded as hadith.
+  isAthar         Boolean @default(false)
+  /// Key from taxonomy/athar-speakers.yaml when the speaker is listed; null when unlisted or marfu.
+  atharSpeakerKey String?
+
   /// DIGITAL: OpenITI and other keyed digital text. OCR: Document AI, hidden
   /// until textVerifiedAt. MANUAL: seed, API, and curator entry (the default).
   textSource     TextSource @default(MANUAL)
@@ -643,12 +651,15 @@ model ImanBranchQuote {
   relevanceScore Int?             @default(0)
   note           String?
   reviewStatus   LinkReviewStatus @default(NOT_REVIEWED)
+  basis          LinkBasis        @default(MANUAL)
+  classifiedBy   ClassifiedBy     @default(BOOK)
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 
   @@unique([imanBranchId, quoteId])
   @@index([quoteId])
   @@index([imanBranchId, relevanceScore(sort: Desc, nulls: Last)])
+  @@index([basis])
 }
 
 model ImanBranchGoodDeed {

@@ -95,15 +95,49 @@ export interface QuoteDto {
     page: string | null;
     gradeAuthority: string | null;
     gradeReference: string | null;
+    /** Second provenance line (e.g. Shu'ab when the matn is a Sahihayn match). */
+    alsoIn: string | null;
   };
   source: QuoteSourceDto;
   tags: QuoteTagDto[];
   textSource: TextSource;
   textVerifiedAt: Date | null;
+  /** Athar (Companion/Successor saying). Never mixed with hadith grades. */
+  isAthar: boolean;
+  atharSpeakerKey: string | null;
   external: { apiProvider: string | null; externalId: string | null } | null;
   isFavorite?: boolean;
   createdAt: Date;
   updatedAt: Date;
+}
+
+function publicTextAr(row: QuoteRowForDto): string {
+  if (row.gradeSource === GradeSource.AUTO_SAHIHAYN) {
+    return row.matches[0]?.referenceHadith.matnText.trim() || row.matnAr || row.textAr;
+  }
+  // Shu'ab (and any row with a stored matn): never show the chain publicly.
+  if (row.matnAr && row.matnAr.trim().length > 0) return row.matnAr.trim();
+  return row.textAr;
+}
+
+function shuabAlsoIn(row: QuoteRowForDto, locale: 'ar' | 'en'): string | null {
+  if (row.apiProvider !== 'book:shuab-iman') return null;
+  if (
+    row.gradeSource !== GradeSource.AUTO_SAHIHAYN &&
+    row.gradeSource !== GradeSource.SUNAN_TAHQIQ &&
+    row.gradeSource !== GradeSource.HADEETHENC
+  ) {
+    return null;
+  }
+  const number = row.referenceNumber;
+  if (locale === 'en') {
+    return number == null
+      ? "Also in Bayhaqi's Shu'ab al-Iman"
+      : `Also in Bayhaqi's Shu'ab al-Iman, no. ${number}`;
+  }
+  return number == null
+    ? 'ورد في الجامع لشعب الإيمان للبيهقي'
+    : `ورد في الجامع لشعب الإيمان للبيهقي، رقم ${number}`;
 }
 
 export function mapQuoteToDto(
@@ -119,9 +153,7 @@ export function mapQuoteToDto(
     id: row.id,
     type: row.type,
     origin: row.origin,
-    textAr: row.gradeSource === 'AUTO_SAHIHAYN'
-      ? (row.matches[0]?.referenceHadith.matnText.trim() || row.textAr)
-      : row.textAr,
+    textAr: publicTextAr(row),
     translation: translation
       ? { languageCode: translation.languageCode, text: translation.text }
       : null,
@@ -139,7 +171,8 @@ export function mapQuoteToDto(
         ? {
             narrator: row.narrator,
             narratorAr: row.narratorAr,
-            grade: row.grade,
+            // Athar never carry a hadith grade on the public card.
+            grade: row.isAthar ? null : row.grade,
             reference: formatPrintedReference({
               locale,
               workAr: row.source.nameAr,
@@ -161,8 +194,9 @@ export function mapQuoteToDto(
     citation: {
       volume: row.volume,
       page: row.page,
-      gradeAuthority: row.gradeAuthority,
-      gradeReference: row.gradeReference,
+      gradeAuthority: row.isAthar ? null : row.gradeAuthority,
+      gradeReference: row.isAthar ? null : row.gradeReference,
+      alsoIn: shuabAlsoIn(row, locale),
     },
     source: {
       id: row.source.id,
@@ -183,6 +217,8 @@ export function mapQuoteToDto(
     })),
     textSource: row.textSource,
     textVerifiedAt: row.textVerifiedAt,
+    isAthar: row.isAthar,
+    atharSpeakerKey: row.atharSpeakerKey,
     external:
       row.origin === 'API_CACHED'
         ? { apiProvider: row.apiProvider, externalId: row.externalId }

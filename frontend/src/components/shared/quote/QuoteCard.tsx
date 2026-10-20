@@ -294,7 +294,7 @@ export function QuoteCard({
                       </span>
                     );
                   })()}
-                  {grade && grade !== HadithGrade.UNGRADED ? (
+                  {grade && grade !== HadithGrade.UNGRADED && !quote.isAthar ? (
                     <GradeBadge grade={grade} label={t(`grade.${grade.toLowerCase()}`)} />
                   ) : null}
                 </div>
@@ -311,9 +311,21 @@ export function QuoteCard({
                     {arabic ? narrator : (englishProvenance(narrator) ?? narrator)}
                   </p>
                 ) : null}
-                {!hasDisclosure && gradeLine ? (
+                {!hasDisclosure && gradeLine && !quote.isAthar ? (
                   <p className="text-xs text-muted-foreground">
                     <FormattedNumber value={gradeLine} />
+                  </p>
+                ) : null}
+                {quote.citation?.alsoIn ? (
+                  <p
+                    dir={/[\u0600-\u06FF]/.test(quote.citation.alsoIn) ? 'rtl' : 'ltr'}
+                    lang={/[\u0600-\u06FF]/.test(quote.citation.alsoIn) ? 'ar' : 'en'}
+                    className={cn(
+                      'text-xs text-muted-foreground',
+                      arabic && 'font-arabic-ui',
+                    )}
+                  >
+                    <FormattedNumber value={quote.citation.alsoIn} />
                   </p>
                 ) : null}
                 {isWeak ? (
