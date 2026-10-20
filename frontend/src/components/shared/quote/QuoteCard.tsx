@@ -4,6 +4,7 @@ import { useId, useState } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import {
   ArrowRight,
+  BookMarked,
   BookOpen,
   ChevronDown,
   Info,
@@ -18,6 +19,7 @@ import { HadithGrade, QuoteType } from '@/lib/types/enums';
 import { publicLinkNote } from '@/lib/format/link-note';
 import { englishProvenance } from '@/lib/format/provenance';
 import { formatGradeCitation } from '@/lib/format/grade-citation';
+import { Button } from '@/components/shared/kit/button';
 import { GradeBadge } from './GradeBadge';
 import { QuoteBody } from './QuoteBody';
 import { FavoriteButton } from './FavoriteButton';
@@ -76,6 +78,8 @@ export interface QuoteCardProps extends VariantProps<typeof quoteCardVariants> {
   showFavoriteButton?: boolean;
   onToggleFavorite?: (quoteId: string, currentlyFavorited: boolean) => void;
   isFavoritePending?: boolean;
+  /** Opens the study panel (tafsir / sharh). */
+  onOpenStudy?: (quote: QuoteDto) => void;
   className?: string;
 }
 
@@ -118,6 +122,7 @@ function ContextLink({
 export function QuoteCard({
   quote,
   link,
+  onOpenStudy,
   detailHref,
   density,
   intent,
@@ -351,6 +356,23 @@ export function QuoteCard({
         <div id={`quote-${quote.id}-text`} className="min-w-0 overflow-visible">
           <QuoteBody quote={quote} />
         </div>
+
+        {onOpenStudy && (isQuran || isHadith) ? (
+          <Button
+            type="button"
+            variant="ghost"
+            tone="neutral"
+            size="sm"
+            icon={<BookMarked aria-hidden />}
+            className={cn(
+              'self-start text-muted-foreground hover:text-foreground',
+              arabic && 'font-arabic-ui',
+            )}
+            onClick={() => onOpenStudy(quote)}
+          >
+            {isQuran ? t('openTafsir') : t('openSharh')}
+          </Button>
+        ) : null}
 
         {hasDisclosure ? (
           <div

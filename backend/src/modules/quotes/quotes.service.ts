@@ -1019,6 +1019,9 @@ export class QuotesService {
 
     const or: Prisma.ExplanationWhereInput[] = [
       { kind: ExplanationKind.SHARH, quoteId: quote.id },
+      { kind: ExplanationKind.FAWAID, quoteId: quote.id },
+      { kind: ExplanationKind.GHARIB, quoteId: quote.id },
+      { kind: ExplanationKind.SHARH_LONG, quoteId: quote.id },
     ];
     if (quote.type === QuoteType.QURAN_VERSE && quote.surahNumber && quote.ayahNumber) {
       const key = `${quote.surahNumber}:${quote.ayahNumber}`;

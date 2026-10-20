@@ -300,6 +300,8 @@
     "viewContext": "عرض السياق كاملًا",
     "whyVerse": "لماذا هذه الآية؟",
     "whyHadith": "لماذا هذا الحديث؟",
+    "openTafsir": "التفسير",
+    "openSharh": "الشرح",
     "tafsirEmpty": "لا يوجد نص لهذا الموضع",
     "report": "أبلغ عن خطأ",
     "reportReason": "سبب البلاغ",
@@ -320,6 +322,31 @@
     "relatedSins": "معاصي ذات صلة",
     "relatedGoodDeeds": "أعمال مرتبطة"
   },
+  "studyPanel": {
+    "titleTafsir": "التفسير",
+    "titleSharh": "الشرح",
+    "loading": "جارٍ التحميل…",
+    "error": "تعذّر تحميل النص",
+    "empty": "لا يوجد نص لهذا الموضع",
+    "readMore": "اقرأ المزيد",
+    "readLess": "عرض أقل",
+    "close": "إغلاق",
+    "share": "نسخ الرابط",
+    "expand": "صفحة كاملة",
+    "previous": "السابق",
+    "next": "التالي",
+    "tabs": {
+      "mukhtasar": "المعنى",
+      "sadi": "السعدي",
+      "ashur": "التحرير والتنوير",
+      "sharh": "الشرح",
+      "fawaid": "الفوائد",
+      "gharib": "معاني الكلمات",
+      "fath": "فتح الباري",
+      "nawawi": "شرح النووي"
+    }
+  },
+
   "feelings": {
     "pageTitle": "اقتباسات — {tag}",
     "noQuotes": "لا توجد اقتباسات لهذا الموضوع",

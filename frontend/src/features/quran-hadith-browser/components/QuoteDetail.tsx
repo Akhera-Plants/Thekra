@@ -1,15 +1,17 @@
 'use client';
 
+import { useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { FormattedNumber } from '@/components/shared/FormattedNumber';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Link } from '@/i18n/navigation';
+import { Button } from '@/components/shared/kit/button';
 import { GradeBadge } from '@/components/shared/quote/GradeBadge';
 import { QuoteBody } from '@/components/shared/quote/QuoteBody';
-import { VerseTafsir } from '@/features/quran-hadith-browser/components/VerseTafsir';
 import { ReportMistake } from '@/components/shared/quote/ReportMistake';
 import { SourceAttribution } from '@/components/shared/quote/SourceAttribution';
+import { StudyPanel } from '@/features/study-panel/components/StudyPanel';
 import type { QuoteDetailDto } from '@/lib/types/api';
 import { HadithGrade } from '@/lib/types/enums';
 
@@ -25,10 +27,12 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
   const t = useTranslations('quote');
   const tDetail = useTranslations('quoteDetail');
   const arabic = useLocale() === 'ar';
+  const [studyOpen, setStudyOpen] = useState(false);
 
   const grade = quote.hadith?.grade;
   const isWeak =
     grade === HadithGrade.DAIF || grade === HadithGrade.MAWDU;
+  const canStudy = quote.type === 'QURAN_VERSE' || quote.type === 'HADITH';
 
   return (
     <article className="flex flex-col gap-6">
@@ -68,7 +72,25 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
         )}
       </QuoteBody>
 
-      {quote.type === 'QURAN_VERSE' && <VerseTafsir quoteId={quote.id} />}
+      {canStudy ? (
+        <Button
+          type="button"
+          variant="outline"
+          tone="neutral"
+          size="sm"
+          className="self-start"
+          onClick={() => setStudyOpen(true)}
+        >
+          {quote.type === 'QURAN_VERSE' ? t('openTafsir') : t('openSharh')}
+        </Button>
+      ) : null}
+
+      <StudyPanel
+        open={studyOpen}
+        onOpenChange={setStudyOpen}
+        quote={quote}
+        listIds={[quote.id]}
+      />
 
       <Separator />
 

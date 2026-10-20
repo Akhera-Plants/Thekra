@@ -300,6 +300,8 @@
     "viewContext": "View full context",
     "whyVerse": "Why this verse?",
     "whyHadith": "Why this hadith?",
+    "openTafsir": "Tafsir",
+    "openSharh": "Commentary",
     "tafsirEmpty": "No text for this verse",
     "report": "Report a mistake",
     "reportReason": "Reason",
@@ -319,6 +321,30 @@
     "pageTitle": "Quote",
     "relatedSins": "Related sins",
     "relatedGoodDeeds": "Related good deeds"
+  },
+  "studyPanel": {
+    "titleTafsir": "Tafsir",
+    "titleSharh": "Commentary",
+    "loading": "Loading…",
+    "error": "Could not load the text",
+    "empty": "No text for this place",
+    "readMore": "Read more",
+    "readLess": "Show less",
+    "close": "Close",
+    "share": "Copy link",
+    "expand": "Full page",
+    "previous": "Previous",
+    "next": "Next",
+    "tabs": {
+      "mukhtasar": "Meaning",
+      "sadi": "Al-Sa'di",
+      "ashur": "Al-Tahrir wa al-Tanwir",
+      "sharh": "Commentary",
+      "fawaid": "Benefits",
+      "gharib": "Word meanings",
+      "fath": "Fath al-Bari",
+      "nawawi": "Nawawi's commentary"
+    }
   },
   "feelings": {
     "pageTitle": "Quotes — {tag}",

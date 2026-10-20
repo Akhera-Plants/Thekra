@@ -36,7 +36,26 @@ Passages are often keyed `# [N]` in Fath / Abd al-Baqi numbering, but:
 
 ## Phase 3 — study panel
 
-_(filled when Phase 3 lands)_
+- Trigger: quiet «التفسير» / «الشرح» on `QuoteCard` (+ quote detail); opens kit `Sheet` + `SegmentTabs`.
+- Verse tabs: المعنى (المختصر) / السعدي / التحرير والتنوير; en: Meaning (Mukhtasar) only when EN text exists.
+- Hadith tabs: الشرح / الفوائد / معاني الكلمات (+ فتح الباري / شرح النووي when SHARH_LONG exists — none after Phase 2 STOP).
+- Reading: ≤68ch, Quranic spans in Quran font + accent, long texts truncated at ~1200 chars with «اقرأ المزيد».
+- Toolbar: expand (`/quran/[surah]/[ayah]`, `/hadith/[id]`), share (copy link + tab), prev/next, close; Esc / ←→.
+- Removed inline `VerseTafsir` accordions.
+- Screenshots: `docs/design/after/study/` (verse + hadith × light/dark × 1440/390 × ar/en).
+
+### Gates (Phase 3)
+
+| Check | Result |
+| --- | --- |
+| frontend `tsc --noEmit` | pass |
+| backend `tsc --noEmit` | pass |
+| frontend lint | pass (1 pre-existing LogoLoop `<img>` warning) |
+| backend lint | pass (pre-existing unbound-method warnings in specs) |
+| frontend unit | 25 passed |
+| backend unit | 446 passed |
+| backend e2e | 258 passed |
+| taxonomy importer re-run | `created=0 updated=0 deleted=0` (topics + links) |
 
 ## Phase 4 — deploy prep
 

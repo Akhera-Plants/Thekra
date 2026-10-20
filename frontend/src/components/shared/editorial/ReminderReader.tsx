@@ -8,6 +8,7 @@ import { SegmentTabs } from '@/components/shared/kit/segment-tabs';
 import type { QuoteCardIntent } from '@/components/shared/quote/QuoteCard';
 import type { QuoteDto } from '@/lib/types/api';
 import { QuoteType } from '@/lib/types/enums';
+import { StudyPanel } from '@/features/study-panel/components/StudyPanel';
 
 export interface ReaderItem {
   id: string;
@@ -63,6 +64,7 @@ export function ReminderReader({
   const [filter, setFilter] = useState<TypeFilter>('all');
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [studyQuoteId, setStudyQuoteId] = useState<string | null>(null);
 
   const allItems = useMemo(() => {
     if (sections && sections.length > 0) {
@@ -148,6 +150,22 @@ export function ReminderReader({
     },
   ];
 
+  const studyListIds = useMemo(
+    () =>
+      filteredFlat
+        .filter(
+          (item) =>
+            item.quote.type === QuoteType.QURAN_VERSE
+            || item.quote.type === QuoteType.HADITH,
+        )
+        .map((item) => item.quote.id),
+    [filteredFlat],
+  );
+  const studyQuote =
+    studyQuoteId
+      ? (allItems.find((item) => item.quote.id === studyQuoteId)?.quote ?? null)
+      : null;
+
   return (
     <div className="flex w-full min-w-0 flex-col gap-8">
       <SegmentTabs
@@ -177,6 +195,7 @@ export function ReminderReader({
                     link={item.note ? { relevanceScore: null, note: item.note } : null}
                     detailHref={`/quotes/${item.quote.id}`}
                     intent={intent}
+                    onOpenStudy={(quote) => setStudyQuoteId(quote.id)}
                   />
                 </li>
               ))}
@@ -201,6 +220,16 @@ export function ReminderReader({
           </Button>
         </div>
       ) : null}
+
+      <StudyPanel
+        open={Boolean(studyQuote)}
+        onOpenChange={(open) => {
+          if (!open) setStudyQuoteId(null);
+        }}
+        quote={studyQuote}
+        listIds={studyListIds}
+        onNavigate={setStudyQuoteId}
+      />
     </div>
   );
 }
