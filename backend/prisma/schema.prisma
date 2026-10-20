@@ -289,6 +289,8 @@ model Quote {
   isAthar         Boolean @default(false)
   /// Key from taxonomy/athar-speakers.yaml when the speaker is listed; null when unlisted or marfu.
   atharSpeakerKey String?
+  /// Display name (Arabic) for the listed speaker; null when unlisted or marfu.
+  atharSpeakerAr  String?
 
   /// DIGITAL: OpenITI and other keyed digital text. OCR: Document AI, hidden
   /// until textVerifiedAt. MANUAL: seed, API, and curator entry (the default).

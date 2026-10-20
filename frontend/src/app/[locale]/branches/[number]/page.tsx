@@ -111,6 +111,8 @@ export default async function BranchDetailPage({
               tabAll: tDetail('typeAll'),
               tabVerses: tDetail('typeVerses'),
               tabHadith: tDetail('typeHadith'),
+              tabAthar: tDetail('typeAthar'),
+              atharSection: tDetail('atharSection'),
               tabsLabel: tDetail('tabsLabel'),
             }}
           />

@@ -328,6 +328,32 @@ export function QuoteCard({
                     <FormattedNumber value={quote.citation.alsoIn} />
                   </p>
                 ) : null}
+                {quote.isAthar && quote.atharSpeakerAr ? (
+                  <p
+                    dir="rtl"
+                    lang="ar"
+                    className={cn(
+                      'text-[13px] text-muted-foreground md:text-[14px]',
+                      'font-arabic-ui',
+                    )}
+                  >
+                    — {quote.atharSpeakerAr}
+                  </p>
+                ) : null}
+                {quote.isAthar ? (
+                  <p
+                    dir={arabic ? 'rtl' : 'ltr'}
+                    lang={arabic ? 'ar' : 'en'}
+                    className={cn(
+                      'text-xs text-muted-foreground',
+                      arabic && 'font-arabic-ui',
+                    )}
+                  >
+                    {arabic
+                      ? `أثر، وليس حديثًا${hadithRef ? ` · ${hadithRef}` : quietSource ? ` · ${quietSource}` : ''}`
+                      : `A saying, not a hadith${hadithRef ? ` · ${hadithRef}` : quietSource ? ` · ${quietSource}` : ''}`}
+                  </p>
+                ) : null}
                 {isWeak ? (
                   <p role="note" className="text-xs text-muted-foreground">
                     {t('weakNotice')}

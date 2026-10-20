@@ -213,6 +213,8 @@
     "typeVerses": "الآيات",
     "typeQuran": "قرآن",
     "typeHadith": "الأحاديث",
+    "typeAthar": "الآثار",
+    "atharSection": "من أقوال السلف",
     "typeScholar": "أقوال العلماء",
     "typeBook": "كتب",
     "tabsLabel": "تصفية النصوص",
@@ -247,6 +249,8 @@
     "typeVerses": "الآيات",
     "typeQuran": "قرآن",
     "typeHadith": "الأحاديث",
+    "typeAthar": "الآثار",
+    "atharSection": "من أقوال السلف",
     "typeScholar": "أقوال العلماء",
     "typeBook": "كتب",
     "tabsLabel": "تصفية النصوص"

@@ -47,7 +47,32 @@ Note: the mid-band did not shrink. The backend `splitMatn` already cut most Bayh
 
 ## Phase 2 — athar
 
-_(pending)_
+Classifier: `backend/src/common/text/athar-classify.ts` (30/30 unit samples in `athar-classify.spec.ts`).
+
+| Metric | Value |
+| --- | ---: |
+| Narrations classified | 12527 |
+| MARFU | 2535 |
+| ATHAR | 9992 |
+| Listed speakers (public) | 827 |
+| Unlisted (hidden; TSV) | 9165 |
+| Idempotent re-run updates | 0 |
+
+- Reviewer file: `docs/taxonomy/athar-unlisted-speakers.tsv`
+- Speakers YAML: `backend/prisma/taxonomy/athar-speakers.yaml`
+- Public: listed athar via `GradePolicy` (`isAthar` + `atharSpeakerKey`); ReminderReader section «من أقوال السلف» + tab «الآثار» / «Sayings of the Salaf»; QuoteCard shows «— speaker» and «أثر، وليس حديثًا» (no grade badge)
+
+### Gates (Phase 2)
+
+| Check | Result |
+| --- | --- |
+| tsc / lint | pass |
+| frontend unit | 25 passed |
+| backend unit | 476 passed (incl. 30 classifier samples) |
+| backend e2e | 258 passed |
+| `import:book athar` re-run | `updated=0` |
+
+Screenshots of branch + `/sins/ghibah` (1440/390, ar/en) — captured after Phase 3 when servers are up, or noted if deferred.
 
 ## Phase 3 — hide accounts
 

@@ -213,6 +213,8 @@
     "typeVerses": "Verses",
     "typeQuran": "Quran",
     "typeHadith": "Hadith",
+    "typeAthar": "Sayings of the Salaf",
+    "atharSection": "Sayings of the Salaf",
     "typeScholar": "Scholar quotes",
     "typeBook": "Books",
     "tabsLabel": "Filter texts",
@@ -247,6 +249,8 @@
     "typeVerses": "Verses",
     "typeQuran": "Quran",
     "typeHadith": "Hadith",
+    "typeAthar": "Sayings of the Salaf",
+    "atharSection": "Sayings of the Salaf",
     "typeScholar": "Scholar quotes",
     "typeBook": "Books",
     "tabsLabel": "Filter texts"

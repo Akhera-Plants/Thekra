@@ -23,6 +23,8 @@ export function SinReader({ items, total, sections }: SinReaderProps) {
         tabAll: t('typeAll'),
         tabVerses: t('typeVerses'),
         tabHadith: t('typeHadith'),
+        tabAthar: t('typeAthar'),
+        atharSection: t('atharSection'),
         tabsLabel: t('tabsLabel'),
       }}
     />

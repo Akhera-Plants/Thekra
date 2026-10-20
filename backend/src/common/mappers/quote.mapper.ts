@@ -105,6 +105,7 @@ export interface QuoteDto {
   /** Athar (Companion/Successor saying). Never mixed with hadith grades. */
   isAthar: boolean;
   atharSpeakerKey: string | null;
+  atharSpeakerAr: string | null;
   external: { apiProvider: string | null; externalId: string | null } | null;
   isFavorite?: boolean;
   createdAt: Date;
@@ -219,6 +220,7 @@ export function mapQuoteToDto(
     textVerifiedAt: row.textVerifiedAt,
     isAthar: row.isAthar,
     atharSpeakerKey: row.atharSpeakerKey,
+    atharSpeakerAr: row.atharSpeakerAr,
     external:
       row.origin === 'API_CACHED'
         ? { apiProvider: row.apiProvider, externalId: row.externalId }

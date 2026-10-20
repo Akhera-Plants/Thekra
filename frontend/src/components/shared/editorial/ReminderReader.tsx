@@ -21,7 +21,7 @@ export interface ReaderSection {
   items: ReaderItem[];
 }
 
-type TypeFilter = 'all' | 'verse' | 'hadith';
+type TypeFilter = 'all' | 'verse' | 'hadith' | 'athar';
 
 const PAGE_SIZE = 10;
 
@@ -35,18 +35,43 @@ interface ReminderReaderProps {
     tabAll: string;
     tabVerses: string;
     tabHadith: string;
+    tabAthar?: string;
+    atharSection?: string;
     tabsLabel: string;
   };
+}
+
+function isAtharItem(item: ReaderItem): boolean {
+  return Boolean(item.quote.isAthar);
 }
 
 function matchesFilter(item: ReaderItem, filter: TypeFilter): boolean {
   if (filter === 'all') return true;
   if (filter === 'verse') return item.quote.type === QuoteType.QURAN_VERSE;
-  return item.quote.type === QuoteType.HADITH;
+  if (filter === 'athar') return isAtharItem(item);
+  // Hadith tab: prophetic hadith only — never mix athar.
+  return item.quote.type === QuoteType.HADITH && !isAtharItem(item);
 }
 
 function countOf(items: ReaderItem[], filter: TypeFilter): number {
   return items.filter((item) => matchesFilter(item, filter)).length;
+}
+
+/** When the caller passes a flat list, split athar into its own section after hadith. */
+function withAtharSection(
+  items: ReaderItem[],
+  sections: ReaderSection[] | undefined,
+  atharHeading: string | undefined,
+): ReaderSection[] {
+  if (sections && sections.length > 0) return sections;
+  if (!atharHeading) return [{ heading: '', items }];
+  const athar = items.filter(isAtharItem);
+  if (athar.length === 0) return [{ heading: '', items }];
+  const main = items.filter((item) => !isAtharItem(item));
+  return [
+    ...(main.length > 0 ? [{ heading: '', items: main }] : []),
+    { heading: atharHeading, items: athar },
+  ];
 }
 
 /**
@@ -66,22 +91,28 @@ export function ReminderReader({
   const [loadingMore, setLoadingMore] = useState(false);
   const [studyQuoteId, setStudyQuoteId] = useState<string | null>(null);
 
-  const allItems = useMemo(() => {
-    if (sections && sections.length > 0) {
-      return sections.flatMap((section) => section.items);
-    }
-    return items;
-  }, [items, sections]);
+  const baseSections = useMemo(
+    () => withAtharSection(items, sections, labels.atharSection),
+    [items, sections, labels.atharSection],
+  );
+
+  const allItems = useMemo(
+    () => baseSections.flatMap((section) => section.items),
+    [baseSections],
+  );
 
   const verseCount = countOf(allItems, 'verse');
   const hadithCount = countOf(allItems, 'hadith');
+  const atharCount = countOf(allItems, 'athar');
   const allCount = allItems.length;
   const activeFilter: TypeFilter =
     filter === 'verse' && verseCount === 0
       ? 'all'
       : filter === 'hadith' && hadithCount === 0
         ? 'all'
-        : filter;
+        : filter === 'athar' && atharCount === 0
+          ? 'all'
+          : filter;
 
   function changeFilter(next: TypeFilter) {
     setFilter(next);
@@ -89,17 +120,13 @@ export function ReminderReader({
   }
 
   const filteredSections = useMemo(() => {
-    const source =
-      sections && sections.length > 0
-        ? sections
-        : [{ heading: '', items: allItems }];
-    return source
+    return baseSections
       .map((section) => ({
         ...section,
         items: section.items.filter((item) => matchesFilter(item, activeFilter)),
       }))
       .filter((section) => section.items.length > 0);
-  }, [sections, allItems, activeFilter]);
+  }, [baseSections, activeFilter]);
 
   const filteredFlat = useMemo(
     () => filteredSections.flatMap((section) => section.items),
@@ -147,6 +174,12 @@ export function ReminderReader({
       label: labels.tabHadith,
       count: hadithCount,
       hidden: hadithCount === 0,
+    },
+    {
+      value: 'athar',
+      label: labels.tabAthar ?? labels.tabHadith,
+      count: atharCount,
+      hidden: atharCount === 0 || !labels.tabAthar,
     },
   ];
 

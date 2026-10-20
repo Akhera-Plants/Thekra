@@ -105,6 +105,8 @@ export class GradePolicy {
           OR: [
             { type: { not: QuoteType.HADITH } },
             { gradeSource: { in: [...PUBLISHABLE_GRADE_SOURCES] } },
+            // Listed athar (Companion / senior Successor) — never graded as hadith.
+            { isAthar: true, atharSpeakerKey: { not: null } },
           ],
         },
         { flags: { none: { status: FlagStatus.OPEN, severity: FlagSeverity.HIGH } } },
@@ -123,8 +125,14 @@ export class GradePolicy {
     };
   }
 
-  static isPublishable(row: { type: QuoteType; gradeSource: GradeSource }): boolean {
+  static isPublishable(row: {
+    type: QuoteType;
+    gradeSource: GradeSource;
+    isAthar?: boolean;
+    atharSpeakerKey?: string | null;
+  }): boolean {
     if (row.type !== QuoteType.HADITH) return true;
+    if (row.isAthar && row.atharSpeakerKey) return true;
     return PUBLISHABLE_GRADE_SOURCES.includes(row.gradeSource);
   }
 

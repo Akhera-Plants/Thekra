@@ -122,6 +122,7 @@ export interface QuoteDto {
   tags: QuoteTagDto[];
   isAthar?: boolean;
   atharSpeakerKey?: string | null;
+  atharSpeakerAr?: string | null;
   external: { apiProvider: string | null; externalId: string | null } | null;
   isFavorite?: boolean;
   createdAt: string;

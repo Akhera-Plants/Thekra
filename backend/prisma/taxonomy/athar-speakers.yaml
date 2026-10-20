@@ -1,0 +1,58 @@
+# Reviewer list — whose sayings (athar) may appear publicly under «من أقوال السلف».
+# Owner rule: only Companions and senior Successors (كبار التابعين). Anyone not listed here stays hidden and is
+# exported for the reviewer. Matching is on the normalised name as it appears in the narration («قال ابن مسعود»،
+# «عن الحسن قال» …); each entry lists the common forms. The label shown to readers is `ar`.
+
+companions:
+  - { key: abu-bakr, ar: أبو بكر الصديق, forms: [أبو بكر الصديق, أبي بكر الصديق, أبو بكر رضي الله عنه] }
+  - { key: umar, ar: عمر بن الخطاب, forms: [عمر بن الخطاب, عمر رضي الله عنه, قال عمر] }
+  - { key: uthman, ar: عثمان بن عفان, forms: [عثمان بن عفان, عثمان رضي الله عنه] }
+  - { key: ali, ar: علي بن أبي طالب, forms: [علي بن أبي طالب, علي رضي الله عنه, قال علي] }
+  - { key: ibn-masud, ar: عبد الله بن مسعود, forms: [عبد الله بن مسعود, ابن مسعود] }
+  - { key: ibn-abbas, ar: عبد الله بن عباس, forms: [عبد الله بن عباس, ابن عباس] }
+  - { key: ibn-umar, ar: عبد الله بن عمر, forms: [عبد الله بن عمر, ابن عمر] }
+  - { key: ibn-amr, ar: عبد الله بن عمرو, forms: [عبد الله بن عمرو, ابن عمرو] }
+  - { key: abu-hurayra, ar: أبو هريرة, forms: [أبو هريرة, أبي هريرة] }
+  - { key: abu-darda, ar: أبو الدرداء, forms: [أبو الدرداء, أبي الدرداء] }
+  - { key: muadh, ar: معاذ بن جبل, forms: [معاذ بن جبل, معاذ] }
+  - { key: salman, ar: سلمان الفارسي, forms: [سلمان الفارسي, سلمان] }
+  - { key: abu-dharr, ar: أبو ذر الغفاري, forms: [أبو ذر, أبي ذر] }
+  - { key: hudhayfa, ar: حذيفة بن اليمان, forms: [حذيفة بن اليمان, حذيفة] }
+  - { key: anas, ar: أنس بن مالك, forms: [أنس بن مالك, أنس] }
+  - { key: aisha, ar: عائشة أم المؤمنين, forms: [عائشة, أم المؤمنين عائشة] }
+  - { key: ubayy, ar: أبي بن كعب, forms: [أبي بن كعب] }
+  - { key: abu-musa, ar: أبو موسى الأشعري, forms: [أبو موسى, أبي موسى] }
+  - { key: jabir, ar: جابر بن عبد الله, forms: [جابر بن عبد الله, جابر] }
+  - { key: abu-said, ar: أبو سعيد الخدري, forms: [أبو سعيد الخدري, أبي سعيد] }
+  - { key: abu-umama, ar: أبو أمامة الباهلي, forms: [أبو أمامة, أبي أمامة] }
+  - { key: abdullah-ibn-zubayr, ar: عبد الله بن الزبير, forms: [عبد الله بن الزبير, ابن الزبير] }
+  - { key: ammar, ar: عمار بن ياسر, forms: [عمار بن ياسر, عمار] }
+  - { key: abu-ubayda, ar: أبو عبيدة بن الجراح, forms: [أبو عبيدة بن الجراح] }
+  - { key: shaddad, ar: شداد بن أوس, forms: [شداد بن أوس] }
+  - { key: ibn-rawaha, ar: عبد الله بن رواحة, forms: [عبد الله بن رواحة, ابن رواحة] }
+  - { key: imran, ar: عمران بن حصين, forms: [عمران بن حصين] }
+  - { key: buraida, ar: بريدة الأسلمي, forms: [بريدة] }
+
+senior-successors:
+  - { key: hasan-basri, ar: الحسن البصري, forms: [الحسن البصري, عن الحسن قال, قال الحسن] }
+  - { key: said-musayyib, ar: سعيد بن المسيب, forms: [سعيد بن المسيب, ابن المسيب] }
+  - { key: uways, ar: أويس القرني, forms: [أويس القرني, أويس] }
+  - { key: masruq, ar: مسروق بن الأجدع, forms: [مسروق] }
+  - { key: alqama, ar: علقمة بن قيس, forms: [علقمة] }
+  - { key: rabi-khuthaym, ar: الربيع بن خثيم, forms: [الربيع بن خثيم] }
+  - { key: amir-abd-qays, ar: عامر بن عبد قيس, forms: [عامر بن عبد قيس] }
+  - { key: abu-muslim-khawlani, ar: أبو مسلم الخولاني, forms: [أبو مسلم الخولاني] }
+  - { key: said-jubayr, ar: سعيد بن جبير, forms: [سعيد بن جبير] }
+  - { key: mutarrif, ar: مطرف بن عبد الله بن الشخير, forms: [مطرف بن عبد الله, مطرف] }
+  - { key: ibn-sirin, ar: محمد بن سيرين, forms: [محمد بن سيرين, ابن سيرين] }
+  - { key: urwa, ar: عروة بن الزبير, forms: [عروة بن الزبير] }
+  - { key: ali-zayn, ar: علي بن الحسين, forms: [علي بن الحسين] }
+  - { key: umar-abd-aziz, ar: عمر بن عبد العزيز, forms: [عمر بن عبد العزيز] }
+  - { key: mujahid, ar: مجاهد بن جبر, forms: [مجاهد] }
+  - { key: ibrahim-nakhai, ar: إبراهيم النخعي, forms: [إبراهيم النخعي] }
+  - { key: shabi, ar: عامر الشعبي, forms: [الشعبي] }
+  - { key: abu-aliya, ar: أبو العالية, forms: [أبو العالية, أبي العالية] }
+  - { key: qatada, ar: قتادة بن دعامة, forms: [قتادة] }
+  - { key: zayd-aslam, ar: زيد بن أسلم, forms: [زيد بن أسلم] }
+# Note for the reviewer: «كبار التابعين» is applied generously here for the most quoted early Successors
+# (e.g. Mujahid, al-Sha'bi, Qatada are of the middle generation). Remove any you do not want before applying.

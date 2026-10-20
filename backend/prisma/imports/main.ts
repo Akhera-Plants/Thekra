@@ -6,6 +6,7 @@ import { runKabairImport } from './kabair/import.js';
 import { parseArgs, type ImportOptions } from './lib/cli.js';
 import { runShuabImport } from './shuab/import.js';
 import { runShuabRematchPrep, runShuabRematchPropagate } from './shuab/rematch.js';
+import { runAtharClassifyImport } from './athar/classify-import.js';
 import { runClassify } from './classify/import.js';
 import { runQuranImport } from './quran/import.js';
 import { runAshurImport } from './tafsir/ashur-import.js';
@@ -29,6 +30,7 @@ const WORKS: Record<string, (options: ImportOptions) => Promise<void>> = {
   'shuab-propagate': async ({ prisma }) => {
     await runShuabRematchPropagate(prisma);
   },
+  athar: runAtharClassifyImport,
   'adab-mufrad': runAdabMufradImport,
   kabair: runKabairImport,
   targhib: runTarghibImport,
