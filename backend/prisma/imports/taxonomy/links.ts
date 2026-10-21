@@ -15,6 +15,7 @@ import type { MatchSection } from './match.js';
 import { keywordSide } from './match.js';
 import type { SahihaynMapRow } from './sahihayn-map.js';
 import type { DunyaMapRow } from './ibn-abi-dunya-map.js';
+import type { AdhkarMapRow } from './adhkar-map.js';
 import type { Topic, TopicSide } from './yaml.js';
 
 export interface LinkItem {
@@ -198,7 +199,7 @@ export function buildLinks(
   strong: ReadonlyMap<string, readonly StrongHit[]>,
   sahihayn: ReadonlyMap<string, string>,
   sahihaynMap: readonly SahihaynMapRow[] = [],
-  dunyaMap: readonly DunyaMapRow[] = [],
+  dunyaMap: readonly (DunyaMapRow | AdhkarMapRow)[] = [],
   dunyaSections: ReadonlyMap<string, DunyaSection> = new Map(),
   extraLinks: readonly DesiredLink[] = [],
 ): LinkBuild {

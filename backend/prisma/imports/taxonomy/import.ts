@@ -15,6 +15,8 @@ import { inTransactionBatches } from '../lib/batch.js';
 import { ITEM_DECISIONS } from './decisions.js';
 import { buildLinks, loadContentMap, type DesiredLink, type DunyaSection, type LinkBuild, type ReadySection } from './links.js';
 import { loadDunyaMap, validateDunyaMapTopics, type DunyaMapRow } from './ibn-abi-dunya-map.js';
+import { loadAdhkarMap, validateAdhkarMapTopics, type AdhkarMapRow } from './adhkar-map.js';
+import { loadSahihaynHadithMap, validateSahihaynHadithMap, sahihaynHadithNote, type SahihaynHadithRow } from './sahihayn-hadith-map.js';
 import { highConfidenceRows, loadHadeethencMap, validateHadeethencMapTopics } from './hadeethenc-map.js';
 import { hadeethencReviewerNote, linkPriority } from './notes.js';
 import {
@@ -290,7 +292,7 @@ async function sahihaynQuotes(prisma: PrismaClient, hits: Map<string, { book: 'B
 const HADEETHENC_PROVIDER = 'hadeethenc.com';
 
 /** Load the Ibn Abi al-Dunya chapters named by the reviewer map, with Source.nameAr for the notes. */
-async function loadDunyaSections(prisma: PrismaClient, map: readonly DunyaMapRow[], quotes: Map<string, QuoteMeta>): Promise<Map<string, DunyaSection>> {
+async function loadDunyaSections(prisma: PrismaClient, map: readonly (DunyaMapRow | AdhkarMapRow)[], quotes: Map<string, QuoteMeta>): Promise<Map<string, DunyaSection>> {
   if (map.length === 0) return new Map();
   const rows = await prisma.bookSection.findMany({
     where: { id: { in: map.map((row) => row.id) } },
@@ -308,15 +310,15 @@ async function loadDunyaSections(prisma: PrismaClient, map: readonly DunyaMapRow
   for (const row of map) {
     const section = byId.get(row.id);
     if (!section) throw new Error(`ibn-abi-dunya-map section ${row.id} is not in the database`);
-    const expected = `book:ibn-abi-dunya:${row.work.toLowerCase()}`;
+    const expected = row.book === 'nawawi-adhkar' ? 'book:nawawi-adhkar' : `book:ibn-abi-dunya:${row.work.toLowerCase()}`;
     if (section.source.apiProvider !== expected) {
       throw new Error(`ibn-abi-dunya-map ${row.id} work is ${section.source.apiProvider ?? 'unknown'}, expected ${expected}`);
     }
     if (!section.source.nameAr) throw new Error(`ibn-abi-dunya-map ${row.id} source has no nameAr`);
     sections.set(row.id, {
       id: section.id,
-      titleAr: section.titleAr,
-      bookAr: section.source.nameAr,
+      titleAr: row.book === 'nawawi-adhkar' ? row.title : section.titleAr,
+      bookAr: row.book === 'nawawi-adhkar' ? 'الأذكار' : section.source.nameAr,
       order: section.order,
       items: section.items.map((item) => ({
         order: item.order,
@@ -380,6 +382,65 @@ async function hadeethencDesiredLinks(prisma: PrismaClient, topics: ReadonlyMap<
   }
   console.log(`hadeethenc map: rows=${rows.length} applied=${high.length} links=${links.length} missing-quotes=${missing}`);
   return links;
+}
+
+async function sahihaynHadithLinks(prisma: PrismaClient, rows: readonly SahihaynHadithRow[], topics: ReadonlyMap<string, Topic>, quotes: Map<string, QuoteMeta>): Promise<DesiredLink[]> {
+  const branches = new Set((await prisma.imanBranch.findMany({ select: { number: true } })).map((row) => row.number));
+  validateSahihaynHadithMap(rows, topics, branches);
+  const found = await prisma.quote.findMany({
+    where: { id: { in: rows.map((row) => row.quoteId) } },
+    select: { id: true, sourceId: true, referenceNumber: true, type: true },
+  });
+  const byId = new Map(found.map((row) => [row.id, row]));
+  await loadQuotes(prisma, rows.map((row) => row.quoteId), quotes);
+  const links: DesiredLink[] = [];
+  for (const row of rows) {
+    const quote = byId.get(row.quoteId);
+    const sourceId = row.book === 'BUKHARI' ? BUKHARI_SOURCE_ID : MUSLIM_SOURCE_ID;
+    if (!quote || quote.sourceId !== sourceId || quote.referenceNumber !== row.number || quote.type !== 'HADITH') {
+      throw new Error(`sahihayn-hadith-map quote ${row.quoteId} does not match its source/number/type`);
+    }
+    for (const target of row.targets) {
+      if (target.kind !== 'topic') continue;
+      const topic = topics.get(target.slug);
+      if (!topic) throw new Error(`Unknown slug ${target.slug}`);
+      links.push({
+        side: topic.side, slug: topic.slug, quoteId: row.quoteId,
+        basis: 'REVIEWER_SECTION', classifiedBy: 'REVIEWER', reviewStatus: 'ACCEPTED',
+        note: sahihaynHadithNote(row), relevanceScore: hadithScore(quotes.get(row.quoteId)),
+        sectionId: null, sectionOrder: 0, itemOrder: 0, priority: linkPriority('REVIEWER_SECTION'),
+      });
+    }
+  }
+  console.log(`sahihayn hadith map: high-rows=${rows.length} topic-links=${links.length}`);
+  return links;
+}
+
+async function syncHadithBranches(prisma: PrismaClient, rows: readonly SahihaynHadithRow[], quotes: ReadonlyMap<string, QuoteMeta>, write: boolean): Promise<Tally> {
+  const tally = { ...ZERO };
+  const branches = new Map((await prisma.imanBranch.findMany({ select: { id: true, number: true } })).map((row) => [row.number, row.id]));
+  for (const row of rows) {
+    for (const target of row.targets) {
+      if (target.kind !== 'branch') continue;
+      const imanBranchId = branches.get(target.number);
+      if (!imanBranchId) throw new Error(`Unknown branch ${target.number}`);
+      const where = { imanBranchId_quoteId: { imanBranchId, quoteId: row.quoteId } };
+      const current = await prisma.imanBranchQuote.findUnique({ where });
+      const data = {
+        basis: 'REVIEWER_SECTION' as const, classifiedBy: 'REVIEWER' as const,
+        reviewStatus: 'ACCEPTED' as const, note: sahihaynHadithNote(row),
+        relevanceScore: hadithScore(quotes.get(row.quoteId)),
+      };
+      if (!current) {
+        tally.created += 1;
+        if (write) await prisma.imanBranchQuote.create({ data: { imanBranchId, quoteId: row.quoteId, ...data } });
+      } else if (current.basis !== data.basis || current.classifiedBy !== data.classifiedBy || current.reviewStatus !== data.reviewStatus || current.note !== data.note || current.relevanceScore !== data.relevanceScore) {
+        tally.updated += 1;
+        if (write) await prisma.imanBranchQuote.update({ where, data });
+      }
+    }
+  }
+  return tally;
 }
 
 interface TopicIds {
@@ -854,15 +915,20 @@ export async function runTaxonomyImport(options: ImportOptions): Promise<void> {
   }
   const dunyaMap = loadDunyaMap();
   validateDunyaMapTopics(dunyaMap, topics);
-  const dunyaSections = await loadDunyaSections(options.prisma, dunyaMap, quotes);
+  const adhkarMap = loadAdhkarMap();
+  validateAdhkarMapTopics(adhkarMap, topics);
+  const chapterMap = [...dunyaMap, ...adhkarMap];
+  const dunyaSections = await loadDunyaSections(options.prisma, chapterMap, quotes);
   const hadeethencLinks = await hadeethencDesiredLinks(options.prisma, topics, quotes);
+  const hadithMap = loadSahihaynHadithMap();
+  const hadithLinks = await sahihaynHadithLinks(options.prisma, hadithMap, topics, quotes);
   const quoteIds = [
     ...sections.flatMap((section) => section.items.flatMap((item) => item.quoteId ? [item.quoteId] : [])),
     ...[...dunyaSections.values()].flatMap((section) => section.items.flatMap((item) => item.quoteId ? [item.quoteId] : [])),
   ];
   const strong = await strongMatches(options.prisma, quoteIds);
   const sahihayn = await sahihaynQuotes(options.prisma, strong);
-  const built = buildLinks(topics, sections, content, strong, sahihayn, sahihaynMap, dunyaMap, dunyaSections, hadeethencLinks);
+  const built = buildLinks(topics, sections, content, strong, sahihayn, sahihaynMap, chapterMap, dunyaSections, [...hadeethencLinks, ...hadithLinks]);
   const ayah = await loadAyahReview(options.prisma, docsPath(), !options.dryRun);
   const reviewedLinks = reviewAyahLinks(built.links, ayah.dropped, ayah.kept, (quoteId) => verseKeyFromQuote(quotes.get(quoteId)));
   const reviewed: LinkBuild = { ...built, links: reviewedLinks };
@@ -874,9 +940,10 @@ export async function runTaxonomyImport(options: ImportOptions): Promise<void> {
   console.log(`ayah review: keep=${ayah.keepCount} drop=${ayah.dropCount}`);
   const topicSync = await syncTopics(options.prisma, file, titles, !options.dryRun);
   const linkSync = await syncLinks(options.prisma, reviewed, topicSync.ids, file, !options.dryRun);
+  const branchSync = await syncHadithBranches(options.prisma, hadithMap, quotes, !options.dryRun);
   // After the links: new rows get their theme keys in the same run.
   const themeSync = await syncThemeKeys(options.prisma, themes, topicSync.ids.sins, topicSync.ids.deeds, !options.dryRun);
-  const tally = plus(plus(topicSync.tally, linkSync), { created: 0, updated: themeSync.updated, deleted: 0 });
+  const tally = plus(plus(plus(topicSync.tally, linkSync), branchSync), { created: 0, updated: themeSync.updated, deleted: 0 });
   if (!options.dryRun) writeReports(reviewed, sections, quotes, content);
   const afterVerses = await countAcceptedVerses(options.prisma, VERSE_COUNT_TOPICS);
   console.log('ayah verses before/after:');
@@ -888,4 +955,5 @@ export async function runTaxonomyImport(options: ImportOptions): Promise<void> {
   console.log(`taxonomy topics ${mode}: created=${topicSync.tally.created} updated=${topicSync.tally.updated} deleted=${topicSync.tally.deleted}`);
   console.log(`taxonomy links ${mode}: created=${linkSync.created} updated=${linkSync.updated} deleted=${linkSync.deleted}`);
   console.log(`taxonomy themes ${mode}: themes=${themes.length} updated=${themeSync.updated} tagged=${themeSync.tagged}/${themeSync.links} links`);
+  console.log(`taxonomy hadith branches ${mode}: created=${branchSync.created} updated=${branchSync.updated} deleted=${branchSync.deleted}`);
 }

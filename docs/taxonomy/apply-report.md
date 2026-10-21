@@ -725,3 +725,67 @@ From `GET /v1/{sins|good-deeds}/<slug>/quotes?limit=1&lang=ar` → `meta.countsB
 | dhikr | good-deeds | 310→319 | 147→147 | 120→129 | 43→43 | +9 |
 | sadaqah | good-deeds | 153→161 | 27→27 | 126→131 | 0→3 | +8 |
 | sabr | good-deeds | 149→157 | 61→61 | 88→94 | 0→2 | +8 |
+
+## Adhkar + Sahihayn hadith-level maps
+
+The conservative Adhkar map contains 194 BAB/FASL sections with HADITH items across 18 topics. Titles and IDs match the section inventory; YAML parsing, uniqueness, allowed slugs, and positive hadith counts were checked. The notes include topic counts, a reproducible random sample of 25 mappings, and every skipped section with its reason. Only 566 high-confidence Sahihayn rows are executable; low/blank rows create no links. Topic links use REVIEWER_SECTION / REVIEWER / ACCEPTED, and ImanBranchQuote supports and uses the same values. Adhkar chapter links use CHAPTER / REVIEWER / ACCEPTED, with the requested Arabic note and existing TAKHRIJ propagation. The existing ayah review/exclusions and post-link theme computation remain in place.
+
+### Verification
+
+`pnpm exec tsc --noEmit -p tsconfig.json` passed. `pnpm lint` passed with 29 existing warnings and no errors. `pnpm test` passed: 73 files, 598 tests. `pnpm test:e2e` passed: 18 files, 282 tests. `pnpm build` passed; the API was restarted with `node --env-file=.env --enable-source-maps dist/main`, then public endpoint counts were fetched successfully. No GradePolicy, frontend, schema, or other importer changes were made. No commit or push. The working tree was clean at inspection; no unrelated concurrent edits were observed in the final status.
+
+First write:
+
+```text
+taxonomy write: created=1388 updated=154 deleted=0
+taxonomy topics write: created=0 updated=0 deleted=0
+taxonomy links write: created=1368 updated=43 deleted=0
+taxonomy themes write: themes=325 updated=111 tagged=9642/18114 links
+taxonomy hadith branches write: created=20 updated=0 deleted=0
+```
+
+Second write:
+
+```text
+taxonomy write: created=0 updated=0 deleted=0
+taxonomy topics write: created=0 updated=0 deleted=0
+taxonomy links write: created=0 updated=0 deleted=0
+taxonomy themes write: themes=325 updated=0 tagged=9642/18114 links
+taxonomy hadith branches write: created=0 updated=0 deleted=0
+```
+
+### Links created per map source
+
+Measured by comparing link IDs before the first run and after the second, grouped by the stored attribution note. These are newly inserted links, not all planned mappings; existing links can win deduplication or be updated. Total topic links rose from 16,748 to 18,116. Branch links rose from 10,971 to 10,991.
+
+| Source / route | Created topic links |
+| --- | ---: |
+| الأذكار — chapter links | 689 |
+| الأذكار — TAKHRIJ propagated to the Sahihayn | 40 |
+| صحيح البخاري — hadith-level reviewer map | 508 |
+| صحيح مسلم — hadith-level reviewer map | 131 |
+| **Total** | **1368** |
+
+Branch links created: **20** (12 Bukhari, 8 Muslim); zero branch updates or deletes. The first run also updated 43 existing topic links and 111 theme-key sets. All reported ayah verse counts remained unchanged, including dhikr 147, tawba 82, quran 18, and dua 18.
+
+### Public gain — top 15 topics
+
+Measured directly before import and after API rebuild/restart using `GET http://localhost:3001/v1/{sins|good-deeds}/<slug>/quotes?limit=1&lang=ar` → `meta.countsByKind`. All 151 non-hidden, non-contemporary topics were sampled. Their summed public gain was **+856 topic-items** (not globally unique quotes). Every count below is an observed endpoint value; public visibility still follows the unchanged GradePolicy.
+
+| Topic | Side | All | Verse | Hadith | Athar | Gain |
+| --- | --- | --- | --- | --- | --- | ---: |
+| dhikr | good-deeds | 324→467 | 147→147 | 130→273 | 47→47 | +143 |
+| dua | good-deeds | 113→157 | 18→18 | 95→139 | 0→0 | +44 |
+| sadaqah | good-deeds | 161→186 | 27→27 | 131→156 | 3→3 | +25 |
+| qatl | sins | 35→56 | 11→11 | 24→45 | 0→0 | +21 |
+| tawhid | good-deeds | 26→45 | 0→0 | 26→45 | 0→0 | +19 |
+| salam | good-deeds | 51→70 | 5→5 | 46→65 | 0→0 | +19 |
+| sabb-lan | sins | 52→70 | 6→6 | 45→63 | 1→1 | +18 |
+| nawafil | good-deeds | 149→167 | 15→15 | 134→152 | 0→0 | +18 |
+| taat-wulat | good-deeds | 32→48 | 1→1 | 31→47 | 0→0 | +16 |
+| khawf-raja | good-deeds | 175→190 | 82→82 | 84→99 | 9→9 | +15 |
+| yamin-ghamus | sins | 23→37 | 4→4 | 19→33 | 0→0 | +14 |
+| sabr | good-deeds | 162→175 | 61→61 | 96→109 | 5→5 | +13 |
+| adab-safar | good-deeds | 31→44 | 5→5 | 26→39 | 0→0 | +13 |
+| iyadat-marid | good-deeds | 57→69 | 2→2 | 55→67 | 0→0 | +12 |
+| silat-ar-rahim | good-deeds | 48→59 | 12→12 | 36→47 | 0→0 | +11 |

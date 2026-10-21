@@ -1,0 +1,196 @@
+# Al-Nawawi al-Adhkar: conservative title-only reviewer map.
+sections:
+  - { id: 9132c274-f231-4d25-8c98-cdd8567cd9ce, book: nawawi-adhkar, title: "باب مختصر في أحرف مما جاء في فضل الذكر غير مقيد بوقت", topics: [dhikr] }
+  - { id: 632f8d61-1e22-43e0-8368-29988970a4f3, book: nawawi-adhkar, title: "باب ما يقول إذا استيقظ من منامه", topics: [dhikr] }
+  - { id: 33a47886-bff8-477b-851e-0c36dc75f6bf, book: nawawi-adhkar, title: "باب ما يقول إذا لبس ثوبه", topics: [dhikr] }
+  - { id: 72df33da-c9a2-40a3-84d3-d69f49e8a5ad, book: nawawi-adhkar, title: "باب ما يقول إذا لبس ثوبا جديدا أو نعلا أو شبهه", topics: [dhikr] }
+  - { id: 06938a80-0662-4863-86b8-88e4c3da9d23, book: nawawi-adhkar, title: "باب ما يقول لصاحبه إذا رأى عليه ثوبا جديدا", topics: [dhikr] }
+  - { id: 830d1c28-fff4-4013-8143-ca617def0cc0, book: nawawi-adhkar, title: "باب ما يقول إذا خلع ثوبه لغسل أو نوم أو نحوهما", topics: [dhikr] }
+  - { id: 792076d3-2b8e-4bb0-919a-da59d350b0e9, book: nawawi-adhkar, title: "باب ما يقول حال خروجه من بيته", topics: [dhikr] }
+  - { id: 03efb5f4-4eb2-4f43-8de5-13e2bb0d46ca, book: nawawi-adhkar, title: "باب ما يقول إذا دخل بيته", topics: [dhikr] }
+  - { id: 51e5c77a-9b32-4174-91cb-779329545cd1, book: nawawi-adhkar, title: "باب ما يقول إذا استيقظ من الليل وخرج من بيته", topics: [dhikr] }
+  - { id: 1b992fc7-6dc5-456e-8981-fcb6ba819cb5, book: nawawi-adhkar, title: "باب ما يقول إذا أراد دخول الخلاء", topics: [dhikr] }
+  - { id: e3256b87-3877-421e-b0f9-7dbc7cd5dbc3, book: nawawi-adhkar, title: "باب ما يقول إذا خرج من الخلاء", topics: [dhikr] }
+  - { id: 878d6479-e125-46d4-92c7-794bf5079f48, book: nawawi-adhkar, title: "باب ما يقول على وضوئه", topics: [dhikr] }
+  - { id: 57e4d305-a13b-4b53-897e-9f21192183dc, book: nawawi-adhkar, title: "باب ما يقول إذا توجه إلى المسجد", topics: [dhikr] }
+  - { id: 5a79bb31-394f-4051-8274-a0c15c3b3d70, book: nawawi-adhkar, title: "باب ما يقوله عند دخول المسجد والخروج منه", topics: [dhikr] }
+  - { id: 2e7c1974-fe7e-4ffb-bfb9-39e58e29993f, book: nawawi-adhkar, title: "باب ما يقول في المسجد", topics: [dhikr] }
+  - { id: 65cb5323-f5dd-4324-914e-8ea69ab257ef, book: nawawi-adhkar, title: "باب دعائه على من ينشد في المسجد شعرا ليس فيه مدح للإسلام ولا تزهيد، ولا حث على مكارم الأخلاق ونحو ذلك", topics: [dua] }
+  - { id: 49074ea7-8164-4ded-bbfc-9a571ae90567, book: nawawi-adhkar, title: "باب ما يقول من سمع المؤذن والمقيم", topics: [dhikr] }
+  - { id: 41c8c986-534c-4a3e-bbff-76a2a04abd39, book: nawawi-adhkar, title: "باب الدعاء بعد الأذان", topics: [dua] }
+  - { id: f2a5b479-733b-4c3b-b05e-af6002e4f070, book: nawawi-adhkar, title: "باب ما يقول بعد ركعتي سنة الصبح", topics: [dhikr] }
+  - { id: 4689a310-564c-4524-bae1-9cac487cc544, book: nawawi-adhkar, title: "باب ما يقول إذا انتهى إلى الصف", topics: [dhikr] }
+  - { id: bdb3bb60-2915-4a62-aba0-d4a76be8ccf8, book: nawawi-adhkar, title: "باب ما يقول عند إرادته القيام إلى الصلاة", topics: [dhikr] }
+  - { id: f11d64ed-7128-4848-9637-4f0371d4f43c, book: nawawi-adhkar, title: "باب الدعاء عند الإقامة", topics: [dua] }
+  - { id: 932ddb61-bfb1-4144-8e6e-9b099ab392c7, book: nawawi-adhkar, title: "باب ما يقوله بعد تكبيرة الإحرام", topics: [dhikr] }
+  - { id: e4a6d7f8-5b62-44e5-a773-38bf63d5b0af, book: nawawi-adhkar, title: "باب أذكار الركوع", topics: [dhikr] }
+  - { id: 21eb9295-e43b-44c9-bc3a-dbf1731b34ea, book: nawawi-adhkar, title: "باب ما يقوله في رفع رأسه من الركوع وفي اعتداله", topics: [dhikr] }
+  - { id: d1eaf0f4-a24f-431d-a40d-a778e07b96c4, book: nawawi-adhkar, title: "باب أذكار السجود", topics: [dhikr] }
+  - { id: bc732eb6-37bd-4df9-8d59-c228ca218579, book: nawawi-adhkar, title: "باب ما يقول في رفع رأسه من السجود وفي الجلوس بين السجدتين", topics: [dhikr] }
+  - { id: 46f97cfe-9a4e-4914-ad29-41a2f995847f, book: nawawi-adhkar, title: "باب الصلاة على النبي صلى الله عليه وسلم بعد التشهد", topics: [salat-ala-nabi] }
+  - { id: fe2444bb-bf4d-4aac-be12-7af33a8618d8, book: nawawi-adhkar, title: "باب الدعاء بعد التشهد الأخير", topics: [dua] }
+  - { id: 58ff3655-c3cf-44f4-8e5e-20eeb70d71d6, book: nawawi-adhkar, title: "باب الأذكار بعد الصلاة", topics: [dhikr] }
+  - { id: 48d900e1-d380-45f1-b4f0-255617b0e34a, book: nawawi-adhkar, title: "باب الحث على ذكر الله تعالى بعد صلاة الصبح", topics: [dhikr] }
+  - { id: 0ef01233-041d-490e-9899-1d09665c3639, book: nawawi-adhkar, title: "باب ما يقال عند الصباح وعند المساء", topics: [dhikr] }
+  - { id: 96783a7c-e4a8-40e1-9782-42a1aa7ae877, book: nawawi-adhkar, title: "باب ما يقال في صبيحة الجمعة", topics: [dhikr] }
+  - { id: 1feee15a-f4bc-43f1-9838-5512787e6d8d, book: nawawi-adhkar, title: "باب ما يقول إذا طلعت الشمس", topics: [dhikr] }
+  - { id: 60867849-61b3-4a70-85d0-7c0bb0f8a6a6, book: nawawi-adhkar, title: "باب ما يقول إذا استقلت الشمس", topics: [dhikr] }
+  - { id: 0ccdcb36-7ad4-473d-b684-271a9f5b44e0, book: nawawi-adhkar, title: "باب ما يقول بعد زوال الشمس إلى العصر", topics: [dhikr] }
+  - { id: d010e35d-619b-4580-a65f-c308d3136bad, book: nawawi-adhkar, title: "باب ما يقوله بعد العصر إلى غروب الشمس", topics: [dhikr] }
+  - { id: c333d42f-5859-4c96-ab65-930912e0d776, book: nawawi-adhkar, title: "باب ما يقوله إذا سمع أذان المغرب", topics: [dhikr] }
+  - { id: 6db7a237-512f-4337-9f32-a3b399eedd0f, book: nawawi-adhkar, title: "باب ما يقوله بعد صلاة المغرب", topics: [dhikr] }
+  - { id: 39131a5a-900c-436c-8a67-2d299caee81e, book: nawawi-adhkar, title: "باب ما يقول إذا أراد النوم واضطجع على فراشه", topics: [dhikr] }
+  - { id: 339347c6-86b6-46e8-ad4e-4f1b1d47d981, book: nawawi-adhkar, title: "باب ما يقول إذا قلق في فراشه فلم ينم", topics: [dhikr] }
+  - { id: de620c8e-20f3-41f1-8c7f-7a389c5d4050, book: nawawi-adhkar, title: "باب ما يقول إذا كان يفزع في منامه", topics: [dhikr] }
+  - { id: f29be906-e604-433a-9006-6c059ddcd8c5, book: nawawi-adhkar, title: "باب ما يقول إذا رأى في منامه ما يحب أو يكره", topics: [dhikr] }
+  - { id: 71aa1ef7-b64a-4f71-b8e8-c9f820d7914b, book: nawawi-adhkar, title: "باب ما يقول إذا قصت عليه رؤيا", topics: [dhikr] }
+  - { id: 5df0dafe-8540-45e3-aecf-a5d9bbf4bdab, book: nawawi-adhkar, title: "باب الحث على الدعاء والاستغفار في النصف الثاني من كل ليلة", topics: [dua] }
+  - { id: 6181804a-7e9f-417b-acb0-9ef1c1473749, book: nawawi-adhkar, title: "باب الدعاء في جميع ساعات الليل كله رجاء أن يصادف ساعة الإجابة", topics: [dua] }
+  - { id: a7534102-65e4-4fb1-86ce-06268362c53b, book: nawawi-adhkar, title: "فصل في آداب الختم وما يتعلق به", topics: [quran] }
+  - { id: bbc0dbcc-0fc2-4b91-bf78-2fc680b00067, book: nawawi-adhkar, title: "فصل في الأمر بتعهد القرآن والتحذير من تعريضه للنسيان", topics: [quran] }
+  - { id: 6898f3fe-5015-43db-999c-e5123da9d49a, book: nawawi-adhkar, title: "فصل في مسائل وآداب ينبغي للقارئ الاعتناء بها", topics: [quran] }
+  - { id: 554ab5a8-b93f-487f-8dc2-8a0a0c73a43c, book: nawawi-adhkar, title: "باب أمر من ذكر عنده النبي صلى الله عليه وسلم بالصلاة عليه والتسليم، صلى الله عليه وسلم", topics: [salat-ala-nabi] }
+  - { id: e7ec289b-06bf-4435-b8c4-a7f05b6e63ac, book: nawawi-adhkar, title: "باب استفتاح الدعاء بالحمد لله تعالى والصلاة على النبي صلى الله عليه وسلم", topics: [dua] }
+  - { id: 6792da6e-2b9f-48ee-8685-77f6aa00b94b, book: nawawi-adhkar, title: "باب دعاء الاستخارة", topics: [dua] }
+  - { id: ee3ebb06-8bd5-41c9-bbc0-3926d98847c8, book: nawawi-adhkar, title: "باب دعاء الكرب والدعاء عند الأمور المهمة", topics: [dua] }
+  - { id: a8ed0f6a-de73-4c6f-9a21-a2c2560b9e1f, book: nawawi-adhkar, title: "باب ما يقوله إذا راعه شئ أو فزع", topics: [dhikr] }
+  - { id: ba02ff9d-f065-41e8-b197-8e6b1a287cb2, book: nawawi-adhkar, title: "باب ما يقول إذا أصابه هم أو حزن", topics: [dhikr] }
+  - { id: c7d6b233-4385-49ec-9992-07aad56c0f85, book: nawawi-adhkar, title: "باب ما يقوله إذا وقع في هلكة", topics: [dhikr] }
+  - { id: d3b284c9-f0ce-48c2-b35b-de95628faee8, book: nawawi-adhkar, title: "باب ما يقول إذا خاف قوما", topics: [dhikr] }
+  - { id: 5358c2b6-64ff-495e-99fe-9615d303edee, book: nawawi-adhkar, title: "باب ما يقول إذا خاف سلطانا", topics: [dhikr] }
+  - { id: 9f238e1e-3712-424e-a002-892e7446f17b, book: nawawi-adhkar, title: "باب ما يقول إذا نظر إلى عدوه", topics: [dhikr] }
+  - { id: bb37ee5a-d81a-4676-b5d4-9b0473e7f389, book: nawawi-adhkar, title: "باب ما يقول إذا عرض له شيطان أو خافه", topics: [dhikr] }
+  - { id: 0b4f1960-0db1-473d-aad3-3015be23ea6b, book: nawawi-adhkar, title: "باب ما يقول إذا غلبه أمر", topics: [dhikr] }
+  - { id: 73a5e580-5177-4874-8de7-8a8ad8dd4895, book: nawawi-adhkar, title: "باب ما يقول إذا استصعب عليه أمر", topics: [dhikr] }
+  - { id: f7e2e7d5-7d5f-4440-80ce-52f1d818c697, book: nawawi-adhkar, title: "باب ما يقول إذا تعسرت عليه معيشته", topics: [dhikr] }
+  - { id: 5bbf7c0c-810d-46a1-bd66-f4aa219b3786, book: nawawi-adhkar, title: "باب ما يقوله لدفع الآفات", topics: [dhikr] }
+  - { id: cf3dbd8d-98ed-4afa-9f6b-f98d5d9a88ba, book: nawawi-adhkar, title: "باب ما يقوله إذا كان عليه دين عجز عنه", topics: [dhikr] }
+  - { id: 35e804f3-9707-4178-9b8e-2e5138dbd936, book: nawawi-adhkar, title: "باب ما يقوله من بلي بالوحشة", topics: [dhikr] }
+  - { id: 61301396-7c1a-40a9-96cc-4fda8fa1571b, book: nawawi-adhkar, title: "باب ما يقوله من بلي بالوسوسة", topics: [dhikr] }
+  - { id: 5dcba9a1-7dab-46f1-b91f-fca6c2c151c3, book: nawawi-adhkar, title: "باب ما يقال على الخراج والبثرة ونحوهما", topics: [dhikr] }
+  - { id: 79188f85-acbe-4a50-bf2a-7d7328a4e456, book: nawawi-adhkar, title: "باب استحباب الإكثار من ذكر الموت", topics: [dhikr-akhira] }
+  - { id: f51792db-e3f7-41ec-b501-ef1b11a692dd, book: nawawi-adhkar, title: "باب ما يقوله المريض ويقال عنده ويقرأ عليه وسؤاله عن حاله", topics: [dhikr] }
+  - { id: d5aaf56f-8eac-49ba-8d3f-3683d07b641a, book: nawawi-adhkar, title: "باب ما يقوله من به صداع أو حمى أو غيرهما من الأوجاع", topics: [dhikr] }
+  - { id: 13f9ff70-3358-4787-b88a-deaaaba02797, book: nawawi-adhkar, title: "باب استحباب دعاء الإنسان بأن يكون موته في البلد الشريف", topics: [dua] }
+  - { id: 322d91bb-4092-4bc3-b7c4-3fed0ae04238, book: nawawi-adhkar, title: "باب طلب العواد الدعاء من المريض", topics: [dua] }
+  - { id: b0687192-cac1-4454-8383-abebc5f08666, book: nawawi-adhkar, title: "باب ما يقوله من أيس من حياته", topics: [dhikr] }
+  - { id: 44c4bb4c-adb0-4974-918e-b2a11fe7ad36, book: nawawi-adhkar, title: "باب ما يقوله بعض تغميض الميت", topics: [dhikr] }
+  - { id: 46774362-3f34-49ff-97e7-a5e5cd97679a, book: nawawi-adhkar, title: "باب ما يقال عند الميت", topics: [dhikr] }
+  - { id: 1ae7ab8a-e358-4614-8711-82913045af35, book: nawawi-adhkar, title: "باب ما يقول من مات له ميت", topics: [dhikr] }
+  - { id: cab03ef4-7b5c-4635-9c4e-3921fda2d443, book: nawawi-adhkar, title: "باب ما يقوله من بلغه موت صاحبه", topics: [dhikr] }
+  - { id: 5e9b8f00-7fed-4ce5-b067-7f3ca70b910d, book: nawawi-adhkar, title: "باب ما يقوله إذا بلغه موت عدو الإسلام", topics: [dhikr] }
+  - { id: 74224e80-0cb4-4525-9725-460e8cbbb2a3, book: nawawi-adhkar, title: "باب تحريم النياحة على الميت والدعاء بدعوى الجاهلية", topics: [niyaha] }
+  - { id: 3b0c72ce-bf2d-46bc-906a-fd7af574f0eb, book: nawawi-adhkar, title: "باب ما يقوله الماشي مع الجنازة", topics: [dhikr] }
+  - { id: 4494c3f8-2a50-4943-8e7e-ecd2136fae18, book: nawawi-adhkar, title: "باب ما يقوله من يدخل الميت قبره", topics: [dhikr] }
+  - { id: 79caebc8-9894-4bc2-9f77-3efa96d93c7e, book: nawawi-adhkar, title: "باب ما يقوله بعد الدفن", topics: [dhikr] }
+  - { id: a461aab9-4093-44e4-8c11-9ff065dc761c, book: nawawi-adhkar, title: "باب النهي عن سب الأموات", topics: [sabb-lan] }
+  - { id: 490f4d2b-b3e6-4f60-af9e-282dfff4d2d2, book: nawawi-adhkar, title: "باب ما يقوله زائر القبور", topics: [dhikr] }
+  - { id: 7c220d7f-f005-409e-9a70-568ebd56959e, book: nawawi-adhkar, title: "باب البكاء والخوف عند المرور بقبور الظالمين وبمصارعهم وإظهار الافتقار إلى الله تعالى والتحذير من الغفلة عن ذلك", topics: [dhikr-akhira] }
+  - { id: e2a01d6c-68aa-42a5-a2f6-42f4d80ddb77, book: nawawi-adhkar, title: "باب الأذكار المستحبة يوم الجمعة وليلتها والدعاء", topics: [dhikr] }
+  - { id: d4205827-818a-4be1-8c85-3db40bedd802, book: nawawi-adhkar, title: "باب الأذكار المشروعة في العيدين", topics: [dhikr] }
+  - { id: 78122ce8-6e72-4b91-9f58-66489993ca6b, book: nawawi-adhkar, title: "باب الأذكار في العشر الأول من ذي الحجة", topics: [dhikr] }
+  - { id: 844ed496-fefd-49dd-b4ac-caa9e8061ac7, book: nawawi-adhkar, title: "باب الأذكار المشروعة في الكسوف", topics: [dhikr] }
+  - { id: 63436c95-a016-4ddf-ab28-f02a1e0f50de, book: nawawi-adhkar, title: "باب الأذكار في الاستسقاء", topics: [dhikr] }
+  - { id: 34451d28-aa23-4e57-af52-f859e72cc816, book: nawawi-adhkar, title: "باب ما يقوله إذا هاجت الريح", topics: [dhikr] }
+  - { id: 5359fd0f-1a42-4012-a14f-b3a7f50dc203, book: nawawi-adhkar, title: "باب ما يقول إذا انقض الكوكب", topics: [dhikr] }
+  - { id: bd5b5631-b009-4745-80bd-230a91d4100a, book: nawawi-adhkar, title: "باب ما يقول إذا سمع الرعد", topics: [dhikr] }
+  - { id: 9fd158f7-7e43-4417-8b98-b0430198ea08, book: nawawi-adhkar, title: "باب ما يقول إذا نزل المطر", topics: [dhikr] }
+  - { id: 503d2180-e3ff-467c-899c-1e2558492717, book: nawawi-adhkar, title: "باب ما يقوله بعد نزول المطر", topics: [dhikr] }
+  - { id: fcb8c4b4-c1e4-424a-8a83-f3f33cb15c40, book: nawawi-adhkar, title: "باب ما يقوله إذا كثر المطر وخيف منه الضرر", topics: [dhikr] }
+  - { id: 0b94df6f-e5ff-4273-a38f-fb14d45959fa, book: nawawi-adhkar, title: "باب أذكار المتعلقة بالزكاة", topics: [dhikr] }
+  - { id: 366f1004-964b-424e-929b-0b3bbe547c9a, book: nawawi-adhkar, title: "باب الأذكار المتعلقة بالزكاة", topics: [dhikr] }
+  - { id: 5057e03c-f439-4aba-8cce-8c57411da798, book: nawawi-adhkar, title: "باب ما يقوله إذا رأى الهلال، وما يقول إذا رأى القمر", topics: [dhikr] }
+  - { id: 82f64411-bb97-459b-b41d-6657ae5fb5fc, book: nawawi-adhkar, title: "باب الأذكار المستحبة في الصوم", topics: [dhikr] }
+  - { id: 8c1c820c-c931-445d-864e-a9ebac5f4350, book: nawawi-adhkar, title: "باب ما يقول عند الإفطار", topics: [dhikr] }
+  - { id: 60b1b4ae-2474-4f0f-b39b-f788ab830bdb, book: nawawi-adhkar, title: "باب ما يقول إذا أفطر عند قوم", topics: [dhikr] }
+  - { id: 2fd501bf-5311-41a9-b3e0-91f0a41c9b3e, book: nawawi-adhkar, title: "باب ما يدعو به إذا صادف ليلة القدر", topics: [dua] }
+  - { id: d1a9d60f-4841-4e89-a5ae-a011a23ce44f, book: nawawi-adhkar, title: "فصل في الدعاء في البيت", topics: [dua] }
+  - { id: 656a9518-9eb0-49aa-99d5-f72819ddbf18, book: nawawi-adhkar, title: "فصل في الأذكار المستحبة بمنى في أيام التشريق", topics: [dhikr] }
+  - { id: 5dcfe9c1-e409-4277-ba99-6edd7837da0d, book: nawawi-adhkar, title: "باب استحباب سؤال الشهادة", topics: [dua] }
+  - { id: 5fbd0deb-be4d-4797-90f2-ca2d309e6837, book: nawawi-adhkar, title: "باب الدعاء لمن يقاتل أو يعمل على ما يعين على القتال في وجهه وذكر ما ينشطهم ويحرضهم على القتال", topics: [dua] }
+  - { id: db68794b-6008-4f2c-8d3c-a0ab0c35686f, book: nawawi-adhkar, title: "باب الدعاء والتضرع والتكبير عند القتال واستنجاز الله ما وعد من نصر المؤمنين", topics: [dua] }
+  - { id: c8d79566-5515-4637-a321-9749cb1201cd, book: nawawi-adhkar, title: "باب أذكاره عند إرادته الخروج من بيته", topics: [dhikr] }
+  - { id: 1e472f11-e752-4f35-9246-c5476f81caed, book: nawawi-adhkar, title: "باب أذكاره إذا خرج", topics: [dhikr] }
+  - { id: ec9d13aa-6b4f-4ef4-8935-f9a0858b6805, book: nawawi-adhkar, title: "باب استحباب وصية المقيم المسافر بالدعاء له في مواطن الخير ولو كان المقيم أفضل من المسافر", topics: [dua] }
+  - { id: c6bf8fd1-9b30-4d21-8006-8f217720a9f6, book: nawawi-adhkar, title: "باب ما يقوله إذا ركب دابته", topics: [dhikr] }
+  - { id: 714abb27-2a03-41fe-9617-7654503a1004, book: nawawi-adhkar, title: "باب ما يقول إذا ركب سفينة", topics: [dhikr] }
+  - { id: e72fd9bb-25f2-47de-88d0-b312b03dc90c, book: nawawi-adhkar, title: "باب استحباب الدعاء في السفر", topics: [dua] }
+  - { id: 3bfc2e2d-c608-462f-a5bf-c7ed2f7c2f25, book: nawawi-adhkar, title: "باب تكبير المسافر إذا صعد الثنايا وشبهها وتسبيحه إذا هبط الأودية ونحوها", topics: [dhikr] }
+  - { id: 4fd2b32b-25ee-4def-9908-1fea9f5363fd, book: nawawi-adhkar, title: "باب ما يقوله على الدابة الصعبة", topics: [dhikr] }
+  - { id: f013cf9e-6ed8-40e8-a28e-171c4677a624, book: nawawi-adhkar, title: "باب ما يقوله إذا رأى قرية يريد دخولها أولا يريده", topics: [dhikr] }
+  - { id: ee664852-e479-4818-a0e3-f8e528307855, book: nawawi-adhkar, title: "باب ما يدعو به إذا خاف ناسا أو غيرهم", topics: [dua] }
+  - { id: 8752428c-36dd-4cb9-a12a-88712a461fed, book: nawawi-adhkar, title: "باب ما يقول المسافر إذا تغولت الغيلان", topics: [dhikr] }
+  - { id: 60ed0713-ff56-4c50-a83e-1e6112f54b49, book: nawawi-adhkar, title: "باب ما يقول إذا نزل منزلا", topics: [dhikr] }
+  - { id: 3ff7fa41-3d25-4810-9250-e34ad501369f, book: nawawi-adhkar, title: "باب ما يقول إذا رجع من سفره", topics: [dhikr] }
+  - { id: cd5ce0aa-ea90-4ff5-a75a-ed1f3d033c67, book: nawawi-adhkar, title: "باب ما يقوله المسافر بعد صلاة الصبح", topics: [dhikr] }
+  - { id: a2f61a41-04b6-41c0-9c47-abe84dc806ba, book: nawawi-adhkar, title: "باب ما يقول إذا رأى بلدته", topics: [dhikr] }
+  - { id: 29710441-087b-4935-b8fa-80edeec47fb0, book: nawawi-adhkar, title: "باب ما يقول إذا قدم من سفره فدخل بيته", topics: [dhikr] }
+  - { id: 820c3b95-95d3-41c5-a7e4-4365d0bd7836, book: nawawi-adhkar, title: "باب ما يقال لمن يقدم من حج وما يقوله", topics: [dhikr] }
+  - { id: c8e1b748-82ce-4234-95b2-39b44a36a384, book: nawawi-adhkar, title: "باب ما يقول إذا قرب إليه طعامه", topics: [dhikr] }
+  - { id: f8dba635-d457-4291-8a8e-9015c72ccaa6, book: nawawi-adhkar, title: "باب التسمية عند الأكل والشرب", topics: [dhikr] }
+  - { id: 2a5b143b-12d2-44e6-ab3c-c381b814a980, book: nawawi-adhkar, title: "باب ما يقوله ويفعله من يأكل ولا يشبع", topics: [dhikr] }
+  - { id: bf280053-1553-43df-9ad6-5a7240759432, book: nawawi-adhkar, title: "باب ما يقول إذا أكل مع صاحب عاهة", topics: [dhikr] }
+  - { id: 911f4709-eb96-4db2-bacf-98f4f37b15df, book: nawawi-adhkar, title: "باب ما يقول إذا فرغ من الطعام", topics: [dhikr] }
+  - { id: 3e3b3490-ce9f-426a-ae01-ac534e71153a, book: nawawi-adhkar, title: "باب دعاء المدعو والضيف لأهل الطعام إذا فرغ من أكله", topics: [dua] }
+  - { id: 0c2969a6-661c-4482-8b72-cab33d50e985, book: nawawi-adhkar, title: "باب دعاء الإنسان لمن سقاه ماء أو لبنا ونحوهما", topics: [dua] }
+  - { id: 6d7585ef-2ff2-42a9-a5bb-d8e44387e928, book: nawawi-adhkar, title: "باب دعاء الإنسان وتحريضه لمن يضيف ضيفا", topics: [dua] }
+  - { id: 6ac107a6-9201-4c8a-bf5e-1012c8e210b9, book: nawawi-adhkar, title: "باب ما يقوله بعد انصرافه عن الطعام", topics: [dhikr] }
+  - { id: 11a0a17b-6724-4e27-8b6e-6d7d3d9b160d, book: nawawi-adhkar, title: "باب فضل السلام والأمر بإفشائه", topics: [salam] }
+  - { id: 37aa872c-f09d-4b30-a007-fc385136f383, book: nawawi-adhkar, title: "فصل في المصافحة", topics: [salam] }
+  - { id: 4deefcb1-aeff-4a39-906e-90a749add476, book: nawawi-adhkar, title: "باب ما يقول الزوج إذا دخلت عليه امرأته ليلة الزفاف", topics: [dhikr] }
+  - { id: a8ad974f-93f2-4975-b6b2-3209d797b81a, book: nawawi-adhkar, title: "باب ما يقوله عند الجماع", topics: [dhikr] }
+  - { id: 411f78fc-5154-4454-bdd1-8a22eb1b2b20, book: nawawi-adhkar, title: "باب ما يقال عند الولادة وتألم المرأة بذلك", topics: [dhikr] }
+  - { id: 0e409bf0-8120-4185-8f03-48d7d9fafb5e, book: nawawi-adhkar, title: "باب الدعاء عند تحنيك الطفل", topics: [dua] }
+  - { id: 480b9ede-7421-49e5-9f23-e70e73f233e0, book: nawawi-adhkar, title: "باب استحباب حمد الله تعالى والثناء عليه عند البشارة بما يسره", topics: [dhikr] }
+  - { id: 237ab038-3f3a-43f1-88f3-f6021ff9590c, book: nawawi-adhkar, title: "باب ما يقول إذا سمع صياح الديك ونهيق الحمار ونباح الكلب", topics: [dhikr] }
+  - { id: 5f688e44-f709-4c91-a692-d599c865d819, book: nawawi-adhkar, title: "باب ما يقول إذا رأى الحريق", topics: [dhikr] }
+  - { id: a6b4631c-1254-441c-822d-85854564a28a, book: nawawi-adhkar, title: "باب ما يقوله عند القيام من المجلس", topics: [dhikr] }
+  - { id: f8ab7c72-b6c0-47da-8208-d1f29f0c3a87, book: nawawi-adhkar, title: "باب دعاء الجالس في جمع لنفسه ومن معه", topics: [dua] }
+  - { id: 8a143903-f56e-4b11-8f9e-b44223acf749, book: nawawi-adhkar, title: "باب الذكر في الطريق", topics: [dhikr] }
+  - { id: a609320c-f698-46c8-a6d0-d8c152199124, book: nawawi-adhkar, title: "باب ما يقول إذا غضب", topics: [dhikr] }
+  - { id: 92a1cd2f-9407-43a1-a2b9-27ea1ff3d614, book: nawawi-adhkar, title: "باب ما يقول إذا رأى مبتلى بمرض أو غيره", topics: [dhikr] }
+  - { id: 38ffab96-4ef9-4607-9f8e-6637d97cdf16, book: nawawi-adhkar, title: "باب استحباب حمد الله تعالى للمسؤول عن حاله أو حال محبوبه مع جوابه إذا كان في جوابه إخبار بطيب حاله", topics: [dhikr] }
+  - { id: 378c0cb8-5f1e-48d0-b05c-31d0b6ab3c7a, book: nawawi-adhkar, title: "باب ما يقول إذا دخل السوق", topics: [dhikr] }
+  - { id: 6eac44eb-f6c3-48e2-a62d-fc51022281bd, book: nawawi-adhkar, title: "باب ما يقول إذا نظر في المرآة", topics: [dhikr] }
+  - { id: 063be8f4-2036-4f58-b938-2c62c5c109c7, book: nawawi-adhkar, title: "باب ما يقول عند الحجامة", topics: [dhikr] }
+  - { id: 2395f5ac-efb4-4189-802d-abf2c37a4e2d, book: nawawi-adhkar, title: "باب ما يقول إذا طنت أذنه", topics: [dhikr] }
+  - { id: a8e3b041-b431-408d-b874-67e497a75975, book: nawawi-adhkar, title: "باب جواز دعاء الإنسان على من ظلم المسلمين أو ظلمه وحده", topics: [dua] }
+  - { id: 872f067a-4f87-40b9-8d75-e14eef1f861d, book: nawawi-adhkar, title: "باب ما يقوله إذا عثرت دابته", topics: [dhikr] }
+  - { id: befa566b-dc28-43f1-b336-d8c38226e4cd, book: nawawi-adhkar, title: "باب دعاء الإنسان لمن صنع معروفا إليه أو إلى الناس كلهم أو بعضهم، والثناء عليه وتحريضه على ذلك", topics: [dua] }
+  - { id: d35f5094-7c87-4591-a8ce-0629c994b4e9, book: nawawi-adhkar, title: "باب استحباب مكافأة المهدي بالدعاء للمهدى له إذا دعا له عند الهدية", topics: [dua] }
+  - { id: 090463f6-0d69-40dc-ad47-e1ef784bd0fe, book: nawawi-adhkar, title: "باب ما يقول لمن أزال عنه أذى", topics: [dua] }
+  - { id: d05c442c-0484-4909-a792-3b0fef65c243, book: nawawi-adhkar, title: "باب ما يقول إذا رأى الباكورة من الثمر", topics: [dhikr] }
+  - { id: 85388895-d960-4c23-8f6e-512c4162070f, book: nawawi-adhkar, title: "باب استحباب دعاء الإنسان لمن عرض عليه ماله أو غيره", topics: [dua] }
+  - { id: 6c8008d8-a3d9-436d-9814-fbdb9588438a, book: nawawi-adhkar, title: "باب ما يقوله إذا رأى من نفسه أو ولده أو ماله أو غير ذلك شيئا فأعجبه وخاف أن يصيبه بعينه وأن يتضرر بذلك", topics: [dhikr] }
+  - { id: d1416570-4093-4d3e-9fe3-0c5ec7c85935, book: nawawi-adhkar, title: "باب ما يقول إذا رأى ما يحب وما يكره", topics: [dhikr] }
+  - { id: 79e1e007-5ca8-418c-8d00-b78b0e9dcc7c, book: nawawi-adhkar, title: "باب ما يقول إذا تطير بشئ", topics: [dhikr] }
+  - { id: 4d28bf4d-275b-4571-bb70-c2f4dc1550f9, book: nawawi-adhkar, title: "باب ما يقول عند دخول الحمام", topics: [dhikr] }
+  - { id: 2abf2279-8c68-45ef-940f-38779915effc, book: nawawi-adhkar, title: "باب ما يقول إذا اشترى غلاما أو جارية أو دابة، وما يقوله إذا قضى دينا", topics: [dhikr] }
+  - { id: 4ae4d39a-ed68-452f-b8f3-c545c42e4647, book: nawawi-adhkar, title: "باب ما يقول من لا يثبت على الخيل ويدعى له به", topics: [dua] }
+  - { id: d357bc8e-f79b-4510-a44e-15cfca4a13df, book: nawawi-adhkar, title: "باب الحث على طيب الكلام", topics: [kalam-tayyib] }
+  - { id: ab0744f2-bc16-457d-89ca-2556d9b1123b, book: nawawi-adhkar, title: "باب استحباب التبشير والتهنئة", topics: [kalam-tayyib] }
+  - { id: 7622d603-35d3-4fb1-a9dd-7bb9dc2348d1, book: nawawi-adhkar, title: "باب جواز التعجب بلفظ التسبيح والتهليل ونحوهما", topics: [dhikr] }
+  - { id: 926488ab-3b40-4a23-9dfa-96b009c9aab7, book: nawawi-adhkar, title: "باب الأمر بالمعروف والنهي عن المنكر", topics: [amr-maruf] }
+  - { id: 6953da9a-194c-450c-94ea-343f01700330, book: nawawi-adhkar, title: "باب تحريم الغيبة والنميمة", topics: [ghibah, namimah] }
+  - { id: a66ab6a9-2430-43de-b812-70e0a73723e0, book: nawawi-adhkar, title: "باب بيان ما يدفع به الغيبة عن نفسه", topics: [hifz-al-lisan] }
+  - { id: 514bf87e-51f5-48a5-bc67-08fe565fb187, book: nawawi-adhkar, title: "باب أمر من سمع غيبة شيخه أو صاحبه أو غيرهما بردها وإبطالها", topics: [hifz-al-lisan] }
+  - { id: 4c0992e8-0095-4653-9a5d-0c76bb6d7cde, book: nawawi-adhkar, title: "باب الغيبة بالقلب", topics: [ghibah] }
+  - { id: d34405e1-ea77-400f-adf4-dc7eeb328080, book: nawawi-adhkar, title: "باب كفارة الغيبة والتوبة منها", topics: [tawba] }
+  - { id: 0d4ddf3d-68b6-4fab-a1b1-46e68d4ae710, book: nawawi-adhkar, title: "باب النهي عن نقل الحديث إلى ولاة الأمور إذا لم تدع إليه ضرورة لخوف مفسدة ونحوها", topics: [namimah] }
+  - { id: 0ee4da17-2237-43fa-9f86-be5688243841, book: nawawi-adhkar, title: "باب النهي عن الطعن في الأنساب الثابتة في ظاهر الشرع", topics: [sukhriya] }
+  - { id: 056d3373-1a67-40bd-a301-f21a2b381899, book: nawawi-adhkar, title: "باب النهي عن الافتخار", topics: [kibr] }
+  - { id: adae4b74-a1e0-4240-b76a-1faf8c0bd145, book: nawawi-adhkar, title: "باب النهي عن إظهار الشماتة بالمسلم", topics: [sukhriya] }
+  - { id: c4355f8c-f897-4042-af73-9284df56dad2, book: nawawi-adhkar, title: "باب تحريم احتقار المسلمين والسخرية منهم", topics: [sukhriya] }
+  - { id: dd64b3e2-903e-4082-bb1f-75ab9216fb93, book: nawawi-adhkar, title: "باب غلظ تحريم شهادة الزور", topics: [shahadat-zur] }
+  - { id: 285549f3-bf26-40fc-aebd-739306712d47, book: nawawi-adhkar, title: "باب النهي عن اللعن", topics: [sabb-lan] }
+  - { id: 1b2ea3b3-6dc3-41fd-bfb5-0b9500094e3f, book: nawawi-adhkar, title: "باب النهي عن الكذب وبيان أقسامه", topics: [kadhib] }
+  - { id: 5ba0529a-75d0-4b9f-8742-6c87d2d5c61b, book: nawawi-adhkar, title: "باب الحث على التثبت فيما يحكيه الإنسان والنهي عن التحديث بكل ما سمع إذا لم يظن صحته", topics: [hifz-al-lisan] }
+  - { id: b8a8568a-1743-4262-a151-6657efa182b5, book: nawawi-adhkar, title: "باب ما يقوله ويفعله من تكلم بكلام قبيح", topics: [tawba] }
+  - { id: affbfab5-e140-4bb4-b995-22178e25c565, book: nawawi-adhkar, title: "باب دعاء الإنسان وتوسله بصالح عمله إلى الله تعالى", topics: [dua] }
+  - { id: fc5d215f-d565-401c-a0f6-a41ad93393e1, book: nawawi-adhkar, title: "باب رفع اليدين في الدعاء ثم مسح الوجه بهما", topics: [dua] }
+  - { id: e9923282-bb50-45f3-b25e-af90b97fa0a1, book: nawawi-adhkar, title: "باب استحباب تكرير الدعاء", topics: [dua] }
+  - { id: 0f4e7b20-4219-4b9f-a910-47a6c1e0aac2, book: nawawi-adhkar, title: "باب الحث على حضور القلب في الدعاء", topics: [dua] }
+  - { id: 86bc20d2-6d37-45b2-89d6-07933cc87ee8, book: nawawi-adhkar, title: "باب فضل الدعاء بظهر الغيب", topics: [dua] }
+  - { id: dd88cf77-828a-4d9c-94ac-bce546dad60f, book: nawawi-adhkar, title: "باب استحباب الدعاء لمن أحسن إليه، وصفة دعائه", topics: [dua] }
+  - { id: f7574834-9a89-480a-904a-49d7fd78b055, book: nawawi-adhkar, title: "باب استحباب طلب الدعاء من أهل الفضل وإن كان الطالب أفضل من المطلوب منه، والدعاء في المواضع الشريفة", topics: [dua] }
+  - { id: 5eb76bac-c7ff-471f-8561-31cbc298d72d, book: nawawi-adhkar, title: "باب الدليل على أن دعاء المسلم يجاب بمطلوبه أو غيره وأنه لا يستعجل الإجابة", topics: [dua] }
