@@ -48,7 +48,12 @@ function parseFlow(inner: string, keys: Set<string>): Record<string, string> {
   return Object.fromEntries(hits.map((hit) => [hit.key, inner.slice(hit.valueStart, hit.valueEnd).trim()]));
 }
 
-function parseTopics(value: string | undefined): string[] {
+/** Parse one `- { key: value, ... }` flow-mapping line into its raw field strings. */
+export function parseFlowRow(line: string, keys: Set<string>): Record<string, string> {
+  return parseFlow(unwrap(line), keys);
+}
+
+export function parseTopics(value: string | undefined): string[] {
   if (!value) return [];
   const match = /^\[(.*)\]$/.exec(value);
   if (!match) throw new Error(`Expected a topics list, got ${value}`);

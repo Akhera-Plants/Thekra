@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import {
   aiNote,
   chapterNote,
+  chapterNoteNamed,
   ayahNote,
   keywordNote,
   linkPriority,
@@ -13,6 +14,7 @@ import { ITEM_DECISIONS } from './decisions.js';
 import type { MatchSection } from './match.js';
 import { keywordSide } from './match.js';
 import type { SahihaynMapRow } from './sahihayn-map.js';
+import type { DunyaMapRow } from './ibn-abi-dunya-map.js';
 import type { Topic, TopicSide } from './yaml.js';
 
 export interface LinkItem {
@@ -49,7 +51,8 @@ export interface DesiredLink {
   reviewStatus: 'ACCEPTED' | 'NOT_REVIEWED';
   note: string;
   relevanceScore: number;
-  sectionId: string;
+  /** Null for item-level reviewer links with no source chapter (e.g. the HadeethEnc map). */
+  sectionId: string | null;
   sectionOrder: number;
   itemOrder: number;
   priority: number;
@@ -61,6 +64,16 @@ export interface ProposalRow {
   slugs: string;
   side: string;
   items: number;
+}
+
+/** An Ibn Abi al-Dunya chapter listed in the reviewer map, loaded from the database. */
+export interface DunyaSection {
+  id: string;
+  titleAr: string;
+  /** Source.nameAr of the work, used in the link note. */
+  bookAr: string;
+  order: number;
+  items: LinkItem[];
 }
 
 export interface StrongHit {
@@ -185,6 +198,9 @@ export function buildLinks(
   strong: ReadonlyMap<string, readonly StrongHit[]>,
   sahihayn: ReadonlyMap<string, string>,
   sahihaynMap: readonly SahihaynMapRow[] = [],
+  dunyaMap: readonly DunyaMapRow[] = [],
+  dunyaSections: ReadonlyMap<string, DunyaSection> = new Map(),
+  extraLinks: readonly DesiredLink[] = [],
 ): LinkBuild {
   const byId = new Map(sections.map((section) => [section.id, section]));
   const direct: DesiredLink[] = [];
@@ -267,6 +283,35 @@ export function buildLinks(
     }
   }
 
+  for (const row of dunyaMap) {
+    const section = dunyaSections.get(row.id);
+    if (!section) throw new Error(`ibn-abi-dunya-map section ${row.id} is not in the database`);
+    for (const item of section.items) {
+      if (item.kind !== 'HADITH') continue;
+      if (!item.quoteId) {
+        skippedItems += 1;
+        continue;
+      }
+      for (const slug of row.topics) {
+        const topic = topicOf(topics, slug);
+        direct.push({
+          side: topic.side,
+          slug,
+          quoteId: item.quoteId,
+          basis: 'CHAPTER',
+          classifiedBy: 'REVIEWER',
+          reviewStatus: 'ACCEPTED',
+          note: chapterNoteNamed(section.titleAr, section.bookAr, topics, row.topics),
+          relevanceScore: item.score,
+          sectionId: section.id,
+          sectionOrder: section.order,
+          itemOrder: item.order,
+          priority: linkPriority('CHAPTER'),
+        });
+      }
+    }
+  }
+
   for (const row of content) {
     if (row.decision !== 'TOPICS') continue;
     const section = byId.get(row.sectionId);
@@ -303,13 +348,16 @@ export function buildLinks(
     }
   }
 
-  const collapsed = collapse(direct);
+  const collapsed = collapse([...direct, ...extraLinks]);
   const propagated: DesiredLink[] = [];
   for (const link of collapsed) {
     if (link.reviewStatus !== 'ACCEPTED') continue;
     if (link.basis !== 'CHAPTER' && link.basis !== 'CHAPTER_AYAH' && link.basis !== 'AUTHOR_CITATION' && link.basis !== 'REVIEWER_SECTION') continue;
+    if (!link.sectionId) continue;
     const section = byId.get(link.sectionId);
-    if (!section) continue;
+    const dunya = section ? undefined : dunyaSections.get(link.sectionId);
+    const noteSection = section ?? (dunya ? { titleAr: dunya.titleAr, book: dunya.bookAr } : undefined);
+    if (!noteSection) continue;
     for (const hit of strong.get(link.quoteId) ?? []) {
       const target = sahihayn.get(`${hit.book}:${hit.number}`);
       if (!target || target === link.quoteId) continue;
@@ -321,10 +369,10 @@ export function buildLinks(
         basis: 'TAKHRIJ',
         classifiedBy: link.classifiedBy === 'REVIEWER' ? 'REVIEWER' : 'BOOK',
         reviewStatus: 'ACCEPTED',
-        note: takhrijNote(hit.book, hit.number, section),
+        note: takhrijNote(hit.book, hit.number, noteSection),
         relevanceScore: 80,
-        sectionId: section.id,
-        sectionOrder: section.order,
+        sectionId: link.sectionId,
+        sectionOrder: (section ?? dunya)?.order ?? link.sectionOrder,
         itemOrder: link.itemOrder,
         priority: link.classifiedBy === 'REVIEWER' ? 21 : 20,
       });

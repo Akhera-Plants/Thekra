@@ -653,3 +653,75 @@ taxonomy links write: created=0 updated=0 deleted=0
 ```
 
 Verse counts on the second run were unchanged.
+
+## Ibn Abi al-Dunya + HadeethEnc maps
+
+Two reviewer maps applied by `pnpm import:taxonomy`:
+
+- `backend/prisma/taxonomy/ibn-abi-dunya-map.yaml` (131 chapters across 16 works): every HADITH item (athar included — they are stored as HADITH items) under a listed chapter is linked to each listed topic, ACCEPTED, basis CHAPTER, classifiedBy REVIEWER, note «من باب: \<title\> — \<Source.nameAr\>». Takhrij propagation to the Sahihayn runs as for the other chapter maps. Publishing stays governed by GradePolicy (hadith need an accepted grade; athar need a reviewer keep).
+- `docs/taxonomy/hadeethenc-map.tsv` (1454 rows; 1397 high / 57 low): the 175 high-confidence rows with topics were applied — each matching Quote (`apiProvider = hadeethenc.com`, `externalId` = HadeethEnc id; all 175 found) linked ACCEPTED, basis REVIEWER_SECTION, classifiedBy REVIEWER, note «تصنيف المراجع — موسوعة الأحاديث النبوية». Low/empty rows produce no link. The ayah exclusion list (`docs/taxonomy/ayah-dropped.tsv`) is unchanged.
+
+First run:
+
+```
+taxonomy write: created=2998 updated=3 deleted=0
+taxonomy topics write: created=0 updated=0 deleted=0
+taxonomy links write: created=2998 updated=3 deleted=0
+```
+
+Second run:
+
+```
+taxonomy write: created=0 updated=0 deleted=0
+taxonomy topics write: created=0 updated=0 deleted=0
+taxonomy links write: created=0 updated=0 deleted=0
+```
+
+### Links created per source
+
+All counts were 0 before the run. The 3 updates were pre-existing Sahihayn TAKHRIJ links re-attributed to a reviewer chapter (REVIEWER beats BOOK at equal basis).
+
+| Source | Links |
+| --- | ---: |
+| العيال | 530 |
+| الصمت وآداب اللسان | 493 |
+| الإخوان | 324 |
+| صفة الجنة | 270 |
+| مداراة الناس | 203 |
+| اصطناع المعروف | 143 |
+| محاسبة النفس | 128 |
+| قصر الأمل | 114 |
+| الورع | 113 |
+| ذم الغيبة والنميمة | 109 |
+| القبور | 101 |
+| قضاء الحوائج | 94 |
+| ذم الملاهي | 75 |
+| المحتضرين | 52 |
+| القناعة | 21 |
+| صفة النار | 16 |
+| **Ibn Abi al-Dunya (chapter links)** | **2786** |
+| موسوعة الأحاديث النبوية (hadeethenc.com, item links) | 175 |
+| Takhrij propagated to the Sahihayn from these chapters | 40 |
+| **Total** | **3001** |
+
+### Public items gained — top 15 topics
+
+From `GET /v1/{sins|good-deeds}/<slug>/quotes?limit=1&lang=ar` → `meta.countsByKind`, before vs after (API rebuilt and restarted). Across all 90 affected topics the public gain is +360 items.
+
+| Topic | Side | All | Verse | Hadith | Athar | Gain |
+| --- | --- | --- | --- | --- | --- | ---: |
+| kadhib | sins | 34→64 | 10→10 | 24→43 | 0→11 | +30 |
+| husn-khuluq | good-deeds | 48→71 | 6→6 | 42→61 | 0→4 | +23 |
+| hubb-fillah | good-deeds | 55→76 | 17→17 | 36→41 | 2→18 | +21 |
+| dua | good-deeds | 93→112 | 18→18 | 75→94 | 0→0 | +19 |
+| husn-ishra | good-deeds | 28→42 | 6→6 | 22→36 | 0→0 | +14 |
+| nafaqa-ahl | good-deeds | 34→47 | 10→10 | 24→34 | 0→3 | +13 |
+| hifz-al-lisan | good-deeds | 37→50 | 8→8 | 27→31 | 2→11 | +13 |
+| kalam-tayyib | good-deeds | 27→37 | 10→10 | 17→25 | 0→2 | +10 |
+| idaat-al-waqt | sins | 7→17 | 1→1 | 6→6 | 0→10 | +10 |
+| nawafil | good-deeds | 140→149 | 15→15 | 125→134 | 0→0 | +9 |
+| muhasaba | good-deeds | 23→32 | 23→23 | 0→0 | 0→9 | +9 |
+| khamr | sins | 39→48 | 12→12 | 27→36 | 0→0 | +9 |
+| dhikr | good-deeds | 310→319 | 147→147 | 120→129 | 43→43 | +9 |
+| sadaqah | good-deeds | 153→161 | 27→27 | 126→131 | 0→3 | +8 |
+| sabr | good-deeds | 149→157 | 61→61 | 88→94 | 0→2 | +8 |

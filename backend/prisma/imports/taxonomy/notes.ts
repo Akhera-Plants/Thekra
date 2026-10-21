@@ -22,10 +22,14 @@ const AUTHOR_AR: Record<string, string> = {
   minhaj: 'ابن قدامة',
 };
 
-export function chapterNote(section: MatchSection, topics: ReadonlyMap<string, Topic>, slugs: readonly string[]): string {
-  const book = BOOK_AR[section.book] ?? section.book;
-  const note = `من باب: ${section.titleAr} — ${book}`;
+/** Chapter note with an explicit Arabic book name (works without a BOOK_AR key, e.g. Ibn Abi al-Dunya). */
+export function chapterNoteNamed(titleAr: string, bookAr: string, topics: ReadonlyMap<string, Topic>, slugs: readonly string[]): string {
+  const note = `من باب: ${titleAr} — ${bookAr}`;
   return isMixed(slugs, topics) ? `${note} (باب مشترك)` : note;
+}
+
+export function chapterNote(section: MatchSection, topics: ReadonlyMap<string, Topic>, slugs: readonly string[]): string {
+  return chapterNoteNamed(section.titleAr, BOOK_AR[section.book] ?? section.book, topics, slugs);
 }
 
 export function ayahNote(section: MatchSection): string {
@@ -42,9 +46,13 @@ export function keywordNote(section: MatchSection): string {
   return `اقتراح من عنوان الباب: ${section.titleAr} — ${BOOK_AR[section.book] ?? section.book}`;
 }
 
-export function takhrijNote(book: 'BUKHARI' | 'MUSLIM', number: number, section: MatchSection): string {
+export function takhrijNote(book: 'BUKHARI' | 'MUSLIM', number: number, section: { titleAr: string; book: string }): string {
   const name = book === 'BUKHARI' ? 'البخاري' : 'مسلم';
   return `رواه ${name} (${number}) — ورد في باب: ${section.titleAr} من ${BOOK_AR[section.book] ?? section.book}`;
+}
+
+export function hadeethencReviewerNote(): string {
+  return 'تصنيف المراجع — موسوعة الأحاديث النبوية';
 }
 
 export function munajjidNote(page: string | null): string {

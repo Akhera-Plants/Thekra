@@ -13,7 +13,10 @@ import { GradePolicy } from '../../../src/modules/hadith/grade-policy.js';
 import type { ImportOptions } from '../lib/cli.js';
 import { inTransactionBatches } from '../lib/batch.js';
 import { ITEM_DECISIONS } from './decisions.js';
-import { buildLinks, loadContentMap, type DesiredLink, type LinkBuild, type ReadySection } from './links.js';
+import { buildLinks, loadContentMap, type DesiredLink, type DunyaSection, type LinkBuild, type ReadySection } from './links.js';
+import { loadDunyaMap, validateDunyaMapTopics, type DunyaMapRow } from './ibn-abi-dunya-map.js';
+import { highConfidenceRows, loadHadeethencMap, validateHadeethencMapTopics } from './hadeethenc-map.js';
+import { hadeethencReviewerNote, linkPriority } from './notes.js';
 import {
   countAcceptedVerses,
   loadAyahReview,
@@ -281,6 +284,101 @@ async function sahihaynQuotes(prisma: PrismaClient, hits: Map<string, { book: 'B
     }
   }
   return new Map([...picked].map(([key, row]) => [key, row.id]));
+}
+
+const HADEETHENC_PROVIDER = 'hadeethenc.com';
+
+/** Load the Ibn Abi al-Dunya chapters named by the reviewer map, with Source.nameAr for the notes. */
+async function loadDunyaSections(prisma: PrismaClient, map: readonly DunyaMapRow[], quotes: Map<string, QuoteMeta>): Promise<Map<string, DunyaSection>> {
+  if (map.length === 0) return new Map();
+  const rows = await prisma.bookSection.findMany({
+    where: { id: { in: map.map((row) => row.id) } },
+    select: {
+      id: true,
+      titleAr: true,
+      order: true,
+      source: { select: { nameAr: true, apiProvider: true } },
+      items: { orderBy: { order: 'asc' }, select: { order: true, kind: true, quoteId: true } },
+    },
+  });
+  const byId = new Map(rows.map((row) => [row.id, row]));
+  await loadQuotes(prisma, rows.flatMap((row) => row.items.flatMap((item) => item.quoteId ? [item.quoteId] : [])), quotes);
+  const sections = new Map<string, DunyaSection>();
+  for (const row of map) {
+    const section = byId.get(row.id);
+    if (!section) throw new Error(`ibn-abi-dunya-map section ${row.id} is not in the database`);
+    const expected = `book:ibn-abi-dunya:${row.work.toLowerCase()}`;
+    if (section.source.apiProvider !== expected) {
+      throw new Error(`ibn-abi-dunya-map ${row.id} work is ${section.source.apiProvider ?? 'unknown'}, expected ${expected}`);
+    }
+    if (!section.source.nameAr) throw new Error(`ibn-abi-dunya-map ${row.id} source has no nameAr`);
+    sections.set(row.id, {
+      id: section.id,
+      titleAr: section.titleAr,
+      bookAr: section.source.nameAr,
+      order: section.order,
+      items: section.items.map((item) => ({
+        order: item.order,
+        kind: item.kind,
+        quoteId: item.quoteId,
+        score: item.kind === 'AYAH' ? 90 : hadithScore(item.quoteId ? quotes.get(item.quoteId) : undefined),
+      })),
+    });
+  }
+  console.log(`taxonomy: loaded ibn-abi-dunya (${sections.size} mapped sections)`);
+  return sections;
+}
+
+/** Item-level reviewer links from the HadeethEnc map: high confidence with topics only. */
+async function hadeethencDesiredLinks(prisma: PrismaClient, topics: ReadonlyMap<string, Topic>, quotes: Map<string, QuoteMeta>): Promise<DesiredLink[]> {
+  const rows = loadHadeethencMap();
+  validateHadeethencMapTopics(rows, topics);
+  const high = highConfidenceRows(rows);
+  const byExternal = new Map<string, string[]>();
+  for (const batch of chunks(high.map((row) => row.id), 4000)) {
+    const found = await prisma.quote.findMany({
+      where: { apiProvider: HADEETHENC_PROVIDER, externalId: { in: batch } },
+      select: { id: true, externalId: true },
+    });
+    for (const quote of found) {
+      if (!quote.externalId) continue;
+      const list = byExternal.get(quote.externalId) ?? [];
+      list.push(quote.id);
+      byExternal.set(quote.externalId, list);
+    }
+  }
+  await loadQuotes(prisma, [...byExternal.values()].flat(), quotes);
+  const links: DesiredLink[] = [];
+  let missing = 0;
+  for (const row of high) {
+    const quoteIds = byExternal.get(row.id) ?? [];
+    if (quoteIds.length === 0) {
+      missing += 1;
+      continue;
+    }
+    for (const quoteId of quoteIds) {
+      for (const slug of row.topics) {
+        const topic = topics.get(slug);
+        if (!topic) throw new Error(`hadeethenc-map ${row.id} names unknown slug ${slug}`);
+        links.push({
+          side: topic.side,
+          slug,
+          quoteId,
+          basis: 'REVIEWER_SECTION',
+          classifiedBy: 'REVIEWER',
+          reviewStatus: 'ACCEPTED',
+          note: hadeethencReviewerNote(),
+          relevanceScore: hadithScore(quotes.get(quoteId)),
+          sectionId: null,
+          sectionOrder: 0,
+          itemOrder: 0,
+          priority: linkPriority('REVIEWER_SECTION'),
+        });
+      }
+    }
+  }
+  console.log(`hadeethenc map: rows=${rows.length} applied=${high.length} links=${links.length} missing-quotes=${missing}`);
+  return links;
 }
 
 interface TopicIds {
@@ -752,10 +850,17 @@ export async function runTaxonomyImport(options: ImportOptions): Promise<void> {
       if (!topics.has(slug)) throw new Error(`sahihayn-map ${row.id} names unknown slug ${slug}`);
     }
   }
-  const quoteIds = sections.flatMap((section) => section.items.flatMap((item) => item.quoteId ? [item.quoteId] : []));
+  const dunyaMap = loadDunyaMap();
+  validateDunyaMapTopics(dunyaMap, topics);
+  const dunyaSections = await loadDunyaSections(options.prisma, dunyaMap, quotes);
+  const hadeethencLinks = await hadeethencDesiredLinks(options.prisma, topics, quotes);
+  const quoteIds = [
+    ...sections.flatMap((section) => section.items.flatMap((item) => item.quoteId ? [item.quoteId] : [])),
+    ...[...dunyaSections.values()].flatMap((section) => section.items.flatMap((item) => item.quoteId ? [item.quoteId] : [])),
+  ];
   const strong = await strongMatches(options.prisma, quoteIds);
   const sahihayn = await sahihaynQuotes(options.prisma, strong);
-  const built = buildLinks(topics, sections, content, strong, sahihayn, sahihaynMap);
+  const built = buildLinks(topics, sections, content, strong, sahihayn, sahihaynMap, dunyaMap, dunyaSections, hadeethencLinks);
   const ayah = await loadAyahReview(options.prisma, docsPath(), !options.dryRun);
   const reviewedLinks = reviewAyahLinks(built.links, ayah.dropped, ayah.kept, (quoteId) => verseKeyFromQuote(quotes.get(quoteId)));
   const reviewed: LinkBuild = { ...built, links: reviewedLinks };
