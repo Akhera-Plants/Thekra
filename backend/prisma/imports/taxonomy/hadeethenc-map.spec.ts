@@ -11,11 +11,11 @@ const TAXONOMY = join(import.meta.dirname, '..', '..', 'taxonomy', 'taxonomy.yam
 const HEADER = 'id\ttitle\ttopics\tconfidence\treason';
 
 describe('hadeethenc-map', () => {
-  it('loads the reviewer decisions (1454 rows, 175 applied high rows)', () => {
+  it('loads the reviewer decisions (1454 rows, 198 applied high rows)', () => {
     const rows = loadHadeethencMap();
     expect(rows).toHaveLength(1454);
     expect(new Set(rows.map((row) => row.id)).size).toBe(rows.length);
-    expect(highConfidenceRows(rows)).toHaveLength(175);
+    expect(highConfidenceRows(rows)).toHaveLength(198);
     expect(rows.find((row) => row.id === '8402')).toMatchObject({ confidence: 'high', topics: ['dhikr'] });
     // A high row with no topics is a deliberate "no link" decision.
     expect(rows.find((row) => row.id === '10842')).toMatchObject({ confidence: 'high', topics: [] });

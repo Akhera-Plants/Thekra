@@ -11,7 +11,7 @@ companions:
   - { key: ibn-masud, ar: عبد الله بن مسعود, forms: [عبد الله بن مسعود, ابن مسعود] }
   - { key: ibn-abbas, ar: عبد الله بن عباس, forms: [عبد الله بن عباس, ابن عباس] }
   - { key: ibn-umar, ar: عبد الله بن عمر, forms: [عبد الله بن عمر, ابن عمر] }
-  - { key: ibn-amr, ar: عبد الله بن عمرو, forms: [عبد الله بن عمرو, ابن عمرو] }
+  - { key: ibn-amr, ar: عبد الله بن عمرو, forms: [عبد الله بن عمرو بن العاص, عبد الله بن عمرو, ابن عمرو] }
   - { key: abu-hurayra, ar: أبو هريرة, forms: [أبو هريرة, أبي هريرة] }
   - { key: abu-darda, ar: أبو الدرداء, forms: [أبو الدرداء, أبي الدرداء] }
   - { key: muadh, ar: معاذ بن جبل, forms: [معاذ بن جبل, معاذ] }
@@ -31,6 +31,7 @@ companions:
   - { key: shaddad, ar: شداد بن أوس, forms: [شداد بن أوس] }
   - { key: ibn-rawaha, ar: عبد الله بن رواحة, forms: [عبد الله بن رواحة, ابن رواحة] }
   - { key: imran, ar: عمران بن حصين, forms: [عمران بن حصين] }
+  - { key: muawiya, ar: معاوية بن أبي سفيان, forms: [معاوية بن أبي سفيان] }
   - { key: buraida, ar: بريدة الأسلمي, forms: [بريدة] }
 
 senior-successors:
@@ -53,6 +54,8 @@ senior-successors:
   - { key: shabi, ar: عامر الشعبي, forms: [الشعبي] }
   - { key: abu-aliya, ar: أبو العالية, forms: [أبو العالية, أبي العالية] }
   - { key: qatada, ar: قتادة بن دعامة, forms: [قتادة] }
+  - { key: ahnaf, ar: الأحنف بن قيس, forms: [الأحنف بن قيس] }
+  - { key: ubayd-umayr, ar: عبيد بن عمير, forms: [عبيد بن عمير] }
   - { key: zayd-aslam, ar: زيد بن أسلم, forms: [زيد بن أسلم] }
 # Note for the reviewer: «كبار التابعين» is applied generously here for the most quoted early Successors
 # (e.g. Mujahid, al-Sha'bi, Qatada are of the middle generation). Remove any you do not want before applying.

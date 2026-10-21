@@ -199,8 +199,8 @@ sections:
   - { id: 19a1d9c5-805a-4c69-874b-c45f2ba73dd7, book: muslim, title: باب بيان عدد شعب الإيمان وأفضلها وأدناها وفضيلة الحياء وكونه من الإيمان, topics: [haya] }
 
   # ── ghibah (AVOID) ──
-  - { id: 583ad749-cba9-4a23-8e70-24acda0c1fd4, book: bukhari, title: باب الغيبة, topics: [ghibah] }
-  - { id: b8d0179b-b0e8-45b7-a08d-2303a38562d6, book: bukhari, title: باب عذاب القبر من الغيبة والبول, topics: [ghibah, tanazzuh-bawl] }
+  - { id: 583ad749-cba9-4a23-8e70-24acda0c1fd4, book: bukhari, title: باب الغيبة, topics: [namimah] }
+  - { id: b8d0179b-b0e8-45b7-a08d-2303a38562d6, book: bukhari, title: باب عذاب القبر من الغيبة والبول, topics: [namimah, tanazzuh-bawl] }
   - { id: a4a8b881-44db-44b9-a274-544f4a092a0e, book: muslim, title: باب تحريم الغيبة, topics: [ghibah] }
 
   # ── hifz-al-lisan (DO) ──
@@ -266,7 +266,7 @@ sections:
   - { id: 723f425b-0485-4e3e-955a-d7b2ab40daa6, book: muslim, title: باب النهى عن لعن الدواب وغيرها, topics: [sabb-lan] }
 
   # ── sukhriya (AVOID) ──
-  - { id: b01a295f-32b4-4165-a5f6-ba180469bb74, book: muslim, title: باب إطلاق اسم الكفر على الطعن في النسب والنياحة, topics: [sukhriya, niyaha] }
+  - { id: b01a295f-32b4-4165-a5f6-ba180469bb74, book: muslim, title: باب إطلاق اسم الكفر على الطعن في النسب والنياحة, topics: [niyaha] }
 
   # ── kalam-tayyib (DO) ──
   - { id: 51998101-dc19-4af8-b9a0-806cc4f85811, book: bukhari, title: باب طيب الكلام, topics: [kalam-tayyib] }
@@ -848,7 +848,6 @@ sections:
 
   # ── zina (AVOID) ──
   - { id: 419c12bf-d965-4876-81a8-f4aa25a4a7c3, book: bukhari, title: باب إثم الزناة, topics: [zina] }
-  - { id: 299d04de-aa03-4502-b5af-498776d9549c, book: muslim, title: باب غيرة الله تعالى وتحريم الفواحش, topics: [zina] }
 
   # ── nazar-muharram (AVOID) ──
   - { id: b29075f8-9a2b-4f12-a4a3-6b3e8c78b4e5, book: bukhari, title: باب زنا الجوارح دون الفرج, topics: [nazar-muharram] }

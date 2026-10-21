@@ -1,124 +1,126 @@
 speaker	count	example1	example2
-ابيه	138	book:ibn-abi-dunya:riqqawabuka#315	book:shuab-iman#7037
+ابيه	147	book:ibn-abi-dunya:riqqawabuka#315	book:shuab-iman#7037
 عبد الله	79	book:shuab-iman#6081	book:shuab-iman#6769
-ابراهيم	57	book:ibn-abi-dunya:ciyal#37	book:ibn-abi-dunya:samt#354
-سفيان	54	book:ibn-abi-dunya:maradwakaffarat#213	book:ibn-abi-dunya:qasramal#265
-رجل	44	book:shuab-iman#827	book:ibn-mubarak-zuhd#449
-وهب بن منبه	43	book:ibn-mubarak-zuhd#303	book:ibn-mubarak-zuhd#48
-مالك بن دينار	38	book:ibn-abi-dunya:sifatnar#191	book:shuab-iman#7901
-كعب	32	book:ibn-abi-dunya:riqqawabuka#65	book:shuab-iman#5128
+ابراهيم	58	book:ibn-abi-dunya:ciyal#37	book:ibn-abi-dunya:samt#354
+سفيان	56	book:ibn-abi-dunya:maradwakaffarat#213	book:ibn-abi-dunya:qasramal#265
+وهب بن منبه	48	book:ibn-mubarak-zuhd#303	book:ibn-mubarak-zuhd#48
+رجل	45	book:shuab-iman#827	book:ibn-mubarak-zuhd#449
+مالك بن دينار	40	book:ibn-abi-dunya:sifatnar#191	book:shuab-iman#7901
+كعب	33	book:ibn-abi-dunya:riqqawabuka#65	book:shuab-iman#5128
 ذا النون	30	book:shuab-iman#10328	book:shuab-iman#957
 ابي	29	book:shuab-iman#1208	book:shuab-iman#6931
-سفيان الثوري	22	book:ibn-abi-dunya:hammwahuzn#104	book:ibn-abi-dunya:cuzla#165
+الاعمش	24	book:ibn-mubarak-zuhd#1099	book:ibn-abi-dunya:juc#117
+سفيان الثوري	23	book:ibn-abi-dunya:hammwahuzn#104	book:ibn-abi-dunya:cuzla#165
+سفيان بن عيينه	22	book:ibn-abi-dunya:caqlwafadluh#52	book:ibn-mubarak-zuhd#1184
 بعض الحكماء	21	book:shuab-iman#6570	book:ibn-abi-dunya:qasramal#320
-الاعمش	21	book:ibn-mubarak-zuhd#1099	book:ibn-abi-dunya:juc#117
-سفيان بن عيينه	21	book:ibn-abi-dunya:caqlwafadluh#52	book:ibn-mubarak-zuhd#1184
 ابراهيم بن ادهم	20	book:shuab-iman#6576	book:ibn-abi-dunya:cuzla#132
 يحيي بن ابي كثير	19	book:ibn-abi-dunya:muhtadarin#89	book:ibn-abi-dunya:muhtadarin#287
-الاحنف بن قيس	19	book:shuab-iman#8102	book:ibn-mubarak-zuhd#1402
+محمد بن واسع	18	book:ibn-abi-dunya:tawba#163	book:ibn-abi-dunya:samt#125
+ميمون بن مهران	18	book:ibn-abi-dunya:samt#610	book:ibn-abi-dunya:ikhlaswaniyya#52
+الاوزاعي	17	book:ibn-mubarak-zuhd#484	book:shuab-iman#930
 الفضيل بن عياض	17	book:shuab-iman#5315	book:ibn-abi-dunya:qasramal#90
+ثابت	17	book:ibn-abi-dunya:maradwakaffarat#50	book:shuab-iman#5705
 البيهقي	16	book:shuab-iman#3014	book:shuab-iman#1021
-الاوزاعي	16	book:ibn-mubarak-zuhd#484	book:shuab-iman#930
-محمد بن واسع	16	book:ibn-abi-dunya:tawba#163	book:ibn-abi-dunya:riqqawabuka#165
-ميمون بن مهران	16	book:ibn-abi-dunya:samt#610	book:ibn-abi-dunya:ikhlaswaniyya#52
+عون بن عبد الله	16	book:ibn-abi-dunya:samt#366	book:ibn-abi-dunya:mudaratnas#143
 بلال بن سعد	16	book:shuab-iman#282	book:ibn-mubarak-zuhd#487
+ابن عون	15	book:ibn-abi-dunya:tawba#63	book:shuab-iman#5807
 يونس بن عبيد	15	book:ibn-abi-dunya:warac#198	book:ibn-abi-dunya:riqqawabuka#232
-عون بن عبد الله	14	book:ibn-abi-dunya:samt#366	book:ibn-abi-dunya:samt#198
-ثابت	14	book:ibn-abi-dunya:maradwakaffarat#50	book:shuab-iman#5705
-ابن عون	14	book:shuab-iman#5807	book:shuab-iman#6930
-عطاء	13	book:shuab-iman#9173	book:ibn-abi-dunya:ciyal#653
+عطاء	14	book:shuab-iman#9173	book:ibn-abi-dunya:hilmmucawiya#20
+محمد بن المنكدر	14	book:ibn-abi-dunya:warac#80	book:shuab-iman#5299
+الفضيل	13	book:shuab-iman#7908	book:shuab-iman#8157
+حميد بن هلال	13	book:ibn-mubarak-zuhd#79	book:ibn-mubarak-zuhd#1431
+فضيل بن عياض	13	book:ibn-abi-dunya:hammwahuzn#29	book:ibn-abi-dunya:muhtadarin#334
 ابراهيم التيمي	13	book:ibn-abi-dunya:zuhd#128	book:shuab-iman#3660
-محمد بن المنكدر	13	book:ibn-abi-dunya:warac#80	book:shuab-iman#5299
 بشر بن الحارث	13	book:shuab-iman#5317	book:shuab-iman#5342
 معاويه بن قره	12	book:ibn-abi-dunya:hilm#58	book:ibn-abi-dunya:ikhwan#56
-الفضيل	12	book:shuab-iman#7908	book:shuab-iman#8157
-حميد بن هلال	12	book:ibn-mubarak-zuhd#79	book:ibn-mubarak-zuhd#1431
 وهيب بن الورد	12	book:ibn-abi-dunya:samt#558	book:ibn-abi-dunya:juc#209
-فضيل بن عياض	12	book:ibn-abi-dunya:hammwahuzn#29	book:ibn-abi-dunya:muhtadarin#334
 سهل بن عبد الله	12	book:shuab-iman#6462	book:ibn-qudama-minhaj#72
 الزهري	11	book:shuab-iman#2845	book:shuab-iman#10127
 مالك	11	book:ibn-abi-dunya:qasramal#279	book:shuab-iman#3044
 الرجل	11	book:shuab-iman#7039	book:ibn-abi-dunya:muhasabatnafs#105
-عبد الله بن عمرو بن العاص	11	book:ibn-mubarak-zuhd#275	book:ibn-mubarak-zuhd#289
+معاويه	11	book:ibn-abi-dunya:hilmmucawiya#24	book:shuab-iman#7706
+بكر بن عبد الله المزني	11	book:ibn-abi-dunya:dhammghiba#62	book:ibn-abi-dunya:mudaratnas#48
 عمرو بن مره	11	book:ibn-mubarak-zuhd#817	book:shuab-iman#9513
-معاويه	10	book:ibn-abi-dunya:hilmmucawiya#24	book:shuab-iman#7706
+شهر بن حوشب	10	book:ibn-mubarak-zuhd#564	book:ibn-mubarak-zuhd#1529
 هشام بن حسان	10	book:ibn-abi-dunya:samt#214	book:ibn-abi-dunya:dhammghiba#77
-عبيد بن عمير	10	book:ibn-abi-dunya:zuhd#88	book:shuab-iman#8874
-بكر بن عبد الله المزني	10	book:ibn-abi-dunya:dhammghiba#62	book:ibn-abi-dunya:mudaratnas#48
 ايوب	10	book:shuab-iman#5829	book:shuab-iman#4370
+جعفر بن سليمان	9	book:ibn-abi-dunya:muhasabatnafs#46	book:ibn-abi-dunya:cuqubat#162
 عكرمه	9	book:ibn-abi-dunya:cuqubat#195	book:shuab-iman#6324
-شهر بن حوشب	9	book:ibn-mubarak-zuhd#564	book:ibn-mubarak-zuhd#1529
 نافع	9	book:ibn-abi-dunya:ciyal#584	book:shuab-iman#8775
 يحيي بن معاذ الرازي	9	book:shuab-iman#233	book:shuab-iman#433
 السري	9	book:shuab-iman#892	book:shuab-iman#5398
 خيثمه	9	book:ibn-abi-dunya:qiradayf#67	book:shuab-iman#9191
+عيسي ابن مريم عليه السلام	9	book:ibn-abi-dunya:samt#738	book:shuab-iman#6498
 شعبه	9	book:ibn-abi-dunya:samt#369	book:ibn-abi-dunya:ikhwan#84
-جعفر بن سليمان	8	book:ibn-abi-dunya:muhasabatnafs#46	book:ibn-abi-dunya:cuqubat#162
 ابا سليمان	8	book:shuab-iman#5326	book:shuab-iman#5313
 مسعر	8	book:ibn-abi-dunya:mudaratnas#134	book:ibn-abi-dunya:warac#164
+ابي جعفر	8	book:ibn-abi-dunya:ikhwan#80	book:shuab-iman#6101
+صالح المري	8	book:ibn-abi-dunya:qubur#13	book:shuab-iman#6834
 ابي اسحاق	8	book:shuab-iman#5998	book:ibn-mubarak-zuhd#11
 مكحول	8	book:ibn-abi-dunya:cuqubat#76	book:shuab-iman#7498
+محمد	8	book:ibn-abi-dunya:amrbimacruf#115	book:ibn-mubarak-zuhd#1355
+ابو حازم	8	book:shuab-iman#6500	book:ibn-abi-dunya:tawba#161
 الاصمعي	8	book:shuab-iman#4717	book:shuab-iman#4847
-عيسي ابن مريم عليه السلام	8	book:ibn-abi-dunya:samt#738	book:shuab-iman#6498
+عبد العزيز بن ابي رواد	8	book:ibn-abi-dunya:amrbimacruf#63	book:ibn-abi-dunya:muhtadarin#286
+عبد الواحد بن زيد	8	book:ibn-abi-dunya:muhtadarin#367	book:shuab-iman#474
+جعفر	8	book:shuab-iman#6087	book:shuab-iman#3380
+بعضهم	8	book:shuab-iman#8417	book:ibn-qudama-minhaj#48
 عامر	8	book:ibn-abi-dunya:dhammghiba#18	book:shuab-iman#9215
 بشرا	8	book:shuab-iman#7261	book:shuab-iman#451
+ابن المبارك	8	book:ibn-abi-dunya:qasramal#185	book:ibn-abi-dunya:istinacmacruf#46
+الشيخ	8	book:shuab-iman#9655	book:shuab-iman#6097
 حدثني	7	book:ibn-abi-dunya:caqlwafadluh#54	book:ibn-abi-dunya:caqlwafadluh#55
-ابي جعفر	7	book:ibn-abi-dunya:ikhwan#80	book:shuab-iman#6101
 يوسف بن اسباط	7	book:ibn-abi-dunya:cuqubat#219	book:ibn-abi-dunya:amrbimacruf#72
 ابي حيان التيمي	7	book:shuab-iman#4676	book:ibn-abi-dunya:sabr#178
 ثابت البناني	7	book:ibn-abi-dunya:riqqawabuka#360	book:ibn-abi-dunya:sifatjanna#14
-محمد	7	book:ibn-abi-dunya:amrbimacruf#115	book:ibn-mubarak-zuhd#1355
 سعيد بن العاص	7	book:ibn-abi-dunya:samt#395	book:ibn-abi-dunya:ciyal#170
-ابو حازم	7	book:shuab-iman#6500	book:ibn-abi-dunya:tawba#161
 ذو النون	7	book:shuab-iman#7479	book:shuab-iman#7036
-عبد العزيز بن ابي رواد	7	book:ibn-abi-dunya:amrbimacruf#63	book:shuab-iman#4558
-عبد الواحد بن زيد	7	book:ibn-abi-dunya:muhtadarin#367	book:shuab-iman#474
-جعفر	7	book:shuab-iman#6087	book:shuab-iman#3380
-بعضهم	7	book:shuab-iman#8417	book:ibn-qudama-minhaj#48
 جعفر بن محمد	7	book:shuab-iman#7991	book:shuab-iman#10422
-ابن المبارك	7	book:ibn-abi-dunya:qasramal#185	book:ibn-abi-dunya:istinacmacruf#46
-الشيخ	7	book:shuab-iman#9655	book:shuab-iman#6097
 الجنيد	7	book:shuab-iman#6521	book:shuab-iman#5352
+عمر بن ذر	6	book:ibn-abi-dunya:qasramal#270	book:ibn-abi-dunya:qasramal#81
 زيد بن وهب	6	book:shuab-iman#940	book:shuab-iman#941
 عبد الله بن سلام	6	book:shuab-iman#669	book:ibn-mubarak-zuhd#1242
+قيس بن ابي حازم	6	book:ibn-abi-dunya:muhtadarin#353	book:ibn-abi-dunya:muhtadarin#55
 يحيي بن معاذ	6	book:shuab-iman#6861	book:shuab-iman#476
 حسان بن عطيه	6	book:ibn-abi-dunya:riqqawabuka#321	book:shuab-iman#3225
 ابي عثمان النهدي	6	book:ibn-abi-dunya:qasramal#21	book:ibn-mubarak-zuhd#878
-صالح المري	6	book:ibn-abi-dunya:qubur#13	book:shuab-iman#6834
 ابن جريج	6	book:shuab-iman#1063	book:shuab-iman#6328
+عمرو بن العاص	6	book:ibn-abi-dunya:sabr#89	book:shuab-iman#4726
 ابن شهاب	6	book:shuab-iman#7081	book:shuab-iman#5007
+داود	6	book:ibn-abi-dunya:riqqawabuka#366	book:ibn-abi-dunya:riqqawabuka#389
 عبد الله بن المبارك	6	book:shuab-iman#8365	book:ibn-abi-dunya:warac#206
+الحكم	6	book:ibn-abi-dunya:samt#393	book:ibn-abi-dunya:tawba#170
 طارق بن شهاب	6	book:ibn-mubarak-zuhd#267	book:shuab-iman#7847
+يونس	6	book:ibn-abi-dunya:hammwahuzn#36	book:ibn-mubarak-zuhd#1499
 الله	6	book:ibn-abi-dunya:riqqawabuka#407	book:ibn-mubarak-zuhd#1032
 حبيب بن ابي ثابت	6	book:shuab-iman#8166	book:ibn-mubarak-zuhd#404
+شيخ من قريش	6	book:ibn-abi-dunya:muhtadarin#93	book:ibn-abi-dunya:hammwahuzn#144
 ابي الجلد	6	book:ibn-abi-dunya:qasramal#207	book:ibn-abi-dunya:cuqubat#287
 محمد بن علي	6	book:ibn-abi-dunya:dhammghiba#21	book:ibn-abi-dunya:samt#159
+خالد الربعي	6	book:shuab-iman#6287	book:ibn-abi-dunya:samt#733
+ابي وائل	6	book:shuab-iman#5844	book:shuab-iman#6601
 مالك بن مغول	6	book:ibn-abi-dunya:kalamlayali#32	book:ibn-abi-dunya:muhasabatnafs#87
 هشام	6	book:ibn-abi-dunya:dhammmalahi#119	book:ibn-abi-dunya:mudaratnas#50
 عمه	6	book:ibn-abi-dunya:zuhd#209	book:ibn-abi-dunya:cuqubat#51
+ابي قلابه	6	book:shuab-iman#6668	book:shuab-iman#2239
+ابن شوذب	6	book:ibn-abi-dunya:rasailfitawakkul#29	book:ibn-abi-dunya:samt#581
 بعض العلماء	5	book:shuab-iman#6508	book:ibn-abi-dunya:cuzla#93
-عمر بن ذر	5	book:ibn-abi-dunya:qasramal#270	book:ibn-abi-dunya:qasramal#81
 عبد الرحمن بن يزيد	5	book:shuab-iman#1861	book:ibn-mubarak-zuhd#1083
-قيس بن ابي حازم	5	book:ibn-abi-dunya:muhtadarin#353	book:ibn-mubarak-zuhd#295
 الشافعي	5	book:shuab-iman#10217	book:shuab-iman#8651
+عبد الملك بن عمير	5	book:ibn-abi-dunya:mudaratnas#87	book:shuab-iman#9195
 طاوس	5	book:ibn-mubarak-zuhd#727	book:shuab-iman#1110
 داود الطائي	5	book:ibn-abi-dunya:muhasabatnafs#44	book:ibn-abi-dunya:qasramal#43
 الله عز وجل	5	book:shuab-iman#7361	book:shuab-iman#9014
 محمد ابن الحنفيه	5	book:ibn-abi-dunya:muhasabatnafs#67	book:shuab-iman#9076
 خالد بن معدان	5	book:ibn-abi-dunya:warac#109	book:ibn-mubarak-zuhd#871
-عمرو بن العاص	5	book:ibn-abi-dunya:sabr#89	book:shuab-iman#4726
 سليمان	5	book:ibn-abi-dunya:ictibarwaacqab#18	book:ibn-mubarak-zuhd#823
 في دعائه	5	book:ibn-abi-dunya:qanaca#100	book:shuab-iman#836
 منصور	5	book:ibn-abi-dunya:riqqawabuka#233	book:ibn-abi-dunya:ikhwan#204
-الحكم	5	book:ibn-abi-dunya:samt#393	book:ibn-abi-dunya:tawba#170
 ابي حازم	5	book:ibn-mubarak-zuhd#587	book:ibn-abi-dunya:mudaratnas#29
 القاسم	5	book:ibn-abi-dunya:juc#268	book:ibn-abi-dunya:riqqawabuka#207
-يونس	5	book:ibn-abi-dunya:hammwahuzn#36	book:ibn-mubarak-zuhd#1499
 سعد	5	book:ibn-mubarak-zuhd#777	book:ibn-mubarak-zuhd#828
 علي بن عثام	5	book:shuab-iman#924	book:shuab-iman#9972
 موسي عليه السلام	5	book:shuab-iman#4114	book:shuab-iman#7072
-خالد الربعي	5	book:shuab-iman#6287	book:ibn-abi-dunya:samt#733
-ابي وائل	5	book:shuab-iman#5844	book:shuab-iman#6601
 بعض التابعين	5	book:ibn-abi-dunya:dhammmalahi#137	book:shuab-iman#5013
 قيس	5	book:ibn-abi-dunya:muhtadarin#325	book:ibn-abi-dunya:samt#177
 ابو عبيد	5	book:shuab-iman#3789	book:ibn-abi-dunya:cuzla#77
@@ -127,13 +129,10 @@ speaker	count	example1	example2
 يزيد بن ابي حبيب	5	book:ibn-mubarak-zuhd#54	book:ibn-mubarak-zuhd#40
 يحيي بن سعيد	5	book:shuab-iman#7912	book:ibn-abi-dunya:ciyal#420
 وهب	5	book:ibn-abi-dunya:riqqawabuka#314	book:ibn-abi-dunya:riqqawabuka#353
-ابي قلابه	5	book:shuab-iman#6668	book:shuab-iman#2239
-ابن شوذب	5	book:ibn-abi-dunya:rasailfitawakkul#29	book:ibn-abi-dunya:samt#581
 الضحاك	5	book:ibn-abi-dunya:sifatnar#145	book:ibn-abi-dunya:ciyal#353
-شيخ من قريش	5	book:ibn-abi-dunya:hammwahuzn#144	book:ibn-abi-dunya:muhtadarin#155
 ابن السماك	5	book:shuab-iman#113	book:ibn-abi-dunya:tawba#99
 عاصم	5	book:ibn-abi-dunya:qasramal#338	book:ibn-abi-dunya:ikhlaswaniyya#32
-داود	5	book:ibn-abi-dunya:riqqawabuka#389	book:ibn-abi-dunya:ciyal#619
+عطاء بن السائب	5	book:ibn-abi-dunya:cuqubat#359	book:ibn-abi-dunya:cuqubat#348
 ابن عائشه	4	book:ibn-abi-dunya:dhammbaghy#36	book:ibn-abi-dunya:dhammbaghy#37
 داود بن ابي هند	4	book:shuab-iman#5435	book:ibn-abi-dunya:samt#117
 ابي عبيده	4	book:ibn-mubarak-zuhd#1489	book:ibn-mubarak-zuhd#1338
@@ -144,6 +143,8 @@ speaker	count	example1	example2
 سري السقطي	4	book:shuab-iman#487	book:shuab-iman#6883
 امه	4	book:ibn-abi-dunya:mujabudacwa#33	book:ibn-abi-dunya:dhammmalahi#111
 ابي عمران الجوني	4	book:ibn-abi-dunya:maradwakaffarat#98	book:ibn-abi-dunya:riqqawabuka#43
+ابن سابط	4	book:ibn-abi-dunya:riqqawabuka#386	book:ibn-abi-dunya:matarwaracd#178
+عبيد الله بن عمر	4	book:ibn-abi-dunya:samt#602	book:ibn-abi-dunya:dhammmalahi#102
 شقيق	4	book:shuab-iman#9601	book:shuab-iman#7120
 ابي الربيع	4	book:shuab-iman#10204	book:shuab-iman#10205
 الثوري	4	book:shuab-iman#7294	book:shuab-iman#4143
@@ -157,21 +158,26 @@ speaker	count	example1	example2
 رجل من قريش	4	book:ibn-abi-dunya:zuhd#456	book:ibn-abi-dunya:qasramal#52
 ابي الاحوص	4	book:ibn-abi-dunya:ciyal#23	book:ibn-mubarak-zuhd#874
 هلال بن يساف	4	book:shuab-iman#1092	book:ibn-abi-dunya:ikhlaswaniyya#33
-عبد الملك بن عمير	4	book:shuab-iman#9195	book:ibn-abi-dunya:warac#205
+بكر بن عبد الله	4	book:ibn-mubarak-zuhd#1343	book:ibn-abi-dunya:mudaratnas#51
+جده	4	book:ibn-abi-dunya:mujabudacwa#58	book:ibn-abi-dunya:amrbimacruf#35
 طلحه بن مصرف	4	book:shuab-iman#6100	book:shuab-iman#2343
 مسلم بن يسار	4	book:ibn-abi-dunya:cuzla#176	book:ibn-mubarak-zuhd#1081
 محمد بن النضر الحارثي	4	book:shuab-iman#1657	book:shuab-iman#6726
+عمرو بن ميمون	4	book:shuab-iman#6614	book:ibn-abi-dunya:samt#265
 ادم عليه السلام	4	book:ibn-abi-dunya:hammwahuzn#4	book:shuab-iman#808
 خطاب العابد	4	book:ibn-abi-dunya:tawba#54	book:ibn-abi-dunya:cuqubat#66
+ابي سنان	4	book:ibn-abi-dunya:sifatnar#58	book:ibn-abi-dunya:samt#309
 عون بن معمر	4	book:ibn-abi-dunya:qasramal#225	book:ibn-abi-dunya:zuhd#263
 معمر	4	book:ibn-abi-dunya:ikhlaswaniyya#35	book:shuab-iman#1621
 محمد بن الحسين	4	book:ibn-abi-dunya:samt#55	book:shuab-iman#10321
-عطاء بن السائب	4	book:ibn-abi-dunya:cuqubat#359	book:ibn-abi-dunya:cuqubat#348
+سليمان التيمي	4	book:ibn-abi-dunya:riqqawabuka#344	book:ibn-abi-dunya:riqqawabuka#382
+الحجاج	4	book:ibn-mubarak-zuhd#1354	book:ibn-abi-dunya:samt#452
 في خطبته	4	book:shuab-iman#10111	book:ibn-abi-dunya:zuhd#495
 حميد الطويل	3	book:ibn-abi-dunya:dhammghiba#96	book:ibn-abi-dunya:samt#316
 المغيره	3	book:ibn-abi-dunya:hilmmucawiya#21	book:shuab-iman#6385
 ابن صاعد	3	book:ibn-mubarak-zuhd#949	book:ibn-mubarak-zuhd#319
 ابراهيم بن شيبان	3	book:shuab-iman#1703	book:shuab-iman#860
+مورق العجلي	3	book:shuab-iman#2394	book:ibn-abi-dunya:samt#118
 ابي رافع	3	book:ibn-abi-dunya:tawba#49	book:shuab-iman#1521
 ابو قلابه	3	book:shuab-iman#7983	book:shuab-iman#1204
 احمد بن ابي الحواري	3	book:shuab-iman#844	book:ibn-abi-dunya:juc#320
@@ -181,18 +187,21 @@ speaker	count	example1	example2
 سعيد بن عبد العزيز	3	book:ibn-abi-dunya:muhtadarin#80	book:ibn-abi-dunya:cuqubat#201
 مغيث بن سمي	3	book:ibn-abi-dunya:sifatnar#176	book:ibn-abi-dunya:sifatnar#88
 الحارث بن سويد	3	book:ibn-mubarak-zuhd#1363	book:shuab-iman#5643
-ابن سابط	3	book:ibn-abi-dunya:riqqawabuka#386	book:ibn-abi-dunya:matarwaracd#178
 ابو سليمان	3	book:ibn-abi-dunya:tawakkul#48	book:ibn-abi-dunya:rasailfitawakkul#48
 عبد الله بن عكيم	3	book:ibn-mubarak-zuhd#32	book:ibn-abi-dunya:qasramal#195
 عطاء بن يسار	3	book:ibn-abi-dunya:sifatnar#45	book:shuab-iman#829
 ابن ابي مليكه	3	book:ibn-abi-dunya:muhtadarin#110	book:ibn-mubarak-zuhd#1007
 عبيد الله بن العيزار	3	book:ibn-abi-dunya:hammwahuzn#42	book:ibn-abi-dunya:riqqawabuka#133
+ابي معشر	3	book:ibn-abi-dunya:riqqawabuka#30	book:ibn-abi-dunya:riqqawabuka#82
 عمران القصير	3	book:shuab-iman#6256	book:shuab-iman#6434
 ابا بكر الرازي	3	book:shuab-iman#10438	book:shuab-iman#6829
 عبد الرحمن بن مهدي	3	book:shuab-iman#8155	book:shuab-iman#1734
 سلم بن قتيبه	3	book:ibn-abi-dunya:dhammghiba#20	book:ibn-abi-dunya:qadahawaij#111
 طلق بن حبيب	3	book:ibn-abi-dunya:tawba#62	book:ibn-abi-dunya:mujabudacwa#54
+زياد	3	book:ibn-abi-dunya:caqlwafadluh#2	book:ibn-abi-dunya:muhtadarin#124
+عثمان	3	book:shuab-iman#2033	book:ibn-mubarak-zuhd#1133
 الحسن بن حي	3	book:ibn-abi-dunya:warac#102	book:ibn-abi-dunya:warac#93
+غالب القطان	3	book:ibn-abi-dunya:sabr#16	book:ibn-abi-dunya:warac#199
 العوام بن حوشب	3	book:ibn-abi-dunya:ikhwan#21	book:ibn-abi-dunya:samt#415
 سالم	3	book:ibn-abi-dunya:samt#378	book:shuab-iman#2449
 مطر الوراق	3	book:ibn-abi-dunya:ikhwan#182	book:shuab-iman#4556
@@ -205,51 +214,52 @@ speaker	count	example1	example2
 الله تعالي	3	book:ibn-mubarak-zuhd#412	book:ibn-mubarak-zuhd#457
 عاصم الاحول	3	book:shuab-iman#4551	book:shuab-iman#6804
 ابن عيينه	3	book:ibn-mubarak-zuhd#84	book:shuab-iman#7867
+بعض اصحابه	3	book:ibn-abi-dunya:riqqawabuka#27	book:ibn-abi-dunya:hammwahuzn#65
 مغيره	3	book:shuab-iman#7543	book:shuab-iman#3661
 ذا النون المصري	3	book:shuab-iman#485	book:shuab-iman#1674
+اسحاق بن ابراهيم	3	book:ibn-abi-dunya:juc#267	book:ibn-abi-dunya:qiradayf#58
 بكر بن ماعز	3	book:ibn-abi-dunya:samt#87	book:ibn-abi-dunya:samt#577
 الاشجعي	3	book:ibn-abi-dunya:ciyal#160	book:shuab-iman#7546
 ضمره بن حبيب	3	book:ibn-abi-dunya:matarwaracd#157	book:ibn-abi-dunya:juc#277
 ذا النون بن ابراهيم	3	book:shuab-iman#696	book:shuab-iman#10329
 عبد الله بن ادريس	3	book:shuab-iman#1251	book:ibn-abi-dunya:cuqubat#130
+عيسي ابن مريم	3	book:ibn-abi-dunya:zuhd#166	book:ibn-abi-dunya:tawba#124
 رقبه بن مسقله	3	book:ibn-abi-dunya:cuqubat#122	book:ibn-abi-dunya:muhtadarin#131
 اياس بن معاويه	3	book:shuab-iman#4725	book:shuab-iman#7103
 اعرابيا	3	book:shuab-iman#8001	book:ibn-abi-dunya:samt#408
-بكر بن عبد الله	3	book:ibn-mubarak-zuhd#1343	book:ibn-abi-dunya:mudaratnas#53
 مطرف بن الشخير	3	book:shuab-iman#6524	book:ibn-abi-dunya:samt#439
 ربيعه بن كلثوم	3	book:ibn-abi-dunya:maradwakaffarat#181	book:shuab-iman#9591
 عبد الله بن دينار	3	book:ibn-mubarak-zuhd#1060	book:shuab-iman#4748
 ابا العباس بن عطاء	3	book:shuab-iman#283	book:shuab-iman#216
 ابا عبد الرحمن السلمي	3	book:shuab-iman#6486	book:shuab-iman#6831
 مالكا	3	book:shuab-iman#3045	book:shuab-iman#935
-عمرو بن ميمون	3	book:shuab-iman#6614	book:ibn-abi-dunya:sifatnar#101
+ابي مسعود	3	book:ibn-abi-dunya:muhtadarin#168	book:shuab-iman#1589
 في كلامه	3	book:shuab-iman#4150	book:ibn-abi-dunya:qasramal#80
 محمد بن اسحاق	3	book:ibn-abi-dunya:cuqubat#128	book:shuab-iman#2937
 حكيم بن جابر	3	book:ibn-mubarak-zuhd#634	book:ibn-abi-dunya:samt#266
 جعفر بن برقان	3	book:ibn-abi-dunya:zuhd#104	book:shuab-iman#8039
 عباده بن الصامت	3	book:ibn-mubarak-zuhd#500	book:shuab-iman#5065
-جده	3	book:ibn-abi-dunya:amrbimacruf#35	book:ibn-abi-dunya:matarwaracd#30
-عبيد الله بن عمر	3	book:ibn-abi-dunya:dhammmalahi#102	book:ibn-abi-dunya:dhammmalahi#97
 القاسم بن محمد	3	book:shuab-iman#6927	book:ibn-mubarak-zuhd#151
 منصور بن زاذان	3	book:ibn-abi-dunya:dhammghiba#163	book:ibn-abi-dunya:hammwahuzn#23
 احمد	3	book:ibn-abi-dunya:sifatnar#70	book:shuab-iman#7141
 ابراهيم بن محمد بن المنتشر	3	book:ibn-abi-dunya:qasramal#301	book:ibn-abi-dunya:zuhd#184
-ابي سنان	3	book:ibn-abi-dunya:sifatnar#58	book:ibn-abi-dunya:samt#309
 اعرابي	3	book:shuab-iman#8038	book:shuab-iman#10686
 رجلا	3	book:ibn-mubarak-zuhd#625	book:ibn-abi-dunya:muhasabatnafs#111
 عروه	3	book:shuab-iman#8675	book:ibn-abi-dunya:ciyal#263
+زيد	3	book:ibn-abi-dunya:sabr#96	book:shuab-iman#6489
+حميد	3	book:ibn-abi-dunya:riqqawabuka#420	book:ibn-abi-dunya:muhtadarin#20
 ايوب السختياني	3	book:ibn-abi-dunya:muhasabatnafs#28	book:shuab-iman#1716
 ابي حمزه	3	book:ibn-abi-dunya:dhammmalahi#150	book:shuab-iman#1882
+صفوان بن محرز	3	book:ibn-abi-dunya:sifatnar#222	book:ibn-abi-dunya:muhasabatnafs#134
 صالح بن شعيب	3	book:ibn-abi-dunya:rasailfitawakkul#26	book:shuab-iman#1246
 ام الدرداء	3	book:shuab-iman#1098	book:shuab-iman#4944
-سليمان التيمي	3	book:ibn-abi-dunya:riqqawabuka#344	book:ibn-abi-dunya:riqqawabuka#382
-الحجاج	3	book:ibn-mubarak-zuhd#1354	book:ibn-abi-dunya:samt#452
 مسلم	3	book:shuab-iman#997	book:ibn-mubarak-zuhd#290
 ابي عبيد	3	book:shuab-iman#6474	book:shuab-iman#4112
 عبد الرحمن بن سابط	3	book:shuab-iman#62	book:shuab-iman#156
 كعبا	3	book:ibn-mubarak-zuhd#428	book:shuab-iman#7591
 بشر بن الحارث الحافي	3	book:shuab-iman#10412	book:shuab-iman#4698
 عباد بن منصور	3	book:ibn-abi-dunya:rasailfitawakkul#17	book:ibn-abi-dunya:tawakkul#17
+حاتم	3	book:ibn-abi-dunya:qiradayf#37	book:shuab-iman#6459
 ابي بكر بن عياش	3	book:shuab-iman#4712	book:ibn-abi-dunya:qasramal#336
 ابن شبرمه	3	book:shuab-iman#1564	book:shuab-iman#2966
 الخليل بن احمد	3	book:ibn-abi-dunya:kalamlayali#12	book:shuab-iman#6211
@@ -257,11 +267,13 @@ speaker	count	example1	example2
 محارب بن دثار	3	book:shuab-iman#6227	book:ibn-mubarak-zuhd#600
 شرقي بن قطامي	3	book:ibn-abi-dunya:hilm#94	book:ibn-abi-dunya:dhammbaghy#19
 الاحنف	2	book:shuab-iman#4553	book:shuab-iman#4638
+بكر بن خنيس	2	book:ibn-abi-dunya:sabr#193	book:shuab-iman#1756
 عبد الله بن ثعلبه	2	book:ibn-abi-dunya:tawba#98	book:shuab-iman#804
 سعيد بن ابي سعيد	2	book:ibn-abi-dunya:samt#324	book:shuab-iman#7512
 سهلا	2	book:shuab-iman#219	book:shuab-iman#869
 ابن القريه	2	book:shuab-iman#4348	book:ibn-abi-dunya:caqlwafadluh#25
 خناس بن سحيم او	2	book:ibn-mubarak-zuhd#213	book:ibn-mubarak-zuhd#201
+زيادا النميري	2	book:ibn-abi-dunya:samt#431	book:ibn-abi-dunya:muhtadarin#176
 السدي	2	book:ibn-abi-dunya:cuqubat#138	book:ibn-abi-dunya:cuqubat#196
 عطيه بن قيس	2	book:shuab-iman#9365	book:ibn-abi-dunya:maradwakaffarat#44
 اسماعيل بن ذكوان	2	book:ibn-abi-dunya:hammwahuzn#139	book:ibn-abi-dunya:riqqawabuka#39
@@ -270,11 +282,11 @@ speaker	count	example1	example2
 عبد الملك بن مروان	2	book:ibn-abi-dunya:warac#140	book:ibn-abi-dunya:ciyal#339
 اسماعيل بن اميه	2	book:ibn-abi-dunya:muhasabatnafs#101	book:ibn-abi-dunya:muhasabatnafs#66
 كعب بن علقمه	2	book:ibn-abi-dunya:qasramal#278	book:shuab-iman#10267
-مورق العجلي	2	book:shuab-iman#2394	book:shuab-iman#4675
 ابن ابي الحواري	2	book:shuab-iman#4138	book:ibn-abi-dunya:zuhd#114
 حماد بن سلمه	2	book:ibn-mubarak-zuhd#1357	book:ibn-abi-dunya:fadailramadan#27
 ابو الصهباء صله بن اشيم	2	book:ibn-abi-dunya:muhasabatnafs#133	book:ibn-mubarak-zuhd#986
 خالد بن دريك	2	book:shuab-iman#3006	book:ibn-abi-dunya:cuqubat#169
+سفيان بن محمد	2	book:ibn-abi-dunya:mudaratnas#66	book:ibn-abi-dunya:ikhwan#134
 ابي سهل	2	book:shuab-iman#5019	book:ibn-abi-dunya:dhammmalahi#140
 ابي عثمان	2	book:ibn-mubarak-zuhd#1046	book:shuab-iman#10171
 ابن منبه	2	book:ibn-abi-dunya:zuhd#62	book:shuab-iman#1740
@@ -291,13 +303,14 @@ speaker	count	example1	example2
 خليد العصري	2	book:ibn-abi-dunya:qasramal#152	book:shuab-iman#10302
 ابا علي الروذباري	2	book:shuab-iman#1729	book:shuab-iman#4696
 ابليس	2	book:shuab-iman#9008	book:ibn-abi-dunya:sabr#66
+ابن ابي رواد	2	book:ibn-abi-dunya:sabr#184	book:ibn-abi-dunya:riqqawabuka#351
 بديل	2	book:ibn-mubarak-zuhd#245	book:ibn-mubarak-zuhd#198
 ذلك	2	book:shuab-iman#1360	book:ibn-abi-dunya:riqqawabuka#144
 في اخره	2	book:shuab-iman#92	book:shuab-iman#1582
 سعيد	2	book:shuab-iman#2667	book:shuab-iman#2088
 ابي عبيده بن عبد الله	2	book:ibn-mubarak-zuhd#1156	book:ibn-abi-dunya:cuqubat#273
-ابي معشر	2	book:ibn-abi-dunya:riqqawabuka#30	book:ibn-abi-dunya:muhtadarin#147
 صعصعه بن صوحان	2	book:ibn-abi-dunya:samt#697	book:ibn-abi-dunya:samt#719
+محمد بن واسع وهو في الموت	2	book:ibn-abi-dunya:muhtadarin#181	book:ibn-abi-dunya:muhasabatnafs#36
 ثور بن يزيد	2	book:shuab-iman#3438	book:ibn-abi-dunya:hammwahuzn#67
 ابراهيم بن عبيد بن رفاعه	2	book:shuab-iman#950	book:ibn-mubarak-zuhd#834
 وهيب المكي	2	book:ibn-abi-dunya:zuhd#33	book:shuab-iman#8067
@@ -308,9 +321,8 @@ speaker	count	example1	example2
 ميمون بن سياه	2	book:ibn-abi-dunya:samt#425	book:shuab-iman#1538
 عطاء بن يزيد الليثي	2	book:ibn-mubarak-zuhd#183	book:shuab-iman#1766
 علي المنبر	2	book:shuab-iman#1640	book:ibn-abi-dunya:qanaca#187
-زياد	2	book:ibn-abi-dunya:caqlwafadluh#2	book:shuab-iman#5937
 يحيي بن يمان	2	book:ibn-abi-dunya:warac#76	book:shuab-iman#921
-عثمان	2	book:shuab-iman#2033	book:ibn-mubarak-zuhd#1133
+عبد الرحمن بن شريح	2	book:ibn-abi-dunya:samt#693	book:ibn-abi-dunya:samt#560
 صله	2	book:ibn-abi-dunya:amrbimacruf#48	book:shuab-iman#4011
 نوف	2	book:ibn-abi-dunya:maradwakaffarat#199	book:shuab-iman#10286
 اشعث	2	book:ibn-abi-dunya:juc#304	book:ibn-abi-dunya:zuhd#74
@@ -342,25 +354,29 @@ speaker	count	example1	example2
 الحميدي	2	book:ibn-abi-dunya:riqqawabuka#348	book:shuab-iman#10156
 ابي العلاء	2	book:ibn-mubarak-zuhd#1430	book:ibn-mubarak-zuhd#203
 رجل من خثعم	2	book:ibn-abi-dunya:juc#240	book:ibn-abi-dunya:warac#129
+بشر بن منصور	2	book:ibn-abi-dunya:cuzla#139	book:ibn-abi-dunya:qubur#15
+حزم	2	book:ibn-abi-dunya:samt#249	book:ibn-abi-dunya:dhammghiba#113
 سالم بن ابي الجعد	2	book:ibn-mubarak-zuhd#797	book:ibn-abi-dunya:dhammmalahi#18
 عبد الله الرازي	2	book:shuab-iman#446	book:shuab-iman#1685
 عبد الكريم بن ابي اميه	2	book:ibn-abi-dunya:samt#155	book:ibn-abi-dunya:dhammghiba#17
 ابراهيم بن احمد الخواص	2	book:shuab-iman#6781	book:shuab-iman#450
-اسحاق بن ابراهيم	2	book:ibn-abi-dunya:juc#267	book:shuab-iman#5549
 عمرو بن راشد الليثي	2	book:ibn-mubarak-zuhd#1076	book:ibn-mubarak-zuhd#1382
 الملك	2	book:ibn-mubarak-zuhd#1464	book:ibn-mubarak-zuhd#1465
 في بعض قوله	2	book:ibn-abi-dunya:samt#97	book:ibn-mubarak-zuhd#191
 طلق بن معاويه	2	book:shuab-iman#2936	book:ibn-abi-dunya:muhasabatnafs#56
 ابي السليل	2	book:ibn-mubarak-zuhd#424	book:ibn-abi-dunya:qasramal#259
+ابا عمران الجوني	2	book:ibn-abi-dunya:muhtadarin#12	book:ibn-abi-dunya:samt#51
 هارون بن رئاب	2	book:ibn-abi-dunya:amrbimacruf#122	book:ibn-abi-dunya:samt#456
 ابا علي الثقفي	2	book:shuab-iman#1723	book:shuab-iman#1720
 حفص بن عثمان	2	book:ibn-abi-dunya:samt#195	book:ibn-abi-dunya:dhammghiba#58
 رقبه	2	book:shuab-iman#2952	book:shuab-iman#9517
 الاعرابي	2	book:shuab-iman#3662	book:shuab-iman#3735
 عباد بن راشد	2	book:ibn-abi-dunya:qasramal#310	book:shuab-iman#10276
+مولاه	2	book:ibn-abi-dunya:dhammghiba#132	book:ibn-abi-dunya:samt#268
+عقيبه بن فضاله	2	book:ibn-abi-dunya:riqqawabuka#120	book:ibn-abi-dunya:riqqawabuka#216
+عبد الله بن ابي الهذيل	2	book:ibn-abi-dunya:samt#598	book:ibn-abi-dunya:cuqubat#28
 خليد	2	book:ibn-abi-dunya:tawakkul#13	book:ibn-abi-dunya:rasailfitawakkul#13
 جبير بن نفير	2	book:shuab-iman#831	book:ibn-abi-dunya:cuqubat#2
-عيسي ابن مريم	2	book:ibn-abi-dunya:zuhd#166	book:shuab-iman#5340
 امراته	2	book:ibn-mubarak-zuhd#312	book:ibn-mubarak-zuhd#297
 جعفر بن محمد بن علي	2	book:ibn-abi-dunya:dhammmalahi#149	book:shuab-iman#5080
 عمير بن سعيد	2	book:ibn-abi-dunya:cuqubat#223	book:ibn-abi-dunya:ikhwan#218
@@ -376,21 +392,24 @@ speaker	count	example1	example2
 سليمان بن داود عليهما السلام	2	book:ibn-abi-dunya:cuqubat#200	book:ibn-abi-dunya:samt#608
 ابو عبيده	2	book:ibn-mubarak-zuhd#1549	book:shuab-iman#1963
 يحيي بن الحصين	2	book:ibn-abi-dunya:samt#246	book:ibn-abi-dunya:dhammghiba#110
+الجريري	2	book:ibn-abi-dunya:mujabudacwa#57	book:ibn-mubarak-zuhd#895
 حسان بن ابي سنان	2	book:ibn-abi-dunya:qasramal#100	book:ibn-abi-dunya:qasramal#155
 محمد بن السماك	2	book:shuab-iman#1771	book:shuab-iman#8118
+عقبه بن ابي زينب	2	book:shuab-iman#1245	book:ibn-abi-dunya:tawakkul#58
 بعض اهل العلم	2	book:shuab-iman#5348	book:ibn-abi-dunya:kalamlayali#15
 ثابت بن عبيد	2	book:shuab-iman#7852	book:ibn-abi-dunya:ciyal#570
 صالح المزني	2	book:ibn-abi-dunya:samt#196	book:ibn-abi-dunya:dhammghiba#59
+رجل من القوم	2	book:ibn-abi-dunya:riqqawabuka#175	book:shuab-iman#4494
 عبد الوهاب بن بخت المكي	2	book:ibn-mubarak-zuhd#1080	book:ibn-mubarak-zuhd#1387
 عطاء الخراساني	2	book:ibn-mubarak-zuhd#489	book:shuab-iman#1510
+ابي قتاده	2	book:ibn-abi-dunya:muhtadarin#50	book:ibn-abi-dunya:samt#669
 ابي رزين	2	book:ibn-mubarak-zuhd#622	book:shuab-iman#5842
 محمد بن الفضل	2	book:shuab-iman#1678	book:shuab-iman#7351
 عم ابيك	2	book:ibn-abi-dunya:istinacmacruf#140	book:ibn-abi-dunya:qadahawaij#82
 ابي بكر بن حفص	2	book:ibn-abi-dunya:juc#56	book:ibn-mubarak-zuhd#566
 اسماء بن عبيد	2	book:ibn-abi-dunya:hilm#97	book:shuab-iman#9512
-عبد الله بن عبيد بن عمير	2	book:shuab-iman#68	book:ibn-abi-dunya:muhasabatnafs#86
+ادم	2	book:ibn-abi-dunya:riqqawabuka#331	book:ibn-abi-dunya:riqqawabuka#330
 خالد بن صفوان	2	book:ibn-abi-dunya:samt#398	book:shuab-iman#7969
-ابي مسعود	2	book:shuab-iman#1589	book:ibn-abi-dunya:samt#491
 عروه بن عامر	2	book:ibn-abi-dunya:tawba#205	book:ibn-mubarak-zuhd#1362
 قلت	2	book:shuab-iman#8869	book:shuab-iman#8859
 سفيان بن سعيد	2	book:shuab-iman#9974	book:ibn-abi-dunya:zuhd#51
@@ -407,14 +426,17 @@ speaker	count	example1	example2
 الكتاني	2	book:shuab-iman#5344	book:shuab-iman#843
 مبارك بن فضاله	2	book:ibn-abi-dunya:hammwahuzn#92	book:shuab-iman#8508
 صالح بن عبد الكريم	2	book:ibn-abi-dunya:sabr#88	book:ibn-abi-dunya:zuhd#396
-بعض اصحابه	2	book:ibn-abi-dunya:hammwahuzn#65	book:ibn-abi-dunya:warac#10
+ابراهيم بن ابي عبله	2	book:ibn-abi-dunya:ciyal#352	book:ibn-abi-dunya:tawba#5
 يعقوب بن عطاء	2	book:shuab-iman#9582	book:shuab-iman#1618
+ربيعه الجرشي	2	book:ibn-abi-dunya:sabr#15	book:ibn-abi-dunya:sabr#47
 مجاهدا	2	book:ibn-abi-dunya:samt#379	book:ibn-mubarak-zuhd#755
 منصور بن عمار	2	book:shuab-iman#10447	book:shuab-iman#909
 علي بن خشرم	2	book:shuab-iman#1774	book:shuab-iman#1738
+هلال بن ايوب	2	book:ibn-abi-dunya:ikhwan#171	book:ibn-abi-dunya:mudaratnas#89
 عبيد المكتب	2	book:shuab-iman#5078	book:ibn-abi-dunya:qasramal#249
 عيسي	2	book:ibn-abi-dunya:qasramal#22	book:ibn-abi-dunya:qasramal#289
 طلحه	2	book:ibn-abi-dunya:dhammmalahi#112	book:ibn-mubarak-zuhd#1467
+محمد بن سلام الجمحي	2	book:ibn-abi-dunya:tawakkul#55	book:ibn-abi-dunya:rasailfitawakkul#57
 المؤمن	2	book:ibn-abi-dunya:qasramal#59	book:ibn-abi-dunya:kalamlayali#17
 حكيم بن جعفر	2	book:ibn-abi-dunya:hammwahuzn#41	book:ibn-abi-dunya:tawakkul#51
 هانئ بن ايوب	2	book:ibn-abi-dunya:samt#225	book:ibn-abi-dunya:dhammghiba#88
@@ -434,10 +456,7 @@ speaker	count	example1	example2
 عبيد الله بن عبد الله	2	book:shuab-iman#1984	book:ibn-mubarak-zuhd#87
 عبد الاعلي	2	book:ibn-abi-dunya:sifatnar#3	book:ibn-abi-dunya:sifatnar#4
 خليد بن دعلج	2	book:shuab-iman#4366	book:ibn-abi-dunya:sifatnar#160
-حميد	2	book:ibn-abi-dunya:riqqawabuka#420	book:shuab-iman#6714
 ابي الجوزاء	2	book:ibn-abi-dunya:samt#676	book:shuab-iman#6639
-زيد	2	book:shuab-iman#6489	book:shuab-iman#6584
-غالب القطان	2	book:ibn-abi-dunya:warac#199	book:ibn-abi-dunya:cuqubat#163
 عبد الله بن يزيد	2	book:ibn-abi-dunya:ciyal#358	book:shuab-iman#10624
 عثمان بن زائده	2	book:ibn-abi-dunya:tawba#29	book:ibn-abi-dunya:qasramal#178
 علي بن بذيمه	2	book:ibn-abi-dunya:samt#146	book:ibn-abi-dunya:dhammghiba#8
@@ -446,9 +465,11 @@ speaker	count	example1	example2
 داود بن شابور	2	book:ibn-abi-dunya:dhammghiba#4	book:ibn-abi-dunya:samt#142
 يسار بن نمير	2	book:ibn-abi-dunya:juc#177	book:ibn-mubarak-zuhd#538
 ابراهيم بن الاشعث	2	book:ibn-abi-dunya:ikhlaswaniyya#44	book:ibn-abi-dunya:warac#55
-صفوان بن محرز	2	book:ibn-abi-dunya:sifatnar#222	book:ibn-abi-dunya:muhasabatnafs#134
+ابي غالب	2	book:ibn-abi-dunya:muhtadarin#19	book:shuab-iman#6713
 محمد بن ابي بكر	2	book:ibn-abi-dunya:qasramal#335	book:shuab-iman#10279
 محارب	2	book:ibn-abi-dunya:samt#618	book:shuab-iman#2929
+صالح الدهان	2	book:ibn-abi-dunya:ciyal#105	book:ibn-abi-dunya:qiradayf#33
+محمد بن الحنفيه	2	book:ibn-abi-dunya:mudaratnas#20	book:ibn-abi-dunya:maqtalcali#125
 ابي صالح	2	book:ibn-abi-dunya:juc#241	book:shuab-iman#538
 بعض شيوخنا	2	book:shuab-iman#469	book:shuab-iman#10305
 امراه	2	book:ibn-abi-dunya:samt#530	book:shuab-iman#1876
@@ -463,11 +484,15 @@ speaker	count	example1	example2
 عدي بن حاتم	2	book:ibn-mubarak-zuhd#1302	book:ibn-mubarak-zuhd#373
 مسمع بن عاصم	2	book:ibn-abi-dunya:riqqawabuka#70	book:ibn-abi-dunya:hammwahuzn#97
 بسام الصيرفي	2	book:shuab-iman#6102	book:ibn-abi-dunya:dhammmalahi#103
+جنيد	2	book:shuab-iman#870	book:ibn-abi-dunya:riqqawabuka#303
 عمرو	2	book:ibn-abi-dunya:ciyal#419	book:shuab-iman#2392
 ام موسي	2	book:shuab-iman#8361	book:shuab-iman#2222
 مولي	2	book:ibn-abi-dunya:dhammghiba#111	book:ibn-abi-dunya:samt#247
 الحسن بن ذكوان	2	book:shuab-iman#5014	book:ibn-abi-dunya:dhammmalahi#144
+محمد بن الوليد	2	book:ibn-abi-dunya:ikhlaswaniyya#9	book:ibn-abi-dunya:kalamlayali#26
+سماك بن حرب	2	book:shuab-iman#10607	book:ibn-abi-dunya:mujabudacwa#111
 ابي سعد	2	book:shuab-iman#5296	book:ibn-abi-dunya:matarwaracd#38
+يونس بن خباب	2	book:ibn-abi-dunya:riqqawabuka#341	book:ibn-abi-dunya:ciyal#657
 علقمه بن وقاص	2	book:ibn-abi-dunya:riqqawabuka#417	book:shuab-iman#1896
 شعيب بن الحبحاب	2	book:shuab-iman#2077	book:shuab-iman#4919
 فرقد السبخي	2	book:ibn-abi-dunya:ciyal#618	book:ibn-abi-dunya:cuqubat#164
@@ -481,11 +506,12 @@ speaker	count	example1	example2
 موسي بن عمران	2	book:ibn-abi-dunya:cuqubat#278	book:ibn-abi-dunya:cuqubat#32
 وهو في الموت	2	book:ibn-abi-dunya:muhtadarin#139	book:ibn-abi-dunya:muhtadarin#105
 رجل من العباد	2	book:ibn-abi-dunya:tawba#28	book:shuab-iman#6801
-حاتم	2	book:shuab-iman#6459	book:shuab-iman#5323
 محمد بن عجلان	2	book:ibn-abi-dunya:samt#561	book:shuab-iman#4976
 طلحه يعني ابن مصرف	2	book:shuab-iman#3836	book:ibn-abi-dunya:riqqawabuka#180
 ابي هزان	2	book:ibn-abi-dunya:cuqubat#14	book:ibn-abi-dunya:amrbimacruf#73
+عبيده السلماني	2	book:ibn-abi-dunya:samt#179	book:ibn-abi-dunya:dhammghiba#41
 معروفا الكرخي	2	book:shuab-iman#4706	book:shuab-iman#1692
+بشر بن السري	2	book:shuab-iman#470	book:ibn-abi-dunya:samt#299
 الفضيل بن غزوان	2	book:shuab-iman#6096	book:ibn-abi-dunya:dhammmalahi#91
 ابا سعيد بن الاعرابي	1	book:shuab-iman#6007	
 الرضا ف	1	book:shuab-iman#230	
@@ -501,7 +527,6 @@ speaker	count	example1	example2
 جعفر بن زيد العبدي	1	book:ibn-abi-dunya:qasramal#325	
 بكر	1	book:ibn-abi-dunya:samt#708	
 ابو وهب محمد بن مزاحم	1	book:ibn-abi-dunya:cuzla#129	
-زيادا النميري	1	book:ibn-abi-dunya:samt#431	
 وقال الحسن	1	book:shuab-iman#4673	
 شيخ من اهل الكوفه	1	book:ibn-abi-dunya:ciyal#159	
 محمد بن مسلم	1	book:ibn-mubarak-zuhd#1547	
@@ -561,6 +586,7 @@ speaker	count	example1	example2
 سعيد بن عبد الرحمن	1	book:shuab-iman#10706	
 يزيد بن يزيد بن جابر	1	book:ibn-mubarak-zuhd#1548	
 مروان المحلمي	1	book:ibn-abi-dunya:juc#228	
+اسد بن وداعه	1	book:ibn-abi-dunya:muhtadarin#129	
 عوف بن النعمان في الجاهليه الجهلاء	1	book:ibn-abi-dunya:samt#465	
 عبد الله بن خبيق	1	book:shuab-iman#10432	
 سلم بن العلاء	1	book:shuab-iman#4921	
@@ -577,6 +603,7 @@ speaker	count	example1	example2
 ابو حسان	1	book:ibn-abi-dunya:ictibarwaacqab#56	
 جليس	1	book:ibn-abi-dunya:hammwahuzn#129	
 بدر المغازلي	1	book:shuab-iman#8042	
+عمرو بن عثمان	1	book:ibn-abi-dunya:hilmmucawiya#15	
 عمار بن سعيد	1	book:ibn-abi-dunya:zuhd#273	
 يوسف	1	book:ibn-abi-dunya:warac#145	
 ابو العبيدين	1	book:ibn-abi-dunya:juc#215	
@@ -636,9 +663,9 @@ speaker	count	example1	example2
 اسماء بن خارجه	1	book:ibn-abi-dunya:qadahawaij#61	
 يزيد بن الاصم	1	book:ibn-abi-dunya:dhammghiba#57	
 عبد الله بن نافع الزبيري	1	book:ibn-abi-dunya:sabr#79	
+سليمان اظنه ابن قيمر	1	book:ibn-abi-dunya:riqqawabuka#346	
 عبايه بن رفاعه	1	book:ibn-mubarak-zuhd#859	
 بكر بن خنيس رفعه	1	book:ibn-abi-dunya:samt#373	
-عبد الرحمن بن شريح	1	book:ibn-abi-dunya:samt#693	
 رؤبه بن العجاج	1	book:shuab-iman#1622	
 محمد بن عطاء	1	book:shuab-iman#3694	
 احمد بن صاعد الصوري	1	book:ibn-abi-dunya:cuzla#178	
@@ -662,6 +689,7 @@ speaker	count	example1	example2
 خشيش ابي محرز	1	book:ibn-abi-dunya:riqqawabuka#179	
 طلحه بن عبيد الله بن كريز	1	book:ibn-mubarak-zuhd#723	
 الطفيل	1	book:shuab-iman#8411	
+حمزه الاعمي	1	book:ibn-abi-dunya:riqqawabuka#38	
 محمد بن احمد الفراء	1	book:shuab-iman#1701	
 ابو بكره	1	book:ibn-abi-dunya:matarwaracd#45	
 الماجشون	1	book:ibn-abi-dunya:samt#525	
@@ -678,6 +706,7 @@ speaker	count	example1	example2
 الربيع بن عبد الرحمن	1	book:ibn-abi-dunya:hammwahuzn#118	
 سلم العلوي	1	book:ibn-abi-dunya:matarwaracd#21	
 العلاء بن خالد	1	book:shuab-iman#8119	
+عمران الخياط	1	book:ibn-abi-dunya:muhtadarin#148	
 ابي ايوب الانصاري	1	book:ibn-mubarak-zuhd#419	
 عمر بن عبد الرحمن	1	book:shuab-iman#10391	
 خالد بن رخيم	1	book:ibn-abi-dunya:muhtadarin#142	
@@ -688,6 +717,7 @@ speaker	count	example1	example2
 سريه الربيع	1	book:ibn-abi-dunya:muhtadarin#145	
 حبيب القصاب	1	book:shuab-iman#10722	
 الله سبحانه وتعالي	1	book:ibn-mubarak-zuhd#1473	
+زياد النميري	1	book:ibn-abi-dunya:muhtadarin#207	
 ام ولده	1	book:ibn-abi-dunya:ikhwan#148	
 خاقان بن عبد الله	1	book:ibn-abi-dunya:samt#736	
 عبد الكبير بن معافي بن عمران	1	book:ibn-abi-dunya:zuhd#411	
@@ -718,7 +748,6 @@ speaker	count	example1	example2
 سيار ابو الحكم	1	book:ibn-abi-dunya:hammwahuzn#165	
 ابا العباس السراج	1	book:shuab-iman#4705	
 ابي مجلز	1	book:shuab-iman#8776	
-بشر بن منصور	1	book:ibn-abi-dunya:cuzla#139	
 ابا علي الحافظ	1	book:shuab-iman#499	
 ابراهيم بن ميسره	1	book:ibn-abi-dunya:samt#326	
 عبد الرحمن بن عبد الله	1	book:ibn-abi-dunya:riqqawabuka#170	
@@ -735,7 +764,9 @@ speaker	count	example1	example2
 رشدين بن خباب	1	book:shuab-iman#928	
 اهلي	1	book:shuab-iman#878	
 ابي غراره	1	book:ibn-abi-dunya:zuhd#317	
+محمد بن قيس	1	book:ibn-abi-dunya:riqqawabuka#115	
 الاخلاص	1	book:shuab-iman#6466	
+وجهه و	1	book:ibn-abi-dunya:riqqawabuka#267	
 سعد بن مالك	1	book:shuab-iman#10145	
 نصر بن ابي نصر العطار	1	book:shuab-iman#5322	
 ابو بكر الصديق وهو يخطب الناس	1	book:shuab-iman#7337	
@@ -752,6 +783,7 @@ speaker	count	example1	example2
 محمود	1	book:shuab-iman#6409	
 ابو الصهباء يعني صله بن اشيم	1	book:shuab-iman#1229	
 جواب التيمي	1	book:ibn-abi-dunya:samt#529	
+جدته	1	book:ibn-abi-dunya:muhtadarin#322	
 بعض الصالحين	1	book:shuab-iman#4274	
 جدي	1	book:shuab-iman#242	
 الشطرنج والنرد؟ ف	1	book:shuab-iman#6107	
@@ -763,7 +795,6 @@ speaker	count	example1	example2
 سعيد الجريري	1	book:ibn-abi-dunya:qasramal#112	
 ابراهيم الهروي	1	book:shuab-iman#714	
 عمر بن ابراهيم	1	book:ibn-abi-dunya:zuhd#146	
-مولاه	1	book:ibn-abi-dunya:dhammghiba#132	
 عمه عمرو بن اوس	1	book:shuab-iman#7733	
 عبد الرحمن بن احمد القاضي	1	book:shuab-iman#1664	
 ابا محمد الجريري	1	book:shuab-iman#1627	
@@ -783,6 +814,7 @@ speaker	count	example1	example2
 مجاشع الدبري	1	book:ibn-abi-dunya:hammwahuzn#134	
 بسطام بن مسلم	1	book:ibn-abi-dunya:tawba#154	
 الحارث بن عبد الرحمن	1	book:ibn-abi-dunya:matarwaracd#168	
+شميط يعني ابن عجلان	1	book:ibn-abi-dunya:riqqawabuka#79	
 ميمون	1	book:ibn-abi-dunya:juc#51	
 ابي السائب العبدي	1	book:ibn-abi-dunya:ictibarwaacqab#59	
 خارجه	1	book:shuab-iman#4688	
@@ -830,13 +862,15 @@ speaker	count	example1	example2
 ابن ابي جمله	1	book:shuab-iman#4715	
 يزيد بن ابي زياد	1	book:ibn-abi-dunya:qasramal#306	
 جعفر بن الحارث النخعي	1	book:ibn-abi-dunya:hammwahuzn#117	
+محمد بن يوسف	1	book:ibn-abi-dunya:mudaratnas#132	
 الكبائر	1	book:shuab-iman#6749	
 مسلم بن زياد	1	book:ibn-abi-dunya:samt#714	
 الوليد بن عقبه حين حضره الموت	1	book:ibn-abi-dunya:muhtadarin#109	
 عبده بن سليمان الكلابي	1	book:shuab-iman#4687	
-عقبه بن ابي زينب	1	book:shuab-iman#1245	
+ابي شعبه الطحان	1	book:ibn-abi-dunya:mudaratnas#18	
 يزيد بن الاسود	1	book:shuab-iman#7218	
 في ادب اليتيم	1	book:ibn-abi-dunya:ciyal#629	
+سالم كاتب هشام بن عبد الملك	1	book:ibn-abi-dunya:muhtadarin#92	
 الله عز وجل في ايه اخري	1	book:ibn-abi-dunya:sifatnar#255	
 عباد بن الوليد القرشي	1	book:ibn-abi-dunya:ikhwan#180	
 اسحاق بن خلف	1	book:shuab-iman#841	
@@ -867,7 +901,6 @@ speaker	count	example1	example2
 وكان كثيرا ما يردد هذا الكلام	1	book:ibn-abi-dunya:riqqawabuka#182	
 ابن اخي سفيان	1	book:shuab-iman#927	
 في قول الله	1	book:ibn-mubarak-zuhd#1222	
-ادم	1	book:ibn-abi-dunya:riqqawabuka#331	
 عبيد الله بن ابي العيزار	1	book:shuab-iman#1600	
 حجاج	1	book:ibn-abi-dunya:ciyal#664	
 يضجر	1	book:ibn-abi-dunya:qadahawaij#63	
@@ -880,11 +913,15 @@ speaker	count	example1	example2
 مسروق بن سفيان	1	book:ibn-abi-dunya:tawba#42	
 ربيعه بن عطاء	1	book:ibn-abi-dunya:samt#685	
 مورق	1	book:ibn-abi-dunya:samt#575	
+الربيع يعني ابن صبيح	1	book:ibn-abi-dunya:riqqawabuka#156	
+عثمان بن صخر	1	book:ibn-abi-dunya:mujabudacwa#65	
 ابي جلده	1	book:shuab-iman#4691	
 ابا حازم	1	book:shuab-iman#7041	
+جعفر يعني ابن ابي المغيره	1	book:ibn-abi-dunya:sabr#128	
 عبد الاعلي التيمي	1	book:ibn-abi-dunya:muhtadarin#208	
 يوسف بن الحسين	1	book:shuab-iman#6788	
 بعد طلوع الفجر في بيته	1	book:ibn-abi-dunya:riqqawabuka#294	
+ابي شيبه المهري	1	book:ibn-abi-dunya:kalamlayali#23	
 وهيبا	1	book:ibn-abi-dunya:warac#123	
 ابي الاشعث الجدلي	1	book:ibn-abi-dunya:fadailramadan#44	
 طالوت	1	book:ibn-abi-dunya:cuqubat#251	
@@ -895,17 +932,21 @@ speaker	count	example1	example2
 مدرك ابي زياد	1	book:ibn-abi-dunya:juc#232	
 يزيد بن صعصعه بن صرخان	1	book:ibn-abi-dunya:hilm#107	
 سلمه بن سبره	1	book:shuab-iman#72	
+البطال الخثعمي	1	book:ibn-abi-dunya:sabr#32	
 عاصم بن بهدله	1	book:ibn-abi-dunya:ikhwan#145	
 ابي عبد الرحمن الحبلي	1	book:ibn-mubarak-zuhd#1256	
+عمرو بن دينار	1	book:ibn-abi-dunya:muhtadarin#44	
 مطرف ابي مصعب	1	book:ibn-abi-dunya:samt#423	
 المسيح	1	book:shuab-iman#1660	
 عبد الوهاب	1	book:shuab-iman#8463	
+بكر بن مصاد	1	book:ibn-abi-dunya:riqqawabuka#277	
 عبد الصمد بن معقل	1	book:shuab-iman#9570	
 رجاء بن ابي سلمه	1	book:ibn-abi-dunya:hilm#15	
 عبد الله بن الوليد	1	book:ibn-abi-dunya:ikhwan#159	
 الامام احمد رحمه الله تعالي	1	book:shuab-iman#1168	
 ابا العباس بن حمكويه	1	book:shuab-iman#1114	
 جرير	1	book:ibn-mubarak-zuhd#436	
+رجل كان مع وهب	1	book:ibn-abi-dunya:sabr#170	
 التوكل	1	book:shuab-iman#1221	
 بنت ابي عمرو	1	book:shuab-iman#5966	
 الترمذي	1	book:shuab-iman#248	
@@ -925,6 +966,7 @@ speaker	count	example1	example2
 عبيد الله بن الحسن	1	book:ibn-abi-dunya:ikhwan#29	
 يونس بن العوام بن حوشب	1	book:shuab-iman#6756	
 رجل من ال جعونه	1	book:ibn-abi-dunya:hilm#34	
+حبيب	1	book:ibn-abi-dunya:mujabudacwa#130	
 اسحاق بن عباد البصري	1	book:shuab-iman#1057	
 محمد بن ابي منصور	1	book:ibn-abi-dunya:hammwahuzn#96	
 امراه من الفراديس	1	book:ibn-abi-dunya:ciyal#631	
@@ -935,6 +977,7 @@ speaker	count	example1	example2
 يزيد بن المهلب	1	book:ibn-abi-dunya:qubur#126	
 ابي العاليه الشامي	1	book:ibn-abi-dunya:zuhd#115	
 زجله	1	book:ibn-abi-dunya:ikhwan#18	
+زاذان ابي عمر	1	book:ibn-abi-dunya:riqqawabuka#21	
 زبيد اليامي	1	book:ibn-mubarak-zuhd#256	
 اعرابيا وقد راي جنازه فاقبل وهو	1	book:ibn-abi-dunya:qubur#166	
 جعفر بن محمد الصادق	1	book:shuab-iman#8733	
@@ -947,14 +990,11 @@ speaker	count	example1	example2
 محمد بن ثابت البناني	1	book:ibn-abi-dunya:muhtadarin#161	
 وانا اواكله علي المائده	1	book:shuab-iman#463	
 جدتها خوله	1	book:ibn-abi-dunya:ciyal#632	
-بكر بن خنيس	1	book:shuab-iman#1756	
 شيء من امر المكاسب؟ ف	1	book:ibn-abi-dunya:warac#197	
 العقل	1	book:shuab-iman#4344	
-ابراهيم بن ابي عبله	1	book:ibn-abi-dunya:ciyal#352	
 رجل - يعني	1	book:shuab-iman#1942	
 ابا القاسم الحسن بن محمد بن احمد الصوفي	1	book:shuab-iman#467	
 يزيد بن حيان	1	book:shuab-iman#2892	
-ربيعه الجرشي	1	book:ibn-abi-dunya:sabr#15	
 ام رجاء الاشجعيه	1	book:shuab-iman#2390	
 موسي بن خلف	1	book:shuab-iman#1941	
 ابا علي بن حمشاذ الصائغ	1	book:shuab-iman#1691	
@@ -962,7 +1002,6 @@ speaker	count	example1	example2
 عتبه بن فرقد	1	book:ibn-abi-dunya:juc#79	
 رجل من اهل البصره	1	book:ibn-abi-dunya:ciyal#200	
 مروان بن ابي شجاع	1	book:ibn-abi-dunya:ciyal#348	
-هلال بن ايوب	1	book:ibn-abi-dunya:ikhwan#171	
 قره	1	book:shuab-iman#10160	
 ابي الاسود	1	book:ibn-abi-dunya:maradwakaffarat#136	
 اسماعيل بن عبيد الله المخزومي	1	book:ibn-abi-dunya:samt#524	
@@ -974,6 +1013,7 @@ speaker	count	example1	example2
 زهيرا البابي	1	book:shuab-iman#6857	
 الحارث بن عميره الزبيدي	1	book:ibn-abi-dunya:muhtadarin#128	
 زهير ابي خيثمه	1	book:ibn-abi-dunya:ikhwan#169	
+عمير بن اسحاق	1	book:ibn-abi-dunya:muhtadarin#132	
 عثمان بن حكيم الاودي	1	book:ibn-abi-dunya:ikhwan#45	
 كان محمد بن اسماعيل البخاري	1	book:shuab-iman#2058	
 عثمان بن حيان	1	book:ibn-mubarak-zuhd#525	
@@ -982,10 +1022,13 @@ speaker	count	example1	example2
 علي بن بكار	1	book:shuab-iman#1272	
 ابا عبد الرحمن العمري الزاهد	1	book:ibn-abi-dunya:muhtadarin#212	
 احمد بن حنبل	1	book:shuab-iman#385	
+فاطمه	1	book:ibn-abi-dunya:riqqawabuka#55	
 منصورا	1	book:shuab-iman#4720	
 شفي بن ماتع الاصبحي	1	book:ibn-abi-dunya:sifatnar#37	
+ربيعه بن ناجد	1	book:ibn-abi-dunya:mudaratnas#28	
 الوليد بن هشام القحذمي	1	book:ibn-abi-dunya:muhtadarin#64	
 ابا الفتح احمد بن عبد الله البغدادي	1	book:shuab-iman#845	
+الاشعث	1	book:ibn-abi-dunya:tawba#13	
 الحريث بن قيس	1	book:ibn-mubarak-zuhd#29	
 داود بن ابي صالح	1	book:ibn-mubarak-zuhd#110	
 سهل بن هارون	1	book:shuab-iman#9718	
@@ -996,6 +1039,7 @@ speaker	count	example1	example2
 الحر بن الصياح	1	book:ibn-abi-dunya:fadlcashrdhihijja#7	
 النعمان بن ابي عياش الزرقي	1	book:shuab-iman#8780	
 سليمان بن حرب	1	book:shuab-iman#5810	
+خوات بن جبير	1	book:ibn-abi-dunya:mujabudacwa#43	
 حماد بن سعيد بن ابي عطيه المذبوح	1	book:ibn-mubarak-zuhd#414	
 بعض حكماء الهند	1	book:ibn-abi-dunya:sabr#155	
 ابا بكر بن عياش	1	book:ibn-abi-dunya:samt#547	
@@ -1017,17 +1061,14 @@ speaker	count	example1	example2
 يزيد بن شجره	1	book:ibn-mubarak-zuhd#1321	
 التواضع	1	book:shuab-iman#7895	
 سعد بن مسعود التجيبي	1	book:ibn-mubarak-zuhd#583	
-عبد الله بن ابي الهذيل	1	book:ibn-abi-dunya:cuqubat#28	
 عثمان بن زفر	1	book:shuab-iman#7023	
 ابو جعفر محمد بن علي	1	book:ibn-abi-dunya:matarwaracd#116	
 داود بن المغيره	1	book:ibn-abi-dunya:muhtadarin#111	
 ابي خالد	1	book:shuab-iman#2993	
-الجريري	1	book:ibn-mubarak-zuhd#895	
 خزيمه ابي محمد	1	book:ibn-abi-dunya:muhtadarin#285	
 عبد الرحمن بن جبير	1	book:ibn-abi-dunya:mudaratnas#111	
 ابو عبد الرحمن	1	book:ibn-abi-dunya:riqqawabuka#280	
 كردوس التغلبي	1	book:shuab-iman#9557	
-محمد بن واسع وهو في الموت	1	book:ibn-abi-dunya:muhasabatnafs#36	
 صفيه بنت شيبه	1	book:ibn-abi-dunya:mujabudacwa#72	
 ابي الدهقان	1	book:ibn-abi-dunya:samt#504	
 يزيد بن معاويه	1	book:shuab-iman#10176	
@@ -1072,9 +1113,7 @@ speaker	count	example1	example2
 الزهد	1	book:shuab-iman#6483	
 ابي برده	1	book:ibn-abi-dunya:muhtadarin#56	
 رجل من بني تميم	1	book:ibn-abi-dunya:sifatnar#61	
-معاويه بن ابي سفيان	1	book:shuab-iman#8966	
 قيس بن سليم العنبري	1	book:ibn-abi-dunya:riqqawabuka#176	
-رجل من القوم	1	book:shuab-iman#4494	
 مريح بن مسروق	1	book:ibn-mubarak-zuhd#331	
 ابن فارس الابلق	1	book:shuab-iman#4910	
 المعافي بن عمران	1	book:shuab-iman#5380	
@@ -1098,9 +1137,11 @@ speaker	count	example1	example2
 ابا سعيد الخراز	1	book:shuab-iman#194	
 عثمان بن سليط	1	book:ibn-abi-dunya:juc#53	
 جده علي	1	book:ibn-abi-dunya:samt#478	
+غريب الهمداني	1	book:ibn-abi-dunya:samt#278	
 عبد ربه بن يزيد الرشك	1	book:ibn-abi-dunya:dhammmalahi#134	
 عصمه بن المتوكل	1	book:ibn-abi-dunya:warac#51	
 ابن زياد	1	book:shuab-iman#2933	
+عماره بن زاذان	1	book:ibn-abi-dunya:mujabudacwa#52	
 ابي العطاء اليحبوري	1	book:ibn-abi-dunya:cuqubat#347	
 حبيب بن سنان الاسدي	1	book:shuab-iman#6892	
 ابا الحسن علي بن حمزه بن علي العلوي	1	book:shuab-iman#1728	
@@ -1117,6 +1158,7 @@ speaker	count	example1	example2
 غير مره	1	book:shuab-iman#7907	
 حصين	1	book:ibn-abi-dunya:zuhd#202	
 سلمه العابد	1	book:ibn-abi-dunya:cuzla#185	
+بعض العباد علي بعض السواحل	1	book:ibn-abi-dunya:sabr#158	
 عمرو يعني ابن دينار	1	book:ibn-abi-dunya:muhtadarin#45	
 زريك بن ابي زريك	1	book:ibn-abi-dunya:maradwakaffarat#218	
 خالد بن يزيد القرني	1	book:ibn-abi-dunya:zuhd#319	
@@ -1127,9 +1169,9 @@ speaker	count	example1	example2
 الدقي	1	book:shuab-iman#1702	
 عبد الله بن خليفه	1	book:shuab-iman#9245	
 شميط بن عجلان	1	book:ibn-abi-dunya:samt#622	
+ابن عمر حين اتته بيعه يزيد	1	book:ibn-abi-dunya:sabr#168	
 ثابتا البناني	1	book:ibn-abi-dunya:sifatnar#136	
 المختار بن فلفل	1	book:ibn-abi-dunya:mujabudacwa#77	
-صالح الدهان	1	book:ibn-abi-dunya:ciyal#105	
 ابراهيم بن اسماعيل من اهل العلم	1	book:ibn-abi-dunya:mujabudacwa#74	
 ابو احمد	1	book:shuab-iman#7260	
 جابر بن عون	1	book:ibn-abi-dunya:hilm#44	
@@ -1144,12 +1186,13 @@ speaker	count	example1	example2
 ابي عمرو العبدي	1	book:ibn-mubarak-zuhd#941	
 خلف بن حوشب	1	book:ibn-mubarak-zuhd#270	
 محمد بن يحيي بن حبان	1	book:ibn-abi-dunya:ciyal#496	
-عقيبه بن فضاله	1	book:ibn-abi-dunya:riqqawabuka#216	
 المنكر؟	1	book:ibn-abi-dunya:amrbimacruf#71	
 ابو معاويه بن الاسود	1	book:ibn-abi-dunya:qadahawaij#83	
 الزبير بن العوام	1	book:ibn-mubarak-zuhd#1109	
+علي بن زيد بن جدعان	1	book:ibn-abi-dunya:mujabudacwa#68	
 ابي فراس	1	book:shuab-iman#2379	
 ابو معمر الازدي	1	book:ibn-abi-dunya:maradwakaffarat#16	
+سهما	1	book:ibn-abi-dunya:mujabudacwa#40	
 محمد بن رافع	1	book:ibn-abi-dunya:hammwahuzn#14	
 هارون الرشيد	1	book:shuab-iman#7027	
 الفضل بن محمد	1	book:shuab-iman#5422	
@@ -1175,7 +1218,6 @@ speaker	count	example1	example2
 في الليل	1	book:shuab-iman#4270	
 معضد	1	book:ibn-mubarak-zuhd#264	
 ام محمد بن كعب القرظي	1	book:ibn-abi-dunya:muhasabatnafs#122	
-محمد بن سلام الجمحي	1	book:ibn-abi-dunya:rasailfitawakkul#57	
 سعيد بن شيبان	1	book:shuab-iman#10567	
 ابراهيم الهجري	1	book:shuab-iman#2606	
 يوسف الصفار	1	book:shuab-iman#9516	
@@ -1199,6 +1241,7 @@ speaker	count	example1	example2
 عمر بن الخطاب في خطبته	1	book:ibn-mubarak-zuhd#586	
 صالح بن حي	1	book:ibn-abi-dunya:sifatnar#51	
 ابي فالج الانماري	1	book:ibn-abi-dunya:matarwaracd#181	
+مهدي بن ميمون	1	book:ibn-abi-dunya:muhtadarin#189	
 بعض من ياتيه	1	book:ibn-mubarak-zuhd#462	
 ابراهيم بن عيسي اليشكري	1	book:shuab-iman#2970	
 الشيخ ابا عبد الله بن خفيف	1	book:shuab-iman#854	
@@ -1238,8 +1281,8 @@ speaker	count	example1	example2
 امراه سالت عائشه	1	book:ibn-abi-dunya:ciyal#522	
 ابا بكر الوراق	1	book:shuab-iman#1693	
 الزجاج	1	book:shuab-iman#2415	
+عثمان بن ابي العاتكه	1	book:ibn-abi-dunya:mujabudacwa#88	
 بكر بن محمد	1	book:ibn-abi-dunya:mudaratnas#124	
-جنيد	1	book:shuab-iman#870	
 بعض اصحابنا	1	book:ibn-abi-dunya:ciyal#602	
 السدر ف	1	book:ibn-abi-dunya:dhammmalahi#109	
 هذا القول غسل واغتسل	1	book:shuab-iman#2729	
@@ -1272,19 +1315,19 @@ speaker	count	example1	example2
 الحجاج بن محمد	1	book:ibn-abi-dunya:qasramal#184	
 عبد الله بن رباح	1	book:shuab-iman#3642	
 ابراهيم بن ادهم ذات يوم	1	book:ibn-abi-dunya:cuzla#115	
+عبد الله بن دينار البهراني	1	book:ibn-abi-dunya:samt#640	
 الحسن بن عرفه العبدي	1	book:shuab-iman#814	
 ابي حره	1	book:ibn-abi-dunya:muhasabatnafs#110	
 زيد بن السائب	1	book:ibn-abi-dunya:ciyal#592	
 بسطام	1	book:shuab-iman#8644	
 سعيد بن ابي هلال الليثي	1	book:shuab-iman#8527	
 مطرفا	1	book:shuab-iman#884	
+ابي مالك الاشعري	1	book:ibn-abi-dunya:samt#303	
 ضمره	1	book:shuab-iman#1714	
-محمد بن الوليد	1	book:ibn-abi-dunya:ikhlaswaniyya#9	
 ابو واقد	1	book:shuab-iman#10201	
 ابي صخره جامع بن شداد	1	book:ibn-abi-dunya:matarwaracd#111	
 الليث	1	book:ibn-abi-dunya:ciyal#622	
 عبد الله بن يوسف الاصبهاني	1	book:shuab-iman#479	
-سماك بن حرب	1	book:shuab-iman#10607	
 حسن	1	book:ibn-abi-dunya:ikhwan#172	
 خالد بن يزيد بن معاويه	1	book:ibn-abi-dunya:zuhd#471	
 ابا الوليد	1	book:ibn-abi-dunya:warac#159	
@@ -1305,10 +1348,12 @@ speaker	count	example1	example2
 صهيب بن مهران	1	book:shuab-iman#2979	
 محمد بن علي الترمذي	1	book:shuab-iman#6460	
 منذر	1	book:shuab-iman#7856	
+حين حضره الموت	1	book:ibn-abi-dunya:muhtadarin#118	
 اسحاق بن سويد	1	book:shuab-iman#3605	
 رجل من الانصار	1	book:ibn-abi-dunya:zuhd#543	
 المنهال	1	book:ibn-abi-dunya:cuqubat#302	
 العلماء	1	book:shuab-iman#217	
+ابا جعفر	1	book:ibn-abi-dunya:samt#154	
 عبد الرحمن بن مصرف	1	book:ibn-abi-dunya:amrbimacruf#60	
 محمد بن عبد الله بن ابراهيم التميمي	1	book:shuab-iman#6754	
 زياد بن ابي حبيب	1	book:shuab-iman#4516	
@@ -1324,6 +1369,7 @@ speaker	count	example1	example2
 ابي جعفر المدايني	1	book:ibn-abi-dunya:warac#56	
 عمرو بن خالد	1	book:ibn-abi-dunya:cuqubat#123	
 رجل من العرب	1	book:ibn-abi-dunya:qasramal#198	
+عبد الرحمن بن ابي عوف الجرشي	1	book:ibn-abi-dunya:mudaratnas#43	
 العلاء بن عبد الرحمن	1	book:shuab-iman#38	
 علي بن ابي طالب عليه السلام	1	book:ibn-abi-dunya:cuqubat#197	
 في تفسير قوله	1	book:shuab-iman#8492	
@@ -1339,6 +1385,7 @@ speaker	count	example1	example2
 وكيع بن الجراح	1	book:ibn-abi-dunya:qasramal#189	
 اسماعيل بن عليه	1	book:ibn-abi-dunya:muhasabatnafs#37	
 سهيل بن حسان الكلبي	1	book:ibn-mubarak-zuhd#388	
+عمرو بن حماد بن طلحه	1	book:ibn-abi-dunya:sabr#99	
 حبيب بن ابي عمره	1	book:shuab-iman#1910	
 ابا عبيده الخواص	1	book:ibn-abi-dunya:hammwahuzn#19	
 سعد وهم في مجلس	1	book:shuab-iman#4768	
@@ -1363,10 +1410,13 @@ speaker	count	example1	example2
 محبوب الزاهد	1	book:ibn-abi-dunya:qasramal#329	
 محمد بن عبد الله القرشي	1	book:ibn-abi-dunya:ictibarwaacqab#38	
 ابي عطيه الهمداني	1	book:shuab-iman#2213	
+والده شيئا.	1	book:ibn-abi-dunya:riqqawabuka#286	
 بعض الحكماء في مناجاته	1	book:shuab-iman#1039	
 الحكم بن عبد الله الارزق	1	book:ibn-abi-dunya:caqlwafadluh#36	
 ابن ابي جبله	1	book:ibn-mubarak-zuhd#1284	
 ابا سعيد الخزاز	1	book:shuab-iman#466	
+منيعه بنت زربي	1	book:ibn-abi-dunya:mujabudacwa#71	
+بلال حين حضرته الوفاه	1	book:ibn-abi-dunya:muhtadarin#294	
 عباس بن الوليد بن يزيد	1	book:ibn-abi-dunya:hilm#121	
 سليمان بن قرم	1	book:ibn-abi-dunya:ikhwan#178	
 صعصعه	1	book:shuab-iman#8124	
@@ -1403,7 +1453,6 @@ speaker	count	example1	example2
 الفضل الرقاشي	1	book:ibn-abi-dunya:hammwahuzn#71	
 زيد بن ابي الزرقاء	1	book:shuab-iman#925	
 ابي العاتكه	1	book:ibn-abi-dunya:riqqawabuka#358	
-حزم	1	book:ibn-abi-dunya:dhammghiba#113	
 عبد العزيز بن ابان	1	book:ibn-abi-dunya:caqlwafadluh#104	
 شيء	1	book:ibn-mubarak-zuhd#52	
 ابي قيس	1	book:ibn-abi-dunya:cuqubat#318	
@@ -1411,6 +1460,7 @@ speaker	count	example1	example2
 اذا دخل شهر رمضان	1	book:ibn-abi-dunya:fadailramadan#31	
 صيفي بن رباح التميمي	1	book:ibn-abi-dunya:dhammbaghy#23	
 العجوز	1	book:shuab-iman#902	
+افلح مولي محمد بن علي	1	book:ibn-abi-dunya:riqqawabuka#266	
 اكثم بن صيفي	1	book:ibn-abi-dunya:hilm#16	
 عبد الله بن محمد الرازي	1	book:shuab-iman#457	
 زيد بن الحسين	1	book:shuab-iman#10293	
@@ -1427,18 +1477,17 @@ speaker	count	example1	example2
 عصمه بن عبد الرحمن السكوني	1	book:shuab-iman#4198	
 ابو احمد الفراء	1	book:shuab-iman#2292	
 الانصاري	1	book:ibn-abi-dunya:muhtadarin#349	
+ابي المنذر الكوفي	1	book:ibn-abi-dunya:mujabudacwa#37	
 الجنيد بن محمد	1	book:shuab-iman#5298	
 ابا يزيد المدني	1	book:ibn-mubarak-zuhd#163	
 علي بن سهل بن الازهر	1	book:shuab-iman#454	
 عبد الله بن الحارث	1	book:ibn-mubarak-zuhd#1368	
 حماد بن موسي الخشني	1	book:ibn-abi-dunya:muhtadarin#114	
 ابن عطيه	1	book:shuab-iman#4803	
-ابي قتاده	1	book:ibn-abi-dunya:samt#669	
 عثمان بن ابي سوده	1	book:shuab-iman#8610	
 سليمان بن حبيب	1	book:ibn-mubarak-zuhd#61	
 محمد بن كناسه الاسدي	1	book:ibn-abi-dunya:juc#171	
 الشهيق الذي يعتري الباكي بعد البكاء؟	1	book:ibn-abi-dunya:hammwahuzn#101	
-سفيان بن محمد	1	book:ibn-abi-dunya:ikhwan#134	
 زكريا	1	book:ibn-abi-dunya:mujabudacwa#112	
 عبد الله بن زرير الغافقي	1	book:ibn-abi-dunya:juc#242	
 ابا عبيده بن عقبه	1	book:ibn-mubarak-zuhd#1552	
@@ -1451,6 +1500,7 @@ speaker	count	example1	example2
 نافع بن عمر الجمحي	1	book:ibn-abi-dunya:ciyal#665	
 شعيب ابن حرب	1	book:ibn-abi-dunya:cuzla#63	
 عبد الله بن زبيد الايامي	1	book:ibn-mubarak-zuhd#1562	
+بكر بن سواده	1	book:ibn-abi-dunya:muhtadarin#173	
 سلمه الاسواري يوما	1	book:ibn-abi-dunya:juc#134	
 سعيد بن ابي ايوب	1	book:shuab-iman#5153	
 مطرف بن طريف	1	book:ibn-abi-dunya:samt#495	
@@ -1473,7 +1523,6 @@ speaker	count	example1	example2
 القعقاع بن حكيم	1	book:ibn-abi-dunya:qasramal#78	
 الاسود بن شيبان	1	book:ibn-abi-dunya:hammwahuzn#34	
 عبد الله بن الحسن	1	book:ibn-abi-dunya:ikhwan#53	
-يونس بن خباب	1	book:ibn-abi-dunya:ciyal#657	
 ابو عبيد الله	1	book:ibn-abi-dunya:qadahawaij#84	
 شقيقا	1	book:shuab-iman#220	
 عبد الله بن خبيق الانطاكي	1	book:ibn-abi-dunya:caqlwafadluh#65	
@@ -1501,17 +1550,21 @@ speaker	count	example1	example2
 راهويه	1	book:ibn-abi-dunya:hammwahuzn#100	
 عمرو بن جرير	1	book:shuab-iman#6899	
 علي بن صالح	1	book:shuab-iman#2927	
+عاصم بن عبيد الله	1	book:ibn-abi-dunya:muhtadarin#42	
 الحجاج بن دينار	1	book:ibn-abi-dunya:hammwahuzn#38	
 عثمان بن زايده	1	book:shuab-iman#6802	
 ابي عبد الله	1	book:ibn-abi-dunya:amrbimacruf#47	
 شعيب بن محرز	1	book:shuab-iman#877	
 سفيان بن حسين	1	book:shuab-iman#6351	
 حنش الصنعاني	1	book:ibn-abi-dunya:samt#660	
+وهيب	1	book:ibn-abi-dunya:riqqawabuka#402	
 ابن ابي زكريا	1	book:ibn-abi-dunya:matarwaracd#118	
 سعيد بن عبد الرحمن الزبيدي	1	book:ibn-abi-dunya:mudaratnas#67	
 ابن معين في المسعودي	1	book:ibn-mubarak-zuhd#822	
 معقل بن عبيد الله الجزري	1	book:ibn-abi-dunya:ikhlaswaniyya#25	
 عقبه بن صالح	1	book:shuab-iman#6099	
+ضيغم	1	book:ibn-abi-dunya:riqqawabuka#97	
+عطاء الخفاف	1	book:ibn-abi-dunya:mudaratnas#121	
 سيار	1	book:shuab-iman#10318	
 صالح ابي شعيب	1	book:ibn-abi-dunya:hammwahuzn#130	
 بكر بن عامر	1	book:shuab-iman#4680	
@@ -1547,8 +1600,11 @@ speaker	count	example1	example2
 حسينا الجعفي	1	book:shuab-iman#10443	
 الفتي	1	book:ibn-mubarak-zuhd#1496	
 قطن بن عبد الله	1	book:ibn-abi-dunya:juc#138	
+المبارك بن فضاله	1	book:ibn-abi-dunya:riqqawabuka#118	
+عبد الجليل	1	book:ibn-abi-dunya:tawakkul#18	
 داود بن هلال	1	book:ibn-abi-dunya:zuhd#473	
 الشكر والصبر ايهما افضل؟	1	book:shuab-iman#4126	
+ابراهيم بن عبد الرحمن بن عوف	1	book:ibn-abi-dunya:muhtadarin#352	
 يونس بن ابي الفرات	1	book:ibn-abi-dunya:juc#305	
 محمد بن يحيي	1	book:ibn-abi-dunya:caqlwafadluh#43	
 الرضا	1	book:shuab-iman#232	
@@ -1558,7 +1614,6 @@ speaker	count	example1	example2
 عبد العزيز بن قريب	1	book:ibn-abi-dunya:ciyal#134	
 واثله بن الاسقع	1	book:shuab-iman#9839	
 بعضهم في تفسير العزله	1	book:ibn-abi-dunya:samt#37	
-ابي غالب	1	book:shuab-iman#6713	
 ابا عبد الله محمد بن ابراهيم الكرماني	1	book:shuab-iman#1751	
 سليمان بن داود عليه السلام	1	book:shuab-iman#8076	
 الصلاه التي يسبح فيها ف	1	book:shuab-iman#603	
@@ -1586,18 +1641,20 @@ speaker	count	example1	example2
 عبد الله بن محمد	1	book:ibn-abi-dunya:hilm#90	
 سهل بن عبد الله بن يونس الزاهد	1	book:shuab-iman#1726	
 تميم بن سلمه	1	book:shuab-iman#5450	
+ابي نوفل بن ابي عقرب	1	book:ibn-abi-dunya:muhtadarin#104	
 عثمان بن غياث	1	book:ibn-abi-dunya:dhammmalahi#118	
 مسلم ابي عبد الله الحنفي	1	book:ibn-abi-dunya:ciyal#149	
 محمد بن كعب	1	book:ibn-abi-dunya:muhtadarin#277	
+عبد الواحد	1	book:ibn-abi-dunya:muhtadarin#203	
 عمران بن سليمان التيمي	1	book:shuab-iman#9108	
 السري السقطي	1	book:shuab-iman#840	
 ابن ابي عمره	1	book:ibn-abi-dunya:qasramal#83	
 اسماعيل بن سهيل	1	book:shuab-iman#9706	
+اسماعيل بن عياش	1	book:ibn-abi-dunya:riqqawabuka#73	
 شميطا العنسي	1	book:ibn-abi-dunya:samt#119	
 سويد بن غفله	1	book:shuab-iman#5690	
 بشر بن المفضل	1	book:ibn-abi-dunya:mujabudacwa#136	
 ابا معاويه الاسود	1	book:ibn-abi-dunya:qasramal#138	
-محمد بن الحنفيه	1	book:ibn-abi-dunya:maqtalcali#125	
 عبد الحميد بن محمود	1	book:ibn-abi-dunya:cuqubat#338	
 محمد بن عبد	1	book:shuab-iman#4228	
 حبيب بن عبيد الرحبي	1	book:ibn-mubarak-zuhd#1442	
@@ -1611,13 +1668,14 @@ speaker	count	example1	example2
 عبايه ابو غسان	1	book:shuab-iman#9753	
 الحليمي	1	book:shuab-iman#7160	
 علي بن ابي طالب صلوات الله عليه	1	book:ibn-abi-dunya:qasramal#49	
+ابي بكر الهذلي	1	book:ibn-abi-dunya:riqqawabuka#109	
 ميسره بن حبيب	1	book:ibn-abi-dunya:dhammmalahi#92	
+قائلا	1	book:ibn-abi-dunya:qubur#138	
 رجل مره	1	book:ibn-abi-dunya:sabr#130	
 محمد بن حجاده	1	book:ibn-mubarak-zuhd#760	
 الضحاك بن عثمان	1	book:ibn-abi-dunya:zuhd#15	
 خالد بن الدريك	1	book:shuab-iman#3977	
 سفيان بن عمرو بن عتبه	1	book:ibn-abi-dunya:ciyal#356	
-بشر بن السري	1	book:shuab-iman#470	
 عقبه الاسدي	1	book:ibn-abi-dunya:juc#35	
 ابو بكر وفي غير حديث العباس	1	book:ibn-abi-dunya:maradwakaffarat#165	
 افلح	1	book:shuab-iman#4036	
@@ -1633,6 +1691,7 @@ speaker	count	example1	example2
 احمد بن حفص	1	book:shuab-iman#6906	
 فيما ذهب	1	book:ibn-mubarak-zuhd#951	
 قتيبه بن سعيد	1	book:ibn-abi-dunya:hilm#120	
+صالح	1	book:ibn-abi-dunya:riqqawabuka#258	
 واصل	1	book:ibn-abi-dunya:ciyal#591	
 صاحب الطعام	1	book:ibn-abi-dunya:juc#249	
 سوار بن عبد الله	1	book:ibn-abi-dunya:samt#503	
@@ -1652,18 +1711,17 @@ speaker	count	example1	example2
 الحسن او غيره	1	book:ibn-abi-dunya:juc#97	
 يزيد بن الوليد الناقص	1	book:ibn-abi-dunya:dhammmalahi#52	
 عبد العزيز الماجشون	1	book:ibn-abi-dunya:dhammmalahi#45	
-ابا عمران الجوني	1	book:ibn-abi-dunya:samt#51	
 شقيق البلخي	1	book:ibn-mubarak-zuhd#982	
 كعب الحبر	1	book:shuab-iman#6992	
 ابن الفرخي	1	book:shuab-iman#6467	
 تميم في قوله	1	book:ibn-mubarak-zuhd#1449	
 عياش بن مطرف الكلاعي	1	book:ibn-abi-dunya:ikhwan#36	
 عيسي بن عمر	1	book:shuab-iman#624	
+فياض بن محمد	1	book:ibn-abi-dunya:riqqawabuka#67	
 حبيب بن عبيد	1	book:ibn-mubarak-zuhd#1345	
 محمد بن المبارك الصوري	1	book:ibn-abi-dunya:warac#58	
 المهلب	1	book:ibn-abi-dunya:samt#717	
 كندير بن سليمان	1	book:ibn-abi-dunya:ictibarwaacqab#22	
-عبيده السلماني	1	book:ibn-abi-dunya:dhammghiba#41	
 النضر بن شميل	1	book:shuab-iman#7137	
 عامر بن ابي عامر الخزاز	1	book:ibn-abi-dunya:ikhwan#46	
 يعلي بن منيه	1	book:ibn-abi-dunya:sifatnar#62	
@@ -1682,6 +1740,7 @@ speaker	count	example1	example2
 الحسن بن كثير	1	book:ibn-abi-dunya:ikhwan#179	
 سهم	1	book:ibn-abi-dunya:dhammbaghy#15	
 عبد الله بن ابي ثابت	1	book:ibn-abi-dunya:ciyal#640	
+عقيب	1	book:ibn-abi-dunya:sabr#100	
 الاخر	1	book:ibn-abi-dunya:warac#169	
 علي بن سلمه اللبقي	1	book:shuab-iman#934	
 فقد شمتك في نفسي فقال	1	book:shuab-iman#8890	
@@ -1693,3 +1752,4 @@ speaker	count	example1	example2
 امره؟ ف	1	book:ibn-abi-dunya:warac#120	
 حكام بن سلم	1	book:ibn-abi-dunya:ikhwan#141	
 جابر بن عون الاسدي	1	book:ibn-abi-dunya:zuhd#157	
+عبد الرحمن بن يزيد بن معاويه	1	book:ibn-abi-dunya:tawba#21	
