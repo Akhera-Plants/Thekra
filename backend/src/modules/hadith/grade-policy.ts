@@ -164,13 +164,17 @@ export class GradePolicy {
     return PUBLISHABLE_GRADE_SOURCES.includes(row.gradeSource);
   }
 
-  static whereClause(allowed: HadithGrade[]): Prisma.QuoteWhereInput {
+  static whereClause(allowed: HadithGrade[], athar = ATHAR_PUBLIC_ENABLED): Prisma.QuoteWhereInput {
     return {
       OR: [
         { type: { not: QuoteType.HADITH } },
         { grade: { in: allowed } },
         ...(allowed.includes(HadithGrade.UNGRADED)
           ? [{ type: QuoteType.HADITH, grade: null }]
+          : []),
+        // A kept athar carries no hadith grade; it is labelled «أثر، وليس حديثًا» instead.
+        ...(athar
+          ? [{ isAthar: true, atharSpeakerKey: { not: null }, atharReviewDecision: 'KEEP' as const }]
           : []),
       ],
     };

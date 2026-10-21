@@ -9,5 +9,7 @@ export default defineConfig({
     globals: true,
     root: './',
     include: ['**/*.spec.ts'],
+    // Unit specs assume the reviewed-athar section is off unless a test turns it on explicitly.
+    env: { ATHAR_PUBLIC_ENABLED: 'false' },
   },
 });

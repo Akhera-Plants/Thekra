@@ -111,6 +111,13 @@ describe('GradePolicy', () => {
       });
     });
 
+    it('admits a kept, listed athar (no hadith grade) only when the athar section is on', () => {
+      const allowed = [HadithGrade.SAHIH, HadithGrade.HASAN];
+      const kept = { isAthar: true, atharSpeakerKey: { not: null }, atharReviewDecision: 'KEEP' };
+      expect(GradePolicy.whereClause(allowed, true).OR).toContainEqual(kept);
+      expect(GradePolicy.whereClause(allowed, false).OR).not.toContainEqual(kept);
+    });
+
     it('does not include null-grade HADITH when UNGRADED is not allowed', () => {
       const clause = GradePolicy.whereClause([
         HadithGrade.SAHIH,
