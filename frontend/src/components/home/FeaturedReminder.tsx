@@ -14,6 +14,7 @@ import { englishProvenance } from '@/lib/format/provenance';
 import { QuoteType } from '@/lib/types/enums';
 import type { QuoteDto } from '@/lib/types/api';
 import { splitChain } from './today/chain';
+import { featuredVerseScale } from './today/verse-scale';
 
 interface FeaturedReminderProps {
   quote: QuoteDto;
@@ -79,6 +80,7 @@ export function FeaturedReminder({ quote }: FeaturedReminderProps) {
       : rawReference;
   const meta = [gradeLine, sourceLine].filter(Boolean).join(' · ');
   const body = english ?? text;
+  const scale = featuredVerseScale(body.length);
 
   return (
     <article className="featured-reminder">
@@ -97,7 +99,10 @@ export function FeaturedReminder({ quote }: FeaturedReminderProps) {
           </button>
         ) : null}
       </div>
-      <p className={isQuran ? 'quran featured-verse' : 'featured-verse'} lang={english ? 'en' : 'ar'}>
+      <p
+        className={['featured-verse', isQuran ? 'quran' : '', scale].filter(Boolean).join(' ')}
+        lang={english ? 'en' : 'ar'}
+      >
         {english ? <EnglishWithHonorific text={body} /> : body}
       </p>
       <div className="reading-bottom">

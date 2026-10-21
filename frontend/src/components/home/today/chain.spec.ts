@@ -18,6 +18,14 @@ describe('splitChain', () => {
     });
   });
 
+  it('drops a short preface plus the chain («غيره: حدثني…»)', () => {
+    const full =
+      'غيره: حدثني الليث، حدثني عقيل، عن ابن شهاب، قال: أخبرني عبيد الله بن عبد الله، عن ابن عباس، عن عمر بن الخطاب رضي الله عنه، أنه قال: لما مات عبد الله بن أبي ابن سلول، دعي له رسول الله صلى الله عليه وسلم ليصلي عليه';
+    const { text } = splitChain(full);
+    expect(text.startsWith('لما مات')).toBe(true);
+    expect(text.includes('حدثني الليث')).toBe(false);
+  });
+
   it('shows the whole text when the remainder still opens with a chain', () => {
     const full = 'حدثنا فلان، قال: حدثنا فلان عن أبي هريرة أن رسول الله صلى الله عليه وسلم قال كلمة';
     expect(splitChain(full).chain).toBeNull();

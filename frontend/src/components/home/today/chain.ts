@@ -7,7 +7,11 @@
  * cleanly is shown whole.
  */
 
-const CHAIN_OPENER = /^\s*(?:و?(?:حدثنا|حدثني|أخبرنا|أخبرني|أنبأنا|أنبأني|ثنا|نا|أنا)(?=[\s،:]))/;
+/** Opener may sit after a short preface («غيره: حدثني…»). */
+const CHAIN_WORD = 'و?(?:حدثنا|حدثني|أخبرنا|أخبرني|أنبأنا|أنبأني|ثنا|نا|أنا)';
+const CHAIN_OPENER = new RegExp(`(?:^|[\\s:])(?:${CHAIN_WORD})(?=[\\s،:])`);
+const CHAIN_START = new RegExp(`^\\s*(?:${CHAIN_WORD})(?=[\\s،:])`);
+const OPENER_WINDOW = 48;
 const PROPHET = /رسول الله|النبي|ﷺ/;
 const SAID = /(?:،\s*)?(?:قال|قالت)\s*:\s*/g;
 const MIN_TEXT = 24;
@@ -19,7 +23,8 @@ export interface ChainSplit {
 
 export function splitChain(full: string): ChainSplit {
   const source = full.trim();
-  if (!CHAIN_OPENER.test(source)) return { chain: null, text: source };
+  const opener = CHAIN_OPENER.exec(source);
+  if (!opener || opener.index > OPENER_WINDOW) return { chain: null, text: source };
 
   const prophetAt = source.search(PROPHET);
   if (prophetAt <= 0) return { chain: null, text: source };
@@ -32,6 +37,6 @@ export function splitChain(full: string): ChainSplit {
 
   const chain = source.slice(0, cut).replace(/[،:\s]+$/, '').trim();
   const text = source.slice(cut).trim();
-  if (text.length < MIN_TEXT || CHAIN_OPENER.test(text)) return { chain: null, text: source };
+  if (text.length < MIN_TEXT || CHAIN_START.test(text)) return { chain: null, text: source };
   return { chain, text };
 }
