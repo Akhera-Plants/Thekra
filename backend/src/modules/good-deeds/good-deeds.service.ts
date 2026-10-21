@@ -26,6 +26,8 @@ import {
 } from '../quotes/quotes.service.js';
 import type { GoodDeedQuotesQueryDto } from '../sins/dto/sin-quotes-query.dto.js';
 import { pairForSlug } from '../taxonomy/topic-pairs.js';
+import { readThemedPage, summariseThemes } from '../taxonomy/theme-reading.js';
+import { themesForTopics } from '../taxonomy/topic-themes.js';
 import type { CreateGoodDeedDto } from './dto/create-good-deed.dto.js';
 import type { GoodDeedsQueryDto } from './dto/good-deeds-query.dto.js';
 import type { UpdateGoodDeedDto } from './dto/update-good-deed.dto.js';
@@ -359,10 +361,30 @@ export class GoodDeedsService {
         includeWeak: query.includeWeak,
       }).quoteFilter,
     };
-    const countsByKindQ = this.quotes.countsByKind({
-      linkTable: 'goodDeedLinks',
-      linkWhere: baseWhere,
+    // Topic themes: this deed's, then its paired sin's (one page, taxonomy.yaml pairs:).
+    const pair = pairForSlug(deed.slug);
+    const pairedSinId = pair ? (deed.oppositeSin?.id ?? null) : null;
+    const pageThemes = themesForTopics(pair ? [deed.slug, pair.avoid] : [deed.slug]);
+    const activeTheme = pageThemes.find((theme) => theme.key === query.theme)?.key ?? null;
+    const sinSide = (quote: Prisma.SinQuoteWhereInput['quote']): Prisma.SinQuoteWhereInput => ({
+      sinId: pairedSinId ?? undefined,
+      reviewStatus: PUBLISHED_LINK_REVIEW_STATUS,
+      ...autoLinkExclusion(),
+      quote,
     });
+    const themeSummaryQ = summariseThemes(
+      this.prisma,
+      { deed: baseWhere, ...(pairedSinId ? { sin: sinSide(baseWhere.quote) } : {}) },
+      pageThemes,
+      activeTheme,
+    );
+
+    const countsByKindQ = activeTheme
+      ? Promise.resolve(null)
+      : this.quotes.countsByKind({
+          linkTable: 'goodDeedLinks',
+          linkWhere: baseWhere,
+        });
 
     // Shared sub-queries (count, type breakdown) — same for both paths
     const countQ = this.prisma.goodDeedQuote.count({ where });
@@ -385,6 +407,42 @@ export class GoodDeedsService {
       oppositeSin: deed.oppositeSin,
     };
 
+    // ── Theme: one merged, deduped list over the page (deed + paired sin) ─────
+    // Kind still applies. Counts follow the theme; meta.themes does not.
+    if (activeTheme) {
+      const has = { themeKeys: { has: activeTheme } };
+      const [themed, summary] = await Promise.all([
+        readThemedPage(
+          this.prisma,
+          { deed: { ...where, ...has }, ...(pairedSinId ? { sin: { ...sinSide(where.quote), ...has } } : {}) },
+          {
+            page,
+            limit,
+            include: this.quotes.buildQuoteInclude(locale),
+            present: (row) => this.presentDeedItem(row as Parameters<GoodDeedsService['presentDeedItem']>[0], locale),
+          },
+        ),
+        themeSummaryQ,
+      ]);
+      return {
+        data: {
+          goodDeed: { ...goodDeedPayload, isContemporary: deed.isContemporary },
+          items: themed.items,
+          companion: { items: [] },
+          derived: [],
+        },
+        meta: buildPageMeta(page, limit, themed.total, {
+          locale,
+          ordering: READING_ORDER,
+          countsByType: themed.countsByType,
+          countsByKind: summary.countsByKind,
+          appliedGrades: allowedGrades,
+          themes: summary.themes,
+          theme: activeTheme,
+        }),
+      };
+    }
+
     // ── Shuffle variety mode (§4.2) ────────────────────────────────────────────
     // One shared implementation with SinsService.findQuotesForSin — both call
     // QuotesService.shuffleLinksPage with the appropriate table / parentKey.
@@ -405,7 +463,7 @@ export class GoodDeedsService {
         limit,
       });
 
-      const [[rows, total, typeGroups], countsByKind] = await Promise.all([
+      const [[rows, total, typeGroups], countsByKind, summary] = await Promise.all([
         this.prisma.$transaction([
           this.prisma.goodDeedQuote.findMany({
             where: { id: { in: ids } },
@@ -415,6 +473,7 @@ export class GoodDeedsService {
           typeGroupsQ,
         ]),
         countsByKindQ,
+        themeSummaryQ,
       ]);
 
       // Re-order to match the shuffle ordering from the raw query
@@ -441,13 +500,15 @@ export class GoodDeedsService {
           countsByType,
           countsByKind,
           appliedGrades: allowedGrades,
+          themes: summary.themes,
+          theme: null,
         }),
       };
     }
 
     const ranked = await this.prisma.goodDeedQuote.findMany({ where, select: READING_SELECT });
     const ids = pageReadingIds(ranked as ReadingRow[], page, limit);
-    const [[rows, total, typeGroups], countsByKind] = await Promise.all([
+    const [[rows, total, typeGroups], countsByKind, summary] = await Promise.all([
       this.prisma.$transaction([
         this.prisma.goodDeedQuote.findMany({
           where: { id: { in: ids.length > 0 ? ids : ['00000000-0000-0000-0000-000000000000'] } },
@@ -457,6 +518,7 @@ export class GoodDeedsService {
         typeGroupsQ,
       ]),
       countsByKindQ,
+      themeSummaryQ,
     ]);
     const order = new Map(ids.map((id, index) => [id, index]));
     rows.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
@@ -487,6 +549,8 @@ export class GoodDeedsService {
         countsByType,
         countsByKind,
         appliedGrades: allowedGrades,
+        themes: summary.themes,
+        theme: null,
       }),
     };
   }

@@ -218,6 +218,8 @@
     "typeScholar": "أقوال العلماء",
     "typeBook": "كتب",
     "tabsLabel": "تصفية النصوص",
+    "themesLabel": "موضوعات الباب",
+    "themeAll": "الكل",
     "severity": "الخطورة"
   },
   "goodDeeds": {
@@ -253,7 +255,9 @@
     "atharSection": "من أقوال السلف",
     "typeScholar": "أقوال العلماء",
     "typeBook": "كتب",
-    "tabsLabel": "تصفية النصوص"
+    "tabsLabel": "تصفية النصوص",
+    "themesLabel": "موضوعات الباب",
+    "themeAll": "الكل"
   },
   "browse": {
     "pageTitle": "تصفح",
@@ -826,7 +830,8 @@
     "search": "بحث",
     "results": "المواضيع: {count}",
     "footnote": "اختر موضوعًا لتقرأ نصوصه مع مصادرها.",
-    "empty": "لا مواضيع مطابقة."
+    "empty": "لا مواضيع مطابقة.",
+    "themeIn": "ضمن باب: {title}"
   },
   "breadcrumbs": {
     "home": "الرئيسية",

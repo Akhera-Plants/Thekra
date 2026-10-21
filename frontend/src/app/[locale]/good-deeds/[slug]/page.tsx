@@ -7,6 +7,7 @@ import type { ReaderItem, ReaderSection } from '@/components/shared/editorial/Re
 import { GoodDeedReader } from '@/features/good-deed-motivation/components/GoodDeedReader';
 import { interleaveReading } from '@/lib/reading';
 import { getGoodDeed, getGoodDeedQuotes } from '@/lib/api/good-deeds';
+import { parseThemeParam } from '@/lib/search/topic-themes';
 import type { LocaleCode } from '@/lib/types/enums';
 import type { GoodDeedQuotesMeta } from '@/lib/types/api';
 
@@ -29,8 +30,11 @@ export async function generateMetadata({
 
 export default async function GoodDeedDetailPage({
   params,
+  searchParams,
 }: PageProps<'/[locale]/good-deeds/[slug]'>) {
   const { slug, locale } = await params;
+  // ?theme= preselects a chip (search results, shared links). Unknown keys are ignored by the API.
+  const requestedTheme = parseThemeParam((await searchParams).theme);
   setRequestLocale(locale);
   const t = await getTranslations('goodDeedDetail');
   const tNav = await getTranslations('nav');
@@ -50,6 +54,7 @@ export default async function GoodDeedDetailPage({
       page: 1,
       limit: paired ? 50 : 20,
       lang: locale as LocaleCode,
+      ...(requestedTheme ? { theme: requestedTheme } : {}),
     });
   } catch {
     quotes = null;
@@ -66,7 +71,10 @@ export default async function GoodDeedDetailPage({
     .map(toReader)
     .filter((item) => !seen.has(item.id));
   const derived = quotes?.data.derived ?? [];
-  const sections: ReaderSection[] = [
+  const quotesMeta = quotes?.meta as GoodDeedQuotesMeta | undefined;
+  const activeTheme = quotesMeta?.theme ?? null;
+  // A theme is one merged list (virtue and warning together), so it has no section headings.
+  const sections: ReaderSection[] = activeTheme ? [] : [
     ...(virtue.length > 0
       ? [{ heading: paired ? t('pairVirtueHeading') : t('virtueHeading'), items: virtue }]
       : []),
@@ -159,7 +167,9 @@ export default async function GoodDeedDetailPage({
             items={items}
             sections={sections}
             total={items.length}
-            countsByKind={(quotes?.meta as GoodDeedQuotesMeta | undefined)?.countsByKind}
+            countsByKind={quotesMeta?.countsByKind}
+            themes={quotesMeta?.themes}
+            initialTheme={activeTheme}
           />
         )}
 

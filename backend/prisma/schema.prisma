@@ -543,12 +543,15 @@ model SinQuote {
   classifiedBy   ClassifiedBy     @default(BOOK)
   sectionId      String?
   section        BookSection?     @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  /// Keys from taxonomy/topic-themes.yaml whose pattern matches this link's chapter title. Written by import:taxonomy.
+  themeKeys      String[]         @default([])
   /// D-2: added for admin sort=newest and curator audit trail.
   createdAt      DateTime         @default(now())
   /// D-2: added for curator audit trail.
   updatedAt      DateTime         @updatedAt
 
   @@unique([sinId, quoteId])
+  @@index([themeKeys], type: Gin)
   /// D-3: quoteId index for reverse lookups (find all sins referencing a quote).
   @@index([quoteId])
   /// D-3: composite index supporting the core reminder loop (filter by sin, sort by score).
@@ -570,12 +573,15 @@ model GoodDeedQuote {
   classifiedBy   ClassifiedBy     @default(BOOK)
   sectionId      String?
   section        BookSection?     @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  /// Keys from taxonomy/topic-themes.yaml whose pattern matches this link's chapter title. Written by import:taxonomy.
+  themeKeys      String[]         @default([])
   /// D-2: added for admin sort=newest and curator audit trail.
   createdAt      DateTime         @default(now())
   /// D-2: added for curator audit trail.
   updatedAt      DateTime         @updatedAt
 
   @@unique([goodDeedId, quoteId])
+  @@index([themeKeys], type: Gin)
   /// D-3: quoteId index for reverse lookups (find all good deeds referencing a quote).
   @@index([quoteId])
   /// D-3: composite index supporting the core reminder loop (filter by deed, sort by score).

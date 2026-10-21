@@ -34,6 +34,7 @@ import {
   type MatchSection,
 } from './match.js';
 import { loadSahihaynMap } from './sahihayn-map.js';
+import { loadThemesFile, syncThemeKeys } from './themes.js';
 import { loadTaxonomy, topicBySlug, type TaxonomyFile, type Topic } from './yaml.js';
 
 const KABAIR_SOURCE_ID = '10000000-0000-4000-8000-000000000007';
@@ -836,6 +837,7 @@ export async function runTaxonomyImport(options: ImportOptions): Promise<void> {
   for (const [quoteId, decision] of Object.entries(ITEM_DECISIONS)) {
     for (const slug of decision.slugs) if (!topics.has(slug)) throw new Error(`Item ${quoteId} names unknown slug ${slug}`);
   }
+  const themes = loadThemesFile(topics);
   const quotes = new Map<string, QuoteMeta>();
   const sections = await loadSections(options.prisma, quotes);
   const report = coverage(file.topics, sections);
@@ -872,7 +874,9 @@ export async function runTaxonomyImport(options: ImportOptions): Promise<void> {
   console.log(`ayah review: keep=${ayah.keepCount} drop=${ayah.dropCount}`);
   const topicSync = await syncTopics(options.prisma, file, titles, !options.dryRun);
   const linkSync = await syncLinks(options.prisma, reviewed, topicSync.ids, file, !options.dryRun);
-  const tally = plus(topicSync.tally, linkSync);
+  // After the links: new rows get their theme keys in the same run.
+  const themeSync = await syncThemeKeys(options.prisma, themes, topicSync.ids.sins, topicSync.ids.deeds, !options.dryRun);
+  const tally = plus(plus(topicSync.tally, linkSync), { created: 0, updated: themeSync.updated, deleted: 0 });
   if (!options.dryRun) writeReports(reviewed, sections, quotes, content);
   const afterVerses = await countAcceptedVerses(options.prisma, VERSE_COUNT_TOPICS);
   console.log('ayah verses before/after:');
@@ -883,4 +887,5 @@ export async function runTaxonomyImport(options: ImportOptions): Promise<void> {
   console.log(`taxonomy ${mode}: created=${tally.created} updated=${tally.updated} deleted=${tally.deleted}`);
   console.log(`taxonomy topics ${mode}: created=${topicSync.tally.created} updated=${topicSync.tally.updated} deleted=${topicSync.tally.deleted}`);
   console.log(`taxonomy links ${mode}: created=${linkSync.created} updated=${linkSync.updated} deleted=${linkSync.deleted}`);
+  console.log(`taxonomy themes ${mode}: themes=${themes.length} updated=${themeSync.updated} tagged=${themeSync.tagged}/${themeSync.links} links`);
 }

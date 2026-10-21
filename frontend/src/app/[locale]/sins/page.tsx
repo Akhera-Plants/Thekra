@@ -1,6 +1,7 @@
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { TopicCatalog, type TopicEntry } from '@/components/shared/editorial/TopicCatalog';
 import { getSins } from '@/lib/api/sins';
+import { getTopicThemes } from '@/lib/api/topic-themes';
 import { SinRank } from '@/lib/types/enums';
 
 export const dynamic = 'force-dynamic';
@@ -23,6 +24,9 @@ export default async function SinsPage({ params }: PageProps<'/[locale]/sins'>) 
   } catch {
     sins = [];
   }
+
+  // Theme labels for the search («ترك الجمعة» → the prayer page with that chip on).
+  const themes = await getTopicThemes().then((res) => res.data).catch(() => []);
 
   const entries: TopicEntry[] = sins.map((sin) => ({
     href: `/sins/${sin.slug}`,
@@ -49,6 +53,7 @@ export default async function SinsPage({ params }: PageProps<'/[locale]/sins'>) 
       noResults={t('noResults')}
       kabiraLabel={tRank('KABIRA')}
       contemporaryLabel={t('contemporary')}
+      themes={themes}
     />
   );
 }

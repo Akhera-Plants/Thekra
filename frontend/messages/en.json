@@ -218,6 +218,8 @@
     "typeScholar": "Scholar quotes",
     "typeBook": "Books",
     "tabsLabel": "Filter texts",
+    "themesLabel": "Themes on this page",
+    "themeAll": "All",
     "severity": "Severity"
   },
   "goodDeeds": {
@@ -253,7 +255,9 @@
     "atharSection": "Sayings of the Salaf",
     "typeScholar": "Scholar quotes",
     "typeBook": "Books",
-    "tabsLabel": "Filter texts"
+    "tabsLabel": "Filter texts",
+    "themesLabel": "Themes on this page",
+    "themeAll": "All"
   },
   "browse": {
     "pageTitle": "Browse",
@@ -825,7 +829,8 @@
     "search": "Search",
     "results": "Topics: {count}",
     "footnote": "Choose a topic to read its texts with their sources.",
-    "empty": "No matching topics."
+    "empty": "No matching topics.",
+    "themeIn": "Within: {title}"
   },
   "breadcrumbs": {
     "home": "Home",

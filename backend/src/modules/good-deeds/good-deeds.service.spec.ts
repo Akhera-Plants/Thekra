@@ -126,12 +126,14 @@ describe('GoodDeedsService', () => {
     await service.findQuotesForGoodDeed('hifz-al-lisan', {
       grades: ['SAHIH'] as never,
     });
-    expect(prisma.goodDeedQuote.findMany.mock.calls[0][0].where.reviewStatus).toBe('ACCEPTED');
-    expect(prisma.goodDeedQuote.findMany.mock.calls[0][0].where.quote.OR).toEqual([
+    // The reading query (the page also runs a theme summary query first).
+    const reading = prisma.goodDeedQuote.findMany.mock.calls.find((call) => (call[0] as { select?: { basis?: boolean } }).select?.basis)?.[0];
+    expect(reading.where.reviewStatus).toBe('ACCEPTED');
+    expect(reading.where.quote.OR).toEqual([
       { type: { not: QuoteType.HADITH } },
       { grade: { in: ['SAHIH'] } },
     ]);
-    expect(prisma.goodDeedQuote.findMany.mock.calls[0][0].select.basis).toBe(true);
+    expect(reading.select.basis).toBe(true);
   });
 
   // ─── Shuffle variety mode (P1-2) ──────────────────────────────────────────────

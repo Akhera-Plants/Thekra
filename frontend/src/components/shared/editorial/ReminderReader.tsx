@@ -5,6 +5,7 @@ import { ChevronDown } from 'lucide-react';
 import { QuoteCard } from '@/components/shared/quote/QuoteCard';
 import { Button } from '@/components/shared/kit/button';
 import { SegmentTabs } from '@/components/shared/kit/segment-tabs';
+import { ThemeChips, type ThemeChip } from '@/components/shared/editorial/ThemeChips';
 import type { QuoteCardIntent } from '@/components/shared/quote/QuoteCard';
 import type { CountsByKind, QuoteDto } from '@/lib/types/api';
 import { QuoteType } from '@/lib/types/enums';
@@ -40,6 +41,14 @@ interface ReminderReaderProps {
   hasNextPage?: boolean;
   /** Called when the user clicks «show more»; parent fetches the next page. */
   onShowMore?: () => void;
+  /** Theme chips under the tabs (topic-themes.yaml). Omit to hide the row. */
+  themes?: ThemeChip[];
+  activeTheme?: string | null;
+  /** Called with a key, or null for «الكل»; the parent fetches `theme=`. */
+  onThemeChange?: (key: string | null) => void;
+  themeLang?: 'ar' | 'en';
+  /** True while the parent fetches a new filter; the current list stays, dimmed. */
+  busy?: boolean;
   labels: {
     showMore: string;
     tabAll: string;
@@ -48,6 +57,8 @@ interface ReminderReaderProps {
     tabAthar?: string;
     atharSection?: string;
     tabsLabel: string;
+    themesLabel?: string;
+    themeAll?: string;
   };
 }
 
@@ -100,6 +111,11 @@ export function ReminderReader({
   loadingNextPage = false,
   hasNextPage,
   onShowMore,
+  themes,
+  activeTheme = null,
+  onThemeChange,
+  themeLang = 'ar',
+  busy = false,
   labels,
 }: ReminderReaderProps) {
   void _total;
@@ -138,6 +154,12 @@ export function ReminderReader({
     setFilter(next);
     setVisibleCount(PAGE_SIZE);
     onKindChange?.(next);
+  }
+
+  // A theme may hold no text of the current kind, so a new theme starts on «الكل».
+  function changeTheme(next: string | null) {
+    if (filter !== 'all') changeFilter('all');
+    onThemeChange?.(next);
   }
 
   // When kind is controlled by the parent, all loaded items match the active kind already.
@@ -243,18 +265,33 @@ export function ReminderReader({
 
   return (
     <div className="flex w-full min-w-0 flex-col gap-8">
-      <SegmentTabs
-        aria-label={labels.tabsLabel}
-        items={tabItems}
-        value={activeFilter}
-        onValueChange={(value) => changeFilter(value as TypeFilter)}
-        variant="segment"
-        size="filled"
-        className="min-w-0 w-full [&_[data-slot=tabs-list]]:w-full sm:[&_[data-slot=tabs-list]]:w-fit"
-        listClassName="w-full sm:w-fit"
-      />
+      <div className="flex min-w-0 flex-col gap-3">
+        <SegmentTabs
+          aria-label={labels.tabsLabel}
+          items={tabItems}
+          value={activeFilter}
+          onValueChange={(value) => changeFilter(value as TypeFilter)}
+          variant="segment"
+          size="filled"
+          className="min-w-0 w-full [&_[data-slot=tabs-list]]:w-full sm:[&_[data-slot=tabs-list]]:w-fit"
+          listClassName="w-full sm:w-fit"
+        />
+        {themes && themes.length > 0 && onThemeChange ? (
+          <ThemeChips
+            themes={themes}
+            value={activeTheme}
+            onValueChange={changeTheme}
+            allLabel={labels.themeAll ?? labels.tabAll}
+            label={labels.themesLabel ?? labels.tabsLabel}
+            lang={themeLang}
+          />
+        ) : null}
+      </div>
 
-      <div className="flex flex-col gap-8 md:gap-9">
+      <div
+        aria-busy={busy || undefined}
+        className="flex flex-col gap-8 transition-opacity duration-150 md:gap-9 aria-busy:opacity-60"
+      >
         {shownSections.map((section) => (
           <section key={section.heading || 'texts'} className="flex flex-col gap-8 md:gap-9">
             {section.heading ? (

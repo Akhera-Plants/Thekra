@@ -241,11 +241,34 @@ export interface CountsByKind {
   athar: number;
 }
 
+/** One theme chip of a topic page (counts cover the whole page, deduped). */
+export interface TopicThemeCount {
+  key: string;
+  ar: string;
+  en: string;
+  count: number;
+}
+
 export interface SinQuotesMeta extends PageMeta {
   ordering?: string;
   countsByType?: Partial<Record<QuoteType, number>>;
   countsByKind?: CountsByKind;
   appliedGrades?: HadithGrade[];
+  themes?: TopicThemeCount[];
+  /** The applied theme key, or null when none (or unknown) was requested. */
+  theme?: string | null;
+}
+
+/** GET /topic-themes — the catalogue search index. */
+export interface TopicThemeIndexEntry {
+  key: string;
+  ar: string;
+  en: string;
+  terms: string[];
+  topic: { slug: string; side: 'AVOID' | 'DO' };
+  pages: { sins: string | null; goodDeeds: string | null };
+  pageTitleAr: string;
+  pageTitleEn: string;
 }
 
 export interface SinsQuery {
@@ -267,6 +290,8 @@ export interface SinQuotesQuery {
   lang?: LocaleCode;
   type?: QuoteType[];
   kind?: QuoteKind;
+  /** Theme key from meta.themes; filters the page to that theme. */
+  theme?: string;
   grades?: HadithGrade[];
   includeWeak?: boolean;
   minScore?: number;
@@ -289,6 +314,8 @@ export interface GoodDeedQuotesQuery {
   lang?: LocaleCode;
   type?: QuoteType[];
   kind?: QuoteKind;
+  /** Theme key from meta.themes; filters the page to that theme. */
+  theme?: string;
   grades?: HadithGrade[];
   includeWeak?: boolean;
   minScore?: number;
@@ -340,6 +367,8 @@ export interface GoodDeedQuotesMeta extends PageMeta {
   countsByType?: Partial<Record<QuoteType, number>>;
   countsByKind?: CountsByKind;
   appliedGrades?: HadithGrade[];
+  themes?: TopicThemeCount[];
+  theme?: string | null;
 }
 
 export interface SurahDto {

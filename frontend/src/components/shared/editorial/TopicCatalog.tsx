@@ -8,6 +8,8 @@ import { Link, usePathname, useRouter } from '@/i18n/navigation';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { FormattedNumber } from '@/components/shared/FormattedNumber';
+import { searchTopicThemes } from '@/lib/search/topic-themes';
+import type { TopicThemeIndexEntry } from '@/lib/types/api';
 
 const SEARCH_DEBOUNCE_MS = 300;
 
@@ -56,6 +58,8 @@ interface TopicCatalogProps {
   noResults: string;
   kabiraLabel?: string;
   contemporaryLabel?: string;
+  /** GET /topic-themes: theme labels the search also matches (sins / good-deeds catalogues). */
+  themes?: TopicThemeIndexEntry[];
 }
 
 export function TopicCatalog(props: TopicCatalogProps) {
@@ -130,6 +134,7 @@ function TopicCatalogShell({
   noResults,
   kabiraLabel,
   contemporaryLabel,
+  themes,
   query,
   debounced = '',
   onQueryChange,
@@ -169,6 +174,13 @@ function TopicCatalogShell({
       return (a.taxonomyOrder ?? 0) - (b.taxonomyOrder ?? 0);
     });
   }, [debounced, domainOrder, entries]);
+
+  // A theme hit opens its page with the chip already on (?theme=).
+  const themeHits = useMemo(() => {
+    if (!debounced || !themes || intent === 'branch') return [];
+    return searchTopicThemes(themes, debounced, intent === 'sin' ? 'sins' : 'good-deeds', locale);
+  }, [debounced, themes, intent, locale]);
+  const resultCount = filtered.length + themeHits.length;
 
   function topicMeta(entry: TopicEntry): string | null {
     const parts: string[] = [];
@@ -226,10 +238,10 @@ function TopicCatalogShell({
         </form>
 
         <p className="results-count" id="results-count" role="status">
-          {tCatalog('results', { count: filtered.length })}
+          {tCatalog('results', { count: resultCount })}
         </p>
 
-        {filtered.length === 0 ? (
+        {resultCount === 0 ? (
           <p className="empty-state">{noResults || tCatalog('empty')}</p>
         ) : (
           <div className="topic-list" id="topic-results">
@@ -252,6 +264,16 @@ function TopicCatalogShell({
                 </Link>
               );
             })}
+            {themeHits.map((hit) => (
+              <Link key={`theme-${hit.key}`} href={hit.href} className="topic-item">
+                <Icon className="size-[26px]" aria-hidden />
+                <span>
+                  <strong>{hit.label}</strong>
+                  <small>{tCatalog('themeIn', { title: hit.pageTitle })}</small>
+                </span>
+                <DirectionalArrow className="topic-arrow size-[18px]" />
+              </Link>
+            ))}
           </div>
         )}
 

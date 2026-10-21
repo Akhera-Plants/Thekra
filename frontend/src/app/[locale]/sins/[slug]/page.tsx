@@ -9,6 +9,7 @@ import { SinReader } from '@/features/sin-reminder/components/SinReader';
 import { interleaveReading } from '@/lib/reading';
 import { getSin, getSinQuotes } from '@/lib/api/sins';
 import { englishProvenance } from '@/lib/format/provenance';
+import { parseThemeParam } from '@/lib/search/topic-themes';
 import { SinRank, type LocaleCode } from '@/lib/types/enums';
 import type { SinQuotesMeta } from '@/lib/types/api';
 
@@ -31,8 +32,11 @@ export async function generateMetadata({
 
 export default async function SinDetailPage({
   params,
+  searchParams,
 }: PageProps<'/[locale]/sins/[slug]'>) {
   const { slug, locale } = await params;
+  // ?theme= preselects a chip (search results, shared links). Unknown keys are ignored by the API.
+  const requestedTheme = parseThemeParam((await searchParams).theme);
   setRequestLocale(locale);
   const t = await getTranslations('sinDetail');
   const tRank = await getTranslations('sinRank');
@@ -53,6 +57,7 @@ export default async function SinDetailPage({
       page: 1,
       limit: paired ? 50 : 20,
       lang: locale as LocaleCode,
+      ...(requestedTheme ? { theme: requestedTheme } : {}),
     });
   } catch {
     quotes = null;
@@ -69,7 +74,10 @@ export default async function SinDetailPage({
     .map(toReader)
     .filter((item) => !seen.has(item.id));
   const derived = quotes?.data.derived ?? [];
-  const sections: ReaderSection[] = [
+  const quotesMeta = quotes?.meta as SinQuotesMeta | undefined;
+  const activeTheme = quotesMeta?.theme ?? null;
+  // A theme is one merged list (warning and reward together), so it has no section headings.
+  const sections: ReaderSection[] = activeTheme ? [] : [
     ...(warning.length > 0
       ? [{ heading: paired ? t('pairWarningHeading') : t('warningHeading'), items: warning }]
       : []),
@@ -164,7 +172,9 @@ export default async function SinDetailPage({
           items={items}
           sections={sections}
           total={items.length}
-          countsByKind={(quotes?.meta as SinQuotesMeta | undefined)?.countsByKind}
+          countsByKind={quotesMeta?.countsByKind}
+          themes={quotesMeta?.themes}
+          initialTheme={activeTheme}
         />
         )}
 

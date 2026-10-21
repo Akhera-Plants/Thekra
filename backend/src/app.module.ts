@@ -18,6 +18,7 @@ import { ReviewModule } from './modules/review/review.module.js';
 import { SinsModule } from './modules/sins/sins.module.js';
 import { SourcesModule } from './modules/sources/sources.module.js';
 import { TagsModule } from './modules/tags/tags.module.js';
+import { TaxonomyModule } from './modules/taxonomy/taxonomy.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { UsersModule } from './modules/users/users.module.js';
 import { FavoritesModule } from './modules/favorites/favorites.module.js';
@@ -106,6 +107,7 @@ const REQUEST_ID_RE = /^[A-Za-z0-9._-]{1,128}$/;
     ReviewModule,
     SourcesModule,
     TagsModule,
+    TaxonomyModule,
     GoodDeedsModule,
     SinsModule,
     ImanBranchesModule,

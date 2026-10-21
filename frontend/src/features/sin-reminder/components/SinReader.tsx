@@ -1,11 +1,10 @@
 'use client';
 
-import { useState, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { ReminderReader, type ReaderItem, type ReaderSection, type TypeFilter } from '@/components/shared/editorial/ReminderReader';
+import { ReminderReader, type ReaderItem, type ReaderSection } from '@/components/shared/editorial/ReminderReader';
+import { useTopicReader } from '@/components/shared/editorial/useTopicReader';
 import { getSinQuotes } from '@/lib/api/sins';
-import type { CountsByKind, SinQuotesMeta } from '@/lib/types/api';
+import type { CountsByKind, TopicThemeCount } from '@/lib/types/api';
 
 interface SinReaderProps {
   slug: string;
@@ -15,78 +14,53 @@ interface SinReaderProps {
   sections?: ReaderSection[];
   /** Server-computed kind counts from the initial page fetch. */
   countsByKind?: CountsByKind;
+  /** meta.themes: the page's theme chips with counts. */
+  themes?: TopicThemeCount[];
+  /** meta.theme: the chip the page was rendered with (?theme=). */
+  initialTheme?: string | null;
 }
 
-export function SinReader({ slug, lang, items: initialItems, total, sections: initialSections, countsByKind }: SinReaderProps) {
+export function SinReader({ slug, lang, items, total, sections, countsByKind, themes, initialTheme = null }: SinReaderProps) {
   const t = useTranslations('sinDetail');
-  const [activeKind, setActiveKind] = useState<TypeFilter>('all');
-
-  const isFiltered = activeKind !== 'all';
-
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useInfiniteQuery({
-    queryKey: ['sins', slug, 'quotes', { lang, kind: activeKind }] as const,
-    queryFn: ({ pageParam }) =>
-      getSinQuotes(slug, {
-        page: pageParam as number,
-        limit: 50,
-        lang: lang as 'ar' | 'en',
-        kind: activeKind === 'all' ? undefined : activeKind,
-      }),
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) =>
-      (lastPage.meta as SinQuotesMeta)?.hasNext
-        ? ((lastPage.meta as SinQuotesMeta).page + 1)
-        : undefined,
-    // Only activate query when a specific kind is selected — for 'all' we use
-    // the server-rendered initial items. For specific kinds we start fresh.
-    enabled: isFiltered,
+  const reader = useTopicReader({
+    queryRoot: 'sins',
+    slug,
+    lang,
+    fetchPage: (query) => getSinQuotes(slug, query),
+    initialItems: items,
+    initialSections: sections,
+    initialCountsByKind: countsByKind,
+    themes,
+    initialTheme,
   });
-
-  // Build items for display:
-  // - 'all': use server-rendered initial items (with sections/companion)
-  // - specific kind: use infinite query pages (flat list, no sections)
-  const { displayItems, displaySections } = useMemo(() => {
-    if (!isFiltered) {
-      return { displayItems: initialItems, displaySections: initialSections };
-    }
-    const pages = data?.pages ?? [];
-    const flat: ReaderItem[] = pages.flatMap((page) =>
-      page.data.items.map((item) => ({
-        id: item.quote.id,
-        quote: item.quote,
-        note: item.link.note,
-      })),
-    );
-    return { displayItems: flat, displaySections: undefined };
-  }, [isFiltered, initialItems, initialSections, data]);
-
-  const labels = {
-    showMore: t('showMore'),
-    tabAll: t('typeAll'),
-    tabVerses: t('typeVerses'),
-    tabHadith: t('typeHadith'),
-    tabAthar: t('typeAthar'),
-    atharSection: t('atharSection'),
-    tabsLabel: t('tabsLabel'),
-  };
 
   return (
     <ReminderReader
-      items={displayItems}
+      items={reader.items}
       total={total}
-      sections={displaySections}
+      sections={reader.sections}
       intent="sin"
-      countsByKind={countsByKind}
-      onKindChange={(kind) => setActiveKind(kind)}
-      loadingNextPage={isFetchingNextPage}
-      hasNextPage={isFiltered ? hasNextPage : false}
-      onShowMore={() => void fetchNextPage()}
-      labels={labels}
+      countsByKind={reader.countsByKind}
+      onKindChange={reader.setKind}
+      loadingNextPage={reader.isFetchingNextPage}
+      hasNextPage={reader.hasNextPage}
+      onShowMore={reader.fetchNextPage}
+      themes={reader.chips}
+      activeTheme={reader.activeTheme}
+      onThemeChange={reader.setTheme}
+      themeLang={lang === 'en' ? 'en' : 'ar'}
+      busy={reader.busy}
+      labels={{
+        showMore: t('showMore'),
+        tabAll: t('typeAll'),
+        tabVerses: t('typeVerses'),
+        tabHadith: t('typeHadith'),
+        tabAthar: t('typeAthar'),
+        atharSection: t('atharSection'),
+        tabsLabel: t('tabsLabel'),
+        themesLabel: t('themesLabel'),
+        themeAll: t('themeAll'),
+      }}
     />
   );
 }
