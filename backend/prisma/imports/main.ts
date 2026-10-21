@@ -21,6 +21,7 @@ import { runSunanTahqiq } from './sunan-tahqiq/import.js';
 import { runTranslations } from './translations/import.js';
 import { runIbnRajab } from './ibn-rajab/import.js';
 import { runIbnAbiDunyaImport } from './ibn-abi-dunya/import.js';
+import { runAdhkarImport } from './adhkar/import.js';
 import { runHadeethencImport } from './hadeethenc/import.js';
 import { runMinhajImport, runRiyadImport, runTarghibImport, runZuhdImport } from './waqfeya/import.js';
 import { runStripPageMarkersCleanup } from './cleanup/strip-page-markers.js';
@@ -52,6 +53,7 @@ const WORKS: Record<string, (options: ImportOptions) => Promise<void>> = {
   translations: runTranslations,
   'ibn-rajab': runIbnRajab,
   'ibn-abi-dunya': runIbnAbiDunyaImport,
+  adhkar: runAdhkarImport,
   sadi: runSadiImport,
   mukhtasar: runMukhtasarImport,
   ashur: runAshurImport,

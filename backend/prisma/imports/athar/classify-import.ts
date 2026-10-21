@@ -27,7 +27,7 @@ export async function runAtharClassify(options: ImportOptions): Promise<void> {
   const rows = await options.prisma.quote.findMany({
     where: {
       OR: [
-        { apiProvider: { in: ['book:shuab-iman', 'book:ibn-mubarak-zuhd', 'book:ibn-qudama-minhaj'] } },
+        { apiProvider: { in: ['book:shuab-iman', 'book:ibn-mubarak-zuhd', 'book:ibn-qudama-minhaj', 'book:nawawi-adhkar'] } },
         { apiProvider: { startsWith: 'book:ibn-abi-dunya' } },
       ],
     },

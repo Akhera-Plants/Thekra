@@ -14,6 +14,7 @@ describe('APPROVED_WORKS', () => {
       'book:mukhtasar-tafsir',
       'book:munajjid-qulub',
       'book:mundhiri-targhib',
+      'book:nawawi-adhkar',
       'book:nawawi-riyad',
       'book:sadi-tafsir',
       'book:shuab-iman',

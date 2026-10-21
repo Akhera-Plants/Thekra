@@ -47,6 +47,7 @@ export function bookLabel(provider: string | null): string {
   if (provider === 'book:shuab-iman') return 'شعب الإيمان';
   if (provider === 'book:ibn-mubarak-zuhd') return 'الزهد لابن المبارك';
   if (provider === 'book:ibn-qudama-minhaj') return 'منهاج القاصدين';
+  if (provider === 'book:nawawi-adhkar') return 'الأذكار';
   if (provider?.startsWith('book:ibn-abi-dunya')) return 'ابن أبي الدنيا';
   return provider ?? '';
 }

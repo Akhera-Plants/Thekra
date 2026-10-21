@@ -81,6 +81,23 @@ export const APPROVED_WORKS = [
     gradeBy: null,
   },
   {
+    id: '10000000-0000-4000-8000-000000000027',
+    bookKey: 'book:nawawi-adhkar',
+    name: 'al-Adhkar — al-Nawawi',
+    nameAr: 'الأذكار',
+    type: SourceType.BOOK,
+    author: 'Yahya ibn Sharaf al-Nawawi',
+    authorAr: 'يحيى بن شرف النووي',
+    role: 'narration',
+    /**
+     * Structure-only import; no topic links. Al-Nawawi's grading remarks
+     * («رويناه في صحيح البخاري», «إسناده صحيح») are author text, never a
+     * grade source. Narrations stay UNGRADED until the matn-only takhrij /
+     * hadeethenc runs match them.
+     */
+    gradeBy: null,
+  },
+  {
     id: '10000000-0000-4000-8000-000000000011',
     bookKey: 'book:ibn-mubarak-zuhd',
     name: "Al-Zuhd wa al-Raqa'iq (Dar al-Mi'raj)",
