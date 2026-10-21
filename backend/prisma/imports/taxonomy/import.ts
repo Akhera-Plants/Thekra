@@ -15,6 +15,13 @@ import { inTransactionBatches } from '../lib/batch.js';
 import { ITEM_DECISIONS } from './decisions.js';
 import { buildLinks, loadContentMap, type DesiredLink, type LinkBuild, type ReadySection } from './links.js';
 import {
+  countAcceptedVerses,
+  loadAyahReview,
+  reviewAyahLinks,
+  verseKeyFromQuote,
+  VERSE_COUNT_TOPICS,
+} from './ayah-decisions.js';
+import {
   coverage,
   coverageDiff,
   matchKeywords,
@@ -56,6 +63,8 @@ interface QuoteMeta {
   apiProvider: string | null;
   highFlag: boolean;
   textAr: string;
+  surahNumber: number | null;
+  ayahNumber: number | null;
 }
 
 const ZERO: Tally = { created: 0, updated: 0, deleted: 0 };
@@ -205,7 +214,17 @@ async function loadQuotes(prisma: PrismaClient, ids: readonly string[], into: Ma
   for (const batch of chunks([...new Set(missing)], 4000)) {
     const rows = await prisma.quote.findMany({
       where: { id: { in: batch } },
-      select: { id: true, type: true, gradeSource: true, textSource: true, textVerifiedAt: true, apiProvider: true, textAr: true },
+      select: {
+        id: true,
+        type: true,
+        gradeSource: true,
+        textSource: true,
+        textVerifiedAt: true,
+        apiProvider: true,
+        textAr: true,
+        surahNumber: true,
+        ayahNumber: true,
+      },
     });
     const flagged = new Set((await prisma.quoteFlag.findMany({
       where: { quoteId: { in: batch }, status: 'OPEN', severity: 'HIGH' },
@@ -737,14 +756,24 @@ export async function runTaxonomyImport(options: ImportOptions): Promise<void> {
   const strong = await strongMatches(options.prisma, quoteIds);
   const sahihayn = await sahihaynQuotes(options.prisma, strong);
   const built = buildLinks(topics, sections, content, strong, sahihayn, sahihaynMap);
+  const ayah = await loadAyahReview(options.prisma, docsPath(), !options.dryRun);
+  const reviewedLinks = reviewAyahLinks(built.links, ayah.dropped, ayah.kept, (quoteId) => verseKeyFromQuote(quotes.get(quoteId)));
+  const reviewed: LinkBuild = { ...built, links: reviewedLinks };
+  const beforeVerses = await countAcceptedVerses(options.prisma, VERSE_COUNT_TOPICS);
   const titles = new Map(sections.filter((section) => section.book === 'kabair' && section.level === 'KABIRA' && section.kabiraNumber !== null).map((section) => [section.kabiraNumber as number, section.titleAr]));
   console.log(`coverage: targhib ${report.targhib.matched}/${report.targhib.eligible}, zuhd ${report.zuhd.matched}/${report.zuhd.eligible}, minhaj ${report.minhaj.matched}/${report.minhaj.eligible}, unmapped ${report.unmapped}`);
   console.log(`items: ${Object.entries(report.items).map(([slug, count]) => `${slug} ${count}`).join(', ')}`);
-  console.log(`links planned: ${built.links.length}, proposals: ${built.proposals.length}, skipped items: ${built.skippedItems}`);
+  console.log(`links planned: ${reviewed.links.length}, proposals: ${reviewed.proposals.length}, skipped items: ${reviewed.skippedItems}`);
+  console.log(`ayah review: keep=${ayah.keepCount} drop=${ayah.dropCount}`);
   const topicSync = await syncTopics(options.prisma, file, titles, !options.dryRun);
-  const linkSync = await syncLinks(options.prisma, built, topicSync.ids, file, !options.dryRun);
+  const linkSync = await syncLinks(options.prisma, reviewed, topicSync.ids, file, !options.dryRun);
   const tally = plus(topicSync.tally, linkSync);
-  if (!options.dryRun) writeReports(built, sections, quotes, content);
+  if (!options.dryRun) writeReports(reviewed, sections, quotes, content);
+  const afterVerses = await countAcceptedVerses(options.prisma, VERSE_COUNT_TOPICS);
+  console.log('ayah verses before/after:');
+  for (const slug of VERSE_COUNT_TOPICS) {
+    console.log(`  ${slug} ${beforeVerses.get(slug) ?? 0} → ${afterVerses.get(slug) ?? 0}`);
+  }
   const mode = options.dryRun ? 'dry-run' : 'write';
   console.log(`taxonomy ${mode}: created=${tally.created} updated=${tally.updated} deleted=${tally.deleted}`);
   console.log(`taxonomy topics ${mode}: created=${topicSync.tally.created} updated=${topicSync.tally.updated} deleted=${topicSync.tally.deleted}`);

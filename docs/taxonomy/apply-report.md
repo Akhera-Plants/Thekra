@@ -614,3 +614,42 @@ Both URLs open the paired page titled «الصلاة»; `/sins/tark-as-salah` op
 - **4b:** Importer `same` check now includes `surahName` / `surahNameAr`; chapters loaded from Quran.com `?language=ar` and `?language=en`.
 - **4c:** `skipKabairFaslAyah` in `taxonomy/links.ts` — AYAH under `kabair` + `FASL` are not planned; existing ACCEPTED links removed on re-apply.
 - **4d:** Reviewer file `docs/taxonomy/ayah-review.tsv` (linkId, side, topic, verse key/name/snippet, book, section, opening vs after first hadith). Await decisions; do not edit these links until then.
+
+## Verse decisions
+
+`docs/taxonomy/ayah-review-decisions.tsv`: 491 rows, 250 keep and 241 drop. A keep stays ACCEPTED; `classifiedBy` is REVIEWER and the basis is unchanged (245 AUTHOR_CITATION, 5 REVIEWER_SECTION). A drop is deleted. The importer reads `docs/taxonomy/ayah-dropped.tsv` (241 rows: linkId, sectionId, side, topic, verse, quoteId) and will not plan that topic and verse again.
+
+Accepted verses on the sixteen topics, before the write and after it:
+
+| Topic | Before | After |
+| --- | ---: | ---: |
+| sabr | 117 | 61 |
+| muraqaba | 115 | 64 |
+| khawf-raja | 125 | 82 |
+| shukr | 64 | 39 |
+| tawakkul | 51 | 39 |
+| muhasaba | 36 | 23 |
+| ikhlas | 41 | 32 |
+| mahabbat-allah | 55 | 36 |
+| wara | 10 | 6 |
+| quran | 22 | 18 |
+| zakah | 11 | 11 |
+| salah | 14 | 12 |
+| dhikr | 147 | 147 |
+| tawba | 83 | 82 |
+| satr-muslim | 3 | 2 |
+| dua | 19 | 18 |
+
+The drops on these topics sum to 241. Zakah and dhikr had none.
+
+First `import:book taxonomy` after the filter: `ayah review: keep=250 drop=241`. Link sync `created=384 updated=600 deleted=566` (topics 0). The 241 deletes are the dropped verses; the rest of that sync is the importer matching the current desired set (takhrij and chapter rows that had drifted). The 245 AUTHOR_CITATION keeps were updated to `classifiedBy = REVIEWER`.
+
+Second `import:book taxonomy`:
+
+```
+taxonomy write: created=0 updated=0 deleted=0
+taxonomy topics write: created=0 updated=0 deleted=0
+taxonomy links write: created=0 updated=0 deleted=0
+```
+
+Verse counts on the second run were unchanged.
