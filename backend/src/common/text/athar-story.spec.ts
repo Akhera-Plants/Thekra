@@ -187,3 +187,32 @@ describe('extractAtharStory — audit 2', () => {
     expect(atharContentCue(text)).toBe('العمالقة');
   });
 });
+
+/** Real rows from docs/build/SHUAB_ATHAR_REPORT.md «Athar audit 3» (seed 20261026). */
+describe('extractAtharStory — audit 3', () => {
+  it('#41 أبو ذر / شعب 3200 — cut «هكذا موقوفا»', () => {
+    const text =
+      'أخبرنا أبو محمد السكري، حدثنا إسماعيل الصفار، حدثنا أحمد بن منصور، حدثنا عبد الرزاق، حدثنا الثوري، عن عمار الدهني، عن راشد بن الحارث، عن أبي ذر، قال: " ما خرجت صدقة يعني يفك عنها لحيي سبعين شيطانا كلهم ينهى عنها "، هكذا موقوفا التصدق من كسب طيب';
+    const result = extractAtharStory(text);
+    expect(result.kept).toBe(true);
+    if (!result.kept) return;
+    expect(result.text.endsWith('كلهم ينهى عنها')).toBe(true);
+    expect(result.text).not.toContain('موقوفا');
+  });
+
+  it('#22 علي / ابن أبي الدنيا 7 — gesture and a dotted gap are not a story', () => {
+    const text =
+      'حدثنا خلف بن هشام قال : حدثنا أبو شهاب الحناط ، عن | عمرو بن قيس الملائي ، عن أبي إسحاق ، عن عاصم بن ضمرة ، عن علي | قال : إن أبواب جهنم هكذا بعضها فوق بعض . وأومأ أبو شهاب | بأصابعه . . . . هذا عن هذا .';
+    const result = extractAtharStory(text);
+    expect(result.kept).toBe(false);
+    if (!result.kept) expect(result.reason).toBe('gesture');
+  });
+
+  it('#44 ابن عباس / ابن أبي الدنيا 275 — «. . .» is not a story', () => {
+    const text =
+      'حدثنا عبد الله قال: وحدثنا أحمد بن إبراهيم، قال: حدثنا خلف بن تميم، قال: حدثنا إسماعيل بن إبراهيم بن مهاجر، قال: سمعت أبي يذكره، عن مجاهد، عن ابن عباس، قال: «إن الأرض. . . في أعين الناس إذا كان عليها إمام عادل، وإنها لتفتح في أعين الناس إذا كان عليها إمام جائر، وإنها لتخرج في زمان الإمام العادل، تزكو ما لا تزكو في زمان الجائر»';
+    const result = extractAtharStory(text);
+    expect(result.kept).toBe(false);
+    if (!result.kept) expect(result.reason).toBe('gap');
+  });
+});

@@ -44,6 +44,21 @@ export const PUBLISHABLE_GRADE_SOURCES: readonly GradeSource[] = [
  */
 export const ATHAR_PUBLIC_ENABLED = process.env['ATHAR_PUBLIC_ENABLED'] === 'true';
 
+/**
+ * Public athar: the section flag, a listed speaker, and an explicit keep.
+ * A missing decision stays hidden.
+ */
+export function atharMayPublish(
+  row: {
+    isAthar?: boolean;
+    atharSpeakerKey?: string | null;
+    atharReviewDecision?: 'KEEP' | 'DROP' | null;
+  },
+  enabled = ATHAR_PUBLIC_ENABLED,
+): boolean {
+  return enabled && row.isAthar === true && !!row.atharSpeakerKey && row.atharReviewDecision === 'KEEP';
+}
+
 export class GradePolicy {
   static defaultAllowedGrades(): HadithGrade[] {
     return [...DEFAULT_ALLOWED_GRADES];
@@ -111,8 +126,12 @@ export class GradePolicy {
       { gradeSource: { in: [...PUBLISHABLE_GRADE_SOURCES] } },
     ];
     if (ATHAR_PUBLIC_ENABLED) {
-      // Listed athar (Companion / senior Successor) — never graded as hadith.
-      hadithOr.push({ isAthar: true, atharSpeakerKey: { not: null } });
+      // Listed, and the reviewer wrote keep. A blank decision stays hidden.
+      hadithOr.push({
+        isAthar: true,
+        atharSpeakerKey: { not: null },
+        atharReviewDecision: 'KEEP',
+      });
     }
     return {
       AND: [
@@ -138,9 +157,10 @@ export class GradePolicy {
     gradeSource: GradeSource;
     isAthar?: boolean;
     atharSpeakerKey?: string | null;
+    atharReviewDecision?: 'KEEP' | 'DROP' | null;
   }): boolean {
     if (row.type !== QuoteType.HADITH) return true;
-    if (ATHAR_PUBLIC_ENABLED && row.isAthar && row.atharSpeakerKey) return true;
+    if (atharMayPublish(row)) return true;
     return PUBLISHABLE_GRADE_SOURCES.includes(row.gradeSource);
   }
 

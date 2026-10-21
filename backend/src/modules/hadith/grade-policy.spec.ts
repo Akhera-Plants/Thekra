@@ -3,6 +3,7 @@ import { GradeSource, HadithGrade, QuoteType, TextSource } from '@prisma/client'
 import {
   DEFAULT_ALLOWED_GRADES,
   GradePolicy,
+  atharMayPublish,
 } from './grade-policy.js';
 
 describe('GradePolicy', () => {
@@ -71,6 +72,15 @@ describe('GradePolicy', () => {
           { NOT: { apiProvider: 'book-structure', type: QuoteType.BOOK_EXCERPT } },
         ],
       });
+    });
+
+    it('publishes a listed athar only when the reviewer kept it and the flag is on', () => {
+      const listed = { isAthar: true, atharSpeakerKey: 'umar' as const };
+      expect(atharMayPublish({ ...listed, atharReviewDecision: 'KEEP' }, true)).toBe(true);
+      expect(atharMayPublish({ ...listed, atharReviewDecision: null }, true)).toBe(false);
+      expect(atharMayPublish({ ...listed, atharReviewDecision: 'DROP' }, true)).toBe(false);
+      expect(atharMayPublish({ ...listed, atharReviewDecision: 'KEEP' }, false)).toBe(false);
+      expect(atharMayPublish({ isAthar: true, atharReviewDecision: 'KEEP' }, true)).toBe(false);
     });
   });
 

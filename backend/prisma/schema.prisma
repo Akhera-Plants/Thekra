@@ -186,6 +186,12 @@ enum AtharAttributionKind {
   NARRATED
 }
 
+/// Reviewer sheet. Null stays hidden even when ATHAR_PUBLIC_ENABLED is on.
+enum AtharReviewDecision {
+  KEEP
+  DROP
+}
+
 enum ExplanationKind {
   TAFSIR // تفسير — attached by ayahKey
   SHARH // شرح — attached by quoteId
@@ -301,6 +307,8 @@ model Quote {
   atharTextAr     String?
   /// SAID = the speaker's own words («—»). NARRATED = they report someone else («رواه»).
   atharAttributionKind AtharAttributionKind?
+  /// Empty until the reviewer writes keep or drop. Public requires KEEP.
+  atharReviewDecision AtharReviewDecision?
 
   /// DIGITAL: OpenITI and other keyed digital text. OCR: Document AI, hidden
   /// until textVerifiedAt. MANUAL: seed, API, and curator entry (the default).

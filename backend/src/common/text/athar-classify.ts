@@ -320,7 +320,14 @@ export function classifyNarration(text: string): AtharClassification {
   };
 }
 
-export type AtharStoryRejectReason = 'short' | 'frame-only' | 'ocr' | 'mid-dialogue' | 'content';
+export type AtharStoryRejectReason =
+  | 'short'
+  | 'frame-only'
+  | 'ocr'
+  | 'mid-dialogue'
+  | 'content'
+  | 'gap'
+  | 'gesture';
 
 export type AtharAttributionKind = 'SAID' | 'NARRATED';
 
@@ -346,6 +353,7 @@ const STORY_CUTS: RegExp[] = [
   /قال\s*[:：]?\s*و(?:حدثنا|حدثني|اخبرنا|اخبرني|انبانا|ثنا)\s/,
   /(?:^|\s)و?(?:حدثنا|حدثني|اخبرنا|اخبرني|انبانا)\s/,
   /هكذا\s+جاء/,
+  /(?:^|\s)و?هكذا\s+موقوف/,
   /هذا\s+اسناد/,
   /(?:^|\s)و?هذا\s+موقوف/,
   /(?:^|\s)و?هذا\s+مرسل/,
@@ -422,6 +430,11 @@ function isOnlyFrame(body: string): boolean {
   return /^(?:ف?(?:قال|يقول|قالت)|سمعت)\s+\S.{0,50}$/.test(t) && !/[:：]/.test(t);
 }
 
+/** «. . .» / «...» left in the story, or a narrator's gesture («وأومأ», «وأشار»). */
+const STORY_GAP = /(?:\.\s*){3,}|\u2026/;
+const STORY_GESTURE =
+  /(?:^|[^\u0600-\u06FF])[وف]?(?:اوما|اشار)(?:[^\u0600-\u06FF]|$)/;
+
 /** «سبحان الله وما له؟ قالت:…» or a dangling «وما يبقى…؟». */
 function isMidDialogue(body: string): boolean {
   const t = body.replace(/^[«"\s]+/, '');
@@ -497,13 +510,13 @@ export function extractAtharStory(text: string): AtharStoryResult {
   const origEnd = cutAbs >= folded.length ? cleaned.length : (toOrig[cutAbs] ?? cleaned.length);
   const story = cleaned
     .slice(origStart, origEnd)
-    .replace(/[«»"“”„\s]+$/g, '')
+    .replace(/[«»"“”„\s،,]+$/g, '')
     .trim();
   const bodyStart = toOrig[start.sayingStart] ?? origStart;
   const body = cleaned
     .slice(bodyStart, origEnd)
     .replace(/^[«»"“”„:：\s]+/, '')
-    .replace(/[«»"“”„\s]+$/g, '')
+    .replace(/[«»"“”„\s،,]+$/g, '')
     .trim();
   const bodyFolded = foldArabic(body);
 
@@ -511,6 +524,8 @@ export function extractAtharStory(text: string): AtharStoryResult {
   if (isOnlyFrame(bodyFolded)) return rejected('frame-only');
   if (body.length < 25) return rejected('short');
   if (isMidDialogue(bodyFolded)) return rejected('mid-dialogue');
+  if (STORY_GESTURE.test(bodyFolded)) return rejected('gesture');
+  if (STORY_GAP.test(story) || STORY_GAP.test(body)) return rejected('gap');
   if (atharContentCue(bodyFolded)) return rejected('content');
 
   return {

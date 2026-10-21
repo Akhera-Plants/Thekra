@@ -775,3 +775,32 @@ Attribution is `—` when `SAID`, and `رواه` when `NARRATED`.
 **60.** رواه الحسن البصري · ابن أبي الدنيا، رقم 6
 
 عن الحسن، قال: كان منذ خرج يوسف عليه السلام من عند يعقوب عليهما السلام، إلى أن رجع ثمانين سنة فما فارق الحزن قلبه، ومازال يبكي حتى ذهب بصره " قال الحسن: «والله إن كان على الأرض يومئذ بشر أكرم على الله عز وجل من يعقوب
+
+## Athar audit 4
+
+A kept story whose matn scores at least 0.75 against Bukhari, Muslim, the al-Arna'ut Sunan editions, or HadeethEnc is MARFU. «هكذا موقوفا» is cut in every form. A story that still contains «. . .», «...», «وأومأ», or «وأشار» is rejected. Listed rows are in `docs/taxonomy/athar-review.tsv` with an empty decision. Public requires a listed speaker, decision `keep`, and `ATHAR_PUBLIC_ENABLED`. The flag stays off. Rows with no decision stay hidden. The review importer's second run updated 0. A second classify also updated 0.
+
+Audit 3 #32 (Abu Hurayra, Ibn Abi al-Dunya فضائل رمضان 12, «من صام رمضان إيمانا واحتسابا…») is no longer an athar. The strongest matn hit is Muslim 760 at 0.907. The same wording is Bukhari 1901 at 0.891. The row stored here as Bukhari 38 is a different concatenation and scores 0.434, so it is not the hit that removes the athar.
+
+#41 ends at «كلهم ينهى عنها». #22 is rejected for «وأومأ». #44 is rejected for «. . .».
+
+### Counts
+
+| | |
+| --- | ---: |
+| Narrations | 21417 |
+| MARFU | 8680 |
+| Moved to MARFU by takhrij | 14 |
+| Classifier REJECT | 7252 |
+| Story kept | 4856 |
+| Listed (review sheet) | 1172 |
+| Unlisted | 3684 |
+| Rejected — shorter than 25 characters | 196 |
+| Rejected — frame only | 156 |
+| Rejected — OCR still in the story | 24 |
+| Rejected — starts mid-dialogue | 135 |
+| Rejected — content (istighatha / Isra'iliyyat) | 31 |
+| Rejected — dotted gap | 76 |
+| Rejected — narrator's gesture | 11 |
+
+Takhrij corpus: 23930 matns, 3309 candidate pairs, 14 strong. Review sheet: 1172 rows, every decision empty. `pnpm import:book athar-review` twice: `updated=0` both times.
