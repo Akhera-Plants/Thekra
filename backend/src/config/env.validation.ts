@@ -201,6 +201,17 @@ export class EnvironmentVariables {
   @IsOptional()
   @IsString()
   REFRESH_TTL?: string = '30d';
+
+  /**
+   * Express "trust proxy" setting. Rate limiting keys on the client IP, so
+   * behind a load balancer / platform proxy this must be set (usually `1`, the
+   * number of proxy hops) or every visitor shares the proxy's single bucket.
+   * Leave unset when the API is reached directly. Accepts a hop count, `true`,
+   * or an Express trust-proxy list such as `loopback`.
+   */
+  @IsOptional()
+  @IsString()
+  TRUST_PROXY?: string;
 }
 
 export function validateEnv(config: Record<string, unknown>): EnvironmentVariables {
@@ -215,19 +226,41 @@ export function validateEnv(config: Record<string, unknown>): EnvironmentVariabl
     throw new Error(`Invalid environment: ${messages}`);
   }
 
-  // Phase 4: JWT secrets must be non-default in production
+  // JWT secrets in production: fail fast at boot unless both are set to
+  // strong, distinct, non-default values. (The class defaults above exist only
+  // so local development and tests boot without extra setup.)
   if (validated.NODE_ENV === 'production') {
-    const defaultAccess = 'thekra-access-secret-change-in-production';
-    const defaultRefresh = 'thekra-refresh-secret-change-in-production';
-    if (
-      validated.JWT_ACCESS_SECRET === defaultAccess ||
-      validated.JWT_REFRESH_SECRET === defaultRefresh
-    ) {
-      throw new Error(
-        'Invalid environment: JWT_ACCESS_SECRET and JWT_REFRESH_SECRET must be set to non-default values in production.',
-      );
-    }
+    assertProductionJwtSecrets(validated.JWT_ACCESS_SECRET, validated.JWT_REFRESH_SECRET);
   }
 
   return validated;
+}
+
+const DEFAULT_JWT_SECRETS = new Set([
+  'thekra-access-secret-change-in-production',
+  'thekra-refresh-secret-change-in-production',
+]);
+const MIN_JWT_SECRET_LENGTH = 32;
+
+export function assertProductionJwtSecrets(
+  access: string | undefined,
+  refresh: string | undefined,
+): void {
+  const problems: string[] = [];
+  for (const [name, value] of [
+    ['JWT_ACCESS_SECRET', access],
+    ['JWT_REFRESH_SECRET', refresh],
+  ] as const) {
+    if (!value || DEFAULT_JWT_SECRETS.has(value)) {
+      problems.push(`${name} must be set to a non-default value`);
+    } else if (value.length < MIN_JWT_SECRET_LENGTH) {
+      problems.push(`${name} must be at least ${MIN_JWT_SECRET_LENGTH} characters`);
+    }
+  }
+  if (access && access === refresh) {
+    problems.push('JWT_ACCESS_SECRET and JWT_REFRESH_SECRET must differ');
+  }
+  if (problems.length > 0) {
+    throw new Error(`Invalid environment (production): ${problems.join('; ')}.`);
+  }
 }

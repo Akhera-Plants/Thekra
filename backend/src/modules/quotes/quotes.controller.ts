@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Header, HttpCode, HttpStatus, Param, ParseUUIDPipe, Post, Query, UseGuards } from '@nestjs/common';
-import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
+import { Throttle } from '@nestjs/throttler';
 import { CurrentUser, type JwtPayload } from '../../common/decorators/current-user.decorator.js';
 import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard.js';
 import { FavoritesService } from '../favorites/favorites.service.js';
@@ -47,8 +47,7 @@ export class QuotesController {
   /** Mistake report. No login. The address is used only for the rate limit and is not stored. */
   @Post(':id/reports')
   @HttpCode(HttpStatus.CREATED)
-  @UseGuards(ThrottlerGuard)
-  @Throttle({ default: { limit: 8, ttl: 60_000 } })
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   report(@Param('id', ParseUUIDPipe) id: string, @Body() dto: ReportQuoteDto) {
     return this.quotesService.report(id, dto.reason, dto.note);
   }

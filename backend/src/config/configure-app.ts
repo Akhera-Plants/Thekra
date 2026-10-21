@@ -7,8 +7,28 @@ import { AllExceptionsFilter } from '../common/filters/all-exceptions.filter.js'
 import { ResponseEnvelopeInterceptor } from '../common/interceptors/response-envelope.interceptor.js';
 import { validationExceptionFactory } from '../common/validation/validation-exception.factory.js';
 
+/** TRUST_PROXY env → Express "trust proxy" value (hop count, boolean, or list). */
+export function parseTrustProxy(raw: string | undefined): boolean | number | string | undefined {
+  const value = raw?.trim();
+  if (!value) return undefined;
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  if (/^\d+$/.test(value)) return Number(value);
+  return value;
+}
+
 export function configureApp(app: INestApplication): void {
   const config = app.get(ConfigService);
+
+  // The rate limiter keys on req.ip; behind a platform proxy it must come from
+  // X-Forwarded-For, which Express only honours when "trust proxy" is set.
+  const trustProxy = parseTrustProxy(config.get<string>('TRUST_PROXY'));
+  if (trustProxy !== undefined) {
+    const instance = app.getHttpAdapter().getInstance() as {
+      set?: (key: string, value: unknown) => void;
+    };
+    instance.set?.('trust proxy', trustProxy);
+  }
 
   // Phase 5: security headers via helmet
   app.use(

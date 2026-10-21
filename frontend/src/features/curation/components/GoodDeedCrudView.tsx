@@ -9,7 +9,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { z } from '@/lib/zod';
 import { queryKeys } from '@/lib/query-keys';
 import { getGoodDeeds } from '@/lib/api/good-deeds';
 import { getSins } from '@/lib/api/sins';

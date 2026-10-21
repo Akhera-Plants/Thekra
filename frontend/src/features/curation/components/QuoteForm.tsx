@@ -7,7 +7,7 @@
 
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { z } from '@/lib/zod';
 import { useLocale, useTranslations } from 'next-intl';
 import { adminLabel, sourceName } from '@/lib/format/admin-labels';
 import { useRouter } from '@/i18n/navigation';

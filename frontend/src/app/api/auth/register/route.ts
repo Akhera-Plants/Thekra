@@ -92,7 +92,8 @@ export async function POST(request: Request) {
     );
   }
 
-  const isSecure = request.url.startsWith('https');
+  // Always Secure in production, even if a proxy hands us an http:// URL.
+  const isSecure = process.env.NODE_ENV === 'production' || request.url.startsWith('https');
   const cookieStore = await cookies();
   cookieStore.set({ ...refreshCookieOptions(isSecure), value: refreshToken });
 
