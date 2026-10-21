@@ -51,7 +51,9 @@ export const EXPECTED_COVERAGE = {
     khiyana: 5,
     salah: 125,
     'salat-fi-jamaah': 168,
-    siyam: 108,
+    // Was 108: that count wrongly included «باب تحريم الغدر» (2 ayahs + 4 hadiths),
+    // which shares the printed number 227 with «باب فضل صوم يوم عرفة».
+    siyam: 102,
     dhikr: 964,
     'dhikr-akhira': 215,
     'adha-muslimin': 22,
@@ -86,11 +88,71 @@ function unique(slugs: readonly string[]): string[] {
   return [...new Set(slugs)];
 }
 
-function riyadSlugs(section: MatchSection, topics: readonly Topic[]): string[] {
-  const printed = section.number !== null && /^\d+$/.test(section.number) ? Number(section.number) : null;
+/** Topic slugs reached through numeric riyad anchors, keyed by section id. */
+export type RiyadNumberIndex = ReadonlyMap<string, readonly string[]>;
+
+export interface RiyadNumberResolution {
+  index: RiyadNumberIndex;
+  warnings: string[];
+}
+
+function printedNumber(section: MatchSection): number | null {
+  return section.number !== null && /^\d+$/.test(section.number) ? Number(section.number) : null;
+}
+
+/**
+ * Resolve numeric riyad anchors to BAB sections. The printed numbering repeats
+ * (227 is both «فضل صوم يوم عرفة» in كتاب الفضائل and «تحريم الغدر» in كتاب الأمور
+ * المنهي عنها), so a repeated number only matches the candidate whose kitab
+ * (parentPath) is the kitab of the topic's unambiguous numeric anchors. When
+ * that leaves anything but one candidate, the anchor matches nothing and a
+ * warning names the topic, the number and the candidates.
+ */
+export function resolveRiyadNumbers(topics: readonly Topic[], sections: readonly MatchSection[]): RiyadNumberResolution {
+  const byNumber = new Map<number, MatchSection[]>();
+  for (const section of sections) {
+    if (section.book !== 'riyad' || !ELIGIBLE.riyad.has(section.level)) continue;
+    const number = printedNumber(section);
+    if (number === null) continue;
+    const list = byNumber.get(number) ?? [];
+    list.push(section);
+    byNumber.set(number, list);
+  }
+  const index = new Map<string, string[]>();
+  const warnings: string[] = [];
+  const add = (section: MatchSection, slug: string): void => {
+    const list = index.get(section.id) ?? [];
+    if (!list.includes(slug)) list.push(slug);
+    index.set(section.id, list);
+  };
+  for (const topic of topics) {
+    const resolved: MatchSection[] = [];
+    const repeated: { number: number; candidates: MatchSection[] }[] = [];
+    for (const number of topic.riyadNumbers) {
+      const candidates = byNumber.get(number) ?? [];
+      if (candidates.length === 1) resolved.push(candidates[0] as MatchSection);
+      else if (candidates.length > 1) repeated.push({ number, candidates });
+    }
+    const kitabs = new Set(resolved.map((section) => section.parentPath));
+    for (const { number, candidates } of repeated) {
+      const narrowed = candidates.filter((section) => kitabs.has(section.parentPath));
+      if (narrowed.length === 1) {
+        resolved.push(narrowed[0] as MatchSection);
+        continue;
+      }
+      const titles = candidates.map((section) => `«${section.titleAr}» (${section.parentPath})`).join('، ');
+      warnings.push(`riyad: topic ${topic.slug} anchor ${number} is ambiguous, matched none; candidates: ${titles}`);
+    }
+    for (const section of resolved) add(section, topic.slug);
+  }
+  return { index, warnings };
+}
+
+function riyadSlugs(section: MatchSection, topics: readonly Topic[], numbers: RiyadNumberIndex): string[] {
+  const numbered = numbers.get(section.id) ?? [];
   const slugs: string[] = [];
   for (const topic of topics) {
-    if (printed !== null && topic.riyadNumbers.includes(printed)) slugs.push(topic.slug);
+    if (numbered.includes(topic.slug)) slugs.push(topic.slug);
     if (topic.riyadPhrases.some((phrase) => containsPhrase(section.titleAr, phrase))) slugs.push(topic.slug);
   }
   return unique(slugs);
@@ -123,8 +185,9 @@ function kabairSlugs(section: MatchSection, topics: readonly Topic[]): string[] 
   return topics.filter((topic) => topic.kabair.includes(section.kabiraNumber as number)).map((topic) => topic.slug);
 }
 
-export function matchSection(section: MatchSection, topics: readonly Topic[]): string[] {
-  if (section.book === 'riyad' && ELIGIBLE.riyad.has(section.level)) return riyadSlugs(section, topics);
+/** `riyadNumbers` comes from {@link resolveRiyadNumbers} over the same topics and all sections. */
+export function matchSection(section: MatchSection, topics: readonly Topic[], riyadNumbers: RiyadNumberIndex): string[] {
+  if (section.book === 'riyad' && ELIGIBLE.riyad.has(section.level)) return riyadSlugs(section, topics, riyadNumbers);
   if (section.book === 'targhib' && ELIGIBLE.targhib.has(section.level)) return phraseSlugs(section, topics, 'targhib');
   if (section.book === 'zuhd' && ELIGIBLE.zuhd.has(section.level)) return phraseSlugs(section, topics, 'zuhd');
   if (section.book === 'minhaj' && ELIGIBLE.minhaj.has(section.level)) return phraseSlugs(section, topics, 'minhaj');
@@ -135,8 +198,9 @@ export function matchSection(section: MatchSection, topics: readonly Topic[]): s
 
 export function matchAnchors(topics: readonly Topic[], sections: readonly MatchSection[]): Map<string, string[]> {
   const matches = new Map<string, string[]>();
+  const { index } = resolveRiyadNumbers(topics, sections);
   for (const section of sections) {
-    const slugs = matchSection(section, topics);
+    const slugs = matchSection(section, topics, index);
     if (slugs.length > 0) matches.set(section.id, slugs);
   }
   return matches;

@@ -789,3 +789,38 @@ Measured directly before import and after API rebuild/restart using `GET http://
 | adab-safar | good-deeds | 31→44 | 5→5 | 26→39 | 0→0 | +13 |
 | iyadat-marid | good-deeds | 57→69 | 2→2 | 55→67 | 0→0 | +12 |
 | silat-ar-rahim | good-deeds | 48→59 | 12→12 | 36→47 | 0→0 | +11 |
+
+## Riyad duplicate-number fix
+
+**What was wrong.** Numeric Riyad anchors were matched against every BAB with that printed number. In this edition 227 appears twice: «باب فضل صوم يوم عرفة (1) وعاشوراء وتاسوعاء» (كتاب الفضائل) and «باب تحريم الغدر» (كتاب الأمور المنهي عنها). `siyam` anchors `riyad: [217, …, 227, …, 231]`, so the ghadr chapter was linked to fasting. The result was 10 wrong siyam links: 4 CHAPTER, 2 CHAPTER_AYAH and 4 TAKHRIJ copies in the Sahihayn (البخاري 34، 2270؛ مسلم 1736، 1738). The coverage baseline `siyam: 108` had counted that chapter's 2 ayahs and 4 hadiths.
+
+**Fix.** `resolveRiyadNumbers` in `backend/prisma/imports/taxonomy/match.ts` resolves numeric anchors per topic. A number that is unique among BAB rows matches as before. For a repeated number, only the candidate whose `parentPath` (kitab) matches the kitab of the topic's unambiguous numeric anchors can match. If more than one candidate remains, or none does, the anchor matches nothing and the importer prints `taxonomy warning: riyad: topic <slug> anchor <n> is ambiguous…` with the candidate titles. Title anchors are unchanged; ghadr still reaches the chapter through `riyad: ["تحريم الغدر"]`. `EXPECTED_COVERAGE.items.siyam` is now 102. The real data produces no ambiguity warnings. The existing link sync already deletes stale non-MANUAL links, including TAKHRIJ propagation, so it did not need to change. The deleted rows had no theme keys.
+
+First write: the 4 updates are ghadr's CHAPTER notes losing «(باب مشترك)», because the chapter is no longer shared with a DO topic.
+
+```text
+taxonomy write: created=0 updated=4 deleted=10
+taxonomy topics write: created=0 updated=0 deleted=0
+taxonomy links write: created=0 updated=4 deleted=10
+taxonomy themes write: themes=325 updated=0 tagged=9642/18104 links
+taxonomy hadith branches write: created=0 updated=0 deleted=0
+```
+
+Second write:
+
+```text
+taxonomy write: created=0 updated=0 deleted=0
+taxonomy topics write: created=0 updated=0 deleted=0
+taxonomy links write: created=0 updated=0 deleted=0
+taxonomy themes write: themes=325 updated=0 tagged=9642/18104 links
+taxonomy hadith branches write: created=0 updated=0 deleted=0
+```
+
+| Check | Before | After |
+| --- | ---: | ---: |
+| siyam `GoodDeedQuote` with note like `%الغدر%` | 10 | 0 |
+| ghadr `SinQuote` with note like `%الغدر%` | 30 | 30 |
+| siyam `GoodDeedQuote` rows (all statuses) | 329 | 319 |
+| siyam API `countsByKind` (all / verse / hadith / athar) | 112 / 10 / 102 / 0 | 102 / 8 / 94 / 0 |
+
+Checks: `pnpm exec tsc --noEmit -p tsconfig.json` passed. `pnpm lint` passed with 29 existing warnings and 0 errors. `pnpm test` passed with 73 files and 601 tests. `pnpm test:e2e` passed with 18 files and 282 tests. `pnpm build` passed, and the API was restarted. No commit or push.

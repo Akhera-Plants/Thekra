@@ -8,6 +8,8 @@ import {
   coverageDiff,
   keywordSide,
   matchKeywords,
+  matchSection,
+  resolveRiyadNumbers,
   withKabiraNumbers,
   type MatchSection,
 } from './match.js';
@@ -124,6 +126,60 @@ describe('anchor coverage', () => {
         'targhib الترهيب من قوله لمسلم : یا کافر !',
       ],
     });
+  });
+});
+
+describe('riyad numeric anchors', () => {
+  const taxonomy = loadTaxonomy(join(ROOT, 'backend', 'prisma', 'taxonomy', 'taxonomy.yaml'));
+  const sections = loadSections();
+  const riyad = sections.filter((section) => section.book === 'riyad' && section.level === 'BAB');
+
+  it('resolves the repeated 227 to the fasting chapter through its كتاب الفضائل siblings', () => {
+    const repeated = riyad.filter((section) => section.number === '227');
+    expect(repeated.map((section) => [section.parentPath, section.titleAr])).toEqual([
+      ['كتاب الفضائل', 'باب فضل صوم يوم عرفة (1) وعاشوراء وتاسوعاء'],
+      ['كتاب الأمور المنهي عنها', 'باب تحريم الغدر'],
+    ]);
+    const siyam = taxonomy.topics.find((topic) => topic.slug === 'siyam') as Topic;
+    expect(siyam.riyadNumbers).toContain(227);
+    const { index, warnings } = resolveRiyadNumbers(taxonomy.topics, sections);
+    expect(warnings).toEqual([]);
+    const [arafah, ghadr] = repeated as [MatchSection, MatchSection];
+    expect(matchSection(arafah, taxonomy.topics, index)).toEqual(['siyam']);
+    // The ghadr topic keeps its title anchor; siyam no longer reaches this chapter.
+    expect(matchSection(ghadr, taxonomy.topics, index)).toEqual(['ghadr']);
+    const siyamTitles = riyad.filter((section) => index.get(section.id)?.includes('siyam')).map((section) => section.titleAr);
+    expect(siyamTitles).toHaveLength(12);
+    expect(siyamTitles).not.toContain('باب تحريم الغدر');
+  });
+
+  it('matches none and warns when the kitab cannot pick one candidate', () => {
+    const section = (id: string, parentPath: string, number: string, titleAr: string): MatchSection => ({
+      id, book: 'riyad', level: 'BAB', number, titleAr, parentPath, ayah: 0, hadith: 1, author: 0, kabiraNumber: null, order: 1,
+    });
+    const fabricated = [
+      section('a', 'كتاب الأول', '5', 'باب ألف'),
+      section('b', 'كتاب الثاني', '5', 'باب باء'),
+      section('c', 'كتاب الأول', '6', 'باب جيم'),
+      section('d', 'كتاب الثاني', '7', 'باب دال'),
+    ];
+    const topic = { slug: 'mixed', side: 'DO', riyadNumbers: [5, 6, 7], riyadPhrases: [] as string[] } as unknown as Topic;
+    const { index, warnings } = resolveRiyadNumbers([topic], fabricated);
+    expect(index.get('a')).toBeUndefined();
+    expect(index.get('b')).toBeUndefined();
+    expect(index.get('c')).toEqual(['mixed']);
+    expect(index.get('d')).toEqual(['mixed']);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain('mixed');
+    expect(warnings[0]).toContain('5');
+    expect(warnings[0]).toContain('باب ألف');
+    expect(warnings[0]).toContain('باب باء');
+  });
+
+  it('matches a unique number without looking at the kitab', () => {
+    const only = { id: 'x', book: 'riyad', level: 'BAB', number: '9', titleAr: 'باب', parentPath: 'كتاب', ayah: 0, hadith: 1, author: 0, kabiraNumber: null, order: 1 } as MatchSection;
+    const topic = { slug: 'solo', side: 'DO', riyadNumbers: [9], riyadPhrases: [] as string[] } as unknown as Topic;
+    expect(resolveRiyadNumbers([topic], [only])).toEqual({ index: new Map([['x', ['solo']]]), warnings: [] });
   });
 });
 

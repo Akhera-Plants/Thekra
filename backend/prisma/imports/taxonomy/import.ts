@@ -31,6 +31,7 @@ import {
   coverageDiff,
   matchKeywords,
   matchSection,
+  resolveRiyadNumbers,
   withKabiraNumbers,
   type BookKey,
   type MatchSection,
@@ -195,6 +196,8 @@ async function loadSections(prisma: PrismaClient, quotes: Map<string, QuoteMeta>
   await loadQuotes(prisma, quoteIds, quotes);
   const stamped = withKabiraNumbers(loaded);
   const topics = topicBySlug(loadTaxonomy(yamlPath()).topics);
+  const riyadNumbers = resolveRiyadNumbers([...topics.values()], stamped);
+  for (const warning of riyadNumbers.warnings) console.warn(`taxonomy warning: ${warning}`);
   return stamped.map((section) => ({
     ...section,
     page: pageOf.get(section.id) ?? null,
@@ -202,7 +205,7 @@ async function loadSections(prisma: PrismaClient, quotes: Map<string, QuoteMeta>
       ...item,
       score: item.kind === 'AYAH' ? 90 : hadithScore(item.quoteId ? quotes.get(item.quoteId) : undefined),
     })),
-    anchorSlugs: matchSection(section, [...topics.values()]),
+    anchorSlugs: matchSection(section, [...topics.values()], riyadNumbers.index),
     keywordSlugs: matchKeywords(section, [...topics.values()]),
   }));
 }
