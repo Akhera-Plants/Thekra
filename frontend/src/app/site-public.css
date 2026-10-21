@@ -91,3 +91,17 @@
 [dir=ltr] .site-public .solid-button:hover svg,
 [dir=ltr] .site-public .outline-button:hover svg,
 [dir=ltr] .site-public .good-deed:hover .card-action svg{transform:translateX(4px)}
+/* Long featured reminder: smaller type, a few lines, then «اقرأ النص كاملًا». */
+.featured-verse.is-medium,
+.featured-verse.is-long{
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+  text-align:start;
+}
+.featured-verse.is-medium{font-size:26px;line-height:1.85;-webkit-line-clamp:5}
+.featured-verse.is-long{font-size:21px;line-height:1.8;-webkit-line-clamp:6}
+@media(max-width:650px){
+  .featured-verse.is-medium{font-size:22px;-webkit-line-clamp:6}
+  .featured-verse.is-long{font-size:18px;-webkit-line-clamp:7}
+}

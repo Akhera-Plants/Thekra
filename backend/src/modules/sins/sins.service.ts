@@ -269,6 +269,27 @@ export class SinsService {
       quote: quoteFilter,
     };
 
+    // countsByKind: computed over the whole topic with the *base* filter (no kind restriction).
+    // This gives stable tab counts regardless of which kind the caller is currently viewing.
+    const baseWhere: Prisma.SinQuoteWhereInput = {
+      sinId: sin.id,
+      reviewStatus: PUBLISHED_LINK_REVIEW_STATUS,
+      ...autoLinkExclusion(),
+      ...(query.minScore !== undefined && {
+        relevanceScore: { gte: query.minScore },
+      }),
+      quote: this.quotes.buildLinkQuoteFilter({
+        type: query.type,
+        grades: query.grades,
+        includeWeak: query.includeWeak,
+        // no kind here — we want counts for all kinds
+      }).quoteFilter,
+    };
+    const countsByKindQ = this.quotes.countsByKind({
+      linkTable: 'sinLinks',
+      linkWhere: baseWhere,
+    });
+
     // Shared sub-queries (count, type breakdown, alternatives) — same for both paths
     const countQ = this.prisma.sinQuote.count({ where });
     const typeGroupsQ = this.prisma.quote.groupBy({
@@ -312,14 +333,17 @@ export class SinsService {
         limit,
       });
 
-      const [rows, total, typeGroups, alternatives] = await this.prisma.$transaction([
-        this.prisma.sinQuote.findMany({
-          where: { id: { in: ids } },
-          include: { quote: { include: this.quotes.buildQuoteInclude(locale) } },
-        }),
-        countQ,
-        typeGroupsQ,
-        alternativesQ,
+      const [[rows, total, typeGroups, alternatives], countsByKind] = await Promise.all([
+        this.prisma.$transaction([
+          this.prisma.sinQuote.findMany({
+            where: { id: { in: ids } },
+            include: { quote: { include: this.quotes.buildQuoteInclude(locale) } },
+          }),
+          countQ,
+          typeGroupsQ,
+          alternativesQ,
+        ]),
+        countsByKindQ,
       ]);
 
       // Re-order to match the shuffle ordering from the raw query
@@ -353,6 +377,7 @@ export class SinsService {
           ordering: `variety:md5(seed),floor=${floor}`,
           seed,
           countsByType,
+          countsByKind,
           appliedGrades: allowedGrades,
         }),
       };
@@ -360,14 +385,17 @@ export class SinsService {
 
     const ranked = await this.prisma.sinQuote.findMany({ where, select: READING_SELECT });
     const ids = pageReadingIds(ranked as ReadingRow[], page, limit);
-    const [rows, total, typeGroups, alternatives] = await this.prisma.$transaction([
-      this.prisma.sinQuote.findMany({
-        where: { id: { in: ids.length > 0 ? ids : ['00000000-0000-0000-0000-000000000000'] } },
-        include: { quote: { include: this.quotes.buildQuoteInclude(locale) } },
-      }),
-      countQ,
-      typeGroupsQ,
-      alternativesQ,
+    const [[rows, total, typeGroups, alternatives], countsByKind] = await Promise.all([
+      this.prisma.$transaction([
+        this.prisma.sinQuote.findMany({
+          where: { id: { in: ids.length > 0 ? ids : ['00000000-0000-0000-0000-000000000000'] } },
+          include: { quote: { include: this.quotes.buildQuoteInclude(locale) } },
+        }),
+        countQ,
+        typeGroupsQ,
+        alternativesQ,
+      ]),
+      countsByKindQ,
     ]);
     const order = new Map(ids.map((id, index) => [id, index]));
     rows.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
@@ -406,6 +434,7 @@ export class SinsService {
         locale,
         ordering: READING_ORDER,
         countsByType,
+        countsByKind,
         appliedGrades: allowedGrades,
       }),
     };

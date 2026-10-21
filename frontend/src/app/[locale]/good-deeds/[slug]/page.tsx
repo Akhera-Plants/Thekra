@@ -8,6 +8,7 @@ import { GoodDeedReader } from '@/features/good-deed-motivation/components/GoodD
 import { interleaveReading } from '@/lib/reading';
 import { getGoodDeed, getGoodDeedQuotes } from '@/lib/api/good-deeds';
 import type { LocaleCode } from '@/lib/types/enums';
+import type { GoodDeedQuotesMeta } from '@/lib/types/api';
 
 export const dynamic = 'force-dynamic';
 
@@ -152,7 +153,14 @@ export default async function GoodDeedDetailPage({
             </Link>
           </div>
         ) : (
-          <GoodDeedReader items={items} sections={sections} total={items.length} />
+          <GoodDeedReader
+            slug={slug}
+            lang={locale}
+            items={items}
+            sections={sections}
+            total={items.length}
+            countsByKind={(quotes?.meta as GoodDeedQuotesMeta | undefined)?.countsByKind}
+          />
         )}
 
         {deed.oppositeSin && opposite ? (

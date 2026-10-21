@@ -1,5 +1,5 @@
 import { apiGet } from '@/lib/api-client';
-import type { QuoteDto } from '@/lib/types/api';
+import type { CountsByKind, PageMeta, QuoteDto, QuoteKind } from '@/lib/types/api';
 
 export interface ImanBranchDto {
   id: string;
@@ -27,6 +27,13 @@ export interface ImanBranchDetailDto extends ImanBranchDto {
   next: { number: number; titleAr: string; title: string | null } | null;
 }
 
+export interface BranchQuotesMeta extends PageMeta {
+  ordering?: string;
+  countsByType?: Record<string, number>;
+  countsByKind?: CountsByKind;
+  appliedGrades?: string[];
+}
+
 export interface BranchQuotesResponse {
   branch: {
     number: number;
@@ -50,6 +57,13 @@ export async function getBranch(number: number, lang?: string) {
   });
 }
 
-export async function getBranchQuotes(number: number, query: { page?: number; limit?: number; lang?: string } = {}) {
+export interface BranchQuotesQuery {
+  page?: number;
+  limit?: number;
+  lang?: string;
+  kind?: QuoteKind;
+}
+
+export async function getBranchQuotes(number: number, query: BranchQuotesQuery = {}) {
   return apiGet<BranchQuotesResponse>(`/branches/${number}/quotes`, { params: query });
 }

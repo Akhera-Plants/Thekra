@@ -278,6 +278,7 @@
     "type": {
       "quran": "Quranic verse",
       "hadith": "Prophetic hadith",
+      "athar": "Saying of the Salaf",
       "scholar": "Scholar quote",
       "book": "Book excerpt"
     },

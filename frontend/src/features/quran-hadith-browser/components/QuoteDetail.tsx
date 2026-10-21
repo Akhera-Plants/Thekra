@@ -39,9 +39,19 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
       {/* Grade badge + type */}
       <header className="flex flex-wrap items-center gap-2">
         <Badge variant="outline">
-          {t(`type.${quote.type === 'QURAN_VERSE' ? 'quran' : quote.type === 'HADITH' ? 'hadith' : quote.type === 'SCHOLAR_QUOTE' ? 'scholar' : 'book'}`)}
+          {t(`type.${
+            quote.isAthar
+              ? 'athar'
+              : quote.type === 'QURAN_VERSE'
+                ? 'quran'
+                : quote.type === 'HADITH'
+                  ? 'hadith'
+                  : quote.type === 'SCHOLAR_QUOTE'
+                    ? 'scholar'
+                    : 'book'
+          }`)}
         </Badge>
-        {grade && grade !== HadithGrade.UNGRADED && (
+        {grade && grade !== HadithGrade.UNGRADED && !quote.isAthar && (
           <GradeBadge
             grade={grade}
             label={t(`grade.${grade.toLowerCase()}`)}

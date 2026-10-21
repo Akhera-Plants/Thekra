@@ -177,6 +177,7 @@ export class QuotesService {
     type?: QuoteType[];
     grades?: HadithGrade[];
     includeWeak?: boolean;
+    kind?: 'verse' | 'hadith' | 'athar';
   }): {
     quoteFilter: Prisma.QuoteWhereInput;
     allowedGrades: HadithGrade[];
@@ -190,9 +191,65 @@ export class QuotesService {
         ...(query.type?.length ? [{ type: { in: query.type } }] : []),
         GradePolicy.whereClause(allowedGrades),
         GradePolicy.readerClause(),
+        ...(query.kind ? [this.buildKindFilter(query.kind)] : []),
       ],
     };
     return { quoteFilter, allowedGrades };
+  }
+
+  /**
+   * Translate a reader tab `kind` into a Prisma quote filter.
+   * - verse  → QURAN_VERSE type only
+   * - hadith → HADITH with isAthar=false (prophet hadith only)
+   * - athar  → HADITH with isAthar=true and atharReviewDecision=KEEP
+   */
+  buildKindFilter(kind: 'verse' | 'hadith' | 'athar'): Prisma.QuoteWhereInput {
+    if (kind === 'verse') return { type: QuoteType.QURAN_VERSE };
+    if (kind === 'hadith') {
+      // isAthar is a non-nullable Boolean in the schema defaulting to false.
+      // All non-athar hadith rows have isAthar=false.
+      return { type: QuoteType.HADITH, isAthar: false };
+    }
+    // athar: HADITH rows that are marked as a kept athar
+    return {
+      type: QuoteType.HADITH,
+      isAthar: true,
+      atharReviewDecision: 'KEEP',
+    };
+  }
+
+  /**
+   * Compute `countsByKind` over the whole filtered topic set (no pagination).
+   *
+   * Returns `{ all, verse, hadith, athar }` where:
+   * - all    = total matching quotes (sum of all kinds)
+   * - verse  = QURAN_VERSE
+   * - hadith = HADITH where isAthar=false (prophet hadith only)
+   * - athar  = HADITH where isAthar=true and atharReviewDecision=KEEP
+   */
+  async countsByKind<TWhere extends object>(opts: {
+    linkTable: 'sinLinks' | 'goodDeedLinks' | 'imanBranchLinks';
+    linkWhere: TWhere;
+  }): Promise<{ all: number; verse: number; hadith: number; athar: number }> {
+    const base = { [opts.linkTable]: { some: opts.linkWhere } };
+
+    const [verseCount, hadithCount, atharCount] = await Promise.all([
+      this.prisma.quote.count({ where: { ...base, type: QuoteType.QURAN_VERSE } }),
+      this.prisma.quote.count({
+        where: { ...base, type: QuoteType.HADITH, isAthar: false },
+      }),
+      this.prisma.quote.count({
+        where: {
+          ...base,
+          type: QuoteType.HADITH,
+          isAthar: true,
+          atharReviewDecision: 'KEEP',
+        },
+      }),
+    ]);
+
+    const all = verseCount + hadithCount + atharCount;
+    return { all, verse: verseCount, hadith: hadithCount, athar: atharCount };
   }
 
   /**

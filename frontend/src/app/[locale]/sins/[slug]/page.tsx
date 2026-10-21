@@ -10,6 +10,7 @@ import { interleaveReading } from '@/lib/reading';
 import { getSin, getSinQuotes } from '@/lib/api/sins';
 import { englishProvenance } from '@/lib/format/provenance';
 import { SinRank, type LocaleCode } from '@/lib/types/enums';
+import type { SinQuotesMeta } from '@/lib/types/api';
 
 export const dynamic = 'force-dynamic';
 
@@ -157,7 +158,14 @@ export default async function SinDetailPage({
             </Link>
           </div>
         ) : (
-          <SinReader items={items} sections={sections} total={items.length} />
+          <SinReader
+          slug={slug}
+          lang={locale}
+          items={items}
+          sections={sections}
+          total={items.length}
+          countsByKind={(quotes?.meta as SinQuotesMeta | undefined)?.countsByKind}
+        />
         )}
 
         <AlternativeDeedsBlock alternatives={alternatives} heading={t('alternativesHeading')} />

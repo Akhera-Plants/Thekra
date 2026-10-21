@@ -54,6 +54,7 @@ describe('SinsService', () => {
       type?: QuoteType[];
       grades?: string[];
       includeWeak?: boolean;
+      kind?: string;
     }) => {
       const allowedGrades = GradePolicy.resolveAllowedGrades({
         grades: query.grades as never,
@@ -65,6 +66,11 @@ describe('SinsService', () => {
       };
       return { quoteFilter, allowedGrades };
     }),
+    buildKindFilter: vi.fn().mockImplementation((kind: string) => {
+      if (kind === 'verse') return { type: QuoteType.QURAN_VERSE };
+      if (kind === 'hadith') return { type: QuoteType.HADITH, isAthar: false };
+      return { type: QuoteType.HADITH, isAthar: true, atharReviewDecision: 'KEEP' };
+    }),
     countsByTypeFromGroups: vi.fn().mockImplementation(
       (groups: Array<{ type: string; _count: { _all: number } }>) => {
         const result: Record<string, number> = {
@@ -74,6 +80,7 @@ describe('SinsService', () => {
         return result;
       },
     ),
+    countsByKind: vi.fn().mockResolvedValue({ all: 10, verse: 3, hadith: 5, athar: 2 }),
   };
 
   const goodDeeds = {
@@ -180,6 +187,38 @@ describe('SinsService', () => {
     });
   });
 
+  it('meta.countsByKind comes from QuotesService.countsByKind', async () => {
+    prisma.sin.findUnique.mockResolvedValue(SIN);
+    prisma.sinQuote.findMany.mockResolvedValue([]);
+    prisma.sinQuote.count.mockResolvedValue(10);
+    prisma.quote.groupBy.mockResolvedValue([]);
+    prisma.goodDeed.findMany.mockResolvedValue([]);
+    prisma.$transaction.mockImplementation(async (ops) => Promise.all(ops));
+    quotes.countsByKind.mockResolvedValue({ all: 10, verse: 3, hadith: 5, athar: 2 });
+
+    const result = await service.findQuotesForSin('ghibah', {});
+    expect(result.meta.countsByKind).toEqual({ all: 10, verse: 3, hadith: 5, athar: 2 });
+  });
+
+  it('passes kind filter to buildLinkQuoteFilter when kind is provided', async () => {
+    prisma.sin.findUnique.mockResolvedValue(SIN);
+    prisma.sinQuote.findMany.mockResolvedValue([]);
+    prisma.sinQuote.count.mockResolvedValue(3);
+    prisma.quote.groupBy.mockResolvedValue([]);
+    prisma.goodDeed.findMany.mockResolvedValue([]);
+    prisma.$transaction.mockImplementation(async (ops) => Promise.all(ops));
+    quotes.countsByKind.mockResolvedValue({ all: 10, verse: 3, hadith: 5, athar: 2 });
+
+    await service.findQuotesForSin('ghibah', { kind: 'athar' });
+    // buildLinkQuoteFilter called twice: once for the kind-filtered where, once for baseWhere
+    const calls = (quotes.buildLinkQuoteFilter as ReturnType<typeof vi.fn>).mock.calls;
+    const kindCall = calls.find((call) => call[0].kind === 'athar');
+    expect(kindCall).toBeDefined();
+    // The base call (for countsByKind) should NOT carry kind
+    const baseCall = calls.find((call) => !call[0].kind);
+    expect(baseCall).toBeDefined();
+  });
+
   // ─── Shuffle variety mode (P1-2) ──────────────────────────────────────────────
 
   describe('shuffle=true (variety mode)', () => {
@@ -199,6 +238,7 @@ describe('SinsService', () => {
         for (const g of groups) result[g.type] = g._count._all;
         return result;
       });
+      quotes.countsByKind.mockResolvedValue({ all: 0, verse: 0, hadith: 0, athar: 0 });
     });
 
     it('calls shuffleLinksPage with correct table/parentKey and echoes seed in meta', async () => {

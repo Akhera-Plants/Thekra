@@ -6,7 +6,7 @@ import { QuoteCard } from '@/components/shared/quote/QuoteCard';
 import { Button } from '@/components/shared/kit/button';
 import { SegmentTabs } from '@/components/shared/kit/segment-tabs';
 import type { QuoteCardIntent } from '@/components/shared/quote/QuoteCard';
-import type { QuoteDto } from '@/lib/types/api';
+import type { CountsByKind, QuoteDto } from '@/lib/types/api';
 import { QuoteType } from '@/lib/types/enums';
 import { StudyPanel } from '@/features/study-panel/components/StudyPanel';
 
@@ -21,7 +21,7 @@ export interface ReaderSection {
   items: ReaderItem[];
 }
 
-type TypeFilter = 'all' | 'verse' | 'hadith' | 'athar';
+export type TypeFilter = 'all' | 'verse' | 'hadith' | 'athar';
 
 const PAGE_SIZE = 10;
 
@@ -30,6 +30,16 @@ interface ReminderReaderProps {
   total: number;
   intent: QuoteCardIntent;
   sections?: ReaderSection[];
+  /** Server-computed counts for all kinds — drives tab visibility without a client-side scan. */
+  countsByKind?: CountsByKind;
+  /** Called when the user switches tabs; parent fetches new items for that kind. */
+  onKindChange?: (kind: TypeFilter) => void;
+  /** True while the parent is fetching the next page (show more spinner). */
+  loadingNextPage?: boolean;
+  /** True when more pages are available for the current kind. */
+  hasNextPage?: boolean;
+  /** Called when the user clicks «show more»; parent fetches the next page. */
+  onShowMore?: () => void;
   labels: {
     showMore: string;
     tabAll: string;
@@ -53,10 +63,6 @@ function matchesFilter(item: ReaderItem, filter: TypeFilter): boolean {
   return item.quote.type === QuoteType.HADITH && !isAtharItem(item);
 }
 
-function countOf(items: ReaderItem[], filter: TypeFilter): number {
-  return items.filter((item) => matchesFilter(item, filter)).length;
-}
-
 /** When the caller passes a flat list, split athar into its own section after hadith. */
 function withAtharSection(
   items: ReaderItem[],
@@ -75,20 +81,32 @@ function withAtharSection(
 }
 
 /**
- * Topic reading surface: type tabs and a full-width list (10 at a time).
+ * Topic reading surface: type tabs and a full-width list.
+ *
+ * When `countsByKind` is supplied (server counts), tabs are driven by those
+ * numbers and `onKindChange` is called on tab switch so the parent can fetch
+ * the correct kind.  When omitted, falls back to client-side counting (legacy).
+ *
+ * When `hasNextPage` / `onShowMore` are supplied, «show more» triggers a
+ * network fetch; otherwise it slices locally.
  */
 export function ReminderReader({
   items,
   total: _total,
   intent,
   sections,
+  countsByKind,
+  onKindChange,
+  loadingNextPage = false,
+  hasNextPage,
+  onShowMore,
   labels,
 }: ReminderReaderProps) {
   void _total;
 
   const [filter, setFilter] = useState<TypeFilter>('all');
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const [loadingMore, setLoadingMore] = useState(false);
+  const [localLoadingMore, setLocalLoadingMore] = useState(false);
   const [studyQuoteId, setStudyQuoteId] = useState<string | null>(null);
 
   const baseSections = useMemo(
@@ -101,10 +119,12 @@ export function ReminderReader({
     [baseSections],
   );
 
-  const verseCount = countOf(allItems, 'verse');
-  const hadithCount = countOf(allItems, 'hadith');
-  const atharCount = countOf(allItems, 'athar');
-  const allCount = allItems.length;
+  // Use server-provided counts when available; otherwise scan loaded items.
+  const verseCount = countsByKind?.verse ?? allItems.filter((item) => matchesFilter(item, 'verse')).length;
+  const hadithCount = countsByKind?.hadith ?? allItems.filter((item) => matchesFilter(item, 'hadith')).length;
+  const atharCount = countsByKind?.athar ?? allItems.filter((item) => matchesFilter(item, 'athar')).length;
+  const allCount = countsByKind?.all ?? allItems.length;
+
   const activeFilter: TypeFilter =
     filter === 'verse' && verseCount === 0
       ? 'all'
@@ -117,23 +137,35 @@ export function ReminderReader({
   function changeFilter(next: TypeFilter) {
     setFilter(next);
     setVisibleCount(PAGE_SIZE);
+    onKindChange?.(next);
   }
 
+  // When kind is controlled by the parent, all loaded items match the active kind already.
+  // When not controlled (legacy), filter client-side.
+  const isControlled = Boolean(onKindChange);
+
   const filteredSections = useMemo(() => {
+    if (isControlled) {
+      // Items are already filtered by the parent; split into sections as-is.
+      return baseSections.filter((section) => section.items.length > 0);
+    }
     return baseSections
       .map((section) => ({
         ...section,
         items: section.items.filter((item) => matchesFilter(item, activeFilter)),
       }))
       .filter((section) => section.items.length > 0);
-  }, [baseSections, activeFilter]);
+  }, [baseSections, activeFilter, isControlled]);
 
   const filteredFlat = useMemo(
     () => filteredSections.flatMap((section) => section.items),
     [filteredSections],
   );
 
+  // In network-controlled mode: always show everything loaded (parent pages items in).
+  // In legacy mode: slice locally.
   const shownSections = useMemo(() => {
+    if (isControlled) return filteredSections;
     let remaining = visibleCount;
     const result: ReaderSection[] = [];
     for (const section of filteredSections) {
@@ -144,16 +176,26 @@ export function ReminderReader({
       remaining -= slice.length;
     }
     return result;
-  }, [filteredSections, visibleCount]);
+  }, [filteredSections, visibleCount, isControlled]);
 
-  const canShowMore = visibleCount < filteredFlat.length;
+  // «Show more» is available when:
+  // - network mode: parent says there's a next page
+  // - legacy mode: more items loaded than currently shown
+  const canShowMore = isControlled
+    ? Boolean(hasNextPage)
+    : visibleCount < filteredFlat.length;
+
+  const loadingMore = isControlled ? loadingNextPage : localLoadingMore;
 
   function handleShowMore() {
-    setLoadingMore(true);
-    // Keep the loading affordance visible for a beat so the press feels answered.
+    if (isControlled) {
+      onShowMore?.();
+      return;
+    }
+    setLocalLoadingMore(true);
     window.setTimeout(() => {
       setVisibleCount((value) => Math.min(value + PAGE_SIZE, filteredFlat.length));
-      setLoadingMore(false);
+      setLocalLoadingMore(false);
     }, 180);
   }
 

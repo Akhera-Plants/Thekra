@@ -194,4 +194,35 @@ describe('Good-deeds endpoints (e2e)', () => {
       .expect(200);
     expect(JSON.stringify(res.body)).not.toContain('rawPayload');
   });
+
+  // ── §8  kind filter + countsByKind ─────────────────────────────────────────
+
+  it('GET /v1/good-deeds/hifz-al-lisan/quotes → meta.countsByKind present', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/v1/good-deeds/hifz-al-lisan/quotes?limit=50')
+      .expect(200);
+    const ck = res.body.meta.countsByKind as { all: number; verse: number; hadith: number; athar: number };
+    expect(typeof ck.all).toBe('number');
+    expect(typeof ck.verse).toBe('number');
+    expect(typeof ck.hadith).toBe('number');
+    expect(typeof ck.athar).toBe('number');
+    expect(ck.all).toBe(ck.verse + ck.hadith + ck.athar);
+  });
+
+  it('GET /v1/good-deeds/hifz-al-lisan/quotes?kind=verse → only QURAN_VERSE items', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/v1/good-deeds/hifz-al-lisan/quotes?kind=verse&limit=50')
+      .expect(200);
+    const items: Array<{ quote: { type: string } }> = res.body.data.items;
+    for (const item of items) {
+      expect(item.quote.type).toBe('QURAN_VERSE');
+    }
+  });
+
+  it('GET /v1/good-deeds/hifz-al-lisan/quotes?kind=invalid → 400', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/v1/good-deeds/hifz-al-lisan/quotes?kind=invalid')
+      .expect(400);
+    expect(res.body.error.code).toBe('VALIDATION_FAILED');
+  });
 });

@@ -139,7 +139,10 @@ export function QuoteCard({
   const panelId = useId();
   const [contextOpen, setContextOpen] = useState(false);
 
-  const { typeKey, Icon } = QUOTE_TYPE_CONFIG[quote.type];
+  const isAthar = Boolean(quote.isAthar);
+  const { typeKey: rawTypeKey, Icon } = QUOTE_TYPE_CONFIG[quote.type];
+  // Athar are companion/successor sayings stored as HADITH rows — never label them «حديث نبوي».
+  const typeKey = isAthar ? 'athar' : rawTypeKey;
   const typeLabel = t(`type.${typeKey}`);
   const isQuran = quote.type === QuoteType.QURAN_VERSE;
   const isHadith = quote.type === QuoteType.HADITH;
@@ -195,7 +198,10 @@ export function QuoteCard({
             <span
               className={cn(
                 'inline-flex min-h-8 items-center gap-1.5 rounded-full px-2.5 py-1',
-                'bg-primary/10 text-[13px] font-medium text-primary md:text-[14px]',
+                'text-[13px] font-medium md:text-[14px]',
+                isAthar
+                  ? 'bg-muted text-muted-foreground'
+                  : 'bg-primary/10 text-primary',
                 arabic && 'font-arabic-ui',
               )}
             >

@@ -181,6 +181,22 @@ export class ImanBranchesService {
       quote: quoteFilter,
     };
 
+    // countsByKind: computed over the whole branch with the *base* filter (no kind restriction).
+    const baseWhere: Prisma.ImanBranchQuoteWhereInput = {
+      imanBranchId: branch.id,
+      reviewStatus: PUBLISHED_LINK_REVIEW_STATUS,
+      ...(query.minScore !== undefined && { relevanceScore: { gte: query.minScore } }),
+      quote: this.quotes.buildLinkQuoteFilter({
+        type: query.type,
+        grades: query.grades,
+        includeWeak: query.includeWeak,
+      }).quoteFilter,
+    };
+    const countsByKindQ = this.quotes.countsByKind({
+      linkTable: 'imanBranchLinks',
+      linkWhere: baseWhere,
+    });
+
     if (query.shuffle) {
       const seed = query.seed ?? new Date().toISOString().slice(0, 10);
       const floor = this.quotes.getVarietyScoreFloor();
@@ -196,17 +212,20 @@ export class ImanBranchesService {
         page,
         limit,
       });
-      const [rows, total, typeGroups] = await this.prisma.$transaction([
-        this.prisma.imanBranchQuote.findMany({
-          where: { id: { in: ids } },
-          include: { quote: { include: this.quotes.buildQuoteInclude(locale) } },
-        }),
-        this.prisma.imanBranchQuote.count({ where }),
-        this.prisma.quote.groupBy({
-          by: ['type'],
-          where: { imanBranchLinks: { some: where } },
-          _count: { _all: true },
-        }),
+      const [[rows, total, typeGroups], countsByKind] = await Promise.all([
+        this.prisma.$transaction([
+          this.prisma.imanBranchQuote.findMany({
+            where: { id: { in: ids } },
+            include: { quote: { include: this.quotes.buildQuoteInclude(locale) } },
+          }),
+          this.prisma.imanBranchQuote.count({ where }),
+          this.prisma.quote.groupBy({
+            by: ['type'],
+            where: { imanBranchLinks: { some: where } },
+            _count: { _all: true },
+          }),
+        ]),
+        countsByKindQ,
       ]);
       if (ids.length > 1) {
         const order = new Map(ids.map((id, index) => [id, index]));
@@ -216,28 +235,33 @@ export class ImanBranchesService {
         ordering: `variety:md5(seed),floor=${floor}`,
         seed,
         countsByType: this.quotes.countsByTypeFromGroups(typeGroups),
+        countsByKind,
       });
     }
 
-    const [rows, total, typeGroups] = await this.prisma.$transaction([
-      this.prisma.imanBranchQuote.findMany({
-        where,
-        orderBy: this.quotes.linkOrderBy(),
-        skip: (page - 1) * limit,
-        take: limit,
-        include: { quote: { include: this.quotes.buildQuoteInclude(locale) } },
-      }),
-      this.prisma.imanBranchQuote.count({ where }),
-      this.prisma.quote.groupBy({
-        by: ['type'],
-        where: { imanBranchLinks: { some: where } },
-        _count: { _all: true },
-      }),
+    const [[rows, total, typeGroups], countsByKind] = await Promise.all([
+      this.prisma.$transaction([
+        this.prisma.imanBranchQuote.findMany({
+          where,
+          orderBy: this.quotes.linkOrderBy(),
+          skip: (page - 1) * limit,
+          take: limit,
+          include: { quote: { include: this.quotes.buildQuoteInclude(locale) } },
+        }),
+        this.prisma.imanBranchQuote.count({ where }),
+        this.prisma.quote.groupBy({
+          by: ['type'],
+          where: { imanBranchLinks: { some: where } },
+          _count: { _all: true },
+        }),
+      ]),
+      countsByKindQ,
     ]);
 
     return this.quotesPage(branch, rows, page, limit, total, locale, allowedGrades, {
       ordering: LINK_ORDERING_LABEL,
       countsByType: this.quotes.countsByTypeFromGroups(typeGroups),
+      countsByKind,
     });
   }
 
@@ -379,7 +403,12 @@ export class ImanBranchesService {
     total: number,
     locale: 'ar' | 'en',
     allowedGrades: HadithGrade[],
-    extra: { ordering: string; seed?: string; countsByType: Record<string, number> },
+    extra: {
+      ordering: string;
+      seed?: string;
+      countsByType: Record<string, number>;
+      countsByKind: { all: number; verse: number; hadith: number; athar: number };
+    },
   ) {
     return {
       data: {
@@ -399,6 +428,7 @@ export class ImanBranchesService {
         ordering: extra.ordering,
         ...(extra.seed ? { seed: extra.seed } : {}),
         countsByType: extra.countsByType,
+        countsByKind: extra.countsByKind,
         appliedGrades: allowedGrades,
       }),
     };

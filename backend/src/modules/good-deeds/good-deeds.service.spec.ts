@@ -57,6 +57,7 @@ describe('GoodDeedsService', () => {
         return result;
       },
     ),
+    countsByKind: vi.fn().mockResolvedValue({ all: 0, verse: 0, hadith: 0, athar: 0 }),
   };
 
   let service: GoodDeedsService;

@@ -234,9 +234,17 @@ export interface SinQuotesResponse {
   alternatives: GoodDeedSummaryDto[];
 }
 
+export interface CountsByKind {
+  all: number;
+  verse: number;
+  hadith: number;
+  athar: number;
+}
+
 export interface SinQuotesMeta extends PageMeta {
   ordering?: string;
   countsByType?: Partial<Record<QuoteType, number>>;
+  countsByKind?: CountsByKind;
   appliedGrades?: HadithGrade[];
 }
 
@@ -251,11 +259,14 @@ export interface SinsQuery {
   includeEmpty?: 'true' | 'false';
 }
 
+export type QuoteKind = 'verse' | 'hadith' | 'athar';
+
 export interface SinQuotesQuery {
   page?: number;
   limit?: number;
   lang?: LocaleCode;
   type?: QuoteType[];
+  kind?: QuoteKind;
   grades?: HadithGrade[];
   includeWeak?: boolean;
   minScore?: number;
@@ -277,6 +288,7 @@ export interface GoodDeedQuotesQuery {
   limit?: number;
   lang?: LocaleCode;
   type?: QuoteType[];
+  kind?: QuoteKind;
   grades?: HadithGrade[];
   includeWeak?: boolean;
   minScore?: number;
@@ -326,6 +338,7 @@ export interface GoodDeedQuotesResponse {
 export interface GoodDeedQuotesMeta extends PageMeta {
   ordering?: string;
   countsByType?: Partial<Record<QuoteType, number>>;
+  countsByKind?: CountsByKind;
   appliedGrades?: HadithGrade[];
 }
 

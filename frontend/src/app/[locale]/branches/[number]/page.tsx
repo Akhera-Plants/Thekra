@@ -5,7 +5,8 @@ import { getBranch, getBranchQuotes } from '@/lib/api/branches';
 import { ArabicText } from '@/components/shared/ArabicText';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { FormattedNumber } from '@/components/shared/FormattedNumber';
-import { ReminderReader } from '@/components/shared/editorial/ReminderReader';
+import { BranchReader } from '@/features/iman-branches/components/BranchReader';
+import type { BranchQuotesMeta } from '@/lib/api/branches';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,7 +19,6 @@ export default async function BranchDetailPage({
 
   setRequestLocale(locale);
   const t = await getTranslations('branches');
-  const tDetail = await getTranslations('sinDetail');
   const tNav = await getTranslations('nav');
   const tCrumbs = await getTranslations('breadcrumbs');
 
@@ -29,18 +29,19 @@ export default async function BranchDetailPage({
     notFound();
   }
 
-  let items: Awaited<ReturnType<typeof getBranchQuotes>>['data']['items'] = [];
+  let branchQuotes: Awaited<ReturnType<typeof getBranchQuotes>> | null = null;
   try {
-    items = (await getBranchQuotes(branchNumber, { limit: 20, lang: locale })).data.items;
+    branchQuotes = await getBranchQuotes(branchNumber, { limit: 50, lang: locale });
   } catch {
-    items = [];
+    branchQuotes = null;
   }
 
-  const readerItems = items.map((item) => ({
+  const readerItems = (branchQuotes?.data.items ?? []).map((item) => ({
     id: item.quote.id,
     quote: item.quote,
     note: item.link.note,
   }));
+  const countsByKind = (branchQuotes?.meta as BranchQuotesMeta | undefined)?.countsByKind;
 
   const heading = locale === 'en'
     ? (detail.title || t('branchFallback', { number: detail.number }))
@@ -102,19 +103,12 @@ export default async function BranchDetailPage({
             </Link>
           </div>
         ) : (
-          <ReminderReader
+          <BranchReader
+            number={branchNumber}
+            lang={locale}
             items={readerItems}
             total={detail.quoteCount || readerItems.length}
-            intent="iman-branch"
-            labels={{
-              showMore: tDetail('showMore'),
-              tabAll: tDetail('typeAll'),
-              tabVerses: tDetail('typeVerses'),
-              tabHadith: tDetail('typeHadith'),
-              tabAthar: tDetail('typeAthar'),
-              atharSection: tDetail('atharSection'),
-              tabsLabel: tDetail('tabsLabel'),
-            }}
+            countsByKind={countsByKind}
           />
         )}
 

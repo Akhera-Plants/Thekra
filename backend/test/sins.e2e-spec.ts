@@ -321,6 +321,61 @@ describe('Sins endpoints (e2e)', () => {
     expect(JSON.stringify(res.body)).not.toContain('rawPayload');
   });
 
+  // ── §9  kind filter + countsByKind ─────────────────────────────────────────
+
+  it('GET /v1/sins/ghibah/quotes → meta.countsByKind present with all/verse/hadith/athar keys', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/v1/sins/ghibah/quotes?limit=50')
+      .expect(200);
+    const ck = res.body.meta.countsByKind as { all: number; verse: number; hadith: number; athar: number };
+    expect(typeof ck.all).toBe('number');
+    expect(typeof ck.verse).toBe('number');
+    expect(typeof ck.hadith).toBe('number');
+    expect(typeof ck.athar).toBe('number');
+    // all === sum of the other three
+    expect(ck.all).toBe(ck.verse + ck.hadith + ck.athar);
+  });
+
+  it('GET /v1/sins/ghibah/quotes?kind=verse → only QURAN_VERSE items', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/v1/sins/ghibah/quotes?kind=verse&limit=50')
+      .expect(200);
+    const items: Array<{ quote: { type: string } }> = res.body.data.items;
+    for (const item of items) {
+      expect(item.quote.type).toBe('QURAN_VERSE');
+    }
+  });
+
+  it('GET /v1/sins/ghibah/quotes?kind=hadith → only non-athar HADITH items', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/v1/sins/ghibah/quotes?kind=hadith&limit=50')
+      .expect(200);
+    const items: Array<{ quote: { type: string; isAthar?: boolean } }> = res.body.data.items;
+    for (const item of items) {
+      expect(item.quote.type).toBe('HADITH');
+      expect(item.quote.isAthar).not.toBe(true);
+    }
+  });
+
+  it('GET /v1/sins/ghibah/quotes?kind=invalid → 400 VALIDATION_FAILED', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/v1/sins/ghibah/quotes?kind=invalid')
+      .expect(400);
+    expect(res.body.error.code).toBe('VALIDATION_FAILED');
+  });
+
+  it('GET /v1/sins/ghibah/quotes?kind=verse&limit=50 → countsByKind unchanged (counts whole topic)', async () => {
+    const base = await request(app.getHttpServer())
+      .get('/v1/sins/ghibah/quotes?limit=50')
+      .expect(200);
+    const filtered = await request(app.getHttpServer())
+      .get('/v1/sins/ghibah/quotes?kind=verse&limit=50')
+      .expect(200);
+    // countsByKind.verse should be the same regardless of active kind filter
+    expect(filtered.body.meta.countsByKind.verse).toBe(base.body.meta.countsByKind.verse);
+    expect(filtered.body.meta.countsByKind.hadith).toBe(base.body.meta.countsByKind.hadith);
+  });
+
   // Suppress unused import warning — SIN_TEST_MANY is used in test descriptions
   void SIN_TEST_MANY;
 });

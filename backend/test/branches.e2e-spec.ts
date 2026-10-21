@@ -226,4 +226,46 @@ describe('Branches of faith (e2e)', () => {
       .expect(409);
     expect(res.body.error.code).toBe('CONFLICT');
   });
+
+  // ── §kind filter + countsByKind ────────────────────────────────────────────
+
+  it('GET /v1/branches/1/quotes → meta.countsByKind present with correct shape', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/v1/branches/1/quotes?limit=50')
+      .expect(200);
+    const ck = res.body.meta.countsByKind as { all: number; verse: number; hadith: number; athar: number };
+    expect(typeof ck.all).toBe('number');
+    expect(typeof ck.verse).toBe('number');
+    expect(typeof ck.hadith).toBe('number');
+    expect(typeof ck.athar).toBe('number');
+    expect(ck.all).toBe(ck.verse + ck.hadith + ck.athar);
+  });
+
+  it('GET /v1/branches/1/quotes?kind=verse → only QURAN_VERSE items', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/v1/branches/1/quotes?kind=verse&limit=50')
+      .expect(200);
+    const items: Array<{ quote: { type: string } }> = res.body.data.items;
+    for (const item of items) {
+      expect(item.quote.type).toBe('QURAN_VERSE');
+    }
+  });
+
+  it('GET /v1/branches/1/quotes?kind=hadith → only non-athar HADITH items', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/v1/branches/1/quotes?kind=hadith&limit=50')
+      .expect(200);
+    const items: Array<{ quote: { type: string; isAthar?: boolean } }> = res.body.data.items;
+    for (const item of items) {
+      expect(item.quote.type).toBe('HADITH');
+      expect(item.quote.isAthar).not.toBe(true);
+    }
+  });
+
+  it('GET /v1/branches/1/quotes?kind=invalid → 400 VALIDATION_FAILED', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/v1/branches/1/quotes?kind=invalid')
+      .expect(400);
+    expect(res.body.error.code).toBe('VALIDATION_FAILED');
+  });
 });

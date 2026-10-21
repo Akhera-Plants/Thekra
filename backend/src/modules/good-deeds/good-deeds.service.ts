@@ -345,6 +345,25 @@ export class GoodDeedsService {
       quote: quoteFilter,
     };
 
+    // countsByKind: computed over the whole topic with the *base* filter (no kind restriction).
+    const baseWhere: Prisma.GoodDeedQuoteWhereInput = {
+      goodDeedId: deed.id,
+      reviewStatus: PUBLISHED_LINK_REVIEW_STATUS,
+      ...autoLinkExclusion(),
+      ...(query.minScore !== undefined && {
+        relevanceScore: { gte: query.minScore },
+      }),
+      quote: this.quotes.buildLinkQuoteFilter({
+        type: query.type,
+        grades: query.grades,
+        includeWeak: query.includeWeak,
+      }).quoteFilter,
+    };
+    const countsByKindQ = this.quotes.countsByKind({
+      linkTable: 'goodDeedLinks',
+      linkWhere: baseWhere,
+    });
+
     // Shared sub-queries (count, type breakdown) — same for both paths
     const countQ = this.prisma.goodDeedQuote.count({ where });
     const typeGroupsQ = this.prisma.quote.groupBy({
@@ -386,13 +405,16 @@ export class GoodDeedsService {
         limit,
       });
 
-      const [rows, total, typeGroups] = await this.prisma.$transaction([
-        this.prisma.goodDeedQuote.findMany({
-          where: { id: { in: ids } },
-          include: { quote: { include: this.quotes.buildQuoteInclude(locale) } },
-        }),
-        countQ,
-        typeGroupsQ,
+      const [[rows, total, typeGroups], countsByKind] = await Promise.all([
+        this.prisma.$transaction([
+          this.prisma.goodDeedQuote.findMany({
+            where: { id: { in: ids } },
+            include: { quote: { include: this.quotes.buildQuoteInclude(locale) } },
+          }),
+          countQ,
+          typeGroupsQ,
+        ]),
+        countsByKindQ,
       ]);
 
       // Re-order to match the shuffle ordering from the raw query
@@ -417,6 +439,7 @@ export class GoodDeedsService {
           ordering: `variety:md5(seed),floor=${floor}`,
           seed,
           countsByType,
+          countsByKind,
           appliedGrades: allowedGrades,
         }),
       };
@@ -424,13 +447,16 @@ export class GoodDeedsService {
 
     const ranked = await this.prisma.goodDeedQuote.findMany({ where, select: READING_SELECT });
     const ids = pageReadingIds(ranked as ReadingRow[], page, limit);
-    const [rows, total, typeGroups] = await this.prisma.$transaction([
-      this.prisma.goodDeedQuote.findMany({
-        where: { id: { in: ids.length > 0 ? ids : ['00000000-0000-0000-0000-000000000000'] } },
-        include: { quote: { include: this.quotes.buildQuoteInclude(locale) } },
-      }),
-      countQ,
-      typeGroupsQ,
+    const [[rows, total, typeGroups], countsByKind] = await Promise.all([
+      this.prisma.$transaction([
+        this.prisma.goodDeedQuote.findMany({
+          where: { id: { in: ids.length > 0 ? ids : ['00000000-0000-0000-0000-000000000000'] } },
+          include: { quote: { include: this.quotes.buildQuoteInclude(locale) } },
+        }),
+        countQ,
+        typeGroupsQ,
+      ]),
+      countsByKindQ,
     ]);
     const order = new Map(ids.map((id, index) => [id, index]));
     rows.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
@@ -459,6 +485,7 @@ export class GoodDeedsService {
         locale,
         ordering: READING_ORDER,
         countsByType,
+        countsByKind,
         appliedGrades: allowedGrades,
       }),
     };

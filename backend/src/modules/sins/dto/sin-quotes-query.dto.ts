@@ -16,6 +16,9 @@ import { TransformToArray } from '../../../common/decorators/transform-to-array.
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto.js';
 import { NotMawdu } from '../../hadith/grade-policy.js';
 
+/** Coarse kind filter for the topic reader tabs. */
+export type QuoteKind = 'verse' | 'hadith' | 'athar';
+
 export class SinQuotesQueryDto extends PaginationQueryDto {
   @IsOptional()
   @Type(() => Number)
@@ -32,6 +35,17 @@ export class SinQuotesQueryDto extends PaginationQueryDto {
   @TransformToArray()
   @IsEnum(QuoteType, { each: true })
   type?: QuoteType[];
+
+  /**
+   * Coarse kind filter for the reader tabs.
+   * - verse  → QURAN_VERSE only
+   * - hadith → HADITH rows where isAthar is false
+   * - athar  → HADITH rows where isAthar=true, atharReviewDecision=KEEP
+   * When omitted (or 'all'), all kinds are returned.
+   */
+  @IsOptional()
+  @IsIn(['verse', 'hadith', 'athar'])
+  kind?: QuoteKind;
 
   @IsOptional()
   @TransformToArray()
