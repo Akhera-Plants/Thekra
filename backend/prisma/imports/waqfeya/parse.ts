@@ -4,6 +4,7 @@
  * Riyad takhrij phrases. Nothing else is inferred.
  */
 import { HadithGrade } from '@prisma/client';
+import { stripPageMarkers } from '../../../src/common/text/strip-page-markers.js';
 import { foldArabic, splitLeadingGrade, stripInlineGrades } from './clean.js';
 
 export interface ParsedNarration {
@@ -263,6 +264,7 @@ function parseNumbered(
         draft.gradeToken = displayToken(inline.token);
       }
     }
+    draft.textAr = stripPageMarkers(draft.textAr);
   }
 
   const narrations = finish(
@@ -370,7 +372,7 @@ export function parseZuhd(text: string): { narrations: ParsedNarration[]; chapte
       number: start.number,
       volume: start.volume,
       page: String(start.page),
-      textAr: narrationBody(text.slice(start.offset, end)),
+      textAr: stripPageMarkers(narrationBody(text.slice(start.offset, end))),
       grade: HadithGrade.UNGRADED,
       gradeToken: null,
       takhrij: null,

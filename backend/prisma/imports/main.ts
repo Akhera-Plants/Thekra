@@ -23,6 +23,7 @@ import { runIbnRajab } from './ibn-rajab/import.js';
 import { runIbnAbiDunyaImport } from './ibn-abi-dunya/import.js';
 import { runHadeethencImport } from './hadeethenc/import.js';
 import { runMinhajImport, runRiyadImport, runTarghibImport, runZuhdImport } from './waqfeya/import.js';
+import { runStripPageMarkersCleanup } from './cleanup/strip-page-markers.js';
 
 const WORKS: Record<string, (options: ImportOptions) => Promise<void>> = {
   shuab: runShuabImport,
@@ -56,6 +57,7 @@ const WORKS: Record<string, (options: ImportOptions) => Promise<void>> = {
   ashur: runAshurImport,
   'ibn-kathir-en': runIbnKathirEnImport,
   hadeethenc: runHadeethencImport,
+  'strip-page-markers': runStripPageMarkersCleanup,
 };
 
 const USAGE = `usage: import:book <${Object.keys(WORKS).join('|')}> [--dry-run] [--limit N]`;

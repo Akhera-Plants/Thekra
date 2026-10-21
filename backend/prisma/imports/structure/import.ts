@@ -15,6 +15,7 @@ import {
 } from '@prisma/client';
 import { normalizeArabic } from '../../../src/common/text/arabic-normalizer.js';
 import { wordOverlap } from '../../../src/common/text/match-score.js';
+import { stripPageMarkers } from '../../../src/common/text/strip-page-markers.js';
 import { inTransactionBatches } from '../lib/batch.js';
 import type { ImportOptions } from '../lib/cli.js';
 import { loadCorpus, type CorpusFile, type CorpusSpec } from '../lib/corpus.js';
@@ -766,7 +767,7 @@ export async function runStructureImport({ prisma }: ImportOptions): Promise<voi
           : `openiti:${sectionIndex + 1}:${itemIndex + 1}`;
         fresh.push({
           externalId,
-          textAr: item.text ?? '—',
+          textAr: stripPageMarkers(item.text ?? '—'),
           type: QuoteType.HADITH,
           textSource: TextSource.DIGITAL,
           referenceNumber: item.hadithNumber,
@@ -789,7 +790,7 @@ export async function runStructureImport({ prisma }: ImportOptions): Promise<voi
         : `author:${job.key}:${sectionIndex + 1}:${itemIndex + 1}`;
       fresh.push({
         externalId,
-        textAr: item.text ?? '—',
+        textAr: stripPageMarkers(item.text ?? '—'),
         type: QuoteType.BOOK_EXCERPT,
         textSource: TextSource.DIGITAL,
         referenceNumber: null,

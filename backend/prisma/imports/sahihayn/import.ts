@@ -22,6 +22,7 @@ import { duplicateDifferentGrade, isWeakMatch, ocrSuspect, quranMismatch, refere
 import { splitMatn } from '../../../src/common/text/matn.js';
 import { CANDIDATE_FLOOR, MATCH_METHOD, STRONG_MATCH_SCORE, WEAK_MATCH_SCORE, combinedScore, wordOverlap } from '../../../src/common/text/match-score.js';
 import { normalizeMatn } from '../../../src/common/text/normalize-matn.js';
+import { stripPageMarkers } from '../../../src/common/text/strip-page-markers.js';
 import { applyLimit, type ImportOptions } from '../lib/cli.js';
 import { loadCorpus } from '../lib/corpus.js';
 import { loadUthmaniMap } from '../waqfeya/quran.js';
@@ -105,7 +106,7 @@ async function upsertCorpus(
   const pending: Prisma.ReferenceHadithCreateManyInput[] = [];
   for (const narration of parsed.narrations) {
     const split = splitMatn(narration.text);
-    const matnText = split.matnText || narration.text;
+    const matnText = stripPageMarkers(split.matnText || narration.text);
     const normalized = normalizeMatn(matnText);
     const previous = byNumber.get(narration.number);
     if (!previous) {

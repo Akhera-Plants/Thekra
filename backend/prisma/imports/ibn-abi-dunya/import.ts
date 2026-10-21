@@ -23,6 +23,7 @@ import {
   type SectionItemKind,
 } from '@prisma/client';
 import { splitMatn } from '../../../src/common/text/matn.js';
+import { stripPageMarkers } from '../../../src/common/text/strip-page-markers.js';
 import { inTransactionBatches } from '../lib/batch.js';
 import type { ImportOptions } from '../lib/cli.js';
 import { loadCorpus, provenanceOf } from '../lib/corpus.js';
@@ -290,7 +291,7 @@ function planBook(
           item.hadithNumber != null
             ? `openiti:${item.hadithNumber}`
             : `openiti:${sectionIndex + 1}:${itemIndex + 1}`;
-        const textAr = (item.text ?? '—').trim() || '—';
+        const textAr = stripPageMarkers((item.text ?? '—').trim() || '—');
         const matn = splitMatn(textAr).matnText?.trim() || null;
         fresh.push({
           externalId,
@@ -315,7 +316,7 @@ function planBook(
         };
       }
       const externalId = `author:${book.key}:${sectionIndex + 1}:${itemIndex + 1}`;
-      const textAr = (item.text ?? '—').trim() || '—';
+      const textAr = stripPageMarkers((item.text ?? '—').trim() || '—');
       fresh.push({
         externalId,
         textAr,

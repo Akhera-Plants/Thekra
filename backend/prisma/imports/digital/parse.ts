@@ -6,6 +6,7 @@
  */
 import { parseLeadingOrdinal } from '../lib/arabic-ordinal.js';
 import { readRecords } from '../lib/openiti.js';
+import { stripPageMarkers } from '../../../src/common/text/strip-page-markers.js';
 
 export interface DigitalPiece {
   kind: 'narration' | 'section';
@@ -44,7 +45,7 @@ export function parseNumberedBook(source: string): DigitalPiece[] {
     }
     const match = NUMBERED.exec(heading);
     if (!match?.[1]) continue;
-    const textAr = record.body.trim();
+    const textAr = stripPageMarkers(record.body.trim());
     if (arabicLetters(textAr) < 40) continue;
     pieces.push({
       kind: 'narration',
@@ -72,7 +73,7 @@ export function parseKabairSections(source: string): DigitalPiece[] {
     if (!record.heading.startsWith('الكبيرة ')) continue;
     const ordinal = parseLeadingOrdinal(record.heading.slice('الكبيرة '.length));
     if (!ordinal) continue;
-    const textAr = record.body.trim();
+    const textAr = stripPageMarkers(record.body.trim());
     if (arabicLetters(textAr) < 40) continue;
     pieces.push({
       kind: 'section',
@@ -93,7 +94,7 @@ export function parseMinhajSections(source: string): DigitalPiece[] {
   for (const record of readRecords(source)) {
     const heading = record.heading.trim();
     if (!/^(?:\d+\s+)?(?:كتاب|باب|فصل)(?:\s|:|$)/.test(heading)) continue;
-    const textAr = record.body.trim();
+    const textAr = stripPageMarkers(record.body.trim());
     if (arabicLetters(textAr) < 40) continue;
     number += 1;
     pieces.push({
