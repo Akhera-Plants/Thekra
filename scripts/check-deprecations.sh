@@ -59,6 +59,7 @@ ALLOWLIST=(
   "prisma-client-no-adapter|backend/prisma/imports/main.ts|1"
   "prisma-client-no-adapter|backend/prisma/imports/taxonomy/themes-report.ts|1"
   "prisma-client-no-adapter|backend/test/fixtures/seed-test-fixtures.ts|1"
+  "prisma-client-no-adapter|backend/scripts/admin/create-admin.ts|1"
   "zod-string-email|frontend/src/features/auth/components/LoginForm.tsx|1"
   "zod-string-email|frontend/src/features/auth/components/RegisterForm.tsx|1"
   "zod-string-uuid|frontend/src/features/curation/components/QuoteForm.tsx|1"

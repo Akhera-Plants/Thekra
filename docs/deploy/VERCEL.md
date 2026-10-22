@@ -16,7 +16,7 @@ native modules (`argon2`) or the 250 MB Function limit, host the API on
 2. Copy both connection strings from Neon:
    - **Pooled** (host contains `-pooler`) → `DATABASE_URL`
    - **Direct** (no pooler) → `DIRECT_URL`
-3. Keep them handy for both projects and for `scripts/db-push-to-neon.sh`.
+3. Keep them handy for both projects and for `scripts/release-db.sh push` (direct URL only).
 
 ## 2. Import the repo twice
 
@@ -58,15 +58,25 @@ Optional: `ACCESS_TTL`, `REFRESH_TTL`, `LOG_LEVEL`, `VARIETY_SCORE_FLOOR` — se
 1. Push to `master` (or trigger Deploy). The API build runs:
    `prisma generate` → `prisma migrate deploy` → `pnpm run build` (`nest build`, then
    `scripts/bundle.mjs` writes `dist/bundle/*.mjs`).
-2. Restore local content into Neon (once):
+2. Copy the content into Neon with the release pipeline. The full guide (what is removed
+   and why, and every check) is [docs/build/RELEASE_DB.md](../build/RELEASE_DB.md).
+   `scripts/db-push-to-neon.sh` is superseded: it copied the development accounts, and it
+   now refuses to run.
 
 ```bash
-export LOCAL_DATABASE_URL='postgresql://…local…'
-export NEON_DATABASE_URL='postgresql://…neon-direct…'   # not the pooler host
-./scripts/db-push-to-neon.sh
+scripts/release-db.sh build                              # local → cleaned thekra_release → /tmp/thekra-release.dump
+export NEON_DATABASE_URL='postgresql://…neon-direct…'    # direct host, not -pooler; never printed
+scripts/release-db.sh push                               # type PUSH (or --yes); verifies Neon afterwards
+DATABASE_URL="$NEON_DATABASE_URL" ADMIN_EMAIL='you@example.com' ADMIN_PASSWORD='<16+ chars>' \
+  pnpm --filter backend admin:create                     # again after every push
 ```
 
-3. Confirm `GET https://<api>/health` (and `/v1/…` for quotes).
+   These are one-off command inputs, not API config: `NEON_DATABASE_URL`, `ADMIN_EMAIL`,
+   `ADMIN_PASSWORD`, and the optional `LOCAL_DATABASE_URL`, `PG_BIN` and `PG_CONTAINER`.
+   Do not add them to the Vercel project or to CI.
+
+3. Confirm `GET https://<api>/health/ready` returns `database: up`, and that
+   `/v1/sources?limit=5` reports `meta.total` 88.
 
 ## 5. Custom domain
 
