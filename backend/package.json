@@ -11,6 +11,7 @@
     "import:book": "node --env-file=.env --experimental-strip-types prisma/imports/run.ts",
     "import:taxonomy": "node --env-file=.env --experimental-strip-types prisma/imports/run.ts taxonomy",
     "taxonomy:themes": "node --env-file=.env --experimental-strip-types prisma/imports/themes-run.ts",
+    "admin:create": "node --experimental-strip-types scripts/admin/run.ts",
     "build": "nest build && node scripts/bundle.mjs",
     "deploy": "nest deploy",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",

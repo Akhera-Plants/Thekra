@@ -5,14 +5,14 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { hash as argon2hash, verify as argon2verify, argon2id } from 'argon2';
-import type { HashOptions } from 'argon2';
+import { hash as argon2hash, verify as argon2verify } from 'argon2';
 import { randomUUID } from 'node:crypto';
 import type { EnvironmentVariables } from '../../config/env.validation.js';
 import type { JwtPayload } from '../../common/decorators/current-user.decorator.js';
 import { UsersService } from '../users/users.service.js';
 import type { RegisterDto } from './dto/register.dto.js';
 import type { LoginDto } from './dto/login.dto.js';
+import { ARGON2_OPTIONS } from './password-hash.js';
 
 export interface TokenPair {
   accessToken: string;
@@ -32,18 +32,6 @@ export interface AuthResponse {
   refreshToken: string;
   expiresIn: number;
 }
-
-/**
- * argon2id OWASP baseline (memory 19 MiB / time 2 / parallelism 1).
- * Decision: argon2id chosen over bcrypt for memory-hardness per §7.1.
- * Note: argon2.argon2id === 2 (numeric constant) per the library API.
- */
-const ARGON2_OPTIONS: HashOptions = {
-  type: argon2id,
-  memoryCost: 19456, // 19 MiB
-  timeCost: 2,
-  parallelism: 1,
-};
 
 /** Convert a vercel/ms string like '15m' or '30d' to seconds. */
 function parseTtlToSeconds(ttl: string): number {

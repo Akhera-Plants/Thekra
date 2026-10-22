@@ -8,7 +8,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import type { CorpusSpec } from '../lib/corpus.js';
-import { titleArFor } from './titles.js';
+import { titleArFor, titleEnFor } from './titles.js';
 
 interface EditionFile {
   commit: string;
@@ -34,10 +34,6 @@ function sourceId(index: number): string {
   return `20000000-0000-4000-8000-${(index + 1).toString(16).padStart(12, '0')}`;
 }
 
-function titleEn(key: string): string {
-  return key.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/C([A-Z])/g, "'$1");
-}
-
 export const DUNYA_COMMIT = EDITIONS.commit;
 export const DUNYA_REPO = EDITIONS.repo;
 
@@ -45,7 +41,7 @@ export const DUNYA_BOOKS: readonly DunyaBook[] = EDITIONS.works.map((work, index
   key: work.key,
   id: sourceId(index),
   titleAr: titleArFor(work.key),
-  titleEn: titleEn(work.key),
+  titleEn: titleEnFor(work.key),
   apiProvider: `book:ibn-abi-dunya:${work.key.toLowerCase()}`,
   corpus: {
     repo: EDITIONS.repo,
