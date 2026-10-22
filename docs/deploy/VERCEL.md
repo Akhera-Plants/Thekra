@@ -37,7 +37,7 @@ Node: set **Node.js 24.x** (matches root `engines`) in each project’s Settings
 
 | Name | Value |
 | --- | --- |
-| `NEXT_PUBLIC_API_URL` | Production API origin, **no** trailing slash (e.g. `https://thekra-api.vercel.app`) |
+| `NEXT_PUBLIC_API_URL` | Production API origin, **no** trailing slash: `https://thekra.vercel.app` |
 
 ### Backend (`thekra-api`)
 
@@ -47,11 +47,54 @@ Node: set **Node.js 24.x** (matches root `engines`) in each project’s Settings
 | `DIRECT_URL` | Neon **direct** URL (migrations) |
 | `JWT_ACCESS_SECRET` | Long random secret (required in production) |
 | `JWT_REFRESH_SECRET` | Different long random secret |
-| `CORS_ORIGINS` | Frontend origin(s), comma-separated (e.g. `https://thekra.vercel.app`) |
+| `CORS_ORIGINS` | Browser origins allowed to call the API, comma-separated — paste the value below |
 | `NODE_ENV` | `production` |
 | `PORT` | Optional; Vercel sets this |
 
 Optional: `ACCESS_TTL`, `REFRESH_TTL`, `LOG_LEVEL`, `VARIETY_SCORE_FLOOR` — see `backend/.env.example`.
+
+#### `CORS_ORIGINS` (production value)
+
+Paste exactly, then redeploy the API (env changes apply to new deployments only):
+
+```
+https://thekra-web.vercel.app,https://thekra-web-*-almekdadmohammadgmailcoms-projects.vercel.app,http://localhost:3000
+```
+
+| Entry | Allows |
+| --- | --- |
+| `https://thekra-web.vercel.app` | The production site. Exact match. |
+| `https://thekra-web-*-almekdadmohammadgmailcoms-projects.vercel.app` | `thekra-web` preview deployments (`…-git-<branch>-…`, `…-<hash>-…`). The `*` matches `[a-z0-9-]+` only: no dot, slash, port or scheme change, so `https://thekra-web-x.vercel.app.evil.com` and `http://…` do not match. |
+| `http://localhost:3000` | **Temporary.** Lets `pnpm dev:web:prod-api` ([LOCAL_DEV.md](../build/LOCAL_DEV.md)) make browser-side calls to production. Any page served from your own `localhost:3000` is trusted by the API, so remove this entry (and redeploy) once that mode is no longer needed. |
+
+Rules (enforced in `backend/src/config/cors-origins.ts`): each entry is an exact origin
+(`scheme://host[:port]`, lowercase, no trailing slash) or one pattern with a single `*` in the
+leftmost host label. A bare `*`, `null`, a whole-label `*.vercel.app`, or a malformed entry
+makes the API **fail at boot** (every request fails; the error names the bad entry),
+because the API answers with `Access-Control-Allow-Credentials: true`. Empty entries are
+skipped. Requests without an `Origin` header (server-side rendering, curl) are unaffected.
+Without a matching entry, browser-side calls (topic tabs, «عرض المزيد», theme chips) are
+blocked; server-rendered pages still load.
+
+Residual risk of the pattern: it trusts any host on `vercel.app` with that name shape. Vercel
+hands out `<project>.vercel.app` names first come, first served; whether it would give another
+account a name ending in this team's `-almekdadmohammadgmailcoms-projects` suffix is not
+verified. The API authenticates with bearer tokens, not cookies, so a hostile origin that
+matched could read only what is already public. On a custom domain, prefer exact origins.
+
+Verify after the redeploy:
+
+```bash
+for o in https://thekra-web.vercel.app \
+         https://thekra-web-git-master-almekdadmohammadgmailcoms-projects.vercel.app \
+         http://localhost:3000 https://evil.example; do
+  echo "== $o"; curl -si -X OPTIONS https://thekra.vercel.app/v1/sins \
+    -H "Origin: $o" -H 'Access-Control-Request-Method: GET' | grep -i '^access-control-allow'
+done
+```
+
+The first three print `access-control-allow-origin: <origin>` and
+`access-control-allow-credentials: true`; `https://evil.example` prints no `allow-origin` line.
 
 ## 4. First migration + data
 
@@ -82,7 +125,8 @@ DATABASE_URL="$NEON_DATABASE_URL" ADMIN_EMAIL='you@example.com' ADMIN_PASSWORD='
 
 - Frontend project → Domains → add `thekra.example` (and `www` if desired).
 - Point DNS as Vercel instructs.
-- Set backend `CORS_ORIGINS` to the final frontend URL(s) and redeploy the API.
+- Add the final frontend origin(s) to backend `CORS_ORIGINS` as exact entries (e.g.
+  `https://thekra.example,https://www.thekra.example`) and redeploy the API.
 - Update frontend `NEXT_PUBLIC_API_URL` if the API also gets a custom host.
 
 ## 6. Local verify
