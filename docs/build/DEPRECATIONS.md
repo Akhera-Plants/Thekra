@@ -23,7 +23,7 @@ Effort: **S** = under half a day, mechanical; **M** = several files or packages,
 | `prisma` (dev) | 6.19.3 | 7.10.1 (`8.0.0-rc.24` is a release candidate) | Generator `prisma-client-js`; datasource `url` / `directUrl` in the schema | `backend/prisma/schema.prisma:2`, `:7`, `:10` | 7.0 (`url`/`directUrl` deprecated; `prisma-client-js` removal announced) | M |
 | `@prisma/client` | 6.19.3 | 7.10.1 | `new PrismaClient()` with no driver adapter, and the removed `datasources` option | `backend/src/prisma/prisma.service.ts:6`; `backend/prisma/seed.ts:44`; `backend/prisma/imports/main.ts:81`; `backend/prisma/imports/taxonomy/themes-report.ts:103`; `backend/test/fixtures/seed-test-fixtures.ts:95`; `backend/src/common/text/arabic-search.spec.ts:43` | 7.0 (driver adapter required) | M |
 | `@prisma/client` | 6.19.3 | 7.10.1 | 131 files import from `@prisma/client`; the generated client moves out of `node_modules` to a required `output` | `backend/src`, `backend/test`, `backend/prisma` (`grep -rl "from '@prisma/client'"`) | 7.0 (generated path replaces `node_modules`) | M |
-| `@types/helmet` (dev) | 4.0.0 | none (stub; `helmet` 8.3.0 ships its own types) | Stub types, deprecated on npm | `backend/package.json:62` | deprecated now | S |
+| ~~`@types/helmet` (dev)~~ | ~~4.0.0~~ | ~~none (stub)~~ | ~~Stub types, deprecated on npm~~ | **Done 2026-10-22** — removed from `backend/package.json`; import changed to `import { default as helmet }` in `configure-app.ts:14` | — | — |
 | `eslint` (dev) | 9.39.5 | 10.13.0 | Release line 9.x is end-of-life | `frontend/package.json:41` | EOL 2026-08-06 (already past) | M |
 | `zod` | 4.6.5 | 4.6.7 | `z.string().email()`, `z.string().uuid()` | `frontend/src/features/auth/components/LoginForm.tsx:24`, `RegisterForm.tsx:25`; `frontend/src/features/curation/components/QuoteForm.tsx:44`, `GoodDeedCrudView.tsx:62`, `SyncConsoleView.tsx:53` | `@deprecated` in installed 4.6.5; no removal version announced | S |
 | `vitest` (frontend) | 3.2.7 | 5.0.5 | Two majors behind | `frontend/package.json:45` | 5.0 (Vite ≥ 6.4, Node ≥ 22.12 required) | M |
@@ -63,11 +63,13 @@ Effort: **S** = under half a day, mechanical; **M** = several files or packages,
 
 **Migration:** see [Prisma v7 upgrade plan](#prisma-v7-upgrade-plan-not-performed). Effort L overall; the schema and config part alone is M.
 
-### 2. `@types/helmet` is a deprecated stub — [M1]
+### 2. `@types/helmet` is a deprecated stub — [M1] ✅ DONE 2026-10-22
 
 - `npm view @types/helmet@4.0.0 deprecated` → "This is a stub types definition. helmet provides its own type definitions, so you do not need this installed."
 - `pnpm outdated -r` → `DEPRECATED @types/helmet 4.0.0 [backend]`.
-- **Minimal step:** `pnpm --filter backend remove @types/helmet`, then `pnpm --filter backend exec tsc --noEmit -p tsconfig.json`. Helmet 8.3.0 ships its own types (verify by the tsc run).
+- **Done:** `pnpm --filter backend remove @types/helmet` removed the stub. `tsc --noEmit`, `nest build`, unit tests (601), and e2e tests (282) all pass.
+- **Also done:** Changed `configure-app.ts:4` from `import helmet from 'helmet'` to `import { default as helmet } from 'helmet'`. Helmet's `exports` map has no `types` condition, so different install layouts can resolve to `index.d.mts` (ESM) or `index.d.cts` (CJS). Both declaration files declare a real named export `default` (`export { … helmet as default … }`), so the named-default form type-checks correctly under either resolution without depending on interop synthesis. The stub's removal eliminates the trigger; the named-default import removes the dependency on which declaration file is reached.
+- **Lesson from Vercel failure:** a package whose `exports` map lacks a `types` condition can resolve to different declaration files (`index.d.mts` vs `index.d.cts`) depending on the install layout and the CJS/ESM mode TypeScript infers for the importing file. An `@types/<pkg>` stub with `typings: null` may alter which resolution path TypeScript takes, making the behaviour environment-dependent. Prefer `import { default as X }` for packages in this class so the named export is reached regardless of which declaration file resolves.
 
 ### 3. ESLint 9 is end-of-life — [M1][M3]
 
@@ -149,7 +151,7 @@ None were needed. No `package.json` script or scripts-folder command uses a remo
 
 ## Safe to do now (no major bump; owner executes)
 
-1. Remove the stub `@types/helmet` from `backend` (finding 2).
+1. ~~Remove the stub `@types/helmet` from `backend` (finding 2).~~ **Done 2026-10-22** — stub removed; import changed to `import { default as helmet }` in `configure-app.ts`.
 2. Replace the five Zod calls with `z.email()` / `z.uuid()` and run `pnpm --filter frontend exec vitest run` (finding 4).
 3. Remove the unused `@vitejs/plugin-react` from `frontend` (finding 6).
 4. Minor and patch updates within current majors, from `pnpm outdated -r` (review first): `next` and `eslint-config-next` 16.3.8 → 16.4.2; `@tanstack/react-query` 5.104.1 → 5.104.5; `zod` 4.6.5 → 4.6.7; `@nestjs/common`, `core`, `platform-express`, `testing` 12.1.2 → 12.2.0; `@nestjs/cache-manager` → 12.0.1; `@nestjs/jwt` → 12.0.3; `@nestjs/cli` → 12.0.10; `@nestjs/schematics` → 12.0.10; `lucide-react` 1.51.0 → 1.60.0; `react-hook-form` → 7.90.0; `shadcn` → 4.22.1; `oxlint` → 1.89.0; `prettier` → 3.9.10; `pino-pretty` → 13.2.0; `@playwright/test` → 1.64.1.

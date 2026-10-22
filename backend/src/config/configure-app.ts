@@ -1,7 +1,17 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Logger } from 'nestjs-pino';
-import helmet from 'helmet';
+// helmet ships both index.d.mts (ESM) and index.d.cts (CJS) but its exports map
+// has no "types" condition, so different install layouts can resolve to either
+// declaration file. Both files declare a real named export `default`
+// (export { … helmet as default … }), so `import { default as helmet }` binds
+// that named export and type-checks correctly under both resolutions without
+// depending on esModuleInterop synthesis.
+//
+// compression uses `export = compression` (CJS export-assignment via @types/compression),
+// which is incompatible with the named-default form — keep it as a plain default import
+// with esModuleInterop handling it.
+import { default as helmet } from 'helmet';
 import compression from 'compression';
 import { AllExceptionsFilter } from '../common/filters/all-exceptions.filter.js';
 import { ResponseEnvelopeInterceptor } from '../common/interceptors/response-envelope.interceptor.js';
