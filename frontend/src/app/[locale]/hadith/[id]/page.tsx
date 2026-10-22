@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
@@ -5,6 +6,21 @@ import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { getQuote } from '@/lib/api/quotes';
 import type { LocaleCode } from '@/lib/types/enums';
 import { StudyFullPage } from '@/features/study-panel/components/StudyFullPage';
+
+export async function generateMetadata({
+  params,
+}: PageProps<'/[locale]/hadith/[id]'>): Promise<Metadata> {
+  const { id, locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'studyPanel' });
+  try {
+    const { data } = await getQuote(id, { lang: locale as LocaleCode });
+    if (data.type !== 'HADITH') return { title: t('titleSharh') };
+    const source = locale === 'en' ? (data.source.name || data.source.nameAr) : (data.source.nameAr || data.source.name);
+    return { title: source ? `${t('titleSharh')}: ${source}` : t('titleSharh') };
+  } catch {
+    return { title: t('titleSharh') };
+  }
+}
 
 export default async function HadithStudyPage({
   params,

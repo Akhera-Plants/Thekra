@@ -2,6 +2,7 @@
   "app": {
     "name": "Thekra",
     "tagline": "For whoever has a heart",
+    "description": "Reminders from the Quran, authentic Sunnah, and the words of scholars, arranged by sins, good deeds, and the branches of faith, with each text's source named.",
     "intentionReminder": "I want nothing from this except Allah."
   },
   "theme": {

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { TopicCatalog, type TopicEntry } from '@/components/shared/editorial/TopicCatalog';
 import { getGoodDeeds } from '@/lib/api/good-deeds';
@@ -5,6 +6,12 @@ import { getTopicThemes } from '@/lib/api/topic-themes';
 import type { LocaleCode } from '@/lib/types/enums';
 
 export const dynamic = 'force-dynamic';
+
+export async function generateMetadata({ params }: PageProps<'/[locale]/good-deeds'>): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'goodDeeds' });
+  return { title: t('pageTitle') };
+}
 
 export default async function GoodDeedsPage({ params }: PageProps<'/[locale]/good-deeds'>) {
   const { locale } = await params;

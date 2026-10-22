@@ -1,8 +1,17 @@
+import type { Metadata } from 'next';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { TopicCatalog, type TopicEntry } from '@/components/shared/editorial/TopicCatalog';
 import { getBranches } from '@/lib/api/branches';
 
 export const dynamic = 'force-dynamic';
+
+export async function generateMetadata({
+  params,
+}: PageProps<'/[locale]/branches'>): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'branches' });
+  return { title: t('pageTitle') };
+}
 
 export default async function BranchesPage({
   params,

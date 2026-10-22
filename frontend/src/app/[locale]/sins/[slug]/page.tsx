@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
@@ -17,14 +18,14 @@ export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({
   params,
-}: PageProps<'/[locale]/sins/[slug]'>) {
+}: PageProps<'/[locale]/sins/[slug]'>): Promise<Metadata> {
   const { slug, locale } = await params;
   try {
     const { data } = await getSin(slug, locale as LocaleCode);
     const title = data.pair
       ? (locale === 'en' ? data.pair.titleEn : data.pair.titleAr)
       : (locale === 'en' ? (data.name || data.nameAr) : data.nameAr);
-    return { title: `${title} — ${locale === 'en' ? 'Thekra' : 'ذكرى'}` };
+    return { title };
   } catch {
     return {};
   }
