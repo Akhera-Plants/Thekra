@@ -1,0 +1,312 @@
+# Thekra taxonomy — the single source of truth for public sins (AVOID) and good deeds (DO).
+# Authored by the project reviewer, approved by the owner. The importer APPLIES this file; it never invents topics.
+#
+# Anchors (the scholars' own tabwib, not our guesses):
+#   riyad   = Riyad al-Salihin chapter numbers as printed (column `number` in docs/taxonomy/sections/riyad.tsv)
+#   kabair  = al-Kabair (al-Dhahabi) kabira ordinal (1..70) — also sets Sin.rank = KABIRA with that reference
+#   branches= Shu'ab al-Iman branch numbers (ImanBranch.number) — links topic <-> branch
+#   targhib = Sahih al-Targhib section titles: a section maps when its normalised title CONTAINS the phrase
+#             AND the title's own verb matches the side (الترغيب في → DO, الترهيب من / ترهيب → AVOID).
+#             Mixed titles («الترغيب في … والترهيب من …») map each part to its own topic.
+#   zuhd / minhaj / adab = title phrases matched the same way (containment after normalisation).
+#   kw      = extra phrases used ONLY for books without explicit anchors here (al-Adab al-Mufrad, Bukhari, Muslim,
+#             Minhaj fusul). Those matches are proposals: they go to the review report, not straight to ACCEPTED.
+#
+# side: AVOID (shows in «أعنّي على ترك معصية») | DO (shows in «دُلّني على طاعة»)
+# opposite: the slug of the other side, shown as «بدلًا من ذلك» / «وضدّها».
+# contemporary topics have no classical chapter: they show their own curated texts + texts of `derivedFrom`.
+# Slugs of the 16 existing curated entities are kept so URLs and favorites keep working.
+
+domains:
+  - { key: iman,     ar: الإيمان والعقيدة }
+  - { key: qalb,     ar: أعمال القلوب }
+  - { key: ibadat,   ar: العبادات }
+  - { key: lisan,    ar: اللسان والكلام }
+  - { key: usra,     ar: الأسرة والأرحام }
+  - { key: mujtama,  ar: الناس والمجتمع }
+  - { key: mal,      ar: المال والمعاملات }
+  - { key: shahawat, ar: الشهوات والجسد }
+  - { key: dima,     ar: الدماء والولايات }
+  - { key: ilm,      ar: العلم والدعوة }
+  - { key: raqami,   ar: الوقت والحياة الرقمية }
+  - { key: adab,     ar: الآداب والسنن اليومية }
+
+topics:
+  # ───────────────────────── AVOID ─────────────────────────
+  # iman
+  - { slug: shirk, ar: الشرك بالله, en: Associating partners with Allah, side: AVOID, domain: iman, opposite: tawhid, kabair: [1, 58], kw: [الشرك, الذبح لغير الله] }
+  - { slug: sihr-kahana, ar: السحر وإتيان الكهان والعرافين, en: Sorcery and consulting soothsayers, side: AVOID, domain: iman, opposite: tawakkul, kabair: [3, 46], riyad: [303, 362], targhib: [السحر, الكهان, العراف], kw: [السحر, الكهان, الكاهن, العراف, المنجم] }
+  - { slug: tatayyur, ar: التطيّر وتعليق التمائم, en: Superstitious omens and amulets, side: AVOID, domain: iman, opposite: tawakkul, riyad: [304], targhib: [الطيرة, التمائم], kw: [الطيرة, التطير, التمائم, التميمة] }
+  - { slug: takdhib-qadar, ar: التكذيب بالقدر, en: Denying divine decree, side: AVOID, domain: iman, opposite: tawakkul, branches: [5], kabair: [41], kw: [التكذيب بالقدر] }
+  - { slug: amn-makr, ar: الأمن من مكر الله واليأس من رحمته, en: Feeling safe from Allah's plan, or despairing of His mercy, side: AVOID, domain: iman, opposite: khawf-raja, kabair: [63], kw: [القنوط, اليأس من رحمة] }
+  - { slug: bida, ar: البدع ومحدثات الأمور, en: Innovation in religion, side: AVOID, domain: iman, opposite: sunna, riyad: [18], targhib: [ترك السنة وارتكاب البدع], kw: [البدع, البدعة, محدثات الأمور] }
+  - { slug: hilf-bighayr-allah, ar: الحلف بغير الله, en: Swearing by other than Allah, side: AVOID, domain: iman, riyad: [314], targhib: [الحلف بغير الله], kw: [الحلف بغير الله, بالأمانة] }
+  - { slug: sabb-sahaba, ar: سبّ الصحابة, en: Reviling the Companions, side: AVOID, domain: iman, opposite: mahabbat-allah, kabair: [70] }
+
+  # qalb
+  - { slug: riya, ar: الرياء, en: Ostentation, side: AVOID, domain: qalb, opposite: ikhlas, branches: [45], kabair: [37], riyad: [288, 289], targhib: [الرياء], zuhd: [الرياء], minhaj: [الرياء, الجاه], kw: [الرياء, يرائي, السمعة] }
+  - { slug: kibr, ar: الكبر والعُجب, en: Arrogance and self-admiration, side: AVOID, domain: qalb, opposite: tawadu, kabair: [17], riyad: [72], targhib: [الكبر], zuhd: [إعجاب المرء بنفسه, العجب], minhaj: [الكبر, العجب], kw: [الكبر, الكبرياء, العجب, الخيلاء, التكبر] }
+  - { slug: hasad, ar: الحسد والغل, en: Envy and rancour, side: AVOID, domain: qalb, opposite: salamat-sadr, branches: [43], riyad: [270], targhib: [الحسد], minhaj: [الحسد, الحقد], kw: [الحسد, الحاسد, الغل, الحقد, الشحناء] }
+  - { slug: ghadab, ar: الغضب, en: Anger, side: AVOID, domain: qalb, opposite: kaff-al-ghadab, targhib: [الغضب], minhaj: [الغضب], kw: [الغضب] }
+  - { slug: tul-amal, ar: التعلق بالدنيا وطول الأمل, en: Attachment to this world and long hopes, side: AVOID, domain: qalb, opposite: zuhd, zuhd: [طول الأمل, ذم التنعم], minhaj: [ذم الدنيا, الغرور], kw: [طول الأمل, حب الدنيا, ذم الدنيا] }
+  - { slug: istihana-saghair, ar: الاستهانة بالصغائر, en: Belittling minor sins, side: AVOID, domain: qalb, opposite: tawba, targhib: [الصغائر والمحقرات], kw: [محقرات الذنوب, الصغائر] }
+
+  # lisan
+  - { slug: ghibah, ar: الغيبة, en: Backbiting, side: AVOID, domain: lisan, opposite: hifz-al-lisan, branches: [34, 44], riyad: [254, 255], targhib: [الغيبة, البهت], kw: [الغيبة, البهتان] }
+  - { slug: namimah, ar: النميمة, en: Talebearing, side: AVOID, domain: lisan, opposite: islah-bayn-nas, kabair: [43], riyad: [257, 258], targhib: [النميمة], kw: [النميمة, النمام, القتات] }
+  - { slug: kadhib, ar: الكذب, en: Lying, side: AVOID, domain: lisan, opposite: sidq, kabair: [14, 30], riyad: [260], targhib: [الكذب], zuhd: [من كذب في حديثه, الخلال المذمومة], kw: [الكذب, الكذاب] }
+  - { slug: shahadat-zur, ar: شهادة الزور, en: False testimony, side: AVOID, domain: lisan, opposite: adl, kabair: [18], riyad: [263], targhib: [شهادة الزور], kw: [شهادة الزور, قول الزور] }
+  - { slug: yamin-ghamus, ar: اليمين الكاذبة, en: Swearing falsely, side: AVOID, domain: lisan, opposite: sidq, kabair: [25], riyad: [315, 318], targhib: [اليمين الكاذبة], kw: [اليمين الغموس, اليمين الكاذبة, الحلف الكاذب] }
+  - { slug: sabb-lan, ar: السبّ واللعن والفحش, en: Cursing, insults and obscenity, side: AVOID, domain: lisan, opposite: kalam-tayyib, kabair: [44], riyad: [264, 266, 267, 326, 327], targhib: [السباب, اللعن, يا كافر, سب الدهر], kw: [اللعن, اللعان, السباب, سب المسلم, الفحش, البذاء, الطعان] }
+  - { slug: dhul-wajhayn, ar: ذو الوجهين والنفاق في التعامل, en: Being two-faced, side: AVOID, domain: lisan, opposite: sidq, riyad: [259], targhib: [ذي الوجهين], kw: [ذي الوجهين, ذو الوجهين] }
+  - { slug: jidal, ar: الجدال والمراء, en: Quarrelsome argument, side: AVOID, domain: lisan, opposite: hifz-al-lisan, kabair: [60], targhib: [المراء والجدال], kw: [المراء, الجدال, الخصومة] }
+  - { slug: qadhf, ar: قذف المحصنات, en: Slandering chaste people, side: AVOID, domain: lisan, opposite: satr-muslim, kabair: [21], kw: [القذف, قذف المحصنات] }
+  - { slug: sukhriya, ar: احتقار الناس والسخرية منهم والشماتة, en: Contempt, mockery and gloating, side: AVOID, domain: lisan, opposite: tawadu, riyad: [273, 274, 275], targhib: [احتقار المسلم], kw: [احتقار, السخرية, الاستهزاء, الشماتة, الطعن في الأنساب] }
+
+  # usra
+  - { slug: uquq, ar: عقوق الوالدين, en: Disobeying parents, side: AVOID, domain: usra, opposite: birr-al-walidayn, kabair: [8], riyad: [41], targhib: [عقوق الوالدين], kw: [العقوق, عقوق الوالدين] }
+  - { slug: qat-al-rahim, ar: قطيعة الرحم, en: Severing family ties, side: AVOID, domain: usra, opposite: silat-ar-rahim, kabair: [9], riyad: [41], targhib: [قطعها, قطيعة الرحم], kw: [قطيعة الرحم, قاطع الرحم, هجر الأقارب] }
+  - { slug: nushuz, ar: إفساد الحياة الزوجية وعصيان الزوج, en: Spoiling the marriage, side: AVOID, domain: usra, opposite: husn-ishra, kabair: [47], riyad: [335, 336], targhib: [إفساد المرأة على زوجها, تسأل الطلاق], kw: [النشوز, تخبيب] }
+  - { slug: zulm-zawja, ar: ظلم الزوجة والميل بين الزوجات, en: Wronging a wife, side: AVOID, domain: usra, opposite: husn-ishra, targhib: [ترجيح إحدى الزوجات], kw: [الميل بين الزوجات] }
+  - { slug: intisab, ar: الانتساب إلى غير الأب, en: Claiming false lineage, side: AVOID, domain: usra, kabair: [59], riyad: [367], targhib: [ينتسب إلى غير أبيه], kw: [ادعى إلى غير أبيه, انتسب إلى غير أبيه] }
+  - { slug: dayyuth, ar: الدياثة وقلّة الغيرة على الأهل, en: Lack of protective jealousy, side: AVOID, domain: usra, opposite: nikah, branches: [72], kabair: [34], kw: [الديوث] }
+
+  # mujtama
+  - { slug: zulm, ar: الظلم, en: Oppression, side: AVOID, domain: mujtama, opposite: adl, kabair: [26, 51], riyad: [26], targhib: [الظلم], kw: [الظلم, الظالم, المظالم] }
+  - { slug: adha-jar, ar: أذى الجار, en: Harming one's neighbour, side: AVOID, domain: mujtama, opposite: haqq-jar, kabair: [52], targhib: [أذى الجار], kw: [أذى الجار] }
+  - { slug: adha-muslimin, ar: أذى الناس وترويعهم, en: Harming and frightening people, side: AVOID, domain: mujtama, opposite: imatat-adha, kabair: [53, 54], riyad: [48, 268, 357], targhib: [ترويع المسلم, تخطي الرقاب], kw: [أذى المسلمين, إيذاء, ترويع, الإشارة بالسلاح] }
+  - { slug: tajassus, ar: التجسس وتتبّع عورات الناس, en: Spying on people, side: AVOID, domain: mujtama, opposite: satr-muslim, kabair: [42, 69], riyad: [271], targhib: [يطلع في دار], kw: [التجسس, التسمع, تتبع العورات] }
+  - { slug: su-dhann, ar: سوء الظن بالناس, en: Suspicion of others, side: AVOID, domain: mujtama, opposite: salamat-sadr, riyad: [272], kw: [سوء الظن, الظن] }
+  - { slug: hijran, ar: الهجر والتدابر والتقاطع, en: Shunning one another, side: AVOID, domain: mujtama, opposite: islah-bayn-nas, riyad: [269, 280], targhib: [التهاجر, التشاحن, التدابر], kw: [الهجران, التهاجر, التدابر, التقاطع, التباغض] }
+  - { slug: ghadr, ar: الغدر ونقض العهد وإخلاف الوعد, en: Treachery and broken promises, side: AVOID, domain: mujtama, opposite: amana-wafa, kabair: [45], riyad: ["تحريم الغدر"], kw: [الغدر, نقض العهد, إخلاف الوعد] }
+  - { slug: khiyana, ar: الخيانة, en: Betraying a trust, side: AVOID, domain: mujtama, opposite: amana-wafa, kabair: [39], zuhd: [الخلال المذمومة], kw: [الخيانة, الخائن] }
+  - { slug: mann, ar: المنّ بالعطية, en: Reminding people of one's favours, side: AVOID, domain: mujtama, opposite: sadaqah, kabair: [40], riyad: [278, 285], targhib: [عود الإنسان في هبته], kw: [المن, المنان] }
+  - { slug: baghy-fakhr, ar: البغي والفخر والتعالي, en: Transgression and boasting, side: AVOID, domain: mujtama, opposite: tawadu, kabair: [50], riyad: [279], targhib: [البناء فوق الحاجة], kw: [البغي, الفخر, التفاخر] }
+  - { slug: tadhib-hayawan, ar: تعذيب الحيوان والضعفاء, en: Cruelty to animals and the weak, side: AVOID, domain: mujtama, opposite: rahma-khalq, riyad: [282, 283], targhib: [المثلة بالحيوان], kw: [تعذيب, المثلة] }
+  - { slug: niyaha, ar: النياحة والتسخّط عند المصيبة, en: Wailing and discontent at calamity, side: AVOID, domain: mujtama, opposite: sabr, kabair: [49], riyad: [302, 354], targhib: [النياحة, إحداد المرأة], kw: [النياحة, النائحة, لطم الخدود, شق الجيوب] }
+
+  # mal
+  - { slug: riba, ar: الربا, en: Usury, side: AVOID, domain: mal, opposite: kasb-halal, kabair: [12], riyad: [287], targhib: [الربا], kw: [الربا] }
+  - { slug: akl-mal-yatim, ar: أكل مال اليتيم, en: Consuming an orphan's wealth, side: AVOID, domain: mal, opposite: kafalat-yatim, kabair: [13], riyad: [286], targhib: [مال اليتيم], kw: [مال اليتيم] }
+  - { slug: ghish, ar: الغش والخداع وبخس الكيل, en: Cheating and short-measuring, side: AVOID, domain: mal, opposite: samaha, kabair: [62, 68], riyad: [276], targhib: [الغش, بخس الكيل], kw: [الغش, الخداع, التطفيف, المكر] }
+  - { slug: sariqa, ar: السرقة والغصب والغلول, en: Theft, seizure and embezzlement, side: AVOID, domain: mal, opposite: amana-wafa, branches: [38], kabair: [22, 23, 24], targhib: [غصب الأرض, الغلول], kw: [السرقة, السارق, الغصب, الغلول, قطع الطريق] }
+  - { slug: rishwa, ar: الرشوة, en: Bribery, side: AVOID, domain: mal, opposite: adl, kabair: [32], targhib: [الراشي والمرتشي], kw: [الرشوة, الراشي, المرتشي] }
+  - { slug: akl-haram, ar: أكل الحرام والمكوس, en: Unlawful earnings, side: AVOID, domain: mal, opposite: kasb-halal, branches: [39], kabair: [27, 28], kw: [أكل الحرام, المكس, السحت] }
+  - { slug: mutl, ar: المماطلة في الحقوق والديون, en: Delaying debts and rights, side: AVOID, domain: mal, opposite: amana-wafa, riyad: [284], targhib: [مطل الغني, الدين], kw: [مطل, المماطلة] }
+  - { slug: man-ajr, ar: منع الأجير أجره, en: Withholding a worker's wage, side: AVOID, domain: mal, opposite: adl, targhib: [منع الأجير], kw: [الأجير أجره] }
+  - { slug: ihtikar, ar: الاحتكار, en: Hoarding, side: AVOID, domain: mal, opposite: samaha, targhib: [الاحتكار], kw: [الاحتكار, المحتكر] }
+  - { slug: bukhl, ar: البخل والشح, en: Miserliness, side: AVOID, domain: mal, opposite: sadaqah, kabair: [61], riyad: [61], targhib: [البخل, الشح], zuhd: [الشح], minhaj: [البخل], kw: [البخل, الشح, البخيل] }
+  - { slug: man-zakah, ar: منع الزكاة, en: Withholding zakah, side: AVOID, domain: mal, opposite: zakah, kabair: [5], targhib: [منع الزكاة], kw: [منع الزكاة, مانع الزكاة] }
+  - { slug: israf, ar: الإسراف وإضاعة المال, en: Extravagance and wasting wealth, side: AVOID, domain: mal, opposite: iqtisad, branches: [42], riyad: [356], kw: [الإسراف, التبذير, إضاعة المال] }
+  - { slug: masala, ar: سؤال الناس من غير حاجة, en: Begging without need, side: AVOID, domain: mal, opposite: kasb-halal, targhib: [المسألة], kw: [المسألة, السؤال من غير حاجة] }
+  - { slug: qimar, ar: القمار والميسر, en: Gambling, side: AVOID, domain: mal, opposite: kasb-halal, kabair: [20], kw: [القمار, الميسر] }
+
+  # shahawat
+  - { slug: zina, ar: الزنا, en: Adultery and fornication, side: AVOID, domain: shahawat, opposite: iffa, branches: [37], kabair: [10], targhib: [الزنا], kw: [الزنا, الزاني, الفواحش] }
+  - { slug: liwat, ar: اللواط, en: Sodomy, side: AVOID, domain: shahawat, opposite: iffa, kabair: [11], targhib: [اللواط], kw: [اللواط, عمل قوم لوط] }
+  - { slug: nazar-muharram, ar: النظر المحرّم والخلوة بالأجنبية, en: Unlawful gazing and seclusion, side: AVOID, domain: shahawat, opposite: ghadd-basar, riyad: [290, 291, 331], targhib: [إطلاق البصر], kw: [النظر إلى المرأة, الخلوة, إطلاق البصر] }
+  - { slug: khamr, ar: الخمر والمسكرات والمخدّرات, en: Alcohol and intoxicants, side: AVOID, domain: shahawat, kabair: [19], targhib: [شرب الخمر], kw: [الخمر, المسكر, شارب الخمر] }
+  - { slug: tashabbuh, ar: تشبّه الرجال بالنساء والنساء بالرجال, en: Men and women imitating each other, side: AVOID, domain: shahawat, kabair: [33], riyad: [292], targhib: [تشبه الرجل بالمرأة], kw: [المتشبهين, المترجلات, المخنثين] }
+  - { slug: tabarruj, ar: التبرّج وتغيير خلق الله, en: Immodest display and altering creation, side: AVOID, domain: shahawat, opposite: haya, riyad: [296], targhib: [لبس النساء الرقيق, الواصلة], kw: [الكاسيات العاريات, الواصلة, الواشمة, النامصة] }
+  - { slug: isbal-harir, ar: الإسبال ولبس الحرير والذهب للرجال, en: Trailing garments; silk and gold for men, side: AVOID, domain: shahawat, opposite: tawadu, branches: [40], kabair: [55, 56], riyad: [119, 122], targhib: [الحرير], kw: [الإسبال, جر الثوب, الحرير] }
+  - { slug: malahi, ar: اللهو المحرّم, en: Forbidden amusement, side: AVOID, domain: shahawat, opposite: ightinam-waqt, branches: [41], targhib: [اللعب بالنرد], zuhd: [استماع اللهو], kw: [النرد, المعازف, الملاهي] }
+
+  # dima
+  - { slug: qatl, ar: قتل النفس, en: Killing a soul, side: AVOID, domain: dima, opposite: rahma-khalq, branches: [36], kabair: [2], targhib: [قتل النفس], kw: [قتل النفس, القاتل, الدماء] }
+  - { slug: intihar, ar: قتل الإنسان نفسه, en: Suicide, side: AVOID, domain: dima, opposite: sabr, kabair: [29], targhib: [قتل الإنسان نفسه], kw: [قتل نفسه] }
+  - { slug: zulm-raiyya, ar: خيانة الأمانة في الولاية والقضاء, en: Betrayal by those in authority, side: AVOID, domain: dima, opposite: adl, kabair: [16, 31], riyad: [81, 83], targhib: [تولي السلطنة], kw: [غش الرعية, القاضي, الإمارة] }
+
+  # ibadat
+  - { slug: tark-as-salah, ar: ترك الصلاة والتهاون بها, en: Abandoning prayer, side: AVOID, domain: ibadat, opposite: salah, kabair: [4, 65, 66], targhib: [ترك الصلاة, ترك حضور الجماعة, ترك الجمعة, فوات العصر, نوم الإنسان إلى الصباح], kw: [ترك الصلاة, تارك الصلاة] }
+  - { slug: iftar-ramadan, ar: الفطر في رمضان بلا عذر, en: Breaking the Ramadan fast without excuse, side: AVOID, domain: ibadat, opposite: siyam, kabair: [6], targhib: [إفطار شيء من رمضان], kw: [أفطر يوما من رمضان] }
+  - { slug: tark-hajj, ar: ترك الحج مع القدرة, en: Neglecting Hajj despite ability, side: AVOID, domain: ibadat, opposite: hajj, kabair: [7], targhib: [قدر على الحج فلم يحج] }
+  - { slug: tanazzuh-bawl, ar: عدم التنزّه من البول, en: Carelessness with impurity, side: AVOID, domain: ibadat, opposite: tahara, kabair: [36], targhib: [إصابة البول] }
+  - { slug: hajr-quran, ar: هجر القرآن ونسيانه, en: Neglecting the Quran, side: AVOID, domain: ibadat, opposite: quran, riyad: [181], targhib: [نسيان القرآن], kw: [نسيان القرآن] }
+
+  # ilm
+  - { slug: kitman-ilm, ar: كتمان العلم وطلبه للدنيا, en: Concealing knowledge or seeking it for worldly gain, side: AVOID, domain: ilm, opposite: talab-ilm, kabair: [38], targhib: [كتم العلم, تعلم العلم لغير وجه الله, يعلم ولا يعمل, الدعوى في العلم], zuhd: [من طلب العلم لعرض], kw: [كتم العلم, كتمان العلم] }
+  - { slug: qawl-bila-amal, ar: أن تقول ما لا تفعل, en: Preaching what one does not practise, side: AVOID, domain: ilm, opposite: amr-maruf, riyad: [24], targhib: [يأمر بمعروف وينهى عن منكر ويخالف] }
+
+  # raqami (classical root)
+  - { slug: idaat-al-waqt, ar: إضاعة الوقت واللغو, en: Wasting time and idle talk, side: AVOID, domain: raqami, opposite: ightinam-waqt, branches: [73], riyad: [301, 334], kw: [اللغو, ما لا يعنيه, السهر] }
+
+  # raqami (contemporary — needsScholarReview, no fatwa wording)
+  - { slug: waqt-tawasul, ar: إضاعة الوقت على وسائل التواصل, en: Losing time to social media, side: AVOID, domain: raqami, opposite: ightinam-waqt, contemporary: true, derivedFrom: [idaat-al-waqt, nazar-muharram, ghibah] }
+  - { slug: alab-mulhiya, ar: الألعاب التي تُلهي عن الواجبات, en: Games that distract from duties, side: AVOID, domain: raqami, opposite: ightinam-waqt, contemporary: true, derivedFrom: [idaat-al-waqt, malahi, tark-as-salah] }
+  - { slug: murahanat, ar: المراهنات الإلكترونية, en: Online betting, side: AVOID, domain: raqami, opposite: kasb-halal, contemporary: true, derivedFrom: [qimar] }
+  - { slug: nazar-shashat, ar: النظر المحرّم عبر الشاشات, en: Unlawful viewing on screens, side: AVOID, domain: raqami, opposite: ghadd-basar, contemporary: true, derivedFrom: [nazar-muharram, zina] }
+  - { slug: ishaat, ar: نشر الشائعات والأخبار دون تثبّت, en: Spreading rumours unverified, side: AVOID, domain: raqami, opposite: tathabbut, contemporary: true, derivedFrom: [kadhib, namimah] }
+  - { slug: tanammur, ar: السخرية والتنمّر على الإنترنت, en: Online mockery and bullying, side: AVOID, domain: raqami, opposite: kalam-tayyib, contemporary: true, derivedFrom: [sukhriya, sabb-lan, adha-muslimin] }
+  - { slug: tashhir, ar: التشهير وكشف عيوب الناس على المنصات, en: Exposing people online, side: AVOID, domain: raqami, opposite: satr-muslim, contemporary: true, derivedFrom: [tajassus, ghibah, qadhf] }
+  - { slug: istirad, ar: الاستعراض والتباهي بالنشر, en: Showing off in posts, side: AVOID, domain: raqami, opposite: ikhlas, contemporary: true, derivedFrom: [riya, baghy-fakhr, kibr] }
+  - { slug: ghibah-raqamiya, ar: الغيبة في المجموعات والتعليقات, en: Backbiting in groups and comments, side: AVOID, domain: raqami, opposite: hifz-al-lisan, contemporary: true, derivedFrom: [ghibah] }
+
+  # ───────────────────────── DO ─────────────────────────
+  # qalb / iman
+  - { slug: tawhid, ar: التوحيد وإفراد الله بالعبادة, en: Pure monotheism, side: DO, domain: iman, opposite: shirk, branches: [1], kw: [التوحيد, لا إله إلا الله, الإيمان بالله] }
+  - { slug: ikhlas, ar: الإخلاص, en: Sincerity, side: DO, domain: qalb, opposite: riya, branches: [45], riyad: [1], targhib: [الإخلاص], zuhd: [الإخلاص والنية, حسن السريرة, العمل والذكر الخفي, النية مع قلة العمل], munajjid: [الإخلاص], kw: [الإخلاص, النية, النيات] }
+  - { slug: tawba, ar: التوبة والاستغفار, en: Repentance and seeking forgiveness, side: DO, domain: qalb, opposite: istihana-saghair, branches: [47, 46], riyad: [2, 369, 371], targhib: [التوبة, الاستغفار], minhaj: [التوبة], zuhd: [الهرب من الخطايا], kw: [التوبة, الاستغفار, التائب] }
+  - { slug: sabr, ar: الصبر والرضا بالقضاء, en: Patience and contentment, side: DO, domain: qalb, opposite: niyaha, branches: [70], riyad: [3], targhib: [الصبر, مات له ثلاثة], zuhd: [الصبر على البلاء, ثواب المصيبة, الرضا بالقضاء], minhaj: [الصبر], munajjid: [الصبر, الرضا], kw: [الصبر, المصيبة, البلاء, الرضا] }
+  - { slug: muhasaba, ar: محاسبة النفس, en: Self-accountability, side: DO, domain: qalb, opposite: istihana-saghair, munajjid: [المحاسبة], kw: [محاسبة النفس, حاسبوا أنفسكم] }
+  - { slug: tark-lillah, ar: أجر من ترك شيئًا لله, en: The reward of leaving something for Allah, side: DO, domain: qalb, listed: false, zuhd: [من ترك شيئا لله], kw: [من ترك شيئا لله] }
+  - { slug: sidq, ar: الصدق, en: Truthfulness, side: DO, domain: qalb, opposite: kadhib, riyad: [4], targhib: [الصدق], kw: [الصدق] }
+  - { slug: muraqaba, ar: مراقبة الله والتقوى, en: God-consciousness, side: DO, domain: qalb, riyad: [5, 6, 8, 9], zuhd: [التقوى, التفكر, الاعتبار], munajjid: [التفكر, التقوى], kw: [المراقبة, التقوى, الاستقامة] }
+  - { slug: tawakkul, ar: اليقين والتوكل على الله, en: Certainty and reliance on Allah, side: DO, domain: qalb, opposite: tatayyur, branches: [13], riyad: [7], zuhd: [التوكل], minhaj: [التوكل], munajjid: [التوكل], kw: [التوكل, اليقين] }
+  - { slug: khawf-raja, ar: الخوف من الله ورجاؤه, en: Fear and hope in Allah, side: DO, domain: qalb, opposite: amn-makr, branches: [11, 12], riyad: [50, 51, 52, 53, 54], targhib: [الخوف, الرجاء, البكاء من خشية الله], zuhd: [خوف الله, الحزن والبكاء, الخشوع, رحمة الله], minhaj: [الرجاء والخوف, الخوف والرجاء, رحمة الله], munajjid: [الخوف, الرجاء], kw: [الخوف, الخشية, الرجاء, حسن الظن بالله] }
+  - { slug: shukr, ar: شكر النعم, en: Gratitude, side: DO, domain: qalb, branches: [33], riyad: [242], minhaj: [الشكر], munajjid: [الشكر], kw: [الشكر, شكر النعمة] }
+  - { slug: zuhd, ar: الزهد والقناعة وتذكّر الموت, en: Detachment, contentment and remembering death, side: DO, domain: qalb, opposite: tul-amal, branches: [71], riyad: [55, 56, 57, 65], targhib: [الزهد, ذكر الموت], zuhd: [التقلل من الدنيا, القناعة, ذكر الموت, هوان الدنيا, الفقر], minhaj: [الزهد, القناعة, الفقر], kw: [الزهد, القناعة, ذكر الموت, قصر الأمل] }
+  - { slug: tawadu, ar: التواضع, en: Humility, side: DO, domain: qalb, opposite: kibr, riyad: [71, 120], targhib: [التواضع, ترك الترفع], zuhd: [التواضع], kw: [التواضع] }
+  - { slug: mahabbat-allah, ar: محبة الله ورسوله وتعظيمهما, en: Love of Allah and His Messenger, side: DO, domain: iman, branches: [10, 14, 15], riyad: [47, 43], minhaj: [المحبة], munajjid: [المحبة], kw: [محبة الله, حب النبي, حب الله] }
+  - { slug: sunna, ar: اتباع السنة, en: Following the Sunnah, side: DO, domain: iman, opposite: bida, branches: [50], riyad: [16, 17], targhib: [اتباع الكتاب والسنة], zuhd: [لزوم السنة], kw: [السنة, الاتباع, الاعتصام] }
+  - { slug: wara, ar: الورع وترك الشبهات, en: Scrupulousness, side: DO, domain: qalb, branches: [16], riyad: [68], targhib: [الورع], zuhd: [الورع], munajjid: [الورع], kw: [الورع, الشبهات] }
+  - { slug: salamat-sadr, ar: سلامة الصدر ومحبة الخير للناس, en: A clean heart towards others, side: DO, sideCheck: false, domain: qalb, opposite: hasad, branches: [43, 77], targhib: [سلامة الصدر], kw: [سلامة الصدر, يحب لأخيه] }
+  - { slug: husn-khuluq, ar: حسن الخلق والحلم والرفق, en: Good character, forbearance and gentleness, side: DO, domain: qalb, branches: [57], riyad: [73, 74, 92], targhib: [الخلق الحسن, الرفق], minhaj: [رياضة النفس], kw: [حسن الخلق, الحلم, الأناة, الرفق] }
+  - { slug: haya, ar: الحياء, en: Modesty, side: DO, domain: qalb, opposite: tabarruj, branches: [54], riyad: [84], targhib: [الحياء], kw: [الحياء] }
+  - { slug: kaff-al-ghadab, ar: كظم الغيظ, en: Restraining anger, side: DO, domain: qalb, opposite: ghadab, riyad: [76], targhib: [دفعه], kw: [كظم الغيظ, احتمال الأذى] }
+  - { slug: ightinam-waqt, ar: اغتنام الوقت والمبادرة إلى الخير, en: Seizing time for good, side: DO, domain: raqami, opposite: idaat-al-waqt, riyad: [10, 11, 12, 13, 14, 15, 87], targhib: [المداومة على العمل, الفراغ للعبادة, العمل الصالح], zuhd: [التحضيض على طاعة الله, الاجتهاد في العبادة, فضل العبادة], kw: [المبادرة, المداومة, اغتنام] }
+
+  # ibadat
+  - { slug: salah, ar: المحافظة على الصلاة, en: Guarding the prayers, side: DO, domain: ibadat, opposite: tark-as-salah, branches: [21], riyad: [187, 188, 193], targhib: [الصلوات الخمس, الصلاة في أول وقتها, المحافظة على الصبح والعصر, الصلاة مطلقا, الأذان, المؤذن, جلوس المرء في مصلاه], zuhd: [فخر الارض], kw: [المحافظة على الصلاة, الصلوات الخمس] }
+  - { slug: adab-salah, ar: الخشوع وآداب الصلاة, en: Humility and etiquette in prayer, side: DO, sideCheck: false, domain: ibadat, targhib: [إتمام الركوع, رفع المأموم رأسه, الالتفات في الصلاة, المرور بين يدي المصلي, الخشوع], kw: [الخشوع في الصلاة] }
+  - { slug: salat-fi-jamaah, ar: صلاة الجماعة والمشي إلى المساجد, en: Congregational prayer, side: DO, domain: ibadat, opposite: tark-as-salah, riyad: [189, 190, 191, 192, 194], targhib: [صلاة الجماعة, الصف الأول, المشي إلى المساجد, انتظار الصلاة, المساجد, وصل الصفوف, صلاة العشاء والصبح], zuhd: [المشي إلى الصلاة, المشي إلى المسجد], kw: [الجماعة, المساجد] }
+  - { slug: nawafil, ar: النوافل وقيام الليل, en: Voluntary prayers and night prayer, side: DO, domain: ibadat, riyad: [195, 196, 197, 199, 200, 201, 202, 203, 204, 205, 206, 208, 209, 212, 213, 214], targhib: [قيام الليل, صلاة الضحى, النافلة, ثنتي عشرة ركعة], kw: [قيام الليل, التهجد, الوتر, الضحى, النوافل] }
+  - { slug: jumua, ar: يوم الجمعة وصلاتها, en: Friday and its prayer, side: DO, domain: ibadat, riyad: [210], targhib: [صلاة الجمعة, التبكير إلى الجمعة], kw: [الجمعة] }
+  - { slug: tahara, ar: الطهارة والوضوء, en: Purification and ablution, side: DO, domain: ibadat, opposite: tanazzuh-bawl, branches: [20], riyad: [185, 215], targhib: [الوضوء, السواك], kw: [الوضوء, الطهور, السواك] }
+  - { slug: zakah, ar: أداء الزكاة, en: Paying zakah, side: DO, domain: ibadat, opposite: man-zakah, branches: [22], riyad: [216], targhib: [أداء الزكاة, صدقة الفطر], kw: [الزكاة] }
+  - { slug: sadaqah, ar: الصدقة والإنفاق في الخير, en: Charity, side: DO, domain: mal, opposite: bukhl, branches: [74], riyad: [37, 60, 62, 64, 162], targhib: [الصدقة, الإنفاق في وجوه الخير, إطعام الطعام, القرض, صدقة السر], zuhd: [الصدقة, جهد المقل], kw: [الصدقة, الإنفاق, الجود, السخاء, الإيثار] }
+  - { slug: siyam, ar: الصيام, en: Fasting, side: DO, domain: ibadat, opposite: iftar-ramadan, branches: [23, 24], riyad: [217, 218, 221, 222, 223, 225, 226, 227, 228, 229, 230, 231], targhib: [الصوم, صوم, صيام, السحور, تعجيل الفطر], kw: [الصيام, الصوم, رمضان] }
+  - { slug: hajj, ar: الحج والعمرة, en: Hajj and Umrah, side: DO, domain: ibadat, opposite: tark-hajj, branches: [25, 48], riyad: [233], targhib: [الحج والعمرة, العمرة, الطواف, الوقوف بعرفة], kw: [الحج, العمرة] }
+  - { slug: quran, ar: تلاوة القرآن وتعاهده, en: Reciting the Quran, side: DO, domain: ibadat, opposite: hajr-quran, branches: [19], riyad: [180, 182, 183, 184], targhib: [قراءة القرآن, تعاهد القرآن, قراءة سورة, آية الكرسي], kw: [القرآن, تلاوة] }
+  - { slug: dhikr, ar: ذكر الله, en: Remembrance of Allah, side: DO, domain: ibadat, riyad: [244, 245, 246, 247, 248, 249], targhib: [ذكر الله, مجالس الذكر, التسبيح, لا إله إلا الله, لا حول ولا قوة, أذكار], zuhd: [ذكر الله, تعظيم ذكر الله, فخر الارض], kw: [الذكر, التسبيح, التهليل] }
+  - { slug: dua, ar: الدعاء, en: Supplication, side: DO, domain: ibadat, riyad: [250, 251, 252], targhib: [الدعاء, دعاء المرء لأخيه], zuhd: [الإخلاص في الدعاء], kw: [الدعاء] }
+  - { slug: salat-ala-nabi, ar: الصلاة على النبي ﷺ, en: Sending blessings on the Prophet, side: DO, domain: ibadat, riyad: [243], targhib: [الصلاة على النبي], kw: [الصلاة على النبي] }
+
+  # lisan
+  - { slug: hifz-al-lisan, ar: حفظ اللسان والصمت إلا عن خير, en: Guarding the tongue, side: DO, domain: lisan, opposite: ghibah, branches: [34, 73], riyad: [254], targhib: [الصمت], zuhd: [حفظ اللسان], minhaj: [آفات اللسان], kw: [حفظ اللسان, الصمت] }
+  - { slug: kalam-tayyib, ar: الكلمة الطيبة وطلاقة الوجه, en: Kind words and a cheerful face, side: DO, domain: lisan, opposite: sabb-lan, riyad: [88, 95], targhib: [طلاقة الوجه وطيب الكلام], kw: [الكلمة الطيبة, طيب الكلام, طلاقة الوجه, التبشير] }
+  - { slug: islah-bayn-nas, ar: الإصلاح بين الناس, en: Reconciling people, side: DO, domain: lisan, opposite: namimah, branches: [76], riyad: [31], targhib: [الإصلاح بين الناس], zuhd: [إصلاح ذات البين], kw: [الإصلاح بين الناس, إصلاح ذات البين] }
+  - { slug: tathabbut, ar: التثبّت في نقل الأخبار, en: Verifying news, side: DO, domain: lisan, opposite: ishaat, riyad: [262], kw: [التثبت] }
+  - { slug: nasiha, ar: النصيحة, en: Sincere advice, side: DO, domain: lisan, riyad: [22], targhib: [النصيحة], kw: [النصيحة] }
+  - { slug: amr-maruf, ar: الأمر بالمعروف والنهي عن المنكر, en: Enjoining good and forbidding evil, side: DO, domain: lisan, opposite: qawl-bila-amal, branches: [52], riyad: [23], targhib: [الأمر بالمعروف], minhaj: [الأمر بالمعروف], kw: [الأمر بالمعروف, النهي عن المنكر] }
+
+  # usra
+  - { slug: birr-al-walidayn, ar: بر الوالدين, en: Honouring parents, side: DO, domain: usra, opposite: uquq, branches: [55], riyad: [40, 42], targhib: [بر الوالدين], kw: [بر الوالدين, البر] }
+  - { slug: silat-ar-rahim, ar: صلة الرحم, en: Keeping family ties, side: DO, domain: usra, opposite: qat-al-rahim, branches: [56], riyad: [40], targhib: [صلة الرحم], kw: [صلة الرحم, الأرحام] }
+  - { slug: husn-ishra, ar: حسن العشرة بين الزوجين, en: Kindness between spouses, side: DO, domain: usra, opposite: zulm-zawja, branches: [60], riyad: [34, 35], targhib: [ترغيب الزوج في الوفاء, النفقة على الزوجة], kw: [الوصية بالنساء, حق الزوج, حق المرأة] }
+  - { slug: nafaqa-ahl, ar: النفقة على الأهل وتربية الأولاد, en: Providing for and raising the family, side: DO, domain: usra, branches: [60], riyad: [36, 38], zuhd: [صلاح أهل البيت], kw: [النفقة على العيال, أهله وأولاده] }
+  - { slug: nikah, ar: الزواج والعفة, en: Marriage and chastity, side: DO, domain: usra, opposite: zina, branches: [37, 72], targhib: [النكاح], minhaj: [النكاح], kw: [النكاح, التزويج] }
+  - { slug: kafalat-yatim, ar: كفالة اليتيم والإحسان إلى الضعفاء, en: Caring for orphans and the weak, side: DO, domain: usra, opposite: akl-mal-yatim, branches: [75], riyad: [32, 33], targhib: [كفالة اليتيم], zuhd: [الإحسان إلى اليتيم], kw: [اليتيم, المساكين, الضعفاء, الأرملة] }
+
+  # mujtama
+  - { slug: haqq-jar, ar: إكرام الجار, en: Honouring neighbours, side: DO, domain: mujtama, opposite: adha-jar, branches: [67], riyad: [39], minhaj: [حقوق المسلم], kw: [الجار] }
+  - { slug: ikram-dayf, ar: إكرام الضيف, en: Hospitality, side: DO, domain: mujtama, branches: [68], riyad: [94], targhib: [الضيافة], kw: [الضيف, الضيافة] }
+  - { slug: qada-hawaij, ar: قضاء حوائج الناس والتيسير على المعسر, en: Helping people in need, side: DO, domain: mujtama, riyad: [29, 30, 240], targhib: [قضاء حوائج المسلمين, التيسير على المعسر], kw: [قضاء الحوائج, المعسر, التيسير, تفريج الكرب] }
+  - { slug: satr-muslim, ar: ستر المسلم, en: Covering others' faults, side: DO, domain: mujtama, opposite: tajassus, branches: [69], riyad: [28], targhib: [ستر المسلم], kw: [الستر, ستر المسلم] }
+  - { slug: hubb-fillah, ar: الحب في الله والصحبة الصالحة, en: Love for Allah's sake and good company, side: DO, domain: mujtama, branches: [61], riyad: [45, 46], targhib: [الحب في الله, زيارة الإخوان, الجليس الصالح], zuhd: [جليس الصدق], minhaj: [الصحبة والأخوة], kw: [الحب في الله, المتحابين, الصحبة, الجليس] }
+  - { slug: afw, ar: العفو والصفح, en: Forgiveness and pardon, side: DO, domain: mujtama, riyad: [75], targhib: [العفو], minhaj: [العفو], kw: [العفو, الصفح] }
+  - { slug: amana-wafa, ar: أداء الأمانة والوفاء بالعهد, en: Fulfilling trusts and promises, side: DO, domain: mujtama, opposite: khiyana, branches: [32, 35], riyad: [25, 86, 85], targhib: [إنجاز الوعد, إفشاء السر], kw: [الأمانة, الوفاء بالعهد, إنجاز الوعد, حفظ السر] }
+  - { slug: adl, ar: العدل ورد المظالم, en: Justice, side: DO, domain: mujtama, opposite: zulm, branches: [51], riyad: [79, 78, 82], targhib: [ولي شيئا من أمور], kw: [العدل, الإمام العادل, المقسطين] }
+  - { slug: salam, ar: إفشاء السلام, en: Spreading the greeting of peace, side: DO, domain: mujtama, branches: [61, 62, 65], riyad: [131, 132, 133, 135, 140, 143], targhib: [إفشاء السلام, المصافحة], kw: [السلام, إفشاء السلام, المصافحة] }
+  - { slug: iyadat-marid, ar: عيادة المريض واتباع الجنائز, en: Visiting the sick and attending funerals, side: DO, domain: mujtama, branches: [63, 64], riyad: [144, 145, 155, 156], targhib: [عيادة المرضى, تشييع الميت, الدعاء للميت], kw: [عيادة المريض, الجنازة, اتباع الجنائز] }
+  - { slug: imatat-adha, ar: إماطة الأذى عن الطريق, en: Removing harm from the road, side: DO, domain: mujtama, opposite: adha-muslimin, targhib: [إماطة الأذى], kw: [إماطة الأذى] }
+  - { slug: rahma-khalq, ar: الرحمة بالخلق والحيوان, en: Mercy to people and animals, side: DO, domain: mujtama, opposite: tadhib-hayawan, branches: [75], riyad: [27], targhib: [الشفقة], kw: [الرحمة, الشفقة, رحم الصغير] }
+  - { slug: taawun, ar: التعاون على البر والتقوى, en: Cooperating in goodness, side: DO, domain: mujtama, branches: [53], riyad: [21], kw: [التعاون] }
+
+  # mal
+  - { slug: kasb-halal, ar: الكسب الحلال وطلب الرزق, en: Lawful earning, side: DO, domain: mal, opposite: akl-haram, riyad: [59], targhib: [طلب الحلال, الاكتساب, الاقتصاد في طلب الرزق], zuhd: [طلب الحلال], minhaj: [الكسب والمعاش], kw: [الكسب, عمل يده, الحلال] }
+  - { slug: samaha, ar: السماحة في البيع والشراء, en: Generosity in trade, side: DO, domain: mal, opposite: ghish, riyad: [240], targhib: [السماحة في البيع, التجار في الصدق], kw: [السماحة] }
+  - { slug: iqtisad, ar: الاقتصاد في الإنفاق, en: Moderation in spending, side: DO, domain: mal, opposite: israf, branches: [42], riyad: [57], kw: [الاقتصاد, القصد] }
+
+  # ilm
+  - { slug: talab-ilm, ar: طلب العلم, en: Seeking knowledge, side: DO, domain: ilm, opposite: kitman-ilm, branches: [17], riyad: [241], targhib: [العلم وطلبه, الرحلة في طلب العلم, مجالسة العلماء], zuhd: [قبض العلم], minhaj: [العلم], kw: [طلب العلم, العلم] }
+  - { slug: nashr-ilm, ar: نشر العلم والدلالة على الخير, en: Spreading knowledge and guiding to good, side: DO, domain: ilm, branches: [18], riyad: [19, 20], targhib: [نشر العلم, البداءة بالخير], kw: [نشر العلم, الدال على الخير, سن سنة حسنة] }
+
+  # raqami (contemporary DO)
+  - { slug: nashr-khayr-raqami, ar: نشر الخير والعلم النافع على المنصات, en: Sharing good online, side: DO, domain: raqami, opposite: ishaat, contemporary: true, derivedFrom: [nashr-ilm, kalam-tayyib] }
+  - { slug: silah-raqamiya, ar: صلة الرحم بالتواصل والرسائل, en: Keeping ties through messages, side: DO, domain: raqami, opposite: qat-al-rahim, contemporary: true, derivedFrom: [silat-ar-rahim] }
+  - { slug: ghadd-basar, ar: غضّ البصر, en: Lowering the gaze, side: DO, domain: shahawat, opposite: nazar-muharram, targhib: [غض البصر], kw: [غض البصر] }
+  - { slug: iffa, ar: العفّة وحفظ الفرج, en: Chastity, side: DO, domain: shahawat, opposite: zina, branches: [37], minhaj: [كسر الشهوتين], kw: [العفة, حفظ الفرج, التعفف] }
+
+  # added after the dry run (owner decision on public visibility marked with hidden: true)
+  - { slug: dhikr-akhira, ar: التشويق إلى الجنة وتذكّر الآخرة, en: Remembering the Hereafter, side: DO, sideCheck: false, domain: iman, branches: [6, 7, 8, 9], riyad: [372], targhib: [الترهيب من النار, المرور بقبور, سؤال الجنة, صفة الجنة, صفة النار, الحشر, الحساب, الحوض, النفخ في الصور, ما لأدنى أهل الجنة, خلود أهل الجنة], zuhd: [تخويف عواقب الذنوب, بشرى المؤمن, ذكر الموت, صفة النار, صفة الجنة], minhaj: [الميت, القبر, الموت], kw: [الجنة, النار, القيامة, البعث, الحساب] }
+  - { slug: iman-ghayb, ar: الإيمان بالملائكة والرسل والكتب, en: Faith in angels, messengers and scriptures, side: DO, domain: iman, branches: [2, 3, 4], kw: [الإيمان بالملائكة, الإيمان بالرسل] }
+  - { slug: jihad, ar: الجهاد في سبيل الله, en: Striving in the path of Allah, side: DO, domain: dima, hidden: true, branches: [26, 27, 28, 29], riyad: [234, 235], targhib: [الجهاد, الرباط, الحراسة في سبيل, الشهادة, الغدوة في سبيل, الرمي في سبيل, النفقة في سبيل], kw: [الجهاد, الرباط, الشهادة في سبيل] }
+  - { slug: firar-zahf, ar: الفرار من الزحف والتولي يوم القتال, en: Fleeing the battlefield, side: AVOID, domain: dima, hidden: true, opposite: jihad, kabair: [15], targhib: [الفرار من الزحف, يموت الإنسان ولم يغز] }
+  - { slug: kaffarat, ar: الكفارات والعتق, en: Expiations and freeing slaves, side: DO, domain: ibadat, hidden: true, branches: [30, 31], riyad: [236, 237], targhib: [العتق] }
+
+  # added from the unmapped-sections pass (reviewer, content-based)
+  - { slug: adab-taam, ar: آداب الطعام والشراب, en: Etiquette of eating and drinking, side: DO, domain: adab }
+  - { slug: adab-safar, ar: آداب السفر, en: Etiquette of travel, side: DO, domain: adab }
+  - { slug: adab-libas, ar: آداب اللباس والزينة, en: Etiquette of dress and adornment, side: DO, domain: adab }
+  - { slug: adab-masjid, ar: آداب المسجد, en: Etiquette of the mosque, side: DO, domain: adab }
+  - { slug: adab-majlis, ar: آداب المجلس والاستئذان, en: Etiquette of gatherings and asking permission, side: DO, domain: adab }
+  - { slug: tawqir-kibar, ar: توقير العلماء والكبار وأهل الفضل, en: Honouring scholars and elders, side: DO, domain: mujtama, branches: [75], riyad: [44] }
+  - { slug: taat-wulat, ar: طاعة ولاة الأمر في المعروف, en: Obeying those in authority in what is right, side: DO, domain: dima, branches: [49], riyad: [80] }
+  - { slug: tasweer, ar: تصوير ذوات الأرواح, en: Making images of living beings, side: AVOID, domain: shahawat, hidden: true, kabair: [48] }
+
+# Kabair entries intentionally NOT mapped (archaic or needs a scholar before public use):
+#   29 is intihar (mapped). 57 إباق العبد, 67 الإضرار في الوصية (fiqh detail) — kept hidden; 35/64 missing in this edition. Their kabira-N rows stay hidden.
+
+# ───────────────────────── Akhlaq labels (DEFERRED — store only, no UI yet) ─────────────────────────
+# A later «الأخلاق والتزكية» view pairs each virtue with its opposite and the balance between them.
+# Now: store these as labels on the topics (TopicLabel), nothing public. Virtues without a topic yet are
+# listed with topics: [] and will be filled when the owner provides the reference (e.g. «خلق المسلم» للغزالي).
+akhlaq:
+  - { key: tawadu-izza, ar: التواضع للمؤمنين مع عزة المؤمن, pair: [tawadu, kibr], balance: «أذلة على المؤمنين أعزة على الكافرين», topics: [tawadu, kibr] }
+  - { key: karam, ar: الكرم, pair: [sadaqah, bukhl], topics: [sadaqah, bukhl, ikram-dayf] }
+  - { key: rushd-infaq, ar: الرشد في الإنفاق, pair: [iqtisad, israf], balance: بين البخل والتبذير, topics: [iqtisad, israf, bukhl] }
+  - { key: hilm, ar: الحلم وكظم الغيظ, pair: [kaff-al-ghadab, ghadab], topics: [kaff-al-ghadab, ghadab, husn-khuluq] }
+  - { key: sidq, ar: الصدق, pair: [sidq, kadhib], topics: [sidq, kadhib, dhul-wajhayn] }
+  - { key: amana, ar: الأمانة, pair: [amana-wafa, khiyana], topics: [amana-wafa, khiyana, ghadr] }
+  - { key: haya, ar: الحياء, pair: [haya, tabarruj], topics: [haya] }
+  - { key: adab-majalis, ar: أدب المجالس والجماعات, topics: [adha-muslimin, salam], note: «تخطي الرقاب» وآداب المسجد }
+  - { key: mudarat, ar: المداراة (لا المداهنة), topics: [] }
+  - { key: izzat-mumin, ar: عزة المؤمن ورفض الهوان, topics: [] }
+
+# Sections deliberately NOT mapped (owner decision): biographies (عامر بن عبد قيس، صلة بن أشيم، أويس، عمر بن عبد العزيز،
+# توبة داود), «قتل الحيات والوزغ», and fiqh-detail etiquette chapters listed in docs/taxonomy/unmapped-sections.tsv.
+
+# ───── Paired pages (owner decision): a sin and its opposite deed are ONE topic page with two sides ─────
+# Both slugs open the same page; lists show the pair once. title = the deed-side root unless set here.
+pairs:
+  - { avoid: shirk, do: tawhid }
+  - { avoid: tatayyur, do: tawakkul }
+  - { avoid: amn-makr, do: khawf-raja }
+  - { avoid: bida, do: sunna }
+  - { avoid: riya, do: ikhlas }
+  - { avoid: kibr, do: tawadu }
+  - { avoid: hasad, do: salamat-sadr }
+  - { avoid: ghadab, do: kaff-al-ghadab }
+  - { avoid: tul-amal, do: zuhd }
+  - { avoid: istihana-saghair, do: tawba }
+  - { avoid: ghibah, do: hifz-al-lisan }
+  - { avoid: namimah, do: islah-bayn-nas }
+  - { avoid: kadhib, do: sidq }
+  - { avoid: sabb-lan, do: kalam-tayyib }
+  - { avoid: uquq, do: birr-al-walidayn }
+  - { avoid: qat-al-rahim, do: silat-ar-rahim }
+  - { avoid: zulm-zawja, do: husn-ishra }
+  - { avoid: zulm, do: adl }
+  - { avoid: adha-jar, do: haqq-jar }
+  - { avoid: adha-muslimin, do: imatat-adha }
+  - { avoid: tajassus, do: satr-muslim }
+  - { avoid: khiyana, do: amana-wafa }
+  - { avoid: tadhib-hayawan, do: rahma-khalq }
+  - { avoid: niyaha, do: sabr }
+  - { avoid: akl-mal-yatim, do: kafalat-yatim }
+  - { avoid: ghish, do: samaha }
+  - { avoid: akl-haram, do: kasb-halal }
+  - { avoid: bukhl, do: sadaqah }
+  - { avoid: man-zakah, do: zakah }
+  - { avoid: israf, do: iqtisad }
+  - { avoid: zina, do: iffa }
+  - { avoid: nazar-muharram, do: ghadd-basar }
+  - { avoid: tabarruj, do: haya }
+  - { avoid: tark-as-salah, do: salah, ar: الصلاة }
+  - { avoid: iftar-ramadan, do: siyam }
+  - { avoid: tark-hajj, do: hajj }
+  - { avoid: tanazzuh-bawl, do: tahara }
+  - { avoid: hajr-quran, do: quran }
+  - { avoid: kitman-ilm, do: talab-ilm }
+  - { avoid: qawl-bila-amal, do: amr-maruf }
+  - { avoid: idaat-al-waqt, do: ightinam-waqt }

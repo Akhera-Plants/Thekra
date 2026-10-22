@@ -1,0 +1,167 @@
+# Reviewer map: Ibn Abi al-Dunya chapters (BookSection ids from docs/taxonomy/sections/ibn-abi-dunya/*.tsv)
+# → taxonomy topics. Only BAB rows with hadith > 0 are eligible; omitted chapters produce no public link.
+# Title-based, precision-first review. Every hadith item under a listed chapter inherits its listed topics.
+
+sections:
+  # ── Ciyal ──
+  - { id: 8b947075-dc1b-4d46-ae95-a4745138ff59, book: ibn-abi-dunya, work: Ciyal, title: "باب النفقة على العيال والثواب على النفقة عليهم", topics: [nafaqa-ahl] }
+  - { id: 4fed47ad-6f4e-4d02-b088-22e8a645a992, book: ibn-abi-dunya, work: Ciyal, title: "باب العدل بين الأولاد والتسوية بينهم", topics: [adl] }
+  - { id: 1f2175d2-50c5-4231-865f-bf70d9fbf737, book: ibn-abi-dunya, work: Ciyal, title: "باب في الإحسان إلى البنات", topics: [rahma-khalq] }
+  - { id: 9cb1d514-b0ca-427d-b5bc-b38c1e1d18bc, book: ibn-abi-dunya, work: Ciyal, title: "باب تزويج البنات", topics: [nikah] }
+  - { id: f1d6c2f2-6590-4ec5-911d-0b312dd5e090, book: ibn-abi-dunya, work: Ciyal, title: "باب في العطف على البنين والمحبة لهم", topics: [rahma-khalq] }
+  - { id: 242a6f6a-3432-4f89-a2e2-757e5be9e227, book: ibn-abi-dunya, work: Ciyal, title: "باب الرأفة على الولدان والرأفة بينهم", topics: [rahma-khalq] }
+  - { id: 4a380ce0-af60-4a62-9c4f-fa989817d660, book: ibn-abi-dunya, work: Ciyal, title: "باب حمل الولدان وشمهم وتقبيلهم", topics: [rahma-khalq] }
+  - { id: 4d3ea84d-7f05-4d66-a973-ef6dea2499ce, book: ibn-abi-dunya, work: Ciyal, title: "باب تنقيز الولدان ومداعبتهم", topics: [rahma-khalq] }
+  - { id: a2b65bd0-4c52-4403-b1ea-a96d385c8e5b, book: ibn-abi-dunya, work: Ciyal, title: "باب التسليم على الصبيان", topics: [salam] }
+  - { id: 36071e36-3eb1-4a68-a703-afa8320cb4f8, book: ibn-abi-dunya, work: Ciyal, title: "باب تعليم الصبيان الصلاة", topics: [salah] }
+  - { id: 8376cddf-bc2f-45fe-a2d7-6ae52532b10f, book: ibn-abi-dunya, work: Ciyal, title: "باب تعليم الأصاغر القرآن", topics: [quran] }
+  - { id: d4036fa7-c7cf-428d-8c34-fcbecb2ce07b, book: ibn-abi-dunya, work: Ciyal, title: "باب تعليم الرجل أهله وتعليم ولده وتأديبهم", topics: [nafaqa-ahl] }
+  - { id: 855c96df-e289-43d4-98d3-11fdc534c717, book: ibn-abi-dunya, work: Ciyal, title: "باب التوسع على العيال", topics: [nafaqa-ahl] }
+  - { id: 24ef6361-50d4-43ae-8e63-8586bc9c4d0a, book: ibn-abi-dunya, work: Ciyal, title: "باب جماع الزوجة صدقة ووقاعها من أجل الولد", topics: [nikah] }
+  - { id: 89e69b63-bf59-497e-a3fe-0ca988519909, book: ibn-abi-dunya, work: Ciyal, title: "باب تخفر المرأة في بيتها وتركها الزينة لغير بعلها", topics: [haya] }
+  - { id: 5af7cdb4-2281-4d39-a7ea-cab2395fc755, book: ibn-abi-dunya, work: Ciyal, title: "باب العطف على الأزواج والرأفة بهم والمداراة لهم", topics: [husn-ishra] }
+  - { id: f23c8261-8806-458c-9595-2b0053518fdd, book: ibn-abi-dunya, work: Ciyal, title: "باب حق المرأة على زوجها والثواب على النفقة عليها", topics: [husn-ishra, nafaqa-ahl] }
+  - { id: 5841340e-c662-4761-8192-9bf4ab28461b, book: ibn-abi-dunya, work: Ciyal, title: "باب حق الرجل على زوجته", topics: [husn-ishra] }
+  - { id: c7a23f11-32b1-4905-a23c-edefe3f11a47, book: ibn-abi-dunya, work: Ciyal, title: "باب ملاعبة الرجل أهله", topics: [husn-ishra] }
+  - { id: c8b867a7-948d-429a-ba5f-fb59972a22df, book: ibn-abi-dunya, work: Ciyal, title: "باب في تعليم العلم للأصاغر", topics: [talab-ilm] }
+  - { id: 84799fb1-8077-4810-b7a1-819590880b23, book: ibn-abi-dunya, work: Ciyal, title: "باب في اليتامى", topics: [kafalat-yatim] }
+  - { id: ac043c49-1bd2-4601-9bc9-0be8d5ab6509, book: ibn-abi-dunya, work: Ciyal, title: "باب الحج بالصبيان", topics: [hajj] }
+
+  # ── DhammGhiba ──
+  - { id: 481d7f9f-8da0-4375-8f53-917791e95b82, book: ibn-abi-dunya, work: DhammGhiba, title: "باب ذم المراء", topics: [jidal] }
+  - { id: 635036f6-749f-48bf-b980-9ca13a22a02d, book: ibn-abi-dunya, work: DhammGhiba, title: "باب ذم الخصومات", topics: [jidal] }
+  - { id: d9d85ec0-1598-4f01-a087-2c1a2afb4a6e, book: ibn-abi-dunya, work: DhammGhiba, title: "باب الغيبة وذمها", topics: [ghibah] }
+  - { id: aab3383e-1eaf-429c-947f-cf6f9d52bcd0, book: ibn-abi-dunya, work: DhammGhiba, title: "باب ما جاء في ذم النميمة", topics: [namimah] }
+  - { id: 9598eba8-6732-4891-b016-1bd558c2d4f4, book: ibn-abi-dunya, work: DhammGhiba, title: "باب ذم ذي اللسانين", topics: [dhul-wajhayn] }
+  - { id: 929cf283-8b71-4bb5-8717-ad7ccea57012, book: ibn-abi-dunya, work: DhammGhiba, title: "باب ما نهي عنه العباد من أن يسخر بعضهم من بعض", topics: [sukhriya] }
+  - { id: fa276833-a953-42d6-ae4a-3b2a25f97b07, book: ibn-abi-dunya, work: DhammGhiba, title: "باب كفارة الاغتياب", topics: [tawba] }
+
+  # ── DhammMalahi ──
+  - { id: aab34191-8b25-43c3-82f4-700836146e1b, book: ibn-abi-dunya, work: DhammMalahi, title: "باب: في المزمار", topics: [malahi] }
+  - { id: f40552b4-cd39-4df7-9ce3-8d089e9db807, book: ibn-abi-dunya, work: DhammMalahi, title: "باب في الشطرنج", topics: [malahi] }
+  - { id: 4263b3fb-143b-4690-8ef2-bfa08c3fa48e, book: ibn-abi-dunya, work: DhammMalahi, title: "باب في القمار", topics: [qimar] }
+  - { id: ec65ba84-6d4f-409c-ae3d-a7b937f5d225, book: ibn-abi-dunya, work: DhammMalahi, title: "باب في اللعب بالحمام", topics: [malahi] }
+  - { id: f65bebd8-d755-4f49-b764-209d69f8f6d9, book: ibn-abi-dunya, work: DhammMalahi, title: "باب: في عمل قوم لوط", topics: [liwat] }
+
+  # ── Ikhwan ──
+  - { id: 65f977b8-07d5-41da-9bf7-a4dd1454c4b9, book: ibn-abi-dunya, work: Ikhwan, title: "باب ذكر المتحابين في الله عز وجل، وفضل منزلتهم عند الله عز وجل", topics: [hubb-fillah] }
+  - { id: 3afb9c41-b305-4be7-937a-b63944e80037, book: ibn-abi-dunya, work: Ikhwan, title: "باب الرغبة في الإخوان والحث عليهم.", topics: [hubb-fillah] }
+  - { id: 8c04df0e-a5e5-47e2-a8bd-247fb3ab2b1c, book: ibn-abi-dunya, work: Ikhwan, title: "باب من أمر بصحبته ورغب في اعتقاد مودته", topics: [hubb-fillah] }
+  - { id: b989d2ee-d335-4925-b857-02fed978bb07, book: ibn-abi-dunya, work: Ikhwan, title: "باب إعلام الرجل أخاه بشدة مودته إياه.", topics: [hubb-fillah] }
+  - { id: fcad3400-d1de-4668-ad27-5a59d5ce15af, book: ibn-abi-dunya, work: Ikhwan, title: "باب اتفاق القلوب على المودة", topics: [hubb-fillah] }
+  - { id: c5a6f535-c528-4193-b516-ad22e82bf849, book: ibn-abi-dunya, work: Ikhwan, title: "باب في شدة الشوق إلى لقاء الإخوان والتسلي بمحادثتهم عن الهموم والأحزان", topics: [hubb-fillah] }
+  - { id: 69cbc5ff-c505-4ca3-9cbd-604ebc1bfe8e, book: ibn-abi-dunya, work: Ikhwan, title: "باب في زيارة الإخوان", topics: [hubb-fillah] }
+  - { id: b0fdee48-2f47-4bc3-a0f4-3c23516c104b, book: ibn-abi-dunya, work: Ikhwan, title: "باب في إغباب الزيارة.", topics: [hubb-fillah] }
+  - { id: 44d2795f-2101-4d8b-9da1-5d8e7e5be4e3, book: ibn-abi-dunya, work: Ikhwan, title: "باب في ذكر مصافحة أهل المودة.", topics: [hubb-fillah, salam] }
+  - { id: 50db0f2c-abfa-4c05-ab12-3b7927d682d6, book: ibn-abi-dunya, work: Ikhwan, title: "باب مصافحة أهل المودة.", topics: [hubb-fillah, salam] }
+  - { id: 7718c595-5ef0-40a7-9a78-98a45b4d76a2, book: ibn-abi-dunya, work: Ikhwan, title: "باب في معانقة الإخوان.", topics: [hubb-fillah] }
+  - { id: 9ccaa5bc-2e79-40ef-9821-736400853ff0, book: ibn-abi-dunya, work: Ikhwan, title: "باب في بشاشة الرجل لأخيه وطلاقة وجهه إليه إذا لقيه", topics: [hubb-fillah, kalam-tayyib] }
+  - { id: 8c495f5d-0047-48f3-b714-6a2cf0ef3e62, book: ibn-abi-dunya, work: Ikhwan, title: "باب في تقبيل الإخوان.", topics: [hubb-fillah] }
+  - { id: 4fe088d6-09f2-4c72-b349-925bcff00722, book: ibn-abi-dunya, work: Ikhwan, title: "باب في سخاء النفس بالبذل للإخوان.", topics: [hubb-fillah, sadaqah] }
+  - { id: b696ee09-6c8e-46e8-ab5c-4d95e1a573ff, book: ibn-abi-dunya, work: Ikhwan, title: "باب في إطعام الطعام للإخوان وفضل ذلك والحث على الرغبة فيه", topics: [hubb-fillah, sadaqah] }
+  - { id: df1cf2a7-41dc-47fd-994b-709722b2d052, book: ibn-abi-dunya, work: Ikhwan, title: "باب في تعاهد الإخوان بالكسوة", topics: [hubb-fillah, sadaqah] }
+
+  # ── IstinacMacruf ──
+  - { id: c406fe9e-54a4-4c4e-a60a-d71a1ed148b6, book: ibn-abi-dunya, work: IstinacMacruf, title: "باب فضل اصطناع المعروف", topics: [qada-hawaij] }
+  - { id: 9afe066e-3cbb-467e-be90-0c17b7f6f7b1, book: ibn-abi-dunya, work: IstinacMacruf, title: "باب اصطناع المعروف إلى من هو أهله", topics: [qada-hawaij] }
+  - { id: 6efe7b77-1114-4a7a-848d-5a4de6fcd66e, book: ibn-abi-dunya, work: IstinacMacruf, title: "باب في الحوائج", topics: [qada-hawaij] }
+  - { id: a49d91d9-3690-489f-bd55-0a7248b2bbf0, book: ibn-abi-dunya, work: IstinacMacruf, title: "باب طلب الحوائج إلى حسان الوجوه", topics: [qada-hawaij] }
+  - { id: a12c7ab7-0c10-41fd-b970-2e777baea6c1, book: ibn-abi-dunya, work: IstinacMacruf, title: "باب في شكر الصنيعة", topics: [shukr] }
+  - { id: 28b4f792-253a-4d43-92e0-b4b8900c5997, book: ibn-abi-dunya, work: IstinacMacruf, title: "باب من أنظر معسرا", topics: [qada-hawaij] }
+
+  # ── MudaratNas ──
+  - { id: 9f67b066-efd2-4c3e-9992-0f0da91681cd, book: ibn-abi-dunya, work: MudaratNas, title: "باب مداراة الناس والصبر على أذاهم", topics: [sabr, husn-khuluq] }
+  - { id: 3c084d8a-077a-4411-b4ca-8df050738177, book: ibn-abi-dunya, work: MudaratNas, title: "باب التودد إلى الناس", topics: [husn-khuluq] }
+  - { id: b9ad5ac3-c5ef-492c-a964-1b41279edaeb, book: ibn-abi-dunya, work: MudaratNas, title: "باب المداراة بطلاقة الوجه وحسن البشر", topics: [husn-khuluq, kalam-tayyib] }
+  - { id: cd2909e7-607f-41f8-8a89-cf9953b0ed4a, book: ibn-abi-dunya, work: MudaratNas, title: "باب جميل المعاشرة بحسن الخلق", topics: [husn-khuluq] }
+  - { id: 781d6a03-dded-414b-ac89-2d6255191c57, book: ibn-abi-dunya, work: MudaratNas, title: "باب المداراة بلين الجانب وطيب الكلام", topics: [husn-khuluq, kalam-tayyib] }
+  - { id: f5745081-bb79-4be8-a628-6aac8ce4d567, book: ibn-abi-dunya, work: MudaratNas, title: "باب الإصلاح بين الناس", topics: [islah-bayn-nas] }
+  - { id: 9490ebe9-3485-4819-ab12-df15191b79d8, book: ibn-abi-dunya, work: MudaratNas, title: "باب مداراة الرجل زوجته وحسن معاشرته إياها", topics: [husn-ishra] }
+  - { id: 4f9b5896-fca5-4798-90cd-930841e00350, book: ibn-abi-dunya, work: MudaratNas, title: "باب مداراة المرأة لزوجها وحسن معاشرتها إياه", topics: [husn-ishra] }
+
+  # ── MuhasabatNafs ──
+  - { id: 7fe813a0-93b8-417e-baab-791ad85fb74d, book: ibn-abi-dunya, work: MuhasabatNafs, title: "باب ذم النفس", topics: [muhasaba] }
+  - { id: 073902e3-2208-4b21-a73b-c7fd72305c7e, book: ibn-abi-dunya, work: MuhasabatNafs, title: "باب معاقبة النفس", topics: [muhasaba] }
+  - { id: d3c8cc59-15b9-443d-91db-1009d1f06a78, book: ibn-abi-dunya, work: MuhasabatNafs, title: "باب جهاد النفس ومنعها من شهواتها", topics: [muhasaba] }
+  - { id: f997d560-4cbc-45d5-bdd1-ee3496704f97, book: ibn-abi-dunya, work: MuhasabatNafs, title: "باب الحذر على النفس مخافة سوء المنقلب والمقت", topics: [muhasaba] }
+  - { id: b7a0247a-16e1-4f60-bb00-925d9f47e188, book: ibn-abi-dunya, work: MuhasabatNafs, title: "باب إجهاز النفس في الأعمال طلب الراحة يوم المعاد", topics: [muhasaba] }
+
+  # ── Muhtadarin ──
+  - { id: 580ee0e2-87b5-46a6-8b54-3701c83bedcb, book: ibn-abi-dunya, work: Muhtadarin, title: "باب حسن الظن بالله عند نزول الموت", topics: [khawf-raja] }
+  - { id: 04cf6648-050e-441f-a82b-453a01596853, book: ibn-abi-dunya, work: Muhtadarin, title: "باب تعزية النفس عند الاحتضار بالصبر والاحتساب", topics: [sabr] }
+
+  # ── QadaHawaij ──
+  - { id: 80e7a124-fb65-473a-8ccc-4220edef3bfb, book: ibn-abi-dunya, work: QadaHawaij, title: "باب: في قضاء الحوائج", topics: [qada-hawaij] }
+  - { id: 131e83b5-1b3a-4f68-aa2b-dd6d121baa6c, book: ibn-abi-dunya, work: QadaHawaij, title: "باب طلب الحوائج إلى حسان الوجوه", topics: [qada-hawaij] }
+  - { id: 9ee93d92-33b0-428f-bc39-067f3b2a29d6, book: ibn-abi-dunya, work: QadaHawaij, title: "باب في شكر الصنيعة", topics: [shukr] }
+
+  # ── Qanaca ──
+  - { id: cf5b603d-2eb3-4baf-ad07-59903afd033c, book: ibn-abi-dunya, work: Qanaca, title: "باب ذم المسألة والزجر عنها والفضل في التعفف عنها", topics: [masala, zuhd] }
+  - { id: 8aa45d8a-e73c-4dc2-89f7-e7b1f2e30b4e, book: ibn-abi-dunya, work: Qanaca, title: "باب الإجمال بالطلب والرضى بالقسم", topics: [zuhd] }
+  - { id: 9c7cc13a-847e-4a59-a361-6a9210f75f98, book: ibn-abi-dunya, work: Qanaca, title: "باب إنزال الحاجة بالله تعالى والاستعفاف عن المسألة", topics: [tawakkul, zuhd] }
+  - { id: bd2fe960-6572-4692-862a-7510b6639026, book: ibn-abi-dunya, work: Qanaca, title: "باب ذم الطمع وحمد اليأس", topics: [zuhd] }
+
+  # ── QasrAmal ──
+  - { id: 93114c6f-62f3-4c6a-b5d2-8988c159cf24, book: ibn-abi-dunya, work: QasrAmal, title: "باب | البناء وما ذموا منه $ |", topics: [tul-amal] }
+  - { id: a03fbc5c-4881-4dd1-a852-8748fc9c553e, book: ibn-abi-dunya, work: QasrAmal, title: "باب | البناء وذمه", topics: [tul-amal] }
+
+  # ── Qubur ──
+  - { id: c23bc8d2-b774-4a4b-b269-f08bd20b026f, book: ibn-abi-dunya, work: Qubur, title: "باب الموعظة بالجنازة والاعتبار بها", topics: [zuhd, dhikr-akhira] }
+  - { id: d9f7f3e6-df35-485b-bc38-cd5bec18b407, book: ibn-abi-dunya, work: Qubur, title: "باب في النشور", topics: [dhikr-akhira] }
+
+  # ── Samt ──
+  - { id: 574e55c8-8ebd-4b99-aa69-2e6d3ce043c8, book: ibn-abi-dunya, work: Samt, title: "باب حفظ اللسان وفضل الصمت", topics: [hifz-al-lisan] }
+  - { id: a396268d-c811-4008-ab00-971cfbe1e8a8, book: ibn-abi-dunya, work: Samt, title: "باب النهي عن فضول الكلام، والخوض في الباطل", topics: [idaat-al-waqt] }
+  - { id: 769829fa-8791-452c-a8f2-89eb7d3e1cc4, book: ibn-abi-dunya, work: Samt, title: "باب النهي عن الكلام فيما لا يعنيك", topics: [idaat-al-waqt] }
+  - { id: 1a5caa69-358e-4fc6-a0fb-13ea25720ac8, book: ibn-abi-dunya, work: Samt, title: "باب ذم المراء", topics: [jidal] }
+  - { id: 32f1e69f-8f16-414c-9b4e-9206f49eddce, book: ibn-abi-dunya, work: Samt, title: "باب ذم الخصومات", topics: [jidal] }
+  - { id: 6ee2f08a-595d-40f1-8a38-bc809e8c386f, book: ibn-abi-dunya, work: Samt, title: "باب الغيبة وذمها", topics: [ghibah] }
+  - { id: e608a3ad-eb27-43db-8088-90d7e40d56c8, book: ibn-abi-dunya, work: Samt, title: "باب تفسير الغيبة", topics: [ghibah] }
+  - { id: 6a107409-5206-4c21-99b8-a83fefc7c35b, book: ibn-abi-dunya, work: Samt, title: "باب ذم النميمة", topics: [namimah] }
+  - { id: fe485f27-9a08-4f1f-b827-81dde42bf0fa, book: ibn-abi-dunya, work: Samt, title: "باب ذم ذي اللسانين", topics: [dhul-wajhayn] }
+  - { id: e157011a-3966-42e6-a0aa-890d6264dcb8, book: ibn-abi-dunya, work: Samt, title: "باب ما نهي عنه العباد أن يسخر بعضهم من بعض", topics: [sukhriya] }
+  - { id: d32b5b4b-0fe4-4a01-9729-ef30de3181b3, book: ibn-abi-dunya, work: Samt, title: "باب كفارة الاغتياب", topics: [tawba] }
+  - { id: a761fa99-4c04-452f-bf19-2f45dce48df7, book: ibn-abi-dunya, work: Samt, title: "باب ما أمر به الناس أن يستعملوا فيه أنفسهم من القول الحسن للناس أجمعين", topics: [kalam-tayyib] }
+  - { id: c98fee0a-3384-4447-83db-7a770a08efe7, book: ibn-abi-dunya, work: Samt, title: "باب ذم الفحش والبذاء", topics: [sabb-lan] }
+  - { id: 0bc1de68-9a97-485e-b175-936e1ee9c68e, book: ibn-abi-dunya, work: Samt, title: "باب ذم اللعانين", topics: [sabb-lan] }
+  - { id: 09a5c7a5-6d1c-4eb2-a70c-8f348d14eb3a, book: ibn-abi-dunya, work: Samt, title: "باب حفظ السر", topics: [amana-wafa] }
+  - { id: f8eaab5e-3fd0-46df-8376-492396493fb2, book: ibn-abi-dunya, work: Samt, title: "باب قلة الكلام والتحفظ في المنطق", topics: [hifz-al-lisan] }
+  - { id: 8c8235bb-3347-4329-a417-4bd41b620353, book: ibn-abi-dunya, work: Samt, title: "باب الصدق وفضله", topics: [sidq] }
+  - { id: 6dfaa837-a59c-4dd8-897d-acde9ba036ca, book: ibn-abi-dunya, work: Samt, title: "باب الوفاء بالوعد", topics: [amana-wafa] }
+  - { id: fe7281f8-a673-4e06-b0cd-526ed1461538, book: ibn-abi-dunya, work: Samt, title: "باب ذم الكذب", topics: [kadhib] }
+
+  # ── SifatJanna ──
+  - { id: f65d2b3f-70e9-40e4-904e-1a2ad5b7ca3a, book: ibn-abi-dunya, work: SifatJanna, title: "باب صفة شجرة الجنة", topics: [dhikr-akhira] }
+  - { id: 06ccc373-21b5-4873-85fa-c69af9fa3e8c, book: ibn-abi-dunya, work: SifatJanna, title: "باب شجرة طوبى", topics: [dhikr-akhira] }
+  - { id: eb17644c-ab6b-457d-af89-298bff0591d8, book: ibn-abi-dunya, work: SifatJanna, title: "باب طعام أهل الجنة", topics: [dhikr-akhira] }
+  - { id: 96a32697-0670-49f9-b285-ade85dc9e601, book: ibn-abi-dunya, work: SifatJanna, title: "باب شراب أهل الجنة", topics: [dhikr-akhira] }
+  - { id: e14d4868-e20b-4c7c-8ce5-92ecb351bc1d, book: ibn-abi-dunya, work: SifatJanna, title: "باب لباس أهل الجنة", topics: [dhikr-akhira] }
+  - { id: e1fb40e8-7854-4e64-b535-5ee2c46adeba, book: ibn-abi-dunya, work: SifatJanna, title: "باب فراش أهل الجنة", topics: [dhikr-akhira] }
+  - { id: ed58b05a-4142-40cb-9fa5-e9a3fb69f70a, book: ibn-abi-dunya, work: SifatJanna, title: "باب قصور أهل الجنة", topics: [dhikr-akhira] }
+  - { id: e0d9aa2b-553e-4572-b0ea-9152bbd547d0, book: ibn-abi-dunya, work: SifatJanna, title: "باب درجات أهل الجنة", topics: [dhikr-akhira] }
+  - { id: f5c5867f-a722-4f45-943f-0d74799b9abb, book: ibn-abi-dunya, work: SifatJanna, title: "باب ملك أهل الجنة", topics: [dhikr-akhira] }
+  - { id: 99ad93e2-2311-432a-a9c8-056acbc8afd8, book: ibn-abi-dunya, work: SifatJanna, title: "باب خدم أهل الجنة", topics: [dhikr-akhira] }
+  - { id: bf70e633-90b3-4f57-90a3-25bf355a6fae, book: ibn-abi-dunya, work: SifatJanna, title: "باب لسان أهل الجنة", topics: [dhikr-akhira] }
+  - { id: 11287b13-e7b7-4f13-8dac-a106df246b01, book: ibn-abi-dunya, work: SifatJanna, title: "باب حلي أهل الجنة", topics: [dhikr-akhira] }
+  - { id: 2a3f633f-46c1-42df-b46e-40e6edcd0e02, book: ibn-abi-dunya, work: SifatJanna, title: "باب تزاور أهل الجنة ومنتزهاتهم", topics: [dhikr-akhira] }
+  - { id: 45211762-1ebe-4381-88ec-14979851bb27, book: ibn-abi-dunya, work: SifatJanna, title: "باب سوق أهل الجنة", topics: [dhikr-akhira] }
+  - { id: c31e7bab-5e5e-4dd4-a24d-a779b0ef539f, book: ibn-abi-dunya, work: SifatJanna, title: "باب غناء أهل الجنة", topics: [dhikr-akhira] }
+  - { id: 076450c9-2df1-47f3-b100-b4b917c348e9, book: ibn-abi-dunya, work: SifatJanna, title: "باب جماع أهل الجنة", topics: [dhikr-akhira] }
+  - { id: 9f485471-7c20-411d-82f8-b294fb5d90af, book: ibn-abi-dunya, work: SifatJanna, title: "باب الحور العين", topics: [dhikr-akhira] }
+  - { id: fde27c94-9c84-4c5e-864a-968376af5726, book: ibn-abi-dunya, work: SifatJanna, title: "باب صفة الحور العين", topics: [dhikr-akhira] }
+  - { id: f3b66706-12c4-4ba1-a6a8-357d56301164, book: ibn-abi-dunya, work: SifatJanna, title: "باب جامع من ذكر الجنة", topics: [dhikr-akhira] }
+
+  # ── SifatNar ──
+  - { id: 4c5bb46e-e0ac-4c16-bcaf-fab7ca540aae, book: ibn-abi-dunya, work: SifatNar, title: "باب صفة جهنم وسعتها", topics: [dhikr-akhira] }
+
+  # ── Warac ──
+  - { id: 92791660-7261-4c86-a3e4-b83ce00ea7d1, book: ibn-abi-dunya, work: Warac, title: "باب الورع في النظر", topics: [wara] }
+  - { id: e78a1883-5027-45ce-b7d8-04b6e8f5be2a, book: ibn-abi-dunya, work: Warac, title: "باب الورع في السمع", topics: [wara] }
+  - { id: a371fdb4-de02-4bc1-b7e9-cc2722fcba66, book: ibn-abi-dunya, work: Warac, title: "باب الورع في الشم", topics: [wara] }
+  - { id: 7520a7d9-e2da-4546-8f6c-e4c359f7d6e2, book: ibn-abi-dunya, work: Warac, title: "باب الورع في اللسان", topics: [wara] }
+  - { id: b1c186f3-8f31-4595-98de-3976e537cc31, book: ibn-abi-dunya, work: Warac, title: "باب الورع في البطش", topics: [wara] }
+  - { id: c890d366-0264-4dfb-9d3c-4ed3afe2f50c, book: ibn-abi-dunya, work: Warac, title: "باب الورع في البطن", topics: [wara] }
+  - { id: f49c32d0-4446-4e7d-8b30-322a251729fe, book: ibn-abi-dunya, work: Warac, title: "باب الورع في الفرج", topics: [wara] }
+  - { id: d3a99845-2511-427d-9e33-f7774742028d, book: ibn-abi-dunya, work: Warac, title: "باب الورع في المسعى", topics: [wara] }
+  - { id: c899642a-5046-4f42-b415-fc28fd0ce49c, book: ibn-abi-dunya, work: Warac, title: "باب الورع في الشراء والبيع", topics: [wara] }
+  - { id: 8053eeb2-48d5-48c9-9805-2a35fedfb4e7, book: ibn-abi-dunya, work: Warac, title: "باب ثواب الورعين", topics: [wara] }

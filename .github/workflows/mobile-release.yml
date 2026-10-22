@@ -1,0 +1,104 @@
+# Mobile release (EAS)
+#
+# Runs EAS Build for the `preview` (internal) and `production` profiles.
+# Skips entirely when the `EXPO_TOKEN` repository secret is missing, so CI stays green
+# before Expo / store accounts exist.
+#
+# Triggers:
+# - Push tags matching `mobile-v*` (e.g. `mobile-v0.1.0`)
+# - Manual `workflow_dispatch` with a profile input
+#
+# See `mobile/RELEASE.md` for the owner account steps that unlock this workflow.
+
+name: Mobile release
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: EAS build profile
+        required: true
+        type: choice
+        options:
+          - preview
+          - production
+        default: preview
+  push:
+    tags:
+      - 'mobile-v*'
+
+concurrency:
+  group: mobile-release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: '24'
+
+jobs:
+  # Secrets cannot be read in job-level `if:` — gate via an env check + output.
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      proceed: ${{ steps.check.outputs.proceed }}
+    steps:
+      - id: check
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -n "$EXPO_TOKEN" ]; then
+            echo "proceed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "proceed=false" >> "$GITHUB_OUTPUT"
+            echo "EXPO_TOKEN is not set — skipping mobile release (expected until EAS is configured)."
+          fi
+
+  build:
+    needs: gate
+    if: needs.gate.outputs.proceed == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+        working-directory: .
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Resolve build profile
+        id: profile
+        env:
+          DISPATCH_PROFILE: ${{ inputs.profile }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            echo "name=$DISPATCH_PROFILE" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=production" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: EAS Build (non-interactive)
+        env:
+          EAS_PROFILE: ${{ steps.profile.outputs.name }}
+        run: >
+          pnpm exec eas build
+          --profile "$EAS_PROFILE"
+          --platform all
+          --non-interactive
+          --no-wait

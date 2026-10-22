@@ -1,0 +1,938 @@
+# Reviewer map: Sahih al-Bukhari / Sahih Muslim chapters (BookSection ids from docs/taxonomy/sections/{bukhari,muslim}.tsv)
+# → taxonomy topics. Every hadith item under a listed bab is linked ACCEPTED, basis CHAPTER, classifiedBy REVIEWER,
+# note «من باب: <title> — <book>». Chapters NOT listed here produce no public link (keyword proposals stay unreviewed).
+# Filled topic by topic by the reviewer. Batch 1: prayer.
+
+sections:
+  # ── salah (DO: guarding the prayers) ──
+  - { id: d1db5aac-8ff5-434e-a4c0-d4ab3f44db84, book: bukhari, title: باب مواقيت الصلاة وفضلها, topics: [salah] }
+  - { id: 55d67708-950a-440f-aa03-5b6dc82b339e, book: bukhari, title: باب الصلاة كفارة, topics: [salah] }
+  - { id: 789a720e-e384-4be6-b62d-98028db81088, book: bukhari, title: باب فضل الصلاة لوقتها, topics: [salah] }
+  - { id: 44df69bb-69a9-44e9-855a-d989632452ba, book: bukhari, title: باب الصلوات الخمس كفارة, topics: [salah] }
+  - { id: 0c73e99c-7abf-45e3-b1f3-3ac3ecae1c2e, book: bukhari, title: باب فضل صلاة العصر, topics: [salah] }
+  - { id: 7efb087d-e90d-49af-9378-79ac7787ebe8, book: bukhari, title: باب فضل صلاة الفجر, topics: [salah] }
+  - { id: 11daed66-ba5d-44d2-b988-e147bcd3bcef, book: muslim, title: باب الصلوات الخمس والجمعة إلى الجمعة ورمضان إلى رمضان, topics: [salah] }
+  - { id: 65dde9d0-83f4-4f7d-8890-bfd8ee26f219, book: muslim, title: باب فضل صلاتي الصبح والعصر والمحافظة عليهما, topics: [salah] }
+  - { id: bc3dbd6c-66f1-4493-9ec8-58b0cb20cf0d, book: muslim, title: باب فضل الوضوء والصلاة عقبه, topics: [salah, tahara] }
+
+  # ── tark-as-salah (AVOID: abandoning / neglecting the prayer) ──
+  - { id: 34e6ee06-f9d8-44c3-80e2-8b3bbfbc73cc, book: bukhari, title: باب تضييع الصلاة عن وقتها, topics: [tark-as-salah] }
+  - { id: 764886eb-b536-4124-8497-d4a77a7e95a7, book: bukhari, title: باب إثم من فاتته العصر, topics: [tark-as-salah] }
+  - { id: a5e40326-edac-4a9b-af8e-27eee100d2ab, book: bukhari, title: باب من ترك العصر, topics: [tark-as-salah] }
+  - { id: f2507e24-a631-4277-9897-f857eff3a740, book: muslim, title: باب بيان إطلاق اسم الكفر على من ترك الصلاة, topics: [tark-as-salah] }
+  - { id: ad911a70-2ddc-4994-a49a-d45d975963aa, book: muslim, title: باب التغليظ في تفويت صلاة العصر, topics: [tark-as-salah] }
+  - { id: cdc37e46-34f3-4fd9-aebd-87e97ca753f6, book: muslim, title: باب كراهية تأخير الصلاة عن وقتها المختار, topics: [tark-as-salah] }
+
+  # ── salat-fi-jamaah ──
+  - { id: 842d7ee6-910b-4dbb-8ba8-081143d2fc3e, book: bukhari, title: باب فضل صلاة الفجر في جماعة, topics: [salat-fi-jamaah] }
+  - { id: e6db7fd0-811f-450a-babd-d7273db5c8b4, book: bukhari, title: باب فضل العشاء في الجماعة, topics: [salat-fi-jamaah] }
+  - { id: 606543f8-a11e-49eb-8dc9-969c37aea8fa, book: bukhari, title: باب من جلس في المسجد ينتظر الصلاة وفضل المساجد, topics: [salat-fi-jamaah] }
+  - { id: 671b9403-483d-43db-9b40-cdafe92a936c, book: muslim, title: باب فضل صلاة العشاء والصبح في جماعة, topics: [salat-fi-jamaah] }
+  - { id: 329728bc-3a4e-41fa-bd92-aa8a660e9d57, book: muslim, title: باب فضل صلاة الجماعة وانتظار الصلاة, topics: [salat-fi-jamaah] }
+  - { id: 2821a073-e558-45af-ad2a-8676872f68c5, book: muslim, title: باب فضل الجلوس في مصلاه بعد الصبح وفضل المساجد, topics: [salat-fi-jamaah] }
+
+  # ════════════ Batch 2: core AVOID / DO topics (reviewer, title-based; see docs/taxonomy/sahihayn-map-notes.md) ════════════
+
+  # ── tawhid (DO) ──
+  - { id: 628af22c-2d14-47c3-b6a0-01e58d01d1e0, book: bukhari, title: "باب ما جاء في الجنائز، ومن كان آخر كلامه: لا إله إلا الله", topics: [tawhid] }
+  - { id: f5e12c80-087a-4938-a3d2-ddc255b8f97a, book: bukhari, title: باب ما جاء في دعاء النبي صلى الله عليه وسلم أمته إلى توحيد الله تبارك وتعالى, topics: [tawhid] }
+  - { id: 590addf8-99ca-414b-9310-1992b6a0abab, book: muslim, title: باب الدليل على أن من مات على التوحيد دخل الجنة قطعا, topics: [tawhid] }
+  - { id: 568d4d5a-5b26-478e-aca7-60dbffb6b7a2, book: muslim, title: باب من مات لا يشرك بالله شيئا دخل الجنة ومن مات مشركا دخل النار, topics: [tawhid, shirk] }
+
+  # ── shirk (AVOID) ──
+  - { id: 3f0d995e-07b6-4c03-93e8-d32ccf9e17a5, book: bukhari, title: "باب قول الله تعالى: {فلا تجعلوا لله أندادا} [البقرة: 22]", topics: [shirk] }
+  - { id: 47261710-25ab-4f01-9ba2-95fe9e30e8b9, book: muslim, title: باب كون الشرك أقبح الذنوب وبيان أعظمها بعده, topics: [shirk] }
+  - { id: 8b5140bd-d522-401e-9c11-daf092dbd3bd, book: muslim, title: باب تحريم الذبح لغير الله تعالى ولعن فاعله, topics: [shirk] }
+
+  # ── ikhlas (DO) ──
+  - { id: 65af8d93-0b6f-49c4-9cbd-3a25c23aaa40, book: bukhari, title: "باب: ما جاء إن الأعمال بالنية والحسبة، ولكل امرئ ما نوى", topics: [ikhlas] }
+  - { id: 9b74ac0e-fc1f-480a-9608-1b81778c2104, book: bukhari, title: باب العمل الذي يبتغى به وجه الله, topics: [ikhlas] }
+
+  # ── riya (AVOID) ──
+  - { id: 11a03441-83af-4958-a6dc-738f85f663cc, book: bukhari, title: باب الرياء والسمعة, topics: [riya] }
+  - { id: c0fde984-97bd-45a2-b1aa-3a2e4bf261ad, book: bukhari, title: باب إثم من راءى بقراءة القرآن أو تأكل به أو فخر به, topics: [riya] }
+  - { id: 48d229e5-f240-4f57-bb73-95dc1af48811, book: muslim, title: باب من أشرك في عمله غير الله وفي نسخة باب تحريم الرياء, topics: [riya] }
+
+  # ── mahabbat-allah (DO) ──
+  - { id: c04807f5-329a-491b-bb43-190989a51936, book: bukhari, title: "باب: حب الرسول صلى الله عليه وسلم من الإيمان", topics: [mahabbat-allah] }
+  - { id: 94fa04a4-cb1e-4e04-a264-83112134d3b8, book: bukhari, title: باب حلاوة الإيمان, topics: [mahabbat-allah] }
+  - { id: 8c3d1c25-80fc-4244-a88a-664082aad0c4, book: muslim, title: باب بيان خصال من اتصف بهن وجد حلاوة الإيمان, topics: [mahabbat-allah] }
+
+  # ── sunna (DO) ──
+  - { id: 3a33a400-59d4-40d5-a72b-6d6848f60cb2, book: bukhari, title: باب الاقتداء بسنن رسول الله صلى الله عليه وسلم, topics: [sunna] }
+  - { id: e23c6cdd-04c0-4221-9319-c82aecc00e0b, book: bukhari, title: باب الاقتداء بأفعال النبي صلى الله عليه وسلم, topics: [sunna] }
+
+  # ── bida (AVOID) ──
+  - { id: 0cad10bf-6a94-4adb-acb3-adeb8dab093f, book: bukhari, title: باب ما يكره من التعمق والتنازع في العلم، والغلو في الدين والبدع, topics: [bida] }
+  - { id: 79976424-f189-4298-99f9-35779bb4ef2b, book: muslim, title: باب نقض الأحكام الباطلة ورد محدثات الأمور, topics: [bida] }
+
+  # ── tawba (DO) ──
+  - { id: 567e7430-9ab6-4b21-85c7-7a0b2c183fd2, book: bukhari, title: باب أفضل الاستغفار, topics: [tawba] }
+  - { id: 0d29fa7d-55e0-456f-9613-a49901e18f21, book: bukhari, title: باب استغفار النبي صلى الله عليه وسلم في اليوم والليلة, topics: [tawba] }
+  - { id: dee8bd99-53fd-4bd1-8e21-0d73949eecdc, book: bukhari, title: باب التوبة, topics: [tawba] }
+  - { id: cabdbd77-190b-4fb8-8c27-4ec60c832f44, book: muslim, title: باب استحباب الاستغفار والاستكثار منه, topics: [tawba] }
+  - { id: d641f310-a3bf-4268-a861-74020ccaeccf, book: muslim, title: باب في الحض على التوبة والفرح بها, topics: [tawba] }
+  - { id: df47626d-ee45-4a64-85b0-f9981d5a1179, book: muslim, title: باب سقوط الذنوب بالاستغفار توبة, topics: [tawba] }
+  - { id: af4cb2eb-a31a-4f3b-90a6-5cf065cb6e0d, book: muslim, title: باب قبول التوبة من الذنوب وإن تكررت الذنوب والتوبة, topics: [tawba] }
+  - { id: 73df7d12-ac1c-4c6e-bf53-084539bd1bee, book: muslim, title: "باب قوله تعالى {إن الحسنات يذهبن السيئات}", topics: [tawba] }
+  - { id: 50b3cf83-b972-4ef1-b1c4-d470f271bffb, book: muslim, title: باب قبول توبة القاتل وإن كثر قتله, topics: [tawba] }
+  - { id: 753d08e2-626b-4d13-9c7e-f187aa1f8e75, book: muslim, title: باب حديث توبة كعب بن مالك وصاحبيه, topics: [tawba, sidq] }
+
+  # ── istihana-saghair (AVOID) ──
+  - { id: b83f7e87-b109-4143-87cc-abd4fc374fc2, book: bukhari, title: باب ما يتقى من محقرات الذنوب, topics: [istihana-saghair] }
+
+  # ── khawf-raja (DO) ──
+  - { id: 66c5ae4c-d06c-415c-bea0-97af80d28449, book: bukhari, title: باب الرجاء مع الخوف, topics: [khawf-raja] }
+  - { id: cc52076c-c6d4-4758-bd3b-f35ea8e2e928, book: bukhari, title: باب البكاء من خشية الله, topics: [khawf-raja] }
+  - { id: e75ac61f-1840-4b8b-8f2c-9e266ebd5856, book: bukhari, title: باب الخوف من الله, topics: [khawf-raja] }
+  - { id: 7847e5cc-e5f9-4a48-a9f6-8d189f847672, book: bukhari, title: "باب قول النبي صلى الله عليه وسلم: «لو تعلمون ما أعلم لضحكتم قليلا ولبكيتم كثيرا»", topics: [khawf-raja] }
+  - { id: b92fac79-9dcc-4960-85ab-abd3a732c748, book: muslim, title: باب في سعة رحمة الله تعالى وأنها سبقت غضبه, topics: [khawf-raja] }
+  - { id: 4b5427b0-ab0d-4ddc-ac6d-8318d12cd492, book: muslim, title: باب الأمر بحسن الظن بالله تعالى عند الموت, topics: [khawf-raja] }
+
+  # ── amn-makr (AVOID) ──
+  - { id: 04aa9287-4a26-4bed-8ad5-390c4f4f5e4a, book: muslim, title: باب النهي عن تقنيط الإنسان من رحمة الله تعالى, topics: [amn-makr] }
+
+  # ── muraqaba (DO) ──
+  - { id: 238e4d20-b61c-459f-b170-53f1a2f24b68, book: muslim, title: باب فضل دوام الذكر والفكر في أمور الآخرة والمراقبة وجواز ترك ذلك في بعض الأوقات والاشتغال بالدنيا, topics: [muraqaba] }
+
+  # ── tawakkul (DO) ──
+  - { id: f71f1534-43fe-46a3-b377-1969bae1af9a, book: bukhari, title: "باب: {ومن يتوكل على الله فهو حسبه} [الطلاق: 3]", topics: [tawakkul] }
+  - { id: ed2965f0-68b8-403f-b751-5ee3d457f717, book: bukhari, title: باب من اكتوى أو كوى غيره، وفضل من لم يكتو, topics: [tawakkul] }
+  - { id: f36542f2-19a4-4df6-8001-4903ec71a63a, book: muslim, title: باب في الأمر بالقوة وترك العجز والإستعانة بالله وتفويض المقادير لله, topics: [tawakkul] }
+
+  # ── sabr (DO) ──
+  - { id: cca7848f-537d-4726-ba40-0d835251dcad, book: bukhari, title: باب الصبر على الأذى, topics: [sabr] }
+  - { id: d99563ae-a0b9-4445-bb3a-7a58f92f5183, book: bukhari, title: باب الصبر عن محارم الله, topics: [sabr] }
+  - { id: 2d3c0ca4-99bd-49ce-8b9b-328d41626a13, book: bukhari, title: "باب فضل من مات له ولد فاحتسب وقال الله عز وجل: {وبشر الصابرين} [البقرة: 155]", topics: [sabr] }
+  - { id: 74131ff4-7ac6-4166-a5be-35a994b58c33, book: bukhari, title: "باب قول الرجل للمرأة عند القبر: اصبري", topics: [sabr] }
+  - { id: 576cc30f-06ab-479a-af47-fb08619d2925, book: bukhari, title: باب الصبر عند الصدمة الأولى, topics: [sabr] }
+  - { id: 1d724f49-00c9-4ec9-90ff-d77c273bab83, book: bukhari, title: باب ما جاء في كفارة المرض, topics: [sabr] }
+  - { id: 01990550-fa81-4f8d-ae33-5acc1b5c3bc3, book: bukhari, title: باب شدة المرض, topics: [sabr] }
+  - { id: 3240ef06-3ecb-4f29-b2df-d736a5c9d029, book: bukhari, title: "باب: أشد الناس بلاء الأنبياء، ثم الأمثل فالأمثل", topics: [sabr] }
+  - { id: dd9251c3-b831-46c6-919c-e8e79f3e42f9, book: bukhari, title: باب فضل من يصرع من الريح, topics: [sabr] }
+  - { id: 02ea3613-0721-48da-9378-b6ec1d83bd98, book: bukhari, title: باب فضل من ذهب بصره, topics: [sabr] }
+  - { id: 56a66748-d879-482b-b825-611c3c2d71a4, book: bukhari, title: باب أجر الصابر في الطاعون, topics: [sabr] }
+  - { id: f17fbb90-6a09-4ecb-b255-21b3406d97e3, book: muslim, title: باب ما يقال عند المصيبة, topics: [sabr] }
+  - { id: 01f9a60a-1e87-45de-9a7b-bfdacb9cd62d, book: muslim, title: باب في الصبر على المصيبة عند الصدمة الأولى, topics: [sabr] }
+  - { id: 10a87cd4-85b3-4673-8808-19bc0c0e355e, book: muslim, title: باب فضل التعفف والصبر, topics: [sabr] }
+  - { id: 55e49ba1-513f-49ad-aa30-2650ef660746, book: muslim, title: باب ثواب المؤمن فيما يصيبه من مرض أو حزن أو نحو ذلك حتى الشوكة يشاكها, topics: [sabr] }
+  - { id: e9dd2f1d-fb9a-45a0-8571-8f66f1f2d866, book: muslim, title: باب فضل من يموت له ولد فيحتسبه, topics: [sabr] }
+  - { id: da00eaf1-f5e6-47d7-9f0a-83f04ef96ccf, book: muslim, title: باب المؤمن أمره كله خير, topics: [sabr, shukr] }
+
+  # ── shukr (DO) ──
+  - { id: 43c2cb9b-8cba-4b26-b056-530df92fd2dd, book: muslim, title: باب استحباب حمد الله تعالى بعد الأكل والشرب, topics: [shukr] }
+
+  # ── niyaha (AVOID) ──
+  - { id: bbb06146-f5cb-4fd3-9025-f697e1ee8d33, book: bukhari, title: "باب قول النبي صلى الله عليه وسلم: «يعذب الميت ببعض بكاء أهله عليه» إذا كان النوح من سنته \"", topics: [niyaha] }
+  - { id: 221c7114-113f-4ca6-8a6c-f95e12bd4ffe, book: bukhari, title: باب ما يكره من النياحة على الميت, topics: [niyaha] }
+  - { id: 1aa2553b-8f25-4b27-99aa-f8b923c09c4a, book: bukhari, title: "باب: ليس منا من شق الجيوب", topics: [niyaha] }
+  - { id: f6cec067-0ca7-4472-a407-f2d0a3667ff1, book: bukhari, title: باب ما ينهى من الحلق عند المصيبة, topics: [niyaha] }
+  - { id: 4910180b-eb32-4193-a9f5-6c1bc703a36d, book: bukhari, title: "باب: ليس منا من ضرب الخدود", topics: [niyaha] }
+  - { id: ceca6054-4cfc-4120-a0c5-19e14d24170e, book: bukhari, title: باب ما ينهى من الويل ودعوى الجاهلية عند المصيبة, topics: [niyaha] }
+  - { id: c1d6efe3-b179-4105-9bc6-c92837c8cf6c, book: bukhari, title: باب ما ينهى من النوح والبكاء والزجر عن ذلك, topics: [niyaha] }
+  - { id: 01789aea-6c2b-4375-bb1f-c3b8bab53388, book: muslim, title: باب تحريم ضرب الخدود وشق الجيوب والدعاء بدعوى الجاهلية, topics: [niyaha] }
+  - { id: 1f9005af-655d-4e72-9a4b-865aaa67c524, book: muslim, title: باب الميت يعذب ببكاء أهله عليه, topics: [niyaha] }
+  - { id: d4365e15-abaa-4908-91ec-a7ed77320555, book: muslim, title: باب التشديد في النياحة, topics: [niyaha] }
+
+  # ── zuhd (DO) ──
+  - { id: 683a8e2c-b07e-4d30-a6a2-7a09f5a9a7e3, book: bukhari, title: باب مثل الدنيا في الآخرة, topics: [zuhd] }
+  - { id: ae53f202-34cd-48e7-9649-1ccdcaf79cb9, book: bukhari, title: "باب قول النبي صلى الله عليه وسلم: «كن في الدنيا كأنك غريب أو عابر سبيل»", topics: [zuhd] }
+  - { id: 1354529e-3b28-46b5-a00b-b208c4fd2e26, book: bukhari, title: "باب قول النبي صلى الله عليه وسلم: «ما أحب أن لي مثل أحد ذهبا»", topics: [zuhd] }
+  - { id: 9cbe1f21-989c-4901-9a9d-c221795cd2d1, book: bukhari, title: باب الغنى غنى النفس, topics: [zuhd] }
+  - { id: 9d255b57-606a-4c1d-83e0-c3151fde5e09, book: bukhari, title: باب فضل الفقر, topics: [zuhd] }
+  - { id: 8572a934-ddc8-4d13-868c-db0e617c5ada, book: bukhari, title: "باب: كيف كان عيش النبي صلى الله عليه وسلم وأصحابه، وتخليهم من الدنيا", topics: [zuhd] }
+  - { id: 84bf132f-899f-4343-980b-b736e141a152, book: bukhari, title: "باب: لينظر إلى من هو أسفل منه، ولا ينظر إلى من هو فوقه", topics: [zuhd] }
+  - { id: 9471e04e-9f06-436c-b7f7-2c93a2217201, book: muslim, title: باب ليس الغنى عن كثرة العرض, topics: [zuhd] }
+  - { id: e513b514-ef81-495a-bebd-cc7e101f5651, book: muslim, title: باب في الكفاف والقناعة, topics: [zuhd] }
+
+  # ── tul-amal (AVOID) ──
+  - { id: f19cef1b-1db8-4e01-92b1-11c301ec13c6, book: bukhari, title: باب في الأمل وطوله, topics: [tul-amal] }
+  - { id: ae0e3d2b-f0c3-4d98-88e3-563eac4be006, book: bukhari, title: باب ما يحذر من زهرة الدنيا والتنافس فيها, topics: [tul-amal] }
+  - { id: fc970267-06ae-4a6a-88f6-d2416677a8a4, book: bukhari, title: باب ما يتقى من فتنة المال, topics: [tul-amal] }
+  - { id: 04569c80-12eb-4905-bdd4-8a185e2c32aa, book: muslim, title: باب كراهة الحرص على الدنيا, topics: [tul-amal] }
+  - { id: b8dad9bf-bdbd-4921-b06c-7c50fcefff10, book: muslim, title: باب لو أن لابن آدم واديين لابتغى ثالثا, topics: [tul-amal] }
+  - { id: f9e10fd5-942d-4fbe-9a94-10c8068df9e3, book: muslim, title: باب تخوف ما يخرج من زهرة الدنيا, topics: [tul-amal] }
+
+  # ── ightinam-waqt (DO) ──
+  - { id: d7dd1120-8e04-4964-884c-002ecc6cf912, book: bukhari, title: "باب: أحب الدين إلى الله عز وجل أدومه", topics: [ightinam-waqt] }
+  - { id: 177fd523-c5be-4921-9736-b49159d3a44a, book: bukhari, title: باب القصد والمداومة على العمل, topics: [ightinam-waqt] }
+  - { id: a6cd188c-62ca-46db-8260-b8cb58e9fa0a, book: muslim, title: باب الحث على المبادرة بالأعمال قبل تظاهر الفتن, topics: [ightinam-waqt] }
+  - { id: de4b6057-c411-4c9d-b87a-8e59b545a929, book: muslim, title: باب فضيلة العمل الدائم من قيام الليل وغيره, topics: [ightinam-waqt] }
+  - { id: b59c6164-a119-4b75-9736-402e937cdf80, book: muslim, title: باب إكثار الأعمال والاجتهاد في العبادة, topics: [ightinam-waqt] }
+
+  # ── idaat-al-waqt (AVOID) ──
+  - { id: 37dd2b65-0ab5-4ee0-bb70-d634aeb7cfe1, book: bukhari, title: باب ما يكره من قيل وقال, topics: [idaat-al-waqt] }
+
+  # ── kibr (AVOID) ──
+  - { id: f0ffb605-4494-4cdf-9fcb-396d4d1b6f26, book: bukhari, title: باب الكبر, topics: [kibr] }
+  - { id: f4c51e47-2919-4b54-9833-d0ba3eefad9c, book: muslim, title: باب تحريم الكبر وبيانه, topics: [kibr] }
+  - { id: 322f663e-368c-403c-861c-67dfa37c7e41, book: muslim, title: باب تحريم الكبر, topics: [kibr] }
+  - { id: fccad078-4906-416a-a14b-e897f1448675, book: muslim, title: باب تحريم التبختر في المشي مع إعجابه بثيابه, topics: [kibr] }
+
+  # ── tawadu (DO) ──
+  - { id: 067b631a-ced8-4859-a194-7821078f11de, book: bukhari, title: باب التواضع, topics: [tawadu] }
+  - { id: 759985cb-d5db-4606-8f74-f57a254d49cf, book: muslim, title: باب إستحباب العفو والتواضع, topics: [tawadu, afw] }
+
+  # ── hasad (AVOID) ──
+  - { id: 90c7cae5-757b-458f-bad8-2242eb134b08, book: bukhari, title: باب ما ينهى عن التحاسد والتدابر, topics: [hasad, hijran] }
+  - { id: a9cfe7bf-4226-4dc9-b66c-39aec456dcb3, book: muslim, title: باب تحريم التحاسد والتباغض والتدابر, topics: [hasad, hijran] }
+
+  # ── salamat-sadr (DO) ──
+  - { id: ccf2559c-3413-42e3-a7ec-b9b2b6591abc, book: bukhari, title: "باب: من الإيمان أن يحب لأخيه ما يحب لنفسه", topics: [salamat-sadr] }
+  - { id: 1cfdaab9-0e0c-41fb-b68e-85de57bcd276, book: muslim, title: باب الدليل على أن من خصال الإيمان أن يحب لأخيه المسلم ما يحب لنفسه من الخير, topics: [salamat-sadr] }
+
+  # ── ghadab (AVOID) ──
+  - { id: 7ba9d4e3-f22c-4dbc-9632-02f4aeae5dbe, book: bukhari, title: باب الحذر من الغضب, topics: [ghadab, kaff-al-ghadab] }
+  - { id: 700b036c-6031-46e5-912c-5ad7e4fb02ee, book: muslim, title: باب فضل من يملك نفسه عند الغضب وبأي شيء يذهب الغضب, topics: [kaff-al-ghadab, ghadab] }
+
+  # ── husn-khuluq (DO) ──
+  - { id: 313e9b8c-0a32-4b02-accf-d0b6cf618ea4, book: bukhari, title: باب حسن الخلق والسخاء، وما يكره من البخل, topics: [husn-khuluq, sadaqah, bukhl] }
+  - { id: f00b9402-a528-44b7-b69c-a0c5ed752373, book: bukhari, title: باب «لم يكن النبي صلى الله عليه وسلم فاحشا ولا متفحشا», topics: [husn-khuluq, sabb-lan] }
+  - { id: 5ca52628-d43f-4eca-8f03-69b2724544a1, book: bukhari, title: "باب قول النبي صلى الله عليه وسلم: «يسروا ولا تعسروا»", topics: [husn-khuluq] }
+  - { id: 4e052775-549c-4c0e-954e-14ee498effd1, book: muslim, title: باب في الأمر بالتيسير وترك التنفير, topics: [husn-khuluq] }
+  - { id: 80243707-ed7f-4d9d-a064-0f53c4475008, book: muslim, title: باب فضل الرفق, topics: [husn-khuluq] }
+
+  # ── haya (DO) ──
+  - { id: 412874d4-1ddb-4083-a4c6-1767f2fc591a, book: bukhari, title: "باب: الحياء من الإيمان", topics: [haya] }
+  - { id: 67c401d4-8e20-4fda-9b03-68287458a908, book: bukhari, title: باب الحياء, topics: [haya] }
+  - { id: f0c078a7-8a3b-4113-874d-bc94418ad243, book: bukhari, title: باب إذا لم تستحي فاصنع ما شئت, topics: [haya] }
+  - { id: 19a1d9c5-805a-4c69-874b-c45f2ba73dd7, book: muslim, title: باب بيان عدد شعب الإيمان وأفضلها وأدناها وفضيلة الحياء وكونه من الإيمان, topics: [haya] }
+
+  # ── ghibah (AVOID) ──
+  - { id: 583ad749-cba9-4a23-8e70-24acda0c1fd4, book: bukhari, title: باب الغيبة, topics: [namimah] }
+  - { id: b8d0179b-b0e8-45b7-a08d-2303a38562d6, book: bukhari, title: باب عذاب القبر من الغيبة والبول, topics: [namimah, tanazzuh-bawl] }
+  - { id: a4a8b881-44db-44b9-a274-544f4a092a0e, book: muslim, title: باب تحريم الغيبة, topics: [ghibah] }
+
+  # ── hifz-al-lisan (DO) ──
+  - { id: 49c3f215-819e-4955-862a-6ad8322ebd7f, book: bukhari, title: "باب: المسلم من سلم المسلمون من لسانه ويده", topics: [hifz-al-lisan] }
+  - { id: 0efcc72b-3d2b-4ca8-bbd4-3bf980d45c97, book: bukhari, title: باب حفظ اللسان, topics: [hifz-al-lisan] }
+  - { id: 651417a3-0f58-466b-b763-36bfcf1360ba, book: muslim, title: باب التكلم بالكلمة يهوى بها في النار وفي نسخة باب حفظ اللسان, topics: [hifz-al-lisan] }
+
+  # ── namimah (AVOID) ──
+  - { id: e5ff7d7e-c204-4501-ae12-3c74eb40c5f6, book: bukhari, title: "باب: النميمة من الكبائر", topics: [namimah] }
+  - { id: 100ab54c-bb0d-4c88-b5df-12cdf83b7dbb, book: bukhari, title: باب ما يكره من النميمة, topics: [namimah] }
+  - { id: e2b098b3-bbac-4297-b9ec-ba92995687a3, book: muslim, title: باب بيان غلظ تحريم النميمة, topics: [namimah] }
+  - { id: 47be9d2b-facc-493e-89da-67b1662dd356, book: muslim, title: باب تحريم النميمة, topics: [namimah] }
+
+  # ── kadhib (AVOID) ──
+  - { id: 0aa4d714-b98e-4fe1-8b13-d2a52f2daea7, book: bukhari, title: باب إثم من كذب على النبي صلى الله عليه وسلم, topics: [kadhib] }
+  - { id: 2b0cc9fb-f8ca-4d1b-8448-5642a63a6968, book: bukhari, title: "باب قول الله تعالى: {واجتنبوا قول الزور} [الحج: 30]", topics: [kadhib] }
+  - { id: b94787a7-ec83-4df1-aa54-4ecb60c5e8ba, book: muslim, title: باب تغليظ الكذب على رسول الله صلى الله عليه وسلم, topics: [kadhib] }
+  - { id: 8fb4a96f-3da9-445c-a2e7-30e1321ba5be, book: muslim, title: باب تحريم الكذب وبيان المباح منه, topics: [kadhib] }
+  - { id: 31855ec8-4db1-4854-b90f-a3f0a840ed74, book: muslim, title: باب النهي عن التزوير في اللباس وغيره والتشبع بما لم يعط, topics: [kadhib] }
+
+  # ── sidq (DO) ──
+  - { id: 3aa0a03c-7732-4e1d-9435-d914c0eb929f, book: bukhari, title: "باب قول الله تعالى: {يا أيها الذين آمنوا اتقوا الله وكونوا مع الصادقين} [التوبة: 119] وما ينهى عن الكذب", topics: [sidq, kadhib] }
+  - { id: 54c25ab4-54a0-49c6-b357-b2b00ba7abf4, book: muslim, title: باب قبح الكذب وحسن الصدق وفضله, topics: [sidq, kadhib] }
+  - { id: adff0e0a-4935-4d6e-93ee-6302c83ad430, book: bukhari, title: "باب إذا بين البيعان ولم يكتما ونصحا ويذكر عن العداء بن خالد، قال: كتب لي النبي صلى الله عليه وسلم: «هذا ما اشترى محمد رسول الله صلى الله عليه وسلم، من العداء بن خالد، بيع المسلم من المسلم، لا داء ولا خبثة، ولا غائلة» وقال قتادة: «الغائلة الزنا، والسرقة، والإباق» وقيل لإبراهيم: إن بعض النخاسين يسمي آري خراسان، وسجستان، فيقول: جاء أمس من خراسان، جاء اليوم من سجستان، فكرهه كراهية شديدة وقال عقبة بن عامر: «لا يحل لامرئ يبيع سلعة يعلم أن بها داء إلا أخبره»", topics: [sidq] }
+  - { id: 6a678403-fd57-43d9-b246-9102d6a6fb54, book: muslim, title: باب الصدق في البيع والبيان, topics: [sidq] }
+
+  # ── tathabbut (DO) ──
+  - { id: 850eec38-5ae6-4169-91df-ebf8c865dbfe, book: muslim, title: باب النهي عن الحديث بكل ما سمع, topics: [tathabbut, kadhib] }
+
+  # ── dhul-wajhayn (AVOID) ──
+  - { id: 99004435-208d-4b95-b993-e88262e20cd2, book: bukhari, title: باب ما قيل في ذي الوجهين, topics: [dhul-wajhayn] }
+  - { id: 535c6467-6a3a-4c3c-a8d7-fcf3309bb3d3, book: muslim, title: باب ذم ذي الوجهين وتحريم فعله, topics: [dhul-wajhayn] }
+  - { id: 6ba3fc24-1d88-4651-ae03-a9a8c5642812, book: bukhari, title: باب علامة المنافق, topics: [dhul-wajhayn] }
+  - { id: b00c0807-9879-4e2b-8e23-17e62d705d8c, book: muslim, title: باب بيان خصال المنافق, topics: [dhul-wajhayn] }
+
+  # ── shahadat-zur (AVOID) ──
+  - { id: 9f5f0347-2ef0-41c8-8963-c2c0fc95eede, book: bukhari, title: باب ما قيل في شهادة الزور, topics: [shahadat-zur] }
+
+  # ── yamin-ghamus (AVOID) ──
+  - { id: f22a4d9e-4ba6-41ab-8f3e-5e4986015360, book: bukhari, title: باب اليمين الغموس, topics: [yamin-ghamus] }
+  - { id: a94b9afa-4503-4ed4-be23-937531712571, book: bukhari, title: "باب قول الله تعالى: {إن الذين يشترون بعهد الله وأيمانهم ثمنا قليلا، أولئك لا خلاق لهم في الآخرة، ولا يكلمهم الله ولا ينظر إليهم يوم القيامة، ولا يزكيهم ولهم عذاب أليم} [آل عمران: 77]", topics: [yamin-ghamus] }
+  - { id: c25b9992-1ff6-4897-b964-a7480ec22b32, book: bukhari, title: "باب قول الله تعالى: {إن الذين يشترون بعهد الله وأيمانهم ثمنا قليلا} [آل عمران: 77]", topics: [yamin-ghamus] }
+  - { id: 7c755eb8-51e1-44ac-ade7-60fda7134a27, book: bukhari, title: باب ما يكره من الحلف في البيع, topics: [yamin-ghamus] }
+  - { id: 48ce7a16-455b-464d-a483-a6edc0eba6a1, book: muslim, title: باب وعيد من اقتطع حق المسلم بيمين فاجرة بالنار, topics: [yamin-ghamus] }
+  - { id: 8ce4674a-0215-4a4a-b905-954f30921f7d, book: muslim, title: باب بيان غلظ تحريم إسبال الإزار والمن بالعطية وتنفيق السلعة بالحلف وبيان الثلاثة الذين لا يكلمهم الله يوم القيامة ولا ينظر إليهم ولا يزكيهم ولهم عذاب أليم, topics: [isbal-harir, mann, yamin-ghamus] }
+
+  # ── hilf-bighayr-allah (AVOID) ──
+  - { id: ead4c2f6-4e7b-42d7-91b4-58ad9e0a224d, book: bukhari, title: باب لا تحلفوا بآبائكم, topics: [hilf-bighayr-allah] }
+  - { id: 002b86f4-68b6-4eec-8c02-d927d0936685, book: bukhari, title: باب لا يحلف باللات والعزى ولا بالطواغيت, topics: [hilf-bighayr-allah] }
+  - { id: 96fd5cd4-6030-4164-afad-1fc26b466cd6, book: bukhari, title: باب من حلف بملة سوى ملة الإسلام, topics: [hilf-bighayr-allah] }
+  - { id: 2ebbd91e-7096-4990-b49f-b337bb5c357c, book: muslim, title: باب النهي عن الحلف بغير الله تعالى, topics: [hilf-bighayr-allah] }
+  - { id: 1600a47a-6ee0-4eb8-9c66-43c039cd89c3, book: muslim, title: باب من حلف باللات والعزى فليقل لا إله إلا الله, topics: [hilf-bighayr-allah] }
+
+  # ── sabb-lan (AVOID) ──
+  - { id: 4701e1df-c432-426c-a6e9-9142e15e4ac8, book: bukhari, title: باب ما ينهى من السباب واللعن, topics: [sabb-lan] }
+  - { id: 7f88d78e-f5a2-4f17-913b-ca869e9d8b55, book: bukhari, title: باب من كفر أخاه بغير تأويل فهو كما قال, topics: [sabb-lan] }
+  - { id: 9bb3e389-d9fc-4977-a482-44ab9e4c6b73, book: bukhari, title: "باب: لا تسبوا الدهر", topics: [sabb-lan] }
+  - { id: 6e07a517-6505-4d02-b83e-a1580a83f7f7, book: bukhari, title: باب ما ينهى من سب الأموات, topics: [sabb-lan] }
+  - { id: 8b34e087-f399-4372-bf52-f269f29d7eae, book: muslim, title: باب بيان حال إيمان من قال لأخيه المسلم يا كافر, topics: [sabb-lan] }
+  - { id: 97ec1f4c-a1e1-43d7-9178-f9d46506ba52, book: muslim, title: باب بيان قول النبي صلى الله عليه وسلم سباب المسلم فسوق وقتاله كفر, topics: [sabb-lan] }
+  - { id: 89c6fd1c-2619-4eee-b99d-39463c819247, book: muslim, title: باب النهي عن سب الدهر, topics: [sabb-lan] }
+  - { id: 70c1a194-2930-4ccb-88a0-3b352e3fd651, book: muslim, title: باب النهي عن السباب, topics: [sabb-lan] }
+  - { id: 723f425b-0485-4e3e-955a-d7b2ab40daa6, book: muslim, title: باب النهى عن لعن الدواب وغيرها, topics: [sabb-lan] }
+
+  # ── sukhriya (AVOID) ──
+  - { id: b01a295f-32b4-4165-a5f6-ba180469bb74, book: muslim, title: باب إطلاق اسم الكفر على الطعن في النسب والنياحة, topics: [niyaha] }
+
+  # ── kalam-tayyib (DO) ──
+  - { id: 51998101-dc19-4af8-b9a0-806cc4f85811, book: bukhari, title: باب طيب الكلام, topics: [kalam-tayyib] }
+  - { id: 2a5d8277-449c-4376-a162-1a2b10d74763, book: muslim, title: باب إستحباب طلاقة الوجه عند اللقاء, topics: [kalam-tayyib] }
+
+  # ── jidal (AVOID) ──
+  - { id: cb41768b-c3f5-4448-8fdf-35bfe08d7d32, book: bukhari, title: "باب قول الله تعالى: {وهو ألد الخصام} [البقرة: 204]", topics: [jidal] }
+  - { id: 26359e44-0b74-441f-8f58-550229303dc3, book: bukhari, title: باب إثم من خاصم في باطل، وهو يعلمه, topics: [jidal] }
+  - { id: 5ef2a8ba-db97-4fcc-a21d-3b79b1be6817, book: bukhari, title: باب الألد الخصم، وهو الدائم في الخصومة, topics: [jidal] }
+  - { id: f28831dc-34c9-471a-979a-d009d5d7850a, book: muslim, title: باب في الألد الخصم, topics: [jidal] }
+
+  # ── qadhf (AVOID) ──
+  - { id: 4c6138af-1130-4b92-8589-31b1a11f6de2, book: bukhari, title: باب رمي المحصنات, topics: [qadhf] }
+  - { id: bcae84a5-f352-49ec-82ae-f06b16427c4b, book: muslim, title: باب التغليظ على من قذف مملوكه بالزنى, topics: [qadhf] }
+
+  # ── islah-bayn-nas (DO) ──
+  - { id: c9ce9687-5473-40cc-9c9c-5485afda2734, book: bukhari, title: "باب ما جاء في الإصلاح بين الناس \" إذا تفاسدوا،", topics: [islah-bayn-nas] }
+  - { id: 7171f04e-9974-4438-8878-3b5cbd1daabc, book: bukhari, title: "باب: ليس الكاذب الذي يصلح بين الناس", topics: [islah-bayn-nas] }
+  - { id: f8d1291f-c4ae-4d8b-8824-2a4e65fd6a5f, book: bukhari, title: "باب قول الإمام لأصحابه: اذهبوا بنا نصلح", topics: [islah-bayn-nas] }
+  - { id: 08d6b40f-23d3-402e-ba97-9a20bdd36504, book: bukhari, title: باب فضل الإصلاح بين الناس، والعدل بينهم, topics: [islah-bayn-nas] }
+
+  # ── nasiha (DO) ──
+  - { id: 793f9e73-60d1-462a-8564-5fa56556ab6e, book: bukhari, title: "باب قول النبي صلى الله عليه وسلم: \" الدين النصيحة: لله ولرسوله ولأئمة المسلمين وعامتهم \"", topics: [nasiha] }
+  - { id: c6501116-22ad-4c65-b6f9-5ec5793b58c9, book: muslim, title: باب بيان أن الدين النصيحة, topics: [nasiha] }
+
+  # ── qawl-bila-amal (AVOID) ──
+  - { id: 2fc294de-e314-4967-b415-cc3ae2dc5bb1, book: muslim, title: باب عقوبة من يأمر بالمعروف ولا يفعله وينهى عن المنكر ويفعله, topics: [qawl-bila-amal] }
+
+  # ── birr-al-walidayn (DO) ──
+  - { id: 3624a5e9-74f5-417b-b751-05711413f838, book: bukhari, title: "باب قول الله تعالى: {ووصينا الإنسان بوالديه حسنا} [العنكبوت: 8]", topics: [birr-al-walidayn] }
+  - { id: 72416d92-2820-4c42-946d-fb895a4b193e, book: bukhari, title: "باب: من أحق الناس بحسن الصحبة", topics: [birr-al-walidayn] }
+  - { id: 1887e5e2-a9d7-4f8b-86ab-5695de9dfd96, book: bukhari, title: باب إجابة دعاء من بر والديه, topics: [birr-al-walidayn] }
+  - { id: 0c09ce88-6423-415f-9bbf-6df4b3bf314a, book: bukhari, title: باب صلة الوالد المشرك, topics: [birr-al-walidayn] }
+  - { id: ad905a4a-7bd2-44dd-b6d8-0689de6be349, book: bukhari, title: باب صلة المرأة أمها ولها زوج, topics: [birr-al-walidayn] }
+  - { id: c94bea1f-a306-416a-b859-313c2b955e17, book: muslim, title: باب بر الوالدين وأنهما أحق به, topics: [birr-al-walidayn] }
+  - { id: 6c014f4f-c848-42e3-90da-85890e7202a6, book: muslim, title: باب تقديم بر الوالدين على التطوع بالصلاة وغيرها, topics: [birr-al-walidayn] }
+  - { id: 0f09e60c-7fb7-4e4d-9170-2acecc65aafc, book: muslim, title: باب رغم أنف من أدرك أبويه أو أحدهما عند الكبر فلم يدخل الجنة, topics: [birr-al-walidayn, uquq] }
+  - { id: e8a4f3b8-ea04-40b8-ad12-2a93fc974891, book: muslim, title: باب فضل صلة أصدقاء الأب والأم ونحوهما, topics: [birr-al-walidayn] }
+  - { id: 1fc163e7-f78e-4fb1-b4d6-6956b3245c52, book: muslim, title: باب فضل عتق الوالد, topics: [birr-al-walidayn] }
+
+  # ── uquq (AVOID) ──
+  - { id: 8331f067-91d2-433a-a155-35be6dd1a2bc, book: bukhari, title: "باب: لا يسب الرجل والديه", topics: [uquq] }
+  - { id: 98ede15a-5ebd-4753-8f20-64a7ec80cb9b, book: bukhari, title: "باب: عقوق الوالدين من الكبائر", topics: [uquq] }
+
+  # ── silat-ar-rahim (DO) ──
+  - { id: 711ceb16-c9e5-4f69-af2d-66c44e06672d, book: bukhari, title: باب صلة الأخ المشرك, topics: [silat-ar-rahim] }
+  - { id: 633d578a-ac94-41ae-bcee-38b831c7d89c, book: bukhari, title: باب فضل صلة الرحم, topics: [silat-ar-rahim] }
+  - { id: 702e0709-0d9d-4476-8547-2c3597185e52, book: bukhari, title: باب من بسط له في الرزق بصلة الرحم, topics: [silat-ar-rahim] }
+  - { id: d75355b0-a916-4a27-8466-8865d9948f39, book: bukhari, title: باب من وصل وصله الله, topics: [silat-ar-rahim, qat-al-rahim] }
+  - { id: 2dd1fe96-dd2b-49ed-a988-c34ce746e94f, book: bukhari, title: باب تبل الرحم ببلالها, topics: [silat-ar-rahim] }
+  - { id: 7c498ba8-9e98-4a4c-b1e3-42f3a8ce1598, book: bukhari, title: "باب: ليس الواصل بالمكافئ", topics: [silat-ar-rahim] }
+  - { id: e414f671-6166-4be4-865f-b254a4c4bd01, book: muslim, title: باب صلة الرحم وتحريم قطيعتها, topics: [silat-ar-rahim, qat-al-rahim] }
+
+  # ── qat-al-rahim (AVOID) ──
+  - { id: 1c5c6b3f-b136-4277-b307-04e16c9127d9, book: bukhari, title: باب إثم القاطع, topics: [qat-al-rahim] }
+
+  # ── intisab (AVOID) ──
+  - { id: f39e12f0-7441-4f0f-898d-3584b28fe90e, book: muslim, title: باب بيان حال إيمان من رغب عن أبيه وهو يعلم, topics: [intisab] }
+
+  # ── husn-ishra (DO) ──
+  - { id: 41b22207-48e8-47cc-b70b-50f710467c00, book: bukhari, title: باب الوصاة بالنساء, topics: [husn-ishra] }
+  - { id: 7e1ed995-9400-49dd-829c-6edf071f95bb, book: bukhari, title: باب حسن المعاشرة مع الأهل, topics: [husn-ishra] }
+  - { id: 0262307f-eb9f-4c62-85cf-9b015c092921, book: bukhari, title: "باب المداراة مع النساء، وقول النبي صلى الله عليه وسلم: «إنما المرأة كالضلع»", topics: [husn-ishra] }
+  - { id: 3a8c864b-4f9f-4a6c-b34e-904c464e1624, book: bukhari, title: "باب: لزوجك عليك حق", topics: [husn-ishra] }
+  - { id: 259c27b5-27aa-40cf-89f9-f22f707d25ba, book: bukhari, title: باب خدمة الرجل في أهله, topics: [husn-ishra] }
+  - { id: 0690f8d8-9521-47ea-8422-bd6984b4fe9b, book: bukhari, title: "باب: كيف يكون الرجل في أهله", topics: [husn-ishra] }
+
+  # ── zulm-zawja (AVOID) ──
+  - { id: f2ad05a4-adfd-4e54-b743-166ccdbbbc1e, book: bukhari, title: باب ما يكره من ضرب النساء, topics: [zulm-zawja] }
+
+  # ── nushuz (AVOID) ──
+  - { id: 1a226284-946c-40a0-a302-7cb6243020ae, book: bukhari, title: باب إذا باتت المرأة مهاجرة فراش زوجها, topics: [nushuz] }
+  - { id: 210a42e9-7713-46b7-ab68-a9cee7a88596, book: muslim, title: باب تحريم امتناعها من فراش زوجها, topics: [nushuz] }
+
+  # ── nafaqa-ahl (DO) ──
+  - { id: 8f407f22-c31f-4ecb-97d9-de2d5a8fd854, book: bukhari, title: باب فضل النفقة على الأهل, topics: [nafaqa-ahl] }
+  - { id: 07b9d71c-138b-476a-8129-cf16dc47477b, book: muslim, title: باب فضل النفقة على العيال والمملوك وإثم من ضيعهم أو حبس نفقتهم عنهم, topics: [nafaqa-ahl] }
+  - { id: dd15cb01-0ae0-4528-a646-51228d865380, book: muslim, title: باب فضل الإحسان إلى البنات, topics: [nafaqa-ahl] }
+
+  # ── nikah (DO) ──
+  - { id: 8e477d4a-6020-4d41-8b11-22d1bde9466f, book: bukhari, title: باب الترغيب في النكاح, topics: [nikah] }
+  - { id: ac855e29-292e-43b9-a951-6e8d95be26b0, book: bukhari, title: "باب قول النبي صلى الله عليه وسلم: «من استطاع منكم الباءة فليتزوج، لأنه أغض للبصر وأحصن للفرج» وهل يتزوج من لا أرب له في النكاح \"", topics: [nikah, iffa] }
+  - { id: 6cf40aaa-f831-486f-9be7-089084b78827, book: muslim, title: باب استحباب النكاح لمن تاقت نفسه إليه ووجد مؤنه واشتغال من عجز عن المؤن بالصوم, topics: [nikah, iffa] }
+  - { id: d91c0f34-0947-4e0c-9428-249e1064da8c, book: muslim, title: باب استحباب نكاح ذات الدين, topics: [nikah] }
+
+  # ── iffa (DO) ──
+  - { id: babb69c8-b8ef-4025-9e37-bf749c36f1c2, book: bukhari, title: باب من لم يستطع الباءة فليصم, topics: [iffa] }
+  - { id: 8ca4b173-a255-47eb-90ef-ad8b328025b8, book: bukhari, title: باب فضل من ترك الفواحش, topics: [iffa] }
+
+  # ── kafalat-yatim (DO) ──
+  - { id: d074257c-a47e-49f4-b856-04f868220fb0, book: bukhari, title: باب فضل من يعول يتيما, topics: [kafalat-yatim] }
+  - { id: 850f11ea-6095-4fbc-9168-d8e26292a41b, book: bukhari, title: باب الساعي على الأرملة, topics: [kafalat-yatim] }
+  - { id: fbe43d83-9f84-443e-93ec-9b711fee0afd, book: bukhari, title: باب الساعي على المسكين, topics: [kafalat-yatim] }
+  - { id: 9311f54d-517e-44bd-aabe-3b0228dd0749, book: muslim, title: باب الإحسان إلى الأرملة والمسكين واليتيم, topics: [kafalat-yatim] }
+
+  # ── akl-mal-yatim (AVOID) ──
+  - { id: f17f52f9-2e8e-4a23-aeb1-9355a10f4735, book: bukhari, title: "باب قول الله تعالى: {إن الذين يأكلون أموال اليتامى ظلما، إنما يأكلون في بطونهم نارا وسيصلون سعيرا} [النساء: 10]", topics: [akl-mal-yatim] }
+
+  # ── haqq-jar (DO) ──
+  - { id: 2292b8df-dbd8-4c1e-ad7b-823857c5182c, book: bukhari, title: باب الوصاة بالجار, topics: [haqq-jar] }
+  - { id: ba956419-0283-4db4-be4c-d9d69ddd28f1, book: bukhari, title: "باب: لا تحقرن جارة لجارتها", topics: [haqq-jar] }
+  - { id: e0c0db86-d24e-48cd-a449-757452e8f038, book: bukhari, title: باب حق الجوار في قرب الأبواب, topics: [haqq-jar] }
+  - { id: 216650bd-bdd6-4f64-8553-431526445bbe, book: muslim, title: باب الوصية بالجار والإحسان إليه, topics: [haqq-jar] }
+  - { id: c46aba80-4225-4ef7-be43-f3c97824ca3d, book: muslim, title: باب الحث على إكرام الجار والضيف ولزوم الصمت إلا عن الخير وكون ذلك كله من الإيمان, topics: [haqq-jar, ikram-dayf, hifz-al-lisan] }
+
+  # ── adha-jar (AVOID) ──
+  - { id: 49cc3893-277c-4830-b4db-01d6068e3f56, book: bukhari, title: باب إثم من لا يأمن جاره بوايقه, topics: [adha-jar] }
+  - { id: 1c86a274-0d64-4f20-bd0d-e93efbdd7f0b, book: bukhari, title: "باب: من كان يؤمن بالله واليوم الآخر فلا يؤذ جاره", topics: [adha-jar, ikram-dayf, hifz-al-lisan] }
+  - { id: c386f72c-f17e-43b8-b734-a8e23fd45a9a, book: muslim, title: باب بيان تحريم إيذاء الجار, topics: [adha-jar] }
+
+  # ── ikram-dayf (DO) ──
+  - { id: db98a7fd-32c1-4be7-9e84-ae38b00c9084, book: bukhari, title: باب حق الضيف, topics: [ikram-dayf] }
+  - { id: 69db5312-c7d1-47cb-8423-03a7370a1559, book: bukhari, title: باب إكرام الضيف، وخدمته إياه بنفسه, topics: [ikram-dayf] }
+  - { id: 26412e3d-3d47-4f87-aad6-69ce9c104c46, book: bukhari, title: باب صنع الطعام والتكلف للضيف, topics: [ikram-dayf] }
+  - { id: 372319dc-ead2-4a4e-a647-ec4addf0d423, book: muslim, title: باب إكرام الضيف وفضل إيثاره, topics: [ikram-dayf] }
+
+  # ── rahma-khalq (DO) ──
+  - { id: b821d3d3-03ea-4467-b04b-3af1f13114a7, book: bukhari, title: باب رحمة الولد وتقبيله ومعانقته, topics: [rahma-khalq] }
+  - { id: 2d2a66b9-2f21-433b-a752-8055a272162e, book: bukhari, title: باب رحمة الناس والبهائم, topics: [rahma-khalq] }
+  - { id: edc1d8cf-5690-449c-9e66-3d8ea85604d5, book: muslim, title: باب تراحم المؤمنين وتعاطفهم وتعاضدهم, topics: [rahma-khalq] }
+  - { id: 9c29eef2-7abe-44fc-8480-74630a29f871, book: muslim, title: باب رحمته صلى الله عليه وسلم الصبيان والعيال وتواضعه وفضل ذلك, topics: [rahma-khalq] }
+  - { id: 411a2406-cfec-431c-9de6-7a3a6c522cb3, book: muslim, title: باب الأمر بإحسان الذبح والقتل وتحديد الشفرة, topics: [rahma-khalq] }
+  - { id: 9fe7ef00-7a55-4441-9665-6135016c611e, book: muslim, title: باب فضل ساقي البهائم المحترمة وإطعامها, topics: [rahma-khalq] }
+
+  # ── tadhib-hayawan (AVOID) ──
+  - { id: dc32af9b-e040-47f3-89b3-b6407e21ecf1, book: muslim, title: باب النهي عن صبر البهائم, topics: [tadhib-hayawan] }
+  - { id: 15e0d6d8-c1cc-43f6-adeb-9c4d626c6a04, book: muslim, title: باب النهي عن ضرب الحيوان في وجهه ووسمه فيه, topics: [tadhib-hayawan] }
+  - { id: d0e1797d-e91f-4fe3-837a-6090ea5cf646, book: muslim, title: باب تحريم قتل الهرة, topics: [tadhib-hayawan] }
+  - { id: fc8bee72-0d6f-475a-98cd-a92ca5454be6, book: muslim, title: باب تحريم تعذيب الهرة ونحوها من الحيوان الذي لا يؤذى, topics: [tadhib-hayawan] }
+
+  # ── zulm (AVOID) ──
+  - { id: a39ea8f0-2331-44e4-b5ea-8727ae54c90b, book: bukhari, title: باب قصاص المظالم, topics: [zulm] }
+  - { id: 25970253-b24a-4f74-8fcf-e5b6389d93c6, book: bukhari, title: "باب: لا يظلم المسلم المسلم ولا يسلمه", topics: [zulm, qada-hawaij, satr-muslim] }
+  - { id: 2d6baa2f-698a-4e9e-a402-eb46c27b4763, book: bukhari, title: "باب: أعن أخاك ظالما أو مظلوما", topics: [zulm] }
+  - { id: d9155c63-4dda-4ede-accc-16164300e34a, book: bukhari, title: "باب: الظلم ظلمات يوم القيامة", topics: [zulm] }
+  - { id: 548aca45-f49a-4baa-afb0-1a1bf52d773e, book: bukhari, title: باب الاتقاء والحذر من دعوة المظلوم, topics: [zulm] }
+  - { id: 6f35f787-5e0d-458c-b0d4-3fb96f60f45b, book: muslim, title: باب تحريم ظلم المسلم وخذله واحتقاره ودمه وعرضه وماله, topics: [zulm, sukhriya] }
+  - { id: fd71c5a4-7d48-4e86-ad50-022781af947c, book: muslim, title: باب تحريم الظلم, topics: [zulm] }
+  - { id: 67875b88-274a-43b9-860b-44bfa1ec57bf, book: muslim, title: باب نصر الأخ ظالما أو مظلوما, topics: [zulm] }
+
+  # ── adl (DO) ──
+  - { id: c874e0b3-d3d3-4596-9252-7ad8f10d6454, book: muslim, title: باب فضيلة الإمام العادل وعقوبة الجائر والحث على الرفق بالرعية والنهي عن إدخال المشقة عليهم, topics: [adl, zulm-raiyya] }
+  - { id: a64f644e-4b19-46f3-b848-dd708cf69100, book: muslim, title: باب كراهة تفضيل بعض الأولاد في الهبة, topics: [adl] }
+
+  # ── zulm-raiyya (AVOID) ──
+  - { id: 311c6c11-59d9-4b24-bb33-73f0d7ce5984, book: bukhari, title: باب من استرعي رعية فلم ينصح, topics: [zulm-raiyya] }
+  - { id: ae568175-c9f3-4c85-864b-a68b15eec167, book: muslim, title: باب استحقاق الوالي الغاش لرعيته النار, topics: [zulm-raiyya] }
+
+  # ── taat-wulat (DO) ──
+  - { id: 6e96691f-7481-4bac-8c7b-32c5cfb5ae60, book: bukhari, title: "باب قول الله تعالى و {أطيعوا الله وأطيعوا الرسول وأولي الأمر منكم} [النساء: 59]", topics: [taat-wulat] }
+  - { id: 75557ef7-bb08-4f9b-b211-756355d02922, book: bukhari, title: باب السمع والطاعة للإمام ما لم تكن معصية, topics: [taat-wulat] }
+  - { id: 39612af9-54ff-4999-92e6-69c686c82ef4, book: bukhari, title: باب السمع والطاعة للإمام, topics: [taat-wulat] }
+  - { id: 7cd46fa7-8687-429d-b6ed-2ac03cb86d7e, book: muslim, title: باب وجوب طاعة الأمراء في غير معصية وتحريمها في المعصية, topics: [taat-wulat] }
+  - { id: d6fa4207-479a-42db-9480-d1adef41c224, book: muslim, title: باب الأمر بالصبر عند ظلم الولاة واستئثارهم, topics: [taat-wulat] }
+  - { id: e4102a5b-19bf-416d-bba1-bef56e86fc47, book: muslim, title: باب في طاعة الأمراء وإن منعوا الحقوق, topics: [taat-wulat] }
+  - { id: 5086a692-26d1-48e3-8e42-47ab05c648fd, book: muslim, title: باب البيعة على السمع والطاعة فيما استطاع, topics: [taat-wulat] }
+
+  # ── rishwa (AVOID) ──
+  - { id: fbc245b8-e6b2-42df-8786-4c9b4b711740, book: bukhari, title: باب هدايا العمال, topics: [rishwa] }
+  - { id: 376204d5-957a-40a3-b88a-b264e15221a2, book: muslim, title: باب تحريم هدايا العمال, topics: [rishwa] }
+
+  # ── hijran (AVOID) ──
+  - { id: 754dff76-8ccb-4a04-9e05-1e9864ea4521, book: bukhari, title: باب الهجرة, topics: [hijran] }
+  - { id: 5e6de93f-76fd-4f51-ae67-a746e16df718, book: muslim, title: باب تحريم الهجر فوق ثلاث بلا عذر شرعى, topics: [hijran] }
+  - { id: 79ef1025-ca0a-4f8e-82f8-9aa77a3d6267, book: muslim, title: باب النهى عن الشحناء والتهاجر, topics: [hijran, hasad] }
+
+  # ── su-dhann (AVOID) ──
+  - { id: d18254b3-69b3-4e93-9d46-31286861e01f, book: bukhari, title: "باب {يا أيها الذين آمنوا اجتنبوا كثيرا من الظن إن بعض الظن إثم ولا تجسسوا} [الحجرات: 12]", topics: [su-dhann, tajassus] }
+  - { id: ed672c4a-b4b3-4729-8a83-9483520f2cd8, book: muslim, title: باب تحريم الظن والتجسس والتنافس والتناجش ونحوها, topics: [su-dhann, tajassus] }
+
+  # ── tajassus (AVOID) ──
+  - { id: c116a9b3-d981-4770-bf97-1fbd24162376, book: bukhari, title: "باب: الاستئذان من أجل البصر", topics: [tajassus] }
+  - { id: 449c8d3b-c367-4d61-a7c9-c56ce39dac7a, book: muslim, title: باب تحريم النظر في بيت غيره, topics: [tajassus] }
+
+  # ── satr-muslim (DO) ──
+  - { id: 067e32ac-bf37-405e-92a0-589273aa3660, book: muslim, title: باب بشارة من ستر الله تعالى عيبه في الدنيا بأن يستر عليه في الآخرة, topics: [satr-muslim] }
+
+  # ── qada-hawaij (DO) ──
+  - { id: 730e52e3-b995-4b22-b57b-62f42ab81a0a, book: muslim, title: باب استحباب الوضع من الدين, topics: [qada-hawaij] }
+  - { id: 9298a296-fdd9-49e6-8a9a-6a03200fd38d, book: muslim, title: باب فضل إنظار المعسر, topics: [qada-hawaij, samaha] }
+  - { id: 97e6488f-4ea2-4c69-8fbf-96bbd4113738, book: muslim, title: باب إستحباب الشفاعة فيما ليس بحرام, topics: [qada-hawaij] }
+
+  # ── taawun (DO) ──
+  - { id: 214fe810-f662-4d27-8c55-7976298e4020, book: bukhari, title: باب تعاون المؤمنين بعضهم بعضا, topics: [taawun] }
+
+  # ── hubb-fillah (DO) ──
+  - { id: 64cbf10d-6490-494c-b0da-be95a25fd6e1, book: bukhari, title: باب علامة حب الله عز وجل, topics: [hubb-fillah] }
+  - { id: f5d231a9-4fe2-44b6-b419-c2adbfff7293, book: muslim, title: باب في فضل الحب في الله, topics: [hubb-fillah] }
+  - { id: 1b3be4d8-9c12-4af5-b706-7c91c7f0f0d3, book: muslim, title: باب إستحباب مجالسة الصالحين ومجانبة قرناء السوء, topics: [hubb-fillah] }
+  - { id: 4be51803-8dd9-422c-9922-ef7a29d9d52a, book: muslim, title: باب المرء مع من أحب, topics: [hubb-fillah] }
+
+  # ── amana-wafa (DO) ──
+  - { id: 9421ce2f-1f31-418f-bfc3-6ec0676facfa, book: bukhari, title: باب من أمر بإنجاز الوعد, topics: [amana-wafa] }
+  - { id: c4cd554f-9719-472e-a495-18d2c565334b, book: bukhari, title: باب حفظ السر, topics: [amana-wafa] }
+  - { id: ab2db3b0-6d82-4cf7-b8c5-baf49e339939, book: bukhari, title: باب من أخذ أموال الناس يريد أداءها أو إتلافها, topics: [amana-wafa] }
+  - { id: 0bd1fae3-b980-4728-9175-723e2f016a9d, book: bukhari, title: باب أداء الدين, topics: [amana-wafa] }
+  - { id: d002d11a-98e9-4c7c-96b9-e0b1cb52af19, book: muslim, title: باب الوفاء بالعهد, topics: [amana-wafa] }
+
+  # ── khiyana (AVOID) ──
+  - { id: 2171b18e-56d0-4018-a44c-96c230085492, book: muslim, title: باب تحريم إفشاء سر المرأة, topics: [khiyana] }
+
+  # ── ghadr (AVOID) ──
+  - { id: 53cdbaac-c3db-4ff3-986a-fa48caf63828, book: muslim, title: باب تحريم الغدر, topics: [ghadr] }
+
+  # ── mann (AVOID) ──
+  - { id: a706ad92-3a46-42c1-8a8c-88ca44f705d0, book: bukhari, title: "باب: لا يحل لأحد أن يرجع في هبته وصدقته", topics: [mann] }
+  - { id: 5c3de3cd-48b8-40ac-b1b6-3521b60a3763, book: muslim, title: باب تحريم الرجوع في الصدقة والهبة بعد القبض إلا ما وهبه لولده وإن سفل, topics: [mann] }
+
+  # ── adha-muslimin (AVOID) ──
+  - { id: 86f90079-8094-4d8d-9b44-51ff4877ba44, book: muslim, title: باب قول النبي صلى الله عليه وسلم من حمل علينا السلاح فليس منا, topics: [adha-muslimin] }
+  - { id: c7ab326e-04d0-4b63-a67d-442b90ac2ecc, book: muslim, title: باب الوعيد الشديد لمن عذب الناس بغير حق, topics: [adha-muslimin] }
+  - { id: 845b3ce9-62c6-4a0c-a957-04761dcf5daa, book: muslim, title: باب أمر من مر بسلاح في مسجد أو سوق أو غيرهما من المواضع الجامعة للناس أن يمسك بنصالها, topics: [adha-muslimin] }
+  - { id: 1abbc49d-cfbb-4d38-bb5a-d5da1e9031fd, book: muslim, title: باب النهي عن الإشارة بالسلاح إلى مسلم, topics: [adha-muslimin] }
+
+  # ── imatat-adha (DO) ──
+  - { id: ab696a7f-f33e-4ea3-8f23-2973811d6a31, book: bukhari, title: باب من أخذ الغصن، وما يؤذي الناس في الطريق، فرمى به, topics: [imatat-adha] }
+  - { id: 311856c5-d02e-48fc-b3e8-3567183c4cda, book: muslim, title: باب فضل إزالة الأذى عن الطريق, topics: [imatat-adha] }
+
+  # ── salam (DO) ──
+  - { id: bc1b305a-6b1e-4b2b-94e1-19899adeeeaf, book: bukhari, title: "باب: إفشاء السلام من الإسلام", topics: [salam] }
+  - { id: 4dbd36d3-ce16-4340-ba2d-6465ca5646b7, book: bukhari, title: باب إفشاء السلام, topics: [salam] }
+  - { id: 7c252217-4f39-4df5-bfe7-7a8cc6d92ef3, book: bukhari, title: باب السلام للمعرفة وغير المعرفة, topics: [salam] }
+  - { id: 5f032793-4f4e-4c7d-84b0-656755fb852a, book: bukhari, title: باب تسليم القليل على الكثير, topics: [salam] }
+  - { id: dd2ed919-9976-458a-b3e7-ce5114e131a9, book: bukhari, title: باب تسليم الراكب على الماشي, topics: [salam] }
+  - { id: a09f65e5-d444-412b-9b24-6d9cd4bade5d, book: bukhari, title: باب تسليم الماشي على القاعد, topics: [salam] }
+  - { id: 07489043-53d3-4b69-8fb6-52a742d0bad5, book: bukhari, title: باب تسليم الصغير على الكبير, topics: [salam] }
+  - { id: 45380af8-e139-4ca1-b5c6-07edfce7cbe3, book: bukhari, title: باب المصافحة, topics: [salam] }
+  - { id: b7ad8da5-f0b4-48b0-8dd5-111a3e2a9e7f, book: muslim, title: باب بيان أنه لا يدخل الجنة إلا المؤمنون وأن محبة المؤمنين من الإيمان وأن إفشاء السلام سبب لحصولها, topics: [salam] }
+  - { id: e6af85c4-1c7b-4d9a-becb-b912d146ff32, book: muslim, title: باب استحباب السلام على الصبيان, topics: [salam] }
+
+  # ── adab-majlis (DO) ──
+  - { id: 1a3822ce-91f3-4b37-aac6-475b3fb2213b, book: bukhari, title: باب التسليم والاستئذان ثلاثا, topics: [adab-majlis] }
+  - { id: 5303c5a3-7b25-4c96-8c8b-c4a0a90b3535, book: bukhari, title: "باب: لا يقيم الرجل الرجل من مجلسه", topics: [adab-majlis] }
+  - { id: 8a155a26-66e8-437a-be2e-6a92932459bf, book: bukhari, title: باب (إذا قيل لكم تفسحوا في المجلس، فافسحوا يفسح الله لكم وإذا قيل انشزوا فانشزوا) الآية, topics: [adab-majlis] }
+  - { id: bfb7ee22-5c4c-486d-b6f1-71708b7f4e9c, book: bukhari, title: باب لا يتناجى اثنان دون الثالث, topics: [adab-majlis] }
+  - { id: 6df10b25-3bf9-4e94-ac4d-dbc82c0047b0, book: muslim, title: باب الاستئذان, topics: [adab-majlis] }
+  - { id: 0f26e0fb-fed3-4070-86b8-df1064a7b3d7, book: muslim, title: باب تحريم إقامة الإنسان من موضعه المباح الذي سبق إليه, topics: [adab-majlis] }
+  - { id: 9c99ad19-45b0-44ca-8c68-1ccd0481372b, book: muslim, title: باب تحريم مناجاة الإثنين دون الثالث بغير رضاه, topics: [adab-majlis] }
+
+  # ── iyadat-marid (DO) ──
+  - { id: e558dc28-6a5a-4736-a501-24d610ef7762, book: bukhari, title: "باب: اتباع الجنائز من الإيمان", topics: [iyadat-marid] }
+  - { id: 19a5b1b4-5d71-4622-895d-f25e91d2a112, book: bukhari, title: باب الأمر باتباع الجنائز, topics: [iyadat-marid] }
+  - { id: 5e8ed463-0dbc-4bfe-9cf0-078498eef0f4, book: bukhari, title: باب فضل اتباع الجنائز, topics: [iyadat-marid] }
+  - { id: 728eb93b-fb6b-432a-b89d-60f0e40c4333, book: bukhari, title: باب وجوب عيادة المريض, topics: [iyadat-marid] }
+  - { id: b3a1823b-35cb-4006-9817-91a583c0db7b, book: bukhari, title: باب عيادة المريض، راكبا وماشيا، وردفا على الحمار, topics: [iyadat-marid] }
+  - { id: bb7a20e1-e2de-44af-8094-575ba93c37a6, book: bukhari, title: باب دعاء العائد للمريض, topics: [iyadat-marid] }
+  - { id: de8eab27-a9ee-4577-8c75-a2a6c69c6441, book: muslim, title: باب في عيادة المرضى, topics: [iyadat-marid] }
+  - { id: 158830c1-ae94-41dc-95b3-930ec4bd1ce1, book: muslim, title: باب فضل الصلاة على الجنازة واتباعها, topics: [iyadat-marid] }
+  - { id: c2bcda23-1a69-4791-8403-fd27c14461b9, book: muslim, title: باب فضل عيادة المريض, topics: [iyadat-marid] }
+
+  # ── sadaqah (DO) ──
+  - { id: ab90d083-eb4d-4379-aa8c-f5d4d296d5cd, book: bukhari, title: "باب: إطعام الطعام من الإسلام", topics: [sadaqah] }
+  - { id: 1ff65969-363c-4b1b-8b7e-b73135e09085, book: bukhari, title: باب إنفاق المال في حقه, topics: [sadaqah] }
+  - { id: b6e6fa9d-88fa-4071-b926-646f13baa309, book: bukhari, title: "باب الصدقة من كسب طيب لقوله: {ويربي الصدقات، والله لا يحب كل كفار أثيم، إن الذين آمنوا وعملوا الصالحات وأقاموا الصلاة وآتوا الزكاة، لهم أجرهم عند ربهم ولا خوف عليهم ولا هم يحزنون} [البقرة: 277]", topics: [sadaqah] }
+  - { id: ad5c8389-ba97-4937-a0d7-71a9036426c1, book: bukhari, title: باب الصدقة قبل الرد, topics: [sadaqah] }
+  - { id: bd42550a-50bf-40ee-98d8-fa9b74cd19b9, book: bukhari, title: "باب: اتقوا النار ولو بشق تمرة والقليل من الصدقة", topics: [sadaqah] }
+  - { id: 1229a5e0-2182-4579-80c2-d65cd153fb39, book: bukhari, title: باب فضل صدقة الشحيح الصحيح, topics: [sadaqah] }
+  - { id: 045158fe-fd3e-481d-b895-d8256eb8564e, book: bukhari, title: باب الصدقة باليمين, topics: [sadaqah] }
+  - { id: b5fafefc-9474-45fe-b609-3b72b69371f6, book: bukhari, title: باب من أحب تعجيل الصدقة من يومها, topics: [sadaqah] }
+  - { id: e8ef16fa-e249-4c71-a376-f33b1ec34025, book: bukhari, title: باب التحريض على الصدقة والشفاعة فيها, topics: [sadaqah] }
+  - { id: 47211557-5e5b-412f-918a-d7396873e4d7, book: bukhari, title: باب الصدقة فيما استطاع, topics: [sadaqah] }
+  - { id: 43322a76-7180-43f0-bb80-73378c395c94, book: bukhari, title: باب الصدقة تكفر الخطيئة, topics: [sadaqah] }
+  - { id: 67472dab-4d59-4f60-a89c-cc46afe7a82d, book: bukhari, title: باب أجر المرأة إذا تصدقت، أو أطعمت، من بيت زوجها، غير مفسدة, topics: [sadaqah] }
+  - { id: 6a59d573-90ae-4d6f-a932-805c199c91aa, book: bukhari, title: باب مثل المتصدق والبخيل, topics: [sadaqah, bukhl] }
+  - { id: d0e9fd13-7648-4ff8-9b38-1c147e88e33d, book: bukhari, title: "باب: على كل مسلم صدقة، فمن لم يجد فليعمل بالمعروف", topics: [sadaqah] }
+  - { id: e6449ba1-d943-4461-8d85-25e11f94fef0, book: bukhari, title: باب الزكاة على الأقارب, topics: [sadaqah, silat-ar-rahim] }
+  - { id: 0c4e8da9-2d73-4199-8063-41fc56843797, book: bukhari, title: "باب: أجود ما كان النبي صلى الله عليه وسلم يكون في رمضان", topics: [sadaqah] }
+  - { id: ee1a09bd-69cc-4d88-a4b8-9b3794cbdcc6, book: bukhari, title: باب فضل الزرع والغرس إذا أكل منه, topics: [sadaqah] }
+  - { id: 342f719b-74ca-4c26-9777-d92b830393b8, book: bukhari, title: باب فضل المنيحة, topics: [sadaqah] }
+  - { id: ffdbe43f-165f-4d85-b234-c8b98d882670, book: bukhari, title: باب الصدقة عند الموت, topics: [sadaqah] }
+  - { id: 5ad19044-0366-440c-a2b8-25df7616b703, book: bukhari, title: "باب: كل معروف صدقة", topics: [sadaqah] }
+  - { id: 7e77b90d-8e23-466a-804c-597bec4a77c4, book: bukhari, title: باب ما قدم من ماله فهو له, topics: [sadaqah] }
+  - { id: 5f4567af-5734-4728-ac96-7b29d9a33e28, book: bukhari, title: "باب: المكثرون هم المقلون", topics: [sadaqah] }
+  - { id: fb323aad-6722-47e1-a024-331031db7f96, book: muslim, title: باب الترغيب في الصدقة, topics: [sadaqah] }
+  - { id: 6a7c6dde-b1c9-4ce7-958b-643e55881ddd, book: muslim, title: باب الحث على النفقة وتبشير المنفق بالخلف, topics: [sadaqah] }
+  - { id: cfffbe09-cd9f-4f6a-b063-8844b4497bc1, book: muslim, title: باب فضل النفقة والصدقة على الأقربين والزوج والأولاد والوالدين ولو كانوا مشركين, topics: [sadaqah, silat-ar-rahim] }
+  - { id: de9ede98-35d6-4c22-90b9-dc1a6106d556, book: muslim, title: باب بيان أن اسم الصدقة يقع على كل نوع من المعروف, topics: [sadaqah] }
+  - { id: 24f4ac9e-13b0-4f21-8c5b-6626717ec441, book: muslim, title: باب في المنفق والممسك, topics: [sadaqah, bukhl] }
+  - { id: 6f9af8d4-ed37-4c41-b3c6-c287af00a62b, book: muslim, title: باب الترغيب في الصدقة قبل أن لا يوجد من يقبلها, topics: [sadaqah] }
+  - { id: 36e4264c-3795-4c77-8c27-7c88d9a253ba, book: muslim, title: باب قبول الصدقة من الكسب الطيب وتربيتها, topics: [sadaqah] }
+  - { id: 379f4312-ad60-4ab9-b4f0-f14d80fee5b8, book: muslim, title: باب فضل المنيحة, topics: [sadaqah] }
+  - { id: b8ee207e-01b0-4b57-a7ce-f6f6bfda075e, book: muslim, title: باب مثل المنفق والبخيل, topics: [sadaqah, bukhl] }
+  - { id: ed3a90f1-c083-4725-b383-dd6ec4ba0911, book: muslim, title: باب أجر الخازن الأمين والمرأة إذا تصدقت من بيت زوجها غير مفسدة بإذنه الصريح أو العرفي, topics: [sadaqah] }
+  - { id: 1a0db2c1-0593-4915-af69-66d5e1cedf8c, book: muslim, title: باب من جمع الصدقة وأعمال البر, topics: [sadaqah] }
+  - { id: bb959490-ec52-4031-b358-ba7719c01f7b, book: muslim, title: باب الحث في الإنفاق وكراهة الإحصاء, topics: [sadaqah] }
+  - { id: aec3843c-502f-4700-b74a-3c201016fda3, book: muslim, title: باب الحث على الصدقة ولو بالقليل ولا تمتنع من القليل لاحتقاره, topics: [sadaqah] }
+  - { id: 7f02630c-88ba-46e8-91ab-b29bc38ae668, book: muslim, title: باب فضل إخفاء الصدقة, topics: [sadaqah] }
+  - { id: de321618-e569-43a3-8051-3a697d970dfc, book: muslim, title: باب بيان أن أفضل الصدقة صدقة الصحيح الشحيح, topics: [sadaqah] }
+  - { id: 9caf7f74-ba54-4e61-b215-d559c181521c, book: muslim, title: باب بيان أن اليد العليا خير من اليد السفلى وأن اليد العليا هي المنفقة وأن السفلى هي الآخذة, topics: [sadaqah] }
+  - { id: 67c5afc5-160b-431b-b403-0fd6b6c0769a, book: muslim, title: باب فضل الغرس والزرع, topics: [sadaqah] }
+  - { id: 50e2899a-5973-4d7f-a455-5ae499844af7, book: muslim, title: باب استحباب المؤاساة بفضول المال, topics: [sadaqah] }
+  - { id: 4feba06f-79d7-482c-9996-3fce8439744b, book: muslim, title: باب الصدقة في المساكين, topics: [sadaqah] }
+
+  # ── bukhl (AVOID) ──
+  - { id: 2a4592b8-83a1-44bb-bb8a-d0fcbab107e7, book: muslim, title: باب في الكنازين للأموال والتغليظ عليهم, topics: [bukhl] }
+
+  # ── masala (AVOID) ──
+  - { id: 6c9553c7-4f60-4d2c-94ab-55a1880f0570, book: bukhari, title: باب الاستعفاف عن المسألة, topics: [kasb-halal, masala] }
+  - { id: e85b2763-936b-4d40-b2b6-cfc0c848ce0d, book: bukhari, title: باب من سأل الناس تكثرا, topics: [masala] }
+  - { id: 624c2a89-d57c-417d-9af7-01294f1603c8, book: bukhari, title: "باب قول الله تعالى: {لا يسألون الناس إلحافا} [البقرة: 273] وكم الغنى", topics: [masala] }
+  - { id: 05ff77e6-4984-4fe0-87ad-7ce7da9f59d8, book: muslim, title: باب النهي عن المسألة, topics: [masala] }
+  - { id: 12d400ca-b90a-4a64-8f28-7a331cd76177, book: muslim, title: باب كراهة المسألة للناس, topics: [masala] }
+
+  # ── kasb-halal (DO) ──
+  - { id: ecbeb678-97da-43fc-be13-187e65b3094b, book: bukhari, title: باب كسب الرجل وعمله بيده, topics: [kasb-halal] }
+
+  # ── wara (DO) ──
+  - { id: 39884b63-e257-4795-9387-e13c7e458999, book: bukhari, title: "باب: الحلال بين، والحرام بين، وبينهما مشبهات", topics: [wara] }
+  - { id: 3a4c2067-18fb-42dd-a27d-1b1f7fce2281, book: muslim, title: باب أخذ الحلال وترك الشبهات, topics: [wara] }
+
+  # ── akl-haram (AVOID) ──
+  - { id: 255899f8-10ae-41b4-965b-c5b522579538, book: bukhari, title: باب من لم يبال من حيث كسب المال, topics: [akl-haram] }
+
+  # ── samaha (DO) ──
+  - { id: 80e31d25-89e2-4877-84f5-81c4f0813c01, book: bukhari, title: باب السهولة والسماحة في الشراء والبيع، ومن طلب حقا فليطلبه في عفاف, topics: [samaha] }
+  - { id: 0f2529b2-67c1-43a4-ad4a-d9d02a5410d0, book: bukhari, title: باب حسن التقاضي, topics: [samaha] }
+  - { id: 4daa7775-fc40-4566-b01b-90d56057fe21, book: bukhari, title: باب حسن القضاء, topics: [samaha] }
+
+  # ── ghish (AVOID) ──
+  - { id: d7838f67-bca6-4125-83ef-409e8a42cd8e, book: muslim, title: باب قول النبي صلى الله عليه وسلم من غشنا فليس منا, topics: [ghish] }
+  - { id: ed777c73-3a76-4e34-8f76-a95afd9df7e3, book: bukhari, title: باب ما يمحق الكذب والكتمان في البيع, topics: [ghish, kadhib] }
+  - { id: 56ddccd0-4ae8-4ea1-85d1-b321c82c14a0, book: bukhari, title: باب ما يكره من الخداع في البيع, topics: [ghish] }
+  - { id: b828291b-828c-47af-836f-834e5e57e902, book: bukhari, title: باب ما ينهى من الخداع في البيوع, topics: [ghish] }
+
+  # ── riba (AVOID) ──
+  - { id: a9410b88-b4da-4a27-8408-2ecc1a14e27c, book: bukhari, title: "باب قول الله تعالى: {يا أيها الذين آمنوا لا تأكلوا الربا أضعافا مضاعفة واتقوا الله لعلكم تفلحون} [آل عمران: 130]", topics: [riba] }
+  - { id: 13eb209e-49bf-4cd3-ab19-c58510900f97, book: bukhari, title: "باب آكل الربا وشاهده وكاتبه وقوله تعالى: {الذين يأكلون الربا لا يقومون إلا كما يقوم الذي يتخبطه الشيطان من المس ذلك بأنهم قالوا: إنما البيع مثل الربا، وأحل الله البيع وحرم الربا، فمن جاءه موعظة من ربه فانتهى فله ما سلف وأمره إلى الله، ومن عاد فأولئك أصحاب النار هم فيها خالدون} [البقرة: 275]", topics: [riba] }
+  - { id: 52f770df-3274-4786-9acb-ba5f9dee829e, book: bukhari, title: "باب موكل الربا لقول الله تعالى: {يا أيها الذين آمنوا اتقوا الله وذروا ما بقي من الربا إن كنتم مؤمنين، فإن لم تفعلوا فأذنوا بحرب من الله ورسوله وإن تبتم فلكم رءوس أموالكم لا تظلمون ولا تظلمون وإن كان ذو عسرة فنظرة إلى ميسرة وأن تصدقوا خير لكم إن كنتم تعلمون. واتقوا يوما ترجعون فيه إلى الله ثم توفى كل نفس ما كسبت وهم لا يظلمون} قال ابن عباس: «هذه آخر آية نزلت على النبي صلى الله عليه وسلم»", topics: [riba] }
+  - { id: 98c95ae9-80cf-4061-8b6b-611136f7cc42, book: bukhari, title: "باب: {يمحق الله الربا ويربي الصدقات والله لا يحب كل كفار أثيم} [البقرة: 276]", topics: [riba] }
+  - { id: ab1cd091-716b-4480-b0f9-cbbb3d69d142, book: muslim, title: باب لعن آكل الربا ومؤكله, topics: [riba] }
+
+  # ── mutl (AVOID) ──
+  - { id: 64d1b089-866f-46b2-9c99-2e8264cd40b9, book: bukhari, title: "باب: مطل الغني ظلم", topics: [mutl] }
+  - { id: 67999a53-99ed-4db0-914a-4fabd088e7cb, book: muslim, title: باب تحريم مطل الغني وصحة الحوالة واستحباب قبولها إذا أحيل على ملى, topics: [mutl] }
+
+  # ── man-ajr (AVOID) ──
+  - { id: 2ddc002b-2939-4e69-a80d-83a9e3dee6e9, book: bukhari, title: باب إثم من منع أجر الأجير, topics: [man-ajr] }
+
+  # ── ihtikar (AVOID) ──
+  - { id: c8c74224-80b9-4905-9b96-a6a4a7ee8f68, book: muslim, title: باب تحريم الاحتكار في الأقوات, topics: [ihtikar] }
+
+  # ── israf (AVOID) ──
+  - { id: 28952980-1261-4658-8bc8-1de9c8a73d21, book: bukhari, title: باب ما ينهى عن إضاعة المال, topics: [israf] }
+  - { id: 2b97fb39-b5ac-469b-ab6b-9bb0852ffca1, book: muslim, title: باب كراهة ما زاد على الحاجة من الفراش واللباس, topics: [israf] }
+
+  # ── sariqa (AVOID) ──
+  - { id: 0d1f69c5-5768-4556-ac7f-42afe95fad73, book: bukhari, title: باب السارق حين يسرق, topics: [sariqa] }
+  - { id: a14deafe-43b5-41f0-8f61-554a23b074b8, book: bukhari, title: باب لعن السارق إذا لم يسم, topics: [sariqa] }
+  - { id: 4a0d3df8-4f61-4a52-ac89-89f8031bab9c, book: bukhari, title: باب النهبى بغير إذن صاحبه, topics: [sariqa] }
+  - { id: 80d7eb21-a0e5-4125-ad26-cb02530e94ac, book: bukhari, title: باب إثم من ظلم شيئا من الأرض, topics: [sariqa, zulm] }
+  - { id: f3cb4902-755f-47a1-bf19-35354cc84944, book: bukhari, title: باب الغلول, topics: [sariqa] }
+  - { id: acc255e7-0576-43ee-a432-2cc58bd508dc, book: bukhari, title: باب القليل من الغلول, topics: [sariqa] }
+  - { id: 1f02621b-8ec5-40a6-917e-add66f96174c, book: muslim, title: باب غلظ تحريم الغلول وأنه لا يدخل الجنة إلا المؤمنون, topics: [sariqa] }
+  - { id: 3217a7fd-bd4c-4881-847a-2df8726219e9, book: muslim, title: باب غلظ تحريم الغلول, topics: [sariqa] }
+  - { id: 5b8cb9ae-44c1-4064-937d-b61ab1b9b38e, book: muslim, title: باب تحريم الظلم وغصب الأرض وغيرها, topics: [zulm, sariqa] }
+
+  # ── qimar (AVOID) ──
+  - { id: 4d4927dc-fde8-47aa-9c6c-20bc4694fb41, book: bukhari, title: "باب: كل لهو باطل إذا شغله عن طاعة الله، ومن قال لصاحبه: تعال أقامرك", topics: [qimar, hilf-bighayr-allah] }
+
+  # ── malahi (AVOID) ──
+  - { id: b20febea-bf3f-456c-bba8-66c4f533a42e, book: muslim, title: باب تحريم اللعب بالنردشير, topics: [malahi] }
+
+  # ── zakah (DO) ──
+  - { id: 4f3d7fd7-70a9-42a2-a543-04a608d4ba62, book: bukhari, title: "باب: الزكاة من الإسلام", topics: [zakah] }
+  - { id: 5fb5955d-7208-4e97-8f4b-bf4be8062cba, book: bukhari, title: باب وجوب الزكاة, topics: [zakah] }
+  - { id: 64a017c7-6531-4847-af95-e063547ede7f, book: bukhari, title: باب البيعة على إيتاء الزكاة, topics: [zakah] }
+  - { id: f7cc3631-e5f1-472c-8afd-d1e3c11baff6, book: bukhari, title: باب فرض صدقة الفطر, topics: [zakah] }
+
+  # ── man-zakah (AVOID) ──
+  - { id: 24d0ccf9-c153-4fa8-819e-2870eb24f5d5, book: bukhari, title: باب إثم مانع الزكاة, topics: [man-zakah] }
+  - { id: be726113-7fb4-4742-9927-2991fda64f94, book: muslim, title: باب إثم مانع الزكاة, topics: [man-zakah] }
+  - { id: f092198a-c924-4683-b42a-8ad996d1b29d, book: muslim, title: باب تغليظ عقوبة من لا يؤدي الزكاة, topics: [man-zakah] }
+
+  # ── siyam (DO) ──
+  - { id: 45a0997d-742b-4a11-bf42-e2645e2a82f0, book: bukhari, title: "باب: صوم رمضان احتسابا من الإيمان", topics: [siyam] }
+  - { id: fb873241-e7ee-4fb4-a6c7-d94bc401585d, book: bukhari, title: باب وجوب صوم رمضان, topics: [siyam] }
+  - { id: e310249c-138e-4daa-8e19-09924d44222c, book: bukhari, title: باب فضل الصوم, topics: [siyam] }
+  - { id: 6194ea08-d4a8-4995-8b1b-aa792d37fd03, book: bukhari, title: "باب: الصوم كفارة", topics: [siyam] }
+  - { id: 176dc83f-bc3f-4b78-b8de-c34d72d6cdfa, book: bukhari, title: "باب: الريان للصائمين", topics: [siyam] }
+  - { id: 106d3e39-ecac-4918-b567-375aa6fc75f7, book: bukhari, title: باب من صام رمضان إيمانا واحتسابا ونية, topics: [siyam] }
+  - { id: a4c82d40-bc7a-4381-8703-245df51336a2, book: bukhari, title: باب من لم يدع قول الزور، والعمل به في الصوم, topics: [siyam, kadhib] }
+  - { id: 7c16dd7a-2ef4-4542-99ec-a6a643c84cc2, book: bukhari, title: "باب: هل يقول إني صائم إذا شتم", topics: [siyam] }
+  - { id: b767a115-b877-46ef-9fd1-bed1e6d9650c, book: bukhari, title: باب بركة السحور من غير إيجاب, topics: [siyam] }
+  - { id: 1b152805-352c-48ec-9a8c-2ca331284a48, book: bukhari, title: باب تعجيل الإفطار, topics: [siyam] }
+  - { id: 55bd8fc2-06bf-446a-891f-5b1465a3fcda, book: bukhari, title: باب صوم شعبان, topics: [siyam] }
+  - { id: dedd744a-41c3-4623-bd22-4743bae678c8, book: bukhari, title: باب صوم داود عليه السلام, topics: [siyam] }
+  - { id: 55e6e59c-37c1-4728-aad6-a74dab227efc, book: bukhari, title: "باب صيام أيام البيض: ثلاث عشرة وأربع عشرة وخمس عشرة", topics: [siyam] }
+  - { id: 0ae1380b-fb68-48a2-8a98-123f88c3ea5d, book: bukhari, title: باب صيام يوم عاشوراء, topics: [siyam] }
+  - { id: a3cbbc21-c002-460b-9c32-cd56976cf4ca, book: muslim, title: باب فضل شهر رمضان, topics: [siyam] }
+  - { id: 8db26def-8d4e-4ab7-85bb-e9c687d53351, book: muslim, title: باب فضل السحور وتأكيد استحبابه واستحباب تأخيره وتعجيل الفطر, topics: [siyam] }
+  - { id: d44c8e3e-b2d2-4027-af45-1975d5578157, book: muslim, title: باب فضل الصيام, topics: [siyam] }
+  - { id: dfecd26c-0079-4c06-9dec-e7809055ee1a, book: muslim, title: باب استحباب صيام ثلاثة أيام من كل شهر وصوم يوم عرفة وعاشوراء والإثنين والخميس, topics: [siyam] }
+  - { id: 296b0519-e591-4988-abd7-bdc2adf590f1, book: muslim, title: باب فضل صوم المحرم, topics: [siyam] }
+  - { id: c27f64f2-5827-4cf5-9e12-fe006eac8632, book: muslim, title: باب استحباب صوم ستة أيام من شوال أتباعا لرمضان, topics: [siyam] }
+
+  # ── iftar-ramadan (AVOID) ──
+  - { id: 45e5bad9-ad8a-4265-aa26-cb13e35e935e, book: muslim, title: باب تغليظ تحريم الجماع في نهار رمضان على الصائم ووجوب الكفارة الكبرى فيه وبيانها وأنها تجب على الموسر والمعسر وتثبت في ذمة المعسر حتى يستطيع, topics: [iftar-ramadan] }
+
+  # ── hajj (DO) ──
+  - { id: f22dfc9e-2319-48ad-8042-0a71dbbb493f, book: bukhari, title: باب وجوب الحج وفضله, topics: [hajj] }
+  - { id: 2f71b1dd-4972-46bc-9c0e-a5ec61127ce1, book: bukhari, title: باب فضل الحج المبرور, topics: [hajj] }
+  - { id: 9da5a6f7-4092-41a6-bcbd-b51a5385a2ee, book: bukhari, title: باب وجوب العمرة وفضلها, topics: [hajj] }
+  - { id: 5ff91cab-bf3a-4907-9030-22351e5d553d, book: bukhari, title: باب أجر العمرة على قدر النصب, topics: [hajj] }
+  - { id: cbd4d799-ceeb-47ef-989d-6077e988253d, book: muslim, title: باب فضل العمرة في رمضان, topics: [hajj] }
+  - { id: edcd98e5-4f9b-4068-a42a-eecb032bf2ad, book: muslim, title: باب في فضل الحج والعمرة ويوم عرفة, topics: [hajj] }
+
+  # ── quran (DO) ──
+  - { id: f1322082-59ba-4a6a-8356-80eecaa9c025, book: bukhari, title: باب فضل فاتحة الكتاب, topics: [quran] }
+  - { id: bd894966-b7c6-4429-a6d3-38aa594516f2, book: bukhari, title: باب فضل سورة البقرة, topics: [quran] }
+  - { id: b64995f5-9438-4ff7-8c96-23133cbd02de, book: bukhari, title: باب فضل سورة الكهف, topics: [quran] }
+  - { id: 0728091b-7feb-43aa-960f-d7a5812ffa98, book: bukhari, title: باب فضل قل هو الله أحد, topics: [quran] }
+  - { id: 13c34107-0bbc-499b-a5dc-af5ee7983da1, book: bukhari, title: باب فضل المعوذات, topics: [quran] }
+  - { id: 0060e7d8-5251-43db-af7c-05f5d09769d8, book: bukhari, title: باب نزول السكينة والملائكة عند قراءة القرآن, topics: [quran] }
+  - { id: 5ea2f18e-731d-4433-bf17-67c512186c04, book: bukhari, title: باب فضل القرآن على سائر الكلام, topics: [quran] }
+  - { id: 4d558695-18fe-4656-9af7-a9acf0adb9f4, book: bukhari, title: باب الوصية بكتاب الله عز وجل, topics: [quran] }
+  - { id: 20368ea7-9463-4e7c-9b8f-330e6d000cf2, book: bukhari, title: باب من لم يتغن بالقرآن, topics: [quran] }
+  - { id: c4af4cb7-826f-4871-a6a3-c077c81e2ef2, book: bukhari, title: باب اغتباط صاحب القرآن, topics: [quran] }
+  - { id: d61f30b3-6404-4556-bf6d-ce5828d79933, book: bukhari, title: "باب: خيركم من تعلم القرآن وعلمه", topics: [quran] }
+  - { id: 3ca5869d-0dd5-4cf1-805a-709d22b478a6, book: bukhari, title: باب استذكار القرآن وتعاهده, topics: [quran] }
+  - { id: efb66ac2-43d2-4cfa-aad5-3dab5eb40796, book: bukhari, title: باب الترتيل في القراءة, topics: [quran] }
+  - { id: 8d4658a6-9440-4856-a6a3-62e70cbcd338, book: bukhari, title: باب حسن الصوت بالقراءة للقرآن, topics: [quran] }
+  - { id: 501468ec-204c-4e64-b7de-c8174caf45a6, book: bukhari, title: باب من أحب أن يسمع القرآن من غيره, topics: [quran] }
+  - { id: 2e5198aa-5a23-4e8c-b766-25f12bd6cdef, book: bukhari, title: "باب: في كم يقرأ القرآن", topics: [quran] }
+  - { id: c048e074-e5bc-4704-891a-c9ee48041200, book: bukhari, title: باب البكاء عند قراءة القرآن, topics: [quran] }
+  - { id: 3be80ba4-53a2-46c5-919d-6607d329fc3a, book: bukhari, title: "باب قول النبي صلى الله عليه وسلم: \" رجل آتاه الله القرآن فهو يقوم به آناء الليل وآناء النهار، ورجل يقول: لو أوتيت مثل ما أوتي هذا فعلت كما يفعل", topics: [quran] }
+  - { id: fae8b39a-668a-40ea-996e-5f00642a0aa2, book: bukhari, title: "باب قول النبي صلى الله عليه وسلم: «الماهر بالقرآن مع الكرام البررة»", topics: [quran] }
+  - { id: e27cac17-25ad-4ece-9405-41a801a16ae8, book: muslim, title: باب فضائل القرآن وما يتعلق به, topics: [quran] }
+  - { id: 9ff28742-f7e4-4923-a356-432bcf3b36d9, book: muslim, title: باب استحباب تحسين الصوت بالقرآن, topics: [quran] }
+  - { id: f785ebd1-824e-44e6-b496-e47090c14743, book: muslim, title: باب نزول السكينة لقراءة القرآن, topics: [quran] }
+  - { id: 355b92e8-1394-4ac9-989b-5ee2be604ed8, book: muslim, title: باب فضيلة حافظ القرآن, topics: [quran] }
+  - { id: cc00ff8b-be2e-4ec3-b161-73e182c57412, book: muslim, title: باب فضل الماهر بالقرآن والذي يتتعتع فيه, topics: [quran] }
+  - { id: 8e412c9c-baf8-420c-99d4-ec1532569674, book: muslim, title: باب فضل استماع القرآن وطلب القراءة من حافظ للاستماع والبكاء عند القراءة والتدبر, topics: [quran] }
+  - { id: ffc51701-82ec-49de-9e62-76139b782e35, book: muslim, title: باب فضل قراءة القرآن في الصلاة وتعلمه, topics: [quran] }
+  - { id: 1ab0da9f-4f43-421c-b980-18cb9b42ff82, book: muslim, title: باب فضل قراءة القرآن وسورة البقرة, topics: [quran] }
+  - { id: 4250226d-4492-4f32-883d-da6bfc96f29c, book: muslim, title: باب فضل الفاتحة وخواتيم سورة البقرة والحث على قراءة الآيتين من آخر البقرة, topics: [quran] }
+  - { id: 59ffc6a2-5b18-4420-b802-48f508ce2956, book: muslim, title: باب فضل سورة الكهف وآية الكرسي, topics: [quran] }
+  - { id: cf049b2b-67a4-4f79-a01b-4c8b0ad3b3b0, book: muslim, title: باب فضل قراءة قل هو الله أحد, topics: [quran] }
+  - { id: 98f52255-c4b8-4c87-bb1b-bdc2f610aa11, book: muslim, title: باب فضل قراءة المعوذتين, topics: [quran] }
+  - { id: 913b1eae-1e4d-4be3-9da1-35269be77a09, book: muslim, title: باب فضل من يقوم بالقرآن ويعلمه وفضل من تعلم حكمة من فقه أو غيره فعمل بها وعلمها, topics: [quran] }
+  - { id: 3081b1e8-69ad-4d4c-8a81-c2693cdf064c, book: muslim, title: باب فضل الاجتماع على تلاوة القرآن وعلى الذكر, topics: [quran, dhikr] }
+
+  # ── dhikr (DO) ──
+  - { id: cba0ddae-b14d-4784-95ec-df0adadc77b9, book: bukhari, title: باب فضل التهليل, topics: [dhikr] }
+  - { id: c2a9b9b7-3a66-40ba-92e0-4dc1e5c98248, book: bukhari, title: باب فضل التسبيح, topics: [dhikr] }
+  - { id: 48cc136f-7dc1-49d6-b7d3-540b5ee58188, book: bukhari, title: باب فضل ذكر الله عز وجل, topics: [dhikr] }
+  - { id: 0c9d3b76-c637-482c-906a-85bc721d99ea, book: bukhari, title: "باب قول: لا حول ولا قوة إلا بالله", topics: [dhikr] }
+  - { id: 0022c3c4-66ec-47b3-8c18-c828560fb2fb, book: bukhari, title: باب لا حول ولا قوة إلا بالله, topics: [dhikr] }
+  - { id: 0bef0a4e-1b5f-493b-b6d4-20aa59109739, book: bukhari, title: باب ما يقول إذا نام, topics: [dhikr] }
+  - { id: d6e417e5-b160-4466-b3d6-3a0b231e49b0, book: bukhari, title: باب التكبير والتسبيح عند المنام, topics: [dhikr] }
+  - { id: da28ac28-1fcf-460b-947f-3617368aa6b8, book: bukhari, title: باب التعوذ والقراءة عند المنام, topics: [dhikr] }
+  - { id: 2d197540-9039-43e5-9d90-0d3ff7a469b2, book: bukhari, title: باب ما يقول إذا أصبح, topics: [dhikr] }
+  - { id: 1f02cba4-811a-4e94-b045-7ed7c9ad2921, book: bukhari, title: باب الدعاء بعد الصلاة, topics: [dhikr, dua] }
+  - { id: 6ed6576c-c066-4a33-aed0-a5335eb8c4eb, book: muslim, title: باب الذكر بعد الصلاة, topics: [dhikr] }
+  - { id: 2948601d-cb0b-4bbc-b5be-41ddb921dfad, book: muslim, title: باب إستحباب الذكر بعد الصلاة وبيان صفته, topics: [dhikr] }
+  - { id: feb31c3a-29e5-459c-b021-1fe0ee626338, book: muslim, title: باب الحث على ذكر الله تعالى, topics: [dhikr] }
+  - { id: 11ea17bd-5208-44da-9393-5c6b204503bb, book: muslim, title: باب فضل الذكر والدعاء والتقرب إلى الله تعالى, topics: [dhikr, dua] }
+  - { id: f992feb9-6568-485e-bd9e-ce502ea7360f, book: muslim, title: باب فضل مجالس الذكر, topics: [dhikr] }
+  - { id: 7006746e-0ac5-4b1f-88e0-9cbfc9ff3510, book: muslim, title: باب فضل التهليل والتسبيح والدعاء, topics: [dhikr, dua] }
+  - { id: f22dd743-bf86-4c61-9f31-718d8c646600, book: muslim, title: باب استحباب خفض الصوت بالذكر, topics: [dhikr] }
+  - { id: 60317575-591a-41f4-af3e-7990450293f3, book: muslim, title: باب ما يقول عند النوم وأخذ المضجع, topics: [dhikr] }
+  - { id: 8e9b12cc-e656-4f00-8618-37fc6362338d, book: muslim, title: باب التسبيح أول النهار وعند النوم, topics: [dhikr] }
+  - { id: 9f9464c6-4d72-49f4-a2e8-34fc907b1bbb, book: muslim, title: باب فضل سبحان الله وبحمده, topics: [dhikr] }
+
+  # ── dua (DO) ──
+  - { id: 676a5528-3766-428e-9948-7ac858db4e8f, book: bukhari, title: باب الدعاء إذا انتبه بالليل, topics: [dua] }
+  - { id: 34c5f7a5-f277-44bb-a93c-dbe1da64af2c, book: bukhari, title: باب الدعاء نصف الليل, topics: [dua] }
+  - { id: 9bdff765-7fe2-45b8-b213-44ef397c2023, book: bukhari, title: باب الدعاء في الصلاة, topics: [dua] }
+  - { id: ecdd4b5b-7016-4a4e-bc40-eeece341ae6b, book: bukhari, title: "باب قول الله تعالى: {وصل عليهم} [التوبة: 103] ومن خص أخاه بالدعاء دون نفسه", topics: [dua] }
+  - { id: e69015d4-839a-4901-8a2d-3db7bee4ae37, book: bukhari, title: باب ليعزم المسألة، فإنه لا مكره له, topics: [dua] }
+  - { id: 26d14e90-5433-472f-b825-61c46d0435b9, book: bukhari, title: باب يستجاب للعبد ما لم يعجل, topics: [dua] }
+  - { id: d399b67a-ceaa-46ed-9b82-1ea50d5460e5, book: bukhari, title: باب رفع الأيدي في الدعاء, topics: [dua] }
+  - { id: b2e78bea-c76a-4ee3-b74e-b2c6c4784883, book: bukhari, title: باب الدعاء عند الكرب, topics: [dua] }
+  - { id: b164dcb9-c77b-44cb-9117-eb5f778e95ce, book: bukhari, title: باب التعوذ من جهد البلاء, topics: [dua] }
+  - { id: 61d6bdb3-e8d4-4be6-b2bb-fd89dfe371ac, book: bukhari, title: باب التعوذ من الفتن, topics: [dua] }
+  - { id: 493766e1-3143-4f8f-8c0b-fcfa0da17d3d, book: bukhari, title: باب التعوذ من عذاب القبر, topics: [dua] }
+  - { id: e260b47c-0052-4517-9020-a372b70cddfe, book: bukhari, title: باب التعوذ من فتنة المحيا والممات, topics: [dua] }
+  - { id: 1d7390cc-02a2-43bd-994a-67aff2dff5fb, book: bukhari, title: باب التعوذ من المأثم والمغرم, topics: [dua] }
+  - { id: 4398c102-5702-475f-9c23-d4dbadf5689d, book: bukhari, title: باب الاستعاذة من أرذل العمر، ومن فتنة الدنيا وفتنة النار, topics: [dua] }
+  - { id: 54a34c58-f70f-47f9-9361-9753f045b981, book: bukhari, title: باب الدعاء عند الاستخارة, topics: [dua] }
+  - { id: ff31adc5-1052-456f-a5e7-33a4e486be6f, book: bukhari, title: "باب قول النبي صلى الله عليه وسلم: «ربنا آتنا في الدنيا حسنة»", topics: [dua] }
+  - { id: a9e7cf4c-1056-4f76-ac1d-ee23ffe0b910, book: bukhari, title: "باب قول النبي صلى الله عليه وسلم: «اللهم اغفر لي ما قدمت وما أخرت»", topics: [dua] }
+  - { id: fa504001-0339-4d28-9ab5-1995a5a8c95b, book: muslim, title: باب في الليل ساعة مستجاب فيها الدعاء, topics: [dua] }
+  - { id: 57da85b2-268c-4398-921e-2c957f636afe, book: muslim, title: باب الترغيب في الدعاء والذكر في آخر الليل والإجابة فيه, topics: [dua] }
+  - { id: da065a18-9c9d-485a-afc6-74d535e1df2d, book: muslim, title: باب العزم بالدعاء ولا يقل إن شئت, topics: [dua] }
+  - { id: 24cf015c-246b-41f3-8aad-b7ae8f0d03ca, book: muslim, title: باب كراهة الدعاء بتعجيل العقوبة في الدنيا, topics: [dua] }
+  - { id: b6074adf-b271-4823-9e2a-83ccd54c992a, book: muslim, title: "باب فضل الدعاء باللهم {آتنا في الدنيا حسنة وفي الآخرة حسنة وقنا عذاب النار}", topics: [dua] }
+  - { id: 21563bed-4e81-47d9-a7c9-a900771647f3, book: muslim, title: باب التعوذ من شر الفتن وغيرها, topics: [dua] }
+  - { id: 878d4a5d-3a50-4902-bce4-cd36a0bb3987, book: muslim, title: باب التعوذ من العجز والكسل وغيره, topics: [dua] }
+  - { id: c3eb6647-870e-45ea-beb5-b083d7407688, book: muslim, title: باب في التعوذ من سوء القضاء ودرك الشقاء وغيره, topics: [dua] }
+  - { id: 16fe1076-b2fe-4911-946e-b14801a327e1, book: muslim, title: باب التعوذ من شر ما عمل ومن شر ما لم يعمل, topics: [dua] }
+  - { id: ef534b31-44e0-406e-80a6-2b52e988ab56, book: muslim, title: باب دعاء الكرب, topics: [dua] }
+  - { id: 0a6dbd9a-1a8b-4ef8-94b6-96f63bee8edd, book: muslim, title: باب فضل الدعاء للمسلمين بظهر الغيب, topics: [dua] }
+  - { id: c9cfe663-3770-4aed-8365-c24e227843fa, book: muslim, title: باب بيان أنه يستجاب للداعي ما لم يعجل فيقول دعوت فلم يستجب لي, topics: [dua] }
+
+  # ── salat-ala-nabi (DO) ──
+  - { id: 7cc5a42d-815f-477c-b83b-d81805963732, book: bukhari, title: باب الصلاة على النبي صلى الله عليه وسلم, topics: [salat-ala-nabi] }
+
+  # ── salat-fi-jamaah (DO) ──
+  - { id: 2e63b2f1-ee79-499e-a014-66dfa5d04f6b, book: bukhari, title: باب وجوب صلاة الجماعة, topics: [salat-fi-jamaah, tark-as-salah] }
+  - { id: aa797275-9cdf-4403-bcc8-68040c3f3747, book: bukhari, title: "باب فضل صلاة الجماعة وكان الأسود: «إذا فاتته الجماعة ذهب إلى مسجد آخر» وجاء أنس بن مالك: «إلى مسجد قد صلي فيه، فأذن وأقام وصلى جماعة»", topics: [salat-fi-jamaah] }
+  - { id: 489cc4ed-8761-4113-b6ee-0b5e8098bd54, book: bukhari, title: باب فضل التهجير إلى الظهر, topics: [salat-fi-jamaah] }
+  - { id: 2c8024de-2898-4158-959f-0260a020355a, book: bukhari, title: باب فضل من غدا إلى المسجد ومن راح, topics: [salat-fi-jamaah] }
+  - { id: 62348963-41c6-44b6-8e70-1933b28ab019, book: muslim, title: باب فضل صلاة الجماعة وبيان التشديد في التخلف عنها, topics: [salat-fi-jamaah, tark-as-salah] }
+  - { id: 55f9b6ad-83b5-462b-bace-126cb0bb452f, book: muslim, title: باب فضل كثرة الخطا إلى المساجد, topics: [salat-fi-jamaah] }
+
+  # ── tark-as-salah (AVOID) ──
+  - { id: e357edec-ac4c-45b4-97bb-858ef6ed1941, book: muslim, title: باب التغليظ في ترك الجمعة, topics: [tark-as-salah] }
+
+  # ── adab-salah (DO) ──
+  - { id: 513517de-c167-4f32-93af-4ab1788347a2, book: bukhari, title: باب إثم المار بين يدي المصلي, topics: [adab-salah] }
+  - { id: 6aa9bfda-bb38-4856-8a5d-ab4c5dfea51c, book: bukhari, title: باب إثم من رفع رأسه قبل الإمام, topics: [adab-salah] }
+  - { id: ec1dcd76-dfb4-454c-ad01-2e181464f685, book: muslim, title: باب الأمر بتحسين الصلاة وإتمامها والخشوع فيها, topics: [adab-salah] }
+  - { id: e54e316a-a62a-4b9a-bff0-617e5897244c, book: muslim, title: باب تحريم سبق الإمام بركوع أو سجود ونحوهما, topics: [adab-salah] }
+  - { id: eeece554-25ac-4cf1-8f34-10251425e037, book: muslim, title: باب النهي عن رفع البصر إلى السماء في الصلاة, topics: [adab-salah] }
+
+  # ── nawafil (DO) ──
+  - { id: 5b8da9c6-0762-47ce-ad81-a8ade45ed550, book: bukhari, title: "باب: قيام ليلة القدر من الإيمان", topics: [nawafil] }
+  - { id: 0b5dfc15-8889-4c8b-99ca-8ce411d2a647, book: bukhari, title: "باب: تطوع قيام رمضان من الإيمان", topics: [nawafil] }
+  - { id: aedc7665-4fdf-43eb-862b-8a6e45f225d1, book: bukhari, title: باب فضل قيام الليل, topics: [nawafil] }
+  - { id: 65e497a3-eaac-4317-b1fb-08bd8b810019, book: bukhari, title: باب تحريض النبي صلى الله عليه وسلم على صلاة الليل والنوافل من غير إيجاب, topics: [nawafil] }
+  - { id: 558ff285-43f8-49ef-8976-3caeb65fcb04, book: bukhari, title: "باب: قيام النبي صلى الله عليه وسلم الليل حتى ترم قدماه", topics: [nawafil] }
+  - { id: 7e94eb69-4d89-47e1-93fb-38877d3940bf, book: bukhari, title: باب عقد الشيطان على قافية الرأس إذا لم يصل بالليل, topics: [nawafil] }
+  - { id: 3a165770-675e-444b-960d-b749cfb61a58, book: bukhari, title: باب ما يكره من ترك قيام الليل لمن كان يقومه, topics: [nawafil] }
+  - { id: 89a27245-a003-4944-bd73-9269c1d8de12, book: bukhari, title: باب فضل من تعار من الليل فصلى, topics: [nawafil] }
+  - { id: f571e42b-eb20-44f6-9500-7b898a140728, book: bukhari, title: باب المداومة على ركعتي الفجر, topics: [nawafil] }
+  - { id: eb539e75-5842-44db-98c0-ef964d82f378, book: bukhari, title: باب تعاهد ركعتي الفجر ومن سماهما تطوعا, topics: [nawafil] }
+  - { id: f70e54bc-9dd9-4fb4-a330-c13fc8e46bd3, book: bukhari, title: باب صلاة الضحى في الحضر, topics: [nawafil] }
+  - { id: aa29396f-0f85-4988-a6e9-ba19b88e890a, book: bukhari, title: باب التطوع في البيت, topics: [nawafil] }
+  - { id: 9c6cf8ba-0c0e-44e4-823f-d5f30c9b8be7, book: bukhari, title: باب فضل ليلة القدر, topics: [nawafil, siyam] }
+  - { id: 486d6f08-a5f2-432c-ab94-e7b2ebafebe2, book: bukhari, title: باب العمل في العشر الأواخر من رمضان, topics: [nawafil] }
+  - { id: c8ac33eb-680c-46f7-b372-7f99a2d048b8, book: muslim, title: باب استحباب صلاة الضحى وأن أقلها ركعتان وأكملها ثمان ركعات وأوسطها أربع ركعات أو ست والحث على المحافظة عليها, topics: [nawafil] }
+  - { id: a46169d1-e0ba-4cfe-a75a-c516e8ab5e59, book: muslim, title: باب استحباب ركعتي سنة الفجر والحث عليهما وتخفيفهما والمحافظة عليهما وبيان ما يستحب أن يقرأ فيهما, topics: [nawafil] }
+  - { id: 28595740-a53d-4322-acaf-8ecf97096e4e, book: muslim, title: باب فضل السنن الراتبة قبل الفرائض وبعدهن وبيان عددهن, topics: [nawafil] }
+  - { id: 5304c693-d5d7-434a-a28f-2954b7e69d73, book: muslim, title: باب الترغيب في قيام رمضان وهو التراويح, topics: [nawafil] }
+  - { id: 65a005a8-9d82-4e82-a569-1f6cf24df0c0, book: muslim, title: باب استحباب صلاة النافلة في بيته وجوازها في المسجد, topics: [nawafil] }
+  - { id: f35b5e6b-aa62-42c1-b721-81bf94b7a1f3, book: muslim, title: باب فضل ليلة القدر والحث على طلبها وبيان محلها وأرجى أوقات طلبها, topics: [nawafil] }
+
+  # ── jumua (DO) ──
+  - { id: c16730f9-228c-4cbb-b22e-0e9c71ba880f, book: bukhari, title: باب فرض الجمعة, topics: [jumua] }
+  - { id: fbd5c7ae-aefd-46a6-8190-0a410754932d, book: bukhari, title: باب فضل الغسل يوم الجمعة، وهل على الصبي شهود يوم الجمعة، أو على النساء, topics: [jumua] }
+  - { id: 9bcf4404-ed19-48b1-9793-8181ff9a15a4, book: bukhari, title: باب فضل الجمعة, topics: [jumua] }
+  - { id: 0956f68d-3cf8-4d58-997a-8be3e31d12a4, book: bukhari, title: باب الاستماع إلى الخطبة, topics: [jumua] }
+  - { id: 59b185df-82a4-4def-9042-16658f61b208, book: bukhari, title: باب الإنصات يوم الجمعة والإمام يخطب،, topics: [jumua] }
+  - { id: 48194f33-b76a-4413-bbac-137179d001b7, book: bukhari, title: باب الساعة التي في يوم الجمعة, topics: [jumua] }
+  - { id: 5962d59e-bed0-4590-bd2e-bb0e6a0ed8ca, book: muslim, title: باب فضل يوم الجمعة, topics: [jumua] }
+  - { id: 58841da2-7dd0-4d40-b7f2-1d3b14de509d, book: muslim, title: باب فضل التهجير يوم الجمعة, topics: [jumua] }
+  - { id: 86a60821-b2bb-4e20-8f1d-a535d7454f39, book: muslim, title: باب فضل من استمع وأنصت في الخطبة, topics: [jumua] }
+
+  # ── tahara (DO) ──
+  - { id: 08510485-a1e3-49df-8e6a-b61c2243b95a, book: bukhari, title: باب فضل الوضوء، والغر المحجلون من آثار الوضوء, topics: [tahara] }
+  - { id: 40824473-a6d2-4f52-9c8c-a12ef97a5564, book: muslim, title: باب فضل الوضوء, topics: [tahara] }
+  - { id: 48ca2e8c-4ec4-489c-ab9c-58afcd838e82, book: muslim, title: باب الذكر المستحب عقب الوضوء, topics: [tahara] }
+  - { id: 68dce900-deb9-4449-aad3-f52c8ff3ab20, book: muslim, title: باب فضل إسباغ الوضوء على المكاره, topics: [tahara] }
+
+  # ── adab-masjid (DO) ──
+  - { id: 4c3aceb8-17b3-4374-9314-5097ce050358, book: muslim, title: باب النهي عن البصاق في المسجد في الصلاة وغيرها, topics: [adab-masjid] }
+  - { id: a1b9c8be-7b00-45db-8dbe-67006b6e3475, book: muslim, title: باب نهي من أكل ثوما أو بصلا أو كراثا أو نحوهما, topics: [adab-masjid] }
+
+  # ── adab-taam (DO) ──
+  - { id: bff1921a-0e87-4ba9-8e35-4482ea43d118, book: bukhari, title: باب لعق الأصابع ومصها قبل أن تمسح بالمنديل, topics: [adab-taam] }
+  - { id: 09cf771e-dd1d-4f7d-b213-e337ab7d9579, book: bukhari, title: باب النهي عن التنفس في الإناء, topics: [adab-taam] }
+  - { id: 963fc6ce-d851-4c43-804e-cd93be97b5c0, book: muslim, title: باب كراهية الشرب قائما, topics: [adab-taam] }
+  - { id: d1f27e37-c82d-4210-8f1c-b885d59b56f1, book: muslim, title: باب كراهة التنفس في نفس الإناء واستحباب التنفس ثلاثا خارج الإناء, topics: [adab-taam] }
+  - { id: 034eb19d-d35b-456a-97b4-b2e2e009492e, book: muslim, title: باب استحباب لعق الأصابع والقصعة وأكل اللقمة الساقطة بعد مسح ما يصيبها من أذى وكراهة مسح اليد قبل لعقها, topics: [adab-taam] }
+  - { id: b095886a-8d30-4e6d-b693-878df7121d7e, book: muslim, title: باب استحباب تواضع الآكل وصفة قعوده, topics: [adab-taam] }
+
+  # ── talab-ilm (DO) ──
+  - { id: 95e59b5e-26d2-4576-8765-34fc8e943610, book: bukhari, title: "باب: من يرد الله به خيرا يفقهه في الدين", topics: [talab-ilm] }
+  - { id: 53303840-32b4-4d32-ab60-ad440a139ae6, book: bukhari, title: باب الاغتباط في العلم والحكمة, topics: [talab-ilm] }
+  - { id: 36e97445-08b4-41c5-8fe0-1cf42de81502, book: bukhari, title: باب الخروج في طلب العلم, topics: [talab-ilm] }
+  - { id: caabbf0f-d2da-40fa-b5b3-35a78f15e795, book: bukhari, title: باب فضل من علم وعلم, topics: [talab-ilm, nashr-ilm] }
+  - { id: 830c586e-0605-409b-9b44-8505e23afc5f, book: bukhari, title: باب الحرص على الحديث, topics: [talab-ilm] }
+
+  # ── nashr-ilm (DO) ──
+  - { id: d49b6174-4522-4f8d-88cb-d45e0c44b481, book: bukhari, title: "باب قول النبي صلى الله عليه وسلم: «رب مبلغ أوعى من سامع»", topics: [nashr-ilm] }
+  - { id: cf8ddea5-f2c1-4c30-a29e-a55432dba79c, book: bukhari, title: باب تحريض النبي صلى الله عليه وسلم وفد عبد القيس على أن يحفظوا الإيمان والعلم، ويخبروا من وراءهم, topics: [nashr-ilm] }
+  - { id: 72dc88dd-1dca-4ff8-836e-d8eafc938fa7, book: bukhari, title: "باب: ليبلغ العلم الشاهد الغائب", topics: [nashr-ilm] }
+  - { id: 01d4a8db-3d0c-4826-9878-c71a5f030731, book: muslim, title: باب من سن سنة حسنة أو سيئة ومن دعا إلى هدى أو ضلالة, topics: [nashr-ilm] }
+
+  # ── zina (AVOID) ──
+  - { id: 419c12bf-d965-4876-81a8-f4aa25a4a7c3, book: bukhari, title: باب إثم الزناة, topics: [zina] }
+
+  # ── nazar-muharram (AVOID) ──
+  - { id: b29075f8-9a2b-4f12-a4a3-6b3e8c78b4e5, book: bukhari, title: باب زنا الجوارح دون الفرج, topics: [nazar-muharram] }
+  - { id: 821af825-90a0-4f8f-a806-9c33fe05093f, book: bukhari, title: باب لا يخلون رجل بامرأة إلا ذو محرم، والدخول على المغيبة, topics: [nazar-muharram] }
+  - { id: 468704a7-4f33-4bc3-a4be-b0913ec1ca4c, book: muslim, title: باب تحريم النظر إلى العورات, topics: [nazar-muharram] }
+  - { id: e1b09a4c-a1ca-4501-9e3d-b030dad2b6ae, book: muslim, title: باب تحريم الخلوة بالأجنبية والدخول عليها, topics: [nazar-muharram] }
+  - { id: dfa66762-04df-4fb3-ad87-4bcc813b1e96, book: muslim, title: باب قدر على بن آدم حظه من الزنا وغيره, topics: [nazar-muharram] }
+
+  # ── ghadd-basar (DO) ──
+  - { id: e738494f-45cd-4834-bc4c-56d422f11545, book: muslim, title: باب نظر الفجأة, topics: [ghadd-basar] }
+
+  # ── khamr (AVOID) ──
+  - { id: 0fab616e-44ef-49ca-a05d-975c0471412c, book: bukhari, title: "باب: الخمر من العنب", topics: [khamr] }
+  - { id: ad2a32d3-bf86-4228-8ca0-2b62ca10e062, book: bukhari, title: باب نزل تحريم الخمر وهي من البسر والتمر, topics: [khamr] }
+  - { id: 60d279c8-ece5-4403-8b76-d49f8f0a6e6c, book: bukhari, title: "باب: الخمر من العسل، وهو البتع", topics: [khamr] }
+  - { id: 686c04ca-5c20-4400-a983-c9641bb761ba, book: bukhari, title: باب ما جاء في أن الخمر ما خامر العقل من الشراب, topics: [khamr] }
+  - { id: 7c8589bd-716d-4eec-bafd-04ac8ce2107c, book: bukhari, title: باب ما جاء فيمن يستحل الخمر ويسميه بغير اسمه, topics: [khamr] }
+  - { id: db3ead9b-00cc-4785-a042-2d9b44167c1a, book: bukhari, title: باب الباذق، ومن نهى عن كل مسكر من الأشربة, topics: [khamr] }
+  - { id: ca554407-1d71-4055-866c-ddf64c413357, book: bukhari, title: باب لا يشرب الخمر, topics: [khamr] }
+  - { id: 5d6b3939-044e-4635-8476-db617b4023d2, book: bukhari, title: باب تحريم التجارة في الخمر, topics: [khamr] }
+  - { id: d389dc56-e950-4a5e-853f-cd6a6d16a5d4, book: muslim, title: باب تحريم الخمر وبيان أنها تكون من عصير العنب ومن التمر والبسر والزبيب وغيرها مما يسكر, topics: [khamr] }
+  - { id: 36a5772e-9141-4756-b05b-1aa095908bea, book: muslim, title: باب تحريم تخليل الخمر, topics: [khamr] }
+  - { id: f8972e1e-e50b-48fd-b107-c28f25c45a6b, book: muslim, title: باب تحريم التداوي بالخمر, topics: [khamr] }
+  - { id: 427a79f3-e26e-4eb4-a847-dfad8a1ecfd7, book: muslim, title: باب بيان أن جميع ما ينبذ مما يتخذ من النخل والعنب يسمى خمرا, topics: [khamr] }
+  - { id: b70e97c1-203e-4986-8da6-174c901e19ce, book: muslim, title: باب عقوبة من شرب الخمر إذا لم يتب منها بمنعه إياها في الآخرة, topics: [khamr] }
+  - { id: e3af77ff-01a9-48e8-a4d3-ca174cd511d4, book: muslim, title: باب تحريم بيع الخمر, topics: [khamr] }
+
+  # ── tashabbuh (AVOID) ──
+  - { id: ec63908d-60bd-40d8-adea-dc8c752548b8, book: bukhari, title: "باب: المتشبهون بالنساء، والمتشبهات بالرجال", topics: [tashabbuh] }
+  - { id: 963c9c09-fed6-4b76-9f17-c2853d0db516, book: bukhari, title: باب إخراج المتشبهين بالنساء من البيوت, topics: [tashabbuh] }
+  - { id: 57ac101f-e2d7-4019-a998-405d4b87ce0d, book: bukhari, title: باب ما ينهى من دخول المتشبهين بالنساء على المرأة, topics: [tashabbuh] }
+  - { id: 7f684e54-0787-4039-886c-411fc806b9aa, book: muslim, title: باب منع المخنث من الدخول على النساء الأجانب, topics: [tashabbuh] }
+
+  # ── tabarruj (AVOID) ──
+  - { id: 9259b29b-b07e-4de2-84bf-4b659cdd48a8, book: bukhari, title: باب المتفلجات للحسن, topics: [tabarruj] }
+  - { id: 7a44d18f-77a2-4e94-af8b-e1b0f847aa75, book: bukhari, title: باب الوصل في الشعر, topics: [tabarruj] }
+  - { id: bd572d65-615a-4a68-86e8-7ee137c30889, book: bukhari, title: باب المتنمصات, topics: [tabarruj] }
+  - { id: 5cb3ac4b-9b88-4db6-a977-4d06e78fcc76, book: bukhari, title: باب الموصولة, topics: [tabarruj] }
+  - { id: c671038c-41d3-4762-87ad-1b09e03e00cd, book: bukhari, title: باب الواشمة, topics: [tabarruj] }
+  - { id: 5bcc0ddc-63ec-43b1-bc78-7c0180f0d82d, book: bukhari, title: باب المستوشمة, topics: [tabarruj] }
+  - { id: 7871f202-dbfc-459e-985d-07427ca4edb8, book: muslim, title: باب تحريم فعل الواصلة والمستوصلة والواشمة والمستوشمة والنامصة والمتنمصة والمتفلجات والمغيرات خلق الله, topics: [tabarruj] }
+
+  # ── isbal-harir (AVOID) ──
+  - { id: 6ee760bc-63fe-4121-b1fc-05718f945b11, book: bukhari, title: باب ما أسفل من الكعبين فهو في النار, topics: [isbal-harir] }
+  - { id: e43ac192-b4aa-46a1-9a4e-43bbcb3aa2bb, book: bukhari, title: باب من جر ثوبه من الخيلاء, topics: [isbal-harir, kibr] }
+  - { id: 20ae12f4-94f6-4cc0-b7ec-d36b5279ae5c, book: bukhari, title: باب لبس الحرير وافتراشه للرجال، وقدر ما يجوز منه, topics: [isbal-harir] }
+  - { id: 85edfc86-6bb0-4bac-8484-5792b5aed2c1, book: bukhari, title: باب افتراش الحرير, topics: [isbal-harir] }
+  - { id: 2b2a6f62-0e6e-4a6a-8b2b-c9821accf979, book: muslim, title: باب تحريم استعمال إناء الذهب والفضة على الرجال والنساء وخاتم الذهب والحرير على الرجل وإباحته للنساء وإباحة العلم ونحوه للرجل ما لم يزد على أربع أصابع, topics: [isbal-harir] }
+  - { id: 78ef25b5-5baf-4356-9c14-3d0592a923c2, book: muslim, title: باب تحريم جر الثوب خيلاء وبيان حد ما يجوز إرخاؤه إليه وما يستحب, topics: [isbal-harir, kibr] }
+  - { id: e6a0fc8f-aa0b-4f52-a192-083d0ac8d128, book: muslim, title: باب تحريم خاتم الذهب على الرجال ونسخ ما كان من إباحته في أول الإسلام, topics: [isbal-harir] }
+
+  # ── qatl (AVOID) ──
+  - { id: 6739dc1f-16ff-46c1-8754-857753c72183, book: bukhari, title: "باب قول الله تعالى: {ومن أحياها} [المائدة: 32]", topics: [qatl] }
+  - { id: 299c633e-5d0e-44a9-8d03-146fb55ad39a, book: bukhari, title: باب من طلب دم امرئ بغير حق, topics: [qatl] }
+  - { id: da4bfb57-ec6f-4a07-b34c-bf85ff18b096, book: bukhari, title: باب إثم من قتل ذميا بغير جرم, topics: [qatl] }
+  - { id: e3de10b9-34d7-41f1-a187-05c751619cc3, book: bukhari, title: باب قتل الولد خشية أن يأكل معه, topics: [qatl] }
+  - { id: 8d00c856-e62f-46eb-8d43-8123dd49a1cf, book: muslim, title: باب بيان معنى قول النبي صلى الله عليه وسلم لا ترجعوا بعدي كفارا يضرب بعضكم رقاب بعض, topics: [qatl] }
+  - { id: 91d9fd5a-d568-4f9e-aee3-a9e6c313b81a, book: muslim, title: باب تحريم قتل الكافر بعد أن قال لا إله إلا الله, topics: [qatl] }
+  - { id: c719b200-dac8-44ca-840e-e0f44e9f4dc5, book: muslim, title: باب بيان إثم من سن القتل, topics: [qatl] }
+  - { id: 7da11670-e467-46fd-bb55-2fe289b466e3, book: muslim, title: باب المجازاة بالدماء في الآخرة وأنها أول ما يقضي فيه بين الناس يوم القيامة, topics: [qatl] }
+  - { id: 48dc8ddc-64ec-453c-a5eb-5ab448f9028e, book: muslim, title: باب تغليظ تحريم الدماء والأعراض والأموال, topics: [qatl] }
+
+  # ── intihar (AVOID) ──
+  - { id: 9c778c0a-d3ae-42f7-a52f-e72d559cc912, book: bukhari, title: باب ما جاء في قاتل النفس, topics: [intihar] }
+  - { id: fab07d04-a285-4eab-b331-549538e8c4fa, book: muslim, title: باب غلظ تحريم قتل الإنسان نفسه وإن من قتل نفسه بشيء عذب به في النار وأنه لا يدخل الجنة إلا نفس مسلمة, topics: [intihar] }
+  - { id: 972940f1-2e75-48e4-971f-48ab7bd36e16, book: muslim, title: باب ترك الصلاة على القاتل نفسه, topics: [intihar] }
+
+  # ── sihr-kahana (AVOID) ──
+  - { id: 3a6b6ec1-be2a-4ce8-9b7a-18e8f93e1b55, book: bukhari, title: باب الكهانة, topics: [sihr-kahana] }
+  - { id: f7059184-2b96-408c-9cf8-7c19bad56e47, book: bukhari, title: "باب: الشرك والسحر من الموبقات", topics: [sihr-kahana, shirk] }
+  - { id: 0db5f45a-ef61-4026-bc60-ea92000879ef, book: muslim, title: باب تحريم الكهانة وإتيان الكهان, topics: [sihr-kahana] }
+
+  # ── tatayyur (AVOID) ──
+  - { id: c1d2f0aa-6206-4247-920a-3cab695d3224, book: bukhari, title: باب الطيرة, topics: [tatayyur] }
+  - { id: 8d96d3f2-066b-4355-8888-587c44acde01, book: muslim, title: باب الطيرة والفأل وما يكون فيه من الشؤم, topics: [tatayyur] }
+
+  # ── sabb-sahaba (AVOID) ──
+  - { id: fc20079c-2405-4e47-859a-28519ed345d3, book: muslim, title: باب تحريم سب الصحابة رضي الله عنهم, topics: [sabb-sahaba] }
+
+  # ── dhikr-akhira (DO) ──
+  - { id: 7df2f7dc-e82b-4410-9370-644d9f36552e, book: bukhari, title: باب صفة الجنة والنار, topics: [dhikr-akhira] }
+  - { id: 4329f4f2-e412-4b37-b489-95fbaea6750e, book: muslim, title: باب إن في الجنة شجرة يسير الراكب في ظلها مائة عام لا يقطعها, topics: [dhikr-akhira] }
+  - { id: eeb9ce93-497d-449b-acd0-b61f11a8523f, book: muslim, title: باب في سوق الجنة وما ينالون فيها من النعيم والجمال, topics: [dhikr-akhira] }
+  - { id: 990e27c4-fbe7-487c-b88f-0f586a209b12, book: muslim, title: باب أول زمرة تدخل الجنة على صورة القمر ليلة البدر وصفاتهم وأزواجهم, topics: [dhikr-akhira] }
+  - { id: 53cfbf66-0d1e-44a6-a1ae-6d76dcc820e4, book: muslim, title: باب في صفات الجنة وأهلها وتسبيحهم فيها بكرة وعشيا, topics: [dhikr-akhira] }
+  - { id: 0f252855-b624-4d8e-a848-a67eedf9447b, book: muslim, title: "باب في دوام نعيم أهل الجنة وقوله تعالى {ونودوا أن تلكم الجنة أورثتموها بما كنتم تعملون}", topics: [dhikr-akhira] }
+  - { id: 6b5e2140-56b0-4292-8904-355f35b6e0d1, book: muslim, title: باب في صفة خيام الجنة وما للمؤمنين فيها من الأهلين, topics: [dhikr-akhira] }
+  - { id: 3fe42eb3-f15b-4ba5-bcad-db1bd1b4337f, book: muslim, title: باب في شدة حر نار جهنم وبعد قعرها وما تأخذ من المعذبين, topics: [dhikr-akhira] }

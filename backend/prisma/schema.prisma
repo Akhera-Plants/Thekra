@@ -1,0 +1,809 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Neon pooled URL goes in DATABASE_URL; set DIRECT_URL to the direct
+  // (non-pooler) connection for `prisma migrate deploy`. Locally both may match.
+  directUrl = env("DIRECT_URL")
+}
+
+enum SourceType {
+  QURAN
+  HADITH_COLLECTION
+  BOOK
+  SCHOLAR
+  OTHER
+}
+
+enum QuoteType {
+  QURAN_VERSE
+  HADITH
+  SCHOLAR_QUOTE
+  BOOK_EXCERPT
+}
+
+enum QuoteOrigin {
+  LOCAL
+  API_CACHED
+}
+
+enum HadithGrade {
+  SAHIH
+  HASAN
+  DAIF
+  MAWDU
+  UNGRADED
+}
+
+/// Where Quote.textAr came from. OCR stays off public routes until textVerifiedAt is set.
+enum TextSource {
+  DIGITAL
+  OCR
+  MANUAL
+}
+
+/// A heading in a printed book. The reviewer's taxonomy is built from these rows.
+enum BookLevel {
+  KITAB
+  BAB
+  FASL
+  TARGHIB
+  TARHIB
+  KABIRA
+  BRANCH
+  OTHER
+}
+
+enum SectionItemKind {
+  AYAH
+  HADITH
+  AUTHOR_TEXT
+}
+
+enum TagCategory {
+  SIN
+  GOOD_DEED
+  THEME
+  EMOTION
+}
+
+enum SyncStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  FAILED
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  REVIEWER
+}
+
+/// Who the public grade came from. AUTHORITY_LEGACY stays stored and hidden.
+enum GradeSource {
+  AUTHORITY_LEGACY
+  AUTO_SAHIHAYN
+  /// The two Sahihs themselves, not a match from another book.
+  SAHIHAYN
+  MANUAL
+  /// Shu'ayb al-Arna'ut or Bashar Awad Ma'ruf graded the narration sahih or hasan.
+  /// It is not a Sahihayn grade, and the quote carries an OUTSIDE_SAHIHAYN flag.
+  SUNAN_TAHQIQ
+  /// Kept for stored rows. Ibn Rajab is selection only — never publishable as a grade.
+  IBN_RAJAB
+  /// موسوعة الأحاديث النبوية (HadeethEnc). Publishable when grade is SAHIH or HASAN.
+  /// Never overwrites SAHIHAYN / AUTO_SAHIHAYN / SUNAN_TAHQIQ / MANUAL.
+  HADEETHENC
+}
+
+enum ReferenceBook {
+  BUKHARI
+  MUSLIM
+}
+
+enum MatchDecision {
+  CANDIDATE
+  CONFIRMED
+  REJECTED
+}
+
+enum FlagType {
+  WEAK_MATCH
+  DUPLICATE_DIFFERENT_GRADE
+  QURAN_MISMATCH
+  OCR_SUSPECT
+  REFERENCE_MISMATCH
+  USER_REPORT
+  /// A chapter title is both a warning and an encouragement, or names no topic.
+  AMBIGUOUS_CHAPTER
+  /// Al-Sa'di mentions the subject without a matching warning or praise.
+  WEAK_TAFSIR_SUPPORT
+  /// A published sunan grade. Low severity: it marks the narration as outside the two Sahihs and does not hide it.
+  OUTSIDE_SAHIHAYN
+}
+
+enum FlagSeverity {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum FlagOrigin {
+  AUTO
+  USER
+}
+
+enum FlagStatus {
+  OPEN
+  RESOLVED
+  DISMISSED
+}
+
+/// Scholarly rank shown on a sin. Distinct from Sin.severity (editorial weight).
+enum SinRank {
+  KABIRA // كبيرة
+  SAGHIRA // صغيرة
+}
+
+/// CURATED rows were entered by hand. AUTO_CHAPTER rows come from a book chapter.
+enum EntityOrigin {
+  CURATED
+  AUTO_CHAPTER
+  TAXONOMY
+}
+
+/// Why a quote is linked to a topic.
+enum LinkBasis {
+  CHAPTER
+  CHAPTER_AYAH
+  TAKHRIJ
+  AUTHOR_CITATION
+  REVIEWER_SECTION
+  AI_ITEM
+  KEYWORD_PROPOSAL
+  MANUAL
+}
+
+/// Who classified the link: the book's own tabwib, the reviewer, or the item pass.
+enum ClassifiedBy {
+  BOOK
+  REVIEWER
+  AI
+}
+
+enum TopicSide {
+  AVOID
+  DO
+}
+
+/// «— speaker» (their own words) vs «رواه speaker» (they only narrate).
+enum AtharAttributionKind {
+  SAID
+  NARRATED
+}
+
+/// Reviewer sheet. Null stays hidden even when ATHAR_PUBLIC_ENABLED is on.
+enum AtharReviewDecision {
+  KEEP
+  DROP
+}
+
+enum ExplanationKind {
+  TAFSIR // تفسير — attached by ayahKey
+  SHARH // شرح — attached by quoteId
+  BRANCH_SHARH // شرح شعبة — attached by imanBranchId
+  /// فوائد — HadeethEnc hints; attached by quoteId
+  FAWAID
+  /// غريب — HadeethEnc word meanings; attached by quoteId
+  GHARIB
+  /// Long classical sharh (Fath al-Bari / Nawawi); quote page only, never lists
+  SHARH_LONG
+}
+
+/// Review state of a suggested or curated link.
+/// Public reminder feeds serve ACCEPTED only.
+enum LinkReviewStatus {
+  NOT_REVIEWED
+  UNDER_REVIEW
+  REVIEWED
+  ACCEPTED
+  REJECTED
+}
+
+/// A book's own chapter, mapped to one entity after the owner reviews it once.
+enum ChapterMapTarget {
+  SIN
+  GOOD_DEED
+  IMAN_BRANCH
+}
+
+model Source {
+  id            String     @id @default(uuid())
+  name          String
+  nameAr        String?
+  type          SourceType
+  author        String?
+  authorAr      String?
+  language      String     @default("ar")
+  isExternalApi Boolean    @default(false)
+  apiProvider   String?
+  apiBaseUrl    String?
+  lastSyncedAt  DateTime?
+  /// When set, this row is an old id for `canonical`. Quotes live on the canonical source.
+  canonicalId   String?
+  canonical     Source?  @relation("SourceAlias", fields: [canonicalId], references: [id])
+  aliases       Source[] @relation("SourceAlias")
+  quotes        Quote[]
+  syncLogs      SyncLog[]
+  explanations  Explanation[] @relation("ExplanationSource")
+  imanBranches  ImanBranch[]  @relation("ImanBranchSource")
+  rankedSins    Sin[]         @relation("SinRankSource")
+  chapterMaps   ChapterEntityMap[]
+  bookSections  BookSection[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Quote {
+  id       String      @id @default(uuid())
+  type     QuoteType
+  origin   QuoteOrigin @default(LOCAL)
+  textAr   String
+  sourceId String
+  source   Source      @relation(fields: [sourceId], references: [id])
+
+  surahNumber Int?
+  surahName   String?
+  surahNameAr String?
+  ayahNumber  Int?
+
+  narrator        String?
+  narratorAr      String?
+  grade           HadithGrade?
+  /// Printed number in Source. Public text is formatted from this, not from the legacy string.
+  referenceNumber Int?
+  /// Odd printed marks such as (أ), or a volume/page locator such as 5/428.
+  referenceLabel  String?
+  /// Legacy free-text reference. Public responses do not read it.
+  hadithReference String?
+
+  bookTitle     String?
+  author        String?
+  pageOrChapter String?
+
+  /// Public printed location in the cited edition (vision v2 §5.3).
+  /// Corpus commit and chapter stay in rawPayload, which is never serialised.
+  volume String?
+  page   String?
+
+  /// Who assigned Quote.grade, and where. Never inferred for a whole book.
+  gradeAuthority String?
+  gradeReference String?
+  /// AUTHORITY_LEGACY and IBN_RAJAB stay stored and are not published. SAHIHAYN, AUTO_SAHIHAYN, MANUAL, SUNAN_TAHQIQ, and HADEETHENC are.
+  gradeSource    GradeSource @default(AUTHORITY_LEGACY)
+  /// Previous authority grade, kept when a sahihayn match replaces it.
+  legacyGrade          HadithGrade?
+  legacyGradeAuthority String?
+  legacyGradeReference String?
+
+  externalId  String?
+  apiProvider String?
+  rawPayload  Json?
+
+  /// Matn only (isnad stripped). Full edition text may remain in textAr and/or rawPayload.fullTextAr.
+  matnAr String?
+
+  /// Athar (Companion / Successor saying), not a prophetic hadith. Never graded as hadith.
+  isAthar         Boolean @default(false)
+  /// Key from taxonomy/athar-speakers.yaml when the speaker is listed; null when unlisted or marfu.
+  atharSpeakerKey String?
+  /// Display name (Arabic) for the listed speaker; null when unlisted or marfu.
+  atharSpeakerAr  String?
+  /// Story only: from the first speaker frame to the end, chain and junk cut.
+  atharTextAr     String?
+  /// SAID = the speaker's own words («—»). NARRATED = they report someone else («رواه»).
+  atharAttributionKind AtharAttributionKind?
+  /// Empty until the reviewer writes keep or drop. Public requires KEEP.
+  atharReviewDecision AtharReviewDecision?
+
+  /// DIGITAL: OpenITI and other keyed digital text. OCR: Document AI, hidden
+  /// until textVerifiedAt. MANUAL: seed, API, and curator entry (the default).
+  textSource     TextSource @default(MANUAL)
+  textVerifiedAt DateTime?
+
+  translations  Translation[]
+  tags          QuoteTag[]
+  sinLinks        SinQuote[]
+  goodDeedLinks   GoodDeedQuote[]
+  favorites       Favorite[]
+  imanBranchLinks ImanBranchQuote[]
+  explanations    Explanation[]
+  matches         HadithMatch[]
+  flags           QuoteFlag[]
+  sectionItems    SectionItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([apiProvider, externalId])
+  @@index([type])
+  @@index([sourceId])
+  /// D-3 / P2-17: grade filter for the hadith grade policy (WHERE grade IN (...)).
+  @@index([grade])
+  /// D-3 / P2-17: combined type+grade for public quote search grade-policy clause.
+  @@index([type, grade])
+  /// D-3 / P2-17: ayah lookups within a surah (quran list/detail).
+  @@index([type, surahNumber, ayahNumber])
+  /// Public routes hide OCR rows until textVerifiedAt is set.
+  @@index([textSource, textVerifiedAt])
+  @@index([gradeSource])
+}
+
+/// One heading in a book, in the order the author printed it.
+model BookSection {
+  id       String        @id @default(uuid())
+  sourceId String
+  source   Source        @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  parentId String?
+  parent   BookSection?  @relation("BookSectionTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children BookSection[] @relation("BookSectionTree")
+  level    BookLevel
+  /// Printed number, when the heading has one. Null for an unnumbered bab.
+  number   String?
+  titleAr  String
+  /// Position in the book, starting at 1.
+  order    Int
+  volume   String?
+  page     String?
+  items    SectionItem[]
+  sinQuotes SinQuote[]
+  goodDeedQuotes GoodDeedQuote[]
+
+  @@unique([sourceId, order])
+  @@index([parentId])
+}
+
+/// One ayah, narration, or author paragraph inside a section, in the author's order.
+model SectionItem {
+  id        String          @id @default(uuid())
+  sectionId String
+  section   BookSection     @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  /// Position inside the section, starting at 1.
+  order     Int
+  kind      SectionItemKind
+  /// Hadith and author text, and the canonical Quran verse for an ayah.
+  quoteId   String?
+  quote     Quote?          @relation(fields: [quoteId], references: [id], onDelete: SetNull)
+  /// Verse key, for example 49:12. ayahTo equals ayahFrom for a single verse.
+  ayahFrom  String?
+  ayahTo    String?
+
+  @@unique([sectionId, order])
+  @@index([quoteId])
+}
+
+/// Numbered corpus for Sahih al-Bukhari and Sahih Muslim. Public Quotes link here.
+model ReferenceHadith {
+  id             String        @id @default(uuid())
+  book           ReferenceBook
+  number         Int
+  kitab          String?
+  bab            String?
+  isnadText      String
+  matnText       String
+  normalizedMatn String
+  matches        HadithMatch[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@unique([book, number])
+  @@index([book])
+  // Trigram GIN index created in 20261011180000_add_takhrij_and_flags (needs pg_trgm,
+  // which that migration enables). Declared here so the datamodel matches the migrations.
+  @@index([normalizedMatn(ops: raw("gin_trgm_ops"))], map: "ReferenceHadith_normalizedMatn_trgm_idx", type: Gin)
+}
+
+model HadithMatch {
+  id                String          @id @default(uuid())
+  quoteId           String
+  quote             Quote           @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  referenceHadithId String
+  referenceHadith   ReferenceHadith @relation(fields: [referenceHadithId], references: [id], onDelete: Cascade)
+  score             Float
+  method            String
+  decision          MatchDecision   @default(CANDIDATE)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@unique([quoteId, referenceHadithId])
+  @@index([quoteId])
+  @@index([score])
+}
+
+model QuoteFlag {
+  id         String       @id @default(uuid())
+  quoteId    String
+  quote      Quote        @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  type       FlagType
+  severity   FlagSeverity
+  source     FlagOrigin
+  status     FlagStatus   @default(OPEN)
+  details    Json?
+  note       String?
+  resolvedBy String?
+  resolvedAt DateTime?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@index([status, severity])
+  @@index([quoteId, type, status])
+}
+
+model Translation {
+  id           String @id @default(uuid())
+  quoteId      String
+  quote        Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  languageCode String
+  text         String
+
+  @@unique([quoteId, languageCode])
+}
+
+model TopicDomain {
+  key        String     @id
+  nameAr     String
+  nameEn     String
+  order      Int
+  sins       Sin[]
+  goodDeeds  GoodDeed[]
+}
+
+model Sin {
+  id               String     @id @default(uuid())
+  name             String
+  nameAr           String
+  slug             String     @unique
+  category         String?
+  description      String?
+  descriptionAr    String?
+  severity         Int?
+  /// Null until a curator classifies the sin. Never derived from severity.
+  rank             SinRank?
+  origin           EntityOrigin @default(CURATED)
+  domainKey        String?
+  domain           TopicDomain? @relation(fields: [domainKey], references: [key])
+  isContemporary   Boolean      @default(false)
+  /// Hidden topics stay out of every public response until the owner unhides them.
+  isHidden         Boolean      @default(false)
+  /// False topics stay usable (tark-lillah) and are omitted from lists.
+  isListed         Boolean      @default(true)
+  taxonomyOrder    Int          @default(0)
+  oppositeGoodDeedId String?
+  oppositeGoodDeed   GoodDeed?  @relation("OppositeOfGoodDeed", fields: [oppositeGoodDeedId], references: [id])
+  rankSourceId     String?
+  rankSource       Source?    @relation("SinRankSource", fields: [rankSourceId], references: [id])
+  rankReference    String?
+  quotes           SinQuote[]
+  relatedGoodDeeds GoodDeed[] @relation("OppositeOfSin")
+  derivationsFrom  TopicDerivation[] @relation("DerivationFromSin")
+  derivationsTo    TopicDerivation[] @relation("DerivationToSin")
+  imanBranches     ImanBranchSin[]
+  chapterMaps      ChapterEntityMap[]
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  @@index([rank])
+  @@index([domainKey])
+  @@index([oppositeGoodDeedId])
+}
+
+model GoodDeed {
+  id            String          @id @default(uuid())
+  name          String
+  nameAr        String
+  slug          String          @unique
+  category      String?
+  description   String?
+  descriptionAr String?
+  reward        String?
+  rewardAr      String?
+  origin        EntityOrigin @default(CURATED)
+  domainKey     String?
+  domain        TopicDomain? @relation(fields: [domainKey], references: [key])
+  isContemporary Boolean     @default(false)
+  isHidden      Boolean      @default(false)
+  isListed      Boolean      @default(true)
+  taxonomyOrder Int          @default(0)
+  oppositeSinId String?
+  oppositeSin   Sin?                 @relation("OppositeOfSin", fields: [oppositeSinId], references: [id])
+  oppositeOf    Sin[]                @relation("OppositeOfGoodDeed")
+  quotes        GoodDeedQuote[]
+  derivationsFrom TopicDerivation[] @relation("DerivationFromDeed")
+  derivationsTo   TopicDerivation[] @relation("DerivationToDeed")
+  imanBranches  ImanBranchGoodDeed[]
+  chapterMaps   ChapterEntityMap[]
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  @@index([oppositeSinId])
+  @@index([domainKey])
+}
+
+model SinQuote {
+  id             String   @id @default(uuid())
+  sinId          String
+  sin            Sin      @relation(fields: [sinId], references: [id], onDelete: Cascade)
+  quoteId        String
+  quote          Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  relevanceScore Int?              @default(0)
+  note           String?
+  reviewStatus   LinkReviewStatus @default(NOT_REVIEWED)
+  basis          LinkBasis        @default(MANUAL)
+  classifiedBy   ClassifiedBy     @default(BOOK)
+  sectionId      String?
+  section        BookSection?     @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  /// Keys from taxonomy/topic-themes.yaml whose pattern matches this link's chapter title. Written by import:taxonomy.
+  themeKeys      String[]         @default([])
+  /// D-2: added for admin sort=newest and curator audit trail.
+  createdAt      DateTime         @default(now())
+  /// D-2: added for curator audit trail.
+  updatedAt      DateTime         @updatedAt
+
+  @@unique([sinId, quoteId])
+  @@index([themeKeys], type: Gin)
+  /// D-3: quoteId index for reverse lookups (find all sins referencing a quote).
+  @@index([quoteId])
+  /// D-3: composite index supporting the core reminder loop (filter by sin, sort by score).
+  @@index([sinId, relevanceScore(sort: Desc, nulls: Last)])
+  @@index([sectionId])
+  @@index([classifiedBy])
+}
+
+model GoodDeedQuote {
+  id             String   @id @default(uuid())
+  goodDeedId     String
+  goodDeed       GoodDeed @relation(fields: [goodDeedId], references: [id], onDelete: Cascade)
+  quoteId        String
+  quote          Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  relevanceScore Int?              @default(0)
+  note           String?
+  reviewStatus   LinkReviewStatus @default(NOT_REVIEWED)
+  basis          LinkBasis        @default(MANUAL)
+  classifiedBy   ClassifiedBy     @default(BOOK)
+  sectionId      String?
+  section        BookSection?     @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  /// Keys from taxonomy/topic-themes.yaml whose pattern matches this link's chapter title. Written by import:taxonomy.
+  themeKeys      String[]         @default([])
+  /// D-2: added for admin sort=newest and curator audit trail.
+  createdAt      DateTime         @default(now())
+  /// D-2: added for curator audit trail.
+  updatedAt      DateTime         @updatedAt
+
+  @@unique([goodDeedId, quoteId])
+  @@index([themeKeys], type: Gin)
+  /// D-3: quoteId index for reverse lookups (find all good deeds referencing a quote).
+  @@index([quoteId])
+  /// D-3: composite index supporting the core reminder loop (filter by deed, sort by score).
+  @@index([goodDeedId, relevanceScore(sort: Desc, nulls: Last)])
+  @@index([sectionId])
+  @@index([classifiedBy])
+}
+
+/// A contemporary topic draws its public texts from one or more classical topics.
+/// Exactly one "from" and one "to" are set (SQL CHECK). Either side may be a sin or a deed.
+model TopicDerivation {
+  id              String    @id @default(uuid())
+  fromSinId       String?
+  fromSin         Sin?      @relation("DerivationFromSin", fields: [fromSinId], references: [id], onDelete: Cascade)
+  fromGoodDeedId  String?
+  fromGoodDeed    GoodDeed? @relation("DerivationFromDeed", fields: [fromGoodDeedId], references: [id], onDelete: Cascade)
+  toSinId         String?
+  toSin           Sin?      @relation("DerivationToSin", fields: [toSinId], references: [id], onDelete: Cascade)
+  toGoodDeedId    String?
+  toGoodDeed      GoodDeed? @relation("DerivationToDeed", fields: [toGoodDeedId], references: [id], onDelete: Cascade)
+
+  @@index([fromSinId])
+  @@index([fromGoodDeedId])
+  @@index([toSinId])
+  @@index([toGoodDeedId])
+}
+
+/// Deferred akhlaq label. One row per virtue and the topic it names.
+model TopicLabel {
+  id       String    @id @default(uuid())
+  labelKey String
+  labelAr  String
+  side     TopicSide
+  slug     String
+
+  @@unique([labelKey, side, slug])
+  @@index([slug])
+}
+
+/// One شعبة of faith. Numbering follows an edition the owner still has to confirm.
+model ImanBranch {
+  id              String               @id @default(uuid())
+  number          Int                  @unique
+  titleAr         String
+  title           String?
+  summaryAr       String?
+  summary         String?
+  sourceId        String?
+  source          Source?              @relation("ImanBranchSource", fields: [sourceId], references: [id])
+  sourceReference String?
+  quotes          ImanBranchQuote[]
+  goodDeeds       ImanBranchGoodDeed[]
+  sins            ImanBranchSin[]
+  explanations    Explanation[]
+  chapterMaps     ChapterEntityMap[]
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+}
+
+/// Owner-reviewed map from a book's own chapter to one sin, deed, or branch.
+/// An importer may turn a reviewed row into ACCEPTED links, using the chapter title as the note.
+/// Similarity suggestions never write this table as reviewed.
+model ChapterEntityMap {
+  id             String           @id @default(uuid())
+  sourceId       String
+  source         Source           @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  chapterKey     String
+  chapterTitleAr String
+  targetType     ChapterMapTarget
+  sinId          String?
+  sin            Sin?             @relation(fields: [sinId], references: [id], onDelete: Cascade)
+  goodDeedId     String?
+  goodDeed       GoodDeed?        @relation(fields: [goodDeedId], references: [id], onDelete: Cascade)
+  imanBranchId   String?
+  imanBranch     ImanBranch?      @relation(fields: [imanBranchId], references: [id], onDelete: Cascade)
+  reviewed       Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([sourceId, chapterKey])
+  @@index([sinId])
+  @@index([goodDeedId])
+  @@index([imanBranchId])
+}
+
+/// Curator or suggested link: a quote that teaches this branch.
+model ImanBranchQuote {
+  id             String           @id @default(uuid())
+  imanBranchId   String
+  imanBranch     ImanBranch       @relation(fields: [imanBranchId], references: [id], onDelete: Cascade)
+  quoteId        String
+  quote          Quote            @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  relevanceScore Int?             @default(0)
+  note           String?
+  reviewStatus   LinkReviewStatus @default(NOT_REVIEWED)
+  basis          LinkBasis        @default(MANUAL)
+  classifiedBy   ClassifiedBy     @default(BOOK)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@unique([imanBranchId, quoteId])
+  @@index([quoteId])
+  @@index([imanBranchId, relevanceScore(sort: Desc, nulls: Last)])
+  @@index([basis])
+}
+
+model ImanBranchGoodDeed {
+  id           String     @id @default(uuid())
+  imanBranchId String
+  imanBranch   ImanBranch @relation(fields: [imanBranchId], references: [id], onDelete: Cascade)
+  goodDeedId   String
+  goodDeed     GoodDeed   @relation(fields: [goodDeedId], references: [id], onDelete: Cascade)
+  sortOrder    Int        @default(0)
+  note         String?
+  createdAt    DateTime   @default(now())
+
+  @@unique([imanBranchId, goodDeedId])
+  @@index([goodDeedId])
+}
+
+model ImanBranchSin {
+  id           String     @id @default(uuid())
+  imanBranchId String
+  imanBranch   ImanBranch @relation(fields: [imanBranchId], references: [id], onDelete: Cascade)
+  sinId        String
+  sin          Sin        @relation(fields: [sinId], references: [id], onDelete: Cascade)
+  sortOrder    Int        @default(0)
+  note         String?
+  createdAt    DateTime   @default(now())
+
+  @@unique([imanBranchId, sinId])
+  @@index([sinId])
+}
+
+/// تفسير / شرح with mandatory attribution. Exactly one target (SQL CHECK).
+model Explanation {
+  id           String          @id @default(uuid())
+  kind         ExplanationKind
+  quoteId      String?
+  quote        Quote?          @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  ayahKey      String?
+  imanBranchId String?
+  imanBranch   ImanBranch?     @relation(fields: [imanBranchId], references: [id], onDelete: Cascade)
+  languageCode String          @default("ar")
+  text         String
+  sourceId     String
+  source       Source          @relation("ExplanationSource", fields: [sourceId], references: [id])
+  reference    String?
+  origin       QuoteOrigin     @default(LOCAL)
+  apiProvider  String?
+  externalId   String?
+  rawPayload   Json?
+  sortOrder    Int             @default(0)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@unique([apiProvider, externalId])
+  @@index([quoteId])
+  @@index([ayahKey, languageCode])
+  @@index([imanBranchId])
+}
+
+model Tag {
+  id       String      @id @default(uuid())
+  name     String
+  nameAr   String?
+  slug     String      @unique
+  category TagCategory
+  quotes   QuoteTag[]
+
+  /// D-3 / P2-17: filter tags by category (SIN, GOOD_DEED, THEME, EMOTION).
+  @@index([category])
+}
+
+model QuoteTag {
+  id      String @id @default(uuid())
+  quoteId String
+  quote   Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  tagId   String
+  tag     Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([quoteId, tagId])
+  /// D-3 / P2-17: reverse lookup — fetch all quotes for a given tag.
+  @@index([tagId])
+}
+
+model SyncLog {
+  id              String     @id @default(uuid())
+  sourceId        String
+  source          Source     @relation(fields: [sourceId], references: [id])
+  status          SyncStatus @default(PENDING)
+  startedAt       DateTime   @default(now())
+  finishedAt      DateTime?
+  recordsImported Int?       @default(0)
+  errorMessage    String?
+}
+
+model User {
+  id           String     @id @default(uuid())
+  email        String     @unique
+  displayName  String?
+  /// Phase 4: nullable so existing/OAuth-only users remain valid
+  passwordHash String?
+  /// Phase 4: required by RolesGuard; defaults USER
+  role         UserRole   @default(USER)
+  /// Phase 4: optional, useful for support dashboards
+  lastLoginAt  DateTime?
+  favorites    Favorite[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Favorite {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quoteId   String
+  quote     Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, quoteId])
+}

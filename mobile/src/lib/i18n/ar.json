@@ -1,0 +1,142 @@
+{
+  "tabs": {
+    "home": "الرئيسية",
+    "browse": "استكشف",
+    "favorites": "المفضلة",
+    "settings": "الإعدادات"
+  },
+  "home": {
+    "title": "تذكرة",
+    "subtitle": "بماذا تشعر الآن؟",
+    "sinAction": "أعنّي على ترك معصية",
+    "sinSubtitle": "اقرأ ما يُعينك على تجنّبها",
+    "goodDeedAction": "دُلّني على طاعة",
+    "goodDeedSubtitle": "اقرأ ما يُحفّزك ويُبيّن أجرها",
+    "continueReading": "واصل القراءة"
+  },
+  "sinPicker": {
+    "title": "اختر المعصية",
+    "searchPlaceholder": "ابحث...",
+    "recentLabel": "المستخدمة مؤخراً",
+    "allLabel": "جميع المعاصي",
+    "empty": "لا توجد نتائج"
+  },
+  "reminders": {
+    "title": "التذكيرات",
+    "anotherReminder": "تذكير آخر",
+    "alternatives": "الأعمال البديلة",
+    "filterAll": "الكل",
+    "filterQuran": "قرآن",
+    "filterHadith": "حديث",
+    "filterScholar": "أقوال العلماء",
+    "filterBook": "كتب",
+    "empty": "لا توجد تذكيرات لهذه المعصية بعد",
+    "shuffleSeed": "اضغط لتغيير الترتيب"
+  },
+  "goodDeedPicker": {
+    "title": "اختر العمل الصالح",
+    "searchPlaceholder": "ابحث...",
+    "empty": "لا توجد نتائج"
+  },
+  "motivations": {
+    "title": "المحفّزات",
+    "reward": "الأجر والثواب",
+    "oppositeSin": "المعصية المقابلة",
+    "empty": "لا توجد محفّزات بعد"
+  },
+  "browse": {
+    "title": "استكشف",
+    "searchPlaceholder": "ابحث في الآيات والأحاديث...",
+    "filterType": "النوع",
+    "filterGrade": "الدرجة",
+    "tabAll": "الكل",
+    "tabQuran": "القرآن",
+    "tabHadith": "الحديث",
+    "empty": "لا توجد نتائج"
+  },
+  "quoteDetail": {
+    "source": "المصدر",
+    "provenance": "الإسناد",
+    "relatedSins": "معاصٍ ذات صلة",
+    "relatedGoodDeeds": "أعمال ذات صلة",
+    "share": "مشاركة",
+    "favorite": "حفظ",
+    "unfavorite": "إلغاء الحفظ"
+  },
+  "feelings": {
+    "title": "اقتبس بحسب ما تشعر",
+    "empty": "لا توجد اقتباسات لهذا الشعور"
+  },
+  "favorites": {
+    "title": "المفضلة",
+    "empty": "لا توجد اقتباسات محفوظة بعد",
+    "emptyHint": "اضغط على أيقونة الحفظ في أي اقتباس لإضافته هنا",
+    "offlineBanner": "عرض محتوى محفوظ — لا يوجد اتصال",
+    "signInPrompt": "سجّل الدخول لمزامنة المفضلة بين أجهزتك"
+  },
+  "settings": {
+    "title": "الإعدادات",
+    "language": "اللغة",
+    "languageAr": "العربية",
+    "languageEn": "English",
+    "languageRestart": "يتطلب إعادة تشغيل التطبيق لتطبيق التغيير",
+    "theme": "المظهر",
+    "themeLight": "فاتح",
+    "themeDark": "داكن",
+    "themeSystem": "تلقائي",
+    "translations": "إظهار الترجمات",
+    "weakHadith": "إظهار الأحاديث الضعيفة",
+    "account": "الحساب",
+    "signIn": "تسجيل الدخول",
+    "signOut": "تسجيل الخروج",
+    "clearCache": "مسح الذاكرة المؤقتة",
+    "clearCacheConfirm": "سيتم حذف المحتوى المحفوظ للاستخدام بدون إنترنت. هل أنت متأكد؟",
+    "version": "الإصدار"
+  },
+  "auth": {
+    "loginTitle": "تسجيل الدخول",
+    "registerTitle": "إنشاء حساب",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "loginButton": "دخول",
+    "registerButton": "إنشاء حساب",
+    "noAccount": "ليس لديك حساب؟",
+    "haveAccount": "لديك حساب بالفعل؟",
+    "register": "سجّل",
+    "login": "دخول",
+    "guestNote": "يمكنك استخدام التطبيق بدون حساب. الحساب مطلوب فقط لحفظ المفضلة ومزامنتها."
+  },
+  "grade": {
+    "SAHIH": "صحيح",
+    "HASAN": "حسن",
+    "DAIF": "ضعيف",
+    "MAWDU": "موضوع",
+    "UNGRADED": "قرآن"
+  },
+  "quoteType": {
+    "QURAN_VERSE": "آية قرآنية",
+    "HADITH": "حديث",
+    "SCHOLAR_QUOTE": "قول عالم",
+    "BOOK_EXCERPT": "مقتبس"
+  },
+  "common": {
+    "loading": "جارٍ التحميل...",
+    "error": "حدث خطأ",
+    "retry": "إعادة المحاولة",
+    "back": "رجوع",
+    "close": "إغلاق",
+    "cancel": "إلغاء",
+    "confirm": "تأكيد",
+    "ok": "حسناً",
+    "save": "حفظ",
+    "delete": "حذف",
+    "search": "بحث",
+    "notFound": "الصفحة غير موجودة"
+  },
+  "errors": {
+    "network": "تعذّر الاتصال بالخادم",
+    "unauthorized": "يرجى تسجيل الدخول أولاً",
+    "notFound": "المحتوى غير موجود",
+    "unknown": "حدث خطأ غير متوقع"
+  }
+}

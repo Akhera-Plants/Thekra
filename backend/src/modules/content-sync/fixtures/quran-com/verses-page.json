@@ -1,0 +1,44 @@
+{
+  "_fixture_note": "TEST-ONLY — placeholder data, NOT authentic religious text",
+  "verses": [
+    {
+      "id": 2741,
+      "verse_number": 12,
+      "verse_key": "49:12",
+      "chapter_id": 49,
+      "text_uthmani": "بِسْمِ اللَّهِ — PLACEHOLDER TEST VERSE",
+      "juz_number": 26,
+      "page_number": 517,
+      "translations": [
+        {
+          "id": 9100,
+          "resource_id": 131,
+          "text": "[TEST] O you who believe — placeholder translation"
+        }
+      ]
+    },
+    {
+      "id": 2742,
+      "verse_number": 13,
+      "verse_key": "49:13",
+      "chapter_id": 49,
+      "text_uthmani": "لِلتَّعَارُفِ — PLACEHOLDER TEST VERSE 2",
+      "juz_number": 26,
+      "page_number": 517,
+      "translations": [
+        {
+          "id": 9101,
+          "resource_id": 131,
+          "text": "[TEST] Indeed We created you — placeholder translation"
+        }
+      ]
+    }
+  ],
+  "pagination": {
+    "per_page": 50,
+    "current_page": 1,
+    "next_page": null,
+    "total_pages": 1,
+    "total_records": 2
+  }
+}

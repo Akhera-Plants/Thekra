@@ -1,0 +1,60 @@
+import { Type } from 'class-transformer';
+import {
+  IsBoolean,
+  IsEnum,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsUUID,
+  Max,
+  Min,
+} from 'class-validator';
+import { ClassifiedBy, LinkReviewStatus } from '@prisma/client';
+import { ToBoolean } from '../../../common/decorators/to-boolean.decorator.js';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto.js';
+
+export class GoodDeedQuotesAdminQueryDto extends PaginationQueryDto {
+  @IsOptional()
+  @IsUUID()
+  goodDeedId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  quoteId?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  minScore?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  maxScore?: number;
+
+  @IsOptional()
+  @ToBoolean()
+  @IsBoolean()
+  hasNote?: boolean;
+
+  /**
+   * D-2: `newest` restored after adding `createdAt DateTime @default(now())` to GoodDeedQuote
+   * (migration 20261005000002_add_link_timestamps).  `newest` orders by `createdAt DESC, id ASC`.
+   * Default remains `score` (relevanceScore DESC NULLS LAST, then id ASC).
+   */
+  @IsOptional()
+  @IsIn(['score', 'newest'])
+  sort?: 'score' | 'newest';
+
+  @IsOptional()
+  @IsEnum(LinkReviewStatus)
+  reviewStatus?: LinkReviewStatus;
+
+  @IsOptional()
+  @IsEnum(ClassifiedBy)
+  classifiedBy?: ClassifiedBy;
+}

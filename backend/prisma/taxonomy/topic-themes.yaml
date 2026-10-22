@@ -1,0 +1,512 @@
+# Topic themes — reviewer file.
+#
+# Short labels that say what a topic page holds. Each label is taken from the
+# scholars' chapter titles of that topic (variants merged; no claim that the
+# chapters do not make). `match` lists whole-word, normalised substrings of a
+# link's chapter title (tashkeel, hamza seats, ta marbuta and punctuation are
+# folded); a link takes every theme of its own topic whose pattern occurs.
+# Links matching nothing stay untagged and still show under «الكل».
+#
+# key: unique across the file (it is the ?theme= value). 2–8 themes per topic.
+# Proposals and coverage: pnpm taxonomy:themes [--propose] [--topic slug]
+# Applied by: pnpm import:taxonomy
+themes:
+  # ── الصلاة (tark-as-salah ↔ salah) ─────────────────────────────
+  - { topic: tark-as-salah, key: tark-salah-iqab, ar: عقوبة تارك الصلاة, en: The warning to whoever abandons prayer, match: [ترك الصلاه, تارك الصلاه] }
+  - { topic: tark-as-salah, key: tark-jumua, ar: ترك الجمعة, en: Missing Friday prayer, match: [ترك الجمعه, ترك صلاه الجمعه] }
+  - { topic: tark-as-salah, key: tark-jamaah, ar: ترك الجماعة, en: Staying away from congregation, match: [ترك حضور الجماعه, التخلف عنها, تارك الجماعه, صلاه الجمعه والجماعه, وجوب صلاه الجماعه] }
+  - { topic: tark-as-salah, key: tark-asr, ar: تفويت صلاة العصر, en: Missing the ʿAsr prayer, match: [العصر] }
+  - { topic: tark-as-salah, key: tark-waqt, ar: تأخير الصلاة عن وقتها, en: Delaying prayer past its time, match: [عن وقتها] }
+  - { topic: salah, key: salah-muhafaza, ar: ثواب المحافظة على الصلاة, en: The reward of guarding the prayers, match: [المحافظه علي الصلوات, الصلوات الخمس, فضل الصلوات, الصلاه كفاره] }
+  - { topic: salah, key: salah-subh-asr, ar: فضل صلاتي الصبح والعصر, en: The Fajr and ʿAsr prayers, match: [الصبح والعصر, صلاتي الصبح والعصر, صلاه العصر] }
+  - { topic: salah, key: salah-wudu, ar: الوضوء والصلاة عقبه, en: Wuduʾ and the prayer after it, match: [الوضوء والصلاه عقبه] }
+  - { topic: salah, key: salah-khushu, ar: الركوع والسجود والخشوع, en: Bowing and prostration, match: [الركوع والسجود] }
+  - { topic: salah, key: salah-adhan, ar: فضل الأذان, en: The virtue of the adhan, match: [الاذان] }
+
+  # ── ذكر الله ───────────────────────────────────────────────
+  - { topic: dhikr, key: dhikr-fadl, ar: فضل ذكر الله, en: The virtue of remembering Allah, match: [فضل ذكر الله, تعظيم ذكر الله, فضل الذكر, الاكثار من ذكر الله, الحث علي ذكر الله] }
+  - { topic: dhikr, key: dhikr-tasbih, ar: التسبيح والتهليل, en: Glorifying Allah and tahlil, match: [التسبيح, التهليل والتسبيح, التسبيح والتكبير] }
+  - { topic: dhikr, key: dhikr-bad-salah, ar: الذكر بعد الصلاة, en: Remembrance after prayer, match: [الذكر بعد الصلاه] }
+  - { topic: dhikr, key: dhikr-nawm-sabah, ar: أذكار النوم والصباح, en: Morning and bedtime remembrance, match: [عند النوم, اذا اصبح, اذا نام, اذا امسي] }
+  - { topic: dhikr, key: dhikr-halaq, ar: حلق الذكر, en: Gatherings of remembrance, match: [حلق الذكر, مجالس الذكر] }
+  - { topic: dhikr, key: dhikr-waswasa, ar: ما يقال عند الوسوسة, en: What to say against whispers, match: [وسوسه] }
+
+  # ── الآخرة ───────────────────────────────────────────────
+  - { topic: dhikr-akhira, key: akhira-ashrat, ar: أشراط الساعة والدجال, en: Signs of the Hour and the Dajjal, match: [الدجال, اشراط الساعه] }
+  - { topic: dhikr-akhira, key: akhira-nar, ar: صفة النار, en: The description of the Fire, match: [صفه النار, الترهيب من النار, صفه الجنه والنار, نار جهنم] }
+  - { topic: dhikr-akhira, key: akhira-jannah, ar: صفة الجنة, en: The description of Paradise, match: [صفه الجنه, صفه الجنه والنار, في الجنه, شجره الجنه] }
+  - { topic: dhikr-akhira, key: akhira-mawt, ar: ذكر الموت وأحوال الميت, en: Remembering death, match: [ذكر الموت, حقيقه الموت, احوال الميت] }
+
+  # ── الخوف والرجاء ──────────────────────────────────────────
+  - { topic: khawf-raja, key: kr-raja, ar: الرجاء وفضله, en: Hope in Allah, match: [الرجاء, فضل الرجاء, دواء الرجاء] }
+  - { topic: khawf-raja, key: kr-khawf, ar: الخوف من الله, en: Fear of Allah, match: [الخوف, الخوف من الله, الخوف وفضله, الخشوع والخوف] }
+  - { topic: khawf-raja, key: kr-rahma, ar: سعة رحمة الله, en: The vastness of Allah's mercy, match: [رحمه الله] }
+  - { topic: khawf-raja, key: kr-buka, ar: البكاء من خشية الله, en: Weeping from awe of Allah, match: [البكاء من خشيه الله, الحزن والبكاء] }
+  - { topic: khawf-raja, key: kr-jam, ar: الجمع بين الخوف والرجاء, en: Fear and hope together, match: [الجمع بين الخوف والرجاء, الرجاء مع الخوف] }
+  - { topic: khawf-raja, key: kr-husn-dhann, ar: حسن الظن بالله, en: Thinking well of Allah, match: [بحسن الظن بالله, حسن الظن بالله] }
+
+  # ── شكر النعم ────────────────────────────────────────────
+  - { topic: shukr, key: shukr-sania, ar: شكر الصنيعة, en: Thanking those who do good, match: [شكر الصنيعه] }
+  - { topic: shukr, key: shukr-wujub, ar: وجوب الشكر, en: The duty of gratitude, match: [وجوب الشكر, فعل الشكر, كثره نعم الله] }
+
+  # ── الصبر (niyaha ↔ sabr) ─────────────────────────────────
+  - { topic: sabr, key: sabr-fadl, ar: فضل الصبر, en: The virtue of patience, match: [الصبر, الترغيب في الصبر, اقسام الصبر, الصبر علي الاذي] }
+  - { topic: sabr, key: sabr-marad, ar: كفارة المرض وثوابه, en: Illness as expiation and reward, match: [يصيبه من مرض, كفاره المرض] }
+  - { topic: sabr, key: sabr-walad, ar: من مات له ولد فاحتسب, en: Whoever loses a child and is patient, match: [مات له ولد, يموت له, مات له اولاد] }
+  - { topic: sabr, key: sabr-adha, ar: الصبر على أذى الناس, en: Bearing people's harm, match: [والصبر علي اذاهم, الصبر علي الاذي] }
+  - { topic: sabr, key: sabr-tamanni, ar: كراهة تمني الموت, en: Not wishing for death, match: [تمني الموت] }
+  - { topic: niyaha, key: niyaha-tahrim, ar: تحريم النياحة, en: Wailing over the dead, match: [النياحه] }
+  - { topic: niyaha, key: niyaha-tadhib, ar: تعذيب الميت ببكاء أهله, en: The dead and the wailing of the family, match: [يعذب ببكاء, يعذب الميت] }
+  - { topic: niyaha, key: niyaha-ihdad, ar: الإحداد فوق ثلاث, en: Mourning beyond three days, match: [احداد] }
+
+  # ── الصدقة (bukhl ↔ sadaqah) ──────────────────────────────
+  - { topic: sadaqah, key: sadaqah-karam, ar: الكرم والإنفاق في وجوه الخير, en: Generosity and spending in good, match: [الكرم والجود, الانفاق في وجوه الخير] }
+  - { topic: sadaqah, key: sadaqah-ithar, ar: الإيثار والمواساة, en: Preferring others, match: [الايثار والمواساه, الايثار] }
+  - { topic: sadaqah, key: sadaqah-aqrabin, ar: الصدقة على الأقربين, en: Charity to relatives, match: [علي الاقربين] }
+  - { topic: sadaqah, key: sadaqah-mayyit, ar: الصدقة عن الميت, en: Charity on behalf of the dead, match: [الصدقه عن الميت] }
+  - { topic: sadaqah, key: sadaqah-maruf, ar: كل معروف صدقة, en: Every good deed is charity, match: [كل نوع من المعروف] }
+  - { topic: sadaqah, key: sadaqah-maniha, ar: فضل المنيحة, en: Lending a milch animal, match: [المنيحه] }
+  - { topic: sadaqah, key: sadaqah-yad, ar: اليد العليا خير, en: The upper hand is better, match: [اليد العليا] }
+  - { topic: sadaqah, key: sadaqah-tamra, ar: اتقوا النار ولو بشق تمرة, en: Even half a date, match: [بشق تمره, القليل من الصدقه] }
+  - { topic: bukhl, key: bukhl-shuhh, ar: ذم الشح والبخل, en: Avarice and miserliness, match: [الشح, البخل, البخل والشح] }
+  - { topic: bukhl, key: bukhl-mathal, ar: مثل المنفق والبخيل, en: The spender and the miser, match: [مثل المتصدق والبخيل, مثل المنفق والبخيل, المنفق والممسك] }
+
+  # ── اغتنام الوقت (idaat-al-waqt ↔ ightinam-waqt) ──────────
+  - { topic: ightinam-waqt, key: waqt-turuq, ar: كثرة طرق الخير, en: The many paths of good, match: [كثره طرق الخير] }
+  - { topic: ightinam-waqt, key: waqt-mujahada, ar: مجاهدة النفس, en: Striving against the self, match: [المجاهده] }
+  - { topic: ightinam-waqt, key: waqt-iqtisad, ar: الاقتصاد في العبادة, en: Moderation in worship, match: [الاقتصاد في العباده] }
+  - { topic: ightinam-waqt, key: waqt-mubadara, ar: المبادرة إلى الخيرات, en: Hastening to good deeds, match: [المبادره الي الخيرات] }
+  - { topic: ightinam-waqt, key: waqt-mudawama, ar: المداومة على العمل, en: Constancy in deeds, match: [المداومه علي العمل, والمداومه علي العمل, المحافظه علي الاعمال] }
+  - { topic: ightinam-waqt, key: waqt-taa, ar: الفراغ للعبادة والإقبال على الله, en: Devoting time to worship, match: [التحضيض علي طاعه الله, الفراغ للعباده, فضل العباده] }
+  - { topic: ightinam-waqt, key: waqt-umr, ar: الازدياد من الخير آخر العمر, en: More good at the end of life, match: [اواخر العمر] }
+  - { topic: idaat-al-waqt, key: waqt-fudul, ar: فضول الكلام والخوض في الباطل, en: Idle talk and vain discourse, match: [فضول الكلام, الخوض في الباطل, فيما لا يعنيك, قيل وقال, التكلف] }
+  - { topic: idaat-al-waqt, key: waqt-samar, ar: الحديث بعد العشاء, en: Talking after ʿIshaʾ, match: [الحديث بعد العشاء] }
+
+  # ── الزهد (tul-amal ↔ zuhd) ───────────────────────────────
+  - { topic: zuhd, key: zuhd-juu, ar: الجوع وخشونة العيش, en: Hunger and a simple life, match: [فضل الجوع, خشونه العيش] }
+  - { topic: zuhd, key: zuhd-dunya, ar: الزهد في الدنيا, en: Detachment from this world, match: [الزهد في الدنيا, الزهد, الترغيب في الزهد] }
+  - { topic: zuhd, key: zuhd-qanaa, ar: القناعة والعفاف, en: Contentment and restraint, match: [القناعه والعفاف, القناعه] }
+  - { topic: zuhd, key: zuhd-mawt, ar: ذكر الموت وقصر الأمل, en: Remembering death and short hopes, match: [ذكر الموت, قصر الامل] }
+  - { topic: zuhd, key: zuhd-aysh, ar: عيش النبي ﷺ وأصحابه, en: How the Prophet ﷺ and his Companions lived, match: [كيف كان عيش النبي] }
+  - { topic: tul-amal, key: amal-dunya, ar: ذم الدنيا والتنعم فيها, en: Censure of worldly luxury, match: [ذم التنعم, ذم الدنيا, زهره الدنيا, هوان الدنيا] }
+  - { topic: tul-amal, key: amal-mal, ar: فتنة المال والحرص, en: The trial of wealth and greed, match: [فتنه المال, لابن ادم واديين, الحرص علي الدنيا] }
+  - { topic: tul-amal, key: amal-tul, ar: طول الأمل, en: Long hopes, match: [طول الامل, الامل وطوله] }
+
+  # ── النوافل وقيام الليل ────────────────────────────────────
+  - { topic: nawafil, key: nawafil-qiyam, ar: قيام الليل, en: Night prayer, match: [قيام الليل, تعار من الليل] }
+  - { topic: nawafil, key: nawafil-qadr, ar: ليلة القدر, en: Laylat al-Qadr, match: [ليله القدر] }
+  - { topic: nawafil, key: nawafil-ramadan, ar: قيام رمضان, en: Night prayer in Ramadan, match: [قيام رمضان] }
+  - { topic: nawafil, key: nawafil-duha, ar: صلاة الضحى, en: The Duha prayer, match: [الضحي, صلاه الضحي] }
+  - { topic: nawafil, key: nawafil-witr, ar: صلاة الوتر, en: The Witr prayer, match: [صلاه الوتر] }
+  - { topic: nawafil, key: nawafil-bayt, ar: النافلة في البيت, en: Voluntary prayer at home, match: [النافله في بيته] }
+  - { topic: nawafil, key: nawafil-fajr, ar: ركعتا الفجر, en: The two rakʿahs of Fajr, match: [ركعتي الفجر, ركعتي سنه الفجر] }
+
+  # ── التوبة (istihana-saghair ↔ tawba) ─────────────────────
+  - { topic: tawba, key: tawba-fadl, ar: التوبة وفضلها, en: Repentance, match: [التوبه, الترغيب في التوبه, صلاه التوبه, علي التوبه] }
+  - { topic: tawba, key: tawba-istighfar, ar: الاستغفار وفضله, en: Seeking forgiveness, match: [الاستغفار, بالاستغفار] }
+  - { topic: tawba, key: tawba-harab, ar: الهرب من الخطايا, en: Fleeing from sins, match: [الهرب من الخطايا] }
+  - { topic: istihana-saghair, key: saghair-muhaqqarat, ar: محقرات الذنوب, en: Sins thought small, match: [الصغاير, محقرات الذنوب] }
+  - { topic: istihana-saghair, key: saghair-hudud, ar: مواقعة الحدود, en: Crossing Allah's limits, match: [مواقعه الحدود] }
+  - { topic: istihana-saghair, key: saghair-nahy, ar: ارتكاب ما نهى الله عنه, en: Doing what Allah forbade, match: [ارتكاب ما نهي الله] }
+
+  # ── القرآن ───────────────────────────────────────────────
+  - { topic: quran, key: quran-fadl, ar: فضل قراءة القرآن, en: The virtue of reciting the Quran, match: [قراءه القران, فضايل القران, الماهر بالقران, تعلم القران وعلمه, يقوم بالقران, تلاوه القران] }
+  - { topic: quran, key: quran-suwar, ar: فضل سور وآيات مخصوصة, en: Particular surahs and verses, match: [سور وايات مخصوصه, سوره الفاتحه, سوره البقره, سوره الكهف, قل هو الله احد, فاتحه الكتاب] }
+  - { topic: quran, key: quran-sawt, ar: تحسين الصوت بالقرآن, en: Reciting with a beautiful voice, match: [تحسين الصوت] }
+  - { topic: quran, key: quran-taahud, ar: تعاهد القرآن, en: Keeping up with the Quran, match: [استذكار القران, تعاهده] }
+  - { topic: quran, key: quran-khatm, ar: في كم يقرأ القرآن, en: How long to complete the Quran, match: [في كم يقرا القران] }
+
+  # ── الدعاء ───────────────────────────────────────────────
+  - { topic: dua, key: dua-taawwudh, ar: التعوذ من الشر, en: Seeking refuge, match: [التعوذ] }
+  - { topic: dua, key: dua-ghayb, ar: الدعاء بظهر الغيب, en: Praying for others in their absence, match: [بظهر الغيب, خص اخاه بالدعاء] }
+  - { topic: dua, key: dua-salah, ar: الدعاء في الصلاة وبعدها, en: Supplication in and after prayer, match: [الدعاء في الصلاه, الدعاء بعد الصلاه] }
+  - { topic: dua, key: dua-azam, ar: اسم الله الأعظم, en: Allah's greatest name, match: [اسم الله الاعظم] }
+  - { topic: dua, key: dua-fadl, ar: الأمر بالدعاء وفضله, en: The command to supplicate, match: [بالدعاء وفضله, ليعزم المساله, يستفتح بها الدعاء] }
+  - { topic: dua, key: dua-istikhara, ar: الاستخارة والمشاورة, en: The prayer for guidance, match: [الاستخاره] }
+
+  # ── الصيام ───────────────────────────────────────────────
+  - { topic: siyam, key: siyam-ramadan, ar: صوم رمضان وفضل الصيام, en: Fasting Ramadan and its virtue, match: [صوم رمضان, صيام رمضان, فضل الصيام, الترغيب في الصوم, الصيام] }
+  - { topic: siyam, key: siyam-thalatha, ar: صيام ثلاثة أيام كل شهر, en: Three days every month, match: [ثلاثه ايام من كل شهر] }
+  - { topic: siyam, key: siyam-ashura, ar: صيام عاشوراء, en: Fasting ʿAshura, match: [عاشوراء] }
+  - { topic: siyam, key: siyam-itikaf, ar: الاعتكاف في رمضان, en: Iʿtikaf, match: [الاعتكاف] }
+  - { topic: siyam, key: siyam-suhur, ar: السحور وتعجيل الفطر, en: Suhur and breaking the fast promptly, match: [السحور, تعجيل الفطر] }
+  - { topic: siyam, key: siyam-jumua, ar: تخصيص الجمعة بصيام, en: Singling out Friday for fasting, match: [تخصيص يوم الجمعه] }
+
+  # ── المراقبة والتقوى ───────────────────────────────────────
+  - { topic: muraqaba, key: muraqaba-taqwa, ar: التقوى وفضلها, en: Taqwa, match: [التقوي] }
+  - { topic: muraqaba, key: muraqaba-muraqaba, ar: مراقبة الله, en: Mindfulness of Allah, match: [المراقبه] }
+  - { topic: muraqaba, key: muraqaba-karamat, ar: كرامات الأولياء, en: The friends of Allah, match: [كرامات الاولياء] }
+  - { topic: muraqaba, key: muraqaba-tafakkur, ar: التفكر والاعتبار, en: Reflection, match: [التفكر, الاعتبار والتفكر] }
+  - { topic: muraqaba, key: muraqaba-istiqama, ar: الاستقامة على الدين, en: Steadfastness, match: [الاستقامه] }
+
+  # ── صلاة الجماعة ─────────────────────────────────────────
+  - { topic: salat-fi-jamaah, key: jamaah-saff, ar: الصف الأول, en: The first row, match: [الصف الاول] }
+  - { topic: salat-fi-jamaah, key: jamaah-mashy, ar: المشي إلى المساجد, en: Walking to the mosques, match: [المشي الي المساجد, المشي الي الصلاه, الخطا الي المساجد] }
+  - { topic: salat-fi-jamaah, key: jamaah-fadl, ar: فضل صلاة الجماعة, en: The virtue of praying in congregation, match: [صلاه الجماعه] }
+  - { topic: salat-fi-jamaah, key: jamaah-luzum, ar: لزوم المساجد وانتظار الصلاة, en: Staying in the mosque awaiting prayer, match: [ينتظر الصلاه, لزوم المساجد] }
+  - { topic: salat-fi-jamaah, key: jamaah-bina, ar: بناء المساجد وتنظيفها, en: Building and cleaning mosques, match: [بناء المساجد, تنظيف المساجد] }
+  - { topic: salat-fi-jamaah, key: jamaah-fajr, ar: الفجر في جماعة, en: Fajr in congregation, match: [الفجر في جماعه, العشاء والصبح في جماعه] }
+
+  # ── الحب في الله ─────────────────────────────────────────
+  - { topic: hubb-fillah, key: hubb-fadl, ar: الحب في الله, en: Love for the sake of Allah, match: [الحب في الله] }
+  - { topic: hubb-fillah, key: hubb-ziyara, ar: زيارة أهل الخير ومجالستهم, en: Visiting and sitting with the righteous, match: [زياره اهل الخير, زياره الاخوان] }
+  - { topic: hubb-fillah, key: hubb-maa, ar: المرء مع من أحب, en: One is with those one loves, match: [المرء مع من احب] }
+  - { topic: hubb-fillah, key: hubb-ikhwan, ar: الصحبة والإخوان, en: Companionship and brotherhood, match: [الرغبه في الاخوان, من امر بصحبته, جليس الصدق, للاخوان, اتفاق القلوب] }
+  - { topic: hubb-fillah, key: hubb-bashasha, ar: بشاشة الرجل لأخيه, en: A cheerful face to one's brother, match: [بشاشه الرجل] }
+
+  # ── حسن الخلق ─────────────────────────────────────────────
+  - { topic: husn-khuluq, key: khuluq-hilm, ar: الحلم والرفق, en: Forbearance and gentleness, match: [الحلم والاناه والرفق, الرفق, في الرفق] }
+  - { topic: husn-khuluq, key: khuluq-husn, ar: حسن الخلق, en: Good character, match: [حسن الخلق] }
+  - { topic: husn-khuluq, key: khuluq-mudarah, ar: مداراة الناس, en: Courtesy towards people, match: [مداراه الناس, المداراه] }
+  - { topic: husn-khuluq, key: khuluq-taysir, ar: التيسير وترك التنفير, en: Making things easy, match: [يسروا ولا تعسروا, بالتيسير] }
+
+  # ── آداب الطعام ───────────────────────────────────────────
+  - { topic: adab-taam, key: taam-tasmiya, ar: التسمية والحمد, en: Saying Bismillah and praising Allah, match: [التسميه في اوله] }
+  - { topic: adab-taam, key: taam-shurb, ar: آداب الشرب, en: Manners of drinking, match: [الشرب, ادب الشرب, جواز الشرب] }
+  - { topic: adab-taam, key: taam-asabi, ar: لعق الأصابع والأكل بثلاث, en: Eating with three fingers, match: [لعق الاصابع, بثلاث اصابع] }
+  - { topic: adab-taam, key: taam-ijtima, ar: الاجتماع على الطعام, en: Eating together, match: [تكثير الايدي] }
+  - { topic: adab-taam, key: taam-aib, ar: لا يعيب الطعام, en: Not finding fault with food, match: [لا يعيب الطعام] }
+
+  # ── الكذب والصدق (kadhib ↔ sidq) ──────────────────────────
+  - { topic: kadhib, key: kadhib-tahrim, ar: تحريم الكذب, en: The prohibition of lying, match: [ذم الكذب, تحريم الكذب, الترهيب من الكذب, الكذب في غالب اقواله, ليضحك به القوم] }
+  - { topic: kadhib, key: kadhib-nabi, ar: الكذب على النبي ﷺ, en: Lying about the Prophet ﷺ, match: [كذب علي النبي, الكذب علي رسول الله] }
+  - { topic: sidq, key: sidq-fadl, ar: الصدق وفضله, en: Truthfulness, match: [الصدق, الصدق وفضله, الترغيب في الصدق, الاخلاص والصدق, مع الصادقين] }
+  - { topic: sidq, key: sidq-bay, ar: الصدق في البيع, en: Honesty in trade, match: [ترغيب التجار في الصدق, الصدق في البيع] }
+
+  # ── الظلم والعدل (zulm ↔ adl) ─────────────────────────────
+  - { topic: zulm, key: zulm-tahrim, ar: تحريم الظلم ورد المظالم, en: Injustice and returning rights, match: [الظلم, تحريم الظلم, الترهيب من الظلم] }
+  - { topic: zulm, key: zulm-ard, ar: غصب الأرض, en: Seizing land, match: [ظلم شييا من الارض, غصب الارض] }
+  - { topic: zulm, key: zulm-daif, ar: الاستطالة على الضعيف, en: Oppressing the weak, match: [الاستطاله علي الضعيف] }
+  - { topic: adl, key: adl-wilaya, ar: العدل في الولاية, en: Justice in authority, match: [ولاه الامور, الامام العادل, الوالي العادل, من ولي شييا] }
+  - { topic: adl, key: adl-awlad, ar: العدل بين الأولاد, en: Fairness between children, match: [تفضيل بعض الاولاد, العدل بين الاولاد] }
+  - { topic: adl, key: adl-hudud, ar: الشفاعة في الحدود, en: Interceding in prescribed penalties, match: [الشفاعه في الحدود] }
+
+  # ── الإخلاص والرياء (riya ↔ ikhlas) ───────────────────────
+  - { topic: ikhlas, key: ikhlas-fadl, ar: الإخلاص لله, en: Sincerity, match: [الاخلاص, الاخلاص والصدق, الاخلاص والنيه, الاخلاص واحضار النيه] }
+  - { topic: ikhlas, key: ikhlas-niyya, ar: النية وإحضارها, en: Intention, match: [النيه, بالنيه, الاخلاص والنيه, احضار النيه] }
+  - { topic: ikhlas, key: ikhlas-wajh, ar: العمل لوجه الله, en: Deeds for Allah's sake, match: [يبتغي به وجه الله] }
+  - { topic: riya, key: riya-tahrim, ar: تحريم الرياء, en: Showing off in worship, match: [الرياء, تحريم الرياء, الترهيب من الرياء, ذم الرياء] }
+  - { topic: riya, key: riya-quran, ar: الرياء بقراءة القرآن, en: Showing off with the Quran, match: [بقراءه القران] }
+  - { topic: riya, key: riya-shirk, ar: الإشراك في العمل, en: Associating others in one's deed, match: [اشرك في عمله] }
+
+  # ── محبة الله ورسوله ───────────────────────────────────────
+  - { topic: mahabbat-allah, key: mahabba-alamat, ar: علامات محبة الله للعبد, en: Signs of Allah's love, match: [علامات حب الله, المحبه, محبه الله تعالي للعبد] }
+  - { topic: mahabbat-allah, key: mahabba-ahl-bayt, ar: إكرام أهل البيت, en: Honouring the Prophet's household, match: [اهل بيت رسول الله] }
+
+  # ── الرحمة وتعذيب الحيوان (tadhib-hayawan ↔ rahma-khalq) ─
+  - { topic: rahma-khalq, key: rahma-muslimin, ar: حرمات المسلمين والشفقة عليهم, en: The sanctity of Muslims and compassion, match: [حرمات المسلمين, الترغيب في الشفقه] }
+  - { topic: rahma-khalq, key: rahma-walad, ar: رحمة الأولاد وتقبيلهم, en: Mercy to children, match: [رحمه الولد, الصبيان والعيال, حمل الولدان, الاحسان الي البنات] }
+  - { topic: rahma-khalq, key: rahma-bahaim, ar: رحمة الناس والبهائم, en: Mercy to people and animals, match: [رحمه الناس والبهايم] }
+  - { topic: rahma-khalq, key: rahma-tarahum, ar: تراحم المؤمنين, en: Believers' mutual mercy, match: [تراحم المومنين] }
+  - { topic: tadhib-hayawan, key: tadhib-darb, ar: تعذيب العبد والدابة بغير حق, en: Harming servants and animals, match: [تعذيب العبد والدابه, ضرب الحيوان] }
+  - { topic: tadhib-hayawan, key: tadhib-sabr, ar: صبر البهائم والمثلة, en: Tying up and mutilating animals, match: [صبر البهايم, المثله] }
+  - { topic: tadhib-hayawan, key: tadhib-nar, ar: التعذيب بالنار, en: Burning living things, match: [التعذيب بالنار] }
+  - { topic: tadhib-hayawan, key: tadhib-hirra, ar: تعذيب الهرة, en: Tormenting a cat, match: [الهره] }
+
+  # ── اليقين والتوكل (tatayyur ↔ tawakkul) ───────────────────
+  - { topic: tawakkul, key: tawakkul-fadl, ar: التوكل على الله, en: Reliance on Allah, match: [التوكل, ما جاء في التوكل, اعمال المتوكلين] }
+  - { topic: tawakkul, key: tawakkul-yaqin, ar: اليقين والتوكل, en: Certainty, match: [اليقين والتوكل] }
+  - { topic: tatayyur, key: tatayyur-tira, ar: الطيرة والتشاؤم, en: Evil omens, match: [الطيره, الطيره والفال, التطير] }
+
+  # ── عيادة المريض ──────────────────────────────────────────
+  - { topic: iyadat-marid, key: iyada-marid, ar: عيادة المريض والدعاء له, en: Visiting the sick, match: [عياده المريض, يدعي به للمريض] }
+  - { topic: iyadat-marid, key: iyada-janaza, ar: الصلاة على الميت واتباع الجنائز, en: Funeral prayer and following the bier, match: [صلاه الجنازه, الصلاه علي الميت, اتباع الجنايز] }
+  - { topic: iyadat-marid, key: iyada-thana, ar: الثناء على الميت والدعاء له, en: Praying for the dead, match: [ثناء الناس علي الميت, الدعاء للميت] }
+  - { topic: iyadat-marid, key: iyada-talqin, ar: تلقين المحتضر, en: Prompting the dying, match: [تلقين المحتضر] }
+
+  # ── اتباع السنة (bida ↔ sunna) ────────────────────────────
+  - { topic: sunna, key: sunna-muhafaza, ar: المحافظة على السنة وآدابها, en: Holding to the Sunnah, match: [بالمحافظه علي السنه, لزوم السنه, الكتاب والسنه] }
+  - { topic: sunna, key: sunna-iqtida, ar: الاقتداء بالنبي ﷺ, en: Following the Prophet's example, match: [الاقتداء بسنن رسول الله, الاقتداء بافعال النبي] }
+  - { topic: sunna, key: sunna-inqiyad, ar: الانقياد لحكم الله, en: Submitting to Allah's ruling, match: [الانقياد لحكم الله] }
+  - { topic: sunna, key: sunna-yamin, ar: تقديم اليمين, en: Starting with the right, match: [تقديم اليمين] }
+  - { topic: bida, key: bida-muhdathat, ar: البدع ومحدثات الأمور, en: Innovations in religion, match: [البدع ومحدثات الامور, محدثات الامور] }
+  - { topic: bida, key: bida-ghuluw, ar: التعمق والغلو في الدين, en: Extremism in religion, match: [التعمق والتنازع في العلم] }
+
+  # ── قضاء الحوائج ─────────────────────────────────────────
+  - { topic: qada-hawaij, key: hawaij-qada, ar: قضاء حوائج المسلمين, en: Meeting people's needs, match: [قضاء حوايج المسلمين, قضاء الحوايج, قضاء حوايج, في الحوايج] }
+  - { topic: qada-hawaij, key: hawaij-samaha, ar: السماحة في الأخذ والعطاء, en: Leniency in dealings, match: [فضل السماحه] }
+  - { topic: qada-hawaij, key: hawaij-musir, ar: إنظار المعسر, en: Giving the debtor time, match: [انظار المعسر, التيسير علي المعسر, الوضع من الدين] }
+  - { topic: qada-hawaij, key: hawaij-shafaa, ar: الشفاعة الحسنة, en: Interceding for others, match: [الشفاعه, استحباب الشفاعه] }
+
+  # ── إفشاء السلام ─────────────────────────────────────────
+  - { topic: salam, key: salam-ifsha, ar: فضل السلام وإفشاؤه, en: Spreading the greeting of peace, match: [فضل السلام, كيفيه السلام, السلام للمعرفه, تسليم الراكب, تسليم الماشي] }
+  - { topic: salam, key: salam-tashmit, ar: تشميت العاطس, en: Answering one who sneezes, match: [تشميت العاطس] }
+  - { topic: salam, key: salam-musafaha, ar: المصافحة عند اللقاء, en: Shaking hands, match: [المصافحه] }
+
+  # ── السب واللعن والكلمة الطيبة (sabb-lan ↔ kalam-tayyib) ─
+  - { topic: sabb-lan, key: sabb-muslim, ar: سب المسلم, en: Abusing a Muslim, match: [سب المسلم, السباب, السباب واللعن] }
+  - { topic: sabb-lan, key: sabb-lan, ar: لعن الإنسان والدواب, en: Cursing, match: [لعن الدواب, لعن انسان, السباب واللعن] }
+  - { topic: sabb-lan, key: sabb-fuhsh, ar: الفحش في القول, en: Obscene speech, match: [فاحشا ولا متفحشا] }
+  - { topic: sabb-lan, key: sabb-takfir, ar: تكفير المسلم, en: Calling a Muslim a disbeliever, match: [كفر اخاه] }
+  - { topic: kalam-tayyib, key: tayyib-tabshir, ar: التبشير والتهنئة بالخير, en: Giving good news, match: [التبشير والتهنيه] }
+  - { topic: kalam-tayyib, key: tayyib-talaqa, ar: طيب الكلام وطلاقة الوجه, en: Kind words and a cheerful face, match: [طيب الكلام, طلاقه الوجه, بشاشه الرجل] }
+
+  # ── حفظ اللسان والغيبة (ghibah ↔ hifz-al-lisan) ───────────
+  - { topic: hifz-al-lisan, key: lisan-samt, ar: حفظ اللسان وفضل الصمت, en: Guarding the tongue, match: [حفظ اللسان, فضل الصمت, في الصمت, قله الكلام] }
+  - { topic: hifz-al-lisan, key: lisan-ghibah, ar: النهي عن الغيبة, en: Avoiding backbiting, match: [تحريم الغيبه] }
+  - { topic: hifz-al-lisan, key: lisan-khayr, ar: لزوم الصمت إلا عن الخير, en: Silence except for good, match: [الصمت الا عن الخير] }
+  - { topic: ghibah, key: ghibah-tahrim, ar: تحريم الغيبة, en: The prohibition of backbiting, match: [تحريم الغيبه, الترهيب من الغيبه, الغيبه وذمها] }
+  - { topic: ghibah, key: ghibah-mubah, ar: ما يباح من الغيبة, en: When mentioning others is allowed, match: [ما يباح من الغيبه] }
+  - { topic: ghibah, key: ghibah-samaa, ar: سماع الغيبة وردها, en: Listening to backbiting, match: [سماع الغيبه] }
+
+  # ── الخمر ────────────────────────────────────────────────
+  - { topic: khamr, key: khamr-shurb, ar: شرب الخمر, en: Drinking wine, match: [شرب الخمر] }
+  - { topic: khamr, key: khamr-bay, ar: بيع الخمر, en: Selling wine, match: [بيع الخمر, التجاره في الخمر] }
+  - { topic: khamr, key: khamr-muskir, ar: كل مسكر خمر, en: Every intoxicant is wine, match: [تحريم الخمر, الخمر من العنب, الخمر من العسل, البسر والتمر, ما خامر العقل, كل مسكر] }
+
+  # ── صلة الرحم (qat-al-rahim ↔ silat-ar-rahim) ─────────────
+  - { topic: silat-ar-rahim, key: rahim-birr, ar: بر الوالدين وصلة الأرحام, en: Kindness to parents and kin, match: [بر الوالدين وصله الارحام] }
+  - { topic: silat-ar-rahim, key: rahim-fadl, ar: فضل صلة الرحم, en: The virtue of keeping ties, match: [صله الرحم, من وصل وصله الله, بصله الرحم] }
+  - { topic: silat-ar-rahim, key: rahim-nafaqa, ar: الصدقة على الأقارب, en: Spending on relatives, match: [علي الاقربين, علي الاقارب] }
+  - { topic: qat-al-rahim, key: qati-tahrim, ar: تحريم قطيعة الرحم, en: Cutting family ties, match: [قطيعه الرحم, وقطيعه الرحم, تحريم قطيعتها, اثم القاطع] }
+  - { topic: qat-al-rahim, key: qati-hajr, ar: هجر الأقارب, en: Shunning relatives, match: [هجر الاقارب] }
+
+  # ── اللباس (isbal-harir) ─────────────────────────────────
+  - { topic: isbal-harir, key: isbal-dhahab, ar: الذهب والحرير للرجال, en: Gold and silk for men, match: [خاتم الذهب, لبس الحرير, اناء الذهب, لبسهم الحرير] }
+  - { topic: isbal-harir, key: isbal-jarr, ar: جر الثوب خيلاء, en: Trailing the garment in pride, match: [جر ثوبه, جر الثوب, اسبال, اسبال الازار] }
+
+  # ── النفقة على الأهل ─────────────────────────────────────
+  - { topic: nafaqa-ahl, key: nafaqa-iyal, ar: النفقة على العيال, en: Spending on one's family, match: [النفقه علي العيال, النفقه علي الاهل, النفقه عليها] }
+  - { topic: nafaqa-ahl, key: nafaqa-tarbiya, ar: أمر الأهل بالطاعة وتعليمهم, en: Teaching one's family, match: [وجوب امره اهله, تعليم الرجل اهله, صلاح اهل البيت] }
+  - { topic: nafaqa-ahl, key: nafaqa-banat, ar: الإحسان إلى البنات, en: Kindness to daughters, match: [الاحسان الي البنات] }
+
+  # ── الأمر بالمعروف (qawl-bila-amal ↔ amr-maruf) ──────────
+  - { topic: amr-maruf, key: maruf-amr, ar: الأمر بالمعروف والنهي عن المنكر, en: Enjoining good and forbidding evil, match: [الامر بالمعروف والنهي عن المنكر, الامر بالمعروف] }
+  - { topic: amr-maruf, key: maruf-ghadab, ar: الغضب لحرمات الله, en: Anger when Allah's limits are violated, match: [انتهكت حرمات الشرع] }
+
+  # ── الكسب الحلال ─────────────────────────────────────────
+  - { topic: kasb-halal, key: kasb-talab, ar: طلب الحلال, en: Seeking the lawful, match: [طلب الحلال] }
+  - { topic: kasb-halal, key: kasb-yad, ar: العمل باليد, en: Working with one's hands, match: [عمل يده, عمله بيده, الكسب والحث عليه] }
+  - { topic: kasb-halal, key: kasb-iffa, ar: الاستعفاف عن المسألة, en: Refraining from begging, match: [الاستعفاف عن المساله] }
+  - { topic: kasb-halal, key: kasb-iqtisad, ar: الإجمال في طلب الرزق, en: Moderation in seeking provision, match: [الاقتصاد في طلب الرزق] }
+
+  # ── كفالة اليتيم (akl-mal-yatim ↔ kafalat-yatim) ──────────
+  - { topic: kafalat-yatim, key: yatim-ihsan, ar: الإحسان إلى اليتيم, en: Kindness to orphans, match: [ملاطفه اليتيم, الاحسان الي اليتيم, يعول يتيما, في اليتامي, الارمله والمسكين واليتيم] }
+  - { topic: kafalat-yatim, key: yatim-duafa, ar: فضل ضعفة المسلمين, en: The weak and the poor, match: [ضعفه المسلمين] }
+  - { topic: kafalat-yatim, key: yatim-armala, ar: الساعي على الأرملة والمسكين, en: Caring for widows and the needy, match: [الساعي علي الارمله, الساعي علي المسكين, الارمله والمسكين واليتيم] }
+  - { topic: akl-mal-yatim, key: yatim-akl, ar: أكل مال اليتيم, en: Consuming an orphan's wealth, match: [اكل مال اليتيم, مال اليتيم, اموال اليتامي] }
+
+  # ── حسن العشرة ───────────────────────────────────────────
+  - { topic: husn-ishra, key: ishra-zawj, ar: حق الزوج على المرأة, en: The husband's rights, match: [حق الزوج, حق الرجل علي زوجته] }
+  - { topic: husn-ishra, key: ishra-nisa, ar: الوصية بالنساء, en: Kindness to women, match: [الوصيه بالنساء, الوصاه بالنساء, حق المراه علي زوجها, مداراه الرجل زوجته, حسن المعاشره] }
+
+  # ── بر الوالدين وعقوقهما (uquq ↔ birr-al-walidayn) ────────
+  - { topic: birr-al-walidayn, key: birr-walidayn, ar: بر الوالدين, en: Kindness to parents, match: [بر الوالدين, بر الوالدين وصله الارحام, بر الوالدين وانهما احق به, من بر والديه] }
+  - { topic: birr-al-walidayn, key: birr-asdiqa, ar: بر أصدقاء الأب والأم, en: Honouring parents' friends, match: [بر اصدقاء الاب] }
+  - { topic: uquq, key: uquq-walidayn, ar: عقوق الوالدين, en: Disobeying parents, match: [عقوق الوالدين, تحريم العقوق] }
+
+  # ── الكبر والتواضع (kibr ↔ tawadu) ────────────────────────
+  - { topic: kibr, key: kibr-tahrim, ar: تحريم الكبر, en: Arrogance, match: [تحريم الكبر, تحريم الكبر والاعجاب, الكبر, تحريم الكبر وبيانه] }
+  - { topic: kibr, key: kibr-ujb, ar: الإعجاب بالنفس, en: Self-admiration, match: [العجب, علاج العجب, اعجاب, والعجب] }
+  - { topic: kibr, key: kibr-khuyala, ar: جر الثوب خيلاء, en: Trailing the garment in pride, match: [الخيلاء, خيلاء, التبختر] }
+  - { topic: tawadu, key: tawadu-janah, ar: التواضع وخفض الجناح, en: Humility towards believers, match: [التواضع وخفض الجناح] }
+  - { topic: tawadu, key: tawadu-fadl, ar: فضل التواضع, en: The virtue of humility, match: [التواضع, في التواضع, الترغيب في التواضع] }
+
+  # ── الطهارة ──────────────────────────────────────────────
+  - { topic: tahara, key: tahara-wudu, ar: فضل الوضوء, en: The virtue of wuduʾ, match: [فضل الوضوء, الوضوء واسباغه, بعد الوضوء] }
+  - { topic: tahara, key: tahara-siwak, ar: السواك وخصال الفطرة, en: The siwak and natural cleanliness, match: [السواك] }
+
+  # ── الخشوع وآداب الصلاة ─────────────────────────────────
+  - { topic: adab-salah, key: adab-salah-adhan, ar: فضل الأذان, en: The virtue of the adhan, match: [فضل الاذان] }
+  - { topic: adab-salah, key: adab-salah-khushu, ar: الخشوع وإتمام الصلاة, en: Humility and completing the prayer, match: [الخشوع فيها, والخشوع, اتمام الركوع والسجود] }
+  - { topic: adab-salah, key: adab-salah-nawahi, ar: ما يُنهى عنه في الصلاة, en: What to avoid in prayer, match: [رفع البصر الي السماء, الالتفات في الصلاه, سبق الامام, المرور بين يدي المصلي] }
+
+  # ── طلب العلم ونشره (kitman-ilm ↔ talab-ilm) ─────────────
+  - { topic: talab-ilm, key: ilm-fadl, ar: فضل العلم تعلما وتعليما, en: The virtue of learning and teaching, match: [فضل العلم, الترغيب في العلم, من علم وعلم, يفقهه في الدين] }
+  - { topic: talab-ilm, key: ilm-afat, ar: آفات العلم وعلماء السوء, en: The pitfalls of knowledge, match: [افات العلم] }
+  - { topic: nashr-ilm, key: nashr-dalala, ar: الدلالة على الخير, en: Guiding others to good, match: [الدلاله علي خير, دعا الي هدي] }
+  - { topic: nashr-ilm, key: nashr-sunna-hasana, ar: من سن سنة حسنة, en: Starting a good practice, match: [سن سنه حسنه, البداءه بالخير] }
+  - { topic: nashr-ilm, key: nashr-tabligh, ar: تبليغ العلم ونشره, en: Conveying knowledge, match: [ليبلغ العلم, نشر العلم, الوعظ] }
+
+  # ── قتل النفس ────────────────────────────────────────────
+  - { topic: qatl, key: qatl-nafs, ar: قتل النفس بغير حق, en: Killing a soul unjustly, match: [قتل النفس, دم امري بغير حق, قتل الولد] }
+  - { topic: qatl, key: qatl-ihya, ar: ومن أحياها, en: Whoever saves a life, match: [ومن احياها] }
+  - { topic: qatl, key: qatl-kafir, ar: قتل من نطق بالشهادة, en: Killing one who said the shahadah, match: [بعد ان قال لا اله الا الله, قتل ذميا, لا ترجعوا بعدي كفارا] }
+
+  # ── الزكاة (man-zakah ↔ zakah) ────────────────────────────
+  - { topic: zakah, key: zakah-wujub, ar: وجوب الزكاة وفضلها, en: The obligation and virtue of zakah, match: [وجوب الزكاه, اداء الزكاه, الزكاه من الاسلام, ايتاء الزكاه] }
+  - { topic: zakah, key: zakah-adab, ar: آداب الزكاة الباطنة, en: The inner manners of zakah, match: [الاداب الباطنه في الزكاه] }
+  - { topic: man-zakah, key: man-zakah-ithm, ar: إثم مانع الزكاة, en: Withholding zakah, match: [منع الزكاه, مانع الزكاه, لا يودي الزكاه] }
+  - { topic: man-zakah, key: man-zakah-huli, ar: زكاة الحلي, en: Zakah on jewellery, match: [زكاه الحلي] }
+
+  # ── الأمانة والوفاء (khiyana ↔ amana-wafa) ────────────────
+  - { topic: amana-wafa, key: amana-ada, ar: أداء الأمانة, en: Fulfilling trusts, match: [باداء الامانه, والامانه] }
+  - { topic: amana-wafa, key: amana-sirr, ar: حفظ السر, en: Keeping secrets, match: [حفظ السر] }
+  - { topic: amana-wafa, key: amana-wad, ar: الوفاء بالعهد وإنجاز الوعد, en: Keeping promises, match: [الوفاء بالعهد, انجاز الوعد] }
+  - { topic: amana-wafa, key: amana-dayn, ar: أداء الدين, en: Repaying debts, match: [اداء الدين, يريد اداءها] }
+
+  # ── طاعة ولاة الأمر ───────────────────────────────────────
+  - { topic: taat-wulat, key: wulat-taa, ar: الطاعة في غير معصية, en: Obedience in what is right, match: [في غير معصيه, ما لم تكن معصيه, السمع والطاعه] }
+  - { topic: taat-wulat, key: wulat-sabr, ar: الصبر على ظلم الولاة, en: Patience with unjust rulers, match: [ظلم الولاه, منعوا الحقوق] }
+
+  # ── محاسبة النفس ──────────────────────────────────────────
+  - { topic: muhasaba, key: muhasaba-nafs, ar: محاسبة النفس, en: Self-accounting, match: [المحاسبه] }
+  - { topic: muhasaba, key: muhasaba-jihad, ar: جهاد النفس وذمها, en: Struggling against the self, match: [جهاد النفس, ذم النفس, اجهاز النفس] }
+
+  # ── التبرج والحياء (tabarruj ↔ haya) ─────────────────────
+  - { topic: tabarruj, key: tabarruj-wasl, ar: وصل الشعر, en: Hair extensions, match: [الوصل في الشعر, وصل الشعر, الواصله, الموصوله] }
+  - { topic: tabarruj, key: tabarruj-washm, ar: الوشم والنمص, en: Tattooing and plucking, match: [الواشمه, المستوشمه, الوشم, المتفلجات للحسن] }
+  - { topic: haya, key: haya-iman, ar: الحياء من الإيمان, en: Modesty is part of faith, match: [الحياء, الحياء من الايمان, الحياء وفضله, فضيله الحياء] }
+
+  # ── الجمعة ───────────────────────────────────────────────
+  - { topic: jumua, key: jumua-fadl, ar: فضل يوم الجمعة, en: The virtue of Friday, match: [فضل يوم الجمعه, فضل الجمعه, في صلاه الجمعه, فرض الجمعه, الساعه التي في يوم الجمعه, التهجير يوم الجمعه] }
+  - { topic: jumua, key: jumua-ghusl, ar: الغسل يوم الجمعة, en: The Friday bath, match: [الغسل يوم الجمعه, والاغتسال لها] }
+  - { topic: jumua, key: jumua-khutba, ar: الإنصات للخطبة, en: Listening to the sermon, match: [الاستماع الي الخطبه, الانصات يوم الجمعه] }
+
+  # ── آداب السفر ───────────────────────────────────────────
+  - { topic: adab-safar, key: safar-dhikr, ar: أذكار السفر, en: Remembrance on a journey, match: [تكبير المسافر, اذا نزل منزلا, وداع الصاحب] }
+  - { topic: adab-safar, key: safar-sayr, ar: آداب السير والرجوع, en: Travelling and returning, match: [اداب السير, يوم الخميس, القدوم علي اهله, تعجيل المسافر الرجوع] }
+
+  # ── الورع ────────────────────────────────────────────────
+  - { topic: wara, key: wara-shubuhat, ar: الورع وترك الشبهات, en: Avoiding doubtful matters, match: [الورع وترك الشبهات, ترك الشبهات, مشبهات, الورع في البطن, الورع في الفرج, الورع في المسعي] }
+  - { topic: wara, key: wara-uzla, ar: العزلة عند الفتن, en: Seclusion in times of trial, match: [العزله] }
+
+  # ── السحر والكهانة ───────────────────────────────────────
+  - { topic: sihr-kahana, key: sihr-kahin, ar: إتيان الكهان وتصديقهم, en: Visiting soothsayers, match: [الكاهن, الكهانه, الكهان] }
+  - { topic: sihr-kahana, key: sihr-sihr, ar: الترهيب من السحر, en: Sorcery, match: [السحر, الشرك والسحر] }
+
+  # ── الحج ─────────────────────────────────────────────────
+  - { topic: hajj, key: hajj-fadl, ar: وجوب الحج وفضله, en: The obligation and virtue of Hajj, match: [وجوب الحج, فضل الحج, الحج المبرور, في الحج والعمره] }
+  - { topic: hajj, key: hajj-umra, ar: فضل العمرة, en: The virtue of ʿUmrah, match: [العمره, وجوب العمره, اجر العمره, العمره في رمضان] }
+
+  # ── آداب المسجد ──────────────────────────────────────────
+  - { topic: adab-masjid, key: masjid-thum, ar: من أكل ثوما أو بصلا, en: Garlic and onion before the mosque, match: [اكل ثوما] }
+  - { topic: adab-masjid, key: masjid-busaq, ar: البصاق في المسجد, en: Spitting in the mosque, match: [البصاق في المسجد] }
+  - { topic: adab-masjid, key: masjid-khusuma, ar: رفع الصوت والبيع في المسجد, en: Raising voices and trading in the mosque, match: [الخصومه في المسجد] }
+
+  # ── التوحيد والشرك (shirk ↔ tawhid) ───────────────────────
+  - { topic: tawhid, key: tawhid-janna, ar: من مات على التوحيد, en: Dying upon tawhid, match: [من مات علي التوحيد, من مات لا, اخر كلامه لا اله الا الله] }
+  - { topic: tawhid, key: tawhid-dawa, ar: الدعوة إلى التوحيد, en: The call to tawhid, match: [توحيد الله] }
+  - { topic: tawhid, key: tawhid-anwa, ar: مطرنا بنوء كذا, en: Attributing rain to the stars, match: [مطرنا بنوء] }
+  - { topic: shirk, key: shirk-ithm, ar: الشرك أقبح الذنوب, en: The gravest sin, match: [الشرك بالله, اقبح الذنوب, من مات مشركا, اندادا, الشرك والسحر] }
+  - { topic: shirk, key: shirk-dhabh, ar: الذبح لغير الله, en: Sacrificing to other than Allah, match: [الذبح لغير الله] }
+
+  # ── السرقة والغلول ───────────────────────────────────────
+  - { topic: sariqa, key: sariqa-ghulul, ar: الغلول من الغنيمة, en: Stealing from the spoils, match: [الغلول, تحريم الغلول, القليل من الغلول] }
+  - { topic: sariqa, key: sariqa-sariqa, ar: السرقة والنهب, en: Theft and robbery, match: [السرقه, السارق, النهبي] }
+  - { topic: sariqa, key: sariqa-ard, ar: غصب الأرض, en: Seizing land, match: [ظلم شييا من الارض, غصب الارض] }
+
+  # ── المسألة ──────────────────────────────────────────────
+  - { topic: masala, key: masala-tahrim, ar: سؤال الناس من غير حاجة, en: Begging without need, match: [الترهيب من المساله, كراهه المساله, النهي عن المساله, سال الناس تكثرا, لا يسالون الناس] }
+  - { topic: masala, key: masala-istifaf, ar: الاستعفاف عن المسألة, en: Refraining from asking, match: [الاستعفاف عن المساله, من غير مساله] }
+
+  # ── المجلس ───────────────────────────────────────────────
+  - { topic: adab-majlis, key: majlis-adab, ar: آداب المجلس والجليس, en: Manners of a gathering, match: [اداب المجلس, اصغاء الجليس, اقامه الانسان من موضعه] }
+  - { topic: adab-majlis, key: majlis-najwa, ar: تناجي اثنين دون الثالث, en: Two whispering apart from a third, match: [تناجي اثنين, مناجاه الاثنين] }
+  - { topic: adab-majlis, key: majlis-istidhan, ar: الاستئذان والتسليم, en: Asking permission to enter, match: [الاستيذان, للمستاذن] }
+
+  # ── الولاية ──────────────────────────────────────────────
+  - { topic: zulm-raiyya, key: raiyya-imara, ar: سؤال الإمارة, en: Seeking leadership, match: [سوال الاماره, توليه الاماره, تولي السلطنه] }
+  - { topic: zulm-raiyya, key: raiyya-ghish, ar: غش الإمام رعيته, en: A ruler who deceives his people, match: [غش الامام الرعيه, فلم ينصح, الوالي الغاش, عقوبه الجاير] }
+
+  # ── الغضب وكظم الغيظ (ghadab ↔ kaff-al-ghadab) ────────────
+  - { topic: ghadab, key: ghadab-hadhar, ar: الحذر من الغضب, en: Beware of anger, match: [الحذر من الغضب, الترهيب من الغضب, للغضب] }
+  - { topic: ghadab, key: ghadab-milk, ar: من يملك نفسه عند الغضب, en: Controlling oneself when angry, match: [يملك نفسه عند الغضب, كظم الغيظ] }
+  - { topic: kaff-al-ghadab, key: kaff-adha, ar: احتمال الأذى, en: Bearing harm, match: [احتمال الاذي] }
+  - { topic: kaff-al-ghadab, key: kaff-milk, ar: من يملك نفسه عند الغضب, en: Controlling oneself when angry, match: [يملك نفسه عند الغضب, الحذر من الغضب, كظم الغيظ] }
+
+  # ── اليمين الكاذبة ───────────────────────────────────────
+  - { topic: yamin-ghamus, key: yamin-kadhiba, ar: اليمين الكاذبة, en: The false oath, match: [اليمين الكاذبه, اليمين الغموس, بيمين فاجره, يشترون بعهد الله] }
+  - { topic: yamin-ghamus, key: yamin-bay, ar: الحلف في البيع, en: Swearing in trade, match: [الحلف في البيع, تنفيق السلعه بالحلف] }
+
+  # ── الحسد ────────────────────────────────────────────────
+  - { topic: hasad, key: hasad-tahasud, ar: التحاسد والتدابر, en: Envy and turning away, match: [التحاسد, الحسد, الحقد والحسد, الشحناء] }
+  - { topic: hasad, key: hasad-ghadab, ar: كظم الغيظ, en: Restraining anger, match: [كظم الغيظ, للغضب] }
+
+  # ── الضيف والجار (adha-jar ↔ haqq-jar) ────────────────────
+  - { topic: ikram-dayf, key: dayf-ikram, ar: إكرام الضيف, en: Honouring the guest, match: [اكرام الضيف, حق الضيف, الضيافه, التكلف للضيف] }
+  - { topic: ikram-dayf, key: dayf-iman, ar: إكرام الضيف من الإيمان, en: Whoever believes in Allah and the Last Day, match: [اكرام الجار والضيف, يومن بالله واليوم الاخر] }
+  - { topic: haqq-jar, key: jar-haqq, ar: حق الجار والوصية به, en: The neighbour's right, match: [حق الجار, الوصاه بالجار, الوصيه بالجار, حق الجوار, لا تحقرن جاره] }
+  - { topic: haqq-jar, key: jar-iman, ar: إكرام الجار من الإيمان, en: Honouring the neighbour is faith, match: [اكرام الجار والضيف, فلا يوذ جاره] }
+
+  # ── اللباس والزينة ───────────────────────────────────────
+  - { topic: adab-libas, key: libas-thawb, ar: الثياب المستحبة, en: Recommended clothing, match: [الثوب الابيض, القميص, النعل] }
+  - { topic: adab-libas, key: libas-shaar, ar: الشعر والخضاب, en: Hair and dye, match: [القزع, نتف الشيب, خضاب] }
+
+  # ── الهجر ────────────────────────────────────────────────
+  - { topic: hijran, key: hijran-thalath, ar: الهجر فوق ثلاث, en: Shunning beyond three days, match: [الهجران, الهجر فوق ثلاث, التهاجر, الهجره] }
+  - { topic: hijran, key: hijran-tadabur, ar: التباغض والتدابر, en: Mutual hatred and turning away, match: [التباغض, التدابر, التحاسد والتدابر] }
+
+  # ── غض البصر (nazar-muharram) ─────────────────────────────
+  - { topic: nazar-muharram, key: nazar-tahrim, ar: النظر إلى الأجنبية, en: Looking at non-mahram women, match: [النظر الي المراه, النظر الي العورات, زنا الجوارح, حظه من الزنا] }
+  - { topic: nazar-muharram, key: nazar-khalwa, ar: الخلوة بالأجنبية, en: Being alone with a non-mahram, match: [الخلوه بالاجنبيه, لا يخلون رجل, المغيبه] }
+
+  # ── الإصلاح والنميمة (namimah ↔ islah-bayn-nas) ───────────
+  - { topic: islah-bayn-nas, key: islah-fadl, ar: الإصلاح بين الناس, en: Reconciling people, match: [الاصلاح بين الناس, اصلاح ذات البين, نصلح, يصلح بين الناس] }
+  - { topic: namimah, key: namimah-dhamm, ar: ذم النميمة, en: Talebearing, match: [النميمه, النمام, نقل الحديث] }
+
+  # ── أذى الناس ────────────────────────────────────────────
+  - { topic: adha-muslimin, key: adha-salah, ar: إيذاء الصالحين والضعفة, en: Harming the righteous and the weak, match: [ايذاء الصالحين, الايذاء, اذيه عباد الله, عذب الناس] }
+  - { topic: adha-muslimin, key: adha-silah, ar: الإشارة بالسلاح وترويع المسلم, en: Pointing weapons and frightening Muslims, match: [السلاح, بسلاح, ترويع المسلم] }
+
+  # ── الجدال ───────────────────────────────────────────────
+  - { topic: jidal, key: jidal-mira, ar: ذم المراء والجدال, en: Argumentation, match: [الجدل والمراء, ذم المراء, المراء والجدال] }
+  - { topic: jidal, key: jidal-khusuma, ar: الخصومة في الباطل, en: Quarrelling in falsehood, match: [ذم الخصومات, خاصم في باطل, الالد الخصم, الد الخصام] }
+
+  # ── العفو ────────────────────────────────────────────────
+  - { topic: afw, key: afw-jahilin, ar: العفو والإعراض عن الجاهلين, en: Pardoning and turning from the ignorant, match: [العفو والاعراض عن الجاهلين] }
+  - { topic: afw, key: afw-tawadu, ar: العفو والرفق, en: Pardon and gentleness, match: [العفو والتواضع, العفو والرفق, سوال العفو] }
+
+  # ── المماطلة ─────────────────────────────────────────────
+  - { topic: mutl, key: mutl-ghani, ar: مطل الغني, en: Delay in paying by one who can, match: [مطل الغني] }
+  - { topic: mutl, key: mutl-dayn, ar: الترهيب من الدين, en: The burden of debt, match: [الترهيب من الدين] }
+
+  # ── الزنا ────────────────────────────────────────────────
+  - { topic: zina, key: zina-tahrim, ar: الترهيب من الزنا, en: The warning against zina, match: [الزنا, الترهيب من الزنا] }
+  - { topic: zina, key: zina-ithm, ar: إثم الزناة, en: The punishment of fornicators, match: [اثم الزناه] }
+
+  # ── الحلف بغير الله ──────────────────────────────────────
+  - { topic: hilf-bighayr-allah, key: hilf-aba, ar: لا تحلفوا بآبائكم, en: Do not swear by your fathers, match: [لا تحلفوا بابايكم, الحلف بغير الله, بمخلوق] }
+  - { topic: hilf-bighayr-allah, key: hilf-lat, ar: الحلف باللات والعزى, en: Swearing by al-Lat and al-ʿUzza, match: [باللات والعزي, بمله سوي مله الاسلام] }
+
+  # ── التعاون ──────────────────────────────────────────────
+  - { topic: taawun, key: taawun-birr, ar: التعاون على البر والتقوى, en: Cooperation in goodness, match: [التعاون علي البر والتقوي, تعاون المومنين] }
+  - { topic: taawun, key: taawun-rafiq, ar: إعانة الرفيق, en: Helping one's companion, match: [اعانه الرفيق] }
+
+  # ── الغدر ────────────────────────────────────────────────
+  - { topic: ghadr, key: ghadr-tahrim, ar: تحريم الغدر, en: Treachery, match: [تحريم الغدر] }
+  - { topic: ghadr, key: ghadr-ahd, ar: عدم الوفاء بالعهد, en: Breaking covenants, match: [الوفاء بالعهد] }
+
+  # ── المن والرجوع في الهبة ────────────────────────────────
+  - { topic: mann, key: mann-ruju, ar: الرجوع في الهبة, en: Taking back a gift, match: [يرجع في هبته, عود الانسان في هبه, الرجوع في الصدقه, عود الانسان في هبته] }
+  - { topic: mann, key: mann-atiyya, ar: المن بالعطية, en: Reminding others of one's gift, match: [المن بالعطيه, المنان] }
+
+
+  # ── الانتساب ─────────────────────────────────────────────
+  - { topic: intisab, key: intisab-ghayr-abih, ar: الانتساب إلى غير الأب, en: Claiming another father, match: [غير ابيه] }
+  - { topic: intisab, key: intisab-mawali, ar: التولي إلى غير المولى, en: Claiming other patrons, match: [غير مواليه] }
+
+  # ── سوء الظن والتجسس (tajassus ↔ satr-muslim) ─────────────
+  - { topic: su-dhann, key: dhann-dhahir, ar: إجراء الأحكام على الظاهر, en: Judging by what is apparent, match: [علي الظاهر] }
+  - { topic: su-dhann, key: dhann-nahy, ar: النهي عن سوء الظن, en: Avoiding suspicion, match: [سوء الظن, من الظن, تحريم الظن] }
+  - { topic: tajassus, key: tajassus-bayt, ar: النظر في بيت غيره, en: Looking into others' homes, match: [النظر في بيت غيره, من اجل البصر] }
+  - { topic: tajassus, key: tajassus-tasammu, ar: التجسس والتسمع, en: Spying and eavesdropping, match: [التجسس, ولا تجسسوا] }
+
+  # ── الربا ────────────────────────────────────────────────
+  - { topic: riba, key: riba-lan, ar: لعن آكل الربا وموكله, en: The curse on riba, match: [لعن اكل الربا, اكل الربا, موكل الربا, الترهيب من الربا] }
+  - { topic: riba, key: riba-mahq, ar: يمحق الله الربا, en: Allah destroys riba, match: [يمحق الله الربا, اضعافا مضاعفه] }
+
+
+  # ── ذو الوجهين ───────────────────────────────────────────
+  - { topic: dhul-wajhayn, key: wajhayn-dhamm, ar: ذم ذي الوجهين, en: The two-faced, match: [ذي الوجهين, ذي اللسانين] }
+  - { topic: dhul-wajhayn, key: wajhayn-munafiq, ar: خصال المنافق, en: Traits of the hypocrite, match: [علامه المنافق, خصال المنافق] }
+
+  # ── الغش ─────────────────────────────────────────────────
+  - { topic: ghish, key: ghish-bay, ar: الغش والخداع في البيع, en: Cheating in trade, match: [الغش, الغش والخداع, من غشنا, الخداع في البيع, الخداع في البيوع, الكتمان في البيع] }
+  - { topic: ghish, key: ghish-makr, ar: المكر والخديعة, en: Deceit and trickery, match: [المكر والخديعه] }
+
+  # ── السماحة (ghish ↔ samaha) ─────────────────────────────
+  - { topic: samaha, key: samaha-bay, ar: السماحة في البيع والشراء, en: Leniency in buying and selling, match: [السماحه في البيع والشراء, السهوله والسماحه, في البيع والشراء] }
+  - { topic: samaha, key: samaha-musir, ar: إنظار المعسر, en: Giving the debtor time, match: [انظار المعسر] }
+  - { topic: samaha, key: samaha-sidq, ar: صدق التجار, en: Honest traders, match: [ترغيب التجار في الصدق] }
+  - { topic: samaha, key: samaha-qada, ar: حسن القضاء والتقاضي, en: Paying and claiming graciously, match: [حسن القضاء, حسن التقاضي] }
+
+  # ── السخرية ──────────────────────────────────────────────
+  - { topic: sukhriya, key: sukhriya-ihtiqar, ar: احتقار المسلمين, en: Belittling Muslims, match: [احتقار المسلمين, احتقار المسلم, واحتقاره] }
+  - { topic: sukhriya, key: sukhriya-ansab, ar: الطعن في الأنساب, en: Attacking lineage, match: [الطعن في الانساب] }
+  - { topic: sukhriya, key: sukhriya-shamata, ar: الشماتة بالمسلم, en: Gloating over a Muslim, match: [الشماته] }
+
+
+  # ── الزواج ───────────────────────────────────────────────
+  - { topic: nikah, key: nikah-targhib, ar: الترغيب في النكاح, en: Encouragement to marry, match: [استحباب النكاح, الترغيب في النكاح, استطاع منكم الباءه] }
+  - { topic: nikah, key: nikah-din, ar: نكاح ذات الدين, en: Marrying the religious, match: [ذات الدين, بذات الدين] }

@@ -1,0 +1,258 @@
+# THEKRA FRONTEND — CODE STANDARDS (Next.js 16 · React 19 · Tailwind v4 · shadcn/ui)
+
+This folder (`frontend/`) is opened as its own Cursor project root. Paths below are relative to `frontend/`
+unless they start with `docs/` (which lives one level up, at the monorepo root: `../docs/`).
+
+## Source of Truth (READ BEFORE ANY TASK)
+
+| Question | Authority |
+| --- | --- |
+| Routes, rendering strategy, shadcn setup, theming mechanism, i18n/RTL, data-fetching layer, build order | `../docs/plan/frontend-plan.md` |
+| Visual, motion, performance (Core Web Vitals) and component-architecture standards | `.cursor/rules/design-system.mdc` |
+| The API contract the frontend consumes | `../docs/plan/backend-plan.md` §2–§3 |
+| General code style, React/TypeScript conventions, scope and git discipline | **this file** |
+
+If this file and `frontend-plan.md` disagree on a concrete decision, **`frontend-plan.md` wins** — follow it and
+tell the user about the conflict. Never invent a third option.
+
+**Next.js 16 is newer than most training data.** Per `AGENTS.md`, verify any Next API against
+`node_modules/next/dist/docs/` before using it. If a plan snippet uses an API the bundled docs mark deprecated
+(e.g. `middleware.ts` is now `proxy.ts`; `next/image`'s `priority` is now `preload`), follow the docs and flag
+the mismatch to the user. `params`/`searchParams` are Promises (`const { slug } = await params`); use the
+generated `PageProps` / `LayoutProps` helpers instead of hand-written route prop types.
+
+---
+
+## Core Principles
+
+- Clean, readable, maintainable code. DRY. KISS — the simplest solution that satisfies the plan.
+- Small functions (~50 lines max), one job each. Meaningful names, self-documenting code.
+- Comments only for non-obvious decisions (e.g. why a `<bdi>` wraps a reference), never to narrate code.
+- Do NOT create `.md` files, `example-usage` files, demo pages, or scratch files unless the user asks.
+- Look for an existing component/hook/util before building a new one (see below).
+
+---
+
+## Tailwind v4 (MANDATORY — repo fact)
+
+- This project has **NO `tailwind.config.*`** and must never get one. Tailwind v4 is CSS-first: tokens live in
+  `src/app/globals.css` under `@theme inline { … }`, wired through `postcss.config.mjs`
+  (`@tailwindcss/postcss`).
+- Never follow an older Tailwind/shadcn tutorial that says "add this to `tailwind.config.ts`" or install
+  `tailwindcss-animate` (v4 uses `tw-animate-css`). New design tokens go in `globals.css` only, and only when
+  the task is a token change (see `frontend-plan.md` §4.4).
+- `components.json` keeps `"tailwind": { "config": "" }` and `"cssVariables": true` (§3.1). Do not change them.
+
+## Icons (MANDATORY)
+
+- `lucide-react` is the **ONLY** icon library (it is shadcn's configured `"iconLibrary": "lucide"`).
+- Never introduce another icon package (Heroicons, react-icons, Phosphor, Tabler, inline SVG icon sets, …).
+- Import named icons: `import { Heart, ChevronLeft } from 'lucide-react'`. Size with Tailwind (`size-4`), colour
+  with semantic utilities (`text-muted-foreground`).
+- Directional icons (chevrons, back arrows) get `rtl:-scale-x-100`. Decorative icons get `aria-hidden`;
+  an icon is never the only accessible label of a control.
+
+## Colors (MANDATORY)
+
+Use ONLY shadcn's semantic, CSS-variable-backed Tailwind utilities:
+
+- Surfaces & text: `bg-background`, `text-foreground`, `bg-card`, `text-card-foreground`, `bg-muted`,
+  `text-muted-foreground`, `bg-popover`, `text-popover-foreground`
+- Actions & emphasis: `bg-primary`, `text-primary-foreground`, `bg-secondary`, `bg-accent`, `bg-destructive`
+- Lines & focus: `border-border`, `border-input`, `ring-ring`
+- Thekra semantic tokens (from `frontend-plan.md` §4.1): `bg-grade-sahih`/`-hasan`/`-daif`,
+  `*-intent-sin`, `*-intent-good-deed` — once they exist in `globals.css`
+- Opacity modifiers on those are fine (`bg-primary/10`)
+
+**NEVER** a raw Tailwind palette class (`bg-blue-500`, `text-neutral-800`, `border-gray-200`, `bg-white`,
+`text-black`) and **NEVER** a literal hex/rgb/hsl/oklch value in a component, `style` prop, or arbitrary class
+(`bg-[#0a0a0a]`). The real palette arrives later as a **values-only change to `globals.css`**; one hard-coded
+colour breaks that promise and forces a component edit on design day — which `frontend-plan.md` §4.4 defines as
+"the component was written wrong".
+
+---
+
+## Use What Already Exists First (MANDATORY)
+
+Before creating ANY new component, hook, util, type, or query key:
+
+1. **Search first** (Grep/Glob), in this order:
+   - `src/components/ui/*` — shadcn primitives. The planned batch (§3.2) is: `card`, `tabs`, `command`,
+     `dialog`, `sheet`, `badge`, `skeleton`, `sonner`, `separator`, `scroll-area`, `button`, `input`, `label`,
+     `select`, `popover`, `tooltip`, `dropdown-menu`, `alert`, `accordion`, `avatar`, `toggle-group`, `form`.
+     Use these instead of native `<button>`, `<input>`, `<select>` or hand-rolled modals.
+   - `src/components/shared/*` — `AppShell`, `SiteHeader`, `LocaleSwitcher`, `ThemeToggle`, `EmptyState`,
+     `ErrorState`, `ArabicText`, and `shared/quote/*` (`QuoteCard`, `QuoteCardSkeleton`, `GradeBadge`,
+     `SourceAttribution`, `FavoriteButton`).
+   - Sibling `src/features/*` folders and `src/lib/*` (`api/`, `types/`, `query-keys.ts`, `utils.ts`).
+2. **Reuse > Extend > Create.** Reuse as-is first; extend with an optional prop second; create only when
+   nothing fits. If something is ~80% similar, ask the user before writing a sibling.
+3. **`QuoteCard` and friends exist exactly once**, in `src/components/shared/quote/`. Every slice that renders a
+   quote — `sin-reminder`, `good-deed-motivation`, `quran-hadith-browser`, `favorites` — imports them. Never a
+   per-feature `ReminderCard`/`MotivationCard`/`HadithCard` duplicate.
+4. A missing shadcn primitive is added with the shadcn CLI (ask first — it adds dependencies), never hand-written
+   into `components/ui/`.
+
+**Anti-overengineering:** don't create a file for one tiny export; don't add a `utils/`/`constants/`/`hooks/`
+folder to hold a single value; don't add props, generics or option bags "for later". A constant used by one
+component sits at the top of that file. New files are the last resort.
+
+## Component Layering (FIXED — `frontend-plan.md` §3.3)
+
+| Layer | Path | Hand-edited? |
+| --- | --- | --- |
+| Primitives | `src/components/ui/*` | **No.** Generated by the shadcn CLI only. Sole exception: an unavoidable a11y/RTL fix, marked with a comment explaining why. |
+| Shared composites | `src/components/shared/*` (incl. `shared/quote/*`) | Yes — cross-feature, presentational |
+| Feature components | `src/features/<slice>/components/*` | Yes — flow-specific |
+| Routes | `src/app/**` | Routing, metadata, data prefetch and layout composition **only** — no UI logic |
+
+**One-way dependencies: `app → features → shared → ui`.** Never the reverse. `components/shared/*` never
+imports from inside a `features/*` folder; `components/ui/*` imports nothing app-specific; a feature slice never
+imports another slice's internals — promote the piece to `components/shared/` instead.
+
+Feature folder names are fixed: `sin-reminder`, `good-deed-motivation`, `quran-hadith-browser`, `favorites`, `iman-branches`.
+
+## Shared Components: Don't Break Existing Consumers
+
+Before editing anything under `src/components/shared/**`: grep every consumer and list them. Changes are
+additive — new props default to the old behaviour. If a contract must change, update every consumer in the same
+change and call it out. Default fix location for a page-specific bug is the call site, not the shared component.
+
+---
+
+## State & Data (MANDATORY — `frontend-plan.md` §6)
+
+- **TanStack Query v5 for all server state**, through typed hooks per endpoint inside the owning slice
+  (`useSins`, `useSinQuotes`, `useGoodDeedQuotes`, `useQuote`, `useFavorites`, `useToggleFavorite`, …).
+  Call `useQuery` / `useInfiniteQuery` / `useMutation` directly inside those hooks — there is no custom
+  fetch wrapper layer. Hooks return the TanStack result unchanged (no bespoke `{ loading, data }` re-wrapping)
+  and contain no JSX.
+- Components never call `apiClient` or axios directly — always through a hook. Request functions live in
+  `src/lib/api/<entity>.ts`; query keys come only from the `src/lib/query-keys.ts` factory, never inline arrays.
+- The envelope (`{ data, meta }`) and error shape are decoded once, in `src/lib/api-client.ts`. UI switches on
+  `ApiError.code`, never on message text.
+- After a mutation, **invalidate** the affected factory keys (`invalidateQueries` in the mutation's
+  `onSettled`) and let TanStack refetch. Using `useQueryClient()` for that one call is fine; manual cache
+  juggling (`setQueryData` / `getQueryData` patching, hand-merged lists) is not — the only sanctioned exception
+  is the optimistic update in `useToggleFavorite` (snapshot → rollback → invalidate, per §6.4).
+- **Zustand only** for the enumerated client-only state: picker open/mode, last-viewed sin/deed slug, variety
+  seed (`session-intent.store.ts`), and device preferences (`preferences.store.ts`: `showTranslation`,
+  `includeWeakHadith`, `arabicNumerals`, `fontScale`). **Never put API data in a Zustand store.** Theme →
+  `next-themes`; locale → `next-intl` + URL; filters/pagination/tabs → URL search params.
+- Never read `process.env` in a component — use `src/lib/env.ts`.
+
+## i18n & Content (MANDATORY — a correctness rule, not a style rule)
+
+- All UI chrome text goes through `next-intl` (`useTranslations` in Client Components, `getTranslations` in
+  Server Components). **No hardcoded user-facing string** in JSX, `aria-label`, `placeholder`, `title`, or toast.
+  `messages/ar.json` is the primary catalogue; add every key to `en.json` too. Never repeat a top-level key in a
+  messages file — `JSON.parse` silently keeps only the last one.
+- **Content is not UI.** `Quote.textAr` (and every other API content field: `nameAr`, `descriptionAr`,
+  `rewardAr`, `narratorAr`, …) is **never** a translation key and is **never** replaced by a UI-locale string.
+  It is rendered verbatim from the API response, in `--font-arabic` with `dir="rtl"` on that element. An attached
+  `Translation` is shown alongside — beneath it — never instead of it (`frontend-plan.md` §5.5).
+- Mixed-direction runs (`Bukhari 13`, `49:12`, emails) are isolated with `<bdi>` where they occur.
+
+## RTL (MANDATORY)
+
+`dir` is set once on `<html>` from the locale. In any shared or direction-agnostic component use logical
+utilities only:
+
+| Use | Never (in shared code) |
+| --- | --- |
+| `ps-*` / `pe-*`, `ms-*` / `me-*` | `pl-*` / `pr-*`, `ml-*` / `mr-*` |
+| `text-start` / `text-end` | `text-left` / `text-right` |
+| `start-*` / `end-*`, `border-s` / `border-e`, `rounded-s-*` / `rounded-e-*` | `left-*` / `right-*`, `border-l/r`, `rounded-l/r-*` |
+
+Physical utilities are acceptable only inside a component explicitly pinned to one direction (rare — say why in
+a comment). Check every UI change in both `ar` (RTL) and `en` (LTR).
+
+## Forms
+
+`react-hook-form` + `zod` via shadcn's `form` primitive (added in phase 4 with the auth screens) for every form.
+Never a `useState` + manual validation loop. Every input has a real `<Label>`; errors are tied with
+`aria-describedby` and are never colour-only. Build dynamic schemas with `useMemo`.
+
+---
+
+## React & TypeScript Hygiene
+
+- Functional components only; hooks at the top level, never in conditions/loops; custom hooks start with `use`
+  and have specific names (`useSinQuotes`, not `useData`).
+- One responsibility per custom hook and per `useEffect`. Don't create a hook for single-use logic just to shrink
+  a component. Prefer derived values (`useMemo` or plain expressions) over state synced in an effect.
+- Components stay under **~300 lines**; split into subcomponents beside them when they grow.
+- Server Components by default; add `'use client'` only where interactivity requires it, as low in the tree as
+  possible.
+- Props: `interface ComponentNameProps` (e.g. `QuoteCardProps`), declared **beside the component in the same
+  file**. The backend's "types live only in `dto/`/`entities/`" rule does **not** apply here — don't move a
+  component's own props into a `types/` folder. Shared API/domain types (`QuoteDto`, `SinDto`, enums) live once in
+  `src/lib/types/` and are imported, never redeclared.
+- No `any`, no `as any`; use type guards for unknown data. Enums are `const` objects + union types in
+  `src/lib/types/enums.ts` — never imported from `@prisma/client`.
+- List keys are stable ids (`quote.id`, `link.id`), **never the array index**.
+- Every data-driven view handles **loading, error, and empty** states explicitly (see `design-system.mdc` §5).
+- Early returns for edge cases. Make truly optional callbacks optional (`onSelect?: …`, called with `?.()`);
+  never pass empty callbacks; never pass a prop equal to its default.
+- `useMemo`/`useCallback` where there is real cost (expensive derivation, memoised child, effect dependency) —
+  not reflexively. Lazy-load heavy or below-the-fold client components with `next/dynamic`.
+- Complete effect dependency arrays; clean up subscriptions/timers; use functional state updates to avoid stale
+  closures; never use an unmemoised object/array as an effect dependency.
+- `@/` path aliases instead of `../../..` relative chains.
+
+## Naming
+
+- Booleans name the affirmative, current condition with `is`/`has`/`can`/`should` (`isPickerOpen`,
+  `hasTranslation`). Never `isNotReady`, `isUninitialized` — name the active state (`isLoading`).
+- Composite conditions get a named derived const describing the use-case
+  (`const isFirstPageLoading = isPending && !data`), not an inline formula in JSX.
+- Handlers: `handle<Event>` inside a component (`handleSelectSin`), `on<Event>` for props (`onSelect`).
+- Named constants for magic numbers/strings (e.g. `SEARCH_DEBOUNCE_MS = 300`).
+
+## Security & Privacy
+
+- Never `dangerouslySetInnerHTML` with API content. Access token in memory only; refresh token in the httpOnly
+  cookie (§6.5) — never `localStorage`.
+- No analytics or logging event may name the sin a user selected (`frontend-plan.md` §7.1).
+
+## Dead Code
+
+Before finishing: delete unused exports, components, props, types, imports and commented-out code. No "for later"
+stubs. Grep every new export — if nothing imports it, remove it.
+
+---
+
+## Scope Control (CRITICAL)
+
+- ONLY modify files the task needs. Don't refactor outside the immediate scope, rename working code, or reformat
+  untouched files.
+- DO NOT add a dependency without asking. Packages planned in `frontend-plan.md` §8 are added only in their phase;
+  `@tanstack/react-query`, `axios`, `zustand`, `tailwindcss` are already present — never re-add them.
+- DO NOT modify config (`next.config.ts`, `eslint.config.mjs`, `postcss.config.mjs`, `tsconfig.json`,
+  `components.json`) unless the task requires it. Leave the `next dev`-managed block in `AGENTS.md` alone.
+- A change to how an API type is read (`src/lib/types/api.ts`) is a contract change — flag it.
+- Ask when the plan is silent; state assumptions explicitly; warn about anything outside scope.
+
+## Pre-Push Checklist (MANDATORY)
+
+Work through it explicitly; if a step doesn't apply, say so. Commands run from the monorepo root (equivalent
+`pnpm <script>` inside `frontend/`):
+
+- [ ] `pnpm --filter frontend lint` passes (ESLint 9 flat config — the frontend does not use oxlint).
+- [ ] `pnpm --filter frontend build` passes.
+- [ ] No raw palette classes, hex/oklch literals, `tailwind.config.*`, or non-`lucide-react` icons introduced.
+- [ ] No hardcoded UI strings; `textAr` rendered verbatim; logical (RTL-safe) utilities in shared code.
+- [ ] Layering respected (`features → shared → ui`); no hand edits in `components/ui/*` without a comment.
+- [ ] No API data in Zustand; no direct `apiClient` calls from components.
+- [ ] Loading / error / empty states handled; stable list keys; no `any`.
+- [ ] `design-system.mdc` "Never do this" checklist passes for every touched component.
+- [ ] Checked in both `ar` (RTL) and `en` (LTR) in the browser.
+- [ ] No new dependency without the user's approval.
+- [ ] No `console.log`, `debugger`, commented-out code, or dead exports.
+- [ ] `git diff` reviewed end-to-end: every hunk maps to the task; no unrelated files.
+
+## Git
+
+- Conventional Commits: `feat:`, `fix:`, `refactor:`, `docs:`, `style:`, `test:`, `chore:` (optional scope, e.g.
+  `feat(sin-reminder): add SinPickerSheet`). No ticket-ID requirement.
+- Atomic commits: one logical change each. Never bypass hooks with `--no-verify`.

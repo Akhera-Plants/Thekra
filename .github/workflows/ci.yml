@@ -1,0 +1,250 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master, main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '24'
+  # Every job that runs a Prisma CLI command needs both datasource variables:
+  # schema.prisma reads url + directUrl, and prisma.config.ts disables Prisma's
+  # own .env loading. Jobs that talk to a real database override these.
+  DATABASE_URL: postgresql://thekra:thekra_dev_password@localhost:5432/thekra?schema=public
+  DIRECT_URL: postgresql://thekra:thekra_dev_password@localhost:5432/thekra?schema=public
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter backend lint
+      - run: pnpm --filter frontend lint
+
+  prisma:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: thekra
+          POSTGRES_PASSWORD: thekra_dev_password
+          POSTGRES_DB: thekra
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U thekra -d thekra"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # DATABASE_URL and DIRECT_URL come from the workflow-level env above.
+      SHADOW_DATABASE_URL: postgresql://thekra:thekra_dev_password@localhost:5432/thekra_shadow?schema=public
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm prisma:validate
+      - run: pnpm prisma:generate
+      - name: Create shadow database
+        run: >
+          PGPASSWORD=thekra_dev_password psql
+          -h localhost -U thekra -d thekra
+          -c "CREATE DATABASE thekra_shadow;"
+      - name: Migration drift check
+        working-directory: backend
+        run: >
+          pnpm exec prisma migrate diff
+          --from-migrations ./prisma/migrations
+          --to-schema-datamodel ./prisma/schema.prisma
+          --shadow-database-url "$SHADOW_DATABASE_URL"
+          --exit-code
+
+  typecheck:
+    runs-on: ubuntu-latest
+    needs: [prisma]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm prisma:generate
+      - run: pnpm --filter backend exec tsc --noEmit -p tsconfig.json
+      - run: pnpm --filter frontend exec next typegen
+      - run: pnpm --filter frontend exec tsc --noEmit
+
+  test-unit:
+    runs-on: ubuntu-latest
+    needs: [prisma]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm prisma:generate
+      # This job has no Postgres. src/common/text/arabic-search.spec.ts runs its
+      # SQL parity suite whenever DATABASE_URL is non-empty, so blank the
+      # workflow-level URL (needed above only by the Prisma CLI) for the tests.
+      - run: pnpm --filter backend test
+        env:
+          DATABASE_URL: ''
+
+  test-e2e:
+    runs-on: ubuntu-latest
+    needs: [prisma]
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: thekra
+          POSTGRES_PASSWORD: thekra_dev_password
+          POSTGRES_DB: thekra_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U thekra -d thekra_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://thekra:thekra_dev_password@localhost:5432/thekra_test?schema=public
+      # Must override the workflow default too: `prisma migrate deploy` migrates
+      # directUrl when it is set, which would otherwise hit the wrong database.
+      DIRECT_URL: postgresql://thekra:thekra_dev_password@localhost:5432/thekra_test?schema=public
+      NODE_ENV: test
+      LOG_LEVEL: warn
+      ADMIN_API_KEY: test-admin-key
+      VARIETY_SCORE_FLOOR: '70'
+      SYNC_ENABLED: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm prisma:generate
+      - name: Write backend/.env.test
+        run: |
+          cat > backend/.env.test <<EOF
+          DATABASE_URL=${DATABASE_URL}
+          PORT=3001
+          CORS_ORIGINS=http://localhost:3000
+          NODE_ENV=test
+          LOG_LEVEL=warn
+          VARIETY_SCORE_FLOOR=70
+          ADMIN_API_KEY=test-admin-key
+          JWT_ACCESS_SECRET=test-access-secret
+          JWT_REFRESH_SECRET=test-refresh-secret
+          ACCESS_TTL=15m
+          REFRESH_TTL=30d
+          EOF
+      - working-directory: backend
+        run: pnpm exec prisma migrate deploy
+      - run: pnpm --filter backend test:e2e
+
+  design-tokens:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # The runner image does not ship ripgrep. Without it `rg` exits 127, which
+      # an `if rg …` reads as "no match", so the check passed without running.
+      - name: Install ripgrep
+        run: sudo apt-get update && sudo apt-get install -y ripgrep
+      - name: No literal colours outside globals.css
+        # rg exits 0 on a match, 1 on no match, 2+ on error; only 1 passes.
+        run: |
+          status=0
+          rg -n '#[0-9a-fA-F]{3,8}\b|rgb\(|bg-neutral-|text-gray-|bg-white\b|text-black\b' frontend/src \
+            --glob '!**/globals.css' --glob '!**/components/ui/**' || status=$?
+          if [ "$status" -eq 0 ]; then
+            echo "Found hard-coded colours — use semantic tokens in globals.css"
+            exit 1
+          fi
+          if [ "$status" -ne 1 ]; then
+            echo "rg failed with exit code $status"
+            exit "$status"
+          fi
+
+  rtl-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # See design-tokens: without ripgrep installed this check passed vacuously.
+      - name: Install ripgrep
+        run: sudo apt-get update && sudo apt-get install -y ripgrep
+      - name: No physical RTL-unsafe utilities outside ui primitives
+        # rg exits 0 on a match, 1 on no match, 2+ on error; only 1 passes.
+        run: |
+          status=0
+          rg -n '\b(pl-|pr-|ml-|mr-|text-left|text-right)\b' frontend/src \
+            --glob '!**/components/ui/**' || status=$?
+          if [ "$status" -eq 0 ]; then
+            echo "Use logical spacing (ps/pe/ms/me) and text-start/end"
+            exit 1
+          fi
+          if [ "$status" -ne 1 ]; then
+            echo "rg failed with exit code $status"
+            exit "$status"
+          fi
+
+  i18n-parity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: node scripts/check-i18n-keys.mjs
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [prisma]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm prisma:generate
+      - run: pnpm --filter backend build
+      - run: pnpm --filter frontend build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:3001
+
+  mobile-check:
+    runs-on: ubuntu-latest
+    needs: [prisma]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter mobile exec tsc --noEmit
+      - run: pnpm --filter mobile test

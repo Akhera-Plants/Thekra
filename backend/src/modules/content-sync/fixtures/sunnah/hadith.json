@@ -1,0 +1,57 @@
+{
+  "_fixture_note": "TEST-ONLY — placeholder data, NOT authentic hadith text",
+  "hadiths": [
+    {
+      "collection": "bukhari",
+      "bookNumber": "2",
+      "chapterId": "1",
+      "hadithNumber": "13",
+      "hadith": [
+        {
+          "lang": "ar",
+          "chapterNumber": "1",
+          "chapterTitle": "باب الإيمان",
+          "urn": 10260,
+          "body": "لا يؤمن أحدكم — PLACEHOLDER TEST HADITH ARABIC",
+          "grades": [
+            { "graded_by": "", "grade": "صحيح" }
+          ],
+          "reference": { "book": 2, "hadith": 13 }
+        },
+        {
+          "lang": "en",
+          "chapterNumber": "1",
+          "chapterTitle": "Chapter of Faith",
+          "urn": 10270,
+          "body": "[TEST] None of you will have faith — placeholder English",
+          "grades": [
+            { "graded_by": "Al-Albani", "grade": "Sahih" }
+          ],
+          "reference": { "book": 2, "hadith": 13 }
+        }
+      ]
+    },
+    {
+      "_fixture_note": "Record with no Arabic body — should be SKIPPED",
+      "collection": "bukhari",
+      "bookNumber": "2",
+      "chapterId": "1",
+      "hadithNumber": "999",
+      "hadith": [
+        {
+          "lang": "en",
+          "chapterNumber": "1",
+          "chapterTitle": "Chapter of Faith",
+          "urn": 99970,
+          "body": "[TEST] English only — no Arabic",
+          "grades": [],
+          "reference": { "book": 2, "hadith": 999 }
+        }
+      ]
+    }
+  ],
+  "total": 2,
+  "limit": 50,
+  "previous": null,
+  "next": null
+}

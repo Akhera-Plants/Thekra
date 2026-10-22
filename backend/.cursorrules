@@ -1,0 +1,320 @@
+# THEKRA BACKEND — CODE STANDARDS (NestJS · Prisma · PostgreSQL)
+
+This folder (`backend/`) is opened as its own Cursor project root. Paths below are relative to `backend/` unless
+they start with `docs/` (which lives one level up, at the monorepo root: `../docs/`).
+
+## Source of Truth (READ BEFORE ANY TASK)
+
+| Question | Authority |
+| --- | --- |
+| Which modules exist, which endpoints, request/response shapes, DTO fields, auth design, test cases, build order | `../docs/plan/backend-plan.md` |
+| The data model (models, fields, relations, enums, unique constraints) | `../docs/ARCHITECTURE.md` + `prisma/schema.prisma` |
+| Ingestion, provider mappings, curation workflow, seed data | `../docs/plan/content-pipeline-plan.md` |
+| Cross-cutting decisions (IDs like B5, D7) | `../docs/TECHNICAL_PLAN.md` → "Open decisions" table |
+
+This file governs **HOW** code is written, never **WHAT** is built. If this file and `backend-plan.md` ever
+disagree on a concrete decision (a path, a field, a status code, a module name), **`backend-plan.md` wins** —
+follow it and tell the user about the conflict so this file can be corrected. Never "resolve" a conflict by
+inventing a third option.
+
+Before implementing an endpoint, open its entry in `backend-plan.md` §3 and implement exactly that contract:
+path, auth column, query/body fields, response shape, status codes.
+
+---
+
+## Core Principles
+
+- Clean, readable, maintainable code. DRY. KISS — the simplest solution that satisfies the plan.
+- Small units: a service method does one thing; if a method passes ~50 lines, extract a private helper.
+- Meaningful names; self-documenting code. Comments only for non-obvious decisions (e.g. *why* the grade
+  filter is an `OR` clause), never to narrate what the next line does.
+- Do NOT create `.md` files, `example-usage.ts`, scratch scripts, or demo files unless the user asks.
+- Old logic that works is an asset: reuse or lightly extend it, don't write a "clean new" parallel version.
+
+---
+
+## ESM Discipline (MANDATORY — repo fact)
+
+`package.json` has `"type": "module"` and `tsconfig.json` uses `"module": "nodenext"`. Therefore:
+
+- Every **relative** import ends in `.js` (yes, `.js`, even though the file on disk is `.ts`). This is exactly
+  how the scaffold already does it:
+
+  ```ts
+  // src/main.ts
+  import { AppModule } from './app.module.js';
+
+  // src/app.module.ts
+  import { AppController } from './app.controller.js';
+  import { AppService } from './app.service.js';
+  ```
+
+- Package imports stay bare (`'@nestjs/common'`, `'@prisma/client'`) — no extension.
+- No `require()`, no `module.exports`, no `__dirname` (use `import.meta.dirname` if a path is truly needed),
+  no extensionless relative imports. Top-level `await` is allowed (`main.ts` already uses it).
+- Directory imports (`'./dto'`) do not resolve under `nodenext` — import the file (`'./dto/create-sin.dto.js'`).
+
+---
+
+## Module Boundaries (MANDATORY)
+
+The approved module list is **exactly** `backend-plan.md` §1:
+
+```
+src/prisma/            PrismaModule (@Global) + PrismaService
+src/common/            cross-cutting: dto/, interceptors/, filters/, pipes/, decorators/, text/, mappers/
+src/health/            GET /health, GET /health/ready (unprefixed)
+src/modules/quran/          src/modules/hadith/         src/modules/sins/
+src/modules/good-deeds/     src/modules/classification/ src/modules/content-sync/
+src/modules/iman-branches/
+src/modules/quotes/         src/modules/sources/        src/modules/tags/
+src/modules/auth/           src/modules/users/          src/modules/favorites/
+```
+
+- Before creating any new module folder, check this list. If the task seems to need a module that is not on
+  it, **STOP and ask the user** — do not invent `modules/search`, `modules/admin`, `modules/shared`, etc.
+  Admin routes live in `<name>.admin.controller.ts` inside the owning module, not in a separate admin module.
+- Existing folder names must not be renamed (`quran`, `hadith`, `sins`, `good-deeds`, `classification`,
+  `content-sync`).
+- Per-module file convention (§1): `<name>.module.ts`, `<name>.controller.ts`, `<name>.admin.controller.ts`
+  (only where admin routes exist), `<name>.service.ts`, `dto/`, `entities/`, `<name>.service.spec.ts`.
+- Respect each module's **Owns (writes)** column in §1.2–§1.10. A module writes only the models it owns; to
+  change another module's model, call that module's exported service.
+- Import direction is one-way where the plan says so (e.g. `sins → good-deeds`, never back). If you reach for
+  `forwardRef()`, the design is wrong — stop and re-read §1.
+- `PrismaModule` is `@Global()`: do not re-import it in feature modules.
+- Build order is §12. Do not build a module whose dependencies (e.g. `quotes/` before `sins/`) don't exist yet.
+
+---
+
+## Use What Already Exists First (MANDATORY)
+
+Before writing ANY new DTO, service method, mapper, decorator, pipe, guard, or helper:
+
+1. **Grep first.** Search `src/common/` and the relevant existing module(s) for the concept and likely names
+   (`to*Dto`, `build*Include`, `*OrderBy`, `normalize*`, `Parse*Pipe`, `*.dto.ts`).
+2. **Reuse > Extend > Create**, in that order. Create only when nothing fits; if something is ~80% similar,
+   ask the user before writing a sibling.
+3. **The quote projection exists exactly once.** `QuotesService.toQuoteDto(row, locale)`,
+   `buildQuoteInclude(locale)` and `linkOrderBy()` (with the pure mapper in `common/mappers/quote.mapper.ts`)
+   are the only way a `Quote` row becomes a `QuoteDto`. `sins`, `good-deeds`, `quran`, `hadith`, `tags` and
+   `favorites` import and call them — they never hand-build a `QuoteDto`, never write their own `include` for
+   a quote, never pick a translation themselves.
+4. Shared request pieces live in `common/`: `PaginationQueryDto`, `LocaleQueryDto`, `@TransformToArray()`,
+   `@CurrentUser()`, `@Roles()`, `@Public()`, `arabic-normalizer.ts`. Extend them (`extends PaginationQueryDto`),
+   never copy their fields into a new DTO. `GoodDeedQuotesQueryDto` reuses `SinQuotesQueryDto` (§5.3).
+5. When two helpers already do the same job, consolidate to one and point every caller at it.
+
+**Anti-overengineering:** don't create a file for a single tiny export, don't add a `constants/` or `utils/`
+folder for one value, don't add option bags/overloads/generics "for later". A constant used by one service
+sits at the top of that service. New files are the last resort, not the default.
+
+---
+
+## Strict Architecture Boundaries (MANDATORY)
+
+| Concern | Lives in | Never in |
+| --- | --- | --- |
+| Request DTOs (classes + `class-validator` decorators) | `<module>/dto/<operation>.dto.ts` — one DTO per file; shared ones in `common/dto/` | controllers, services, `entities/` |
+| Response shapes (interfaces/types — not validated, so not classes, per §5 rule 2) | `<module>/entities/*.ts`, or import the shared `QuoteDto` from `quotes` | inline in a controller/service signature |
+| HTTP: routing, guards, param parsing, status codes | `*.controller.ts` | services |
+| Business logic + Prisma queries | `*.service.ts` | controllers |
+| The `PrismaClient` instance | `src/prisma/prisma.service.ts` only | anywhere else |
+
+- **Controllers validate and delegate, nothing else.** The DTO + global `ValidationPipe` validate; the
+  controller calls one service method and returns its result. No branching business rules, no Prisma calls,
+  no response-envelope building in a controller.
+
+  ```ts
+  // ✅ RIGHT
+  @Get(':slug/quotes')
+  @UseGuards(OptionalJwtAuthGuard)
+  findQuotes(@Param('slug') slug: string, @Query() query: SinQuotesQueryDto, @CurrentUser() user?: AuthUser) {
+    return this.sinsService.findQuotesForSin(slug, query, user?.userId);
+  }
+
+  // ❌ WRONG — Prisma + ranking logic in the controller
+  @Get(':slug/quotes')
+  async findQuotes(@Param('slug') slug: string) {
+    const sin = await this.prisma.sin.findUnique({ where: { slug } });
+    return this.prisma.sinQuote.findMany({ where: { sinId: sin!.id }, orderBy: { relevanceScore: 'desc' } });
+  }
+  ```
+
+- **Only `PrismaService` imports `PrismaClient`.** Every other file injects `PrismaService`
+  (`constructor(private readonly prisma: PrismaService) {}`). Never `new PrismaClient()` in a service, script
+  helper, or test. Importing *types and enums* from `@prisma/client` (`Prisma`, `QuoteType`, `HadithGrade`) is
+  fine.
+- Services never read `req.user`; they receive the typed user via `@CurrentUser()` from the controller (§7.2).
+- Multi-row writes that must succeed together use `this.prisma.$transaction(...)`.
+- Never return raw Prisma rows from a public endpoint when a DTO projection exists for that entity.
+
+---
+
+## Product-Safety Rules (CORRECTNESS GUARANTEES — not style preferences)
+
+Breaking any of these is a product bug, even if every test passes and the code "looks fine".
+
+1. **Grade policy gates every hadith.** `GradePolicy.assertRenderable(grade)` (from `modules/hadith/`, §4.3)
+   must gate every code path that can return a `HADITH`-type quote. `MAWDU` (fabricated) is **never** served or
+   selectable → `422 GRADE_NOT_PERMITTED`. `DAIF` and `UNGRADED` only when explicitly opted in
+   (`includeWeak` / `grades`). Default is `SAHIH, HASAN`. Enforce in the DTO (`@NotMawdu()`) **and** re-assert
+   in the service.
+2. **The grade filter must not drop non-hadith rows.** Verses have `grade = NULL`; filter with
+   `OR: [{ type: { not: QuoteType.HADITH } }, { grade: { in: allowedGrades } }]` (§4.1), never a bare
+   `grade: { in: [...] }`. A unit test asserting a verse survives `grades=SAHIH` is mandatory.
+3. **Links are upserted, never bare-created.** `SinQuote` / `GoodDeedQuote` writes go through
+   `prisma.sinQuote.upsert` / `prisma.goodDeedQuote.upsert` keyed on the `@@unique` compound
+   (`sinId_quoteId` / `goodDeedId_quoteId`) — never `create`, so a curator re-submitting updates the score
+   instead of 500-ing on `P2002`. Both sides share one generic implementation in `ClassificationService` (§3.11).
+4. **Ingestion never classifies.** `content-sync` may only write `Quote`, `Translation`, `SyncLog` and
+   `Source.lastSyncedAt` (always `origin = API_CACHED`, upserted on `@@unique([apiProvider, externalId])`).
+   It must **NEVER** write a `SinQuote`/`GoodDeedQuote` row — linking is the human curator's job through
+   `classification` (ARCHITECTURE.md §2 "Ingestion is separate from classification"; TECHNICAL_PLAN D7;
+   content-pipeline-plan §1). Re-syncing must never touch curation work.
+5. **Cache, don't proxy.** User-facing requests read PostgreSQL only. No request handler calls Quran.com,
+   Sunnah.com or any provider inline; providers are called only by `content-sync` runs.
+6. **Arabic is the source of truth.** `textAr` is always returned. A translation is attached as
+   `translation: { languageCode, text } | null` and never substitutes for the Arabic (§2.4).
+7. **`rawPayload` is never serialised to a client** (§3.1). Neither is `passwordHash`, ever.
+8. **Guest-first.** Endpoints #1–#18 require no token. Never add a guard to a public read "to be safe".
+
+---
+
+## API Conventions Are Fixed (do not reinvent per endpoint)
+
+All defined in `backend-plan.md` §2 — implemented once, globally:
+
+- Global prefix `/v1` (health excluded). A new version is a new controller folder, never a mutated `/v1` shape.
+- Envelope: `{ data }` for a single resource, `{ data, meta }` for collections, applied by the global
+  `ResponseEnvelopeInterceptor`. Paginated services return `{ data, meta }` built with the shared
+  `PaginatedResult<T>` helper; others return the plain value and let the interceptor wrap it.
+- Errors: only the `AllExceptionsFilter` shape `{ error: { code, message, details, path, method, requestId,
+  timestamp } }` with stable `SCREAMING_SNAKE` codes and the Prisma→HTTP table in §2.5. Throw Nest
+  `HttpException`s (`NotFoundException`, `ConflictException`, …) from services; never build an error body by
+  hand. Never leak a Prisma message or stack in a `5xx`.
+- Pagination: offset `page`/`limit`, `limit` max **100**, enforced in the DTO (reminder endpoints cap at 50, §5.3).
+- Status codes per §2.6 (`201` + `Location` on create, `204` on delete, `409` duplicates, `422` invalid reference).
+- IDs are UUIDs (`ParseUUIDPipe`); `Sin`, `GoodDeed`, `Tag` are addressed publicly by `slug`.
+- `?lang=ar|en` via `LocaleQueryDto` on every read endpoint.
+
+**A new endpoint that invents a different response shape, error shape, or pagination style is a bug.**
+
+### DTO conventions (summary — full rules in §5)
+
+One file per DTO named after the operation; `@IsOptional()` before the type validator; every string has
+`@MaxLength`; arrays use `@TransformToArray()`; keep `forbidNonWhitelisted: true`. Until
+`@nestjs/mapped-types` is installed (§10), write `Update*Dto` partials explicitly — don't pull in
+`@nestjs/swagger` for `PartialType`.
+
+---
+
+## Auth Pattern Is Fixed
+
+- Guards are opted into **per controller / per route** with `@UseGuards(JwtAuthGuard)`,
+  `@UseGuards(OptionalJwtAuthGuard)`, or `@UseGuards(JwtAuthGuard, RolesGuard)` + `@Roles('ADMIN')` for every
+  `/admin` route (`RolesGuard` always after `JwtAuthGuard`). See `backend-plan.md` §7.2 and TECHNICAL_PLAN B5.
+- **Do not register a global `APP_GUARD`** for auth unless the user confirms the plan changed.
+- `OptionalJwtAuthGuard` must degrade a malformed/expired token to anonymous, never `401`, on endpoints 3, 7, 8, 9.
+- Unknown email and wrong password return the identical `401 INVALID_CREDENTIALS`.
+
+---
+
+## Testing (MANDATORY — matches repo reality)
+
+- **Vitest only.** Never add Jest, `ts-jest`, `@types/jest`, or `jest.config.*`. Use `vi.fn()` / `vi.mock()`;
+  Vitest globals are on (`describe`, `it`, `expect` need no import).
+- Unit specs sit **beside** the service: `src/modules/sins/sins.service.spec.ts`. Mock `PrismaService` through
+  `Test.createTestingModule({ providers: [SinsService, { provide: PrismaService, useValue: prismaMock }] })`.
+- E2E specs live in `test/*.e2e-spec.ts` (one per controller, §11.2), run against a real Postgres test
+  database, never mocks. External providers are always stubbed with fixtures in `test/fixtures/<provider>/`.
+- The must-have table in `backend-plan.md` §11.1 **is the checklist**: a module is not "done" until every case
+  listed for it has a passing test. Copy those cases into the spec as `it(...)` names.
+- Adding the `/v1` prefix breaks the scaffold's `test/app.e2e-spec.ts` — update/delete it in the same commit.
+
+## Lint
+
+**oxlint only** (`oxlint --type-aware src/ test/`). Never add `.eslintrc*`, `eslint.config.*`, or ESLint
+packages to the backend. Prettier (`pnpm format`) is the formatter.
+
+## Dependencies
+
+Only add a package that appears in `backend-plan.md` §10 **for the phase being built**. Anything else — even a
+"tiny helper" — requires asking the user first. Never re-add packages §10 lists as already present
+(`@nestjs/config`, `@nestjs/axios`, `axios`, `class-validator`, `class-transformer`, `@prisma/client`, `prisma`,
+`vitest`, `supertest`).
+
+## Schema Changes Are Exceptional
+
+`prisma/schema.prisma` is treated as **final**.
+
+- The ONLY changes allowed without an explicit user request are the ones pre-approved in `backend-plan.md` §9:
+  `User.passwordHash`, `User.role` + `enum UserRole`, `User.lastLoginAt` — shipped together in phase 4 as
+  `prisma migrate dev --name add_user_auth_fields`.
+- Any other model, field, index, or enum change requires asking the user first, and ships as its own
+  `prisma migrate dev --name <description>` in its own commit — never silently bundled into a feature commit.
+- Never edit an already-committed migration file. Never "fix" a query by changing the schema.
+
+---
+
+## Naming
+
+- Booleans name the affirmative, current condition with `is`/`has`/`can`/`should`
+  (`isExternalApi`, `hasNext`, `includeWeak`) — never `isNotFound`, `isReady` for "not loading".
+- Service methods follow the plan's verbs: `findAll`, `findBySlug`, `findById`, `findQuotesFor*`, `link*`,
+  `unlink*`. Don't rename a method the plan already names.
+- Files are kebab-case (`grade-policy.ts`, `link-sin-quote.dto.ts`); classes PascalCase with a role suffix
+  (`SinsService`, `LinkSinQuoteDto`, `RolesGuard`).
+- Named constants for magic numbers/strings (`DEFAULT_ALLOWED_GRADES`, `VARIETY_SCORE_FLOOR`) — via
+  `ConfigService` when environment-dependent.
+
+## Error Handling & Logging
+
+- Services throw Nest exceptions; the global filter formats them. Don't wrap every Prisma call in `try/catch`
+  just to rethrow — catch only when translating a specific case (e.g. "unknown `quoteId`" → `422`).
+- Use the injected Nest/pino logger, never `console.log`. Never log tokens, passwords or full `rawPayload`.
+
+## Dead Code
+
+Before finishing: delete unused exports, helpers, DTO fields, imports and commented-out code. No "for later"
+stubs. Grep every new export — if nothing imports it, remove it.
+
+---
+
+## Scope Control (CRITICAL)
+
+- ONLY touch files the task needs. Don't refactor unrelated modules, rename working code, or reformat files you
+  didn't otherwise change.
+- Changing a DTO field, a response shape, a status code, or an `error.code` is a **contract change** (the
+  frontend mirrors these in `frontend/src/lib/types/api.ts`): flag it explicitly to the user, never slip it in.
+- Don't add unrequested endpoints, features, query params, or config.
+- If the task needs a change outside its scope, explain why and ask first.
+- State assumptions explicitly; ask when the plan is silent on a decision instead of guessing.
+
+## Pre-Finish / Pre-Push Checklist (MANDATORY)
+
+Work through this explicitly; if a step doesn't apply, say so rather than silently skipping it. Commands are run
+from the monorepo root (equivalent `pnpm <script>` inside `backend/`):
+
+- [ ] `pnpm --filter backend exec prisma validate` passes — if `schema.prisma` was touched (it almost never
+      should be; see "Schema Changes Are Exceptional").
+- [ ] `pnpm --filter backend lint` passes (oxlint).
+- [ ] `pnpm --filter backend exec tsc --noEmit -p tsconfig.json` passes — Vitest strips types, so green
+      tests alone are not enough; this gate catches projection/include drift.
+- [ ] `pnpm --filter backend test` passes, including the §11.1 cases for every touched module.
+- [ ] Every new or changed endpoint has at least one e2e assertion (`pnpm --filter backend test:e2e`) covering
+      the envelope shape and its main status code(s).
+- [ ] All relative imports end in `.js`; no `require()`.
+- [ ] No Prisma calls or business logic in controllers; nothing but `PrismaService` touches `PrismaClient`.
+- [ ] Product-safety rules hold (grade policy, upsert links, no links written by `content-sync`, `rawPayload`
+      never serialised).
+- [ ] No `console.log`, no `debugger`, no commented-out code, no `any` / `as any`.
+- [ ] No new dependency outside §10 without the user's approval.
+- [ ] `git diff` reviewed end-to-end: every hunk maps to the task; no scope creep, no unrelated files.
+
+## Git
+
+- Conventional Commits: `feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:` (optional scope, e.g.
+  `feat(sins): add GET /v1/sins/:slug/quotes`). No ticket-ID requirement.
+- Atomic commits: one logical change each. A schema migration is always its own commit.
+- Never bypass hooks with `--no-verify`.

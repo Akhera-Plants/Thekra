@@ -1,0 +1,5 @@
+# Local test environment — committed example is .env.test.example
+.env.test
+
+# OpenITI corpus cache for prisma/imports (CC BY-NC-SA 4.0 — never commit)
+.corpus/
