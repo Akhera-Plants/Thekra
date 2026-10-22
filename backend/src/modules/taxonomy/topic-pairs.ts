@@ -1,5 +1,4 @@
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { readTaxonomyFile } from './taxonomy-files.js';
 
 export interface ResolvedPair {
   avoid: string;
@@ -20,10 +19,6 @@ let cached: {
   bySlug: Map<string, ResolvedPair>;
   pairs: ResolvedPair[];
 } | null = null;
-
-function taxonomyPath(): string {
-  return join(process.cwd(), 'prisma', 'taxonomy', 'taxonomy.yaml');
-}
 
 function field(inner: string, key: string): string | null {
   const match = new RegExp(`(?:^|,)\\s*${key}\\s*:\\s*([^,\\]}]+)`).exec(inner);
@@ -87,7 +82,7 @@ function parsePairs(text: string, topics: Map<string, TopicRow>): ResolvedPair[]
 
 function load(): { bySlug: Map<string, ResolvedPair>; pairs: ResolvedPair[] } {
   if (cached) return cached;
-  const text = readFileSync(taxonomyPath(), 'utf8');
+  const text = readTaxonomyFile('taxonomy.yaml');
   const topics = parseTopics(text);
   const pairs = parsePairs(text, topics);
   const bySlug = new Map<string, ResolvedPair>();

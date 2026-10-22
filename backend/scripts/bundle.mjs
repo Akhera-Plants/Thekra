@@ -11,26 +11,11 @@
 import { build } from 'esbuild';
 import { readFileSync, rmSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { external } from './bundle-externals.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 const outdir = resolve(root, 'dist/bundle');
-
-// Packages that must stay on disk: native bindings, files read relative to the
-// package (pino's thread-stream worker transports), or the generated Prisma
-// client (lives in node_modules/.prisma).
-// Vercel's file tracing ships whatever these import. Optional Nest transports
-// are not installed; Nest only imports them when a microservice/websocket
-// feature is used, which this app never does.
-export const external = [
-  'argon2',
-  '@prisma/client',
-  '.prisma/client',
-  'pino-http',
-  '@nestjs/microservices',
-  '@nestjs/websockets',
-  '@nestjs/platform-socket.io',
-  '@nestjs/platform-ws',
-];
 
 // src/config/configure-app.ts loads helmet through createRequire() (a typing
 // workaround, see its comment). A bundler and Vercel's file tracer cannot see
@@ -47,6 +32,45 @@ const staticHelmet = {
         contents: `import __helmet from 'helmet';\n${source.replace(call, '__helmet')}`,
         loader: 'js',
         resolveDir: dirname(args.path),
+      };
+    });
+  },
+};
+
+// src/modules/taxonomy/taxonomy-files.ts reads prisma/taxonomy/*.yaml from
+// disk. The Vercel function ships only the bundle (and vercel.json
+// includeFiles), so embed the text: replace the module with one that has the
+// same exports and returns the files' content. The file list and the reading
+// come from the compiled module itself, so there is one source of truth.
+const EMBED_EXPORTS = ['TAXONOMY_FILES', 'readTaxonomyFile', 'taxonomyFilePath'];
+let embeddedTaxonomy = null;
+const embedTaxonomy = {
+  name: 'embed-taxonomy',
+  setup(b) {
+    b.onLoad({ filter: /[\\/]modules[\\/]taxonomy[\\/]taxonomy-files\.js$/ }, async (args) => {
+      const mod = await import(pathToFileURL(args.path).href);
+      const exported = Object.keys(mod).sort();
+      if (exported.join() !== [...EMBED_EXPORTS].sort().join()) {
+        throw new Error(
+          `embed-taxonomy: ${args.path} exports [${exported}], the plugin generates [${EMBED_EXPORTS}]; update scripts/bundle.mjs`,
+        );
+      }
+      const files = Object.fromEntries(mod.TAXONOMY_FILES.map((file) => [file, mod.readTaxonomyFile(file)]));
+      embeddedTaxonomy = Object.keys(files);
+      return {
+        contents: [
+          `const EMBEDDED = ${JSON.stringify(files)};`,
+          `export const TAXONOMY_FILES = ${JSON.stringify(mod.TAXONOMY_FILES)};`,
+          'export function taxonomyFilePath(file) {',
+          '  throw new Error(`prisma/taxonomy/${file} is embedded in the bundle and has no path on disk`);',
+          '}',
+          'export function readTaxonomyFile(file) {',
+          '  if (!Object.hasOwn(EMBEDDED, file)) throw new Error(`prisma/taxonomy/${file} is not embedded in the bundle`);',
+          '  return EMBEDDED[file];',
+          '}',
+        ].join('\n'),
+        loader: 'js',
+        watchFiles: mod.TAXONOMY_FILES.map((file) => mod.taxonomyFilePath(file)),
       };
     });
   },
@@ -72,7 +96,7 @@ await build({
   keepNames: true,
   minify: false,
   external,
-  plugins: [staticHelmet],
+  plugins: [staticHelmet, embedTaxonomy],
   // Bundled CommonJS code calls require() for externals; ESM has no `require`.
   banner: {
     js: [
@@ -82,3 +106,10 @@ await build({
   },
   logLevel: 'info',
 });
+
+// A renamed or moved taxonomy-files module would otherwise be bundled as is,
+// with its disk reads, and fail only on Vercel.
+if (!embeddedTaxonomy) {
+  throw new Error('embed-taxonomy: dist/modules/taxonomy/taxonomy-files.js was not bundled; update scripts/bundle.mjs');
+}
+console.log(`embed-taxonomy: inlined prisma/taxonomy/{${embeddedTaxonomy.join(',')}}`);

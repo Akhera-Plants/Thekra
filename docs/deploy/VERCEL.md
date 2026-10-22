@@ -119,7 +119,7 @@ runtime `require()` of an ES module is left:
 
 | Piece | Role |
 | --- | --- |
-| `backend/scripts/bundle.mjs` | `dist/main.js` → `dist/bundle/main.mjs` (plain server) and `dist/serverless.js` → `dist/bundle/serverless.mjs` (Vercel). Kept external: `argon2`, `@prisma/client`, `pino-http` (native binding / generated client / pino's worker-thread files) and the optional, uninstalled Nest transports. |
+| `backend/scripts/bundle.mjs` | `dist/main.js` → `dist/bundle/main.mjs` (plain server) and `dist/serverless.js` → `dist/bundle/serverless.mjs` (Vercel). Kept external (`scripts/bundle-externals.mjs`): `argon2`, `@prisma/client`, `pino-http` (native binding / generated client / pino's worker-thread files) and the optional, uninstalled Nest transports. Plugin `embed-taxonomy` inlines `prisma/taxonomy/taxonomy.yaml` and `topic-themes.yaml` (topic pairs and themes, read by the sins and good-deeds pages): the function does not ship `prisma/`. Unbundled code (`dist/main`, vitest, import scripts) reads them from disk relative to `src/modules/taxonomy/taxonomy-files.ts`, never `process.cwd()`. |
 | `backend/src/serverless.ts` | Default-exports `(req, res)`. Creates the Nest app once per function instance (`configureApp` + `app.init()`, no port), reuses it for every invocation, and clears the cache if boot fails. |
 | `backend/api/index.mjs` | The Vercel Function entry; re-exports the bundled handler. |
 | `backend/vercel.json` | `framework: null`, rewrite of **every** path to `/api` (so `/health` and `/v1/*` keep their paths), `includeFiles: package.json` (the health endpoint reads its version from it at runtime, which file tracing cannot see), `outputDirectory: public`. |
@@ -140,9 +140,15 @@ pnpm --filter backend gate:vercel
 
 It boots the bundle with the flag (once with `backend/.env` as is, once with
 `NODE_ENV=production` and throwaway JWT secrets) and once without it, checks
-`/health`, `/v1/sins` and `/v1/good-deeds/dhikr/quotes` return 200 JSON plus the helmet
-headers, calls `api/index.mjs` through a plain `http` server on several requests and asserts the
-Nest app was created once, and runs a negative control: un-bundled `dist/main.js`
+`/health`, `/v1/sins`, `/v1/good-deeds/dhikr/quotes` and a themed
+`/v1/sins/tark-as-salah/quotes?theme=…` return 200 with non-empty data (and non-empty
+`meta.themes` on the quote pages) plus the helmet headers, and calls `api/index.mjs`
+through a plain `http` server on several requests and asserts the Nest app was created
+once. It does that last leg twice: from the repo, and from a temporary replica of the
+function tree holding only `api/index.mjs`, the serverless bundle, `includeFiles` from
+`vercel.json` and the externals linked into `node_modules`, with the cwd at the tree root
+(as `/var/task` is). Only that replica catches a runtime read of a file Vercel does not
+ship; the repo legs run with every source file in reach. Last, a negative control: un-bundled `dist/main.js`
 under the flag must still fail with `ERR_REQUIRE_ESM`. Manual equivalent:
 
 ```bash
