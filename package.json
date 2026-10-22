@@ -18,6 +18,7 @@
     "test": "pnpm --filter backend test",
     "test:e2e": "pnpm --filter backend test:e2e",
     "build": "pnpm --filter backend build && pnpm --filter frontend build",
-    "check:i18n": "node scripts/check-i18n-keys.mjs"
+    "check:i18n": "node scripts/check-i18n-keys.mjs",
+    "deprecations": "bash scripts/check-deprecations.sh"
   }
 }

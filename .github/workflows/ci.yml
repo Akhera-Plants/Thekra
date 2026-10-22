@@ -3,7 +3,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [master, main]
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -11,6 +11,11 @@ concurrency:
 
 env:
   NODE_VERSION: '24'
+  # Every job that runs a Prisma CLI command needs both datasource variables:
+  # schema.prisma reads url + directUrl, and prisma.config.ts disables Prisma's
+  # own .env loading. Jobs that talk to a real database override these.
+  DATABASE_URL: postgresql://thekra:thekra_dev_password@localhost:5432/thekra?schema=public
+  DIRECT_URL: postgresql://thekra:thekra_dev_password@localhost:5432/thekra?schema=public
 
 jobs:
   lint:
@@ -43,7 +48,7 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     env:
-      DATABASE_URL: postgresql://thekra:thekra_dev_password@localhost:5432/thekra?schema=public
+      # DATABASE_URL and DIRECT_URL come from the workflow-level env above.
       SHADOW_DATABASE_URL: postgresql://thekra:thekra_dev_password@localhost:5432/thekra_shadow?schema=public
     steps:
       - uses: actions/checkout@v4
@@ -118,6 +123,9 @@ jobs:
           --health-retries 10
     env:
       DATABASE_URL: postgresql://thekra:thekra_dev_password@localhost:5432/thekra_test?schema=public
+      # Must override the workflow default too: `prisma migrate deploy` migrates
+      # directUrl when it is set, which would otherwise hit the wrong database.
+      DIRECT_URL: postgresql://thekra:thekra_dev_password@localhost:5432/thekra_test?schema=public
       NODE_ENV: test
       LOG_LEVEL: warn
       ADMIN_API_KEY: test-admin-key

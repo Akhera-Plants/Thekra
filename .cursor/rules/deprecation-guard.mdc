@@ -1,0 +1,22 @@
+---
+description: Guard against deprecated or end-of-life APIs — check installed docs, run pnpm deprecations, record debt in docs/build/DEPRECATIONS.md
+alwaysApply: true
+---
+
+# Deprecation guard
+
+Apply the `deprecation-guard` skill and the rules in `AGENTS.md` at the repo root.
+
+## Hard rules
+
+1. Before using an API from an installed package, check its version (`pnpm ls <pkg>`) and read the docs shipped with that version (`node_modules`). Do not write from memory.
+2. When adding, upgrading, or removing a dependency, or editing config (`schema.prisma`, `prisma.config.ts`, `next.config.ts`, `tsconfig*.json`, CI, Vercel configs), run `pnpm deprecations` and report the result.
+3. Never silence a deprecation warning. Capture it and record it in `docs/build/DEPRECATIONS.md` with file:line and the migration step.
+4. Never introduce an API that is deprecated in the next major without a note in `docs/build/DEPRECATIONS.md`.
+5. Every new environment variable a config requires goes into `.github/workflows/ci.yml`, `backend/.env.example`, and `docs/deploy/VERCEL.md` in the same change.
+6. Never add a dependency or script from an unverified source to clear a deprecation; use the vendor's first-party migration path.
+
+## Do not
+
+- Run bare `npx prisma`; use `pnpm exec prisma` so the pinned version is used.
+- Upgrade a major version inside an unrelated change.
