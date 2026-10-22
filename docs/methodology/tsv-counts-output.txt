@@ -1,0 +1,34 @@
+== athar-review.tsv (rows, decisions)
+rows=1259 keep=544 drop=708 blank=7
+== ayah-review-decisions.tsv (rows, decisions)
+rows=491 keep=250 drop=241
+ayah-dropped.tsv rows=241
+== sahihayn-hadith-map.tsv (confidence; rows with targets)
+rows=8401 high=566 low=667 blank_confidence=7168 rows_with_targets=1233
+-- low rows by book
+BUKHARI	439
+MUSLIM	228
+-- low rows: top 12 topics (a row counts once per topic it names)
+47	topic:adab-salah
+41	topic:dua
+29	topic:dhikr
+26	topic:adab-taam
+25	topic:zuhd
+22	topic:sabr
+19	topic:sadaqah
+18	topic:nafaqa-ahl
+17	topic:shirk
+16	topic:birr-al-walidayn
+15	topic:tabarruj
+14	topic:qada-hawaij
+-- low rows: distinct topics
+93
+== hadeethenc-map.tsv (rows with topics, confidence among them)
+rows=1454 rows_with_topics=198 high_with_topics=198 low_with_topics=0
+== hand-written maps (chapter-level entries in YAML)
+ibn-abi-dunya-map.yaml entries=131
+sahihayn-map.yaml entries=661
+adhkar-map.yaml entries=194
+-- athar speakers by section
+senior-successors=22
+companions=29
