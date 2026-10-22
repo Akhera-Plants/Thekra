@@ -1,7 +1,19 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Logger } from 'nestjs-pino';
-import helmet from 'helmet';
+// eslint-disable-next-line @typescript-eslint/no-require-imports -- helmet's
+// exports map has no "types" condition, so Vercel's pnpm layout resolves
+// index.d.cts as a CJS namespace with no call signature. Importing through
+// createRequire bypasses TypeScript's module-resolution mismatch entirely:
+// the runtime value is always the callable middleware function.
+import { createRequire } from 'node:module';
+import type { IncomingMessage, ServerResponse } from 'node:http';
+
+const require = createRequire(import.meta.url);
+const helmet = require('helmet') as (
+  options?: Record<string, unknown>,
+) => (req: IncomingMessage, res: ServerResponse, next: () => void) => void;
+
 import compression from 'compression';
 import { AllExceptionsFilter } from '../common/filters/all-exceptions.filter.js';
 import { ResponseEnvelopeInterceptor } from '../common/interceptors/response-envelope.interceptor.js';
