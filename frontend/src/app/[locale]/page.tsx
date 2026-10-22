@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { FeaturedDeed } from '@/components/home/FeaturedDeed';
 import { FeaturedReminder } from '@/components/home/FeaturedReminder';
@@ -8,9 +9,17 @@ import { Reflection } from '@/components/home/Reflection';
 import { SourceStrip } from '@/components/home/SourceStrip';
 import { getGoodDeeds } from '@/lib/api/good-deeds';
 import { getQuotes, getReminderOfTheDay } from '@/lib/api/quotes';
+import { getSourceStripNames } from '@/lib/api/source-strip';
 import { utcDayNumber } from '@/lib/day';
 import { QuoteType } from '@/lib/types/enums';
 import type { GoodDeedDto, QuoteDto } from '@/lib/types/api';
+
+export async function generateMetadata({ params }: PageProps<'/[locale]'>): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'app' });
+  // absolute: the home title is the brand line, not a topic, so no template suffix.
+  return { title: { absolute: `${t('name')} — ${t('tagline')}` } };
+}
 
 export const dynamic = 'force-dynamic';
 
@@ -53,7 +62,7 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
   const t = await getTranslations('home');
   const day = utcDayNumber();
 
-  const [reminder, deeds, scholars] = await Promise.all([
+  const [reminder, deeds, scholars, sourceNames] = await Promise.all([
     getReminderOfTheDay(lang)
       .then((result) => result.data)
       .catch(() => null),
@@ -63,6 +72,7 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
     getQuotes({ type: [QuoteType.SCHOLAR_QUOTE], limit: 12, lang })
       .then((result) => result.data)
       .catch(() => []),
+    getSourceStripNames(lang),
   ]);
 
   const deed = pickDeed(deeds, lang, day);
@@ -80,7 +90,7 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
         </section>
       ) : null}
       {reflection ? <Reflection quote={reflection} locale={lang} /> : null}
-      <SourceStrip locale={lang} />
+      <SourceStrip locale={lang} names={sourceNames} />
     </div>
   );
 }

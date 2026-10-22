@@ -35,6 +35,7 @@ Effort: **S** = under half a day, mechanical; **M** = several files or packages,
 | `actions/setup-node` (CI) | v4 | not checked in this audit | Action runtime `node20` | `.github/workflows/ci.yml:26` and 7 more | same as above | S |
 | `@types/node` | frontend 20.19.43; backend 24.19.1 | 26.6.5 | Not deprecated; frontend types lag the Node 24 target | `frontend/package.json:37`; `backend/package.json:63` | n/a | S |
 | `pnpm` (`packageManager`) | 11.7.0 | 12.14.0 | Not a deprecation; a major exists | `package.json:6` | n/a | M (not evaluated) |
+| `@nestjs/throttler` | 6.7.1 (latest) | 6.7.1 | CommonJS-only build `require()`s `@nestjs/common`, which is ESM-only in Nest 12 | `backend/src/app.module.ts:5` (import); `node_modules/@nestjs/throttler/dist/throttler.decorator.js:4` (the `require`) | Fails wherever `require(esm)` is off (Vercel's loader; Node < 22.12). Worked around by bundling, `backend/scripts/bundle.mjs` | M (blocked upstream) |
 | mobile majors (expo 57→58, react-native 0.86→0.88, jest 29→30, i18next 24→26, react-i18next 15→17, react-native-gesture-handler 2→3) | see `pnpm outdated` | see `pnpm outdated` | Not evaluated in depth; mobile is not deployed | `mobile/package.json` | varies | L |
 
 ## Findings
@@ -144,6 +145,16 @@ Effort: **S** = under half a day, mechanical; **M** = several files or packages,
 - Backend `import:*` scripts and `prisma.config.ts:31` pass `--experimental-strip-types`. Node 22.19 accepts the flag with no warning (`node --experimental-strip-types t.ts` ran cleanly). It is redundant on current Node, so it is left as is.
 - Root `engines` says Node `>=24`; the local Node is 22.19, and pnpm prints `Unsupported engine` on every run.
 - `pnpm outdated` reports `prisma` latest as `8.1.0-dev.9`, a dev prerelease. The guard now labels prerelease targets.
+
+### 13. `@nestjs/throttler` (and `nestjs-pino`'s CJS entry) against ESM-only Nest 12 — [M1][M2][M3]
+
+- Nest 12 packages (`common`, `core`, `platform-express`, `config`, `jwt`, `passport`, `schedule`, `cache-manager`, `axios`, `mapped-types`) are `"type": "module"`.
+- `@nestjs/throttler` 6.7.1 is CommonJS (`main: dist/index.js`, no `exports`, no `type`) and `require("@nestjs/common")` at `dist/throttler.decorator.js:4`. `npm view @nestjs/throttler dist-tags.latest` → `6.7.1`: no ESM release exists. Its peer range already lists `^12.0.0`.
+- `nestjs-pino` 5.3.1 is dual-format: `exports["."].import` → `dist/esm/index.js` (`"type":"module"`), `require` → `dist/cjs/index.js`. Our ESM `import` resolves the ESM build, so it is not the failing edge today; anything that `require()`s it would hit the same error. Recorded because it was suspected and checked.
+- Symptom: `Error [ERR_REQUIRE_ESM]` on every request on Vercel, whose function loader disables `require(esm)`. Reproduced locally with `node --no-experimental-require-module --env-file=.env dist/main`. Node >= 22.12 enables `require(esm)` by default, which is why dev, CI and Render do not see it.
+- **Workaround (in place):** `backend/scripts/bundle.mjs` bundles `dist/` with esbuild into `dist/bundle/*.mjs`; Vercel runs `backend/api/index.mjs` against it. Gate: `pnpm --filter backend gate:vercel`. See `docs/deploy/VERCEL.md`.
+- **Remove the workaround when** `@nestjs/throttler` ships an ESM (or dual) build: bump it, drop `bundle.mjs`, `api/index.mjs`, `src/serverless.ts` and the `vercel.json` rewrites, return to the `nestjs` preset, and re-run the gate against plain `dist/main`.
+- Related, not a deprecation: `src/config/configure-app.ts:12-13` loads helmet through `createRequire`. The bundler inlines it (`static-helmet` plugin in `bundle.mjs`) because neither esbuild nor Vercel's file tracer sees that call.
 
 ## Zero-risk fixes made in this audit
 

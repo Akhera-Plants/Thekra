@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { TopicCatalog, type TopicEntry } from '@/components/shared/editorial/TopicCatalog';
 import { getSins } from '@/lib/api/sins';
@@ -5,6 +6,12 @@ import { getTopicThemes } from '@/lib/api/topic-themes';
 import { SinRank } from '@/lib/types/enums';
 
 export const dynamic = 'force-dynamic';
+
+export async function generateMetadata({ params }: PageProps<'/[locale]/sins'>): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'sins' });
+  return { title: t('pageTitle') };
+}
 
 export default async function SinsPage({ params }: PageProps<'/[locale]/sins'>) {
   const { locale } = await params;

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
@@ -9,6 +10,22 @@ import { BranchReader } from '@/features/iman-branches/components/BranchReader';
 import type { BranchQuotesMeta } from '@/lib/api/branches';
 
 export const dynamic = 'force-dynamic';
+
+export async function generateMetadata({
+  params,
+}: PageProps<'/[locale]/branches/[number]'>): Promise<Metadata> {
+  const { number, locale } = await params;
+  const branchNumber = Number(number);
+  if (!Number.isInteger(branchNumber) || branchNumber < 1) return {};
+  const t = await getTranslations({ locale, namespace: 'branches' });
+  try {
+    const { data } = await getBranch(branchNumber, locale);
+    const title = locale === 'en' ? (data.title || t('branchFallback', { number: data.number })) : data.titleAr;
+    return { title };
+  } catch {
+    return {};
+  }
+}
 
 export default async function BranchDetailPage({
   params,

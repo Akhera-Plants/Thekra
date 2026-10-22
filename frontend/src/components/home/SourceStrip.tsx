@@ -1,27 +1,13 @@
 'use client';
 
-import { useSyncExternalStore } from 'react';
+import { useMemo, useSyncExternalStore } from 'react';
 import { useTranslations } from 'next-intl';
 import LogoLoop from '@/components/shared/react-bits/LogoLoop';
 
-const SOURCE_NAMES_AR = [
-  'القرآن الكريم',
-  'صحيح البخاري',
-  'صحيح مسلم',
-  'رياض الصالحين',
-  'الفوائد',
-] as const;
-
-const SOURCE_NAMES_EN = [
-  'The Noble Quran',
-  'Sahih al-Bukhari',
-  'Sahih Muslim',
-  'Riyad as-Salihin',
-  'Al-Fawaid',
-] as const;
-
 interface SourceStripProps {
   locale: 'ar' | 'en';
+  /** Source names in the active locale, already ranked and de-duplicated on the server. */
+  names: readonly string[];
 }
 
 function usePrefersReducedMotion() {
@@ -40,16 +26,20 @@ function usePrefersReducedMotion() {
  * Informational source wordmarks via React Bits LogoLoop.
  * Reduced motion → static complete list (CURSOR_HANDOFF).
  */
-export function SourceStrip({ locale }: SourceStripProps) {
+export function SourceStrip({ locale, names }: SourceStripProps) {
   const t = useTranslations('home');
-  const names = locale === 'en' ? SOURCE_NAMES_EN : SOURCE_NAMES_AR;
   const reduceMotion = usePrefersReducedMotion();
 
-  const logos = names.map((name) => ({
-    node: <span className="source-mark-title">{name}</span>,
-    title: name,
-    ariaLabel: name,
-  }));
+  // Memoised so LogoLoop only re-measures when the names change, not on every render.
+  const logos = useMemo(
+    () =>
+      names.map((name) => ({
+        node: <span className="source-mark-title">{name}</span>,
+        title: name,
+        ariaLabel: name,
+      })),
+    [names],
+  );
 
   return (
     <section className="sources-section" aria-labelledby="sources-title">
@@ -72,7 +62,9 @@ export function SourceStrip({ locale }: SourceStripProps) {
         </ul>
       ) : (
         <div className="sources-marquee is-moving" aria-label={t('sourcesAria')} aria-hidden>
-          <div className="source-window">
+          {/* LogoLoop measures the track with left-based geometry, which needs an LTR
+              track even on the RTL page. Arabic text inside still renders right-to-left. */}
+          <div className="source-window" dir="ltr">
             <LogoLoop
               logos={logos}
               speed={55}

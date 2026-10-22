@@ -6,6 +6,7 @@ import { notFound } from 'next/navigation';
 import { AppShell } from '@/components/shared/AppShell';
 import { LocaleSync } from '@/components/shared/LocaleSync';
 import { amiri, amiriQuran, plexArabic, thmanyahDisplay, thmanyahSans, thmanyahText } from '@/lib/fonts';
+import { env } from '@/lib/env';
 import { AppProviders } from '@/lib/providers';
 import { routing } from '@/i18n/routing';
 
@@ -20,7 +21,22 @@ export async function generateMetadata({
 }: LayoutProps<'/[locale]'>): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'app' });
-  return { title: t('name') };
+  const name = t('name');
+  const description = t('description');
+  return {
+    metadataBase: new URL(env.SITE_ORIGIN),
+    applicationName: name,
+    // Child pages pass their own topic or branch name; the template adds the app name.
+    title: { default: name, template: `%s · ${name}` },
+    description,
+    openGraph: {
+      type: 'website',
+      siteName: name,
+      description,
+      locale: locale === 'ar' ? 'ar_AR' : 'en_US',
+    },
+    twitter: { card: 'summary', description },
+  };
 }
 
 export function generateStaticParams() {

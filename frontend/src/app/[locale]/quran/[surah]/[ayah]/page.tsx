@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
@@ -18,6 +19,14 @@ async function findVerse(surah: number, ayah: number, lang: LocaleCode) {
     },
   });
   return data[0] ?? null;
+}
+
+export async function generateMetadata({
+  params,
+}: PageProps<'/[locale]/quran/[surah]/[ayah]'>): Promise<Metadata> {
+  const { surah, ayah, locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'studyPanel' });
+  return { title: `${t('titleTafsir')} ${surah}:${ayah}` };
 }
 
 export default async function QuranStudyPage({

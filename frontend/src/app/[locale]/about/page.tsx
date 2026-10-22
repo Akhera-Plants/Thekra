@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
@@ -7,6 +8,12 @@ import { getCatalogSources } from '@/lib/api/sources';
 import type { LocaleCode } from '@/lib/types/enums';
 
 export const dynamic = 'force-dynamic';
+
+export async function generateMetadata({ params }: PageProps<'/[locale]/about'>): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'about' });
+  return { title: t('pageTitle') };
+}
 
 export default async function AboutPage({
   params,

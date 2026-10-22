@@ -176,8 +176,9 @@ jobs:
         # rg exits 0 on a match, 1 on no match, 2+ on error; only 1 passes.
         run: |
           status=0
+          # app/icon.svg is the brand favicon: SVG favicons cannot read CSS variables, so it keeps its literal brand colours.
           rg -n '#[0-9a-fA-F]{3,8}\b|rgb\(|bg-neutral-|text-gray-|bg-white\b|text-black\b' frontend/src \
-            --glob '!**/globals.css' --glob '!**/components/ui/**' || status=$?
+            --glob '!**/globals.css' --glob '!**/components/ui/**' --glob '!**/app/icon.svg' || status=$?
           if [ "$status" -eq 0 ]; then
             echo "Found hard-coded colours — use semantic tokens in globals.css"
             exit 1

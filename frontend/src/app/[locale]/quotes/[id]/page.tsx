@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
@@ -7,13 +8,14 @@ import { QuoteDetail } from '@/features/quran-hadith-browser/components/QuoteDet
 
 export async function generateMetadata({
   params,
-}: PageProps<'/[locale]/quotes/[id]'>) {
+}: PageProps<'/[locale]/quotes/[id]'>): Promise<Metadata> {
   const { id, locale } = await params;
   try {
     const { data } = await getQuote(id, {
       lang: locale as LocaleCode,
     });
-    return { title: `${data.textAr.slice(0, 60)}… — ذكرى` };
+    const text = locale === 'en' && data.translation?.text ? data.translation.text : data.textAr;
+    return { title: `${text.slice(0, 60)}…` };
   } catch {
     return {};
   }
