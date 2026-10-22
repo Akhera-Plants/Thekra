@@ -1,5 +1,4 @@
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { readTaxonomyFile, taxonomyFilePath } from './taxonomy-files.js';
 
 /**
  * Topic themes (prisma/taxonomy/topic-themes.yaml): short reviewer labels
@@ -174,15 +173,16 @@ export function matchThemeKeys(themes: readonly TopicTheme[], haystack: string):
 
 let cached: { themes: TopicTheme[]; byTopic: Map<string, TopicTheme[]>; byKey: Map<string, TopicTheme> } | null = null;
 
+/** On-disk path for the import scripts; the API reads the file through readTaxonomyFile. */
 export function topicThemesPath(): string {
-  return join(process.cwd(), 'prisma', 'taxonomy', 'topic-themes.yaml');
+  return taxonomyFilePath('topic-themes.yaml');
 }
 
 function load() {
   if (cached) return cached;
   let source = '';
   try {
-    source = readFileSync(topicThemesPath(), 'utf8');
+    source = readTaxonomyFile('topic-themes.yaml');
   } catch {
     source = '';
   }

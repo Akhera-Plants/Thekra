@@ -119,8 +119,11 @@ checks(key, value) AS (
     (SELECT count(*) FROM pg_indexes WHERE schemaname = 'public')::text
   UNION ALL SELECT 'schema.count.trgm_indexes',
     (SELECT count(*) FROM pg_indexes WHERE schemaname = 'public' AND indexdef LIKE '%gin_trgm_ops%')::text
+  -- contype 'n' excluded: PostgreSQL 18 (Neon) records every NOT NULL column as a
+  -- pg_constraint row, PostgreSQL 16 (local) does not. Same schema, different catalog.
   UNION ALL SELECT 'schema.count.constraints',
-    (SELECT count(*) FROM pg_constraint c JOIN pg_namespace n ON n.oid = c.connamespace WHERE n.nspname = 'public')::text
+    (SELECT count(*) FROM pg_constraint c JOIN pg_namespace n ON n.oid = c.connamespace
+     WHERE n.nspname = 'public' AND c.contype <> 'n')::text
   UNION ALL SELECT 'schema.count.enum_labels',
     (SELECT count(*) FROM pg_enum e JOIN pg_type t ON t.oid = e.enumtypid JOIN pg_namespace n ON n.oid = t.typnamespace
      WHERE n.nspname = 'public')::text
