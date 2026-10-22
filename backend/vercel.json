@@ -1,6 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
   "buildCommand": "pnpm exec prisma generate && pnpm exec prisma migrate deploy && pnpm run build",
   "framework": "nestjs"
 }
