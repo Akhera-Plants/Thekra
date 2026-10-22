@@ -177,6 +177,14 @@
   --shelf: #263d35;
   --spine-shade: color-mix(in srgb, #000 30%, transparent);
   --spine-sheen: color-mix(in srgb, #fff 10%, transparent);
+  /* Public pathway cards (site-public.css). Same value in light and dark. */
+  --pathway-shadow: #203a2a09;
+  --pathway-flourish: #d9e5d8;
+  --pathway-return-ink: #eef4ef;
+  --pathway-return-cta: #fff5ee;
+  --pathway-return-cta-ink: #285542;
+  --pathway-return-cta-border: #bdd4c7;
+  --pathway-return-cta-hover: #ffffff0b;
 }
 
 .dark {

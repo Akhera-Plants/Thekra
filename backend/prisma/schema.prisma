@@ -402,6 +402,9 @@ model ReferenceHadith {
 
   @@unique([book, number])
   @@index([book])
+  // Trigram GIN index created in 20261011180000_add_takhrij_and_flags (needs pg_trgm,
+  // which that migration enables). Declared here so the datamodel matches the migrations.
+  @@index([normalizedMatn(ops: raw("gin_trgm_ops"))], map: "ReferenceHadith_normalizedMatn_trgm_idx", type: Gin)
 }
 
 model HadithMatch {

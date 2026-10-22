@@ -1,14 +1,14 @@
 # Mobile release (EAS)
-
-Runs EAS Build for the `preview` (internal) and `production` profiles.
-Skips entirely when the `EXPO_TOKEN` repository secret is missing, so CI stays green
-before Expo / store accounts exist.
-
-Triggers:
-- Push tags matching `mobile-v*` (e.g. `mobile-v0.1.0`)
-- Manual `workflow_dispatch` with a profile input
-
-See `mobile/RELEASE.md` for the owner account steps that unlock this workflow.
+#
+# Runs EAS Build for the `preview` (internal) and `production` profiles.
+# Skips entirely when the `EXPO_TOKEN` repository secret is missing, so CI stays green
+# before Expo / store accounts exist.
+#
+# Triggers:
+# - Push tags matching `mobile-v*` (e.g. `mobile-v0.1.0`)
+# - Manual `workflow_dispatch` with a profile input
+#
+# See `mobile/RELEASE.md` for the owner account steps that unlock this workflow.
 
 name: Mobile release
 

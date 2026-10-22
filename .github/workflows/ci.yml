@@ -102,7 +102,12 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm prisma:generate
+      # This job has no Postgres. src/common/text/arabic-search.spec.ts runs its
+      # SQL parity suite whenever DATABASE_URL is non-empty, so blank the
+      # workflow-level URL (needed above only by the Prisma CLI) for the tests.
       - run: pnpm --filter backend test
+        env:
+          DATABASE_URL: ''
 
   test-e2e:
     runs-on: ubuntu-latest
@@ -163,24 +168,45 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # The runner image does not ship ripgrep. Without it `rg` exits 127, which
+      # an `if rg …` reads as "no match", so the check passed without running.
+      - name: Install ripgrep
+        run: sudo apt-get update && sudo apt-get install -y ripgrep
       - name: No literal colours outside globals.css
+        # rg exits 0 on a match, 1 on no match, 2+ on error; only 1 passes.
         run: |
-          if rg -n '#[0-9a-fA-F]{3,8}\b|rgb\(|bg-neutral-|text-gray-|bg-white\b|text-black\b' frontend/src \
-            --glob '!**/globals.css' --glob '!**/components/ui/**'; then
+          status=0
+          rg -n '#[0-9a-fA-F]{3,8}\b|rgb\(|bg-neutral-|text-gray-|bg-white\b|text-black\b' frontend/src \
+            --glob '!**/globals.css' --glob '!**/components/ui/**' || status=$?
+          if [ "$status" -eq 0 ]; then
             echo "Found hard-coded colours — use semantic tokens in globals.css"
             exit 1
+          fi
+          if [ "$status" -ne 1 ]; then
+            echo "rg failed with exit code $status"
+            exit "$status"
           fi
 
   rtl-lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # See design-tokens: without ripgrep installed this check passed vacuously.
+      - name: Install ripgrep
+        run: sudo apt-get update && sudo apt-get install -y ripgrep
       - name: No physical RTL-unsafe utilities outside ui primitives
+        # rg exits 0 on a match, 1 on no match, 2+ on error; only 1 passes.
         run: |
-          if rg -n '\b(pl-|pr-|ml-|mr-|text-left|text-right)\b' frontend/src \
-            --glob '!**/components/ui/**'; then
+          status=0
+          rg -n '\b(pl-|pr-|ml-|mr-|text-left|text-right)\b' frontend/src \
+            --glob '!**/components/ui/**' || status=$?
+          if [ "$status" -eq 0 ]; then
             echo "Use logical spacing (ps/pe/ms/me) and text-start/end"
             exit 1
+          fi
+          if [ "$status" -ne 1 ]; then
+            echo "rg failed with exit code $status"
+            exit "$status"
           fi
 
   i18n-parity:
