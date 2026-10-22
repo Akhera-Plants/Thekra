@@ -13,6 +13,7 @@
     "prisma:validate": "pnpm --filter backend exec prisma validate",
     "dev:backend": "pnpm --filter backend start:dev",
     "dev:frontend": "pnpm --filter frontend dev",
+    "dev:web:prod-api": "NEXT_PUBLIC_API_URL=https://thekra.vercel.app pnpm --filter frontend dev",
     "lint": "pnpm --filter backend lint && pnpm --filter frontend lint",
     "typecheck": "pnpm prisma:generate && pnpm --filter backend exec tsc --noEmit -p tsconfig.json && pnpm --filter frontend exec tsc --noEmit",
     "test": "pnpm --filter backend test",

@@ -18,6 +18,7 @@ import compression from 'compression';
 import { AllExceptionsFilter } from '../common/filters/all-exceptions.filter.js';
 import { ResponseEnvelopeInterceptor } from '../common/interceptors/response-envelope.interceptor.js';
 import { validationExceptionFactory } from '../common/validation/validation-exception.factory.js';
+import { parseCorsOrigins } from './cors-origins.js';
 
 /** TRUST_PROXY env → Express "trust proxy" value (hop count, boolean, or list). */
 export function parseTrustProxy(raw: string | undefined): boolean | number | string | undefined {
@@ -69,11 +70,11 @@ export function configureApp(app: INestApplication): void {
   );
   app.useGlobalFilters(new AllExceptionsFilter());
   app.useGlobalInterceptors(new ResponseEnvelopeInterceptor());
+  // Exact origins and single-`*` host patterns (Vercel previews); a bare `*`,
+  // `null` or a malformed entry throws here, so a bad value fails the boot.
+  // Rules: src/config/cors-origins.ts. Requests without Origin get no CORS headers.
   app.enableCors({
-    origin: (config.get<string>('CORS_ORIGINS') ?? 'http://localhost:3000')
-      .split(',')
-      .map((origin) => origin.trim())
-      .filter(Boolean),
+    origin: parseCorsOrigins(config.get<string>('CORS_ORIGINS') ?? 'http://localhost:3000'),
     credentials: true,
   });
   app.enableShutdownHooks();

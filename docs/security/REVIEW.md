@@ -203,8 +203,10 @@ API (NestJS):
 - [ ] `NODE_ENV=production` — enables the JWT secret checks and helmet's CSP; throttling is never skipped.
 - [ ] `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET` — two different random values, ≥ 32 chars
       (e.g. `openssl rand -base64 48`). Boot fails otherwise.
-- [ ] `CORS_ORIGINS` — exactly the Vercel frontend URL(s), comma-separated, e.g.
-      `https://thekra.vercel.app` (add the custom domain if any). No wildcards, no localhost.
+- [ ] `CORS_ORIGINS` — the value in [VERCEL.md § 3](../deploy/VERCEL.md#cors_origins-production-value):
+      the exact site origin, one single-`*` preview pattern (validated at boot; a bare `*` or `null`
+      is rejected), and a temporary `http://localhost:3000` to remove when no longer needed.
+      Add the custom domain as an exact origin if any.
 - [ ] `TRUST_PROXY` — number of proxies in front of the API (usually `1`), so rate limits key on
       the real client IP. Leave unset only if clients connect directly.
 - [ ] `DATABASE_URL` / `DIRECT_URL` — Neon pooled / direct URLs with `sslmode=require`.

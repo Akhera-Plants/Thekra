@@ -71,7 +71,11 @@ pnpm prisma:validate   # validate the Prisma schema
 pnpm prisma:generate   # regenerate the Prisma client
 pnpm dev:backend       # NestJS in watch mode
 pnpm dev:frontend      # Next.js dev server
+pnpm dev:web:prod-api  # Next.js dev server against the production API
 ```
+
+Both local modes (fully local, or the web against the production API) are described in
+[docs/build/LOCAL_DEV.md](docs/build/LOCAL_DEV.md).
 
 Once the database container is running and `backend/.env` exists, the first migration can be created with:
 
