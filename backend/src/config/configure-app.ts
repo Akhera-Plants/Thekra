@@ -1,17 +1,19 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Logger } from 'nestjs-pino';
-// helmet ships both index.d.mts (ESM) and index.d.cts (CJS) but its exports map
-// has no "types" condition, so different install layouts can resolve to either
-// declaration file. Both files declare a real named export `default`
-// (export { … helmet as default … }), so `import { default as helmet }` binds
-// that named export and type-checks correctly under both resolutions without
-// depending on esModuleInterop synthesis.
-//
-// compression uses `export = compression` (CJS export-assignment via @types/compression),
-// which is incompatible with the named-default form — keep it as a plain default import
-// with esModuleInterop handling it.
-import { default as helmet } from 'helmet';
+// eslint-disable-next-line @typescript-eslint/no-require-imports -- helmet's
+// exports map has no "types" condition, so Vercel's pnpm layout resolves
+// index.d.cts as a CJS namespace with no call signature. Importing through
+// createRequire bypasses TypeScript's module-resolution mismatch entirely:
+// the runtime value is always the callable middleware function.
+import { createRequire } from 'node:module';
+import type { IncomingMessage, ServerResponse } from 'node:http';
+
+const require = createRequire(import.meta.url);
+const helmet = require('helmet') as (
+  options?: Record<string, unknown>,
+) => (req: IncomingMessage, res: ServerResponse, next: () => void) => void;
+
 import compression from 'compression';
 import { AllExceptionsFilter } from '../common/filters/all-exceptions.filter.js';
 import { ResponseEnvelopeInterceptor } from '../common/interceptors/response-envelope.interceptor.js';
