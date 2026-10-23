@@ -42,6 +42,10 @@ Production gets this only through `scripts/release-db.sh build` + `push` (owner,
 - Records whose Arabic is another text than their cited number (e.g. the record cited «البخاري 1543»
   holds an ihram hadith): their English was removed; the citation itself needs review (R01/R03).
 
+- `prisma/release/verify.sql` still counted graded athar without KEEP (the athar fix earlier today
+  changed the API only); fixed, so the release smoke test matches the API (dhikr 467).
+  `docs/methodology/queries.sql` (report queries for the sheikh) still uses the old rule.
+
 ## Not done / not verified
 
 - B10–B12, U01–U10, R01–R03.
