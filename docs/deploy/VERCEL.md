@@ -55,6 +55,10 @@ Optional: `ACCESS_TTL`, `REFRESH_TTL`, `LOG_LEVEL`, `VARIETY_SCORE_FLOOR` — se
 
 #### `CORS_ORIGINS` (production value)
 
+**Built in since 2026-10-23:** `https://thekra-web.vercel.app` and the `thekra-web-*` preview pattern are always
+allowed (`BUILT_IN_CORS_ORIGINS` in `backend/src/config/cors-origins.ts`), so the live site works even when this
+variable is missing. Use `CORS_ORIGINS` only to *add* origins (localhost, a future custom domain).
+
 Paste exactly, then redeploy the API (env changes apply to new deployments only):
 
 ```
