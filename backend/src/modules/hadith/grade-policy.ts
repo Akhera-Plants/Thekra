@@ -118,16 +118,23 @@ export class GradePolicy {
    * A hadith is publishable from a sahihayn match, a manual grade, a sunan
    * tahqiq grade (Arna'ut, sahih or hasan), or HadeethEnc (صحيح / حسن).
    * Ibn Rajab is selection only — never a grade.
+   * An athar answers to the athar rule alone (section flag, listed speaker, KEEP),
+   * whatever its grade source or type: a sahihayn or HadeethEnc grade does not publish it.
    * An open high-severity flag hides every quote type. OUTSIDE_SAHIHAYN is low and does not hide.
    */
-  static publishableClause(): Prisma.QuoteWhereInput {
-    const hadithOr: Prisma.QuoteWhereInput[] = [
-      { type: { not: QuoteType.HADITH } },
-      { gradeSource: { in: [...PUBLISHABLE_GRADE_SOURCES] } },
+  static publishableClause(athar = ATHAR_PUBLIC_ENABLED): Prisma.QuoteWhereInput {
+    const publishableOr: Prisma.QuoteWhereInput[] = [
+      {
+        isAthar: false,
+        OR: [
+          { type: { not: QuoteType.HADITH } },
+          { gradeSource: { in: [...PUBLISHABLE_GRADE_SOURCES] } },
+        ],
+      },
     ];
-    if (ATHAR_PUBLIC_ENABLED) {
+    if (athar) {
       // Listed, and the reviewer wrote keep. A blank decision stays hidden.
-      hadithOr.push({
+      publishableOr.push({
         isAthar: true,
         atharSpeakerKey: { not: null },
         atharReviewDecision: 'KEEP',
@@ -135,7 +142,7 @@ export class GradePolicy {
     }
     return {
       AND: [
-        { OR: hadithOr },
+        { OR: publishableOr },
         { flags: { none: { status: FlagStatus.OPEN, severity: FlagSeverity.HIGH } } },
       ],
     };
@@ -152,15 +159,19 @@ export class GradePolicy {
     };
   }
 
-  static isPublishable(row: {
-    type: QuoteType;
-    gradeSource: GradeSource;
-    isAthar?: boolean;
-    atharSpeakerKey?: string | null;
-    atharReviewDecision?: 'KEEP' | 'DROP' | null;
-  }): boolean {
+  /** Row form of publishableClause (without the flag check). Callers must select the athar fields. */
+  static isPublishable(
+    row: {
+      type: QuoteType;
+      gradeSource: GradeSource;
+      isAthar: boolean;
+      atharSpeakerKey: string | null;
+      atharReviewDecision: 'KEEP' | 'DROP' | null;
+    },
+    athar = ATHAR_PUBLIC_ENABLED,
+  ): boolean {
+    if (row.isAthar) return atharMayPublish(row, athar);
     if (row.type !== QuoteType.HADITH) return true;
-    if (atharMayPublish(row)) return true;
     return PUBLISHABLE_GRADE_SOURCES.includes(row.gradeSource);
   }
 
