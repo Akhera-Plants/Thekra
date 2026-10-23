@@ -36,3 +36,6 @@ yarn-error.log*
 
 # Local design prototype reference (not shipped)
 thekra-source/
+
+# Local database backups (pg_dump). Never committed: size, and the corpus licences.
+/backups/

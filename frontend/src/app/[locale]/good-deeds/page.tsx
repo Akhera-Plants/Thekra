@@ -5,6 +5,7 @@ import { reportFailure } from '@/lib/errors';
 import { getGoodDeeds } from '@/lib/api/good-deeds';
 import { getTopicThemes } from '@/lib/api/topic-themes';
 import type { LocaleCode } from '@/lib/types/enums';
+import { localeAlternates } from '@/lib/seo';
 
 // Catalogue data is cached for an hour (api-client); the page itself is rebuilt every 5 minutes,
 // so a degraded render (below) is replaced quickly.
@@ -13,7 +14,7 @@ export const revalidate = 300;
 export async function generateMetadata({ params }: PageProps<'/[locale]/good-deeds'>): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'goodDeeds' });
-  return { title: t('pageTitle') };
+  return { title: t('pageTitle'), alternates: localeAlternates(locale, '/good-deeds') };
 }
 
 export default async function GoodDeedsPage({ params }: PageProps<'/[locale]/good-deeds'>) {

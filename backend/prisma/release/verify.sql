@@ -30,7 +30,7 @@ reader AS (
     -- An athar answers to the athar rule alone, whatever its grade source or type (publishableClause).
     AND ((NOT q."isAthar"
           AND (q.type <> 'HADITH'
-               OR q."gradeSource" IN ('SAHIHAYN', 'AUTO_SAHIHAYN', 'MANUAL', 'SUNAN_TAHQIQ', 'HADEETHENC')))
+               OR q."gradeSource" IN ('SAHIHAYN', 'AUTO_SAHIHAYN', 'MANUAL', 'SUNAN_TAHQIQ', 'AHMAD_TAHQIQ', 'IBN_HIBBAN_TAHQIQ', 'HADEETHENC')))
          OR q.id IN (SELECT id FROM kept_athar))
     AND NOT EXISTS (
       SELECT 1 FROM "QuoteFlag" f

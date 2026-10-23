@@ -42,8 +42,8 @@ const GRADE_SEAL_CONFIG = {
 /**
  * Shows the hadith grade as a small circular "seal" — never colour alone
  * (plan §7.2 + ARCHITECTURE §1 + design-language-sakina.md §Card/Badge redesign).
- * `aria-label` carries the grade phrase, e.g. "حديث صحيح"; the word is also always
- * rendered as visible text, never implied by colour or icon alone.
+ * The grade word is visible text (read as such by screen readers), never implied by colour
+ * or icon alone.
  */
 export function GradeBadge({ grade, label, className }: GradeBadgeProps) {
   const { classes, showCheck } = GRADE_SEAL_CONFIG[grade];
@@ -55,12 +55,10 @@ export function GradeBadge({ grade, label, className }: GradeBadgeProps) {
         classes,
         className,
       )}
-      aria-label={label}
     >
       {showCheck && <Check className="size-3 shrink-0" aria-hidden />}
-      <span aria-hidden className="leading-none">
-        {label}
-      </span>
+      {/* The visible word is what screen readers read: aria-label is not allowed on a plain span. */}
+      <span className="leading-none">{label}</span>
     </span>
   );
 }

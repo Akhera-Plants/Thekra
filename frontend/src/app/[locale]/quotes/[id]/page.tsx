@@ -5,6 +5,7 @@ import { getQuote } from '@/lib/api/quotes';
 import { rethrowUnlessNotFound } from '@/lib/api/server-guard';
 import type { LocaleCode } from '@/lib/types/enums';
 import { QuoteDetail } from '@/features/quran-hadith-browser/components/QuoteDetail';
+import { localeAlternates, metaDescription } from '@/lib/seo';
 
 // Cached and revalidated like the topic pages; ids render on first visit.
 export const revalidate = 300;
@@ -30,9 +31,13 @@ export async function generateMetadata({
     const text = locale === 'en' ? data.translation?.text : data.textAr;
     if (!text) {
       const t = await getTranslations({ locale, namespace: 'quoteDetail' });
-      return { title: t('pageTitle') };
+      return { title: t('pageTitle'), alternates: localeAlternates(locale, `/quotes/${id}`) };
     }
-    return { title: excerpt(text, 60) };
+    return {
+      title: excerpt(text, 60),
+      description: metaDescription(text),
+      alternates: localeAlternates(locale, `/quotes/${id}`),
+    };
   } catch {
     return {};
   }

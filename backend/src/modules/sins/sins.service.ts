@@ -16,6 +16,7 @@ import {
   READING_SELECT,
   sinHasPublicText,
   visibleOrigins,
+  readingHasNext,
   readingTier,
   type ReadingRow,
 } from '../classification/reading.js';
@@ -507,6 +508,12 @@ export class SinsService {
         appliedGrades: allowedGrades,
         themes: summary.themes,
         theme: null,
+        hasNext: readingHasNext(
+          page,
+          limit,
+          [total, dedupeReading(rewardRanked as ReadingRow[]).length],
+          derived.map((group) => group.items.length),
+        ),
       }),
     };
   }

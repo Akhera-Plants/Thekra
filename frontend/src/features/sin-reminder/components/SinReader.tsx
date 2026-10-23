@@ -19,9 +19,11 @@ interface SinReaderProps {
   themes?: TopicThemeCount[];
   /** meta.theme: the chip the page was rendered with (?theme=). */
   initialTheme?: string | null;
+  /** meta.hasNext of the server page: «show more» continues from page 2. */
+  initialHasNext?: boolean;
 }
 
-export function SinReader({ slug, lang, items, total, sections, countsByKind, themes, initialTheme = null }: SinReaderProps) {
+export function SinReader({ slug, lang, items, total, sections, countsByKind, themes, initialTheme = null, initialHasNext = false }: SinReaderProps) {
   const t = useTranslations('sinDetail');
   const reader = useTopicReader({
     queryRoot: 'sins',
@@ -33,6 +35,7 @@ export function SinReader({ slug, lang, items, total, sections, countsByKind, th
     initialCountsByKind: countsByKind,
     themes,
     initialTheme,
+    initialHasNext,
   });
 
   return (

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useId } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { QuoteCard } from '@/components/shared/quote/QuoteCard';
 import { Button } from '@/components/shared/kit/button';
@@ -21,6 +21,8 @@ export interface ReaderItem {
 export interface ReaderSection {
   heading: string;
   items: ReaderItem[];
+  /** Which list of the API page fills it, so «show more» appends to the right heading. */
+  source?: 'items' | 'companion';
 }
 
 export type TypeFilter = 'all' | 'verse' | 'hadith' | 'athar';
@@ -125,6 +127,7 @@ export function ReminderReader({
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [localLoadingMore, setLocalLoadingMore] = useState(false);
   const [studyQuoteId, setStudyQuoteId] = useState<string | null>(null);
+  const listId = useId();
 
   const baseSections = useMemo(
     () => withAtharSection(items, sections, labels.atharSection),
@@ -269,6 +272,7 @@ export function ReminderReader({
       <div className="flex min-w-0 flex-col gap-3">
         <SegmentTabs
           aria-label={labels.tabsLabel}
+          controls={listId}
           items={tabItems}
           value={activeFilter}
           onValueChange={(value) => changeFilter(value as TypeFilter)}
@@ -297,6 +301,9 @@ export function ReminderReader({
       </div>
 
       <div
+        id={listId}
+        role="tabpanel"
+        aria-label={labels.tabsLabel}
         aria-busy={busy || undefined}
         className="flex flex-col gap-8 transition-opacity duration-150 md:gap-9 aria-busy:opacity-60"
       >

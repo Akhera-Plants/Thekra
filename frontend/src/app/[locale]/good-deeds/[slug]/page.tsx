@@ -5,11 +5,12 @@ import { ArabicText } from '@/components/shared/ArabicText';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import type { ReaderItem, ReaderSection } from '@/components/shared/editorial/ReminderReader';
 import { GoodDeedReader } from '@/features/good-deed-motivation/components/GoodDeedReader';
-import { interleaveReading } from '@/lib/reading';
+import { TOPIC_PAGE_SIZE, interleaveReading } from '@/lib/reading';
 import { getGoodDeed, getGoodDeedQuotes, getGoodDeeds } from '@/lib/api/good-deeds';
 import { rethrowUnlessNotFound, topSlugs } from '@/lib/api/server-guard';
 import type { LocaleCode } from '@/lib/types/enums';
 import type { GoodDeedQuotesMeta } from '@/lib/types/api';
+import { localeAlternates, metaDescription } from '@/lib/seo';
 
 // Same for every visitor: cached and revalidated, not rendered per request. The `?theme=` chip
 // is applied on the client (useTopicReader), which is what keeps this page out of dynamic rendering.
@@ -29,7 +30,11 @@ export async function generateMetadata({
     const title = data.pair
       ? (locale === 'en' ? data.pair.titleEn : data.pair.titleAr)
       : (locale === 'en' ? (data.name || data.nameAr) : data.nameAr);
-    return { title };
+    return {
+      title,
+      description: metaDescription(locale === 'en' ? data.description : data.descriptionAr),
+      alternates: localeAlternates(locale, `/good-deeds/${slug}`),
+    };
   } catch {
     return {};
   }
@@ -55,7 +60,7 @@ export default async function GoodDeedDetailPage({
   // See the sin page: fail rather than cache an empty reader.
   const quotes = await getGoodDeedQuotes(slug, {
     page: 1,
-    limit: paired ? 50 : 20,
+    limit: TOPIC_PAGE_SIZE,
     lang: locale as LocaleCode,
   }).catch((error: unknown) => rethrowUnlessNotFound('good-deed quotes', error));
 
@@ -75,10 +80,10 @@ export default async function GoodDeedDetailPage({
   // A theme is one merged list (virtue and warning together), so it has no section headings.
   const sections: ReaderSection[] = activeTheme ? [] : [
     ...(virtue.length > 0
-      ? [{ heading: paired ? t('pairVirtueHeading') : t('virtueHeading'), items: virtue }]
+      ? [{ heading: paired ? t('pairVirtueHeading') : t('virtueHeading'), items: virtue, source: 'items' as const }]
       : []),
     ...(neglect.length > 0
-      ? [{ heading: paired ? t('pairNeglectHeading') : t('neglectHeading'), items: neglect }]
+      ? [{ heading: paired ? t('pairNeglectHeading') : t('neglectHeading'), items: neglect, source: 'companion' as const }]
       : []),
     ...derived.filter((group) => group.items.length > 0).map((group) => ({
       heading: locale === 'en' ? (group.name || group.nameAr) : group.nameAr,
@@ -167,6 +172,7 @@ export default async function GoodDeedDetailPage({
             countsByKind={quotesMeta?.countsByKind}
             themes={quotesMeta?.themes}
             initialTheme={activeTheme}
+          initialHasNext={quotesMeta?.hasNext ?? false}
           />
         )}
 

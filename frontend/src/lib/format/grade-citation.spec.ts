@@ -89,3 +89,19 @@ describe('formatGradeCitation', () => {
     ).toBe('Hadeeth Encyclopedia ruling: Authentic');
   });
 });
+
+describe('formatGradeCitation — Musnad Ahmad and Ibn Hibban (Arna\'ut tahqiq)', () => {
+  it('cites the book and number first, then the grader, in both languages', () => {
+    const input = {
+      gradeAuthority: 'شعيب الأرنؤوط',
+      gradeReference: 'مسند أحمد (ط. قرطبة)، رقم 10519، صحيح ابن حبان، رقم 609',
+      grade: 'SAHIH',
+    };
+    expect(formatGradeCitation({ ...input, locale: 'ar' })).toBe(
+      'مسند أحمد (ط. قرطبة)، رقم 10519، صحيح ابن حبان، رقم 609 · صحّحه شعيب الأرنؤوط',
+    );
+    expect(formatGradeCitation({ ...input, locale: 'en' })).toBe(
+      "Musnad Ahmad (Qurtuba ed.) 10519, Sahih Ibn Hibban 609 · graded sahih by Shu'ayb al-Arna'ut",
+    );
+  });
+});

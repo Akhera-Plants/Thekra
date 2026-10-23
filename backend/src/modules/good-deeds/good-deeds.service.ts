@@ -10,6 +10,7 @@ import {
   READING_ORDER,
   READING_SELECT,
   visibleOrigins,
+  readingHasNext,
   readingTier,
   type ReadingRow,
 } from '../classification/reading.js';
@@ -543,6 +544,12 @@ export class GoodDeedsService {
         appliedGrades: allowedGrades,
         themes: summary.themes,
         theme: null,
+        hasNext: readingHasNext(
+          page,
+          limit,
+          [total, dedupeReading(warningRanked as ReadingRow[]).length],
+          derived.map((group) => group.items.length),
+        ),
       }),
     };
   }

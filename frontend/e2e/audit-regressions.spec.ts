@@ -7,6 +7,8 @@
 import { expect, test, type Page } from '@playwright/test';
 
 const BASE = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000';
+/** frontend/src/lib/reading.ts TOPIC_PAGE_SIZE: a list shows this many before «عرض المزيد». */
+const PAGE = 20;
 
 const toNumber = (text: string) =>
   Number(text.replace(/[٠-٩]/g, (d) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d))).replace(/\D/g, ''));
@@ -44,18 +46,18 @@ test('B07: a shared ?theme= link opens on that theme; chips and back/forward sta
   await page.goto(`${BASE}/sins/ghibah?theme=lisan-ghibah`, { waitUntil: 'networkidle' });
   const nahy = chips.getByRole('button', { name: /النهي عن الغيبة/ });
   await expect(nahy).toHaveAttribute('aria-pressed', 'true');
-  await expect(await cards(page)).toHaveCount(toNumber(await nahy.locator('span').last().innerText()));
+  await expect(await cards(page)).toHaveCount(Math.min(PAGE, toNumber(await nahy.locator('span').last().innerText())));
 
   const tahrim = chips.getByRole('button', { name: /تحريم الغيبة/ });
   await tahrim.click();
   await expect(page).toHaveURL(/theme=ghibah-tahrim/);
   await expect(tahrim).toHaveAttribute('aria-pressed', 'true');
-  await expect(await cards(page)).toHaveCount(toNumber(await tahrim.locator('span').last().innerText()));
+  await expect(await cards(page)).toHaveCount(Math.min(PAGE, toNumber(await tahrim.locator('span').last().innerText())));
 
   await page.goBack();
   await expect(page).toHaveURL(/theme=lisan-ghibah/);
   await expect(nahy).toHaveAttribute('aria-pressed', 'true');
-  await expect(await cards(page)).toHaveCount(toNumber(await nahy.locator('span').last().innerText()));
+  await expect(await cards(page)).toHaveCount(Math.min(PAGE, toNumber(await nahy.locator('span').last().innerText())));
 });
 
 test('B06: every kind tab shows exactly its count', async ({ page }) => {
@@ -68,7 +70,7 @@ test('B06: every kind tab shows exactly its count', async ({ page }) => {
     const expected = toNumber(await tab.innerText());
     await tab.click();
     await expect(tab).toHaveAttribute('aria-selected', 'true');
-    await expect(await cards(page)).toHaveCount(expected);
+    await expect(await cards(page)).toHaveCount(Math.min(PAGE, expected));
   }
 });
 
@@ -84,4 +86,38 @@ test('B09: switching language keeps the theme and the search', async ({ page }) 
   await page.locator('[data-locale-switch]').click();
   await expect(page).toHaveURL(/\/en\/sins\?q=/);
   await expect(page.getByRole('searchbox')).toHaveValue('الغيبة');
+});
+
+test('Paging: a long topic shows 20 texts, then «المزيد» adds the next 20', async ({ page }) => {
+  await page.goto(`${BASE}/good-deeds/dhikr`, { waitUntil: 'load' });
+  const more = page.getByRole('button', { name: 'عرض المزيد' });
+  await expect(page.locator('article[aria-labelledby]')).toHaveCount(20);
+  await more.click();
+  await expect(page.locator('article[aria-labelledby]')).toHaveCount(40);
+  await expect(more).toBeVisible();
+});
+
+test('Paging: a theme with 33 texts shows 20, then the remaining 13, then no button', async ({ page }) => {
+  await page.goto(`${BASE}/sins/ghibah?theme=ghibah-tahrim`, { waitUntil: 'load' });
+  const chip = page.getByRole('group', { name: 'موضوعات الباب' }).getByRole('button', { name: /تحريم الغيبة/ });
+  await expect(chip).toHaveAttribute('aria-pressed', 'true');
+  const total = toNumber(await chip.locator('span').last().innerText());
+  await expect(page.locator('article[aria-labelledby]')).toHaveCount(Math.min(PAGE, total));
+  await page.getByRole('button', { name: 'عرض المزيد' }).click();
+  await expect(page.locator('article[aria-labelledby]')).toHaveCount(total);
+  await expect(page.getByRole('button', { name: 'عرض المزيد' })).toHaveCount(0);
+});
+
+test('PWA: manifest, icons and an offline page are served', async ({ request }) => {
+  const manifest = await (await request.get(`${BASE}/manifest.webmanifest`)).json();
+  expect(manifest).toMatchObject({ start_url: '/', display: 'standalone', lang: 'ar', dir: 'rtl' });
+  for (const icon of manifest.icons as Array<{ src: string }>) {
+    expect((await request.get(`${BASE}${icon.src}`)).status()).toBe(200);
+  }
+  const sw = await request.get(`${BASE}/sw.js`);
+  expect(sw.status()).toBe(200);
+  expect(sw.headers()['cache-control']).toContain('no-cache');
+  expect((await request.get(`${BASE}/offline`)).status()).toBe(200);
+  expect(await (await request.get(`${BASE}/robots.txt`)).text()).toContain('Sitemap:');
+  expect(await (await request.get(`${BASE}/sitemap.xml`)).text()).toContain('/sins/ghibah');
 });

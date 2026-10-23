@@ -8,6 +8,7 @@ import { rethrowUnlessNotFound } from '@/lib/api/server-guard';
 import type { QuoteDto } from '@/lib/types/api';
 import type { LocaleCode } from '@/lib/types/enums';
 import { StudyFullPage } from '@/features/study-panel/components/StudyFullPage';
+import { localeAlternates } from '@/lib/seo';
 
 async function findVerse(surah: number, ayah: number, lang: LocaleCode) {
   const { data } = await apiGet<QuoteDto[]>('/quotes', {
@@ -29,7 +30,7 @@ export async function generateMetadata({
 }: PageProps<'/[locale]/quran/[surah]/[ayah]'>): Promise<Metadata> {
   const { surah, ayah, locale } = await params;
   const t = await getTranslations({ locale, namespace: 'studyPanel' });
-  return { title: `${t('titleTafsir')} ${surah}:${ayah}` };
+  return { title: `${t('titleTafsir')} ${surah}:${ayah}`, alternates: localeAlternates(locale, `/quran/${surah}/${ayah}`) };
 }
 
 export default async function QuranStudyPage({

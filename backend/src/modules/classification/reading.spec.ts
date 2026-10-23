@@ -1,4 +1,4 @@
-import { compareReading, readingTier, type ReadingRow } from './reading.js';
+import { compareReading, readingHasNext, readingTier, type ReadingRow } from './reading.js';
 
 function row(partial: Partial<ReadingRow> & Pick<ReadingRow, 'id' | 'basis'>): ReadingRow {
   return {
@@ -39,5 +39,20 @@ describe('reading order', () => {
     const high = row({ id: 'high', basis: 'MANUAL', relevanceScore: 80 });
     const missing = row({ id: 'none', basis: 'MANUAL', relevanceScore: null });
     expect([low, missing, high].sort(compareReading).map((item) => item.id)).toEqual(['high', 'low', 'none']);
+  });
+});
+
+describe('readingHasNext', () => {
+  it('continues while any list of the page has more texts', () => {
+    // ghibah: 23 own texts and 20+ on the paired side, 20 per page.
+    expect(readingHasNext(1, 20, [23, 20])).toBe(true);
+    // The paired side is longer than the topic's own list.
+    expect(readingHasNext(2, 20, [23, 60])).toBe(true);
+    expect(readingHasNext(3, 20, [23, 60])).toBe(false);
+  });
+
+  it('continues when a derived group filled the page', () => {
+    expect(readingHasNext(1, 20, [0], [20])).toBe(true);
+    expect(readingHasNext(1, 20, [0], [7])).toBe(false);
   });
 });
