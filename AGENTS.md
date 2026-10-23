@@ -1,5 +1,7 @@
 # Thekra — agent rules
 
+**Start with the full project guide: [docs/guide/PROJECT_GUIDE.md](docs/guide/PROJECT_GUIDE.md) and [docs/guide/PROJECT_HISTORY_AND_LESSONS.md](docs/guide/PROJECT_HISTORY_AND_LESSONS.md)** (owner preferences, content rules, deployment, past mistakes).
+
 Applies to the whole monorepo (`backend/`, `frontend/`, `mobile/`, root tooling). Package rules still apply on top of these: `frontend/AGENTS.md` (Next.js 16 docs-first rule), `frontend/.cursorrules`, `backend/.cursorrules`, and `.cursor/rules/`.
 
 ## Before using a library API
