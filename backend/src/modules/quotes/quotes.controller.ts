@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Header, HttpCode, HttpStatus, Param, ParseUUIDPipe, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Post, Query, UseGuards } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { CurrentUser, type JwtPayload } from '../../common/decorators/current-user.decorator.js';
 import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard.js';
@@ -7,6 +7,7 @@ import { QuoteDetailQueryDto } from './dto/quote-detail-query.dto.js';
 import { ReportQuoteDto } from './dto/report-quote.dto.js';
 import { QuotesQueryDto } from './dto/quotes-query.dto.js';
 import { QuotesService } from './quotes.service.js';
+import { PUBLIC_CACHE, PublicCache } from '../../common/http/public-cache.js';
 
 @Controller('quotes')
 export class QuotesController {
@@ -18,8 +19,8 @@ export class QuotesController {
   /** #8 GET /quotes — optional auth enriches isFavorite
    *  Phase 5: Cache-Control header for browse pages (short TTL since content changes). */
   @Get()
+  @PublicCache(PUBLIC_CACHE.search)
   @UseGuards(OptionalJwtAuthGuard)
-  @Header('Cache-Control', 'public, max-age=30, stale-while-revalidate=30')
   async search(
     @Query() query: QuotesQueryDto,
     @CurrentUser() user: JwtPayload | undefined,
@@ -39,7 +40,7 @@ export class QuotesController {
 
   /** One published sahih or hasan text, the same one for everyone on a given UTC day. */
   @Get('today')
-  @Header('Cache-Control', 'public, max-age=300, stale-while-revalidate=300')
+  @PublicCache(PUBLIC_CACHE.daily)
   reminderOfTheDay(@Query() query: QuoteDetailQueryDto) {
     return this.quotesService.reminderOfTheDay(query.lang ?? 'ar');
   }
@@ -54,6 +55,7 @@ export class QuotesController {
 
   /** Explanations for a quote. MAWDU quotes stay 404. */
   @Get(':id/explanations')
+  @PublicCache(PUBLIC_CACHE.quote)
   listExplanations(
     @Param('id', ParseUUIDPipe) id: string,
     @Query() query: QuoteDetailQueryDto,
@@ -63,6 +65,7 @@ export class QuotesController {
 
   /** #9 GET /quotes/:id — optional auth enriches isFavorite */
   @Get(':id')
+  @PublicCache(PUBLIC_CACHE.quote)
   @UseGuards(OptionalJwtAuthGuard)
   async findById(
     @Param('id', ParseUUIDPipe) id: string,

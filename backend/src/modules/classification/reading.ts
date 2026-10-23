@@ -29,6 +29,8 @@ export interface ReadingRow {
   id: string;
   basis: string;
   relevanceScore: number | null;
+  classifiedBy: string;
+  note: string | null;
   quoteId: string;
   quote: {
     type: string;
@@ -36,6 +38,18 @@ export interface ReadingRow {
     grade: string | null;
     createdAt: Date;
   };
+}
+
+/** `countsByType` from ranked link rows: distinct texts per type (what a groupBy over the links gave). */
+export function countsByTypeFromRanked(rows: ReadonlyArray<{ quoteId: string; quote: { type: string } }>): Record<string, number> {
+  const result: Record<string, number> = { QURAN_VERSE: 0, HADITH: 0, SCHOLAR_QUOTE: 0, BOOK_EXCERPT: 0 };
+  const seen = new Set<string>();
+  for (const row of rows) {
+    if (seen.has(row.quoteId)) continue;
+    seen.add(row.quoteId);
+    result[row.quote.type] = (result[row.quote.type] ?? 0) + 1;
+  }
+  return result;
 }
 
 export function visibleOrigins(): Prisma.EnumEntityOriginFilter {

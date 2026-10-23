@@ -1,5 +1,6 @@
-import { Controller, Get, Header } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
 import { TopicThemesService } from './topic-themes.service.js';
+import { PUBLIC_CACHE, PublicCache } from '../../common/http/public-cache.js';
 
 @Controller('topic-themes')
 export class TopicThemesController {
@@ -7,7 +8,7 @@ export class TopicThemesController {
 
   /** Theme labels for the catalogue search; changes only with import:taxonomy. */
   @Get()
-  @Header('Cache-Control', 'public, max-age=300, stale-while-revalidate=60')
+  @PublicCache(PUBLIC_CACHE.content)
   index() {
     return this.themes.index();
   }

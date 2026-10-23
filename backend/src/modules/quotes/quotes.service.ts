@@ -136,6 +136,66 @@ export class QuotesService {
     } as typeof quoteDetailIncludeForDto;
   }
 
+  /**
+   * Loads the quote behind each link row with the same relations and shape as
+   * `include: { quote: { include: buildQuoteInclude(locale) } }`, but in ONE
+   * parallel wave of flat queries. Prisma runs the sibling relations of a nested
+   * include one after another (quote, source, tags, tag, matches, referenceHadith:
+   * six sequential statements), which costs six database round trips per page.
+   * Here every branch starts at once, so the page costs the longest branch (two).
+   * Rows keep their order; a text linked twice is loaded once.
+   */
+  async hydrateLinks<TLink extends { quoteId: string }>(
+    links: readonly TLink[],
+    locale: 'ar' | 'en',
+  ): Promise<Array<Omit<TLink, 'quote'> & { quote: QuoteRowForDto }>> {
+    if (links.length === 0) return [];
+    const ids = [...new Set(links.map((link) => link.quoteId))];
+    const [quoteRows, sources, translations, quoteTags, matchRows] = await Promise.all([
+      this.prisma.quote.findMany({ where: { id: { in: ids } } }),
+      this.prisma.source.findMany({ where: { quotes: { some: { id: { in: ids } } } } }),
+      locale === 'ar'
+        ? Promise.resolve([])
+        : this.prisma.translation.findMany({ where: { quoteId: { in: ids }, languageCode: locale } }),
+      this.prisma.quoteTag.findMany({
+        where: { quoteId: { in: ids } },
+        include: { tag: true },
+        orderBy: { tag: { slug: 'asc' } },
+      }),
+      this.prisma.hadithMatch.findMany({
+        where: { quoteId: { in: ids }, ...sahihaynMatchInclude.where },
+        orderBy: sahihaynMatchInclude.orderBy,
+        include: sahihaynMatchInclude.include,
+      }),
+    ]);
+    const sourceById = new Map(sources.map((source) => [source.id, source]));
+    const translationOf = new Map<string, typeof translations>();
+    for (const row of translations) translationOf.set(row.quoteId, [...(translationOf.get(row.quoteId) ?? []), row]);
+    const tagsOf = new Map<string, typeof quoteTags>();
+    for (const row of quoteTags) tagsOf.set(row.quoteId, [...(tagsOf.get(row.quoteId) ?? []), row]);
+    const matchOf = new Map<string, typeof matchRows>();
+    for (const row of matchRows) {
+      // `take: 1` per text: rows arrive best score first.
+      if (!matchOf.has(row.quoteId)) matchOf.set(row.quoteId, [row]);
+    }
+    const quoteById = new Map<string, QuoteRowForDto>();
+    for (const quote of quoteRows) {
+      quoteById.set(quote.id, {
+        ...quote,
+        source: sourceById.get(quote.sourceId) as QuoteRowForDto['source'],
+        translations: (translationOf.get(quote.id) ?? []) as QuoteRowForDto['translations'],
+        tags: (tagsOf.get(quote.id) ?? []) as QuoteRowForDto['tags'],
+        matches: (matchOf.get(quote.id) ?? []) as QuoteRowForDto['matches'],
+      });
+    }
+    return links.flatMap((link) => {
+      const quote = quoteById.get(link.quoteId);
+      if (!quote) return [];
+      const { quote: _partial, ...rest } = link as TLink & { quote?: unknown };
+      return [{ ...rest, quote } as unknown as Omit<TLink, 'quote'> & { quote: QuoteRowForDto }];
+    });
+  }
+
   toQuoteDto(row: QuoteRowForDto, locale: 'ar' | 'en'): QuoteDto {
     return mapQuoteToDto(row, locale);
   }
@@ -233,20 +293,21 @@ export class QuotesService {
   }): Promise<{ all: number; verse: number; hadith: number; athar: number }> {
     const base = { [opts.linkTable]: { some: opts.linkWhere } };
 
-    const [verseCount, hadithCount, atharCount] = await Promise.all([
-      this.prisma.quote.count({ where: { ...base, type: QuoteType.QURAN_VERSE } }),
-      this.prisma.quote.count({
-        where: { ...base, type: QuoteType.HADITH, isAthar: false },
-      }),
-      this.prisma.quote.count({
-        where: {
-          ...base,
-          type: QuoteType.HADITH,
-          isAthar: true,
-          atharReviewDecision: 'KEEP',
-        },
-      }),
-    ]);
+    // One grouped query instead of three counts: kind is a function of (type, isAthar, atharReviewDecision).
+    const groups = await this.prisma.quote.groupBy({
+      by: ['type', 'isAthar', 'atharReviewDecision'],
+      where: { ...base, type: { in: [QuoteType.QURAN_VERSE, QuoteType.HADITH] } },
+      _count: { _all: true },
+    });
+    let verseCount = 0;
+    let hadithCount = 0;
+    let atharCount = 0;
+    for (const group of groups) {
+      const n = group._count._all;
+      if (group.type === QuoteType.QURAN_VERSE) verseCount += n;
+      else if (!group.isAthar) hadithCount += n;
+      else if (group.atharReviewDecision === 'KEEP') atharCount += n;
+    }
 
     const all = verseCount + hadithCount + atharCount;
     return { all, verse: verseCount, hadith: hadithCount, athar: atharCount };
@@ -471,7 +532,7 @@ export class QuotesService {
       );
     }
 
-    const [rows, total] = await this.prisma.$transaction([
+    const [rows, total] = await Promise.all([
       this.prisma.quote.findMany({
         where,
         include: this.buildQuoteInclude(locale),
@@ -565,6 +626,18 @@ export class QuotesService {
     const hidden = await this.prisma.quoteFlag.count({
       where: { quoteId: row.id, status: 'OPEN', severity: 'HIGH' },
     });
+    this.assertPublicRow(row, hidden);
+  }
+
+  /** The synchronous half of assertPublicQuote, for callers that fetch the open-flag count in parallel. */
+  private assertPublicRow(row: {
+    type: QuoteType;
+    grade: HadithGrade | null;
+    gradeSource: GradeSource;
+    textSource: TextSource;
+    textVerifiedAt: Date | null;
+    apiProvider: string | null;
+  }, hidden: number): void {
     if (
       (row.type === QuoteType.HADITH && row.grade === HadithGrade.MAWDU)
       || !GradePolicy.isPublicText(row)
@@ -636,7 +709,7 @@ export class QuotesService {
 
     const where = await this.buildAdminSearchWhere(query);
 
-    const [rows, total] = await this.prisma.$transaction([
+    const [rows, total] = await Promise.all([
       this.prisma.quote.findMany({
         where,
         include: this.buildQuoteInclude(locale),
@@ -1072,7 +1145,8 @@ export class QuotesService {
     if (!quote) {
       throw new NotFoundException({ code: 'RESOURCE_NOT_FOUND', message: 'Quote not found' });
     }
-    await this.assertPublicQuote(quote);
+    // Not public by its own fields: no need to look further. The open-flag count runs beside the explanations below.
+    this.assertPublicRow(quote, 0);
 
     const or: Prisma.ExplanationWhereInput[] = [
       { kind: ExplanationKind.SHARH, quoteId: quote.id },
@@ -1092,7 +1166,9 @@ export class QuotesService {
       });
     }
 
-    const rows = await this.prisma.explanation.findMany({
+    const [hiddenFlags, rows] = await Promise.all([
+      this.prisma.quoteFlag.count({ where: { quoteId: quote.id, status: 'OPEN', severity: 'HIGH' } }),
+      this.prisma.explanation.findMany({
       where: {
         OR: or,
         languageCode: { in: lang === 'ar' ? ['ar'] : ['ar', lang] },
@@ -1110,7 +1186,9 @@ export class QuotesService {
           },
         },
       },
-    });
+      }),
+    ]);
+    this.assertPublicRow(quote, hiddenFlags);
 
     const surah = quote.surahNumber;
     const ayah = quote.ayahNumber;

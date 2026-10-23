@@ -58,7 +58,7 @@ export class SourcesService {
     const locale = query.lang ?? 'ar';
     const where = this.buildListWhere(query);
 
-    const [rows, total, published] = await this.prisma.$transaction([
+    const [rows, total, published] = await Promise.all([
       this.prisma.source.findMany({
         where,
         orderBy: [{ name: 'asc' }, { id: 'asc' }],

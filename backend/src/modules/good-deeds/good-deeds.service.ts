@@ -5,6 +5,8 @@ import {
   dedupeReading,
   deedHasPublicText,
   pageReadingIds,
+  compareReading,
+  countsByTypeFromRanked,
   READING_ORDER,
   READING_SELECT,
   visibleOrigins,
@@ -26,7 +28,7 @@ import {
 } from '../quotes/quotes.service.js';
 import type { GoodDeedQuotesQueryDto } from '../sins/dto/sin-quotes-query.dto.js';
 import { pairForSlug } from '../taxonomy/topic-pairs.js';
-import { readThemedPage, summariseThemes } from '../taxonomy/theme-reading.js';
+import { findActiveTheme, mergePageThemes, readThemedPage, summariseThemes } from '../taxonomy/theme-reading.js';
 import { themesForTopics } from '../taxonomy/topic-themes.js';
 import type { CreateGoodDeedDto } from './dto/create-good-deed.dto.js';
 import type { GoodDeedsQueryDto } from './dto/good-deeds-query.dto.js';
@@ -156,7 +158,7 @@ export class GoodDeedsService {
       );
     }
 
-    const [rows, total] = await this.prisma.$transaction([
+    const [rows, total] = await Promise.all([
       this.prisma.goodDeed.findMany({
         where,
         orderBy,
@@ -364,8 +366,8 @@ export class GoodDeedsService {
     // Topic themes: this deed's, then its paired sin's (one page, taxonomy.yaml pairs:).
     const pair = pairForSlug(deed.slug);
     const pairedSinId = pair ? (deed.oppositeSin?.id ?? null) : null;
-    const pageThemes = themesForTopics(pair ? [deed.slug, pair.avoid] : [deed.slug]);
-    const activeTheme = pageThemes.find((theme) => theme.key === query.theme)?.key ?? null;
+    const pageThemes = mergePageThemes(themesForTopics(pair ? [deed.slug, pair.avoid] : [deed.slug]), pair?.avoid ?? null);
+    const activeTheme = findActiveTheme(pageThemes, query.theme);
     const sinSide = (quote: Prisma.SinQuoteWhereInput['quote']): Prisma.SinQuoteWhereInput => ({
       sinId: pairedSinId ?? undefined,
       reviewStatus: PUBLISHED_LINK_REVIEW_STATUS,
@@ -386,14 +388,6 @@ export class GoodDeedsService {
           linkWhere: baseWhere,
         });
 
-    // Shared sub-queries (count, type breakdown) — same for both paths
-    const countQ = this.prisma.goodDeedQuote.count({ where });
-    const typeGroupsQ = this.prisma.quote.groupBy({
-      by: ['type'],
-      where: { goodDeedLinks: { some: where } },
-      _count: { _all: true },
-    });
-
     // Good-deed payload (reused in both response shapes)
     const goodDeedPayload = {
       id: deed.id,
@@ -410,7 +404,7 @@ export class GoodDeedsService {
     // ── Theme: one merged, deduped list over the page (deed + paired sin) ─────
     // Kind still applies. Counts follow the theme; meta.themes does not.
     if (activeTheme) {
-      const has = { themeKeys: { has: activeTheme } };
+      const has = { themeKeys: { hasSome: activeTheme.keys } };
       const [themed, summary] = await Promise.all([
         readThemedPage(
           this.prisma,
@@ -418,7 +412,7 @@ export class GoodDeedsService {
           {
             page,
             limit,
-            include: this.quotes.buildQuoteInclude(locale),
+            hydrate: (rows) => this.quotes.hydrateLinks(rows, locale),
             present: (row) => this.presentDeedItem(row as Parameters<GoodDeedsService['presentDeedItem']>[0], locale),
           },
         ),
@@ -438,7 +432,7 @@ export class GoodDeedsService {
           countsByKind: summary.countsByKind,
           appliedGrades: allowedGrades,
           themes: summary.themes,
-          theme: activeTheme,
+          theme: activeTheme.key,
         }),
       };
     }
@@ -450,24 +444,25 @@ export class GoodDeedsService {
       const seed = query.seed ?? new Date().toISOString().slice(0, 10);
       const floor = this.quotes.getVarietyScoreFloor();
 
-      const ids = await this.quotes.shuffleLinksPage({
-        table: '"GoodDeedQuote"',
-        parentKey: '"goodDeedId"',
-        parentId: deed.id,
-        minScore: query.minScore,
-        types: query.type,
-        allowedGrades,
-        seed,
-        floor,
-        page,
-        limit,
+      const countQ = this.prisma.goodDeedQuote.count({ where });
+      const typeGroupsQ = this.prisma.quote.groupBy({
+        by: ['type'],
+        where: { goodDeedLinks: { some: where } },
+        _count: { _all: true },
       });
-
-      const [[rows, total, typeGroups], countsByKind, summary] = await Promise.all([
-        this.prisma.$transaction([
-          this.prisma.goodDeedQuote.findMany({
-            where: { id: { in: ids } },
-            include: { quote: { include: this.quotes.buildQuoteInclude(locale) } },
+      const [[ids, total, typeGroups], countsByKind, summary] = await Promise.all([
+        Promise.all([
+          this.quotes.shuffleLinksPage({
+            table: '"GoodDeedQuote"',
+            parentKey: '"goodDeedId"',
+            parentId: deed.id,
+            minScore: query.minScore,
+            types: query.type,
+            allowedGrades,
+            seed,
+            floor,
+            page,
+            limit,
           }),
           countQ,
           typeGroupsQ,
@@ -475,6 +470,8 @@ export class GoodDeedsService {
         countsByKindQ,
         themeSummaryQ,
       ]);
+      const links = ids.length === 0 ? [] : await this.prisma.goodDeedQuote.findMany({ where: { id: { in: ids } } });
+      const rows = await this.quotes.hydrateLinks(links, locale);
 
       // Re-order to match the shuffle ordering from the raw query
       if (ids.length > 1) {
@@ -506,35 +503,30 @@ export class GoodDeedsService {
       };
     }
 
-    const ranked = await this.prisma.goodDeedQuote.findMany({ where, select: READING_SELECT });
-    const ids = pageReadingIds(ranked as ReadingRow[], page, limit);
-    const [[rows, total, typeGroups], countsByKind, summary] = await Promise.all([
-      this.prisma.$transaction([
-        this.prisma.goodDeedQuote.findMany({
-          where: { id: { in: ids.length > 0 ? ids : ['00000000-0000-0000-0000-000000000000'] } },
-          include: { quote: { include: this.quotes.buildQuoteInclude(locale) } },
-        }),
-        countQ,
-        typeGroupsQ,
-      ]),
+    // Wave 1: every query that needs only the deed, in parallel. The ranked rows also give
+    // the link total and the per-type breakdown, so no count/groupBy round trips.
+    const [ranked, countsByKind, summary, warningRanked, derivedLinks] = await Promise.all([
+      this.prisma.goodDeedQuote.findMany({ where, select: READING_SELECT }),
       countsByKindQ,
       themeSummaryQ,
+      this.warningRanked(deed.oppositeSin?.id ?? null, where.quote),
+      deed.isContemporary ? this.derivedLinks(deed.id) : Promise.resolve([]),
     ]);
-    const order = new Map(ids.map((id, index) => [id, index]));
-    rows.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
-    const countsByType = this.quotes.countsByTypeFromGroups(typeGroups);
-    const primaryItems = ids.length === 0 ? [] : rows.map((row) => this.presentDeedItem(row, locale));
-    const companion = await this.warningForDeed(
-      deed.oppositeSin?.id ?? null,
-      where.quote,
-      page,
-      limit,
-      locale,
-      new Set(primaryItems.map((item) => item.quote.id)),
+    const ids = pageReadingIds(ranked as ReadingRow[], page, limit);
+    const total = ranked.length;
+    const countsByType = countsByTypeFromRanked(ranked);
+    const pageQuoteIds = new Set(
+      ids.map((id) => ranked.find((row) => row.id === id)?.quoteId).filter((id): id is string => id != null),
     );
-    const derived = deed.isContemporary
-      ? await this.derivedDeedTexts(deed.id, where.quote, page, limit, locale)
-      : [];
+
+    // Wave 2: the page rows, the warning page and the derived groups, in parallel.
+    const rankedById = new Map((ranked as ReadingRow[]).map((row) => [row.id, row]));
+    const [rows, companion, derived] = await Promise.all([
+      this.quotes.hydrateLinks(ids.flatMap((id) => rankedById.get(id) ?? []), locale),
+      this.warningPage(warningRanked, pageQuoteIds, page, limit, locale),
+      this.derivedDeedTexts(derivedLinks, where.quote, page, limit, locale),
+    ]);
+    const primaryItems = rows.map((row) => this.presentDeedItem(row, locale));
 
     return {
       data: {
@@ -582,72 +574,73 @@ export class GoodDeedsService {
     };
   }
 
-  private async warningForDeed(
+  /** Ranked reading rows of the paired sin that sit beside a deed page. */
+  private async warningRanked(
     oppositeSinId: string | null,
     quote: Prisma.GoodDeedQuoteWhereInput['quote'],
-    page: number,
-    limit: number,
-    locale: 'ar' | 'en',
-    excludeQuoteIds: ReadonlySet<string> = new Set(),
-  ) {
-    if (!oppositeSinId) return { items: [] as ReturnType<GoodDeedsService['presentDeedItem']>[] };
+  ): Promise<ReadingRow[]> {
+    if (!oppositeSinId) return [];
     const ranked = await this.prisma.sinQuote.findMany({
       where: {
         sinId: oppositeSinId,
         reviewStatus: PUBLISHED_LINK_REVIEW_STATUS,
         ...autoLinkExclusion(),
         quote,
-        ...(excludeQuoteIds.size > 0 ? { quoteId: { notIn: [...excludeQuoteIds] } } : {}),
       },
       select: READING_SELECT,
     });
-    const pageRows = dedupeReading(ranked as ReadingRow[]).slice((page - 1) * limit, page * limit);
-    if (pageRows.length === 0) return { items: [] as ReturnType<GoodDeedsService['presentDeedItem']>[] };
-    const full = await this.prisma.sinQuote.findMany({
-      where: { id: { in: pageRows.map((row) => row.id) } },
-      include: { quote: { include: this.quotes.buildQuoteInclude(locale) } },
-    });
-    const order = new Map(pageRows.map((row, index) => [row.id, index]));
-    full.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
-    return { items: full.map((row) => this.presentDeedItem(row, locale)) };
+    return ranked as ReadingRow[];
   }
 
-  private async derivedDeedTexts(
-    deedId: string,
-    quote: Prisma.GoodDeedQuoteWhereInput['quote'],
+  /** The warning page: texts already on the main page are left out before the reading-order dedupe. */
+  private async warningPage(
+    ranked: ReadingRow[],
+    excludeQuoteIds: ReadonlySet<string>,
     page: number,
     limit: number,
     locale: 'ar' | 'en',
   ) {
-    const links = await this.prisma.topicDerivation.findMany({
+    const pageRows = dedupeReading(ranked.filter((row) => !excludeQuoteIds.has(row.quoteId)))
+      .slice((page - 1) * limit, page * limit);
+    if (pageRows.length === 0) return { items: [] as ReturnType<GoodDeedsService['presentDeedItem']>[] };
+    const full = await this.quotes.hydrateLinks(pageRows, locale);
+    return { items: full.map((row) => this.presentDeedItem(row, locale)) };
+  }
+
+  private derivedLinks(deedId: string) {
+    return this.prisma.topicDerivation.findMany({
       where: { fromGoodDeedId: deedId },
       select: {
         toSin: { select: { id: true, slug: true, name: true, nameAr: true, isHidden: true } },
         toGoodDeed: { select: { id: true, slug: true, name: true, nameAr: true } },
       },
     });
-    const groups = [];
+  }
+
+  /** Derived groups in link order (sin side first), each read in parallel with the others. */
+  private async derivedDeedTexts(
+    links: Awaited<ReturnType<GoodDeedsService['derivedLinks']>>,
+    quote: Prisma.GoodDeedQuoteWhereInput['quote'],
+    page: number,
+    limit: number,
+    locale: 'ar' | 'en',
+  ) {
+    const jobs: Array<Promise<{ slug: string; name: string; nameAr: string; side: 'AVOID' | 'DO'; items: Awaited<ReturnType<GoodDeedsService['pageDeedSource']>> }>> = [];
     for (const link of links) {
-      if (link.toSin && !link.toSin.isHidden) {
-        groups.push({
-          slug: link.toSin.slug,
-          name: link.toSin.name,
-          nameAr: link.toSin.nameAr,
-          side: 'AVOID' as const,
-          items: await this.pageDeedSource('sin', link.toSin.id, quote, page, limit, locale),
-        });
+      const toSin = link.toSin;
+      if (toSin && !toSin.isHidden) {
+        jobs.push(this.pageDeedSource('sin', toSin.id, quote, page, limit, locale).then((items) => (
+          { slug: toSin.slug, name: toSin.name, nameAr: toSin.nameAr, side: 'AVOID' as const, items }
+        )));
       }
-      if (link.toGoodDeed) {
-        groups.push({
-          slug: link.toGoodDeed.slug,
-          name: link.toGoodDeed.name,
-          nameAr: link.toGoodDeed.nameAr,
-          side: 'DO' as const,
-          items: await this.pageDeedSource('deed', link.toGoodDeed.id, quote, page, limit, locale),
-        });
+      const toDeed = link.toGoodDeed;
+      if (toDeed) {
+        jobs.push(this.pageDeedSource('deed', toDeed.id, quote, page, limit, locale).then((items) => (
+          { slug: toDeed.slug, name: toDeed.name, nameAr: toDeed.nameAr, side: 'DO' as const, items }
+        )));
       }
     }
-    return groups;
+    return Promise.all(jobs);
   }
 
   private async pageDeedSource(
@@ -667,19 +660,8 @@ export class GoodDeedsService {
     const ranked = side === 'sin'
       ? await this.prisma.sinQuote.findMany({ where, select: READING_SELECT })
       : await this.prisma.goodDeedQuote.findMany({ where, select: READING_SELECT });
-    const ids = pageReadingIds(ranked as ReadingRow[], page, limit);
-    if (ids.length === 0) return [];
-    const rows = side === 'sin'
-      ? await this.prisma.sinQuote.findMany({
-        where: { id: { in: ids } },
-        include: { quote: { include: this.quotes.buildQuoteInclude(locale) } },
-      })
-      : await this.prisma.goodDeedQuote.findMany({
-        where: { id: { in: ids } },
-        include: { quote: { include: this.quotes.buildQuoteInclude(locale) } },
-      });
-    const order = new Map(ids.map((linkId, index) => [linkId, index]));
-    rows.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+    const pageRows = [...(ranked as ReadingRow[])].sort(compareReading).slice((page - 1) * limit, page * limit);
+    const rows = await this.quotes.hydrateLinks(pageRows, locale);
     return rows.map((row) => this.presentDeedItem(row, locale));
   }
 }

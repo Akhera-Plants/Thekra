@@ -86,7 +86,7 @@ export class HadithService {
 
     const where: Prisma.QuoteWhereInput = { AND: and };
 
-    const [rows, total] = await this.prisma.$transaction([
+    const [rows, total] = await Promise.all([
       this.prisma.quote.findMany({
         where,
         include: this.quotes.buildQuoteInclude(locale),

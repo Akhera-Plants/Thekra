@@ -4,6 +4,8 @@ function row(partial: Partial<ReadingRow> & Pick<ReadingRow, 'id' | 'basis'>): R
   return {
     relevanceScore: 50,
     quoteId: partial.id,
+    classifiedBy: 'BOOK',
+    note: null,
     ...partial,
     quote: {
       type: 'HADITH',

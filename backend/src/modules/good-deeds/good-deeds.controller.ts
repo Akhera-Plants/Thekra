@@ -6,6 +6,7 @@ import { FavoritesService } from '../favorites/favorites.service.js';
 import { GoodDeedQuotesQueryDto } from '../sins/dto/sin-quotes-query.dto.js';
 import { GoodDeedsQueryDto } from './dto/good-deeds-query.dto.js';
 import { GoodDeedsService } from './good-deeds.service.js';
+import { PUBLIC_CACHE, PublicCache } from '../../common/http/public-cache.js';
 
 @Controller('good-deeds')
 export class GoodDeedsController {
@@ -15,11 +16,13 @@ export class GoodDeedsController {
   ) {}
 
   @Get()
+  @PublicCache(PUBLIC_CACHE.content)
   findAll(@Query() query: GoodDeedsQueryDto) {
     return this.goodDeedsService.findAll(query);
   }
 
   @Get(':slug')
+  @PublicCache(PUBLIC_CACHE.content)
   findBySlug(
     @Param('slug') slug: string,
     @Query() query: LocaleQueryDto,
@@ -29,6 +32,7 @@ export class GoodDeedsController {
 
   /** #7 GET /good-deeds/:slug/quotes — optional auth for isFavorite enrichment */
   @Get(':slug/quotes')
+  @PublicCache(PUBLIC_CACHE.content)
   @UseGuards(OptionalJwtAuthGuard)
   async findQuotes(
     @Param('slug') slug: string,

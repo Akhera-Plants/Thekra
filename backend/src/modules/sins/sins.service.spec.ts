@@ -47,6 +47,9 @@ describe('SinsService', () => {
       { relevanceScore: { sort: 'desc', nulls: 'last' } },
     ]),
     shuffleLinksPage: vi.fn(),
+    // hydrateLinks loads the quote relations; here it only attaches a stub quote to each link row.
+    hydrateLinks: vi.fn().mockImplementation((links: Array<{ quoteId?: string; quote?: unknown }>) =>
+      Promise.resolve(links.map((link) => ({ ...link, quote: link.quote ?? { id: link.quoteId } })))),
     getVarietyScoreFloor: vi.fn().mockReturnValue(70),
     // P2-1: new shared helpers — delegate to real GradePolicy so existing
     // grade-filter tests continue to assert the correct Prisma where clause.
@@ -165,26 +168,31 @@ describe('SinsService', () => {
     expect(result.data.alternatives).toHaveLength(3);
   });
 
-  it('countsByType counts the full filtered set, not the page', async () => {
+  it('countsByType and total count the full filtered set, not the page (folded from the ranked rows)', async () => {
     prisma.sin.findUnique.mockResolvedValue(SIN);
-    prisma.sinQuote.findMany.mockResolvedValue([]);
-    prisma.sinQuote.count.mockResolvedValue(12);
-    prisma.quote.groupBy.mockResolvedValue([
-      { type: QuoteType.QURAN_VERSE, _count: { _all: 5 } },
-      { type: QuoteType.HADITH, _count: { _all: 6 } },
-      { type: QuoteType.SCHOLAR_QUOTE, _count: { _all: 1 } },
-    ]);
+    const row = (n: number, type: QuoteType, quoteId = `q${n}`) => ({
+      id: `l${n}`, quoteId, basis: 'CHAPTER', relevanceScore: 50, classifiedBy: 'BOOK', note: null,
+      quote: { type, sourceId: null, grade: null, createdAt: new Date('2026-01-01') },
+    });
+    const ranked = [
+      ...Array.from({ length: 5 }, (_, i) => row(i, QuoteType.QURAN_VERSE)),
+      ...Array.from({ length: 6 }, (_, i) => row(10 + i, QuoteType.HADITH)),
+      row(20, QuoteType.SCHOLAR_QUOTE),
+      row(21, QuoteType.SCHOLAR_QUOTE, 'q20'), // a second link to the same text: a link, not a second text
+    ];
+    prisma.sinQuote.findMany.mockImplementation(({ select }: { select?: unknown }) => Promise.resolve(select ? ranked : []));
     prisma.goodDeed.findMany.mockResolvedValue([]);
-    prisma.$transaction.mockImplementation(async (ops) => Promise.all(ops));
 
     const result = await service.findQuotesForSin('ghibah', { limit: 2 });
-    expect(result.meta.total).toBe(12);
+    expect(result.meta.total).toBe(13);
     expect(result.meta.countsByType).toEqual({
       QURAN_VERSE: 5,
       HADITH: 6,
       SCHOLAR_QUOTE: 1,
       BOOK_EXCERPT: 0,
     });
+    expect(prisma.sinQuote.count).not.toHaveBeenCalled();
+    expect(prisma.quote.groupBy).not.toHaveBeenCalled();
   });
 
   it('meta.countsByKind comes from QuotesService.countsByKind', async () => {

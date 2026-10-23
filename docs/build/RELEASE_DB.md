@@ -183,6 +183,13 @@ These numbers were measured with `ATHAR_PUBLIC_ENABLED=true` (the local `.env`).
 off, the API serves no athar, so totals that include kept athar come out lower. The database
 checks in `verify.sql` do not depend on the flag.
 
+## After a push: what readers see, and when
+
+Public GET routes are cached by Vercel's CDN (`s-maxage` 60–600 s plus a stale window, see
+[`docs/deploy/VERCEL.md`](../deploy/VERCEL.md) "Latency"). A pushed content change therefore shows within
+`s-maxage` (at most 5 minutes for topic pages, plus one stale answer inside `stale-while-revalidate`).
+Nothing needs purging; to see it at once, redeploy the API (a new deployment has an empty CDN cache).
+
 ## Environment variables used here
 
 These are inputs to one-off commands, not app config. The API never reads them, so CI does
