@@ -28,9 +28,8 @@ export async function generateMetadata({
   const { slug, locale } = await params;
   try {
     const { data } = await getSin(slug, locale as LocaleCode);
-    const title = data.pair
-      ? (locale === 'en' ? data.pair.titleEn : data.pair.titleAr)
-      : (locale === 'en' ? (data.name || data.nameAr) : data.nameAr);
+    // A sin page is named by the sin; the paired virtue is a secondary line (audit B02).
+    const title = locale === 'en' ? (data.name || data.nameAr) : data.nameAr;
     return { title };
   } catch {
     return {};
@@ -93,9 +92,9 @@ export default async function SinDetailPage({
   const items = interleaveReading(warning, reward).concat(derivedItems);
   const alternatives = paired ? [] : (quotes?.data.alternatives ?? []);
   const onward = alternatives[0];
-  const heading = paired
-    ? (locale === 'en' ? sin.pair!.titleEn : sin.pair!.titleAr)
-    : (locale === 'en' ? (sin.name || sin.nameAr) : sin.nameAr);
+  // The sin's own name: a paired page used to show the virtue («الإخلاص») under «كبيرة» (audit B02).
+  const heading = locale === 'en' ? (sin.name || sin.nameAr) : sin.nameAr;
+  const counterpart = sin.pair ? (locale === 'en' ? sin.pair.titleEn : sin.pair.titleAr) : null;
   // English shows the English description or nothing: never Arabic prose on /en.
   const description = locale === 'en' ? sin.description : sin.descriptionAr;
   const rankReference = locale === 'en' ? englishOnlyProvenance(sin.rankReference) : sin.rankReference;
@@ -125,6 +124,14 @@ export default async function SinDetailPage({
           >
             {heading}
           </h1>
+          {counterpart && sin.pair ? (
+            <p className="page-lead">
+              {t('pairCounterpart')}
+              <Link href={`/good-deeds/${sin.pair.do}`} className="text-link">
+                {counterpart}
+              </Link>
+            </p>
+          ) : null}
           {description ? <p className="page-lead">{description}</p> : null}
           {sin.rank === SinRank.KABIRA && sin.rankReference && (
             <p className="page-lead">

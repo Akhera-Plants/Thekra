@@ -280,7 +280,9 @@ Playwright: import from `node_modules/.pnpm/@playwright+test@…/…/index.mjs` 
 
 | Item | Owner/engineering | Notes |
 | --- | --- | --- |
-| Set `CORS_ORIGINS` on the API project and redeploy | **owner (Vercel)** | value in `docs/deploy/VERCEL.md` §3; production still lacks ACAO headers |
+| Push the release copy to Neon (B01 English fix: 3,151 replaced, 1,223 added, 233 removed) | **owner** | `scripts/release-db.sh build` then `push`; see `docs/review/2026-10-23-audit-fixes.md` |
+| Review `prisma/taxonomy/text-review.yaml` (818 possible fragments, audit B03) | owner/sheikh | COMPLETE or FRAGMENT; FRAGMENT needs the full matn from the cited edition |
+| Switching back to Arabic lands on `/ar/...` (`e2e/direction.spec.ts` fails) | engineering | pre-existing on live |
 | `NEXT_PUBLIC_API_URL` also for the **Preview** environment | owner | preview builds fail without it |
 | Rotate the Neon owner password (was pasted in chat) | owner | then update `DATABASE_URL`/`DIRECT_URL` and redeploy |
 | Delete the duplicate Vercel project `thekra-api` | owner | |

@@ -9,7 +9,7 @@ import { Link, usePathname, useRouter } from '@/i18n/navigation';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { FormattedNumber } from '@/components/shared/FormattedNumber';
-import { searchTopicThemes } from '@/lib/search/topic-themes';
+import { foldArabic, namesMatch, searchTopicThemes } from '@/lib/search/topic-themes';
 import type { TopicThemeIndexEntry } from '@/lib/types/api';
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -39,6 +39,8 @@ export interface TopicEntry {
   href: string;
   nameAr: string;
   name?: string | null;
+  /** Other names the search also matches (a sin's paired virtue). Not displayed. */
+  aliases?: readonly string[];
   quoteCount: number;
   domainKey: string | null;
   taxonomyOrder: number | null;
@@ -167,14 +169,11 @@ function TopicCatalogShell({
   }, []);
 
   const filtered = useMemo(() => {
-    const needle = debounced.toLowerCase();
-    const list = !debounced
+    // Folded on both sides: «غض البصر» finds «غضّ البصر» (tashkeel, hamza seats, ta marbuta, spacing; audit B08).
+    const needle = foldArabic(debounced);
+    const list = !needle
       ? entries
-      : entries.filter(
-          (entry) =>
-            entry.nameAr.includes(debounced)
-            || (entry.name?.toLowerCase().includes(needle) ?? false),
-        );
+      : entries.filter((entry) => namesMatch([entry.nameAr, entry.name ?? '', ...(entry.aliases ?? [])], needle));
     return [...list].sort((a, b) => {
       const da = a.domainKey ? (domainOrder.get(a.domainKey) ?? 99) : 99;
       const db = b.domainKey ? (domainOrder.get(b.domainKey) ?? 99) : 99;

@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import {
   type AtharReviewDecision,
   ExplanationKind,
+  FlagStatus,
   GradeSource,
   HadithGrade,
   LinkReviewStatus,
@@ -28,6 +29,7 @@ import {
 } from '../../common/mappers/quote.mapper.js';
 import { findIdsByNormalizedArabic, findIdsByNormalizedArabicOrdered } from '../../common/text/arabic-search.js';
 import { parsePrintedReference, utcDayNumber } from '../../common/text/printed-reference.js';
+import { unfeaturableTextIds } from './text-review.js';
 import { autoLinkExclusion } from '../classification/public-taxonomy.js';
 import { ATHAR_PUBLIC_ENABLED, GradePolicy, PUBLISHABLE_GRADE_SOURCES } from '../hadith/grade-policy.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
@@ -201,12 +203,20 @@ export class QuotesService {
     return mapQuoteToDto(row, locale);
   }
 
-  /** The same published sahih or hasan text for every reader on one UTC day. */
+  /**
+   * The same published sahih or hasan text for every reader on one UTC day. It is the most visible
+   * text on the site, so it comes only from texts a topic page already shows, with no open flag,
+   * and not on the fragment review list (text-review.yaml) unless reviewed COMPLETE (audit B03).
+   */
   async reminderOfTheDay(locale: 'ar' | 'en', now = new Date()) {
+    const accepted = { some: { reviewStatus: LinkReviewStatus.ACCEPTED } };
     const where: Prisma.QuoteWhereInput = {
       AND: [
         { grade: { in: [HadithGrade.SAHIH, HadithGrade.HASAN] } },
         GradePolicy.readerClause(),
+        { OR: [{ sinLinks: accepted }, { goodDeedLinks: accepted }, { imanBranchLinks: accepted }] },
+        { flags: { none: { status: FlagStatus.OPEN } } },
+        { id: { notIn: [...unfeaturableTextIds()] } },
       ],
     };
     const total = await this.prisma.quote.count({ where });

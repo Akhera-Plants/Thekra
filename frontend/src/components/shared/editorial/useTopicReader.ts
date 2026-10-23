@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query';
 import type { ReaderItem, ReaderSection, TypeFilter } from '@/components/shared/editorial/ReminderReader';
 import type { ThemeChip } from '@/components/shared/editorial/ThemeChips';
@@ -40,15 +40,20 @@ interface UseTopicReaderOptions {
 
 const toReader = (item: TopicText): ReaderItem => ({ id: item.quote.id, quote: item.quote, note: item.link.note });
 
-/** Mirror the chip in ?theme= without a navigation (the list is fetched on the client). */
+/**
+ * Mirror the chip in ?theme= without a navigation (the list is fetched on the client). A new history
+ * entry per chip, so back and forward return to the previous chip (audit B07).
+ */
 function writeThemeParam(key: string | null) {
   const url = new URL(window.location.href);
   if (key) url.searchParams.set('theme', key);
   else url.searchParams.delete('theme');
-  window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+  const next = `${url.pathname}${url.search}${url.hash}`;
+  if (next !== `${window.location.pathname}${window.location.search}${window.location.hash}`) {
+    window.history.pushState(null, '', next);
+  }
 }
 
-const subscribeToNothing = () => () => {};
 const readThemeFromUrl = () => parseThemeParam(new URLSearchParams(window.location.search).get('theme'));
 
 /**
@@ -68,11 +73,22 @@ export function useTopicReader({
   initialTheme,
 }: UseTopicReaderOptions) {
   const [activeKind, setActiveKind] = useState<TypeFilter>('all');
-  // `?theme=` of the address bar, read after hydration (null on the server: same HTML for everyone).
-  const urlTheme = useSyncExternalStore(subscribeToNothing, readThemeFromUrl, () => null);
-  const urlThemeKnown = urlTheme && (themes ?? []).some((theme) => theme.key === urlTheme) ? urlTheme : null;
   // `undefined` = the visitor has not picked a chip yet, so the URL (or the server render) decides.
   const [pickedTheme, setPickedTheme] = useState<string | null | undefined>(undefined);
+  // `?theme=` of the address bar, read after hydration (null on the server: same HTML for everyone).
+  // An effect, not a no-op external store: that store kept the server's null after hydration, so a
+  // shared ?theme= link opened on «الكل» (audit B07). Back/forward re-read it and drop the picked chip.
+  const [urlTheme, setUrlTheme] = useState<string | null>(null);
+  useEffect(() => {
+    const sync = () => {
+      setUrlTheme(readThemeFromUrl());
+      setPickedTheme(undefined);
+    };
+    sync();
+    window.addEventListener('popstate', sync);
+    return () => window.removeEventListener('popstate', sync);
+  }, []);
+  const urlThemeKnown = urlTheme && (themes ?? []).some((theme) => theme.key === urlTheme) ? urlTheme : null;
   const activeTheme = pickedTheme !== undefined ? pickedTheme : (urlThemeKnown ?? initialTheme);
   const serverView = activeKind === 'all' && activeTheme === initialTheme;
 

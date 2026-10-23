@@ -14,6 +14,22 @@ export const ENGLISH_EDITIONS: readonly {
 ];
 
 /**
+ * Arabic of the same editions, read only to check that an English entry is the stored narration
+ * (match.ts). Same running numbers as the English files.
+ */
+export const ARABIC_EDITIONS: readonly {
+  book: EnglishBook;
+  file: string;
+  sha256: string;
+}[] = [
+  { book: 'bukhari', file: 'ara-bukhari.min.json', sha256: 'f887d8724f75fb6e1d5d29342a173af5346ad9b933173c85e6e3cb570063ea33' },
+  { book: 'muslim', file: 'ara-muslim.min.json', sha256: '2cb296f3455ff8a3da9f6a0ca3de75da675788b2fb446ad316df297838e48217' },
+  { book: 'abudawud', file: 'ara-abudawud.min.json', sha256: '30dd3792ea65abe7fd0be8d568809d4eac04e38cbbd588b9c6055218fe43675f' },
+  { book: 'tirmidhi', file: 'ara-tirmidhi.min.json', sha256: '22b7ffbbca9beb5d4f108cc0389a3cd16917876b3ceb32993c46e1554afd871b' },
+  { book: 'ibnmajah', file: 'ara-ibnmajah.min.json', sha256: '495fcccdea5f2d157794d2b1bd1eaa0e0a5ff5aeb6be2d7817de8f25e3b3349c' },
+];
+
+/**
  * Saheeh International, the Umm Muhammad wording. Quran.com no longer returns
  * resource 131 without a key, so the file is the same publisher’s pinned edition.
  */

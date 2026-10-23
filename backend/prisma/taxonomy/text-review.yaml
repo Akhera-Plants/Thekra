@@ -1,0 +1,1645 @@
+# Published hadith whose stored wording may be cut from a longer narration (audit B03).
+# Written by `pnpm --filter backend import:book audit-texts` (read-only on the database);
+# a re-run keeps the decisions below.
+#
+# decision: COMPLETE  the text stands on its own as stored
+#           FRAGMENT  the full matn must be restored from the cited edition (reviewed migration)
+#           (empty)   not reviewed yet
+# Until a text is COMPLETE it is never chosen as the homepage reminder. Listing pages are unchanged.
+texts:
+  # "إنما بعثت قاسما أقسم بينكم وقال سليمان فإنما أنا قاسم أقسم بينكم"
+  - { id: 00579e96-4518-4462-858e-04c6b7956476, ref: "مسلم 2133", reason: fragment, decision:  }
+  # "«أولكلكم ثوبان»"
+  - { id: 00f0949b-eb70-4233-8333-d71cf22364e8, ref: "البخاري 358", reason: short, decision:  }
+  # "«في العسل والحجم»"
+  - { id: 018a6445-d701-48fb-91c5-6142e8b3acd3, ref: "البخاري 5680", reason: short, decision:  }
+  # "لا نورث ما تركنا صدقة"
+  - { id: 02869174-3bde-4851-89c1-840a68b3c20e, ref: "مسلم 1761", reason: short, decision:  }
+  # "«كل مسكر حرام»"
+  - { id: 031d355a-3c19-4b8f-bc63-21d6c579937a, ref: "البخاري 6124", reason: short, decision:  }
+  # "لصاحبيه ما أنصفنا أصحابنا"
+  - { id: 038ca5fd-8642-4344-907a-f52beb676bbc, ref: "مسلم 1789", reason: short, decision:  }
+  # "«لا يدخل الجنة قتات»"
+  - { id: 04858f36-a4b3-42d0-81e8-da96bbc732e9, ref: "البخاري 6056", reason: short, decision:  }
+  # "«العائد في هبته كالعائد في قيئه»"
+  - { id: 04873e0e-33c3-427e-a359-e9d20ff705aa, ref: "البخاري 2621", reason: short, decision:  }
+  # "فصوموه أنتم"
+  - { id: 04ca0d0c-1a18-4217-ac7f-688f69e2a34e, ref: "مسلم 1131", reason: short, decision:  }
+  # "لا يكون له سمسارا"
+  - { id: 04e604f8-eec7-4f47-b539-f5be149aaee3, ref: "البخاري 2274", reason: short, decision:  }
+  # "حين توفي سجي ببرد حبرة»"
+  - { id: 053eb4e8-2274-4a6c-9e7a-f191cee96b7b, ref: "البخاري 5814", reason: short, decision:  }
+  # "«إن عبد الله رجل صالح، لو كان يصلي من الليل» فقال نافع: «فلم يزل بعد ذلك يكثر الصلاة»"
+  - { id: 058eb7c2-13db-446f-881f-d9c9ba570b20, ref: "البخاري 7029", reason: fragment, decision:  }
+  # "«لا تتمنوا الموت» لتمنيت"
+  - { id: 06329639-9005-498e-bfca-2643ae6bf68a, ref: "البخاري 7233", reason: short, decision:  }
+  # "«من جاء منكم الجمعة فليغتسل»"
+  - { id: 0667afae-f7d6-47dc-9dc9-9ecb92eab71d, ref: "البخاري 894", reason: short, decision:  }
+  # "سأل زينب بنت جحش عن أمري، فقال لزينب: «ماذا علمت، أو رأيت». فقالت: يا رسول الله أحمي سمعي وبصري، والله ما علمت إلا خيرا،"
+  - { id: 0707fee8-7577-42cf-b443-618166cccea2, ref: "البخاري 4141", reason: fragment, decision:  }
+  # "«الشؤم في المرأة، والدار، والفرس»"
+  - { id: 073d8153-3d51-4eb9-9cf3-cd77f8229246, ref: "البخاري 5093", reason: short, decision:  }
+  # "«أكفئوا القدور»"
+  - { id: 08076451-45ac-4ff6-8ed4-b02b3d1d305e, ref: "البخاري 4221", reason: short, decision:  }
+  # "يلبسها فنحن نغسلها للمرضى يستشفى بها"
+  - { id: 09019a99-dd43-4183-97d7-c8e8a47ad8fb, ref: "مسلم 2069", reason: fragment, decision:  }
+  # "\" اللهم كما حسنت خلقي فأحسن خلقي \""
+  - { id: 09a23a64-272a-45e6-b3fa-381e581b240f, ref: "- مسند الإمام أحمد بن حنبل، المحقق: شعيب الأرنؤوط - عادل مرشد، وآخرون إشراف: د عبد الله بن عبد المحسن التركي مؤسسة الرسالة الطبعة: الأولى، 1421 هـ - 2001 م.", reason: short, decision:  }
+  # "«لا آكل متكئا»"
+  - { id: 09c6c2df-8982-4438-828f-73c929b2508c, ref: "البخاري 5398", reason: short, decision:  }
+  # "«الجار أحق بصقبه» ما أعطيتك"
+  - { id: 0a22c80e-732f-4f30-acc6-334984830785, ref: "البخاري 6981", reason: short, decision:  }
+  # "«الشمس والقمر مكوران يوم القيامة»"
+  - { id: 0a5580d7-f2d1-42a1-a94b-55d81358060a, ref: "البخاري 3200", reason: short, decision:  }
+  # "أشهدوا أشهدوا"
+  - { id: 0a59da38-487e-4745-b1d9-6b556a3522a1, ref: "مسلم 2801", reason: short, decision:  }
+  # "«إذا سمعتم به بأرض فلا تقدموا عليه، وإذا وقع بأرض وأنتم بها فلا تخرجوا فرارا منه» قال: فحمد الله عمر ثم انصرف"
+  - { id: 0a681f84-512d-4b3b-b0f1-b37a1165564f, ref: "البخاري 5729", reason: fragment, decision:  }
+  # "كان يغتسل بفضل ميمونة"
+  - { id: 0aa049bc-b4e0-478d-bda8-0a99a37e0000, ref: "مسلم 323", reason: short, decision:  }
+  # "نعم ورب هذا البيت"
+  - { id: 0ad41327-d2f7-46ef-b85e-383422d7d65c, ref: "مسلم 1143", reason: short, decision:  }
+  # "بمعنى حديث هشام بن عروة"
+  - { id: 0b0fc061-eb59-4903-932d-07895d3b1c1e, ref: "مسلم 2243", reason: short, decision:  }
+  # "«وهل ترك لنا عقيل من منزل»"
+  - { id: 0b46c339-02f9-4b65-81c2-8f306a397b21, ref: "البخاري 4282", reason: fragment, decision:  }
+  # "لعمار تقتلك الفئة الباغية"
+  - { id: 0ba186e4-80c9-4141-9035-d510e1deeb1f, ref: "مسلم 2916", reason: short, decision:  }
+  # "اجعلوا آخر صلاتكم بالليل وترا"
+  - { id: 0bda155b-e786-4616-a380-56be0031c5c2, ref: "مسلم 751", reason: short, decision:  }
+  # "«أسلمت على ما سلف لك من خير»"
+  - { id: 0c55921d-b3f9-4c22-85cd-bffc2ea60dc4, ref: "البخاري 2220", reason: fragment, decision:  }
+  # "«اجعلوا آخر صلاتكم بالليل وترا»"
+  - { id: 0c5cb483-4a60-4afe-8497-01419d1fe845, ref: "البخاري 998", reason: short, decision:  }
+  # "أحد عمومتي"
+  - { id: 0c8becd2-893f-4284-901b-31a74a773c95, ref: "البخاري 3810", reason: short, decision:  }
+  # "أمرني بهذا»"
+  - { id: 0cbe8c45-990e-427a-a50c-42967d65bda5, ref: "البخاري 5332", reason: short, decision:  }
+  # "صلى إلى بعير"
+  - { id: 0d44b97e-70a4-48af-8ebe-62f91322ccfb, ref: "مسلم 502", reason: short, decision:  }
+  # "«الولد للفراش وللعاهر الحجر» وقال ابن شهاب: وكان أبو هريرة يصيح بذلك"
+  - { id: 0d453c06-6df5-430e-9e73-9a2952bed887, ref: "البخاري 4303", reason: fragment, decision:  }
+  # "«عرضت علي النار وأنا أصلي»"
+  - { id: 0de0ba69-7f62-4022-8c3f-f54e30a5bcf9, ref: "البخاري 430", reason: short, decision:  }
+  # "بنحو هذا أو بمثله"
+  - { id: 0e77bc9f-696a-4ffd-b5c9-cf5138251901, ref: "مسلم 2468", reason: short, decision:  }
+  # "«التوكل على الله جماع الإيمان»"
+  - { id: 0e7a0a28-96e5-4b0a-95b8-c147814134e9, ref: "", reason: short, decision:  }
+  # "«يسروا ولا تعسروا، وسكنوا ولا تنفروا»"
+  - { id: 0e82eaeb-f985-4e82-92e3-4190bee5cade, ref: "البخاري 6125", reason: short, decision:  }
+  # "«من لا يشكر الناس لا يشكر الله»"
+  - { id: 0eb93197-cf58-44df-b3b7-adb74e7f764b, ref: "سنن أبي داود (7/ 188) (4811).", reason: short, decision:  }
+  # "بهذا الحديث"
+  - { id: 0ec3d448-f7fc-4927-b00c-1df99f130889, ref: "مسلم 132", reason: short, decision:  }
+  # "لأشج عبد القيس: «إن فيك خصلتين يحبهما الله الحلم، والأناة»"
+  - { id: 0eefcd52-19fc-4185-a823-8ca091052bc7, ref: "مسلم 18", reason: fragment, decision:  }
+  # "حلق رأسه في حجة الوداع"
+  - { id: 0f7e1c1c-1eec-4326-a77b-f61f31620bc0, ref: "مسلم 1304", reason: short, decision:  }
+  # "قال: «هذا جبل يحبنا ونحبه»"
+  - { id: 0ff5cccd-df88-481a-9671-06d0446f92fe, ref: "البخاري 4083", reason: short, decision:  }
+  # "«وجدته بحرا» يعني الفرس"
+  - { id: 1068058b-4cbc-4eda-968d-9a5c681d868a, ref: "البخاري 3040", reason: short, decision:  }
+  # "«الولد للفراش، وللعاهر الحجر»"
+  - { id: 10953149-1125-479f-9316-8c1725b5bf02, ref: "البخاري 6818", reason: short, decision:  }
+  # "الطاعون شهادة لكل مسلم"
+  - { id: 109755de-3fc1-43d3-886f-26928f4a0dc2, ref: "مسلم 1916", reason: short, decision:  }
+  # "بمثل حديث معمر"
+  - { id: 11922203-8a55-443f-979f-1cb7e2fcd25e, ref: "مسلم 1458", reason: short, decision:  }
+  # "يسأل زينب ابنة جحش عن أمري، فقال: «يا زينب ماذا علمت أو رأيت؟» فقالت: يا رسول الله أحمي سمعي وبصري، ما علمت إلا خيرا، قا"
+  - { id: 120ed409-384a-4468-a69b-bb65dd9a0b52, ref: "البخاري 4750", reason: fragment, decision:  }
+  # "«صدق، فأعطه». فأعطانيه، فابتعت به مخرفا في بني سلمة، فإنه لأول مال تأثلته في الإسلام،"
+  - { id: 125f4afe-e0b5-4244-9fef-85ad18b85b31, ref: "البخاري 4321", reason: fragment, decision:  }
+  # "فأمر رجلا من القوم فجاء بدلو من ماء فشنه عليه"
+  - { id: 12812f82-cfd0-4227-b5a0-65e6b5293a0f, ref: "مسلم 285", reason: fragment, decision:  }
+  # "«لا يقربنها حتى يطوف بين الصفا والمروة»"
+  - { id: 129287ec-80e0-4a71-8d60-34caf38c8ae1, ref: "البخاري 1646", reason: fragment, decision:  }
+  # "توضئوا مما مست النار"
+  - { id: 12cbcc6c-1366-4917-b70d-5d7eacb3a2ab, ref: "مسلم 352", reason: short, decision:  }
+  # "«إن الميت ليعذب ببكاء أهله عليه»،"
+  - { id: 131a40c7-0319-4cb6-811e-9ba91df9efce, ref: "البخاري 1286", reason: fragment, decision:  }
+  # "«التودد إلى الناس نصف العقل»"
+  - { id: 133d7eaf-68f7-4bc5-8474-c0547049fbc9, ref: "", reason: short, decision:  }
+  # "كان ذلك يوم الخندق"
+  - { id: 13795ea8-cb87-4318-aab7-654ac3d5713b, ref: "مسلم 3020", reason: short, decision:  }
+  # "بنحو حديث عطاء وأبي الزبير وعمرو بن دينار"
+  - { id: 13b70ae2-2951-459a-b944-0c63f8497075, ref: "مسلم 1552", reason: fragment, decision:  }
+  # "اللهم إني أحبه فأحبه وأحبب من يحبه"
+  - { id: 14b00135-a417-4a36-8a9a-01a46e032928, ref: "مسلم 2421", reason: fragment, decision:  }
+  # "عند ذلك إن الرجل ليعمل عمل أهل الجنة فيما يبدو للناس وهو من أهل النار وإن الرجل ليعمل عمل أهل النار فيما يبدو للناس وهو"
+  - { id: 14b8fc2d-c4e5-4c51-91e7-d2aa767e24a1, ref: "مسلم 112", reason: fragment, decision:  }
+  # "كان يفعله"
+  - { id: 1550ecf0-f5a4-43f0-b43e-41bfaf491188, ref: "البخاري 1095", reason: short, decision:  }
+  # "صلى وذلك في رمضان»"
+  - { id: 15cf37b3-9afc-483e-8eab-445fbd8969cf, ref: "البخاري 2011", reason: short, decision:  }
+  # "وقت صلاتكم بين ما رأيتم"
+  - { id: 15eff6a2-b35d-4d35-9d8e-63d3ab708ffa, ref: "مسلم 613", reason: short, decision:  }
+  # "«اذهبوا به فارجموه» وكان قد أحصن"
+  - { id: 16049fd7-7f7f-4fa6-a9a1-0104a4986f88, ref: "البخاري 5271", reason: fragment, decision:  }
+  # "يقسم لعائشة يومين يومها ويوم سودة"
+  - { id: 16595e04-c95c-4196-a1d7-631255df4d13, ref: "مسلم 1463", reason: fragment, decision:  }
+  # "\" قد قلت: وعليكم \""
+  - { id: 16845393-82a1-40ef-8ebf-7df7a62f9bce, ref: "البخاري 6024", reason: short, decision:  }
+  # "أهل بالحج مفردا"
+  - { id: 169354f0-f2ee-46b1-a228-3e35d92b73ab, ref: "مسلم 1231", reason: short, decision:  }
+  # "كان يفعله"
+  - { id: 16b4315b-28e9-4b35-939a-a2fcad077711, ref: "البخاري 1096", reason: short, decision:  }
+  # "خرجت من النار فنظروا فإذا هو راعي معزى"
+  - { id: 1700f8aa-694e-4fea-b110-6f902cc289f6, ref: "مسلم 382", reason: fragment, decision:  }
+  # "«نعم إذا رأت الماء»"
+  - { id: 17778c45-83f2-4d5e-83c0-0f6a1644d77f, ref: "البخاري 282", reason: short, decision:  }
+  # "نهى عن الدباء والمزفت"
+  - { id: 17a22256-1cf7-4b24-8548-6d51fa0e4d01, ref: "مسلم 1994", reason: short, decision:  }
+  # "«زوج معقل أخته فطلقها تطليقة»"
+  - { id: 17cbc0f9-77b6-4bcd-a1f3-ee42289baf02, ref: "البخاري 5330", reason: short, decision:  }
+  # "كان يأمر بالغسل»"
+  - { id: 180c007e-5513-4988-93de-cea59d1d56f4, ref: "البخاري 878", reason: short, decision:  }
+  # "في هذا المسجد"
+  - { id: 18b30ba6-7b20-49e6-b074-8282bb053c47, ref: "مسلم 113", reason: short, decision:  }
+  # "بمثله، إلا النهبة"
+  - { id: 18ce7ce6-9aec-489c-8464-c4713042b7a2, ref: "البخاري 6772", reason: short, decision:  }
+  # "أن جارية لكعب: بهذا"
+  - { id: 18e2dc18-430d-4e31-a7cc-08814a734fa3, ref: "البخاري 5504", reason: short, decision:  }
+  # "«خير دور الأنصار بنو النجار»"
+  - { id: 1982534d-dd40-4717-a96b-53d03bb3234b, ref: "البخاري 6053", reason: short, decision:  }
+  # "«يقتل المحرم»"
+  - { id: 1987dd03-d48c-4139-9e5d-42a3c6cab352, ref: "البخاري 1827", reason: short, decision:  }
+  # "«نصرت بالصبا، وأهلكت عاد بالدبور»"
+  - { id: 19fdb259-cdf9-42d4-8c97-27b597463c96, ref: "البخاري 4105", reason: short, decision:  }
+  # "« هو لك يا عبد الله»"
+  - { id: 1a1f2e33-fc92-49cd-8c50-2e6eeecb273e, ref: "البخاري 2611", reason: short, decision:  }
+  # "إن الكافر يأكل في سبعة أمعاء"
+  - { id: 1a90660c-f564-4532-8386-31c4f7c3f6d9, ref: "مسلم 2060", reason: fragment, decision:  }
+  # "كان «يحدث حديثا لو عده العاد لأحصاه»"
+  - { id: 1aab9a7f-1bb0-4de6-889b-94d63c00a22b, ref: "البخاري 3567", reason: fragment, decision:  }
+  # "«مستريح ومستراح منه، المؤمن يستريح»"
+  - { id: 1ab19b10-6b88-41f9-8a1b-c9393dda0369, ref: "البخاري 6513", reason: short, decision:  }
+  # "«وأتبع أصحاب القليب لعنة»"
+  - { id: 1b7a6f09-98bc-4b6a-9c7e-02a6bc4992f1, ref: "البخاري 520", reason: short, decision:  }
+  # "أخذها من مجوس هجر \""
+  - { id: 1cb13b32-4e2f-4878-9c78-14b530816cb8, ref: "البخاري 3157", reason: short, decision:  }
+  # "«أولم ولو بشاة»"
+  - { id: 1d482a53-2bb2-4727-bff1-658e0473a2c9, ref: "البخاري 5153", reason: short, decision:  }
+  # "«ما بين لابتيها حرام»"
+  - { id: 1d64c915-dea7-4b52-baf8-8e336e60542b, ref: "البخاري 1873", reason: short, decision:  }
+  # "«ثلاث للمهاجر بعد الصدر»"
+  - { id: 1d719f23-f40a-432e-ba3b-8babe0aaaed4, ref: "البخاري 3933", reason: short, decision:  }
+  # "«إنما هذا من إخوان الكهان»"
+  - { id: 1d7f2e0f-08b3-4484-867b-62fef46091e2, ref: "البخاري 5760", reason: short, decision:  }
+  # "خرج يوم الفطر، فبدأ بالصلاة قبل الخطبة»"
+  - { id: 1da87ad1-5f52-4b8b-ae4c-472735c6d7b3, ref: "البخاري 958", reason: fragment, decision:  }
+  # "قال: «لا ربا إلا في النسيئة»"
+  - { id: 1db5b51f-b4ea-4add-8e68-9555fce954a7, ref: "البخاري 2178", reason: fragment, decision:  }
+  # "«يا أنجش، رويدك سوقك بالقوارير»"
+  - { id: 1e030d1b-34fd-4391-948f-c739794b9072, ref: "البخاري 6202", reason: short, decision:  }
+  # "«العين حق» ونهى عن الوشم"
+  - { id: 1e14526f-6a7c-4c43-a44a-6c59765928e7, ref: "البخاري 5740", reason: short, decision:  }
+  # "«له أجران أجر القرابة والصدقة»"
+  - { id: 1e540194-0cc9-44ed-91d4-8206ba87ccb1, ref: "البخاري 1460", reason: short, decision:  }
+  # "استسقى فقلب رداءه»"
+  - { id: 1eed3b2e-8c89-4e5f-9665-22fafa0d166a, ref: "البخاري 1011", reason: short, decision:  }
+  # "أمرها بقتل الأوزاغ»"
+  - { id: 1f1ebd5c-c50c-43a9-85d4-2b1f7f4521f4, ref: "البخاري 3307", reason: short, decision:  }
+  # "مدكر دالا"
+  - { id: 1fc1715b-f3fc-4727-b71e-3a727ae13725, ref: "مسلم 823", reason: short, decision:  }
+  # "«إن من عباد الله من لو أقسم على الله لأبره»"
+  - { id: 20b1ec7d-5352-4bcc-9ec8-cff2093ec993, ref: "البخاري 2806", reason: fragment, decision:  }
+  # "«لا تحلين لزوجك الأول حتى يذوق الآخر عسيلتك وتذوقي عسيلته»"
+  - { id: 20c1e98c-483b-410d-9546-0e90b3bc41f0, ref: "البخاري 5265", reason: fragment, decision:  }
+  # "«لو تأخر الهلال لزدتكم» كالمنكل لهم"
+  - { id: 20f484d8-23d4-476e-8eac-481aac2ab4e6, ref: "البخاري 7299", reason: fragment, decision:  }
+  # "«لا صام من صام الأبد» مرتين"
+  - { id: 2193ab4a-326e-4fda-bef1-ab223e186c0e, ref: "البخاري 1977", reason: short, decision:  }
+  # "«اللهم ثبته، واجعله هاديا مهديا»"
+  - { id: 21bd9d93-fdf6-49ad-b2a0-3b34c7fa7d65, ref: "البخاري 6090", reason: short, decision:  }
+  # "أبو بردة فقالت أسماء فلقد رأيت أبا موسى وإنه ليستعيد هذا الحديث مني"
+  - { id: 2275701b-de24-4ea2-9188-04de9180507d, ref: "مسلم 2503", reason: fragment, decision:  }
+  # "وقاها الله شركم كما وقاكم شرها"
+  - { id: 22f8396c-2230-45db-a3f0-02957bce35c8, ref: "مسلم 2234", reason: fragment, decision:  }
+  # "أو مخرجي هم قال ورقة نعم لم يأت رجل قط بما جئت به إلا عودي وإن يدركني يومك أنصرك نصرا مؤزرا"
+  - { id: 2330e765-62e2-4a7d-92f2-30b3b0d05108, ref: "مسلم 160", reason: fragment, decision:  }
+  # "كل معروف صدقة"
+  - { id: 23671d84-df80-418e-a5ac-035e3871d301, ref: "مسلم 1005", reason: short, decision:  }
+  # "«صدق سلمان»"
+  - { id: 23b9d4e3-af62-4c76-bc3e-d510e17a3b50, ref: "البخاري 1968", reason: short, decision:  }
+  # "لا ينكح المحرم"
+  - { id: 23df9ac9-c8fd-48b0-893c-602348973d74, ref: "مسلم 1409", reason: short, decision:  }
+  # "إن من عباد الله من لو أقسم على الله لأبره"
+  - { id: 2472e81a-b187-46cb-9ea0-d88a1efbb050, ref: "مسلم 1675", reason: fragment, decision:  }
+  # "كان أهل بعمرة عام الحديبية»"
+  - { id: 24c0fc94-02be-479d-9f2a-1e09e4ef668c, ref: "البخاري 4183", reason: short, decision:  }
+  # "«يرحم الله موسى، لوددنا لو صبر حتى يقص علينا من أمرهما»"
+  - { id: 254b37db-74d1-4868-a5f2-6b89c3259f49, ref: "البخاري 122", reason: fragment, decision:  }
+  # "«هذا أهون - أو هذا أيسر -»"
+  - { id: 25719b7f-b74f-496f-a73a-c8f2a281a4ff, ref: "البخاري 4628", reason: short, decision:  }
+  # "«إن الصبر عند أول صدمة»"
+  - { id: 2686cce2-9a12-48fa-b416-8aaabb65dfd8, ref: "البخاري 7154", reason: short, decision:  }
+  # "خيرت دور الأنصار فجعلتنا أخرا فقال أو ليس بحسبكم أن تكونوا من الخيار"
+  - { id: 26a91e40-44a6-4a57-91ae-a57b9b758a5e, ref: "مسلم 1392", reason: fragment, decision:  }
+  # "رأى جبريل"
+  - { id: 270f0c24-f645-4778-946f-27835c06e280, ref: "مسلم 175", reason: short, decision:  }
+  # "إذا استجمر أحدكم فليوتر"
+  - { id: 2842719d-a2b6-496a-9a24-40221d74cdf5, ref: "مسلم 239", reason: short, decision:  }
+  # "قد نهى عن ذوات البيوت"
+  - { id: 2849eb79-8016-4f2d-88bf-6261ee8cebfc, ref: "مسلم 2233", reason: short, decision:  }
+  # "«اللهم اشف سعدا»"
+  - { id: 28cbf0ef-e8ec-473e-bab5-c89b1d121a17, ref: "البخاري 5674", reason: short, decision:  }
+  # "«نهى أن تصبر بهيمة أو غيرها للقتل»"
+  - { id: 2970278a-b267-4e1d-ad79-ee3457af4063, ref: "البخاري 5514", reason: fragment, decision:  }
+  # "لأشج عبد القيس إن فيك لخصلتين يحبهما الله الحلم والأناة"
+  - { id: 2adab387-9055-4da0-8a1d-f14e6a65d7b6, ref: "مسلم 18", reason: fragment, decision:  }
+  # "«لا هجرة بعد الفتح»"
+  - { id: 2ae0b47d-0eb3-4ba8-ad5a-4537923e9a9e, ref: "البخاري 4311", reason: short, decision:  }
+  # "الجرس مزامير الشيطان"
+  - { id: 2b2fcc2c-a4d6-4f67-950b-3eb492874ac1, ref: "مسلم 2114", reason: short, decision:  }
+  # "«من لا يشكر الناس لا يشكر الله»"
+  - { id: 2c20e6cb-3c7c-4fa5-b0b7-db484227de2a, ref: "سنن أبي داود (7/ 188) (4811).", reason: short, decision:  }
+  # "لم يحل حتى بلغ الهدي محله"
+  - { id: 2c9094e5-841e-4cfe-9ab0-0dbfe7d0ff72, ref: "البخاري 1724", reason: fragment, decision:  }
+  # "أنه نهى عن خاتم الذهب"
+  - { id: 2ce7c5f7-3f34-4a65-af97-0c8cfd93f359, ref: "مسلم 2089", reason: short, decision:  }
+  # "قال أبو هريرة: «لم يبلغوا الحنث»"
+  - { id: 2d6bd8c5-43d0-4605-b4c9-3f1bd9c18907, ref: "البخاري 1250", reason: fragment, decision:  }
+  # "«من لا يشكر الناس لا يشكر الله»"
+  - { id: 2da8816a-a694-4574-b5cf-e2ac9616816e, ref: "سنن أبي داود (7/ 188) (4811).", reason: short, decision:  }
+  # "حج على رحل وكانت زاملته»"
+  - { id: 2df11ab5-2d28-40b4-b005-ec6ee7cc1ae3, ref: "البخاري 1517", reason: short, decision:  }
+  # "إذا جاء أحدكم إلى الجمعة فليغتسل"
+  - { id: 2e42d7fc-6bbf-4f14-a9d8-749bbd0eb836, ref: "مسلم 845", reason: fragment, decision:  }
+  # "الربا في النسيئة"
+  - { id: 2e53261f-a169-4bfe-82a3-409d67d40c92, ref: "مسلم 1596", reason: short, decision:  }
+  # "«قد أجرنا من أجرت يا أم هانئ» قالت أم هانئ: وذاك ضحى"
+  - { id: 2ea29da2-2a64-4c6c-bd66-77838b700c40, ref: "البخاري 357", reason: fragment, decision:  }
+  # "قولي السلام على أهل الديار من المؤمنين والمسلمين ويرحم الله المستقدمين منا والمستأخرين وإنا إن شاء الله بكم للاحقون"
+  - { id: 2f95f37b-e7b3-4b54-9494-2b47602c4f32, ref: "مسلم 974", reason: fragment, decision:  }
+  # "يسروا ولا تعسروا وسكنوا ولا تنفروا"
+  - { id: 2fc1286a-8573-43ff-b022-b20a87dec7e0, ref: "مسلم 1734", reason: short, decision:  }
+  # "«اصبروا حتى تلقوني على الحوض»"
+  - { id: 3015e933-67b6-403d-8b07-e6aca12d1364, ref: "البخاري 6574", reason: short, decision:  }
+  # "لبيك عمرة وحجا"
+  - { id: 303e49db-7165-41de-9742-a9b122f171b0, ref: "مسلم 1232", reason: short, decision:  }
+  # "«صدقك وهو كذوب ذاك شيطان»"
+  - { id: 30758821-321e-40ab-80d9-766d0d911ce5, ref: "البخاري 3275", reason: short, decision:  }
+  # "العمرى جائزة"
+  - { id: 3076a6b3-bcd8-4979-8eb6-99829c0cb9ff, ref: "مسلم 1626", reason: short, decision:  }
+  # "«فمن أعدى الأول»"
+  - { id: 31395fcb-cc62-42b3-bf47-b6342c051bdd, ref: "البخاري 5775", reason: short, decision:  }
+  # "لا تصاحبنا ناقة عليها لعنة"
+  - { id: 314166fe-4f25-440a-bc5f-bb9f152ac761, ref: "مسلم 2596", reason: short, decision:  }
+  # "قال أبو عبد الله: «الأول أصح»"
+  - { id: 315b97b6-69b8-43cc-84fc-1411b5d8eea1, ref: "البخاري 2839", reason: fragment, decision:  }
+  # "لم يتزوج بكرا غيرها"
+  - { id: 31934e35-c5aa-436c-8f19-30b0d341ed85, ref: "البخاري 5077", reason: short, decision:  }
+  # "ألبس عبد الله قميصه مكافأة لما صنع»"
+  - { id: 3204073f-8be0-49f1-812e-ea59735dd4d1, ref: "البخاري 1350", reason: fragment, decision:  }
+  # "وتقول والله لنمنعهن"
+  - { id: 32235003-7db9-4ce3-8b4b-2279ad66e3c8, ref: "مسلم 442", reason: short, decision:  }
+  # "هكذا رأيت رسول الله صلى الله عليه وسلم يتوضأ"
+  - { id: 32a56406-e4c0-4102-8057-e85649e4debb, ref: "البخاري 140", reason: fragment, decision:  }
+  # "كانت الأولى من موسى نسيانا قال وجاء عصفور حتى وقع على حرف السفينة ثم نقر في البحر فقال له الخضر ما نقص علمي وعلمك من علم"
+  - { id: 32e9ce1a-1ebb-48f4-acba-454927fc4aeb, ref: "مسلم 2380", reason: fragment, decision:  }
+  # "غيروا هذا بشيء واجتنبوا السواد"
+  - { id: 32f6d821-4348-4584-8e34-4f8dbd1d744f, ref: "مسلم 2102", reason: short, decision:  }
+  # "«أفلح إن صدق»"
+  - { id: 33b35d7c-b01c-4fa3-9e94-9fbc418a2caa, ref: "البخاري 46", reason: short, decision:  }
+  # "إنما الماء من الماء"
+  - { id: 34537f64-bff4-4504-bd6a-db1c38e184cb, ref: "مسلم 343", reason: short, decision:  }
+  # "«عائذا بالله من ذلك»"
+  - { id: 3534e45b-62c8-4745-b32d-0a4b19db1cf7, ref: "البخاري 1055", reason: short, decision:  }
+  # "«يميط الأذى عن الطريق صدقة»"
+  - { id: 3578ef78-1c30-46ad-9b47-f23784886d41, ref: "البخاري 2466", reason: short, decision:  }
+  # "يهلل بهن دبر كل صلاة"
+  - { id: 358d50bc-29cc-4211-9802-1fbdf0000566, ref: "مسلم 594", reason: short, decision:  }
+  # "كانت شريكته في ذلك العذق وفي ماله \""
+  - { id: 358f9d73-2fde-446f-991a-93756a0212b8, ref: "البخاري 4573", reason: fragment, decision:  }
+  # "«التلبينة مجمة لفؤاد المريض، تذهب ببعض الحزن»"
+  - { id: 35e64f32-5e1a-47b7-b9dd-8b9c11fc90c7, ref: "البخاري 5417", reason: fragment, decision:  }
+  # "«هو أحد المتصدقين»"
+  - { id: 35f12827-b235-4257-b18a-b7809d895afc, ref: "البخاري 1424", reason: short, decision:  }
+  # "«ألم تروا أنها تنبت صفراء ملتوية»"
+  - { id: 3603e12d-89ad-41c0-9b59-c92d5fea6845, ref: "البخاري 6560", reason: fragment, decision:  }
+  # "فعل ذلك، تابعه إسماعيل، عن أيوب في الغسل"
+  - { id: 36e3331f-3522-41f7-88ea-af473c473a20, ref: "البخاري 1553", reason: fragment, decision:  }
+  # "استسقى، فصلى ركعتين وقلب رداءه»"
+  - { id: 36f844fb-1c03-4bd7-994c-14756ce46527, ref: "البخاري 1026", reason: short, decision:  }
+  # "أنس: «فإذا سجد فاسجدوا»"
+  - { id: 37443397-d5d0-4f14-ace1-c61fc0e17bbd, ref: "البخاري 689", reason: short, decision:  }
+  # "قل لا حول ولا قوة الا بالله"
+  - { id: 379a8b04-ecba-46a2-9f20-e7e3cc5b87af, ref: "مسلم 2704", reason: fragment, decision:  }
+  # "في القيد. قال أبو عبد الله: «لا تكون الأغلال إلا في الأعناق»"
+  - { id: 37c16a04-dc5d-4492-ab1d-8c469fffffa5, ref: "البخاري 7017", reason: fragment, decision:  }
+  # "«إن الله تعالى يخوف بهما عباده»"
+  - { id: 386962fd-9233-41ec-9484-84d1abe7bf1b, ref: "البخاري 1048", reason: fragment, decision:  }
+  # "كان يزوره راكبا وماشيا،"
+  - { id: 38b31c41-5bb0-4689-911e-5c510c8a0835, ref: "البخاري 1191", reason: short, decision:  }
+  # "«يا معشر قريش»"
+  - { id: 38d3b680-62e5-4da4-884c-e58c865f7eed, ref: "البخاري 2752", reason: short, decision:  }
+  # "وما طينة الخبال قال عرق أهل النار أو عصارة أهل النار"
+  - { id: 398a4849-7ba9-4fee-aa2a-d145b17fe592, ref: "مسلم 2002", reason: fragment, decision:  }
+  # "«نصيبي لكم»"
+  - { id: 39b10f7b-cd48-4440-9f2f-8bb215f08907, ref: "البخاري 2306", reason: short, decision:  }
+  # "نهى عن لقطة الحاج"
+  - { id: 3a2a8399-d76b-40b4-95bd-34bca687f72c, ref: "مسلم 1724", reason: short, decision:  }
+  # "«يتعوذ من عذاب القبر»"
+  - { id: 3a3f4e84-1193-4cf8-ae73-a47a467b1ff7, ref: "البخاري 6364", reason: short, decision:  }
+  # "«أنا النبي لا كذب، أنا ابن عبد المطلب»"
+  - { id: 3ad1ba5b-cc56-4fed-aa28-76d0345390f7, ref: "البخاري 2864", reason: fragment, decision:  }
+  # "«لا شيء أغير من الله»"
+  - { id: 3b111906-9b02-4d92-bd50-bf45a66ae4d2, ref: "البخاري 5222", reason: short, decision:  }
+  # "من حمل علينا السلاح فليس منا"
+  - { id: 3b629b29-541b-4862-b98a-03a13338f57a, ref: "مسلم 98", reason: fragment, decision:  }
+  # "ويل للأعقاب من النار"
+  - { id: 3b8c1231-90e3-48b9-a505-f233e7f77cb1, ref: "مسلم 240", reason: short, decision:  }
+  # "«هما ريحانتاي من الدنيا»"
+  - { id: 3c308437-0542-4023-9a77-a16a179237c4, ref: "البخاري 5994", reason: short, decision:  }
+  # "«لا تلتقط لقطتها إلا لمعرف»"
+  - { id: 3c47414f-9040-4534-9801-3ac7addf097e, ref: "البخاري 2432", reason: short, decision:  }
+  # "«أكثرت عليكم في السواك»"
+  - { id: 3cbab8ae-0d26-4c44-8c46-207e4e7feb6c, ref: "البخاري 888", reason: short, decision:  }
+  # "«صدقك وهو كذوب، ذاك شيطان»"
+  - { id: 3cbb30b4-3daf-4dbd-aaf8-9d83abf0ecd6, ref: "البخاري 5010", reason: short, decision:  }
+  # "وددنا أن موسى كان صبر حتى يقص الله علينا من خبرهما \" قال سعيد بن جبير: فكان ابن عباس يقرأ (وكان أمامهم ملك يأخذ كل سفينة"
+  - { id: 3cdddd1c-5f3d-4088-a3cb-6aeb68d485da, ref: "البخاري 4725", reason: fragment, decision:  }
+  # "صف بهم بالمصلى فكبر عليه أربعا»"
+  - { id: 3cfbc518-bff2-4a18-967a-fccbb8e5a5fe, ref: "البخاري 1328", reason: fragment, decision:  }
+  # "ورأسه على فخذي»"
+  - { id: 3d28143a-1dc3-44a8-b5b9-3bed23c265c6, ref: "البخاري 5250", reason: short, decision:  }
+  # "قد مسح وجهه عام الفتح"
+  - { id: 3d8e59a1-43ed-4242-88b5-a9d52e25b6f8, ref: "البخاري 4300", reason: short, decision:  }
+  # "«كل معروف صدقة»"
+  - { id: 3e9db519-1eae-4162-b8b6-5511615587cd, ref: "البخاري 6021", reason: short, decision:  }
+  # "«فتردين عليه حديقته» قالت: نعم"
+  - { id: 3ec59b1c-a399-4740-a9a7-b4c8dad40ece, ref: "البخاري 5275", reason: short, decision:  }
+  # "يبعث إلى قومه خاصة وبعثت إلى الناس عامة \""
+  - { id: 3f11f2f2-0b26-4134-9f89-e69c07c04321, ref: "البخاري 335", reason: fragment, decision:  }
+  # "«كان القنوت في المغرب والفجر»"
+  - { id: 3f348c8f-f70c-4e6b-b1e9-a1ccea00bdf4, ref: "البخاري 798", reason: short, decision:  }
+  # "«لم يكذب إبراهيم إلا ثلاثا»"
+  - { id: 3fe50cac-6587-45ef-adb9-616a1823af33, ref: "البخاري 3357", reason: short, decision:  }
+  # "يخرج من النار من قال: لا إله إلا الله وكان في قلبه من الخير ما يزن شعيرة، ثم يخرج من النار من قال: لا إله إلا الله وكان"
+  - { id: 40d7f8ee-a7b8-48bc-8d7f-18c8e5e6a4ba, ref: "البخاري 7410", reason: fragment, decision:  }
+  # "«نحن الآخرون السابقون يوم القيامة»"
+  - { id: 40f9b5b9-5e9f-4df2-aa7f-64e8b9b53272, ref: "البخاري 6624", reason: short, decision:  }
+  # "«اشتريها، فإنما الولاء لمن أعتق»"
+  - { id: 415b98ac-7eeb-46de-8dfc-7d060ae704fb, ref: "البخاري 6717", reason: short, decision:  }
+  # "الذاكرون الله كثيرا والذاكرات"
+  - { id: 4215809f-29fb-409d-bcae-163db6a608eb, ref: "مسلم 2676", reason: short, decision:  }
+  # "«ويأكلهن وترا»"
+  - { id: 42f4c231-e70a-4e09-a97a-bdbcf5dfe2ce, ref: "البخاري 953", reason: short, decision:  }
+  # "«أنه صلى على قبرها»"
+  - { id: 4304c177-aabb-4fc4-a8cd-38be13c63998, ref: "البخاري 460", reason: short, decision:  }
+  # "نهى عن الشرب قائما"
+  - { id: 4318710b-6c6d-4080-b250-6fe58588358f, ref: "مسلم 2025", reason: short, decision:  }
+  # "«برئ من الصالقة والحالقة والشاقة»"
+  - { id: 442afe5a-f474-4434-a812-a455519560fb, ref: "البخاري 1296", reason: short, decision:  }
+  # "إذا سمعتم به بأرض فلا تقدموا عليه وإذا وقع بأرض وأنتم بها فلا تخرجوا فرارا منه قال فحمد الله عمر بن الخطاب ثم انصرف"
+  - { id: 44af14ea-af29-44c2-89ef-ec93076f2db7, ref: "مسلم 2219", reason: fragment, decision:  }
+  # "«فحج آدم موسى» سورة الأنبياء"
+  - { id: 450dc20e-b003-48f8-871d-b318f491a6ba, ref: "البخاري 4738", reason: short, decision:  }
+  # "«ليست نفس مخلوقة إلا الله خالقها»"
+  - { id: 45a44e7e-ff0d-4507-8c62-4f96b82f5e22, ref: "البخاري 7409", reason: fragment, decision:  }
+  # "«الثلث والثلث كثير أو كبير»"
+  - { id: 45b21d63-b271-4068-8eb9-fa59bb5fa017, ref: "البخاري 2743", reason: short, decision:  }
+  # "«لا تصاحبنا ناقة عليها لعنة»"
+  - { id: 4669041d-c3d7-4ab3-89d9-6f65d8d896f5, ref: "مسلم 2596", reason: short, decision:  }
+  # "بل أرجو أن يخرج الله من أصلابهم من يعبد الله وحده، لا يشرك به شيئا \""
+  - { id: 466d80ed-cab5-4a51-8fbc-cbd33170eff7, ref: "البخاري 3231", reason: fragment, decision:  }
+  # "مثله، وقال: «فاغفر للأنصار»"
+  - { id: 4691aaef-66c7-4784-80fa-c7689d74095b, ref: "البخاري 3795", reason: short, decision:  }
+  # "إي ورب هذا المسجد"
+  - { id: 46f422c7-6d6c-4887-b99e-8aed1c4023b9, ref: "مسلم 1576", reason: short, decision:  }
+  # "يا موسى، قد والله استحييت من ربي مما اختلفت إليه، قال: فاهبط باسم الله قال: واستيقظ وهو في مسجد الحرام \""
+  - { id: 4711e923-4335-4a3d-9984-0b0be2d4406a, ref: "البخاري 7517", reason: fragment, decision:  }
+  # "«استقبل القبلة وكبر»"
+  - { id: 4724b1d1-b308-42e6-b24e-831cf7ebba0d, ref: "البخاري 398", reason: short, decision:  }
+  # "«ولو خاتما من حديد»"
+  - { id: 4782e732-ffe5-4b11-8230-c98905e08d97, ref: "البخاري 5147", reason: short, decision:  }
+  # "يجمع أبويه لأحد غير سعد»"
+  - { id: 47a84e35-38f0-4bec-92c3-c95d6b699bfb, ref: "البخاري 4058", reason: short, decision:  }
+  # "صدق الله وكذب بطن أخيك فسقاه فبرأ"
+  - { id: 4887c69f-46fa-4e7f-a270-4c69b8b072be, ref: "مسلم 2217", reason: fragment, decision:  }
+  # "«إلى أقربهما منك بابا»"
+  - { id: 48c7b51b-18ff-481c-a8da-914b9f533f32, ref: "البخاري 2259", reason: short, decision:  }
+  # "استغفر لي قال وكيف تصنع بلا إله إلا الله إذا جاءت يوم القيامة قال فجعل لا يزيده على أن يقول كيف تصنع بلا إله إلا الله إذ"
+  - { id: 4900499c-e730-41a7-8f54-6830e87bba7b, ref: "مسلم 97", reason: fragment, decision:  }
+  # "لم يحل حتى بلغ الهدي محله"
+  - { id: 492f638e-3eca-4bb3-8820-7f4cae903614, ref: "مسلم 1221", reason: fragment, decision:  }
+  # "«لكم أنتم يا أهل السفينة هجرتان»"
+  - { id: 4959c410-195a-4e1b-827f-22c2eac16e2f, ref: "البخاري 3876", reason: fragment, decision:  }
+  # "فذلك إذنها إذا هي سكتت"
+  - { id: 49832a71-4261-43c9-9167-89cad62f7adf, ref: "مسلم 1420", reason: short, decision:  }
+  # "كان يتخولنا بالموعظة في الأيام مخافة السآمة علينا"
+  - { id: 49b27a8b-0dea-44f2-88e8-afdfe8258552, ref: "مسلم 2821", reason: fragment, decision:  }
+  # "«إن له مرضعا في الجنة»"
+  - { id: 49d7b7ae-2b06-4099-8047-5672a886d1c5, ref: "البخاري 6195", reason: short, decision:  }
+  # "شثن القدمين والكفين»"
+  - { id: 49e5a154-ba9a-4b76-a6cf-d58a1cfe1b11, ref: "البخاري 5910", reason: short, decision:  }
+  # "«اضربوا لي معكم سهما»"
+  - { id: 49fe8a53-91b3-407e-8aa6-64c90fbf483f, ref: "البخاري 2568", reason: short, decision:  }
+  # "أحمي سمعي وبصري والله ما علمت إلا خيرا قالت عائشة وهي التي كانت تساميني من أزواج النبي صلى الله عليه وسلم فعصمها الله با"
+  - { id: 4a5441e4-2d3f-471c-be30-ac98d3beba9b, ref: "مسلم 2770", reason: fragment, decision:  }
+  # "وددنا أن موسى صبر حتى يقص علينا من أمرهما \" قال: وكان ابن عباس يقرأ: «وكان أمامهم ملك يأخذ كل سفينة صالحة غصبا، وأما الغ"
+  - { id: 4a7a9618-532a-431c-ac34-8ca0b778a202, ref: "البخاري 4727", reason: fragment, decision:  }
+  # "«إنما هذا من إخوان الكهان»"
+  - { id: 4a7e6eb5-36e7-4935-a0c4-4508e7b99bde, ref: "البخاري 5758", reason: short, decision:  }
+  # "هذه رحمة جعلها الله في قلوب عباده وإنما يرحم الله من عباده الرحماء"
+  - { id: 4a87a855-d0f6-4b86-b3d8-646776c993a8, ref: "مسلم 923", reason: fragment, decision:  }
+  # "«لا نورث، ما تركنا صدقة»"
+  - { id: 4bce7378-a29b-4d74-8982-894a97f7ecc8, ref: "البخاري 6730", reason: short, decision:  }
+  # "«أولم ولو بشاة»"
+  - { id: 4c38fcde-8fca-43f4-8213-5ba96badc79a, ref: "البخاري 3937", reason: short, decision:  }
+  # "وأصحابه واصلوا ولم يذكر السحور»"
+  - { id: 4c3c71ae-9071-4705-b9ba-611a42672c51, ref: "البخاري 1921", reason: short, decision:  }
+  # "ويلك اركبها ويلك اركبها"
+  - { id: 4d13ccef-c14f-45b3-b512-5efb60a49481, ref: "مسلم 1322", reason: short, decision:  }
+  # "لا تحرم المصة والمصتان"
+  - { id: 4d23eee8-5f35-4165-9977-145fd76cc472, ref: "مسلم 1450", reason: short, decision:  }
+  # "\" الإيمان قول وعمل، يزيد وينقص \""
+  - { id: 4d94a653-85b7-4dca-af1e-e6df7ac31004, ref: "", reason: short, decision:  }
+  # "ما شاء الله أن يقول، ثم أمرهم أن يتعوذوا من عذاب القبر"
+  - { id: 4dcc1f27-7945-4829-a667-3f7f09e954d4, ref: "البخاري 1050", reason: fragment, decision:  }
+  # "«لا نورث ما تركنا صدقة»"
+  - { id: 4dee5583-64a7-4792-a368-be6163eb2841, ref: "البخاري 6727", reason: short, decision:  }
+  # "ابن عباس رضي الله عنهما"
+  - { id: 4e2629e8-414d-46b9-9c3d-d3590c88e049, ref: "البخاري 1319", reason: short, decision:  }
+  # "من ضحك رب العالمين حين قال أتستهزئ مني وأنت رب العالمين فيقول إني لا أستهزئ منك ولكني على ما أشاء قادر"
+  - { id: 4e78c2d7-88bf-4ee6-83ff-8886c2df243b, ref: "مسلم 187", reason: fragment, decision:  }
+  # "\" الشهداء: الغرق، والمطعون، والمبطون، والهدم \""
+  - { id: 4e7bd139-9320-4e23-a164-25ca59cc9737, ref: "البخاري 720", reason: short, decision:  }
+  # "بمعنى حديث مالك"
+  - { id: 4ef1978f-a372-4c1e-86ea-308fe464db12, ref: "مسلم 2183", reason: short, decision:  }
+  # "في الأنهار نحوه. ولم يذكروا: «ثلاثة أقداح»"
+  - { id: 4f0de4d5-413b-4677-bde5-b24970646517, ref: "البخاري 5610", reason: fragment, decision:  }
+  # "«هما عويم بن ساعدة ومعن بن عدي»"
+  - { id: 4fb54f33-8cbc-412c-988c-5ca6a4cad2c8, ref: "البخاري 4021", reason: fragment, decision:  }
+  # "بن شهاب فكانت سنة المتلاعنين"
+  - { id: 4fc21a05-d04a-4920-b03d-6da0964a768d, ref: "مسلم 1492", reason: short, decision:  }
+  # "لم يذكر سمعت"
+  - { id: 4fdaf8e9-6981-4d5d-aa69-921f5a5027ca, ref: "مسلم 2059", reason: short, decision:  }
+  # "«اشتريها، فإنما الولاء لمن أعتق»"
+  - { id: 4fe68bed-c0f0-4afc-b79b-7213012a3995, ref: "البخاري 6759", reason: short, decision:  }
+  # "أمر محرما بقتل حية بمنى"
+  - { id: 5005341d-bf4f-48a1-b138-f7a754a9ae08, ref: "مسلم 2235", reason: short, decision:  }
+  # "«أسلمت على ما سلف من خير»"
+  - { id: 503830d7-022e-4fd2-8448-860ecdd797b9, ref: "البخاري 1436", reason: fragment, decision:  }
+  # "«لا يرحم الله من لا يرحم الناس»"
+  - { id: 504960f9-cff9-4a8b-930b-6033ba0aa319, ref: "البخاري 7376", reason: short, decision:  }
+  # "«احتجم في رأسه»"
+  - { id: 512338da-0c93-4679-903f-c2d6c9b85aa2, ref: "البخاري 5699", reason: short, decision:  }
+  # "«ينصت إذا تكلم الإمام»"
+  - { id: 51883c63-b141-46da-8521-ce92f1dbdd19, ref: "البخاري 933", reason: short, decision:  }
+  # "«يقبض الله الأرض»"
+  - { id: 51a5d200-c7ad-464c-afb8-738d273c668a, ref: "البخاري 7413", reason: short, decision:  }
+  # "وسمى الحرب خدعة»"
+  - { id: 51ab30cd-f586-4376-82c4-29f1bb16cad3, ref: "البخاري 3028", reason: short, decision:  }
+  # "يصلي بالهاجرة»"
+  - { id: 51add5d0-c4da-43a4-a786-a0cc228e8e65, ref: "البخاري 539", reason: short, decision:  }
+  # "إسماعيل: ينمى ذلك ولم يقل ينمي"
+  - { id: 51c840dd-3f38-49a4-be09-e732761ed734, ref: "البخاري 740", reason: short, decision:  }
+  # "«لا يسفك بها دما»"
+  - { id: 51f66966-2b48-46a7-ac18-6e3af7e5d941, ref: "البخاري 1833", reason: short, decision:  }
+  # "أكثر منك شعرا»"
+  - { id: 525d879b-5eea-4839-ab30-c515dca32235, ref: "البخاري 256", reason: short, decision:  }
+  # "بهذا، وقال سعد بن عبادة"
+  - { id: 529bdeb1-4d6d-4c4c-bdb2-c598e0dde2d0, ref: "البخاري 3789", reason: short, decision:  }
+  # "«أقركم ما أقركم الله به»"
+  - { id: 529df5a3-968a-43e4-8f17-c862bb163499, ref: "البخاري 3166", reason: short, decision:  }
+  # "«كنا نؤمر عند الخسوف بالعتاقة»"
+  - { id: 52a3fece-2583-454f-b6c6-dbdb36b3d31c, ref: "البخاري 2520", reason: short, decision:  }
+  # "قال: «فكوا العاني وأجيبوا الداعي»"
+  - { id: 52acf417-f12f-4bb8-94c9-3bd08d07899c, ref: "البخاري 7173", reason: short, decision:  }
+  # "فأنا موضع اللبنة جئت فختمت الأنبياء"
+  - { id: 52c75e5c-c90c-4b4c-bb74-8cbf4eb8c17a, ref: "مسلم 2287", reason: fragment, decision:  }
+  # "وطعن بمخصرته في المنبر هذه طيبة هذه طيبة هذه طيبة يعني المدينة ألا هل كنت حدثتكم ذلك فقال الناس نعم فإنه أعجبني حديث تمي"
+  - { id: 5321d38f-d16d-4387-a25d-67a83f4d3880, ref: "مسلم 2942", reason: fragment, decision:  }
+  # "من ظلم قيد شبر من الأرض طوقه من سبع أرضين"
+  - { id: 53a6b615-8a95-4aed-9424-45b768f2c9a8, ref: "مسلم 1612", reason: fragment, decision:  }
+  # "«إن من الشعر حكمة»"
+  - { id: 53cb9c6b-8a26-4b11-aea1-619011ddf247, ref: "البخاري 6145", reason: short, decision:  }
+  # "قد لقي موسى عليه السلام"
+  - { id: 53e5d247-da6f-4eb5-8bb2-ef62d6badf20, ref: "مسلم 165", reason: short, decision:  }
+  # "بمثل حديث مالك"
+  - { id: 54617756-31ca-4ecb-9637-dade1638717c, ref: "مسلم 1621", reason: short, decision:  }
+  # "«أنزلت في الدعاء»"
+  - { id: 54eb1607-969b-4e05-b958-73fe07c4c857, ref: "البخاري 6327", reason: short, decision:  }
+  # "يذكر الله على كل أحيانه"
+  - { id: 54f57018-2e1a-406d-8efe-71d2e7f7bf2f, ref: "مسلم 373", reason: short, decision:  }
+  # "ه؟ قلت: نعم، قال لي مرارا، فقلت: أفأقرأ التوراة؟"
+  - { id: 555428e0-607e-4ae9-8079-f459e624463d, ref: "البخاري 3305", reason: fragment, decision:  }
+  # "«عمل قليلا وأجر كثيرا»"
+  - { id: 55a2ade7-7a2e-4d50-8235-85643379390a, ref: "البخاري 2808", reason: short, decision:  }
+  # "«لا يعضد شوكه»"
+  - { id: 55ff8596-3f0c-4157-bdaa-fc8fb5913fc5, ref: "البخاري 1831", reason: short, decision:  }
+  # "«ذهبت أنا وأبو بكر، وعمر، ودخلت أنا وأبو بكر، وعمر، وخرجت أنا وأبو بكر، وعمر»"
+  - { id: 5610fa47-3f97-45a0-bd0f-414d4bbd1d34, ref: "البخاري 3685", reason: fragment, decision:  }
+  # "قلت يا رسول الله"
+  - { id: 5639f868-4749-4ae9-82db-af5c445fe82c, ref: "مسلم 2649", reason: short, decision:  }
+  # "«صدق سلمان»"
+  - { id: 565bd99c-0e31-4ea1-92a3-f97ab9879fae, ref: "البخاري 1145", reason: short, decision:  }
+  # "؟ قال: إني لست بمجنون"
+  - { id: 568f01a0-2e0d-4c23-a5d5-df1a3a91a96f, ref: "البخاري 6115", reason: short, decision:  }
+  # "كلهم بمعنى حديث أبي سنان"
+  - { id: 574949c9-cb27-4083-9097-38540eb55137, ref: "مسلم 977", reason: short, decision:  }
+  # "«فبم يشبه الولد»"
+  - { id: 5751594e-dfbc-423f-9e81-56bf3d26eb86, ref: "البخاري 3328", reason: short, decision:  }
+  # "لا صلاة بحضرة الطعام ولا هو يدافعه الأخبثان"
+  - { id: 57786cf1-7c11-4aec-88ac-b6afc9b70e7c, ref: "مسلم 560", reason: fragment, decision:  }
+  # "لم يدخل بيتها إلا صلاهما»"
+  - { id: 57cc92a2-0169-4d8b-b72e-cb827f578a17, ref: "البخاري 1631", reason: short, decision:  }
+  # "عاصم: رأيت القدح وشربت فيه"
+  - { id: 585ab595-b5a3-43f4-bb5a-c218a28baf8a, ref: "البخاري 3109", reason: short, decision:  }
+  # "إنما جعل الإذن من أجل البصر"
+  - { id: 5983e08b-5901-4cf4-bcba-2f5684740a21, ref: "مسلم 2156", reason: fragment, decision:  }
+  # "«أحد جبل يحبنا ونحبه» قال أبو عبد الله: «كل بستان عليه حائط فهو حديقة، وما لم يكن عليه حائط لم يقل حديقة»"
+  - { id: 59da6292-9da1-43fa-819c-eb6b1b798e0d, ref: "البخاري 1482", reason: fragment, decision:  }
+  # "«هي منسوخة»"
+  - { id: 5a067001-63e8-4655-9e7f-933b520319d5, ref: "البخاري 4506", reason: short, decision:  }
+  # "يصلي في نعليه؟ قال: «نعم»"
+  - { id: 5a56a537-eddb-4058-8e09-40ba053e89ae, ref: "البخاري 5850", reason: short, decision:  }
+  # "أبواب صفة الصلاة"
+  - { id: 5a795257-1116-4d91-a9c0-1b07fabfe598, ref: "البخاري 731", reason: short, decision:  }
+  # "«اطلبوه، واقتلوه». فقتله، فنفله سلبه"
+  - { id: 5ac47df7-6aff-415d-b329-3a072cac25e8, ref: "البخاري 3051", reason: short, decision:  }
+  # "«ابن أخت القوم منهم»"
+  - { id: 5b365f28-4b28-46b5-9df4-3b7aaf541fbe, ref: "البخاري 3528", reason: short, decision:  }
+  # "لو أنكم تطهرتم ليومكم هذا"
+  - { id: 5b681fd5-8ba3-42c8-8bb0-067fe1c48960, ref: "مسلم 847", reason: short, decision:  }
+  # "«ذهب المفطرون اليوم بالأجر»"
+  - { id: 5bf46948-3937-4712-a1af-224cd3984529, ref: "البخاري 2890", reason: short, decision:  }
+  # "رجل فيها برأيه ما شاء"
+  - { id: 5c1e3091-c354-46fc-b4f1-c5a1042bae84, ref: "مسلم 1226", reason: short, decision:  }
+  # "لأصحابه: «كلوا» وهم محرمون"
+  - { id: 5c71ecde-58f2-440a-8392-95a1d2a645d9, ref: "البخاري 1822", reason: short, decision:  }
+  # "بمثل حديث مالك وزادوا فيه يوم القيامة"
+  - { id: 5cf064e8-512f-4d14-adea-70c49905a083, ref: "مسلم 2085", reason: fragment, decision:  }
+  # "الواصلة والمستوصلة»"
+  - { id: 5d29e66d-8183-48f9-bafe-8919c69b720d, ref: "البخاري 5936", reason: short, decision:  }
+  # "«سبقك عكاشة»"
+  - { id: 5d4c4f2e-3d37-4887-8a07-d0ab412c1447, ref: "البخاري 5811", reason: short, decision:  }
+  # "«الطاعون شهادة لكل مسلم»"
+  - { id: 5dc1ec43-0f55-4c1b-9d5a-edbe19dda173, ref: "البخاري 2830", reason: short, decision:  }
+  # "«إذا بايعت فقل لا خلابة»"
+  - { id: 5ebd60dc-9c2e-4a6d-a38f-4f455b3bd0cb, ref: "البخاري 6964", reason: short, decision:  }
+  # "يتخولنا بها، مخافة السآمة علينا \""
+  - { id: 5fe60385-b9df-4167-9344-0d9d169c8b87, ref: "البخاري 70", reason: short, decision:  }
+  # "أفلح إن صدق"
+  - { id: 5ff30011-944e-49c2-a960-7326a504bba7, ref: "مسلم 11", reason: short, decision:  }
+  # "له لو أقمت بهذا"
+  - { id: 601b2a49-d9c5-44e4-97e9-8648d005a8e2, ref: "البخاري 1808", reason: short, decision:  }
+  # "«هذا أمين هذه الأمة»"
+  - { id: 6074e312-9926-456b-a5fc-d396f82cf273, ref: "البخاري 4380", reason: short, decision:  }
+  # "أنهلك وفينا الصالحون؟ قال: «نعم إذا كثر الخبث»"
+  - { id: 60dd6db4-bf36-428c-b0c4-5bf0202c580b, ref: "البخاري 3598", reason: fragment, decision:  }
+  # "يملك أربه"
+  - { id: 617e0ba0-bf47-4aa9-8d26-4bc83a99db7c, ref: "مسلم 293", reason: short, decision:  }
+  # "«انهكوا الشوارب، وأعفوا اللحى»"
+  - { id: 6192b4b5-9e0c-4606-bbf3-0ddee6618c57, ref: "البخاري 5893", reason: short, decision:  }
+  # "«نحن أحق بصومه، فأمر بصومه»"
+  - { id: 6199ca45-646b-489b-9031-c3ba0c34cd73, ref: "البخاري 3942", reason: short, decision:  }
+  # "استصغرت أنا وابن عمر،"
+  - { id: 61bed24b-fe05-4e45-9978-e09249a8a698, ref: "البخاري 3955", reason: short, decision:  }
+  # "ذاك إبراهيم عليه السلام"
+  - { id: 6204d304-c1b8-496b-9762-ecbfd031cbf7, ref: "مسلم 2369", reason: short, decision:  }
+  # "من قال ذلك قال قلت ناس من أصحابك قال كذب من قال ذلك بل له أجره مرتين ثم أرسلني إلى علي وهو أرمد فقال لأعطين الراية رجلا"
+  - { id: 621df25b-b60a-4b24-986c-afe01f8aaf9a, ref: "مسلم 1807", reason: fragment, decision:  }
+  # "«فحج آدم موسى مرتين»"
+  - { id: 6245d11d-697d-48aa-bfd3-ba83e61352b9, ref: "البخاري 3409", reason: short, decision:  }
+  # "«إن خياركم أحسنكم قضاء»"
+  - { id: 6261b873-9daa-4811-9a89-ca2145cb20b5, ref: "البخاري 2393", reason: short, decision:  }
+  # "«اللهم ارزق آل محمد قوتا»"
+  - { id: 6316a0b9-ac82-411a-8c27-19f7acafdbaf, ref: "البخاري 6460", reason: short, decision:  }
+  # "والذي نفسي بيده ما لقيك الشيطان قط سالكا فجا إلا سلك فجا غير فجك"
+  - { id: 63dd7d0b-3bf9-4da3-a371-75a7560cf4c0, ref: "مسلم 2396", reason: fragment, decision:  }
+  # "يضحي بكبشين، وأنا أضحي بكبشين»"
+  - { id: 64a09cf0-ea2b-422a-9e6a-bd63368bb96f, ref: "البخاري 5553", reason: short, decision:  }
+  # "رواه جرير بن عبد الحميد، عن الشيباني، عن أبي بردة"
+  - { id: 64a3f70d-6383-480c-ac55-de48256f08db, ref: "البخاري 4344", reason: fragment, decision:  }
+  # "أعتقيها فإنها من ولد إسماعيل"
+  - { id: 64e7b8b5-9426-4059-adce-6c760d1a2557, ref: "مسلم 2525", reason: short, decision:  }
+  # "لا ولكن اسمه المنذر فسماه يومئذ المنذر"
+  - { id: 64e86c9e-a4dc-4894-b4f5-d58a09c4f3ed, ref: "مسلم 2149", reason: fragment, decision:  }
+  # "الحرب خدعة"
+  - { id: 64fa741e-da49-467c-9348-8ad2ec5a431a, ref: "مسلم 1740", reason: short, decision:  }
+  # "ا: «لم يكن يؤذن يوم الفطر ولا يوم الأضحى»"
+  - { id: 6532125c-b225-4912-b040-93fa449f6cfe, ref: "البخاري 960", reason: fragment, decision:  }
+  # "تسموا باسمي ولا تكنوا بكنيتي"
+  - { id: 65853fdc-35cd-4b73-96f7-9bf675940e1f, ref: "مسلم 2131", reason: short, decision:  }
+  # "«اصبروا حتى تلقوني على الحوض»"
+  - { id: 65c455fd-5a54-494d-9ada-a2a703128687, ref: "البخاري 7050", reason: short, decision:  }
+  # "«لو تركته بين»،"
+  - { id: 6611acec-760f-4aa0-908c-5f08ed0796f0, ref: "البخاري 3056", reason: short, decision:  }
+  # "فقلت قد رجعت إلى ربي حتى استحييت منه"
+  - { id: 661b38fd-5143-4530-80b7-5e43de068a5b, ref: "مسلم 162", reason: fragment, decision:  }
+  # "«نصرت بالصبا، وأهلكت عاد بالدبور»"
+  - { id: 669e8bd8-9fd1-45c1-ac68-df0eb16619d5, ref: "البخاري 3205", reason: short, decision:  }
+  # "قد ذكرها، فلم أكن لأفشي سر رسول الله صلى الله عليه وسلم، ولو تركها لقبلتها"
+  - { id: 66ec91ff-de43-4d47-acff-e5001ca664c0, ref: "البخاري 4005", reason: fragment, decision:  }
+  # "بعد يستعيذ من عذاب القبر"
+  - { id: 66ed8273-bab5-470e-b5d9-338866504a83, ref: "مسلم 584", reason: short, decision:  }
+  # "سبقك بها عكاشة"
+  - { id: 66f09847-7e71-4360-8d0a-42a74264159b, ref: "مسلم 216", reason: short, decision:  }
+  # "بمثل حديث مالك عن نافع"
+  - { id: 673fb2bb-22fe-4c4f-a92e-d2e091020dd6, ref: "مسلم 1871", reason: short, decision:  }
+  # "«حرمت التجارة في الخمر»"
+  - { id: 67414360-63b2-44dd-ab94-5f401b7e1450, ref: "البخاري 2226", reason: short, decision:  }
+  # "ولقد سمعته منه مرارا \""
+  - { id: 678b175e-643b-495d-ae55-05d2c83137f7, ref: "البخاري 5538", reason: short, decision:  }
+  # "نهى عن أكل كل ذي ناب من السبع»"
+  - { id: 67a8183d-9d63-45c6-880e-c5831d0cd0ac, ref: "البخاري 5781", reason: fragment, decision:  }
+  # "كان زكريا نجارا"
+  - { id: 6819f46b-4fe8-441e-9f8d-3563eb11c493, ref: "مسلم 2379", reason: short, decision:  }
+  # "أذن للظعن"
+  - { id: 6840e467-56ce-4fe3-bc1d-a6c5980513a0, ref: "مسلم 1291", reason: short, decision:  }
+  # "«رأيته عبدا» يعني زوج بريرة"
+  - { id: 69e4631b-4a2e-4d64-8c9a-eb6cb3384f70, ref: "البخاري 5280", reason: short, decision:  }
+  # "«من اعتجن بمائه»"
+  - { id: 6a29dec2-89af-4c29-a542-7b176572b189, ref: "البخاري 3378", reason: short, decision:  }
+  # "إنه من لا يرحم لا يرحم"
+  - { id: 6a2a2f4f-65cd-44e3-8bee-0b2133df19d5, ref: "مسلم 2318", reason: short, decision:  }
+  # "«كلب صيد أو ماشية»"
+  - { id: 6a4b3ba2-b4b0-4c9f-8edf-1f68283f319c, ref: "البخاري 2322", reason: short, decision:  }
+  # "«هكذا وضوء رسول الله صلى الله عليه وسلم»"
+  - { id: 6ac2f2d2-4a2d-400f-9f6a-38f45f1178ea, ref: "البخاري 191", reason: fragment, decision:  }
+  # "سبحان الله إن المؤمن لا ينجس"
+  - { id: 6b02b8f0-c92b-46f7-86ef-2046c07ee6a3, ref: "مسلم 371", reason: fragment, decision:  }
+  # "الوضوء مما مست النار"
+  - { id: 6b5e0dd9-9799-4cab-94ec-c3dd5bd29761, ref: "مسلم 351", reason: short, decision:  }
+  # "\" أشد العبادة القراءة في المصحف \""
+  - { id: 6bd43809-bac2-4cd3-8923-b86b68c24606, ref: "", reason: short, decision:  }
+  # "من لا يشكر الناس لا يشكر الله."
+  - { id: 6be30f25-906f-41f1-8690-88b4162ebc49, ref: "سنن أبي داود (7/ 188) (4811).", reason: short, decision:  }
+  # "في البيت المعمور"
+  - { id: 6c62598e-5bcc-43da-90bd-c3f5bbb10c5e, ref: "البخاري 3207", reason: short, decision:  }
+  # "يأمرنا أن نبردها بالماء»"
+  - { id: 6c65e9bb-c45c-46a7-8198-73738f569569, ref: "البخاري 5724", reason: short, decision:  }
+  # "«أرجو أن تكون منهم»"
+  - { id: 6d09e14b-904e-4b9e-a6c7-4b4c9e6c2bf7, ref: "البخاري 3216", reason: short, decision:  }
+  # "ولم يذكر لكن"
+  - { id: 6d250462-9329-4e25-b12e-6ddd627e04a0, ref: "مسلم 2250", reason: short, decision:  }
+  # "أنس بن مالك"
+  - { id: 6d3f8c3a-13b0-4ecd-8eed-a04f86950c34, ref: "البخاري 6889", reason: short, decision:  }
+  # "أسلم سالمها الله وغفار غفر الله لها"
+  - { id: 6da277ad-982b-450d-8082-398543c699b5, ref: "مسلم 2515", reason: fragment, decision:  }
+  # "«لا توردوا الممرض على المصح»"
+  - { id: 6e0aaabb-8610-4fa7-845d-42480e4d44a3, ref: "البخاري 5774", reason: short, decision:  }
+  # "«أفيدع يده في فيك تقضمها، كأنها في في فحل يقضمها»"
+  - { id: 6e47bef1-8561-4efc-adf2-9a2ae96ea1a7, ref: "البخاري 4417", reason: fragment, decision:  }
+  # "هذا أعظم الناس شهادة عند رب العالمين"
+  - { id: 6e628b17-8384-49bc-9eea-3df2d1bb8259, ref: "مسلم 2938", reason: fragment, decision:  }
+  # "يذكر الله على كل أحيانه»"
+  - { id: 6e6f1101-28f3-48b6-8715-038878d0479d, ref: "البخاري 633", reason: short, decision:  }
+  # "المرء مع من أحب"
+  - { id: 6e993bcd-ee76-407a-9154-a4df0065c63d, ref: "مسلم 2640", reason: short, decision:  }
+  # "وتبسم إنها ابنة أبي بكر"
+  - { id: 6efb7f23-9d15-49e3-834b-d36ec76d66b5, ref: "مسلم 2442", reason: short, decision:  }
+  # "وقد أخبرتني أمي: أنها أهلت هي وأختها والزبير وفلان وفلان، بعمرة، فلما مسحوا الركن حلوا"
+  - { id: 6f3bbab7-edd8-4f36-8cda-ed1a7d90cded, ref: "البخاري 1642", reason: fragment, decision:  }
+  # "«أو مخرجي هم»، قال: نعم، لم يأت رجل قط بمثل ما جئت به إلا عودي، وإن يدركني يومك أنصرك نصرا مؤزرا. ثم لم ينشب ورقة أن توف"
+  - { id: 702832f9-b9c9-484b-bf5d-db2a150b34ad, ref: "البخاري 3", reason: fragment, decision:  }
+  # "«لا تحلفوا بآبائكم»"
+  - { id: 703f4caf-5d65-40f6-8a81-eebab65fe78a, ref: "البخاري 6648", reason: short, decision:  }
+  # "يزهق: يهلك \""
+  - { id: 70638997-0d70-4e9e-94f0-8dce412e4cb7, ref: "البخاري 4719", reason: short, decision:  }
+  # "بادروا الصبح بالوتر"
+  - { id: 7063e783-fdd0-4d3c-8393-073b3083f66b, ref: "مسلم 750", reason: short, decision:  }
+  # "فحفر له ووضع في قبره ولم يذكر غسلا"
+  - { id: 7078769d-8503-485b-8041-45313404a002, ref: "مسلم 2472", reason: fragment, decision:  }
+  # "«فنزع أبو بكر ذنوبا أو ذنوبين»"
+  - { id: 714caab0-f94d-40b7-aeb0-df3af6e85949, ref: "البخاري 3633", reason: fragment, decision:  }
+  # "إن يكن الذي ترى فلن تستطيع قتله"
+  - { id: 71c43522-088b-4048-9cd7-cae38513dac2, ref: "مسلم 2924", reason: fragment, decision:  }
+  # "وهو «يتعوذ من عذاب القبر»"
+  - { id: 7232b847-e974-4347-9d38-530b79479025, ref: "البخاري 1376", reason: short, decision:  }
+  # "الأيمنون الأيمنون الأيمنون قال أنس فهي سنة فهي سنة فهي سنة"
+  - { id: 727acedc-6688-4edf-9d71-947942f6b04c, ref: "مسلم 2029", reason: short, decision:  }
+  # "إني قد رزقت حبها"
+  - { id: 72825de3-b8c1-447d-bf2d-909ca6ee444d, ref: "مسلم 2435", reason: short, decision:  }
+  # "«لو تركته بين»، وقال شعيب في حديثه: فرفصه رمرمة - أو زمزمة - وقال إسحاق الكلبي، وعقيل: رمرمة، وقال معمر: رمزة"
+  - { id: 72c33f6e-ff3a-4adf-a3fe-fde1269bd06d, ref: "البخاري 1355", reason: fragment, decision:  }
+  # "إلا آل فلان"
+  - { id: 72e19f0a-28e8-4251-8b43-d93750c25951, ref: "مسلم 936", reason: short, decision:  }
+  # "وعن صلاة بعد الصبح والعصر»"
+  - { id: 732316e4-2137-48ab-aede-88101b240560, ref: "البخاري 1992", reason: short, decision:  }
+  # "«هو البغيض النافع»"
+  - { id: 736f2035-f732-443b-8000-dd910c47daaf, ref: "البخاري 5690", reason: short, decision:  }
+  # "صنع مثل ما صنعت»"
+  - { id: 74d78462-c67e-4693-a30d-ea0a859044f7, ref: "البخاري 5616", reason: short, decision:  }
+  # "واثنين واثنين واثنين"
+  - { id: 74fa12ba-f4c2-4a49-b4cb-49efc2e311ed, ref: "مسلم 2633", reason: short, decision:  }
+  # "اللهم اغفر لعبد الله بن قيس ذنبه وادخله يوم القيامة مدخلا كريما قال أبو بردة إحداهما لأبي عامر والأخرى لأبي موسى"
+  - { id: 75395dd6-4928-48a1-9020-43c81e99e1c0, ref: "مسلم 2498", reason: fragment, decision:  }
+  # "يقبل وهو صائم"
+  - { id: 7592f896-638c-493b-a645-f1e6ab9cf7b4, ref: "مسلم 1107", reason: short, decision:  }
+  # "«حتى تذهب عاهته»"
+  - { id: 7692c46b-b050-44eb-817f-b06df3c83499, ref: "البخاري 1486", reason: short, decision:  }
+  # "قال: «التمسوا»،"
+  - { id: 7694f7b2-5fb2-4b48-8fc9-b1dc6f2ecb34, ref: "البخاري 2019", reason: short, decision:  }
+  # "نعم وأرجو أن تكون منهم"
+  - { id: 76a6425d-6aef-478c-b2cf-90e6b37d945f, ref: "مسلم 1027", reason: short, decision:  }
+  # "الدنيا متاع وخير متاع الدنيا المرأة الصالحة"
+  - { id: 773ff676-f9db-49af-93de-e45a479182d6, ref: "مسلم 1467", reason: short, decision:  }
+  # "«إنها تنفي الرجال كما تنفي النار خبث الحديد»"
+  - { id: 77e11028-09c8-47ee-a336-17c4d4bb7b2e, ref: "البخاري 1884", reason: fragment, decision:  }
+  # "ألا أخذتم إهابها فاستمتعتم به"
+  - { id: 78302750-528b-446b-a12d-6e35ca1599cc, ref: "مسلم 364", reason: short, decision:  }
+  # "مثله سواء"
+  - { id: 78512807-e349-409d-a89f-75f7bda27bb6, ref: "مسلم 2311", reason: short, decision:  }
+  # "يقرأ بهما يوم الجمعة"
+  - { id: 78657864-d8b8-4fdf-b547-a6dd514b7cf0, ref: "مسلم 877", reason: short, decision:  }
+  # "من قرأ بالآيتين،"
+  - { id: 7871b703-5217-474c-85d4-7c7b276bbada, ref: "البخاري 5008", reason: short, decision:  }
+  # "«إذا جاء أحدكم الجمعة، فليغتسل»"
+  - { id: 78a4f62b-6649-4a77-9603-dcab563e07c0, ref: "البخاري 877", reason: short, decision:  }
+  # "«انزعوه» فأوفاهم الذي لهم وبقي مثل ما أعطاهم"
+  - { id: 78f77aee-c6c5-4fe3-9c6c-79766f560dbf, ref: "البخاري 3580", reason: fragment, decision:  }
+  # "«عائذا بالله من ذلك»،"
+  - { id: 79343a27-a0bb-414c-adcb-895f8645606b, ref: "البخاري 1049", reason: short, decision:  }
+  # "احتجم وهو محرم، واحتجم وهو صائم»"
+  - { id: 79847ffc-aca5-499e-bb85-1e37081f1724, ref: "البخاري 1938", reason: short, decision:  }
+  # "كان يضرب شعره منكبيه»"
+  - { id: 79cf8f70-efd7-4d5a-9514-eb68fa3e35cf, ref: "البخاري 5903", reason: short, decision:  }
+  # "«لا تشمن ولا تستوشمن»"
+  - { id: 79e7fc94-388e-49f6-a2ab-822a337abb5c, ref: "البخاري 5946", reason: short, decision:  }
+  # "رأيت الجنة والنار"
+  - { id: 79f5fc3e-11e5-4776-a4eb-33375b9ada3d, ref: "مسلم 426", reason: short, decision:  }
+  # "أشهد أن لا إله إلا الله وأني رسول الله لا يلقى الله بهما عبد غير شاك فيحجب عن الجنة"
+  - { id: 7a70ea95-130f-49a0-8e50-772d834bd465, ref: "مسلم 27", reason: fragment, decision:  }
+  # "«ما شبعنا حتى فتحنا خيبر»"
+  - { id: 7a8ff965-69f0-4fd0-91f1-3f776aa5940b, ref: "البخاري 4243", reason: short, decision:  }
+  # "إذا كفن أحدكم أخاه فليحسن كفنه"
+  - { id: 7ab9d54e-b23c-4a79-8f15-0c96a734aa41, ref: "مسلم 943", reason: fragment, decision:  }
+  # "نهى عن النجش"
+  - { id: 7b2d4e66-617e-4b67-a32a-26222a370d38, ref: "مسلم 1516", reason: short, decision:  }
+  # "«توضأ مرتين مرتين»"
+  - { id: 7b5e34d9-820f-4599-9e8c-b6f0f2f29c45, ref: "البخاري 158", reason: short, decision:  }
+  # "هذه الخطبة التي سمعها من رسول الله صلى الله عليه وسلم"
+  - { id: 7c65d43f-bd44-4930-9fd0-b2eb04145014, ref: "مسلم 1355", reason: fragment, decision:  }
+  # "\" {فهل من مدكر} [القمر: 15] \""
+  - { id: 7c6cb3f8-8512-41ef-9451-d260360fc58f, ref: "البخاري 4874", reason: short, decision:  }
+  # "لبس عليه دعوه"
+  - { id: 7cc613fc-b798-4a85-b788-455ee081ab89, ref: "مسلم 2925", reason: short, decision:  }
+  # "«قد أجرنا من أجرت يا أم هانئ»، قالت أم هانئ: وذلك ضحى"
+  - { id: 7cd68c5b-9394-4e04-814e-a79c8541f67f, ref: "البخاري 3171", reason: fragment, decision:  }
+  # "ويل للأعقاب من النار أسبغوا الوضوء"
+  - { id: 7cde09f2-7042-47d4-9734-04b979dbac0a, ref: "مسلم 241", reason: fragment, decision:  }
+  # "يستحب تأخيرها»"
+  - { id: 7cea1967-4ebb-4f85-8c2e-b226f39a634d, ref: "البخاري 571", reason: short, decision:  }
+  # "ارجع إلى ثوبك فخذه ولا تمشوا عراة"
+  - { id: 7cef86be-5d1b-49f9-83bf-c5929f1897de, ref: "مسلم 341", reason: fragment, decision:  }
+  # "\" الشعوب: القبائل العظام، والقبائل: البطون \""
+  - { id: 7cf1eb52-d445-4ce8-955e-649ebbef3c43, ref: "البخاري 3489", reason: short, decision:  }
+  # "إن الميت يعذب ببكاء الحي"
+  - { id: 7d21f17b-5caf-48ac-a6d1-10c728e5f4a9, ref: "مسلم 930", reason: short, decision:  }
+  # "«يا أبان اجلس» فلم يقسم لهم"
+  - { id: 7d4ab1a7-560b-4834-bdf9-09690bcf8ca5, ref: "البخاري 4238", reason: fragment, decision:  }
+  # "كبر عليه أربعا"
+  - { id: 7d972022-1c72-4bda-8dc3-1c12c7c48814, ref: "مسلم 954", reason: short, decision:  }
+  # "يصومه قال نعم"
+  - { id: 7d9d1481-31db-4cbc-bfb2-b36c439c7228, ref: "مسلم 1133", reason: short, decision:  }
+  # "وإن قضيبا من أراك"
+  - { id: 7da131ba-5117-40ac-8252-a55204d23915, ref: "مسلم 137", reason: short, decision:  }
+  # "«الذهب بالذهب مثلا بمثل، والورق بالورق مثلا بمثل»"
+  - { id: 7dd7340b-f946-41b6-ad67-187d9abf47e6, ref: "البخاري 2176", reason: fragment, decision:  }
+  # "المؤمن يشرب في معي واحد والكافر يشرب في سبعة أمعاء"
+  - { id: 7e0bb12c-1301-4a63-ac5d-1754b2be6432, ref: "مسلم 2063", reason: fragment, decision:  }
+  # "«عن بدر، والخارجون إلى بدر»"
+  - { id: 7e8f6a0a-231c-4d35-896a-2496204541da, ref: "البخاري 4595", reason: short, decision:  }
+  # "وإنه من يأخذه بغير حقه كان كالذي يأكل ولا يشبع ويكون عليه شهيدا يوم القيامة"
+  - { id: 7e9cc8b1-696e-46a8-ade9-455684e9a939, ref: "مسلم 1052", reason: fragment, decision:  }
+  # "لا تحلفوا بالطواغي ولا بآبائكم"
+  - { id: 7ed432b2-1049-44e5-bd57-5b6bf3575496, ref: "مسلم 1648", reason: short, decision:  }
+  # "«التسبيح للرجال، والتصفيق للنساء»"
+  - { id: 7f2c543e-34da-4261-826e-7c32536780ad, ref: "البخاري 1203", reason: short, decision:  }
+  # "«الحرب خدعة»"
+  - { id: 7f76137a-9246-4871-afaf-9ef9ce1b5c9e, ref: "البخاري 3030", reason: short, decision:  }
+  # "مؤمن قتل كافرا ثم سدد"
+  - { id: 7f789379-94a3-4fa1-b08f-375280ad07ae, ref: "مسلم 1891", reason: short, decision:  }
+  # "«إنا لم نرده عليك إلا أنا حرم»"
+  - { id: 7f84adca-8125-4207-8969-541b39b1920a, ref: "البخاري 1825", reason: fragment, decision:  }
+  # "كنت أنا وأبي حين دخلنا على عائشة، وأم سلمة، ح"
+  - { id: 803e4fb3-cb18-407e-a517-93169069e27d, ref: "البخاري 1925", reason: fragment, decision:  }
+  # "«صدق ابن مسعود، زوجك وولدك أحق من تصدقت به عليهم»"
+  - { id: 816de1aa-6d6c-4e07-8bfb-967dc9ef8c08, ref: "البخاري 1462", reason: fragment, decision:  }
+  # "وقال: «عناق جذعة»"
+  - { id: 82223832-709f-4e5a-aedf-6e9da7a25c49, ref: "البخاري 5557", reason: short, decision:  }
+  # "وكان ابن عمر يفعله"
+  - { id: 82a174a2-b5e6-449c-af7e-39bc748d3106, ref: "البخاري 1753", reason: short, decision:  }
+  # "أنه نهى عن تلقي البيوع"
+  - { id: 83b5d317-e9b1-4038-8b05-45df726116b9, ref: "مسلم 1518", reason: short, decision:  }
+  # "من يحرم الرفق يحرم الخير"
+  - { id: 83f017f7-88b0-4ad2-ab87-5c824b36af3e, ref: "مسلم 2592", reason: short, decision:  }
+  # "«هم مني وأنا منهم»"
+  - { id: 84439d6d-b1f9-41ae-9996-24d6f1d94dc2, ref: "البخاري 4383", reason: short, decision:  }
+  # "«لا هجرة بعد الفتح»"
+  - { id: 84a4abc6-acd5-453e-ba85-a2a667c6fac4, ref: "البخاري 3899", reason: short, decision:  }
+  # "يستعيذ في صلاته من فتنة الدجال"
+  - { id: 84bdc089-d853-47a2-a9a3-113ed1eb1074, ref: "البخاري 833", reason: fragment, decision:  }
+  # "«نحن أولى بموسى منكم، ثم أمر بصومه»"
+  - { id: 852d8c2e-b320-4fbe-a4b3-7ce65a47b5c9, ref: "البخاري 3943", reason: fragment, decision:  }
+  # "«لا يدخل الجنة قاطع»"
+  - { id: 8568e32e-745e-44a4-9808-4238739fce5a, ref: "البخاري 5984", reason: short, decision:  }
+  # "«هي النخلة»"
+  - { id: 85a5546d-35c1-474b-914c-659cc88e5751, ref: "البخاري 5444", reason: short, decision:  }
+  # "«لأن يأخذ أحدكم أحبله»"
+  - { id: 85e675d0-1222-47d2-8ba2-8800b69cd5f1, ref: "البخاري 2075", reason: short, decision:  }
+  # "لا عدوى فلا أدري أنسى أبو هريرة أو نسخ أحد القولين الآخر"
+  - { id: 86069d02-3926-4ae2-9b52-13f5012d160b, ref: "مسلم 2221", reason: fragment, decision:  }
+  # "«فصوموه أنتم»"
+  - { id: 8640d74b-0fcd-42ea-813d-691638926f48, ref: "البخاري 2005", reason: short, decision:  }
+  # "أنه حرق متاعه، وهذا أصح"
+  - { id: 864d6794-f5aa-41d5-ad5c-b3dc6f9af7b8, ref: "البخاري 3073", reason: short, decision:  }
+  # "سبحان الله إنما سمعت شيئا فأحببت أن أتثبت"
+  - { id: 86d38463-8b10-43c2-94c4-46ea9928c18f, ref: "مسلم 2154", reason: fragment, decision:  }
+  # "«سباب المسلم فسوق، وقتاله كفر»"
+  - { id: 86ea0550-dcb7-4761-906a-38e38b68f0b6, ref: "البخاري 48", reason: short, decision:  }
+  # "رسول الله صلى الله عليه وسلم قم فاقضه"
+  - { id: 887f77cd-bcdb-4157-b64c-2a541e0005a5, ref: "مسلم 1558", reason: fragment, decision:  }
+  # "بمثل حديث الثوري"
+  - { id: 8889d6f6-c4f8-4ab0-b30f-41cbac393d76, ref: "مسلم 2987", reason: short, decision:  }
+  # "«أصاب، إنه فقيه»"
+  - { id: 88ae0f58-98f4-4f79-b958-5c3971f82afd, ref: "البخاري 3765", reason: short, decision:  }
+  # "نحو حديثهم"
+  - { id: 88bdf391-c5ac-4379-8137-f93598b849fc, ref: "مسلم 1835", reason: short, decision:  }
+  # "أذن للظعن»"
+  - { id: 88f1766b-be77-44a1-8fb5-50655032d6b1, ref: "البخاري 1679", reason: short, decision:  }
+  # "«وأولاد المشركين، وأما القوم الذين كانوا شطر منهم حسنا وشطر قبيحا، فإنهم قوم خلطوا عملا صالحا وآخر سيئا، تجاوز الله عنهم"
+  - { id: 89159519-7aac-4785-9af2-aff57dc3850d, ref: "البخاري 7047", reason: fragment, decision:  }
+  # "والله لو أني عنده لأريتكم قبره إلى جانب الطريق عند الكثيب الأحمر"
+  - { id: 89a1124a-e7bc-4f34-aedd-3781b58b69d9, ref: "مسلم 2372", reason: fragment, decision:  }
+  # "ولم أسمعه: «ومهل أهل اليمن يلملم»"
+  - { id: 89a310b3-88e9-44b8-918d-12ba8e69bb6b, ref: "البخاري 1528", reason: fragment, decision:  }
+  # "مثله، والهرج: بلسان الحبشة القتل"
+  - { id: 89df5ab3-f9f1-4713-b16f-570ae2d76f02, ref: "البخاري 7065", reason: short, decision:  }
+  # "عند ذلك: «إن الرجل ليعمل عمل أهل الجنة، فيما يبدو للناس، وهو من أهل النار، وإن الرجل ليعمل عمل أهل النار، فيما يبدو للنا"
+  - { id: 8a5e3bab-9bc3-4dc3-a9d6-b12659b34530, ref: "البخاري 4202", reason: fragment, decision:  }
+  # "«فاطمة سيدة نساء أهل الجنة»"
+  - { id: 8a72b435-3d2d-419d-aca8-6237c2b48c16, ref: "البخاري 3710", reason: short, decision:  }
+  # "أبوك سالم مولى شيبة"
+  - { id: 8a8c8d51-413c-4304-a5b7-e73c7b780015, ref: "مسلم 2360", reason: short, decision:  }
+  # "«من شاء صام، ومن شاء أفطر»"
+  - { id: 8ab562fc-1dee-4ebc-865c-6d94b96588c2, ref: "البخاري 4502", reason: short, decision:  }
+  # "لو تركته بين"
+  - { id: 8ad1d060-fe62-408a-9eb6-350cf18bf95c, ref: "مسلم 2931", reason: short, decision:  }
+  # "«ائذنوا للنساء بالليل إلى المساجد»"
+  - { id: 8adc8fda-7185-4275-9a3a-e5e7a7567ef6, ref: "البخاري 899", reason: short, decision:  }
+  # "«سباب المؤمن فسوق، وقتاله كفر»"
+  - { id: 8b779568-fecb-4cc0-80d2-1e1f92472f80, ref: "البخاري 48", reason: short, decision:  }
+  # "«أحلت لي الغنائم»"
+  - { id: 8c1e090d-c513-42ad-9410-d1d71c50d083, ref: "البخاري 3122", reason: short, decision:  }
+  # "«من أدرك ركعة من الصلاة، فقد أدرك الصلاة»"
+  - { id: 8c5f1563-ae18-4a87-b281-1d0b8f8a68c1, ref: "البخاري 580", reason: short, decision:  }
+  # "«ولكن جهاد ونية»"
+  - { id: 8c8d44d1-8a10-4928-b1b6-ed7ff1976ab3, ref: "البخاري 53", reason: short, decision:  }
+  # "«من لا يشكر الناس لا يشكر الله»"
+  - { id: 8d16e71b-d70b-4327-96fa-2a28ab53be8b, ref: "سنن أبي داود (7/ 188) (4811).", reason: short, decision:  }
+  # "«فاطمة سيدة نساء أهل الجنة»"
+  - { id: 8d42b00a-166b-4220-b82d-82a66923995f, ref: "البخاري 3766", reason: short, decision:  }
+  # "يوجز الصلاة ويكملها»"
+  - { id: 8d4823a7-7f40-4644-8d4d-5a1495a2cc7d, ref: "البخاري 706", reason: short, decision:  }
+  # "لم يمت حتى صلى قاعدا"
+  - { id: 8dd290cf-860a-4f4b-846a-ea03843dd471, ref: "مسلم 734", reason: short, decision:  }
+  # "الحرب خدعة"
+  - { id: 8e290b72-6dd3-4a00-b4c1-dc60144eb78b, ref: "مسلم 1739", reason: short, decision:  }
+  # "«وكان من أصحاب الشجرة»"
+  - { id: 8e7187d5-bb22-4ef0-b12b-a8993c15e774, ref: "البخاري 4843", reason: short, decision:  }
+  # "«أفلح إن صدق»"
+  - { id: 8ef56258-a087-409b-a9ea-21b0d1617d98, ref: "البخاري 2678", reason: short, decision:  }
+  # "«سباب المسلم فسوق وقتاله كفر»"
+  - { id: 8f5dcb2c-fd18-4231-b2dc-8fd9a4a74598, ref: "البخاري 48", reason: short, decision:  }
+  # "«فرد نكاحه»،"
+  - { id: 8f7293e9-05a1-43a7-81db-b05d78c7b535, ref: "البخاري 5138", reason: short, decision:  }
+  # "«فإني أومن به وأبو بكر، وعمر، وما ثم أبو بكر وعمر»"
+  - { id: 8f80a424-c4ee-4280-b63d-74f984847157, ref: "البخاري 3690", reason: fragment, decision:  }
+  # "وللمقصرين قال وللمقصرين"
+  - { id: 8fc9cce0-f751-4637-af08-aed0f3761154, ref: "مسلم 1302", reason: short, decision:  }
+  # "«فبم شبه الولد»"
+  - { id: 8ff4e350-7f4c-4ac4-9039-0105f8890d89, ref: "البخاري 6091", reason: short, decision:  }
+  # "أمر بقتل الكلاب»"
+  - { id: 90027d5d-3f70-4885-8833-e675abbc5577, ref: "البخاري 3323", reason: short, decision:  }
+  # "بعث معاذا إلى اليمن»"
+  - { id: 90ed66ef-aa29-4589-aff5-4bb677f7c619, ref: "البخاري 7371", reason: short, decision:  }
+  # "«يا بلال قم فناد بالصلاة»"
+  - { id: 914dee5b-4e77-488c-9342-13bbae3282de, ref: "البخاري 604", reason: short, decision:  }
+  # "يرويه عن ربكم عز وجل"
+  - { id: 91ad01cc-7db5-4e25-8f73-32d7322d94fe, ref: "البخاري 60", reason: short, decision:  }
+  # "افعلوا ذلك ولا حرج"
+  - { id: 927f5aec-20f0-44ae-944a-84f8d56cd794, ref: "مسلم 1306", reason: short, decision:  }
+  # "«ينهاكم عن لحوم الحمر»"
+  - { id: 92d7c969-00fe-4e97-be30-efebb0198f02, ref: "البخاري 4173", reason: short, decision:  }
+  # "أمر بقتل الوزغ وسماه فويسقا"
+  - { id: 92e3c52e-aabf-4643-9029-dd67235af299, ref: "مسلم 2238", reason: short, decision:  }
+  # "قال: «كتاب الله القصاص»"
+  - { id: 931b787e-11e6-41f5-9b2f-9b6ddcf146fb, ref: "البخاري 4499", reason: short, decision:  }
+  # "فسألوه فضحك وقال: «وما أدراك أنها رقية، خذوها واضربوا لي بسهم»"
+  - { id: 931bc313-cc11-4c2d-a292-f1c8811bdea1, ref: "البخاري 5736", reason: fragment, decision:  }
+  # "الجهاد في سبيل الله الجهاد في سبيل الله"
+  - { id: 9320d7d2-db33-496d-8d97-222d87f5a2ad, ref: "مسلم 1884", reason: short, decision:  }
+  # "يهل ملبدا»"
+  - { id: 9346110d-ceb6-4e14-b863-a945f43ab9dd, ref: "البخاري 1540", reason: short, decision:  }
+  # "إن الله مده للرؤية فهو لليلة رأيتموه"
+  - { id: 934b395d-f935-41b7-a0ba-8137c2032e8c, ref: "مسلم 1088", reason: fragment, decision:  }
+  # "لا يكون اللعانون شفعاء ولا شهداء يوم القيامة"
+  - { id: 934f921e-54ec-4edc-97a0-47fc444d0418, ref: "مسلم 2598", reason: fragment, decision:  }
+  # "أعتقها فإنها مؤمنة"
+  - { id: 93eacc8f-c27e-4010-83f4-489aff5d02a4, ref: "مسلم 537", reason: short, decision:  }
+  # "إن من عباد الله من لو أقسم على الله لأبره \""
+  - { id: 94062fa9-9ae7-4c7a-969d-cd929eb01bbd, ref: "البخاري 4500", reason: fragment, decision:  }
+  # "يعتكف العشر الأواخر من رمضان»"
+  - { id: 942be688-6244-470f-aed6-76982b5d87f8, ref: "البخاري 2025", reason: short, decision:  }
+  # "«كان القنوت في المغرب والفجر»"
+  - { id: 9440aa9a-f8c0-4b96-bbb4-ca15df814bbf, ref: "البخاري 1004", reason: short, decision:  }
+  # "وفيه يزيد عن سلمة"
+  - { id: 9459b9c5-21d1-4e90-a4ab-58391617b75d, ref: "البخاري 3033", reason: short, decision:  }
+  # "\" لعن الله السارق يسرق البيضة \"."
+  - { id: 94cedf6e-66d1-4807-bb5e-61b0db4f6621, ref: "مسلم 1687", reason: short, decision:  }
+  # "فلا تستنجوا بهما فإنهما طعام إخوانكم"
+  - { id: 9536f2cf-760b-4ff2-bb38-ac954ffc5c76, ref: "مسلم 450", reason: fragment, decision:  }
+  # "وقد أوجعني نحوه» لكز ووكز واحد \""
+  - { id: 958a804e-1827-460b-b6c6-5ee4767cc08c, ref: "البخاري 6845", reason: fragment, decision:  }
+  # "«شراك - أو شراكان - من نار»"
+  - { id: 9652b4f0-2bd2-4286-9fee-8551df0a225f, ref: "البخاري 4234", reason: short, decision:  }
+  # "فسأله، فقال: «فيه الوضوء»"
+  - { id: 96570f5d-3ab1-4727-99dc-2a69092545b6, ref: "البخاري 132", reason: short, decision:  }
+  # "«إِنَّمَا البَيْعُ عَنْ تَرَاضٍ»."
+  - { id: 96aa9df1-c947-42ff-ae9a-120b52ba3c47, ref: "سنن ابن ماجه (3/ 305) (2185)، مرشد ذوي الحجا والحاجة إلى سنن ابن ماجه والقول المكتفى على سنن المصطفى (12/ 480).", reason: short, decision:  }
+  # "في جلد الأمة إذا زنت ثلاثا ثم ليبعها في الرابعة"
+  - { id: 96de171a-cfd0-45be-a527-466f3ef235c1, ref: "مسلم 1703", reason: fragment, decision:  }
+  # "«إن عصية عصوا الله ورسوله»"
+  - { id: 96ed9f9b-35dc-4b29-9d66-ab1f92cff8c0, ref: "البخاري 6394", reason: short, decision:  }
+  # "«أصبت بعضا وأخطأت بعضا» قال: فوالله يا رسول الله لتحدثني بالذي أخطأت، قال: «لا تقسم»"
+  - { id: 97a155a1-0880-4c39-b547-09fec5767595, ref: "البخاري 7046", reason: fragment, decision:  }
+  # "«لا تكونوا عون الشيطان على أخيكم»"
+  - { id: 9801cde1-adbd-41b4-b410-9d547c95573e, ref: "البخاري 6781", reason: fragment, decision:  }
+  # "تلك الملائكة كانت تستمع لك ولو قرأت لأصبحت يراها الناس ما تستتر منهم"
+  - { id: 982202a7-02d8-46f3-927b-abdad65f534a, ref: "مسلم 796", reason: fragment, decision:  }
+  # "لا يضرب الناس بين يديه فلما كثر عليه ركب والمشي والسعي أفضل"
+  - { id: 98b2318d-c0d7-4da0-8f11-732b631513f9, ref: "مسلم 1264", reason: fragment, decision:  }
+  # "نعم ولكن ربي أعانني عليه حتى أسلم"
+  - { id: 98c40e57-1146-49f0-b3f7-1593d2f33523, ref: "مسلم 2815", reason: fragment, decision:  }
+  # "نهى عن الملامسة والمنابذة»"
+  - { id: 98e0cf45-d631-4866-b22f-fabc3a6495e2, ref: "البخاري 2146", reason: short, decision:  }
+  # "حدثني إسحاق، حدثنا يعقوب بن إبراهيم، حدثنا أبي، عن ابن شهاب، قال: أخبرني محمود بن الربيع الأنصاري: أنه عقل رسول الله صلى"
+  - { id: 9930d647-f24a-42dc-99c0-5092ac09132d, ref: "البخاري 1185", reason: fragment, decision:  }
+  # "«صدق سلمان» أبو جحيفة وهب السوائي يقال: وهب الخير"
+  - { id: 9a317813-7a05-48a2-b304-0b0ab9bb706d, ref: "البخاري 6139", reason: fragment, decision:  }
+  # "«تعلم أصحابي الخير وتعلمت الشر»"
+  - { id: 9a8ac127-ad6e-430b-8b6e-f2288acaf8a0, ref: "البخاري 3607", reason: short, decision:  }
+  # "«هكذا رأيت النبي صلى الله عليه وسلم يفعله»"
+  - { id: 9b10a188-a3a4-4443-bbef-4801f4b1f77a, ref: "البخاري 1751", reason: fragment, decision:  }
+  # "حلق رأسه في حجة الوداع»"
+  - { id: 9b50fda4-c4fc-4954-b7f6-3719e59b8c46, ref: "البخاري 4410", reason: short, decision:  }
+  # "«إن الميت يعذب ببعض بكاء أهله عليه»،"
+  - { id: 9b55ee62-4a3f-4de0-adf5-c3f577ae5cf2, ref: "البخاري 1287", reason: fragment, decision:  }
+  # "«بعثت أنا والساعة كهاتين»"
+  - { id: 9b7fb8fe-d5a3-490d-af25-6657a823fcf4, ref: "البخاري 6504", reason: short, decision:  }
+  # "يوم الأحزاب: «نغزوهم، ولا يغزوننا»"
+  - { id: 9c1542d9-7a61-4904-a83f-40a1872707e9, ref: "البخاري 4109", reason: short, decision:  }
+  # "توضأ وانضح فرجك"
+  - { id: 9ce6bd8e-2667-41c3-8455-120e7c54659f, ref: "مسلم 303", reason: short, decision:  }
+  # "أتصلي؟ فقال: «المصلى أمامك»"
+  - { id: 9d07bc4e-67cd-4289-a36c-061a74802322, ref: "البخاري 181", reason: short, decision:  }
+  # "«إن القرآن أنزل على سبعة أحرف، فاقرءوا ما تيسر منه»"
+  - { id: 9dd3ff9f-3381-46d0-b3c2-ac4790b86672, ref: "البخاري 5041", reason: fragment, decision:  }
+  # "«قرأ في المغرب بالطور»"
+  - { id: 9e9bb0f3-999a-4699-9be2-79498103fbf9, ref: "البخاري 765", reason: short, decision:  }
+  # "«نعم، إن الرضاعة تحرم ما يحرم من الولادة»"
+  - { id: 9ebba43c-9cca-4415-b738-aa3e1df571a6, ref: "البخاري 2646", reason: fragment, decision:  }
+  # "يصوم حتي نقول لا يفطر ويفطر حتي نقول لا يصوم"
+  - { id: 9f6296ce-b76f-40b5-850f-bb16b369c215, ref: "مسلم 1157", reason: fragment, decision:  }
+  # "«من شاء فليصمه ومن شاء أفطر»"
+  - { id: 9f76209f-bf37-4a6b-b44c-31ea176ccc91, ref: "البخاري 1893", reason: short, decision:  }
+  # "«لا يدخلن هذا عليكن»"
+  - { id: 9f78d938-4331-4e91-95e3-cc3a7bc2f421, ref: "البخاري 5235", reason: short, decision:  }
+  # "أنهلك وفينا الصالحون قال نعم إذا كثر الخبث"
+  - { id: 9f9ec011-36d2-4415-b814-3bbe651d20c2, ref: "مسلم 2880", reason: fragment, decision:  }
+  # "\" فقد قلت: وعليكم \""
+  - { id: 9fc9ae80-54de-4df8-814c-ff6982927919, ref: "البخاري 6256", reason: short, decision:  }
+  # "ابن عباس رضي الله عنهما"
+  - { id: a0450946-7ccb-45ce-a633-51b732668d22, ref: "البخاري 1336", reason: short, decision:  }
+  # "عمر: «لأفضلنهم على من بعدهم»"
+  - { id: a06ec3d9-0ed2-4b38-907c-782cdf3d7aea, ref: "البخاري 4022", reason: short, decision:  }
+  # "كل شراب مسكر حرام"
+  - { id: a0fe0c66-8951-4820-8112-aa340a899923, ref: "مسلم 2001", reason: short, decision:  }
+  # "إنما هذا من إخوان الكهان من أجل سجعه الذي سجع"
+  - { id: a215f845-db4d-4256-9a85-d0eb5f00cf3e, ref: "مسلم 1681", reason: fragment, decision:  }
+  # "«إن أحق ما أخذتم عليه أجرا كتاب الله»"
+  - { id: a21f22e3-965b-4743-90eb-92110e02838b, ref: "البخاري 5737", reason: fragment, decision:  }
+  # "«أول يوم شهدته يوم الخندق»"
+  - { id: a288c94d-a311-4f22-a39c-591651730294, ref: "البخاري 4107", reason: short, decision:  }
+  # "يصليها بغلس"
+  - { id: a3dc7abd-4f63-404f-8a8c-6a40a1d39fce, ref: "مسلم 646", reason: short, decision:  }
+  # "فذكر بمثله"
+  - { id: a3f9bcff-9d29-4ea4-a783-940f88373e9a, ref: "مسلم 2941", reason: short, decision:  }
+  # "كما قال معمر"
+  - { id: a49c875e-6eb0-4a1b-9fd4-c08017ae374e, ref: "مسلم 2223", reason: short, decision:  }
+  # "مثله سواء"
+  - { id: a57bbc7a-7b56-414b-ad4c-c2a997189124, ref: "مسلم 1538", reason: short, decision:  }
+  # "عن ذلك فلعن الواصلة والمستوصلة"
+  - { id: a59602a5-443a-4d07-b669-b5d5939af173, ref: "مسلم 2123", reason: short, decision:  }
+  # "إني لأفعل ذلك أنا وهذه ثم نغتسل"
+  - { id: a5b73d4b-1ec4-48c4-bd71-8f9b53718da4, ref: "مسلم 350", reason: fragment, decision:  }
+  # "أنه منسوخ»"
+  - { id: a618a915-c2f5-432e-966c-6a9fb0789b17, ref: "البخاري 5119", reason: short, decision:  }
+  # "وما أحب أن أكتوي قال فجاء بحجام فشرطه فذهب عنه ما يجد"
+  - { id: a66a22f6-07fe-4ecc-afbd-be7d77604864, ref: "مسلم 2205", reason: fragment, decision:  }
+  # "أرى عبد الله رجلا صالحا"
+  - { id: a6827b93-375d-41b3-a0d9-ebdb1d7f0f0e, ref: "مسلم 2478", reason: short, decision:  }
+  # "\" للغازي أجره، وللجاعل أجره وأجر الغازي \""
+  - { id: a6df7460-68ee-4c47-8636-3df2109a19f9, ref: "سنن أبي داود، رقم 2526", reason: short, decision:  }
+  # "أغثني فأقول لا أملك لك شيئا قد أبلغتك"
+  - { id: a70152dd-c545-48a8-ad9b-c67c88ae5379, ref: "مسلم 1831", reason: fragment, decision:  }
+  # "«من لا يرحم الناس لا يرحمه الله»"
+  - { id: a70e437e-b703-433d-bee3-17f1c0278f8f, ref: "مسلم 2319", reason: fragment, decision:  }
+  # "نحو حديث مالك عن نافع"
+  - { id: a725471c-0215-4f1c-804d-e0272fbe1812, ref: "مسلم 1531", reason: short, decision:  }
+  # "«من الفطرة قص الشارب»"
+  - { id: a72aee1b-804f-425c-8b9d-3ad18b128ddc, ref: "البخاري 5888", reason: short, decision:  }
+  # "في غزوة قط"
+  - { id: a7c3485b-8e6b-4514-8730-59ee1fe30f66, ref: "مسلم 1813", reason: short, decision:  }
+  # "«أفلح إن صدق، أو دخل الجنة إن صدق»"
+  - { id: a7fb3ced-b9b5-490f-91c6-8ea387b6d327, ref: "البخاري 1891", reason: fragment, decision:  }
+  # "قال: «نحن الآخرون السابقون»"
+  - { id: a8a79535-4553-4f5c-b819-2a7e623f7fa7, ref: "البخاري 7036", reason: short, decision:  }
+  # "ليس من البر أن تصوموا في السفر"
+  - { id: a8e9241e-ed73-453e-82c5-f501cb9097d4, ref: "مسلم 1115", reason: fragment, decision:  }
+  # "قضى بيمين وشاهد"
+  - { id: a8f729b5-5212-4f2e-b65a-ae7ec3fff833, ref: "مسلم 1712", reason: short, decision:  }
+  # "بمثل حديث أبي عوانة"
+  - { id: a9153d55-4817-4a66-af1b-b7f520ac9ae0, ref: "مسلم 1717", reason: short, decision:  }
+  # "كان إذا غزا بنا"
+  - { id: a95abc7d-b3ed-49fb-841b-66a5e9d95077, ref: "البخاري 2944", reason: short, decision:  }
+  # "إذا رأيتم المداحين فاحثوا في وجوههم التراب"
+  - { id: aa03dcae-c5cf-405b-9915-f644e02f7674, ref: "مسلم 3002", reason: fragment, decision:  }
+  # "أصبت بعضا وأخطأت بعضا قال فوالله يا رسول الله لتحدثني ما الذي أخطأت قال لا تقسم"
+  - { id: aa38c9c2-4615-4e60-b6de-d155c2f19539, ref: "مسلم 2269", reason: fragment, decision:  }
+  # "«إنما الولاء لمن أعتق»"
+  - { id: aa6399a7-e5c1-4c4c-948e-2640694dee44, ref: "البخاري 6752", reason: short, decision:  }
+  # "«نصرت بالصبا، وأهلكت عاد بالدبور»"
+  - { id: aa9fda25-7fcd-4ccd-87a7-1fb187a2a2c1, ref: "البخاري 1035", reason: short, decision:  }
+  # "«هكذا رأيت رسول الله صلى الله عليه وسلم يفعل»"
+  - { id: ab0f6285-ce67-4c04-a2e5-1e9ba8ca3f85, ref: "البخاري 1752", reason: fragment, decision:  }
+  # "«المسلمون عند شروطهم»"
+  - { id: ab53a703-620d-4ed1-9d55-5cc31a136646, ref: "البخاري 2273", reason: short, decision:  }
+  # "بمثله غير أن في حديثهم جميعا فاقتلوه"
+  - { id: ab74138b-5ef6-406e-b49d-fc89198222a6, ref: "مسلم 1852", reason: fragment, decision:  }
+  # "كان ذاك يوم الخندق"
+  - { id: ab910fed-babd-49fe-b97d-398a8d7d9c78, ref: "البخاري 4103", reason: short, decision:  }
+  # "«انصر أخاك ظالما أو مظلوما»"
+  - { id: ab99d150-12d1-4f0c-adf3-86970d21ea87, ref: "البخاري 2443", reason: short, decision:  }
+  # "يرويه عن ربه عز وجل"
+  - { id: abee8395-464b-4a6e-bf18-6e4c873234ba, ref: "البخاري 7537", reason: short, decision:  }
+  # "الواصلة والمستوصلة، والواشمة والمستوشمة»"
+  - { id: abf15a13-6d87-4ab2-ab36-b0dc774bbbbd, ref: "البخاري 5940", reason: short, decision:  }
+  # "«الضب لست آكله ولا أحرمه»"
+  - { id: ac0ffc7c-341c-4da3-b4bf-d0e015d0ca42, ref: "البخاري 5536", reason: short, decision:  }
+  # "هذا جبريل أراد أن تعلموا إذ لم تسألوا"
+  - { id: ac60a513-9562-437b-8feb-2be05a8e9296, ref: "مسلم 10", reason: fragment, decision:  }
+  # "«ولا يصعد إلى الله إلا الطيب»"
+  - { id: acbacf76-fb99-4178-9ff9-8df1a79949f6, ref: "البخاري 7430", reason: fragment, decision:  }
+  # "إلا بن جريج وحده وقد تابع بن جريج على ذلك بن إسحاق"
+  - { id: ad384d68-7bec-4622-8a5d-568b95368bc9, ref: "مسلم 1199", reason: fragment, decision:  }
+  # "تمثل ببيت شعر تام غير هذا البيت"
+  - { id: adea34e8-7b2c-4d13-b948-a976c1f05e07, ref: "البخاري 3906", reason: fragment, decision:  }
+  # "«التودد إلى الناس نصف العقل»"
+  - { id: adf0ab49-6a69-4bfa-80e6-83ae0a4ece68, ref: "", reason: short, decision:  }
+  # "«أولم ولو بشاة»"
+  - { id: ae0c64f1-96bb-4ae5-9821-2ed217858dd8, ref: "البخاري 5167", reason: short, decision:  }
+  # "التلبينة مجمة لفؤاد المريض تذهب بعض الحزن"
+  - { id: ae2ae61d-4a0d-4cdb-8b0b-c7d3d5d94d41, ref: "مسلم 2216", reason: fragment, decision:  }
+  # "فيه مالك بن الحويرث"
+  - { id: ae51d787-c8fc-4562-87a9-17b0761f2bc7, ref: "البخاري 783", reason: short, decision:  }
+  # "يعجبه الحلواء والعسل»"
+  - { id: aed885f7-b832-4a41-af2e-69a607e267b8, ref: "البخاري 5682", reason: short, decision:  }
+  # "أغيرنا فوالله إنا لجياع ما لنا شيء قال فكلوه"
+  - { id: b0396baa-57e6-4048-830b-14b5de7e1465, ref: "مسلم 1112", reason: fragment, decision:  }
+  # "أسجع كسجع الأعراب قال وجعل عليهم الدية"
+  - { id: b059eafc-b5d4-4065-a11d-123fbf23441a, ref: "مسلم 1682", reason: fragment, decision:  }
+  # "«يموت عبد الله وهو آخذ بالعروة الوثقى»"
+  - { id: b07e7339-ad20-4221-b6e4-78a050e4493d, ref: "البخاري 7010", reason: fragment, decision:  }
+  # "للقوم كلوا وهم محرمون"
+  - { id: b083cb24-fa81-45ec-97e1-6e60fa9c45d1, ref: "مسلم 1196", reason: short, decision:  }
+  # "بمثله بسم الله الرحمن الرحيم"
+  - { id: b08cf4db-66f1-4cb3-a8dd-f42b13979930, ref: "مسلم 900", reason: short, decision:  }
+  # "شهيدا عليهم ما دمت فيهم أو ما كنت فيهم شك مسعر"
+  - { id: b0b70c16-d589-4e74-9c42-a86e4c382917, ref: "مسلم 800", reason: fragment, decision:  }
+  # "«إن يكنه فلن تسلط عليه، وإن لم يكنه فلا خير لك في قتله»"
+  - { id: b0b88ca0-9817-4e03-a9cb-b6e30523228a, ref: "البخاري 1354", reason: fragment, decision:  }
+  # "يخطب خطبتين يقعد بينهما»"
+  - { id: b0e1b198-2c69-4323-9457-16d783d36764, ref: "البخاري 928", reason: short, decision:  }
+  # "«من لا يرحم لا يرحمه الله عز وجل»"
+  - { id: b10269e9-ba81-4949-a50e-355fa68fd4b1, ref: "مسلم 2319", reason: fragment, decision:  }
+  # "«يباشرني وأنا حائض،"
+  - { id: b1399cce-4172-4266-bf44-c2e634281af9, ref: "البخاري 2030", reason: short, decision:  }
+  # "بمثله بسم الله الرحمن الرحيم"
+  - { id: b156298c-6853-4dab-8ea3-5699275f165d, ref: "مسلم 1710", reason: short, decision:  }
+  # "«لا يقربنها حتى يطوف بين الصفا والمروة»"
+  - { id: b158bf11-4215-44c4-80f1-c88ec8b6b76d, ref: "البخاري 396", reason: fragment, decision:  }
+  # "«لا يرث المسلم الكافر ولا الكافر المسلم»"
+  - { id: b15da14f-724f-4805-a59b-043b360e814d, ref: "البخاري 6764", reason: short, decision:  }
+  # "هجاهم حسان فشفى واشتفى قال حسان"
+  - { id: b1adc55f-9bfa-4d21-9d71-be71f97768e5, ref: "مسلم 2490", reason: short, decision:  }
+  # "في بعض أيامه التي لقي فيها، انتظر حتى مالت الشمس،"
+  - { id: b1c14fb5-737f-4490-b391-693e2491aa3f, ref: "البخاري 2965", reason: fragment, decision:  }
+  # "ولم يرفعه سفيان، عن منصور"
+  - { id: b23fe6c3-8cc0-4645-a9b9-9319aea3b608, ref: "البخاري 7083", reason: short, decision:  }
+  # "«لو تركته بين»"
+  - { id: b258b6f8-1a89-4ccf-aa93-616d2af6c4a6, ref: "البخاري 6174", reason: short, decision:  }
+  # "بمثل حديث مالك"
+  - { id: b26d4918-95fc-43bc-9900-d76d3d2a4991, ref: "مسلم 1349", reason: short, decision:  }
+  # "نرجو بركته لصبياننا قال أصبت"
+  - { id: b38047a8-ecc5-47cb-b9b4-6edb3a92c21a, ref: "مسلم 2331", reason: short, decision:  }
+  # "«دعه، فإن الحياء من الإيمان»"
+  - { id: b39a7a65-664f-49fd-920a-0c8684bd1871, ref: "البخاري 6118", reason: short, decision:  }
+  # "كما سألتني فقال الكلب الأسود شيطان"
+  - { id: b3db26df-24ed-4185-a249-f53ccbe1a064, ref: "مسلم 510", reason: fragment, decision:  }
+  # "«نصرت بالصبا، وأهلكت عاد بالدبور»"
+  - { id: b3f9cca7-9420-4112-abbc-8609f6405d22, ref: "البخاري 1035", reason: short, decision:  }
+  # "«آيبون تائبون عابدون لربنا حامدون»، فلم يزل يقولها حتى دخل المدينة"
+  - { id: b425bd05-3a3d-4181-85ec-85df81485540, ref: "البخاري 3086", reason: fragment, decision:  }
+  # "«ألا آذنتموني»"
+  - { id: b4619f3e-5f40-45d2-ad01-343377f330a1, ref: "البخاري 1246", reason: short, decision:  }
+  # "«كذلك أنزلت إن هذا القرآن أنزل على سبعة أحرف، فاقرءوا ما تيسر منه»"
+  - { id: b4777926-9f82-4b86-9ee0-4886437e4eb9, ref: "البخاري 4992", reason: fragment, decision:  }
+  # "«العبد راع في مال سيده»"
+  - { id: b4876aa0-6911-43c1-81b5-692104689419, ref: "البخاري 2749", reason: short, decision:  }
+  # "«أشهد أن لا إله إلا الله، وأني رسول الله»"
+  - { id: b502ce69-4916-4ab1-a2ef-3fb7636f5a2b, ref: "البخاري 2982", reason: fragment, decision:  }
+  # "نعم إن الرضاعة تحرم ما تحرم الولادة"
+  - { id: b58a20be-0914-4a8a-bf8f-4efbe80ed8c1, ref: "مسلم 1444", reason: fragment, decision:  }
+  # "آخر ما صلى صلى قاعدا والناس خلفه قيام»"
+  - { id: b5fab92c-a19c-4477-a122-9b1d4a7cd6bb, ref: "البخاري 5658", reason: fragment, decision:  }
+  # "كان يفعل ذلك"
+  - { id: b635ed99-c371-423c-8774-dc176c5e628b, ref: "البخاري 1769", reason: short, decision:  }
+  # "ت: «أفتاني إذا وضعت أن أنكح»"
+  - { id: b6818548-5a7d-49b3-a9d9-12871a84ef2e, ref: "البخاري 5319", reason: short, decision:  }
+  # "يقرأ بطولى الطوليين»"
+  - { id: b6b2d9a2-1016-4b62-b22b-56e14d177ba5, ref: "البخاري 764", reason: short, decision:  }
+  # "بعثه وأتبعه بمعاذ»"
+  - { id: b6bcfa02-4479-48c3-a35a-ab9a8c7e22d3, ref: "البخاري 7156", reason: short, decision:  }
+  # "كان يتنفس ثلاثا»"
+  - { id: b6c2d9a8-756d-43fd-9cd0-36e291af79eb, ref: "البخاري 5631", reason: short, decision:  }
+  # "«أملكناكها بما معك من القرآن»"
+  - { id: b6e23e61-db0e-43de-867b-acf52f444305, ref: "البخاري 5121", reason: short, decision:  }
+  # "مثله «إلا النهبة»"
+  - { id: b7421179-9e89-44c5-866c-0644b266e34c, ref: "البخاري 2475", reason: short, decision:  }
+  # "«نحن أولى بموسى منهم فصوموه»"
+  - { id: b761a13d-8bef-474a-8b62-80413315aa7d, ref: "البخاري 4737", reason: short, decision:  }
+  # "«أما إنه قد صدقك وهو كذوب، تعلم من تخاطب منذ ثلاث ليال يا أبا هريرة»، قال: لا، قال: «ذاك شيطان»"
+  - { id: b7c871ab-2efe-406c-9c22-7acb4ccb089a, ref: "البخاري 2311", reason: fragment, decision:  }
+  # "كان يوتر على البعير"
+  - { id: b7d6d96d-ec03-46cd-aab7-f4ca0fe00387, ref: "مسلم 700", reason: short, decision:  }
+  # "فأنزل الله آية التيمم»"
+  - { id: b840ea88-faf0-49e7-818c-ab1620d363b3, ref: "البخاري 6844", reason: short, decision:  }
+  # "اللهم وليديه فاغفر"
+  - { id: b87c1d75-4a60-4c4c-8b4c-3ee6ce925a41, ref: "مسلم 116", reason: short, decision:  }
+  # "قد ذكرها، فلم أكن لأفشي سر رسول الله صلى الله عليه وسلم، ولو تركها رسول الله صلى الله عليه وسلم قبلتها"
+  - { id: b8b2b6c8-d257-48d8-bf6f-43d194247e64, ref: "البخاري 5122", reason: fragment, decision:  }
+  # "أنهلك وفينا الصالحون؟ قال: «نعم إذا كثر الخبث»"
+  - { id: b8c76772-fb15-4890-910a-da243c132bd3, ref: "البخاري 3346", reason: fragment, decision:  }
+  # "قد كان بالبادية"
+  - { id: b8c9fa43-cc89-46ee-8fd6-2f243f553891, ref: "مسلم 185", reason: short, decision:  }
+  # "«من ابتلي بشيء من هذه البنات كن له سترا من النار»"
+  - { id: b96168a5-d2e1-4c65-a801-871c86a36812, ref: "مسلم 2629", reason: fragment, decision:  }
+  # "ركعة من آخر الليل"
+  - { id: b9684996-46de-47d7-a710-d065c616cd46, ref: "مسلم 753", reason: short, decision:  }
+  # "فحمد الله، ثم قال: الله المستعان"
+  - { id: b9b62901-f476-4844-835c-9ed3b1aa4806, ref: "البخاري 3693", reason: short, decision:  }
+  # "كان يتخولنا بالموعظة في الأيام، كراهية السآمة علينا»"
+  - { id: b9be27bc-786d-4b45-b379-0e79a95c2939, ref: "البخاري 6411", reason: fragment, decision:  }
+  # "ما شاء الله أن يقول ثم «أمرهم أن يتعوذوا من عذاب القبر»"
+  - { id: ba1f8a5a-aad7-4401-9a66-db9303065689, ref: "البخاري 1056", reason: fragment, decision:  }
+  # "«هل بلغت ثلاثا؟»"
+  - { id: bacfe5d3-05bd-4fb5-bf64-c7f150774114, ref: "البخاري 93", reason: short, decision:  }
+  # "أخبروه أن الله يحبه"
+  - { id: bb6c0bf3-c6cd-4b8c-a49a-51fe617b4ece, ref: "مسلم 813", reason: short, decision:  }
+  # "«حسبت علي بتطليقة»"
+  - { id: bb92d34d-b9a5-4cb8-8c0e-d42cb925f0d2, ref: "البخاري 5253", reason: short, decision:  }
+  # "«لا تقولي هكذا وقولي ما كنت تقولين»"
+  - { id: bbe90a46-bd02-427d-abe4-45834ecbd4bc, ref: "البخاري 4001", reason: fragment, decision:  }
+  # "«كذب من قاله، إن له لأجرين - وجمع بين إصبعيه - إنه لجاهد مجاهد، قل عربي نشأ بها مثله»"
+  - { id: bcdda844-84c1-4115-a9d6-f8b63dfb17e9, ref: "البخاري 6148", reason: fragment, decision:  }
+  # "انا عبد الله ورسوله"
+  - { id: bcf06b7c-0778-4474-b7f7-27ac0becfeb8, ref: "مسلم 1439", reason: short, decision:  }
+  # "«اصطبح الخمر يوم أحد ناس، ثم قتلوا شهداء»"
+  - { id: bd281455-802e-4731-8caf-b7e3e306fddb, ref: "البخاري 4044", reason: fragment, decision:  }
+  # "حماد بسم الله الرحمن الرحيم"
+  - { id: bd6bbf1d-5b09-4614-b2c5-ca802c716af5, ref: "مسلم 2642", reason: short, decision:  }
+  # "«لولا ما مضى من كتاب الله لكان لي ولها شأن»"
+  - { id: bd8b9196-7aa7-40fc-8b84-463c044dc048, ref: "البخاري 4747", reason: fragment, decision:  }
+  # "ذهب المفطرون اليوم بالأجر"
+  - { id: bdc6360c-77af-4b2b-a9b6-b9f262a3d331, ref: "مسلم 1119", reason: short, decision:  }
+  # "إنها ستكون"
+  - { id: be29dc2e-2b51-4cad-9e9c-9c59ce935aa0, ref: "مسلم 2083", reason: short, decision:  }
+  # "«إن فيه شفاء»"
+  - { id: be7c661b-6ca2-4fbc-b24b-3eae442fd9b6, ref: "البخاري 5697", reason: short, decision:  }
+  # "«الولاء لمن أعتق، وإن اشترطوا مائة شرط»"
+  - { id: bfd0bd09-232a-4cf3-8c0b-0e226ccae3ed, ref: "البخاري 2565", reason: fragment, decision:  }
+  # "قال: نعم، ثم قال: الله أعلم"
+  - { id: bfdc388e-c9c5-4847-9fdc-f52a6edc033d, ref: "البخاري 1937", reason: short, decision:  }
+  # "فحج آدم موسى"
+  - { id: c011de42-28c1-4591-a43d-b6a01b504e96, ref: "مسلم 2652", reason: short, decision:  }
+  # "إنما مثل هذا مثل الذي يصلي وهو مكتوف"
+  - { id: c09061e3-e96c-4645-9ec8-be93ef77d095, ref: "مسلم 492", reason: fragment, decision:  }
+  # "«بأبي أنت وأمي، والله لا يجمع الله عليك موتتين أما الموتة التي كتبت عليك، فقد متها»"
+  - { id: c0aa1177-db28-4c5d-b1f5-e1532da76f8a, ref: "البخاري 4452", reason: fragment, decision:  }
+  # "«تسحروا؛ فإن في السحور بركة»"
+  - { id: c1cbbffe-be66-4f13-9d92-490d2d44664e, ref: "مسلم 1095", reason: short, decision:  }
+  # "«لقد رأيتني وأنا ثلث الإسلام»"
+  - { id: c246f4c4-2af3-4602-9fc3-7424227cd80b, ref: "البخاري 3726", reason: short, decision:  }
+  # "قال: «لا تمنوا لقاء العدو»"
+  - { id: c264c5fc-b670-402e-b3d7-4d5594f78330, ref: "البخاري 3025", reason: short, decision:  }
+  # "الواصلة والمستوصلة، والواشمة والمستوشمة»"
+  - { id: c295bb4b-ca86-45b1-af25-f3009596774f, ref: "البخاري 5947", reason: short, decision:  }
+  # "ولو استزدته لزادني"
+  - { id: c2fc9bdb-fab2-4f21-a219-db0f37b09eff, ref: "البخاري 2782", reason: short, decision:  }
+  # "\" ما أسكر كثيره فقليله حرام \""
+  - { id: c3233ee1-d03b-42ae-9d15-017015c7a22f, ref: "سنن أبي داود، رقم 3681، سنن ابن ماجه، رقم 3393، سنن ابن ماجه، رقم 3394", reason: short, decision:  }
+  # "«يفرغ على رأسه ثلاثا»"
+  - { id: c37e3065-8e4d-4dfc-8a2b-1e5f9c5c1168, ref: "البخاري 255", reason: short, decision:  }
+  # "«أن جبريل كان يعارضه القرآن»"
+  - { id: c4119395-3a53-41d8-9aa4-60ef14de8822, ref: "البخاري 3220", reason: short, decision:  }
+  # "يصلى الظهر إذا دحضت الشمس"
+  - { id: c416d545-6a46-4f07-82ec-25252e5422ae, ref: "مسلم 618", reason: short, decision:  }
+  # "\" انظروا إلى حب الأنصار التمر \" , ثم مسح وجهه وسماه عبد الله"
+  - { id: c43abc45-ccb9-4cd9-8cda-c5f1564bbc6f, ref: "مسلم 2144", reason: fragment, decision:  }
+  # "رخص في العرايا بخرصها»"
+  - { id: c43e9949-ee2e-45fa-b0e9-5448206f32ef, ref: "البخاري 2173", reason: short, decision:  }
+  # "لا يرث المسلم الكافر ولا يرث الكافر المسلم"
+  - { id: c4cd99c5-766a-400e-bffd-c38f17b995b4, ref: "مسلم 1614", reason: short, decision:  }
+  # "إني لأعرف أسماءهم وأسماء آبائهم وألوان خيولهم هم خير فوارس على ظهر الأرض يومئذ أو من خير فوارس على ظهر الأرض يومئذ قال ب"
+  - { id: c5530111-402d-411f-a66f-a56d4be5c511, ref: "مسلم 2899", reason: fragment, decision:  }
+  # "«كنا نقيل ونتغدى بعد الجمعة»"
+  - { id: c595bfba-0630-46da-b831-e2f87824a623, ref: "البخاري 6279", reason: short, decision:  }
+  # "«أنه نهى عن النهبة والمثلة»"
+  - { id: c5ca1b8c-c5cf-47e2-89a9-0885dad7a73c, ref: "البخاري 5516", reason: short, decision:  }
+  # "«أولم ولو بشاة»"
+  - { id: c6094775-e87b-4ca5-9096-728a89a7ab48, ref: "البخاري 6082", reason: short, decision:  }
+  # "«الكلمة الطيبة صدقة»"
+  - { id: c630a9be-f89d-4bd6-a4be-241f419d520d, ref: "البخاري 6022", reason: short, decision:  }
+  # "لم يزل يلبي حتى بلغ الجمرة"
+  - { id: c638521b-17e0-41eb-808d-44034fd982d1, ref: "البخاري 1670", reason: fragment, decision:  }
+  # "«بينا أيوب يغتسل عريانا»"
+  - { id: c6c40104-a2e4-4d87-a230-7df6714e9532, ref: "البخاري 279", reason: short, decision:  }
+  # "فتنخع فدلكها بنعله اليسرى"
+  - { id: c759f94d-ef84-4820-a24d-6f2013c6be57, ref: "مسلم 554", reason: short, decision:  }
+  # "لا يدخل الجنة قتات"
+  - { id: c7ab11b3-9318-409c-aaa0-32e62e1f6a25, ref: "مسلم 105", reason: short, decision:  }
+  # "كان يأتي قباء ماشيا وراكبا»"
+  - { id: c7faf74b-7693-4e99-8b17-d55d034c89b1, ref: "البخاري 7326", reason: short, decision:  }
+  # "يقرأ في المغرب بالطور»"
+  - { id: c8096890-66e2-40ca-a8e6-8ec05f9a291e, ref: "البخاري 3050", reason: short, decision:  }
+  # "«وقيت شركم كما وقيتم شرها»"
+  - { id: c83bb4fd-b383-44fe-8b9d-9113aa878b12, ref: "البخاري 1830", reason: short, decision:  }
+  # "«ما خلأت القصواء»"
+  - { id: c8684500-57fb-44a8-a965-6ee288f17e0f, ref: "البخاري 2870", reason: short, decision:  }
+  # "شرب من زمزم وهو قائم"
+  - { id: c894ab03-227c-4616-a8f3-0ac576c86b27, ref: "مسلم 2027", reason: short, decision:  }
+  # "«اللهم اشهد» وودع الناس، فقالوا: هذه حجة الوداع"
+  - { id: c944c5dc-1237-48ff-aac6-01b6fc8b4c34, ref: "البخاري 1742", reason: fragment, decision:  }
+  # "«من ذبح بعد الصلاة تم نسكه، وأصاب سنة المسلمين»"
+  - { id: c9a0f6e3-8cd6-4be0-99fa-5cea6f29eb25, ref: "البخاري 5545", reason: fragment, decision:  }
+  # "غفار غفر الله لها واسلم سالمها الله"
+  - { id: c9d0bd41-b02f-4536-8e33-510134164d72, ref: "مسلم 2473", reason: fragment, decision:  }
+  # "أجب عني اللهم أيده بروح القدس قال اللهم نعم"
+  - { id: c9e9c969-39e3-4a0e-9e19-24873bc4ea49, ref: "مسلم 2485", reason: fragment, decision:  }
+  # "كان يفعله"
+  - { id: ca4b6d85-60d5-44bc-9df4-38f69b113b91, ref: "مسلم 581", reason: short, decision:  }
+  # "الله: « أنفق أنفق عليك»"
+  - { id: cb2e4acf-2fc0-44a6-84bb-1efc1004cdd8, ref: "البخاري 7496", reason: short, decision:  }
+  # "توضئوا مما مست النار"
+  - { id: cba67bb1-ab83-4e91-9f65-286484c1e296, ref: "مسلم 353", reason: short, decision:  }
+  # "«دعه فإن الحياء من الإيمان»"
+  - { id: cbdda406-5af4-4ad2-a9f1-a5766d67685d, ref: "البخاري 24", reason: short, decision:  }
+  # "«إذا قاتل أحدكم فليجتنب الوجه»"
+  - { id: cc498922-03f5-49f7-8446-adc792778265, ref: "البخاري 2559", reason: short, decision:  }
+  # "«لو سلك الناس واديا، وسلكت الأنصار شعبا، لاخترت شعب الأنصار»"
+  - { id: cc625bc7-f0ab-4f5f-a172-8dbb6454c1be, ref: "البخاري 4333", reason: fragment, decision:  }
+  # "صلاة الأوابين حين ترمض الفصال"
+  - { id: ccb886fa-997a-4266-879f-32c2de2bcb25, ref: "مسلم 748", reason: short, decision:  }
+  # "أحفوا الشوارب وأعفوا اللحى"
+  - { id: ccfb810f-da4c-4b94-8f60-53c201bad7bc, ref: "مسلم 259", reason: short, decision:  }
+  # "وتحدثني عن صحيفتك»"
+  - { id: cd018e6d-9a52-4848-81e7-f3050e557585, ref: "البخاري 6117", reason: short, decision:  }
+  # "«أمسك بعض مالك فهو خير لك»"
+  - { id: cdbd7709-7eb8-49d6-9667-a109822ed89d, ref: "البخاري 4676", reason: fragment, decision:  }
+  # "بمثل حديث يعقوب"
+  - { id: cded6928-531e-4c17-8f00-9585ec030d23, ref: "مسلم 2291", reason: short, decision:  }
+  # "إلا في حديث الليث بن سعد"
+  - { id: cea9a497-7d3d-4ce1-b479-62b576b71b8f, ref: "مسلم 1501", reason: fragment, decision:  }
+  # "«سموا الله عليه وكلوه»"
+  - { id: cebe9045-ca68-4f3d-a725-496e1494c1d1, ref: "البخاري 2057", reason: short, decision:  }
+  # "البركة في نواصي الخيل"
+  - { id: cef4fa3a-1078-4847-8236-5bf62827e7fe, ref: "مسلم 1874", reason: short, decision:  }
+  # "«اذهبوا به فارجموه»"
+  - { id: cef798da-29b6-4d5a-92fd-704768400697, ref: "البخاري 6815", reason: short, decision:  }
+  # "«من ظلم قيد شبر طوقه من سبع أرضين»"
+  - { id: cf06ac5b-64c8-4819-8462-55d1a8a501af, ref: "البخاري 3195", reason: fragment, decision:  }
+  # "بمثل حديث وكيع وبن نمير"
+  - { id: cfa1d4e3-f4f3-4c83-b608-7f57a1350024, ref: "مسلم 2672", reason: short, decision:  }
+  # "«يوم عاشوراء إن شاء صام»"
+  - { id: cfeb1e1d-9889-492d-96f1-ff6cbe624354, ref: "البخاري 2000", reason: short, decision:  }
+  # "إن الظلم ظلمات يوم القيامة"
+  - { id: cffd4ccb-2ff7-4d4e-8226-8be5be1dbf31, ref: "مسلم 2579", reason: short, decision:  }
+  # "«اتقوا النار ولو بشق تمرة»"
+  - { id: d003ead2-5e44-4010-8684-adbd45e32aad, ref: "البخاري 1417", reason: short, decision:  }
+  # "«هذا خير من ملء الأرض مثل هذا»"
+  - { id: d0428d6f-b123-4e15-b093-0b7d1d1c15ca, ref: "البخاري 6447", reason: fragment, decision:  }
+  # "كان يوتر على البعير»"
+  - { id: d07cfa3a-edc7-4c78-930b-f21e9814242a, ref: "البخاري 999", reason: short, decision:  }
+  # "«من إيمان» مكان «من خير»"
+  - { id: d08fd2b1-4a45-4577-8dc9-f1bae631fa0f, ref: "البخاري 44", reason: short, decision:  }
+  # "إن أقل ساكني الجنة النساء"
+  - { id: d0b8fb82-5a2c-4011-8ce4-8a15b25f916b, ref: "مسلم 2738", reason: short, decision:  }
+  # "رأى جبريل له ستمائة جناح"
+  - { id: d0bebcb9-8da7-4e38-afa1-220d9dd043ed, ref: "مسلم 174", reason: short, decision:  }
+  # "«الأيمن فالأيمن»"
+  - { id: d12592e5-6f36-4053-a7e8-92800d161bad, ref: "البخاري 5612", reason: short, decision:  }
+  # "«إن من أخيركم أحسنكم خلقا»"
+  - { id: d1520f2d-626c-46e7-8069-12e7715a76ed, ref: "البخاري 6029", reason: short, decision:  }
+  # "«نحن الآخرون السابقون يوم القيامة»"
+  - { id: d1583aba-89b5-4a93-9eaf-49f26ea0d012, ref: "البخاري 7495", reason: short, decision:  }
+  # "«إذا راح أحدكم إلى الجمعة فليغتسل»"
+  - { id: d1a420a4-50aa-4451-9436-e2cdac15006f, ref: "البخاري 882", reason: fragment, decision:  }
+  # "«نحن الآخرون السابقون»"
+  - { id: d235a07a-07b1-434b-9bde-52c7470e7f66, ref: "البخاري 238", reason: short, decision:  }
+  # "«إن له مرضعا في الجنة»"
+  - { id: d26e281b-ebac-4671-a3df-ec7a12d1412b, ref: "البخاري 1382", reason: short, decision:  }
+  # "«المؤمن لا ينجس»"
+  - { id: d2b1cc60-6bac-47f6-97aa-fee4c1d92e81, ref: "البخاري 1252", reason: short, decision:  }
+  # "قال: «بايعوني»"
+  - { id: d2bfbe9e-6564-4211-b154-b72490634aa8, ref: "البخاري 3999", reason: short, decision:  }
+  # "«أنا النبي لا كذب، أنا ابن عبد المطلب»"
+  - { id: d30bce43-cd17-46c6-9314-b62143273fd2, ref: "البخاري 2874", reason: fragment, decision:  }
+  # "أتي بمال أو بسبي فقسمه بهذا"
+  - { id: d31bdf0a-7028-4bb6-98e7-ded13960cfba, ref: "البخاري 3145", reason: fragment, decision:  }
+  # "«آيبون تائبون عابدون، لربنا حامدون» فلم يزل يقولها حتى دخل المدينة"
+  - { id: d3897754-6538-40b4-ab2d-ca98de1c00f8, ref: "البخاري 6185", reason: fragment, decision:  }
+  # "وإن لنا في هذه البهائم لأجرا فقال في كل كبد رطبة أجر"
+  - { id: d3ba01b7-9870-45f5-91e0-95ca93edc7bf, ref: "مسلم 2244", reason: fragment, decision:  }
+  # "«الظلم ظلمات يوم القيامة»"
+  - { id: d48b3485-e86f-40b2-99b8-4bbc210c421b, ref: "البخاري 2447", reason: short, decision:  }
+  # "لا يشاركه فيه أحد بأسانيد جياد"
+  - { id: d4afd384-0ee2-4d54-9ece-2ed07ffab16f, ref: "مسلم 1647", reason: fragment, decision:  }
+  # "«سموا باسمي ولا تكتنوا بكنيتي»"
+  - { id: d5948602-0295-48c6-bfdb-655f18ea0f3b, ref: "البخاري 3114", reason: short, decision:  }
+  # "من ابتلى من البنات بشيء فأحسن إليهن كن له سترا من النار"
+  - { id: d5bbeb7c-56d7-47c7-9fb5-10389f1fff54, ref: "مسلم 2629", reason: fragment, decision:  }
+  # "«فيجتهد أن يوسعها فلا تتسع»"
+  - { id: d6032ba4-fe10-4c30-966d-9b0b3d9a5447, ref: "البخاري 2917", reason: short, decision:  }
+  # "«من أعتق شقيصا من عبد»،"
+  - { id: d61c3dcd-f2be-4e73-b9b4-51c366b3bb0e, ref: "البخاري 2526", reason: short, decision:  }
+  # "«قد أجرنا من أجرت يا أم هانئ» قالت أم هانئ: وذاك ضحى"
+  - { id: d61e180e-5d30-4d36-9b2d-e4e9e21989da, ref: "البخاري 6158", reason: fragment, decision:  }
+  # "أمر بقتله"
+  - { id: d69ea743-d8b2-432c-aa19-bb7f5385c581, ref: "البخاري 3306", reason: short, decision:  }
+  # "«أشهد أن لا إله إلا الله، وأني رسول الله»"
+  - { id: d6d1d3bc-2028-429b-82e3-b1358c4e5747, ref: "البخاري 2484", reason: fragment, decision:  }
+  # "يعجبه الحلواء والعسل»"
+  - { id: d7896287-cfa6-49ba-b949-dc29a2185674, ref: "البخاري 5614", reason: short, decision:  }
+  # "لعن الواصلة والمستوصلة والواشمة والمستوشمة"
+  - { id: d7b9dc50-5559-499a-8da4-ac7a4697803d, ref: "مسلم 2124", reason: short, decision:  }
+  # "«فمن أعدى الأول»"
+  - { id: d7da7a1b-dbff-4bd5-99ff-b20cf11abff0, ref: "البخاري 5770", reason: short, decision:  }
+  # "صلى على قبر"
+  - { id: d7e4de82-908d-42ab-8304-ff2608fbed58, ref: "مسلم 955", reason: short, decision:  }
+  # "«هل تنصرون وترزقون إلا بضعفائكم»"
+  - { id: d7fd7e64-6039-4410-8329-bb9e6270826f, ref: "البخاري 2896", reason: short, decision:  }
+  # "\" إذا رأيتم المداحين فاحثوا في وجوههم التراب \"."
+  - { id: d85b9ffa-6c0a-435d-bd37-7dbe89b39577, ref: "مسلم 3002", reason: fragment, decision:  }
+  # "«إنكم سترون ربكم عيانا»"
+  - { id: d885c15c-d09e-4589-8570-8e09d1b2e92d, ref: "البخاري 7435", reason: short, decision:  }
+  # "«إني لأرجو أن تكون منهم»"
+  - { id: d8ef5f37-4808-434e-8702-f1575665a255, ref: "البخاري 2841", reason: short, decision:  }
+  # "«لست ممن يصنعه خيلاء»"
+  - { id: d92cb909-7a75-49fb-a97d-4da216b67481, ref: "البخاري 5784", reason: short, decision:  }
+  # "كان يصلي العصر، والشمس في حجرتها قبل أن تظهر»"
+  - { id: d9a31a8f-dea0-439f-878d-2a2a82d153a5, ref: "البخاري 522", reason: fragment, decision:  }
+  # "«من نيح عليه يعذب بما نيح عليه»"
+  - { id: da30bb85-7e76-483b-a22b-086cb8ee1cae, ref: "البخاري 1291", reason: short, decision:  }
+  # "يأمر بتسويتها"
+  - { id: da3578f0-648f-46ca-986f-3955edb4a081, ref: "مسلم 968", reason: short, decision:  }
+  # "سماه الزور. يعني الواصلة في الشعر»"
+  - { id: daea98cb-f554-4a79-bc03-290c2c3f3388, ref: "البخاري 5938", reason: fragment, decision:  }
+  # "«المبطون شهيد، والمطعون شهيد»"
+  - { id: db0a398c-3ff0-4456-90ea-d1de7f6c7389, ref: "البخاري 5733", reason: short, decision:  }
+  # "«أنت أخونا ومولانا»"
+  - { id: db7df17c-a7ab-4693-a545-ddebb1dd1672, ref: "البخاري 3729", reason: short, decision:  }
+  # "بل هو من أهل الجنة"
+  - { id: db982a59-7e4c-450c-a5b4-2d2e59effd53, ref: "مسلم 119", reason: short, decision:  }
+  # "فإني أومن بذلك أنا وأبو بكر وعمر"
+  - { id: dc0b2436-9c3b-45ce-8d5d-d8750037b8d2, ref: "مسلم 2388", reason: fragment, decision:  }
+  # "الوتر ركعة من آخر الليل"
+  - { id: dc2d9444-06e7-4146-8f90-87ea85bc94de, ref: "مسلم 752", reason: short, decision:  }
+  # "\" السواك مطهرة للفم مرضاة للرب \""
+  - { id: dc2db099-6a3f-43e0-8f3d-fe52707c80f9, ref: "البخاري 1933", reason: short, decision:  }
+  # "يقرؤها: «فهل من مدكر» دالا"
+  - { id: dc79b54a-1823-4518-be2b-da4b1d13223b, ref: "البخاري 4871", reason: short, decision:  }
+  # "فإني آخر الأنبياء وإن مسجدي آخر المساجد"
+  - { id: dcb49642-31db-476f-834d-b18b251b48db, ref: "مسلم 1394", reason: fragment, decision:  }
+  # "«نحن الآخرون السابقون»"
+  - { id: ddf4eb12-d667-4a03-8b23-d9fddebe27d5, ref: "البخاري 2956", reason: short, decision:  }
+  # "ذلك على المنبر"
+  - { id: de00e4ad-7199-4494-a0c5-0b202ddc2808, ref: "مسلم 2518", reason: short, decision:  }
+  # "الحلف منفقة للسلعة ممحقة للربح"
+  - { id: de822080-4af7-4f32-82b2-3aa626463f1c, ref: "مسلم 1606", reason: short, decision:  }
+  # "لئن صدق ليدخلن الجنة"
+  - { id: e0603c25-cde8-47bb-bc37-9b4721ff2deb, ref: "مسلم 12", reason: short, decision:  }
+  # "لا هجرة بعد ثلاث"
+  - { id: e0617b9f-0ecb-485b-82fb-f74bd8bbaec0, ref: "مسلم 2562", reason: short, decision:  }
+  # "«لناله رجال من هؤلاء»"
+  - { id: e0a01eac-9d42-4fe2-8ae6-504ed87e8926, ref: "البخاري 4898", reason: short, decision:  }
+  # "\" ما رأيت منظرا قط إلا القبر أفظع منه \""
+  - { id: e1153de1-137e-4091-afd0-a574d6f5a1af, ref: "سنن ابن ماجه، رقم 4267", reason: fragment, decision:  }
+  # "«إنما جعل الإذن من قبل البصر»"
+  - { id: e11e9ce7-4880-4bf9-b451-c0ce05408ab8, ref: "البخاري 6901", reason: fragment, decision:  }
+  # "«هذا خير من ملء الأرض مثل هذا»"
+  - { id: e14c2c79-d4db-4b05-baea-047386a96720, ref: "البخاري 5091", reason: fragment, decision:  }
+  # "التوكل على الله جماع الإيمان."
+  - { id: e1e31b40-1f9d-4737-8fce-10c9d7325f0f, ref: "", reason: short, decision:  }
+  # "«إن يكن هو لا تسلط عليه، وإن لم يكن هو فلا خير لك في قتله»،"
+  - { id: e23a3aa0-89a5-4527-ba90-db9a2a4def36, ref: "البخاري 6173", reason: fragment, decision:  }
+  # "لا نورث ما تركنا فهو صدقة"
+  - { id: e24a7fb9-3f9a-475e-940b-35406fe7263d, ref: "مسلم 1758", reason: fragment, decision:  }
+  # "أي الحل قال الحل كله"
+  - { id: e2c1fb4b-5831-46c4-85ad-077dd5c85dc7, ref: "مسلم 1240", reason: short, decision:  }
+  # "«كانت أمي ممن عذر الله»"
+  - { id: e2d868cc-0a68-4f2b-88c3-d99575518988, ref: "البخاري 4597", reason: short, decision:  }
+  # "عمل هذا يسيرا وأجر كثيرا"
+  - { id: e31a79fa-0c65-4349-8601-195c79c4e0fe, ref: "مسلم 1900", reason: short, decision:  }
+  # "«أنا فرطكم على الحوض»"
+  - { id: e3323481-78c4-49aa-b958-8bb7554be741, ref: "البخاري 6589", reason: short, decision:  }
+  # "ولا أقول: إن أحدا أفضل من يونس بن متى \""
+  - { id: e4264b62-32f1-4c7c-9b88-343a83b52c2b, ref: "البخاري 3415", reason: fragment, decision:  }
+  # "«كان لا يرد الطيب»"
+  - { id: e43f356a-b4c0-4e5a-9a2e-f6bac08e1599, ref: "البخاري 5929", reason: short, decision:  }
+  # "«يبعثون على نياتهم»"
+  - { id: e60f3f41-9018-4fd1-bfdf-8c392bcf5177, ref: "البخاري 1900", reason: short, decision:  }
+  # "لولا أن معي الهدي لأحللت"
+  - { id: e65be430-ab49-4579-a5d1-e4e2651e1319, ref: "مسلم 1250", reason: short, decision:  }
+  # "«أنا من رام هرمز»"
+  - { id: e69afb04-e21e-47c8-8f57-4643a32dd5b9, ref: "البخاري 3947", reason: short, decision:  }
+  # "«دعهم، أمنا بني أرفدة يعني من الأمن»"
+  - { id: e6cb6bbc-0c87-4fcb-b998-30e95ea0fbfe, ref: "البخاري 3530", reason: fragment, decision:  }
+  # "لكل نبي حواري وحواري الزبير"
+  - { id: e78cbc51-0a93-460a-a091-62e7d5d48f77, ref: "مسلم 2415", reason: short, decision:  }
+  # "«الطاعون شهادة لكل مسلم»"
+  - { id: e7ff693c-e08a-4853-8684-688c51926e0c, ref: "البخاري 5732", reason: short, decision:  }
+  # "كل مما يليك"
+  - { id: e82bba8a-59ca-4444-97c0-17c2903a2759, ref: "مسلم 2022", reason: short, decision:  }
+  # "«نزلت في النفقة»"
+  - { id: e83201a3-1afa-4ebd-b239-716f5e235e4b, ref: "البخاري 4516", reason: short, decision:  }
+  # "لم يكن يسرد الحديث كسردكم"
+  - { id: e865d723-247b-4a78-b7ef-9a05847b2fd8, ref: "مسلم 2493", reason: short, decision:  }
+  # "«اللهم ثبته واجعله هاديا مهديا»"
+  - { id: e8c2970a-f09e-4af6-9713-d0352b958ace, ref: "البخاري 3036", reason: short, decision:  }
+  # "لقد سألني هذا عن الذي سألني عنه ومالي علم بشيء منه حتى أتاني الله به"
+  - { id: e945e6f5-c297-4f20-a869-4b89208f5d0a, ref: "مسلم 315", reason: fragment, decision:  }
+  # "«فأمسك فإن معنا هديا»"
+  - { id: e9713886-1405-43ee-a9f7-085b71010f57, ref: "البخاري 4353", reason: short, decision:  }
+  # "نهى عن التلقي"
+  - { id: e9a4a083-f929-44da-9330-22e38877fbc0, ref: "مسلم 1517", reason: short, decision:  }
+  # "«أخبروه أن الله يحبه»"
+  - { id: e9db63c4-86aa-4679-9c42-4c09c3e74526, ref: "البخاري 7375", reason: short, decision:  }
+  # "كان يقنت في الصبح والمغرب"
+  - { id: eb4fc0f4-2528-4a00-bad4-a28b6448a566, ref: "مسلم 678", reason: short, decision:  }
+  # "من صلى البردين دخل الجنة"
+  - { id: eb97067f-dc0c-4308-a4fa-b95df7cfd17e, ref: "مسلم 635", reason: short, decision:  }
+  # "نهى عن القزع»"
+  - { id: ebcf5ec2-323d-4af9-96e1-7ff18112e5a1, ref: "البخاري 5921", reason: short, decision:  }
+  # "ابن شهاب: «فكانت تلك سنة المتلاعنين»"
+  - { id: ebe3b00e-3cbe-4e77-b778-d4adc1ad42d9, ref: "البخاري 5259", reason: fragment, decision:  }
+  # "«ألا تجيبوا له؟»، قال: قالوا: يا رسول الله، ما نقول؟ قال: «قولوا الله مولانا، ولا مولى لكم»"
+  - { id: eccbebf8-40df-4441-a339-ee2d1e10f8b7, ref: "البخاري 3039", reason: fragment, decision:  }
+  # "لعله قال بلى قال فإن ذاك كذاك قال فرمى بنسعته وخلى سبيله"
+  - { id: ecd18e7e-519a-474a-82ef-a159dd1164ab, ref: "مسلم 1680", reason: fragment, decision:  }
+  # "نعم الأدم أو الإدام الخل"
+  - { id: ece0bfae-6103-41ae-8d13-508c2d0f2664, ref: "مسلم 2051", reason: short, decision:  }
+  # "«لو تركته بين»"
+  - { id: ed25a427-aa23-4102-96c0-76473c006b68, ref: "البخاري 2638", reason: short, decision:  }
+  # "ما هذه إلا رحمة من الله أفلا كنت آذنتني فنوقظ صاحبينا فيصيبان منها قال فقلت والذي بعثك بالحق ما أبالي إذا أصبتها وأصبتها"
+  - { id: ed2df328-10da-457e-8380-bc7302903a92, ref: "مسلم 2055", reason: fragment, decision:  }
+  # "من شاء فليصمه ومن شاء فليفطره"
+  - { id: edab7ba7-3c6e-41d3-8281-477bd8aa1372, ref: "مسلم 1125", reason: short, decision:  }
+  # "«المرء مع من أحب»"
+  - { id: ee946387-38b6-4dfc-81da-685ee4885078, ref: "البخاري 6168", reason: short, decision:  }
+  # "كان يزور البيت أيام منى»"
+  - { id: ef311520-1d23-4e35-a9c6-0635fa0d886e, ref: "البخاري 1731", reason: short, decision:  }
+  # "«كيف وقد قيل» ففارقها عقبة، ونكحت زوجا غيره"
+  - { id: ef61421d-0edd-4034-bcce-a6d215ece70b, ref: "البخاري 88", reason: fragment, decision:  }
+  # "يتجوز من اللباس والبسط"
+  - { id: ef78f30d-a8e8-4635-9455-92d3c5e05e27, ref: "البخاري 5842", reason: short, decision:  }
+  # "كان أهل بعمرة عام الحديبية»"
+  - { id: efa4a9c9-917f-4dee-b995-b941d19e04ee, ref: "البخاري 1806", reason: short, decision:  }
+  # "«ويهل أهل اليمن من يلملم»"
+  - { id: f026bec1-4c0d-4230-a997-04e040036993, ref: "البخاري 1525", reason: short, decision:  }
+  # "«تدمع العين، ويحزن القلب»"
+  - { id: f052aa78-65e6-42ab-97d8-83d2aed29ec6, ref: "البخاري 1302", reason: short, decision:  }
+  # "«لا تغتروا» ويقال: الذهاب المطر"
+  - { id: f0601b4a-a2c0-4aa3-8019-4ed64d70eb5a, ref: "البخاري 6433", reason: short, decision:  }
+  # "«أعتقها ثم أصدقها»"
+  - { id: f1231bf3-2637-4e48-8150-70c3e6a208a7, ref: "البخاري 5083", reason: short, decision:  }
+  # "والمقصرين"
+  - { id: f1256fbd-b781-452d-b48e-ba0dea199347, ref: "مسلم 1301", reason: short, decision:  }
+  # "«ارفق يا أنجشة، ويحك بالقوارير»"
+  - { id: f1769b91-d295-4d13-ab4a-78948c06c0bc, ref: "البخاري 6209", reason: short, decision:  }
+  # "إنه وتر يحب الوتر"
+  - { id: f1e91b05-c8a7-4528-a098-9cdbc29b5743, ref: "مسلم 2677", reason: short, decision:  }
+  # "\" لا تبكيه - أو: ما تبكيه - ما زالت الملائكة تظله بأجنحتها حتى رفع \""
+  - { id: f26ce30e-bbac-4d83-83ca-4aa09a120e43, ref: "البخاري 4080", reason: fragment, decision:  }
+  # "انظروا إلى حب الأنصار التمر قال فمسح وجهه وسماه عبد الله"
+  - { id: f2c7ce15-2c74-464f-8d1b-18fc5bfa191b, ref: "مسلم 2144", reason: fragment, decision:  }
+  # "كان ينحر، أو يذبح بالمصلى»"
+  - { id: f32a4425-a60e-45bf-9ece-6666e3d7acc7, ref: "البخاري 982", reason: short, decision:  }
+  # "\" لا يشكر الله من لا يشكر الناس \""
+  - { id: f3befc1b-a60b-4f3e-b4f7-7e26368b9a04, ref: "سنن أبي داود، رقم 4811", reason: short, decision:  }
+  # "يا بلال قم فناد بالصلاة"
+  - { id: f3c5973c-3833-4066-a824-6717ab7dd1eb, ref: "مسلم 377", reason: short, decision:  }
+  # "«الآن يا عمر»"
+  - { id: f3e5a3b6-9e70-41d1-8af9-2b2a86cd2c87, ref: "البخاري 6632", reason: short, decision:  }
+  # "«هي النخلة»"
+  - { id: f46559d7-a15f-4c17-8029-81963ea57935, ref: "البخاري 61", reason: short, decision:  }
+  # "أما الطيب الذي بك فاغسله ثلاث مرات وأما الجبة فانزعها ثم اصنع في عمرتك ما تصنع في حجك"
+  - { id: f4e601e5-c71d-4d3a-bb73-15fe451a8612, ref: "مسلم 1180", reason: fragment, decision:  }
+  # "لله أرحم بعباده من هذه بولدها"
+  - { id: f529a246-614e-485e-bafd-83446fcbd276, ref: "مسلم 2754", reason: fragment, decision:  }
+  # "إن الله يحب العبد التقي الغني الخفي"
+  - { id: f5486ef3-3c37-4e73-aacb-ee76c937d8d4, ref: "مسلم 2965", reason: fragment, decision:  }
+  # "«سباب المسلم فسوق، وقتاله كفر»"
+  - { id: f5533131-b6b5-425c-9018-fa37be1a126d, ref: "البخاري 7076", reason: short, decision:  }
+  # "كتب إلى قيصر يدعوه إلى الإسلام، وبعث بكتابه إليه مع دحية الكلبي، وأمره رسول الله صلى الله عليه وسلم أن يدفعه إلى عظيم بص"
+  - { id: f5a4c742-8e09-4b7c-ba7c-1f7d132b9aef, ref: "البخاري 2940", reason: fragment, decision:  }
+  # "قضيت بحكم الله وربما قال قضيت بحكم الملك ولم يذكر بن المثنى وربما قال قضيت بحكم الملك"
+  - { id: f5f934f3-de75-4065-8c3c-cf5b1d0f2236, ref: "مسلم 1768", reason: fragment, decision:  }
+  # "أجود بالخير من الريح المرسلة"
+  - { id: f6380ed1-cc90-4577-a13c-635bd21de3b5, ref: "مسلم 2308", reason: short, decision:  }
+  # "شراك من نار أو شراكان من نار"
+  - { id: f6f232c3-ce5a-4375-a2ac-1fc8d33fc8c0, ref: "مسلم 115", reason: short, decision:  }
+  # "«كنت لك كأبي زرع لأم زرع» قال أبو عبد الله: قال سعيد بن سلمة، عن هشام، «ولا تعشش بيتنا تعشيشا» قال أبو عبد الله: \" وقال"
+  - { id: f707ab21-a9eb-4344-b5c0-b29b58c66fc1, ref: "البخاري 5189", reason: fragment, decision:  }
+  # "«ثم ارفع حتى تطمئن جالسا»"
+  - { id: f7495031-f75a-49c2-9c4f-b7568e6b1b14, ref: "البخاري 6252", reason: short, decision:  }
+  # "هلك المتنطعون قالها ثلاثا"
+  - { id: f849f49d-7114-475d-8cdc-88921a4df610, ref: "مسلم 2670", reason: short, decision:  }
+  # "«يغزو جيش الكعبة فيخسف بهم»"
+  - { id: f92eae63-6a33-4e03-9dea-85de54c3c41e, ref: "البخاري 1594", reason: short, decision:  }
+  # "أبو هريرة نعم"
+  - { id: f9987822-0944-498a-ad13-a8fcc3e8d159, ref: "مسلم 198", reason: short, decision:  }
+  # "يحب الحلواء والعسل»"
+  - { id: f9aa7ff1-22d4-4534-93a1-74b6d9f63a37, ref: "البخاري 5599", reason: short, decision:  }
+  # "الدنيا سجن المؤمن وجنة الكافر"
+  - { id: fa0f9c82-86de-4e07-a796-adf170658b58, ref: "مسلم 2956", reason: short, decision:  }
+  # "\" إذا رأيتم المداحين فاحثوا في وجوههم التراب \""
+  - { id: fa6ab039-4444-48c5-8c14-bdc2577e17c9, ref: "مسلم 3002", reason: fragment, decision:  }
+  # "«سموا باسمي ولا تكنوا بكنيتي»"
+  - { id: faad2802-8fcf-4ea8-b2ec-b30cd0d88484, ref: "البخاري 2120", reason: short, decision:  }
+  # "همام: بحجرين"
+  - { id: faf765cc-d7bb-449f-8730-ea6f1f840289, ref: "البخاري 6884", reason: short, decision:  }
+  # "من لا يشكر الناس لا يشكر الله."
+  - { id: fb015255-36fd-495b-8510-0fda2362fd41, ref: "سنن أبي داود (7/ 188) (4811).", reason: short, decision:  }
+  # "«إن خياركم أحسنكم قضاء»"
+  - { id: fb1d5393-8fae-4a6e-87e5-146f45179d1e, ref: "البخاري 2305", reason: short, decision:  }
+  # "«عقل رسول الله صلى الله عليه وسلم، وعقل مجة مجها من دلو كان في دارهم»"
+  - { id: fb28e949-d9cc-4f81-b1ce-0f1d8e9c07ea, ref: "البخاري 839", reason: fragment, decision:  }
+  # "\" قال الله: لك ذلك وعشرة أمثاله \"، قال أبو هريرة: لم أحفظ من رسول الله صلى الله عليه وسلم إلا قوله: «لك ذلك ومثله معه» ق"
+  - { id: fb3fd193-0fb7-4379-a58b-97fc686b29eb, ref: "البخاري 806", reason: fragment, decision:  }
+  # "«فأمرني أن آذن له»"
+  - { id: fb4eb195-95c4-4768-aed0-ea99703b6c1f, ref: "البخاري 5103", reason: short, decision:  }
+  # "لعن من اتخذ شيئا فيه الروح غرضا"
+  - { id: fb5f7c2e-0774-4039-a070-0b05186fd1d8, ref: "مسلم 1958", reason: fragment, decision:  }
+  # "تسحروا فإن في السحور بركة"
+  - { id: fb8afec8-3b80-4ca3-9501-e622955c354f, ref: "مسلم 1095", reason: short, decision:  }
+  # "قال: «لا تخيروا بين الأنبياء»"
+  - { id: fb8e2531-4519-4457-94b3-1e909cedbc41, ref: "البخاري 6916", reason: short, decision:  }
+  # "قضى باليمين على المدعى عليه»"
+  - { id: fbcf9c57-c9ba-4f95-be2d-4ff771c96b0f, ref: "البخاري 2668", reason: short, decision:  }
+  # "كان لا يرد الطيب»"
+  - { id: fbf11a40-0680-47ea-8706-d93332aeabe6, ref: "البخاري 2582", reason: short, decision:  }
+  # "«إن يكنه، فلن تسلط عليه، وإن لم يكنه، فلا خير لك في قتله»،"
+  - { id: fc9178ea-6834-4a71-9e60-a0d915d544c9, ref: "البخاري 3055", reason: fragment, decision:  }
+  # "يسر بهن إلي"
+  - { id: fcaa44b6-00d8-4f85-94ec-f95b9307e1ef, ref: "مسلم 2440", reason: short, decision:  }
+  # "بمثل حديث مالك"
+  - { id: fcdb0908-56f5-4afc-882e-d80fe6e18625, ref: "مسلم 1664", reason: short, decision:  }
+  # "يصلي في النعلين قال نعم"
+  - { id: fd088136-1b5d-4e6b-901d-4fdaa9498218, ref: "مسلم 555", reason: short, decision:  }
+  # "العبادة في الهرج كهجرة إلي"
+  - { id: fd56786a-ccad-4447-a838-6e2c45beae1b, ref: "مسلم 2948", reason: short, decision:  }
+  # "«أنا فرطكم على الحوض»"
+  - { id: fd65d7aa-8b8c-47dd-94f6-7dcef8c8e534, ref: "البخاري 6575", reason: short, decision:  }
+  # "وهو في كتاب الله"
+  - { id: fd7ea799-e807-4fd4-8ef2-0aa19080c440, ref: "البخاري 5948", reason: short, decision:  }
+  # "«ونادوا يا مالك»"
+  - { id: fdb6036b-cac2-467d-8183-2959a005237c, ref: "البخاري 3266", reason: short, decision:  }
+  # "«تدع الصلاة»"
+  - { id: fe1308bf-c132-4bb1-bfd4-345466829ca9, ref: "البخاري 320", reason: short, decision:  }
+  # "«ارموا فأنا معكم كلكم»"
+  - { id: fe2fbf9e-23ed-4fea-af41-52b8677bb22c, ref: "البخاري 2899", reason: short, decision:  }
+  # "«كذب من قاله، إن له لأجرين - وجمع بين إصبعيه - إنه لجاهد مجاهد، قل عربي مشى بها مثله»، حدثنا قتيبة، حدثنا حاتم قال: «نشأ"
+  - { id: fe736192-2010-4b2a-bdfb-00e69de1a138, ref: "البخاري 4196", reason: fragment, decision:  }
+  # "يحب الحلواء والعسل»"
+  - { id: fe7d51ec-4238-4d8a-ad00-05834ad206a9, ref: "البخاري 5431", reason: short, decision:  }
+  # "\" الدنيا سجن المؤمن وجنة الكافر \" ,"
+  - { id: feb3a6f9-fa7c-4d1e-bd42-8cf13cb2c8d8, ref: "مسلم 2956", reason: short, decision:  }
+  # "«نحن الآخرون السابقون يوم القيامة»"
+  - { id: ff39f9c5-906c-4026-8b6c-0e18b8fa831f, ref: "البخاري 6887", reason: short, decision:  }
+  # "«هاهنا وثم سواء»"
+  - { id: ff80d56e-d87a-4914-aeea-05b69b19dec5, ref: "البخاري 232", reason: short, decision:  }

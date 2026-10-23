@@ -19,6 +19,7 @@ import { runStructureImport } from './structure/import.js';
 import { runTaxonomyImport } from './taxonomy/import.js';
 import { runSunanTahqiq } from './sunan-tahqiq/import.js';
 import { runTranslations } from './translations/import.js';
+import { runTextAudit } from './audit/text-fragments.js';
 import { runIbnRajab } from './ibn-rajab/import.js';
 import { runIbnAbiDunyaImport } from './ibn-abi-dunya/import.js';
 import { runAdhkarImport } from './adhkar/import.js';
@@ -52,6 +53,7 @@ const WORKS: Record<string, (options: ImportOptions) => Promise<void>> = {
   taxonomy: runTaxonomyImport,
   'sunan-tahqiq': runSunanTahqiq,
   translations: runTranslations,
+  'audit-texts': runTextAudit,
   'ibn-rajab': runIbnRajab,
   'ibn-abi-dunya': runIbnAbiDunyaImport,
   adhkar: runAdhkarImport,

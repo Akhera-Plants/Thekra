@@ -48,8 +48,10 @@ export default async function SinsPage({ params }: PageProps<'/[locale]/sins'>) 
 
   const entries: TopicEntry[] = sins.map((sin) => ({
     href: `/sins/${sin.slug}`,
-    nameAr: sin.pair?.titleAr ?? sin.nameAr,
-    name: sin.pair?.titleEn ?? sin.name,
+    // The sin's own name (audit B02); the paired virtue still finds it in the search.
+    nameAr: sin.nameAr,
+    name: sin.name,
+    aliases: sin.pair ? [sin.pair.titleAr, sin.pair.titleEn] : [],
     quoteCount: sin.quoteCount,
     domainKey: sin.domainKey ?? null,
     taxonomyOrder: sin.taxonomyOrder ?? null,
