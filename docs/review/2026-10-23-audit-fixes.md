@@ -1,53 +1,54 @@
-# Site audit 2026-10-23: fixes and status
+# فحص الموقع 23 أكتوبر 2026: الإصلاحات والحالة
 
-Source: `thekra-audit-and-fix-brief.md` (owner, 2026-10-23). This covers the functional items
-(B01–B09). UI items (B10–B12, U01–U10) and content reviews (R01–R03) are not in this change.
+المصدر: ملف `thekra-audit-and-fix-brief.md` من صاحب المشروع (23 أكتوبر 2026). هذا التقرير يغطي البنود
+الوظيفية B01 حتى B09. بنود الواجهة (B10 حتى B12، وU01 حتى U10) ومراجعات المحتوى (R01 حتى R03) ليست
+ضمن هذا التعديل.
 
-## Status
+## الحالة
 
-| ID | Status | Root cause (proven) | Fix | Regression test |
+| البند | الحالة | السبب الجذري (مُثبت) | الإصلاح | اختبار الانحدار |
 | --- | --- | --- | --- | --- |
-| B01 English of another hadith | **fixed in code + local data; production needs the release push** | The English edition is keyed by its running number; citations give the printed (Abd al-Baqi) number. For Muslim the two differ on 7,219 entries, so «مسلم 2589» got running entry 2589 = Muslim 1109 (fasting). | `translations/match.ts`: index by `arabicnumber`, pick among sub-narrations by the stored Arabic, refuse an entry whose Arabic barely overlaps. Importer replaces or removes only rows it wrote (edition texts); HadeethEnc English untouched. | `match.spec.ts` (Muslim 2589 → backbiting) |
-| B02 virtue name under «كبيرة» | fixed | Sins index and sin page used `pair.titleAr` (the deed's title) for the sin. | Sin name everywhere on `/sins`; «الفضيلة المقابلة: …» links to the deed; the virtue still finds the sin in search. | `audit-regressions.spec.ts` B02 |
-| B03 truncated featured text | **mitigated; the stored text needs review** | The Arabic corpus stored Bukhari 1992 as only its last clause. The «today» pick drew from every publishable text, unlinked fragments included. | «today» now picks only texts linked to a topic, with no open flag, and not on `prisma/taxonomy/text-review.yaml` unless reviewed COMPLETE. The list (818 texts) comes from the read-only audit `import:book audit-texts`. No text was rewritten. | `quotes.service.spec.ts`, `text-review.spec.ts`, `text-fragments.spec.ts` |
-| B04 tafsir fails | fixed (live) | No `Access-Control-Allow-Origin`: the API project has no `CORS_ORIGINS`, and the code default was localhost only. | Site and preview origins built in (`BUILT_IN_CORS_ORIGINS`). | `cors-built-in.e2e-spec.ts` |
-| B05 sharh fails | fixed (live) | Same as B04. The audited hadith has no sharh; the page now says so. | Same. | same |
-| B06 kind tabs empty | fixed (live) | Same as B04: the filtered request was blocked. | Same. | `audit-regressions.spec.ts` B06 |
-| B07 theme chip / stale list | fixed | Live: blocked request (B04) with the previous list kept. Also the URL theme was read with a no-op external store, and chips replaced history (no back/forward). | Effect reads `?theme=` after hydration and on `popstate`; each chip pushes a history entry. | `audit-regressions.spec.ts` B07 |
-| B08 search needs tashkeel | fixed | Catalogue filter compared raw strings. | `namesMatch` folds query and names (`foldArabic`). | `topic-theme-search.test.ts`, B08 spec |
-| B09 language switch drops state | fixed | Switch link carried only the path. | Keeps validated `theme` and `q` only. | `preserved-query.test.ts`, B09 spec |
+| B01 ترجمة إنجليزية لحديث آخر | **مُصلح في الكود وفي القاعدة المحلية، وينتظر رفع النسخة إلى قاعدة الإنتاج** | ملف الترجمة مرقّم برقمه التسلسلي، والمراجع عندنا بالرقم المطبوع (ترقيم عبد الباقي). في صحيح مسلم يختلف الرقمان في 7,219 حديثًا، فأخذ «مسلم 2589» ترجمة الحديث التسلسلي 2589، وهو مسلم 1109 (عن الصيام). | `translations/match.ts`: الفهرسة بالرقم المطبوع (`arabicnumber`)، والاختيار بين روايات الرقم الواحد بمقارنة النص العربي المخزّن، ورفض أي ترجمة لا يتطابق نصها العربي مع المخزّن. المستورد يستبدل أو يحذف فقط الصفوف التي كتبها هو، وترجمات موسوعة الأحاديث لا تُمس. | `match.spec.ts` (مسلم 2589 ← حديث الغيبة) |
+| B02 اسم الفضيلة تحت «كبيرة» | مُصلح | فهرس المعاصي وصفحة المعصية كانا يعرضان `pair.titleAr` (عنوان الطاعة المقابلة) بدل اسم المعصية. | اسم المعصية في كل صفحات `/sins`، وسطر «الفضيلة المقابلة: …» يربط بصفحة الطاعة، والبحث باسم الفضيلة ما زال يجد المعصية. | `audit-regressions.spec.ts` B02 |
+| B03 التذكرة المختارة مبتورة | **خُفّفت، والنص المخزّن يحتاج مراجعة** | النص العربي لصحيح البخاري 1992 مخزّن كآخر جملة منه فقط. وتذكرة اليوم كانت تُختار من كل نص قابل للنشر، ومنها مقاطع غير مربوطة بأي موضوع. | تذكرة اليوم صارت تُختار فقط من نص مربوط بموضوع، وليس عليه علامة مراجعة مفتوحة، وليس في `prisma/taxonomy/text-review.yaml` إلا إذا رُوجع وصار COMPLETE. القائمة (818 نصًا) يولّدها أمر الفحص `import:book audit-texts`، وهو للقراءة فقط. لم يُعدَّل أي نص. | `quotes.service.spec.ts`، `text-review.spec.ts`، `text-fragments.spec.ts` |
+| B04 فشل التفسير | مُصلح (على الموقع) | الـ API لا يرسل `Access-Control-Allow-Origin`: مشروع الـ API ليس فيه `CORS_ORIGINS`، والقيمة الافتراضية في الكود كانت localhost فقط. | عنوان الموقع وعناوين الـ preview صارت مضمّنة في الكود (`BUILT_IN_CORS_ORIGINS`). | `cors-built-in.e2e-spec.ts` |
+| B05 فشل الشرح | مُصلح (على الموقع) | نفس سبب B04. والحديث المفحوص ليس له شرح، والصفحة صارت تقول ذلك بوضوح. | نفس الإصلاح. | نفس الاختبار |
+| B06 تبويبات النوع فارغة | مُصلح (على الموقع) | نفس سبب B04: الطلب المفلتر كان محجوبًا. | نفس الإصلاح. | `audit-regressions.spec.ts` B06 |
+| B07 الموضوع الفرعي يُبقي القائمة القديمة | مُصلح | على الموقع: الطلب محجوب (B04) فتبقى القائمة السابقة. وأيضًا كان `?theme=` يُقرأ بطريقة لا تتحدث بعد التحميل، والأزرار كانت تستبدل سجل التصفح فلا يعمل الرجوع والتقدم. | قراءة `?theme=` بعد التحميل وعند `popstate`، وكل اختيار يضيف خطوة في سجل التصفح. | `audit-regressions.spec.ts` B07 |
+| B08 البحث حساس للتشكيل | مُصلح | فلتر الفهرس كان يقارن النصوص كما هي. | `namesMatch` يطبّع البحث والأسماء معًا (`foldArabic`). | `topic-theme-search.test.ts`، واختبار B08 |
+| B09 تبديل اللغة يُسقط الحالة | مُصلح | رابط اللغة كان يحمل المسار فقط. | يحفظ `theme` و`q` فقط بعد التحقق منهما. | `preserved-query.test.ts`، واختبار B09 |
 
-## Data changes (local database, then the release copy)
+## تعديلات البيانات (القاعدة المحلية، ثم نسخة الإصدار)
 
-`import:book translations` on the local database, report with every previous text kept for revert:
-`backend/.corpus/translations/report-2026-10-23T02-42-01-049Z.json` (gitignored; also copied to the
-main checkout's `backend/.corpus/translations/`).
+شُغّل `import:book translations` على القاعدة المحلية، مع تقرير يحفظ كل نص قديم للرجوع عنه:
+`backend/.corpus/translations/report-2026-10-23T02-42-01-049Z.json` (خارج git، ومنه نسخة في
+`backend/.corpus/translations/` بالمجلد الرئيسي للمشروع).
 
-| | Count |
+| | العدد |
 | --- | --- |
-| English replaced (wrong entry → right entry) | 3,151 (3,132 cite Muslim) |
-| English added (right entry now found) | 1,223 |
-| English removed (stored Arabic is another text than the cited entry) | 233 |
-| Second run | 0 writes |
+| ترجمة استُبدلت (من حديث خطأ إلى الحديث الصحيح) | 3,151 (منها 3,132 من صحيح مسلم) |
+| ترجمة أُضيفت (صار يُعثر على الحديث الصحيح) | 1,223 |
+| ترجمة حُذفت (النص العربي المخزّن نص آخر غير الرقم المذكور) | 233 |
+| التشغيل الثاني | 0 تغييرات |
 
-Production gets this only through `scripts/release-db.sh build` + `push` (owner, needs the Neon URL).
+لا يصل هذا إلى الإنتاج إلا عبر `scripts/release-db.sh build` ثم `push`، ويشغّله صاحب المشروع لأنه يحتاج
+رابط Neon. نسخة الإصدار مبنية وجاهزة في `/tmp/thekra-release.dump`، وكل فحوصاتها ناجحة.
 
-## Found while fixing (not in the brief)
+## أشياء ظهرت أثناء الإصلاح (ليست في الملف)
 
-- **E2E tests wiped the local development database** (my run, 2026-10-23): `setup-e2e.ts` keeps an
-  already-exported `DATABASE_URL`. Restored from `thekra_release`; local seed users and favourites are
-  not in that copy. Guard added: e2e refuses any database whose name does not end in `_test`.
-- **Switching back to Arabic lands on `/ar/...`** instead of `/...` (live too, before this change).
-  `e2e/direction.spec.ts` fails on that step. Not fixed here.
-- Records whose Arabic is another text than their cited number (e.g. the record cited «البخاري 1543»
-  holds an ihram hadith): their English was removed; the citation itself needs review (R01/R03).
+- **اختبارات e2e مسحت قاعدة التطوير المحلية** (في تشغيلي أنا، 23 أكتوبر 2026): `setup-e2e.ts` يحتفظ
+  بـ `DATABASE_URL` إذا كان محمّلًا من قبل. استُرجعت القاعدة من `thekra_release`، وحسابات الـ seed المحلية
+  والمفضلة ليست في تلك النسخة. أُضيفت حماية: e2e يرفض أي قاعدة لا ينتهي اسمها بـ `_test`.
+- **الرجوع إلى العربية يفتح `/ar/...`** بدل `/...`، وهي موجودة على الموقع من قبل هذا التعديل.
+  اختبار `e2e/direction.spec.ts` يفشل في هذه الخطوة، ولم تُصلح هنا.
+- سجلات نصها العربي نص آخر غير الرقم المذكور معها (مثلًا السجل المكتوب «البخاري 1543» فيه حديث عن
+  لباس المُحرم): حُذفت ترجمتها الإنجليزية، والإحالة نفسها تحتاج مراجعة (R01 وR03).
+- `prisma/release/verify.sql` كان ما زال يحسب الآثار التي لها درجة بدون قرار KEEP، لأن إصلاح الأثر
+  صباح اليوم غيّر الـ API فقط. صُحّح، فصار فحص الإصدار يطابق الـ API (الذكر 467).
+  ملف `docs/methodology/queries.sql` (استعلامات تقارير الشيخ) ما زال على القاعدة القديمة.
 
-- `prisma/release/verify.sql` still counted graded athar without KEEP (the athar fix earlier today
-  changed the API only); fixed, so the release smoke test matches the API (dhikr 467).
-  `docs/methodology/queries.sql` (report queries for the sheikh) still uses the old rule.
+## ما لم يُنفذ أو لم يُفحص
 
-## Not done / not verified
-
-- B10–B12, U01–U10, R01–R03.
-- B01 data on production (release push).
-- Mobile viewport and dark mode were not re-checked for this change.
+- B10 حتى B12، وU01 حتى U10، وR01 حتى R03.
+- بيانات B01 على الإنتاج: تنتظر رفع النسخة إلى قاعدة الإنتاج الصحيحة.
+- الموبايل والوضع الداكن لم يُعد فحصهما لهذا التعديل.
