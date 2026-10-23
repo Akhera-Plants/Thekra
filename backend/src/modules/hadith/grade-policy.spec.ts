@@ -3,6 +3,7 @@ import { GradeSource, HadithGrade, QuoteType, TextSource } from '@prisma/client'
 import {
   DEFAULT_ALLOWED_GRADES,
   GradePolicy,
+  PUBLISHABLE_GRADE_SOURCES,
   atharMayPublish,
 } from './grade-policy.js';
 
@@ -48,22 +49,29 @@ describe('GradePolicy', () => {
 
   describe('readerClause', () => {
     it('publishes a hadith from a sahihayn match, a manual grade, or a sunan tahqiq grade, and hides an open high flag', () => {
-      expect(GradePolicy.isPublishable({ type: QuoteType.HADITH, gradeSource: GradeSource.SAHIHAYN })).toBe(true);
-      expect(GradePolicy.isPublishable({ type: QuoteType.HADITH, gradeSource: GradeSource.AUTO_SAHIHAYN })).toBe(true);
-      expect(GradePolicy.isPublishable({ type: QuoteType.HADITH, gradeSource: GradeSource.MANUAL })).toBe(true);
-      expect(GradePolicy.isPublishable({ type: QuoteType.HADITH, gradeSource: GradeSource.SUNAN_TAHQIQ })).toBe(true);
-      expect(GradePolicy.isPublishable({ type: QuoteType.HADITH, gradeSource: GradeSource.HADEETHENC })).toBe(true);
-      expect(GradePolicy.isPublishable({ type: QuoteType.HADITH, gradeSource: GradeSource.IBN_RAJAB })).toBe(false);
-      expect(GradePolicy.isPublishable({ type: QuoteType.HADITH, gradeSource: GradeSource.AUTHORITY_LEGACY })).toBe(false);
-      expect(GradePolicy.isPublishable({ type: QuoteType.QURAN_VERSE, gradeSource: GradeSource.AUTHORITY_LEGACY })).toBe(true);
+      const hadith = { type: QuoteType.HADITH, isAthar: false, atharSpeakerKey: null, atharReviewDecision: null };
+      expect(GradePolicy.isPublishable({ ...hadith, gradeSource: GradeSource.SAHIHAYN })).toBe(true);
+      expect(GradePolicy.isPublishable({ ...hadith, gradeSource: GradeSource.AUTO_SAHIHAYN })).toBe(true);
+      expect(GradePolicy.isPublishable({ ...hadith, gradeSource: GradeSource.MANUAL })).toBe(true);
+      expect(GradePolicy.isPublishable({ ...hadith, gradeSource: GradeSource.SUNAN_TAHQIQ })).toBe(true);
+      expect(GradePolicy.isPublishable({ ...hadith, gradeSource: GradeSource.HADEETHENC })).toBe(true);
+      expect(GradePolicy.isPublishable({ ...hadith, gradeSource: GradeSource.IBN_RAJAB })).toBe(false);
+      expect(GradePolicy.isPublishable({ ...hadith, gradeSource: GradeSource.AUTHORITY_LEGACY })).toBe(false);
+      expect(
+        GradePolicy.isPublishable({ ...hadith, type: QuoteType.QURAN_VERSE, gradeSource: GradeSource.AUTHORITY_LEGACY }),
+      ).toBe(true);
       // Athar stay hidden until ATHAR_PUBLIC_ENABLED=true (audit gate).
       expect(
-        GradePolicy.isPublishable({
-          type: QuoteType.HADITH,
-          gradeSource: GradeSource.AUTHORITY_LEGACY,
-          isAthar: true,
-          atharSpeakerKey: 'umar',
-        }),
+        GradePolicy.isPublishable(
+          {
+            type: QuoteType.HADITH,
+            gradeSource: GradeSource.AUTHORITY_LEGACY,
+            isAthar: true,
+            atharSpeakerKey: 'umar',
+            atharReviewDecision: 'KEEP',
+          },
+          false,
+        ),
       ).toBe(false);
       expect(GradePolicy.readerClause()).toEqual({
         AND: [
@@ -72,6 +80,38 @@ describe('GradePolicy', () => {
           { NOT: { apiProvider: 'book-structure', type: QuoteType.BOOK_EXCERPT } },
         ],
       });
+    });
+
+    it('holds an athar to the athar rule whatever its grade source or type', () => {
+      const athar = { type: QuoteType.HADITH, isAthar: true as const };
+      // A publishable grade source does not publish an athar the reviewer dropped or never decided.
+      for (const gradeSource of [GradeSource.AUTO_SAHIHAYN, GradeSource.SUNAN_TAHQIQ, GradeSource.HADEETHENC]) {
+        expect(GradePolicy.isPublishable({ ...athar, gradeSource, atharSpeakerKey: 'aisha', atharReviewDecision: 'DROP' }, true)).toBe(false);
+        expect(GradePolicy.isPublishable({ ...athar, gradeSource, atharSpeakerKey: null, atharReviewDecision: null }, true)).toBe(false);
+        expect(GradePolicy.isPublishable({ ...athar, gradeSource, atharSpeakerKey: 'aisha', atharReviewDecision: 'KEEP' }, true)).toBe(true);
+        expect(GradePolicy.isPublishable({ ...athar, gradeSource, atharSpeakerKey: 'aisha', atharReviewDecision: 'KEEP' }, false)).toBe(false);
+      }
+      // An athar stored as a book excerpt answers to the same rule.
+      expect(
+        GradePolicy.isPublishable(
+          { type: QuoteType.BOOK_EXCERPT, gradeSource: GradeSource.AUTHORITY_LEGACY, isAthar: true, atharSpeakerKey: null, atharReviewDecision: null },
+          true,
+        ),
+      ).toBe(false);
+    });
+
+    it('builds the publish clause so a graded athar still needs a kept, listed speaker', () => {
+      const flagged = { flags: { none: { status: 'OPEN', severity: 'HIGH' } } };
+      const nonAthar = {
+        isAthar: false,
+        OR: [
+          { type: { not: QuoteType.HADITH } },
+          { gradeSource: { in: [...PUBLISHABLE_GRADE_SOURCES] } },
+        ],
+      };
+      const kept = { isAthar: true, atharSpeakerKey: { not: null }, atharReviewDecision: 'KEEP' };
+      expect(GradePolicy.publishableClause(true)).toEqual({ AND: [{ OR: [nonAthar, kept] }, flagged] });
+      expect(GradePolicy.publishableClause(false)).toEqual({ AND: [{ OR: [nonAthar] }, flagged] });
     });
 
     it('publishes a listed athar only when the reviewer kept it and the flag is on', () => {

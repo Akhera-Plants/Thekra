@@ -93,7 +93,9 @@ function chunks<T>(items: readonly T[], size: number): T[][] {
 function hadithScore(quote: QuoteMeta | undefined): number {
   if (!quote) return 50;
   const excerpt = quote.apiProvider === 'book-structure' && quote.type === QuoteType.BOOK_EXCERPT;
-  const publishable = GradePolicy.isPublishable(quote) && GradePolicy.isPublicText(quote) && !excerpt && !quote.highFlag;
+  // The score ranks by the hadith grade source only. Athar publishing is decided at read time (GradePolicy.publishableClause).
+  const graded = { ...quote, isAthar: false, atharSpeakerKey: null, atharReviewDecision: null };
+  const publishable = GradePolicy.isPublishable(graded) && GradePolicy.isPublicText(quote) && !excerpt && !quote.highFlag;
   return publishable ? 80 : 50;
 }
 

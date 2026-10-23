@@ -83,8 +83,10 @@ These come from the owner and from the scholarly requirements of the project.
     - listing pages additionally require grade `SAHIH`/`HASAN`;
     - links must be `ACCEPTED`; a link note starting «باب …» (auto chapter note) is not shown;
     - `ATHAR_PUBLIC_ENABLED` defaults **off in code** — production must set it to `true` explicitly.
-    - Known gap awaiting the owner: 4 athar rows publish through their grade source without `KEEP`
-      (2 of them marked DROP). Fix = make the athar condition apply regardless of grade source.
+    - An athar (`isAthar=true`) answers to the athar rule **alone**, whatever its grade source or type: a
+      Sahihayn/HadeethEnc/tahqiq grade never publishes an athar without a listed speaker and `KEEP`
+      (closed 2026-10-23; it hid 4 graded athar — 2 DROP, 2 undecided HadeethEnc rows from al-Adhkar — and 5 unlinked
+      Minhaj excerpts). The same rule lives in `publishableClause`, `isPublishable` and the raw SQL of `shuffleLinksPage`.
 
 ## 4. Architecture
 
@@ -282,7 +284,7 @@ Playwright: import from `node_modules/.pnpm/@playwright+test@…/…/index.mjs` 
 | `NEXT_PUBLIC_API_URL` also for the **Preview** environment | owner | preview builds fail without it |
 | Rotate the Neon owner password (was pasted in chat) | owner | then update `DATABASE_URL`/`DIRECT_URL` and redeploy |
 | Delete the duplicate Vercel project `thekra-api` | owner | |
-| Athar publishing gap (4 rows without KEEP) | owner decision → code | `publishableClause` in `grade-policy.ts` |
+| 2 HadeethEnc athar from al-Adhkar (hidden since the athar fix; no speaker/decision) | owner/sheikh | review them in the athar sheet if they should return |
 | Ibn Abi al-Dunya title «الشرف في المنازل» vs corpus «الإشراف في منازل الأشراف» | owner/sheikh | |
 | Close `/auth/register` until the accounts phase? | owner | unanswered |
 | «لماذا هذه الآية/الحديث؟» card: richer content | owner picks | proposals in history file §6 |

@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
+  type AtharReviewDecision,
   ExplanationKind,
   GradeSource,
   HadithGrade,
@@ -28,7 +29,7 @@ import {
 import { findIdsByNormalizedArabic, findIdsByNormalizedArabicOrdered } from '../../common/text/arabic-search.js';
 import { parsePrintedReference, utcDayNumber } from '../../common/text/printed-reference.js';
 import { autoLinkExclusion } from '../classification/public-taxonomy.js';
-import { GradePolicy, PUBLISHABLE_GRADE_SOURCES } from '../hadith/grade-policy.js';
+import { ATHAR_PUBLIC_ENABLED, GradePolicy, PUBLISHABLE_GRADE_SOURCES } from '../hadith/grade-policy.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type { EnvironmentVariables } from '../../config/env.validation.js';
 import type { AdminQuotesQueryDto } from './dto/admin-quotes-query.dto.js';
@@ -392,10 +393,17 @@ export class QuotesService {
       OR q.grade::text IN (${Prisma.join(allowedGrades)})
       ${nullGradeClause}
     )`;
+    // Publish clause mirrors GradePolicy.publishableClause: an athar answers to the athar rule alone.
+    const atharClause = ATHAR_PUBLIC_ENABLED
+      ? Prisma.sql`OR (q."isAthar" AND q."atharSpeakerKey" IS NOT NULL AND q."atharReviewDecision"::text = 'KEEP')`
+      : Prisma.sql``;
     const textFilter = Prisma.sql`AND (q."textSource"::text <> 'OCR' OR q."textVerifiedAt" IS NOT NULL)
       AND (
-        q.type::text <> 'HADITH'
-        OR q."gradeSource"::text IN (${Prisma.join(PUBLISHABLE_GRADE_SOURCES)})
+        (NOT q."isAthar" AND (
+          q.type::text <> 'HADITH'
+          OR q."gradeSource"::text IN (${Prisma.join(PUBLISHABLE_GRADE_SOURCES)})
+        ))
+        ${atharClause}
       )
       AND NOT EXISTS (
         SELECT 1 FROM "QuoteFlag" f
@@ -619,6 +627,9 @@ export class QuotesService {
     type: QuoteType;
     grade: HadithGrade | null;
     gradeSource: GradeSource;
+    isAthar: boolean;
+    atharSpeakerKey: string | null;
+    atharReviewDecision: AtharReviewDecision | null;
     textSource: TextSource;
     textVerifiedAt: Date | null;
     apiProvider: string | null;
@@ -634,6 +645,9 @@ export class QuotesService {
     type: QuoteType;
     grade: HadithGrade | null;
     gradeSource: GradeSource;
+    isAthar: boolean;
+    atharSpeakerKey: string | null;
+    atharReviewDecision: AtharReviewDecision | null;
     textSource: TextSource;
     textVerifiedAt: Date | null;
     apiProvider: string | null;
@@ -1137,6 +1151,9 @@ export class QuotesService {
         surahNumber: true,
         ayahNumber: true,
         gradeSource: true,
+        isAthar: true,
+        atharSpeakerKey: true,
+        atharReviewDecision: true,
         textSource: true,
         textVerifiedAt: true,
         apiProvider: true,
