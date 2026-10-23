@@ -85,6 +85,9 @@ export class FavoritesService {
         id: true,
         type: true,
         gradeSource: true,
+        isAthar: true,
+        atharSpeakerKey: true,
+        atharReviewDecision: true,
         textSource: true,
         textVerifiedAt: true,
         flags: { where: { status: 'OPEN', severity: 'HIGH' }, select: { id: true }, take: 1 },
@@ -93,7 +96,7 @@ export class FavoritesService {
     if (
       !quote
       || !GradePolicy.isPublicText(quote)
-      ||       !GradePolicy.isPublishable(quote)
+      || !GradePolicy.isPublishable(quote)
       || quote.flags.length > 0
     ) {
       throw new UnprocessableEntityException({
