@@ -98,6 +98,10 @@ Grouped by theme; quote marks are his text. Treat these as standing requirements
 | 25 | Docs claimed numbers that were stale | prose copied from old reports | numbers come from SQL (`docs/methodology/queries.sql`) | Every number in a report comes from a query/command you ran; say when docs and DB differ |
 | 26 | I once captured a pipeline's exit code (`tail`) instead of the command's | `cmd | tail; echo $?` | re-ran with redirected output | Read `PIPESTATUS`/redirect to a file when testing exit codes |
 | 27 | A secret copy of `.env` was copied to `/tmp` during a test | careless | deleted immediately | Never copy `.env`/secret files; assume anything pasted in chat is compromised |
+| 28 | E2E tests wiped the local development database | `DATABASE_URL` was exported in the shell; `setup-e2e.ts` never overrides an existing value | restored from `thekra_release`; e2e now refuses a database not named `*_test` | Never export the dev `DATABASE_URL` before tests; a destructive test suite must check its target itself |
+| 29 | Every client-side request of the live site failed (filters, themes, tafsir, sharh) | API project had no `CORS_ORIGINS`; the code default was localhost only | site origins built into the API (`BUILT_IN_CORS_ORIGINS`) | A required production setting must not have a silent default that breaks production |
+| 30 | Muslim hadith showed the English of another hadith | edition `hadithnumber` (running) used as the printed Abd al-Baqi number (`arabicnumber`) | index by `arabicnumber` and check the stored Arabic against the entry | Never join two corpora on a bare number: name the numbering system and verify the text |
+| 31 | Browser checks in the app's pane showed un-hydrated pages | the pane was hidden, so `requestAnimationFrame` never fired and React never revealed streamed content | verified with headless Playwright Chrome | Check `tabs_context` ("pane hidden") before trusting a hydration result from the pane |
 
 Process lessons that cut across the table:
 - **Reproduce before fixing.** Prefer an automated reproduction (a failing gate) over a plausible theory.

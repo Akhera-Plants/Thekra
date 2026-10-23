@@ -3,7 +3,7 @@ import { join } from 'node:path';
 
 /**
  * The reviewer files under prisma/taxonomy/ that the API reads at runtime
- * (topic pairs and topic themes).
+ * (topic pairs, topic themes, and the text review list).
  *
  * Paths come from this module's location, never process.cwd(): src/ and dist/
  * both sit one level below backend/, so ../../../prisma/taxonomy is the same
@@ -16,7 +16,7 @@ import { join } from 'node:path';
  * Plain TypeScript only: the import scripts load this file with Node's type
  * stripping.
  */
-export const TAXONOMY_FILES = ['taxonomy.yaml', 'topic-themes.yaml'] as const;
+export const TAXONOMY_FILES = ['taxonomy.yaml', 'topic-themes.yaml', 'text-review.yaml'] as const;
 export type TaxonomyFile = (typeof TAXONOMY_FILES)[number];
 
 export function taxonomyFilePath(file: TaxonomyFile): string {

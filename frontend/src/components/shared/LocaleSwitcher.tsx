@@ -3,6 +3,7 @@
 import { useLocale } from 'next-intl';
 import { useEffect } from 'react';
 import { Link, usePathname, useRouter } from '@/i18n/navigation';
+import { preservedQuery } from '@/lib/search/preserved-query';
 import { cn } from '@/lib/utils';
 
 interface LocaleSwitcherProps {
@@ -37,6 +38,14 @@ export function LocaleSwitcher({ label, className }: LocaleSwitcherProps) {
       locale={otherLocale}
       data-locale-switch=""
       aria-label={label}
+      onClick={(event) => {
+        // Keep the theme chip and the catalogue search (audit B09). They live in the address bar,
+        // written on the client, so they are read at click time; a modified click opens the plain page.
+        const query = preservedQuery(window.location.search);
+        if (!query || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+        event.preventDefault();
+        router.push(`${pathname}${query}`, { locale: otherLocale });
+      }}
       onPointerEnter={() => router.prefetch(pathname, { locale: otherLocale })}
       onFocus={() => router.prefetch(pathname, { locale: otherLocale })}
       className={cn(
