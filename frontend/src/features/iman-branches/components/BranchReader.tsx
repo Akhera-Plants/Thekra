@@ -2,8 +2,9 @@
 
 import { useState, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query';
 import { ReminderReader, type ReaderItem, type TypeFilter } from '@/components/shared/editorial/ReminderReader';
+import { ReaderStatus } from '@/components/shared/feedback/ReaderStatus';
 import { getBranchQuotes } from '@/lib/api/branches';
 import type { BranchQuotesMeta } from '@/lib/api/branches';
 import type { CountsByKind } from '@/lib/types/api';
@@ -25,29 +26,44 @@ export function BranchReader({ number, lang, items: initialItems, total, countsB
 
   const {
     data,
+    error,
+    isError,
+    isFetching,
+    isFetchNextPageError,
+    refetch,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
     queryKey: ['branches', number, 'quotes', { lang, kind: activeKind }] as const,
-    queryFn: ({ pageParam }) =>
-      getBranchQuotes(number, {
-        page: pageParam as number,
-        limit: 50,
-        lang,
-        kind: activeKind === 'all' ? undefined : activeKind,
-      }),
+    queryFn: ({ pageParam, signal }) =>
+      getBranchQuotes(
+        number,
+        {
+          page: pageParam as number,
+          limit: 50,
+          lang,
+          kind: activeKind === 'all' ? undefined : activeKind,
+        },
+        { signal },
+      ),
     initialPageParam: 1,
     getNextPageParam: (lastPage) =>
       (lastPage.meta as BranchQuotesMeta)?.hasNext
         ? ((lastPage.meta as BranchQuotesMeta).page + 1)
         : undefined,
     enabled: isFiltered,
+    placeholderData: keepPreviousData,
   });
+
+  const failed = isFiltered && isError && !data;
+  const busy = isFiltered && !failed && !data ? true : isFiltered && isFetching && !isFetchingNextPage;
 
   const displayItems = useMemo(() => {
     if (!isFiltered) return initialItems;
-    const pages = data?.pages ?? [];
+    // First load of a kind: the full list stays (dimmed); a failed load shows an empty list and an error.
+    if (!data) return failed ? [] : initialItems;
+    const pages = data.pages;
     return pages.flatMap((page) =>
       page.data.items.map((item) => ({
         id: item.quote.id,
@@ -55,7 +71,7 @@ export function BranchReader({ number, lang, items: initialItems, total, countsB
         note: item.link.note,
       })),
     );
-  }, [isFiltered, initialItems, data]);
+  }, [isFiltered, initialItems, data, failed]);
 
   const labels = {
     showMore: t('showMore'),
@@ -68,6 +84,7 @@ export function BranchReader({ number, lang, items: initialItems, total, countsB
   };
 
   return (
+    <>
     <ReminderReader
       items={displayItems}
       total={total}
@@ -77,7 +94,16 @@ export function BranchReader({ number, lang, items: initialItems, total, countsB
       loadingNextPage={isFetchingNextPage}
       hasNextPage={isFiltered ? hasNextPage : false}
       onShowMore={() => void fetchNextPage()}
+      busy={busy}
       labels={labels}
     />
+    <ReaderStatus
+      busy={busy}
+      failed={failed}
+      nextPageFailed={isFiltered && isFetchNextPageError}
+      error={error}
+      onRetry={() => void (isFetchNextPageError ? fetchNextPage() : refetch())}
+    />
+    </>
   );
 }

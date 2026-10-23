@@ -39,7 +39,7 @@ export class TagsService {
     const locale = query.lang ?? 'ar';
     const where = await this.buildListWhere(query);
 
-    const [rows, total] = await this.prisma.$transaction([
+    const [rows, total] = await Promise.all([
       this.prisma.tag.findMany({
         where,
         orderBy: [{ slug: 'asc' }, { id: 'asc' }],

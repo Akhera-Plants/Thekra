@@ -35,7 +35,7 @@ export function StudyReading({ rows }: { rows: ExplanationRow[] }) {
               className={
                 arabic
                   ? 'max-w-[68ch] font-arabic-ui text-base leading-[1.9]'
-                  : 'max-w-[68ch] font-amiri text-[17px] leading-[1.75]'
+                  : 'max-w-[68ch] font-english text-[16.5px] leading-[1.75] md:text-[17px]'
               }
             >
               {renderExplanationText(shown)}

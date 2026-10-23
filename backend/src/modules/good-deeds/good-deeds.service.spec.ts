@@ -30,6 +30,9 @@ describe('GoodDeedsService', () => {
       { relevanceScore: { sort: 'desc', nulls: 'last' } },
     ]),
     shuffleLinksPage: vi.fn(),
+    // hydrateLinks loads the quote relations; here it only attaches a stub quote to each link row.
+    hydrateLinks: vi.fn().mockImplementation((links: Array<{ quoteId?: string; quote?: unknown }>) =>
+      Promise.resolve(links.map((link) => ({ ...link, quote: link.quote ?? { id: link.quoteId } })))),
     getVarietyScoreFloor: vi.fn().mockReturnValue(70),
     // P2-1: new shared helpers — delegate to real GradePolicy so existing
     // grade-filter tests continue to assert the correct Prisma where clause.

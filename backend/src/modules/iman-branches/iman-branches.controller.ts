@@ -1,10 +1,11 @@
-import { Controller, Get, Header, Param, ParseIntPipe, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, ParseIntPipe, Query, UseGuards } from '@nestjs/common';
 import { CurrentUser, type JwtPayload } from '../../common/decorators/current-user.decorator.js';
 import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard.js';
 import { FavoritesService } from '../favorites/favorites.service.js';
 import { SinQuotesQueryDto } from '../sins/dto/sin-quotes-query.dto.js';
 import { BranchesQueryDto } from './dto/branches-query.dto.js';
 import { ImanBranchesService } from './iman-branches.service.js';
+import { PUBLIC_CACHE, PublicCache } from '../../common/http/public-cache.js';
 
 @Controller('branches')
 export class ImanBranchesController {
@@ -14,12 +15,13 @@ export class ImanBranchesController {
   ) {}
 
   @Get()
-  @Header('Cache-Control', 'public, max-age=60, stale-while-revalidate=30')
+  @PublicCache(PUBLIC_CACHE.content)
   findAll(@Query() query: BranchesQueryDto) {
     return this.branches.findAll(query);
   }
 
   @Get(':number')
+  @PublicCache(PUBLIC_CACHE.content)
   findOne(
     @Param('number', new ParseIntPipe({ errorHttpStatusCode: 400 })) number: number,
     @Query() query: BranchesQueryDto,
@@ -28,6 +30,7 @@ export class ImanBranchesController {
   }
 
   @Get(':number/quotes')
+  @PublicCache(PUBLIC_CACHE.content)
   @UseGuards(OptionalJwtAuthGuard)
   async findQuotes(
     @Param('number', new ParseIntPipe({ errorHttpStatusCode: 400 })) number: number,

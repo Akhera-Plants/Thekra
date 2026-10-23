@@ -3,7 +3,6 @@
 import { useId, useState } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import {
-  ArrowRight,
   BookMarked,
   BookOpen,
   ChevronDown,
@@ -12,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
+import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { FormattedNumber } from '@/components/shared/FormattedNumber';
 import { cn } from '@/lib/utils';
 import type { QuoteDto, QuoteLinkDto } from '@/lib/types/api';
@@ -115,7 +115,7 @@ function ContextLink({
       )}
     >
       {label}
-      <ArrowRight className="size-3.5 shrink-0 rtl:-scale-x-100" aria-hidden />
+      <DirectionalArrow className="size-3.5" />
     </Link>
   );
 }
@@ -234,6 +234,7 @@ export function QuoteCard({
                           aria-hidden
                           className="h-3 w-px shrink-0 bg-border"
                         />
+                        {/* Deliberate dir="ltr": «2:255» must read surah:ayah in both locales. */}
                         <bdi
                           dir="ltr"
                           className="tabular-nums text-muted-foreground"
@@ -337,7 +338,7 @@ export function QuoteCard({
                     <FormattedNumber value={quote.citation.alsoIn} />
                   </p>
                 ) : null}
-                {quote.isAthar && quote.atharSpeakerAr ? (
+                {quote.isAthar && quote.atharSpeakerAr && arabic ? (
                   <p
                     dir="rtl"
                     lang="ar"
@@ -349,6 +350,16 @@ export function QuoteCard({
                     {quote.atharAttributionKind === 'NARRATED'
                       ? `رواه ${quote.atharSpeakerAr}`
                       : `— ${quote.atharSpeakerAr}`}
+                  </p>
+                ) : null}
+                {quote.isAthar && quote.atharSpeakerAr && !arabic ? (
+                  // English frame; the speaker has no English name yet, so the Arabic proper name
+                  // stays isolated and marked inside the English line.
+                  <p lang="en" className="text-[13px] text-muted-foreground md:text-[14px]">
+                    {quote.atharAttributionKind === 'NARRATED' ? 'Narrated by ' : '— '}
+                    <bdi lang="ar" dir="rtl" className="font-arabic-ui">
+                      {quote.atharSpeakerAr}
+                    </bdi>
                   </p>
                 ) : null}
                 {quote.isAthar ? (

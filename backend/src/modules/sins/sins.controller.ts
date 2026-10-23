@@ -1,4 +1,4 @@
-import { Controller, Get, Header, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { LocaleQueryDto } from '../../common/dto/locale-query.dto.js';
 import { CurrentUser, type JwtPayload } from '../../common/decorators/current-user.decorator.js';
 import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard.js';
@@ -7,6 +7,7 @@ import { SinGoodDeedsQueryDto } from './dto/sin-good-deeds-query.dto.js';
 import { SinQuotesQueryDto } from './dto/sin-quotes-query.dto.js';
 import { SinsQueryDto } from './dto/sins-query.dto.js';
 import { SinsService } from './sins.service.js';
+import { PUBLIC_CACHE, PublicCache } from '../../common/http/public-cache.js';
 
 @Controller('sins')
 export class SinsController {
@@ -17,12 +18,13 @@ export class SinsController {
 
   /** Phase 5: Cache-Control for the sins catalogue (small, rarely changes). */
   @Get()
-  @Header('Cache-Control', 'public, max-age=60, stale-while-revalidate=30')
+  @PublicCache(PUBLIC_CACHE.content)
   findAll(@Query() query: SinsQueryDto) {
     return this.sinsService.findAll(query);
   }
 
   @Get(':slug')
+  @PublicCache(PUBLIC_CACHE.content)
   findBySlug(
     @Param('slug') slug: string,
     @Query() query: LocaleQueryDto,
@@ -32,6 +34,7 @@ export class SinsController {
 
   /** #3 GET /sins/:slug/quotes — optional auth for isFavorite enrichment */
   @Get(':slug/quotes')
+  @PublicCache(PUBLIC_CACHE.content)
   @UseGuards(OptionalJwtAuthGuard)
   async findQuotes(
     @Param('slug') slug: string,
@@ -53,6 +56,7 @@ export class SinsController {
   }
 
   @Get(':slug/good-deeds')
+  @PublicCache(PUBLIC_CACHE.content)
   findGoodDeeds(
     @Param('slug') slug: string,
     @Query() query: SinGoodDeedsQueryDto,

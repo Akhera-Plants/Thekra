@@ -124,4 +124,66 @@ describe('Topic themes (e2e)', () => {
     // Topics that are not in the database (most of the taxonomy in the test seed) are left out.
     expect((res.body.data as { topic: { slug: string } }[]).every((row) => row.topic.slug.length > 0)).toBe(true);
   });
+
+  describe('a label shared by both sides of a pair (ghadab ↔ kaff-al-ghadab)', () => {
+    const MILK_AR = 'من يملك نفسه عند الغضب';
+    let texts: string[] = [];
+
+    beforeAll(async () => {
+      const deed = await prisma.goodDeed.upsert({
+        where: { slug: 'kaff-al-ghadab' },
+        create: { slug: 'kaff-al-ghadab', name: 'Restraining anger', nameAr: 'كظم الغضب' },
+        update: {},
+      });
+      const sin = await prisma.sin.upsert({
+        where: { slug: 'ghadab' },
+        create: { slug: 'ghadab', name: 'Anger', nameAr: 'الغضب', category: 'test', severity: 1, oppositeGoodDeedId: deed.id },
+        update: { oppositeGoodDeedId: deed.id },
+      });
+      await prisma.sinQuote.deleteMany({ where: { sinId: sin.id } });
+      await prisma.goodDeedQuote.deleteMany({ where: { goodDeedId: deed.id } });
+      const page = await request(app.getHttpServer()).get('/v1/sins/ghibah/quotes?limit=50').expect(200);
+      texts = (page.body.data.items as Item[]).slice(0, 4).map((item) => item.quote.id);
+      expect(texts).toHaveLength(4);
+      const [a, b, c, d] = texts as [string, string, string, string];
+      // ghadab-milk: a, b, c (sin side). kaff-milk: b, c, d (deed side). Union: a, b, c, d; b and c sit under both keys.
+      for (const [quoteId, keys] of [[a, ['ghadab-milk']], [b, ['ghadab-milk']], [c, ['ghadab-milk', 'ghadab-hadhar']]] as const) {
+        await prisma.sinQuote.create({ data: { sinId: sin.id, quoteId, relevanceScore: 80, note: 'Test-only link', reviewStatus: 'ACCEPTED', themeKeys: [...keys] } });
+      }
+      for (const [quoteId, keys] of [[b, ['kaff-milk']], [c, ['kaff-milk']], [d, ['kaff-milk', 'kaff-adha']]] as const) {
+        await prisma.goodDeedQuote.create({ data: { goodDeedId: deed.id, quoteId, relevanceScore: 80, note: 'Test-only link', reviewStatus: 'ACCEPTED', themeKeys: [...keys] } });
+      }
+    });
+
+    for (const [side, slug] of [['sins', 'ghadab'], ['good-deeds', 'kaff-al-ghadab']] as const) {
+      it(`${side}/${slug}: one chip for the shared label, keyed by the sin-side theme, counting distinct texts`, async () => {
+        const res = await request(app.getHttpServer()).get(`/v1/${side}/${slug}/quotes?limit=50&lang=en`).expect(200);
+        const themes = res.body.meta.themes as { key: string; ar: string; en: string; count: number }[];
+        const milk = themes.filter((theme) => theme.ar === MILK_AR);
+        expect(milk).toEqual([{ key: 'ghadab-milk', ar: MILK_AR, en: 'Controlling oneself when angry', count: 4 }]);
+        expect(themes.map((theme) => theme.key).sort()).toEqual(['ghadab-hadhar', 'ghadab-milk', 'kaff-adha']);
+        // Keys other than the shared label are unchanged.
+        expect(themes.find((theme) => theme.key === 'ghadab-hadhar')?.count).toBe(1);
+        expect(themes.find((theme) => theme.key === 'kaff-adha')?.count).toBe(1);
+      });
+
+      it(`${side}/${slug}: the merged count equals meta.total of the filtered list, for either key`, async () => {
+        const chip = (await request(app.getHttpServer()).get(`/v1/${side}/${slug}/quotes?limit=50`).expect(200)).body.meta.themes
+          .find((theme: { key: string }) => theme.key === 'ghadab-milk') as { count: number };
+        for (const key of ['ghadab-milk', 'kaff-milk']) {
+          const res = await request(app.getHttpServer()).get(`/v1/${side}/${slug}/quotes?limit=50&theme=${key}`).expect(200);
+          expect(res.body.meta.total).toBe(chip.count);
+          expect(res.body.meta.theme).toBe('ghadab-milk');
+          expect(res.body.meta.countsByKind.all).toBe(chip.count);
+          expect((res.body.data.items as Item[]).map((item) => item.quote.id).sort()).toEqual([...texts].sort());
+        }
+      });
+    }
+
+    it('a theme that is not shared keeps its own filter', async () => {
+      const res = await request(app.getHttpServer()).get('/v1/sins/ghadab/quotes?limit=50&theme=kaff-adha').expect(200);
+      expect(res.body.meta.total).toBe(1);
+      expect(res.body.meta.theme).toBe('kaff-adha');
+    });
+  });
 });

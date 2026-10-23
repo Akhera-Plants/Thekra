@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
-import { ErrorState } from '@/components/shared/ErrorState';
+import { QueryErrorState } from '@/components/shared/feedback/QueryErrorState';
 import { Bookmark } from 'lucide-react';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { StaggerReveal } from '@/components/shared/StaggerReveal';
@@ -13,7 +13,7 @@ import { useToggleFavorite } from '../hooks/useToggleFavorite';
 
 export function FavoritesList() {
   const t = useTranslations();
-  const { data, isLoading, isError, refetch } = useFavorites({ limit: 50 });
+  const { data, isLoading, isError, error, refetch } = useFavorites({ limit: 50 });
   const { toggle, isPending } = useToggleFavorite({
     labels: {
       added: t('favorites.added'),
@@ -35,11 +35,7 @@ export function FavoritesList() {
 
   if (isError) {
     return (
-      <ErrorState
-        message={t('errorState.default')}
-        onRetry={refetch}
-        retryLabel={t('errorState.retry')}
-      />
+      <QueryErrorState error={error} onRetry={() => void refetch()} />
     );
   }
 

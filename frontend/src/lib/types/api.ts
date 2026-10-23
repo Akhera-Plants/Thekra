@@ -45,25 +45,43 @@ export interface ApiErrorBody {
   timestamp?: string;
 }
 
+/**
+ * What went wrong, independent of the transport:
+ * - `network`: no HTTP response (offline, DNS, refused, or a CORS block: browsers hide which)
+ * - `timeout`: no answer in time
+ * - `http`: the API answered with a non-2xx status
+ * - `validation`: the API rejected the input (400/422 with field details)
+ * - `parse`: a 2xx answer that is not the expected envelope
+ */
+export type ApiErrorKind = 'network' | 'timeout' | 'http' | 'validation' | 'parse';
+
 export class ApiError extends Error {
   readonly code: string;
   readonly status: number;
+  readonly kind: ApiErrorKind;
   readonly details: ApiValidationDetail[] | null;
   readonly requestId?: string;
+  /** Method and path (no origin, no query values) for logs; never shown to visitors. */
+  readonly endpoint?: string;
 
   constructor(args: {
     code: string;
     message: string;
     status: number;
+    kind?: ApiErrorKind;
     details?: ApiValidationDetail[] | null;
     requestId?: string;
+    endpoint?: string;
+    cause?: unknown;
   }) {
-    super(args.message);
+    super(args.message, args.cause === undefined ? undefined : { cause: args.cause });
     this.name = 'ApiError';
     this.code = args.code;
     this.status = args.status;
+    this.kind = args.kind ?? (args.status === 0 ? 'network' : 'http');
     this.details = args.details ?? null;
     this.requestId = args.requestId;
+    this.endpoint = args.endpoint;
   }
 }
 

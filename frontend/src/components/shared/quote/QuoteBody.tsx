@@ -34,14 +34,15 @@ export function QuoteBody({ quote, size = 'xl', className, children }: QuoteBody
 
   if (english) {
     return (
+      // Deliberate dir="ltr": an English translation keeps its own direction wherever it sits.
       <blockquote
         dir="ltr"
         lang="en"
         className={cn(
-          'max-w-[68ch] border-none ps-0 text-start font-amiri font-normal text-foreground leading-[1.75]',
+          'max-w-[68ch] border-none ps-0 text-start font-english font-normal text-foreground leading-[1.75]',
           size === 'hero'
-            ? 'text-[19px] md:text-[22px]'
-            : 'text-[17px] md:text-[19px]',
+            ? 'text-[18px] md:text-[21px]'
+            : 'text-[16.5px] md:text-[18px]',
           className,
         )}
       >
@@ -70,6 +71,7 @@ export function QuoteBody({ quote, size = 'xl', className, children }: QuoteBody
         {children}
       </ArabicText>
       {locale === 'en' && scripture ? (
+        // Deliberate dir="ltr": English note under an RTL Arabic original.
         <p dir="ltr" lang="en" className="text-sm text-muted-foreground">
           {t('noVerifiedTranslation')}
         </p>

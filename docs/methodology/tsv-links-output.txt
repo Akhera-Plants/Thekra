@@ -1,0 +1,23 @@
+SET
+      set_name      | ids_in_db | published | not_topic_linked 
+--------------------+-----------+-----------+------------------
+ sahihayn low rows  |       667 |       667 |              662
+ sahihayn high rows |       566 |       566 |               17
+(2 rows)
+
+     set_name      | ids_in_db | db_keep | db_listed 
+-------------------+-----------+---------+-----------
+ athar keep (file) |       544 |     544 |       544
+ athar drop (file) |       708 |     708 |       708
+(2 rows)
+
+          set_name           | ids_in_db | topic_linked 
+-----------------------------+-----------+--------------
+ hadeethenc rows with topics |       198 |          198
+(1 row)
+
+       set_name        | still_present 
+-----------------------+---------------
+ ayah dropped link ids |             0
+(1 row)
+

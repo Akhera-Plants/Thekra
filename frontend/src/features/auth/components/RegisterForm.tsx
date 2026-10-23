@@ -17,7 +17,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { ApiError } from '@/lib/types/api';
+import { failureKey } from '@/lib/errors';
 import { useRegister } from '../hooks/useRegister';
 
 const registerSchema = z.object({
@@ -30,6 +30,7 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export function RegisterForm() {
   const t = useTranslations('auth');
+  const tFeedback = useTranslations('feedback');
   const router = useRouter();
   const { mutateAsync: register, isPending } = useRegister();
 
@@ -48,9 +49,13 @@ export function RegisterForm() {
       toast.success(t('registerSuccess'));
       router.push('/');
     } catch (err) {
-      const message =
-        err instanceof ApiError ? err.message : t('registerError');
-      toast.error(message);
+      // Never the raw API text: connection-type failures get the shared localised message.
+      const kind = failureKey(err);
+      toast.error(
+        kind === 'network' || kind === 'timeout' || kind === 'server' || kind === 'rateLimited'
+          ? tFeedback(`error.${kind}`)
+          : t('registerError'),
+      );
     }
   }
 

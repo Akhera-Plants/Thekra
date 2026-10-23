@@ -1,10 +1,22 @@
 import type { Metadata } from 'next';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
-import { notFound } from 'next/navigation';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { getQuote } from '@/lib/api/quotes';
+import { rethrowUnlessNotFound } from '@/lib/api/server-guard';
 import type { LocaleCode } from '@/lib/types/enums';
 import { QuoteDetail } from '@/features/quran-hadith-browser/components/QuoteDetail';
+
+// Cached and revalidated like the topic pages; ids render on first visit.
+export const revalidate = 300;
+
+/** A short, whole-word lead of a text for crumbs and titles. */
+function excerpt(text: string, max: number): string {
+  const flat = text.replace(/\s+/g, ' ').trim();
+  if (flat.length <= max) return flat;
+  const cut = flat.slice(0, max);
+  const space = cut.lastIndexOf(' ');
+  return `${(space > max * 0.6 ? cut.slice(0, space) : cut).replace(/[\s،,.:;]+$/, '')}…`;
+}
 
 export async function generateMetadata({
   params,
@@ -14,8 +26,13 @@ export async function generateMetadata({
     const { data } = await getQuote(id, {
       lang: locale as LocaleCode,
     });
-    const text = locale === 'en' && data.translation?.text ? data.translation.text : data.textAr;
-    return { title: `${text.slice(0, 60)}…` };
+    // The tab title follows the page language too: no Arabic text as the English title.
+    const text = locale === 'en' ? data.translation?.text : data.textAr;
+    if (!text) {
+      const t = await getTranslations({ locale, namespace: 'quoteDetail' });
+      return { title: t('pageTitle') };
+    }
+    return { title: excerpt(text, 60) };
   } catch {
     return {};
   }
@@ -38,34 +55,31 @@ export default async function QuoteDetailPage({
       includeAllTranslations: true,
     });
     quote = result.data;
-  } catch {
-    notFound();
+  } catch (error) {
+    rethrowUnlessNotFound('quote page', error);
   }
 
   const arabic = locale === 'ar';
   const relatedSin = quote?.relatedSins?.[0];
   const relatedDeed = quote?.relatedGoodDeeds?.[0];
-  const crumbTitle = quote
-    ? (quote.textAr.slice(0, 42) + (quote.textAr.length > 42 ? '…' : ''))
-    : t('pageTitle');
+  // Each crumb is in the page's language: the Arabic text on /, the English translation on /en
+  // (or the page title when the text has none). Topic names use the catalogue's English name.
+  const crumbSource = arabic ? quote?.textAr : quote?.translation?.text;
+  const crumbTitle = crumbSource ? excerpt(crumbSource, arabic ? 42 : 48) : t('pageTitle');
+  const sinName = relatedSin ? (arabic ? relatedSin.nameAr : relatedSin.name) : null;
+  const deedName = relatedDeed ? (arabic ? relatedDeed.nameAr : relatedDeed.name) : null;
 
   const crumbItems = [
     { label: tCrumbs('home'), href: '/' as const },
     ...(relatedSin
       ? [
           { label: tCrumbs('sins'), href: '/sins' as const },
-          {
-            label: arabic || !relatedSin.name ? relatedSin.nameAr : relatedSin.name,
-            href: `/sins/${relatedSin.slug}` as const,
-          },
+          ...(sinName ? [{ label: sinName, href: `/sins/${relatedSin.slug}` as const }] : []),
         ]
       : relatedDeed
         ? [
             { label: tCrumbs('goodDeeds'), href: '/good-deeds' as const },
-            {
-              label: arabic || !relatedDeed.name ? relatedDeed.nameAr : relatedDeed.name,
-              href: `/good-deeds/${relatedDeed.slug}` as const,
-            },
+            ...(deedName ? [{ label: deedName, href: `/good-deeds/${relatedDeed.slug}` as const }] : []),
           ]
         : []),
     { label: crumbTitle },

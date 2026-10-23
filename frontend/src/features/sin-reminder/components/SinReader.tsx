@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { ReminderReader, type ReaderItem, type ReaderSection } from '@/components/shared/editorial/ReminderReader';
+import { ReaderStatus } from '@/components/shared/feedback/ReaderStatus';
 import { useTopicReader } from '@/components/shared/editorial/useTopicReader';
 import { getSinQuotes } from '@/lib/api/sins';
 import type { CountsByKind, TopicThemeCount } from '@/lib/types/api';
@@ -26,7 +27,7 @@ export function SinReader({ slug, lang, items, total, sections, countsByKind, th
     queryRoot: 'sins',
     slug,
     lang,
-    fetchPage: (query) => getSinQuotes(slug, query),
+    fetchPage: (query, signal) => getSinQuotes(slug, query, { signal }),
     initialItems: items,
     initialSections: sections,
     initialCountsByKind: countsByKind,
@@ -35,6 +36,7 @@ export function SinReader({ slug, lang, items, total, sections, countsByKind, th
   });
 
   return (
+    <>
     <ReminderReader
       items={reader.items}
       total={total}
@@ -62,5 +64,7 @@ export function SinReader({ slug, lang, items, total, sections, countsByKind, th
         themeAll: t('themeAll'),
       }}
     />
+    <ReaderStatus busy={reader.busy} failed={reader.failed} nextPageFailed={reader.nextPageFailed} error={reader.error} onRetry={reader.retry} />
+    </>
   );
 }

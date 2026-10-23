@@ -1,11 +1,14 @@
 import type { Metadata } from 'next';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { TopicCatalog, type TopicEntry } from '@/components/shared/editorial/TopicCatalog';
+import { reportFailure } from '@/lib/errors';
 import { getGoodDeeds } from '@/lib/api/good-deeds';
 import { getTopicThemes } from '@/lib/api/topic-themes';
 import type { LocaleCode } from '@/lib/types/enums';
 
-export const dynamic = 'force-dynamic';
+// Catalogue data is cached for an hour (api-client); the page itself is rebuilt every 5 minutes,
+// so a degraded render (below) is replaced quickly.
+export const revalidate = 300;
 
 export async function generateMetadata({ params }: PageProps<'/[locale]/good-deeds'>): Promise<Metadata> {
   const { locale } = await params;
@@ -20,7 +23,7 @@ export default async function GoodDeedsPage({ params }: PageProps<'/[locale]/goo
   const tHome = await getTranslations('home');
   const tCrumbs = await getTranslations('breadcrumbs');
 
-  let deeds: Awaited<ReturnType<typeof getGoodDeeds>>['data'] = [];
+  const deeds: Awaited<ReturnType<typeof getGoodDeeds>>['data'] = [];
   try {
     for (let page = 1; page <= 20; page += 1) {
       const batch = (await getGoodDeeds({
@@ -31,12 +34,19 @@ export default async function GoodDeedsPage({ params }: PageProps<'/[locale]/goo
       deeds.push(...batch);
       if (batch.length < 100) break;
     }
-  } catch {
-    deeds = [];
+  } catch (error) {
+    // The list is the page: error.tsx with a retry, not a cached empty catalogue.
+    reportFailure('good-deeds catalogue', error);
+    throw error;
   }
 
-  // Theme labels for the search (a theme hit opens its page with that chip on).
-  const themes = await getTopicThemes().then((res) => res.data).catch(() => []);
+  // Theme labels for the search (a theme hit opens its page with that chip on). Optional.
+  const themes = await getTopicThemes()
+    .then((res) => res.data)
+    .catch((error: unknown) => {
+      reportFailure('topic themes', error);
+      return [];
+    });
 
   const entries: TopicEntry[] = deeds.map((deed) => ({
     href: `/good-deeds/${deed.slug}`,

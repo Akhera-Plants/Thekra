@@ -4,8 +4,11 @@ import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { getQuote } from '@/lib/api/quotes';
+import { rethrowUnlessNotFound } from '@/lib/api/server-guard';
 import type { LocaleCode } from '@/lib/types/enums';
 import { StudyFullPage } from '@/features/study-panel/components/StudyFullPage';
+
+export const revalidate = 300;
 
 export async function generateMetadata({
   params,
@@ -37,8 +40,8 @@ export default async function HadithStudyPage({
   try {
     const result = await getQuote(id, { lang: locale as LocaleCode });
     quote = result.data;
-  } catch {
-    notFound();
+  } catch (error) {
+    rethrowUnlessNotFound('hadith page', error);
   }
   if (!quote || quote.type !== 'HADITH') notFound();
 

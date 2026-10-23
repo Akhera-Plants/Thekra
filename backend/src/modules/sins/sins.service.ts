@@ -10,6 +10,8 @@ import { GradePolicy } from '../hadith/grade-policy.js';
 import {
   dedupeReading,
   pageReadingIds,
+  compareReading,
+  countsByTypeFromRanked,
   READING_ORDER,
   READING_SELECT,
   sinHasPublicText,
@@ -36,7 +38,7 @@ import type { SinQuotesQueryDto } from './dto/sin-quotes-query.dto.js';
 import type { SinsQueryDto } from './dto/sins-query.dto.js';
 import type { UpdateSinDto } from './dto/update-sin.dto.js';
 import { isPairedSlug, pairForSlug } from '../taxonomy/topic-pairs.js';
-import { readThemedPage, summariseThemes } from '../taxonomy/theme-reading.js';
+import { findActiveTheme, mergePageThemes, readThemedPage, summariseThemes } from '../taxonomy/theme-reading.js';
 import { themesForTopics } from '../taxonomy/topic-themes.js';
 import type { SinDetailDto, SinDto } from './entities/sin.entity.js';
 
@@ -170,7 +172,7 @@ export class SinsService {
       );
     }
 
-    const [rows, total] = await this.prisma.$transaction([
+    const [rows, total] = await Promise.all([
       this.prisma.sin.findMany({
         where,
         orderBy,
@@ -290,8 +292,8 @@ export class SinsService {
     // Topic themes: this sin's, then its paired deed's (one page, taxonomy.yaml pairs:).
     const pair = pairForSlug(sin.slug);
     const pairedDeedId = pair ? sin.oppositeGoodDeedId : null;
-    const pageThemes = themesForTopics(pair ? [sin.slug, pair.do] : [sin.slug]);
-    const activeTheme = pageThemes.find((theme) => theme.key === query.theme)?.key ?? null;
+    const pageThemes = mergePageThemes(themesForTopics(pair ? [sin.slug, pair.do] : [sin.slug]), sin.slug);
+    const activeTheme = findActiveTheme(pageThemes, query.theme);
     const deedSide = (quote: Prisma.GoodDeedQuoteWhereInput['quote']): Prisma.GoodDeedQuoteWhereInput => ({
       goodDeedId: pairedDeedId ?? undefined,
       reviewStatus: PUBLISHED_LINK_REVIEW_STATUS,
@@ -312,13 +314,7 @@ export class SinsService {
           linkWhere: baseWhere,
         });
 
-    // Shared sub-queries (count, type breakdown, alternatives) — same for both paths
-    const countQ = this.prisma.sinQuote.count({ where });
-    const typeGroupsQ = this.prisma.quote.groupBy({
-      by: ['type'],
-      where: { sinLinks: { some: where } },
-      _count: { _all: true },
-    });
+    // Shared sub-queries (alternatives; count and type breakdown are folded from the ranked rows)
     const alternativesQ = this.prisma.goodDeed.findMany({
       where: { oppositeSinId: sin.id, origin: visibleOrigins(), isHidden: false, isListed: true },
       take: 3,
@@ -346,7 +342,7 @@ export class SinsService {
     // ── Theme: one merged, deduped list over the page (sin + paired deed) ─────
     // Kind still applies. Counts follow the theme; meta.themes does not.
     if (activeTheme) {
-      const has = { themeKeys: { has: activeTheme } };
+      const has = { themeKeys: { hasSome: activeTheme.keys } };
       const [themed, summary, alternatives] = await Promise.all([
         readThemedPage(
           this.prisma,
@@ -354,7 +350,7 @@ export class SinsService {
           {
             page,
             limit,
-            include: this.quotes.buildQuoteInclude(locale),
+            hydrate: (rows) => this.quotes.hydrateLinks(rows, locale),
             present: (row) => this.presentSinItem(row as Parameters<SinsService['presentSinItem']>[0], locale),
           },
         ),
@@ -376,7 +372,7 @@ export class SinsService {
           countsByKind: summary.countsByKind,
           appliedGrades: allowedGrades,
           themes: summary.themes,
-          theme: activeTheme,
+          theme: activeTheme.key,
         }),
       };
     }
@@ -390,24 +386,26 @@ export class SinsService {
       const seed = query.seed ?? new Date().toISOString().slice(0, 10);
       const floor = this.quotes.getVarietyScoreFloor();
 
-      const ids = await this.quotes.shuffleLinksPage({
-        table: '"SinQuote"',
-        parentKey: '"sinId"',
-        parentId: sin.id,
-        minScore: query.minScore,
-        types: query.type,
-        allowedGrades,
-        seed,
-        floor,
-        page,
-        limit,
+      // Everything that does not depend on the page ids starts now; the ids query runs beside them.
+      const countQ = this.prisma.sinQuote.count({ where });
+      const typeGroupsQ = this.prisma.quote.groupBy({
+        by: ['type'],
+        where: { sinLinks: { some: where } },
+        _count: { _all: true },
       });
-
-      const [[rows, total, typeGroups, alternatives], countsByKind, summary] = await Promise.all([
-        this.prisma.$transaction([
-          this.prisma.sinQuote.findMany({
-            where: { id: { in: ids } },
-            include: { quote: { include: this.quotes.buildQuoteInclude(locale) } },
+      const [[ids, total, typeGroups, alternatives], countsByKind, summary] = await Promise.all([
+        Promise.all([
+          this.quotes.shuffleLinksPage({
+            table: '"SinQuote"',
+            parentKey: '"sinId"',
+            parentId: sin.id,
+            minScore: query.minScore,
+            types: query.type,
+            allowedGrades,
+            seed,
+            floor,
+            page,
+            limit,
           }),
           countQ,
           typeGroupsQ,
@@ -416,6 +414,8 @@ export class SinsService {
         countsByKindQ,
         themeSummaryQ,
       ]);
+      const links = ids.length === 0 ? [] : await this.prisma.sinQuote.findMany({ where: { id: { in: ids } } });
+      const rows = await this.quotes.hydrateLinks(links, locale);
 
       // Re-order to match the shuffle ordering from the raw query
       if (ids.length > 1) {
@@ -456,36 +456,31 @@ export class SinsService {
       };
     }
 
-    const ranked = await this.prisma.sinQuote.findMany({ where, select: READING_SELECT });
-    const ids = pageReadingIds(ranked as ReadingRow[], page, limit);
-    const [[rows, total, typeGroups, alternatives], countsByKind, summary] = await Promise.all([
-      this.prisma.$transaction([
-        this.prisma.sinQuote.findMany({
-          where: { id: { in: ids.length > 0 ? ids : ['00000000-0000-0000-0000-000000000000'] } },
-          include: { quote: { include: this.quotes.buildQuoteInclude(locale) } },
-        }),
-        countQ,
-        typeGroupsQ,
-        alternativesQ,
-      ]),
+    // Wave 1: every query that needs only the sin, in parallel. The ranked rows also give
+    // the link total and the per-type breakdown, so no count/groupBy round trips.
+    const [ranked, countsByKind, summary, alternatives, rewardRanked, derivedLinks] = await Promise.all([
+      this.prisma.sinQuote.findMany({ where, select: READING_SELECT }),
       countsByKindQ,
       themeSummaryQ,
+      alternativesQ,
+      this.rewardRanked(sin, where.quote),
+      sin.isContemporary ? this.derivedLinks(sin.id) : Promise.resolve([]),
     ]);
-    const order = new Map(ids.map((id, index) => [id, index]));
-    rows.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
-    const countsByType = this.quotes.countsByTypeFromGroups(typeGroups);
-    const primaryItems = ids.length === 0 ? [] : rows.map((row) => this.presentSinItem(row, locale));
-    const companion = await this.rewardForSin(
-      sin,
-      where.quote,
-      page,
-      limit,
-      locale,
-      new Set(primaryItems.map((item) => item.quote.id)),
+    const ids = pageReadingIds(ranked as ReadingRow[], page, limit);
+    const total = ranked.length;
+    const countsByType = countsByTypeFromRanked(ranked);
+    const pageQuoteIds = new Set(
+      ids.map((id) => ranked.find((row) => row.id === id)?.quoteId).filter((id): id is string => id != null),
     );
-    const derived = sin.isContemporary
-      ? await this.derivedSinTexts(sin.id, where.quote, page, limit, locale)
-      : [];
+
+    // Wave 2: the page rows, the reward page and the derived groups, in parallel.
+    const rankedById = new Map((ranked as ReadingRow[]).map((row) => [row.id, row]));
+    const [rows, companion, derived] = await Promise.all([
+      this.quotes.hydrateLinks(ids.flatMap((id) => rankedById.get(id) ?? []), locale),
+      this.rewardPage(rewardRanked, pageQuoteIds, page, limit, locale),
+      this.derivedSinTexts(derivedLinks, where.quote, page, limit, locale),
+    ]);
+    const primaryItems = rows.map((row) => this.presentSinItem(row, locale));
 
     return {
       data: {
@@ -543,76 +538,77 @@ export class SinsService {
     };
   }
 
-  private async rewardForSin(
+  /** Ranked reading rows of the paired deed(s) that sit beside a sin page (one query, no deed lookup first). */
+  private async rewardRanked(
     sin: { slug: string; oppositeGoodDeedId: string | null },
     quote: Prisma.SinQuoteWhereInput['quote'],
-    page: number,
-    limit: number,
-    locale: 'ar' | 'en',
-    excludeQuoteIds: ReadonlySet<string> = new Set(),
-  ) {
+  ): Promise<ReadingRow[]> {
     const paired = isPairedSlug(sin.slug);
-    const deeds = await this.prisma.goodDeed.findMany({
-      where: {
-        origin: visibleOrigins(),
-        isHidden: false,
-        OR: paired
-          ? (sin.oppositeGoodDeedId ? [{ id: sin.oppositeGoodDeedId }] : [])
-          : [
-              ...(sin.oppositeGoodDeedId ? [{ id: sin.oppositeGoodDeedId }] : []),
-              { slug: 'tark-lillah' },
-            ],
-      },
-      select: { id: true },
-    });
-    if (deeds.length === 0) return { items: [] as ReturnType<SinsService['presentSinItem']>[] };
+    const or: Prisma.GoodDeedWhereInput[] = paired
+      ? (sin.oppositeGoodDeedId ? [{ id: sin.oppositeGoodDeedId }] : [])
+      : [...(sin.oppositeGoodDeedId ? [{ id: sin.oppositeGoodDeedId }] : []), { slug: 'tark-lillah' }];
+    if (or.length === 0) return [];
     const ranked = await this.prisma.goodDeedQuote.findMany({
       where: {
-        goodDeedId: { in: deeds.map((deed) => deed.id) },
+        goodDeed: { origin: visibleOrigins(), isHidden: false, OR: or },
         reviewStatus: PUBLISHED_LINK_REVIEW_STATUS,
         ...autoLinkExclusion(),
         quote,
-        ...(excludeQuoteIds.size > 0 ? { quoteId: { notIn: [...excludeQuoteIds] } } : {}),
       },
       select: READING_SELECT,
     });
-    const pageRows = dedupeReading(ranked as ReadingRow[]).slice((page - 1) * limit, page * limit);
-    if (pageRows.length === 0) return { items: [] as ReturnType<SinsService['presentSinItem']>[] };
-    const full = await this.prisma.goodDeedQuote.findMany({
-      where: { id: { in: pageRows.map((row) => row.id) } },
-      include: { quote: { include: this.quotes.buildQuoteInclude(locale) } },
-    });
-    const order = new Map(pageRows.map((row, index) => [row.id, index]));
-    full.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
-    return { items: full.map((row) => this.presentSinItem(row, locale)) };
+    return ranked as ReadingRow[];
   }
 
-  private async derivedSinTexts(
-    sinId: string,
-    quote: Prisma.SinQuoteWhereInput['quote'],
+  /** The reward page: texts already on the main page are left out before the reading-order dedupe. */
+  private async rewardPage(
+    ranked: ReadingRow[],
+    excludeQuoteIds: ReadonlySet<string>,
     page: number,
     limit: number,
     locale: 'ar' | 'en',
   ) {
-    const links = await this.prisma.topicDerivation.findMany({
+    const pageRows = dedupeReading(ranked.filter((row) => !excludeQuoteIds.has(row.quoteId)))
+      .slice((page - 1) * limit, page * limit);
+    if (pageRows.length === 0) return { items: [] as ReturnType<SinsService['presentSinItem']>[] };
+    const full = await this.quotes.hydrateLinks(pageRows, locale);
+    return { items: full.map((row) => this.presentSinItem(row, locale)) };
+  }
+
+  private derivedLinks(sinId: string) {
+    return this.prisma.topicDerivation.findMany({
       where: { fromSinId: sinId },
       select: {
         toSin: { select: { id: true, slug: true, name: true, nameAr: true, isHidden: true } },
         toGoodDeed: { select: { id: true, slug: true, name: true, nameAr: true } },
       },
     });
-    const groups = [];
+  }
+
+  /** Derived groups in link order (sin side first), each read in parallel with the others. */
+  private async derivedSinTexts(
+    links: Awaited<ReturnType<SinsService['derivedLinks']>>,
+    quote: Prisma.SinQuoteWhereInput['quote'],
+    page: number,
+    limit: number,
+    locale: 'ar' | 'en',
+  ) {
+    const jobs: Array<Promise<{ slug: string; name: string; nameAr: string; side: 'AVOID' | 'DO'; items: Awaited<ReturnType<SinsService['pageTopicQuotes']>> }>> = [];
     for (const link of links) {
-      if (link.toSin && !link.toSin.isHidden) {
-        const items = await this.pageTopicQuotes('sin', link.toSin.id, quote, page, limit, locale);
-        groups.push({ slug: link.toSin.slug, name: link.toSin.name, nameAr: link.toSin.nameAr, side: 'AVOID' as const, items });
+      const toSin = link.toSin;
+      if (toSin && !toSin.isHidden) {
+        jobs.push(this.pageTopicQuotes('sin', toSin.id, quote, page, limit, locale).then((items) => (
+          { slug: toSin.slug, name: toSin.name, nameAr: toSin.nameAr, side: 'AVOID' as const, items }
+        )));
       }
-      if (link.toGoodDeed) {
-        const items = await this.pageTopicQuotes('deed', link.toGoodDeed.id, quote, page, limit, locale);
-        groups.push({ slug: link.toGoodDeed.slug, name: link.toGoodDeed.name, nameAr: link.toGoodDeed.nameAr, side: 'DO' as const, items });
+      const toDeed = link.toGoodDeed;
+      if (toDeed) {
+        jobs.push(this.pageTopicQuotes('deed', toDeed.id, quote, page, limit, locale).then((items) => (
+          { slug: toDeed.slug, name: toDeed.name, nameAr: toDeed.nameAr, side: 'DO' as const, items }
+        )));
       }
     }
-    return groups;
+    return Promise.all(jobs);
   }
 
   private async pageTopicQuotes(
@@ -632,19 +628,8 @@ export class SinsService {
     const ranked = side === 'sin'
       ? await this.prisma.sinQuote.findMany({ where, select: READING_SELECT })
       : await this.prisma.goodDeedQuote.findMany({ where, select: READING_SELECT });
-    const ids = pageReadingIds(ranked as ReadingRow[], page, limit);
-    if (ids.length === 0) return [];
-    const rows = side === 'sin'
-      ? await this.prisma.sinQuote.findMany({
-        where: { id: { in: ids } },
-        include: { quote: { include: this.quotes.buildQuoteInclude(locale) } },
-      })
-      : await this.prisma.goodDeedQuote.findMany({
-        where: { id: { in: ids } },
-        include: { quote: { include: this.quotes.buildQuoteInclude(locale) } },
-      });
-    const order = new Map(ids.map((linkId, index) => [linkId, index]));
-    rows.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+    const pageRows = [...(ranked as ReadingRow[])].sort(compareReading).slice((page - 1) * limit, page * limit);
+    const rows = await this.quotes.hydrateLinks(pageRows, locale);
     return rows.map((row) => this.presentSinItem(row, locale));
   }
 
@@ -758,7 +743,7 @@ export class SinsService {
       });
     }
     const where = { oppositeSinId: sin.id, origin: visibleOrigins(), isHidden: false, isListed: true };
-    const [rows, total] = await this.prisma.$transaction([
+    const [rows, total] = await Promise.all([
       this.prisma.goodDeed.findMany({
         where,
         skip: (page - 1) * limit,

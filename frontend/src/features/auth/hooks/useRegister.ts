@@ -5,6 +5,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { setAccessToken } from '@/lib/api-client';
+import { fetchRouteJson } from '@/lib/api/route-fetch';
 import { ApiError } from '@/lib/types/api';
 import type { UserDto } from '@/lib/api/auth';
 import { queryKeys } from '@/lib/query-keys';
@@ -19,26 +20,24 @@ async function registerViaRouteHandler(input: RegisterInput): Promise<{
   accessToken: string;
   user: UserDto;
 }> {
-  const res = await fetch('/api/auth/register', {
+  const { ok, status, json } = await fetchRouteJson<{
+    data?: { accessToken?: string; user?: UserDto };
+    error?: { message?: string; code?: string };
+  }>('/api/auth/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   });
 
-  const json = await res.json() as {
-    data?: { accessToken?: string; user?: UserDto };
-    error?: { message?: string; code?: string };
-  };
-
-  if (!res.ok) {
+  if (!ok) {
     throw new ApiError({
-      code: json.error?.code ?? 'REGISTER_FAILED',
-      message: json.error?.message ?? 'Registration failed',
-      status: res.status,
+      code: json?.error?.code ?? 'REGISTER_FAILED',
+      message: json?.error?.message ?? 'Registration failed',
+      status,
     });
   }
 
-  const { accessToken, user } = json.data ?? {};
+  const { accessToken, user } = json?.data ?? {};
   if (!accessToken || !user) {
     throw new ApiError({
       code: 'UNEXPECTED_RESPONSE',

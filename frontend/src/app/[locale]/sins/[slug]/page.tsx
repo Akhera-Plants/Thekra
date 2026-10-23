@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
-import { notFound } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { FormattedNumber } from '@/components/shared/FormattedNumber';
@@ -8,13 +7,20 @@ import { AlternativeDeedsBlock } from '@/features/sin-reminder/components/Altern
 import type { ReaderItem, ReaderSection } from '@/components/shared/editorial/ReminderReader';
 import { SinReader } from '@/features/sin-reminder/components/SinReader';
 import { interleaveReading } from '@/lib/reading';
-import { getSin, getSinQuotes } from '@/lib/api/sins';
-import { englishProvenance } from '@/lib/format/provenance';
-import { parseThemeParam } from '@/lib/search/topic-themes';
+import { getSin, getSinQuotes, getSins } from '@/lib/api/sins';
+import { rethrowUnlessNotFound, topSlugs } from '@/lib/api/server-guard';
+import { englishOnlyProvenance } from '@/lib/format/provenance';
 import { SinRank, type LocaleCode } from '@/lib/types/enums';
 import type { SinQuotesMeta } from '@/lib/types/api';
 
-export const dynamic = 'force-dynamic';
+// Same for every visitor: cached and revalidated, not rendered per request. The `?theme=` chip
+// is applied on the client (useTopicReader), which is what keeps this page out of dynamic rendering.
+export const revalidate = 300;
+
+export async function generateStaticParams() {
+  const slugs = await topSlugs('sins', async () => (await getSins({ limit: 100, lang: 'ar' })).data, (sin) => sin.slug);
+  return slugs.map((slug) => ({ slug }));
+}
 
 export async function generateMetadata({
   params,
@@ -33,11 +39,8 @@ export async function generateMetadata({
 
 export default async function SinDetailPage({
   params,
-  searchParams,
 }: PageProps<'/[locale]/sins/[slug]'>) {
   const { slug, locale } = await params;
-  // ?theme= preselects a chip (search results, shared links). Unknown keys are ignored by the API.
-  const requestedTheme = parseThemeParam((await searchParams).theme);
   setRequestLocale(locale);
   const t = await getTranslations('sinDetail');
   const tRank = await getTranslations('sinRank');
@@ -47,22 +50,18 @@ export default async function SinDetailPage({
   let sin: Awaited<ReturnType<typeof getSin>>['data'];
   try {
     sin = (await getSin(slug, locale as LocaleCode)).data;
-  } catch {
-    notFound();
+  } catch (error) {
+    rethrowUnlessNotFound('sin page', error);
   }
 
   const paired = Boolean(sin.pair);
-  let quotes: Awaited<ReturnType<typeof getSinQuotes>> | null = null;
-  try {
-    quotes = await getSinQuotes(slug, {
-      page: 1,
-      limit: paired ? 50 : 20,
-      lang: locale as LocaleCode,
-      ...(requestedTheme ? { theme: requestedTheme } : {}),
-    });
-  } catch {
-    quotes = null;
-  }
+  // The texts are the page: if they cannot be loaded, fail (error.tsx offers a retry) instead of
+  // rendering and caching an empty reader for everyone.
+  const quotes = await getSinQuotes(slug, {
+    page: 1,
+    limit: paired ? 50 : 20,
+    lang: locale as LocaleCode,
+  }).catch((error: unknown) => rethrowUnlessNotFound('sin quotes', error));
 
   const toReader = (item: { quote: { id: string }; link: { note: string | null } }): ReaderItem => ({
     id: item.quote.id,
@@ -97,7 +96,9 @@ export default async function SinDetailPage({
   const heading = paired
     ? (locale === 'en' ? sin.pair!.titleEn : sin.pair!.titleAr)
     : (locale === 'en' ? (sin.name || sin.nameAr) : sin.nameAr);
-  const description = locale === 'en' ? (sin.description || sin.descriptionAr) : sin.descriptionAr;
+  // English shows the English description or nothing: never Arabic prose on /en.
+  const description = locale === 'en' ? sin.description : sin.descriptionAr;
+  const rankReference = locale === 'en' ? englishOnlyProvenance(sin.rankReference) : sin.rankReference;
   const onwardName = onward
     ? (locale === 'en' ? (onward.name || onward.nameAr) : onward.nameAr)
     : null;
@@ -124,17 +125,16 @@ export default async function SinDetailPage({
           >
             {heading}
           </h1>
-          {locale === 'en' && sin.name && sin.nameAr && sin.name !== sin.nameAr ? (
-            <p dir="rtl" lang="ar" className="page-lead">{sin.nameAr}</p>
-          ) : null}
           {description ? <p className="page-lead">{description}</p> : null}
           {sin.rank === SinRank.KABIRA && sin.rankReference && (
             <p className="page-lead">
               {tRank(sin.rank)}
-              {' — '}
-              <FormattedNumber
-                value={locale === 'en' ? (englishProvenance(sin.rankReference) ?? sin.rankReference) : sin.rankReference}
-              />
+              {rankReference ? (
+                <>
+                  {' — '}
+                  <FormattedNumber value={rankReference} />
+                </>
+              ) : null}
             </p>
           )}
           {sin.branches && sin.branches.length > 0 ? (

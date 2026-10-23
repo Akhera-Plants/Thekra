@@ -1,18 +1,24 @@
 import type { Metadata } from 'next';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
-import { notFound } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
 import { ArabicText } from '@/components/shared/ArabicText';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import type { ReaderItem, ReaderSection } from '@/components/shared/editorial/ReminderReader';
 import { GoodDeedReader } from '@/features/good-deed-motivation/components/GoodDeedReader';
 import { interleaveReading } from '@/lib/reading';
-import { getGoodDeed, getGoodDeedQuotes } from '@/lib/api/good-deeds';
-import { parseThemeParam } from '@/lib/search/topic-themes';
+import { getGoodDeed, getGoodDeedQuotes, getGoodDeeds } from '@/lib/api/good-deeds';
+import { rethrowUnlessNotFound, topSlugs } from '@/lib/api/server-guard';
 import type { LocaleCode } from '@/lib/types/enums';
 import type { GoodDeedQuotesMeta } from '@/lib/types/api';
 
-export const dynamic = 'force-dynamic';
+// Same for every visitor: cached and revalidated, not rendered per request. The `?theme=` chip
+// is applied on the client (useTopicReader), which is what keeps this page out of dynamic rendering.
+export const revalidate = 300;
+
+export async function generateStaticParams() {
+  const slugs = await topSlugs('good-deeds', async () => (await getGoodDeeds({ limit: 100, lang: 'ar' })).data, (deed) => deed.slug);
+  return slugs.map((slug) => ({ slug }));
+}
 
 export async function generateMetadata({
   params,
@@ -31,11 +37,8 @@ export async function generateMetadata({
 
 export default async function GoodDeedDetailPage({
   params,
-  searchParams,
 }: PageProps<'/[locale]/good-deeds/[slug]'>) {
   const { slug, locale } = await params;
-  // ?theme= preselects a chip (search results, shared links). Unknown keys are ignored by the API.
-  const requestedTheme = parseThemeParam((await searchParams).theme);
   setRequestLocale(locale);
   const t = await getTranslations('goodDeedDetail');
   const tNav = await getTranslations('nav');
@@ -44,22 +47,17 @@ export default async function GoodDeedDetailPage({
   let deed: Awaited<ReturnType<typeof getGoodDeed>>['data'];
   try {
     deed = (await getGoodDeed(slug, locale as LocaleCode)).data;
-  } catch {
-    notFound();
+  } catch (error) {
+    rethrowUnlessNotFound('good-deed page', error);
   }
 
   const paired = Boolean(deed.pair);
-  let quotes: Awaited<ReturnType<typeof getGoodDeedQuotes>> | null = null;
-  try {
-    quotes = await getGoodDeedQuotes(slug, {
-      page: 1,
-      limit: paired ? 50 : 20,
-      lang: locale as LocaleCode,
-      ...(requestedTheme ? { theme: requestedTheme } : {}),
-    });
-  } catch {
-    quotes = null;
-  }
+  // See the sin page: fail rather than cache an empty reader.
+  const quotes = await getGoodDeedQuotes(slug, {
+    page: 1,
+    limit: paired ? 50 : 20,
+    lang: locale as LocaleCode,
+  }).catch((error: unknown) => rethrowUnlessNotFound('good-deed quotes', error));
 
   const toReader = (item: { quote: { id: string }; link: { note: string | null } }): ReaderItem => ({
     id: item.quote.id,
@@ -91,8 +89,9 @@ export default async function GoodDeedDetailPage({
   const heading = paired
     ? (locale === 'en' ? deed.pair!.titleEn : deed.pair!.titleAr)
     : (locale === 'en' ? (deed.name || deed.nameAr) : deed.nameAr);
-  const description = locale === 'en' ? (deed.description || deed.descriptionAr) : deed.descriptionAr;
-  const reward = paired ? null : (locale === 'en' ? (deed.reward || deed.rewardAr) : deed.rewardAr);
+  // English shows the English description and reward or nothing: never Arabic prose on /en.
+  const description = locale === 'en' ? deed.description : deed.descriptionAr;
+  const reward = paired ? null : (locale === 'en' ? deed.reward : deed.rewardAr);
   const opposite = !paired && deed.oppositeSin
     ? (locale === 'en' ? (deed.oppositeSin.name || deed.oppositeSin.nameAr) : deed.oppositeSin.nameAr)
     : null;
@@ -119,9 +118,6 @@ export default async function GoodDeedDetailPage({
           >
             {heading}
           </h1>
-          {locale === 'en' && deed.name && deed.nameAr && deed.name !== deed.nameAr ? (
-            <p dir="rtl" lang="ar" className="page-lead">{deed.nameAr}</p>
-          ) : null}
           {description ? <p className="page-lead">{description}</p> : null}
           {reward ? (
             <aside className="next-step" aria-label={t('rewardHeading')}>

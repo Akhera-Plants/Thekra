@@ -68,7 +68,7 @@ export class ImanBranchesService {
         ? [{ quotes: { _count: 'desc' } }, { number: 'asc' }]
         : [{ number: 'asc' }];
 
-    const [rows, total] = await this.prisma.$transaction([
+    const [rows, total] = await Promise.all([
       this.prisma.imanBranch.findMany({
         where,
         orderBy,
@@ -212,12 +212,11 @@ export class ImanBranchesService {
         page,
         limit,
       });
-      const [[rows, total, typeGroups], countsByKind] = await Promise.all([
-        this.prisma.$transaction([
-          this.prisma.imanBranchQuote.findMany({
-            where: { id: { in: ids } },
-            include: { quote: { include: this.quotes.buildQuoteInclude(locale) } },
-          }),
+      const [[links, total, typeGroups], countsByKind] = await Promise.all([
+        Promise.all([
+          ids.length === 0
+            ? Promise.resolve([])
+            : this.prisma.imanBranchQuote.findMany({ where: { id: { in: ids } } }),
           this.prisma.imanBranchQuote.count({ where }),
           this.prisma.quote.groupBy({
             by: ['type'],
@@ -227,9 +226,10 @@ export class ImanBranchesService {
         ]),
         countsByKindQ,
       ]);
+      const rows = await this.quotes.hydrateLinks(links, locale);
       if (ids.length > 1) {
         const order = new Map(ids.map((id, index) => [id, index]));
-        rows.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+        rows.sort((a, b) => (order.get(a.id as string) ?? 0) - (order.get(b.id as string) ?? 0));
       }
       return this.quotesPage(branch, rows, page, limit, total, locale, allowedGrades, {
         ordering: `variety:md5(seed),floor=${floor}`,
@@ -239,14 +239,13 @@ export class ImanBranchesService {
       });
     }
 
-    const [[rows, total, typeGroups], countsByKind] = await Promise.all([
-      this.prisma.$transaction([
+    const [[links, total, typeGroups], countsByKind] = await Promise.all([
+      Promise.all([
         this.prisma.imanBranchQuote.findMany({
           where,
           orderBy: this.quotes.linkOrderBy(),
           skip: (page - 1) * limit,
           take: limit,
-          include: { quote: { include: this.quotes.buildQuoteInclude(locale) } },
         }),
         this.prisma.imanBranchQuote.count({ where }),
         this.prisma.quote.groupBy({
@@ -257,6 +256,7 @@ export class ImanBranchesService {
       ]),
       countsByKindQ,
     ]);
+    const rows = await this.quotes.hydrateLinks(links, locale);
 
     return this.quotesPage(branch, rows, page, limit, total, locale, allowedGrades, {
       ordering: LINK_ORDERING_LABEL,

@@ -4,10 +4,11 @@ import { Link } from '@/i18n/navigation';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { FormattedNumber } from '@/components/shared/FormattedNumber';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
+import { reportFailure } from '@/lib/errors';
 import { getCatalogSources } from '@/lib/api/sources';
 import type { LocaleCode } from '@/lib/types/enums';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 export async function generateMetadata({ params }: PageProps<'/[locale]/about'>): Promise<Metadata> {
   const { locale } = await params;
@@ -25,7 +26,11 @@ export default async function AboutPage({
   const tCrumbs = await getTranslations('breadcrumbs');
   const sources = await getCatalogSources({ limit: 100, lang: locale as LocaleCode })
     .then((result) => result.data)
-    .catch(() => []);
+    .catch((error: unknown) => {
+      // Optional list of source books: the page reads fine without it.
+      reportFailure('about sources', error);
+      return [];
+    });
   const books = sources.filter((source) => (locale === 'ar' ? source.nameAr : source.name));
 
   return (

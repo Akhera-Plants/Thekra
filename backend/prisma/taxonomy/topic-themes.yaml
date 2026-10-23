@@ -388,7 +388,7 @@ themes:
 
   # ── المسألة ──────────────────────────────────────────────
   - { topic: masala, key: masala-tahrim, ar: سؤال الناس من غير حاجة, en: Begging without need, match: [الترهيب من المساله, كراهه المساله, النهي عن المساله, سال الناس تكثرا, لا يسالون الناس] }
-  - { topic: masala, key: masala-istifaf, ar: الاستعفاف عن المسألة, en: Refraining from asking, match: [الاستعفاف عن المساله, من غير مساله] }
+  - { topic: masala, key: masala-istifaf, ar: الاستعفاف عن المسألة, en: Refraining from begging, match: [الاستعفاف عن المساله, من غير مساله] }
 
   # ── المجلس ───────────────────────────────────────────────
   - { topic: adab-majlis, key: majlis-adab, ar: آداب المجلس والجليس, en: Manners of a gathering, match: [اداب المجلس, اصغاء الجليس, اقامه الانسان من موضعه] }

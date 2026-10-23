@@ -10,7 +10,7 @@ interface CatalogNameProps {
   badge?: ReactNode;
 }
 
-/** Primary label follows the UI language. Arabic stays the fallback. */
+/** Label follows the UI language. Arabic is only the fallback for a name with no English. */
 export function CatalogName({ nameAr, name, badge }: CatalogNameProps) {
   const locale = useLocale();
   const arabic = locale === 'ar';
@@ -29,11 +29,7 @@ export function CatalogName({ nameAr, name, badge }: CatalogNameProps) {
         )}
         {badge}
       </span>
-      {!arabic && name && nameAr && name !== nameAr ? (
-        <span dir="rtl" lang="ar" className="font-arabic-ui text-sm text-muted-foreground">
-          {nameAr}
-        </span>
-      ) : null}
+      {/* No Arabic subtitle under the English name: /en shows English only. */}
     </span>
   );
 }

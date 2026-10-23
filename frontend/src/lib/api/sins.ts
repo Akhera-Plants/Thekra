@@ -1,4 +1,4 @@
-import { apiGet } from '@/lib/api-client';
+import { apiGet, type ApiGetConfig } from '@/lib/api-client';
 import type {
   GoodDeedDto,
   SinDto,
@@ -17,8 +17,13 @@ export async function getSin(slug: string, lang?: SinsQuery['lang']) {
   });
 }
 
-export async function getSinQuotes(slug: string, query: SinQuotesQuery = {}) {
+export async function getSinQuotes(
+  slug: string,
+  query: SinQuotesQuery = {},
+  config?: Pick<ApiGetConfig, 'signal' | 'revalidate'>,
+) {
   return apiGet<SinQuotesResponse>(`/sins/${slug}/quotes`, {
+    ...config,
     params: query,
   });
 }

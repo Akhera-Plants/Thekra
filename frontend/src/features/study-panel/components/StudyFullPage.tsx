@@ -3,6 +3,8 @@
 import { useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
+import { BrandLoader } from '@/components/shared/feedback/BrandLoader';
+import { QueryErrorState } from '@/components/shared/feedback/QueryErrorState';
 import { SegmentTabs } from '@/components/shared/kit/segment-tabs';
 import { QuoteBody } from '@/components/shared/quote/QuoteBody';
 import type { QuoteDto } from '@/lib/types/api';
@@ -25,7 +27,7 @@ export function StudyFullPage({ quote }: { quote: QuoteDto }) {
     ? verseTabsForLocale(locale)
     : hadithTabsForLocale(locale);
 
-  const { data: rows = [], isLoading, isError } = useExplanations(quote.id, true);
+  const { data: rows = [], isLoading, isError, error, refetch } = useExplanations(quote.id, true);
   const availableTabs = useMemo(
     () => candidateTabs.filter((tab) => pickTabRows(rows, tab, locale).length > 0),
     [candidateTabs, rows, locale],
@@ -60,9 +62,9 @@ export function StudyFullPage({ quote }: { quote: QuoteDto }) {
       ) : null}
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">{t('loading')}</p>
+        <BrandLoader label={t('loading')} showLabel className="text-sm" />
       ) : isError ? (
-        <p className="text-sm text-muted-foreground">{t('error')}</p>
+        <QueryErrorState error={error} message={t('error')} onRetry={() => void refetch()} className="py-8" />
       ) : (
         <StudyReading rows={activeRows} />
       )}

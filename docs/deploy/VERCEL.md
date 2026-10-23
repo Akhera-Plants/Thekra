@@ -96,6 +96,31 @@ done
 The first three print `access-control-allow-origin: <origin>` and
 `access-control-allow-credentials: true`; `https://evil.example` prints no `allow-origin` line.
 
+## Latency: function region and CDN cache
+
+**Region.** `backend/vercel.json` sets `"regions": ["fra1"]` so the API runs in Frankfurt, next to the
+Neon database (`aws-eu-central-1`). Vercel's default for new projects is `iad1` (Washington), which put
+a transatlantic round trip (~90 ms) in front of every database query. Vercel's docs
+([Configuring regions](https://vercel.com/docs/functions/configuring-functions/region), read 2026-10-23)
+list Hobby as "Single region", so one region in `vercel.json` is allowed on Hobby; more than one fails the
+deployment before the build. If the project dashboard has a region set (Settings → Functions → Function
+Regions), keep it equal to `fra1`; if Neon is ever moved, change both together.
+
+**CDN cache.** Public read routes send `Cache-Control: public, s-maxage=…, stale-while-revalidate=…`
+(presets in `backend/src/common/http/public-cache.ts`). Vercel's CDN does not cache a request that has an
+`Authorization` header, and the API answers `private, no-store` to any request with a bearer token or a
+cookie, so a signed-in reader is never served from or written to the shared cache. `Vary: Origin` (CORS) and
+`Vary: Authorization` are sent. Vercel strips `s-maxage` and `stale-while-revalidate` from the response it
+forwards to the browser, so `curl` against production shows `public` only; use `x-vercel-cache` (HIT / STALE /
+MISS) to see the CDN state. No new environment variable is involved.
+
+How long a change takes to show: the preset's `s-maxage` (topic pages and catalogues 300 s, one text and its
+explanations 120 s, sources 600 s, text of the day 300 s, search 60 s) plus at most one stale answer inside
+`stale-while-revalidate`. A `release-db.sh push` or an admin edit needs no action. To show a change sooner:
+redeploy the API (Vercel's cache key includes the deployment, so a new deployment starts empty;
+[cache keys](https://vercel.com/docs/caching/cdn-cache/purge)), or shorten the preset in `public-cache.ts`.
+Purging by tag needs a `Vercel-Cache-Tag` response header, which this API does not send yet.
+
 ## 4. First migration + data
 
 1. Push to `master` (or trigger Deploy). The API build runs:

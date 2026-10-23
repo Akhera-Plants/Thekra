@@ -8,10 +8,12 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  /* English UI/reading uses Amiri — same literary register as Thmanyah/Amiri Arabic. */
-  --font-sans: var(--font-amiri);
+  /* English UI/reading uses Source Serif 4 (owner decision, docs/design/after/direction/english-font.md).
+     Amiri stays for Arabic Quran text and source-book wordmarks only. */
+  --font-sans: var(--font-english);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-amiri);
+  --font-heading: var(--font-english);
+  --font-english: var(--font-english);
   /* Existing `font-arabic` stays the reading face. Display and UI are separate static families. */
   --font-arabic: var(--font-arabic-text);
   --font-arabic-text: var(--font-arabic-text);

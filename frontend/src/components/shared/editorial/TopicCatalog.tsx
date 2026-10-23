@@ -4,6 +4,7 @@ import { Suspense, useEffect, useMemo, useRef, useState, useTransition, type Com
 import { BookOpen, DoorOpen, Search, Sprout } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
+import { LinkPending } from '@/components/shared/feedback/LinkPending';
 import { Link, usePathname, useRouter } from '@/i18n/navigation';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
@@ -146,6 +147,13 @@ function TopicCatalogShell({
   const tCrumbs = useTranslations('breadcrumbs');
   const tCatalog = useTranslations('catalog');
   const inputRef = useRef<HTMLInputElement>(null);
+  const prefetchRouter = useRouter();
+  /** ~80 cards: prefetching them all in view would pull every topic page; fetch the one the visitor reaches for. */
+  const reach = (href: string) => ({
+    prefetch: false as const,
+    onPointerEnter: () => prefetchRouter.prefetch(href),
+    onFocus: () => prefetchRouter.prefetch(href),
+  });
   const Icon = INTENT_ICON[intent];
 
   useEffect(() => {
@@ -249,10 +257,10 @@ function TopicCatalogShell({
               const label = arabic ? entry.nameAr : (entry.name || entry.nameAr);
               const meta = topicMeta(entry);
               return (
-                <Link key={entry.href} href={entry.href} className="topic-item">
+                <Link key={entry.href} href={entry.href} className="topic-item" {...reach(entry.href)}>
                   <Icon className="size-[26px]" aria-hidden />
                   <span>
-                    <strong>{label}</strong>
+                    <strong>{label} <LinkPending /></strong>
                     {meta ? <small>{meta}</small> : null}
                     {!meta && entry.quoteCount > 0 ? (
                       <small>
@@ -265,10 +273,10 @@ function TopicCatalogShell({
               );
             })}
             {themeHits.map((hit) => (
-              <Link key={`theme-${hit.key}`} href={hit.href} className="topic-item">
+              <Link key={`theme-${hit.key}`} href={hit.href} className="topic-item" {...reach(hit.href)}>
                 <Icon className="size-[26px]" aria-hidden />
                 <span>
-                  <strong>{hit.label}</strong>
+                  <strong>{hit.label} <LinkPending /></strong>
                   <small>{tCatalog('themeIn', { title: hit.pageTitle })}</small>
                 </span>
                 <DirectionalArrow className="topic-arrow size-[18px]" />

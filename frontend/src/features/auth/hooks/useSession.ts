@@ -16,6 +16,8 @@
  */
 'use client';
 
+import { fetchRouteJson } from '@/lib/api/route-fetch';
+import { reportFailure } from '@/lib/errors';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { setAccessToken } from '@/lib/api-client';
@@ -29,12 +31,16 @@ interface SessionData {
 
 /** Attempt to restore a session via the httpOnly refresh cookie. */
 async function fetchSession(): Promise<SessionData | null> {
-  const res = await fetch('/api/auth/refresh', { method: 'POST' });
-  if (!res.ok) return null;
-  const json = await res.json() as {
-    data?: { accessToken?: string; user?: UserDto };
-  };
-  const { accessToken, user } = json.data ?? {};
+  let result: Awaited<ReturnType<typeof fetchRouteJson<{ data?: { accessToken?: string; user?: UserDto } }>>>;
+  try {
+    result = await fetchRouteJson('/api/auth/refresh', { method: 'POST' });
+  } catch (error) {
+    // Offline or the app is unreachable: stay signed out rather than fail the whole page.
+    reportFailure('session restore', error);
+    return null;
+  }
+  if (!result.ok) return null;
+  const { accessToken, user } = result.json?.data ?? {};
   if (!accessToken || !user) return null;
   // Prime the in-memory token immediately
   setAccessToken(accessToken);
