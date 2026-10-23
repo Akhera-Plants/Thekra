@@ -121,3 +121,27 @@ export function isAllowedCorsOrigin(rules: readonly CorsOriginRule[], origin: st
   if (origin === undefined) return false;
   return rules.some((rule) => (typeof rule === 'string' ? rule === origin : rule.test(origin)));
 }
+
+/**
+ * The public site and its Vercel previews. They are part of the product, not
+ * deployment settings, so they are always allowed: a missing or stale
+ * CORS_ORIGINS on the API project once blocked every client-side request of
+ * the live site (filters, themes, tafsir, sharh). CORS_ORIGINS adds origins
+ * (localhost, a custom domain); it cannot remove these.
+ */
+export const BUILT_IN_CORS_ORIGINS: readonly string[] = [
+  'https://thekra-web.vercel.app',
+  'https://thekra-web-*-almekdadmohammadgmailcoms-projects.vercel.app',
+];
+
+/** CORS_ORIGINS plus the built-in site origins, validated by the same rules. */
+export function corsOriginRules(raw: string | undefined): CorsOriginRule[] {
+  const rules = parseCorsOrigins([...BUILT_IN_CORS_ORIGINS, raw ?? ''].join(','));
+  const seen = new Set<string>();
+  return rules.filter((rule) => {
+    const key = typeof rule === 'string' ? rule : rule.source;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}

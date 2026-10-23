@@ -1,4 +1,10 @@
-import { CorsOriginsConfigError, isAllowedCorsOrigin, parseCorsOrigins } from './cors-origins.js';
+import {
+  BUILT_IN_CORS_ORIGINS,
+  CorsOriginsConfigError,
+  corsOriginRules,
+  isAllowedCorsOrigin,
+  parseCorsOrigins,
+} from './cors-origins.js';
 
 const PRODUCTION =
   'https://thekra-web.vercel.app,https://thekra-web-*-almekdadmohammadgmailcoms-projects.vercel.app,http://localhost:3000';
@@ -90,5 +96,26 @@ describe('parseCorsOrigins', () => {
   ])('rejects %s at boot (%s)', (raw, reason) => {
     expect(() => parseCorsOrigins(raw)).toThrow(CorsOriginsConfigError);
     expect(() => parseCorsOrigins(raw)).toThrow(reason);
+  });
+});
+
+describe('corsOriginRules', () => {
+  it('always allows the public site and its previews, whatever CORS_ORIGINS holds', () => {
+    for (const raw of [undefined, '', 'http://localhost:3000']) {
+      const rules = corsOriginRules(raw);
+      expect(isAllowedCorsOrigin(rules, 'https://thekra-web.vercel.app')).toBe(true);
+      expect(isAllowedCorsOrigin(rules, PREVIEW)).toBe(true);
+      expect(isAllowedCorsOrigin(rules, 'https://evil.example')).toBe(false);
+    }
+  });
+
+  it('adds CORS_ORIGINS entries and drops duplicates of the built-in ones', () => {
+    const rules = corsOriginRules(PRODUCTION);
+    expect(rules).toHaveLength(BUILT_IN_CORS_ORIGINS.length + 1);
+    expect(isAllowedCorsOrigin(rules, 'http://localhost:3000')).toBe(true);
+  });
+
+  it('still fails the boot on an unsafe CORS_ORIGINS', () => {
+    expect(() => corsOriginRules('*')).toThrow(CorsOriginsConfigError);
   });
 });

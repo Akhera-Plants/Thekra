@@ -15,6 +15,7 @@ import { execSync } from 'child_process';
 import { readFileSync } from 'fs';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
+import { assertTestDatabase } from './helpers/assert-test-database.js';
 
 function parseEnvFile(filePath: string): Record<string, string> {
   const result: Record<string, string> = {};
@@ -58,6 +59,8 @@ export async function setup(): Promise<void> {
         'Copy .env.test.example → .env.test and fill in the values.',
     );
   }
+
+  assertTestDatabase(databaseUrl);
 
   // Extract DB name and build an admin URL pointing to the postgres system database.
   // URL format: postgresql://user:pass@host:port/dbname?options

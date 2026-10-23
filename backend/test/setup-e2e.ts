@@ -11,6 +11,7 @@
 import { readFileSync } from 'fs';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
+import { assertTestDatabase } from './helpers/assert-test-database.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -41,3 +42,5 @@ try {
   // .env.test not found — CI should inject vars directly
   console.warn('[setup-e2e] .env.test not found; relying on existing process.env');
 }
+
+assertTestDatabase(process.env['DATABASE_URL']);
