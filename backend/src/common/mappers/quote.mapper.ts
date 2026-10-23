@@ -1,4 +1,5 @@
 import { GradeSource, Prisma, type HadithGrade, type QuoteOrigin, type QuoteType, type SourceType, type TagCategory, type TextSource } from '@prisma/client';
+import { isArnautGradeSource } from '../../modules/hadith/grade-policy.js';
 import { STRONG_MATCH_SCORE } from '../text/match-score.js';
 import { formatPrintedReference } from '../text/printed-reference.js';
 
@@ -131,7 +132,7 @@ function shuabAlsoIn(row: QuoteRowForDto, locale: 'ar' | 'en'): string | null {
   if (row.apiProvider !== 'book:shuab-iman') return null;
   if (
     row.gradeSource !== GradeSource.AUTO_SAHIHAYN &&
-    row.gradeSource !== GradeSource.SUNAN_TAHQIQ &&
+    !isArnautGradeSource(row.gradeSource) &&
     row.gradeSource !== GradeSource.HADEETHENC
   ) {
     return null;
@@ -187,7 +188,7 @@ export function mapQuoteToDto(
               referenceNumber: row.referenceNumber,
               referenceLabel: row.referenceLabel,
             }),
-            outsideSahihayn: row.gradeSource === GradeSource.SUNAN_TAHQIQ,
+            outsideSahihayn: isArnautGradeSource(row.gradeSource),
           }
         : null,
     book:

@@ -14,12 +14,16 @@ import { getSourceStripNames } from '@/lib/api/source-strip';
 import { utcDayNumber } from '@/lib/day';
 import { QuoteType } from '@/lib/types/enums';
 import type { GoodDeedDto, QuoteDto } from '@/lib/types/api';
+import { localeAlternates } from '@/lib/seo';
 
 export async function generateMetadata({ params }: PageProps<'/[locale]'>): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'app' });
   // absolute: the home title is the brand line, not a topic, so no template suffix.
-  return { title: { absolute: `${t('name')} — ${t('tagline')}` } };
+  return {
+    title: { absolute: `${t('name')} — ${t('tagline')}` },
+    alternates: localeAlternates(locale, '/'),
+  };
 }
 
 // Public and the same for everyone: cached, rebuilt at most every 5 minutes. The «today» picks

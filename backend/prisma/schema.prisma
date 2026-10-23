@@ -98,6 +98,11 @@ enum GradeSource {
   /// موسوعة الأحاديث النبوية (HadeethEnc). Publishable when grade is SAHIH or HASAN.
   /// Never overwrites SAHIHAYN / AUTO_SAHIHAYN / SUNAN_TAHQIQ / MANUAL.
   HADEETHENC
+  /// Shu'ayb al-Arna'ut graded the matching narration of Musnad Ahmad sahih or hasan
+  /// (import:book arnaut-tahqiq). Kept apart from SUNAN_TAHQIQ so the batch can be reviewed or reverted.
+  AHMAD_TAHQIQ
+  /// Same, for Sahih Ibn Hibban (al-Ihsan, al-Risala edition).
+  IBN_HIBBAN_TAHQIQ
 }
 
 enum ReferenceBook {
@@ -310,6 +315,10 @@ model Quote {
   /// Empty until the reviewer writes keep or drop. Public requires KEEP.
   atharReviewDecision AtharReviewDecision?
 
+  /// The import run that created or last changed this row (e.g. 2026-10-arnaut-tahqiq).
+  /// ImportChange keeps the values it replaced, so a batch can be reverted.
+  importBatch String?
+
   /// DIGITAL: OpenITI and other keyed digital text. OCR: Document AI, hidden
   /// until textVerifiedAt. MANUAL: seed, API, and curator entry (the default).
   textSource     TextSource @default(MANUAL)
@@ -341,6 +350,7 @@ model Quote {
   /// Public routes hide OCR rows until textVerifiedAt is set.
   @@index([textSource, textVerifiedAt])
   @@index([gradeSource])
+  @@index([importBatch])
 }
 
 /// One heading in a book, in the order the author printed it.
@@ -806,4 +816,18 @@ model Favorite {
   createdAt DateTime @default(now())
 
   @@unique([userId, quoteId])
+}
+
+/// One row per quote an import batch changed: the fields before and after.
+/// import:book revert-batch restores `before` for every row of a batch.
+model ImportChange {
+  id        String   @id @default(uuid())
+  batch     String
+  quoteId   String
+  before    Json
+  after     Json
+  createdAt DateTime @default(now())
+
+  @@unique([batch, quoteId])
+  @@index([batch])
 }

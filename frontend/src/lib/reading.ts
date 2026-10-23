@@ -1,3 +1,9 @@
+/**
+ * Texts per page on a topic reader: the first (server) page and every «show more». Small enough
+ * for a fast first paint, large enough that most themes fit on one page.
+ */
+export const TOPIC_PAGE_SIZE = 20;
+
 export interface ReadingPiece {
   id: string;
 }

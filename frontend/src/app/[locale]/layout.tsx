@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server';
 import { Geist_Mono } from 'next/font/google';
@@ -6,6 +6,7 @@ import { notFound } from 'next/navigation';
 import { AppShell } from '@/components/shared/AppShell';
 import { NavigationProgress } from '@/components/shared/feedback/NavigationProgress';
 import { LocaleSync } from '@/components/shared/LocaleSync';
+import { ServiceWorkerRegister } from '@/components/shared/ServiceWorkerRegister';
 import { amiri, amiriQuran, plexArabic, sourceSerif, thmanyahDisplay, thmanyahSans, thmanyahText } from '@/lib/fonts';
 import { env } from '@/lib/env';
 import { AppProviders } from '@/lib/providers';
@@ -34,11 +35,23 @@ export async function generateMetadata({
       type: 'website',
       siteName: name,
       description,
+      images: [{ url: '/icons/icon-512.png', width: 512, height: 512, alt: name }],
       locale: locale === 'ar' ? 'ar_AR' : 'en_US',
     },
     twitter: { card: 'summary', description },
+    // Installed (PWA) copy on iOS: name under the icon, normal status bar.
+    appleWebApp: { capable: true, title: name, statusBarStyle: 'default' },
+    formatDetection: { telephone: false },
   };
 }
+
+/** Browser bar colour = the page colour of each theme (globals.css --background), so nothing changes visually. */
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#fffcf9' },
+    { media: '(prefers-color-scheme: dark)', color: '#101010' },
+  ],
+};
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -73,6 +86,7 @@ export default async function LocaleLayout({
         <NextIntlClientProvider messages={messages}>
           <AppProviders>
             <LocaleSync />
+            <ServiceWorkerRegister />
             <NavigationProgress />
             <AppShell>{children}</AppShell>
           </AppProviders>

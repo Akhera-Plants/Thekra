@@ -3,6 +3,7 @@ import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { TopicCatalog, type TopicEntry } from '@/components/shared/editorial/TopicCatalog';
 import { reportFailure } from '@/lib/errors';
 import { getBranches } from '@/lib/api/branches';
+import { localeAlternates } from '@/lib/seo';
 
 export const revalidate = 300;
 
@@ -11,7 +12,7 @@ export async function generateMetadata({
 }: PageProps<'/[locale]/branches'>): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'branches' });
-  return { title: t('pageTitle') };
+  return { title: t('pageTitle'), alternates: localeAlternates(locale, '/branches') };
 }
 
 export default async function BranchesPage({

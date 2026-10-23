@@ -46,6 +46,8 @@ export type GradeSource =
   | 'SAHIHAYN'
   | 'MANUAL'
   | 'SUNAN_TAHQIQ'
+  | 'AHMAD_TAHQIQ'
+  | 'IBN_HIBBAN_TAHQIQ'
   | 'IBN_RAJAB'
   | 'HADEETHENC';
 export type ReferenceBook = 'BUKHARI' | 'MUSLIM';
@@ -63,6 +65,8 @@ export const APPROVED_GRADE_SOURCES = [
   'AUTO_SAHIHAYN',
   'MANUAL',
   'SUNAN_TAHQIQ',
+  'AHMAD_TAHQIQ',
+  'IBN_HIBBAN_TAHQIQ',
   'HADEETHENC',
 ] as const;
 
@@ -175,6 +179,8 @@ const TABLES = {
     SAHIHAYN: { ar: 'الصحيحان', en: 'Sahihayn' },
     MANUAL: { ar: 'حكم المراجِع', en: 'Reviewer grade' },
     SUNAN_TAHQIQ: { ar: 'تحقيق الأرنؤوط', en: "Arna'ut tahqiq" },
+    AHMAD_TAHQIQ: { ar: 'تحقيق الأرنؤوط: مسند أحمد', en: "Arna'ut tahqiq: Musnad Ahmad" },
+    IBN_HIBBAN_TAHQIQ: { ar: 'تحقيق الأرنؤوط: صحيح ابن حبان', en: "Arna'ut tahqiq: Sahih Ibn Hibban" },
     IBN_RAJAB: { ar: 'ابن رجب', en: 'Ibn Rajab' },
     HADEETHENC: { ar: 'موسوعة الأحاديث النبوية', en: 'Hadeeth Encyclopedia' },
   } satisfies LabelTable<GradeSource>,

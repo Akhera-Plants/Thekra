@@ -9,6 +9,8 @@ import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { FormattedNumber } from '@/components/shared/FormattedNumber';
 import { BranchReader } from '@/features/iman-branches/components/BranchReader';
 import type { BranchQuotesMeta } from '@/lib/api/branches';
+import { TOPIC_PAGE_SIZE } from '@/lib/reading';
+import { localeAlternates } from '@/lib/seo';
 
 export const revalidate = 300;
 
@@ -27,7 +29,7 @@ export async function generateMetadata({
   try {
     const { data } = await getBranch(branchNumber, locale);
     const title = locale === 'en' ? (data.title || t('branchFallback', { number: data.number })) : data.titleAr;
-    return { title };
+    return { title, alternates: localeAlternates(locale, `/branches/${branchNumber}`) };
   } catch {
     return {};
   }
@@ -53,7 +55,7 @@ export default async function BranchDetailPage({
   }
 
   // The texts are the page: fail (retry on error.tsx) rather than cache an empty reader.
-  const branchQuotes = await getBranchQuotes(branchNumber, { limit: 50, lang: locale }).catch(
+  const branchQuotes = await getBranchQuotes(branchNumber, { limit: TOPIC_PAGE_SIZE, lang: locale }).catch(
     (error: unknown) => rethrowUnlessNotFound('branch quotes', error),
   );
 
@@ -126,6 +128,7 @@ export default async function BranchDetailPage({
             items={readerItems}
             total={detail.quoteCount || readerItems.length}
             countsByKind={countsByKind}
+            initialHasNext={(branchQuotes.meta as BranchQuotesMeta | undefined)?.hasNext ?? false}
           />
         )}
 

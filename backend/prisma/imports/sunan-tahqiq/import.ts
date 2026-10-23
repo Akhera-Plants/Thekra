@@ -76,11 +76,11 @@ interface FlagRow {
   details: Prisma.JsonValue;
 }
 
-function matnWords(text: string): string[] {
+export function matnWords(text: string): string[] {
   return [...new Set(text.split(/\s+/).filter((word) => word.length >= 3))];
 }
 
-function proposeIndexes(
+export function proposeIndexes(
   words: readonly string[],
   postings: ReadonlyMap<string, number[]>,
   documentFrequency: ReadonlyMap<string, number>,
@@ -143,7 +143,7 @@ function loadCorpus(): CorpusRow[] {
   return rows;
 }
 
-async function trigramScores(
+export async function trigramScores(
   prisma: PrismaClient,
   pairs: Array<{ quoteId: string; corpusIndex: number; left: string; right: string }>,
 ): Promise<Map<string, number>> {

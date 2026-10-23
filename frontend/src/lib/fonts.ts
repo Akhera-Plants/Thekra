@@ -17,10 +17,10 @@ export const plexArabic = localFont({
   preload: true,
   variable: '--font-plex',
   src: [
-    { path: '../fonts/plex/plex-regular.ttf', weight: '400', style: 'normal' },
-    { path: '../fonts/plex/plex-medium.ttf', weight: '500', style: 'normal' },
-    { path: '../fonts/plex/plex-semibold.ttf', weight: '600', style: 'normal' },
-    { path: '../fonts/plex/plex-semibold.ttf', weight: '700', style: 'normal' },
+    { path: '../fonts/plex/plex-regular.woff2', weight: '400', style: 'normal' },
+    { path: '../fonts/plex/plex-medium.woff2', weight: '500', style: 'normal' },
+    { path: '../fonts/plex/plex-semibold.woff2', weight: '600', style: 'normal' },
+    { path: '../fonts/plex/plex-semibold.woff2', weight: '700', style: 'normal' },
   ],
 });
 
@@ -48,7 +48,7 @@ export const amiri = localFont({
   adjustFontFallback: false,
   preload: false,
   variable: '--font-amiri',
-  src: [{ path: '../fonts/plex/amiri.ttf', weight: '400', style: 'normal' }],
+  src: [{ path: '../fonts/plex/amiri.woff2', weight: '400', style: 'normal' }],
 });
 
 /**

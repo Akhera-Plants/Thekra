@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query';
 import type { ReaderItem, ReaderSection, TypeFilter } from '@/components/shared/editorial/ReminderReader';
 import type { ThemeChip } from '@/components/shared/editorial/ThemeChips';
+import { TOPIC_PAGE_SIZE } from '@/lib/reading';
 import { parseThemeParam } from '@/lib/search/topic-themes';
 import type { CountsByKind, PageMeta, QuoteKind, TopicText, TopicThemeCount } from '@/lib/types/api';
 
@@ -36,6 +37,8 @@ interface UseTopicReaderOptions {
    * render without a theme (null) and the `?theme=` of the URL is applied here, on the client.
    */
   initialTheme: string | null;
+  /** meta.hasNext of the server page. «Show more» on the server view fetches page 2 onwards. */
+  initialHasNext?: boolean;
 }
 
 const toReader = (item: TopicText): ReaderItem => ({ id: item.quote.id, quote: item.quote, note: item.link.note });
@@ -57,6 +60,40 @@ function writeThemeParam(key: string | null) {
 const readThemeFromUrl = () => parseThemeParam(new URLSearchParams(window.location.search).get('theme'));
 
 /**
+ * Pages 2… of the server view, added to its sections: the topic's own list under the section
+ * whose source is `items`, the paired list under `companion`. Without sections, a flat list.
+ */
+function continueServerView(
+  initialItems: ReaderItem[],
+  initialSections: ReaderSection[] | undefined,
+  pages: readonly TopicPage[],
+): { items: ReaderItem[]; sections: ReaderSection[] | undefined } {
+  if (pages.length === 0) return { items: initialItems, sections: initialSections };
+  const seen = new Set(initialItems.map((item) => item.id));
+  for (const section of initialSections ?? []) for (const item of section.items) seen.add(item.id);
+  const fresh = (rows: TopicText[]) =>
+    rows.filter((row) => !seen.has(row.quote.id) && seen.add(row.quote.id)).map(toReader);
+  const own: ReaderItem[] = [];
+  const companion: ReaderItem[] = [];
+  for (const page of pages) {
+    own.push(...fresh(page.data.items));
+    companion.push(...fresh(page.data.companion?.items ?? []));
+  }
+  const items = [...initialItems, ...own, ...companion];
+  if (!initialSections || initialSections.length === 0) return { items, sections: initialSections };
+  const sections = initialSections.map((section) => ({
+    ...section,
+    items:
+      section.source === 'items'
+        ? [...section.items, ...own]
+        : section.source === 'companion'
+          ? [...section.items, ...companion]
+          : section.items,
+  }));
+  return { items, sections };
+}
+
+/**
  * Kind tabs + theme chips for a topic reader. The server render is shown as
  * long as the reader is on «الكل» and the theme it was rendered with; any
  * other combination is fetched (`kind=` and/or `theme=`) page by page.
@@ -71,6 +108,7 @@ export function useTopicReader({
   initialCountsByKind,
   themes,
   initialTheme,
+  initialHasNext = false,
 }: UseTopicReaderOptions) {
   const [activeKind, setActiveKind] = useState<TypeFilter>('all');
   // `undefined` = the visitor has not picked a chip yet, so the URL (or the server render) decides.
@@ -99,7 +137,7 @@ export function useTopicReader({
       fetchPage(
         {
           page: pageParam,
-          limit: 50,
+          limit: TOPIC_PAGE_SIZE,
           lang: lang === 'en' ? 'en' : 'ar',
           kind: activeKind === 'all' ? undefined : activeKind,
           theme: activeTheme ?? undefined,
@@ -113,14 +151,30 @@ export function useTopicReader({
     placeholderData: keepPreviousData,
   });
 
+  // The server view is page 1; «show more» there fetches page 2 onwards with the same filter.
+  const [continued, setContinued] = useState(false);
+  const continuation = useInfiniteQuery({
+    queryKey: [queryRoot, slug, 'quotes', { lang, kind: 'all', theme: initialTheme, from: 2 }] as const,
+    queryFn: ({ pageParam, signal }) =>
+      fetchPage(
+        { page: pageParam, limit: TOPIC_PAGE_SIZE, lang: lang === 'en' ? 'en' : 'ar', theme: initialTheme ?? undefined },
+        signal,
+      ),
+    initialPageParam: 2,
+    getNextPageParam: (lastPage) => (lastPage.meta?.hasNext ? lastPage.meta.page + 1 : undefined),
+    enabled: serverView && continued && initialHasNext,
+  });
+  const continuedPages = continuation.data?.pages;
+
   const pages = serverView ? undefined : query.data?.pages;
   // A failed first page has no data, and must read as an error, never as "still loading".
   const failed = !serverView && query.isError && !pages;
   const pending = !serverView && !pages && !failed;
 
   const { items, sections } = useMemo(() => {
+    if (serverView) return continueServerView(initialItems, initialSections, continuedPages ?? []);
     // First load after the server view: the server list stays on screen, dimmed, until the answer lands.
-    if (serverView || (!pages && !failed)) return { items: initialItems, sections: initialSections };
+    if (!pages && !failed) return { items: initialItems, sections: initialSections };
     // Failed: an empty list plus an error with retry, never another filter's list under this chip.
     if (!pages) return { items: [] as ReaderItem[], sections: undefined };
     const seen = new Set<string>();
@@ -137,7 +191,7 @@ export function useTopicReader({
       }
     }
     return { items: flat, sections: undefined };
-  }, [serverView, failed, pages, initialItems, initialSections, activeKind, activeTheme]);
+  }, [serverView, continuedPages, failed, pages, initialItems, initialSections, activeKind, activeTheme]);
 
   const firstMeta = pages?.[0]?.meta as TopicPageMeta | undefined;
   const countsByKind = serverView ? initialCountsByKind : (firstMeta?.countsByKind ?? initialCountsByKind);
@@ -159,11 +213,20 @@ export function useTopicReader({
     failed,
     error: query.error,
     /** «Show more» failed: the list on screen is still valid. */
-    nextPageFailed: !serverView && query.isFetchNextPageError,
-    retry: () => void (query.isFetchNextPageError ? query.fetchNextPage() : query.refetch()),
-    hasNextPage: serverView ? false : Boolean(query.hasNextPage),
-    isFetchingNextPage: query.isFetchingNextPage,
-    fetchNextPage: () => void query.fetchNextPage(),
+    nextPageFailed: serverView ? continuation.isError : query.isFetchNextPageError,
+    retry: () => {
+      if (serverView) void (continuation.data ? continuation.fetchNextPage() : continuation.refetch());
+      else void (query.isFetchNextPageError ? query.fetchNextPage() : query.refetch());
+    },
+    hasNextPage: serverView
+      ? (continued ? Boolean(continuation.hasNextPage) : initialHasNext)
+      : Boolean(query.hasNextPage),
+    isFetchingNextPage: serverView ? continuation.isFetching : query.isFetchingNextPage,
+    fetchNextPage: () => {
+      if (!serverView) void query.fetchNextPage();
+      else if (!continued) setContinued(true);
+      else void continuation.fetchNextPage();
+    },
     setKind: setActiveKind,
     setTheme: (key: string | null) => {
       setPickedTheme(key);

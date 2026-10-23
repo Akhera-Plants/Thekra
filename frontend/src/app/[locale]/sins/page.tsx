@@ -5,6 +5,7 @@ import { reportFailure } from '@/lib/errors';
 import { getSins } from '@/lib/api/sins';
 import { getTopicThemes } from '@/lib/api/topic-themes';
 import { SinRank } from '@/lib/types/enums';
+import { localeAlternates } from '@/lib/seo';
 
 // Catalogue data is cached for an hour (api-client); the page itself is rebuilt every 5 minutes,
 // so a degraded render (below) is replaced quickly.
@@ -13,7 +14,7 @@ export const revalidate = 300;
 export async function generateMetadata({ params }: PageProps<'/[locale]/sins'>): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'sins' });
-  return { title: t('pageTitle') };
+  return { title: t('pageTitle'), alternates: localeAlternates(locale, '/sins') };
 }
 
 export default async function SinsPage({ params }: PageProps<'/[locale]/sins'>) {

@@ -139,3 +139,17 @@ export function deedHasPublicText(): Prisma.GoodDeedWhereInput {
     ],
   };
 }
+
+/**
+ * A topic page has more texts when any of its lists does: the topic's own links, the paired
+ * topic's texts (companion), or a derived group that filled this page. meta.total counts only
+ * the first, so a paired page whose other side is longer used to stop at page 1.
+ */
+export function readingHasNext(
+  page: number,
+  limit: number,
+  totals: readonly number[],
+  derivedPageSizes: readonly number[] = [],
+): boolean {
+  return totals.some((total) => page * limit < total) || derivedPageSizes.some((size) => size >= limit);
+}

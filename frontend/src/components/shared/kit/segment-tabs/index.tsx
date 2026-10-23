@@ -19,6 +19,7 @@ function SegmentTabs({
   className,
   listClassName,
   'aria-label': ariaLabel,
+  controls,
   children,
 }: SegmentTabsProps) {
   const visible = items.filter((item) => !item.hidden);
@@ -39,6 +40,7 @@ function SegmentTabs({
             key={item.value}
             value={item.value}
             disabled={item.disabled}
+            {...(controls ? { 'aria-controls': controls } : {})}
             className={segmentTriggerVariants({ variant, size })}
           >
             <span className="leading-none">{item.label}</span>
