@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { apiGet } from '@/lib/api-client';
+import { rethrowUnlessNotFound } from '@/lib/api/server-guard';
 import type { QuoteDto } from '@/lib/types/api';
 import type { LocaleCode } from '@/lib/types/enums';
 import { StudyFullPage } from '@/features/study-panel/components/StudyFullPage';
@@ -20,6 +21,8 @@ async function findVerse(surah: number, ayah: number, lang: LocaleCode) {
   });
   return data[0] ?? null;
 }
+
+export const revalidate = 300;
 
 export async function generateMetadata({
   params,
@@ -47,8 +50,8 @@ export default async function QuranStudyPage({
   let quote: QuoteDto | null = null;
   try {
     quote = await findVerse(surahNumber, ayahNumber, locale as LocaleCode);
-  } catch {
-    notFound();
+  } catch (error) {
+    rethrowUnlessNotFound('verse page', error);
   }
   if (!quote) notFound();
 

@@ -103,6 +103,23 @@ export function englishLinkNote(value: string | null | undefined): string | null
   return englishProvenance(text);
 }
 
+const ARABIC_SCRIPT = /[\u0600-\u06FF]/;
+
+/**
+ * English UI only: `englishProvenance`, keeping the « — »-separated parts that came out fully
+ * English and dropping any part still in Arabic. Null when nothing English is left, so the
+ * caller hides the line instead of showing half-translated prose.
+ */
+export function englishOnlyProvenance(value: string | null | undefined): string | null {
+  const english = englishProvenance(value);
+  if (!english) return null;
+  const parts = english
+    .split(/\s+[—–]\s+/)
+    .map((part) => part.trim())
+    .filter((part) => part && !ARABIC_SCRIPT.test(part));
+  return parts.length > 0 ? parts.join(' — ') : null;
+}
+
 export function englishProvenance(value: string | null | undefined): string | null {
   if (!value) return null;
   let text = value;

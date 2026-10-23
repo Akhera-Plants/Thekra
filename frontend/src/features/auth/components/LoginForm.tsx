@@ -17,7 +17,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { ApiError } from '@/lib/types/api';
+import { failureKey } from '@/lib/errors';
 import { useLogin } from '../hooks/useLogin';
 
 const loginSchema = z.object({
@@ -34,6 +34,7 @@ interface LoginFormProps {
 
 export function LoginForm({ redirectTo = '/' }: LoginFormProps) {
   const t = useTranslations('auth');
+  const tFeedback = useTranslations('feedback');
   const router = useRouter();
   const { mutateAsync: login, isPending } = useLogin();
 
@@ -49,9 +50,13 @@ export function LoginForm({ redirectTo = '/' }: LoginFormProps) {
       router.push(redirectTo);
       router.refresh();
     } catch (err) {
-      const message =
-        err instanceof ApiError ? err.message : t('loginError');
-      toast.error(message);
+      // Never the raw API text: connection-type failures get the shared localised message.
+      const kind = failureKey(err);
+      toast.error(
+        kind === 'network' || kind === 'timeout' || kind === 'server' || kind === 'rateLimited'
+          ? tFeedback(`error.${kind}`)
+          : t('loginError'),
+      );
     }
   }
 

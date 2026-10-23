@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { ReminderReader, type ReaderItem, type ReaderSection } from '@/components/shared/editorial/ReminderReader';
+import { ReaderStatus } from '@/components/shared/feedback/ReaderStatus';
 import { useTopicReader } from '@/components/shared/editorial/useTopicReader';
 import { getGoodDeedQuotes } from '@/lib/api/good-deeds';
 import type { CountsByKind, TopicThemeCount } from '@/lib/types/api';
@@ -26,7 +27,7 @@ export function GoodDeedReader({ slug, lang, items, total, sections, countsByKin
     queryRoot: 'good-deeds',
     slug,
     lang,
-    fetchPage: (query) => getGoodDeedQuotes(slug, query),
+    fetchPage: (query, signal) => getGoodDeedQuotes(slug, query, { signal }),
     initialItems: items,
     initialSections: sections,
     initialCountsByKind: countsByKind,
@@ -35,6 +36,7 @@ export function GoodDeedReader({ slug, lang, items, total, sections, countsByKin
   });
 
   return (
+    <>
     <ReminderReader
       items={reader.items}
       total={total}
@@ -62,5 +64,7 @@ export function GoodDeedReader({ slug, lang, items, total, sections, countsByKin
         themeAll: t('themeAll'),
       }}
     />
+    <ReaderStatus busy={reader.busy} failed={reader.failed} nextPageFailed={reader.nextPageFailed} error={reader.error} onRetry={reader.retry} />
+    </>
   );
 }

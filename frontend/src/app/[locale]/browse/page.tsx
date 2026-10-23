@@ -1,15 +1,14 @@
-import { getTranslations } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { Suspense } from 'react';
 import { BrowseTabs } from '@/features/quran-hadith-browser/components/BrowseTabs';
 
-// Renders on every request — no static build-time fetch needed.
-export const dynamic = 'force-dynamic';
+// Static shell: the tabs and results are client queries (BrowseTabs reads ?tab= behind a Suspense).
 
 export default async function BrowsePage({
   params,
 }: PageProps<'/[locale]/browse'>) {
-  // locale unused — force-dynamic; next-intl reads it from the request context
-  await params;
+  const { locale } = await params;
+  setRequestLocale(locale);
 
   const t = await getTranslations('browse');
 

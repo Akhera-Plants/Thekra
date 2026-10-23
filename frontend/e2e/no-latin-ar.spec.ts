@@ -37,14 +37,18 @@ async function expectArabic(page: Page, path: string) {
 test('Arabic pages contain no Latin letters except the language switch', async ({ page }) => {
   await expectArabic(page, '/');
   await expectArabic(page, '/sins');
+  // Client-side navigations: wait for the new URL, not just an idle network (the old page
+  // is already idle, so a bare networkidle wait could read the list page again).
   const sin = page.locator('a[href*="/sins/"]').first();
   await sin.click();
+  await page.waitForURL(/\/sins\/[^/?#]+/);
   await page.waitForLoadState('networkidle');
   expect(latinLeaks(await visibleCopy(page)), page.url()).toEqual([]);
 
   const quote = page.locator('a[href*="/quotes/"]').first();
   if (await quote.count()) {
     await quote.click();
+    await page.waitForURL(/\/quotes\//);
     await page.waitForLoadState('networkidle');
     expect(latinLeaks(await visibleCopy(page)), page.url()).toEqual([]);
   }
@@ -52,6 +56,7 @@ test('Arabic pages contain no Latin letters except the language switch', async (
   await expectArabic(page, '/good-deeds');
   const deed = page.locator('a[href*="/good-deeds/"]').first();
   await deed.click();
+  await page.waitForURL(/\/good-deeds\/[^/?#]+/);
   await page.waitForLoadState('networkidle');
   expect(latinLeaks(await visibleCopy(page)), page.url()).toEqual([]);
 
@@ -69,4 +74,16 @@ test('Arabic pages contain no Latin letters except the language switch', async (
   await page.waitForLoadState('networkidle');
   expect(latinLeaks(await visibleCopy(page)), 'mobile header').toEqual([]);
   await expect(page.locator('[data-locale-switch]').last()).toHaveText('En');
+});
+
+test('Arabic topic pages (sin, deed, pair, branch) contain no Latin letters', async ({ page }) => {
+  for (const path of [
+    '/sins/ghibah',
+    '/good-deeds/silat-ar-rahim',
+    '/sins/tark-as-salah',
+    '/good-deeds/salah',
+    '/branches/1',
+  ]) {
+    await expectArabic(page, path);
+  }
 });

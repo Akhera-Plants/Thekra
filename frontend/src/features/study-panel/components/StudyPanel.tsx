@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
+import { BrandLoader } from '@/components/shared/feedback/BrandLoader';
+import { QueryErrorState } from '@/components/shared/feedback/QueryErrorState';
 import { Button } from '@/components/shared/kit/button';
 import { SegmentTabs } from '@/components/shared/kit/segment-tabs';
 import {
@@ -68,7 +70,7 @@ export function StudyPanel({
     [isVerse, isHadith, locale],
   );
 
-  const { data: rows = [], isLoading, isError } = useExplanations(quote?.id ?? null, open);
+  const { data: rows = [], isLoading, isError, error, refetch } = useExplanations(quote?.id ?? null, open);
 
   const availableTabs = useMemo(
     () => candidateTabs.filter((tab) => pickTabRows(rows, tab, locale).length > 0),
@@ -189,9 +191,9 @@ export function StudyPanel({
 
           <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
             {isLoading ? (
-              <p className="text-sm text-muted-foreground">{t('loading')}</p>
+              <BrandLoader label={t('loading')} showLabel className="text-sm" />
             ) : isError ? (
-              <p className="text-sm text-muted-foreground">{t('error')}</p>
+              <QueryErrorState error={error} message={t('error')} onRetry={() => void refetch()} className="py-8" />
             ) : (
               <StudyReading rows={activeRows} />
             )}
@@ -205,12 +207,8 @@ export function StudyPanel({
                 tone="neutral"
                 size="sm"
                 iconOnly
-                icon={
-                  <span className="inline-flex">
-                    <ChevronRight className="rtl:hidden" aria-hidden />
-                    <ChevronLeft className="hidden rtl:inline" aria-hidden />
-                  </span>
-                }
+                // Previous points back toward the start edge: ← in English, → in Arabic.
+                icon={<ChevronLeft className="rtl:-scale-x-100" aria-hidden />}
                 aria-label={t('previous')}
                 disabled={!prevId}
                 onClick={() => prevId && onNavigate?.(prevId)}
@@ -221,12 +219,8 @@ export function StudyPanel({
                 tone="neutral"
                 size="sm"
                 iconOnly
-                icon={
-                  <span className="inline-flex">
-                    <ChevronLeft className="rtl:hidden" aria-hidden />
-                    <ChevronRight className="hidden rtl:inline" aria-hidden />
-                  </span>
-                }
+                // Next points forward, like DirectionalArrow: → in English, ← in Arabic.
+                icon={<ChevronRight className="rtl:-scale-x-100" aria-hidden />}
                 aria-label={t('next')}
                 disabled={!nextId}
                 onClick={() => nextId && onNavigate?.(nextId)}

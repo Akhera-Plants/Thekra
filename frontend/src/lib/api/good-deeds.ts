@@ -1,4 +1,4 @@
-import { apiGet } from '@/lib/api-client';
+import { apiGet, type ApiGetConfig } from '@/lib/api-client';
 import type {
   GoodDeedDto,
   GoodDeedQuotesQuery,
@@ -23,8 +23,10 @@ export async function getGoodDeed(
 export async function getGoodDeedQuotes(
   slug: string,
   query: GoodDeedQuotesQuery = {},
+  config?: Pick<ApiGetConfig, 'signal' | 'revalidate'>,
 ) {
   return apiGet<GoodDeedQuotesResponse>(`/good-deeds/${slug}/quotes`, {
+    ...config,
     params: query,
   });
 }

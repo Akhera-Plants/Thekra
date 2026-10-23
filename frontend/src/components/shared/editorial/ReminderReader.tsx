@@ -10,6 +10,7 @@ import type { QuoteCardIntent } from '@/components/shared/quote/QuoteCard';
 import type { CountsByKind, QuoteDto } from '@/lib/types/api';
 import { QuoteType } from '@/lib/types/enums';
 import { StudyPanel } from '@/features/study-panel/components/StudyPanel';
+import { cn } from '@/lib/utils';
 
 export interface ReaderItem {
   id: string;
@@ -273,7 +274,14 @@ export function ReminderReader({
           onValueChange={(value) => changeFilter(value as TypeFilter)}
           variant="segment"
           size="filled"
-          className="min-w-0 w-full [&_[data-slot=tabs-list]]:w-full sm:[&_[data-slot=tabs-list]]:w-fit"
+          // Long English labels («Sayings of the Salaf») do not fit four-up on a phone: tabs keep
+          // their text width and the track scrolls from its start edge instead of overlapping.
+          className={cn(
+            'min-w-0 w-full [&_[data-slot=tabs-list]]:w-full sm:[&_[data-slot=tabs-list]]:w-fit',
+            // justify-start: a centred row that overflows would cut its first tab off unreachably.
+            '[&_[data-slot=tabs-list]]:justify-start [&_[data-slot=tabs-list]]:overflow-x-auto [&_[data-slot=tabs-list]]:overscroll-x-contain [&_[data-slot=tabs-list]]:[scrollbar-width:none]',
+            '[&_[data-slot=tabs-trigger]]:min-w-fit',
+          )}
           listClassName="w-full sm:w-fit"
         />
         {themes && themes.length > 0 && onThemeChange ? (

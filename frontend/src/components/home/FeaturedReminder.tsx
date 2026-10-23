@@ -10,9 +10,11 @@ import { useToggleFavorite } from '@/features/favorites/hooks/useToggleFavorite'
 import { accountsEnabled } from '@/lib/accounts';
 import { formatDigits } from '@/lib/format/digits';
 import { formatGradeCitation } from '@/lib/format/grade-citation';
-import { englishProvenance } from '@/lib/format/provenance';
+import { englishOnlyProvenance } from '@/lib/format/provenance';
 import { QuoteType } from '@/lib/types/enums';
 import type { QuoteDto } from '@/lib/types/api';
+import { cn } from '@/lib/utils';
+import { FeaturedText } from './FeaturedText';
 import { splitChain } from './today/chain';
 import { featuredVerseScale } from './today/verse-scale';
 
@@ -74,9 +76,10 @@ export function FeaturedReminder({ quote }: FeaturedReminderProps) {
           ayah: formatDigits(quote.quran.ayahNumber),
         })
       : null);
+  // English keeps only the parts of the reference that came out in English.
   const sourceLine =
     rawReference && locale === 'en'
-      ? (englishProvenance(rawReference) ?? rawReference)
+      ? englishOnlyProvenance(rawReference)
       : rawReference;
   const meta = [gradeLine, sourceLine].filter(Boolean).join(' · ');
   const body = english ?? text;
@@ -84,9 +87,10 @@ export function FeaturedReminder({ quote }: FeaturedReminderProps) {
 
   return (
     <article className="featured-reminder">
-      <div className="section-topline">
-        <h2>{t('todayHeading')}</h2>
-        {showSave ? (
+      <FeaturedText
+        key={`${quote.id}-${locale}`}
+        heading={<h2>{t('todayHeading')}</h2>}
+        actions={showSave ? (
           <button
             type="button"
             className="icon-button save-button"
@@ -98,13 +102,11 @@ export function FeaturedReminder({ quote }: FeaturedReminderProps) {
             <Bookmark className="size-[19px]" aria-hidden />
           </button>
         ) : null}
-      </div>
-      <p
-        className={['featured-verse', isQuran ? 'quran' : '', scale].filter(Boolean).join(' ')}
+        className={cn('featured-verse', scale, { quran: isQuran })}
         lang={english ? 'en' : 'ar'}
       >
         {english ? <EnglishWithHonorific text={body} /> : body}
-      </p>
+      </FeaturedText>
       <div className="reading-bottom">
         <div className="source-stamp">
           {isQuran ? (

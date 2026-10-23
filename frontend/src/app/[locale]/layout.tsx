@@ -4,8 +4,9 @@ import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server
 import { Geist_Mono } from 'next/font/google';
 import { notFound } from 'next/navigation';
 import { AppShell } from '@/components/shared/AppShell';
+import { NavigationProgress } from '@/components/shared/feedback/NavigationProgress';
 import { LocaleSync } from '@/components/shared/LocaleSync';
-import { amiri, amiriQuran, plexArabic, thmanyahDisplay, thmanyahSans, thmanyahText } from '@/lib/fonts';
+import { amiri, amiriQuran, plexArabic, sourceSerif, thmanyahDisplay, thmanyahSans, thmanyahText } from '@/lib/fonts';
 import { env } from '@/lib/env';
 import { AppProviders } from '@/lib/providers';
 import { routing } from '@/i18n/routing';
@@ -63,15 +64,16 @@ export default async function LocaleLayout({
       lang={locale}
       dir={dir}
       suppressHydrationWarning
-      className={`${thmanyahDisplay.variable} ${thmanyahText.variable} ${thmanyahSans.variable} ${plexArabic.variable} ${amiri.variable} ${amiriQuran.variable} ${monoFont.variable} h-full antialiased`}
+      className={`${thmanyahDisplay.variable} ${thmanyahText.variable} ${thmanyahSans.variable} ${plexArabic.variable} ${amiri.variable} ${amiriQuran.variable} ${sourceSerif.variable} ${monoFont.variable} h-full antialiased`}
     >
       <body
         suppressHydrationWarning
-        className={`flex min-h-full flex-col ${locale === 'ar' ? 'font-arabic-ui' : 'font-amiri'}`}
+        className={`flex min-h-full flex-col ${locale === 'ar' ? 'font-arabic-ui' : 'font-english'}`}
       >
         <NextIntlClientProvider messages={messages}>
           <AppProviders>
             <LocaleSync />
+            <NavigationProgress />
             <AppShell>{children}</AppShell>
           </AppProviders>
         </NextIntlClientProvider>

@@ -24,6 +24,24 @@ export const plexArabic = localFont({
   ],
 });
 
+/**
+ * Source Serif 4 (Adobe, OFL — public/licenses/SOURCE-SERIF-4-OFL.txt): the English face for
+ * the whole English UI and English reading text. Upstream 4.005 variable woff2, unmodified, because
+ * Google's subsets drop small caps (smcp/c2sc) and the ʿ ʾ transliteration marks; this file has
+ * them, plus ā ī ū ḥ ṣ ḍ ṭ ẓ and an optical-size axis. Not preloaded: Arabic pages share this
+ * layout and never need it; the Times-based fallback keeps the swap on English pages quiet.
+ */
+export const sourceSerif = localFont({
+  display: 'swap',
+  adjustFontFallback: 'Times New Roman',
+  preload: false,
+  variable: '--font-english',
+  src: [
+    { path: '../fonts/source-serif/SourceSerif4Variable-Roman.ttf.woff2', weight: '200 900', style: 'normal' },
+    { path: '../fonts/source-serif/SourceSerif4Variable-Italic.ttf.woff2', weight: '200 900', style: 'italic' },
+  ],
+});
+
 /** Amiri — Quran reading and source-book wordmarks on the public site. */
 export const amiri = localFont({
   display: 'swap',

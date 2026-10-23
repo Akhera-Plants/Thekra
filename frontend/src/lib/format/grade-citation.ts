@@ -15,6 +15,36 @@ export function formatGradeCitation(input: {
   gradeReference: string | null | undefined;
   grade?: string | null;
 }): string | null {
+  const line = composeGradeCitation(input);
+  return input.locale === 'en' ? englishPartsOnly(line) : line;
+}
+
+const ARABIC_SCRIPT = /[\u0600-\u06FF]/;
+
+/**
+ * English UI shows English only: a part of the line («A — B», «A · B») that is still Arabic
+ * after translation (an untranslated edition note, say) is dropped, never shown as is.
+ */
+function englishPartsOnly(line: string | null): string | null {
+  if (!line || !ARABIC_SCRIPT.test(line)) return line;
+  const kept = line
+    .split(GRADER_SEPARATOR)
+    .map((group) =>
+      group
+        .split(/\s+[—–]\s+/)
+        .filter((part) => part.trim() && !ARABIC_SCRIPT.test(part))
+        .join(' — '),
+    )
+    .filter(Boolean);
+  return kept.length > 0 ? kept.join(GRADER_SEPARATOR) : null;
+}
+
+function composeGradeCitation(input: {
+  locale: 'ar' | 'en';
+  gradeAuthority: string | null | undefined;
+  gradeReference: string | null | undefined;
+  grade?: string | null;
+}): string | null {
   const authority = input.gradeAuthority?.trim() || null;
   const reference = input.gradeReference?.trim() || null;
   if (!authority && !reference) return null;

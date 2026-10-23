@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl';
 import { StaggerReveal } from '@/components/shared/StaggerReveal';
 import { QuoteCard, QuoteCardSkeleton } from '@/components/shared/quote';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { ErrorState } from '@/components/shared/ErrorState';
+import { QueryErrorState } from '@/components/shared/feedback/QueryErrorState';
 import { Button } from '@/components/ui/button';
 import { useQuoteSearch } from '@/features/quran-hadith-browser/hooks/useQuoteSearch';
 import type { QuotesQuery } from '@/lib/types/api';
@@ -15,7 +15,6 @@ interface InfiniteQuoteListProps {
 
 export function InfiniteQuoteList({ params }: InfiniteQuoteListProps) {
   const tBrowse = useTranslations('browse');
-  const tError = useTranslations('errorState');
 
   const {
     data,
@@ -24,6 +23,7 @@ export function InfiniteQuoteList({ params }: InfiniteQuoteListProps) {
     isFetchingNextPage,
     isPending,
     isError,
+    error,
     refetch,
   } = useQuoteSearch(params);
 
@@ -44,10 +44,9 @@ export function InfiniteQuoteList({ params }: InfiniteQuoteListProps) {
 
   if (isError) {
     return (
-      <ErrorState
-        message={tError('default')}
-        retryLabel={tError('retry')}
-        onRetry={() => refetch()}
+      <QueryErrorState
+        error={error}
+        onRetry={() => void refetch()}
       />
     );
   }

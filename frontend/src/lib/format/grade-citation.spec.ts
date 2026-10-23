@@ -77,4 +77,15 @@ describe('formatGradeCitation', () => {
       }),
     ).toBe('Hadeeth Encyclopedia ruling: Good — Sahih Muslim 791');
   });
+
+  it('drops an untranslated Arabic edition note from the English line', () => {
+    expect(
+      formatGradeCitation({
+        locale: 'en',
+        gradeAuthority: 'موسوعة الأحاديث النبوية',
+        gradeReference: 'صحيح البخاري، نشر: دار طوق النجاة، الطبعة: الأولى، 1422ه.',
+        grade: 'SAHIH',
+      }),
+    ).toBe('Hadeeth Encyclopedia ruling: Authentic');
+  });
 });

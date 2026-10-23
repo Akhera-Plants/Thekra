@@ -178,7 +178,10 @@
     "reflectionAuthorFallback": "A scholar",
     "sourcesLead": "From the Book of Allah, authentic Sunnah, and the words of the scholars.",
     "sourcesAria": "Text sources",
-    "readingPairLabel": "A reminder and a door to good"
+    "readingPairLabel": "A reminder and a door to good",
+    "showWholeText": "Show the whole text",
+    "hideWholeText": "Fold the text",
+    "wholeTextLabel": "The whole text"
   },
   "sinRank": {
     "KABIRA": "Major sin",
@@ -840,5 +843,36 @@
     "branches": "Branches of Faith",
     "favorites": "Favorites",
     "about": "About Thekra"
+  },
+  "feedback": {
+    "loading": "Loading",
+    "loadingPage": "Loading the page",
+    "loadingList": "Updating the list",
+    "loadingMore": "Loading more",
+    "navigating": "Opening the page",
+    "retry": "Try again",
+    "retrying": "Trying again",
+    "error": {
+      "network": "Could not reach the server. Check your connection and try again.",
+      "timeout": "The request took longer than usual. Try again.",
+      "server": "The server has a temporary problem. Try again shortly.",
+      "notFound": "We could not find what you were looking for.",
+      "rateLimited": "Too many requests in a short time. Wait a moment and try again.",
+      "unauthorized": "This content needs you to sign in.",
+      "validation": "The request was not accepted. Check what you entered and try again.",
+      "unknown": "Something unexpected went wrong. Try again."
+    },
+    "listError": "Could not load the list",
+    "moreError": "Could not load more",
+    "notFound": {
+      "title": "Page not found",
+      "body": "The link may be old or incorrect.",
+      "home": "Back to home"
+    },
+    "global": {
+      "title": "Thekra could not open",
+      "body": "The site hit an error. Try again in a moment.",
+      "retry": "Try again"
+    }
   }
 }

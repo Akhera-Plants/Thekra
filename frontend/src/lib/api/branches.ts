@@ -1,4 +1,4 @@
-import { apiGet } from '@/lib/api-client';
+import { apiGet, type ApiGetConfig } from '@/lib/api-client';
 import type { CountsByKind, PageMeta, QuoteDto, QuoteKind } from '@/lib/types/api';
 
 export interface ImanBranchDto {
@@ -64,6 +64,10 @@ export interface BranchQuotesQuery {
   kind?: QuoteKind;
 }
 
-export async function getBranchQuotes(number: number, query: BranchQuotesQuery = {}) {
-  return apiGet<BranchQuotesResponse>(`/branches/${number}/quotes`, { params: query });
+export async function getBranchQuotes(
+  number: number,
+  query: BranchQuotesQuery = {},
+  config?: Pick<ApiGetConfig, 'signal' | 'revalidate'>,
+) {
+  return apiGet<BranchQuotesResponse>(`/branches/${number}/quotes`, { ...config, params: query });
 }

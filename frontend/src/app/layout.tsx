@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import './globals.css';
+import './feedback.css';
 
 /**
  * Root layout stays minimal so `[locale]/layout.tsx` can own `<html lang dir>`.

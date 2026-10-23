@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { TopicCatalog, type TopicEntry } from '@/components/shared/editorial/TopicCatalog';
+import { reportFailure } from '@/lib/errors';
 import { getBranches } from '@/lib/api/branches';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 export async function generateMetadata({
   params,
@@ -22,12 +23,13 @@ export default async function BranchesPage({
   const tHome = await getTranslations('home');
   const tCrumbs = await getTranslations('breadcrumbs');
 
-  let branches: Awaited<ReturnType<typeof getBranches>>['data'] = [];
-  try {
-    branches = (await getBranches({ limit: 100, lang: locale })).data;
-  } catch {
-    branches = [];
-  }
+  // The list is the page: error.tsx with a retry, not a cached empty catalogue.
+  const branches = (
+    await getBranches({ limit: 100, lang: locale }).catch((error: unknown) => {
+      reportFailure('branches catalogue', error);
+      throw error;
+    })
+  ).data;
 
   const entries: TopicEntry[] = branches.map((branch) => ({
     href: `/branches/${branch.number}`,

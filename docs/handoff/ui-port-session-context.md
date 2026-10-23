@@ -17,7 +17,7 @@
 7. **«تصنيف المراجعة»** was an internal curation note shown on public quote lists. **Removed** from public UI and API payloads. Do not show it to readers again.
 8. **Brand tagline** is one phrase only, with Quranic vocalization in Arabic: **`لِمَن كَانَ لَهُۥ قَلْبٌ`**. Header + footer use `app.tagline`. About page no longer repeats the same phrase as its lead. Brand message uses the Quran face.
 9. **Focus / borders:** Thick double rings (border + fat `ring-3` / `ring-2` on inputs and grade badges) looked wrong. Focus is now a **single quiet border** (or thin ring). Do not restore shadcn’s heavy `ring-3` focus on public controls.
-10. **English typography:** User rejected Source Sans 3. English uses **Amiri** (literary, pairs with Arabic/Thmanyah feel). Reading sizes were bumped; header nav + tagline were enlarged again after feedback that they were too small.
+10. **English typography (owner override, later session):** English now uses **Source Serif 4** (self-hosted Adobe 4.005, OFL), not Amiri. Amiri's Latin was too small and light for scholarly reading and lacked small caps. Source Sans 3 (a sans) is still rejected. Amiri stays for Arabic Quran text and wordmarks. Details and comparison: `docs/design/after/direction/english-font.md`.
 11. **Dev login (seed):**  
     - User: `user@thekra.local` / `password123456`  
     - Admin: `admin@thekra.local` / `password123456`  
@@ -71,12 +71,16 @@
 - Quieter on: `components/ui/input.tsx`, `textarea.tsx`, `select.tsx`, `button.tsx`, kit `button/variants.ts`, `GradeBadge` (no `ring-2`)
 - Prefer `focus-visible:border-primary` + `ring-0` / thin ring — not `ring-3` + matching border (double frame)
 
-### English font (current — Amiri, not Source Sans)
-- **Do not reintroduce Source Sans 3** unless the owner asks
-- `--font-sans` / `--font-heading` → `var(--font-amiri)` in `globals.css`
-- `html[lang=en] .site-public` → Amiri, base ~18px
-- `layout.tsx`: English body class `font-amiri` (Arabic stays `font-arabic-ui` / public plex where intended)
-- Quote English body: `font-amiri`, ~17–19px (hero larger), `max-w-[68ch]`, `leading-[1.75]`, LTR `text-start`
+### English font (current — Source Serif 4; owner overrode the earlier «Amiri for English»)
+- **Do not reintroduce Source Sans 3**, and do not switch English back to Amiri, unless the owner asks
+- Face: `frontend/src/fonts/source-serif/SourceSerif4Variable-{Roman,Italic}.ttf.woff2` (Adobe 4.005, unmodified; licence `frontend/public/licenses/SOURCE-SERIF-4-OFL.txt`). Not `next/font/google`: Google's subsets drop small caps and `ʿ ʾ`
+- `lib/fonts.ts` → `sourceSerif`, variable `--font-english`, `preload: false`
+- `--font-sans` / `--font-heading` → `var(--font-english)` in `globals.css`; utility `font-english`
+- `html[lang=en] .site-public` → Source Serif 4, 18px / 1.75 (17px at ≤650px); English prose leading 1.7, headings 1.25–1.3 (`site-public.css`, «English typography» blocks at the end)
+- `layout.tsx`: English body class `font-english` (Arabic stays `font-arabic-ui`)
+- Quote English body: `font-english`, 16.5 → 18px (hero 18 → 21px), `max-w-[68ch]`, `leading-[1.75]`, LTR `text-start`
+- Amiri (`--font-amiri`) remains for Arabic: `.quran`, source wordmarks, tagline; those switch to the English face only under `:lang(en)`
+- Full comparison and glyph verification: `docs/design/after/direction/english-font.md`
 
 ### Header sizing (latest)
 - `.main-nav` ~16px; `.brand-message` ~16px
@@ -87,6 +91,13 @@
 - Lucide icons for UI; site chrome may use shared site-icons where already wired
 - Admin keeps its own shell; public routes use `.site-public` via `SiteChrome`
 - Design tokens: Viridian / Shell; theme via `next-themes` + `.dark`
+
+### Direction / language pass (later session, uncommitted at writing)
+- Radix direction comes from the locale: `Direction.Provider` in `lib/providers.tsx` (tabs, menus, popovers, sheets flip with a client-side language switch). Spec: `frontend/e2e/direction.spec.ts`
+- `/en` shows English only: no `nameAr`/`titleAr` lead lines, no Arabic fallback for descriptions, rewards, summaries, rank references or grade notes (`englishOnlyProvenance`, `formatGradeCitation`). Quote-page crumb is an excerpt in the page language. Specs: `no-arabic-en` (also checks breadcrumbs + `header.page-heading` for any Arabic), `no-latin-ar` (topic pages)
+- Decorative art (`.olive-drawing`, `.pathway-flourish`) sits at the inline-end corner and mirrors via `--art-mirror` (`scaleX(-1)` under `[dir=ltr]`), clear of text
+- Featured «تذكرة مختارة» card: `components/home/FeaturedText.tsx` fits whole lines to the deed card's height (desktop) or a per-scale clamp (phone); the whole text opens in a layer on hover / keyboard focus of the top-line toggle / tap, Escape closes; «اقرأ النص كاملًا» still opens `/quotes/[id]`
+- Report and screenshots: `docs/design/after/direction/`
 
 ---
 
@@ -189,7 +200,10 @@ Treat edits below as intentional. Diff against them carefully; prefer extending,
 - [ ] `ArrowLeft` + RTL scale for forward navigation  
 - [ ] Locale label `English` (use `En`)  
 - [ ] Dark ink on green pathway-return overline/icon  
-- [ ] Source Sans 3 as English UI font  
+- [ ] Source Sans 3 as English UI font (English is Source Serif 4 now; not Amiri either)  
+- [ ] Arabic subtitle/lead (`nameAr`, `titleAr`, `summaryAr`, `descriptionAr`) on `/en` pages, or Arabic fallback prose when English is missing  
+- [ ] Radix primitives without the locale `Direction.Provider` (`lib/providers.tsx`): they default to LTR  
+- [ ] Physical `left`/`right` for decorative art: `.olive-drawing` / `.pathway-flourish` use `inset-inline-end` + `--art-mirror`  
 - [ ] Heavy `focus-visible:ring-3` double frames on inputs/badges  
 - [ ] Duplicate unvocalized «لمن كان له قلب» as home + about lead + tagline  
 

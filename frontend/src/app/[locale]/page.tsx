@@ -9,6 +9,7 @@ import { Reflection } from '@/components/home/Reflection';
 import { SourceStrip } from '@/components/home/SourceStrip';
 import { getGoodDeeds } from '@/lib/api/good-deeds';
 import { getQuotes, getReminderOfTheDay } from '@/lib/api/quotes';
+import { reportFailure } from '@/lib/errors';
 import { getSourceStripNames } from '@/lib/api/source-strip';
 import { utcDayNumber } from '@/lib/day';
 import { QuoteType } from '@/lib/types/enums';
@@ -21,7 +22,16 @@ export async function generateMetadata({ params }: PageProps<'/[locale]'>): Prom
   return { title: { absolute: `${t('name')} — ${t('tagline')}` } };
 }
 
-export const dynamic = 'force-dynamic';
+// Public and the same for everyone: cached, rebuilt at most every 5 minutes. The «today» picks
+// derive from the UTC day, so they roll over within one revalidation window.
+export const revalidate = 300;
+
+type Settled<T> = { ok: true; value: T } | { ok: false };
+const ok = <T,>(value: T): Settled<T> => ({ ok: true, value });
+const failed = (scope: string) => (error: unknown): Settled<never> => {
+  reportFailure(scope, error);
+  return { ok: false };
+};
 
 function topicName(
   topic: Pick<GoodDeedDto, 'name' | 'nameAr'> & { pair?: GoodDeedDto['pair'] },
@@ -62,18 +72,20 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
   const t = await getTranslations('home');
   const day = utcDayNumber();
 
-  const [reminder, deeds, scholars, sourceNames] = await Promise.all([
-    getReminderOfTheDay(lang)
-      .then((result) => result.data)
-      .catch(() => null),
-    getGoodDeeds({ limit: 100, sort: 'quoteCount', lang })
-      .then((result) => result.data)
-      .catch(() => []),
-    getQuotes({ type: [QuoteType.SCHOLAR_QUOTE], limit: 12, lang })
-      .then((result) => result.data)
-      .catch(() => []),
+  const [reminderResult, deedsResult, scholarsResult, sourceNames] = await Promise.all([
+    getReminderOfTheDay(lang).then((result) => result.data).then(ok, failed('home reminder')),
+    getGoodDeeds({ limit: 100, sort: 'quoteCount', lang }).then((result) => result.data).then(ok, failed('home deeds')),
+    getQuotes({ type: [QuoteType.SCHOLAR_QUOTE], limit: 12, lang }).then((result) => result.data).then(ok, failed('home reflections')),
     getSourceStripNames(lang),
   ]);
+  // Each block is optional, but with all three down the API is unreachable: show the retry
+  // (error.tsx) instead of caching a bare page for everyone.
+  if (!reminderResult.ok && !deedsResult.ok && !scholarsResult.ok) {
+    throw new Error('Home page: every data source failed');
+  }
+  const reminder = reminderResult.ok ? reminderResult.value : null;
+  const deeds = deedsResult.ok ? deedsResult.value : [];
+  const scholars = scholarsResult.ok ? scholarsResult.value : [];
 
   const deed = pickDeed(deeds, lang, day);
   const reflection = pickReflection(scholars, day);
