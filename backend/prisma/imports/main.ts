@@ -18,6 +18,7 @@ import { runDigitalImport } from './digital/import.js';
 import { runStructureImport } from './structure/import.js';
 import { runTaxonomyImport } from './taxonomy/import.js';
 import { runSunanTahqiq } from './sunan-tahqiq/import.js';
+import { runArnautTahqiq, runRevertArnautTahqiq } from './arnaut-tahqiq/import.js';
 import { runTranslations } from './translations/import.js';
 import { runTextAudit } from './audit/text-fragments.js';
 import { runIbnRajab } from './ibn-rajab/import.js';
@@ -52,6 +53,8 @@ const WORKS: Record<string, (options: ImportOptions) => Promise<void>> = {
   structure: runStructureImport,
   taxonomy: runTaxonomyImport,
   'sunan-tahqiq': runSunanTahqiq,
+  'arnaut-tahqiq': runArnautTahqiq,
+  'revert-arnaut-tahqiq': runRevertArnautTahqiq,
   translations: runTranslations,
   'audit-texts': runTextAudit,
   'ibn-rajab': runIbnRajab,

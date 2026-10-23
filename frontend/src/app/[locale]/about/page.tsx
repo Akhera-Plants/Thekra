@@ -7,13 +7,14 @@ import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { reportFailure } from '@/lib/errors';
 import { getCatalogSources } from '@/lib/api/sources';
 import type { LocaleCode } from '@/lib/types/enums';
+import { localeAlternates } from '@/lib/seo';
 
 export const revalidate = 3600;
 
 export async function generateMetadata({ params }: PageProps<'/[locale]/about'>): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'about' });
-  return { title: t('pageTitle') };
+  return { title: t('pageTitle'), alternates: localeAlternates(locale, '/about') };
 }
 
 export default async function AboutPage({

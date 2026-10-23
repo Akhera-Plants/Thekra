@@ -43,6 +43,8 @@ const PROTECTED_SOURCES: ReadonlySet<GradeSource> = new Set([
   GradeSource.SAHIHAYN,
   GradeSource.AUTO_SAHIHAYN,
   GradeSource.SUNAN_TAHQIQ,
+  GradeSource.AHMAD_TAHQIQ,
+  GradeSource.IBN_HIBBAN_TAHQIQ,
   GradeSource.MANUAL,
 ]);
 

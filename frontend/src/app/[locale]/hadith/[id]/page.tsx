@@ -7,6 +7,7 @@ import { getQuote } from '@/lib/api/quotes';
 import { rethrowUnlessNotFound } from '@/lib/api/server-guard';
 import type { LocaleCode } from '@/lib/types/enums';
 import { StudyFullPage } from '@/features/study-panel/components/StudyFullPage';
+import { localeAlternates } from '@/lib/seo';
 
 export const revalidate = 300;
 
@@ -19,7 +20,10 @@ export async function generateMetadata({
     const { data } = await getQuote(id, { lang: locale as LocaleCode });
     if (data.type !== 'HADITH') return { title: t('titleSharh') };
     const source = locale === 'en' ? (data.source.name || data.source.nameAr) : (data.source.nameAr || data.source.name);
-    return { title: source ? `${t('titleSharh')}: ${source}` : t('titleSharh') };
+    return {
+      title: source ? `${t('titleSharh')}: ${source}` : t('titleSharh'),
+      alternates: localeAlternates(locale, `/hadith/${id}`),
+    };
   } catch {
     return { title: t('titleSharh') };
   }

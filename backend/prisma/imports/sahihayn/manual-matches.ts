@@ -14,6 +14,7 @@ import {
   ReferenceBook,
   type PrismaClient,
 } from '@prisma/client';
+import { isArnautGradeSource } from '../../../src/modules/hadith/grade-policy.js';
 
 export const MANUAL_MATCH_METHOD = 'manual';
 
@@ -126,7 +127,7 @@ export async function applyManualSahihaynMatches(
 
     const sahihaynRef = citation(row.book, row.number);
     const sunanRef =
-      quote.gradeSource === GradeSource.SUNAN_TAHQIQ
+      isArnautGradeSource(quote.gradeSource)
         ? quote.gradeReference
         : quote.legacyGradeReference ?? quote.gradeReference;
     const gradeReference = sunanRef && !sunanRef.includes(sahihaynRef)

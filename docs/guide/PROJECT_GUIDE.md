@@ -281,6 +281,7 @@ Playwright: import from `node_modules/.pnpm/@playwright+test@…/…/index.mjs` 
 | Item | Owner/engineering | Notes |
 | --- | --- | --- |
 | Push the release copy to Neon (B01 English fix: 3,151 replaced, 1,223 added, 233 removed) | **owner** | `scripts/release-db.sh build` then `push`; see `docs/review/2026-10-23-audit-fixes.md` |
+| Push the release copy after the API deploy (Musnad Ahmad / Ibn Hibban grades: 550 hadith, batch `2026-10-arnaut-tahqiq`) | **owner** | revert: `pnpm --filter backend import:book revert-arnaut-tahqiq`; review list `docs/taxonomy/arnaut-tahqiq-report.tsv` |
 | Review `prisma/taxonomy/text-review.yaml` (818 possible fragments, audit B03) | owner/sheikh | COMPLETE or FRAGMENT; FRAGMENT needs the full matn from the cited edition |
 | Switching back to Arabic lands on `/ar/...` (`e2e/direction.spec.ts` fails) | engineering | pre-existing on live |
 | `NEXT_PUBLIC_API_URL` also for the **Preview** environment | owner | preview builds fail without it |
@@ -299,6 +300,21 @@ Playwright: import from `node_modules/.pnpm/@playwright+test@…/…/index.mjs` 
 | Weak link: army-instructions hadith → `tadhib-hayawan` | low | |
 | Low security items: Prisma error details expose field names; `/branches/:number/quotes` link-note filter | low | |
 | Dark-mode outline buttons have low-contrast green text; no `<Toaster/>` on public pages | low | noted by the direction worker |
+
+## 13b. Import batches, backups, PWA (2026-10-23)
+
+- **Import batches**: a data import that changes grades sets `Quote.importBatch` and writes one `ImportChange`
+  row per quote with the fields it replaced (`prisma/imports/lib/import-batch.ts`). Revert = restore `before`.
+  New grade sources get their own `GradeSource` value (`AHMAD_TAHQIQ`, `IBN_HIBBAN_TAHQIQ`), never a reused one.
+- **Arna'ut verdicts** (`src/modules/hadith/arnaut-grade.ts`): only his literal «صحيح» / «حسن» publish; «قوي», «جيد»,
+  «رجاله ثقات», «دون قوله», conditions and weak/mawquf verdicts are refused. In al-Ihsan only block `S` is read
+  (block `L` is al-Albani's and never used).
+- **Backups**: `backups/` in the main checkout (git-ignored): pg_dump copies before and after each data import.
+- **Topic pages paginate**: 20 texts per page (`frontend/src/lib/reading.ts` `TOPIC_PAGE_SIZE`); «عرض المزيد»
+  continues the server page. `meta.hasNext` counts the paired and derived lists too (`readingHasNext`).
+- **PWA**: `app/manifest.ts`, `public/sw.js` (hand-written; network-first pages, cache-first build assets, public
+  API reads only, never auth/admin/favorites), `/offline` page, `sitemap.ts`, `robots.ts`, canonical + hreflang
+  per page (`lib/seo.ts`). The worker registers in production builds only.
 
 ## 14. Where everything lives
 

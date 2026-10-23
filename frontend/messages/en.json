@@ -875,5 +875,11 @@
       "body": "The site hit an error. Try again in a moment.",
       "retry": "Try again"
     }
+  },
+  "offline": {
+    "title": "You are offline",
+    "body": "The network cannot be reached. Pages you opened before are still available; the rest will load when the connection returns.",
+    "retry": "Try again",
+    "home": "Home"
   }
 }

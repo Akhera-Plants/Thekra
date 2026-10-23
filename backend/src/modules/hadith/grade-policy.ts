@@ -28,12 +28,23 @@ export const WEAK_OPT_IN_GRADES: HadithGrade[] = [
 
 export const NEVER_SERVE: HadithGrade[] = [HadithGrade.MAWDU];
 
+/** Shu'ayb al-Arna'ut's tahqiq: the Sunan, Musnad Ahmad, and Sahih Ibn Hibban. Never a Sahihayn grade. */
+export const ARNAUT_GRADE_SOURCES: readonly GradeSource[] = [
+  GradeSource.SUNAN_TAHQIQ,
+  GradeSource.AHMAD_TAHQIQ,
+  GradeSource.IBN_HIBBAN_TAHQIQ,
+];
+
+export function isArnautGradeSource(source: GradeSource): boolean {
+  return ARNAUT_GRADE_SOURCES.includes(source);
+}
+
 /** Hadith grade sources a public route may serve. AUTHORITY_LEGACY and IBN_RAJAB stay stored and hidden. */
 export const PUBLISHABLE_GRADE_SOURCES: readonly GradeSource[] = [
   GradeSource.SAHIHAYN,
   GradeSource.AUTO_SAHIHAYN,
   GradeSource.MANUAL,
-  GradeSource.SUNAN_TAHQIQ,
+  ...ARNAUT_GRADE_SOURCES,
   GradeSource.HADEETHENC,
 ];
 

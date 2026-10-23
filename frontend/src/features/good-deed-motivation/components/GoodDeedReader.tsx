@@ -19,9 +19,11 @@ interface GoodDeedReaderProps {
   themes?: TopicThemeCount[];
   /** meta.theme: the chip the page was rendered with (?theme=). */
   initialTheme?: string | null;
+  /** meta.hasNext of the server page: «show more» continues from page 2. */
+  initialHasNext?: boolean;
 }
 
-export function GoodDeedReader({ slug, lang, items, total, sections, countsByKind, themes, initialTheme = null }: GoodDeedReaderProps) {
+export function GoodDeedReader({ slug, lang, items, total, sections, countsByKind, themes, initialTheme = null, initialHasNext = false }: GoodDeedReaderProps) {
   const t = useTranslations('goodDeedDetail');
   const reader = useTopicReader({
     queryRoot: 'good-deeds',
@@ -33,6 +35,7 @@ export function GoodDeedReader({ slug, lang, items, total, sections, countsByKin
     initialCountsByKind: countsByKind,
     themes,
     initialTheme,
+    initialHasNext,
   });
 
   return (

@@ -13,6 +13,11 @@ export interface SegmentTabItem {
 }
 
 export interface SegmentTabsProps {
+  /**
+   * id of the element the tabs filter. Without it Radix points each tab at a TabsContent panel,
+   * which a strip used as a filter does not render (an aria-controls to nothing).
+   */
+  controls?: string;
   items: SegmentTabItem[];
   value: string;
   onValueChange: (value: string) => void;
