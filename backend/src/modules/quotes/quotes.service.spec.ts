@@ -516,3 +516,30 @@ describe('QuotesService — sort=relevance (P2-10)', () => {
     expect(prismaMock.$queryRaw).not.toHaveBeenCalled();
   });
 });
+
+describe('QuotesService — reminder of the day (audit B03)', () => {
+  it('picks only linked, unflagged texts that are not on the fragment review list', async () => {
+    const { mock, count } = makePrismaMock();
+    const module = await Test.createTestingModule({
+      providers: [
+        QuotesService,
+        { provide: PrismaService, useValue: mock },
+        { provide: ConfigService, useValue: makeConfigMock() },
+      ],
+    }).compile();
+    await module.get(QuotesService).reminderOfTheDay('ar');
+
+    const and = (count.mock.calls[0][0].where as { AND: Prisma.QuoteWhereInput[] }).AND;
+    expect(and).toContainEqual({ flags: { none: { status: 'OPEN' } } });
+    expect(and).toContainEqual({
+      OR: [
+        { sinLinks: { some: { reviewStatus: 'ACCEPTED' } } },
+        { goodDeedLinks: { some: { reviewStatus: 'ACCEPTED' } } },
+        { imanBranchLinks: { some: { reviewStatus: 'ACCEPTED' } } },
+      ],
+    });
+    const notIn = and.find((clause) => 'id' in clause) as { id: { notIn: string[] } };
+    // The truncated «وعن صلاة بعد الصبح والعصر» (Bukhari 1992) is listed and unreviewed.
+    expect(notIn.id.notIn).toContain('732316e4-2137-48ab-aede-88101b240560');
+  });
+});

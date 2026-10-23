@@ -16,6 +16,12 @@ export function foldArabic(value: string): string {
     .trim();
 }
 
+/** Whether a folded query (foldArabic) sits inside any of the names, folded the same way. */
+export function namesMatch(names: readonly string[], foldedQuery: string): boolean {
+  if (!foldedQuery) return true;
+  return names.some((name) => foldArabic(name).includes(foldedQuery));
+}
+
 /** Words that carry no topic on their own («من باب …», "the …"). */
 const STOP = new Set(['من', 'في', 'علي', 'عن', 'الي', 'او', 'و', 'ما', 'the', 'of', 'and', 'a', 'to', 'in']);
 

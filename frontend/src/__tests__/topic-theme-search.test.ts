@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { foldArabic, parseThemeParam, searchTopicThemes } from '@/lib/search/topic-themes';
+import { foldArabic, namesMatch, parseThemeParam, searchTopicThemes } from '@/lib/search/topic-themes';
 import type { TopicThemeIndexEntry } from '@/lib/types/api';
 
 const entry = (over: Partial<TopicThemeIndexEntry> & Pick<TopicThemeIndexEntry, 'key' | 'ar' | 'en'>): TopicThemeIndexEntry => ({
@@ -60,5 +60,25 @@ describe('foldArabic / parseThemeParam', () => {
     expect(parseThemeParam('<script>')).toBeNull();
     expect(parseThemeParam('Tark')).toBeNull();
     expect(parseThemeParam(undefined)).toBeNull();
+  });
+});
+
+describe('namesMatch (catalogue search, audit B08)', () => {
+  const sin = ['النظر إلى المحرمات', 'Looking at the forbidden', 'غضّ البصر', 'Lowering the gaze'];
+
+  it('finds «غضّ البصر» with or without the shadda', () => {
+    expect(namesMatch(sin, foldArabic('غض البصر'))).toBe(true);
+    expect(namesMatch(sin, foldArabic('غضّ البصر'))).toBe(true);
+  });
+
+  it('ignores tatweel, repeated spaces, hamza seats and case', () => {
+    expect(namesMatch(sin, foldArabic('غـض   البصر'))).toBe(true);
+    expect(namesMatch(sin, foldArabic('النظر الى المحرمات'))).toBe(true);
+    expect(namesMatch(sin, foldArabic('LOWERING'))).toBe(true);
+  });
+
+  it('matches nothing unrelated, and everything for an empty query', () => {
+    expect(namesMatch(sin, foldArabic('الغيبة'))).toBe(false);
+    expect(namesMatch(sin, foldArabic('  '))).toBe(true);
   });
 });
