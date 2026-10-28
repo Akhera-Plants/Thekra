@@ -5,6 +5,7 @@
   "buildCommand": "pnpm exec prisma generate && pnpm exec prisma migrate deploy && pnpm run build",
   "outputDirectory": "public",
   "rewrites": [{ "source": "/(.*)", "destination": "/api" }],
+  "crons": [{ "path": "/v1/push/refill", "schedule": "17 1 * * *" }],
   "functions": {
     "api/index.mjs": {
       "includeFiles": "package.json"

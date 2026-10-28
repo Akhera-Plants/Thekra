@@ -100,6 +100,25 @@ done
 The first three print `access-control-allow-origin: <origin>` and
 `access-control-allow-credentials: true`; `https://evil.example` prints no `allow-origin` line.
 
+### Web push (optional, temporary — API project)
+
+Browser reminders (docs/plan/2026-10-web-push.md). Push is **off** until all of these are set on the API project
+(Production and Preview), then redeploy. This setup exists only because of Vercel Hobby limits; when the API moves to
+a long-lived server, follow [MIGRATION_OFF_VERCEL.md](MIGRATION_OFF_VERCEL.md).
+
+| Name | Value |
+| --- | --- |
+| `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | Run `pnpm --filter backend push:keys` once on your computer; paste the two values. Keep them: changing them signs every browser out of reminders. |
+| `VAPID_SUBJECT` | `mailto:` + your email |
+| `PUSH_PUBLIC_API_URL` | `https://thekra.vercel.app` (the API's production origin, no trailing slash) |
+| `QSTASH_TOKEN` | Upstash console → QStash → `QSTASH_TOKEN` (free account) |
+| `QSTASH_URL` | Only if the console shows one other than `https://qstash.upstash.io` |
+| `QSTASH_CURRENT_SIGNING_KEY`, `QSTASH_NEXT_SIGNING_KEY` | Upstash console → QStash → signing keys |
+| `CRON_SECRET` | A long random string; Vercel sends it with the daily cron (`backend/vercel.json` → `crons`) |
+
+Check after the redeploy: `curl https://thekra.vercel.app/v1/push/config` shows `"enabled":true`. The cron runs only
+on the production deployment, once a day (Hobby).
+
 ## Latency: function region and CDN cache
 
 **Region.** `backend/vercel.json` sets `"regions": ["fra1"]` so the API runs in Frankfurt, next to the

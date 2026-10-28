@@ -18,6 +18,12 @@ Applies to the whole monorepo (`backend/`, `frontend/`, `mobile/`, root tooling)
 - Never add a dependency from an unverified source to clear a deprecation. Use the vendor's first-party migration path.
 - Run Prisma through the pinned package: `pnpm exec prisma …` or `pnpm --filter backend …`. Never use bare `npx prisma`; on npm it now resolves to the Prisma 8 release-candidate CLI, which does not read `schema.prisma`.
 
+## Before moving off Vercel
+
+Web push and a few other pieces are temporary because of Vercel Hobby. Before any work that moves the API to another
+host (Hetzner or similar), read [docs/deploy/MIGRATION_OFF_VERCEL.md](docs/deploy/MIGRATION_OFF_VERCEL.md) and remind
+the owner of it first; he asked to be reminded.
+
 ## Environment variables
 
 Every new environment variable that a config requires must be added in the same change to all three places:

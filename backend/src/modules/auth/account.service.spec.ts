@@ -1,6 +1,7 @@
 import { NotFoundException, UnauthorizedException } from '@nestjs/common';
 import type { PrismaService } from '../../prisma/prisma.service.js';
 import type { UsersService } from '../users/users.service.js';
+import type { PushService } from '../push/push.service.js';
 import { AccountService } from './account.service.js';
 import { hashPassword } from './password-hash.js';
 
@@ -28,13 +29,20 @@ async function makeService(userExists = true) {
     relative: { findMany: vi.fn().mockResolvedValue([]) },
     relativeContact: { findMany: vi.fn().mockResolvedValue([]) },
   };
-  return { users, prisma, service: new AccountService(prisma as unknown as PrismaService, users as unknown as UsersService) };
+  const push = { forgetUser: vi.fn().mockResolvedValue(undefined) };
+  return {
+    users,
+    prisma,
+    push,
+    service: new AccountService(prisma as unknown as PrismaService, users as unknown as UsersService, push as unknown as PushService),
+  };
 }
 
 describe('AccountService', () => {
   it('deletes the account when the password is right', async () => {
-    const { service, users } = await makeService();
+    const { service, users, push } = await makeService();
     await service.deleteAccount(USER_ID, 'password123456');
+    expect(push.forgetUser).toHaveBeenCalledWith(USER_ID);
     expect(users.deleteById).toHaveBeenCalledWith(USER_ID);
   });
 

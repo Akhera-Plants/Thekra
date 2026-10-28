@@ -12,6 +12,7 @@
     "import:taxonomy": "node --env-file=.env --experimental-strip-types prisma/imports/run.ts taxonomy",
     "taxonomy:themes": "node --env-file=.env --experimental-strip-types prisma/imports/themes-run.ts",
     "admin:create": "node --experimental-strip-types scripts/admin/run.ts",
+    "push:keys": "web-push generate-vapid-keys --json",
     "build": "nest build && node scripts/bundle.mjs",
     "deploy": "nest deploy",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
@@ -42,6 +43,7 @@
     "@nestjs/throttler": "^6.7.1",
     "@prisma/client": "^6.19.3",
     "@thekra/practice-core": "workspace:*",
+    "@upstash/qstash": "2.12.0",
     "argon2": "^0.45.1",
     "axios": "^1.20.0",
     "cache-manager": "^7.2.9",
@@ -54,7 +56,8 @@
     "passport-jwt": "^4.0.1",
     "pino-http": "^11.0.0",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "web-push": "3.6.7"
   },
   "devDependencies": {
     "@nestjs/cli": "^12.0.0",
@@ -66,6 +69,7 @@
     "@types/node": "^24.0.0",
     "@types/passport-jwt": "^4.0.1",
     "@types/supertest": "^7.0.0",
+    "@types/web-push": "^3.6.4",
     "@vitest/coverage-v8": "^4.1.2",
     "esbuild": "0.28.2",
     "oxlint": "^1.58.0",

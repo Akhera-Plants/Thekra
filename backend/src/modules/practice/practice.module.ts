@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module.js';
+import { PushModule } from '../push/push.module.js';
 import { QuotesModule } from '../quotes/quotes.module.js';
 import { CalendarController } from './calendar.controller.js';
 import { MePracticeController } from './me-practice.controller.js';
@@ -16,7 +17,7 @@ import { SinVaultService } from './sin-vault.service.js';
  * import this one.
  */
 @Module({
-  imports: [QuotesModule, AuthModule],
+  imports: [QuotesModule, AuthModule, PushModule],
   controllers: [PracticeController, CalendarController, MePracticeController, SinVaultController],
   providers: [PracticeService, PracticeSyncService, SinVaultService],
 })

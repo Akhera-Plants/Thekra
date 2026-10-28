@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/co
 import { verify as argon2verify } from 'argon2';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { readPracticeChanges, type PracticeChangesDto } from '../practice/practice-sync.js';
+import { PushService } from '../push/push.service.js';
 import { UsersService } from '../users/users.service.js';
 import { DUMMY_PASSWORD_HASH } from './password-hash.js';
 
@@ -25,6 +26,7 @@ export class AccountService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly users: UsersService,
+    private readonly push: PushService,
   ) {}
 
   /** Re-checks the password (unknown user and wrong password look the same), then deletes the user. */
@@ -37,6 +39,7 @@ export class AccountService {
         message: 'Invalid email or password.',
       });
     }
+    await this.push.forgetUser(user.id); // scheduled reminders would otherwise still fire after the rows are gone
     await this.users.deleteById(user.id);
   }
 

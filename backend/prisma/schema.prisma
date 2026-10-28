@@ -809,6 +809,8 @@ model User {
   relatives        Relative[]
   /// The sin program, encrypted on the device; the server never sees it in clear.
   sinVault         SinVault?
+  /// Web push: one row per browser that turned reminders on (docs/plan/2026-10-web-push.md).
+  pushSubscriptions PushSubscription[]
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 }
@@ -905,6 +907,43 @@ model SinVault {
   iterations Int
   version    Int      @default(0)
   updatedAt  DateTime @updatedAt
+}
+
+/// Web push (docs/plan/2026-10-web-push.md). One row per browser that turned reminders on. The endpoint and
+/// keys come from the browser's PushManager; `timeZone` (IANA) and `locale` decide when and in which language the
+/// reminders of this browser fire. Never logged.
+model PushSubscription {
+  id        String         @id @default(uuid())
+  userId    String
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String         @unique
+  p256dh    String
+  auth      String
+  timeZone  String
+  /// ar | en
+  locale    String
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  reminders PushReminder[]
+
+  @@index([userId])
+}
+
+/// A reminder handed to the scheduler (temporary: Upstash QStash, see docs/deploy/MIGRATION_OFF_VERCEL.md).
+/// `key` names what it reminds of (`habit:<planId>:<date>:<time>` or `kinship:<date>`), `digest` its content, so a
+/// re-plan only cancels and publishes what changed. Rows whose `fireAt` has passed are removed on the next re-plan.
+model PushReminder {
+  id             String           @id @default(uuid())
+  subscriptionId String
+  subscription   PushSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  key            String
+  digest         String
+  fireAt         DateTime
+  messageId      String
+  createdAt      DateTime         @default(now())
+
+  @@unique([subscriptionId, key])
+  @@index([fireAt])
 }
 
 model Favorite {

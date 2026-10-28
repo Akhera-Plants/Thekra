@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { PushService } from '../push/push.service.js';
 import {
   MAX_LIVE_PLANS,
   MAX_LIVE_RELATIVES,
@@ -83,11 +84,15 @@ const json = (value: unknown) => (value === null ? null : JSON.stringify(value))
  * times a tombstone; then the larger canonical JSON), exactly as every device
  * decides; only winners are written, and the `WHERE` of each `ON CONFLICT`
  * still refuses a row a concurrent request has made newer meanwhile. Practice
- * content is never logged.
+ * content is never logged. After a sync the user's web push reminders are
+ * re-planned (outside the transaction; a failure there never fails the sync).
  */
 @Injectable()
 export class PracticeSyncService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly push: PushService,
+  ) {}
 
   async changes(userId: string, since: Date | null): Promise<PracticeChangesDto> {
     return this.prisma.$transaction(async (tx) => {
@@ -98,7 +103,7 @@ export class PracticeSyncService {
 
   async sync(userId: string, body: unknown): Promise<PracticeChangesDto> {
     const request = parseSyncRequest(body);
-    return this.prisma.$transaction(
+    const response = await this.prisma.$transaction(
       async (tx) => {
         await this.assertUser(tx, userId);
         const plans = await this.resolvePlans(tx, userId, request);
@@ -121,6 +126,12 @@ export class PracticeSyncService {
       },
       { maxWait: 5_000, timeout: 20_000 },
     );
+    const changed =
+      request.settings !== null ||
+      request.plans.length + request.logs.length + request.relatives.length + request.contacts.length > 0;
+    // An empty sync (the periodic check) changes no reminder; the daily refill carries them over midnight.
+    if (changed) await this.push.replanUser(userId);
+    return response;
   }
 
   private async assertUser(tx: Tx, userId: string): Promise<void> {

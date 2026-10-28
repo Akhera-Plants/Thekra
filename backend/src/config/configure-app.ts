@@ -67,6 +67,8 @@ export function configureApp(app: INestApplication): void {
 
   // Registered before init(), so Nest skips its own 100 kB JSON parser.
   (app as NestExpressApplication).useBodyParser('json', { limit: JSON_BODY_LIMIT });
+  // POST /v1/push/deliver: the scheduler's signature covers the exact body, which is sealed text (push module).
+  (app as NestExpressApplication).useBodyParser('text', { type: 'text/plain', limit: '16kb' });
 
   app.useLogger(app.get(Logger));
   app.setGlobalPrefix('v1', { exclude: ['health', 'health/ready'] });

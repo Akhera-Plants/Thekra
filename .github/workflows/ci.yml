@@ -16,6 +16,8 @@ env:
   # own .env loading. Jobs that talk to a real database override these.
   DATABASE_URL: postgresql://thekra:thekra_dev_password@localhost:5432/thekra?schema=public
   DIRECT_URL: postgresql://thekra:thekra_dev_password@localhost:5432/thekra?schema=public
+  # Web push variables (VAPID_*, PUSH_PUBLIC_API_URL, QSTASH_*, CRON_SECRET) are deliberately unset: push is optional
+  # and stays off in CI; backend/test/push.e2e-spec.ts runs it with fakes. List: docs/plan/2026-10-web-push.md §7.
 
 jobs:
   lint:

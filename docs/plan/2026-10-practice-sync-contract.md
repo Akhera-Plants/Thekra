@@ -68,6 +68,9 @@ fields are dropped; a log for a plan the user does not own is rejected (404 for 
 Errors: 400 `PRACTICE_INVALID` (with the item index), 413 `PRACTICE_TOO_LARGE`, 422 `PRACTICE_LIMIT_REACHED`.
 Requests that contain a `programs` key anywhere → 400 `PRACTICE_PROGRAMS_NOT_ALLOWED`.
 
+After a sync that carried changes, the user's web push reminders are re-planned (docs/plan/2026-10-web-push.md);
+a failure there is logged and never fails the sync.
+
 ### Sin vault
 
 - `GET /v1/me/sin-vault` → `{ data: { vault: { ciphertext, iv, salt, kdf, iterations, version, updatedAt } | null } }`

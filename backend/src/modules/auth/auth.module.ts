@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
+import { PushModule } from '../push/push.module.js';
 import { UsersModule } from '../users/users.module.js';
 import { AccountService } from './account.service.js';
 import { AuthController } from './auth.controller.js';
@@ -21,6 +22,7 @@ import { RolesGuard } from './guards/roles.guard.js';
       secret: 'placeholder', // overridden per-call via sign() options
     }),
     UsersModule,
+    PushModule,
   ],
   controllers: [AuthController],
   providers: [

@@ -212,6 +212,52 @@ export class EnvironmentVariables {
   @IsOptional()
   @IsString()
   TRUST_PROXY?: string;
+
+  // ── Web push (docs/plan/2026-10-web-push.md) ──────────────────────────────
+  // All optional: web push is on only when every one below is set (push-config.ts). The QStash and cron
+  // variables are temporary, for Vercel Hobby: docs/deploy/MIGRATION_OFF_VERCEL.md.
+
+  /** VAPID key pair (base64url), from `pnpm --filter backend push:keys`. The public key is served to browsers. */
+  @IsOptional()
+  @IsString()
+  VAPID_PUBLIC_KEY?: string;
+
+  @IsOptional()
+  @IsString()
+  VAPID_PRIVATE_KEY?: string;
+
+  /** Contact for push services: `mailto:…` or an https URL. */
+  @IsOptional()
+  @IsString()
+  VAPID_SUBJECT?: string;
+
+  /** Public base URL of this API (e.g. https://thekra.vercel.app); QStash calls `<it>/v1/push/deliver`. */
+  @IsOptional()
+  @IsString()
+  PUSH_PUBLIC_API_URL?: string;
+
+  /** Upstash QStash: the token publishes, the signing keys verify what QStash delivers. */
+  @IsOptional()
+  @IsString()
+  QSTASH_TOKEN?: string;
+
+  /** QStash API server of the account's region, as the Upstash console shows it. Default: https://qstash.upstash.io */
+  @IsOptional()
+  @IsString()
+  QSTASH_URL?: string;
+
+  @IsOptional()
+  @IsString()
+  QSTASH_CURRENT_SIGNING_KEY?: string;
+
+  @IsOptional()
+  @IsString()
+  QSTASH_NEXT_SIGNING_KEY?: string;
+
+  /** Vercel sends `Authorization: Bearer <CRON_SECRET>` with each cron call (GET /v1/push/refill). */
+  @IsOptional()
+  @IsString()
+  CRON_SECRET?: string;
 }
 
 export function validateEnv(config: Record<string, unknown>): EnvironmentVariables {
