@@ -331,6 +331,24 @@
     },
     "noVerifiedTranslation": "No verified translation available"
   },
+  "share": {
+    "button": "Share",
+    "device": "Share via device",
+    "whatsapp": "WhatsApp",
+    "telegram": "Telegram",
+    "x": "X",
+    "facebook": "Facebook",
+    "copyLink": "Copy link",
+    "copyText": "Copy text",
+    "downloadImage": "Download image",
+    "linkCopied": "Link copied",
+    "textCopied": "Text copied",
+    "copyFailed": "Could not copy",
+    "imageSaved": "Image saved",
+    "imageFailed": "Could not create the image",
+    "atharNotice": "A saying, not a hadith",
+    "atharNarrated": "Narrated by {speaker}"
+  },
   "quoteDetail": {
     "pageTitle": "Quote",
     "relatedSins": "Related sins",

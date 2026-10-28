@@ -5,6 +5,8 @@ import { Bookmark, BookMarked, BookOpen } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
+import { ShareButton } from '@/components/shared/share/ShareButton';
+import { useQuoteSharePayload } from '@/components/shared/share/useQuoteSharePayload';
 import { useFavoriteQuoteIds } from '@/features/favorites/hooks/useFavoriteQuoteIds';
 import { useToggleFavorite } from '@/features/favorites/hooks/useToggleFavorite';
 import { accountsEnabled } from '@/lib/accounts';
@@ -84,24 +86,40 @@ export function FeaturedReminder({ quote }: FeaturedReminderProps) {
   const meta = [gradeLine, sourceLine].filter(Boolean).join(' · ');
   const body = english ?? text;
   const scale = featuredVerseScale(body.length);
+  // Share exactly what this card shows: its text and its source stamp.
+  const sharePayload = useQuoteSharePayload(quote, {
+    body,
+    bodyLang: english ? 'en' : 'ar',
+    attribution: [sourceName, meta].filter(Boolean),
+  });
 
   return (
     <article className="featured-reminder">
       <FeaturedText
         key={`${quote.id}-${locale}`}
         heading={<h2>{t('todayHeading')}</h2>}
-        actions={showSave ? (
-          <button
-            type="button"
-            className="icon-button save-button"
-            aria-label={saved ? tFav('remove') : tFav('add')}
-            aria-pressed={saved}
-            disabled={isPending}
-            onClick={() => toggle(quote.id, saved)}
-          >
-            <Bookmark className="size-[19px]" aria-hidden />
-          </button>
-        ) : null}
+        actions={
+          <div className="flex shrink-0 items-center gap-2">
+            <ShareButton
+              appearance="site"
+              payload={sharePayload}
+              path={`/quotes/${quote.id}`}
+              fileName={`thekra-${quote.id}`}
+            />
+            {showSave ? (
+              <button
+                type="button"
+                className="icon-button save-button"
+                aria-label={saved ? tFav('remove') : tFav('add')}
+                aria-pressed={saved}
+                disabled={isPending}
+                onClick={() => toggle(quote.id, saved)}
+              >
+                <Bookmark className="size-[19px]" aria-hidden />
+              </button>
+            ) : null}
+          </div>
+        }
         className={cn('featured-verse', scale, { quran: isQuran })}
         lang={english ? 'en' : 'ar'}
       >

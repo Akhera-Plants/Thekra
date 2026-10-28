@@ -11,6 +11,8 @@ import { GradeBadge } from '@/components/shared/quote/GradeBadge';
 import { QuoteBody } from '@/components/shared/quote/QuoteBody';
 import { ReportMistake } from '@/components/shared/quote/ReportMistake';
 import { SourceAttribution } from '@/components/shared/quote/SourceAttribution';
+import { ShareButton } from '@/components/shared/share/ShareButton';
+import { useQuoteSharePayload } from '@/components/shared/share/useQuoteSharePayload';
 import { StudyPanel } from '@/features/study-panel/components/StudyPanel';
 import type { QuoteDetailDto } from '@/lib/types/api';
 import { HadithGrade } from '@/lib/types/enums';
@@ -33,6 +35,8 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
   const isWeak =
     grade === HadithGrade.DAIF || grade === HadithGrade.MAWDU;
   const canStudy = quote.type === 'QURAN_VERSE' || quote.type === 'HADITH';
+  // Same shareable units as the quote cards: verses, hadith and athar.
+  const sharePayload = useQuoteSharePayload(quote);
 
   return (
     <article className="flex flex-col gap-6">
@@ -57,6 +61,14 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
             label={t(`grade.${grade.toLowerCase()}`)}
           />
         )}
+        {canStudy ? (
+          <ShareButton
+            payload={sharePayload}
+            path={`/quotes/${quote.id}`}
+            fileName={`thekra-${quote.id}`}
+            className="ms-auto"
+          />
+        ) : null}
       </header>
 
       {/* Weak notice */}

@@ -25,6 +25,8 @@ import { QuoteBody } from './QuoteBody';
 import { accountsEnabled } from '@/lib/accounts';
 import { FavoriteButton } from './FavoriteButton';
 import { ReportMistake } from './ReportMistake';
+import { ShareButton } from '../share/ShareButton';
+import { useQuoteSharePayload } from '../share/useQuoteSharePayload';
 
 /** Which path/flow this card is being viewed in — reserved for list accent if needed. */
 export type QuoteCardIntent = 'sin' | 'good-deed' | 'iman-branch';
@@ -186,6 +188,9 @@ export function QuoteCard({
   const page = visibleArabic(quote.citation?.page, arabic);
   const pageOrChapter = visibleArabic(quote.book?.pageOrChapter, arabic);
   const whyLabel = isQuran ? t('whyVerse') : t('whyHadith');
+  // Verses, hadith and athar (stored as hadith) are the shareable public texts.
+  const shareable = isQuran || isHadith;
+  const sharePayload = useQuoteSharePayload(quote);
 
   return (
     <div className="flex flex-col gap-2">
@@ -398,17 +403,26 @@ export function QuoteCard({
             ) : null}
           </div>
 
-          {showFavorite ? (
+          {showFavorite || shareable ? (
             <div className="flex shrink-0 items-center gap-0.5">
-              <FavoriteButton
-                quoteId={quote.id}
-                isFavorite={quote.isFavorite ?? false}
-                isPending={isFavoritePending}
-                label={tFav('add')}
-                labelRemove={tFav('remove')}
-                onToggle={onToggleFavorite!}
-                className="size-11"
-              />
+              {shareable ? (
+                <ShareButton
+                  payload={sharePayload}
+                  path={`/quotes/${quote.id}`}
+                  fileName={`thekra-${quote.id}`}
+                />
+              ) : null}
+              {showFavorite ? (
+                <FavoriteButton
+                  quoteId={quote.id}
+                  isFavorite={quote.isFavorite ?? false}
+                  isPending={isFavoritePending}
+                  label={tFav('add')}
+                  labelRemove={tFav('remove')}
+                  onToggle={onToggleFavorite!}
+                  className="size-11"
+                />
+              ) : null}
             </div>
           ) : null}
         </header>

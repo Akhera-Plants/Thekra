@@ -38,10 +38,25 @@ function siteOrigin(): string {
   return 'http://localhost:3000';
 }
 
+/**
+ * The configured public origin (NEXT_PUBLIC_SITE_URL), or null. Unlike SITE_ORIGIN it has no
+ * server-only fallback, so browser code (share links) can fall back to `window.location.origin`.
+ */
+function publicSiteOrigin(): string | null {
+  const raw = process.env.NEXT_PUBLIC_SITE_URL;
+  if (!raw) return null;
+  try {
+    return new URL(raw).origin;
+  } catch {
+    return null;
+  }
+}
+
 export const env = {
   NEXT_PUBLIC_API_URL: requirePublicUrl(
     process.env.NEXT_PUBLIC_API_URL,
     'NEXT_PUBLIC_API_URL',
   ),
   SITE_ORIGIN: siteOrigin(),
+  PUBLIC_SITE_ORIGIN: publicSiteOrigin(),
 } as const;

@@ -331,6 +331,24 @@
     },
     "noVerifiedTranslation": "لا توجد ترجمة معتمدة"
   },
+  "share": {
+    "button": "مشاركة",
+    "device": "مشاركة عبر الجهاز",
+    "whatsapp": "واتساب",
+    "telegram": "تيليجرام",
+    "x": "إكس",
+    "facebook": "فيسبوك",
+    "copyLink": "نسخ الرابط",
+    "copyText": "نسخ النص",
+    "downloadImage": "تنزيل صورة",
+    "linkCopied": "نُسخ الرابط",
+    "textCopied": "نُسخ النص",
+    "copyFailed": "تعذّر النسخ",
+    "imageSaved": "حُفظت الصورة",
+    "imageFailed": "تعذّر إنشاء الصورة",
+    "atharNotice": "أثر، وليس حديثًا",
+    "atharNarrated": "رواه {speaker}"
+  },
   "quoteDetail": {
     "pageTitle": "النص",
     "relatedSins": "معاصي ذات صلة",
