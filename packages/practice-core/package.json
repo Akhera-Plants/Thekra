@@ -2,7 +2,7 @@
   "name": "@thekra/practice-core",
   "version": "0.1.0",
   "private": true,
-  "description": "Thekra shared practice engine: Hijri dates, recurrence rules, ICS export, habit plans, sin-leaving program, kinship schedule, local storage envelope. Pure TypeScript, no runtime dependencies.",
+  "description": "Thekra shared practice engine: Hijri dates, recurrence rules, ICS export, habit plans, sin-leaving program, kinship schedule, local storage envelope, account sync and the encrypted sin vault. Pure TypeScript; crypto from @noble/hashes and @noble/ciphers.",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",

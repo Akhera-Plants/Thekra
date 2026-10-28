@@ -15,13 +15,35 @@
  * - obligations come first; free time is usually 2–5 hours (س 1332–1376).
  *
  * Every function is pure: plans are never mutated, new objects are returned.
+ *
+ * Sync (Store v2): helpers that change the plan's own fields take `now` and set `updatedAt`, the version used for
+ * last-writer-wins. Two kinds of change deliberately do NOT touch `updatedAt`:
+ * - `logDone`: logs sync per day (max wins), so logging never overwrites a plan edit made on another device;
+ * - `normalize`: the end of a season is derived from the date, every device reaches the same result on its own.
  */
-import { addDays, diffDays, isValidDate, isValidTime, maxDate, toDayNumber, fromDayNumber, type LocalDate, type LocalTime } from './dates.js';
+import {
+  addDays,
+  diffDays,
+  isIsoTime,
+  isValidDate,
+  isValidTime,
+  maxDate,
+  nowIso,
+  toDayNumber,
+  fromDayNumber,
+  type IsoTime,
+  type LocalDate,
+  type LocalTime,
+} from './dates.js';
+import { validateRule, type Rule } from './rules.js';
 
 export type PlanUnit = 'minutes' | 'count' | 'times';
 
 export interface Plan {
+  /** Client UUID. */
   id: string;
+  /** Catalog habit key (e.g. 'duha'), when the plan came from the catalog. */
+  habitKey?: string;
   deedSlug: string;
   title: string;
   unit: PlanUnit;
@@ -42,6 +64,10 @@ export interface Plan {
   ebb?: { since: LocalDate };
   /** A season (e.g. Ramadan) with a higher amount until `until`, then back to `previous`. */
   season?: { amount: number; until: LocalDate; previous: number };
+  /** Optional schedule of active days (the server stores it as `rule`). */
+  rule?: Rule;
+  /** ISO time of the last local edit of the plan's own fields (not its log). Set by the helpers; v1 data gets it on upgrade. */
+  updatedAt?: IsoTime;
 }
 
 /** The only amounts a plan climbs through. Used for minutes and for count/times units alike. */
@@ -85,6 +111,12 @@ function isPositive(v: unknown): v is number {
 export function validatePlan(plan: unknown): string | null {
   if (typeof plan !== 'object' || plan === null) return 'plan must be an object';
   const p = plan as Record<string, unknown>;
+  if (p.habitKey !== undefined && (typeof p.habitKey !== 'string' || p.habitKey.length === 0)) return 'habitKey must be a non-empty string';
+  if (p.rule !== undefined) {
+    const e = validateRule(p.rule);
+    if (e) return `rule: ${e}`;
+  }
+  if (p.updatedAt !== undefined && !isIsoTime(p.updatedAt)) return 'updatedAt must be an ISO time';
   for (const k of ['id', 'deedSlug', 'title'] as const) {
     if (typeof p[k] !== 'string' || (p[k] as string).length === 0) return `${k} must be a non-empty string`;
   }
@@ -131,12 +163,16 @@ export interface NewPlan {
   activeDaysPerWeek: number;
   slots: LocalTime[];
   createdOn: LocalDate;
+  habitKey?: string;
+  rule?: Rule;
 }
 
 /** A new plan with an empty log. Throws when a field is invalid. */
-export function createPlan(input: NewPlan): Plan {
-  const plan: Plan = { ...input, slots: [...input.slots], amountChangedOn: input.createdOn, log: {} };
+export function createPlan(input: NewPlan, now: IsoTime = nowIso()): Plan {
+  const plan: Plan = { ...input, slots: [...input.slots], amountChangedOn: input.createdOn, log: {}, updatedAt: now };
   if (plan.ceiling === undefined) delete plan.ceiling;
+  if (plan.habitKey === undefined) delete plan.habitKey;
+  if (plan.rule === undefined) delete plan.rule;
   assertPlan(plan);
   return plan;
 }
@@ -146,7 +182,10 @@ export function baseAmount(plan: Plan): number {
   return plan.season ? plan.season.previous : plan.amount;
 }
 
-/** Ends a season whose `until` has passed: the amount returns to `previous`, with no penalty. */
+/**
+ * Ends a season whose `until` has passed: the amount returns to `previous`, with no penalty.
+ * Does not change `updatedAt` (derived from the date; see the sync note at the top).
+ */
 export function normalize(plan: Plan, today: LocalDate): Plan {
   if (!isValidDate(today)) throw new RangeError('Invalid today');
   const copy: Plan = { ...plan };
@@ -169,7 +208,10 @@ export function requiredOn(plan: Plan, date: LocalDate): number {
   return base;
 }
 
-/** Adds `amount` to what is logged for `date` (same-day make-up: any amount counts). */
+/**
+ * Adds `amount` to what is logged for `date` (same-day make-up: any amount counts).
+ * Does not change `updatedAt`: logs sync per (plan, date) with max-wins.
+ */
 export function logDone(plan: Plan, date: LocalDate, amount: number): Plan {
   if (!isValidDate(date)) throw new RangeError('Invalid date');
   if (!isPositive(amount)) throw new RangeError('amount must be a positive number');
@@ -228,22 +270,22 @@ export function canIncrease(plan: Plan, today: LocalDate): boolean {
 }
 
 /** One ladder step up (capped at the ceiling). Throws when {@link canIncrease} is false. */
-export function increase(plan: Plan, today: LocalDate): Plan {
+export function increase(plan: Plan, today: LocalDate, now: IsoTime = nowIso()): Plan {
   if (!canIncrease(plan, today)) throw new Error('Increase not allowed yet');
   const next = nextStep(plan.amount) as number;
   const amount = plan.ceiling !== undefined ? Math.min(next, plan.ceiling) : next;
-  return { ...plan, amount, amountChangedOn: today };
+  return { ...plan, amount, amountChangedOn: today, updatedAt: now };
 }
 
 /**
  * Lowers the everyday amount (e.g. to {@link relapseSuggestion}). Always allowed; restarts the hold period.
  * Throws when `amount` is not lower than the current base amount (use {@link increase} to go up).
  */
-export function decreaseTo(plan: Plan, amount: number, today: LocalDate): Plan {
+export function decreaseTo(plan: Plan, amount: number, today: LocalDate, now: IsoTime = nowIso()): Plan {
   if (!isValidDate(today)) throw new RangeError('Invalid today');
   if (!isPositive(amount) || amount >= baseAmount(plan)) throw new RangeError('amount must be positive and lower than the current amount');
-  if (plan.season) return { ...plan, season: { ...plan.season, previous: amount }, amountChangedOn: today };
-  return { ...plan, amount, amountChangedOn: today };
+  if (plan.season) return { ...plan, season: { ...plan.season, previous: amount }, amountChangedOn: today, updatedAt: now };
+  return { ...plan, amount, amountChangedOn: today, updatedAt: now };
 }
 
 export type PlanStatus = 'ok' | 'relapse';
@@ -258,13 +300,13 @@ export function status(plan: Plan, today: LocalDate): PlanStatus {
   return 'relapse';
 }
 
-export function startEbb(plan: Plan, since: LocalDate): Plan {
+export function startEbb(plan: Plan, since: LocalDate, now: IsoTime = nowIso()): Plan {
   if (!isValidDate(since)) throw new RangeError('Invalid since');
-  return { ...plan, ebb: { since } };
+  return { ...plan, ebb: { since }, updatedAt: now };
 }
 
-export function endEbb(plan: Plan): Plan {
-  const copy: Plan = { ...plan };
+export function endEbb(plan: Plan, now: IsoTime = nowIso()): Plan {
+  const copy: Plan = { ...plan, updatedAt: now };
   delete copy.ebb;
   return copy;
 }
@@ -273,10 +315,10 @@ export function endEbb(plan: Plan): Plan {
  * Starts (or replaces) a season. `amount` becomes the plan amount until `until`; {@link normalize} restores the
  * everyday amount the day after. The hold clock (`amountChangedOn`) is not touched: a season is no penalty.
  */
-export function startSeason(plan: Plan, amount: number, until: LocalDate): Plan {
+export function startSeason(plan: Plan, amount: number, until: LocalDate, now: IsoTime = nowIso()): Plan {
   if (!isPositive(amount)) throw new RangeError('season amount must be a positive number');
   if (!isValidDate(until)) throw new RangeError('Invalid until');
-  return { ...plan, amount, season: { amount, until, previous: baseAmount(plan) } };
+  return { ...plan, amount, season: { amount, until, previous: baseAmount(plan) }, updatedAt: now };
 }
 
 /** Total minutes asked for on `date` by plans whose unit is minutes. */

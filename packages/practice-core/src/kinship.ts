@@ -2,8 +2,12 @@
  * صلة الرحم, local-first. A relative is a nickname («خالتي») and a rhythm; never a phone number, email or
  * address (docs/plan/silat-rahim-plan.md §4, §5.9). Due dates follow the same rule as that plan's
  * `computeNextDueOn` (§4.3): a contact restarts the cycle; a relative never contacted is due now.
+ *
+ * Sync (Store v2): `updatedAt` versions the relative's own fields (name, relation, rule). Contacts sync on their
+ * own as (relative, date) pairs, so `logContact` / `undoLastContact` do not touch `updatedAt`. In a store, undo a
+ * contact through `undoContact` / `updateRelative` (storage.ts) so the removal is kept as a tombstone.
  */
-import { addDays, diffDays, isValidDate, weekday, type LocalDate } from './dates.js';
+import { addDays, diffDays, isIsoTime, isValidDate, nowIso, weekday, type IsoTime, type LocalDate } from './dates.js';
 import { firstWeekdayOnOrAfter, validateRule, type Rule } from './rules.js';
 
 export type KinshipRule = Extract<Rule, { kind: 'everyNDays' | 'everyNWeeks' | 'weekdays' }>;
@@ -18,6 +22,8 @@ export interface Relative {
   lastContactedOn?: LocalDate;
   /** Logged contact dates in the order they were logged (no duplicates). */
   history: LocalDate[];
+  /** ISO time of the last local edit of name, relation or rule. Set by the helpers; v1 data gets it on upgrade. */
+  updatedAt?: IsoTime;
 }
 
 export const MAX_NAME_LENGTH = 60;
@@ -60,6 +66,7 @@ export function validateRelative(rel: unknown): string | null {
   if (ruleErr) return ruleErr;
   if (r.lastContactedOn !== undefined && !isValidDate(r.lastContactedOn)) return 'lastContactedOn must be YYYY-MM-DD';
   if (!Array.isArray(r.history) || !r.history.every(isValidDate)) return 'history must be an array of YYYY-MM-DD';
+  if (r.updatedAt !== undefined && !isIsoTime(r.updatedAt)) return 'updatedAt must be an ISO time';
   return null;
 }
 
@@ -71,14 +78,22 @@ export interface NewRelative {
 }
 
 /** A new relative with no contacts. Throws when invalid (including contact details in the name). */
-export function createRelative(input: NewRelative): Relative {
-  const rel: Relative = { id: input.id, name: input.name.trim(), relation: input.relation, rule: input.rule, history: [] };
+export function createRelative(input: NewRelative, now: IsoTime = nowIso()): Relative {
+  const rel: Relative = {
+    id: input.id,
+    name: input.name.trim(),
+    relation: input.relation,
+    rule: input.rule,
+    history: [],
+    updatedAt: now,
+  };
   const err = validateRelative(rel);
   if (err) throw new RangeError(`Invalid relative: ${err}`);
   return rel;
 }
 
-function latest(dates: readonly LocalDate[]): LocalDate | undefined {
+/** The latest date in a list (`undefined` when empty). */
+export function latestDate(dates: readonly LocalDate[]): LocalDate | undefined {
   let best: LocalDate | undefined;
   for (const d of dates) if (best === undefined || d > best) best = d;
   return best;
@@ -150,15 +165,18 @@ export function dueList(relatives: readonly Relative[], today: LocalDate): DueLi
 export function logContact(rel: Relative, date: LocalDate): Relative {
   if (!isValidDate(date)) throw new RangeError('Invalid date');
   const history = rel.history.includes(date) ? [...rel.history] : [...rel.history, date];
-  return { ...rel, history, lastContactedOn: latest(history) as LocalDate };
+  return { ...rel, history, lastContactedOn: latestDate(history) as LocalDate };
 }
 
-/** Removes the most recently logged contact; `lastContactedOn` falls back to the latest remaining date. */
+/**
+ * Removes the most recently logged contact; `lastContactedOn` falls back to the latest remaining date.
+ * On a relative inside a synced store, prefer `undoContact(store, relativeId)`, which also records a tombstone.
+ */
 export function undoLastContact(rel: Relative): Relative {
   if (rel.history.length === 0) return { ...rel, history: [] };
   const history = rel.history.slice(0, -1);
   const copy: Relative = { ...rel, history };
-  const last = latest(history);
+  const last = latestDate(history);
   if (last === undefined) delete copy.lastContactedOn;
   else copy.lastContactedOn = last;
   return copy;

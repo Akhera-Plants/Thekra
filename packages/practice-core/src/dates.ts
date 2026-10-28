@@ -123,3 +123,24 @@ export function timeToMinutes(time: LocalTime): number {
   if (!isValidTime(time)) throw new RangeError('Invalid time: expected HH:MM');
   return Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));
 }
+
+/** An ISO 8601 UTC instant (`2026-10-28T18:00:00.000Z`), used for edit times and sync versions. */
+export type IsoTime = string;
+
+const ISO_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d{1,9})?)?(Z|[+-]\d{2}:\d{2})$/;
+
+/** True for an ISO 8601 date-time with a zone (`Z` or `±HH:MM`). */
+export function isIsoTime(value: unknown): value is IsoTime {
+  return typeof value === 'string' && ISO_RE.test(value) && !Number.isNaN(Date.parse(value));
+}
+
+/** The current instant as ISO UTC. Every mutating helper takes `now` and defaults to this. */
+export function nowIso(): IsoTime {
+  return new Date().toISOString();
+}
+
+/** Milliseconds since the epoch for an ISO time; `-Infinity` when missing or invalid (an unknown edit is the oldest). */
+export function isoMillis(value: string | null | undefined): number {
+  if (!isIsoTime(value)) return Number.NEGATIVE_INFINITY;
+  return Date.parse(value);
+}
