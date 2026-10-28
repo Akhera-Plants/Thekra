@@ -296,6 +296,7 @@ Playwright: import from `node_modules/.pnpm/@playwright+test@…/…/index.mjs` 
 | IIFA financial resolutions as references (no fatwa wording) | later | after deploy |
 | Professions / محرمات التخصصات | deferred | owner to supply a source |
 | Reviewer platform, accounts/login, التحقيق | deferred | next phase |
+| Reminders + calendar, «أعني على طاعة», sin-leaving program, browser extension, mobile app, sharing | owner decisions D1–D8 | plan only: `docs/plan/2026-10-features-roadmap.md`; sin program waits for the researcher's transcript and the sheikh |
 | Prisma 7 migration and other majors | planned | `DEPRECATIONS.md` |
 | Weak link: army-instructions hadith → `tadhib-hayawan` | low | |
 | Low security items: Prisma error details expose field names; `/branches/:number/quotes` link-note filter | low | |
