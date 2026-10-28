@@ -8,7 +8,7 @@
 import React from 'react';
 import { Alert, Linking } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { addDays, formatHijriAr, isHijriSupported, toHijri, weekday } from '@thekra/practice-core';
+import { addDays, formatHijriAr, isHijriSupported, toHijri, updateSettings, weekday } from '@thekra/practice-core';
 import { calendarSubscribeUrl, useCalendarOccasions } from '@/lib/api/practice';
 import { pick, type CalendarOccasionDto } from '@/lib/practice/catalog-types';
 import { shortDate } from '@/lib/practice/format';
@@ -64,7 +64,7 @@ export default function CalendarScreen() {
                 key={v}
                 label={v > 0 ? `+${v}` : String(v)}
                 selected={hijriOffset === v}
-                onPress={() => setStore((s) => ({ ...s, settings: { ...s.settings, hijriOffset: v } }))}
+                onPress={() => setStore((s) => updateSettings(s, { hijriOffset: v }))}
               />
             ))}
           </Wrap>

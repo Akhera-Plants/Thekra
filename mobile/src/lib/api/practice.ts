@@ -1,16 +1,17 @@
 /**
- * Practice API: public catalog, evidence texts, the public occasions calendar, and (signed in) the synced
- * practice store, account export and account deletion.
+ * Practice API: public catalog, evidence texts, the public occasions calendar, and (signed in) the practice
+ * sync, the encrypted sin vault, account export and account deletion
+ * (docs/plan/2026-10-practice-sync-contract.md §3).
  *
- * Privacy (roadmap §0.1): nothing about the sin program ever goes through this module except the request for
- * evidence texts, and that request always asks for the evidence of **all** catalog programs at once, so it is
- * the same request for every user and reveals no choice (see `useSinProgramEvidence`).
+ * Privacy (roadmap §0.1): the sin program reaches the network only as vault ciphertext. The request for evidence
+ * texts always asks for the evidence of **all** catalog programs at once, so it is the same request for every
+ * user and reveals no choice (see `useSinProgramEvidence`).
  */
 
 import { useQuery } from '@tanstack/react-query';
 import type { AxiosRequestConfig } from 'axios';
-import type { SyncPayload } from '@thekra/practice-core';
-import { apiClient, apiDelete, apiGet, getApiBaseUrl } from '../api-client';
+import type { SyncRequest, SyncResponse, VaultPayload } from '@thekra/practice-core';
+import { apiClient, apiDelete, apiGet, apiPost, getApiBaseUrl } from '../api-client';
 import { queryKeys } from '../query-keys';
 import type { QuoteDto } from '../types/api';
 import {
@@ -18,8 +19,7 @@ import {
   type AccountExport,
   type CalendarOccasionDto,
   type PracticeCatalog,
-  type PracticeVersion,
-  type RemotePractice,
+  type RemoteVault,
   type UiLocale,
 } from '../practice/catalog-types';
 
@@ -48,17 +48,32 @@ export function calendarSubscribeUrl(lang: UiLocale, months = 12): string {
 /** `skipLang` is a custom flag read by the api-client interceptor (no `?lang` on account calls). */
 const NO_LANG = { skipLang: true } as unknown as AxiosRequestConfig;
 
-export async function getRemotePractice(): Promise<RemotePractice> {
-  const res = await apiGet<RemotePractice>('/me/practice', { ...NO_LANG });
+/** `GET /v1/me/practice?since=` → the changes after `since` (everything when null). Contract §3. */
+export async function getPracticeChanges(since: string | null): Promise<SyncResponse> {
+  const res = await apiGet<SyncResponse>('/me/practice', { ...NO_LANG, params: since ? { since } : {} });
   return res.data;
 }
 
-/** The body must come from practice-core `exportForSync` (no `programs`). See practice/sync.ts. */
-export async function putRemotePractice(body: { store: SyncPayload; version: PracticeVersion }) {
-  const res = await apiClient.put<{ data: { version: PracticeVersion } }>('/me/practice', body, {
-    ...NO_LANG,
-  });
+/** `POST /v1/me/practice/sync`. The body comes from practice-core `buildSyncRequest` (never any program). */
+export async function postPracticeSync(body: SyncRequest): Promise<SyncResponse> {
+  const res = await apiPost<SyncResponse>('/me/practice/sync', body, { ...NO_LANG });
+  return res.data;
+}
+
+/** The encrypted sin vault as stored on the server (opaque ciphertext), or null. */
+export async function getSinVault(): Promise<RemoteVault | null> {
+  const res = await apiGet<{ vault: RemoteVault | null }>('/me/sin-vault', { ...NO_LANG });
+  return res.data.vault ?? null;
+}
+
+/** PUT the sealed vault (practice-core `vaultPayload`). 409 SIN_VAULT_CONFLICT carries the current vault. */
+export async function putSinVault(body: VaultPayload): Promise<{ version: number }> {
+  const res = await apiClient.put<{ data: { version: number } }>('/me/sin-vault', body, { ...NO_LANG });
   return res.data.data;
+}
+
+export async function deleteSinVault(): Promise<void> {
+  await apiDelete('/me/sin-vault', { ...NO_LANG });
 }
 
 export async function deleteAccount(password: string): Promise<void> {

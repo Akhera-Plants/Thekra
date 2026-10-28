@@ -3,6 +3,8 @@
  * This is the first file expo-router mounts.
  */
 
+// First: `globalThis.crypto.getRandomValues` from expo-crypto, before practice-core's vault can run (Hermes).
+import '@/lib/crypto/install';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, View } from 'react-native';
 import { Stack } from 'expo-router';

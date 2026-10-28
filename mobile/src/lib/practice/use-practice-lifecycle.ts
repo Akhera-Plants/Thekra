@@ -2,9 +2,9 @@
  * Keeps the practice feature alive in the background of the UI:
  * - hydrates the on-device store;
  * - re-plans local notifications after every change (debounced) and on every foreground;
- * - ends finished seasons on foreground (`normalize`);
- * - syncs plans/relatives/settings with the account when signed in (on sign-in, on foreground, and a few
- *   seconds after a change of synced data);
+ * - syncs plans/relatives/settings with the account when signed in (on sign-in, on foreground, 3 s after a
+ *   local edit, every 15 minutes while the app is active — sync contract §5);
+ * - keeps the encrypted sin vault in step while it is unlocked (vault-runner.ts);
  * - opens the right screen when a reminder is tapped.
  */
 
@@ -13,7 +13,7 @@ import { AppState } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
-import { exportForSync, type PlanUnit } from '@thekra/practice-core';
+import type { PlanUnit } from '@thekra/practice-core';
 import { useAuthStore } from '../stores/auth-store';
 import { queryKeys } from '../query-keys';
 import type { PracticeCatalog, UiLocale } from './catalog-types';
@@ -21,7 +21,10 @@ import { nowTime } from './format';
 import { applyReminders, configureNotificationHandler, onReminderTapped } from './notifications';
 import { usePracticeStore, today } from './practice-store';
 import { planReminders, type ReminderTexts } from './reminders';
-import { syncPractice } from './sync-runner';
+import { pendingCount, syncPractice } from './sync-runner';
+import { isVaultUnlocked, pushVault, refreshVault } from './vault-runner';
+
+const SYNC_INTERVAL_MS = 15 * 60 * 1000;
 import { usePracticeCatalog } from '../api/practice';
 
 type T = (key: string, opts?: Record<string, unknown>) => string;
@@ -88,22 +91,26 @@ export function usePracticeLifecycle(): void {
     return onReminderTapped((route) => router.push(route as never));
   }, [hydrate]);
 
-  // Store or prefs changed → re-plan reminders (debounced); synced data changed → sync (debounced).
+  // Store or prefs changed → re-plan reminders (debounced 0.8 s); pending sync items → sync (debounced 3 s);
+  // programs changed while the vault is unlocked → seal and PUT the vault (debounced 1.5 s).
   useEffect(() => {
     if (!hydrated) return;
     let remindTimer: ReturnType<typeof setTimeout> | null = null;
     let syncTimer: ReturnType<typeof setTimeout> | null = null;
-    let lastSynced = JSON.stringify(exportForSync(usePracticeStore.getState().store));
+    let vaultTimer: ReturnType<typeof setTimeout> | null = null;
     const unsub = usePracticeStore.subscribe((state, prev) => {
       if (state.store === prev.store && state.prefs === prev.prefs) return;
       if (remindTimer) clearTimeout(remindTimer);
       remindTimer = setTimeout(() => void rescheduleRef.current(), 800);
-      const json = JSON.stringify(exportForSync(state.store));
-      if (json !== lastSynced && userIdRef.current) {
-        lastSynced = json;
+      const userId = userIdRef.current;
+      // Only local edits leave something pending; applying a server response does not, so this cannot loop.
+      if (userId && state.store !== prev.store && pendingCount() > 0) {
         if (syncTimer) clearTimeout(syncTimer);
-        const userId = userIdRef.current;
-        syncTimer = setTimeout(() => void syncPractice(userId), 4000);
+        syncTimer = setTimeout(() => void syncPractice(userId), 3000);
+      }
+      if (state.store.programs !== prev.store.programs && isVaultUnlocked()) {
+        if (vaultTimer) clearTimeout(vaultTimer);
+        vaultTimer = setTimeout(() => void pushVault(), 1500);
       }
     });
     void rescheduleRef.current();
@@ -111,6 +118,7 @@ export function usePracticeLifecycle(): void {
       unsub();
       if (remindTimer) clearTimeout(remindTimer);
       if (syncTimer) clearTimeout(syncTimer);
+      if (vaultTimer) clearTimeout(vaultTimer);
     };
   }, [hydrated]);
 
@@ -119,19 +127,40 @@ export function usePracticeLifecycle(): void {
     if (hydrated && catalog.data) void rescheduleRef.current();
   }, [hydrated, catalog.data, locale]);
 
-  // Signed in (or switched account) → sync.
+  // Signed in (or switched account) → sync, then open the vault if it can be. (Sign-out locks the vault in
+  // auth-store `clearSession`.)
   useEffect(() => {
-    if (hydrated && user?.id) void syncPractice(user.id);
+    if (hydrated && user?.id) {
+      const id = user.id;
+      void syncPractice(id).then(() => refreshVault(id));
+    }
   }, [hydrated, user?.id]);
 
-  // Foreground → end finished seasons, refresh the 14-day window, sync.
+  // Foreground → refresh the 14-day window, sync, refresh the vault; every 15 minutes while active → sync.
   useEffect(() => {
+    let interval: ReturnType<typeof setInterval> | null = null;
+    const startInterval = () => {
+      if (interval) clearInterval(interval);
+      interval = setInterval(() => {
+        if (userIdRef.current) void syncPractice(userIdRef.current);
+      }, SYNC_INTERVAL_MS);
+    };
+    startInterval();
     const sub = AppState.addEventListener('change', (next) => {
-      if (next !== 'active' || !usePracticeStore.getState().hydrated) return;
-      usePracticeStore.getState().normalizeToday();
+      if (next !== 'active') {
+        if (interval) clearInterval(interval);
+        interval = null;
+        return;
+      }
+      startInterval();
+      if (!usePracticeStore.getState().hydrated) return;
       void rescheduleRef.current();
-      if (userIdRef.current) void syncPractice(userIdRef.current);
+      const id = userIdRef.current;
+      if (id) void syncPractice(id).then(() => refreshVault(id));
     });
-    return () => sub.remove();
+    return () => {
+      sub.remove();
+      if (interval) clearInterval(interval);
+    };
   }, []);
 }

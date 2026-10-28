@@ -1,12 +1,13 @@
 /**
- * «فروضي وأدواري» (lecture analysis §4 and §8.1): roles first, then free minutes per day; practice-core
+ * «فروضي وأدواري» (lecture analysis §4 and §8.1): roles first (device prefs), then free minutes per day (Store
+ * settings, synced); practice-core
  * `loadWarning` says 'over' when the minute-based habits take more than half of that free time.
  */
 
 import React, { useState } from 'react';
 import { TextInput } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { dailyLoad, loadWarning } from '@thekra/practice-core';
+import { dailyLoad, loadWarning, updateSettings } from '@thekra/practice-core';
 import { toWesternDigits } from '@/lib/practice/format';
 import { ROLE_KEYS } from '@/lib/practice/prefs';
 import { today, usePracticeStore } from '@/lib/practice/practice-store';
@@ -20,17 +21,19 @@ export default function DutiesScreen() {
   const plans = usePracticeStore((s) => s.store.plans);
   const prefs = usePracticeStore((s) => s.prefs);
   const setPrefs = usePracticeStore((s) => s.setPrefs);
+  const setStore = usePracticeStore((s) => s.setStore);
+  const free = usePracticeStore((s) => s.store.settings.freeMinutesPerDay ?? null);
   const [draft, setDraft] = useState('');
 
   if (!hydrated) return <Loading />;
 
   const d = today();
-  const free = prefs.freeMinutesPerDay;
   const load = dailyLoad(plans, d);
   const warning = free !== null ? loadWarning(plans, free, d) : null;
 
-  function setFree(value: number | null) {
-    setPrefs((p) => ({ ...p, freeMinutesPerDay: value }));
+  // Synced with the account: practice-core `updateSettings` stamps the version.
+  function setFree(value: number) {
+    setStore((s) => updateSettings(s, { freeMinutesPerDay: value }));
   }
 
   return (

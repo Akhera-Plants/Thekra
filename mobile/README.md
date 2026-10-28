@@ -28,19 +28,26 @@ Practice (`app/practice/`): `add` (أعِنّي على طاعة), `plan/[id]`, `
 `sin-program` (ترك المعصية), `calendar`  
 Auth: `(auth)/login`, `(auth)/register`
 
-## Practice features (roadmap docs/plan/2026-10-features-roadmap.md §2–§4, §6, §8)
+## Practice features (roadmap docs/plan/2026-10-features-roadmap.md §2–§4, §6, §8; sync contract docs/plan/2026-10-practice-sync-contract.md)
 
-- Engine: `@thekra/practice-core` (workspace package, TypeScript source). Nothing is re-implemented in the app.
-- Storage: practice-core `Store` in AsyncStorage `thekra.practice.v1`; app-only prefs (reminder switches/times,
-  reminder rule per plan, free minutes) in `thekra.practice.prefs.v1`; sync meta in `thekra.practice.sync.v1`.
-- Privacy: the sin program («ترك المعصية») is local only — never synced (`exportForSync` has no `programs`),
-  never in a notification (title always «تذكرة من ذكرى»). Its evidence request asks for the evidence of **all**
-  catalog programs at once, so the request does not reveal the choice.
+- Engine: `@thekra/practice-core` (workspace package, TypeScript source). Nothing is re-implemented in the app;
+  every edit goes through its store helpers (`updatePlan`, `upsertRelative`, `undoContact`, `updateSettings`…).
+- Storage: practice-core `Store` v2 in AsyncStorage `thekra.practice.v1` (`parseStore` upgrades v1; the first
+  app version's habit-key ids get UUIDs once, see `migrateLegacy`); app-only prefs (reminder switches/times, roles,
+  «تذكّر على هذا الجهاز») in `thekra.practice.prefs.v1`.
+- Sync (signed in): `POST /v1/me/practice/sync` with `buildSyncRequest` in batches until nothing is pending, else
+  `GET /v1/me/practice?since=`; merged with `applyServerChanges`. Runs on sign-in, foreground, 3 s after an edit
+  and every 15 minutes while active. Status in Settings.
+- Sin program («ترك المعصية»): in clear only on the device; never in a sync body or a notification (title always
+  «تذكرة من ذكرى»). Optional encrypted vault (`GET/PUT/DELETE /v1/me/sin-vault`): sealed on the device with a key
+  derived from the user's «رمز الخصوصية» (PBKDF2-SHA256 210,000, AES-256-GCM); the key stays in memory, or in
+  expo-secure-store when «تذكّر على هذا الجهاز» is on. The wipe button deletes local data, the key and the vault.
+  `src/lib/crypto/install.ts` installs expo-crypto's `getRandomValues` on `globalThis.crypto` (Hermes has none).
+- Evidence for the sin programs is requested for **all** catalog programs at once, so the request reveals no choice.
 - Local notifications (`expo-notifications`, no push): permission asked when a reminder switch is turned on;
   a rolling 14-day window (max 60 pending, iOS limit) re-planned on every change and every foreground.
-- Account sync (signed in): GET/PUT `/v1/me/practice` with a version; see `src/lib/practice/sync.ts` for the
-  merge rule on 409.
-- Metro: `metro.config.js` maps `./x.js` → `./x.ts` only inside `packages/practice-core` (Jest: `jest.resolver.js`).
+- Metro: `metro.config.js` maps `./x.js` → `./x.ts` only inside `packages/practice-core` (Jest: `jest.resolver.js`;
+  Jest also transforms the ESM-only `@noble/*` packages).
 
 ## Tests
 

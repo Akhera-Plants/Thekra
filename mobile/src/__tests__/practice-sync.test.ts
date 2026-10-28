@@ -1,115 +1,157 @@
 /**
- * Account sync payload and merge (pure parts of src/lib/practice/sync.ts).
- * The sin program must never be part of anything sent to the server (roadmap §0.1).
+ * Account sync body (practice-core `buildSyncRequest`, contract §3) and the one-time migration of data written
+ * by the first app version. The sin program (slug, check-ins, notes) must never be in a sync body.
  */
 
 import {
+  applyServerChanges,
+  buildSyncRequest,
   checkIn,
   createPlan,
   createRelative,
+  deletePlan,
   emptyStore,
-  exportForSync,
-  logContact,
   logDone,
+  parseStore,
   startProgram,
+  updatePlan,
+  updateSettings,
+  upsertPlan,
+  upsertRelative,
   type Store,
 } from '@thekra/practice-core';
-import {
-  applySyncPayload,
-  buildSyncBody,
-  conflictFromDetails,
-  decideSync,
-  mergeSyncPayloads,
-  payloadJson,
-} from '../lib/practice/sync';
+
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  getItem: jest.fn(async () => null),
+  setItem: jest.fn(async () => undefined),
+  removeItem: jest.fn(async () => undefined),
+}));
+
+jest.mock('../lib/api/practice', () => ({ getPracticeChanges: jest.fn(), postPracticeSync: jest.fn() }));
+
+import { migrateLegacy } from '../lib/practice/practice-store';
+import { assertNoPrograms } from '../lib/practice/sync-runner';
+
+const NOW = '2026-10-28T10:00:00.000Z';
+const PLAN_ID = '7b0c1d9e-3f43-4a7e-9c55-0d6f1b2a3c4d';
+const REL_ID = '0f6e8c1a-2b3d-4e5f-8a9b-1c2d3e4f5a6b';
 
 function store(): Store {
-  const plan = logDone(
-    createPlan({
-      id: 'quran-wird',
-      deedSlug: 'quran',
-      title: 'ورد القرآن',
-      unit: 'minutes',
-      amount: 5,
-      activeDaysPerWeek: 3,
-      slots: ['06:00', '21:00'],
-      createdOn: '2026-10-01',
-    }),
-    '2026-10-27',
-    5,
+  let s = emptyStore();
+  s = upsertPlan(
+    s,
+    createPlan(
+      {
+        id: PLAN_ID,
+        habitKey: 'quran-wird',
+        deedSlug: 'quran',
+        title: 'ورد القرآن',
+        unit: 'minutes',
+        amount: 5,
+        activeDaysPerWeek: 3,
+        slots: ['06:00', '21:00'],
+        createdOn: '2026-10-01',
+      },
+      NOW,
+    ),
+    NOW,
   );
-  const rel = createRelative({ id: 'r1', name: 'خالتي', relation: 'خالة', rule: { kind: 'everyNDays', n: 7, anchor: '2026-10-01' } });
+  s = updatePlan(s, PLAN_ID, (p) => logDone(p, '2026-10-27', 5), NOW);
+  s = upsertRelative(s, createRelative({ id: REL_ID, name: 'خالتي', relation: 'خالة', rule: { kind: 'everyNDays', n: 7, anchor: '2026-10-01' } }, NOW), NOW);
+  s = updateSettings(s, { hijriOffset: 1, freeMinutesPerDay: 120 }, NOW);
   let program = startProgram({ sinSlug: 'ghibah', category: 'haqq_ibad', hardToLeaveAtOnce: false, startedOn: '2026-10-20' });
   program = checkIn(program, '2026-10-27', 'fell_repented', 'سرّ لا يعرفه أحد');
-  return { v: 1, plans: [plan], relatives: [rel], programs: [program], settings: { hijriOffset: 1 } };
+  return { ...s, programs: [program] };
 }
 
-describe('sync payload', () => {
-  it('has no programs key and carries nothing from the sin program', () => {
-    const body = buildSyncBody(store(), 3);
-    expect(body.version).toBe(3);
-    expect(Object.keys(body.store).sort()).toEqual(['plans', 'relatives', 'settings', 'v']);
-    expect(body.store).not.toHaveProperty('programs');
-    const json = JSON.stringify(body);
-    expect(json).not.toContain('programs');
-    expect(json).not.toContain('ghibah');
-    expect(json).not.toContain('سرّ');
-    expect(json).not.toContain('fell_repented');
+function expectNoSinData(body: unknown) {
+  const json = JSON.stringify(body);
+  expect(json).not.toContain('programs');
+  expect(json).not.toContain('ghibah');
+  expect(json).not.toContain('سرّ');
+  expect(json).not.toContain('fell_repented');
+  expect(json).not.toContain('checkIns');
+  expect(() => assertNoPrograms(body)).not.toThrow();
+}
+
+describe('sync body', () => {
+  it('carries plans, logs, relatives and settings, and nothing from the sin program', () => {
+    const body = buildSyncRequest(store());
+    expect(body.since).toBeNull();
+    expect(body.changes.plans).toHaveLength(1);
+    expect(body.changes.plans[0]).toMatchObject({ id: PLAN_ID, habitKey: 'quran-wird', amount: 5, deletedAt: null });
+    expect(body.changes.logs).toEqual([{ planId: PLAN_ID, date: '2026-10-27', amount: 5 }]);
+    expect(body.changes.relatives[0]).toMatchObject({ id: REL_ID, name: 'خالتي' });
+    expect(body.changes.settings).toMatchObject({ hijriOffset: 1, freeMinutesPerDay: 120 });
+    expectNoSinData(body);
   });
 
-  it('a stray programs field on the input never rides along', () => {
-    const s = store() as Store & { extra?: unknown };
-    (s as unknown as Record<string, unknown>).extra = { programs: s.programs };
-    const body = buildSyncBody(s, 0);
-    expect(JSON.stringify(body)).not.toContain('ghibah');
+  it('a deleted plan goes out as { id, clientUpdatedAt, deletedAt } only', () => {
+    const body = buildSyncRequest(deletePlan(store(), PLAN_ID, '2026-10-28T11:00:00.000Z'));
+    expect(body.changes.plans).toEqual([
+      { id: PLAN_ID, clientUpdatedAt: '2026-10-28T11:00:00.000Z', deletedAt: '2026-10-28T11:00:00.000Z' },
+    ]);
+    expectNoSinData(body);
   });
 
-  it('pulling a server payload keeps the local sin program untouched', () => {
-    const local = store();
-    const remote = { ...exportForSync(emptyStore()), settings: { hijriOffset: -1 } };
-    const next = applySyncPayload(local, remote);
-    expect(next.plans).toEqual([]);
-    expect(next.settings.hijriOffset).toBe(-1);
-    expect(next.programs).toEqual(local.programs);
+  it('nothing pending after the server acknowledges, programs untouched', () => {
+    const s = store();
+    const body = buildSyncRequest(s);
+    const response = {
+      serverTime: '2026-10-28T12:00:00.000Z',
+      settings: { ...body.changes.settings! },
+      plans: body.changes.plans,
+      logs: body.changes.logs,
+      relatives: body.changes.relatives,
+      contacts: body.changes.contacts,
+    };
+    const after = applyServerChanges(s, response);
+    expect(after.sync.lastSyncedAt).toBe('2026-10-28T12:00:00.000Z');
+    expect(after.programs).toEqual(s.programs);
+    const next = buildSyncRequest(after);
+    expect(next.since).toBe('2026-10-28T12:00:00.000Z');
+    expect(next.changes).toEqual({ plans: [], logs: [], relatives: [], contacts: [] });
+  });
+
+  it('assertNoPrograms stops a body with a programs key anywhere', () => {
+    expect(() => assertNoPrograms({ changes: { plans: [], extra: { programs: [] } } })).toThrow();
   });
 });
 
-describe('merge and decision', () => {
-  it('merges plans by id, keeping the larger amount per day, and relative histories as a union', () => {
-    const local = exportForSync(store());
-    const remoteStore = store();
-    remoteStore.plans[0] = logDone({ ...remoteStore.plans[0]!, log: { '2026-10-26': 3 } }, '2026-10-27', 2);
-    remoteStore.relatives[0] = logContact(remoteStore.relatives[0]!, '2026-10-25');
-    const merged = mergeSyncPayloads(local, exportForSync(remoteStore));
-    expect(merged.plans).toHaveLength(1);
-    expect(merged.plans[0]!.log).toEqual({ '2026-10-26': 3, '2026-10-27': 5 });
-    expect(merged.relatives[0]!.history).toEqual(['2026-10-25']);
-    expect(merged.relatives[0]!.lastContactedOn).toBe('2026-10-25');
-    expect(merged).not.toHaveProperty('programs');
-  });
-
-  it('decides push / pull / merge from the last synced version', () => {
-    const local = exportForSync(store());
-    const json = payloadJson(local);
-    const meta = { userId: 'u1', version: 4, payloadJson: json };
-    expect(decideSync({ local, remote: { store: local, version: 4 }, meta, userId: 'u1' }).action).toBe('noop');
-    expect(decideSync({ local, remote: { store: { ...local, plans: [] }, version: 5 }, meta, userId: 'u1' }).action).toBe('pull');
-    const changed = { ...local, settings: { hijriOffset: 2 } };
-    expect(decideSync({ local: changed, remote: { store: local, version: 4 }, meta, userId: 'u1' }).action).toBe('push');
-    expect(decideSync({ local: changed, remote: { store: local, version: 5 }, meta, userId: 'u1' }).action).toBe('merge-push');
-    // Another account, or never synced: merge with what the server has.
-    expect(decideSync({ local, remote: { store: null, version: 0 }, meta: null, userId: 'u2' }).action).toBe('push');
-    // A server without a store never empties the device.
-    expect(decideSync({ local, remote: { store: null, version: 9 }, meta, userId: 'u1' }).action).toBe('push');
-  });
-
-  it('reads the current store and version from a 409 conflict', () => {
-    const payload = exportForSync(store());
-    expect(conflictFromDetails({ store: payload, version: 7 })).toEqual({ store: payload, version: 7 });
-    expect(conflictFromDetails({ current: { store: null, version: 2 } })).toEqual({ store: null, version: 2 });
-    expect(conflictFromDetails(null)).toBeNull();
-    // A program smuggled into the conflict store is dropped.
-    const withPrograms = { ...store() };
-    expect(JSON.stringify(conflictFromDetails({ store: withPrograms, version: 1 }))).not.toContain('ghibah');
+describe('migration of the first app version', () => {
+  it('upgrades a { v: 1 } store, gives plans/relatives UUID ids, moves rule and free minutes into the store', () => {
+    const v1 = {
+      v: 1,
+      plans: [
+        {
+          id: 'duha',
+          deedSlug: 'nawafil',
+          title: 'صلاة الضحى',
+          unit: 'times',
+          amount: 1,
+          activeDaysPerWeek: 3,
+          slots: ['09:30'],
+          createdOn: '2026-10-01',
+          amountChangedOn: '2026-10-01',
+          log: { '2026-10-27': 1 },
+        },
+      ],
+      relatives: [{ id: 'rel-abc-123', name: 'خالتي', relation: '', rule: { kind: 'everyNDays', n: 7, anchor: '2026-10-01' }, history: [] }],
+      programs: [],
+      settings: { hijriOffset: 0 },
+    };
+    const prefs = JSON.stringify({ v: 1, planRules: { duha: { kind: 'weekdays', days: [5] } }, freeMinutesPerDay: 90 });
+    let n = 0;
+    const ids = [PLAN_ID, REL_ID];
+    const { store: s, changed } = migrateLegacy(parseStore(v1, NOW), prefs, () => ids[n++] as string);
+    expect(changed).toBe(true);
+    expect(s.v).toBe(2);
+    expect(s.plans[0]).toMatchObject({ id: PLAN_ID, habitKey: 'duha', rule: { kind: 'weekdays', days: [5] }, log: { '2026-10-27': 1 } });
+    expect(s.relatives[0]?.id).toBe(REL_ID);
+    expect(s.settings.freeMinutesPerDay).toBe(90);
+    expect(s.tombstones).toEqual([]); // the old ids were never synced: no tombstone for them
+    const body = buildSyncRequest(s);
+    expect(body.changes.plans.map((p) => p.id)).toEqual([PLAN_ID]); // the habit key is never sent as an id
+    expect(JSON.stringify(body)).not.toContain('rel-abc-123');
   });
 });

@@ -9,7 +9,7 @@
  * current stage (`currentStage`) with its reviewed title/body, practical steps, alternatives, evidence, the
  * daily check-in (held / weak / fell_repented + private note), `summary` (counts of days only) and, after
  * «وقعت ثم تبت», the `afterFall` («خربانة؟ صلّحها») content. «احذف كل بيانات البرنامج» wipes it all at once
- * (no confirmation step) and turns the private reminders off.
+ * (no confirmation step): local data, the vault key, the server vault, and the private reminders.
  */
 
 import React, { useState } from 'react';
@@ -38,6 +38,9 @@ import type { QuoteDto } from '@/lib/types/api';
 import { ErrorState } from '@/components/ErrorState';
 import { EvidenceList } from '@/components/practice/EvidenceList';
 import { TimeField } from '@/components/practice/editors';
+import { VaultCard } from '@/components/practice/VaultCard';
+import { useAuthStore } from '@/lib/stores/auth-store';
+import { wipeSinProgramEverywhere } from '@/lib/practice/vault-runner';
 import {
   ArabicBody,
   Body,
@@ -68,6 +71,7 @@ export default function SinProgramScreen() {
   const catalog = usePracticeCatalog(locale);
   const evidence = useSinProgramEvidence(catalog.data, locale);
   const sins = useSins({ limit: 100 });
+  const userId = useAuthStore((s) => s.user?.id ?? null);
 
   if (!hydrated || catalog.isLoading) return <Loading />;
   if (catalog.isError || !catalog.data) {
@@ -85,6 +89,13 @@ export default function SinProgramScreen() {
       <Card tone="private">
         <Body small>{t('sinProgram.privacy')}</Body>
       </Card>
+      {userId ? (
+        <VaultCard userId={userId} hasProgram={Boolean(program)} />
+      ) : (
+        <Body small muted>
+          {t('vault.signInHint')}
+        </Body>
+      )}
       {program ? (
         <ProgramView
           program={program}
@@ -189,7 +200,7 @@ function ProgramView({
   const prefs = usePracticeStore((s) => s.prefs);
   const setStore = usePracticeStore((s) => s.setStore);
   const setPrefs = usePracticeStore((s) => s.setPrefs);
-  const wipePrograms = usePracticeStore((s) => s.wipePrograms);
+  const userId = useAuthStore((s) => s.user?.id ?? null);
   const [value, setValue] = useState<CheckInValue | null>(null);
   const [note, setNote] = useState('');
 
@@ -202,7 +213,7 @@ function ProgramView({
   const todayCheckIn = program.checkIns.find((c) => c.date === d);
   const counts = summary(program, addDays(d, -29), d);
   const showAfterFall = todayCheckIn?.value === 'fell_repented' && afterFall(program) === 'fixit';
-  const planIds = new Set(plans.map((p) => p.id));
+  const planIds = new Set(plans.map((p) => p.habitKey ?? p.id));
 
   function save() {
     if (!value) return;
@@ -224,7 +235,8 @@ function ProgramView({
 
   // «خروج آمن»: one tap erases everything at once (roadmap §4.2), no confirmation step in between.
   function wipe() {
-    void wipePrograms().then(() => Alert.alert(t('sinProgram.wiped')));
+    // Local programs and notes, the vault key (memory + keystore) and, signed in, the vault on the server.
+    void wipeSinProgramEverywhere(userId).then(() => Alert.alert(t('sinProgram.wiped')));
   }
 
   const actions = entry ? pickList(entry.actionsAr, entry.actionsEn, locale) : [];

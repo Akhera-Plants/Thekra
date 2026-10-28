@@ -9,7 +9,7 @@ import React from 'react';
 import { Alert, Pressable, StyleSheet, Text } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { addDays, endEbb, isDue, logDone, normalize, startEbb, startSeason, type Plan } from '@thekra/practice-core';
+import { addDays, endEbb, isDue, logDone, normalize, startEbb, startSeason, updatePlan, type Plan, type Store } from '@thekra/practice-core';
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { pick, type CatalogHabit } from '@/lib/practice/catalog-types';
 import { shortDate } from '@/lib/practice/format';
@@ -59,31 +59,34 @@ export default function HabitsScreen() {
   const seasonPlans = store.plans.filter((p) => p.season && d <= p.season.until);
   const season = ramadanSeasonUntil(d, store.settings.hijriOffset);
 
+  // Every edit goes through practice-core's store helpers (updatePlan stamps versions for sync).
+  const eachPlan = (s: Store, change: (p: Plan) => Plan | null): Store =>
+    s.plans.reduce((acc, p) => {
+      const next = change(p);
+      return next ? updatePlan(acc, p.id, () => next) : acc;
+    }, s);
+
   function log(plan: Plan, amount: number) {
     if (amount <= 0) return;
-    setStore((s) => ({ ...s, plans: s.plans.map((p) => (p.id === plan.id ? logDone(p, d, amount) : p)) }));
+    setStore((s) => updatePlan(s, plan.id, (p) => logDone(p, d, amount)));
   }
 
   function toggleHeavy(on: boolean) {
-    setStore((s) => ({ ...s, plans: s.plans.map((p) => (on ? startEbb(p, d) : endEbb(p))) }));
+    setStore((s) => eachPlan(s, (p) => (on ? (p.ebb ? null : startEbb(p, d)) : p.ebb ? endEbb(p) : null)));
   }
 
   function startRamadan() {
-    setStore((s) => ({
-      ...s,
-      plans: s.plans.map((p) => {
+    setStore((s) =>
+      eachPlan(s, (p) => {
         const amount = seasonAmount(p);
-        return amount > p.amount ? startSeason(p, amount, season.until) : p;
+        return amount > p.amount ? startSeason(p, amount, season.until) : null;
       }),
-    }));
+    );
   }
 
   function endRamadan() {
     // practice-core `normalize` restores the everyday amount once `until` has passed; ending early = the day after.
-    setStore((s) => ({
-      ...s,
-      plans: s.plans.map((p) => (p.season ? normalize(p, addDays(p.season.until, 1)) : p)),
-    }));
+    setStore((s) => eachPlan(s, (p) => (p.season ? normalize(p, addDays(p.season.until, 1)) : null)));
   }
 
   async function toggleReminders(on: boolean) {
@@ -114,7 +117,7 @@ export default function HabitsScreen() {
               key={plan.id}
               plan={plan}
               habit={habitFor(plan, habits)}
-              reminderDay={safeIsDue(planRule(plan, prefs, habits), d, store.settings.hijriOffset)}
+              reminderDay={safeIsDue(planRule(plan, habits), d, store.settings.hijriOffset)}
               amountLabel={(n) => amountLabel(plan, n)}
               onLog={(n) => log(plan, n)}
             />

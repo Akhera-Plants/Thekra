@@ -8,11 +8,11 @@
 import React, { useState } from 'react';
 import { Alert, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { dueList, logContact, undoLastContact, type DueEntry, type Relative } from '@thekra/practice-core';
+import { deleteRelative, dueList, logContact, undoContact, updateRelative, upsertRelative, type DueEntry, type Relative } from '@thekra/practice-core';
 import { shortDate } from '@/lib/practice/format';
 import { relativeFromForm, type RelativeFormError, type RhythmChoice } from '@/lib/practice/kinship-form';
 import { ensurePermission } from '@/lib/practice/notifications';
-import { today, usePracticeStore } from '@/lib/practice/practice-store';
+import { newPracticeId, today, usePracticeStore } from '@/lib/practice/practice-store';
 import { TimeField, WeekdayPicker } from '@/components/practice/editors';
 import {
   Body,
@@ -29,9 +29,6 @@ import {
   practiceStyles,
 } from '@/components/practice/ui';
 
-function newId(): string {
-  return `rel-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-}
 
 export default function KinshipScreen() {
   const { t } = useTranslation();
@@ -54,9 +51,7 @@ export default function KinshipScreen() {
     setPrefs((p) => ({ ...p, kinshipReminders: on }));
   }
 
-  function mutate(id: string, fn: (r: Relative) => Relative) {
-    setStore((s) => ({ ...s, relatives: s.relatives.map((r) => (r.id === id ? fn(r) : r)) }));
-  }
+
 
   function remove(id: string) {
     Alert.alert(t('kinship.delete'), t('kinship.deleteConfirm'), [
@@ -64,7 +59,7 @@ export default function KinshipScreen() {
       {
         text: t('common.delete'),
         style: 'destructive',
-        onPress: () => setStore((s) => ({ ...s, relatives: s.relatives.filter((r) => r.id !== id) })),
+        onPress: () => setStore((s) => deleteRelative(s, id)),
       },
     ]);
   }
@@ -77,8 +72,8 @@ export default function KinshipScreen() {
           <RelativeCard
             key={e.relative.id}
             entry={e}
-            onContacted={() => mutate(e.relative.id, (r) => logContact(r, d))}
-            onUndo={() => mutate(e.relative.id, undoLastContact)}
+            onContacted={() => setStore((s) => updateRelative(s, e.relative.id, (r) => logContact(r, d)))}
+            onUndo={() => setStore((s) => undoContact(s, e.relative.id))}
             onDelete={() => remove(e.relative.id)}
           />
         ))}
@@ -98,7 +93,7 @@ export default function KinshipScreen() {
         <AddRelativeForm
           onCancel={() => setAdding(false)}
           onSave={(rel) => {
-            setStore((s) => ({ ...s, relatives: [...s.relatives, rel] }));
+            setStore((s) => upsertRelative(s, rel));
             setAdding(false);
           }}
         />
@@ -190,7 +185,7 @@ function AddRelativeForm({
   const [error, setError] = useState<RelativeFormError | null>(null);
 
   function save() {
-    const res = relativeFromForm({ name, relation, rhythm, weekday, everyDays }, newId(), today());
+    const res = relativeFromForm({ name, relation, rhythm, weekday, everyDays }, newPracticeId(), today());
     if (!res.ok) {
       setError(res.error);
       return;

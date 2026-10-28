@@ -30,7 +30,8 @@ import { setApiLocale } from '@/lib/api-client';
 import { Colors, FontSize, Radius, Spacing } from '@/lib/tokens';
 import Constants from 'expo-constants';
 import { deleteAccount, exportAccountData } from '@/lib/api/practice';
-import { syncPractice, type SyncResult } from '@/lib/practice/sync-runner';
+import { syncPractice, useSyncStatus } from '@/lib/practice/sync-runner';
+import { nowTime } from '@/lib/practice/format';
 import { queryKeys } from '@/lib/query-keys';
 import { ApiError } from '@/lib/types/api';
 
@@ -44,7 +45,8 @@ export default function SettingsScreen() {
   const qc = useQueryClient();
 
   const [showTranslations, setShowTranslations] = useState(false);
-  const [syncStatus, setSyncStatus] = useState<SyncResult | 'running' | null>(null);
+  const syncStatus = useSyncStatus((s) => s.status);
+  const lastOkAt = useSyncStatus((s) => s.lastOkAt);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [password, setPassword] = useState('');
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -52,8 +54,7 @@ export default function SettingsScreen() {
 
   async function handleSyncNow() {
     if (!user) return;
-    setSyncStatus('running');
-    setSyncStatus(await syncPractice(user.id));
+    await syncPractice(user.id);
   }
 
   async function handleExport() {
@@ -207,17 +208,10 @@ export default function SettingsScreen() {
               <Text style={styles.rowBtnText}>{t('settings.syncNow')}</Text>
               {syncStatus === 'running' ? (
                 <ActivityIndicator color={Colors.primary} />
-              ) : syncStatus ? (
+              ) : syncStatus !== 'idle' ? (
                 <Text style={styles.statusText}>
-                  {t(
-                    syncStatus === 'ok'
-                      ? 'settings.syncOk'
-                      : syncStatus === 'offline'
-                        ? 'settings.syncOffline'
-                        : syncStatus === 'conflict'
-                          ? 'settings.syncConflict'
-                          : 'settings.syncError',
-                  )}
+                  {t(syncStatus === 'ok' ? 'settings.syncOk' : syncStatus === 'offline' ? 'settings.syncOffline' : 'settings.syncError')}
+                  {lastOkAt ? ` · ${t('settings.syncLast', { time: nowTime(new Date(lastOkAt)) })}` : ''}
                 </Text>
               ) : null}
             </TouchableOpacity>

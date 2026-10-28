@@ -98,8 +98,7 @@
     "syncOk": "Synced",
     "syncOffline": "No connection; we will try later",
     "syncError": "Sync failed",
-    "syncConflict": "Your data changed on another device; we will try again later",
-    "syncNote": "Your habits and kinship list sync with your account. The sin-leaving program never syncs.",
+    "syncNote": "Your habits, kinship list and settings sync with your account. The sin-leaving program syncs only encrypted with your privacy code, if you choose so.",
     "exportData": "Export my data",
     "exportFailed": "Could not export the data.",
     "deleteAccount": "Delete account",
@@ -108,7 +107,8 @@
     "deleteConfirm": "Delete my account",
     "deleted": "Your account was deleted. The data on this device stays as it is.",
     "deleteFailed": "Could not delete the account.",
-    "wrongPassword": "Wrong password."
+    "wrongPassword": "Wrong password.",
+    "syncLast": "last sync {{time}}"
   },
   "auth": {
     "loginTitle": "Sign in",
@@ -339,7 +339,7 @@
   },
   "sinProgram": {
     "title": "Leaving a sin",
-    "privacy": "Everything on this page stays on your device only: it is never sent, never synced and never shown in a notification.",
+    "privacy": "Everything on this page stays on your device and never appears in a notification. It leaves the device only encrypted with your code, if you choose to save it in your account.",
     "choose": "Choose what you want to leave",
     "categoryAllah": "Against the right of Allah",
     "categoryIbad": "Against people's rights",
@@ -402,5 +402,31 @@
     "action": "Share",
     "atharNotice": "A saying, not a hadith",
     "atharNarrated": "Narrated by {{speaker}}"
+  },
+  "vault": {
+    "title": "Encrypted backup",
+    "save": "Save the program encrypted in your account",
+    "saveHint": "To open it on another device. It is encrypted on your device with a code you choose, so nobody can read it, not even us.",
+    "code": "Privacy code",
+    "codeConfirm": "Type the privacy code again",
+    "warning": "Keep this code safe: it cannot be recovered if you forget it, and nobody can read your program without it, not even us.",
+    "remember": "Remember on this device",
+    "rememberHint": "The unlock key is kept in the device's secure storage, so you do not need the code each time on this device.",
+    "submit": "Save encrypted",
+    "unlockTitle": "You have a program saved encrypted in your account",
+    "unlock": "Open",
+    "saved": "Saved encrypted in your account, updated after each log.",
+    "working": "Encrypting… this can take a few seconds.",
+    "signInHint": "If you sign in, you can save the program encrypted in your account and open it on another device.",
+    "cancel": "Cancel",
+    "errors": {
+      "tooShort": "The privacy code needs at least 6 characters.",
+      "mismatch": "The two codes do not match.",
+      "wrongCode": "Wrong code.",
+      "exists": "A program is already saved in your account. Open it with its code first.",
+      "missing": "No program is saved in your account.",
+      "offline": "No connection.",
+      "failed": "That did not work, try again."
+    }
   }
 }

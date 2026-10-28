@@ -101,9 +101,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   clearSession: async () => {
     setAccessToken(null);
     await clearRefreshToken();
-    // Forget the account link of the practice sync; the practice data on this device is kept (local-first).
+    // Forget the account link of the practice sync and lock the sin vault (in-memory key and keystore entry);
+    // the practice data on this device is kept (local-first).
     const { clearSyncMeta } = await import('../practice/sync-runner');
+    const { lockVault } = await import('../practice/vault-runner');
     await clearSyncMeta();
+    await lockVault();
     set({ user: null, isLoading: false, error: null });
   },
 

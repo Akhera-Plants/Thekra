@@ -10,12 +10,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { loadWarning, startSuggestion, validatePlan, type LocalTime } from '@thekra/practice-core';
+import { loadWarning, startSuggestion, upsertPlan, validatePlan, type LocalTime } from '@thekra/practice-core';
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { pick, type CatalogHabit } from '@/lib/practice/catalog-types';
 import { ruleToWeekdays, sortSlots, weekdaysToRule } from '@/lib/practice/format';
 import { planFromHabit, startAmount, type Distance } from '@/lib/practice/plan-view';
-import { today, usePracticeStore } from '@/lib/practice/practice-store';
+import { newPracticeId, today, usePracticeStore } from '@/lib/practice/practice-store';
 import { formatAmount } from '@/lib/practice/reminders';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { ErrorState } from '@/components/ErrorState';
@@ -42,9 +42,8 @@ export default function AddHabitScreen() {
   const params = useLocalSearchParams<{ habit?: string }>();
   const catalog = usePracticeCatalog(locale);
   const plans = usePracticeStore((s) => s.store.plans);
-  const prefs = usePracticeStore((s) => s.prefs);
+  const free = usePracticeStore((s) => s.store.settings.freeMinutesPerDay ?? null);
   const setStore = usePracticeStore((s) => s.setStore);
-  const setPrefs = usePracticeStore((s) => s.setPrefs);
 
   const [habitKey, setHabitKey] = useState<string | null>(params.habit ?? null);
   const [step, setStep] = useState<Step>(params.habit ? 'distance' : 'choose');
@@ -74,7 +73,8 @@ export default function AddHabitScreen() {
     return <ErrorState message={t('practice.catalogError')} onRetry={() => void catalog.refetch()} />;
   }
 
-  const existing = new Set(plans.map((p) => p.id));
+  // Plan ids are UUIDs; the catalog habit is `habitKey`.
+  const planByHabit = new Map(plans.map((p) => [p.habitKey ?? p.id, p.id]));
   const unitFallback = {
     minutes: t('practice.units.minutes'),
     count: t('practice.units.count'),
@@ -101,10 +101,9 @@ export default function AddHabitScreen() {
       setError(t('practice.add.noReminderDays'));
       return;
     }
-    const plan = planFromHabit({ habit, amount, slots, activeDaysPerWeek: activeDays, today: today(), locale });
+    const plan = planFromHabit({ id: newPracticeId(), habit, amount, slots, activeDaysPerWeek: activeDays, rule, today: today(), locale });
     if (validatePlan(plan) !== null) return;
-    setStore((s) => ({ ...s, plans: [...s.plans.filter((p) => p.id !== plan.id), plan] }));
-    setPrefs((p) => ({ ...p, planRules: { ...p.planRules, [plan.id]: rule } }));
+    setStore((s) => upsertPlan(s, plan));
     router.replace(`/practice/plan/${plan.id}`);
   }
 
@@ -117,8 +116,12 @@ export default function AddHabitScreen() {
             <LinkRow
               key={h.key}
               label={pick(h, 'title', locale)}
-              hint={existing.has(h.key) ? t('practice.add.alreadyAdded') : t(`practice.basis.${h.basis}`)}
-              onPress={() => (existing.has(h.key) ? router.replace(`/practice/plan/${h.key}`) : choose(h))}
+              hint={planByHabit.has(h.key) ? t('practice.add.alreadyAdded') : t(`practice.basis.${h.basis}`)}
+              onPress={() => {
+                const id = planByHabit.get(h.key);
+                if (id) router.replace(`/practice/plan/${id}`);
+                else choose(h);
+              }}
             />
           ))}
         </Card>
@@ -192,9 +195,11 @@ export default function AddHabitScreen() {
   }
 
   // step === 'load': «فروضي وأدواري» check with the new plan included.
-  const preview = amount !== null ? planFromHabit({ habit, amount, slots, activeDaysPerWeek: activeDays, today: today(), locale }) : null;
-  const allPlans = preview ? [...plans.filter((p) => p.id !== preview.id), preview] : plans;
-  const free = prefs.freeMinutesPerDay;
+  const preview =
+    amount !== null
+      ? planFromHabit({ id: 'preview', habit, amount, slots, activeDaysPerWeek: activeDays, rule: habit.defaultRule, today: today(), locale })
+      : null;
+  const allPlans = preview ? [...plans, preview] : plans;
   const load = allPlans.reduce((sum, p) => sum + (p.unit === 'minutes' ? p.amount : 0), 0);
 
   return (

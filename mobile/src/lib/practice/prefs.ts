@@ -1,7 +1,9 @@
 /**
  * App-only practice preferences, stored next to the practice-core Store (AsyncStorage
- * `thekra.practice.prefs.v1`). Never synced: reminder switches and times, the reminder rule per plan,
- * the «فروضي وأدواري» answers. Parsing is defensive and never throws.
+ * `thekra.practice.prefs.v1`). Never synced: reminder switches and times, and the «فروضي وأدواري» roles.
+ * The reminder rule of a plan now lives on the plan (`plan.rule`, synced) and the free minutes in the Store
+ * settings (`settings.freeMinutesPerDay`, synced); `legacyPrefs` reads the old fields once to migrate them.
+ * Parsing is defensive and never throws.
  */
 
 import { isValidTime, validateRule, type LocalTime, type Rule } from '@thekra/practice-core';
@@ -15,8 +17,6 @@ export interface PracticePrefs {
   v: 1;
   /** Local notifications for habit plans. */
   habitReminders: boolean;
-  /** Reminder rule per plan id; when missing the catalog habit's `defaultRule` applies. */
-  planRules: Record<string, Rule>;
   kinshipReminders: boolean;
   /** Relatives' nicknames in the notification body. Off by default: notifications show on the lock screen. */
   kinshipShowNames: boolean;
@@ -24,22 +24,22 @@ export interface PracticePrefs {
   /** Sin-program reminders. Their title is always the generic «تذكرة من ذكرى». */
   sinReminders: boolean;
   sinReminderTime: LocalTime;
-  /** «فروضي وأدواري»: free minutes per day after obligations and roles. */
-  freeMinutesPerDay: number | null;
+  /** «فروضي وأدواري» roles (the free minutes are in the Store settings). */
   roles: RoleKey[];
+  /** Remember the vault key in the device keystore («تذكّر على هذا الجهاز»). Off by default. */
+  rememberVaultKey: boolean;
 }
 
 export const DEFAULT_PREFS: PracticePrefs = {
   v: 1,
   habitReminders: false,
-  planRules: {},
   kinshipReminders: false,
   kinshipShowNames: false,
   kinshipTime: '18:00',
   sinReminders: false,
   sinReminderTime: '21:00',
-  freeMinutesPerDay: null,
   roles: [],
+  rememberVaultKey: false,
 };
 
 function isRecord(v: unknown): v is Record<string, unknown> {
@@ -52,32 +52,45 @@ export function parsePrefs(json: unknown): PracticePrefs {
     try {
       raw = JSON.parse(json);
     } catch {
-      return { ...DEFAULT_PREFS, planRules: {} };
+      return { ...DEFAULT_PREFS };
     }
   }
-  if (!isRecord(raw) || raw.v !== 1) return { ...DEFAULT_PREFS, planRules: {} };
+  if (!isRecord(raw) || raw.v !== 1) return { ...DEFAULT_PREFS };
   const bool = (k: keyof PracticePrefs) => (typeof raw[k] === 'boolean' ? (raw[k] as boolean) : (DEFAULT_PREFS[k] as boolean));
   const time = (k: 'kinshipTime' | 'sinReminderTime') => (isValidTime(raw[k]) ? (raw[k] as string) : DEFAULT_PREFS[k]);
-  const planRules: Record<string, Rule> = {};
-  if (isRecord(raw.planRules)) {
-    for (const [id, rule] of Object.entries(raw.planRules)) {
-      if (validateRule(rule) === null) planRules[id] = rule as Rule;
-    }
-  }
-  const free = raw.freeMinutesPerDay;
   return {
     v: 1,
     habitReminders: bool('habitReminders'),
-    planRules,
     kinshipReminders: bool('kinshipReminders'),
     kinshipShowNames: bool('kinshipShowNames'),
     kinshipTime: time('kinshipTime'),
     sinReminders: bool('sinReminders'),
     sinReminderTime: time('sinReminderTime'),
-    freeMinutesPerDay:
-      typeof free === 'number' && Number.isFinite(free) && free >= 0 && free <= 24 * 60 ? Math.round(free) : null,
+    rememberVaultKey: bool('rememberVaultKey'),
     roles: Array.isArray(raw.roles)
       ? (raw.roles.filter((r) => (ROLE_KEYS as readonly string[]).includes(r as string)) as RoleKey[])
       : [],
+  };
+}
+
+/** Fields of the first prefs version that moved into the synced Store (migrated once by practice-store). */
+export function legacyPrefs(json: unknown): { planRules: Record<string, Rule>; freeMinutesPerDay: number | null } {
+  let raw: unknown = json;
+  if (typeof json === 'string') {
+    try {
+      raw = JSON.parse(json);
+    } catch {
+      raw = null;
+    }
+  }
+  const planRules: Record<string, Rule> = {};
+  if (!isRecord(raw)) return { planRules, freeMinutesPerDay: null };
+  if (isRecord(raw.planRules)) {
+    for (const [id, rule] of Object.entries(raw.planRules)) if (validateRule(rule) === null) planRules[id] = rule as Rule;
+  }
+  const free = raw.freeMinutesPerDay;
+  return {
+    planRules,
+    freeMinutesPerDay: typeof free === 'number' && Number.isInteger(free) && free >= 0 && free <= 1440 ? free : null,
   };
 }

@@ -8,7 +8,7 @@ import React, { useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { decreaseTo, increase, logDone, validatePlan, type LocalTime, type Plan } from '@thekra/practice-core';
+import { decreaseTo, deletePlan, increase, logDone, normalize, updatePlan, validatePlan, type LocalTime, type Plan } from '@thekra/practice-core';
 import { useEvidence, usePracticeCatalog } from '@/lib/api/practice';
 import { pick } from '@/lib/practice/catalog-types';
 import { ruleToWeekdays, sortSlots, weekdaysToRule } from '@/lib/practice/format';
@@ -26,9 +26,7 @@ export default function PlanScreen() {
   const locale = useUiLocale();
   const hydrated = usePracticeStore((s) => s.hydrated);
   const plan = usePracticeStore((s) => s.store.plans.find((p) => p.id === id));
-  const prefs = usePracticeStore((s) => s.prefs);
   const setStore = usePracticeStore((s) => s.setStore);
-  const setPrefs = usePracticeStore((s) => s.setPrefs);
   const catalog = usePracticeCatalog(locale);
   const habits = catalog.data?.habits ?? [];
   const habit = plan ? habitFor(plan, habits) : undefined;
@@ -41,12 +39,12 @@ export default function PlanScreen() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const ruleKey = plan ? JSON.stringify(planRule(plan, prefs, habits)) : '';
+  const ruleKey = plan ? JSON.stringify(planRule(plan, habits)) : '';
   useEffect(() => {
     if (!plan) return;
     setSlots(plan.slots);
     setActiveDays(plan.activeDaysPerWeek);
-    setWeekdays(ruleToWeekdays(planRule(plan, prefs, habits)));
+    setWeekdays(ruleToWeekdays(planRule(plan, habits)));
     // Reset the editors when the stored plan's settings change, not on every log.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [plan?.id, plan?.slots.join(','), plan?.activeDaysPerWeek, ruleKey]);
@@ -71,24 +69,24 @@ export default function PlanScreen() {
   const title = habit ? pick(habit, 'title', locale) : plan.title;
   const timeHint = habit ? pick(habit, 'timeHint', locale) : '';
 
+  // practice-core `updatePlan` keeps `updatedAt` right for sync (a log alone does not bump it).
   function update(fn: (p: Plan) => Plan) {
-    setStore((s) => ({ ...s, plans: s.plans.map((p) => (p.id === id ? fn(p) : p)) }));
+    setStore((s) => updatePlan(s, id as string, fn));
   }
 
   function saveSettings() {
     setError(null);
-    const next: Plan = { ...plan!, slots: sortSlots(slots), activeDaysPerWeek: activeDays };
-    if (validatePlan(next) !== null) {
-      setError(t('practice.add.noSlots'));
-      return;
-    }
     const rule = weekdays ? weekdaysToRule(weekdays) : null;
     if (weekdays && !rule) {
       setError(t('practice.add.noReminderDays'));
       return;
     }
+    const next: Plan = { ...plan!, slots: sortSlots(slots), activeDaysPerWeek: activeDays, ...(rule ? { rule } : {}) };
+    if (validatePlan(next) !== null) {
+      setError(t('practice.add.noSlots'));
+      return;
+    }
     update(() => next);
-    if (rule) setPrefs((p) => ({ ...p, planRules: { ...p.planRules, [plan!.id]: rule } }));
     setSaved(true);
     setTimeout(() => setSaved(false), 1500);
   }
@@ -100,12 +98,7 @@ export default function PlanScreen() {
         text: t('common.delete'),
         style: 'destructive',
         onPress: () => {
-          setStore((s) => ({ ...s, plans: s.plans.filter((p) => p.id !== id) }));
-          setPrefs((p) => {
-            const planRules = { ...p.planRules };
-            delete planRules[id as string];
-            return { ...p, planRules };
-          });
+          setStore((s) => deletePlan(s, id as string));
           router.back();
         },
       },
@@ -153,7 +146,7 @@ export default function PlanScreen() {
           <Row style={{ flexWrap: 'wrap' }}>
             <Button
               label={t('practice.relapse.action', { amount: amountLabel(view.relapseAmount) })}
-              onPress={() => update((p) => decreaseTo(p, view.relapseAmount, d))}
+              onPress={() => update((p) => decreaseTo(normalize(p, d), view.relapseAmount, d))}
               compact
             />
             <Button label={t('practice.relapse.keep')} onPress={() => setRelapseDismissed(true)} variant="ghost" compact />
@@ -165,7 +158,7 @@ export default function PlanScreen() {
         <Card tone="info">
           <Body>{t('practice.increase.title')}</Body>
           <Body muted>{t('practice.increase.body', { amount: amountLabel(view.nextAmount) })}</Body>
-          <Button label={t('practice.increase.action')} onPress={() => update((p) => increase(p, d))} compact />
+          <Button label={t('practice.increase.action')} onPress={() => update((p) => increase(normalize(p, d), d))} compact />
         </Card>
       ) : null}
 

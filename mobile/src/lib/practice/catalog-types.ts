@@ -4,7 +4,7 @@
  * sin-programs.yaml (reviewed content; the app never writes religious text of its own).
  */
 
-import type { PlanUnit, Rule, SinCategory, Stage, SyncPayload } from '@thekra/practice-core';
+import type { PlanUnit, Rule, SinCategory, Stage, VaultPayload } from '@thekra/practice-core';
 
 export type Basis = 'text' | 'organizational';
 
@@ -92,19 +92,14 @@ export interface CalendarOccasionDto {
   hijri: { year: number; month: number; day: number };
 }
 
-/** Opaque server version of the synced practice store (last-writer protection). */
-export type PracticeVersion = number;
+/** `GET /v1/me/sin-vault` → `vault` (contract §3): ciphertext only, never readable by the server. */
+export type RemoteVault = Omit<VaultPayload, 'kdf'> & { kdf: string; updatedAt?: string };
 
-export interface RemotePractice {
-  store: SyncPayload | null;
-  version: PracticeVersion;
-}
-
-export interface AccountExport {
-  user: unknown;
-  favorites: unknown;
-  practice: unknown;
-}
+/**
+ * `GET /v1/auth/me/export`: user, favorites, settings, plans, logs, relatives, contacts and the vault ciphertext.
+ * The app only re-shares it as JSON, so the shape is kept open.
+ */
+export type AccountExport = Record<string, unknown>;
 
 export type UiLocale = 'ar' | 'en';
 

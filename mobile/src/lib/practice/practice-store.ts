@@ -1,10 +1,15 @@
 /**
- * On-device practice state (Zustand). The practice-core Store (plans, relatives, sin programs, settings)
- * is persisted as practice-core `serializeStore` JSON in AsyncStorage under `thekra.practice.v1`; the
- * app-only prefs live under `thekra.practice.prefs.v1`.
+ * On-device practice state (Zustand). The practice-core Store v2 (plans, relatives, sin programs, settings,
+ * tombstones, sync bookkeeping) is persisted as practice-core `serializeStore` JSON in AsyncStorage under
+ * `thekra.practice.v1` (the key name is kept; `parseStore` upgrades a v1 envelope to v2). The app-only prefs
+ * live under `thekra.practice.prefs.v1`.
  *
- * Privacy: the sin programs are in this store because practice-core keeps one envelope, but they never
- * leave the device. Only sync.ts reads the store for the network, and it sends `exportForSync` (no programs).
+ * Every edit goes through practice-core's store helpers (`updatePlan`, `upsertPlan`, `deletePlan`,
+ * `upsertRelative`, `updateRelative`, `deleteRelative`, `undoContact`, `updateSettings`) inside `setStore`, so
+ * `updatedAt` and the tombstones that sync needs stay right.
+ *
+ * Privacy: the sin programs are in this store in clear, on this device only. They leave it only sealed in the
+ * vault (vault-runner.ts); sync bodies are built by practice-core `buildSyncRequest`, which has no programs.
  * Never log the store.
  */
 
@@ -12,27 +17,56 @@ import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   emptyStore,
-  normalize,
   parseStore,
   serializeStore,
   todayFrom,
+  updateSettings,
   type Store,
 } from '@thekra/practice-core';
-import { DEFAULT_PREFS, PREFS_KEY, parsePrefs, type PracticePrefs } from './prefs';
+import { DEFAULT_PREFS, PREFS_KEY, legacyPrefs, parsePrefs, type PracticePrefs } from './prefs';
 
 export const STORE_KEY = 'thekra.practice.v1';
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * One-time migration of data written by the first app version (before Store v2 / the sync contract):
+ * plan ids were catalog habit keys and relative ids were not UUIDs, but the server uses the client id as a
+ * global primary key. Such ids get a fresh UUID (the habit key moves to `habitKey`), the reminder rule kept in
+ * prefs moves to `plan.rule`, and the free minutes move to the settings. These items were never synced (that
+ * API did not exist), so no tombstone is written for the old ids.
+ */
+export function migrateLegacy(store: Store, rawPrefs: unknown, newId: () => string): { store: Store; changed: boolean } {
+  const legacy = legacyPrefs(rawPrefs);
+  let changed = false;
+  const plans = store.plans.map((p) => {
+    if (UUID_RE.test(p.id)) return p;
+    changed = true;
+    const rule = p.rule ?? legacy.planRules[p.id];
+    return { ...p, id: newId(), habitKey: p.habitKey ?? p.id, ...(rule ? { rule } : {}) };
+  });
+  const relatives = store.relatives.map((r) => {
+    if (UUID_RE.test(r.id)) return r;
+    changed = true;
+    return { ...r, id: newId() };
+  });
+  let next: Store = changed ? parseStore({ ...store, plans, relatives }) : store;
+  if (legacy.freeMinutesPerDay !== null && next.settings.freeMinutesPerDay === undefined) {
+    next = updateSettings(next, { freeMinutesPerDay: legacy.freeMinutesPerDay });
+    changed = true;
+  }
+  return { store: next, changed };
+}
 
 interface PracticeState {
   hydrated: boolean;
   store: Store;
   prefs: PracticePrefs;
   hydrate: () => Promise<void>;
-  /** Applies `fn` and persists. `fn` must return a new store (practice-core functions are pure). */
+  /** Applies `fn` (practice-core store helpers) and persists. Errors from invalid edits are swallowed. */
   setStore: (fn: (s: Store) => Store) => void;
   setPrefs: (fn: (p: PracticePrefs) => PracticePrefs) => void;
-  /** Ends seasons whose date has passed (practice-core `normalize`). */
-  normalizeToday: () => void;
-  /** «احذف كل بيانات البرنامج»: removes every sin program, check-in and note from the device now. */
+  /** Removes every sin program, check-in and note from this device now (local part of the wipe). */
   wipePrograms: () => Promise<void>;
 }
 
@@ -47,29 +81,55 @@ export function today(): string {
   return todayFrom(new Date());
 }
 
+let idFactory: () => string = () => {
+  // Lazy so that Jest can import this module without the native expo-crypto module.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { newId } = require('../crypto/install') as typeof import('../crypto/install');
+  return newId();
+};
+
+/** Id generator for new plans and relatives (UUID v4 from expo-crypto). Tests may replace it. */
+export function newPracticeId(): string {
+  return idFactory();
+}
+
+export function setIdFactory(fn: () => string): void {
+  idFactory = fn;
+}
+
 export const usePracticeStore = create<PracticeState>((set, get) => ({
   hydrated: false,
   store: emptyStore(),
-  prefs: { ...DEFAULT_PREFS, planRules: {} },
+  prefs: { ...DEFAULT_PREFS },
 
   hydrate: async () => {
     if (get().hydrated) return;
     let store = emptyStore();
     let prefs = parsePrefs(null);
+    let rawPrefs: string | null = null;
     try {
-      const [rawStore, rawPrefs] = await Promise.all([AsyncStorage.getItem(STORE_KEY), AsyncStorage.getItem(PREFS_KEY)]);
+      const [rawStore, p] = await Promise.all([AsyncStorage.getItem(STORE_KEY), AsyncStorage.getItem(PREFS_KEY)]);
+      rawPrefs = p;
       if (rawStore) store = parseStore(rawStore);
       if (rawPrefs) prefs = parsePrefs(rawPrefs);
     } catch {
       // Unreadable storage: start empty rather than crash.
     }
-    const d = today();
-    store = { ...store, plans: store.plans.map((p) => normalize(p, d)) };
-    set({ hydrated: true, store, prefs });
+    const migrated = migrateLegacy(store, rawPrefs, newPracticeId);
+    set({ hydrated: true, store: migrated.store, prefs });
+    if (migrated.changed) {
+      void persist(STORE_KEY, serializeStore(migrated.store));
+      void persist(PREFS_KEY, JSON.stringify(prefs));
+    }
   },
 
   setStore: (fn) => {
-    const next = parseStore(fn(get().store));
+    let next: Store;
+    try {
+      next = parseStore(fn(get().store));
+    } catch {
+      return; // an invalid edit (the helpers throw RangeError) changes nothing
+    }
     set({ store: next });
     void persist(STORE_KEY, serializeStore(next));
   },
@@ -80,18 +140,9 @@ export const usePracticeStore = create<PracticeState>((set, get) => ({
     void persist(PREFS_KEY, JSON.stringify(next));
   },
 
-  normalizeToday: () => {
-    const d = today();
-    const { store } = get();
-    const plans = store.plans.map((p) => normalize(p, d));
-    if (plans.some((p, i) => p !== store.plans[i] && JSON.stringify(p) !== JSON.stringify(store.plans[i]))) {
-      get().setStore((s) => ({ ...s, plans }));
-    }
-  },
-
   wipePrograms: async () => {
     const next: Store = { ...get().store, programs: [] };
-    const prefs: PracticePrefs = { ...get().prefs, sinReminders: false };
+    const prefs: PracticePrefs = { ...get().prefs, sinReminders: false, rememberVaultKey: false };
     set({ store: next, prefs });
     await persist(STORE_KEY, serializeStore(next));
     await persist(PREFS_KEY, JSON.stringify(prefs));

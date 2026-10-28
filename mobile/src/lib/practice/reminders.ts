@@ -78,13 +78,15 @@ export interface ReminderInput {
   limit?: number;
 }
 
-export function habitFor(plan: Pick<Plan, 'id'>, habits: readonly CatalogHabit[]): CatalogHabit | undefined {
-  return habits.find((h) => h.key === plan.id);
+/** The catalog habit of a plan (`habitKey`; plans from tests or old data may carry the key as their id). */
+export function habitFor(plan: Pick<Plan, 'id' | 'habitKey'>, habits: readonly CatalogHabit[]): CatalogHabit | undefined {
+  const key = plan.habitKey ?? plan.id;
+  return habits.find((h) => h.key === key);
 }
 
-/** The reminder rule of a plan: the user's choice, else the catalog default, else daily. */
-export function planRule(plan: Pick<Plan, 'id'>, prefs: Pick<PracticePrefs, 'planRules'>, habits: readonly CatalogHabit[]): Rule {
-  return prefs.planRules[plan.id] ?? habitFor(plan, habits)?.defaultRule ?? { kind: 'daily' };
+/** The reminder rule of a plan: its own `rule` (synced), else the catalog default, else daily. */
+export function planRule(plan: Pick<Plan, 'id' | 'habitKey' | 'rule'>, habits: readonly CatalogHabit[]): Rule {
+  return plan.rule ?? habitFor(plan, habits)?.defaultRule ?? { kind: 'daily' };
 }
 
 /** «2 دقيقة», «ركعتان», «3 × ركعتان», "33 times". Western digits. */
@@ -101,12 +103,12 @@ export function formatAmount(
 }
 
 function habitReminders(input: ReminderInput, end: LocalDate): PlannedReminder[] {
-  const { store, prefs, habits, today, now, locale, texts } = input;
+  const { store, habits, today, now, locale, texts } = input;
   const out: PlannedReminder[] = [];
   for (const plan of store.plans) {
     let dates: LocalDate[];
     try {
-      dates = occurrences(planRule(plan, prefs, habits), today, end, { hijriOffset: store.settings.hijriOffset });
+      dates = occurrences(planRule(plan, habits), today, end, { hijriOffset: store.settings.hijriOffset });
     } catch {
       continue; // e.g. a Hijri rule on a runtime without Umm al-Qura: no reminder rather than a wrong one
     }

@@ -11,6 +11,7 @@ import {
   createPlan,
   diffDays,
   isHijriSupported,
+  normalize,
   nextStep,
   relapseSuggestion,
   requiredOn,
@@ -21,6 +22,7 @@ import {
   type LocalDate,
   type LocalTime,
   type Plan,
+  type Rule,
 } from '@thekra/practice-core';
 import type { CatalogHabit, UiLocale } from './catalog-types';
 import { pick } from './catalog-types';
@@ -46,7 +48,10 @@ export interface PlanView {
   inSeason: boolean;
 }
 
-export function planView(plan: Plan, today: LocalDate): PlanView {
+export function planView(stored: Plan, today: LocalDate): PlanView {
+  // A season whose date has passed is over (practice-core `normalize`); computed here, not written back, because
+  // a season's end is derived from the date on every device (practice-core README, Store v2).
+  const plan = normalize(stored, today);
   const required = requiredOn(plan, today);
   const done = plan.log[today] ?? 0;
   const from = addDays(today, -(MONTH_DAYS - 1));
@@ -87,16 +92,20 @@ export function startAmount(habit: CatalogHabit, distance: Distance, fallback: (
 }
 
 export function planFromHabit(args: {
+  id: string;
   habit: CatalogHabit;
   amount: number;
   slots: LocalTime[];
   activeDaysPerWeek: number;
+  rule: Rule;
   today: LocalDate;
   locale: UiLocale;
 }): Plan {
   const { habit } = args;
   return createPlan({
-    id: habit.key,
+    id: args.id,
+    habitKey: habit.key,
+    rule: args.rule,
     deedSlug: habit.deed,
     title: pick(habit, 'title', args.locale),
     unit: habit.unit,

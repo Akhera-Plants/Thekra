@@ -117,9 +117,11 @@ describe('planReminders — habits', () => {
     expect(list[0]).toMatchObject({ title: 'صلاة الضحى', body: 'المطلوب اليوم: ركعتان', time: '09:30' });
   });
 
-  it('the user rule in prefs wins over the catalog default', () => {
-    const store = { ...emptyStore(), plans: [plan(duha, 1, ['09:30'])] };
-    const list = planReminders(input(store, { planRules: { duha: { kind: 'weekdays', days: [5] } } }));
+  it('the plan rule (synced, plan.rule) wins over the catalog default; a UUID plan finds its habit by habitKey', () => {
+    const p = { ...plan(duha, 1, ['09:30']), id: '7b0c1d9e-3f43-4a7e-9c55-0d6f1b2a3c4d', habitKey: 'duha', rule: { kind: 'weekdays' as const, days: [5] } };
+    const store = { ...emptyStore(), plans: [p] };
+    const list = planReminders(input(store));
+    expect(list[0]?.title).toBe('صلاة الضحى');
     expect(list.map((r) => r.date)).toEqual(['2026-10-30', '2026-11-06']);
   });
 

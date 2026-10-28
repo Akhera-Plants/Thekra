@@ -16,6 +16,11 @@ module.exports = {
       'babel-jest',
       { configFile: path.resolve(__dirname, 'babel.config.js') },
     ],
+    // ESM .js from node_modules that is not ignored below (@noble/* for the vault).
+    '^.+\\.m?js$': [
+      'babel-jest',
+      { configFile: path.resolve(__dirname, 'babel.config.js') },
+    ],
   },
   moduleNameMapper: {
     // Resolve @/* path alias
@@ -23,7 +28,9 @@ module.exports = {
     // expo-constants pulls this ESM virtual module
     '^expo/virtual/env$': '<rootDir>/src/__tests__/mocks/expo-env.js',
   },
+  // pnpm keeps packages under node_modules/.pnpm/<name>@<v>/node_modules/<name>. @noble/* (used by
+  // practice-core's vault) is ESM-only, so it is transformed too.
   transformIgnorePatterns: [
-    '/node_modules/(?!(expo-constants|expo-modules-core)/)',
+    '/node_modules/(?!(\\.pnpm/)?(expo-constants|expo-modules-core|@noble))',
   ],
 };
