@@ -309,7 +309,6 @@ Playwright: import from `node_modules/.pnpm/@playwright+test@…/…/index.mjs` 
 | Reviewer platform, accounts/login, التحقيق | deferred | next phase |
 | Reminders + calendar, «أعني على طاعة», sin-leaving program, browser extension, mobile app, sharing | owner decisions D1–D8 | plan only: `docs/plan/2026-10-features-roadmap.md`; sin program waits for the researcher's transcript and the sheikh |
 | Web push is temporary (QStash + daily Vercel cron) | engineering, **remind the owner** | when the API moves off Vercel: `docs/deploy/MIGRATION_OFF_VERCEL.md` |
-| Drop the empty leftover `UserPracticeStore` table from production | **owner approval** | from a preview deploy; details in `MIGRATION_OFF_VERCEL.md` §3 |
 | Prisma 7 migration and other majors | planned | `DEPRECATIONS.md` |
 | Weak link: army-instructions hadith → `tadhib-hayawan` | low | |
 | Low security items: Prisma error details expose field names; `/branches/:number/quotes` link-note filter | low | |

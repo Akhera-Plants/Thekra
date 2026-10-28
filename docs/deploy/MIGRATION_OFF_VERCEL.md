@@ -34,11 +34,12 @@ The Vercel Preview environment uses the production `DATABASE_URL`, and every Pre
 with `20261028120000_add_user_practice_store`). Give previews their own database (a Neon branch, or a staging DB on
 the new server).
 
-## 3. Leftover table from that preview
+## 3. Leftover table from that preview (done)
 
-`UserPracticeStore` (empty, unused, from the migration above, which is no longer in the repository) is still in the
-production database together with its `_prisma_migrations` row. Dropping it needs the owner's explicit approval
-(backup first).
+`UserPracticeStore` (empty, unused, from the migration above, which is no longer in the repository) was dropped from
+production on 2026-10-28 with the owner's approval, together with its `_prisma_migrations` row, in one transaction
+that refused to run if the table held any row. The backup (structure, 0 rows, the history row and the original
+`CREATE TABLE` script) was handed to the owner. Nothing to do here when moving.
 
 ## 4. Other Vercel-only pieces
 
