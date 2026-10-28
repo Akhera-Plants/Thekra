@@ -235,8 +235,8 @@ Playwright: import from `node_modules/.pnpm/@playwright+test@…/…/index.mjs` 
   one of them — keep both in sync so either deploys the same code.
 - **Vercel (Hobby)**: project **`thekra`** = API (`https://thekra.vercel.app`, Root Directory `backend`,
   `framework: null`, rewrite everything to `/api`, region `fra1`); project **`thekra-web`** = Next.js
-  (`https://thekra-web.vercel.app`, Root Directory `frontend`). A leftover duplicate `thekra-api` project should be
-  deleted. Both enable "include files outside the Root Directory" and Node 24.x. Install is Vercel's own pnpm
+  (`https://thekra-web.vercel.app`, Root Directory `frontend`). The duplicate `thekra-api` project was
+  deleted by the owner (2026-10-28). Both enable "include files outside the Root Directory" and Node 24.x. Install is Vercel's own pnpm
   workspace install (a custom `cd ../..` install command broke it — don't add one).
 - **Neon (free)**: Postgres 18, `eu-central-1`. Created through the Vercel integration; the integration's extra
   variables (`PG*`, `POSTGRES_*`) are unused — we use `DATABASE_URL` (pooled) and `DIRECT_URL` (= the unpooled
@@ -284,9 +284,7 @@ Playwright: import from `node_modules/.pnpm/@playwright+test@…/…/index.mjs` 
 | Push the release copy after the API deploy (Musnad Ahmad / Ibn Hibban grades: 550 hadith, batch `2026-10-arnaut-tahqiq`) | **owner** | revert: `pnpm --filter backend import:book revert-arnaut-tahqiq`; review list `docs/taxonomy/arnaut-tahqiq-report.tsv` |
 | Review `prisma/taxonomy/text-review.yaml` (818 possible fragments, audit B03) | owner/sheikh | COMPLETE or FRAGMENT; FRAGMENT needs the full matn from the cited edition |
 | Switching back to Arabic lands on `/ar/...` (`e2e/direction.spec.ts` fails) | engineering | pre-existing on live |
-| `NEXT_PUBLIC_API_URL` also for the **Preview** environment | owner | preview builds fail without it |
 | Rotate the Neon owner password (was pasted in chat) | owner | then update `DATABASE_URL`/`DIRECT_URL` and redeploy |
-| Delete the duplicate Vercel project `thekra-api` | owner | |
 | 2 HadeethEnc athar from al-Adhkar (hidden since the athar fix; no speaker/decision) | owner/sheikh | review them in the athar sheet if they should return |
 | Ibn Abi al-Dunya title «الشرف في المنازل» vs corpus «الإشراف في منازل الأشراف» | owner/sheikh | |
 | Close `/auth/register` until the accounts phase? | owner | unanswered |
