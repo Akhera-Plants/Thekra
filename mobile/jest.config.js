@@ -9,6 +9,8 @@ const path = require('path');
 module.exports = {
   testEnvironment: 'node',
   testMatch: ['**/src/__tests__/**/*.test.ts'],
+  // @thekra/practice-core is TypeScript source with `.js` relative specifiers (see jest.resolver.js).
+  resolver: '<rootDir>/jest.resolver.js',
   transform: {
     '^.+\\.tsx?$': [
       'babel-jest',

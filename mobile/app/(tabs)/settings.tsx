@@ -1,18 +1,24 @@
 /**
  * Settings tab — language toggle (with RTL), theme, account, offline cache.
  * mobile-plan §3 (Settings screen), §4 (RTL).
+ * Signed in: practice sync now, «تصدير بياناتي» (GET /v1/auth/me/export shared as JSON) and «حذف الحساب»
+ * (password → DELETE /v1/auth/me → local sign-out; the practice data on this device is kept).
  */
 
 import React, { useState } from 'react';
 import {
   View,
   Text,
+  TextInput,
   TouchableOpacity,
   Switch,
   StyleSheet,
   SafeAreaView,
   ScrollView,
   Alert,
+  Modal,
+  Share,
+  ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -23,6 +29,10 @@ import { applyRtlIfNeeded, type SupportedLocale } from '@/lib/i18n';
 import { setApiLocale } from '@/lib/api-client';
 import { Colors, FontSize, Radius, Spacing } from '@/lib/tokens';
 import Constants from 'expo-constants';
+import { deleteAccount, exportAccountData } from '@/lib/api/practice';
+import { syncPractice, type SyncResult } from '@/lib/practice/sync-runner';
+import { queryKeys } from '@/lib/query-keys';
+import { ApiError } from '@/lib/types/api';
 
 const LOCALE_STORAGE_KEY = 'thekra_locale';
 
@@ -30,9 +40,50 @@ export default function SettingsScreen() {
   const { t, i18n } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+  const clearSession = useAuthStore((s) => s.clearSession);
   const qc = useQueryClient();
 
   const [showTranslations, setShowTranslations] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<SyncResult | 'running' | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [password, setPassword] = useState('');
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  async function handleSyncNow() {
+    if (!user) return;
+    setSyncStatus('running');
+    setSyncStatus(await syncPractice(user.id));
+  }
+
+  async function handleExport() {
+    try {
+      const data = await exportAccountData();
+      await Share.share({ message: JSON.stringify(data, null, 2) });
+    } catch {
+      Alert.alert(t('settings.exportFailed'));
+    }
+  }
+
+  async function handleDeleteAccount() {
+    if (!password) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteAccount(password);
+      // Signed-out locally; the account's synced copies in the cache go, this device's practice data stays.
+      await clearSession();
+      qc.removeQueries({ queryKey: queryKeys.favorites.all });
+      setDeleteOpen(false);
+      setPassword('');
+      Alert.alert(t('settings.deleted'));
+    } catch (e) {
+      const wrong = e instanceof ApiError && (e.status === 401 || e.status === 403);
+      setDeleteError(wrong ? t('settings.wrongPassword') : t('settings.deleteFailed'));
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   const currentLocale = (i18n.language as SupportedLocale) ?? 'ar';
 
@@ -143,6 +194,50 @@ export default function SettingsScreen() {
           )}
         </Section>
 
+        {/* Practice data (signed in) */}
+        {user ? (
+          <Section title={t('settings.practice')}>
+            <Row label={t('settings.syncNote')} />
+            <TouchableOpacity
+              style={styles.rowBtn}
+              onPress={() => void handleSyncNow()}
+              accessibilityRole="button"
+              disabled={syncStatus === 'running'}
+            >
+              <Text style={styles.rowBtnText}>{t('settings.syncNow')}</Text>
+              {syncStatus === 'running' ? (
+                <ActivityIndicator color={Colors.primary} />
+              ) : syncStatus ? (
+                <Text style={styles.statusText}>
+                  {t(
+                    syncStatus === 'ok'
+                      ? 'settings.syncOk'
+                      : syncStatus === 'offline'
+                        ? 'settings.syncOffline'
+                        : syncStatus === 'conflict'
+                          ? 'settings.syncConflict'
+                          : 'settings.syncError',
+                  )}
+                </Text>
+              ) : null}
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.rowBtn} onPress={() => void handleExport()} accessibilityRole="button">
+              <Text style={styles.rowBtnText}>{t('settings.exportData')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.rowBtn}
+              onPress={() => {
+                setDeleteError(null);
+                setPassword('');
+                setDeleteOpen(true);
+              }}
+              accessibilityRole="button"
+            >
+              <Text style={[styles.rowBtnText, { color: Colors.error }]}>{t('settings.deleteAccount')}</Text>
+            </TouchableOpacity>
+          </Section>
+        ) : null}
+
         {/* Offline cache */}
         <Section title="">
           <TouchableOpacity
@@ -159,6 +254,42 @@ export default function SettingsScreen() {
           {t('settings.version')} {version}
         </Text>
       </ScrollView>
+
+      <Modal visible={deleteOpen} transparent animationType="fade" onRequestClose={() => setDeleteOpen(false)}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>{t('settings.deleteAccount')}</Text>
+            <Text style={styles.modalBody}>{t('settings.deleteAccountBody')}</Text>
+            <TextInput
+              value={password}
+              onChangeText={setPassword}
+              placeholder={t('settings.passwordPlaceholder')}
+              secureTextEntry
+              autoCapitalize="none"
+              autoComplete="current-password"
+              textContentType="password"
+              style={styles.modalInput}
+              accessibilityLabel={t('settings.passwordPlaceholder')}
+            />
+            {deleteError ? <Text style={styles.modalError}>{deleteError}</Text> : null}
+            <TouchableOpacity
+              style={[styles.dangerBtn, (!password || deleting) && { opacity: 0.5 }]}
+              onPress={() => void handleDeleteAccount()}
+              disabled={!password || deleting}
+              accessibilityRole="button"
+            >
+              {deleting ? (
+                <ActivityIndicator color={Colors.textInverse} />
+              ) : (
+                <Text style={styles.dangerBtnText}>{t('settings.deleteConfirm')}</Text>
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.outlineBtn} onPress={() => setDeleteOpen(false)} accessibilityRole="button">
+              <Text style={styles.outlineBtnText}>{t('common.cancel')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -234,6 +365,39 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   outlineBtnText: { color: Colors.textMuted, fontSize: FontSize.base },
+  rowBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: Spacing['4'],
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.separator,
+  },
+  rowBtnText: { fontSize: FontSize.base, color: Colors.primary, fontWeight: '600' },
+  statusText: { fontSize: FontSize.sm, color: Colors.textMuted },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: Colors.overlay,
+    justifyContent: 'center',
+    padding: Spacing['6'],
+  },
+  modalCard: {
+    backgroundColor: Colors.background,
+    borderRadius: Radius.lg,
+    padding: Spacing['6'],
+    gap: Spacing['3'],
+  },
+  modalTitle: { fontSize: FontSize.lg, fontWeight: '700', color: Colors.text },
+  modalBody: { fontSize: FontSize.base, color: Colors.textMuted },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.md,
+    padding: Spacing['3'],
+    fontSize: FontSize.base,
+    color: Colors.text,
+  },
+  modalError: { fontSize: FontSize.sm, color: Colors.error },
   version: {
     textAlign: 'center',
     color: Colors.textMuted,

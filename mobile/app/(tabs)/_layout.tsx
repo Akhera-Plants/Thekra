@@ -1,6 +1,6 @@
 /**
  * Bottom tab bar layout.
- * Tabs: Home · Browse · Favorites · Settings
+ * Tabs: Home · My habits · Browse · Favorites · Settings
  */
 
 import React from 'react';
@@ -29,6 +29,15 @@ export default function TabLayout() {
           title: t('tabs.home'),
           tabBarIcon: ({ color }) => (
             <TabIcon label="🏠" color={color as string} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="habits"
+        options={{
+          title: t('tabs.habits'),
+          tabBarIcon: ({ color }) => (
+            <TabIcon label="🌱" color={color as string} />
           ),
         }}
       />

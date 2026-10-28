@@ -25,6 +25,11 @@ const API_URL =
   process.env['EXPO_PUBLIC_API_URL'] ??
   'http://localhost:3001';
 
+/** Base URL of the API (no `/v1`), from `EXPO_PUBLIC_API_URL` via app.config.ts. */
+export function getApiBaseUrl(): string {
+  return API_URL.replace(/\/+$/, '');
+}
+
 export const SECURE_STORE_REFRESH_KEY = 'thekra_refresh_token';
 
 // ── Locale ────────────────────────────────────────────────────────────────────
@@ -176,6 +181,7 @@ function attachInterceptors(client: AxiosInstance): void {
           message: apiError?.message ?? error.message,
           status,
           details: asValidationDetails(apiError?.details),
+          rawDetails: apiError?.details,
           requestId: apiError?.requestId,
         }),
       );

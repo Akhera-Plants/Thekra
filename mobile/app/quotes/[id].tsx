@@ -22,6 +22,7 @@ import { GradeBadge } from '@/components/GradeBadge';
 import { ErrorState } from '@/components/ErrorState';
 import { Colors, FontSize, LineHeight, Radius, Spacing } from '@/lib/tokens';
 import { QuoteType } from '@/lib/types/enums';
+import { quoteShareText } from '@/lib/share/quote-share';
 
 export default function QuoteDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -33,20 +34,21 @@ export default function QuoteDetailScreen() {
 
   async function handleShare() {
     if (!quote) return;
-
-    let attribution = quote.source.nameAr ?? quote.source.name;
-    if (quote.type === QuoteType.QURAN_VERSE && quote.quran) {
-      const { surahNameAr, surahNumber, ayahNumber } = quote.quran;
-      if (surahNameAr && surahNumber && ayahNumber) {
-        attribution = `${surahNameAr} ${surahNumber}:${ayahNumber}`;
-      }
-    } else if (quote.type === QuoteType.HADITH && quote.hadith?.reference) {
-      attribution = `${attribution} — ${quote.hadith.reference}`;
+    // Same text as the QuoteCard share: displayed text + attribution (+ athar label) + public page link.
+    const message = quoteShareText(quote, {
+      locale: isAr ? 'ar' : 'en',
+      showTranslation: false,
+      labels: {
+        atharNotice: t('share.atharNotice'),
+        atharNarrated: (speaker) => t('share.atharNarrated', { speaker }),
+        grade: { SAHIH: t('grade.SAHIH'), HASAN: t('grade.HASAN'), DAIF: t('grade.DAIF'), MAWDU: t('grade.MAWDU') },
+      },
+    });
+    try {
+      await Share.share({ message });
+    } catch {
+      // dismissed
     }
-
-    const text = `${quote.textAr}\n\n― ${attribution}\n\nthekra://quotes/${quote.id}`;
-
-    await Share.share({ message: text });
   }
 
   if (isLoading) {

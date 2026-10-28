@@ -26,6 +26,7 @@ import i18n from '@/lib/i18n';
 import { setApiLocale } from '@/lib/api-client';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { Colors, FontFamily } from '@/lib/tokens';
+import { usePracticeLifecycle } from '@/lib/practice/use-practice-lifecycle';
 
 // Keep splash visible until fonts + bootstrap finish.
 void SplashScreen.preventAutoHideAsync();
@@ -115,11 +116,19 @@ export default function RootLayout() {
           <Stack.Screen name="good-deeds" options={{ headerShown: false }} />
           <Stack.Screen name="quotes" options={{ headerShown: false }} />
           <Stack.Screen name="feelings" options={{ headerShown: false }} />
+          <Stack.Screen name="practice" options={{ headerShown: false }} />
           <Stack.Screen name="(auth)" options={{ headerShown: false, presentation: 'modal' }} />
           <Stack.Screen name="+not-found" />
         </Stack>
+        <PracticeLifecycle />
         <StatusBar style="auto" />
       </I18nextProvider>
     </PersistQueryClientProvider>
   );
+}
+
+/** Background work of the practice feature (store, local reminders, account sync). Renders nothing. */
+function PracticeLifecycle() {
+  usePracticeLifecycle();
+  return null;
 }

@@ -27,10 +27,12 @@ interface AuthState {
   login: (dto: LoginDto) => Promise<void>;
   register: (dto: RegisterDto) => Promise<void>;
   logout: () => Promise<void>;
+  /** Drops the session locally without calling /auth/logout (e.g. after the account was deleted). */
+  clearSession: () => Promise<void>;
   clearError: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isLoading: false,
   error: null,
@@ -93,8 +95,15 @@ export const useAuthStore = create<AuthState>((set) => ({
   logout: async () => {
     set({ isLoading: true });
     await logoutUser();
+    await get().clearSession();
+  },
+
+  clearSession: async () => {
     setAccessToken(null);
     await clearRefreshToken();
+    // Forget the account link of the practice sync; the practice data on this device is kept (local-first).
+    const { clearSyncMeta } = await import('../practice/sync-runner');
+    await clearSyncMeta();
     set({ user: null, isLoading: false, error: null });
   },
 

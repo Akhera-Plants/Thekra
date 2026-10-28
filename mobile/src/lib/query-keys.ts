@@ -47,6 +47,15 @@ export const queryKeys = {
   sources: {
     all: ['sources'] as const,
   },
+  practice: {
+    catalog: (lang: string) => ['practice', 'catalog', lang] as const,
+    /** `ids` is the sorted, comma-joined id list, so one list is one cache entry. */
+    evidence: (ids: string, lang: string) => ['practice', 'evidence', ids, lang] as const,
+  },
+  calendar: {
+    occasions: (from: string, to: string, hijriOffset: number, lang: string) =>
+      ['calendar', 'occasions', from, to, hijriOffset, lang] as const,
+  },
   session: ['session'] as const,
 } as const;
 
@@ -59,4 +68,7 @@ export const PERSISTED_QUERY_KEYS = [
   'good-deeds',
   'favorites',
   'quotes',
+  // Public catalog + evidence texts: needed offline for reminder titles and the habit screens.
+  // Nothing user-specific lives under this key.
+  'practice',
 ] as const;

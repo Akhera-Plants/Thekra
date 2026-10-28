@@ -7,6 +7,8 @@
  *  - Source attribution
  *  - Quran reference or hadith reference
  *  - Favorite toggle button
+ *  - Share action (React Native `Share`): the displayed text + attribution (+ «أثر، وليس حديثًا» for an
+ *    athar) + the public page link. Never anything about the user (roadmap §0.5, §6).
  *
  * Design: mobile-plan §3, frontend-plan §5 (QuoteCard equivalent).
  * Never convey grade by colour alone (ARCHITECTURE.md authenticity requirement).
@@ -18,6 +20,7 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
+  Share,
   useColorScheme,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -25,6 +28,7 @@ import { Colors, FontFamily, FontSize, LineHeight, Radius, Shadow, Spacing } fro
 import { GradeBadge } from './GradeBadge';
 import { QuoteType } from '@/lib/types/enums';
 import type { QuoteDto } from '@/lib/types/api';
+import { atharSpeakerLine, gradeCitationLine, quoteProvenance, quoteShareText, type QuoteShareLabels } from '@/lib/share/quote-share';
 
 interface QuoteCardProps {
   quote: QuoteDto;
@@ -32,6 +36,8 @@ interface QuoteCardProps {
   onToggleFavorite?: () => void;
   /** Show the English translation if available. */
   showTranslation?: boolean;
+  /** Show the share action (default true). */
+  shareable?: boolean;
 }
 
 export function QuoteCard({
@@ -39,6 +45,7 @@ export function QuoteCard({
   isFavorite = false,
   onToggleFavorite,
   showTranslation = false,
+  shareable = true,
 }: QuoteCardProps) {
   const { t, i18n } = useTranslation();
   const colorScheme = useColorScheme();
@@ -50,16 +57,34 @@ export function QuoteCard({
   const sourceName = quote.source.nameAr ?? quote.source.name;
 
   // Provenance line (varies by type)
-  let provenance: string | null = null;
-  if (quote.type === QuoteType.QURAN_VERSE && quote.quran) {
-    const { surahNameAr, surahNumber, ayahNumber } = quote.quran;
-    if (surahNameAr && surahNumber && ayahNumber) {
-      provenance = `${surahNameAr} (${surahNumber}:${ayahNumber})`;
+  const provenance = quoteProvenance(quote);
+  const isAthar = Boolean(quote.isAthar);
+
+  const shareLabels: QuoteShareLabels = {
+    atharNotice: t('share.atharNotice'),
+    atharNarrated: (speaker) => t('share.atharNarrated', { speaker }),
+    grade: {
+      SAHIH: t('grade.SAHIH'),
+      HASAN: t('grade.HASAN'),
+      DAIF: t('grade.DAIF'),
+      MAWDU: t('grade.MAWDU'),
+    },
+  };
+  const speakerLine = atharSpeakerLine(quote, shareLabels);
+  // «رواه بمعناه … · حكمه الأستاذ …»: marks a lecturer's retelling, as on the web card.
+  const gradeLine = gradeCitationLine(quote, isArabicUI ? 'ar' : 'en');
+
+  async function handleShare() {
+    const message = quoteShareText(quote, {
+      locale: isArabicUI ? 'ar' : 'en',
+      showTranslation: Boolean(showTranslation && quote.translation),
+      labels: shareLabels,
+    });
+    try {
+      await Share.share({ message });
+    } catch {
+      // The share sheet was dismissed or is unavailable: nothing to do.
     }
-  } else if (quote.type === QuoteType.HADITH && quote.hadith?.reference) {
-    provenance = quote.hadith.reference;
-  } else if (quote.type === QuoteType.BOOK_EXCERPT && quote.book?.bookTitle) {
-    provenance = quote.book.bookTitle;
   }
 
   const grade = quote.type === QuoteType.HADITH ? quote.hadith?.grade : null;
@@ -90,9 +115,25 @@ export function QuoteCard({
       {/* Footer: grade + source + provenance + favorite */}
       <View style={styles.footer}>
         <View style={styles.footerLeft}>
-          {/* Grade badge */}
-          {quote.type === QuoteType.HADITH && (
+          {/* Grade badge — an athar is never shown as hadith: it gets its own label instead */}
+          {isAthar ? (
+            <View style={styles.atharBadge} accessibilityRole="text">
+              <Text style={styles.atharBadgeText}>{t('share.atharNotice')}</Text>
+            </View>
+          ) : quote.type === QuoteType.HADITH ? (
             <GradeBadge grade={grade} compact />
+          ) : null}
+
+          {gradeLine && (
+            <Text style={[styles.source, isDark && styles.sourceDark]}>
+              {gradeLine}
+            </Text>
+          )}
+
+          {speakerLine && (
+            <Text style={[styles.source, isDark && styles.sourceDark]} numberOfLines={1}>
+              {speakerLine}
+            </Text>
           )}
 
           {/* Source */}
@@ -113,6 +154,19 @@ export function QuoteCard({
             </Text>
           )}
         </View>
+
+        {/* Share button */}
+        {shareable && (
+          <TouchableOpacity
+            onPress={() => void handleShare()}
+            style={styles.favoriteBtn}
+            accessibilityRole="button"
+            accessibilityLabel={t('share.action')}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Text style={styles.shareIcon}>↗</Text>
+          </TouchableOpacity>
+        )}
 
         {/* Favorite button */}
         {onToggleFavorite && (
@@ -221,5 +275,23 @@ const styles = StyleSheet.create({
   },
   favoriteStarActive: {
     color: Colors.primary,
+  },
+  shareIcon: {
+    fontSize: FontSize.xl,
+    color: Colors.textMuted,
+  },
+  atharBadge: {
+    paddingHorizontal: Spacing['2'],
+    paddingVertical: 2,
+    borderRadius: Radius.full,
+    alignSelf: 'flex-start',
+    backgroundColor: Colors.gradeUngradedBg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  atharBadgeText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: Colors.gradeUngraded,
   },
 });

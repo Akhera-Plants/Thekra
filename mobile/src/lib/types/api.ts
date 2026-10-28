@@ -38,7 +38,7 @@ export interface ApiValidationDetail {
 export interface ApiErrorBody {
   code: string;
   message: string;
-  details?: ApiValidationDetail[] | null;
+  details?: ApiValidationDetail[] | Record<string, unknown> | null;
   path?: string;
   method?: string;
   requestId?: string;
@@ -49,6 +49,8 @@ export class ApiError extends Error {
   readonly code: string;
   readonly status: number;
   readonly details: ApiValidationDetail[] | null;
+  /** `error.details` exactly as the API sent it (e.g. the current store on a 409 PRACTICE_VERSION_CONFLICT). */
+  readonly rawDetails: unknown;
   readonly requestId?: string;
 
   constructor(args: {
@@ -56,6 +58,7 @@ export class ApiError extends Error {
     message: string;
     status: number;
     details?: ApiValidationDetail[] | null;
+    rawDetails?: unknown;
     requestId?: string;
   }) {
     super(args.message);
@@ -63,6 +66,7 @@ export class ApiError extends Error {
     this.code = args.code;
     this.status = args.status;
     this.details = args.details ?? null;
+    this.rawDetails = args.rawDetails ?? null;
     this.requestId = args.requestId;
   }
 }
@@ -117,6 +121,11 @@ export interface QuoteDto {
   };
   source: QuoteSourceDto;
   tags: QuoteTagDto[];
+  /** A saying of a Companion/Successor: always labelled «أثر، وليس حديثًا», never shown as hadith. */
+  isAthar?: boolean;
+  atharSpeakerAr?: string | null;
+  /** SAID → «— speaker». NARRATED → «رواه speaker». */
+  atharAttributionKind?: 'SAID' | 'NARRATED' | null;
   external: { apiProvider: string | null; externalId: string | null } | null;
   isFavorite?: boolean;
   createdAt: string;

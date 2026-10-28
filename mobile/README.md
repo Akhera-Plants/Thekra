@@ -22,9 +22,25 @@ Use a device/simulator with the API reachable (localhost works on iOS simulator;
 
 ## Screens
 
-Tabs: Home · Browse · Favorites · Settings  
+Tabs: Home · My habits (عاداتي) · Browse · Favorites · Settings  
 Core: `sins/[slug]`, `good-deeds/[slug]`, `quotes/[id]`, `feelings/[tagSlug]`  
+Practice (`app/practice/`): `add` (أعِنّي على طاعة), `plan/[id]`, `duties` (فروضي وأدواري), `kinship` (صلة الرحم),
+`sin-program` (ترك المعصية), `calendar`  
 Auth: `(auth)/login`, `(auth)/register`
+
+## Practice features (roadmap docs/plan/2026-10-features-roadmap.md §2–§4, §6, §8)
+
+- Engine: `@thekra/practice-core` (workspace package, TypeScript source). Nothing is re-implemented in the app.
+- Storage: practice-core `Store` in AsyncStorage `thekra.practice.v1`; app-only prefs (reminder switches/times,
+  reminder rule per plan, free minutes) in `thekra.practice.prefs.v1`; sync meta in `thekra.practice.sync.v1`.
+- Privacy: the sin program («ترك المعصية») is local only — never synced (`exportForSync` has no `programs`),
+  never in a notification (title always «تذكرة من ذكرى»). Its evidence request asks for the evidence of **all**
+  catalog programs at once, so the request does not reveal the choice.
+- Local notifications (`expo-notifications`, no push): permission asked when a reminder switch is turned on;
+  a rolling 14-day window (max 60 pending, iOS limit) re-planned on every change and every foreground.
+- Account sync (signed in): GET/PUT `/v1/me/practice` with a version; see `src/lib/practice/sync.ts` for the
+  merge rule on 409.
+- Metro: `metro.config.js` maps `./x.js` → `./x.ts` only inside `packages/practice-core` (Jest: `jest.resolver.js`).
 
 ## Tests
 
