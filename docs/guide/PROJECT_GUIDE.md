@@ -94,7 +94,9 @@ These come from the owner and from the scholarly requirements of the project.
     transcription errors, each correction listed in `citations.yaml` and checked against the audio before publishing.
     What he retold in his own words (`mode: maana`) is labelled «بمعناه، كما رواه الأستاذ أنس شيخ اكريم», never shown as the
     Prophet's ﷺ exact wording. Athar stay under rule 4; Quran stays under rule 1. Planned as its
-    own `GradeSource` value and import batch (revertable), like `AHMAD_TAHQIQ` — not built yet.
+    loaded 2026-10-28 straight into production (owner approved) as new rows: source «محاضرات الأستاذ أنس شيخ اكريم»,
+    `gradeSource = MANUAL`, `gradeAuthority` = the lecturer, batch `2026-10-anas-habits`, tool and revert SQL in
+    `docs/research/anas-sheikh-akrim/import-to-db.py`. No schema change.
 
 ## 4. Architecture
 
