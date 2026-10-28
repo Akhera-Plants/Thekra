@@ -16,7 +16,7 @@ pnpm --filter @thekra/practice-core typecheck  # tsc --noEmit
   `todayFrom(new Date())` once at the edge of the app. Arithmetic is time-zone and DST independent.
 - Every function is pure: inputs are never mutated, new objects are returned.
 - Only ES2022 plus `Intl.DateTimeFormat` with the `islamic-umalqura` calendar. No Node or DOM APIs.
-- Relative imports are extension-less (`./dates`), which bundlers and `moduleResolution: bundler` accept.
+- Relative imports use `.js` specifiers (`./dates.js`), which bundlers, `moduleResolution: bundler` and the backend's `nodenext` all accept.
 
 ## Modules
 
