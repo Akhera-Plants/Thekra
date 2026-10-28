@@ -177,8 +177,11 @@ jobs:
         run: |
           status=0
           # app/icon.svg is the brand favicon: SVG favicons cannot read CSS variables, so it keeps its literal brand colours.
+          # global-error.tsx replaces the root layout (no stylesheet loads), and [locale]/layout.tsx's viewport.themeColor
+          # is a <meta> value the browser reads before CSS, and app/manifest.ts is the web-app manifest JSON: all need literal colours.
           rg -n '#[0-9a-fA-F]{3,8}\b|rgb\(|bg-neutral-|text-gray-|bg-white\b|text-black\b' frontend/src \
-            --glob '!**/globals.css' --glob '!**/components/ui/**' --glob '!**/app/icon.svg' || status=$?
+            --glob '!**/globals.css' --glob '!**/components/ui/**' --glob '!**/app/icon.svg' \
+            --glob '!**/app/global-error.tsx' --glob '!**/app/\[locale\]/layout.tsx' --glob '!**/app/manifest.ts' || status=$?
           if [ "$status" -eq 0 ]; then
             echo "Found hard-coded colours — use semantic tokens in globals.css"
             exit 1
@@ -235,6 +238,21 @@ jobs:
       - run: pnpm --filter frontend build
         env:
           NEXT_PUBLIC_API_URL: http://localhost:3001
+
+  packages-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @thekra/practice-core typecheck
+      - run: pnpm --filter @thekra/practice-core test
+      - run: pnpm --filter thekra-extension typecheck
+      - run: pnpm --filter thekra-extension test
 
   mobile-check:
     runs-on: ubuntu-latest

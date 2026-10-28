@@ -187,9 +187,12 @@
   --pathway-return-cta-ink: #285542;
   --pathway-return-cta-border: #bdd4c7;
   --pathway-return-cta-hover: #ffffff0b;
+  /* Featured reminder full-text popover (site-public.css). */
+  --featured-full-shadow: rgb(20 40 30 / .14);
 }
 
 .dark {
+  --featured-full-shadow: rgb(0 0 0 / .45);
   --background: #101010;
   --foreground: #eeede9;
   --card: #181818;
