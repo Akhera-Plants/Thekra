@@ -294,7 +294,7 @@ api_total() { node -e 'console.log(JSON.parse(require("node:fs").readFileSync(pr
 
 smoke_test_api() { # release verify file
   local verify=$1 waited=0 total expected
-  [[ -f "$BACKEND/dist/main.js" ]] || die "backend/dist/main.js is missing. Run: pnpm --filter backend build"
+  [[ -f "$BACKEND/dist/bundle/main.mjs" ]] || die "backend/dist/bundle/main.mjs is missing. Run: pnpm --filter backend build && node backend/scripts/bundle.mjs"
   command -v node >/dev/null 2>&1 || die "node is not on PATH."
   API_PORT=$(free_port)
   local env_file_flag=()
@@ -304,7 +304,7 @@ smoke_test_api() { # release verify file
   (
     cd "$BACKEND"
     exec env DATABASE_URL="$(local_url "$RELEASE_DB")" DIRECT_URL="$(local_url "$RELEASE_DB")" \
-      PORT="$API_PORT" SYNC_ENABLED=false node ${env_file_flag[@]+"${env_file_flag[@]}"} dist/main.js
+      PORT="$API_PORT" SYNC_ENABLED=false node ${env_file_flag[@]+"${env_file_flag[@]}"} dist/bundle/main.mjs
   ) > "$WORK/api.log" 2>&1 &
   API_PID=$!
   until curl -fsS -o /dev/null "http://127.0.0.1:$API_PORT/health" 2>/dev/null; do

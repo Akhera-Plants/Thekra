@@ -228,11 +228,11 @@ Full guide: [docs/build/LOCAL_DEV.md](../build/LOCAL_DEV.md).
 ```bash
 export PATH="$HOME/.nvm/versions/node/v22.19.0/bin:$PATH"     # this machine's Node (the shell's default Node 24 cannot load native addons here)
 # DB: Docker container thekra-db-1 (Postgres 16), url in backend/.env: postgresql://thekra:…@localhost:5432/thekra
-pnpm dev:backend                                  # or: cd backend && pnpm build && node --env-file=.env --enable-source-maps dist/main   (API :3001)
+pnpm dev:backend                                  # tsc --watch + esbuild bundle + restart (scripts/dev.mjs); or: cd backend && pnpm start:prod after a build (API :3001)
 pnpm dev:frontend                                 # web :3000 → API :3001
 pnpm dev:web:prod-api                             # web :3000 → https://thekra.vercel.app (production CORS must allow localhost)
 ```
-The long-running local API (`dist/main` on :3001) and `next dev` (:3000) are the owner's working servers —
+The long-running local API (`dist/bundle/main.mjs` on :3001) and `next dev` (:3000) are the owner's working servers —
 **do not kill them**; use free ports for your own runs, and if you must restart, restart exactly as before.
 Playwright: import from `node_modules/.pnpm/@playwright+test@…/…/index.mjs` with Chrome at
 `/Applications/Google Chrome.app/Contents/MacOS/Google Chrome` (`headless: true`).

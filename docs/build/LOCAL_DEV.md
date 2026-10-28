@@ -16,6 +16,16 @@ pnpm dev:backend     # API on :3001 (backend/.env: PORT=3001)
 pnpm dev:frontend    # web on :3000
 ```
 
+- `pnpm dev:backend` (= `pnpm --filter backend start:dev`) runs `backend/scripts/dev.mjs`: `tsc --watch`
+  compiles `src/` to `dist/`, then after every error-free compile (and after an edit to
+  `prisma/taxonomy/*.yaml`) esbuild rebuilds `dist/bundle/` and the server restarts as
+  `node --env-file-if-exists=.env dist/bundle/main.mjs`. Debugger: `pnpm --filter backend start:debug`.
+- The API always runs as the esbuild bundle (the same file Vercel serves), never as `node dist/main.js`:
+  the API imports the workspace package `@thekra/practice-core`, which ships TypeScript source with `.js`
+  import specifiers. Bundlers resolve those; plain Node stops with
+  `ERR_MODULE_NOT_FOUND …/packages/practice-core/src/dates.js`. Without watch:
+  `pnpm --filter backend build && pnpm --filter backend start:prod` (`start:prod` and `start:bundle` run
+  `dist/bundle/main.mjs`).
 - `frontend/.env`: `NEXT_PUBLIC_API_URL="http://localhost:3001"` (copy of `frontend/.env.example`).
 - `backend/.env`: `CORS_ORIGINS` must allow `http://localhost:3000`. That is the default when
   the variable is unset, and the value in `backend/.env.example`.

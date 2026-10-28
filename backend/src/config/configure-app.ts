@@ -22,9 +22,9 @@ import { validationExceptionFactory } from '../common/validation/validation-exce
 import { corsOriginRules } from './cors-origins.js';
 
 /**
- * JSON request bodies up to this size (Express's default is 100 kB). PUT /v1/me/practice carries the
- * user's practice store, which may be up to 256 kB (PRACTICE_STORE_MAX_BYTES); every other body is far
- * smaller and is bounded again by its DTO.
+ * JSON request bodies up to this size (Express's default is 100 kB). POST /v1/me/practice/sync may carry
+ * up to 500 items and PUT /v1/me/sin-vault a ciphertext of up to 128 KB (about 171 kB in base64); every
+ * other body is far smaller and is bounded again by its DTO.
  */
 export const JSON_BODY_LIMIT = '300kb';
 

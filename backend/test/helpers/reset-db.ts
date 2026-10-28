@@ -15,7 +15,12 @@ import { PrismaClient } from '@prisma/client';
 // Order respects FK dependencies: leaf tables first so CASCADE is just extra safety.
 // We pass TRUNCATE…CASCADE anyway so the order does not actually matter.
 const TABLES = [
-  'UserPracticeStore',
+  'HabitLog',
+  'HabitPlan',
+  'RelativeContact',
+  'Relative',
+  'PracticeSettings',
+  'SinVault',
   'Favorite',
   'SyncLog',
   'QuoteTag',

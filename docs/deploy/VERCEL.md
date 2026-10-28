@@ -199,7 +199,7 @@ runtime `require()` of an ES module is left:
 | `backend/public/.gitkeep` | Vercel refuses a build with no output directory (`STATIC_BUILD_NO_OUT_DIR` / `STATIC_BUILD_EMPTY_OUT_DIR`). The placeholder is the only static file served. |
 
 `pnpm --filter backend start:bundle` runs the bundled server (`node dist/bundle/main.mjs`);
-`start:prod` (`node dist/main`) is unchanged and fine on Node 24, where require(esm) works.
+`start:prod` and `start:dev` now run the bundle (`dist/bundle/main.mjs`): plain Node cannot load the `@thekra/practice-core` TypeScript source, and esbuild compiles it in.
 
 ### The gate
 

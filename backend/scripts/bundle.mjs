@@ -7,7 +7,8 @@
 // turns it off. A bundler links CJS and ESM at build time, so no runtime
 // require() of an ES module is left. See docs/deploy/VERCEL.md.
 //
-// Run after `nest build` (the `build` script does both).
+// Run after `nest build` (the `build` script does both). scripts/dev.mjs imports
+// `bundleOptions` for local development with watch and restart.
 import { build } from 'esbuild';
 import { readFileSync, rmSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -15,7 +16,7 @@ import { pathToFileURL } from 'node:url';
 import { external } from './bundle-externals.mjs';
 
 const root = resolve(import.meta.dirname, '..');
-const outdir = resolve(root, 'dist/bundle');
+export const outdir = resolve(root, 'dist/bundle');
 
 // src/config/configure-app.ts loads helmet through createRequire() (a typing
 // workaround, see its comment). A bundler and Vercel's file tracer cannot see
@@ -76,40 +77,51 @@ const embedTaxonomy = {
   },
 };
 
-rmSync(outdir, { recursive: true, force: true });
-
-await build({
-  entryPoints: {
-    main: resolve(root, 'dist/main.js'),
-    serverless: resolve(root, 'dist/serverless.js'),
-  },
-  outdir,
-  outExtension: { '.js': '.mjs' },
-  bundle: true,
-  platform: 'node',
-  format: 'esm',
-  target: 'node22',
-  sourcemap: true,
-  sourcesContent: false,
-  // Keep class and function names: Nest uses them for DI tokens, route and
-  // log context, and Prisma/class-validator for metadata.
-  keepNames: true,
-  minify: false,
-  external,
-  plugins: [staticHelmet, embedTaxonomy],
-  // Bundled CommonJS code calls require() for externals; ESM has no `require`.
-  banner: {
-    js: [
-      "import { createRequire as __bundleCreateRequire } from 'node:module';",
-      'globalThis.require ??= __bundleCreateRequire(import.meta.url);',
-    ].join('\n'),
-  },
-  logLevel: 'info',
-});
-
-// A renamed or moved taxonomy-files module would otherwise be bundled as is,
-// with its disk reads, and fail only on Vercel.
-if (!embeddedTaxonomy) {
-  throw new Error('embed-taxonomy: dist/modules/taxonomy/taxonomy-files.js was not bundled; update scripts/bundle.mjs');
+/** The esbuild options of the server bundles (build here, watch in scripts/dev.mjs). */
+export function bundleOptions() {
+  return {
+    entryPoints: {
+      main: resolve(root, 'dist/main.js'),
+      serverless: resolve(root, 'dist/serverless.js'),
+    },
+    outdir,
+    outExtension: { '.js': '.mjs' },
+    bundle: true,
+    platform: 'node',
+    format: 'esm',
+    target: 'node22',
+    sourcemap: true,
+    sourcesContent: false,
+    // Keep class and function names: Nest uses them for DI tokens, route and
+    // log context, and Prisma/class-validator for metadata.
+    keepNames: true,
+    minify: false,
+    external,
+    plugins: [staticHelmet, embedTaxonomy],
+    // Bundled CommonJS code calls require() for externals; ESM has no `require`.
+    banner: {
+      js: [
+        "import { createRequire as __bundleCreateRequire } from 'node:module';",
+        'globalThis.require ??= __bundleCreateRequire(import.meta.url);',
+      ].join('\n'),
+    },
+    logLevel: 'info',
+  };
 }
-console.log(`embed-taxonomy: inlined prisma/taxonomy/{${embeddedTaxonomy.join(',')}}`);
+
+/**
+ * A renamed or moved taxonomy-files module would otherwise be bundled as is,
+ * with its disk reads, and fail only on Vercel. Returns the embedded file names.
+ */
+export function assertTaxonomyEmbedded() {
+  if (!embeddedTaxonomy) {
+    throw new Error('embed-taxonomy: dist/modules/taxonomy/taxonomy-files.js was not bundled; update scripts/bundle.mjs');
+  }
+  return embeddedTaxonomy;
+}
+
+if (process.argv[1] && resolve(process.argv[1]) === import.meta.filename) {
+  rmSync(outdir, { recursive: true, force: true });
+  await build(bundleOptions());
+  console.log(`embed-taxonomy: inlined prisma/taxonomy/{${assertTaxonomyEmbedded().join(',')}}`);
+}

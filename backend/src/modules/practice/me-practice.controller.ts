@@ -1,26 +1,33 @@
-import { Body, Controller, Get, Header, HttpCode, HttpStatus, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Header, HttpCode, HttpStatus, Post, Query, UseGuards } from '@nestjs/common';
 import { CurrentUser, type JwtPayload } from '../../common/decorators/current-user.decorator.js';
 import { PRIVATE_CACHE_HEADER } from '../../common/http/public-cache.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
-import { PutPracticeStoreDto } from './dto/put-practice-store.dto.js';
-import { PracticeStoreService } from './practice-store.service.js';
+import { PracticeChangesQueryDto } from './dto/practice-changes-query.dto.js';
+import { PracticeSyncService } from './practice-sync.service.js';
 
-/** The signed-in user's synced practice store (never sin programs, roadmap §0.1). Never CDN-cached. */
+/**
+ * Practice sync for the signed-in user (docs/plan/2026-10-practice-sync-contract.md §3): settings, habit
+ * plans and logs, relatives and contacts. Never CDN-cached; the sin program is not here (see /me/sin-vault).
+ */
 @Controller('me/practice')
 @UseGuards(JwtAuthGuard)
 export class MePracticeController {
-  constructor(private readonly practiceStore: PracticeStoreService) {}
+  constructor(private readonly practiceSync: PracticeSyncService) {}
 
   @Get()
   @Header('Cache-Control', PRIVATE_CACHE_HEADER)
-  find(@CurrentUser() user: JwtPayload) {
-    return this.practiceStore.find(user.sub);
+  changes(@CurrentUser() user: JwtPayload, @Query() query: PracticeChangesQueryDto) {
+    return this.practiceSync.changes(user.sub, query.since ? new Date(query.since) : null);
   }
 
-  @Put()
+  /**
+   * The body is validated by PracticeSyncService, not by a DTO: a `programs` key anywhere must answer
+   * PRACTICE_PROGRAMS_NOT_ALLOWED, and item errors carry their index (PRACTICE_INVALID).
+   */
+  @Post('sync')
   @HttpCode(HttpStatus.OK)
   @Header('Cache-Control', PRIVATE_CACHE_HEADER)
-  save(@CurrentUser() user: JwtPayload, @Body() dto: PutPracticeStoreDto) {
-    return this.practiceStore.save(user.sub, dto);
+  sync(@CurrentUser() user: JwtPayload, @Body() body: Record<string, unknown>) {
+    return this.practiceSync.sync(user.sub, body);
   }
 }

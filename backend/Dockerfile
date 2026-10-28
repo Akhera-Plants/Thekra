@@ -34,4 +34,5 @@ COPY --from=build /app/backend/node_modules ./backend_node_modules
 ENV NODE_PATH=/app/backend_node_modules:/app/node_modules
 USER thekra
 EXPOSE 3001
-CMD ["node", "dist/main.js"]
+# The bundle, not dist/main.js: plain Node cannot load @thekra/practice-core (TypeScript source).
+CMD ["node", "dist/bundle/main.mjs"]

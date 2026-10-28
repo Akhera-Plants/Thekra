@@ -803,20 +803,108 @@ model User {
   /// Phase 4: optional, useful for support dashboards
   lastLoginAt  DateTime?
   favorites    Favorite[]
-  /// Synced practice store (plans, kinship list, settings). Never sin programs (roadmap §0.1).
-  practiceStore UserPracticeStore?
+  /// Practice sync (docs/plan/2026-10-practice-sync-contract.md §2). All cascade with the user.
+  practiceSettings PracticeSettings?
+  habitPlans       HabitPlan[]
+  relatives        Relative[]
+  /// The sin program, encrypted on the device; the server never sees it in clear.
+  sinVault         SinVault?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 }
 
-/// One row per user: the practice-core store as exportForSync() returns it (no `programs` key).
-/// `version` is the optimistic-concurrency counter of PUT /v1/me/practice. Deleted with the user.
-model UserPracticeStore {
-  userId    String   @id
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  data      Json
-  version   Int      @default(0)
-  updatedAt DateTime @updatedAt
+/// Practice sync (docs/plan/2026-10-practice-sync-contract.md). Plans and relatives use the client's UUID as id;
+/// merges are last-writer-wins on `clientUpdatedAt` (tombstones included). `updatedAt` is the server write time,
+/// read by `GET /v1/me/practice?since=`. Practice data is never logged.
+model PracticeSettings {
+  userId            String   @id
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hijriOffset       Int      @default(0)
+  reminderTimes     String[]
+  freeMinutesPerDay Int?
+  clientUpdatedAt   DateTime
+  updatedAt         DateTime @updatedAt
+}
+
+model HabitPlan {
+  id                String      @id
+  userId            String
+  user              User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  habitKey          String?
+  deedSlug          String
+  title             String
+  /// minutes | count | times
+  unit              String
+  /// Float: clients may log and plan partial amounts.
+  amount            Float
+  ceiling           Float?
+  activeDaysPerWeek Int
+  slots             String[]
+  rule              Json?
+  createdOn         DateTime    @db.Date
+  amountChangedOn   DateTime    @db.Date
+  ebbSince          DateTime?   @db.Date
+  season            Json?
+  clientUpdatedAt   DateTime
+  updatedAt         DateTime    @updatedAt
+  deletedAt         DateTime?
+  logs              HabitLog[]
+
+  @@index([userId, updatedAt])
+}
+
+/// Amount done per plan and day. Merge: the larger amount wins (logging never goes down). Kept while the plan
+/// is soft-deleted, so a newer edit that restores the plan restores its logs.
+model HabitLog {
+  planId    String
+  plan      HabitPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  date      DateTime  @db.Date
+  amount    Float
+  updatedAt DateTime  @updatedAt
+
+  @@id([planId, date])
+}
+
+/// صلة الرحم: a nickname and a rhythm, never contact details.
+model Relative {
+  id              String            @id
+  userId          String
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name            String
+  relation        String
+  rule            Json
+  lastContactedOn DateTime?         @db.Date
+  clientUpdatedAt DateTime
+  updatedAt       DateTime          @updatedAt
+  deletedAt       DateTime?
+  contacts        RelativeContact[]
+
+  @@index([userId, updatedAt])
+}
+
+/// A logged contact. Merge: union; an undo is a tombstone (`deletedAt`), a later contact clears it.
+model RelativeContact {
+  relativeId String
+  relative   Relative  @relation(fields: [relativeId], references: [id], onDelete: Cascade)
+  date       DateTime  @db.Date
+  deletedAt  DateTime?
+  updatedAt  DateTime  @updatedAt
+
+  @@id([relativeId, date])
+}
+
+/// The sin-leaving program, AES-256-GCM encrypted on the device with a key from the user's privacy code
+/// (PBKDF2-SHA256). Opaque to the server. Optimistic concurrency on `version`.
+model SinVault {
+  userId     String   @id
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ciphertext String
+  iv         String
+  salt       String
+  kdf        String
+  iterations Int
+  version    Int      @default(0)
+  updatedAt  DateTime @updatedAt
 }
 
 model Favorite {

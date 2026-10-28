@@ -6,6 +6,7 @@ import { hashPassword } from './password-hash.js';
 
 const USER_ID = 'd0000000-0000-4000-8000-0000000000f1';
 const createdAt = new Date('2026-10-01T00:00:00Z');
+const VAULT = { ciphertext: 'AAAA', iv: 'AAAAAAAAAAAAAAAA', salt: 'AAAAAAAAAAAAAAAAAAAAAA==', kdf: 'pbkdf2-sha256', iterations: 210000, version: 1, updatedAt: createdAt };
 
 async function makeService(userExists = true) {
   const passwordHash = await hashPassword('password123456');
@@ -20,7 +21,12 @@ async function makeService(userExists = true) {
         .mockResolvedValue(userExists ? { id: USER_ID, email: 'a@b.test', displayName: null, createdAt } : null),
     },
     favorite: { findMany: vi.fn().mockResolvedValue([{ quoteId: 'q1', createdAt }]) },
-    userPracticeStore: { findUnique: vi.fn().mockResolvedValue({ data: { v: 1, plans: [] } }) },
+    sinVault: { findUnique: vi.fn().mockResolvedValue(VAULT) },
+    practiceSettings: { findFirst: vi.fn().mockResolvedValue(null) },
+    habitPlan: { findMany: vi.fn().mockResolvedValue([]) },
+    habitLog: { findMany: vi.fn().mockResolvedValue([{ planId: 'p1', date: new Date('2026-10-27T00:00:00Z'), amount: 3 }]) },
+    relative: { findMany: vi.fn().mockResolvedValue([]) },
+    relativeContact: { findMany: vi.fn().mockResolvedValue([]) },
   };
   return { users, prisma, service: new AccountService(prisma as unknown as PrismaService, users as unknown as UsersService) };
 }
@@ -42,14 +48,15 @@ describe('AccountService', () => {
     }
   });
 
-  it('exports the user, favorites and the practice store, and never the password hash', async () => {
+  it('exports the user, favorites, practice data and the vault ciphertext, and never the password hash', async () => {
     const { service } = await makeService();
     const result = await service.exportAccount(USER_ID, new Date('2026-10-28T00:00:00Z'));
     expect(result).toEqual({
       exportedAt: '2026-10-28T00:00:00.000Z',
       user: { id: USER_ID, email: 'a@b.test', displayName: null, createdAt },
       favorites: [{ quoteId: 'q1', createdAt }],
-      practice: { v: 1, plans: [] },
+      practice: { settings: null, plans: [], logs: [{ planId: 'p1', date: '2026-10-27', amount: 3 }], relatives: [], contacts: [] },
+      sinVault: VAULT,
     });
     expect(JSON.stringify(result)).not.toContain('argon2');
   });

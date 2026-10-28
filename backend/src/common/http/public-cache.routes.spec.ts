@@ -92,7 +92,7 @@ describe('public cache route metadata', () => {
   it('finds the controllers (guards the walk itself)', () => {
     expect(routes.length).toBeGreaterThan(60);
     expect(routes.map((route) => route.id)).toEqual(
-      expect.arrayContaining(['GET /sins/:slug/quotes', 'POST /auth/login', 'GET /favorites', 'GET /me/practice', 'PUT /me/practice']),
+      expect.arrayContaining(['GET /sins/:slug/quotes', 'POST /auth/login', 'GET /favorites', 'GET /me/practice', 'POST /me/practice/sync', 'PUT /me/sin-vault']),
     );
   });
 
