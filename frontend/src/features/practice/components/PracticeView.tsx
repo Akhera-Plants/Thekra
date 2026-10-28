@@ -20,6 +20,7 @@ import { PlanCard, usePlanWords } from './PlanCard';
 import { PlanSetup } from './PlanSetup';
 import { PracticeLoading } from './PracticeLoading';
 import { ProgressPanel } from './ProgressPanel';
+import { PushRemindersCard } from './PushRemindersCard';
 
 /** «أعِنّي على طاعة»: setup, today's habits, in-app reminders, «وين وصلت», calendar file. */
 export function PracticeView() {
@@ -146,6 +147,7 @@ export function PracticeView() {
         </button>
       </div>
       <p className="-mt-6 text-sm leading-7 text-muted-foreground">{t('remindersHint')}</p>
+      <PushRemindersCard />
 
       <ProgressPanel entries={entries} today={today} />
       <PracticePaths />

@@ -8,8 +8,9 @@
  *    readable by JavaScript.
  * 2. After a successful login/register (called from useLogin/useRegister),
  *    the caller sets the access token + user via `setSession`.
- * 3. On logout, `clearSession` wipes the in-memory token and calls
- *    DELETE /api/auth/session to clear the httpOnly cookie.
+ * 3. On logout, `clearSession` removes this browser's push reminders (best
+ *    effort, while the token is still valid), wipes the in-memory token and
+ *    calls DELETE /api/auth/session to clear the httpOnly cookie.
  *
  * The `user` value is derived from the server response; the access token
  * lives in the api-client module (setAccessToken), never in React state.
@@ -21,6 +22,7 @@ import { reportFailure } from '@/lib/errors';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { setAccessToken } from '@/lib/api-client';
+import { removePushOnSignOut } from '@/lib/push/web-push';
 import type { UserDto } from '@/lib/api/auth';
 import { queryKeys } from '@/lib/query-keys';
 
@@ -77,7 +79,10 @@ export function useSession(): UseSessionReturn {
   );
 
   const clearSession = useCallback(async () => {
-    // Clear in-memory token first
+    // Reminders belong to the account: stop them on this browser. Never throws, waits at most a few seconds.
+    await removePushOnSignOut();
+
+    // Clear in-memory token
     setAccessToken(null);
 
     // Delete the httpOnly cookie via route handler
@@ -89,6 +94,7 @@ export function useSession(): UseSessionReturn {
     queryClient.setQueryData(queryKeys.session, null);
     queryClient.removeQueries({ queryKey: queryKeys.favorites.all });
     queryClient.removeQueries({ queryKey: queryKeys.favorites.quoteIds });
+    queryClient.removeQueries({ queryKey: queryKeys.push.browser });
   }, [queryClient]);
 
   return {

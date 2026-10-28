@@ -64,6 +64,11 @@ export const queryKeys = {
     /** Per account, so a sign-in as someone else never reads the previous account's vault from the cache. */
     vault: (userId: string) => ['me', 'sin-vault', userId] as const,
   },
+  /** Web push: the public config, and this browser's permission and subscription (not server data). */
+  push: {
+    config: ['push', 'config'] as const,
+    browser: ['push', 'browser'] as const,
+  },
   session: ['session'] as const,
   // ── Admin (Phase 6) ───────────────────────────────────────────────────────
   adminQuotes: {

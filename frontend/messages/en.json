@@ -1098,6 +1098,23 @@
       "lastSynced": "last synced {time}",
       "signedInNote": "Saved on this device and synced with your account, except the program to leave a sin, which syncs only encrypted, if you choose.",
       "accountLink": "Your account and data"
+    },
+    "push": {
+      "title": "Browser notifications",
+      "note": "Reminders come at the times you chose for your habits, and the kinship reminder at 18:00. The program to leave a sin never appears in notifications.",
+      "unsupported": "This browser does not support notifications. Try another up-to-date browser.",
+      "iosInstall": "On iPhone: add the site to your Home Screen, then open it from the icon to receive notifications.",
+      "signedOut": "Notifications belong to your account, so sign in first to turn them on.",
+      "signIn": "Sign in",
+      "denied": "Notifications are blocked for this site in your browser. Allow them in the browser’s site settings (or in the device settings on a phone), then come back to this page.",
+      "turnOn": "Turn on notifications",
+      "dismissed": "You have not allowed notifications yet. Press “Turn on notifications” again and choose Allow.",
+      "on": "Notifications are on in this browser.",
+      "turnOff": "Turn off",
+      "sendTest": "Send a test notification",
+      "testSent": "We sent a test notification; it should arrive in a moment.",
+      "testNotFound": "We can no longer reach this browser. Turn notifications off, then on again.",
+      "failed": "That did not work just now. Please try again shortly."
     }
   },
   "calendarPage": {

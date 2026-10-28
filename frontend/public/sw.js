@@ -9,6 +9,9 @@
  *   copy offline. Anything with an Authorization header, any non-GET, and private pages
  *   (admin, login, settings, favorites) are never cached.
  * Caches are capped and renamed with VERSION, so a changed worker clears the old ones.
+ *
+ * Push reminders (docs/plan/2026-10-web-push.md §4): a push carries JSON { title, body, url, tag }; a click
+ * focuses an open tab of the site on `url`, or opens it. Only same-origin paths are ever opened.
  */
 const VERSION = 'v1';
 const PAGES = `thekra-pages-${VERSION}`;
@@ -110,4 +113,68 @@ self.addEventListener('fetch', (event) => {
   if (apiOrigin && url.origin === apiOrigin && PUBLIC_API.test(url.pathname)) {
     event.respondWith(networkFirst(request, API, null));
   }
+});
+
+const NOTIFICATION_ICON = '/icons/icon-192.png';
+
+/** A same-origin path (`/ar/practice`), or '/' for anything else (absolute, protocol-relative, not a string). */
+function sameOriginPath(value) {
+  if (typeof value !== 'string' || !value.startsWith('/') || value.startsWith('//')) return '/';
+  try {
+    const url = new URL(value, self.location.origin);
+    return url.origin === self.location.origin ? `${url.pathname}${url.search}${url.hash}` : '/';
+  } catch {
+    return '/';
+  }
+}
+
+/** The text of a push as notification options. A broken payload still shows a notification (the browser requires one). */
+function notificationFromPush(data) {
+  let payload = {};
+  try {
+    const parsed = data ? data.json() : null;
+    if (parsed && typeof parsed === 'object') payload = parsed;
+  } catch {
+    payload = {};
+  }
+  const url = sameOriginPath(payload.url);
+  const english = url === '/en' || url.startsWith('/en/') || url.startsWith('/en?') || url.startsWith('/en#');
+  const title = typeof payload.title === 'string' && payload.title ? payload.title : english ? 'Thekra' : 'ذكرى';
+  const options = {
+    body: typeof payload.body === 'string' ? payload.body : '',
+    icon: NOTIFICATION_ICON,
+    lang: english ? 'en' : 'ar',
+    dir: english ? 'ltr' : 'rtl',
+    data: { url },
+  };
+  if (typeof payload.tag === 'string' && payload.tag) options.tag = payload.tag;
+  return { title, options };
+}
+
+async function openFromNotification(path) {
+  const target = new URL(sameOriginPath(path), self.location.origin).href;
+  const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+  const ours = windows.filter((client) => new URL(client.url).origin === self.location.origin);
+  const exact = ours.find((client) => client.url === target);
+  if (exact) return exact.focus();
+  for (const client of ours) {
+    try {
+      const navigated = await client.navigate(target);
+      if (navigated) return navigated.focus();
+    } catch {
+      // A tab this worker does not control cannot be navigated; try the next one, then a new window.
+    }
+  }
+  return self.clients.openWindow(target);
+}
+
+self.addEventListener('push', (event) => {
+  const { title, options } = notificationFromPush(event.data);
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const data = event.notification.data;
+  event.waitUntil(openFromNotification(data && data.url));
 });
