@@ -41,6 +41,7 @@
     "@nestjs/schedule": "^12.0.2",
     "@nestjs/throttler": "^6.7.1",
     "@prisma/client": "^6.19.3",
+    "@thekra/practice-core": "workspace:*",
     "argon2": "^0.45.1",
     "axios": "^1.20.0",
     "cache-manager": "^7.2.9",

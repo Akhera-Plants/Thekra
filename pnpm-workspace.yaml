@@ -2,6 +2,8 @@ packages:
   - "backend"
   - "frontend"
   - "mobile"
+  - "packages/*"
+  - "extension"
 
 # One React types version. frontend's ^19 was resolving to 19.3.0 while
 # mobile pinned 19.2.x, and the two copies broke frontend tsc.
