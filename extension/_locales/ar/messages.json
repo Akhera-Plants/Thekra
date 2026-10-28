@@ -1,0 +1,197 @@
+{
+  "extName": {
+    "message": "ذكرى: تذكير بالطاعات",
+    "description": "Extension name (store listing, toolbar)."
+  },
+  "extDescription": {
+    "message": "تذكير لطيف بالطاعات التي تختارها، بالقليل الدائم. بياناتك على جهازك فقط.",
+    "description": "Store and browser description."
+  },
+  "atharLabel": {
+    "message": "أثر، وليس حديثًا",
+    "description": "Required label next to every athar (content rule)."
+  },
+  "basisOrganizational": {
+    "message": "اقتراح لتنظيم الوقت، وليس توقيتًا شرعيًا",
+    "description": "Shown for habits with basis: organizational."
+  },
+  "notifRequired": {
+    "message": "المطلوب اليوم: $1",
+    "description": "Notification first line. $1 = amount with unit."
+  },
+  "btnDone": {
+    "message": "تمّ",
+    "description": "Notification button: logs today's amount."
+  },
+  "btnLater": {
+    "message": "لاحقًا",
+    "description": "Notification button: snooze 30 minutes."
+  },
+  "tabToday": {
+    "message": "اليوم"
+  },
+  "tabSettings": {
+    "message": "الإعدادات"
+  },
+  "onboardingIntro": {
+    "message": "اختر طاعة أو اثنتين، وابدأ بقليل تداوم عليه."
+  },
+  "privacyNote": {
+    "message": "بياناتك على هذا الجهاز فقط. الشبكة لجلب الكتالوج والنصوص من موقع ذكرى فقط."
+  },
+  "habitsHeading": {
+    "message": "الطاعات"
+  },
+  "timeHint": {
+    "message": "الوقت: $1"
+  },
+  "distanceLabel": {
+    "message": "أين أنت من هذه الطاعة؟"
+  },
+  "distanceFar": {
+    "message": "بعيد عنها"
+  },
+  "distanceNear": {
+    "message": "قريب منها"
+  },
+  "startSuggestion": {
+    "message": "اقتراح البداية: $1"
+  },
+  "startHint": {
+    "message": "البداية الصغيرة أثبت. ابقَ عليها نحو شهر قبل أي زيادة."
+  },
+  "amountLabel": {
+    "message": "القدر في اليوم"
+  },
+  "amountLockedHint": {
+    "message": "يُخفَّف القدر من هنا، والزيادة من صفحة «اليوم» حين تحين، خطوة واحدة."
+  },
+  "remindersPerDay": {
+    "message": "عدد التذكيرات في اليوم"
+  },
+  "reminderTimes": {
+    "message": "أوقات التذكير"
+  },
+  "activeDays": {
+    "message": "أيام العمل في الأسبوع"
+  },
+  "activeDaysHint": {
+    "message": "4 أو 5 أيام والباقي للتعويض، وفي البداية يومان أو ثلاثة تكفي."
+  },
+  "generalHeading": {
+    "message": "عام"
+  },
+  "quietDaysLabel": {
+    "message": "أيام بلا تذكير"
+  },
+  "hijriOffsetLabel": {
+    "message": "تعديل التاريخ الهجري (بالأيام)"
+  },
+  "hijriToday": {
+    "message": "التاريخ الهجري اليوم: $1"
+  },
+  "hijriUnsupported": {
+    "message": "هذا المتصفح لا يدعم التقويم الهجري."
+  },
+  "languageLabel": {
+    "message": "اللغة"
+  },
+  "languageAr": {
+    "message": "العربية"
+  },
+  "languageEn": {
+    "message": "English"
+  },
+  "save": {
+    "message": "حفظ"
+  },
+  "saved": {
+    "message": "حُفظت الإعدادات."
+  },
+  "errorChooseOne": {
+    "message": "اختر طاعة واحدة على الأقل."
+  },
+  "errorSlots": {
+    "message": "أوقات التذكير لكل طاعة يجب أن تكون مختلفة."
+  },
+  "errorAmount": {
+    "message": "القدر يجب أن يكون رقمًا أكبر من صفر."
+  },
+  "weekday0": {
+    "message": "الأحد"
+  },
+  "weekday1": {
+    "message": "الاثنين"
+  },
+  "weekday2": {
+    "message": "الثلاثاء"
+  },
+  "weekday3": {
+    "message": "الأربعاء"
+  },
+  "weekday4": {
+    "message": "الخميس"
+  },
+  "weekday5": {
+    "message": "الجمعة"
+  },
+  "weekday6": {
+    "message": "السبت"
+  },
+  "todayEmpty": {
+    "message": "لم تختر طاعة بعد."
+  },
+  "goToSettings": {
+    "message": "اختر من الإعدادات"
+  },
+  "requiredToday": {
+    "message": "المطلوب اليوم: $1"
+  },
+  "notDueToday": {
+    "message": "ليس من أيام التذكير اليوم، وما تعمله يُحسب."
+  },
+  "doneToday": {
+    "message": "عملت اليوم: $1"
+  },
+  "doneComplete": {
+    "message": "أتممت قدر اليوم."
+  },
+  "logLabel": {
+    "message": "سجّل ما عملت، وأي قدر يُحسب"
+  },
+  "logButton": {
+    "message": "سجّل"
+  },
+  "bandExcellent": {
+    "message": "مداومة ممتازة في آخر 4 أسابيع"
+  },
+  "bandGood": {
+    "message": "مداومة طيبة في آخر 4 أسابيع"
+  },
+  "bandGentle": {
+    "message": "خطوة صغيرة اليوم تكفي، وأي قدر يُحسب"
+  },
+  "increaseOffer": {
+    "message": "ثبتّ على هذا القدر. يمكنك الزيادة خطوة واحدة إلى $1"
+  },
+  "increaseButton": {
+    "message": "زِد خطوة"
+  },
+  "ebbToggle": {
+    "message": "يومي ثقيل: أخفّف ولا أنقطع"
+  },
+  "seasonToggle": {
+    "message": "موسم رمضان: $1 حتى آخر الشهر"
+  },
+  "openDeed": {
+    "message": "صفحة الطاعة"
+  },
+  "hostPermission": {
+    "message": "اسمح بجلب النصوص من موقع ذكرى",
+    "description": "Firefox: host permission is opt-in."
+  },
+  "paraphraseLabel": {
+    "message": "بمعناه",
+    "description": "Shown before the reference when the lecturer retold a hadith in his own words."
+  }
+}

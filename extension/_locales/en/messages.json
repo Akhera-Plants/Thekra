@@ -1,0 +1,197 @@
+{
+  "extName": {
+    "message": "Thekra: good-deed reminders",
+    "description": "Extension name (store listing, toolbar)."
+  },
+  "extDescription": {
+    "message": "Gentle reminders for the good deeds you choose, small and steady. Your data stays on your device.",
+    "description": "Store and browser description."
+  },
+  "atharLabel": {
+    "message": "A saying, not a hadith",
+    "description": "Required label next to every athar (content rule)."
+  },
+  "basisOrganizational": {
+    "message": "A suggestion to organise your time, not a religious timing",
+    "description": "Shown for habits with basis: organizational."
+  },
+  "notifRequired": {
+    "message": "Today: $1",
+    "description": "Notification first line. $1 = amount with unit."
+  },
+  "btnDone": {
+    "message": "Done",
+    "description": "Notification button: logs today's amount."
+  },
+  "btnLater": {
+    "message": "Later",
+    "description": "Notification button: snooze 30 minutes."
+  },
+  "tabToday": {
+    "message": "Today"
+  },
+  "tabSettings": {
+    "message": "Settings"
+  },
+  "onboardingIntro": {
+    "message": "Pick one or two good deeds and start with a little you can keep."
+  },
+  "privacyNote": {
+    "message": "Your data stays on this device. The network is used only to fetch the catalog and texts from Thekra."
+  },
+  "habitsHeading": {
+    "message": "Good deeds"
+  },
+  "timeHint": {
+    "message": "Time: $1"
+  },
+  "distanceLabel": {
+    "message": "How close are you to this habit?"
+  },
+  "distanceFar": {
+    "message": "Far from it"
+  },
+  "distanceNear": {
+    "message": "Close to it"
+  },
+  "startSuggestion": {
+    "message": "Suggested start: $1"
+  },
+  "startHint": {
+    "message": "A small start lasts. Keep it for about a month before any increase."
+  },
+  "amountLabel": {
+    "message": "Amount per day"
+  },
+  "amountLockedHint": {
+    "message": "You can lower the amount here; increases come from Today when it is time, one step at a time."
+  },
+  "remindersPerDay": {
+    "message": "Reminders per day"
+  },
+  "reminderTimes": {
+    "message": "Reminder times"
+  },
+  "activeDays": {
+    "message": "Active days per week"
+  },
+  "activeDaysHint": {
+    "message": "4 or 5 days with the rest for making up; at the start 2 or 3 are enough."
+  },
+  "generalHeading": {
+    "message": "General"
+  },
+  "quietDaysLabel": {
+    "message": "Quiet days (no reminders)"
+  },
+  "hijriOffsetLabel": {
+    "message": "Hijri date adjustment (days)"
+  },
+  "hijriToday": {
+    "message": "Hijri date today: $1"
+  },
+  "hijriUnsupported": {
+    "message": "This browser does not support the Hijri calendar."
+  },
+  "languageLabel": {
+    "message": "Language"
+  },
+  "languageAr": {
+    "message": "العربية"
+  },
+  "languageEn": {
+    "message": "English"
+  },
+  "save": {
+    "message": "Save"
+  },
+  "saved": {
+    "message": "Settings saved."
+  },
+  "errorChooseOne": {
+    "message": "Choose at least one good deed."
+  },
+  "errorSlots": {
+    "message": "Each habit's reminder times must be different."
+  },
+  "errorAmount": {
+    "message": "The amount must be a number above zero."
+  },
+  "weekday0": {
+    "message": "Sun"
+  },
+  "weekday1": {
+    "message": "Mon"
+  },
+  "weekday2": {
+    "message": "Tue"
+  },
+  "weekday3": {
+    "message": "Wed"
+  },
+  "weekday4": {
+    "message": "Thu"
+  },
+  "weekday5": {
+    "message": "Fri"
+  },
+  "weekday6": {
+    "message": "Sat"
+  },
+  "todayEmpty": {
+    "message": "You have not chosen a good deed yet."
+  },
+  "goToSettings": {
+    "message": "Choose in Settings"
+  },
+  "requiredToday": {
+    "message": "Today: $1"
+  },
+  "notDueToday": {
+    "message": "Not a reminder day today; anything you do still counts."
+  },
+  "doneToday": {
+    "message": "Done today: $1"
+  },
+  "doneComplete": {
+    "message": "Today's amount is done."
+  },
+  "logLabel": {
+    "message": "Log what you did; any amount counts"
+  },
+  "logButton": {
+    "message": "Log"
+  },
+  "bandExcellent": {
+    "message": "Excellent consistency over the last 4 weeks"
+  },
+  "bandGood": {
+    "message": "Good consistency over the last 4 weeks"
+  },
+  "bandGentle": {
+    "message": "A small step today is enough; any amount counts"
+  },
+  "increaseOffer": {
+    "message": "You have held this amount. You may go one step up, to $1"
+  },
+  "increaseButton": {
+    "message": "One step up"
+  },
+  "ebbToggle": {
+    "message": "Heavy day: lighten it, do not stop"
+  },
+  "seasonToggle": {
+    "message": "Ramadan season: $1 until the month ends"
+  },
+  "openDeed": {
+    "message": "Deed page"
+  },
+  "hostPermission": {
+    "message": "Allow fetching texts from Thekra",
+    "description": "Firefox: host permission is opt-in."
+  },
+  "paraphraseLabel": {
+    "message": "Paraphrased",
+    "description": "Shown before the reference when the lecturer retold a hadith in his own words."
+  }
+}
