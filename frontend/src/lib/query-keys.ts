@@ -8,6 +8,7 @@ import type {
   SurahAyahsQuery,
   TagsQuery,
 } from '@/lib/types/api';
+import type { OccasionsQuery } from '@/lib/types/practice';
 import type {
   AdminQuotesQuery,
   SinQuotesAdminQuery,
@@ -54,6 +55,12 @@ export const queryKeys = {
   sources: {
     all: ['sources'] as const,
     list: (p: SourcesQuery) => ['sources', 'list', p] as const,
+  },
+  practice: {
+    catalog: ['practice', 'catalog'] as const,
+    /** Ids joined in a stable order by the caller, so one set is one cache entry. */
+    evidence: (ids: string) => ['practice', 'evidence', ids] as const,
+    occasions: (p: OccasionsQuery) => ['calendar', 'occasions', p] as const,
   },
   session: ['session'] as const,
   // ── Admin (Phase 6) ───────────────────────────────────────────────────────

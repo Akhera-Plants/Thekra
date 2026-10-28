@@ -26,7 +26,11 @@
     "main": "Main navigation",
     "sinsShort": "Leaving a sin",
     "goodDeedsShort": "Doing good",
-    "breadcrumbs": "Breadcrumb"
+    "breadcrumbs": "Breadcrumb",
+    "practice": "My habits",
+    "practiceLong": "Help me keep a good deed",
+    "kinship": "Ties of kinship",
+    "calendar": "Calendar"
   },
   "about": {
     "pageTitle": "About Thekra",
@@ -899,5 +903,270 @@
     "body": "The network cannot be reached. Pages you opened before are still available; the rest will load when the connection returns.",
     "retry": "Try again",
     "home": "Home"
+  },
+  "practice": {
+    "title": "Help me keep a good deed",
+    "lead": "Start very small, keep at it, and increase only once it is steady. Everything here is saved on your device.",
+    "storage": {
+      "local": "Your data is saved on this device only and is never sent to a server.",
+      "memoryOnly": "This browser does not allow saving (perhaps a private window), so your data will be lost when you close the page."
+    },
+    "evidence": {
+      "none": "No published texts here yet.",
+      "loading": "Loading the texts"
+    },
+    "units": {
+      "minutes": "minutes",
+      "count": "times",
+      "times": "times"
+    },
+    "setup": {
+      "stepOf": "Step {step} of {total}",
+      "chooseTitle": "Choose a good habit",
+      "chooseLead": "Start with one or two. Keeping a little going matters more than doing a lot.",
+      "allChosen": "You have added every available habit.",
+      "calmSelection": "You chose more than two. Settle what you have first, then add others once they are steady.",
+      "next": "Next",
+      "back": "Back",
+      "cancel": "Cancel",
+      "shapeTitle": "How will you start?",
+      "shapeLead": "Choose a very small start, two times a day to be reminded, and how many days a week. The other days are for making up.",
+      "distanceQuestion": "Are you close to this habit right now, or far from it?",
+      "far": "Far from it",
+      "near": "Close to it",
+      "startWith": "start with {amount}",
+      "slot": "Time {n}",
+      "activeDays": "Active days a week",
+      "daysPerWeek": "{n} of 7",
+      "shapeHint": "Two times or more are better: if the first passes, the second catches it. At the start, 3 days a week is enough.",
+      "rolesTitle": "My duties and roles",
+      "rolesLead": "Obligations and the rights of those around you come first: parents, family, work and home. After them, how many minutes a day are left for you?",
+      "freeMinutes": "Free minutes a day",
+      "freeMinutesHint": "Usually between 120 and 300 minutes (two to five hours).",
+      "loadOver": "Your plans take more than half of your free time. Lighten or postpone a habit so that extra deeds do not crowd out your duties.",
+      "create": "Start my plan",
+      "errors": {
+        "time": "Enter a valid time.",
+        "minutes": "Enter a number of minutes from 0 to 1440.",
+        "chooseOne": "Choose at least one habit."
+      }
+    },
+    "today": {
+      "title": "Today",
+      "complete": "Done",
+      "dueNow": "Due now",
+      "required": "Today: {amount}",
+      "done": "logged {amount}",
+      "nextSlot": "Next reminder at {time}",
+      "fixItTitle": "It slipped? Mend it",
+      "fixItBody": "Finish today with whatever you can: any amount counts, and nothing is added to tomorrow.",
+      "markDone": "Done it",
+      "partialLabel": "Amount done ({unit})",
+      "partialError": "Enter a number above zero.",
+      "logPartial": "Log",
+      "increaseOffer": "You have held this amount for a month. If you wish, go one small step up to {amount}, or stay as you are.",
+      "increase": "One step up",
+      "relapse": "You have been away for some days, and that is fine. Come back with a smaller amount, {amount}, then build again calmly.",
+      "relapseAction": "Lighten it to {amount}",
+      "seasonOn": "Ramadan mode until {date}; then your plan returns to what it was, and that is no shortcoming.",
+      "seasonOffer": "In Ramadan you can raise it for now to {amount}; your plan returns by itself afterwards.",
+      "seasonStart": "Turn on Ramadan mode",
+      "showEvidence": "Read the texts",
+      "hideEvidence": "Hide the texts",
+      "remove": "Remove this habit",
+      "removeConfirm": "Yes, remove it",
+      "keep": "Keep it",
+      "dueTitle": "Due now",
+      "remaining": "{amount} left",
+      "ebbOn": "Heavy day",
+      "ebbOff": "Lighter now, back to my plan",
+      "ebbHint": "On heavy days, lighten rather than stop: only the smallest amount is asked.",
+      "ebbActive": "Your habits are at their smallest amount. Keep the obligations, and come back when it lightens.",
+      "loadOver": "Your plans take more than half of your free time. Lighten or postpone a habit so that extra deeds do not crowd out your duties.",
+      "catalogError": "The habit details could not be loaded; your plan is saved as it is.",
+      "add": "Add a habit",
+      "downloadReminders": "Download my reminders as a calendar file",
+      "remindersHint": "A file for the next 30 days, built on your device. Open it in your calendar app to be reminded at your times.",
+      "icsName": "Thekra reminders"
+    },
+    "progress": {
+      "title": "Where you are",
+      "lead": "Open it any day, even a day with nothing done, to stay close to your habit.",
+      "band": {
+        "excellent": "Excellent",
+        "good": "Good, you are doing fine",
+        "gentle": "Step by step; a little, kept up, is enough"
+      },
+      "doneDays": "{count, plural, =0 {No days logged yet in the last {total} days} one {{n} day in the last {total} days} other {{n} days in the last {total} days}}",
+      "amountNow": "Now: {amount}",
+      "holdDone": "Settling period done",
+      "holdUntil": "Settling until {date}",
+      "daysLabel": "Done on {n} of the last {total} days"
+    },
+    "paths": {
+      "label": "More pages",
+      "kinship": "Ties of kinship",
+      "leaveSin": "A program to leave a sin",
+      "calendar": "Calendar"
+    },
+    "weekdays": {
+      "d0": "Sunday",
+      "d1": "Monday",
+      "d2": "Tuesday",
+      "d3": "Wednesday",
+      "d4": "Thursday",
+      "d5": "Friday",
+      "d6": "Saturday"
+    },
+    "kinship": {
+      "title": "Ties of kinship",
+      "lead": "A list on your device of your relatives and how often to reach each one. A name or nickname only, no phone numbers.",
+      "form": {
+        "title": "Add a relative",
+        "name": "Name or nickname",
+        "nameHint": "Write a name or nickname only",
+        "relation": "Relation (optional)",
+        "rhythm": "How often?",
+        "rhythmHint": "A suggestion to organize your time, not a religious timing",
+        "rhythms": {
+          "weekly": "Every week",
+          "biweekly": "Every two weeks",
+          "monthly": "Every month"
+        },
+        "weekday": "On",
+        "submit": "Add",
+        "errors": {
+          "nameRequired": "Write a name or nickname.",
+          "nameLong": "Longer than 60 characters.",
+          "contact": "Write a name or nickname only, with no phone number, email or link."
+        }
+      },
+      "empty": "No one added yet.",
+      "buckets": {
+        "overdue": "Overdue",
+        "thisWeek": "This week",
+        "later": "Later"
+      },
+      "rhythmOn": "{rhythm}, on {day}",
+      "rhythmCustom": "Custom rhythm",
+      "overdueBy": "{count, plural, one {due {n} day ago} other {due {n} days ago}}",
+      "dueToday": "Today",
+      "lastContact": "last contact {date}",
+      "contacted": "I contacted them",
+      "contactedToday": "Contacted today",
+      "undo": "Undo",
+      "remove": "Remove",
+      "removeConfirm": "Yes, remove",
+      "keep": "Keep",
+      "exportTitle": "Calendar file",
+      "namesOptIn": "Show names in calendar titles",
+      "namesWarning": "Note: calendar apps and their providers store event titles on their servers, and titles can show on the lock screen.",
+      "genericNote": "Calendar titles stay generic (\"Ties of kinship\"), with no names.",
+      "export": "Download the calendar file",
+      "icsTitle": "Ties of kinship",
+      "icsTitleNamed": "Ties of kinship: {name}",
+      "icsName": "Ties of kinship"
+    }
+  },
+  "calendarPage": {
+    "title": "Calendar",
+    "lead": "The coming sunnah occasions in Hijri and Gregorian dates, each leading to its good deed.",
+    "today": "Today",
+    "hijriUnsupported": "This browser does not support the Hijri calendar.",
+    "subscribe": "Subscribe to the calendar",
+    "download": "Download the calendar file",
+    "subscribeHint": "Subscribing keeps your calendar up to date by itself; it is a public file with no data about you. The downloaded file is built on your device with your Hijri adjustment.",
+    "upcoming": "Coming occasions",
+    "empty": "No occasions in the coming year.",
+    "range": "{from} to {to}",
+    "daysAway": "{count, plural, =0 {today} =1 {tomorrow} other {in {n} days}}",
+    "organizational": "A suggestion to organize your time, not a religious timing",
+    "icsName": "Thekra occasions",
+    "offset": {
+      "label": "Hijri date adjustment",
+      "none": "No adjustment (Umm al-Qura)",
+      "plus": "+{n} day",
+      "minus": "−{n} day",
+      "hint": "If the Hijri month in your country starts before or after Umm al-Qura, adjust it here. Saved on your device."
+    },
+    "hijri": {
+      "date": "{day} {month} {year} AH",
+      "m1": "Muharram",
+      "m2": "Safar",
+      "m3": "Rabi al-Awwal",
+      "m4": "Rabi al-Akhir",
+      "m5": "Jumada al-Ula",
+      "m6": "Jumada al-Akhira",
+      "m7": "Rajab",
+      "m8": "Shaban",
+      "m9": "Ramadan",
+      "m10": "Shawwal",
+      "m11": "Dhu al-Qada",
+      "m12": "Dhu al-Hijja"
+    }
+  },
+  "leaveSin": {
+    "title": "A program to leave a sin",
+    "genericTitle": "A reminder from Thekra",
+    "lead": "A staged program on your device: know the harm, build the alternative, change your surroundings, set limits, stay firm.",
+    "privacy": "This program stays on your device alone: it is never sent to a server or used in any statistics, and the sin is never named in the page title or its link.",
+    "startFromSin": "Start the leaving program",
+    "another": "Start another program",
+    "choose": {
+      "title": "Choose the program",
+      "unnamed": "Program",
+      "veryHardYes": "Yes, very hard",
+      "veryHardNo": "No, I can leave it now",
+      "peopleRights": "This wrongs other people: there is no gradual path. It is left, or lightened with real effort, together with restoring rights, and the program helps you with that.",
+      "cutOnly": "Here the program is for leaving it, helped by means and alternatives.",
+      "start": "Start",
+      "cancel": "Cancel",
+      "errors": {
+        "choose": "Choose a program."
+      }
+    },
+    "program": {
+      "unnamed": "Your program",
+      "pathGradual": "A gradual path: going step by step does not lift the sin, but it lessens the harm step by step until you leave it.",
+      "pathCut": "Leaving path: leave it now; the program helps with means and alternatives.",
+      "pathPeople": "People’s rights: leave it or lighten it with real effort, and return rights to their owners.",
+      "gradualTitle": "Gradual steps",
+      "stageOf": "Stage {n} of {total}",
+      "stageRule": "Each stage lasts at least {days} days; you move on when you check in on most days of the week.",
+      "stagesLabel": "Program stages",
+      "actionsTitle": "Practical steps",
+      "alternativesTitle": "Good habits to put in its place",
+      "alternativesLead": "Start one of them in “Help me keep a good deed”, with a small amount.",
+      "alternativesLink": "Go to Help me keep a good deed",
+      "summaryTitle": "The last {days} days",
+      "summaryItem": "{label}: {n}",
+      "summaryNote": "Counts only, with no streaks and no comparison. What matters is coming back every time.",
+      "notesTitle": "My notebook (this device only)",
+      "textsTitle": "What the texts say",
+      "values": {
+        "held": "I held firm",
+        "weak": "I was weak",
+        "fell_repented": "I slipped, then repented"
+      }
+    },
+    "checkIn": {
+      "title": "How was your day?",
+      "note": "Private note (optional, stays on your device)",
+      "save": "Save",
+      "saved": "Today’s check-in is saved",
+      "errors": {
+        "choose": "Choose one.",
+        "noteLong": "The note is longer than 500 characters."
+      }
+    },
+    "wipe": {
+      "title": "Delete all program data",
+      "lead": "Removes the programs, check-ins and notes from this device at once; they cannot be recovered.",
+      "button": "Delete all program data",
+      "confirmTitle": "Delete all program data?",
+      "confirmBody": "Everything will be removed from this device now.",
+      "cancel": "Cancel",
+      "confirm": "Delete now"
+    }
   }
 }

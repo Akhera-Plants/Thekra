@@ -19,6 +19,8 @@ export function SiteHeader() {
   const tLocale = useTranslations('localeSwitcher');
 
   const aboutCurrent = pathname === '/about' || pathname.startsWith('/about/');
+  const practiceCurrent = pathname === '/practice' || pathname.startsWith('/practice/');
+  const calendarCurrent = pathname === '/calendar';
 
   return (
     <header className="site-header page-width">
@@ -36,6 +38,20 @@ export function SiteHeader() {
       </Link>
 
       <nav className="main-nav" aria-label={tNav('main')}>
+        <Link
+          href="/practice"
+          className="nav-link"
+          aria-current={practiceCurrent ? 'page' : undefined}
+        >
+          {tNav('practice')}
+        </Link>
+        <Link
+          href="/calendar"
+          className="nav-link"
+          aria-current={calendarCurrent ? 'page' : undefined}
+        >
+          {tNav('calendar')}
+        </Link>
         <Link
           href="/about"
           className="nav-link"

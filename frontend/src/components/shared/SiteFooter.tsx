@@ -26,6 +26,9 @@ export async function SiteFooter() {
           <Link href="/sins">{tNav('sinsShort')}</Link>
           <Link href="/good-deeds">{tNav('goodDeedsShort')}</Link>
           <Link href="/branches">{tNav('branches')}</Link>
+          <Link href="/practice">{tNav('practiceLong')}</Link>
+          <Link href="/practice/kinship">{tNav('kinship')}</Link>
+          <Link href="/calendar">{tNav('calendar')}</Link>
         </nav>
         <nav className="footer-links" aria-labelledby="footer-about">
           <h2 id="footer-about">{tFooter('aboutHeading')}</h2>

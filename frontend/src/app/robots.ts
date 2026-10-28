@@ -3,7 +3,7 @@ import { env } from '@/lib/env';
 
 /** /robots.txt: public reading pages are indexed; accounts, admin and tooling are not. */
 export default function robots(): MetadataRoute.Robots {
-  const privatePaths = ['admin', 'login', 'register', 'settings', 'favorites', 'dev', 'offline'];
+  const privatePaths = ['admin', 'login', 'register', 'settings', 'favorites', 'dev', 'offline', 'practice/leave-sin'];
   return {
     rules: {
       userAgent: '*',

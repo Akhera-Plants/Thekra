@@ -7,8 +7,8 @@ import type {
   SinsQuery,
 } from '@/lib/types/api';
 
-export async function getSins(query: SinsQuery = {}) {
-  return apiGet<SinDto[]>('/sins', { params: query });
+export async function getSins(query: SinsQuery = {}, config?: Pick<ApiGetConfig, 'signal'>) {
+  return apiGet<SinDto[]>('/sins', { ...config, params: query });
 }
 
 export async function getSin(slug: string, lang?: SinsQuery['lang']) {

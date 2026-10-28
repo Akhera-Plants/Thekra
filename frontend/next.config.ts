@@ -63,6 +63,19 @@ const nextConfig: NextConfig = {
   // Playwright and local tooling hit 127.0.0.1; without this, Next 16 blocks
   // /_next/* (and HMR) as cross-origin from that host vs localhost.
   allowedDevOrigins: ['127.0.0.1'],
+  // Workspace engine shipped as TypeScript source (`exports` → src/index.ts, `.js` relative specifiers).
+  // Compile it with the app in dev and build instead of loading it as untouched runtime code.
+  transpilePackages: ['@thekra/practice-core'],
+  turbopack: {
+    rules: {
+      // Turbopack does not resolve the package's `./x.js` specifiers to `./x.ts`; see the loader's header.
+      '*.ts': {
+        condition: { path: /^packages\/practice-core\/src\// },
+        loaders: [require.resolve('./scripts/practice-core-specifiers.cjs')],
+        as: '*.ts',
+      },
+    },
+  },
   poweredByHeader: false,
   async headers() {
     return [

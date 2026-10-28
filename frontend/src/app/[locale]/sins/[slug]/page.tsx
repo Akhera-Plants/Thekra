@@ -6,6 +6,7 @@ import { FormattedNumber } from '@/components/shared/FormattedNumber';
 import { AlternativeDeedsBlock } from '@/features/sin-reminder/components/AlternativeDeedsBlock';
 import type { ReaderItem, ReaderSection } from '@/components/shared/editorial/ReminderReader';
 import { SinReader } from '@/features/sin-reminder/components/SinReader';
+import { StartProgramLink } from '@/features/practice/components/StartProgramLink';
 import { TOPIC_PAGE_SIZE, interleaveReading } from '@/lib/reading';
 import { getSin, getSinQuotes, getSins } from '@/lib/api/sins';
 import { rethrowUnlessNotFound, topSlugs } from '@/lib/api/server-guard';
@@ -163,6 +164,7 @@ export default async function SinDetailPage({
           {sin.isContemporary ? (
             <p className="page-lead">{t('contemporaryNote')}</p>
           ) : null}
+          {sin.program?.available ? <StartProgramLink slug={slug} /> : null}
         </header>
 
         {items.length === 0 ? (
