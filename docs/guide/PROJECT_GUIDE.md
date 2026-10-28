@@ -88,6 +88,12 @@ These come from the owner and from the scholarly requirements of the project.
       (closed 2026-10-23; it hid 4 graded athar — 2 DROP, 2 undecided HadeethEnc rows from al-Adhkar — and 5 unlinked
       Minhaj excerpts). The same rule lives in `publishableClause`, `isPublishable` and the raw SQL of `shuffleLinksPage`.
 
+12. **Lecturer citations (owner rule, 2026-10-28):** a hadith cited by the lecturer Anas Sheikh Akrim
+    (`docs/research/anas-sheikh-akrim/`) is shown **with the grade he stated; if he stated none it is treated as sahih**.
+    Limits that still apply: the text comes from the database (never from the automatic transcript); a hadith already
+    public under a stronger source keeps that grade; athar stay under rule 4; Quran stays under rule 1. Planned as its
+    own `GradeSource` value and import batch (revertable), like `AHMAD_TAHQIQ` — not built yet.
+
 ## 4. Architecture
 
 ```
