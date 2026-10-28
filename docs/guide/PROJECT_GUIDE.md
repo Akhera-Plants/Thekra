@@ -90,8 +90,10 @@ These come from the owner and from the scholarly requirements of the project.
 
 12. **Lecturer citations (owner rule, 2026-10-28):** a hadith cited by the lecturer Anas Sheikh Akrim
     (`docs/research/anas-sheikh-akrim/`) is shown **with the grade he stated; if he stated none it is treated as sahih**.
-    Limits that still apply: the text comes from the database (never from the automatic transcript); a hadith already
-    public under a stronger source keeps that grade; athar stay under rule 4; Quran stays under rule 1. Planned as its
+    The text is **his own wording** (owner, same day: «خذها هي ودير نصها اللي حكاه»), cleaned only of clear
+    transcription errors, each correction listed in `citations.yaml` and checked against the audio before publishing.
+    What he retold in his own words (`mode: maana`) is labelled «بمعناه، كما رواه الأستاذ أنس شيخ اكريم», never shown as the
+    Prophet's ﷺ exact wording. Athar stay under rule 4; Quran stays under rule 1. Planned as its
     own `GradeSource` value and import batch (revertable), like `AHMAD_TAHQIQ` — not built yet.
 
 ## 4. Architecture
