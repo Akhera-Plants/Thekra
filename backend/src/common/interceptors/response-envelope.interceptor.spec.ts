@@ -1,3 +1,4 @@
+import { StreamableFile } from '@nestjs/common';
 import { of } from 'rxjs';
 import { ResponseEnvelopeInterceptor } from './response-envelope.interceptor.js';
 
@@ -21,5 +22,15 @@ describe('ResponseEnvelopeInterceptor', () => {
         .subscribe(resolve);
     });
     expect(result).toBe(payload);
+  });
+
+  it('sends a StreamableFile as is (text/calendar feed), not wrapped in { data }', async () => {
+    const file = new StreamableFile(Buffer.from('BEGIN:VCALENDAR\r\n'), { type: 'text/calendar; charset=utf-8' });
+    const result = await new Promise((resolve) => {
+      interceptor
+        .intercept({} as never, { handle: () => of(file) })
+        .subscribe(resolve);
+    });
+    expect(result).toBe(file);
   });
 });

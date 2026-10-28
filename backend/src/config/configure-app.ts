@@ -1,4 +1,5 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
 import { Logger } from 'nestjs-pino';
 // eslint-disable-next-line @typescript-eslint/no-require-imports -- helmet's
@@ -19,6 +20,13 @@ import { AllExceptionsFilter } from '../common/filters/all-exceptions.filter.js'
 import { ResponseEnvelopeInterceptor } from '../common/interceptors/response-envelope.interceptor.js';
 import { validationExceptionFactory } from '../common/validation/validation-exception.factory.js';
 import { corsOriginRules } from './cors-origins.js';
+
+/**
+ * JSON request bodies up to this size (Express's default is 100 kB). PUT /v1/me/practice carries the
+ * user's practice store, which may be up to 256 kB (PRACTICE_STORE_MAX_BYTES); every other body is far
+ * smaller and is bounded again by its DTO.
+ */
+export const JSON_BODY_LIMIT = '300kb';
 
 /** TRUST_PROXY env → Express "trust proxy" value (hop count, boolean, or list). */
 export function parseTrustProxy(raw: string | undefined): boolean | number | string | undefined {
@@ -56,6 +64,9 @@ export function configureApp(app: INestApplication): void {
 
   // Phase 5: gzip/brotli response compression
   app.use(compression());
+
+  // Registered before init(), so Nest skips its own 100 kB JSON parser.
+  (app as NestExpressApplication).useBodyParser('json', { limit: JSON_BODY_LIMIT });
 
   app.useLogger(app.get(Logger));
   app.setGlobalPrefix('v1', { exclude: ['health', 'health/ready'] });

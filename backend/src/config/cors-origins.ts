@@ -122,6 +122,9 @@ export function isAllowedCorsOrigin(rules: readonly CorsOriginRule[], origin: st
   return rules.some((rule) => (typeof rule === 'string' ? rule === origin : rule.test(origin)));
 }
 
+/** The public site (frontend project `thekra-web`). Also the base of links the API writes, e.g. in the calendar feed. */
+export const PUBLIC_SITE_ORIGIN = 'https://thekra-web.vercel.app';
+
 /**
  * The public site and its Vercel previews. They are part of the product, not
  * deployment settings, so they are always allowed: a missing or stale
@@ -130,7 +133,7 @@ export function isAllowedCorsOrigin(rules: readonly CorsOriginRule[], origin: st
  * (localhost, a custom domain); it cannot remove these.
  */
 export const BUILT_IN_CORS_ORIGINS: readonly string[] = [
-  'https://thekra-web.vercel.app',
+  PUBLIC_SITE_ORIGIN,
   'https://thekra-web-*-almekdadmohammadgmailcoms-projects.vercel.app',
 ];
 

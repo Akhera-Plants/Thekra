@@ -803,8 +803,20 @@ model User {
   /// Phase 4: optional, useful for support dashboards
   lastLoginAt  DateTime?
   favorites    Favorite[]
+  /// Synced practice store (plans, kinship list, settings). Never sin programs (roadmap §0.1).
+  practiceStore UserPracticeStore?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
+}
+
+/// One row per user: the practice-core store as exportForSync() returns it (no `programs` key).
+/// `version` is the optimistic-concurrency counter of PUT /v1/me/practice. Deleted with the user.
+model UserPracticeStore {
+  userId    String   @id
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  data      Json
+  version   Int      @default(0)
+  updatedAt DateTime @updatedAt
 }
 
 model Favorite {

@@ -92,6 +92,8 @@ describe('Good-deeds endpoints (e2e)', () => {
       name: 'Guarding the Tongue',
       nameAr: 'حفظ اللسان',
       slug: 'hifz-al-lisan',
+      // deed-schedules.yaml has no habit or occasion for this deed.
+      schedule: { habits: [], occasions: [] },
     });
   });
 

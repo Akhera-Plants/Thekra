@@ -5,8 +5,8 @@ describe('topic pairs', () => {
     resetTopicPairsCache();
   });
 
-  it('loads 41 pairs and resolves the prayer title', () => {
-    expect(allTopicPairs()).toHaveLength(41);
+  it('loads 42 pairs and resolves the prayer title', () => {
+    expect(allTopicPairs()).toHaveLength(42);
     expect(pairForSlug('tark-as-salah')).toMatchObject({
       avoid: 'tark-as-salah',
       do: 'salah',

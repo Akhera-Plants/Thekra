@@ -22,6 +22,7 @@ import { TaxonomyModule } from './modules/taxonomy/taxonomy.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { UsersModule } from './modules/users/users.module.js';
 import { FavoritesModule } from './modules/favorites/favorites.module.js';
+import { PracticeModule } from './modules/practice/practice.module.js';
 import { ContentSyncModule } from './modules/content-sync/content-sync.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 
@@ -111,6 +112,8 @@ const REQUEST_ID_RE = /^[A-Za-z0-9._-]{1,128}$/;
     GoodDeedsModule,
     SinsModule,
     ImanBranchesModule,
+    // Reminders, habit plans, the occasion calendar and the practice store sync
+    PracticeModule,
     HadithModule,
     QuranModule,
     ClassificationModule,

@@ -3,6 +3,7 @@ import {
   ExecutionContext,
   Injectable,
   NestInterceptor,
+  StreamableFile,
 } from '@nestjs/common';
 import { Observable, map } from 'rxjs';
 
@@ -11,7 +12,8 @@ export class ResponseEnvelopeInterceptor implements NestInterceptor {
   intercept(_context: ExecutionContext, next: CallHandler): Observable<unknown> {
     return next.handle().pipe(
       map((value) => {
-        if (value === undefined || value === null) {
+        // A file (e.g. the text/calendar feed) is sent as is, never wrapped in JSON.
+        if (value === undefined || value === null || value instanceof StreamableFile) {
           return value;
         }
         if (

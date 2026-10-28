@@ -9,7 +9,11 @@
 // Legs: bundled server (dev env, prod env, and without the flag), the
 // serverless handler called through a plain http server (once from the repo,
 // once from a replica of the Vercel function tree), and a negative control
-// proving the un-bundled dist/main.js still fails the way Vercel did.
+// proving the flag still reproduces the failure Vercel had: a CommonJS
+// dependency of the app (@nestjs/throttler) require()s ESM-only @nestjs/common.
+// (The control loads that dependency directly: the un-bundled dist/main.js now
+// stops earlier, because plain Node cannot load the workspace package
+// @thekra/practice-core, whose TypeScript source the bundle compiles in.)
 //
 // The function-tree leg matters because the repo legs run with cwd = backend/
 // and every source file within reach: a runtime read of a file Vercel does not
@@ -68,6 +72,21 @@ const PROBES = [
     path: `/v1/sins/tark-as-salah/quotes?limit=1&lang=ar&theme=${THEME_KEY}`,
     want: 'non-empty data.items and meta.themes',
     expect: quotesPage,
+  },
+  // deed-schedules.yaml and sin-programs.yaml are embedded in the bundle (no disk read on Vercel),
+  // and the occasion calendar needs the runtime's islamic-umalqura calendar.
+  {
+    path: '/v1/practice/catalog',
+    want: 'occasions, habits and sin programs',
+    expect: (body) =>
+      body?.data?.occasions?.length > 0 && body?.data?.habits?.length > 0 && body?.data?.sinPrograms?.programs?.length > 0,
+  },
+  {
+    path: '/v1/calendar/occasions?from=2027-05-10&to=2027-05-20',
+    want: 'Arafah 1448 on 2027-05-15',
+    expect: (body) =>
+      Array.isArray(body?.data) &&
+      body.data.some((day) => day.key === 'arafah' && day.date === '2027-05-15' && day.hijri?.year === 1448),
   },
 ];
 
@@ -270,14 +289,11 @@ async function functionTreeLeg() {
 }
 
 async function controlLeg() {
-  console.log('\n== negative control: un-bundled dist/main.js, require(esm) off (must fail)');
-  const port = await freePort();
-  const proc = run([FLAG, ENV_FILE, 'dist/main.js'], { PORT: String(port) });
-  await waitFor(`http://127.0.0.1:${port}/health`, proc, 15_000);
-  if (proc.child.exitCode === null) proc.child.kill('SIGTERM');
+  console.log('\n== negative control: import @nestjs/throttler (CommonJS, require()s ESM), require(esm) off (must fail)');
+  const proc = run([FLAG, '--input-type=module', '-e', "await import('@nestjs/throttler');"], {});
   await proc.exited;
   const reproduced = /ERR_REQUIRE_ESM/.test(proc.output());
   const line = proc.output().split('\n').find((l) => /ERR_REQUIRE_ESM/.test(l)) ?? '';
   console.log(`      ${line.slice(0, 160)}`);
-  check(reproduced, 'control: dist/main.js reproduces ERR_REQUIRE_ESM under the flag');
+  check(reproduced, 'control: @nestjs/throttler reproduces ERR_REQUIRE_ESM under the flag');
 }

@@ -119,7 +119,7 @@ programs:
     gradualAllowed: false
     help: false
     actionsAr: [إذا ذُكر غائب فاذكر خيرًا أو اسكت, غيّر الحديث بلطف, اترك المجلس الذي لا ينتهي عن الغيبة]
-    actionsEn: [When someone absent is mentioned, say something good or stay silent, change the subject gently, leave a gathering that will not stop]
+    actionsEn: ['When someone absent is mentioned, say something good or stay silent', change the subject gently, leave a gathering that will not stop]
     alternatives: [smile, salam]
     evidence: [e95c82ad-29c4-48ea-a75d-c583f9dc46d3, 00000000-0000-4000-8000-000000000001, 7d5afc99-719d-4cca-bbd0-d6b9958f547b]
   - sin: intiqad
@@ -136,6 +136,6 @@ programs:
     gradualAllowed: false
     help: false
     actionsAr: [إذا غضبت فاسكت وغيّر هيئتك, توضأ, اعتذر لمن أخطأت في حقه]
-    actionsEn: [When angry, fall silent and change your position, make wudu, apologise to anyone you wronged]
+    actionsEn: ['When angry, fall silent and change your position', make wudu, apologise to anyone you wronged]
     alternatives: [smile, adhkar-sabah-masa]
     evidence: [2e714754-b13e-4b5c-a776-55e6940c441b, af5fe495-bec7-4880-920e-74bd40511fdb]

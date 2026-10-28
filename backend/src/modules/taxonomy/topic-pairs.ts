@@ -9,15 +9,19 @@ export interface ResolvedPair {
   titleEn: string;
 }
 
+export type TopicSide = 'AVOID' | 'DO';
+
 interface TopicRow {
   slug: string;
   ar: string;
   en: string;
+  side: TopicSide | null;
 }
 
 let cached: {
   bySlug: Map<string, ResolvedPair>;
   pairs: ResolvedPair[];
+  topics: Map<string, TopicRow>;
 } | null = null;
 
 function field(inner: string, key: string): string | null {
@@ -48,7 +52,8 @@ function parseTopics(text: string): Map<string, TopicRow> {
     const slug = field(inner, 'slug');
     const ar = field(inner, 'ar');
     const en = field(inner, 'en');
-    if (slug && ar && en) topics.set(slug, { slug, ar, en });
+    const side = field(inner, 'side');
+    if (slug && ar && en) topics.set(slug, { slug, ar, en, side: side === 'AVOID' || side === 'DO' ? side : null });
   }
   return topics;
 }
@@ -80,7 +85,7 @@ function parsePairs(text: string, topics: Map<string, TopicRow>): ResolvedPair[]
   return pairs;
 }
 
-function load(): { bySlug: Map<string, ResolvedPair>; pairs: ResolvedPair[] } {
+function load(): NonNullable<typeof cached> {
   if (cached) return cached;
   const text = readTaxonomyFile('taxonomy.yaml');
   const topics = parseTopics(text);
@@ -90,7 +95,7 @@ function load(): { bySlug: Map<string, ResolvedPair>; pairs: ResolvedPair[] } {
     bySlug.set(pair.avoid, pair);
     bySlug.set(pair.do, pair);
   }
-  cached = { bySlug, pairs };
+  cached = { bySlug, pairs, topics };
   return cached;
 }
 
@@ -109,4 +114,9 @@ export function allTopicPairs(): readonly ResolvedPair[] {
 
 export function isPairedSlug(slug: string): boolean {
   return load().bySlug.has(slug);
+}
+
+/** `side:` of a taxonomy.yaml topic (AVOID = sin, DO = good deed), or null when the slug is not a topic. */
+export function topicSide(slug: string): TopicSide | null {
+  return load().topics.get(slug)?.side ?? null;
 }

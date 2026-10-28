@@ -5,6 +5,8 @@ import { GradeSource, HadithGrade, QuoteOrigin, QuoteType, SourceType, TagCatego
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type { QuoteRowForDto } from '../../common/mappers/quote.mapper.js';
+import type { EnvironmentVariables } from '../../config/env.validation.js';
+import { GradePolicy } from '../hadith/grade-policy.js';
 import { QuotesService } from './quotes.service.js';
 import type { AdminQuotesQueryDto } from './dto/admin-quotes-query.dto.js';
 import type { QuotesQueryDto } from './dto/quotes-query.dto.js';
@@ -542,5 +544,35 @@ describe('QuotesService — reminder of the day (audit B03)', () => {
     const notIn = and.find((clause) => 'id' in clause) as { id: { notIn: string[] } };
     // The truncated «وعن صلاة بعد الصبح والعصر» (Bukhari 1992) is listed and unreviewed.
     expect(notIn.id.notIn).toContain('732316e4-2137-48ab-aede-88101b240560');
+  });
+});
+
+describe('QuotesService — findPublishedByIds (practice evidence)', () => {
+  it('uses the reader gate, keeps the asked order and silently drops ids it did not find', async () => {
+    const first = makeRow({ id: 'aaaaaaaa-0000-4000-8000-000000000001' });
+    const second = makeRow({ id: 'aaaaaaaa-0000-4000-8000-000000000002', type: QuoteType.QURAN_VERSE, grade: null });
+    const findMany = vi.fn().mockResolvedValue([first, second]);
+    const module = await Test.createTestingModule({
+      providers: [
+        QuotesService,
+        { provide: PrismaService, useValue: { quote: { findMany } } },
+        { provide: ConfigService, useValue: makeConfigMock() },
+      ],
+    }).compile();
+    const ids = [second.id, 'aaaaaaaa-0000-4000-8000-00000000dead', first.id];
+    const result = await module.get(QuotesService).findPublishedByIds(ids, 'ar');
+
+    expect(result.map((quote) => quote.id)).toEqual([second.id, first.id]);
+    const and = (findMany.mock.calls[0][0].where as { AND: Prisma.QuoteWhereInput[] }).AND;
+    expect(and).toContainEqual({ id: { in: ids } });
+    expect(and).toContainEqual(GradePolicy.readerClause());
+    expect(and).toContainEqual(GradePolicy.whereClause(GradePolicy.defaultAllowedGrades()));
+  });
+
+  it('does not query for an empty list', async () => {
+    const findMany = vi.fn();
+    const service = new QuotesService({ quote: { findMany } } as unknown as PrismaService, makeConfigMock() as unknown as ConfigService<EnvironmentVariables>);
+    expect(await service.findPublishedByIds([], 'en')).toEqual([]);
+    expect(findMany).not.toHaveBeenCalled();
   });
 });

@@ -1,4 +1,5 @@
 import type { SinRank } from '@prisma/client';
+import type { SinCategory } from '@thekra/practice-core';
 import type { GoodDeedSummary } from '../../good-deeds/entities/good-deed.entity.js';
 
 export interface SinRankSourceDto {
@@ -42,4 +43,6 @@ export type SinDetailDto = SinDto & {
   locale: string;
   isContemporary: boolean;
   branches: { number: number; titleAr: string; title: string | null }[];
+  /** Whether sin-programs.yaml has a leaving program for this sin, and its category. */
+  program: { available: boolean; category: SinCategory | null };
 };

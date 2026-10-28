@@ -16,6 +16,13 @@ export const ARGON2_OPTIONS: HashOptions = {
   parallelism: 1,
 };
 
+/**
+ * A well-formed argon2id hash that matches no password. Verified when the user is unknown, so an unknown
+ * account costs the same time as a wrong password (no timing oracle).
+ */
+export const DUMMY_PASSWORD_HASH =
+  '$argon2id$v=19$m=19456,t=2,p=1$AAAAAAAAAAAAAAAA$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+
 export function hashPassword(password: string): Promise<string> {
   return argon2hash(password, ARGON2_OPTIONS);
 }

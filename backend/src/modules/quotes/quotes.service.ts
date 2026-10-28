@@ -230,6 +230,30 @@ export class QuotesService {
     return { data: row ? this.toQuoteDto(row, locale) : null };
   }
 
+  /**
+   * Published texts by id, in the order asked, with the reader gate of the topic pages
+   * (public text, publishable grade source or kept athar, no open high flag, default grades
+   * sahih/hasan). Unknown or unpublished ids are left out without saying which.
+   */
+  async findPublishedByIds(ids: readonly string[], locale: 'ar' | 'en'): Promise<QuoteDto[]> {
+    if (ids.length === 0) return [];
+    const rows = await this.prisma.quote.findMany({
+      where: {
+        AND: [
+          { id: { in: [...ids] } },
+          GradePolicy.whereClause(GradePolicy.defaultAllowedGrades()),
+          GradePolicy.readerClause(),
+        ],
+      },
+      include: this.buildQuoteInclude(locale),
+    });
+    const byId = new Map(rows.map((row) => [row.id, row]));
+    return ids.flatMap((id) => {
+      const row = byId.get(id);
+      return row ? [this.toQuoteDto(row, locale)] : [];
+    });
+  }
+
   linkOrderBy() {
     return LINK_ORDER_BY;
   }

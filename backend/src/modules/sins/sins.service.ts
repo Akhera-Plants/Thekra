@@ -30,6 +30,7 @@ import { buildPageMeta, paginated } from '../../common/dto/paginated-result.js';
 import { findIdsByNormalizedArabic } from '../../common/text/arabic-search.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { GoodDeedsService } from '../good-deeds/good-deeds.service.js';
+import { programForSin } from '../practice/practice-catalog.js';
 import {
   PUBLISHED_LINK_REVIEW_STATUS,
   QuotesService,
@@ -241,6 +242,8 @@ export class SinsService {
         titleAr: link.imanBranch.titleAr,
         title: link.imanBranch.title,
       })),
+      // Only whether a leaving program exists and its category; the program itself is in the catalog.
+      program: programForSin(row.slug),
     };
   }
 

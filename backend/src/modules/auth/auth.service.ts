@@ -12,7 +12,7 @@ import type { JwtPayload } from '../../common/decorators/current-user.decorator.
 import { UsersService } from '../users/users.service.js';
 import type { RegisterDto } from './dto/register.dto.js';
 import type { LoginDto } from './dto/login.dto.js';
-import { ARGON2_OPTIONS } from './password-hash.js';
+import { ARGON2_OPTIONS, DUMMY_PASSWORD_HASH } from './password-hash.js';
 
 export interface TokenPair {
   accessToken: string;
@@ -99,9 +99,7 @@ export class AuthService {
     const user = await this.users.findByEmail(email);
 
     // Always run argon2.verify to prevent timing oracle.
-    const dummyHash =
-      '$argon2id$v=19$m=19456,t=2,p=1$AAAAAAAAAAAAAAAA$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
-    const hashToVerify = user?.passwordHash ?? dummyHash;
+    const hashToVerify = user?.passwordHash ?? DUMMY_PASSWORD_HASH;
     const valid = await argon2verify(hashToVerify, dto.password);
 
     if (!user || !valid) {

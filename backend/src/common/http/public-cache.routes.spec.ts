@@ -80,6 +80,10 @@ const CACHEABLE = [
   'GET /quran/ayahs/:surahNumber/:ayahNumber',
   'GET /hadith',
   'GET /hadith/collections',
+  'GET /practice/catalog',
+  'GET /practice/evidence',
+  'GET /calendar/occasions',
+  'GET /calendar/occasions.ics',
 ].sort();
 
 const PRIVATE_PREFIXES = ['auth', 'admin', 'favorites', 'reports', 'review', 'health', 'users', 'me'];
@@ -87,7 +91,9 @@ const PRIVATE_PREFIXES = ['auth', 'admin', 'favorites', 'reports', 'review', 'he
 describe('public cache route metadata', () => {
   it('finds the controllers (guards the walk itself)', () => {
     expect(routes.length).toBeGreaterThan(60);
-    expect(routes.map((route) => route.id)).toEqual(expect.arrayContaining(['GET /sins/:slug/quotes', 'POST /auth/login', 'GET /favorites']));
+    expect(routes.map((route) => route.id)).toEqual(
+      expect.arrayContaining(['GET /sins/:slug/quotes', 'POST /auth/login', 'GET /favorites', 'GET /me/practice', 'PUT /me/practice']),
+    );
   });
 
   it('caches exactly the allow-listed public routes', () => {

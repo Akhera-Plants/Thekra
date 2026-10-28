@@ -28,6 +28,7 @@ import {
   QuotesService,
 } from '../quotes/quotes.service.js';
 import type { GoodDeedQuotesQueryDto } from '../sins/dto/sin-quotes-query.dto.js';
+import { scheduleForDeed } from '../practice/practice-catalog.js';
 import { pairForSlug } from '../taxonomy/topic-pairs.js';
 import { findActiveTheme, mergePageThemes, readThemedPage, summariseThemes } from '../taxonomy/theme-reading.js';
 import { themesForTopics } from '../taxonomy/topic-themes.js';
@@ -233,6 +234,8 @@ export class GoodDeedsService {
         titleAr: link.imanBranch.titleAr,
         title: link.imanBranch.title,
       })),
+      // Reminder habits and sunnah occasions that lead to this deed (deed-schedules.yaml).
+      schedule: scheduleForDeed(row.slug),
     };
   }
 

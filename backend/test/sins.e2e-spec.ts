@@ -153,6 +153,8 @@ describe('Sins endpoints (e2e)', () => {
       name: 'Backbiting',
       nameAr: 'الغيبة',
       slug: 'ghibah',
+      // sin-programs.yaml: only availability and category are exposed here.
+      program: { available: true, category: 'haqq_ibad' },
     });
   });
 

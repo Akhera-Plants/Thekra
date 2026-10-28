@@ -35,6 +35,11 @@ export class UsersService {
     });
   }
 
+  /** Deletes the account; favorites and the practice store go with it (onDelete: Cascade). */
+  async deleteById(id: string): Promise<void> {
+    await this.prisma.user.deleteMany({ where: { id } });
+  }
+
   /** Touch lastLoginAt without other updates — fast, no return needed. */
   touchLastLogin(userId: string): Promise<User> {
     return this.prisma.user.update({

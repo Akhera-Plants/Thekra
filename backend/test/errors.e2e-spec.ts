@@ -102,11 +102,11 @@ describe('Error envelope & HTTP contract (e2e)', () => {
   });
 
   // ── §4  Oversized body → 413 PAYLOAD_TOO_LARGE (P1-5) ─────────────────────
-  // Default Express body-parser limit is 100 kb.  Send ~200 kb to trigger 413.
+  // The JSON body limit is JSON_BODY_LIMIT (300 kb, src/config/configure-app.ts). Send ~400 kb to trigger 413.
 
   it('oversized body → 413 PAYLOAD_TOO_LARGE', async () => {
-    // Build a JSON body slightly above the 100 kb Express default limit
-    const largeValue = 'a'.repeat(110_000);
+    // Build a JSON body above the 300 kb JSON_BODY_LIMIT
+    const largeValue = 'a'.repeat(400_000);
     const largeBody = JSON.stringify({ note: largeValue });
 
     const res = await request(app.getHttpServer())

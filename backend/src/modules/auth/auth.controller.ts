@@ -1,7 +1,9 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  Header,
   HttpCode,
   HttpStatus,
   Post,
@@ -9,8 +11,11 @@ import {
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { CurrentUser, type JwtPayload } from '../../common/decorators/current-user.decorator.js';
+import { PRIVATE_CACHE_HEADER } from '../../common/http/public-cache.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { AccountService } from './account.service.js';
 import { AuthService } from './auth.service.js';
+import { DeleteAccountDto } from './dto/delete-account.dto.js';
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
 import { LoginDto } from './dto/login.dto.js';
 import { RefreshTokenDto } from './dto/refresh-token.dto.js';
@@ -33,6 +38,7 @@ const REFRESH_THROTTLE = { default: { limit: 30, ttl: 60_000 } };
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
+    private readonly accountService: AccountService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -79,6 +85,23 @@ export class AuthController {
         createdAt: dbUser.createdAt,
       },
     };
+  }
+
+  /** #82 GET /v1/auth/me/export — everything stored for the account, as JSON. */
+  @Get('me/export')
+  @UseGuards(JwtAuthGuard)
+  @Header('Cache-Control', PRIVATE_CACHE_HEADER)
+  @Header('Content-Disposition', 'attachment; filename="thekra-export.json"')
+  async exportMe(@CurrentUser() user: JwtPayload) {
+    return { data: await this.accountService.exportAccount(user.sub) };
+  }
+
+  /** #83 DELETE /v1/auth/me — re-enter the password; favorites and the practice store cascade. */
+  @Delete('me')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteMe(@CurrentUser() user: JwtPayload, @Body() dto: DeleteAccountDto): Promise<void> {
+    await this.accountService.deleteAccount(user.sub, dto.password);
   }
 
   /**
