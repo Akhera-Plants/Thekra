@@ -1,7 +1,8 @@
 /**
  * Pure reminder scheduling on top of @thekra/practice-core. No chrome.* here, so it runs in Node tests.
  *
- * A reminder fires at each plan slot (`HH:MM`, local time) on each day the plan's rule fires
+ * A reminder fires at each plan slot (`HH:MM`, local time) on each day the plan's rule (`Plan.rule`, daily when
+ * absent) fires
  * (practice-core `nextOccurrences`, Hijri rules with the user's offset), except on the user's quiet weekdays.
  * Today's remaining slots are skipped once today's required amount is logged (`requiredOn`; a missed day is
  * never added to the next one).
@@ -22,8 +23,6 @@ import {
 
 export interface ScheduleInput {
   plans: readonly Plan[];
-  /** Rule per plan id; a plan without one is treated as daily. */
-  rules: Readonly<Record<string, Rule>>;
   /** Weekdays without reminders (0 = Sunday). */
   quietDays: readonly number[];
   hijriOffset: number;
@@ -51,8 +50,9 @@ export function localInstant(date: LocalDate, time: LocalTime): number {
   return new Date(y, m - 1, d, hh, mm, 0, 0).getTime();
 }
 
-export function ruleOf(rules: Readonly<Record<string, Rule>>, planId: string): Rule {
-  return rules[planId] ?? DAILY;
+/** The plan's schedule; a plan without a rule (e.g. made on another device) is daily. */
+export function ruleOf(plan: Pick<Plan, 'rule'>): Rule {
+  return plan.rule ?? DAILY;
 }
 
 /** What is still asked for on `date` (0 when the required amount is already logged). */
@@ -72,7 +72,7 @@ export function upcomingReminders(input: ScheduleInput, perPlan = 1): Reminder[]
     const plan = normalize(raw, today);
     const slots = [...new Set(plan.slots)].sort();
     const found: Reminder[] = [];
-    const days = nextOccurrences(ruleOf(input.rules, plan.id), today, SEARCH_OCCURRENCES, { hijriOffset: input.hijriOffset });
+    const days = nextOccurrences(ruleOf(plan), today, SEARCH_OCCURRENCES, { hijriOffset: input.hijriOffset });
     for (const date of days) {
       if (found.length >= perPlan) break;
       if (quiet.has(weekday(date))) continue;

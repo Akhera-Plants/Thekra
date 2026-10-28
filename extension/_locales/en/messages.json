@@ -37,7 +37,7 @@
     "message": "Pick one or two good deeds and start with a little you can keep."
   },
   "privacyNote": {
-    "message": "Your data stays on this device. The network is used only to fetch the catalog and texts from Thekra."
+    "message": "Your data stays on this device. The extension contacts Thekra only to fetch the catalog and texts, and to sync with your account if you sign in."
   },
   "habitsHeading": {
     "message": "Good deeds"
@@ -193,5 +193,56 @@
   "paraphraseLabel": {
     "message": "Paraphrased",
     "description": "Shown before the reference when the lecturer retold a hadith in his own words."
+  },
+  "accountHeading": {
+    "message": "Account (optional)"
+  },
+  "accountIntro": {
+    "message": "Sign in with your Thekra account to keep your habits and log in step across the website, the app and the extension. Without an account everything still works on this device."
+  },
+  "email": {
+    "message": "Email"
+  },
+  "password": {
+    "message": "Password"
+  },
+  "signIn": {
+    "message": "Sign in"
+  },
+  "signOut": {
+    "message": "Sign out"
+  },
+  "signedInAs": {
+    "message": "Signed in as $1"
+  },
+  "signInInvalid": {
+    "message": "Wrong email or password."
+  },
+  "signInThrottled": {
+    "message": "Too many attempts; try again shortly."
+  },
+  "syncNow": {
+    "message": "Sync now"
+  },
+  "syncScope": {
+    "message": "The extension syncs habits and their log only. Signing out keeps what is on this device."
+  },
+  "syncOk": {
+    "message": "Synced at $1"
+  },
+  "syncPending": {
+    "message": "Sync pending…"
+  },
+  "syncOffline": {
+    "message": "Could not connect; will retry."
+  },
+  "syncError": {
+    "message": "Sync failed; will retry."
+  },
+  "syncLast": {
+    "message": "Last synced: $1"
+  },
+  "syncSignedOut": {
+    "message": "Session ended; sign in again in Settings."
   }
 }

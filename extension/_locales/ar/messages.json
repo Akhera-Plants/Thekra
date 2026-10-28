@@ -37,7 +37,7 @@
     "message": "اختر طاعة أو اثنتين، وابدأ بقليل تداوم عليه."
   },
   "privacyNote": {
-    "message": "بياناتك على هذا الجهاز فقط. الشبكة لجلب الكتالوج والنصوص من موقع ذكرى فقط."
+    "message": "بياناتك على هذا الجهاز. تتصل الإضافة بموقع ذكرى لجلب الكتالوج والنصوص فقط، وللمزامنة مع حسابك إن سجّلت الدخول."
   },
   "habitsHeading": {
     "message": "الطاعات"
@@ -193,5 +193,56 @@
   "paraphraseLabel": {
     "message": "بمعناه",
     "description": "Shown before the reference when the lecturer retold a hadith in his own words."
+  },
+  "accountHeading": {
+    "message": "الحساب (اختياري)"
+  },
+  "accountIntro": {
+    "message": "سجّل الدخول بحساب موقع ذكرى لتبقى عاداتك وسجلّها متطابقة في الموقع والتطبيق والإضافة. بدون حساب تعمل الإضافة كاملة على جهازك."
+  },
+  "email": {
+    "message": "البريد الإلكتروني"
+  },
+  "password": {
+    "message": "كلمة المرور"
+  },
+  "signIn": {
+    "message": "دخول"
+  },
+  "signOut": {
+    "message": "خروج"
+  },
+  "signedInAs": {
+    "message": "مسجّل الدخول: $1"
+  },
+  "signInInvalid": {
+    "message": "البريد أو كلمة المرور غير صحيحة."
+  },
+  "signInThrottled": {
+    "message": "محاولات كثيرة، حاول بعد قليل."
+  },
+  "syncNow": {
+    "message": "زامن الآن"
+  },
+  "syncScope": {
+    "message": "تُزامن الإضافة العادات وسجلّها فقط. يبقى ما على جهازك عند الخروج."
+  },
+  "syncOk": {
+    "message": "تمت المزامنة الساعة $1"
+  },
+  "syncPending": {
+    "message": "المزامنة قيد الانتظار…"
+  },
+  "syncOffline": {
+    "message": "تعذّر الاتصال، ستُعاد المحاولة."
+  },
+  "syncError": {
+    "message": "تعذّرت المزامنة، ستُعاد المحاولة."
+  },
+  "syncLast": {
+    "message": "آخر مزامنة: $1"
+  },
+  "syncSignedOut": {
+    "message": "انتهت الجلسة، سجّل الدخول من الإعدادات."
   }
 }

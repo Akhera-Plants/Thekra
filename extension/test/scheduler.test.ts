@@ -25,7 +25,7 @@ function plan(id: string, slots: string[], extra: Partial<Plan> = {}): Plan {
 }
 
 function input(plans: Plan[], now: Date, extra: Partial<ScheduleInput> = {}): ScheduleInput {
-  return { plans, rules: {}, quietDays: [], hijriOffset: 0, now, ...extra };
+  return { plans, quietDays: [], hijriOffset: 0, now, ...extra };
 }
 
 describe('upcomingReminders', () => {
@@ -72,17 +72,15 @@ describe('upcomingReminders', () => {
   });
 
   it('follows the plan rule (weekdays: Friday only)', () => {
-    const p = plan('qiyam-last-third', ['04:00']);
-    const rules: Record<string, Rule> = { 'qiyam-last-third': { kind: 'weekdays', days: [5] } };
-    const list = upcomingReminders(input([p], at(TODAY, '08:00'), { rules }), 3);
+    const p = plan('qiyam-last-third', ['04:00'], { rule: { kind: 'weekdays', days: [5] } });
+    const list = upcomingReminders(input([p], at(TODAY, '08:00')), 3);
     expect(list.map((r) => r.date)).toEqual(['2026-10-30', '2026-11-06', '2026-11-13']);
   });
 
   it('applies the Hijri offset to Hijri rules', () => {
-    const p = plan('a', ['08:00']);
-    const rules: Record<string, Rule> = { a: { kind: 'hijriMonthDays', days: [13] } };
-    const base = upcomingReminders(input([p], at(TODAY, '09:00'), { rules }))[0];
-    const shifted = upcomingReminders(input([p], at(TODAY, '09:00'), { rules, hijriOffset: 1 }))[0];
+    const p = plan('a', ['08:00'], { rule: { kind: 'hijriMonthDays', days: [13] } });
+    const base = upcomingReminders(input([p], at(TODAY, '09:00')))[0];
+    const shifted = upcomingReminders(input([p], at(TODAY, '09:00'), { hijriOffset: 1 }))[0];
     expect(toHijri(base?.date as string, 0).day).toBe(13);
     expect(toHijri(shifted?.date as string, 1).day).toBe(13);
     expect(shifted?.date).toBe(addDays(base?.date as string, -1));

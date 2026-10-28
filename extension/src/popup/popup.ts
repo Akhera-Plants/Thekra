@@ -5,6 +5,7 @@
 import {
   createPlan,
   decreaseTo,
+  deletePlan,
   formatHijriAr,
   isHijriSupported,
   logDone,
@@ -13,14 +14,17 @@ import {
   startSuggestion,
   todayFrom,
   toHijri,
-  validatePlan,
+  updatePlan,
+  updateSettings,
+  upsertPlan,
   type LocalDate,
   type Plan,
   type Rule,
+  type Store,
 } from '@thekra/practice-core';
 import { deedUrl, formatAmount, habitTitle, unitLabel, type Habit } from '../catalog.js';
 import { API_ORIGIN } from '../cache.js';
-import { api, getCatalog, loadState, refreshCaches, saveState, TARGET } from '../ext.js';
+import { api, getCatalog, getSyncStatus, loadState, loadStore, refreshCaches, saveState, saveStore, TARGET, tokenStore } from '../ext.js';
 import { translator } from '../i18n.js';
 import {
   applyIncrease,
@@ -34,7 +38,9 @@ import {
 } from '../progress.js';
 import type { Translate } from '../quotes.js';
 import { isReminderDay, remainingOn, ruleOf } from '../scheduler.js';
-import { PREFS_KEY, STORE_KEY, type Lang, type State } from '../state.js';
+import type { Message, Reply } from '../messages.js';
+import { AUTH_KEY, PREFS_KEY, STORE_KEY, SYNC_STATUS_KEY, type Lang, type State } from '../state.js';
+import type { SyncStatus } from '../sync-runner.js';
 
 type Child = Node | string | null | undefined | false;
 
@@ -54,6 +60,9 @@ const EXTRA_SLOTS = ['08:00', '12:00', '15:00', '18:00', '20:00', '22:00', '06:0
 
 let state: State;
 let catalog: Habit[] = [];
+/** Signed-in account email, or null. */
+let account: string | null = null;
+let syncStatus: SyncStatus | null = null;
 let view: 'today' | 'settings' = 'today';
 let flash = '';
 
@@ -78,14 +87,50 @@ function hijriText(date: LocalDate, offset: number, lang: Lang): string | null {
   return `${hd.day}/${hd.month}/${hd.year} AH`;
 }
 
-async function persist(next: State): Promise<void> {
-  state = next;
-  await saveState(next);
+function send(message: Message): Promise<Reply> {
+  return (api.runtime.sendMessage(message) as Promise<Reply | undefined>).then(
+    (r) => r ?? { ok: false, error: 'server' },
+    () => ({ ok: false, error: 'server' }),
+  );
 }
 
-function updatePlan(planId: string, change: (p: Plan) => Plan): Promise<void> {
-  const plans = state.store.plans.map((p) => (p.id === planId ? change(p) : p));
-  return persist({ ...state, store: { ...state.store, plans } });
+/**
+ * Applies a store edit to the store as it is in storage now (a sync may have merged changes since the popup
+ * read it), through the practice-core store helpers so versions and tombstones stay right.
+ */
+async function editStore(change: (store: Store) => Store): Promise<void> {
+  const next = change(await loadStore());
+  await saveStore(next);
+  state = { ...state, store: next };
+}
+
+function editPlan(planId: string, change: (p: Plan) => Plan): Promise<void> {
+  return editStore((store) => updatePlan(store, planId, change));
+}
+
+function habitOf(plan: Plan): Habit | undefined {
+  return plan.habitKey === undefined ? undefined : catalog.find((x) => x.key === plan.habitKey);
+}
+
+/** «HH:MM» in Western digits. */
+function clock(iso: string): string {
+  const d = new Date(iso);
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+function syncLine(t: Translate): HTMLElement | null {
+  if (!account) return null;
+  const s = syncStatus;
+  let text = t('syncPending');
+  let cls = 'sync muted';
+  if (s?.state === 'ok') text = t('syncOk', clock(s.at));
+  else if (s?.state === 'signedOut') text = t('syncSignedOut');
+  else if (s?.state === 'error') {
+    text = s.error === 'offline' ? t('syncOffline') : t('syncError');
+    if (s.lastOkAt) text = `${text} ${t('syncLast', clock(s.lastOkAt))}`;
+    cls = 'sync warn';
+  }
+  return h('p', { class: cls, role: 'status' }, text);
 }
 
 // ---- Shell ---------------------------------------------------------------------------------------------
@@ -112,6 +157,7 @@ function render(): void {
     h('nav', { class: 'tabs' }, tab('today', t('tabToday')), tab('settings', t('tabSettings'))),
   );
   const main = h('main', {});
+  redrawAccount = null;
   if (view === 'today') renderToday(main, t);
   else renderSettings(main, t);
   root.replaceChildren(header, main);
@@ -127,7 +173,7 @@ async function hostPermissionBlock(t: Translate): Promise<HTMLElement | null> {
     void api.permissions.request({ origins: HOST_ORIGINS }).then(async (granted) => {
       if (granted) {
         button.remove();
-        await refreshCaches();
+        await refreshCaches(Date.now(), true);
       }
     });
   });
@@ -146,6 +192,8 @@ function renderToday(main: HTMLElement, t: Translate): void {
   }
   const hijri = hijriText(day, offset, lang);
   if (hijri) main.append(h('p', { class: 'muted date' }, t('hijriToday', hijri)));
+  const line = syncLine(t);
+  if (line) main.append(line);
 
   if (state.store.plans.length === 0) {
     const go = h('button', { type: 'button', class: 'primary' }, t('goToSettings'));
@@ -160,8 +208,8 @@ function renderToday(main: HTMLElement, t: Translate): void {
   const plans = [...state.store.plans].sort((a, b) => (a.slots[0] ?? '').localeCompare(b.slots[0] ?? ''));
   for (const stored of plans) {
     const plan = normalize(stored, day);
-    const habit = catalog.find((x) => x.key === plan.id);
-    const rule = state.prefs.rules[plan.id] ?? habit?.defaultRule ?? ruleOf(state.prefs.rules, plan.id);
+    const habit = habitOf(plan);
+    const rule = ruleOf(plan);
     const label = habit ? unitLabel(habit, lang) : '';
     const amount = (n: number) => formatAmount(n, plan.unit, label);
     const required = requiredOn(plan, day);
@@ -186,7 +234,7 @@ function renderToday(main: HTMLElement, t: Translate): void {
       e.preventDefault();
       const n = Number(input.value);
       if (!Number.isFinite(n) || n <= 0) return;
-      void updatePlan(plan.id, (p) => logDone(p, day, n)).then(render);
+      void editPlan(plan.id, (p) => logDone(p, day, n)).then(render);
     });
     card.append(form);
 
@@ -200,18 +248,18 @@ function renderToday(main: HTMLElement, t: Translate): void {
     if (up !== null) {
       const b = h('button', { type: 'button', class: 'secondary' }, t('increaseButton'));
       b.addEventListener('click', () => {
-        void updatePlan(plan.id, (p) => applyIncrease(p, rule, state.prefs.quietDays, day, offset)).then(render);
+        void editPlan(plan.id, (p) => applyIncrease(p, rule, state.prefs.quietDays, day, offset)).then(render);
       });
       card.append(h('div', { class: 'offer' }, h('p', {}, t('increaseOffer', amount(up))), b));
     }
 
-    card.append(toggle(t('ebbToggle'), Boolean(plan.ebb), (on) => updatePlan(plan.id, (p) => setEbb(p, on, day))));
+    card.append(toggle(t('ebbToggle'), Boolean(plan.ebb), (on) => editPlan(plan.id, (p) => setEbb(p, on, day))));
 
     const ramadan = isHijriSupported() ? ramadanEnd(day, offset) : null;
     const seasonUp = seasonAmount(plan);
     if (plan.season || (ramadan !== null && seasonUp !== null)) {
       const shown = plan.season ? plan.season.amount : (seasonUp as number);
-      card.append(toggle(t('seasonToggle', amount(shown)), Boolean(plan.season), (on) => updatePlan(plan.id, (p) => setSeason(p, on, day, offset))));
+      card.append(toggle(t('seasonToggle', amount(shown)), Boolean(plan.season), (on) => editPlan(plan.id, (p) => setSeason(p, on, day, offset))));
     }
     main.append(card);
   }
@@ -269,7 +317,7 @@ function defaultActiveDays(rule: Rule): number {
 function makeDraft(): Draft {
   const habits: Record<string, HabitDraft> = {};
   for (const habit of catalog) {
-    const plan = state.store.plans.find((p) => p.id === habit.key);
+    const plan = state.store.plans.find((p) => p.habitKey === habit.key);
     if (plan) {
       const base = plan.season ? plan.season.previous : plan.amount;
       habits[habit.key] = { selected: true, distance: 'near', amount: base, maxAmount: base, slots: [...plan.slots], activeDays: plan.activeDaysPerWeek };
@@ -363,7 +411,8 @@ function renderSettings(main: HTMLElement, t: Translate): void {
       });
       card.append(h('div', { class: 'field' }, h('span', {}, t('reminderTimes')), times));
 
-      const maxDays = maxActiveDays(state.prefs.rules[habit.key] ?? habit.defaultRule);
+      const existing = state.store.plans.find((p) => p.habitKey === habit.key);
+      const maxDays = maxActiveDays(existing?.rule ?? habit.defaultRule);
       const days = select(
         Array.from({ length: maxDays - 1 }, (_, i) => ({ value: String(i + 2), label: String(i + 2) })),
         String(Math.min(hd.activeDays, maxDays)),
@@ -436,13 +485,80 @@ function renderSettings(main: HTMLElement, t: Translate): void {
       render();
     });
   });
-  main.append(save, message, h('p', { class: 'muted small' }, t('privacyNote')));
+  main.append(save, message);
+
+  // The account is separate from the form above: signing in or out takes effect at once.
+  const accountBox = h('section', { class: 'card account' });
+  redrawAccount = () => accountBox.replaceChildren(...accountContent(translator(d.lang)));
+  redrawAccount();
+  main.append(accountBox, h('p', { class: 'muted small' }, t('privacyNote')));
   void hostPermissionBlock(t).then((block) => block && main.append(block));
+}
+
+// ---- Account (optional) -------------------------------------------------------------------------------
+
+/** Redraws the account block of the settings view in place (set while that view is shown). */
+let redrawAccount: (() => void) | null = null;
+
+function accountError(t: Translate, code: string): string {
+  switch (code) {
+    case 'invalid':
+      return t('signInInvalid');
+    case 'throttled':
+      return t('signInThrottled');
+    case 'offline':
+      return t('syncOffline');
+    default:
+      return t('syncError');
+  }
+}
+
+function accountContent(t: Translate): Node[] {
+  const heading = h('h2', {}, t('accountHeading'));
+  const message = h('p', { class: 'flash', role: 'status' });
+  if (account) {
+    const syncButton = h('button', { type: 'button', class: 'secondary' }, t('syncNow'));
+    syncButton.addEventListener('click', () => {
+      syncButton.disabled = true;
+      void send({ type: 'sync' }).then((r) => {
+        syncButton.disabled = false;
+        if (!r.ok) message.textContent = accountError(t, r.error);
+      });
+    });
+    const out = h('button', { type: 'button', class: 'secondary' }, t('signOut'));
+    out.addEventListener('click', () => {
+      out.disabled = true;
+      void send({ type: 'signOut' });
+    });
+    const line = syncLine(t);
+    return [heading, h('p', {}, t('signedInAs', account)), ...(line ? [line] : []), h('div', { class: 'row' }, syncButton, out), message, h('p', { class: 'muted small' }, t('syncScope'))];
+  }
+  const email = h('input', { type: 'email', autocomplete: 'username', required: true, dir: 'ltr', 'aria-label': t('email') });
+  const password = h('input', { type: 'password', autocomplete: 'current-password', required: true, dir: 'ltr', 'aria-label': t('password') });
+  const submit = h('button', { type: 'submit', class: 'primary' }, t('signIn'));
+  const form = h(
+    'form',
+    { class: 'signin' },
+    h('label', { class: 'field' }, h('span', {}, t('email')), email),
+    h('label', { class: 'field' }, h('span', {}, t('password')), password),
+    submit,
+  );
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    submit.disabled = true;
+    message.textContent = '';
+    void send({ type: 'signIn', email: email.value, password: password.value }).then((r) => {
+      password.value = '';
+      submit.disabled = false;
+      if (!r.ok) message.textContent = accountError(t, r.error);
+    });
+  });
+  return [heading, h('p', { class: 'muted' }, t('accountIntro')), form, message];
 }
 
 function validateDraft(d: Draft): string | null {
   const chosen = Object.values(d.habits).filter((x) => x.selected);
-  if (chosen.length === 0) return 'errorChooseOne';
+  if (chosen.length === 0 && !state.prefs.onboarded) return 'errorChooseOne';
   for (const hd of chosen) {
     if (!Number.isFinite(hd.amount) || hd.amount <= 0) return 'errorAmount';
     if (hd.slots.some((s) => !/^([01]\d|2[0-3]):[0-5]\d$/.test(s)) || new Set(hd.slots).size !== hd.slots.length) return 'errorSlots';
@@ -452,50 +568,71 @@ function validateDraft(d: Draft): string | null {
 
 async function saveDraft(d: Draft): Promise<void> {
   const day = today();
-  const plans: Plan[] = [];
-  const rules: Record<string, Rule> = {};
+  const fresh = await loadState();
+  let store = fresh.store;
   for (const habit of catalog) {
     const hd = d.habits[habit.key];
-    if (!hd?.selected) continue;
+    const existing = store.plans.find((p) => p.habitKey === habit.key);
+    if (!hd?.selected) {
+      // Unchecked: delete with a tombstone, so the deletion reaches the account too.
+      if (existing) store = deletePlan(store, existing.id);
+      continue;
+    }
     const slots = [...hd.slots].sort();
-    const existing = state.store.plans.find((p) => p.id === habit.key);
-    rules[habit.key] = state.prefs.rules[habit.key] ?? habit.defaultRule;
     const activeDaysPerWeek = Math.max(2, Math.min(7, Math.round(hd.activeDays)));
     if (existing) {
-      let plan: Plan = { ...existing, title: habit.titleAr, slots, activeDaysPerWeek };
-      const base = plan.season ? plan.season.previous : plan.amount;
-      if (hd.amount < base) plan = decreaseTo(plan, hd.amount, day);
-      if (validatePlan(plan) === null) plans.push(plan);
+      store = updatePlan(store, existing.id, (p) => {
+        let plan: Plan = { ...p, title: habit.titleAr, slots, activeDaysPerWeek };
+        if (!plan.rule) plan.rule = habit.defaultRule;
+        const base = plan.season ? plan.season.previous : plan.amount;
+        if (hd.amount < base) plan = decreaseTo(plan, hd.amount, day);
+        return plan;
+      });
     } else {
-      const input = { id: habit.key, deedSlug: habit.deed, title: habit.titleAr, unit: habit.unit, amount: hd.amount, activeDaysPerWeek, slots, createdOn: day };
-      plans.push(createPlan(habit.ceiling !== undefined ? { ...input, ceiling: habit.ceiling } : input));
+      const input = {
+        id: crypto.randomUUID(),
+        habitKey: habit.key,
+        rule: habit.defaultRule,
+        deedSlug: habit.deed,
+        title: habit.titleAr,
+        unit: habit.unit,
+        amount: hd.amount,
+        activeDaysPerWeek,
+        slots,
+        createdOn: day,
+      };
+      store = upsertPlan(store, createPlan(habit.ceiling !== undefined ? { ...input, ceiling: habit.ceiling } : input));
     }
   }
-  // Plans whose habit vanished from the catalog are kept untouched.
-  for (const p of state.store.plans) {
-    if (!catalog.some((x) => x.key === p.id)) {
-      plans.push(p);
-      if (state.prefs.rules[p.id]) rules[p.id] = state.prefs.rules[p.id] as Rule;
-    }
-  }
-  await persist({
-    store: { ...state.store, plans, settings: { ...state.store.settings, hijriOffset: d.hijriOffset } },
-    prefs: { ...state.prefs, lang: d.lang, quietDays: [...d.quietDays].sort(), rules, onboarded: true },
-  });
+  // Plans without a catalog habit (e.g. made on the website) are kept untouched.
+  if (d.hijriOffset !== store.settings.hijriOffset) store = updateSettings(store, { hijriOffset: d.hijriOffset });
+  const next: State = { store, prefs: { ...fresh.prefs, lang: d.lang, quietDays: [...d.quietDays].sort(), onboarded: true } };
+  state = next;
+  await saveState(next);
 }
 
 // ---- Start ---------------------------------------------------------------------------------------------
 
 async function start(): Promise<void> {
-  [state, catalog] = await Promise.all([loadState(), getCatalog()]);
+  // Lets the background finish any storage upgrade first, and starts a sync when signed in.
+  await send({ type: 'ready' });
+  let tokens;
+  [state, catalog, tokens, syncStatus] = await Promise.all([loadState(), getCatalog(), tokenStore.get(), getSyncStatus()]);
+  account = tokens ? tokens.email || '—' : null;
   view = state.prefs.onboarded ? 'today' : 'settings';
   render();
   api.storage.onChanged.addListener((changes, area) => {
-    if (area !== 'local' || !(STORE_KEY in changes || PREFS_KEY in changes)) return;
-    void loadState().then((s) => {
+    if (area !== 'local') return;
+    const data = STORE_KEY in changes || PREFS_KEY in changes;
+    const sync = AUTH_KEY in changes || SYNC_STATUS_KEY in changes;
+    if (!data && !sync) return;
+    void Promise.all([loadState(), tokenStore.get(), getSyncStatus()]).then(([s, tk, st]) => {
       state = s;
-      // Do not throw away an unsaved settings form.
+      account = tk ? tk.email || '—' : null;
+      syncStatus = st;
+      // Do not throw away an unsaved settings form: there only the account block is redrawn.
       if (view === 'today') render();
+      else if (sync) redrawAccount?.();
     });
   });
 }

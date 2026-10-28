@@ -3,15 +3,34 @@
  *
  * Alarms: one `remind|<plan>|<date>|<time>` alarm per plan for its next reminder, recomputed on install, on
  * browser start, whenever the store or preferences change, and after each reminder fires. A «لاحقًا» press adds
- * a one-off `snooze|<plan>|<date>` alarm 30 minutes later. A `refresh` alarm refreshes the API caches
- * (each at most once a day).
+ * a one-off `snooze|<plan>|<date>` alarm 30 minutes later. A `refresh` alarm refreshes the API caches (each at
+ * most once a day). While signed in, a `sync` alarm syncs plans and logs every 15 minutes.
+ *
+ * Sync runs here only (one at a time): on sign-in, when the popup opens, 3 seconds after a local edit that left
+ * something to send, and on the 15-minute alarm.
  *
  * All listeners are registered synchronously at the top level, as MV3 requires.
  */
-import { logDone, normalize, requiredOn, todayFrom, type Plan } from '@thekra/practice-core';
+import { logDone, normalize, requiredOn, todayFrom, updatePlan, type Plan } from '@thekra/practice-core';
+import { AuthError } from './auth.js';
 import { deedUrl, formatAmount, habitTitle, unitLabel, type Habit } from './catalog.js';
-import { api, getCatalog, getQuotes, loadState, refreshCaches, saveState, TARGET } from './ext.js';
+import {
+  api,
+  auth,
+  getCatalog,
+  getQuotes,
+  getSyncStatus,
+  loadState,
+  loadStore,
+  migrateStorage,
+  refreshCaches,
+  saveStore,
+  setSyncStatus,
+  TARGET,
+  tokenStore,
+} from './ext.js';
 import { translator } from './i18n.js';
+import { isMessage, type Message, type Reply } from './messages.js';
 import { buildNotification, pickQuote } from './quotes.js';
 import {
   parseAlarmName,
@@ -23,18 +42,33 @@ import {
   upcomingReminders,
 } from './scheduler.js';
 import { PREFS_KEY, STORE_KEY } from './state.js';
+import { pendingCount, runSync, type SyncStatus } from './sync-runner.js';
 
 const REFRESH_ALARM = 'refresh';
 const REFRESH_PERIOD_MINUTES = 6 * 60;
+const SYNC_ALARM = 'sync';
+const SYNC_PERIOD_MINUTES = 15;
+const SYNC_DEBOUNCE_MS = 3000;
 const NOTIFICATION_PREFIX = 'note';
 
-/** Runs tasks one after another so two reschedules never interleave. */
-let queue: Promise<unknown> = Promise.resolve();
-function serial(task: () => Promise<void>): Promise<void> {
-  const next = queue.then(task, task);
-  queue = next.catch((err: unknown) => console.error('[thekra]', err));
-  return next;
+/** The v1 → v2 storage upgrade, written once per wake before anything else reads the store. */
+const ready = migrateStorage().catch((err: unknown) => console.error('[thekra] migrate', err));
+
+function queue() {
+  let tail: Promise<unknown> = Promise.resolve();
+  return <T>(task: () => Promise<T>): Promise<T> => {
+    const next = tail.then(async () => {
+      await ready;
+      return task();
+    });
+    tail = next.catch((err: unknown) => console.error('[thekra]', err));
+    return next;
+  };
 }
+/** Alarms, notifications and caches, one after another. */
+const serial = queue();
+/** Account calls and syncs, one after another (separate so a slow network never delays a reminder). */
+const syncSerial = queue();
 
 async function reschedule(): Promise<void> {
   const { store, prefs } = await loadState();
@@ -44,7 +78,6 @@ async function reschedule(): Promise<void> {
   if (!prefs.onboarded) return;
   const reminders = upcomingReminders({
     plans: store.plans,
-    rules: prefs.rules,
     quietDays: prefs.quietDays,
     hijriOffset: store.settings.hijriOffset,
     now: new Date(),
@@ -52,11 +85,80 @@ async function reschedule(): Promise<void> {
   for (const r of reminders) await api.alarms.create(reminderAlarmName(r), { when: r.when });
 }
 
-async function ensureRefreshAlarm(): Promise<void> {
+async function ensureAlarms(): Promise<void> {
   if (!(await api.alarms.get(REFRESH_ALARM))) {
     await api.alarms.create(REFRESH_ALARM, { delayInMinutes: 1, periodInMinutes: REFRESH_PERIOD_MINUTES });
   }
+  const signedIn = (await tokenStore.get()) !== null;
+  const syncAlarm = await api.alarms.get(SYNC_ALARM);
+  if (signedIn && !syncAlarm) await api.alarms.create(SYNC_ALARM, { delayInMinutes: SYNC_PERIOD_MINUTES, periodInMinutes: SYNC_PERIOD_MINUTES });
+  if (!signedIn && syncAlarm) await api.alarms.clear(SYNC_ALARM);
 }
+
+// ---- Sync -----------------------------------------------------------------------------------------------------
+
+/** One sync, when signed in. Records the status the popup shows. */
+async function syncNow(): Promise<SyncStatus | null> {
+  if (!(await tokenStore.get())) return null;
+  const status = await runSync(
+    { request: (path, init) => auth.request(path, init), loadStore, saveStore },
+    (await getSyncStatus()) ?? undefined,
+  );
+  await setSyncStatus(status);
+  if (status.state === 'signedOut') await api.alarms.clear(SYNC_ALARM);
+  return status;
+}
+
+let debounce: ReturnType<typeof setTimeout> | undefined;
+function syncSoon(): void {
+  if (debounce !== undefined) clearTimeout(debounce);
+  debounce = setTimeout(() => {
+    debounce = undefined;
+    void syncSerial(async () => {
+      if ((await tokenStore.get()) && pendingCount(await loadStore()) > 0) await syncNow();
+    });
+  }, SYNC_DEBOUNCE_MS);
+}
+
+async function signIn(email: string, password: string): Promise<Reply> {
+  try {
+    await auth.signIn(email, password);
+  } catch (err) {
+    return { ok: false, error: err instanceof AuthError ? err.code : 'server' };
+  }
+  await ensureAlarms();
+  const status = await syncNow();
+  return status?.state === 'ok' || status === null ? { ok: true } : { ok: false, error: status.error ?? 'server' };
+}
+
+async function signOut(): Promise<Reply> {
+  await auth.signOut();
+  // Local data stays. Forget what the server held, so a later sign-in sends everything again.
+  const store = await loadStore();
+  await saveStore({ ...store, sync: { lastSyncedAt: null, acked: {} } });
+  await setSyncStatus(null);
+  await api.alarms.clear(SYNC_ALARM);
+  return { ok: true };
+}
+
+async function handleMessage(message: Message): Promise<Reply> {
+  switch (message.type) {
+    case 'ready':
+      await ready;
+      void syncSerial(syncNow);
+      return { ok: true };
+    case 'sync': {
+      const status = await syncSerial(syncNow);
+      return status === null || status.state === 'ok' ? { ok: true } : { ok: false, error: status.error ?? 'server' };
+    }
+    case 'signIn':
+      return syncSerial(() => signIn(message.email, message.password));
+    case 'signOut':
+      return syncSerial(signOut);
+  }
+}
+
+// ---- Reminders ------------------------------------------------------------------------------------------------
 
 function notificationId(planId: string, date: string): string {
   return [NOTIFICATION_PREFIX, planId, date].join('|');
@@ -68,7 +170,7 @@ function parseNotificationId(id: string): { planId: string; date: string } | nul
 }
 
 function findHabit(catalog: Habit[], plan: Plan): Habit | undefined {
-  return catalog.find((h) => h.key === plan.id);
+  return plan.habitKey === undefined ? undefined : catalog.find((h) => h.key === plan.habitKey);
 }
 
 async function showReminder(planId: string, date: string): Promise<void> {
@@ -101,16 +203,14 @@ async function showReminder(planId: string, date: string): Promise<void> {
 }
 
 async function markDone(planId: string): Promise<void> {
-  const state = await loadState();
+  const store = await loadStore();
   const today = todayFrom(new Date());
-  const index = state.store.plans.findIndex((p) => p.id === planId);
-  const plan = state.store.plans[index];
+  const plan = store.plans.find((p) => p.id === planId);
   if (!plan) return;
   const remaining = remainingOn(normalize(plan, today), today);
   if (remaining <= 0) return;
-  const plans = [...state.store.plans];
-  plans[index] = logDone(plan, today, remaining);
-  await saveState({ ...state, store: { ...state.store, plans } });
+  // practice-core store helper: a log change keeps the plan's version, logs sync per day.
+  await saveStore(updatePlan(store, planId, (p) => logDone(p, today, remaining)));
 }
 
 async function openDeedPage(planId: string): Promise<void> {
@@ -121,21 +221,34 @@ async function openDeedPage(planId: string): Promise<void> {
   await api.tabs.create({ url: deedUrl(habit?.deed ?? plan.deedSlug, prefs.lang) });
 }
 
+// ---- Listeners ------------------------------------------------------------------------------------------------
+
 api.runtime.onInstalled.addListener((details) => {
   void serial(async () => {
-    await ensureRefreshAlarm();
+    await ensureAlarms();
     await reschedule();
     await refreshCaches();
   });
+  void syncSerial(syncNow);
   if (details.reason === 'install') void api.runtime.openOptionsPage();
 });
 
 api.runtime.onStartup.addListener(() => {
   void serial(async () => {
-    await ensureRefreshAlarm();
+    await ensureAlarms();
     await reschedule();
     await refreshCaches();
   });
+  void syncSerial(syncNow);
+});
+
+api.runtime.onMessage.addListener((message: unknown, sender, sendResponse: (reply: Reply) => void) => {
+  if (sender.id !== api.runtime.id || !isMessage(message)) return false;
+  handleMessage(message).then(sendResponse, (err: unknown) => {
+    console.error('[thekra]', err);
+    sendResponse({ ok: false, error: 'server' });
+  });
+  return true; // the reply is sent asynchronously
 });
 
 api.storage.onChanged.addListener((changes, area) => {
@@ -146,11 +259,16 @@ api.storage.onChanged.addListener((changes, area) => {
       await refreshCaches();
     });
   }
+  if (STORE_KEY in changes) syncSoon();
 });
 
 api.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === REFRESH_ALARM) {
     void serial(() => refreshCaches());
+    return;
+  }
+  if (alarm.name === SYNC_ALARM) {
+    void syncSerial(syncNow);
     return;
   }
   const parsed = parseAlarmName(alarm.name);
