@@ -113,7 +113,22 @@
     "pageTitle": "Settings",
     "language": "Language",
     "theme": "Theme",
-    "account": "Account"
+    "account": "Account",
+    "data": {
+      "title": "My data",
+      "export": "Export my data",
+      "exportNote": "A file with everything stored in your account. The program to leave a sin stays encrypted in it.",
+      "delete": "Delete my account",
+      "deleteNote": "The copy of your data on this device is kept.",
+      "deleteTitle": "Delete your account for good?",
+      "deleteBody": "Your account and everything stored in it on the server is deleted: habits, kinship, settings, favorites and the encrypted program. The copy on this device is kept. Enter your password to confirm.",
+      "password": "Password",
+      "passwordRequired": "Enter your password.",
+      "wrongPassword": "The password is not correct.",
+      "cancel": "Cancel",
+      "deleteConfirm": "Delete the account",
+      "deleted": "Your account is deleted. Your data stays on this device."
+    }
   },
   "home": {
     "title": "Thekra",
@@ -906,7 +921,7 @@
   },
   "practice": {
     "title": "Help me keep a good deed",
-    "lead": "Start very small, keep at it, and increase only once it is steady. Everything here is saved on your device.",
+    "lead": "Start very small, keep at it, and increase only once it is steady. Everything here is saved on your device, and synced with your account when you sign in.",
     "storage": {
       "local": "Your data is saved on this device only and is never sent to a server.",
       "memoryOnly": "This browser does not allow saving (perhaps a private window), so your data will be lost when you close the page."
@@ -962,7 +977,7 @@
       "fixItBody": "Finish today with whatever you can: any amount counts, and nothing is added to tomorrow.",
       "markDone": "Done it",
       "partialLabel": "Amount done ({unit})",
-      "partialError": "Enter a number above zero.",
+      "partialError": "Enter a whole number above zero.",
       "logPartial": "Log",
       "increaseOffer": "You have held this amount for a month. If you wish, go one small step up to {amount}, or stay as you are.",
       "increase": "One step up",
@@ -1066,6 +1081,23 @@
       "icsTitle": "Ties of kinship",
       "icsTitleNamed": "Ties of kinship: {name}",
       "icsName": "Ties of kinship"
+    },
+    "sync": {
+      "localGuest": "Your habits are always saved on this device. Sign in and they also stay in step with your account on all your devices.",
+      "signIn": "Sign in",
+      "register": "Create an account",
+      "otherAccount": "What is on this device was synced with another account, so it has not been synced with this one.",
+      "mergeHere": "Add this device’s data to this account",
+      "notSyncedRetrying": "Not synced; will try again.",
+      "notSynced": "Not synced.",
+      "offline": "You are offline; it will sync when the connection is back.",
+      "syncNow": "Sync now",
+      "syncing": "Syncing…",
+      "pending": "Changes waiting to sync",
+      "synced": "Synced",
+      "lastSynced": "last synced {time}",
+      "signedInNote": "Saved on this device and synced with your account, except the program to leave a sin, which syncs only encrypted, if you choose.",
+      "accountLink": "Your account and data"
     }
   },
   "calendarPage": {
@@ -1109,7 +1141,7 @@
     "title": "A program to leave a sin",
     "genericTitle": "A reminder from Thekra",
     "lead": "A staged program on your device: know the harm, build the alternative, change your surroundings, set limits, stay firm.",
-    "privacy": "This program stays on your device alone: it is never sent to a server or used in any statistics, and the sin is never named in the page title or its link.",
+    "privacy": "This program stays on your device alone: it is never sent to a server or used in any statistics, and the sin is never named in the page title or its link. If you choose to save it to your account, it is sent encrypted with a code only you know.",
     "startFromSin": "Start the leaving program",
     "another": "Start another program",
     "choose": {
@@ -1166,7 +1198,46 @@
       "confirmTitle": "Delete all program data?",
       "confirmBody": "Everything will be removed from this device now.",
       "cancel": "Cancel",
-      "confirm": "Delete now"
+      "confirm": "Delete now",
+      "leadAccount": "Removes the programs, check-ins and notes from this device at once, and deletes the encrypted copy from your account. They cannot be recovered.",
+      "confirmBodyAccount": "Everything will be removed from this device now, and the encrypted copy deleted from your account.",
+      "remoteFailed": "This device is cleared, but the encrypted copy could not be deleted from your account.",
+      "retry": "Try deleting it again"
+    },
+    "vault": {
+      "title": "Saving to your account",
+      "guest": "The program is on this device only. Sign in to save it encrypted in your account and open it on another device.",
+      "signIn": "Sign in",
+      "register": "Create an account",
+      "checking": "Checking your account",
+      "offer": "Save the program encrypted in your account",
+      "offerLead": "It is encrypted on your device, with a code you choose, before it is sent. Nobody can read it, not even us, and we cannot tell which sin it is about.",
+      "warningTitle": "Important",
+      "warning": "If you forget the privacy code, the saved program can never be recovered, and nobody can open or read it, not even us.",
+      "code": "Privacy code",
+      "codeConfirm": "Type the code again",
+      "codeHint": "At least 6 characters; do not reuse your account password.",
+      "acknowledge": "I understand the code cannot be recovered",
+      "save": "Encrypt and save",
+      "cancel": "Cancel",
+      "working": "Encrypting…",
+      "saving": "Updating the encrypted copy",
+      "saved": "Saved encrypted in your account, and updated after every check-in while it is open on this page.",
+      "lock": "Lock",
+      "lockedTitle": "You have a program saved encrypted in your account",
+      "lockedLead": "Open it with the privacy code to merge it with this device and keep it up to date. The code stays in this page only until you close it.",
+      "open": "Open the program",
+      "retry": "Try again",
+      "errors": {
+        "short": "The code needs at least 6 characters.",
+        "mismatch": "The two codes do not match.",
+        "ack": "Confirm that you understand the warning.",
+        "wrongCode": "The privacy code is not correct.",
+        "load": "The encrypted copy could not be opened. Try again.",
+        "create": "The encrypted copy could not be saved. What is on your device is unchanged.",
+        "save": "The encrypted copy could not be updated. What is on your device is saved.",
+        "reopen": "The privacy code was changed on another device; open the program again."
+      }
     }
   }
 }

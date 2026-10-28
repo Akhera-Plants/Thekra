@@ -5,7 +5,17 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { BookOpen, Check, Clock } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
-import { baseAmount, decreaseTo, increase, logDone, nextStep, startSeason, type Plan } from '@thekra/practice-core';
+import {
+  baseAmount,
+  decreaseTo,
+  deletePlan,
+  increase,
+  logDone,
+  nextStep,
+  startSeason,
+  updatePlan,
+  type Plan,
+} from '@thekra/practice-core';
 import { Button } from '@/components/shared/kit/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -18,6 +28,7 @@ import { z } from '@/lib/zod';
 import { amountLabel } from './amount-label';
 import { FetchedEvidence } from './EvidenceQuotes';
 
+/** Whole amounts only: the account stores logs as integers (sync contract §2). */
 const MAX_LOG = 1000;
 
 interface PlanCardProps {
@@ -30,7 +41,7 @@ interface PlanCardProps {
 }
 
 export function changePlan(id: string, change: (plan: Plan) => Plan): void {
-  updateStore((store) => ({ ...store, plans: store.plans.map((plan) => (plan.id === id ? change(plan) : plan)) }));
+  updateStore((store) => updatePlan(store, id, change));
 }
 
 /** Hook for the plan's title and unit wording in the page language. */
@@ -100,7 +111,7 @@ export function PlanCard({ plan, habit, view, today, ramadanUntil }: PlanCardPro
         <div className="flex flex-wrap items-end gap-3">
           <button
             type="button"
-            className="solid-button"
+            className="solid-button button-wrap"
             onClick={() => changePlan(plan.id, (p) => logDone(p, today, view.remaining))}
           >
             <Check aria-hidden />
@@ -113,7 +124,13 @@ export function PlanCard({ plan, habit, view, today, ramadanUntil }: PlanCardPro
       {view.canIncrease && view.increaseTo !== null ? (
         <div className="next-step !mt-0 flex flex-col items-start gap-2">
           <p>{t('increaseOffer', { amount: words.amount(view.increaseTo) })}</p>
-          <Button variant="outline" tone="primary" size="sm" onClick={() => changePlan(plan.id, (p) => increase(p, today))}>
+          <Button
+            className="h-auto whitespace-normal py-2 text-start"
+            variant="outline"
+            tone="primary"
+            size="sm"
+            onClick={() => changePlan(plan.id, (p) => increase(p, today))}
+          >
             {t('increase')}
           </Button>
         </div>
@@ -123,6 +140,7 @@ export function PlanCard({ plan, habit, view, today, ramadanUntil }: PlanCardPro
         <div className="next-step !mt-0 flex flex-col items-start gap-2">
           <p>{t('relapse', { amount: words.amount(view.relapseTo) })}</p>
           <Button
+            className="h-auto whitespace-normal py-2 text-start"
             variant="outline"
             tone="primary"
             size="sm"
@@ -141,6 +159,7 @@ export function PlanCard({ plan, habit, view, today, ramadanUntil }: PlanCardPro
         <div className="flex flex-col items-start gap-2">
           <p className="text-sm leading-7 text-muted-foreground">{t('seasonOffer', { amount: words.amount(seasonAmount) })}</p>
           <Button
+            className="h-auto whitespace-normal py-2 text-start"
             variant="outline"
             tone="neutral"
             size="sm"
@@ -167,12 +186,7 @@ export function PlanCard({ plan, habit, view, today, ramadanUntil }: PlanCardPro
         ) : null}
         {confirmRemove ? (
           <>
-            <Button
-              variant="outline"
-              tone="destructive"
-              size="sm"
-              onClick={() => updateStore((s) => ({ ...s, plans: s.plans.filter((p) => p.id !== plan.id) }))}
-            >
+            <Button variant="outline" tone="destructive" size="sm" onClick={() => updateStore((s) => deletePlan(s, plan.id))}>
               {t('removeConfirm')}
             </Button>
             <Button variant="ghost" tone="neutral" size="sm" onClick={() => setConfirmRemove(false)}>
@@ -201,7 +215,7 @@ function PartialLog({ plan, today, unit }: { plan: Plan; today: string; unit: st
       z.object({
         amount: z
           .string()
-          .regex(/^\d+(\.\d+)?$/, t('partialError'))
+          .regex(/^\d+$/, t('partialError'))
           .refine((value) => Number(value) > 0 && Number(value) <= MAX_LOG, t('partialError')),
       }),
     [t],
@@ -223,13 +237,13 @@ function PartialLog({ plan, today, unit }: { plan: Plan; today: string; unit: st
             <FormItem className="w-36">
               <FormLabel>{t('partialLabel', { unit })}</FormLabel>
               <FormControl>
-                <Input type="number" inputMode="decimal" min={0} step="any" {...field} />
+                <Input type="number" inputMode="numeric" min={1} step={1} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <button type="submit" className="outline-button">
+        <button type="submit" className="outline-button button-wrap">
           {t('logPartial')}
         </button>
       </form>

@@ -26,6 +26,7 @@ import { usePracticeStore } from '../hooks/usePracticeStore';
 import { useToday } from '../hooks/useToday';
 import { HijriOffsetSelect } from './HijriOffsetSelect';
 import { PracticeLoading } from './PracticeLoading';
+import { SyncStatus } from './SyncStatus';
 
 /** «التقويم»: today in Hijri, the sunnah occasions of the coming year, subscribe or download. */
 export function CalendarView() {
@@ -73,14 +74,22 @@ export function CalendarView() {
         {todayHijri ? <p className="text-lg font-medium text-primary">{todayHijri}</p> : <p>{t('hijriUnsupported')}</p>}
       </section>
 
-      <HijriOffsetSelect value={offset} />
+      <div className="flex flex-col gap-3">
+        <HijriOffsetSelect value={offset} />
+        <SyncStatus persistent={snapshot.persistent} quiet />
+      </div>
 
       <div className="flex flex-wrap gap-3">
-        <a className="solid-button" href={occasionsIcsUrl(locale, 'webcal')}>
+        <a className="solid-button button-wrap" href={occasionsIcsUrl(locale, 'webcal')}>
           <CalendarPlus aria-hidden />
           {t('subscribe')}
         </a>
-        <button type="button" className="outline-button" onClick={handleDownload} disabled={!rows || rows.length === 0}>
+        <button
+          type="button"
+          className="outline-button button-wrap"
+          onClick={handleDownload}
+          disabled={!rows || rows.length === 0}
+        >
           <Download aria-hidden />
           {t('download')}
         </button>

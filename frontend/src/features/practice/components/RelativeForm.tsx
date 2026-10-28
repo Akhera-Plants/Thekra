@@ -4,20 +4,16 @@ import { useMemo } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useWatch } from 'react-hook-form';
 import { useTranslations } from 'next-intl';
-import { createRelative, looksLikeContactDetails, MAX_NAME_LENGTH } from '@thekra/practice-core';
+import { createRelative, looksLikeContactDetails, MAX_NAME_LENGTH, upsertRelative } from '@thekra/practice-core';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { newUuid } from '@/lib/practice/ids';
 import { updateStore } from '@/lib/practice/local-store';
 import { DEFAULT_WEEKDAY, RHYTHMS, rhythmRule, type Rhythm } from '@/lib/practice/kinship';
 import { z } from '@/lib/zod';
 
 const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6];
-
-function newId(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-}
 
 interface RelativeFormProps {
   today: string;
@@ -50,12 +46,12 @@ export function RelativeForm({ today }: RelativeFormProps) {
 
   function handleSubmit(values: Values) {
     const relative = createRelative({
-      id: newId(),
+      id: newUuid(),
       name: values.name,
       relation: values.relation,
       rule: rhythmRule(values.rhythm as Rhythm, Number(values.weekday), today),
     });
-    updateStore((store) => ({ ...store, relatives: [...store.relatives, relative] }));
+    updateStore((store) => upsertRelative(store, relative));
     form.reset({ ...values, name: '', relation: '' });
   }
 
@@ -145,7 +141,7 @@ export function RelativeForm({ today }: RelativeFormProps) {
             />
           ) : null}
         </div>
-        <button type="submit" className="solid-button self-start">
+        <button type="submit" className="solid-button button-wrap self-start">
           {t('submit')}
         </button>
       </form>

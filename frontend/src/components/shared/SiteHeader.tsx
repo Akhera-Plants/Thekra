@@ -45,9 +45,10 @@ export function SiteHeader() {
         >
           {tNav('practice')}
         </Link>
+        {/* Phones: the calendar stays in the footer and on the practice pages, so the header fits one line. */}
         <Link
           href="/calendar"
-          className="nav-link"
+          className="nav-link nav-link-wide"
           aria-current={calendarCurrent ? 'page' : undefined}
         >
           {tNav('calendar')}

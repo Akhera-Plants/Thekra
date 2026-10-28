@@ -118,11 +118,11 @@ export function ProgramChooser({ entries, common, names, preselected, today, onD
         ) : null}
 
         <div className="flex flex-wrap gap-3">
-          <button type="submit" className="solid-button">
+          <button type="submit" className="solid-button button-wrap">
             {t('start')} <DirectionalArrow />
           </button>
           {onCancel ? (
-            <button type="button" className="outline-button" onClick={onCancel}>
+            <button type="button" className="outline-button button-wrap" onClick={onCancel}>
               {t('cancel')}
             </button>
           ) : null}

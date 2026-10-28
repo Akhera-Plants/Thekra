@@ -3,19 +3,19 @@
 import { useEffect, useMemo, useState } from 'react';
 import { BellRing, CalendarPlus, Feather } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
-import { endEbb, loadWarning, normalize, startEbb } from '@thekra/practice-core';
+import { endEbb, loadWarning, normalize, startEbb, updatePlan } from '@thekra/practice-core';
 import { Link } from '@/i18n/navigation';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { QueryErrorState } from '@/components/shared/feedback/QueryErrorState';
 import { downloadTextFile, ICS_MIME } from '@/lib/practice/download';
 import { updateStore } from '@/lib/practice/local-store';
-import { planReminderEvents, planRemindersIcs, planToday, ramadanEnd } from '@/lib/practice/plans';
+import { habitOf, planReminderEvents, planRemindersIcs, planToday, ramadanEnd } from '@/lib/practice/plans';
 import type { PracticeHabit } from '@/lib/types/practice';
 import { usePracticeCatalog } from '../hooks/usePracticeCatalog';
 import { usePracticeStore } from '../hooks/usePracticeStore';
 import { useFocusOnChange } from '../hooks/useFocusOnChange';
 import { useToday } from '../hooks/useToday';
-import { LocalOnlyNote } from './LocalOnlyNote';
+import { SyncStatus } from './SyncStatus';
 import { PlanCard, usePlanWords } from './PlanCard';
 import { PlanSetup } from './PlanSetup';
 import { PracticeLoading } from './PracticeLoading';
@@ -34,6 +34,7 @@ export function PracticeView() {
   const todayRef = useFocusOnChange<HTMLHeadingElement>(viewKey);
 
   // A season that has ended returns the plan to its everyday amount, with no penalty (practice-core normalize).
+  // Deliberately not through updatePlan: the end is derived from the date, so it is not a new edit (no updatedAt).
   const plans = snapshot?.store.plans;
   useEffect(() => {
     if (!today || !plans?.some((plan) => plan.season && today > plan.season.until)) return;
@@ -55,11 +56,11 @@ export function PracticeView() {
     if (catalog.isError) return <QueryErrorState error={catalog.error} onRetry={() => void catalog.refetch()} />;
     return (
       <div className="flex flex-col gap-6">
-        <LocalOnlyNote persistent={snapshot.persistent} />
+        <SyncStatus persistent={snapshot.persistent} />
         <PlanSetup
           habits={catalog.data.habits}
           existing={plans}
-          freeMinutes={snapshot.prefs.freeMinutesPerDay}
+          freeMinutes={snapshot.store.settings.freeMinutesPerDay}
           today={today}
           onDone={() => setAdding(false)}
           onCancel={plans.length > 0 ? () => setAdding(false) : undefined}
@@ -69,18 +70,20 @@ export function PracticeView() {
     );
   }
 
-  const entries = plans.map((plan) => ({ plan, habit: habits.get(plan.id), view: planToday(plan, today, clock.minutes) }));
+  const entries = plans.map((plan) => ({ plan, habit: habitOf(plan, habits), view: planToday(plan, today, clock.minutes) }));
   const due = entries.filter((entry) => entry.view.isDue);
   const isEbb = plans.some((plan) => plan.ebb);
   const ramadanUntil = ramadanEnd(today, hijriOffset);
-  const freeMinutes = snapshot.prefs.freeMinutesPerDay;
+  const freeMinutes = snapshot.store.settings.freeMinutesPerDay;
   const overLoaded = freeMinutes !== undefined && loadWarning(plans, freeMinutes, today) === 'over';
 
   function toggleEbb() {
-    updateStore((store) => ({
-      ...store,
-      plans: store.plans.map((plan) => (isEbb ? endEbb(plan) : startEbb(plan, today as string))),
-    }));
+    updateStore((store) =>
+      store.plans.reduce(
+        (next, plan) => updatePlan(next, plan.id, (p) => (isEbb ? endEbb(p) : startEbb(p, today as string))),
+        store,
+      ),
+    );
   }
 
   function handleReminders() {
@@ -90,7 +93,7 @@ export function PracticeView() {
 
   return (
     <div className="flex flex-col gap-10">
-      <LocalOnlyNote persistent={snapshot.persistent} />
+      <SyncStatus persistent={snapshot.persistent} />
 
       {due.length > 0 ? (
         <section className="next-step !mt-0 flex flex-col gap-2" aria-labelledby="due-title" role="status">
@@ -107,7 +110,7 @@ export function PracticeView() {
       ) : null}
 
       <div className="flex flex-col items-start gap-2">
-        <button type="button" className="outline-button" aria-pressed={isEbb} onClick={toggleEbb}>
+        <button type="button" className="outline-button button-wrap" aria-pressed={isEbb} onClick={toggleEbb}>
           <Feather aria-hidden />
           {isEbb ? t('ebbOff') : t('ebbOn')}
         </button>
@@ -134,10 +137,10 @@ export function PracticeView() {
       </section>
 
       <div className="flex flex-wrap gap-3">
-        <button type="button" className="solid-button" onClick={() => setAdding(true)}>
+        <button type="button" className="solid-button button-wrap" onClick={() => setAdding(true)}>
           {t('add')} <DirectionalArrow />
         </button>
-        <button type="button" className="outline-button" onClick={handleReminders}>
+        <button type="button" className="outline-button button-wrap" onClick={handleReminders}>
           <CalendarPlus aria-hidden />
           {t('downloadReminders')}
         </button>
@@ -169,13 +172,13 @@ export function PracticePaths() {
   const t = useTranslations('practice.paths');
   return (
     <nav className="about-paths" aria-label={t('label')}>
-      <Link className="outline-button" href="/practice/kinship">
+      <Link className="outline-button button-wrap" href="/practice/kinship">
         {t('kinship')} <DirectionalArrow />
       </Link>
-      <Link className="outline-button" href="/practice/leave-sin">
+      <Link className="outline-button button-wrap" href="/practice/leave-sin">
         {t('leaveSin')} <DirectionalArrow />
       </Link>
-      <Link className="outline-button" href="/calendar">
+      <Link className="outline-button button-wrap" href="/calendar">
         {t('calendar')} <DirectionalArrow />
       </Link>
     </nav>

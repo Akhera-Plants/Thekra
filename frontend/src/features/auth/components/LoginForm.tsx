@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/form';
 import { failureKey } from '@/lib/errors';
 import { useLogin } from '../hooks/useLogin';
+import { nextPathFromLocation } from '../next-path';
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -47,7 +48,7 @@ export function LoginForm({ redirectTo = '/' }: LoginFormProps) {
     try {
       await login(values);
       toast.success(t('loginSuccess'));
-      router.push(redirectTo);
+      router.push(nextPathFromLocation(redirectTo));
       router.refresh();
     } catch (err) {
       // Never the raw API text: connection-type failures get the shared localised message.

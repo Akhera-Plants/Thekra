@@ -2,7 +2,7 @@
 
 import { useId } from 'react';
 import { useTranslations } from 'next-intl';
-import { HIJRI_OFFSET_MAX, HIJRI_OFFSET_MIN } from '@thekra/practice-core';
+import { HIJRI_OFFSET_MAX, HIJRI_OFFSET_MIN, updateSettings } from '@thekra/practice-core';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { updateStore } from '@/lib/practice/local-store';
@@ -21,7 +21,7 @@ export function HijriOffsetSelect({ value }: HijriOffsetSelectProps) {
 
   function handleChange(next: string) {
     const offset = Number(next);
-    updateStore((store) => ({ ...store, settings: { ...store.settings, hijriOffset: offset } }));
+    updateStore((store) => updateSettings(store, { hijriOffset: offset }));
   }
 
   return (

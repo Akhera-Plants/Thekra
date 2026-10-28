@@ -61,6 +61,8 @@ export const queryKeys = {
     /** Ids joined in a stable order by the caller, so one set is one cache entry. */
     evidence: (ids: string) => ['practice', 'evidence', ids] as const,
     occasions: (p: OccasionsQuery) => ['calendar', 'occasions', p] as const,
+    /** Per account, so a sign-in as someone else never reads the previous account's vault from the cache. */
+    vault: (userId: string) => ['me', 'sin-vault', userId] as const,
   },
   session: ['session'] as const,
   // ── Admin (Phase 6) ───────────────────────────────────────────────────────

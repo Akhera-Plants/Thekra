@@ -3,7 +3,16 @@
 import { useId, useState } from 'react';
 import { CalendarPlus, Check, Undo2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
-import { buildIcs, dueList, logContact, undoLastContact, type DueEntry, type Relative } from '@thekra/practice-core';
+import {
+  buildIcs,
+  deleteRelative,
+  dueList,
+  logContact,
+  undoContact,
+  updateRelative,
+  type DueEntry,
+  type Relative,
+} from '@thekra/practice-core';
 import { Button } from '@/components/shared/kit/button';
 import { formatDigits } from '@/lib/format/digits';
 import { downloadTextFile, ICS_MIME } from '@/lib/practice/download';
@@ -12,7 +21,7 @@ import { kinshipEvents, rhythmOf } from '@/lib/practice/kinship';
 import { updatePrefs, updateStore } from '@/lib/practice/local-store';
 import { usePracticeStore } from '../hooks/usePracticeStore';
 import { useToday } from '../hooks/useToday';
-import { LocalOnlyNote } from './LocalOnlyNote';
+import { SyncStatus } from './SyncStatus';
 import { PracticeLoading } from './PracticeLoading';
 import { RelativeForm } from './RelativeForm';
 
@@ -24,7 +33,7 @@ function langOf(text: string): 'ar' | undefined {
 }
 
 function changeRelative(id: string, change: (relative: Relative) => Relative): void {
-  updateStore((store) => ({ ...store, relatives: store.relatives.map((r) => (r.id === id ? change(r) : r)) }));
+  updateStore((store) => updateRelative(store, id, change));
 }
 
 /** صلة الرحم: nicknames and a rhythm, «تواصلت معه», undo, due list, optional calendar file. */
@@ -48,7 +57,7 @@ export function KinshipView() {
 
   return (
     <div className="flex flex-col gap-10">
-      <LocalOnlyNote persistent={snapshot.persistent} />
+      <SyncStatus persistent={snapshot.persistent} />
       <RelativeForm today={today} />
 
       {relatives.length === 0 ? (
@@ -89,7 +98,7 @@ export function KinshipView() {
           <p id={`${namesId}-warning`} className="text-sm leading-7 text-muted-foreground">
             {withNames ? t('namesWarning') : t('genericNote')}
           </p>
-          <button type="button" className="outline-button self-start" onClick={handleExport}>
+          <button type="button" className="outline-button button-wrap self-start" onClick={handleExport}>
             <CalendarPlus aria-hidden />
             {t('export')}
           </button>
@@ -149,7 +158,7 @@ function RelativeRow({ entry, today }: { entry: DueEntry; today: string }) {
           {contactedToday ? t('contactedToday') : t('contacted')}
         </Button>
         {relative.history.length > 0 ? (
-          <Button variant="ghost" tone="neutral" size="sm" onClick={() => changeRelative(relative.id, undoLastContact)}>
+          <Button variant="ghost" tone="neutral" size="sm" onClick={() => updateStore((s) => undoContact(s, relative.id))}>
             <Undo2 aria-hidden />
             {t('undo')}
           </Button>
@@ -160,7 +169,7 @@ function RelativeRow({ entry, today }: { entry: DueEntry; today: string }) {
               variant="outline"
               tone="destructive"
               size="sm"
-              onClick={() => updateStore((s) => ({ ...s, relatives: s.relatives.filter((r) => r.id !== relative.id) }))}
+              onClick={() => updateStore((s) => deleteRelative(s, relative.id))}
             >
               {t('removeConfirm')}
             </Button>

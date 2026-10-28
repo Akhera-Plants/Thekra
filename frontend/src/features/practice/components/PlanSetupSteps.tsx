@@ -154,10 +154,10 @@ export function RolesStep({ control, existing, build, onBack }: RolesStepProps) 
         </p>
       ) : null}
       <div className="flex flex-wrap gap-3">
-        <button type="submit" className="solid-button">
+        <button type="submit" className="solid-button button-wrap">
           {t('create')} <DirectionalArrow />
         </button>
-        <button type="button" className="outline-button" onClick={onBack}>
+        <button type="button" className="outline-button button-wrap" onClick={onBack}>
           {t('back')}
         </button>
       </div>

@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/form';
 import { failureKey } from '@/lib/errors';
 import { useRegister } from '../hooks/useRegister';
+import { nextPathFromLocation } from '../next-path';
 
 const registerSchema = z.object({
   name: z.string().min(1).max(100).optional().or(z.literal('')),
@@ -47,7 +48,7 @@ export function RegisterForm() {
         name: values.name || undefined,
       });
       toast.success(t('registerSuccess'));
-      router.push('/');
+      router.push(nextPathFromLocation());
     } catch (err) {
       // Never the raw API text: connection-type failures get the shared localised message.
       const kind = failureKey(err);

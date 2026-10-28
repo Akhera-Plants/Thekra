@@ -83,7 +83,8 @@ describe('plan view-model', () => {
     const plan = planFromHabit(habit, { distance: 'far', slots: ['21:00', '06:00'], activeDaysPerWeek: 3 }, today);
     expect(plan.amount).toBe(2);
     expect(plan.slots).toEqual(['06:00', '21:00']);
-    expect(plan.id).toBe('quran-wird');
+    expect(plan.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+    expect(plan.habitKey).toBe('quran-wird');
   });
 
   it('adds partial amounts and never asks for more the next day', () => {

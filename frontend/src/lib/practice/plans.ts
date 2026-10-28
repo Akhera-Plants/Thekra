@@ -30,6 +30,12 @@ import {
   type Rule,
 } from '@thekra/practice-core';
 import type { PracticeHabit } from '@/lib/types/practice';
+import { newUuid } from './ids';
+
+/** The catalog habit of a plan (`habitKey`; plans from before accounts used the key as their id). */
+export function habitOf(plan: Plan, habits: ReadonlyMap<string, PracticeHabit>): PracticeHabit | undefined {
+  return habits.get(plan.habitKey ?? plan.id);
+}
 
 /** Active days a week at the beginning (lecture: 3 + 4 at the start). */
 export const DEFAULT_ACTIVE_DAYS = 3;
@@ -49,11 +55,12 @@ export interface PlanChoice {
   activeDaysPerWeek: number;
 }
 
-/** A plan for a catalog habit. The plan id is the habit key, so the catalog can be found again. */
-export function planFromHabit(habit: PracticeHabit, choice: PlanChoice, today: LocalDate): Plan {
+/** A plan for a catalog habit: a client UUID (the server's id), with the habit key kept as `habitKey`. */
+export function planFromHabit(habit: PracticeHabit, choice: PlanChoice, today: LocalDate, id: string = newUuid()): Plan {
   const amount = habit.start[choice.distance];
   return createPlan({
-    id: habit.key,
+    id,
+    habitKey: habit.key,
     deedSlug: habit.deed,
     title: habit.titleAr,
     unit: habit.unit,
@@ -162,7 +169,7 @@ export function planReminderEvents(
   const to = addDays(today, REMINDER_DAYS - 1);
   const events: IcsEvent[] = [];
   for (const plan of plans) {
-    const habit = habits.get(plan.id);
+    const habit = habitOf(plan, habits);
     const rule = habit?.defaultRule ?? DAILY;
     if (rule.kind.startsWith('hijri') && !isHijriSupported()) continue;
     const title = lang === 'en' && habit ? habit.titleEn : plan.title;

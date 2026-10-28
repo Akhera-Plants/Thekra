@@ -5,6 +5,7 @@ import { Separator } from '@/components/ui/separator';
 import { LocaleSwitcher } from '@/components/shared/LocaleSwitcher';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { useSession } from '@/features/auth/hooks/useSession';
+import { AccountDataPanel } from './AccountDataPanel';
 import { AccountSection } from './AccountSection';
 
 export function SettingsView() {
@@ -23,6 +24,8 @@ export function SettingsView() {
         {isAuthenticated && user && (
           <>
             <AccountSection user={user} />
+            <Separator />
+            <AccountDataPanel />
             <Separator />
           </>
         )}

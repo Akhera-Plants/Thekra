@@ -4,10 +4,10 @@ import { useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { useLocale, useTranslations } from 'next-intl';
-import type { Plan } from '@thekra/practice-core';
+import { updateSettings, upsertPlan, type Plan } from '@thekra/practice-core';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { Form } from '@/components/ui/form';
-import { updatePrefs, updateStore } from '@/lib/practice/local-store';
+import { updateStore } from '@/lib/practice/local-store';
 import { DEFAULT_ACTIVE_DAYS, planFromHabit, type Distance } from '@/lib/practice/plans';
 import type { PracticeHabit } from '@/lib/types/practice';
 import { formatDigits } from '@/lib/format/digits';
@@ -37,7 +37,7 @@ export function PlanSetup({ habits, existing, freeMinutes, today, onDone, onCanc
   const stepRef = useFocusOnChange<HTMLParagraphElement>(step);
   const [selected, setSelected] = useState<string[]>([]);
   const [chooseError, setChooseError] = useState(false);
-  const available = habits.filter((habit) => !existing.some((plan) => plan.id === habit.key));
+  const available = habits.filter((habit) => !existing.some((plan) => (plan.habitKey ?? plan.id) === habit.key));
   const chosen = available.filter((habit) => selected.includes(habit.key));
 
   const schema = useMemo(() => makeSetupSchema({ time: t('errors.time'), minutes: t('errors.minutes') }), [t]);
@@ -90,8 +90,12 @@ export function PlanSetup({ habits, existing, freeMinutes, today, onDone, onCanc
 
   function handleSubmit(values: SetupValues) {
     const created = buildPlans(values);
-    updateStore((store) => ({ ...store, plans: [...store.plans, ...created] }));
-    updatePrefs((prefs) => ({ ...prefs, freeMinutesPerDay: Number(values.freeMinutes) }));
+    updateStore((store) =>
+      created.reduce(
+        (next, plan) => upsertPlan(next, plan),
+        updateSettings(store, { freeMinutesPerDay: Number(values.freeMinutes) }),
+      ),
+    );
     onDone();
   }
 
@@ -136,11 +140,11 @@ export function PlanSetup({ habits, existing, freeMinutes, today, onDone, onCanc
             ) : null}
             {chosen.length > CALM_SELECTION ? <p className="next-step">{t('calmSelection')}</p> : null}
             <div className="flex flex-wrap gap-3">
-              <button type="button" className="solid-button" onClick={handleChosen}>
+              <button type="button" className="solid-button button-wrap" onClick={handleChosen}>
                 {t('next')} <DirectionalArrow />
               </button>
               {onCancel ? (
-                <button type="button" className="outline-button" onClick={onCancel}>
+                <button type="button" className="outline-button button-wrap" onClick={onCancel}>
                   {t('cancel')}
                 </button>
               ) : null}
@@ -156,10 +160,10 @@ export function PlanSetup({ habits, existing, freeMinutes, today, onDone, onCanc
               <HabitShape key={habit.key} habit={habit} control={form.control} />
             ))}
             <div className="flex flex-wrap gap-3">
-              <button type="button" className="solid-button" onClick={() => void handleShaped()}>
+              <button type="button" className="solid-button button-wrap" onClick={() => void handleShaped()}>
                 {t('next')} <DirectionalArrow />
               </button>
-              <button type="button" className="outline-button" onClick={() => setStep('choose')}>
+              <button type="button" className="outline-button button-wrap" onClick={() => setStep('choose')}>
                 {t('back')}
               </button>
             </div>

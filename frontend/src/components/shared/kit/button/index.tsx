@@ -49,13 +49,15 @@ function Button({
   };
 
   if (asChild) {
+    // Slot merges its props into exactly one child element; a fragment (`content`) would receive them instead
+    // (React warns: invalid prop `data-slot` on React.Fragment). As a slot, the child brings its own content.
     return (
       <Slot.Root
         {...shared}
         aria-disabled={isDisabled || undefined}
         {...props}
       >
-        {content}
+        {children}
       </Slot.Root>
     );
   }

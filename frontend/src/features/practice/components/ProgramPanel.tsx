@@ -255,7 +255,7 @@ function CheckInForm({ program, today }: { program: SinProgram; today: string })
           )}
         />
         <div className="flex flex-wrap items-center gap-3">
-          <button type="submit" className="solid-button">
+          <button type="submit" className="solid-button button-wrap">
             {t('save')}
           </button>
           {existing ? (
