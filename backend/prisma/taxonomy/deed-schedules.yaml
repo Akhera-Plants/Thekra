@@ -1,0 +1,229 @@
+# Deed schedules: the sunnah timings (public calendar) and the small starting units for
+# «أعِنّي على طاعة». Plan: docs/plan/2026-10-features-roadmap.md §2–§3.
+# Method for units, steps and compensation: docs/research/anas-sheikh-akrim/4EkrbmmIlno-analysis.md §4.
+#
+# Rules
+#   - `deed` is an existing GoodDeed slug; the page of that deed is where the reminder leads.
+#   - `rule` uses the @thekra/practice-core Rule shape (hijri month 1 = Muharram, 9 = Ramadan, 10 = Shawwal, 12 = Dhu al-Hijja;
+#     weekdays 0 = Sunday … 6 = Saturday).
+#   - `basis: text` = the timing is stated in the evidence; `basis: organizational` = a suggested rhythm, not a
+#     religious timing (the UI must say so: «اقتراح لتنظيم الوقت، وليس توقيتًا شرعيًا»).
+#   - `evidence` are Quote ids that are public on the site (checked 2026-10-28 against production). The text is always
+#     read from the database; nothing here is a quoted text.
+#   - Units: `start.far` for someone far from the habit, `start.near` for someone close to it (lecture: «دقيقتان» / 5–10).
+#     Increase only with the ladder in practice-core, never before 4 weeks of steady practice.
+#   - Reviewed by: pending the sheikh (owner approved publishing 2026-10-28).
+
+occasions:
+  - key: ayyam-bid
+    titleAr: صيام الأيام البيض (13 و14 و15 من الشهر الهجري)
+    titleEn: Fasting the White Days (13th–15th of the Hijri month)
+    deed: siyam
+    rule: { kind: hijriMonthDays, days: [13, 14, 15] }
+    basis: text
+    evidence: [e4a9c1f0-c53a-4f1c-9418-aaf4bbb8cd13, 93f7d1ab-b6f7-4521-bae8-f37cc1ff06a2]
+  - key: ithnayn-khamis
+    titleAr: صيام الاثنين والخميس
+    titleEn: Fasting Mondays and Thursdays
+    deed: siyam
+    rule: { kind: weekdays, days: [1, 4] }
+    basis: text
+    evidence: [54cb1111-a5da-412a-a828-90989973ef18, 28b92310-7fb6-4522-9d85-6a6c8282523f]
+  - key: arafah
+    titleAr: صيام يوم عرفة (9 ذو الحجة)
+    titleEn: Fasting the Day of Arafah (9 Dhu al-Hijja)
+    deed: siyam
+    rule: { kind: hijriYearly, month: 12, day: 9 }
+    basis: text
+    evidence: [0d77e977-f40b-473b-8b14-42b5fb82951a]
+  - key: dhul-hijja-ten
+    titleAr: العشر الأوائل من ذي الحجة
+    titleEn: The first ten days of Dhu al-Hijja
+    deed: ightinam-waqt
+    rule: { kind: hijriWindow, month: 12, fromDay: 1, toDay: 10 }
+    basis: text
+    evidence: [7ef3fb7a-e036-431a-a622-87805f2cf067]
+  - key: ashura
+    titleAr: صيام عاشوراء (10 محرم) ويوم قبله
+    titleEn: Fasting Ashura (10 Muharram) and the day before
+    deed: siyam
+    rule: { kind: hijriWindow, month: 1, fromDay: 9, toDay: 10 }
+    basis: text
+    evidence: [0d77e977-f40b-473b-8b14-42b5fb82951a, dcbeea3e-17bd-4eea-8008-c5f21616b6f9, 2f5090f5-82a8-4066-9481-29c1d1c5ab3b]
+  - key: shawwal-six
+    titleAr: صيام ست من شوال
+    titleEn: Fasting six days of Shawwal
+    deed: siyam
+    rule: { kind: hijriWindow, month: 10, fromDay: 2, toDay: 29 }
+    basis: text
+    evidence: [9aae1dae-f70f-470f-9db2-ac951bbcc560]
+  - key: ramadan-last-ten
+    titleAr: العشر الأواخر من رمضان
+    titleEn: The last ten nights of Ramadan
+    deed: nawafil
+    rule: { kind: hijriWindow, month: 9, fromDay: 21, toDay: 30 }
+    basis: text
+    evidence: [b435f332-618f-4a87-9513-3811334bf80a]
+  - key: jumua
+    titleAr: يوم الجمعة
+    titleEn: Friday
+    deed: jumua
+    rule: { kind: weekdays, days: [5] }
+    basis: text
+    evidence: [36d5d59d-b1b7-4b48-b7da-9cef0938f99d]
+
+# Habits for «أعِنّي على طاعة» and reminders (extension, mobile, web).
+habits:
+  - key: duha
+    titleAr: صلاة الضحى
+    titleEn: Duha prayer
+    deed: nawafil
+    unit: times
+    unitLabelAr: ركعتان
+    unitLabelEn: two rak'ahs
+    start: { far: 1, near: 1 }
+    defaultRule: { kind: daily }
+    timeHintAr: بعد ارتفاع الشمس إلى ما قبل الظهر
+    timeHintEn: after the sun has risen, until before Dhuhr
+    defaultSlots: ['09:30', '11:00']
+    basis: text
+    evidence: [93f7d1ab-b6f7-4521-bae8-f37cc1ff06a2, aa18c734-8541-4cea-a9b9-f3efcf432b31, 9b96171e-8218-49a3-bfdd-c94f65b126a1]
+  - key: witr
+    titleAr: الوتر قبل النوم
+    titleEn: Witr before sleeping
+    deed: nawafil
+    unit: times
+    unitLabelAr: ركعة واحدة على الأقل
+    unitLabelEn: at least one rak'ah
+    start: { far: 1, near: 1 }
+    defaultRule: { kind: daily }
+    timeHintAr: بعد العشاء وقبل النوم
+    timeHintEn: after Isha, before sleeping
+    defaultSlots: ['22:00', '23:00']
+    basis: text
+    evidence: [0bda155b-e786-4616-a380-56be0031c5c2, 93f7d1ab-b6f7-4521-bae8-f37cc1ff06a2]
+  - key: qiyam-last-third
+    titleAr: قيام الليل في الثلث الأخير
+    titleEn: Night prayer in the last third of the night
+    deed: nawafil
+    unit: times
+    unitLabelAr: ركعتان
+    unitLabelEn: two rak'ahs
+    start: { far: 1, near: 1 }
+    defaultRule: { kind: weekdays, days: [5] }
+    timeHintAr: الثلث الأخير من الليل
+    timeHintEn: the last third of the night
+    defaultSlots: ['04:00']
+    basis: text
+    evidence: [dc522d5d-3652-4e08-9d60-652da8fe39f1]
+  - key: adhkar-sabah-masa
+    titleAr: «سبحان الله وبحمده» صباحًا ومساءً
+    titleEn: «Subhan Allah wa bihamdih» morning and evening
+    deed: dhikr
+    unit: count
+    unitLabelAr: مرة
+    unitLabelEn: times
+    start: { far: 10, near: 33 }
+    ceiling: 100
+    defaultRule: { kind: daily }
+    defaultSlots: ['07:00', '18:00']
+    basis: text
+    evidence: [7fc63d7e-136b-44ad-bd31-ce0bc8ed3922, 0398949f-e730-40e5-afcd-d083ecdef12b]
+  - key: tasbih-after-salah
+    titleAr: التسبيح والتحميد والتكبير بعد الصلاة
+    titleEn: Tasbih, tahmid and takbir after the prayer
+    deed: dhikr
+    unit: count
+    unitLabelAr: مرة لكل ذكر
+    unitLabelEn: times each
+    start: { far: 10, near: 33 }
+    ceiling: 33
+    defaultRule: { kind: daily }
+    defaultSlots: ['13:00', '19:30']
+    basis: text
+    evidence: [c13f91c6-41bd-45e7-8cdc-d9e1e06ee073, 233c185a-c4b0-4fb0-bac0-61786d37c809]
+  - key: quran-wird
+    titleAr: ورد القرآن
+    titleEn: Daily Quran reading
+    deed: quran
+    unit: minutes
+    unitLabelAr: دقيقة
+    unitLabelEn: minutes
+    start: { far: 2, near: 10 }
+    defaultRule: { kind: daily }
+    defaultSlots: ['06:00', '21:00']
+    basis: organizational
+    evidence: [98e68a75-d3d2-4a38-8da1-5772564adf8d, c2bdf702-6809-4474-a5fc-8b62439233ce]
+  - key: talab-ilm-reading
+    titleAr: القراءة في العلم النافع
+    titleEn: Reading beneficial knowledge
+    deed: talab-ilm
+    unit: minutes
+    unitLabelAr: دقيقة
+    unitLabelEn: minutes
+    start: { far: 2, near: 5 }
+    defaultRule: { kind: weekdays, days: [0, 1, 2, 3] }
+    defaultSlots: ['20:00', '22:00']
+    basis: organizational
+    evidence: [f285c188-c4f1-472b-bd64-e249d479ed3d]
+  - key: smile
+    titleAr: الابتسامة في وجوه الناس
+    titleEn: Smiling at people
+    deed: kalam-tayyib
+    unit: count
+    unitLabelAr: مرة في اليوم
+    unitLabelEn: times a day
+    start: { far: 10, near: 20 }
+    ceiling: 30
+    defaultRule: { kind: daily }
+    defaultSlots: ['10:00', '17:00']
+    basis: organizational
+    evidence: [09208c21-3e22-4c97-8564-8f297e404f66]
+  - key: salam
+    titleAr: إفشاء السلام على من عرفت ومن لم تعرف
+    titleEn: Greeting people you know and do not know
+    deed: salam
+    unit: count
+    unitLabelAr: مرة في اليوم
+    unitLabelEn: times a day
+    start: { far: 3, near: 10 }
+    defaultRule: { kind: daily }
+    defaultSlots: ['10:00', '17:00']
+    basis: organizational
+    evidence: [75f6d47d-8217-4ac3-bb1f-e512aee22640]
+  - key: sadaqah-weekly
+    titleAr: صدقة ولو قليلة
+    titleEn: Charity, even a little
+    deed: sadaqah
+    unit: times
+    unitLabelAr: صدقة
+    unitLabelEn: gift
+    start: { far: 1, near: 1 }
+    defaultRule: { kind: weekdays, days: [5] }
+    defaultSlots: ['12:00']
+    basis: organizational
+    evidence: [393df1bd-4342-4d44-81eb-ef3b0dc5752d]
+  - key: silat-ar-rahim
+    titleAr: صلة الرحم (اتصال أو زيارة أو رسالة)
+    titleEn: Keeping ties of kinship (a call, a visit or a message)
+    deed: silat-ar-rahim
+    unit: times
+    unitLabelAr: تواصل
+    unitLabelEn: contact
+    start: { far: 1, near: 1 }
+    defaultRule: { kind: everyNWeeks, n: 1, weekday: 5, anchor: '2026-10-30' }
+    defaultSlots: ['17:00', '20:00']
+    basis: organizational
+    evidence: [29ff8cf6-4065-4379-a517-9bd455e5e94c]
+  - key: birr-call
+    titleAr: الاتصال بالوالدين أو زيارتهما
+    titleEn: Calling or visiting your parents
+    deed: birr-al-walidayn
+    unit: times
+    unitLabelAr: اتصال أو زيارة
+    unitLabelEn: call or visit
+    start: { far: 1, near: 1 }
+    defaultRule: { kind: daily }
+    defaultSlots: ['18:00', '21:00']
+    basis: organizational
+    evidence: [7e67d670-22ca-4088-a2db-0ed905e3908c]

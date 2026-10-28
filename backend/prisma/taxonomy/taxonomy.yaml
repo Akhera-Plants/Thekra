@@ -243,6 +243,10 @@ topics:
   - { slug: tawqir-kibar, ar: توقير العلماء والكبار وأهل الفضل, en: Honouring scholars and elders, side: DO, domain: mujtama, branches: [75], riyad: [44] }
   - { slug: taat-wulat, ar: طاعة ولاة الأمر في المعروف, en: Obeying those in authority in what is right, side: DO, domain: dima, branches: [49], riyad: [80] }
   - { slug: tasweer, ar: تصوير ذوات الأرواح, en: Making images of living beings, side: AVOID, domain: shahawat, hidden: true, kabair: [48] }
+  # Added 2026-10-28 at the owner's request, from the lecture of Anas Sheikh Akrim (docs/research/anas-sheikh-akrim/).
+  # Derived pages: their texts come from the topics in derivedFrom until texts are linked to them directly.
+  - { slug: intiqad, ar: كثرة انتقاد الناس وتتبّع أخطائهم, en: Constantly criticising people, side: AVOID, domain: lisan, opposite: jabr-al-khatir, derivedFrom: [sukhriya, tajassus, su-dhann] }
+  - { slug: jabr-al-khatir, ar: جبر الخاطر والذوق في التعامل, en: Mending hearts and tact with people, side: DO, domain: mujtama, opposite: intiqad, derivedFrom: [kalam-tayyib, qada-hawaij, salamat-sadr, husn-khuluq] }
 
 # Kabair entries intentionally NOT mapped (archaic or needs a scholar before public use):
 #   29 is intihar (mapped). 57 إباق العبد, 67 الإضرار في الوصية (fiqh detail) — kept hidden; 35/64 missing in this edition. Their kabira-N rows stay hidden.
@@ -310,3 +314,4 @@ pairs:
   - { avoid: kitman-ilm, do: talab-ilm }
   - { avoid: qawl-bila-amal, do: amr-maruf }
   - { avoid: idaat-al-waqt, do: ightinam-waqt }
+  - { avoid: intiqad, do: jabr-al-khatir }

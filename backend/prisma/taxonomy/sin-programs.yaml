@@ -1,0 +1,141 @@
+# «ترك المعصية» programs. Plan: docs/plan/2026-10-features-roadmap.md §4.
+# Method: the lecture of Anas Sheikh Akrim, docs/research/anas-sheikh-akrim/4EkrbmmIlno-analysis.md §5
+# (line numbers `lines:` point into transcripts/4EkrbmmIlno.txt).
+#
+# Owner decision D1 (2026-10-28): a sin against Allah's right may be left gradually when leaving it at once is very
+# hard; a sin against people's rights is left (or lightened) with strong effort, never "permitted gradually", and
+# its program adds a «ردّ الحقوق» stage.
+#
+# Rules
+#   - Everything a user enters for a program stays on their device (practice-core storage, never synced).
+#   - Notifications never name the sin: the title is always «تذكرة من ذكرى».
+#   - `evidence` are public Quote ids (verses or hadith), read from the database.
+#   - Guidance text is our own wording of the lecturer's method. It is not a fatwa. review: pending-sheikh.
+
+review: pending-sheikh
+
+common:
+  willQuestionAr: هل تركُ هذه المعصية دفعةً واحدة صعبٌ عليك جدًا الآن؟
+  willQuestionEn: Is leaving this all at once very hard for you right now?
+  stageMinDays: 7
+  stages:
+    harms:
+      titleAr: اعرف ضررها
+      titleEn: Know the harm
+      bodyAr: >-
+        اقرأ ما ورد فيها من نصوص، واكتب لنفسك أضرارها عليك في دينك ودنياك، قريبًا وبعيدًا. المعرفة وحدها لا تكفي،
+        لكنها تحرّك الإرادة، فارجع إليها كلما ضعفت.
+      bodyEn: >-
+        Read the texts about it and write down how it harms your faith and your life, soon and later. Knowing is not
+        enough on its own, but it moves the will; come back to it whenever you feel weak.
+      lines: [1465, 1472]
+    alternatives:
+      titleAr: ابنِ عادة خير مكانها
+      titleEn: Build a good habit in its place
+      bodyAr: >-
+        بناء الخير أسهل طريق لترك الشر. اختر عادتين أو ثلاثًا صغيرة، خمس دقائق أو عشرًا لكل واحدة، بعد الفرائض،
+        وابدأ بها قبل أن تقطع المعصية، حتى لا يبقى الفراغ.
+      bodyEn: >-
+        Building good is the easiest way to leave bad. Pick two or three small habits, five to ten minutes each, after
+        the obligatory prayers, and start them before you cut the sin, so no empty space is left.
+      lines: [204, 210, 1481, 1507]
+    environment:
+      titleAr: غيّر ما حولك
+      titleEn: Change your surroundings
+      bodyAr: >-
+        البيئة تسهّل الشر أو تصعّبه. ابحث عن صحبة خير ومجلس علم، وغيّر المكان أو الوقت الذي تقع فيه المعصية عادةً.
+      bodyEn: >-
+        Surroundings make wrong easier or harder. Look for good company and a gathering of knowledge, and change the
+        place or the time where it usually happens.
+      lines: [690, 698, 1496, 1498]
+    limits:
+      titleAr: ضع حدودًا عملية
+      titleEn: Set practical limits
+      bodyAr: >-
+        حدود صغيرة تُعينك: حدّد الوقت، أو أعطِ كلمة السر لمن تثق به، أو أبعد الوسيلة عن متناولك. وإن وقعت فلا تيأس:
+        قد تحتاج محاولات كثيرة، وكل محاولة تقرّبك.
+      bodyEn: >-
+        Small limits help: set a time limit, give the password to someone you trust, or keep the means out of reach. If
+        you slip, do not despair: it may take many attempts, and each one brings you closer.
+      lines: [1499, 1514]
+    restore_rights:
+      titleAr: ردّ الحقوق
+      titleEn: Restore people's rights
+      bodyAr: >-
+        المعصية في حق الناس لا تتم توبتها إلا بردّ الحق إلى صاحبه أو استحلاله، ما لم يترتب على ذلك ضرر أكبر، مع الدعاء
+        له وذكره بالخير. اسأل أهل العلم إن أشكل عليك شيء.
+      bodyEn: >-
+        Repentance from wronging people is completed by returning the right or asking the person to pardon you, unless
+        that would cause greater harm, along with praying for them and speaking well of them. Ask a scholar when unsure.
+      evidence: [7d5afc99-719d-4cca-bbd0-d6b9958f547b]
+    leave:
+      titleAr: الثبات
+      titleEn: Staying firm
+      bodyAr: >-
+        استمر على عادات الخير التي بنيتها، فهي سورٌ يحميك. لا تعدّ الأيام ولا تقارن نفسك بأحد، واسأل الله الثبات.
+      bodyEn: >-
+        Keep the good habits you built; they are a wall that protects you. Do not count days or compare yourself with
+        anyone, and ask Allah for steadfastness.
+      lines: [906, 909, 1391]
+  afterFall:
+    titleAr: خربانة؟ صلّحها
+    titleEn: It slipped? Mend it
+    bodyAr: >-
+      إن وقعت فتب في الحال، وأتبع السيئة الحسنة، وارجع إلى خطتك اليوم نفسه. التعثّر لا يعني أنك «لا تلتزم أبدًا».
+    bodyEn: >-
+      If you slip, repent at once, follow the wrong with a good deed, and return to your plan the same day. A slip does
+      not mean you «never keep anything».
+    lines: [448, 449, 1140, 1146]
+    evidence: [5518a387-d429-4a90-be10-c0609f66d7c9, 8677aa91-33df-446c-ba76-e1de6aeb2336, 535ef498-7c9e-4eb8-93c7-a14f32782671, 4235f081-051f-44fc-bc51-3db0da8d2cb2, fb625acf-4317-45bc-b154-7dacb7179f44]
+  helpAr: >-
+    إن كانت المعصية إدمانًا يصعب عليك وحدك (كالمخدرات أو المواد الإباحية أو القمار)، فطلب مساعدة طبيب أو مختص نفسي ثقة
+    جزءٌ من الأخذ بالأسباب.
+  helpEn: >-
+    If it has become an addiction you cannot handle alone (drugs, pornography or gambling, for example), seeking help
+    from a trusted doctor or therapist is part of taking the means.
+
+programs:
+  - sin: waqt-tawasul
+    category: haqq_allah
+    gradualAllowed: true
+    help: false
+    gradualStepsAr: [قلّل الوقت من عشر ساعات إلى ست, ثم إلى أربع, ثم إلى ساعتين, ثم احذف ما لا ينفعك]
+    gradualStepsEn: [Cut the time from ten hours to six, then to four, then to two, then delete what does not benefit you]
+    actionsAr: [فعّل حدّ الوقت في إعدادات الهاتف, أعطِ كلمة سر الحد لشخص تثق به, أبعد الهاتف عن السرير ليلًا]
+    actionsEn: [Turn on the screen-time limit, give the limit password to someone you trust, keep the phone away from the bed at night]
+    alternatives: [quran-wird, talab-ilm-reading, adhkar-sabah-masa]
+    evidence: [7935e301-711b-446d-812d-475545d186a6, 468cc804-42b1-4671-981c-11b18c4dc996]
+    lines: [1463, 1515]
+  - sin: nazar-shashat
+    category: haqq_allah
+    gradualAllowed: true
+    help: true
+    actionsAr: [استعمل برامج حجب المحتوى, لا تخلُ بالجهاز في أوقات ضعفك, غضّ بصرك عن النظرة الثانية]
+    actionsEn: [Use a content blocker, avoid being alone with the device at your weak times, lower your gaze from the second look]
+    alternatives: [adhkar-sabah-masa, quran-wird, witr]
+    evidence: [bde31e23-df04-4de7-a8bb-267a0c9ce9c2, fbf95394-a13a-45b0-9e7a-0d69a9afa8ff]
+  - sin: ghibah
+    category: haqq_ibad
+    gradualAllowed: false
+    help: false
+    actionsAr: [إذا ذُكر غائب فاذكر خيرًا أو اسكت, غيّر الحديث بلطف, اترك المجلس الذي لا ينتهي عن الغيبة]
+    actionsEn: [When someone absent is mentioned, say something good or stay silent, change the subject gently, leave a gathering that will not stop]
+    alternatives: [smile, salam]
+    evidence: [e95c82ad-29c4-48ea-a75d-c583f9dc46d3, 00000000-0000-4000-8000-000000000001, 7d5afc99-719d-4cca-bbd0-d6b9958f547b]
+  - sin: intiqad
+    category: haqq_ibad
+    gradualAllowed: false
+    help: false
+    actionsAr: [أمسك عن النقد ما لم يُطلب منك النصح, إن نصحت فسرًّا وبلطف, اذكر لكل شخص حسنةً قبل أي ملاحظة]
+    actionsEn: [Hold back criticism unless advice is asked of you, if you advise do it privately and gently, mention something good about each person before any remark]
+    alternatives: [smile, salam]
+    evidence: [3c548931-6fd5-4b19-b681-1e78cf35f8b0, 242944a7-2441-4948-a97a-06bf6771ac39, 468cc804-42b1-4671-981c-11b18c4dc996]
+    lines: [834, 836]
+  - sin: ghadab
+    category: haqq_ibad
+    gradualAllowed: false
+    help: false
+    actionsAr: [إذا غضبت فاسكت وغيّر هيئتك, توضأ, اعتذر لمن أخطأت في حقه]
+    actionsEn: [When angry, fall silent and change your position, make wudu, apologise to anyone you wronged]
+    alternatives: [smile, adhkar-sabah-masa]
+    evidence: [2e714754-b13e-4b5c-a776-55e6940c441b, af5fe495-bec7-4880-920e-74bd40511fdb]
