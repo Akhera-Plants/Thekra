@@ -8,10 +8,22 @@ import React, { useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { decreaseTo, deletePlan, increase, logDone, normalize, updatePlan, validatePlan, type LocalTime, type Plan } from '@thekra/practice-core';
+import {
+  addDays,
+  correctLog,
+  decreaseTo,
+  deletePlan,
+  increase,
+  logDone,
+  normalize,
+  updatePlan,
+  validatePlan,
+  type LocalTime,
+  type Plan,
+} from '@thekra/practice-core';
 import { useEvidence, usePracticeCatalog } from '@/lib/api/practice';
 import { pick } from '@/lib/practice/catalog-types';
-import { ruleToWeekdays, sortSlots, weekdaysToRule } from '@/lib/practice/format';
+import { ruleToWeekdays, shortDate, sortSlots, weekdaysToRule } from '@/lib/practice/format';
 import { planView } from '@/lib/practice/plan-view';
 import { today, usePracticeStore } from '@/lib/practice/practice-store';
 import { formatAmount, habitFor, planRule } from '@/lib/practice/reminders';
@@ -19,6 +31,10 @@ import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { EvidenceList } from '@/components/practice/EvidenceList';
 import { ActiveDaysPicker, SlotsEditor, WeekdayPicker } from '@/components/practice/editors';
 import { Body, Button, Card, ErrorText, Loading, Row, Screen, SectionTitle, Title } from '@/components/practice/ui';
+
+/** «صحّح السجل» reaches this many days back (today included). */
+const FIX_DAYS = 7;
+const FIX_MAX = 1000;
 
 export default function PlanScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -38,6 +54,10 @@ export default function PlanScreen() {
   const [relapseDismissed, setRelapseDismissed] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** The last log in this visit, so it can be undone in one tap. */
+  const [lastLog, setLastLog] = useState<{ date: string; before: number } | null>(null);
+  /** «صحّح السجل»: how many days back (0 = today) and the amount to set; null while closed. */
+  const [fix, setFix] = useState<{ back: number; amount: number } | null>(null);
 
   const ruleKey = plan ? JSON.stringify(planRule(plan, habits)) : '';
   useEffect(() => {
@@ -72,6 +92,37 @@ export default function PlanScreen() {
   // practice-core `updatePlan` keeps `updatedAt` right for sync (a log alone does not bump it).
   function update(fn: (p: Plan) => Plan) {
     setStore((s) => updatePlan(s, id as string, fn));
+  }
+
+  function log(amount: number) {
+    setLastLog({ date: d, before: plan!.log[d] ?? 0 });
+    update((p) => logDone(p, d, amount));
+  }
+
+  function undoLastLog() {
+    if (!lastLog) return;
+    const { date, before } = lastLog;
+    update((p) => correctLog(p, date, before));
+    setLastLog(null);
+  }
+
+  // A forgotten or wrong day, up to a week back and never before the plan started.
+  const fixDate = fix ? addDays(d, -fix.back) : d;
+  const canGoBack = fix !== null && fix.back < FIX_DAYS - 1 && addDays(d, -(fix.back + 1)) >= plan.createdOn;
+  const fixLabel = fix?.back === 0 ? t('practice.plan.fixToday') : fix?.back === 1 ? t('practice.plan.fixYesterday') : shortDate(fixDate);
+
+  function moveFixDay(step: number) {
+    if (!fix) return;
+    const back = fix.back + step;
+    setFix({ back, amount: plan!.log[addDays(d, -back)] ?? 0 });
+  }
+
+  function saveFix() {
+    if (!fix) return;
+    const amount = fix.amount;
+    update((p) => correctLog(p, fixDate, amount));
+    setFix(null);
+    setLastLog(null);
   }
 
   function saveSettings() {
@@ -117,9 +168,9 @@ export default function PlanScreen() {
         {view.done > 0 ? <Body muted>{t('practice.plan.done', { amount: amountLabel(view.done) })}</Body> : null}
         {view.inEbb ? <Body muted small>{t('practice.ebbActive')}</Body> : null}
         <Row>
-          <Button label={t('practice.logPlusOne')} onPress={() => update((p) => logDone(p, d, 1))} variant="outline" compact />
+          <Button label={t('practice.logPlusOne')} onPress={() => log(1)} variant="outline" compact />
           {!view.doneToday ? (
-            <Button label={t('practice.logRest')} onPress={() => update((p) => logDone(p, d, view.remaining))} compact />
+            <Button label={t('practice.logRest')} onPress={() => log(view.remaining)} compact />
           ) : (
             <Body>{t('practice.doneToday')}</Body>
           )}
@@ -127,7 +178,36 @@ export default function PlanScreen() {
         <Body muted small>
           {t('practice.partialHint')}
         </Body>
+        {lastLog ? (
+          <Row>
+            <Body muted small>{t('practice.plan.logged')}</Body>
+            <Button label={t('practice.plan.undo')} onPress={undoLastLog} variant="ghost" compact />
+          </Row>
+        ) : null}
+        {fix === null ? (
+          <Button label={t('practice.plan.fixOpen')} onPress={() => setFix({ back: 0, amount: plan.log[d] ?? 0 })} variant="ghost" compact />
+        ) : null}
       </Card>
+
+      {fix ? (
+        <Card>
+          <Body muted small>{t('practice.plan.fixHint')}</Body>
+          <Row>
+            <Button label="‹" accessibilityLabel={t('practice.plan.fixEarlier')} onPress={() => moveFixDay(1)} variant="outline" compact disabled={!canGoBack} />
+            <Body>{fixLabel}</Body>
+            <Button label="›" accessibilityLabel={t('practice.plan.fixLater')} onPress={() => moveFixDay(-1)} variant="outline" compact disabled={fix.back === 0} />
+          </Row>
+          <Row>
+            <Button label="−" accessibilityLabel={t('practice.plan.fixLess')} onPress={() => setFix({ ...fix, amount: Math.max(0, fix.amount - 1) })} variant="outline" compact disabled={fix.amount <= 0} />
+            <Body>{amountLabel(fix.amount)}</Body>
+            <Button label="+" accessibilityLabel={t('practice.plan.fixMore')} onPress={() => setFix({ ...fix, amount: Math.min(FIX_MAX, fix.amount + 1) })} variant="outline" compact />
+          </Row>
+          <Row>
+            <Button label={t('practice.plan.save')} onPress={saveFix} compact />
+            <Button label={t('common.cancel')} onPress={() => setFix(null)} variant="ghost" compact />
+          </Row>
+        </Card>
+      ) : null}
 
       <Card tone="info">
         <Body>{t('practice.monthTitle')}: {t(`practice.band.${view.band}`)}</Body>

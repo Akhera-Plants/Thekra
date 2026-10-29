@@ -273,7 +273,17 @@
       "saved": "Saved",
       "delete": "Delete the habit",
       "deleteConfirm": "The habit and its log are deleted from this device.",
-      "notFound": "This habit was not found."
+      "notFound": "This habit was not found.",
+      "logged": "Logged.",
+      "undo": "Undo",
+      "fixOpen": "Fix the log",
+      "fixHint": "Log a day you forgot, or fix a wrong number. Zero clears that day.",
+      "fixToday": "Today",
+      "fixYesterday": "Yesterday",
+      "fixEarlier": "Earlier day",
+      "fixLater": "Later day",
+      "fixLess": "One less",
+      "fixMore": "One more"
     },
     "duties": {
       "title": "My duties and roles",
@@ -420,7 +430,8 @@
     "signInHint": "If you sign in, you can save the program encrypted in your account and open it on another device.",
     "cancel": "Cancel",
     "errors": {
-      "tooShort": "The privacy code needs at least 6 characters.",
+      "tooShort": "The privacy code must be at least 8 characters.",
+      "weak": "This code is easy to guess. Choose a phrase of two or more words, or a code without repeats or runs.",
       "mismatch": "The two codes do not match.",
       "wrongCode": "Wrong code.",
       "exists": "A program is already saved in your account. Open it with its code first.",

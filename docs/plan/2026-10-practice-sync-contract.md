@@ -23,7 +23,7 @@
 | --- | --- | --- |
 | `PracticeSettings` | `userId` PK→User (cascade), `hijriOffset Int @default(0)`, `reminderTimes String[]`, `freeMinutesPerDay Int?`, `updatedAt DateTime` | one row per user |
 | `HabitPlan` | `id String @id` (client UUID), `userId`→User (cascade), `habitKey String?`, `deedSlug String`, `title String`, `unit String` (`minutes`/`count`/`times`), `amount Int`, `ceiling Int?`, `activeDaysPerWeek Int`, `slots String[]`, `rule Json?`, `createdOn @db.Date`, `amountChangedOn @db.Date`, `ebbSince @db.Date?`, `season Json?`, `clientUpdatedAt DateTime`, `updatedAt DateTime @updatedAt`, `deletedAt DateTime?` | `@@index([userId, updatedAt])`; max 50 live plans per user |
-| `HabitLog` | `planId`→HabitPlan (cascade), `date @db.Date`, `amount Int`, `updatedAt DateTime @updatedAt` | `@@id([planId, date])` |
+| `HabitLog` | `planId`→HabitPlan (cascade), `date @db.Date`, `amount Float`, `correctedAt DateTime?`, `updatedAt DateTime @updatedAt` | `@@id([planId, date])` |
 | `Relative` | `id String @id` (client UUID), `userId`→User (cascade), `name String`, `relation String`, `rule Json`, `lastContactedOn @db.Date?`, `clientUpdatedAt DateTime`, `updatedAt @updatedAt`, `deletedAt DateTime?` | max 200 live per user; name/relation rejected by `looksLikeContactDetails` |
 | `RelativeContact` | `relativeId`→Relative (cascade), `date @db.Date`, `deletedAt DateTime?`, `updatedAt @updatedAt` | `@@id([relativeId, date])`; undo = tombstone |
 | `SinVault` | `userId` PK→User (cascade), `ciphertext String` (base64), `iv String` (base64, 12 bytes), `salt String` (base64, 16 bytes), `kdf String` (`pbkdf2-sha256`), `iterations Int`, `version Int @default(0)`, `updatedAt @updatedAt` | ≤ 128 KB ciphertext |
@@ -42,7 +42,7 @@ Dates on the wire are `YYYY-MM-DD`; timestamps are ISO 8601 UTC.
                "ceiling": null, "activeDaysPerWeek": 3, "slots": ["09:30","11:00"], "rule": {…}|null,
                "createdOn": "2026-10-28", "amountChangedOn": "2026-10-28", "ebbSince": null, "season": null,
                "clientUpdatedAt": "…", "deletedAt": null } ],
-  "logs": [ { "planId": "…", "date": "2026-10-28", "amount": 1 } ],
+  "logs": [ { "planId": "…", "date": "2026-10-28", "amount": 1 }, { "planId": "…", "date": "2026-10-27", "amount": 0, "correctedAt": "<ISO>" } ],
   "relatives": [ { "id": "…", "name": "…", "relation": "…", "rule": {…}, "lastContactedOn": null,
                    "clientUpdatedAt": "…", "deletedAt": null } ],
   "contacts": [ { "relativeId": "…", "date": "2026-10-20", "deleted": false } ]
@@ -60,7 +60,7 @@ Merge rules (server and practice-core apply the same ones):
 | Kind | Rule |
 | --- | --- |
 | plan, relative, settings | last writer wins by `clientUpdatedAt`; a tombstone (`deletedAt`) also carries `clientUpdatedAt` and wins only when newer |
-| log (plan, date) | `amount = max(stored, incoming)` (logging never goes down; same-day partial amounts add up on the device first) |
+| log (plan, date) | the later `correctedAt` wins (absent/null counts as the oldest); at the same `correctedAt` the larger amount wins. So plain logging never goes down (same-day partial amounts add up on the device first), and an undo of «تمّ» or a fixed amount (practice-core `correctLog`, which sets `correctedAt`; `amount` may then be 0) is not undone by a device that still holds the old amount. Added 2026-10-29 (`HabitLog.correctedAt`); a client that never sends `correctedAt` keeps the old max rule |
 | contact (relative, date) | union; `deleted: true` sets a tombstone; a later non-deleted write clears it |
 
 Validation: practice-core `validatePlan` / `validateRule` / `validateRelative` / `looksLikeContactDetails`; unknown

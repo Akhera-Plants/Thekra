@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 import {
   addDays,
   afterFall,
+  isActiveProgram,
   checkIn,
   currentStage,
   startProgram,
@@ -67,7 +68,7 @@ export default function SinProgramScreen() {
   const { t } = useTranslation();
   const locale = useUiLocale();
   const hydrated = usePracticeStore((s) => s.hydrated);
-  const program = usePracticeStore((s) => s.store.programs[0]);
+  const program = usePracticeStore((s) => s.store.programs.find(isActiveProgram));
   const catalog = usePracticeCatalog(locale);
   const evidence = useSinProgramEvidence(catalog.data, locale);
   const sins = useSins({ limit: 100 });

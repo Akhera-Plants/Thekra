@@ -4,9 +4,20 @@ import { useMemo } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { useLocale, useTranslations } from 'next-intl';
-import { afterFall, checkIn, CHECK_IN_VALUES, type CheckInValue, type SinProgram } from '@thekra/practice-core';
+import { afterFall, checkIn, CHECK_IN_VALUES, endProgram, type CheckInValue, type SinProgram } from '@thekra/practice-core';
 import { Link } from '@/i18n/navigation';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { formatDigits } from '@/lib/format/digits';
@@ -159,7 +170,46 @@ export function ProgramPanel({ program, entry, common, name, habits, quotes, tod
         </h3>
         <EvidenceQuotes ids={entry.evidence} quotes={quotes} />
       </section>
+
+      <EndProgram program={program} />
     </article>
+  );
+}
+
+/**
+ * «أنهِ هذا البرنامج»: ends this program only. Its check-ins and notes are removed from this device at once, and the
+ * encrypted copy follows on the next save (practice-core `endProgram` keeps a marker so the vault does not bring it
+ * back). Starting it again later is a fresh program.
+ */
+function EndProgram({ program }: { program: SinProgram }) {
+  const t = useTranslations('leaveSin.program.end');
+  function handleConfirm() {
+    updateStore((store) => ({
+      ...store,
+      programs: store.programs.map((p) => (p.sinSlug === program.sinSlug ? endProgram(p) : p)),
+    }));
+  }
+  return (
+    <div className="flex flex-col items-start gap-2 border-t border-border pt-4">
+      <p className="text-sm leading-7 text-muted-foreground">{t('lead')}</p>
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <button type="button" className="outline-button button-wrap">
+            {t('button')}
+          </button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('confirmTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('confirmBody')}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirm}>{t('confirm')}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   );
 }
 

@@ -15,6 +15,7 @@
  */
 
 import {
+  activePrograms,
   addDays,
   nextDue,
   occurrences,
@@ -162,9 +163,10 @@ function kinshipReminders(input: ReminderInput, end: LocalDate): PlannedReminder
 
 function sinReminders(input: ReminderInput, days: number): PlannedReminder[] {
   const { store, prefs, today, now, texts } = input;
-  if (!prefs.sinReminders || store.programs.length === 0) return [];
+  const programs = activePrograms(store.programs);
+  if (!prefs.sinReminders || programs.length === 0) return [];
   const time = prefs.sinReminderTime;
-  const checkedInToday = store.programs.some((p) => p.checkIns.some((c) => c.date === today));
+  const checkedInToday = programs.some((p) => p.checkIns.some((c) => c.date === today));
   const out: PlannedReminder[] = [];
   for (let i = 0; i < days; i++) {
     const date = addDays(today, i);

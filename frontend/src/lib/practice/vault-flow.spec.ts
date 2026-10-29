@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { checkIn, startProgram, VaultLockedError, type SinProgram, type VaultPayload } from '@thekra/practice-core';
+import { checkIn, endProgram, startProgram, VaultLockedError, type SinProgram, type VaultPayload } from '@thekra/practice-core';
 import { ApiError } from '@/lib/types/api';
 import { safeNextPath } from '@/features/auth/next-path';
 import {
@@ -45,12 +45,12 @@ describe('sin vault flows', () => {
     const sent = JSON.stringify(server.bodies);
     expect(sent).not.toContain('ghibah');
     expect(sent).not.toContain('ملاحظة');
-    expect(server.bodies[0]).toMatchObject({ kdf: 'pbkdf2-sha256', iterations: 210000, version: 0 });
+    expect(server.bodies[0]).toMatchObject({ kdf: 'pbkdf2-sha256', iterations: 600000, version: 0 });
 
     const opened = await openVault(server.api, 'رمز-سري-1');
     expect(opened?.programs).toEqual(programs);
     await expect(openVault(server.api, 'رمز-خطأ')).rejects.toBeInstanceOf(VaultLockedError);
-    await expect(createVault(server.api, programs, 'آخر-123')).rejects.toBeInstanceOf(VaultExistsError);
+    await expect(createVault(server.api, programs, 'رمز-آخر-123')).rejects.toBeInstanceOf(VaultExistsError);
   }, 30_000);
 
   it('on 409 re-opens the newer vault with the session key, merges, and saves on top of it', async () => {
@@ -83,21 +83,29 @@ describe('sin vault flows', () => {
 });
 
 describe('mergePrograms', () => {
-  it('unites check-ins by date; on the same date the copy with more check-ins wins; keeps the earlier start', () => {
-    let local = checkIn(ghibah(), '2026-10-25', 'held');
-    local = checkIn(local, '2026-10-26', 'weak', 'device');
-    let remote = { ...ghibah(), startedOn: '2026-10-18' };
-    remote = checkIn(remote, '2026-10-26', 'held', 'vault');
+  it('unites check-ins by date; on the same date the later check-in wins with its note (not the copy with more)', () => {
+    const t = (h: number) => `2026-10-26T1${h}:00:00.000Z`;
+    let local = checkIn(ghibah(), '2026-10-25', 'held', undefined, t(1));
+    local = checkIn(local, '2026-10-26', 'weak', 'device', t(2));
+    const remote = checkIn(ghibah(), '2026-10-26', 'held', 'vault, edited later', t(3));
     const merged = mergePrograms(
       [local],
       [remote, startProgram({ sinSlug: 'ghadab', category: 'haqq_ibad', hardToLeaveAtOnce: false, startedOn: '2026-10-01' })],
     );
     expect(merged.map((p) => p.sinSlug)).toEqual(['ghibah', 'ghadab']);
-    expect(merged[0]?.startedOn).toBe('2026-10-18');
     expect(merged[0]?.checkIns).toEqual([
-      { date: '2026-10-25', value: 'held' },
-      { date: '2026-10-26', value: 'weak', note: 'device' },
+      { date: '2026-10-25', value: 'held', updatedAt: t(1) },
+      { date: '2026-10-26', value: 'held', note: 'vault, edited later', updatedAt: t(3) },
     ]);
+  });
+
+  it('a program ended on this device is not brought back by the older copy in the vault', () => {
+    const started = startProgram({ sinSlug: 'ghibah', category: 'haqq_ibad', hardToLeaveAtOnce: false, startedOn: '2026-10-20' }, '2026-10-20T10:00:00.000Z');
+    const vaultCopy = checkIn(started, '2026-10-25', 'held', 'old note', '2026-10-25T10:00:00.000Z');
+    const ended = endProgram(vaultCopy, '2026-10-26T10:00:00.000Z');
+    const merged = mergePrograms([ended], [vaultCopy]);
+    expect(merged).toEqual([ended]);
+    expect(JSON.stringify(merged)).not.toContain('old note');
   });
 });
 

@@ -8,16 +8,17 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, TextInput } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { privacyCodeProblem } from '@thekra/practice-core';
 import { usePracticeStore } from '@/lib/practice/practice-store';
 import { enableVault, refreshVault, setRememberKey, unlockWithCode, useVaultState } from '@/lib/practice/vault-runner';
 import { Colors } from '@/lib/tokens';
 import { Body, Button, Card, ErrorText, Row, SwitchRow, practiceStyles } from './ui';
 
-export const MIN_CODE_LENGTH = 6;
-
-/** i18n key under `vault.errors` for a new code, or null when it can be used. */
-export function validateNewCode(code: string, confirm: string): 'tooShort' | 'mismatch' | null {
-  if (code.length < MIN_CODE_LENGTH) return 'tooShort';
+/** i18n key under `vault.errors` for a new code, or null when it can be used (practice-core `privacyCodeProblem`). */
+export function validateNewCode(code: string, confirm: string): 'tooShort' | 'weak' | 'mismatch' | null {
+  const problem = privacyCodeProblem(code);
+  if (problem === 'short') return 'tooShort';
+  if (problem === 'weak') return 'weak';
   if (code !== confirm) return 'mismatch';
   return null;
 }

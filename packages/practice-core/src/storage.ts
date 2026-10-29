@@ -21,7 +21,7 @@
 import { isIsoTime, isValidDate, isValidTime, isoMillis, nowIso, type IsoTime, type LocalTime } from './dates.js';
 import { HIJRI_OFFSET_MAX, HIJRI_OFFSET_MIN } from './hijri.js';
 import { latestDate, undoLastContact, validateRelative, type Relative } from './kinship.js';
-import { validatePlan, type Plan } from './plan.js';
+import { mergeLogs, validatePlan, type Plan, type PlanLog } from './plan.js';
 import type { Rule } from './rules.js';
 import { validateCheckIn, validateProgram, type CheckIn, type SinProgram } from './sin-program.js';
 
@@ -49,6 +49,8 @@ export interface Tombstone {
    * the logs of a soft-deleted plan, so a newer edit that brings the plan back must bring them back too.
    */
   log?: Record<string, number>;
+  /** Plan tombstones only: the corrected days of {@link log} (see `Plan.logCorrectedAt`). */
+  logCorrectedAt?: Record<string, IsoTime>;
 }
 
 export interface SyncState {
@@ -135,6 +137,7 @@ export function clonePlan(p: Plan): Plan {
   if (p.season) out.season = { amount: p.season.amount, until: p.season.until, previous: p.season.previous };
   if (p.rule) out.rule = cloneRule(p.rule);
   if (p.updatedAt !== undefined) out.updatedAt = p.updatedAt;
+  if (p.logCorrectedAt !== undefined) out.logCorrectedAt = { ...p.logCorrectedAt };
   return out;
 }
 
@@ -154,17 +157,21 @@ export function cloneRelative(r: Relative): Relative {
 function cloneCheckIn(c: CheckIn): CheckIn {
   const out: CheckIn = { date: c.date, value: c.value };
   if (c.note !== undefined) out.note = c.note;
+  if (c.updatedAt !== undefined) out.updatedAt = c.updatedAt;
   return out;
 }
 
 function cloneProgram(p: SinProgram): SinProgram {
-  return {
+  const out: SinProgram = {
     sinSlug: p.sinSlug,
     category: p.category,
     path: p.path,
     startedOn: p.startedOn,
-    checkIns: p.checkIns.map(cloneCheckIn),
+    checkIns: p.endedAt !== undefined ? [] : p.checkIns.map(cloneCheckIn),
   };
+  if (p.updatedAt !== undefined) out.updatedAt = p.updatedAt;
+  if (p.endedAt !== undefined) out.endedAt = p.endedAt;
+  return out;
 }
 
 /**
@@ -260,9 +267,17 @@ function parseTombstones(raw: unknown): Tombstone[] {
     }
     const tomb: Tombstone = { kind: t.kind as TombstoneKind, id: t.id, deletedAt: t.deletedAt };
     if (tomb.kind === 'plan' && isRecord(t.log)) {
+      const fixed = isRecord(t.logCorrectedAt) ? t.logCorrectedAt : {};
       const log: Record<string, number> = {};
-      for (const [d, v] of Object.entries(t.log)) if (isValidDate(d) && typeof v === 'number' && Number.isFinite(v) && v > 0) log[d] = v;
-      if (Object.keys(log).length > 0) tomb.log = log;
+      const corrected: Record<string, IsoTime> = {};
+      for (const [d, v] of Object.entries(t.log)) {
+        if (!isValidDate(d) || typeof v !== 'number' || !Number.isFinite(v) || v < 0) continue;
+        const at = fixed[d];
+        if (isIsoTime(at)) corrected[d] = at;
+        else if (v === 0) continue;
+        log[d] = v;
+      }
+      setTombLog(tomb, { log, logCorrectedAt: corrected });
     }
     const key = `${tomb.kind}:${tomb.id}`;
     const prev = byKey.get(key);
@@ -284,21 +299,18 @@ function resolveTombstones(store: Store): Store {
   const relatives = new Map(store.relatives.map((r) => [r.id, r]));
   const dropPlans = new Set<string>();
   const dropRelatives = new Set<string>();
-  const merge = (a: Record<string, number> = {}, b: Record<string, number> = {}) => {
-    const out = { ...a };
-    for (const [d, v] of Object.entries(b)) out[d] = Math.max(out[d] ?? 0, v);
-    return out;
-  };
+  const tombLog = (t: Tombstone): PlanLog => ({ log: t.log ?? {}, ...(t.logCorrectedAt ? { logCorrectedAt: t.logCorrectedAt } : {}) });
   const tombstones = store.tombstones.flatMap((t): Tombstone[] => {
     const plan = t.kind === 'plan' ? plans.get(t.id) : undefined;
     if (plan) {
       // The newer side survives and keeps both logs.
       if (isoMillis(t.deletedAt) > isoMillis(plan.updatedAt)) {
         dropPlans.add(t.id);
-        const log = merge(t.log, plan.log);
-        return [Object.keys(log).length > 0 ? { ...t, log } : t];
+        const kept: Tombstone = { kind: t.kind, id: t.id, deletedAt: t.deletedAt };
+        setTombLog(kept, mergeLogs(tombLog(t), plan));
+        return [kept];
       }
-      plans.set(t.id, { ...plan, log: merge(plan.log, t.log) });
+      plans.set(t.id, withLog(plan, mergeLogs(plan, tombLog(t))));
       return [];
     }
     if (t.kind === 'relative' && relatives.has(t.id)) {
@@ -369,16 +381,26 @@ function withoutTombstone(tombstones: readonly Tombstone[], kind: TombstoneKind,
   return tombstones.filter((t) => !(t.kind === kind && t.id === id));
 }
 
-function withTombstone(
-  tombstones: readonly Tombstone[],
-  kind: TombstoneKind,
-  id: string,
-  deletedAt: IsoTime,
-  log?: Record<string, number>,
-): Tombstone[] {
+function withTombstone(tombstones: readonly Tombstone[], kind: TombstoneKind, id: string, deletedAt: IsoTime, log?: PlanLog): Tombstone[] {
   const tomb: Tombstone = { kind, id, deletedAt };
-  if (log && Object.keys(log).length > 0) tomb.log = { ...log };
+  if (log) setTombLog(tomb, log);
   return [...withoutTombstone(tombstones, kind, id), tomb];
+}
+
+/** Puts a plan log on a plan tombstone, leaving out empty parts. Mutates `tomb`. */
+export function setTombLog(tomb: Tombstone, log: PlanLog): void {
+  if (Object.keys(log.log).length > 0) tomb.log = { ...log.log };
+  else delete tomb.log;
+  if (log.logCorrectedAt && Object.keys(log.logCorrectedAt).length > 0) tomb.logCorrectedAt = { ...log.logCorrectedAt };
+  else delete tomb.logCorrectedAt;
+}
+
+/** The plan with `log` and `logCorrectedAt` replaced by `merged`. */
+export function withLog(plan: Plan, merged: PlanLog): Plan {
+  const out: Plan = { ...plan, log: merged.log };
+  if (merged.logCorrectedAt) out.logCorrectedAt = merged.logCorrectedAt;
+  else delete out.logCorrectedAt;
+  return out;
 }
 
 /**
@@ -394,9 +416,9 @@ export function upsertPlan(store: Store, plan: Plan, now: IsoTime = nowIso()): S
     if (sameJson(planFields(existing), planFields(plan))) updatedAt = existing.updatedAt ?? updatedAt;
     else if (plan.updatedAt === undefined || plan.updatedAt === existing.updatedAt) updatedAt = now;
   }
-  const next = { ...clonePlan(plan), updatedAt };
   const tomb = store.tombstones.find((t) => t.kind === 'plan' && t.id === plan.id);
-  for (const [d, v] of Object.entries(tomb?.log ?? {})) next.log[d] = Math.max(next.log[d] ?? 0, v);
+  let next: Plan = { ...clonePlan(plan), updatedAt };
+  if (tomb?.log) next = withLog(next, mergeLogs(next, { log: tomb.log, ...(tomb.logCorrectedAt ? { logCorrectedAt: tomb.logCorrectedAt } : {}) }));
   const plans = existing ? store.plans.map((p) => (p.id === plan.id ? next : p)) : [...store.plans, next];
   return { ...store, plans, tombstones: withoutTombstone(store.tombstones, 'plan', plan.id) };
 }
@@ -413,7 +435,7 @@ export function deletePlan(store: Store, id: string, now: IsoTime = nowIso()): S
   return {
     ...store,
     plans: store.plans.filter((p) => p.id !== id),
-    tombstones: withTombstone(store.tombstones, 'plan', id, now, store.plans.find((p) => p.id === id)?.log),
+    tombstones: withTombstone(store.tombstones, 'plan', id, now, store.plans.find((p) => p.id === id)),
   };
 }
 

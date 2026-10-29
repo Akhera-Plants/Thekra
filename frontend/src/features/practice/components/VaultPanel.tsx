@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { useQueryClient } from '@tanstack/react-query';
 import { KeyRound, LockKeyhole, LockKeyholeOpen, RefreshCw } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { VaultLockedError, type SinProgram } from '@thekra/practice-core';
+import { activePrograms, privacyCodeProblem, VaultLockedError, type SinProgram } from '@thekra/practice-core';
 import { Link } from '@/i18n/navigation';
 import { Button } from '@/components/shared/kit/button';
 import { BrandLoader } from '@/components/shared/feedback/BrandLoader';
@@ -16,7 +16,6 @@ import { Input } from '@/components/ui/input';
 import { reportFailure } from '@/lib/errors';
 import { updateStore } from '@/lib/practice/local-store';
 import {
-  MIN_CODE_LENGTH,
   VaultExistsError,
   createVault,
   lastSealedFingerprint,
@@ -142,7 +141,7 @@ export function VaultPanel({ programs }: VaultPanelProps) {
     );
   }
 
-  if (programs.length === 0) return null;
+  if (activePrograms(programs).length === 0) return null;
 
   return (
     <Box icon={<KeyRound />} title={t('title')}>
@@ -201,7 +200,10 @@ function CreateForm({
     () =>
       z
         .object({
-          code: z.string().min(MIN_CODE_LENGTH, t('errors.short')),
+          code: z.string().superRefine((code, ctx) => {
+            const problem = privacyCodeProblem(code);
+            if (problem) ctx.addIssue({ code: 'custom', message: t(problem === 'short' ? 'errors.short' : 'errors.weak') });
+          }),
           confirm: z.string(),
           acknowledged: z.boolean().refine((v) => v, t('errors.ack')),
         })

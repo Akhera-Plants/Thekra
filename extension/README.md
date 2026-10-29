@@ -93,15 +93,16 @@ Sync contract: [docs/plan/2026-10-practice-sync-contract.md](../docs/plan/2026-1
       Edge Add-ons accepts the same zip (free account).
 - [ ] **Firefox AMO:** free account, upload `dist/thekra-firefox-<version>.zip`. The add-on id is the placeholder
       **`thekra@akhera-plants`** (`scripts/manifest.mjs`); keep it forever once published. `data_collection_permissions`
-      is set to `none`. The bundles are not minified, so no separate source upload should be needed.
+      is `required: none` with `optional: authenticationInfo, personallyIdentifyingInfo` (the sign-in; Firefox 140+
+      asks for it when the user signs in). The bundles are not minified, so no separate source upload should be needed.
 - [ ] **Privacy policy URL** (required by both stores): publish [PRIVACY.md](./PRIVACY.md) on the site
       (e.g. `https://thekra-web.vercel.app/privacy/extension`) and paste the URL in both dashboards.
 - [ ] Permission justifications: `alarms` (reminder times and the 15-minute sync), `notifications` (the reminder),
       `storage` (plans on the device), host `thekra.vercel.app` (catalog, published texts, optional account sync).
       No remote code, no content scripts.
 - [ ] Store "data usage" forms: with sign-in the extension handles authentication information (tokens) and the
-      user's habit data, sent only to the Thekra API for the user's own account; Firefox `data_collection_permissions`
-      may need updating from `none` before submission (check AMO's current categories).
+      user's habit data, sent only to the Thekra API for the user's own account (declared as optional in Firefox
+      `data_collection_permissions`).
 - [ ] Store texts and screenshots in Arabic and English; single purpose: "reminders for good deeds you choose".
 - [ ] The API endpoints `GET /v1/practice/catalog` and `GET /v1/practice/evidence?ids=` must be live in production
       before release (otherwise reminders show no text, by design).

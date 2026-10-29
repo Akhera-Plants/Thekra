@@ -121,6 +121,12 @@ describe('Practice, calendar and account endpoints (e2e)', () => {
     await request(server()).get('/v1/calendar/occasions?from=2027-1-1').expect(400);
   });
 
+  it('GET /v1/calendar/occasions accepts the ?lang= every client adds, and still rejects an unknown one', async () => {
+    await request(server()).get('/v1/calendar/occasions?from=2027-05-10&to=2027-05-20&lang=ar').expect(200);
+    await request(server()).get('/v1/calendar/occasions?lang=en').expect(200);
+    await request(server()).get('/v1/calendar/occasions?lang=fr').expect(400);
+  });
+
   it('GET /v1/calendar/occasions.ics → text/calendar, CRLF, cached, not wrapped in JSON (GET and HEAD)', async () => {
     const res = await request(server())
       .get('/v1/calendar/occasions.ics?lang=en&months=2')

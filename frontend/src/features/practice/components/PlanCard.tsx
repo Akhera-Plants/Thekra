@@ -3,10 +3,11 @@
 import { useId, useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { BookOpen, Check, Clock } from 'lucide-react';
+import { BookOpen, Check, Clock, PencilLine, Undo2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
   baseAmount,
+  correctLog,
   decreaseTo,
   deletePlan,
   increase,
@@ -27,6 +28,7 @@ import type { PracticeHabit } from '@/lib/types/practice';
 import { z } from '@/lib/zod';
 import { amountLabel } from './amount-label';
 import { FetchedEvidence } from './EvidenceQuotes';
+import { LogEditor } from './LogEditor';
 
 /** Whole amounts only: the account stores logs as integers (sync contract §2). */
 const MAX_LOG = 1000;
@@ -62,9 +64,23 @@ export function PlanCard({ plan, habit, view, today, ramadanUntil }: PlanCardPro
   const words = usePlanWords(plan, habit);
   const [showEvidence, setShowEvidence] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
+  const [editingLog, setEditingLog] = useState(false);
+  /** The last «تمّ» or partial log in this visit, so it can be undone in one tap. */
+  const [lastLog, setLastLog] = useState<{ date: string; before: number } | null>(null);
   const evidenceId = useId();
   const seasonStep = nextStep(baseAmount(plan));
   const seasonAmount = seasonStep === null ? null : plan.ceiling !== undefined ? Math.min(seasonStep, plan.ceiling) : seasonStep;
+
+  function log(amount: number) {
+    setLastLog({ date: today, before: plan.log[today] ?? 0 });
+    changePlan(plan.id, (p) => logDone(p, today, amount));
+  }
+
+  function undoLastLog() {
+    if (!lastLog) return;
+    changePlan(plan.id, (p) => correctLog(p, lastLog.date, lastLog.before));
+    setLastLog(null);
+  }
 
   return (
     <article
@@ -112,13 +128,37 @@ export function PlanCard({ plan, habit, view, today, ramadanUntil }: PlanCardPro
           <button
             type="button"
             className="solid-button button-wrap"
-            onClick={() => changePlan(plan.id, (p) => logDone(p, today, view.remaining))}
+            onClick={() => log(view.remaining)}
           >
             <Check aria-hidden />
             {t('markDone')}
           </button>
-          <PartialLog plan={plan} today={today} unit={words.unit} />
+          <PartialLog unit={words.unit} onLog={log} />
         </div>
+      ) : null}
+
+      <div role="status" aria-live="polite" className="empty:hidden">
+        {lastLog ? (
+          <p className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            {t('logged')}
+            <Button variant="ghost" tone="primary" size="sm" onClick={undoLastLog}>
+              <Undo2 aria-hidden />
+              {t('undo')}
+            </Button>
+          </p>
+        ) : null}
+      </div>
+
+      {editingLog ? (
+        <LogEditor
+          plan={plan}
+          today={today}
+          unit={words.unit}
+          onDone={() => {
+            setEditingLog(false);
+            setLastLog(null);
+          }}
+        />
       ) : null}
 
       {view.canIncrease && view.increaseTo !== null ? (
@@ -184,6 +224,12 @@ export function PlanCard({ plan, habit, view, today, ramadanUntil }: PlanCardPro
             {showEvidence ? t('hideEvidence') : t('showEvidence')}
           </Button>
         ) : null}
+        {!editingLog ? (
+          <Button variant="ghost" tone="neutral" size="sm" onClick={() => setEditingLog(true)}>
+            <PencilLine aria-hidden />
+            {t('editLog.open')}
+          </Button>
+        ) : null}
         {confirmRemove ? (
           <>
             <Button variant="outline" tone="destructive" size="sm" onClick={() => updateStore((s) => deletePlan(s, plan.id))}>
@@ -208,7 +254,7 @@ export function PlanCard({ plan, habit, view, today, ramadanUntil }: PlanCardPro
   );
 }
 
-function PartialLog({ plan, today, unit }: { plan: Plan; today: string; unit: string }) {
+function PartialLog({ unit, onLog }: { unit: string; onLog: (amount: number) => void }) {
   const t = useTranslations('practice.today');
   const schema = useMemo(
     () =>
@@ -223,7 +269,7 @@ function PartialLog({ plan, today, unit }: { plan: Plan; today: string; unit: st
   const form = useForm<{ amount: string }>({ resolver: zodResolver(schema), defaultValues: { amount: '' } });
 
   function handleSubmit(values: { amount: string }) {
-    changePlan(plan.id, (p) => logDone(p, today, Number(values.amount)));
+    onLog(Number(values.amount));
     form.reset({ amount: '' });
   }
 

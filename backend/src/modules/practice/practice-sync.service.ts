@@ -256,18 +256,23 @@ export class PracticeSyncService {
         AND "HabitPlan"."clientUpdatedAt" <= EXCLUDED."clientUpdatedAt"`;
   }
 
-  /** amount = max(stored, incoming): logging never goes down. */
+  /**
+   * practice-core `mergeLogEntry`: the later correction wins (null = oldest), then the larger amount, so plain
+   * logging never goes down and an undo of «تمّ» is not undone by a device that still holds the old amount.
+   */
   private async upsertLogs(tx: Tx, request: SyncRequest): Promise<void> {
     if (request.logs.length === 0) return;
     await tx.$executeRaw`
-      INSERT INTO "HabitLog" ("planId", "date", "amount", "updatedAt")
-      SELECT t.plan_id, t.date::date, t.amount, now() AT TIME ZONE 'UTC'
+      INSERT INTO "HabitLog" ("planId", "date", "amount", "correctedAt", "updatedAt")
+      SELECT t.plan_id, t.date::date, t.amount, t.corrected_at::timestamp(3), now() AT TIME ZONE 'UTC'
       FROM unnest(
         ${request.logs.map((log) => log.planId)}::text[], ${request.logs.map((log) => log.date)}::text[],
-        ${request.logs.map((log) => log.amount)}::float8[]
-      ) AS t(plan_id, date, amount)
-      ON CONFLICT ("planId", "date") DO UPDATE SET "amount" = EXCLUDED."amount", "updatedAt" = EXCLUDED."updatedAt"
-      WHERE "HabitLog"."amount" < EXCLUDED."amount"`;
+        ${request.logs.map((log) => log.amount)}::float8[], ${request.logs.map((log) => log.correctedAt ?? null)}::text[]
+      ) AS t(plan_id, date, amount, corrected_at)
+      ON CONFLICT ("planId", "date") DO UPDATE SET
+        "amount" = EXCLUDED."amount", "correctedAt" = EXCLUDED."correctedAt", "updatedAt" = EXCLUDED."updatedAt"
+      WHERE (COALESCE("HabitLog"."correctedAt", '-infinity'::timestamp), "HabitLog"."amount")
+          < (COALESCE(EXCLUDED."correctedAt", '-infinity'::timestamp), EXCLUDED."amount")`;
   }
 
   private async upsertRelatives(tx: Tx, userId: string, relatives: RelativeWire[]): Promise<void> {

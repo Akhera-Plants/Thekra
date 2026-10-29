@@ -921,7 +921,7 @@
   },
   "practice": {
     "title": "Help me keep a good deed",
-    "lead": "Start very small, keep at it, and increase only once it is steady. Everything here is saved on your device, and synced with your account when you sign in.",
+    "lead": "Start very small, keep at it, and increase only once it is steady. Everything here is saved on your device first.",
     "storage": {
       "local": "Your data is saved on this device only and is never sent to a server.",
       "memoryOnly": "This browser does not allow saving (perhaps a private window), so your data will be lost when you close the page."
@@ -1002,7 +1002,20 @@
       "add": "Add a habit",
       "downloadReminders": "Download my reminders as a calendar file",
       "remindersHint": "A file for the next 30 days, built on your device. Open it in your calendar app to be reminded at your times.",
-      "icsName": "Thekra reminders"
+      "icsName": "Thekra reminders",
+      "logged": "Logged.",
+      "undo": "Undo",
+      "editLog": {
+        "open": "Fix the log",
+        "hint": "Log a day you forgot, or fix a number entered by mistake. Zero clears that day.",
+        "day": "Day",
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "amount": "Amount done ({unit})",
+        "error": "Enter a whole number from 0 to 1000.",
+        "save": "Save",
+        "cancel": "Cancel"
+      }
     },
     "progress": {
       "title": "Where you are",
@@ -1158,7 +1171,7 @@
     "title": "A program to leave a sin",
     "genericTitle": "A reminder from Thekra",
     "lead": "A staged program on your device: know the harm, build the alternative, change your surroundings, set limits, stay firm.",
-    "privacy": "This program stays on your device alone: it is never sent to a server or used in any statistics, and the sin is never named in the page title or its link. If you choose to save it to your account, it is sent encrypted with a code only you know.",
+    "privacy": "This program lives on your device: it is never sent to a server in readable form, never used in any statistics, and the sin is never named in the page title or its link. If you choose to save it to your account, it is sent encrypted with a code only you know.",
     "startFromSin": "Start the leaving program",
     "another": "Start another program",
     "choose": {
@@ -1190,17 +1203,25 @@
       "summaryTitle": "The last {days} days",
       "summaryItem": "{label}: {n}",
       "summaryNote": "Counts only, with no streaks and no comparison. What matters is coming back every time.",
-      "notesTitle": "My notebook (this device only)",
+      "notesTitle": "My private notebook",
       "textsTitle": "What the texts say",
       "values": {
         "held": "I held firm",
         "weak": "I was weak",
         "fell_repented": "I slipped, then repented"
+      },
+      "end": {
+        "lead": "Want to close this program alone? Its check-ins and notes are removed, and your other programs stay as they are.",
+        "button": "End this program",
+        "confirmTitle": "End this program?",
+        "confirmBody": "Its check-ins and notes are removed from this device now, and from the encrypted copy in your account on its next save if you use one. You can start it again whenever you wish.",
+        "cancel": "Cancel",
+        "confirm": "End it now"
       }
     },
     "checkIn": {
       "title": "How was your day?",
-      "note": "Private note (optional, stays on your device)",
+      "note": "Private note (optional, no one but you can read it)",
       "save": "Save",
       "saved": "Today’s check-in is saved",
       "errors": {
@@ -1233,7 +1254,7 @@
       "warning": "If you forget the privacy code, the saved program can never be recovered, and nobody can open or read it, not even us.",
       "code": "Privacy code",
       "codeConfirm": "Type the code again",
-      "codeHint": "At least 6 characters; do not reuse your account password.",
+      "codeHint": "At least 8 characters; a phrase of words you will remember is best. Do not use your account password or a run of digits.",
       "acknowledge": "I understand the code cannot be recovered",
       "save": "Encrypt and save",
       "cancel": "Cancel",
@@ -1246,7 +1267,8 @@
       "open": "Open the program",
       "retry": "Try again",
       "errors": {
-        "short": "The code needs at least 6 characters.",
+        "short": "The code must be at least 8 characters.",
+        "weak": "This code is easy to guess. Choose a phrase of two or more words, or a code without repeats or runs.",
         "mismatch": "The two codes do not match.",
         "ack": "Confirm that you understand the warning.",
         "wrongCode": "The privacy code is not correct.",

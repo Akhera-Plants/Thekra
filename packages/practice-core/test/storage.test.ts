@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   checkIn,
+  correctLog,
   createPlan,
   createRelative,
   deletePlan,
@@ -87,6 +88,17 @@ describe('parseStore', () => {
   it('round-trips through serializeStore (string input)', () => {
     const store = sampleStore();
     expect(parseStore(serializeStore(store))).toEqual(store);
+  });
+
+  it('keeps corrected days (also a cleared one) through a round trip, on plans and on plan tombstones', () => {
+    const base = sampleStore();
+    const id = base.plans[0]!.id;
+    const fixed = updatePlan(base, id, (p) => correctLog(logDone(p, '2026-10-02', 4), '2026-10-02', 0, T2), T2);
+    expect(parseStore(serializeStore(fixed))).toEqual(fixed);
+    const gone = deletePlan(fixed, id, T2);
+    const back = parseStore(serializeStore(gone));
+    expect(back.tombstones.find((t) => t.id === id)?.logCorrectedAt).toEqual({ '2026-10-02': T2 });
+    expect(back.tombstones.find((t) => t.id === id)?.log?.['2026-10-02']).toBe(0);
   });
 
   it('upgrades v1 to v2 losslessly, stamping updatedAt with the upgrade time', () => {
