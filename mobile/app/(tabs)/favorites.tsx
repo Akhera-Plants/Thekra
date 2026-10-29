@@ -1,117 +1,125 @@
 /**
- * Favorites tab — saved quotes, offline-capable.
- * mobile-plan §3 (Favorites screen), §6 (offline strategy).
+ * Favorites, after the website's favorites page: the title and lead, then the saved quote cards. A guest sees why
+ * to sign in and the way to do it; an empty list points to where texts are found. Offline-capable: the list is
+ * served from the cache when there is no connection (see `useFavorites`).
  */
 
-import React from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  StyleSheet,
-  SafeAreaView,
-  ActivityIndicator,
-} from 'react-native';
-import { Link } from 'expo-router';
+import React, { memo, useCallback, useState } from 'react';
+import { FlatList, RefreshControl, View, type ListRenderItem } from 'react-native';
+import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { Bookmark, BookmarkPlus } from 'lucide-react-native';
 import { useFavorites, useToggleFavorite } from '@/lib/api/favorites';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { QuoteCard } from '@/components/QuoteCard';
-import { EmptyState } from '@/components/EmptyState';
-import { Colors, FontSize, Radius, Spacing } from '@/lib/tokens';
+import { GUTTER, space, useStyles, useTheme, type Theme } from '@/theme';
+import { EmptyState, ErrorState, PageHeader, QuoteCardSkeleton, Screen } from '@/ui';
+import type { QuoteDto } from '@/lib/types/api';
 
-function FavoriteQuoteItem({ quoteId, quote }: { quoteId: string; quote: any }) {
-  const { isFavorite, toggle } = useToggleFavorite(quoteId);
+const SKELETON_COUNT = 3;
+
+const makeStyles = (t: Theme) => ({
+  list: { paddingHorizontal: GUTTER, paddingTop: space.lg, paddingBottom: space['4xl'] },
+  header: { paddingBottom: space.xl },
+  gap: { height: space.lg },
+  skeletons: { gap: space.lg },
+  fill: { backgroundColor: t.colors.background },
+});
+
+const FavoriteQuoteItem = memo(function FavoriteQuoteItem({ quote }: { quote: QuoteDto }) {
+  const { isFavorite, toggle } = useToggleFavorite(quote.id);
   return <QuoteCard quote={quote} isFavorite={isFavorite} onToggleFavorite={toggle} />;
+});
+
+const renderFavorite: ListRenderItem<QuoteDto> = ({ item }) => <FavoriteQuoteItem quote={item} />;
+const keyOf = (item: QuoteDto) => item.id;
+
+function Gap() {
+  const styles = useStyles(makeStyles);
+  return <View style={styles.gap} />;
+}
+
+function FavoritesHeader() {
+  const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
+  return (
+    <View style={styles.header}>
+      <PageHeader title={t('favorites.title')} lead={t('favorites.lead')} />
+    </View>
+  );
 }
 
 export default function FavoritesScreen() {
   const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
+  const { colors } = useTheme();
   const user = useAuthStore((s) => s.user);
-  const { data: favorites, isLoading } = useFavorites();
+  const { data: favorites, isLoading, isError, refetch } = useFavorites();
+  const [isPulling, setIsPulling] = useState(false);
+
+  const handleRefresh = useCallback(async () => {
+    setIsPulling(true);
+    try {
+      await refetch();
+    } finally {
+      setIsPulling(false);
+    }
+  }, [refetch]);
 
   if (!user) {
     return (
-      <SafeAreaView style={styles.safe}>
-        <View style={styles.signInContainer}>
-          <Text style={styles.icon}>🔒</Text>
-          <Text style={styles.signInMessage}>{t('favorites.signInPrompt')}</Text>
-          <Link href="/(auth)/login" asChild>
-            <Text style={styles.signInLink}>{t('auth.loginButton')}</Text>
-          </Link>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <SafeAreaView style={styles.safe}>
-        <ActivityIndicator color={Colors.primary} style={styles.loader} />
-      </SafeAreaView>
-    );
-  }
-
-  if (!favorites || favorites.length === 0) {
-    return (
-      <SafeAreaView style={styles.safe}>
+      <Screen>
+        <FavoritesHeader />
         <EmptyState
-          message={t('favorites.empty')}
-          hint={t('favorites.emptyHint')}
-          icon="★"
+          icon={BookmarkPlus}
+          message={t('favorites.signInPrompt')}
+          hint={t('auth.guestNote')}
+          actionLabel={t('auth.loginButton')}
+          onAction={() => router.push('/(auth)/login')}
         />
-      </SafeAreaView>
+      </Screen>
     );
   }
+
+  const empty = isError ? (
+    <ErrorState onRetry={() => void refetch()} />
+  ) : isLoading ? (
+    <View style={styles.skeletons}>
+      {Array.from({ length: SKELETON_COUNT }, (_, i) => (
+        <QuoteCardSkeleton key={`skeleton-${i}`} />
+      ))}
+    </View>
+  ) : (
+    <EmptyState
+      icon={Bookmark}
+      message={t('favorites.empty')}
+      hint={t('favorites.emptyHint')}
+      actionLabel={t('tabs.browse')}
+      onAction={() => router.navigate('/browse')}
+    />
+  );
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <Screen scroll={false} contentStyle={{ paddingHorizontal: 0, paddingTop: 0 }}>
       <FlatList
-        data={favorites}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <FavoriteQuoteItem quoteId={item.id} quote={item} />
-        )}
+        data={isError ? [] : (favorites ?? [])}
+        keyExtractor={keyOf}
+        renderItem={renderFavorite}
+        ListHeaderComponent={FavoritesHeader}
+        ListEmptyComponent={empty}
+        ItemSeparatorComponent={Gap}
+        style={styles.fill}
         contentContainerStyle={styles.list}
+        refreshControl={
+          <RefreshControl
+            refreshing={isPulling}
+            onRefresh={() => void handleRefresh()}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+            progressBackgroundColor={colors.card}
+          />
+        }
       />
-    </SafeAreaView>
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  list: {
-    paddingVertical: Spacing['2'],
-  },
-  loader: {
-    flex: 1,
-    marginTop: Spacing['16'],
-  },
-  signInContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: Spacing['8'],
-    gap: Spacing['6'],
-  },
-  icon: {
-    fontSize: 64,
-  },
-  signInMessage: {
-    fontSize: FontSize.lg,
-    color: Colors.text,
-    textAlign: 'center',
-  },
-  signInLink: {
-    fontSize: FontSize.base,
-    color: Colors.primary,
-    fontWeight: '600',
-    backgroundColor: Colors.primaryLight,
-    paddingHorizontal: Spacing['6'],
-    paddingVertical: Spacing['3'],
-    borderRadius: Radius.md,
-  },
-});

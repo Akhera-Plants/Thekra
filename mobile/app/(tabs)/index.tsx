@@ -1,140 +1,72 @@
 /**
- * Home screen — two primary entry points phrased as moments.
- * Guest-first: no sign-in required.
- * mobile-plan §3 (Home screen).
+ * Home, after the website's home (frontend/src/app/[locale]/page.tsx): the brand bar, the entry question, the two
+ * doors (Pathways: «أعنّي على ترك معصية» filled, «أعنّي على فعل طاعة» quiet), the ornament, and the moments list.
+ * Guest-first: nothing here needs an account.
+ * Copy is the site's own (`home.*`).
  */
 
 import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  SafeAreaView,
-} from 'react-native';
-import { router } from 'expo-router';
+import { View } from 'react-native';
+import { router, type Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Colors, FontSize, Radius, Shadow, Spacing } from '@/lib/tokens';
+import { DoorOpen, Heart, MessageCircle, Pause, Sprout, Sun, type LucideIcon } from 'lucide-react-native';
+import { space } from '@/theme';
+import { BrandBar, ListRow, Ornament, PageHeader, PathwayCard, Screen, Section } from '@/ui';
+
+interface Moment {
+  href: Href;
+  labelKey: string;
+  icon: LucideIcon;
+}
+
+/** The site's curated moments (frontend/src/components/home/Moments.tsx), on the app's topic routes. */
+const MOMENTS: Moment[] = [
+  { href: '/sins/ghadab', labelKey: 'home.momentAnger', icon: Pause },
+  { href: '/good-deeds/salah', labelKey: 'home.momentPrayer', icon: Sun },
+  { href: '/sins/ghibah', labelKey: 'home.momentBackbiting', icon: MessageCircle },
+  { href: '/good-deeds/kalam-tayyib', labelKey: 'home.momentKindness', icon: Heart },
+];
 
 export default function HomeScreen() {
   const { t } = useTranslation();
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.scroll} bounces={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.appTitle}>{t('home.title')}</Text>
-          <Text style={styles.subtitle}>{t('home.subtitle')}</Text>
-        </View>
+    <Screen>
+      <BrandBar />
 
-        {/* Entry action: Sin */}
-        <TouchableOpacity
-          style={[styles.actionCard, styles.sinCard]}
+      <PageHeader
+        eyebrow={t('home.eyebrow')}
+        title={t('home.entryTitle')}
+      />
+
+      <View style={{ gap: space.md }}>
+        <PathwayCard
+          primary
+          icon={DoorOpen}
+          label={t('home.sinOverline')}
+          title={t('home.sinEntryLabel')}
+          body={t('home.sinEntryDescription')}
+          action={t('home.sinCta')}
           onPress={() => router.push('/sins')}
-          accessibilityRole="button"
-          activeOpacity={0.85}
-        >
-          <Text style={styles.actionEmoji}>🛑</Text>
-          <View style={styles.actionText}>
-            <Text style={[styles.actionTitle, styles.sinTitle]}>
-              {t('home.sinAction')}
-            </Text>
-            <Text style={styles.actionSubtitle}>
-              {t('home.sinSubtitle')}
-            </Text>
-          </View>
-        </TouchableOpacity>
-
-        {/* Entry action: Good deed */}
-        <TouchableOpacity
-          style={[styles.actionCard, styles.deedCard]}
+        />
+        <PathwayCard
+          icon={Sprout}
+          label={t('home.deedOverline')}
+          title={t('home.deedEntryLabel')}
+          body={t('home.deedEntryDescription')}
+          action={t('home.deedCta')}
           onPress={() => router.push('/good-deeds')}
-          accessibilityRole="button"
-          activeOpacity={0.85}
-        >
-          <Text style={styles.actionEmoji}>✨</Text>
-          <View style={styles.actionText}>
-            <Text style={[styles.actionTitle, styles.deedTitle]}>
-              {t('home.goodDeedAction')}
-            </Text>
-            <Text style={styles.actionSubtitle}>
-              {t('home.goodDeedSubtitle')}
-            </Text>
-          </View>
-        </TouchableOpacity>
-      </ScrollView>
-    </SafeAreaView>
+        />
+      </View>
+
+      <Ornament />
+      <Section title={t('home.momentsHeading')} lead={t('home.momentsLead')}>
+        <View>
+          {MOMENTS.map((moment) => (
+            <ListRow key={moment.labelKey} icon={moment.icon} title={t(moment.labelKey)} onPress={() => router.push(moment.href)} />
+          ))}
+        </View>
+      </Section>
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  scroll: {
-    flexGrow: 1,
-    padding: Spacing['6'],
-    gap: Spacing['5'],
-  },
-  header: {
-    marginBottom: Spacing['4'],
-    alignItems: 'center',
-    paddingTop: Spacing['8'],
-  },
-  appTitle: {
-    fontSize: FontSize['4xl'],
-    fontWeight: '700',
-    color: Colors.primary,
-    textAlign: 'center',
-    marginBottom: Spacing['2'],
-  },
-  subtitle: {
-    fontSize: FontSize.lg,
-    color: Colors.textMuted,
-    textAlign: 'center',
-  },
-  actionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: Spacing['6'],
-    borderRadius: Radius.xl,
-    gap: Spacing['4'],
-    ...Shadow.md,
-  },
-  sinCard: {
-    backgroundColor: Colors.intentSinLight,
-    borderWidth: 1.5,
-    borderColor: Colors.intentSin,
-  },
-  deedCard: {
-    backgroundColor: Colors.intentGoodDeedLight,
-    borderWidth: 1.5,
-    borderColor: Colors.intentGoodDeed,
-  },
-  actionEmoji: {
-    fontSize: 40,
-  },
-  actionText: {
-    flex: 1,
-    gap: Spacing['1'],
-  },
-  actionTitle: {
-    fontSize: FontSize.xl,
-    fontWeight: '700',
-    textAlign: 'right',
-  },
-  sinTitle: {
-    color: Colors.intentSin,
-  },
-  deedTitle: {
-    color: Colors.intentGoodDeed,
-  },
-  actionSubtitle: {
-    fontSize: FontSize.sm,
-    color: Colors.textMuted,
-    textAlign: 'right',
-  },
-});

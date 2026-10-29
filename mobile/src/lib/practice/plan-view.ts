@@ -18,11 +18,13 @@ import {
   status,
   targetDaysIn,
   toHijri,
+  updatePlan,
   type AdherenceBand,
   type LocalDate,
   type LocalTime,
   type Plan,
   type Rule,
+  type Store,
 } from '@thekra/practice-core';
 import type { CatalogHabit, UiLocale } from './catalog-types';
 import { pick } from './catalog-types';
@@ -142,4 +144,12 @@ export function seasonAmount(plan: Plan): number {
   const base = baseAmount(plan);
   const next = nextStep(base) ?? base;
   return plan.ceiling !== undefined ? Math.max(base, Math.min(next, plan.ceiling)) : next;
+}
+
+/** Applies a change to every plan through practice-core `updatePlan` (it stamps versions for sync); null = unchanged. */
+export function eachPlan(s: Store, change: (p: Plan) => Plan | null): Store {
+  return s.plans.reduce((acc, p) => {
+    const next = change(p);
+    return next ? updatePlan(acc, p.id, () => next) : acc;
+  }, s);
 }

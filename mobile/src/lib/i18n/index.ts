@@ -13,6 +13,7 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { I18nManager } from 'react-native';
+import { reloadAppAsync } from 'expo';
 import * as Localization from 'expo-localization';
 
 import ar from './ar.json';
@@ -41,6 +42,18 @@ export function applyRtlIfNeeded(locale: SupportedLocale): boolean {
     return true; // direction changed — caller should prompt restart
   }
   return false;
+}
+
+/**
+ * Sets the layout direction for `locale` and, when it changed, reloads the JS app at once so every screen
+ * lays out in the new direction (React Native reads I18nManager only at start). No restart prompt.
+ * Resolves false when nothing changed; when it changed the app reloads and the promise may never settle.
+ */
+export async function switchDirectionIfNeeded(locale: SupportedLocale): Promise<boolean> {
+  I18nManager.allowRTL(true);
+  if (!applyRtlIfNeeded(locale)) return false;
+  await reloadAppAsync();
+  return true;
 }
 
 // ── Locale detection ──────────────────────────────────────────────────────────
