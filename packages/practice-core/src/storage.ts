@@ -486,6 +486,26 @@ export function undoContact(store: Store, relativeId: string, now: IsoTime = now
   return updateRelative(store, relativeId, undoLastContact, now);
 }
 
+/**
+ * Takes back the contact logged on `date` (any date, not only the latest) and records a contact tombstone, so the
+ * removal also reaches the user's other devices. `lastContactedOn` follows the remaining history.
+ */
+export function removeContact(store: Store, relativeId: string, date: string, now: IsoTime = nowIso()): Store {
+  return updateRelative(
+    store,
+    relativeId,
+    (r) => {
+      const history = r.history.filter((d) => d !== date);
+      const out: Relative = { ...r, history };
+      const last = latestDate(history);
+      if (last === undefined) delete out.lastContactedOn;
+      else out.lastContactedOn = last;
+      return out;
+    },
+    now,
+  );
+}
+
 /** Changes settings and stamps `updatedAt`. Throws on an invalid value. */
 export function updateSettings(store: Store, patch: Partial<Omit<Settings, 'updatedAt'>>, now: IsoTime = nowIso()): Store {
   const merged = { ...store.settings, ...patch };

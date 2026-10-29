@@ -12,5 +12,6 @@ export * from './sin-program.js';
 export * from './kinship.js';
 export * from './storage.js';
 export * from './sync.js';
+export * from './agenda.js';
 export * from './vault.js';
 export * from './base64.js';

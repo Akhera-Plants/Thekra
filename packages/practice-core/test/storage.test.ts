@@ -12,6 +12,7 @@ import {
   logContact,
   logDone,
   parseStore,
+  removeContact,
   serializeStore,
   startProgram,
   undoContact,
@@ -237,3 +238,16 @@ function withDaysLogged(p: Store['plans'][number]) {
   for (let d = 1; d <= 31; d++) out = logDone(out, `2026-10-${String(d).padStart(2, '0')}`, 1);
   return out;
 }
+
+describe('removeContact', () => {
+  it('takes back the contact of any date with a tombstone, and lastContactedOn follows', () => {
+    let s = upsertRelative(emptyStore(), createRelative({ id: 'r1', name: 'خالتي', relation: '', rule: { kind: 'everyNDays', n: 7, anchor: '2026-10-01' } }, T1), T1);
+    s = updateRelative(s, 'r1', (r) => logContact(logContact(r, '2026-10-10'), '2026-10-20'), T1);
+    s = removeContact(s, 'r1', '2026-10-10', T2);
+    expect(s.relatives[0]?.history).toEqual(['2026-10-20']);
+    expect(s.relatives[0]?.lastContactedOn).toBe('2026-10-20');
+    expect(s.tombstones).toContainEqual({ kind: 'contact', id: 'r1|2026-10-10', deletedAt: T2 });
+    s = removeContact(s, 'r1', '2026-10-20', T2);
+    expect(s.relatives[0]?.lastContactedOn).toBeUndefined();
+  });
+});
