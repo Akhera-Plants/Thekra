@@ -27,6 +27,7 @@ const PLAN = {
   ceiling: null,
   activeDaysPerWeek: 3,
   slots: ['09:30', '11:00'],
+  anchors: null,
   rule: { kind: 'daily' },
   createdOn: '2026-10-28',
   amountChangedOn: '2026-10-28',
@@ -224,6 +225,25 @@ describe('versions (must match practice-core compareVersions on every replica)',
     expect(settingsVersion({ hijriOffset: 1, reminderTimes: ['07:00'], freeMinutesPerDay: null, clientUpdatedAt: NOW.toISOString() }).content).toBe(
       '{"hijriOffset":1,"reminderTimes":["07:00"],"freeMinutesPerDay":null}',
     );
+  });
+
+  it('carries prayer anchors: validated, canonical in the version, back on the wire', () => {
+    const anchors = [{ slot: '09:30', prayer: 'fajr', offset: 10 }];
+    const change = live({ anchors });
+    expect(change.kind === 'live' && change.plan.anchors).toEqual(anchors);
+    const corePlan: Plan = {
+      id: PLAN_ID, habitKey: 'duha', deedSlug: 'nawafil', title: 'Duha', unit: 'times', amount: 1, activeDaysPerWeek: 3,
+      slots: ['09:30', '11:00'], anchors: [{ slot: '09:30', prayer: 'fajr', offset: 10 }], rule: { kind: 'daily' },
+      createdOn: '2026-10-28', amountChangedOn: '2026-10-28', log: {},
+    };
+    expect(planVersion(change).content).toBe(JSON.stringify(planFields(corePlan)));
+    // A plan without anchors keeps the content it had before anchors existed.
+    expect(planVersion(live()).content).not.toContain('anchors');
+    for (const bad of [[{ slot: '09:30', prayer: 'noon', offset: 10 }], [{ slot: '09:30', prayer: 'fajr', offset: 999 }], 'fajr']) {
+      const { status, body } = errorOf(() => parse({ plans: [{ ...PLAN, anchors: bad }] }));
+      expect(status).toBe(400);
+      expect(body.details).toMatchObject({ kind: 'plans', index: 0 });
+    }
   });
 
   it('later time wins; at equal times a tombstone wins, then the larger canonical JSON; equal never rewrites', () => {

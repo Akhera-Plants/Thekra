@@ -1,13 +1,14 @@
 /**
  * App-only practice preferences, stored next to the practice-core Store (AsyncStorage
  * `thekra.practice.prefs.v1`). Never synced: reminder switches and times, the «فروضي وأدواري» roles and the
- * sin-program lock.
+ * sin-program lock, and the place and method of prayer times (the place never leaves the device).
  * The reminder rule of a plan now lives on the plan (`plan.rule`, synced) and the free minutes in the Store
  * settings (`settings.freeMinutesPerDay`, synced); `legacyPrefs` reads the old fields once to migrate them.
  * Parsing is defensive and never throws.
  */
 
 import { isValidTime, validateRule, type LocalTime, type Rule } from '@thekra/practice-core';
+import { PRAYER_CITIES, PRAYER_METHODS, isValidCoordinates, roundCoordinate, type PrayerMethod, type PrayerPlace } from './prayer-times';
 
 export const PREFS_KEY = 'thekra.practice.prefs.v1';
 
@@ -31,6 +32,10 @@ export interface PracticePrefs {
   rememberVaultKey: boolean;
   /** «قفل برنامج الترك بالبصمة»: the sin-program page opens only after the device's biometrics or passcode. Off by default. */
   sinLock: boolean;
+  /** Where «بعد الفجر» reminders compute prayer times. Device only, never synced or sent. Null until the user sets it. */
+  prayerPlace: PrayerPlace | null;
+  /** The calculation method the user chose; null follows the region (`defaultMethodFor`). */
+  prayerMethod: PrayerMethod | null;
 }
 
 export const DEFAULT_PREFS: PracticePrefs = {
@@ -44,7 +49,21 @@ export const DEFAULT_PREFS: PracticePrefs = {
   roles: [],
   rememberVaultKey: false,
   sinLock: false,
+  prayerPlace: null,
+  prayerMethod: null,
 };
+
+function parsePrayerPlace(raw: unknown): PrayerPlace | null {
+  if (!isRecord(raw) || !isValidCoordinates(raw.latitude, raw.longitude)) return null;
+  const source = raw.source === 'device' || raw.source === 'city' || raw.source === 'manual' ? raw.source : 'manual';
+  const place: PrayerPlace = {
+    latitude: roundCoordinate(raw.latitude as number),
+    longitude: roundCoordinate(raw.longitude as number),
+    source,
+  };
+  if (source === 'city' && PRAYER_CITIES.some((c) => c.key === raw.city)) place.city = raw.city as string;
+  return place;
+}
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -72,6 +91,8 @@ export function parsePrefs(json: unknown): PracticePrefs {
     sinReminderTime: time('sinReminderTime'),
     rememberVaultKey: bool('rememberVaultKey'),
     sinLock: bool('sinLock'),
+    prayerPlace: parsePrayerPlace(raw.prayerPlace),
+    prayerMethod: (PRAYER_METHODS as readonly unknown[]).includes(raw.prayerMethod) ? (raw.prayerMethod as PrayerMethod) : null,
     roles: Array.isArray(raw.roles)
       ? (raw.roles.filter((r) => (ROLE_KEYS as readonly string[]).includes(r as string)) as RoleKey[])
       : [],

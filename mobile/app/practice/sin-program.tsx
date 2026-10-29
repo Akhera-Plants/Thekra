@@ -10,8 +10,10 @@
  * and it is a sin against the right of Allah: owner decision D1) → practice-core `startProgram`. Then the
  * current stage (`currentStage`) with its reviewed title/body, practical steps, alternatives, evidence (one text
  * per list, «المزيد» to the sin's page), the daily check-in (held / weak / fell_repented + private note), `summary`
- * (counts of days only) and, after «وقعت ثم تبت», the `afterFall` («خربانة؟ صلّحها») content, and «دفتري الخاص» (past check-ins with their notes,
- * newest first, shown on this screen only). Several programs run side by side, as on the website: each has its own
+ * (counts of days only) and, after «وقعت ثم تبت», the `afterFall` («خربانة؟ صلّحها») content with «أتبِع السيئة الحسنة»
+ * (FollowWithGood), and «دفتري الخاص» (past check-ins with their notes, the deed after a fall and «لحظة ضعف عبرتها»,
+ * newest first, shown on this screen only). Each program has «أشعر بضعف الآن», which opens the «لحظة الضعف» modal
+ * (practice/pause.tsx; the program is handed over in memory, never in the route). Several programs run side by side, as on the website: each has its own
  * stage, check-in, notebook and «أنهِ هذا البرنامج» (confirmed); «ابدأ برنامجًا آخر», or a sin page's «ابدأ برنامج
  * الترك», opens the chooser with the sins not already followed.
  * «احذف كل بيانات البرنامج» wipes it all at once (no confirmation step: «خروج آمن», roadmap §4.2): local data, the
@@ -29,7 +31,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, KeyboardAvoidingView, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Check, Plus, ShieldCheck } from 'lucide-react-native';
+import { Check, Plus, ShieldCheck, Wind } from 'lucide-react-native';
 import {
   activePrograms,
   addDays,
@@ -49,11 +51,13 @@ import { shortDate } from '@/lib/practice/format';
 import { ensurePermission } from '@/lib/practice/notifications';
 import { pendingProgram, setPendingProgram, today, usePracticeStore } from '@/lib/practice/practice-store';
 import { notebookEntries, withProgramEnded, withProgramStarted } from '@/lib/practice/sin-program-view';
+import { setUrgeProgram } from '@/lib/practice/urge-moment';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { useVaultState, wipeSinProgramEverywhere } from '@/lib/practice/vault-runner';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import type { QuoteDto } from '@/lib/types/api';
 import { EvidenceList } from '@/components/practice/EvidenceList';
+import { FollowWithGood } from '@/components/practice/FollowWithGood';
 import { TimeField } from '@/components/practice/editors';
 import { SinProgramGuard } from '@/components/practice/SinProgramGuard';
 import { VaultCard, VaultSignInNote } from '@/components/practice/VaultCard';
@@ -393,6 +397,8 @@ function ProgramView({ program, entry, sinName, evidenceById, evidenceLoading, e
         </Text>
       </View>
 
+      {common?.urgeMoment ? <UrgeButton sinSlug={program.sinSlug} /> : null}
+
       {gradual.length > 0 ? (
         <NextStep title={t('sinProgram.gradualSteps')}>
           {gradual.map((step, i) => (
@@ -447,7 +453,18 @@ function ProgramView({ program, entry, sinName, evidenceById, evidenceLoading, e
 
       <Notebook program={program} />
 
-      {showAfterFall && common ? (
+      {showAfterFall && common?.followWithGood ? (
+        <FollowWithGood
+          program={program}
+          date={d}
+          flow={common.followWithGood}
+          intro={common.afterFall}
+          evidenceById={evidenceById}
+          evidenceLoading={evidenceLoading}
+          evidenceError={evidenceError}
+        />
+      ) : null}
+      {showAfterFall && common && !common.followWithGood ? (
         <SubSection title={pick(common.afterFall, 'title', locale)} tone="link">
           <StageBody content={common.afterFall} />
           <EvidenceList ids={common.afterFall.evidence} {...evidenceProps} />
@@ -456,6 +473,24 @@ function ProgramView({ program, entry, sinName, evidenceById, evidenceLoading, e
 
       <EvidenceList ids={entry?.evidence} {...evidenceProps} />
     </>
+  );
+}
+
+/** «أشعر بضعف الآن»: hands this program to the «لحظة الضعف» modal in memory (never in the route) and opens it. */
+function UrgeButton({ sinSlug }: { sinSlug: string }) {
+  const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
+  function handleOpen() {
+    setUrgeProgram(sinSlug);
+    router.push('/practice/pause');
+  }
+  return (
+    <View style={styles.tight}>
+      <Button label={t('sinProgram.urge.button')} icon={Wind} onPress={handleOpen} large block />
+      <Text variant="small" tone="muted">
+        {t('sinProgram.urge.buttonHint')}
+      </Text>
+    </View>
   );
 }
 
@@ -552,21 +587,38 @@ function CheckInForm({ program }: { program: SinProgram }) {
   );
 }
 
-/** «دفتري الخاص»: past check-ins with their notes, newest first. Shown here only; the name of the sin is not in it. */
+/**
+ * «دفتري الخاص»: past days with their check-in and note, the deed after a fall, and «لحظة ضعف عبرتها», newest first.
+ * Shown here only; the name of the sin is not in it.
+ */
 function Notebook({ program }: { program: SinProgram }) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
+  const locale = useUiLocale();
+  const catalog = usePracticeCatalog(locale);
+  const choices = catalog.data?.sinPrograms.common.followWithGood?.deeds.choices ?? [];
   const entries = notebookEntries(program, today());
   if (entries.length === 0) return null;
   return (
     <SubSection title={t('sinProgram.notebook')}>
       <View style={styles.altList}>
-        {entries.map((c) => (
-          <View key={c.date} style={styles.noteRow}>
-            <Text variant="small" tone="muted">{`${shortDate(c.date)} · ${t(CHECK_IN_KEYS[c.value])}`}</Text>
-            {c.note ? <Text variant="body">{c.note}</Text> : null}
-          </View>
-        ))}
+        {entries.map(({ date, checkIn: c, urgesPassed }) => {
+          const deed = c?.deed ? choices.find((x) => x.key === c.deed) : undefined;
+          return (
+            <View key={date} style={styles.noteRow}>
+              <Text variant="small" tone="muted">
+                {c ? `${shortDate(date)} · ${t(CHECK_IN_KEYS[c.value])}` : shortDate(date)}
+              </Text>
+              {deed ? <Text variant="small">{t('sinProgram.fall.notebookDeed', { deed: pick(deed, 'title', locale) })}</Text> : null}
+              {urgesPassed > 0 ? (
+                <Text variant="small" tone="link">
+                  {urgesPassed > 1 ? t('sinProgram.urge.notebookCount', { count: urgesPassed }) : t('sinProgram.urge.notebook')}
+                </Text>
+              ) : null}
+              {c?.note ? <Text variant="body">{c.note}</Text> : null}
+            </View>
+          );
+        })}
       </View>
     </SubSection>
   );

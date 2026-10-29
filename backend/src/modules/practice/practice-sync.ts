@@ -12,6 +12,7 @@ import {
   validateRule,
   type LogEntry,
   type Plan,
+  type PlanAnchor,
   type Relative,
   type Rule,
   type Version,
@@ -74,6 +75,8 @@ export interface PlanWire {
   ceiling: number | null;
   activeDaysPerWeek: number;
   slots: string[];
+  /** Slots that follow a prayer (practice-core `PlanAnchor`); null when every slot is a clock time. */
+  anchors: PlanAnchor[] | null;
   rule: Rule | null;
   createdOn: string;
   amountChangedOn: string;
@@ -250,6 +253,7 @@ function parsePlan(raw: unknown): PlanChange {
   if (deletedAt) return { kind: 'tombstone', id, clientUpdatedAt, deletedAt };
 
   const ceiling = raw['ceiling'] ?? null;
+  const anchors = raw['anchors'] ?? null;
   const season = parseSeason(raw['season']);
   const ebbSince = optionalDate(raw['ebbSince'], 'ebbSince');
   // The practice-core shape: `log` travels separately, `ebb`/`season`/`ceiling` are optional.
@@ -263,6 +267,7 @@ function parsePlan(raw: unknown): PlanChange {
       ...(ceiling === null ? {} : { ceiling }),
       activeDaysPerWeek: raw['activeDaysPerWeek'],
       slots: raw['slots'],
+      ...(anchors === null ? {} : { anchors }),
       createdOn: raw['createdOn'],
       amountChangedOn: raw['amountChangedOn'],
       log: {},
@@ -285,6 +290,7 @@ function parsePlan(raw: unknown): PlanChange {
   if (plan.title.length > MAX_TITLE) throw new ItemError(`title must be at most ${MAX_TITLE} characters`);
   if (plan.deedSlug.length > MAX_SLUG || !SLUG.test(plan.deedSlug)) throw new ItemError('deedSlug must be a kebab-case slug');
   if (plan.slots.length > MAX_SLOTS) throw new ItemError(`slots must hold at most ${MAX_SLOTS} times`);
+  if (anchors !== null && (anchors as unknown[]).length > MAX_SLOTS) throw new ItemError(`anchors must hold at most ${MAX_SLOTS} entries`);
   const habitKey = raw['habitKey'] ?? null;
   if (habitKey !== null && (typeof habitKey !== 'string' || habitKey.length > MAX_SLUG || !SLUG.test(habitKey))) {
     throw new ItemError('habitKey must be null or a kebab-case key');
@@ -303,6 +309,7 @@ function parsePlan(raw: unknown): PlanChange {
       ceiling,
       activeDaysPerWeek: plan.activeDaysPerWeek,
       slots: [...plan.slots],
+      anchors: anchors === null ? null : (anchors as PlanAnchor[]).map(({ slot, prayer, offset }) => ({ slot, prayer, offset })),
       rule: rule as Rule | null,
       createdOn: plan.createdOn,
       amountChangedOn: plan.amountChangedOn,
@@ -417,6 +424,7 @@ function corePlan(plan: PlanWire): Plan {
     ...(plan.ceiling === null ? {} : { ceiling: plan.ceiling }),
     activeDaysPerWeek: plan.activeDaysPerWeek,
     slots: plan.slots,
+    ...(plan.anchors ? { anchors: plan.anchors } : {}),
     createdOn: plan.createdOn,
     amountChangedOn: plan.amountChangedOn,
     log: {},
@@ -553,6 +561,7 @@ export function planToWire(row: PlanRow): PlanWire {
     ceiling: row.ceiling,
     activeDaysPerWeek: row.activeDaysPerWeek,
     slots: row.slots,
+    anchors: (row.anchors ?? null) as PlanAnchor[] | null,
     rule: (row.rule ?? null) as Rule | null,
     createdOn: day(row.createdOn),
     amountChangedOn: day(row.amountChangedOn),

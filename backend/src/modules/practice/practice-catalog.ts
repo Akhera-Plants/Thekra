@@ -1,8 +1,11 @@
 import {
   isValidTime,
+  MAX_PRAYER_OFFSET,
+  PRAYERS,
   STAGE_MIN_DAYS,
   stagesFor,
   validateRule,
+  type PlanAnchor,
   type PlanUnit,
   type RakahCount,
   type Rule,
@@ -54,6 +57,8 @@ export interface Habit {
   timeHintAr?: string;
   timeHintEn?: string;
   defaultSlots: string[];
+  /** Suggested prayers to remind after («بعد الفجر»): an organizational suggestion the user may pick, never a rule. */
+  defaultAnchors?: Omit<PlanAnchor, 'slot'>[];
   basis: Basis;
   evidence: string[];
 }
@@ -67,12 +72,44 @@ export interface ProgramText {
   evidence?: string[];
 }
 
+/** One pick in a guidance step: a practical move, or a small good deed after a fall. `key` is kebab-case. */
+export interface GuidanceChoice {
+  key: string;
+  titleAr: string;
+  titleEn: string;
+  bodyAr?: string;
+  bodyEn?: string;
+  evidence?: string[];
+}
+
+/** «لحظة الضعف»: the guided steps of a weak moment, in order. */
+export interface UrgeMoment {
+  review: string;
+  breathe: ProgramText & { breaths: number };
+  text: ProgramText;
+  move: ProgramText & { moves: GuidanceChoice[] };
+  delay: ProgramText & { minutes: number };
+  companion: ProgramText & { shareAr: string; shareEn: string };
+  passed: ProgramText;
+}
+
+/** «أتبِع السيئة الحسنة»: istighfar, one small good deed, then a hopeful close. */
+export interface FollowWithGood {
+  review: string;
+  lines?: number[];
+  istighfar: ProgramText & { lineAr: string; lineEn: string };
+  deeds: ProgramText & { choices: GuidanceChoice[] };
+  close: ProgramText;
+}
+
 export interface SinProgramsCommon {
   willQuestionAr: string;
   willQuestionEn: string;
   stageMinDays: number;
   stages: Record<Stage, ProgramText>;
   afterFall: ProgramText;
+  urgeMoment: UrgeMoment;
+  followWithGood: FollowWithGood;
   helpAr: string;
   helpEn: string;
 }
@@ -104,7 +141,7 @@ export interface PracticeCatalog {
   sinPrograms: SinProgramsCatalog;
 }
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const KEY = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const BASES: readonly Basis[] = ['text', 'organizational'];
 const UNITS: readonly PlanUnit[] = ['times', 'count', 'minutes'];
@@ -113,13 +150,13 @@ const CATEGORIES: readonly SinCategory[] = ['haqq_allah', 'haqq_ibad'];
 const ALL_STAGES: readonly Stage[] = [...new Set([...stagesFor('haqq_allah'), ...stagesFor('haqq_ibad')])];
 
 /** Unknown fields are an error: a typo must not pass silently. */
-function assertKnownFields(map: YamlMap, where: string, allowed: readonly string[]): void {
+export function assertKnownFields(map: YamlMap, where: string, allowed: readonly string[]): void {
   const unknown = Object.keys(map).find((key) => !allowed.includes(key));
   if (unknown) throw new Error(`${where}: unknown field "${unknown}"`);
 }
 
 /** Typed reads of one YAML mapping. */
-class Fields {
+export class Fields {
   constructor(
     private readonly map: YamlMap,
     private readonly where: string,
@@ -203,12 +240,12 @@ class Fields {
   }
 }
 
-function asMap(value: YamlValue | undefined, where: string): YamlMap {
+export function asMap(value: YamlValue | undefined, where: string): YamlMap {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) throw new Error(`${where}: expected a mapping`);
   return value;
 }
 
-function asList(value: YamlValue | undefined, where: string): YamlValue[] {
+export function asList(value: YamlValue | undefined, where: string): YamlValue[] {
   if (!Array.isArray(value) || value.length === 0) throw new Error(`${where}: expected a non-empty list`);
   return value;
 }
@@ -227,7 +264,7 @@ function assertSameLength(fields: Fields, ar: string[] | undefined, en: string[]
   }
 }
 
-function assertUniqueKeys(items: readonly { key: string }[], where: string): void {
+export function assertUniqueKeys(items: readonly { key: string }[], where: string): void {
   const seen = new Set<string>();
   for (const { key } of items) {
     if (seen.has(key)) throw new Error(`${where}: duplicate key "${key}"`);
@@ -253,11 +290,24 @@ function readOccasion(value: YamlValue, where: string): Occasion {
 
 const HABIT_FIELDS = [
   'key', 'titleAr', 'titleEn', 'deed', 'unit', 'unitLabelAr', 'unitLabelEn', 'rakah', 'start', 'ceiling', 'defaultRule',
-  'timeHintAr', 'timeHintEn', 'defaultSlots', 'basis', 'evidence',
+  'timeHintAr', 'timeHintEn', 'defaultSlots', 'defaultAnchors', 'basis', 'evidence',
 ];
 
+/** `defaultAnchors`: a list of `{ prayer, offset }`, each prayer once. */
+function readAnchors(value: YamlValue | undefined, where: string): Omit<PlanAnchor, 'slot'>[] {
+  const anchors = asList(value, where).map((item, index) => {
+    const f = new Fields(asMap(item, `${where}[${index}]`), `${where}[${index}]`, ['prayer', 'offset']);
+    const offset = f.integer('offset', 0);
+    if (offset > MAX_PRAYER_OFFSET) f.fail(`offset must be at most ${MAX_PRAYER_OFFSET}`);
+    return { prayer: f.oneOf('prayer', PRAYERS), offset };
+  });
+  if (new Set(anchors.map((a) => a.prayer)).size !== anchors.length) throw new Error(`${where}: each prayer once`);
+  return anchors;
+}
+
 function readHabit(value: YamlValue, where: string): Habit {
-  const f = new Fields(asMap(value, where), where, HABIT_FIELDS);
+  const map = asMap(value, where);
+  const f = new Fields(map, where, HABIT_FIELDS);
   const start = new Fields(f.mapping('start'), `${where}.start`, ['far', 'near']);
   const ceiling = f.optionalInteger('ceiling', 1);
   const rakah = f.optionalString('rakah') !== undefined ? f.oneOf('rakah', RAKAH_COUNTS) : undefined;
@@ -279,6 +329,7 @@ function readHabit(value: YamlValue, where: string): Habit {
     defaultRule: f.rule('defaultRule'),
     ...(timeHintAr !== undefined && timeHintEn !== undefined ? { timeHintAr, timeHintEn } : {}),
     defaultSlots: f.strings('defaultSlots'),
+    ...(map.defaultAnchors !== undefined ? { defaultAnchors: readAnchors(map.defaultAnchors, `${where}.defaultAnchors`) } : {}),
     basis: f.oneOf('basis', BASES),
     evidence: f.strings('evidence', UUID),
   };
@@ -292,8 +343,23 @@ function readHabit(value: YamlValue, where: string): Habit {
   return habit;
 }
 
+const TEXT_FIELDS = ['titleAr', 'titleEn', 'bodyAr', 'bodyEn', 'lines', 'evidence'];
+/** A 90-second step cannot hold more breaths than this. */
+const MAX_BREATHS = 6;
+/** «أجّل عشر دقائق» is a short delay, never a long wait. */
+const MAX_DELAY_MINUTES = 30;
+
 function readProgramText(value: YamlValue | undefined, where: string): ProgramText {
-  const f = new Fields(asMap(value, where), where, ['titleAr', 'titleEn', 'bodyAr', 'bodyEn', 'lines', 'evidence']);
+  return readTextFields(new Fields(asMap(value, where), where, TEXT_FIELDS));
+}
+
+/** A text block with extra fields of its own (`extra`), read by the caller from the returned Fields. */
+function readExtendedText(value: YamlValue | undefined, where: string, extra: readonly string[]): [ProgramText, Fields] {
+  const f = new Fields(asMap(value, where), where, [...TEXT_FIELDS, ...extra]);
+  return [readTextFields(f), f];
+}
+
+function readTextFields(f: Fields): ProgramText {
   const text: ProgramText = {
     titleAr: f.string('titleAr'),
     titleEn: f.string('titleEn'),
@@ -307,9 +373,68 @@ function readProgramText(value: YamlValue | undefined, where: string): ProgramTe
   return text;
 }
 
+function readChoices(value: YamlValue | undefined, where: string): GuidanceChoice[] {
+  const choices = asList(value, where).map((item, index) => {
+    const at = `${where}[${index}]`;
+    const f = new Fields(asMap(item, at), at, ['key', 'titleAr', 'titleEn', 'bodyAr', 'bodyEn', 'evidence']);
+    const bodyAr = f.optionalString('bodyAr');
+    const bodyEn = f.optionalString('bodyEn');
+    if ((bodyAr === undefined) !== (bodyEn === undefined)) f.fail('bodyAr and bodyEn go together');
+    const evidence = f.optionalStrings('evidence', UUID);
+    const choice: GuidanceChoice = {
+      key: f.string('key'),
+      titleAr: f.string('titleAr'),
+      titleEn: f.string('titleEn'),
+      ...(bodyAr !== undefined && bodyEn !== undefined ? { bodyAr, bodyEn } : {}),
+      ...(evidence ? { evidence } : {}),
+    };
+    if (!KEY.test(choice.key)) f.fail(`key "${choice.key}" must be kebab-case`);
+    return choice;
+  });
+  assertUniqueKeys(choices, where);
+  return choices;
+}
+
+function readUrgeMoment(value: YamlValue | undefined, where: string): UrgeMoment {
+  const f = new Fields(asMap(value, where), where, ['review', 'breathe', 'text', 'move', 'delay', 'companion', 'passed']);
+  const [breatheText, breathe] = readExtendedText(f.mapping('breathe'), `${where}.breathe`, ['breaths']);
+  const moveMap = f.mapping('move');
+  const [moveText] = readExtendedText(moveMap, `${where}.move`, ['moves']);
+  const [delayText, delay] = readExtendedText(f.mapping('delay'), `${where}.delay`, ['minutes']);
+  const [companionText, companion] = readExtendedText(f.mapping('companion'), `${where}.companion`, ['shareAr', 'shareEn']);
+  const urge: UrgeMoment = {
+    review: f.string('review'),
+    breathe: { ...breatheText, breaths: breathe.integer('breaths', 1) },
+    text: readProgramText(f.mapping('text'), `${where}.text`),
+    move: { ...moveText, moves: readChoices(moveMap['moves'], `${where}.move.moves`) },
+    delay: { ...delayText, minutes: delay.integer('minutes', 1) },
+    companion: { ...companionText, shareAr: companion.string('shareAr'), shareEn: companion.string('shareEn') },
+    passed: readProgramText(f.mapping('passed'), `${where}.passed`),
+  };
+  if (urge.breathe.breaths > MAX_BREATHS) breathe.fail(`breaths must be ≤ ${MAX_BREATHS}`);
+  if (urge.delay.minutes > MAX_DELAY_MINUTES) delay.fail(`minutes must be ≤ ${MAX_DELAY_MINUTES}`);
+  if (!urge.text.evidence) f.fail('text.evidence is required: the moment\'s text comes from the database');
+  return urge;
+}
+
+function readFollowWithGood(value: YamlValue | undefined, where: string): FollowWithGood {
+  const f = new Fields(asMap(value, where), where, ['review', 'lines', 'istighfar', 'deeds', 'close']);
+  const [istighfarText, istighfar] = readExtendedText(f.mapping('istighfar'), `${where}.istighfar`, ['lineAr', 'lineEn']);
+  const deedsMap = f.mapping('deeds');
+  const [deedsText] = readExtendedText(deedsMap, `${where}.deeds`, ['choices']);
+  const lines = f.optionalIntegers('lines');
+  return {
+    review: f.string('review'),
+    ...(lines ? { lines } : {}),
+    istighfar: { ...istighfarText, lineAr: istighfar.string('lineAr'), lineEn: istighfar.string('lineEn') },
+    deeds: { ...deedsText, choices: readChoices(deedsMap['choices'], `${where}.deeds.choices`) },
+    close: readProgramText(f.mapping('close'), `${where}.close`),
+  };
+}
+
 function readCommon(value: YamlValue | undefined, where: string): SinProgramsCommon {
   const f = new Fields(asMap(value, where), where, [
-    'willQuestionAr', 'willQuestionEn', 'stageMinDays', 'stages', 'afterFall', 'helpAr', 'helpEn',
+    'willQuestionAr', 'willQuestionEn', 'stageMinDays', 'stages', 'afterFall', 'urgeMoment', 'followWithGood', 'helpAr', 'helpEn',
   ]);
   const stagesMap = f.mapping('stages');
   assertKnownFields(stagesMap, `${where}.stages`, ALL_STAGES);
@@ -324,6 +449,8 @@ function readCommon(value: YamlValue | undefined, where: string): SinProgramsCom
     stageMinDays: f.integer('stageMinDays', 1),
     stages,
     afterFall: readProgramText(f.mapping('afterFall'), `${where}.afterFall`),
+    urgeMoment: readUrgeMoment(f.mapping('urgeMoment'), `${where}.urgeMoment`),
+    followWithGood: readFollowWithGood(f.mapping('followWithGood'), `${where}.followWithGood`),
     helpAr: f.string('helpAr'),
     helpEn: f.string('helpEn'),
   };

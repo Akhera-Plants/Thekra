@@ -5,13 +5,25 @@
  * - `applyReminders` cancels only the notifications this feature scheduled (`data.source`) and schedules
  *   the planned list with DATE triggers. It runs after every change and on every foreground (see
  *   use-practice-lifecycle.ts), so the rolling 14-day window stays fresh.
+ * - Habit reminders carry a «تمّ» button (category {@link HABIT_CATEGORY}, `opensAppToForeground: false`). Pressing
+ *   it logs what is left of that day without opening the app (`handleLogAction`), then shows a quiet note.
+ *   Delivery of the press (expo-notifications 57 docs, `registerTaskAsync` and `NotificationAction`):
+ *   - Android, app in the background or killed: the background task in notification-task.ts;
+ *   - app running (either platform): the response listener (`onReminderTapped`);
+ *   - iOS, app killed: iOS wakes the app in the background; the press reaches JS when the app's JS runs, at the
+ *     latest the next time it opens (the date logged is the reminder's own day). Needs a device check.
+ *   Kinship and sin-program reminders never get the button.
  */
 
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
+import { flushPracticeWrites, usePracticeStore } from './practice-store';
+import { HABIT_CATEGORY, LOG_ACTION, logRemaining, parseLogAction } from './reminder-actions';
 import { REMINDER_SOURCE, type PlannedReminder } from './reminders';
 
 export const CHANNEL_ID = 'thekra-reminders';
+/** The note after «تمّ»: no sound, no pop-up. */
+export const QUIET_CHANNEL_ID = 'thekra-quiet';
 
 const supported = Platform.OS === 'ios' || Platform.OS === 'android';
 
@@ -39,6 +51,28 @@ export async function ensureChannel(name: string): Promise<void> {
     lockscreenVisibility: Notifications.AndroidNotificationVisibility.PRIVATE,
     showBadge: false,
   });
+}
+
+/**
+ * The «تمّ» button of habit reminders and the quiet channel of its note, in the current language. Call before
+ * scheduling; repeated calls with the same labels do nothing.
+ */
+let actionLabels: string | null = null;
+export async function setupReminderActions(labels: { done: string; quietChannelName: string }): Promise<void> {
+  const key = `${labels.done}|${labels.quietChannelName}`;
+  if (!supported || actionLabels === key) return;
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync(QUIET_CHANNEL_ID, {
+      name: labels.quietChannelName,
+      importance: Notifications.AndroidImportance.LOW,
+      lockscreenVisibility: Notifications.AndroidNotificationVisibility.PRIVATE,
+      showBadge: false,
+    });
+  }
+  await Notifications.setNotificationCategoryAsync(HABIT_CATEGORY, [
+    { identifier: LOG_ACTION, buttonTitle: labels.done, options: { opensAppToForeground: false } },
+  ]);
+  actionLabels = key;
 }
 
 export async function hasPermission(): Promise<boolean> {
@@ -87,9 +121,20 @@ async function doApply(planned: readonly PlannedReminder[], channelName: string)
   for (const r of planned) {
     const when = toDate(r.date, r.time);
     if (when.getTime() <= now) continue;
+    const data: Record<string, unknown> = { source: REMINDER_SOURCE, route: r.route };
+    if (r.confirm) {
+      data.confirmTitle = r.confirm.title;
+      data.confirmBody = r.confirm.body;
+    }
     await Notifications.scheduleNotificationAsync({
       identifier: r.id,
-      content: { title: r.title, body: r.body, data: { source: REMINDER_SOURCE, route: r.route } },
+      content: {
+        title: r.title,
+        body: r.body,
+        data,
+        // Only habit reminders: never on the generic sin-program or the kinship reminder.
+        ...(r.kind === 'habit' ? { categoryIdentifier: HABIT_CATEGORY } : {}),
+      },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: when, channelId: CHANNEL_ID },
     });
   }
@@ -106,18 +151,64 @@ export async function scheduledReminderCount(): Promise<number> {
   }
 }
 
+/**
+ * «تمّ» pressed on a habit reminder: logs what is left of that day (the hub's own `updatePlan` + `logDone`), saves
+ * it, takes down the reminder and the rest of that day's reminders for the plan, and shows a quiet note.
+ * Works without the UI (Android's background task), so it hydrates the store itself. Never throws; anything that
+ * is not a «تمّ» response is ignored.
+ */
+export async function handleLogAction(response: unknown): Promise<void> {
+  const request = parseLogAction(response);
+  if (!request || !supported) return;
+  try {
+    await usePracticeStore.getState().hydrate();
+    let logged = 0;
+    usePracticeStore.getState().setStore((s) => {
+      const result = logRemaining(s, request.planId, request.date);
+      logged = result.logged;
+      return result.store;
+    });
+    await flushPracticeWrites();
+    await Notifications.dismissNotificationAsync(request.notificationId).catch(() => undefined);
+    const prefix = `${REMINDER_SOURCE}:habit:${request.planId}:${request.date}:`;
+    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+    await Promise.all(
+      scheduled.filter((n) => n.identifier.startsWith(prefix)).map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier)),
+    );
+    if (logged > 0 && request.confirm) {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: request.confirm.title,
+          body: request.confirm.body,
+          sound: false,
+          interruptionLevel: 'passive',
+          data: { source: REMINDER_SOURCE, route: `/practice/plan/${request.planId}` },
+        },
+        trigger: Platform.OS === 'android' ? { channelId: QUIET_CHANNEL_ID } : null,
+      });
+    }
+  } catch {
+    // A failed note or cancel must not undo the log; the next re-plan tidies the reminders.
+  }
+}
+
 /** The tap already opened (the launch tap can come both from the last response and from the listener). */
 let handledTap: string | null = null;
 
 function openReminderTap(response: Notifications.NotificationResponse, open: (route: string) => void): void {
-  const key = `${response.notification.request.identifier}@${response.notification.date}`;
+  const key = `${response.notification.request.identifier}@${response.notification.date}@${response.actionIdentifier}`;
   if (key === handledTap) return;
   handledTap = key;
-  // Cleared so a later JS reload (language switch) does not open it again.
+  // Cleared so a later JS reload (language switch) does not open or log it again.
   try {
     Notifications.clearLastNotificationResponse();
   } catch {
     // Unavailable on this platform: the key above still keeps it to one open.
+  }
+  // «تمّ» (and any other button): handled without opening a screen.
+  if (response.actionIdentifier !== Notifications.DEFAULT_ACTION_IDENTIFIER) {
+    void handleLogAction(response);
+    return;
   }
   const data = response.notification.request.content.data as Record<string, unknown> | undefined;
   if (data?.source === REMINDER_SOURCE && typeof data.route === 'string') open(data.route);
@@ -125,7 +216,8 @@ function openReminderTap(response: Notifications.NotificationResponse, open: (ro
 
 /**
  * Opens the screen of a tapped reminder, once: a tap while the app runs, and the tap that launched it from closed
- * (`getLastNotificationResponse`). Returns the unsubscribe function.
+ * (`getLastNotificationResponse`). A «تمّ» press goes to {@link handleLogAction} instead (a press that arrives
+ * twice logs once). Returns the unsubscribe function.
  */
 export function onReminderTapped(open: (route: string) => void): () => void {
   if (!supported) return () => undefined;

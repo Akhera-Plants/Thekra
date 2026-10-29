@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import { BookOpen, Check, Clock, PencilLine, Undo2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
+  anchorForSlot,
   baseAmount,
   correctLog,
   decreaseTo,
@@ -31,6 +32,7 @@ import { z } from '@/lib/zod';
 import { amountLabel } from './amount-label';
 import { FetchedEvidence } from './EvidenceQuotes';
 import { LogEditor } from './LogEditor';
+import { useCelebration } from '../hooks/useCelebration';
 
 /** Whole amounts only: the account stores logs as integers (sync contract §2). */
 const MAX_LOG = 1000;
@@ -64,6 +66,7 @@ export function usePlanWords(plan: Plan, habit: PracticeHabit | undefined) {
 
 export function PlanCard({ plan, habit, view, today, ramadanUntil }: PlanCardProps) {
   const t = useTranslations('practice.today');
+  const prayers = useTranslations('practice.prayers');
   const locale = useLocale() === 'en' ? 'en' : 'ar';
   const words = usePlanWords(plan, habit);
   const [showEvidence, setShowEvidence] = useState(false);
@@ -72,12 +75,20 @@ export function PlanCard({ plan, habit, view, today, ramadanUntil }: PlanCardPro
   /** The last «تمّ» or partial log in this visit, so it can be undone in one tap. */
   const [lastLog, setLastLog] = useState<{ date: string; before: number } | null>(null);
   const evidenceId = useId();
+  const { celebration, celebrate } = useCelebration();
   const seasonStep = nextStep(baseAmount(plan));
   const seasonAmount = seasonStep === null ? null : plan.ceiling !== undefined ? Math.min(seasonStep, plan.ceiling) : seasonStep;
+
+  /** «بعد الفجر» for a slot that follows a prayer (its time is computed on the phone), else the clock time. */
+  function nextSlotLabel(slot: string): string {
+    const anchor = anchorForSlot(plan, slot);
+    return anchor ? t('nextAfterPrayer', { prayer: prayers(anchor.prayer) }) : t('nextSlot', { time: formatDigits(slot) });
+  }
 
   function log(amount: number) {
     setLastLog({ date: today, before: plan.log[today] ?? 0 });
     changePlan(plan.id, (p) => logDone(p, today, amount));
+    if (!view.isComplete && amount >= view.remaining) celebrate(plan.id);
   }
 
   function undoLastLog() {
@@ -120,7 +131,7 @@ export function PlanCard({ plan, habit, view, today, ramadanUntil }: PlanCardPro
         {view.done > 0 ? <> · {t('done', { amount: words.amount(view.done) })}</> : null}
       </p>
       {view.nextSlot && !view.isComplete ? (
-        <p className="text-sm text-muted-foreground">{t('nextSlot', { time: formatDigits(view.nextSlot) })}</p>
+        <p className="text-sm text-muted-foreground">{nextSlotLabel(view.nextSlot)}</p>
       ) : null}
       {view.isPartial ? (
         <p className="next-step !mt-0">
@@ -146,7 +157,13 @@ export function PlanCard({ plan, habit, view, today, ramadanUntil }: PlanCardPro
       <div role="status" aria-live="polite" className="empty:hidden">
         {lastLog ? (
           <p className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            {t('logged')}
+            {celebration ? (
+              <span className="font-medium text-primary motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200">
+                {celebration.line}
+              </span>
+            ) : (
+              t('logged')
+            )}
             <Button variant="ghost" tone="primary" size="sm" onClick={undoLastLog}>
               <Undo2 aria-hidden />
               {t('undo')}

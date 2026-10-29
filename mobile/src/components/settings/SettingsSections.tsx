@@ -14,6 +14,7 @@ import Constants from 'expo-constants';
 import {
   BookOpen,
   Check,
+  Clock,
   Database,
   Download,
   ExternalLink,
@@ -28,6 +29,7 @@ import {
 import { exportAccountData } from '@/lib/api/practice';
 import { scheduledReminderCount } from '@/lib/practice/notifications';
 import { usePracticeStore } from '@/lib/practice/practice-store';
+import { usePrayerPlaceLabel } from '@/lib/practice/use-prayer-place';
 import { unlockWithDevice, useDeviceLockAvailable } from '@/lib/practice/use-sin-privacy';
 import { wipeSinProgramEverywhere } from '@/lib/practice/vault-runner';
 import { SITE_ABOUT_PATH, SITE_PRIVACY_PATH, sitePageUrl } from '@/lib/site';
@@ -165,6 +167,7 @@ export function PrivacySection() {
 export function RemindersSection() {
   const { t } = useTranslation();
   const prefs = usePracticeStore((s) => s.prefs);
+  const prayerPlace = usePrayerPlaceLabel();
   const [count, setCount] = useState<number | null>(null);
 
   useFocusEffect(
@@ -204,6 +207,7 @@ export function RemindersSection() {
         chevron
         onPress={() => router.push('/practice/sin-program')}
       />
+      <ListRow icon={Clock} title={t('prayerTimes.title')} value={prayerPlace} chevron onPress={() => router.push('/practice/prayer-times')} />
     </SettingsGroup>
   );
 }

@@ -1,6 +1,6 @@
 /**
- * The plan screen's today card, after the website's PlanCard: «المطلوب اليوم», «أتممتها» and «+1», «سُجِّل · تراجع»,
- * and «صحّح السجل» (a week back, steppers for the day and the amount; practice-core `correctLog` on save).
+ * The plan screen's today card, after the website's PlanCard: «المطلوب اليوم», «أتممتها» and «+1», «سُجِّل · تراجع»
+ * (for about 2 s after «أتممتها» the catalog's short supplication takes the place of «سُجِّل»), and «صحّح السجل» (a week back, steppers for the day and the amount; practice-core `correctLog` on save).
  */
 
 import React, { useState } from 'react';
@@ -31,6 +31,8 @@ export interface TodayPanelProps {
   today: string;
   amountLabel: (n: number) => string;
   logged: boolean;
+  /** The short supplication after the day was completed, while it shows. */
+  celebration?: string | null;
   fixing: boolean;
   onLog: (amount: number) => void;
   onUndo: () => void;
@@ -40,7 +42,20 @@ export interface TodayPanelProps {
 }
 
 /** «المطلوب اليوم», the log buttons, «سُجِّل · تراجع» and «صحّح السجل». */
-export function TodayPanel({ plan, view, today: d, amountLabel, logged, fixing, onLog, onUndo, onFixOpen, onFixSave, onFixCancel }: TodayPanelProps) {
+export function TodayPanel({
+  plan,
+  view,
+  today: d,
+  amountLabel,
+  logged,
+  celebration,
+  fixing,
+  onLog,
+  onUndo,
+  onFixOpen,
+  onFixSave,
+  onFixCancel,
+}: TodayPanelProps) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const partial = view.done > 0 && !view.doneToday;
@@ -78,9 +93,15 @@ export function TodayPanel({ plan, view, today: d, amountLabel, logged, fixing, 
       <View accessibilityLiveRegion="polite">
         {logged ? (
           <Row>
-            <Text variant="small" tone="muted">
-              {t('practice.plan.logged')}
-            </Text>
+            {celebration ? (
+              <Text variant="small" weight="medium" tone="link">
+                {celebration}
+              </Text>
+            ) : (
+              <Text variant="small" tone="muted">
+                {t('practice.plan.logged')}
+              </Text>
+            )}
             <Button label={t('practice.plan.undo')} icon={Undo2} onPress={onUndo} variant="ghost" />
           </Row>
         ) : null}

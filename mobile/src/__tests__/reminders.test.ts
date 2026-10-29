@@ -30,6 +30,7 @@ const TODAY = '2026-10-28'; // a Wednesday
 
 const texts: ReminderTexts = {
   habitBody: (amount) => `المطلوب اليوم: ${amount}`,
+  habitLogged: 'سُجِّل لهذا اليوم.',
   kinshipTitle: 'صلة الرحم',
   kinshipBodyGeneric: (n) => `حان وقت التواصل مع ${n} من أقاربك`,
   kinshipBodyNames: (names) => `حان وقت التواصل مع: ${names}`,
@@ -87,6 +88,7 @@ function input(store: Store, prefs: Partial<PracticePrefs> = {}, extra: Partial<
     now: '08:00',
     locale: 'ar',
     texts,
+    prayer: null,
     ...extra,
   };
 }
@@ -170,6 +172,8 @@ describe('planReminders — privacy', () => {
       expect(list).toHaveLength(REMINDER_DAYS);
       for (const r of list) {
         expect(r.kind).toBe('sin');
+        // No «تمّ» note or button: the sin-program reminder stays generic.
+        expect(r.confirm).toBeUndefined();
         expect(r.title).toBe(SIN_REMINDER_TITLE);
         expect(r.title).toBe('تذكرة من ذكرى');
         expect(r.body).toBe(texts.sinBody);

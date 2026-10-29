@@ -4,14 +4,17 @@
  * strip with presence marks; the day's list across tracks with check controls (practice-core `dayAgenda`); «يومي
  * ثقيل»; the three tracks (or the three ways to begin); «وين وصلت هذا الشهر» as a month grid. No streaks, no
  * failure words; the private program shows only as one generic line. Habit management lives on «طاعاتي».
+ * Tazkiya (proposals items 5–7): «نيّتي اليوم» in the morning and «محاسبة المساء» in the evening at the top, a
+ * fresh-start card under today's list, «دفتر المحاسبة» (device only), and a short supplication after a habit's tick.
  */
 
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { ScrollView, View, type LayoutChangeEvent } from 'react-native';
+import { Platform, ScrollView, View, type LayoutChangeEvent } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { dayTitle, monthEnd, shortDayTitle } from '@/lib/practice/calendar-grid';
+import { intendedPlan, type HabitItem } from '@thekra/practice-core';
 import { canLogOn, isDayComplete, occasionDates } from '@/lib/practice/hub';
 import { usePracticeStore } from '@/lib/practice/practice-store';
 import {
@@ -25,16 +28,19 @@ import {
   useTrackSummary,
 } from '@/lib/practice/use-habits-hub';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
+import { useCelebration, useJournal } from '@/lib/practice/use-tazkiya';
 import { AddSheet } from '@/components/practice/hub/AddSheet';
 import { DayAgenda } from '@/components/practice/hub/DayAgenda';
 import { HubHeader } from '@/components/practice/hub/HubHeader';
 import { PresenceMonth } from '@/components/practice/hub/PresenceMonth';
+import { FreshStartSlot, TazkiyaPromptSlot } from '@/components/practice/hub/TazkiyaSlots';
 import { TrackRows } from '@/components/practice/hub/TrackRows';
 import { WeekStrip } from '@/components/practice/hub/WeekStrip';
 import { GUTTER, space, useStyles, type Theme } from '@/theme';
-import { Button, Notice, Ornament, Screen, Skeleton, SwitchRow } from '@/ui';
+import { Button, Notice, Ornament, Screen, Skeleton, SwitchRow, TextLink } from '@/ui';
 
 const SKELETON_DAYS = ['d1', 'd2', 'd3', 'd4', 'd5', 'd6', 'd7'];
+const openNotebook = () => router.push('/practice/notebook');
 const SKELETON_ROWS = ['r1', 'r2', 'r3'];
 
 const makeStyles = (t: Theme) => ({
@@ -82,6 +88,14 @@ function HabitsHub() {
     [catalog.data?.occasions, month, hijriOffset],
   );
 
+  const { journal } = useJournal();
+  const { celebration, celebrate } = useCelebration();
+  const isToday = selected === today;
+  const habitChoices = useMemo(
+    () => rows.flatMap((r) => (r.kind === 'habit' ? [{ planId: r.item.planId, title: r.title }] : [])),
+    [rows],
+  );
+
   const [adding, setAdding] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const listY = useRef(0);
@@ -96,6 +110,14 @@ function HabitsHub() {
     },
     [select],
   );
+  const { toggleHabit } = actions;
+  const handleToggleHabit = useCallback(
+    (item: HabitItem) => {
+      toggleHabit(item);
+      if (!item.complete) celebrate(`${item.planId}|${selected}`);
+    },
+    [toggleHabit, celebrate, selected],
+  );
   const handleAddOpen = useCallback(() => setAdding(true), []);
   const handleAddClose = useCallback(() => setAdding(false), []);
   const handleCalendar = useCallback(() => router.push('/practice/calendar'), []);
@@ -104,8 +126,15 @@ function HabitsHub() {
 
   return (
     <Screen scroll={false} contentStyle={styles.frame} decor>
-      <ScrollView ref={scrollRef} contentContainerStyle={styles.content}>
+      <ScrollView
+        ref={scrollRef}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+      >
         <HubHeader dateLabel={dayTitle(selected, hijriOffset, names)} onCalendar={handleCalendar} onAdd={handleAddOpen} />
+
+        {isToday ? <TazkiyaPromptSlot choices={habitChoices} started={summary.started} /> : null}
 
         {summary.started ? null : <TrackRows summary={summary} />}
 
@@ -136,11 +165,15 @@ function HabitsHub() {
             complete={selected <= today && isDayComplete(items)}
             started={summary.started}
             lastLog={actions.lastLog}
-            onToggleHabit={actions.toggleHabit}
+            intendedPlanId={intendedPlan(journal, selected)}
+            celebration={celebration}
+            onToggleHabit={handleToggleHabit}
             onToggleRelative={actions.toggleRelative}
             onUndo={actions.undo}
           />
         </View>
+
+        {isToday ? <FreshStartSlot today={today} choices={habitChoices} /> : null}
 
         {heavyDay.hasPlans ? (
           <SwitchRow
@@ -150,6 +183,8 @@ function HabitsHub() {
             onValueChange={heavyDay.setHeavy}
           />
         ) : null}
+
+        {summary.started ? <TextLink label={t('tazkiya.notebookTitle')} onPress={openNotebook} muted /> : null}
 
         {summary.started ? (
           <>

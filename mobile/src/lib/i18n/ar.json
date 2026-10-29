@@ -322,7 +322,10 @@
       "kinshipBodyGeneric_other": "حان وقت التواصل مع {{count}} من أقاربك",
       "kinshipBodyNames": "حان وقت التواصل مع: {{names}}",
       "sinBody": "لحظة لنفسك. افتح ذكرى.",
-      "channelName": "التذكيرات"
+      "channelName": "التذكيرات",
+      "doneAction": "تمّ",
+      "habitLogged": "سُجِّل لهذا اليوم.",
+      "quietChannelName": "تأكيد التسجيل"
     },
     "weekdays": {
       "0": "الأحد",
@@ -517,6 +520,39 @@
     "time": {
       "am": "ص",
       "pm": "م"
+    },
+    "prayer": {
+      "names": {
+        "fajr": "الفجر",
+        "dhuhr": "الظهر",
+        "asr": "العصر",
+        "maghrib": "المغرب",
+        "isha": "العشاء"
+      },
+      "modeTime": "وقت محدّد",
+      "modePrayer": "بعد صلاة",
+      "modeHint": "التذكير بعد الصلاة يتبع وقتها كل يوم في مدينتك.",
+      "whichPrayer": "بعد أي صلاة؟",
+      "howLong": "بعد الأذان بكم؟",
+      "atAdhan": "مع الأذان",
+      "minutes_zero": "0 دقيقة",
+      "minutes_one": "دقيقة واحدة",
+      "minutes_two": "دقيقتان",
+      "minutes_few": "{{count}} دقائق",
+      "minutes_many": "{{count}} دقيقة",
+      "minutes_other": "{{count}} دقيقة",
+      "add": "أضف التذكير",
+      "after": "بعد {{prayer}}",
+      "afterBy": "بعد {{prayer}} بـ{{minutes}}",
+      "todayAt": "اليوم {{time}}",
+      "suggested": "مقترح لهذه العادة: {{prayers}}",
+      "needPlace": "لنحسب أوقات الصلاة نحتاج مدينتك. يبقى الموقع على جهازك ولا يُرسَل إلى أي مكان.",
+      "useLocation": "استخدم موقعي",
+      "chooseCity": "اختر مدينة",
+      "locationDenied": "لم يُسمح بالموقع. اختر مدينتك من القائمة.",
+      "locationUnavailable": "تعذّر تحديد الموقع الآن. اختر مدينتك من القائمة.",
+      "alreadyAdded": "أضفت هذه الصلاة.",
+      "listSeparator": "، "
     }
   },
   "kinship": {
@@ -622,6 +658,38 @@
       "cancel": "إلغاء",
       "confirm": "أنهِه الآن",
       "done": "أُغلق البرنامج. يمكنك أن تبدأه من جديد أو تختار غيره متى شئت."
+    },
+    "urge": {
+      "button": "أشعر بضعف الآن",
+      "buttonHint": "دقيقة ونصف، خطوة خطوة، وتستطيع أن تتخطى أي خطوة.",
+      "screenTitle": "وقفة",
+      "progress": "الخطوة {{n}} من {{total}}",
+      "next": "التالي",
+      "inhale": "شهيق",
+      "exhale": "زفير",
+      "breathDone": "تابع حين تكون مستعدًا",
+      "breathCount": "النفَس {{n}} من {{total}}",
+      "noText": "لم يصل النص الآن. تابع إلى الخطوة التالية.",
+      "delayButton": "ذكّرني بعد {{minutes}} دقائق",
+      "delaySet": "سنطمئن عليك بعد {{minutes}} دقائق، مرة واحدة، بإشعار لا يقول إلا «تذكرة من ذكرى».",
+      "delayNoPermission": "الإشعارات غير مسموحة، فانظر في الساعة وارجع إلى نفسك بعد {{minutes}} دقائق.",
+      "companionCircle": "أرسل «ادعُ لي» إلى {{name}}",
+      "companionSent": "أُرسلت «ادعُ لي» إلى {{name}}.",
+      "companionShare": "شارك طلب الدعاء",
+      "endTitle": "كيف أنت الآن؟",
+      "passed": "تجاوزتها، الحمد لله",
+      "fell": "وقعت",
+      "passedSaved": "حُفظت في دفترك الخاص على هذا الجهاز فقط.",
+      "back": "عودة",
+      "unavailable": "افتح هذه الخطوات من صفحة برنامجك.",
+      "notebook": "لحظة ضعف عبرتها",
+      "notebookCount": "لحظة ضعف عبرتها ({{count}})"
+    },
+    "fall": {
+      "did": "فعلتها",
+      "later": "لاحقًا",
+      "deedDone": "فعلت: {{deed}}",
+      "notebookDeed": "وبعدها حسنة: {{deed}}"
     }
   },
   "calendar": {
@@ -836,12 +904,14 @@
     "cheer": {
       "thabat": "دعوت لك بالثبات",
       "jazak": "جزاك الله خيرًا",
-      "dhakkarani": "ذكّرني الله بك"
+      "dhakkarani": "ذكّرني الله بك",
+      "ask_dua": "ادعُ لي"
     },
     "cheerAll": {
       "thabat": "دعوت لكم بالثبات",
       "jazak": "جزاكم الله خيرًا",
-      "dhakkarani": "ذكّرني الله بكم"
+      "dhakkarani": "ذكّرني الله بكم",
+      "ask_dua": "ادعوا لي"
     },
     "inviteTitle": "ادعُ إليها",
     "inviteLead": "من معه الرمز يستطيع الانضمام. غيّره متى شئت، فيبطل القديم.",
@@ -902,5 +972,55 @@
     "lockedTitle": "هذه الصفحة مقفلة",
     "lockedHint": "افتحها ببصمتك أو برمز جهازك.",
     "unlock": "افتح"
+  },
+  "tazkiya": {
+    "niyyahTitle": "نيّتي اليوم",
+    "niyyahNoteLabel": "سطر نيّة قصير (اختياري)",
+    "niyyahSave": "احفظ نيّتي",
+    "niyyahMark": "نيّتي اليوم",
+    "niyyahLabel": "النيّة",
+    "notNow": "ليس الآن",
+    "eveningTitle": "محاسبة المساء",
+    "eveningWrite": "اكتب محاسبتك",
+    "eveningSave": "احفظ في الدفتر",
+    "eveningSaved": "حُفظ في دفتر المحاسبة",
+    "notebookTitle": "دفتر المحاسبة",
+    "notebookPrivate": "يبقى هذا الدفتر على هذا الجهاز وحده: لا يُزامَن، ولا يظهر في الإشعارات، ولا في تصدير الحساب.",
+    "notebookEmpty": "لا شيء في الدفتر بعد. تُحفظ هنا نيّة الصباح ومحاسبة المساء.",
+    "deleteDay": "احذف هذا اليوم",
+    "deleteDayConfirm": "يُحذف ما كتبتَه في هذا اليوم من هذا الجهاز، ولا يمكن استرجاعه.",
+    "deleteAll": "احذف الدفتر كله",
+    "deleteAllConfirm": "يُحذف الدفتر كله من هذا الجهاز، ولا يمكن استرجاعه."
+  },
+  "prayerTimes": {
+    "title": "مواقيت الصلاة",
+    "lead": "للتذكير بعد الصلاة. تُحسب الأوقات على جهازك، ولا يُرسَل موقعك إلى أي مكان.",
+    "placeTitle": "المكان",
+    "placeDevice": "موقعي",
+    "placeManual": "إحداثيات كتبتها",
+    "placeNone": "لم يُحدَّد بعد",
+    "cityTitle": "أو اختر مدينة",
+    "manualTitle": "أو اكتب الإحداثيات",
+    "latitude": "خط العرض",
+    "longitude": "خط الطول",
+    "manualHint": "مثل 21.42 و39.83",
+    "invalidCoordinates": "اكتب خط عرض بين -90 و90، وخط طول بين -180 و180.",
+    "saveManual": "احفظ الإحداثيات",
+    "methodTitle": "طريقة الحساب",
+    "methodAuto": "حسب البلد: {{method}}",
+    "todayTitle": "مواقيت اليوم",
+    "methods": {
+      "umm_al_qura": "أم القرى (مكة المكرمة)",
+      "mwl": "رابطة العالم الإسلامي",
+      "egyptian": "الهيئة المصرية العامة للمساحة",
+      "karachi": "جامعة العلوم الإسلامية بكراتشي",
+      "dubai": "دبي",
+      "kuwait": "الكويت",
+      "qatar": "قطر",
+      "turkey": "رئاسة الشؤون الدينية التركية",
+      "singapore": "سنغافورة",
+      "north_america": "الجمعية الإسلامية لأمريكا الشمالية",
+      "moonsighting": "لجنة رؤية الهلال"
+    }
   }
 }

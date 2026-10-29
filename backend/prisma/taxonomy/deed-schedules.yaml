@@ -12,6 +12,8 @@
 #     read from the database; nothing here is a quoted text.
 #   - Units: `start.far` for someone far from the habit, `start.near` for someone close to it (lecture: «دقيقتان» / 5–10).
 #     Increase only with the ladder in practice-core, never before 4 weeks of steady practice.
+#   - `defaultAnchors` (optional): prayers the app suggests reminding after («بعد الفجر»), `offset` minutes after the
+#     prayer time. An organizational suggestion the user may take or change, not a religious timing.
 #   - Reviewed by: pending the sheikh (owner approved publishing 2026-10-28).
 
 occasions:
@@ -104,6 +106,7 @@ habits:
     timeHintAr: بعد العشاء إلى الفجر، وقبل النوم لمن خشي ألّا يقوم
     timeHintEn: after Isha until Fajr; before sleeping if you may not wake
     defaultSlots: ['22:00', '23:00']
+    defaultAnchors: [{ prayer: isha, offset: 60 }]
     basis: text
     evidence: [0bda155b-e786-4616-a380-56be0031c5c2, 93f7d1ab-b6f7-4521-bae8-f37cc1ff06a2]
   - key: qiyam-last-third
@@ -133,6 +136,7 @@ habits:
     ceiling: 100
     defaultRule: { kind: daily }
     defaultSlots: ['07:00', '18:00']
+    defaultAnchors: [{ prayer: fajr, offset: 20 }, { prayer: asr, offset: 20 }]
     basis: text
     evidence: [7fc63d7e-136b-44ad-bd31-ce0bc8ed3922, 0398949f-e730-40e5-afcd-d083ecdef12b]
   - key: tasbih-after-salah
@@ -146,6 +150,7 @@ habits:
     ceiling: 33
     defaultRule: { kind: daily }
     defaultSlots: ['13:00', '19:30']
+    defaultAnchors: [{ prayer: dhuhr, offset: 15 }, { prayer: maghrib, offset: 15 }]
     basis: text
     evidence: [c13f91c6-41bd-45e7-8cdc-d9e1e06ee073, 233c185a-c4b0-4fb0-bac0-61786d37c809]
   - key: quran-wird

@@ -51,6 +51,13 @@ Auth: `(auth)/login`, `(auth)/register`
 - Evidence for the sin programs is requested for **all** catalog programs at once, so the request reveals no choice.
 - Local notifications (`expo-notifications`, no push): permission asked when a reminder switch is turned on;
   a rolling 14-day window (max 60 pending, iOS limit) re-planned on every change and every foreground.
+- «بعد الفجر»: a reminder slot can follow one of the five prayers (practice-core `PlanAnchor`). Prayer times are
+  computed on the device with `adhan` from a coarse location (`expo-location`, asked for only on «استخدم موقعي»),
+  a city or typed coordinates, kept in the prefs and never sent; method in Settings → «مواقيت الصلاة»
+  (`app/practice/prayer-times.tsx`, `src/lib/practice/prayer-times.ts`).
+- «تمّ» on a habit reminder logs what is left of that day without opening the app, then a quiet note
+  (`src/lib/practice/notifications.ts`, `reminder-actions.ts`; Android background presses run the task in
+  `notification-task.ts`, loaded first by `index.ts`, the app entry). Never on kinship or sin-program reminders.
 - Metro: `metro.config.js` maps `./x.js` → `./x.ts` only inside `packages/practice-core` (Jest: `jest.resolver.js`;
   Jest also transforms the ESM-only `@noble/*` packages).
 

@@ -30,6 +30,8 @@ import { cn } from '@/lib/utils';
 import { z } from '@/lib/zod';
 import { useSinVault } from '../hooks/useSinVault';
 import { EvidenceQuotes } from './EvidenceQuotes';
+import { FollowWithGood } from './FollowWithGood';
+import { UrgeMomentDialog } from './UrgeMomentDialog';
 
 const MAX_NOTE = 500;
 
@@ -64,6 +66,10 @@ export function ProgramPanel({ program, entry, common, name, habits, quotes, tod
           {program.path === 'gradual' ? t('pathGradual') : program.category === 'haqq_ibad' ? t('pathPeople') : t('pathCut')}
         </p>
       </header>
+
+      {common.urgeMoment ? (
+        <UrgeMomentDialog program={program} entry={entry} urge={common.urgeMoment} common={common} quotes={quotes} today={today} />
+      ) : null}
 
       {program.path === 'gradual' && steps && steps.length > 0 ? (
         <section className="next-step !mt-0 flex flex-col gap-2" aria-label={t('gradualTitle')}>
@@ -141,7 +147,10 @@ export function ProgramPanel({ program, entry, common, name, habits, quotes, tod
 
       <CheckInForm program={program} today={today} />
 
-      {fell ? (
+      {fell && common.followWithGood ? (
+        <FollowWithGood program={program} today={today} flow={common.followWithGood} intro={common.afterFall} quotes={quotes} />
+      ) : null}
+      {fell && !common.followWithGood ? (
         <section className="flex flex-col gap-3" aria-labelledby={`fall-${program.sinSlug}`}>
           <h3 id={`fall-${program.sinSlug}`} className="text-xl font-medium text-primary">
             {english ? common.afterFall.titleEn : common.afterFall.titleAr}
@@ -160,10 +169,13 @@ export function ProgramPanel({ program, entry, common, name, habits, quotes, tod
             t('summaryItem', { label: t(`values.${value}`), n: formatDigits(view.summary[value]) }),
           ).join(' · ')}
         </p>
+        {view.urgesPassed > 0 ? (
+          <p className="leading-8 text-primary">{t('summaryItem', { label: t('urgesPassed'), n: formatDigits(view.urgesPassed) })}</p>
+        ) : null}
         <p className="text-sm text-muted-foreground">{t('summaryNote')}</p>
       </section>
 
-      {view.recent.length > 0 ? <RecentCheckIns recent={view.recent} /> : null}
+      {view.recent.length > 0 ? <RecentCheckIns recent={view.recent} common={common} /> : null}
 
       <section className="flex flex-col gap-3" aria-labelledby={`texts-${program.sinSlug}`}>
         <h3 id={`texts-${program.sinSlug}`} className="text-xl font-medium">
@@ -219,19 +231,31 @@ function EndProgram({ program }: { program: SinProgram }) {
   );
 }
 
-function RecentCheckIns({ recent }: { recent: ReturnType<typeof programView>['recent'] }) {
+/** «دفتري الخاص»: the day's check-in and note, the deed after a fall, and «لحظة ضعف عبرتها». */
+function RecentCheckIns({ recent, common }: { recent: ReturnType<typeof programView>['recent']; common: SinProgramCommon }) {
   const t = useTranslations('leaveSin.program');
   const locale = useLocale() === 'en' ? 'en' : 'ar';
+  const choices = common.followWithGood?.deeds.choices ?? [];
   return (
     <details className="rounded-xl border border-border p-4">
       <summary className="cursor-pointer font-medium">{t('notesTitle')}</summary>
       <ul className="mt-3 flex flex-col gap-2">
-        {recent.map((c) => (
-          <li key={c.date} className="leading-8">
-            <span className="text-muted-foreground">{formatGregorian(c.date, locale)}</span> · {t(`values.${c.value}`)}
-            {c.note ? <p className="break-words whitespace-pre-line">{c.note}</p> : null}
-          </li>
-        ))}
+        {recent.map(({ date, checkIn: c, urgesPassed }) => {
+          const deed = c?.deed ? choices.find((x) => x.key === c.deed) : undefined;
+          return (
+            <li key={date} className="leading-8">
+              <span className="text-muted-foreground">{formatGregorian(date, locale)}</span>
+              {c ? <> · {t(`values.${c.value}`)}</> : null}
+              {deed ? <p>{t('deedAfterFall', { deed: locale === 'en' ? deed.titleEn : deed.titleAr })}</p> : null}
+              {urgesPassed > 0 ? (
+                <p className="text-primary">
+                  {urgesPassed > 1 ? t('urgePassedCount', { n: formatDigits(urgesPassed) }) : t('urgePassed')}
+                </p>
+              ) : null}
+              {c?.note ? <p className="break-words whitespace-pre-line">{c.note}</p> : null}
+            </li>
+          );
+        })}
       </ul>
     </details>
   );

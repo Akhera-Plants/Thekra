@@ -73,13 +73,16 @@ const PROBES = [
     want: 'non-empty data.items and meta.themes',
     expect: quotesPage,
   },
-  // deed-schedules.yaml and sin-programs.yaml are embedded in the bundle (no disk read on Vercel),
-  // and the occasion calendar needs the runtime's islamic-umalqura calendar.
+  // deed-schedules.yaml, sin-programs.yaml and tazkiya-prompts.yaml are embedded in the bundle (no disk read on
+  // Vercel), and the occasion calendar needs the runtime's islamic-umalqura calendar.
   {
     path: '/v1/practice/catalog',
-    want: 'occasions, habits and sin programs',
+    want: 'occasions, habits, sin programs and tazkiya prompts',
     expect: (body) =>
-      body?.data?.occasions?.length > 0 && body?.data?.habits?.length > 0 && body?.data?.sinPrograms?.programs?.length > 0,
+      body?.data?.occasions?.length > 0 &&
+      body?.data?.habits?.length > 0 &&
+      body?.data?.sinPrograms?.programs?.length > 0 &&
+      body?.data?.tazkiya?.celebrations?.linesAr?.length > 0,
   },
   {
     path: '/v1/calendar/occasions?from=2027-05-10&to=2027-05-20',

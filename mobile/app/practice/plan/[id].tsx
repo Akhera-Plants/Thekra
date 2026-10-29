@@ -30,6 +30,7 @@ import { planView } from '@/lib/practice/plan-view';
 import { today, usePracticeStore } from '@/lib/practice/practice-store';
 import { formatAmount, habitFor, planRule } from '@/lib/practice/reminders';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
+import { useCelebration } from '@/lib/practice/use-tazkiya';
 import { EvidenceList } from '@/components/practice/EvidenceList';
 import { MonthPanel, SettingsPanel } from '@/components/practice/PlanHistoryAndSettings';
 import { TodayPanel } from '@/components/practice/PlanTodayCard';
@@ -65,6 +66,7 @@ export default function PlanScreen() {
   const habits = catalog.data?.habits ?? [];
   const habit = plan ? habitFor(plan, habits) : undefined;
   const evidence = useEvidence(habit?.evidence ?? [], locale);
+  const { celebration, celebrate } = useCelebration();
 
   const [relapseDismissed, setRelapseDismissed] = useState(false);
   /** The last log in this visit, so it can be undone in one tap. */
@@ -100,7 +102,10 @@ export default function PlanScreen() {
   function handleLog(amount: number) {
     setLastLog({ date: d, before: plan!.log[d] ?? 0 });
     update((p) => logDone(p, d, amount));
-    if (!view.doneToday && amount >= view.remaining) void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    if (!view.doneToday && amount >= view.remaining) {
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      celebrate(plan!.id);
+    }
   }
 
   function handleUndo() {
@@ -150,6 +155,7 @@ export default function PlanScreen() {
         today={d}
         amountLabel={amountLabel}
         logged={lastLog !== null}
+        celebration={celebration?.line}
         fixing={fixing}
         onLog={handleLog}
         onUndo={handleUndo}

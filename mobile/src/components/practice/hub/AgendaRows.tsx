@@ -4,16 +4,18 @@
  * - habit and relative: a round check (a checkbox named after the item: empty, half filled while only part of a
  *   habit is logged, filled with a tick when done; it settles with a small spring when ticked, still when the system
  *   asks to reduce motion) and the body that opens the plan / the kinship page, with «سُجِّل · تراجع» under the last
- *   quick log;
+ *   quick log; for about 2 s after a habit's tick the catalog's short supplication («تقبّل الله منك») takes the place of
+ *   «سُجِّل», fading in (instantly when the system asks to reduce motion); the habit chosen in «نيّتي اليوم» carries a
+ *   small quiet mark;
  * - occasion: a sparkle on a soft gold disc and the title, opening its good deed;
  * - program: a neutral notebook on a quiet disc and generic words only, opening the private program.
  */
 
 import React, { memo, useCallback, useEffect, useRef } from 'react';
-import { AccessibilityInfo, Animated, Pressable, View } from 'react-native';
+import { AccessibilityInfo, Animated, Easing, Pressable, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Check, NotebookPen, Sparkles, type LucideIcon } from 'lucide-react-native';
+import { Check, HandHeart, NotebookPen, Sparkles, type LucideIcon } from 'lucide-react-native';
 import type { HabitItem, RelativeItem } from '@thekra/practice-core';
 import { radius, space, useStyles, useTheme, type Theme } from '@/theme';
 import { ForwardArrow, Icon, Text } from '@/ui';
@@ -146,6 +148,8 @@ function IconLead({ icon, tone }: { icon: LucideIcon; tone: 'occasion' | 'quiet'
 
 interface RowBodyProps {
   title: string;
+  /** A small quiet mark after the title, named for screen readers («نيّتي اليوم»). */
+  mark?: string;
   /** Muted words after the title (a relative's relation). */
   titleNote?: string;
   meta: string;
@@ -156,13 +160,13 @@ interface RowBodyProps {
   onPress: () => void;
 }
 
-function RowBody({ title, titleNote, meta, metaIcon, settled, onPress }: RowBodyProps) {
+function RowBody({ title, mark, titleNote, meta, metaIcon, settled, onPress }: RowBodyProps) {
   const styles = useStyles(makeStyles);
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`${title}${titleNote ? ` · ${titleNote}` : ''}. ${meta}`}
+      accessibilityLabel={`${title}${titleNote ? ` · ${titleNote}` : ''}${mark ? ` · ${mark}` : ''}. ${meta}`}
       style={({ pressed }) => [styles.body, pressed && styles.bodyPressed]}
     >
       <View style={styles.texts}>
@@ -175,6 +179,7 @@ function RowBody({ title, titleNote, meta, metaIcon, settled, onPress }: RowBody
           ) : null}
         </Text>
         <View style={styles.meta}>
+          {mark ? <Icon icon={HandHeart} size={15} tone="link" strokeWidth={1.6} /> : null}
           {metaIcon ? <Icon icon={metaIcon} size={15} tone="link" /> : null}
           <Text variant="caption" tone={metaIcon ? 'link' : 'muted'} numberOfLines={2}>
             {meta}
@@ -189,15 +194,43 @@ function RowBody({ title, titleNote, meta, metaIcon, settled, onPress }: RowBody
 /** What the last quick action did to a row: undo puts back what was there before it. */
 export type UndoKind = 'logged' | 'cleared';
 
-/** «سُجِّل · تراجع» after a tick, «أُلغي التسجيل · تراجع» after an untick. */
-function UndoLine({ kind, onUndo }: { kind: UndoKind; onUndo: () => void }) {
+/** The supplication fades in over 180 ms; with reduce motion it simply appears. */
+function useFadeIn(text: string | undefined) {
+  const opacity = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    if (!text) return;
+    let cancelled = false;
+    void AccessibilityInfo.isReduceMotionEnabled().then((reduced) => {
+      if (cancelled || reduced) return;
+      opacity.setValue(0);
+      Animated.timing(opacity, { toValue: 1, duration: 180, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+    });
+    return () => {
+      cancelled = true;
+      opacity.setValue(1);
+    };
+  }, [text, opacity]);
+  return opacity;
+}
+
+/** «سُجِّل · تراجع» after a tick (or the short supplication while it shows), «أُلغي التسجيل · تراجع» after an untick. */
+function UndoLine({ kind, celebration, onUndo }: { kind: UndoKind; celebration?: string; onUndo: () => void }) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
+  const opacity = useFadeIn(celebration);
   return (
     <View style={styles.undo}>
-      <Text variant="caption" tone="muted">
-        {kind === 'cleared' ? t('practice.hub.unlogged') : t('practice.plan.logged')}
-      </Text>
+      {celebration && kind === 'logged' ? (
+        <Animated.View style={{ opacity }} accessibilityLiveRegion="polite">
+          <Text variant="caption" weight="medium" tone="link">
+            {celebration}
+          </Text>
+        </Animated.View>
+      ) : (
+        <Text variant="caption" tone="muted">
+          {kind === 'cleared' ? t('practice.hub.unlogged') : t('practice.plan.logged')}
+        </Text>
+      )}
       <Pressable
         onPress={onUndo}
         accessibilityRole="button"
@@ -218,11 +251,16 @@ export interface HabitRowProps {
   meta: string;
   canLog: boolean;
   undo: UndoKind | null;
+  /** The habit chosen in «نيّتي اليوم» for this day. */
+  intended?: boolean;
+  /** The short supplication after this row's tick, while it shows. */
+  celebration?: string;
   onToggle: (item: HabitItem) => void;
   onUndo: () => void;
 }
 
-export const HabitRow = memo(function HabitRow({ item, title, meta, canLog, undo, onToggle, onUndo }: HabitRowProps) {
+export const HabitRow = memo(function HabitRow({ item, title, meta, canLog, undo, intended, celebration, onToggle, onUndo }: HabitRowProps) {
+  const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const handleToggle = useCallback(() => onToggle(item), [onToggle, item]);
   const handleOpen = useCallback(() => router.push(`/practice/plan/${item.planId}`), [item.planId]);
@@ -230,9 +268,9 @@ export const HabitRow = memo(function HabitRow({ item, title, meta, canLog, undo
     <View style={styles.row}>
       <View style={styles.line}>
         <CheckControl label={title} checked={item.complete} partial={item.done > 0} disabled={!canLog} onPress={handleToggle} />
-        <RowBody title={title} meta={meta} settled={item.complete} onPress={handleOpen} />
+        <RowBody title={title} mark={intended ? t('tazkiya.niyyahMark') : undefined} meta={meta} settled={item.complete} onPress={handleOpen} />
       </View>
-      {undo ? <UndoLine kind={undo} onUndo={onUndo} /> : null}
+      {undo ? <UndoLine kind={undo} celebration={celebration} onUndo={onUndo} /> : null}
     </View>
   );
 });

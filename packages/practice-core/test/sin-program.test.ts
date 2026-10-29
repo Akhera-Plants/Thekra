@@ -6,11 +6,22 @@ import {
   activePrograms,
   currentStage,
   endProgram,
+  exportForSync,
+  emptyStore,
   mergePrograms,
+  MAX_URGES_PER_DAY,
+  notebookDays,
+  openPrograms,
+  parsePrograms,
   pathFor,
+  recordDeedAfterFall,
+  recordUrgePassed,
+  sealPrograms,
+  urgesPassed,
   stagesFor,
   startProgram,
   summary,
+  validateCheckIn,
   validateProgram,
   type SinProgram,
 } from '../src/index.js';
@@ -164,5 +175,139 @@ describe('endProgram / mergePrograms', () => {
       expect(merged[0]?.checkIns).toHaveLength(3);
       expect(merged[0]?.checkIns[2]).toMatchObject({ date: '2026-11-03', value: 'weak', note: 'تعديل اليوم' });
     }
+  });
+});
+
+describe('«أتبِع السيئة الحسنة»: the deed after a fall', () => {
+  const T = (h: number) => `2026-11-0${h}T10:00:00.000Z`;
+  const p = startProgram({ sinSlug: 'reels', category: 'haqq_allah', hardToLeaveAtOnce: false, startedOn: START }, T(1));
+
+  it('keeps the deed key with that day\'s fell_repented check-in, and the stage logic ignores it', () => {
+    const fell = checkIn(p, START, 'fell_repented', 'سرّ', T(2));
+    const done = recordDeedAfterFall(fell, START, 'two-rakahs', T(3));
+    expect(done.checkIns).toEqual([{ date: START, value: 'fell_repented', note: 'سرّ', updatedAt: T(3), deed: 'two-rakahs' }]);
+    expect(validateProgram(done)).toBeNull();
+    expect(currentStage(done, addDays(START, 3))).toEqual(currentStage(fell, addDays(START, 3)));
+    expect(summary(done, START, START)).toEqual(summary(fell, START, START));
+  });
+
+  it('needs a fell_repented check-in that day, a valid key and a running program', () => {
+    expect(() => recordDeedAfterFall(p, START, 'dhikr')).toThrow(RangeError);
+    expect(() => recordDeedAfterFall(checkIn(p, START, 'held'), START, 'dhikr')).toThrow(RangeError);
+    const fell = checkIn(p, START, 'fell_repented');
+    expect(() => recordDeedAfterFall(fell, START, 'Free text!')).toThrow(RangeError);
+    expect(() => recordDeedAfterFall(endProgram(fell), START, 'dhikr')).toThrow(RangeError);
+  });
+
+  it('stays while the day stays fell_repented and goes when the day is changed to another value', () => {
+    const done = recordDeedAfterFall(checkIn(p, START, 'fell_repented'), START, 'sadaqa');
+    expect(checkIn(done, START, 'fell_repented', 'later').checkIns[0]?.deed).toBe('sadaqa');
+    expect(checkIn(done, START, 'held').checkIns[0]?.deed).toBeUndefined();
+  });
+
+  it('validates the key and refuses it on another value', () => {
+    expect(validateCheckIn({ date: START, value: 'fell_repented', deed: 'dhikr' })).toBeNull();
+    expect(validateCheckIn({ date: START, value: 'held', deed: 'dhikr' })).toMatch(/only with fell_repented/);
+    expect(validateCheckIn({ date: START, value: 'fell_repented', deed: 'x'.repeat(41) })).toMatch(/kebab-case/);
+    expect(validateCheckIn({ date: START, value: 'fell_repented', deed: 'ركعتان' })).toMatch(/kebab-case/);
+  });
+
+  it('merges with the check-in: the later written day wins with its deed', () => {
+    const fell = checkIn(p, START, 'fell_repented', undefined, T(2));
+    const withDeed = recordDeedAfterFall(fell, START, 'dhikr', T(3));
+    for (const merged of [mergePrograms([fell], [withDeed]), mergePrograms([withDeed], [fell])]) {
+      expect(merged[0]?.checkIns[0]?.deed).toBe('dhikr');
+    }
+  });
+});
+
+describe('«لحظة ضعف عبرتها»: weak moments passed', () => {
+  const T = (h: number) => `2026-11-0${h}T10:00:00.000Z`;
+  const p = startProgram({ sinSlug: 'reels', category: 'haqq_allah', hardToLeaveAtOnce: false, startedOn: START }, T(1));
+
+  it('counts per date, never as a check-in, and leaves the stage logic alone', () => {
+    let q = recordUrgePassed(p, START, T(2));
+    q = recordUrgePassed(q, START, T(3));
+    q = recordUrgePassed(q, addDays(START, 2), T(4));
+    q = recordUrgePassed(q, addDays(START, 1), T(4));
+    expect(q.urges).toEqual([
+      { date: START, count: 2, updatedAt: T(3) },
+      { date: addDays(START, 1), count: 1, updatedAt: T(4) },
+      { date: addDays(START, 2), count: 1, updatedAt: T(4) },
+    ]);
+    expect(q.checkIns).toEqual([]);
+    expect(urgesPassed(q, START, addDays(START, 1))).toBe(3);
+    expect(urgesPassed(p, START, START)).toBe(0);
+    expect(summary(q, START, addDays(START, 6)).daysCheckedIn).toBe(0);
+    expect(currentStage(q, addDays(START, 10))).toEqual(currentStage(p, addDays(START, 10)));
+    expect(validateProgram(q)).toBeNull();
+  });
+
+  it('caps a day and refuses an ended program or a bad date', () => {
+    let q = p;
+    for (let i = 0; i < MAX_URGES_PER_DAY + 5; i++) q = recordUrgePassed(q, START);
+    expect(q.urges?.[0]?.count).toBe(MAX_URGES_PER_DAY);
+    expect(() => recordUrgePassed(p, 'today')).toThrow(RangeError);
+    expect(() => recordUrgePassed(endProgram(p), START)).toThrow(RangeError);
+  });
+
+  it('validates marks', () => {
+    expect(validateProgram({ ...p, urges: 'x' })).toMatch(/urges must be an array/);
+    expect(validateProgram({ ...p, urges: [{ date: START, count: 0 }] })).toMatch(/count/);
+    expect(validateProgram({ ...p, urges: [{ date: 'x', count: 1 }] })).toMatch(/date/);
+  });
+
+  it('merges by date with the higher count, the same in either order; ending drops them', () => {
+    const a = recordUrgePassed(recordUrgePassed(p, START, T(2)), START, T(3));
+    const b = recordUrgePassed(recordUrgePassed(p, START, T(4)), addDays(START, 1), T(5));
+    const ab = mergePrograms([a], [b]);
+    expect(ab).toEqual(mergePrograms([b], [a]));
+    expect(ab[0]?.urges).toEqual([
+      { date: START, count: 2, updatedAt: T(4) },
+      { date: addDays(START, 1), count: 1, updatedAt: T(5) },
+    ]);
+    expect(mergePrograms([p], [p])[0]).not.toHaveProperty('urges');
+    const ended = endProgram(a, T(6));
+    expect(ended).not.toHaveProperty('urges');
+    expect(mergePrograms([a], [ended])).toEqual([ended]);
+  });
+});
+
+describe('new private records stay inside the program (vault only, never the sync body)', () => {
+  const key = new Uint8Array(32).fill(7);
+  let p = startProgram({ sinSlug: 'secret-sin-slug', category: 'haqq_allah', hardToLeaveAtOnce: false, startedOn: START });
+  p = recordDeedAfterFall(checkIn(p, START, 'fell_repented'), START, 'two-rakahs');
+  p = recordUrgePassed(p, START);
+
+  it('round-trips parsePrograms and the vault, dropping only invalid marks and deeds', () => {
+    expect(parsePrograms([p])).toEqual([p]);
+    expect(openPrograms(sealPrograms([p], key), key)).toEqual([p]);
+    const dirty = { ...p, urges: [...(p.urges ?? []), { date: 'bad', count: 1 }], checkIns: [...p.checkIns, { date: addDays(START, 1), value: 'held', deed: 'dhikr' }] };
+    expect(parsePrograms([dirty])).toEqual([p]);
+  });
+
+  it('never reaches the sync payload', () => {
+    const payload = JSON.stringify(exportForSync({ ...emptyStore(), programs: [p] }));
+    expect(payload).not.toContain('two-rakahs');
+    expect(payload).not.toContain('secret-sin-slug');
+    expect(payload).not.toContain('urges');
+  });
+});
+
+describe('notebookDays', () => {
+  it('joins check-ins and weak moments by day, newest first, up to today and the limit', () => {
+    let p = startProgram({ sinSlug: 'reels', category: 'haqq_allah', hardToLeaveAtOnce: false, startedOn: START });
+    p = checkIn(p, START, 'held', 'n1');
+    p = recordUrgePassed(recordUrgePassed(p, addDays(START, 1)), addDays(START, 1));
+    p = recordUrgePassed(checkIn(p, addDays(START, 2), 'weak'), addDays(START, 2));
+    p = checkIn(p, addDays(START, 9), 'held');
+    const days = notebookDays(p, addDays(START, 2), 10);
+    expect(days.map((d) => [d.date, d.checkIn?.value ?? null, d.urgesPassed])).toEqual([
+      [addDays(START, 2), 'weak', 1],
+      [addDays(START, 1), null, 2],
+      [START, 'held', 0],
+    ]);
+    expect(notebookDays(p, addDays(START, 2), 2)).toHaveLength(2);
+    expect(notebookDays(p, addDays(START, 2), 0)).toEqual([]);
   });
 });

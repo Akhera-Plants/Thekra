@@ -77,6 +77,14 @@ function persist(key: string, value: string): Promise<void> {
   return writeChain;
 }
 
+/** Resolves once every write queued so far is on disk (a background task must not end before its edit is saved). */
+export function flushPracticeWrites(): Promise<void> {
+  return writeChain;
+}
+
+/** One hydration per process: the app and a notification action can both ask for it at launch. */
+let hydration: Promise<void> | null = null;
+
 export function today(): string {
   return todayFrom(new Date());
 }
@@ -116,25 +124,28 @@ export const usePracticeStore = create<PracticeState>((set, get) => ({
   store: emptyStore(),
   prefs: { ...DEFAULT_PREFS },
 
-  hydrate: async () => {
-    if (get().hydrated) return;
-    let store = emptyStore();
-    let prefs = parsePrefs(null);
-    let rawPrefs: string | null = null;
-    try {
-      const [rawStore, p] = await Promise.all([AsyncStorage.getItem(STORE_KEY), AsyncStorage.getItem(PREFS_KEY)]);
-      rawPrefs = p;
-      if (rawStore) store = parseStore(rawStore);
-      if (rawPrefs) prefs = parsePrefs(rawPrefs);
-    } catch {
-      // Unreadable storage: start empty rather than crash.
-    }
-    const migrated = migrateLegacy(store, rawPrefs, newPracticeId);
-    set({ hydrated: true, store: migrated.store, prefs });
-    if (migrated.changed) {
-      void persist(STORE_KEY, serializeStore(migrated.store));
-      void persist(PREFS_KEY, JSON.stringify(prefs));
-    }
+  hydrate: () => {
+    if (get().hydrated) return Promise.resolve();
+    hydration ??= (async () => {
+      let store = emptyStore();
+      let prefs = parsePrefs(null);
+      let rawPrefs: string | null = null;
+      try {
+        const [rawStore, p] = await Promise.all([AsyncStorage.getItem(STORE_KEY), AsyncStorage.getItem(PREFS_KEY)]);
+        rawPrefs = p;
+        if (rawStore) store = parseStore(rawStore);
+        if (rawPrefs) prefs = parsePrefs(rawPrefs);
+      } catch {
+        // Unreadable storage: start empty rather than crash.
+      }
+      const migrated = migrateLegacy(store, rawPrefs, newPracticeId);
+      set({ hydrated: true, store: migrated.store, prefs });
+      if (migrated.changed) {
+        void persist(STORE_KEY, serializeStore(migrated.store));
+        void persist(PREFS_KEY, JSON.stringify(prefs));
+      }
+    })();
+    return hydration;
   },
 
   setStore: (fn) => {

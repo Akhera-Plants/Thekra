@@ -2,26 +2,30 @@
 
 import { useMemo, useRef } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { dayAgenda, presence, type DayPresence } from '@thekra/practice-core';
+import { dayAgenda, intendedPlan, presence, type DayPresence } from '@thekra/practice-core';
 import { QueryErrorState } from '@/components/shared/feedback/QueryErrorState';
 import { Skeleton } from '@/components/ui/skeleton';
 import { isFirstRun, trackSummary, weekOf, weekStartFor } from '@/lib/practice/hub';
+import { habitOf } from '@/lib/practice/plans';
 import type { PracticeSnapshot } from '@/lib/practice/local-store';
 import type { PracticeHabit, ScheduleBasis } from '@/lib/types/practice';
 import { useDaySelection, type DaySelection } from '../../hooks/useDaySelection';
 import { useEndedSeasons } from '../../hooks/useEndedSeasons';
 import { usePracticeCatalog } from '../../hooks/usePracticeCatalog';
 import { usePracticeStore } from '../../hooks/usePracticeStore';
+import { useTazkiyaJournal } from '../../hooks/useTazkiyaJournal';
 import { useToday } from '../../hooks/useToday';
 import { SyncStatus } from '../SyncStatus';
 import { DayAgenda } from './DayAgenda';
 import { HubHeader } from './HubHeader';
 import { HubMonth } from './HubMonth';
+import { FreshStartSlot, NotebookLink, TazkiyaPromptSlot } from './TazkiyaSlots';
 import { StartChoices, TrackLinks } from './TrackLinks';
 import { WeekStrip } from './WeekStrip';
 
 /**
- * «عاداتي»: the day first. One selected day drives the header date, the week strip, the day's list across every
+ * «عاداتي»: the day first. Tazkiya (proposals items 5–7): the morning intention or the evening reckoning on top, a
+ * fresh-start card under today's list, «دفتر المحاسبة» (this browser only), a short supplication after a tick. One selected day drives the header date, the week strip, the day's list across every
  * track and the month; the tracks lead to their own pages. Everything is read from the device store.
  */
 export function HabitsHub() {
@@ -73,6 +77,20 @@ function HubBody({ snapshot, today, selection }: HubBodyProps) {
   );
   const summary = useMemo(() => trackSummary(store, today), [store, today]);
   const firstRun = isFirstRun(store);
+  const journal = useTazkiyaJournal();
+  const tazkiya = catalog.data?.tazkiya;
+  const isToday = selected === today;
+  const choices = useMemo(
+    () =>
+      items.flatMap((item) => {
+        if (item.kind !== 'habit') return [];
+        const plan = store.plans.find((p) => p.id === item.planId);
+        if (!plan) return [];
+        const habit = habitOf(plan, habits);
+        return [{ planId: plan.id, title: habit ? (locale === 'en' ? habit.titleEn : habit.titleAr) : plan.title }];
+      }),
+    [items, store.plans, habits, locale],
+  );
 
   function handleGridSelect(date: string) {
     selection.select(date);
@@ -90,6 +108,7 @@ function HubBody({ snapshot, today, selection }: HubBodyProps) {
         <QueryErrorState error={catalog.error} onRetry={() => void catalog.refetch()} message={t('catalogError')} className="py-4" />
       ) : null}
       {firstRun ? <StartChoices /> : null}
+      {isToday ? <TazkiyaPromptSlot prompts={tazkiya} choices={choices} isStarted={!firstRun} /> : null}
 
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)] lg:items-start lg:gap-14">
         <div className="flex min-w-0 flex-col gap-6">
@@ -108,7 +127,12 @@ function HubBody({ snapshot, today, selection }: HubBodyProps) {
             habits={habits}
             occasionBasis={occasionBasis}
             headingRef={dayRef}
+            intendedPlanId={journal ? intendedPlan(journal, selected) : null}
           />
+          {isToday ? (
+            <FreshStartSlot prompts={tazkiya} today={today} hijriOffset={hijriOffset} plans={store.plans} choices={choices} />
+          ) : null}
+          {firstRun ? null : <NotebookLink />}
         </div>
         <div className="flex min-w-0 flex-col gap-10">
           {firstRun ? null : <TrackLinks summary={summary} />}

@@ -28,6 +28,7 @@ const PLAN = {
   ceiling: null,
   activeDaysPerWeek: 3,
   slots: ['09:30', '11:00'],
+  anchors: null,
   rule: { kind: 'daily' },
   createdOn: '2026-10-28',
   amountChangedOn: '2026-10-28',
@@ -65,9 +66,10 @@ describe('Practice, calendar and account endpoints (e2e)', () => {
 
   // ── Public catalog and evidence ────────────────────────────────────────────
 
-  it('GET /v1/practice/catalog → 200 { data: { occasions, habits, sinPrograms } }, CDN-cached', async () => {
+  it('GET /v1/practice/catalog → 200 { data: { occasions, habits, sinPrograms, tazkiya } }, CDN-cached', async () => {
     const res = await request(server()).get('/v1/practice/catalog').expect(200);
-    expect(Object.keys(res.body.data)).toEqual(['occasions', 'habits', 'sinPrograms']);
+    expect(Object.keys(res.body.data)).toEqual(['occasions', 'habits', 'sinPrograms', 'tazkiya']);
+    expect(Object.keys(res.body.data.tazkiya)).toEqual(['review', 'niyyah', 'muhasaba', 'freshStarts', 'celebrations']);
     expect(Object.keys(res.body.data.sinPrograms)).toEqual(['review', 'common', 'programs']);
     expect(res.body.data.occasions.find((o: { key: string }) => o.key === 'arafah')).toMatchObject({
       deed: 'siyam',
@@ -194,6 +196,22 @@ describe('Practice, calendar and account endpoints (e2e)', () => {
   }
 
   const sync = (auth: Record<string, string>, body: unknown) => request(server()).post('/v1/me/practice/sync').set(auth).send(body as object);
+
+  it('stores the prayer anchors of a plan and returns them to every device', async () => {
+    const { auth } = await register();
+    const anchors = [{ slot: '09:30', prayer: 'fajr', offset: 10 }];
+    const planWithAnchors = { ...PLAN, id: PLAN2_ID, anchors };
+    const first = await sync(auth, { since: null, changes: { plans: [planWithAnchors] } }).expect(200);
+    expect(first.body.data.plans).toEqual([planWithAnchors]);
+    const view = await request(server()).get('/v1/me/practice').set(auth).expect(200);
+    expect(view.body.data.plans).toEqual([planWithAnchors]);
+    // Removing the anchors (a newer edit) clears the column.
+    const cleared = { ...PLAN, id: PLAN2_ID, anchors: null, clientUpdatedAt: T(5) };
+    await sync(auth, { since: null, changes: { plans: [cleared] } }).expect(200);
+    const after = await request(server()).get('/v1/me/practice').set(auth).expect(200);
+    expect(after.body.data.plans).toEqual([cleared]);
+    await sync(auth, { since: null, changes: { plans: [{ ...PLAN, id: PLAN2_ID, anchors: [{ slot: '09:30', prayer: 'noon', offset: 1 }] }] } }).expect(400);
+  });
 
   it('syncs settings, plans, logs, relatives and contacts with the merge rules', async () => {
     const { auth } = await register();

@@ -192,7 +192,8 @@ export type HubLastLog =
  * complete habit it puts back the amount from before the hub's own log (`correctLog`), or clears the day when the
  * hub did not log it. A relative's check is «تواصلت معه» for that day; on a done one it removes that day's contact
  * (`updateRelative` records the tombstone). Every tick and untick can be undone inline, so a stray tap never loses
- * a logged amount. One light haptic when the tap finishes the day.
+ * a logged amount. One light haptic on a habit's tick (with the supplication the hub shows), and when a relative's
+ * tap finishes the day.
  */
 export function useAgendaActions(date: LocalDate) {
   useCirclePresence(); // «حضرت اليوم» to the user's circles (رفقة), when sharing is on there
@@ -200,12 +201,14 @@ export function useAgendaActions(date: LocalDate) {
   const [lastLog, setLastLog] = useState<HubLastLog | null>(null);
   const before = useRef(new Map<string, number>());
 
-  /** Applies an edit; a light confirmation when it closed the day's last open task. */
+  /** Applies an edit; a light confirmation on a tick (`tick`) or when it closed the day's last open task. */
   const apply = useCallback(
-    (edit: (s: Store) => Store) => {
+    (edit: (s: Store) => Store, tick = false) => {
       const prev = usePracticeStore.getState().store;
       setStore(edit);
-      if (finishedDay(prev, usePracticeStore.getState().store, date)) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      if (tick || finishedDay(prev, usePracticeStore.getState().store, date)) {
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
     },
     [date, setStore],
   );
@@ -221,7 +224,7 @@ export function useAgendaActions(date: LocalDate) {
         return;
       }
       before.current.set(key, item.done);
-      apply((s) => updatePlan(s, item.planId, (p) => logDone(p, date, item.remaining)));
+      apply((s) => updatePlan(s, item.planId, (p) => logDone(p, date, item.remaining)), true);
       setLastLog({ kind: 'habit', planId: item.planId, date, before: item.done, cleared: false });
     },
     [date, apply],

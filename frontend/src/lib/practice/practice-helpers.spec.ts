@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { createRelative, logDone, startProgram, checkIn, startEbb, type Plan } from '@thekra/practice-core';
+import { createRelative, endProgram, logDone, recordUrgePassed, startProgram, checkIn, startEbb, type Plan } from '@thekra/practice-core';
+import type { QuoteDto } from '@/lib/types/api';
 import type { OccasionDate, PracticeCatalog, PracticeHabit, PracticeOccasion } from '@/lib/types/practice';
 import { computeOccasionDates, groupOccasions, occasionsIcs } from './calendar';
 import { kinshipEvents, rhythmOf, rhythmRule } from './kinship';
 import { planFromHabit, planReminderEvents, planToday, progressDays, ramadanEnd } from './plans';
-import { allProgramEvidenceIds, chosenPath, programView } from './programs';
+import { allProgramEvidenceIds, chosenPath, momentTextIds, pickMomentText, programView, updateProgram } from './programs';
 
 const habit: PracticeHabit = {
   key: 'quran-wird',
@@ -204,5 +205,54 @@ describe('sin program helpers', () => {
     expect(view.summary).toMatchObject({ held: 0, weak: 1, fell_repented: 1, daysCheckedIn: 2 });
     expect(view.today).toMatchObject({ value: 'fell_repented', note: 'ملاحظة' });
     expect(view.recent.map((c) => c.date)).toEqual(['2026-10-28', '2026-10-27']);
+  });
+
+  const text = (evidence?: string[]) => ({ titleAr: 't', titleEn: 't', bodyAr: 'b', bodyEn: 'b', ...(evidence ? { evidence } : {}) });
+  const urgeMoment = {
+    review: 'pending-sheikh',
+    breathe: { ...text(), breaths: 3 },
+    text: text(['v']),
+    move: { ...text(), moves: [{ key: 'wudu', titleAr: 'توضأ', titleEn: 'Make wudu' }] },
+    delay: { ...text(), minutes: 10 },
+    companion: { ...text(), shareAr: 'ادعُ لي بالثبات', shareEn: 'Pray for me' },
+    passed: text(),
+  };
+
+  it('adds the weak moment and the deed-after-fall texts to the one evidence request', () => {
+    const withGuidance = {
+      ...sinPrograms,
+      common: {
+        ...sinPrograms.common,
+        urgeMoment,
+        followWithGood: {
+          review: 'pending-sheikh',
+          istighfar: { ...text(['i']), lineAr: 'أستغفر الله وأتوب إليه', lineEn: 'x' },
+          deeds: { ...text(['d']), choices: [{ key: 'dhikr', titleAr: 'ذكر', titleEn: 'Dhikr', evidence: ['k'] }] },
+          close: text(['z']),
+        },
+      },
+    };
+    expect(allProgramEvidenceIds(withGuidance)).toEqual(['a', 'b', 'c', 'd', 'f', 'i', 'k', 'r', 'v', 'z']);
+  });
+
+  it('picks the moment text from published texts only, the step\'s first, turning by day', () => {
+    const entry = sinPrograms.programs[0] as (typeof sinPrograms.programs)[0];
+    expect(momentTextIds(urgeMoment, entry)).toEqual(['v', 'b', 'a']);
+    const quotes = [{ id: 'v' }, { id: 'a' }] as QuoteDto[];
+    const days = ['2026-10-28', '2026-10-29'].map((d) => pickMomentText(['v', 'b', 'a'], quotes, d)?.id);
+    expect([...days].sort()).toEqual(['a', 'v']);
+    expect(pickMomentText(['b'], quotes, '2026-10-28')).toBeNull();
+  });
+
+  it('records a weak moment on the running program only, and counts it in the notebook', () => {
+    const running = startProgram({ sinSlug: 'x', category: 'haqq_allah', hardToLeaveAtOnce: false, startedOn: '2026-10-20' });
+    const ended = endProgram(startProgram({ sinSlug: 'y', category: 'haqq_ibad', hardToLeaveAtOnce: false, startedOn: '2026-10-20' }));
+    const [x, y] = updateProgram([running, ended], 'x', (p) => recordUrgePassed(p, '2026-10-28'));
+    expect(updateProgram([ended], 'y', (p) => recordUrgePassed(p, '2026-10-28'))).toEqual([ended]);
+    expect(y).toBe(ended);
+    const view = programView(x as typeof running, '2026-10-28');
+    expect(view.urgesPassed).toBe(1);
+    expect(view.recent).toEqual([{ date: '2026-10-28', urgesPassed: 1 }]);
+    expect(view.summary.daysCheckedIn).toBe(0);
   });
 });

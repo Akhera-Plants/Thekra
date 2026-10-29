@@ -49,7 +49,12 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       predictiveBackGestureEnabled: false,
       // expo-screen-capture's manifest asks for photo access to detect screenshots; the app only blocks them
       // (FLAG_SECURE on the sin-program page), so the photo permissions are removed from the build.
-      blockedPermissions: ['android.permission.READ_EXTERNAL_STORAGE', 'android.permission.READ_MEDIA_IMAGES'],
+      // Prayer times need only the city: expo-location's FINE permission is removed, COARSE stays.
+      blockedPermissions: [
+        'android.permission.READ_EXTERNAL_STORAGE',
+        'android.permission.READ_MEDIA_IMAGES',
+        'android.permission.ACCESS_FINE_LOCATION',
+      ],
     },
     web: {
       output: 'static',
@@ -79,6 +84,18 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         { faceIDPermission: 'Thekra uses Face ID to unlock the private pages you choose to lock.' },
       ],
       '@react-native-community/datetimepicker',
+      // «بعد الفجر» reminders: the approximate location, in the foreground, asked for only when the user taps
+      // «استخدم موقعي». Never in the background, never sent. Arabic devices read the line in locales/ar.json.
+      [
+        'expo-location',
+        {
+          locationWhenInUsePermission:
+            'Thekra uses your approximate location to work out prayer times on this device. It is never sent anywhere.',
+          locationAlwaysAndWhenInUsePermission: false,
+          locationAlwaysPermission: false,
+          motionUsagePermission: false,
+        },
+      ],
     ],
     experiments: {
       typedRoutes: true,
