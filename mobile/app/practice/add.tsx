@@ -6,13 +6,16 @@
  * 3. reminder slots (≥ 2 suggested) and active days per week (3 at the beginning) + reminder weekdays;
  * 4. «فروضي وأدواري»: the free time check (`loadWarning`), then create.
  * Optional param `habit` preselects a habit (e.g. an alternative from the sin program).
+ * The system Back (Android button, iOS swipe, header) goes one step back inside the wizard, so no input is lost;
+ * from the step the wizard opened on it leaves. «التالي» and «رجوع» stay pinned under the step, above the safe area.
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { View } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { ScrollView, View } from 'react-native';
+import { router, useLocalSearchParams, useNavigation } from 'expo-router';
+import { usePreventRemove } from 'expo-router/react-navigation';
 import { useTranslation } from 'react-i18next';
-import { CircleCheck, HardDrive, Hourglass } from 'lucide-react-native';
+import { CircleAlert, CircleCheck, HardDrive, Hourglass } from 'lucide-react-native';
 import { loadWarning, startSuggestion, upsertPlan, validatePlan, type LocalTime, type Plan } from '@thekra/practice-core';
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { pick, type CatalogHabit, type UiLocale } from '@/lib/practice/catalog-types';
@@ -22,7 +25,7 @@ import { newPracticeId, today, usePracticeStore } from '@/lib/practice/practice-
 import { formatAmount } from '@/lib/practice/reminders';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { ActiveDaysPicker, SlotsEditor, WeekdayPicker } from '@/components/practice/editors';
-import { radius, space, useStyles, type Theme } from '@/theme';
+import { GUTTER, radius, space, useStyles, type Theme } from '@/theme';
 import {
   Button,
   CheckRow,
@@ -45,6 +48,8 @@ type Step = 'choose' | 'distance' | 'schedule' | 'load';
 const STEPS: Step[] = ['choose', 'distance', 'schedule', 'load'];
 const DISTANCES: Distance[] = ['far', 'near'];
 const SKELETON_OPTIONS = ['a', 'b', 'c', 'd'];
+/** Navigation actions that mean «back» (hardware button, swipe, header): inside the wizard they go one step back. */
+const BACK_ACTIONS = new Set(['GO_BACK', 'POP']);
 
 const makeStyles = (t: Theme) => ({
   group: { gap: space.md },
@@ -52,7 +57,17 @@ const makeStyles = (t: Theme) => ({
   progress: { flexDirection: 'row' as const, gap: 6 },
   segment: { flex: 1, height: 3, borderRadius: radius.full, backgroundColor: t.colors.border },
   segmentDone: { backgroundColor: t.colors.primary },
-  actions: { gap: space.md, paddingTop: space.sm },
+  frame: { paddingHorizontal: 0, paddingTop: 0 },
+  scroll: { flex: 1 },
+  body: { paddingHorizontal: GUTTER, paddingTop: space.lg, paddingBottom: space['2xl'], gap: space['2xl'] },
+  footer: {
+    paddingHorizontal: GUTTER,
+    paddingVertical: space.md,
+    borderTopWidth: 1,
+    borderTopColor: t.colors.border,
+    backgroundColor: t.colors.background,
+  },
+  actions: { gap: space.md },
 });
 
 export default function AddHabitScreen() {
@@ -64,9 +79,11 @@ export default function AddHabitScreen() {
   const plans = usePracticeStore((s) => s.store.plans);
   const free = usePracticeStore((s) => s.store.settings.freeMinutesPerDay ?? null);
   const setStore = usePracticeStore((s) => s.setStore);
+  const navigation = useNavigation();
 
+  const entryStep: Step = params.habit ? 'distance' : 'choose';
   const [habitKey, setHabitKey] = useState<string | null>(params.habit ?? null);
-  const [step, setStep] = useState<Step>(params.habit ? 'distance' : 'choose');
+  const [step, setStep] = useState<Step>(entryStep);
   const [distance, setDistance] = useState<Distance | null>(null);
   const [slots, setSlots] = useState<LocalTime[]>([]);
   const [activeDays, setActiveDays] = useState(3);
@@ -84,6 +101,17 @@ export default function AddHabitScreen() {
       setWeekdays(ruleToWeekdays(habit.defaultRule));
     }
   }, [habit, initialized]);
+
+  const stepIndex = STEPS.indexOf(step);
+  const canStepBack = stepIndex > STEPS.indexOf(entryStep);
+  usePreventRemove(canStepBack, ({ data }) => {
+    if (BACK_ACTIONS.has(data.action.type)) {
+      setStep(STEPS[stepIndex - 1]);
+      return;
+    }
+    // Leaving on purpose (the plan was created, a link was followed): let it through.
+    navigation.dispatch(data.action);
+  });
 
   if (catalog.isLoading) return <ChooseSkeleton />;
   if (catalog.isError || !catalog.data) {
@@ -110,6 +138,7 @@ export default function AddHabitScreen() {
 
   function handleCreate() {
     if (!habit || amount === null) return;
+    setError(null);
     if (slots.length === 0) {
       setError(t('practice.add.noSlots'));
       return;
@@ -120,7 +149,10 @@ export default function AddHabitScreen() {
       return;
     }
     const plan = planFromHabit({ id: newPracticeId(), habit, amount, slots, activeDaysPerWeek: activeDays, rule, today: today(), locale });
-    if (validatePlan(plan) !== null) return;
+    if (validatePlan(plan) !== null) {
+      setError(t('practice.add.invalidPlan'));
+      return;
+    }
     setStore((s) => upsertPlan(s, plan));
     router.replace(`/practice/plan/${plan.id}`);
   }
@@ -215,7 +247,11 @@ export default function AddHabitScreen() {
       onBack={() => setStep('schedule')}
     >
       <LoadCheck plans={allPlans} free={free} />
-      {error ? <ErrorText>{error}</ErrorText> : null}
+      {error ? (
+        <Notice icon={CircleAlert} tone="destructive">
+          {error}
+        </Notice>
+      ) : null}
     </StepFrame>
   );
 }
@@ -232,19 +268,23 @@ interface StepFrameProps {
   onBack?: () => void;
 }
 
-/** One step: the progress marker, the step's title block, its fields, then «التالي» and «رجوع». */
+/** One step: the progress marker, the step's title block and its fields scroll; «التالي» and «رجوع» stay pinned. */
 function StepFrame({ step, eyebrow, title, lead, children, nextLabel, onNext, nextDisabled, onBack }: StepFrameProps) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   return (
-    <Screen edges={['bottom']} keyboard>
-      <StepProgress step={step} />
-      <PageHeader eyebrow={eyebrow} title={title} lead={lead} />
-      {children}
-      <Wrap style={styles.actions}>
-        <Button label={nextLabel} onPress={onNext} disabled={nextDisabled} large arrow />
-        {onBack ? <Button label={t('practice.add.back')} onPress={onBack} variant="outline" large /> : null}
-      </Wrap>
+    <Screen edges={['bottom']} keyboard scroll={false} contentStyle={styles.frame}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+        <StepProgress step={step} />
+        <PageHeader eyebrow={eyebrow} title={title} lead={lead} />
+        {children}
+      </ScrollView>
+      <View style={styles.footer}>
+        <Wrap style={styles.actions}>
+          <Button label={nextLabel} onPress={onNext} disabled={nextDisabled} large arrow />
+          {onBack ? <Button label={t('practice.add.back')} onPress={onBack} variant="outline" large /> : null}
+        </Wrap>
+      </View>
     </Screen>
   );
 }

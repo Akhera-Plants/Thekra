@@ -1,18 +1,21 @@
 /**
  * One text, after the website's quote page (quotes/[id] → QuoteDetail): the quote card in full (type, reference,
- * grade, share and favorite live in the card), the other translations, then the related sins and good deeds as
- * chips. The website's page title is for screen readers only, so the card is the page.
+ * grade, share and favorite live in the card), in the English UI the other translations under their language
+ * names, then the related sins and good deeds as chips. The website's page title is for screen readers only, so
+ * the card is the page. A quiet notice says when the device is offline.
  */
 
 import React, { useCallback } from 'react';
 import { View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { WifiOff } from 'lucide-react-native';
 import { useQuote } from '@/lib/api/quotes';
 import { useToggleFavorite } from '@/lib/api/favorites';
 import { QuoteCard } from '@/components/QuoteCard';
 import { space, useStyles, useTheme } from '@/theme';
-import { Chip, ErrorState, QuoteCardSkeleton, Rule, Screen, Text, Wrap } from '@/ui';
+import { useIsOffline } from '@/lib/query-client';
+import { Chip, ErrorState, Notice, QuoteCardSkeleton, Rule, Screen, Text, Wrap } from '@/ui';
 
 /** Translation languages written right to left; every other translation reads left to right in either UI. */
 const RTL_LANGUAGES = new Set(['ar', 'fa', 'ur', 'he']);
@@ -29,6 +32,7 @@ export default function QuoteDetailScreen() {
   const { t } = useTranslation();
   const { english } = useTheme();
   const styles = useStyles(makeStyles);
+  const isOffline = useIsOffline();
 
   const { data: quote, isLoading, isError, isRefetching, refetch } = useQuote(id ?? '');
   const { isFavorite, toggle } = useToggleFavorite(id ?? '');
@@ -45,18 +49,19 @@ export default function QuoteDetailScreen() {
   if (isError || !quote) {
     return (
       <Screen edges={['bottom']} refreshing={isRefetching} onRefresh={handleRefresh}>
+        {isOffline ? <Notice icon={WifiOff}>{t('common.offlineBanner')}</Notice> : null}
         <ErrorState message={isError ? undefined : t('errors.notFound')} onRetry={handleRefresh} />
       </Screen>
     );
   }
 
-  // The card already shows the UI-language translation in English; list only the others.
-  const cardTranslation = english ? quote.translation?.text : null;
-  const translations = (quote.allTranslations ?? []).filter((tr) => tr.text !== cardTranslation);
+  // The Arabic UI shows no translations (Arabic only). In English the card already shows the English one.
+  const translations = english ? (quote.allTranslations ?? []).filter((tr) => tr.text !== quote.translation?.text) : [];
   const hasRelated = quote.relatedSins.length > 0 || quote.relatedGoodDeeds.length > 0;
 
   return (
     <Screen edges={['bottom']} refreshing={isRefetching} onRefresh={handleRefresh}>
+      {isOffline ? <Notice icon={WifiOff}>{t('common.offlineBanner')}</Notice> : null}
       <QuoteCard quote={quote} isFavorite={isFavorite} onToggleFavorite={toggle} detail />
 
       {translations.length > 0 ? (
@@ -64,7 +69,7 @@ export default function QuoteDetailScreen() {
           {translations.map((tr) => (
             <View key={tr.languageCode} style={styles.translation}>
               <Text variant="eyebrow" tone="muted">
-                {tr.languageCode.toUpperCase()}
+                {t(`quoteDetail.languages.${tr.languageCode}`, { defaultValue: tr.languageCode })}
               </Text>
               <Text variant="body" style={RTL_LANGUAGES.has(tr.languageCode) ? styles.rtl : styles.ltr}>
                 {tr.text}

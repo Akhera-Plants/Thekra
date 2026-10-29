@@ -31,6 +31,9 @@ import { dark, FontFiles, light, loadThemePreference, ThemeProvider, useTheme } 
 import { usePracticeLifecycle } from '@/lib/practice/use-practice-lifecycle';
 import { useStackScreenOptions } from '@/ui';
 
+// A deep link or a reminder tap that cold-starts the app lands on its screen with the tabs under it, so Back works.
+export const unstable_settings = { anchor: '(tabs)' };
+
 // Keep splash visible until fonts + bootstrap finish.
 void SplashScreen.preventAutoHideAsync();
 
@@ -79,16 +82,18 @@ export default function RootLayout() {
   }, [fontsLoaded, fontError, rehydrate]);
 
   if (!ready) {
+    // Before the theme provider: the system scheme; `link` is primary in light and the readable ring in dark.
+    const bootColors = systemScheme === 'dark' ? dark : light;
     return (
       <View
         style={{
           flex: 1,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: (systemScheme === 'dark' ? dark : light).background,
+          backgroundColor: bootColors.background,
         }}
       >
-        <ActivityIndicator color={light.primary} />
+        <ActivityIndicator color={bootColors.link} />
       </View>
     );
   }
@@ -131,6 +136,7 @@ function ThemedShell() {
       <Stack screenOptions={stackOptions}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="practice" options={{ headerShown: false }} />
+        <Stack.Screen name="circles" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false, presentation: 'modal' }} />
       </Stack>
       <PracticeLifecycle />

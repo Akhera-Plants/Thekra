@@ -2,7 +2,7 @@
  * One habit plan, after the website's PlanCard: today's amount with «أتممتها» and a partial «+1», «سُجِّل · تراجع»,
  * «صحّح السجل» (a week back, steppers for the day and the amount), the increase and relapse offers as next-step
  * notes, the last 30 days (a kind band and a row of dots, no streaks and no failure words), slot/day settings, the
- * evidence texts from the API, and delete (confirmed).
+ * evidence texts from the API, and delete (confirmed). A quiet «اقرأ عن هذه الطاعة» opens the deed's page.
  */
 
 import React, { useState } from 'react';
@@ -22,6 +22,7 @@ import {
   type Plan,
 } from '@thekra/practice-core';
 import { useEvidence, usePracticeCatalog } from '@/lib/api/practice';
+import { useCirclePresence } from '@/lib/circles/use-circle-presence';
 import { pick } from '@/lib/practice/catalog-types';
 import { ruleToWeekdays } from '@/lib/practice/format';
 import { planView } from '@/lib/practice/plan-view';
@@ -41,6 +42,7 @@ import {
   Rule,
   Screen,
   Text,
+  TextLink,
   Wrap,
 } from '@/ui';
 
@@ -56,6 +58,7 @@ export default function PlanScreen() {
   const hydrated = usePracticeStore((s) => s.hydrated);
   const plan = usePracticeStore((s) => s.store.plans.find((p) => p.id === id));
   const setStore = usePracticeStore((s) => s.setStore);
+  useCirclePresence(); // «حضرت اليوم» to the user's circles (رفقة), when sharing is on there
   const catalog = usePracticeCatalog(locale);
   const habits = catalog.data?.habits ?? [];
   const habit = plan ? habitFor(plan, habits) : undefined;
@@ -134,6 +137,7 @@ export default function PlanScreen() {
             {t('practice.add.timeHint', { hint: timeHint })}
           </Text>
         ) : null}
+        {habit ? <TextLink label={t('practice.plan.readAbout')} onPress={() => router.push(`/good-deeds/${habit.deed}`)} muted /> : null}
       </PageHeader>
 
       <TodayPanel

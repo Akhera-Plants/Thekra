@@ -38,7 +38,7 @@ export function reminderTexts(t: T, locale: UiLocale): ReminderTexts {
   return {
     habitBody: (amount) => t('practice.notify.habitBody', { amount }),
     kinshipTitle: t('practice.notify.kinshipTitle'),
-    kinshipBodyGeneric: (count) => t('practice.notify.kinshipBodyGeneric', { n: String(count) }),
+    kinshipBodyGeneric: (count) => t('practice.notify.kinshipBodyGeneric', { count }),
     kinshipBodyNames: (names) => t('practice.notify.kinshipBodyNames', { names }),
     sinBody: t('practice.notify.sinBody'),
     unitFallback,

@@ -1,51 +1,39 @@
 /**
- * Settings, after the website's settings page: grouped sections separated by hairlines, not a card per row.
- * Language (a direction change reloads the app at once), appearance (device, light, dark), account, practice data,
- * then the destructive actions last in the destructive tone.
- * Signed in: practice sync now, «تصدير بياناتي» (GET /v1/auth/me/export shared as JSON) and «حذف الحساب»
- * (password → DELETE /v1/auth/me → local sign-out; the practice data on this device is kept).
+ * Settings, crafted like the website's settings page: titled groups of hairline rows (kit `ListRow`: an icon, the
+ * value on the end, a chevron), on the page decor. Order: «الحساب والمزامنة», «المظهر واللغة» (a direction change
+ * reloads the app at once), «الخصوصية» (the sin-program lock, the encrypted backup, export, the wipe), «التذكيرات»,
+ * «عن التطبيق» (the site's about and privacy pages), then signing out and deleting the account last.
+ * Signed in: practice sync now, «تصدير بياناتي» (GET /v1/auth/me/export shared as JSON text: expo-file-system and
+ * expo-sharing are not installed) and «حذف الحساب» (password → DELETE /v1/auth/me → local sign-out; the practice
+ * data on this device is kept).
  */
 
 import React, { useState } from 'react';
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform, Pressable, Share, View } from 'react-native';
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQueryClient } from '@tanstack/react-query';
-import Constants from 'expo-constants';
-import { Check, CircleCheck } from 'lucide-react-native';
+import { CircleCheck, LogOut, RefreshCw, Trash2, UserRound } from 'lucide-react-native';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { switchDirectionIfNeeded, type SupportedLocale } from '@/lib/i18n';
 import { setApiLocale } from '@/lib/api-client';
-import { deleteAccount, exportAccountData } from '@/lib/api/practice';
+import { deleteAccount } from '@/lib/api/practice';
 import { syncPractice, useSyncStatus } from '@/lib/practice/sync-runner';
 import { nowTime } from '@/lib/practice/format';
 import { queryKeys } from '@/lib/query-keys';
 import { ApiError } from '@/lib/types/api';
+import { AboutSection, PrivacySection, RemindersSection, SettingsGroup } from '@/components/settings/SettingsSections';
 import { radius, space, useStyles, useTheme, useThemePreference, type Theme, type ThemePreference } from '@/theme';
-import { Button, ErrorText, Field, Icon, Notice, PageHeader, Screen, SwitchRow, Text } from '@/ui';
+import { Button, Field, ListRow, Notice, PageHeader, Screen, SegmentTabs, Text, type SegmentItem } from '@/ui';
 
 const LOCALE_STORAGE_KEY = 'thekra_locale';
 
 const THEME_OPTIONS: ThemePreference[] = ['system', 'light', 'dark'];
 
 const makeStyles = (t: Theme) => ({
-  group: { gap: space.sm },
-  list: { borderTopWidth: 1, borderTopColor: t.colors.border },
-  row: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    gap: space.md,
-    minHeight: 56,
-    paddingVertical: space.md,
-    borderBottomWidth: 1,
-    borderBottomColor: t.colors.border,
-  },
-  rowText: { flex: 1, gap: 2 },
-  switchRow: { paddingVertical: space.xs },
-  pressed: { backgroundColor: t.colors.accent },
-  disabled: { opacity: 0.45 },
-  guest: { gap: space.md, paddingTop: space.md },
+  guest: { gap: space.md, paddingVertical: space.lg },
+  choice: { gap: space.sm, paddingVertical: space.lg, borderBottomWidth: 1, borderBottomColor: t.colors.border },
   backdrop: { flex: 1, backgroundColor: t.colors.overlay, justifyContent: 'center' as const, padding: space.xl },
   dialog: {
     backgroundColor: t.colors.card,
@@ -59,43 +47,16 @@ const makeStyles = (t: Theme) => ({
 });
 
 export default function SettingsScreen() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const clearSession = useAuthStore((s) => s.clearSession);
   const qc = useQueryClient();
-  const styles = useStyles(makeStyles);
-  const themePref = useThemePreference((s) => s.pref);
-  const setThemePref = useThemePreference((s) => s.setPref);
-
-  const [showTranslations, setShowTranslations] = useState(false);
-  const syncStatus = useSyncStatus((s) => s.status);
-  const lastOkAt = useSyncStatus((s) => s.lastOkAt);
-  const [exporting, setExporting] = useState(false);
-  const [exportError, setExportError] = useState(false);
   const [accountDeleted, setAccountDeleted] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [password, setPassword] = useState('');
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
-
-  async function handleSyncNow() {
-    if (!user) return;
-    await syncPractice(user.id);
-  }
-
-  async function handleExport() {
-    setExporting(true);
-    setExportError(false);
-    try {
-      const data = await exportAccountData();
-      await Share.share({ message: JSON.stringify(data, null, 2) });
-    } catch {
-      setExportError(true);
-    } finally {
-      setExporting(false);
-    }
-  }
 
   async function handleDeleteAccount() {
     if (!password) return;
@@ -117,17 +78,6 @@ export default function SettingsScreen() {
     }
   }
 
-  const currentLocale = (i18n.language as SupportedLocale) ?? 'ar';
-
-  async function changeLocale(locale: SupportedLocale) {
-    if (locale === currentLocale) return;
-    await AsyncStorage.setItem(LOCALE_STORAGE_KEY, locale);
-    // A direction change reloads the app now; the start-up reads the saved locale.
-    if (await switchDirectionIfNeeded(locale)) return;
-    await i18n.changeLanguage(locale);
-    setApiLocale(locale);
-  }
-
   function handleLogout() {
     Alert.alert(t('settings.signOut'), '', [
       { text: t('common.cancel'), style: 'cancel' },
@@ -141,91 +91,28 @@ export default function SettingsScreen() {
     ]);
   }
 
-  function handleClearCache() {
-    Alert.alert(t('settings.clearCache'), t('settings.clearCacheConfirm'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('settings.clearCache'),
-        style: 'destructive',
-        onPress: async () => {
-          qc.clear();
-          await AsyncStorage.removeItem('thekra_query_cache');
-        },
-      },
-    ]);
-  }
-
   function openDelete() {
     setDeleteError(null);
     setPassword('');
     setDeleteOpen(true);
   }
 
-  const syncHint =
-    syncStatus === 'idle' || syncStatus === 'running'
-      ? undefined
-      : `${t(syncStatus === 'ok' ? 'settings.syncOk' : syncStatus === 'offline' ? 'settings.syncOffline' : 'settings.syncError')}${
-          lastOkAt ? ` · ${t('settings.syncLast', { time: nowTime(new Date(lastOkAt)) })}` : ''
-        }`;
-
-  const version = Constants.expoConfig?.version ?? '0.1.0';
-
   return (
-    <Screen>
+    <Screen decor>
       <PageHeader title={t('settings.title')} />
 
-      <Group title={t('settings.language')}>
-        <OptionRow label={t('settings.languageAr')} selected={currentLocale === 'ar'} onPress={() => void changeLocale('ar')} />
-        <OptionRow label={t('settings.languageEn')} selected={currentLocale === 'en'} onPress={() => void changeLocale('en')} />
-        <HairlineSwitch label={t('settings.translations')} value={showTranslations} onValueChange={setShowTranslations} />
-      </Group>
-
-      <Group title={t('theme.title')}>
-        {THEME_OPTIONS.map((option) => (
-          <OptionRow key={option} label={t(`theme.${option}`)} selected={themePref === option} onPress={() => setThemePref(option)} />
-        ))}
-      </Group>
-
-      <Group title={t('settings.account')}>
-        {accountDeleted && !user ? <Notice icon={CircleCheck}>{t('settings.deleted')}</Notice> : null}
-        {user ? (
-          <ActionRow label={user.email} />
-        ) : (
-          <View style={styles.guest}>
-            <Text variant="small" tone="muted">
-              {t('auth.guestNote')}
-            </Text>
-            <Button label={t('settings.signIn')} onPress={() => router.push('/(auth)/login')} arrow />
-          </View>
-        )}
-      </Group>
+      <AccountSection accountDeleted={accountDeleted} />
+      <AppearanceSection />
+      <PrivacySection />
+      <RemindersSection />
+      <AboutSection />
 
       {user ? (
-        <Group title={t('settings.practice')}>
-          <Text variant="small" tone="muted">
-            {t('settings.syncNote')}
-          </Text>
-          <ActionRow
-            label={t('settings.syncNow')}
-            tone="link"
-            hint={syncHint}
-            busy={syncStatus === 'running'}
-            onPress={() => void handleSyncNow()}
-          />
-          <ActionRow label={t('settings.exportData')} tone="link" busy={exporting} onPress={() => void handleExport()} />
-          {exportError ? <ErrorText>{t('settings.exportFailed')}</ErrorText> : null}
-        </Group>
+        <SettingsGroup title={t('settings.signOutGroup')}>
+          <ListRow icon={LogOut} title={t('settings.signOut')} destructive onPress={handleLogout} />
+          <ListRow icon={Trash2} title={t('settings.deleteAccount')} destructive onPress={openDelete} />
+        </SettingsGroup>
       ) : null}
-
-      <Group>
-        <ActionRow label={t('settings.clearCache')} onPress={handleClearCache} />
-        {user ? <ActionRow label={t('settings.signOut')} tone="destructive" onPress={handleLogout} /> : null}
-        {user ? <ActionRow label={t('settings.deleteAccount')} tone="destructive" onPress={openDelete} /> : null}
-      </Group>
-
-      <Text variant="caption" tone="muted">
-        {`${t('settings.version')} ${version}`}
-      </Text>
 
       <DeleteAccountDialog
         visible={deleteOpen}
@@ -240,94 +127,84 @@ export default function SettingsScreen() {
   );
 }
 
-function Group({ title, children }: { title?: string; children: React.ReactNode }) {
-  const styles = useStyles(makeStyles);
-  return (
-    <View style={styles.group}>
-      {title ? (
-        <Text variant="small" weight="medium" tone="muted" accessibilityRole="header">
-          {title}
-        </Text>
-      ) : null}
-      <View style={styles.list}>{children}</View>
-    </View>
-  );
-}
-
-/** One choice of a set (language, appearance): the label and a check at the end when chosen. */
-function OptionRow({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
+/** Who is signed in and the practice sync, or the guest note with the way in. */
+function AccountSection({ accountDeleted }: { accountDeleted: boolean }) {
+  const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const { colors } = useTheme();
+  const user = useAuthStore((s) => s.user);
+  const syncStatus = useSyncStatus((s) => s.status);
+  const lastOkAt = useSyncStatus((s) => s.lastOkAt);
+  const syncing = syncStatus === 'running';
+
+  const syncHint =
+    syncStatus === 'idle' || syncing
+      ? undefined
+      : `${t(syncStatus === 'ok' ? 'settings.syncOk' : syncStatus === 'offline' ? 'settings.syncOffline' : 'settings.syncError')}${
+          lastOkAt ? ` · ${t('settings.syncLast', { time: nowTime(new Date(lastOkAt)) })}` : ''
+        }`;
+
   return (
-    <Pressable
-      onPress={onPress}
-      android_ripple={{ color: colors.accent }}
-      accessibilityRole="radio"
-      accessibilityState={{ checked: selected }}
-      style={({ pressed }) => [styles.row, pressed && styles.pressed]}
-    >
-      <View style={styles.rowText}>
-        <Text variant="body" weight={selected ? 'medium' : 'regular'} numberOfLines={1}>
-          {label}
-        </Text>
-      </View>
-      {selected ? <Icon icon={Check} size={20} tone="link" strokeWidth={1.8} /> : null}
-    </Pressable>
+    <SettingsGroup title={t('settings.accountSync')} lead={user ? t('settings.syncNote') : undefined}>
+      {accountDeleted && !user ? <Notice icon={CircleCheck}>{t('settings.deleted')}</Notice> : null}
+      {user ? (
+        <>
+          <ListRow icon={UserRound} title={user.email} hint={t('settings.signedIn')} />
+          <ListRow
+            icon={RefreshCw}
+            title={t('settings.syncNow')}
+            hint={syncHint}
+            chevron
+            onPress={syncing ? undefined : () => void syncPractice(user.id)}
+            trailing={syncing ? <ActivityIndicator size="small" color={colors.primary} /> : undefined}
+          />
+        </>
+      ) : (
+        <View style={styles.guest}>
+          <Text variant="small" tone="muted">
+            {t('auth.guestNote')}
+          </Text>
+          <Button label={t('settings.signIn')} onPress={() => router.push('/(auth)/login')} arrow />
+        </View>
+      )}
+    </SettingsGroup>
   );
 }
 
-/** A plain row: an action when `onPress` is given, otherwise a line of information. */
-function ActionRow({
-  label,
-  hint,
-  tone = 'default',
-  busy,
-  onPress,
-}: {
-  label: string;
-  hint?: string;
-  tone?: 'default' | 'link' | 'destructive';
-  busy?: boolean;
-  onPress?: () => void;
-}) {
+/** Theme (device, light, dark) and language, each a segmented choice like the site's. */
+function AppearanceSection() {
+  const { t, i18n } = useTranslation();
   const styles = useStyles(makeStyles);
-  const { colors } = useTheme();
-  const text = (
-    <View style={styles.rowText}>
-      <Text variant="body" tone={tone} weight={onPress ? 'medium' : 'regular'} numberOfLines={1} ellipsizeMode="middle">
-        {label}
-      </Text>
-      {hint ? (
-        <Text variant="caption" tone="muted" numberOfLines={2}>
-          {hint}
-        </Text>
-      ) : null}
-    </View>
-  );
-  if (!onPress) return <View style={styles.row}>{text}</View>;
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={busy}
-      android_ripple={{ color: colors.accent }}
-      accessibilityRole="button"
-      accessibilityState={{ disabled: Boolean(busy), busy: Boolean(busy) }}
-      style={({ pressed }) => [styles.row, pressed && styles.pressed, busy && styles.disabled]}
-    >
-      {text}
-      {busy ? <ActivityIndicator size="small" color={colors.primary} /> : null}
-    </Pressable>
-  );
-}
+  const themePref = useThemePreference((s) => s.pref);
+  const setThemePref = useThemePreference((s) => s.setPref);
+  const currentLocale: SupportedLocale = i18n.language === 'en' ? 'en' : 'ar';
 
-function HairlineSwitch(props: { label: string; value: boolean; onValueChange: (v: boolean) => void }) {
-  const styles = useStyles(makeStyles);
+  const themeItems: SegmentItem<ThemePreference>[] = THEME_OPTIONS.map((key) => ({ key, label: t(`theme.${key}`) }));
+  const localeItems: SegmentItem<SupportedLocale>[] = [
+    { key: 'ar', label: t('settings.languageAr') },
+    { key: 'en', label: t('settings.languageEn') },
+  ];
+
+  async function changeLocale(locale: SupportedLocale) {
+    if (locale === currentLocale) return;
+    await AsyncStorage.setItem(LOCALE_STORAGE_KEY, locale);
+    // A direction change reloads the app now; the start-up reads the saved locale.
+    if (await switchDirectionIfNeeded(locale)) return;
+    await i18n.changeLanguage(locale);
+    setApiLocale(locale);
+  }
+
   return (
-    <View style={[styles.row, styles.switchRow]}>
-      <View style={styles.rowText}>
-        <SwitchRow {...props} />
+    <SettingsGroup title={t('settings.appearance')}>
+      <View style={styles.choice}>
+        <Text variant="label">{t('theme.title')}</Text>
+        <SegmentTabs items={themeItems} value={themePref} onChange={setThemePref} />
       </View>
-    </View>
+      <View style={styles.choice}>
+        <Text variant="label">{t('settings.language')}</Text>
+        <SegmentTabs items={localeItems} value={currentLocale} onChange={(locale) => void changeLocale(locale)} />
+      </View>
+    </SettingsGroup>
   );
 }
 

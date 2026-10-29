@@ -10,16 +10,23 @@
  * and it is a sin against the right of Allah: owner decision D1) → practice-core `startProgram`. Then the
  * current stage (`currentStage`) with its reviewed title/body, practical steps, alternatives, evidence, the
  * daily check-in (held / weak / fell_repented + private note), `summary` (counts of days only) and, after
- * «وقعت ثم تبت», the `afterFall` («خربانة؟ صلّحها») content. «احذف كل بيانات البرنامج» wipes it all at once
- * (no confirmation step: «خروج آمن», roadmap §4.2): local data, the vault key, the server vault, and the private
- * reminders (wipePrograms turns `sinReminders` off, so the lifecycle cancels them).
+ * «وقعت ثم تبت», the `afterFall` («خربانة؟ صلّحها») content, and «دفتري الخاص» (past check-ins with their notes,
+ * newest first, shown on this screen only). «أنهِ هذا البرنامج» (confirmed) closes the program and opens the chooser;
+ * «ابدأ برنامجًا آخر», or a sin page's «ابدأ برنامج الترك» while another program runs, opens the chooser too, and
+ * starting there ends the current program after a confirmation (one program at a time, see sin-program-view.ts).
+ * «احذف كل بيانات البرنامج» wipes it all at once (no confirmation step: «خروج آمن», roadmap §4.2): local data, the
+ * vault key, the server vault, and the private reminders (wipePrograms turns `sinReminders` off, so the lifecycle
+ * cancels them).
+ *
+ * Privacy: SinProgramGuard holds the page behind the optional device lock («قفل برنامج الترك بالبصمة», Settings),
+ * covers it whenever the app leaves the foreground and blocks screenshots while it is open.
  *
  * Layout after the website's leave-sin page: the title, the privacy line (ShieldCheck), the vault box, then the
  * chooser or the program (stage, steps, check-in, texts), the reminders, and the wipe section last.
  */
 
-import React, { useState } from 'react';
-import { KeyboardAvoidingView, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Alert, KeyboardAvoidingView, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Check, Plus, ShieldCheck } from 'lucide-react-native';
@@ -40,13 +47,15 @@ import { useSins } from '@/lib/api/sins';
 import { pick, pickList, type CatalogSinProgram, type StageContent } from '@/lib/practice/catalog-types';
 import { shortDate } from '@/lib/practice/format';
 import { ensurePermission } from '@/lib/practice/notifications';
-import { today, usePracticeStore } from '@/lib/practice/practice-store';
+import { pendingProgram, setPendingProgram, today, usePracticeStore } from '@/lib/practice/practice-store';
+import { notebookEntries, withProgramEnded, withProgramStarted } from '@/lib/practice/sin-program-view';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
-import { wipeSinProgramEverywhere } from '@/lib/practice/vault-runner';
+import { useVaultState, wipeSinProgramEverywhere } from '@/lib/practice/vault-runner';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import type { QuoteDto } from '@/lib/types/api';
 import { EvidenceList } from '@/components/practice/EvidenceList';
 import { TimeField } from '@/components/practice/editors';
+import { SinProgramGuard } from '@/components/practice/SinProgramGuard';
 import { VaultCard, VaultSignInNote } from '@/components/practice/VaultCard';
 import { radius, space, useStyles, type Theme } from '@/theme';
 import {
@@ -104,10 +113,21 @@ const makeStyles = (t: Theme) => ({
     borderBottomColor: t.colors.border,
   },
   added: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 6 },
+  noteRow: { gap: space.xs, paddingVertical: space.md, borderBottomWidth: 1, borderBottomColor: t.colors.border },
+  end: { gap: space.md, paddingTop: space.lg, borderTopWidth: 1, borderTopColor: t.colors.border },
   wipe: { gap: space.md, paddingTop: space['2xl'], borderTopWidth: 1, borderTopColor: t.colors.border },
 });
 
+/** The optional device lock and the app-switcher cover come first (SinProgramGuard). */
 export default function SinProgramScreen() {
+  return (
+    <SinProgramGuard>
+      <SinProgramContent />
+    </SinProgramGuard>
+  );
+}
+
+function SinProgramContent() {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const locale = useUiLocale();
@@ -116,8 +136,18 @@ export default function SinProgramScreen() {
   const catalog = usePracticeCatalog(locale);
   const evidence = useSinProgramEvidence(catalog.data, locale);
   const sins = useSins({ limit: 100 });
+  const hasProgramData = usePracticeStore((s) => s.store.programs.length > 0);
   const userId = useAuthStore((s) => s.user?.id ?? null);
+  const vaultStatus = useVaultState((s) => s.status);
+  // An end marker is kept only while an encrypted copy may exist (also while that is not known yet).
+  const keepMarker = userId !== null && vaultStatus !== 'none';
   const [wiped, setWiped] = useState(false);
+  const [ended, setEnded] = useState(false);
+  // «ابدأ برنامج الترك» on a sin page hands its choice over in memory (never the route); read once, then cleared.
+  const [pendingSin] = useState(pendingProgram);
+  useEffect(() => setPendingProgram(null), []);
+  /** Null until the user opens or closes the chooser: a sin page's hand-off opens it beside the current program. */
+  const [choosing, setChoosing] = useState<boolean | null>(null);
 
   if (!hydrated || catalog.isLoading || sins.isLoading) return <ProgramSkeleton />;
   if (catalog.isError || !catalog.data) {
@@ -136,27 +166,58 @@ export default function SinProgramScreen() {
     return locale === 'en' ? s.name || s.nameAr : s.nameAr || s.name;
   };
 
+  const entries = catalog.data.sinPrograms.programs;
+  const preselected = pendingSin && pendingSin !== program?.sinSlug && entries.some((p) => p.sin === pendingSin) ? pendingSin : null;
+  const showChooser = !program || (choosing ?? preselected !== null);
+
+  function handleStarted() {
+    setChoosing(false);
+    setEnded(false);
+    setWiped(false);
+  }
+
+  function handleEnded() {
+    setChoosing(null);
+    setEnded(true);
+  }
+
   return (
     <KeyboardAvoidingView style={styles.flex} behavior="padding">
-      <Screen edges={['bottom']}>
+      <Screen edges={['bottom']} decor>
         <PageHeader eyebrow={t('practice.title')} title={t('sinProgram.title')} lead={t('sinProgram.lead')} />
         <Notice icon={ShieldCheck}>{t('sinProgram.privacy')}</Notice>
         {wiped && !program ? <Notice icon={Check}>{t('sinProgram.wiped')}</Notice> : null}
+        {ended && !program ? <Notice icon={Check}>{t('sinProgram.end.done')}</Notice> : null}
         {userId ? <VaultCard userId={userId} hasProgram={Boolean(program)} /> : <VaultSignInNote />}
-        {program ? (
-          <ProgramView
-            program={program}
-            entry={catalog.data.sinPrograms.programs.find((p) => p.sin === program.sinSlug)}
-            sinName={sinName(program.sinSlug)}
-            evidenceById={evidence.data}
-            evidenceLoading={evidence.isLoading}
-            evidenceError={evidence.isError}
+        {showChooser ? (
+          <ChooseProgram
+            programs={entries}
+            sinName={sinName}
+            preselected={preselected}
+            active={program}
+            keepMarker={keepMarker}
+            onStarted={handleStarted}
+            onCancel={program ? () => setChoosing(false) : undefined}
           />
-        ) : (
-          <ChooseProgram programs={catalog.data.sinPrograms.programs} sinName={sinName} />
-        )}
-        {program ? <SinReminders /> : null}
-        {program ? <WipeSection userId={userId} onWiped={() => setWiped(true)} /> : null}
+        ) : null}
+        {program && !showChooser ? (
+          <>
+            <ProgramView
+              program={program}
+              entry={entries.find((p) => p.sin === program.sinSlug)}
+              sinName={sinName(program.sinSlug)}
+              evidenceById={evidence.data}
+              evidenceLoading={evidence.isLoading}
+              evidenceError={evidence.isError}
+            />
+            <EndProgram sinSlug={program.sinSlug} keepMarker={keepMarker} onEnded={handleEnded} />
+            {entries.length > 1 ? (
+              <Button label={t('sinProgram.another')} icon={Plus} onPress={() => setChoosing(true)} variant="outline" />
+            ) : null}
+            <SinReminders />
+          </>
+        ) : null}
+        {hasProgramData ? <WipeSection userId={userId} onWiped={() => setWiped(true)} /> : null}
       </Screen>
     </KeyboardAvoidingView>
   );
@@ -185,22 +246,31 @@ function ProgramSkeleton() {
 interface ChooseProgramProps {
   programs: CatalogSinProgram[];
   sinName: (slug: string) => string;
+  /** The sin a sin page handed over, if any. */
+  preselected: string | null;
+  /** The program being followed: starting another ends it, after a confirmation. */
+  active: SinProgram | undefined;
+  keepMarker: boolean;
+  onStarted: () => void;
+  /** Back to the current program (only when there is one). */
+  onCancel?: () => void;
 }
 
-function ChooseProgram({ programs, sinName }: ChooseProgramProps) {
+function ChooseProgram({ programs, sinName, preselected, active, keepMarker, onStarted, onCancel }: ChooseProgramProps) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const locale = useUiLocale();
   const catalog = usePracticeCatalog(locale);
   const setStore = usePracticeStore((s) => s.setStore);
-  const [selected, setSelected] = useState<CatalogSinProgram | null>(null);
+  const choices = active ? programs.filter((p) => p.sin !== active.sinSlug) : programs;
+  const [selected, setSelected] = useState<CatalogSinProgram | null>(() => choices.find((p) => p.sin === preselected) ?? null);
   const [hard, setHard] = useState<boolean | null>(null);
 
   const common = catalog.data?.sinPrograms.common;
   // Owner decision D1: the gradual path is offered only where the catalog allows it (haqq_allah programs).
   const asksWill = Boolean(selected?.gradualAllowed && selected.category === 'haqq_allah');
 
-  function start() {
+  function commitStart() {
     if (!selected) return;
     const program = startProgram({
       sinSlug: selected.sin,
@@ -208,13 +278,25 @@ function ChooseProgram({ programs, sinName }: ChooseProgramProps) {
       hardToLeaveAtOnce: asksWill && hard === true,
       startedOn: today(),
     });
-    setStore((s) => ({ ...s, programs: [program] }));
+    setStore((s) => ({ ...s, programs: withProgramStarted(s.programs, program, keepMarker) }));
+    onStarted();
+  }
+
+  function handleStart() {
+    if (!active) {
+      commitStart();
+      return;
+    }
+    Alert.alert(t('sinProgram.replace.title'), t('sinProgram.replace.body'), [
+      { text: t('sinProgram.replace.cancel'), style: 'cancel' },
+      { text: t('sinProgram.replace.confirm'), style: 'destructive', onPress: commitStart },
+    ]);
   }
 
   return (
     <Section title={t('sinProgram.choose')}>
       <View style={styles.options} accessibilityRole="radiogroup">
-        {programs.map((p) => (
+        {choices.map((p) => (
           <CheckRow
             key={p.sin}
             radio
@@ -235,7 +317,8 @@ function ChooseProgram({ programs, sinName }: ChooseProgramProps) {
           <CheckRow radio title={t('sinProgram.noCanLeave')} checked={hard === false} onPress={() => setHard(false)} />
         </View>
       ) : null}
-      {selected ? <Button label={t('sinProgram.start')} onPress={start} disabled={asksWill && hard === null} arrow large /> : null}
+      {selected ? <Button label={t('sinProgram.start')} onPress={handleStart} disabled={asksWill && hard === null} arrow large /> : null}
+      {onCancel ? <Button label={t('sinProgram.replace.cancel')} onPress={onCancel} variant="outline" /> : null}
     </Section>
   );
 }
@@ -369,6 +452,8 @@ function ProgramView({ program, entry, sinName, evidenceById, evidenceLoading, e
 
       <CheckInForm program={program} />
 
+      <Notebook program={program} />
+
       {showAfterFall && common ? (
         <SubSection title={pick(common.afterFall, 'title', locale)} tone="link">
           <StageBody content={common.afterFall} />
@@ -471,6 +556,60 @@ function CheckInForm({ program }: { program: SinProgram }) {
         {t('sinProgram.summary', { days: String(counts.daysCheckedIn) })}
       </Text>
     </SubSection>
+  );
+}
+
+/** «دفتري الخاص»: past check-ins with their notes, newest first. Shown here only; the name of the sin is not in it. */
+function Notebook({ program }: { program: SinProgram }) {
+  const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
+  const entries = notebookEntries(program, today());
+  if (entries.length === 0) return null;
+  return (
+    <SubSection title={t('sinProgram.notebook')}>
+      <View style={styles.altList}>
+        {entries.map((c) => (
+          <View key={c.date} style={styles.noteRow}>
+            <Text variant="small" tone="muted">{`${shortDate(c.date)} · ${t(CHECK_IN_KEYS[c.value])}`}</Text>
+            {c.note ? <Text variant="body">{c.note}</Text> : null}
+          </View>
+        ))}
+      </View>
+    </SubSection>
+  );
+}
+
+interface EndProgramProps {
+  sinSlug: string;
+  keepMarker: boolean;
+  onEnded: () => void;
+}
+
+/** «أنهِ هذا البرنامج»: closes the program after a confirmation; its check-ins and notes are removed. */
+function EndProgram({ sinSlug, keepMarker, onEnded }: EndProgramProps) {
+  const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
+  const setStore = usePracticeStore((s) => s.setStore);
+
+  function commitEnd() {
+    setStore((s) => ({ ...s, programs: withProgramEnded(s.programs, sinSlug, keepMarker) }));
+    onEnded();
+  }
+
+  function handleEnd() {
+    Alert.alert(t('sinProgram.end.confirmTitle'), t('sinProgram.end.confirmBody'), [
+      { text: t('sinProgram.end.cancel'), style: 'cancel' },
+      { text: t('sinProgram.end.confirm'), style: 'destructive', onPress: commitEnd },
+    ]);
+  }
+
+  return (
+    <View style={styles.end}>
+      <Text variant="small" tone="muted">
+        {t('sinProgram.end.lead')}
+      </Text>
+      <Button label={t('sinProgram.end.button')} onPress={handleEnd} variant="outline" />
+    </View>
   );
 }
 

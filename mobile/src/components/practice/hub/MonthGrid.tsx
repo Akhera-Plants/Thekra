@@ -1,8 +1,10 @@
 /**
- * A month as a 7-column grid, shared by the «عاداتي» hub («وين وصلت هذا الشهر»: presence fills) and the calendar page
- * (sunnah occasions only). The first day of the week sits at the reading start; each day is a button labelled with its
- * full Gregorian and Hijri date; today is outlined, the selected day ringed, a small gold dot marks an occasion.
- * No run lengths: a day shows only whether something, or all of it, was done.
+ * A month as a 7-column grid, shared by the «عاداتي» hub («وين وصلت هذا الشهر»: presence marks) and the calendar page
+ * (sunnah occasions only), after the website's MonthGrid. The first day of the week sits at the reading start; each
+ * day is a rounded tile and a button labelled with its full Gregorian and Hijri date; the selected day is filled,
+ * today outlined, a small gold dot in the end corner marks an occasion, and on the hub a mark under the number shows
+ * whether some or all of the day was done, with the week strip's marks (PresenceDot: empty ring, half, full). No run
+ * lengths.
  */
 
 import React, { memo, useCallback, useMemo } from 'react';
@@ -15,31 +17,42 @@ import { useDateNames } from '@/lib/practice/use-habits-hub';
 import { usePracticeStore } from '@/lib/practice/practice-store';
 import { radius, space, useStyles, useTheme, type Theme } from '@/theme';
 import { BackChevron, ForwardChevron, Text } from '@/ui';
+import { PresenceDot } from './PresenceDot';
 
-const CELL = 40;
+const OCCASION_DOT = 6;
 
 const makeStyles = (t: Theme) => ({
-  root: { gap: space.sm },
+  root: { gap: space.xs },
   header: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.xs },
   titles: { flex: 1 },
-  row: { flexDirection: 'row' as const },
+  row: { flexDirection: 'row' as const, gap: space.xs },
   weekday: { flex: 1, alignItems: 'center' as const, paddingVertical: space.xs },
-  cell: { flex: 1, minHeight: 52, alignItems: 'center' as const, justifyContent: 'center' as const, gap: 2 },
-  day: {
-    width: CELL,
-    height: CELL,
-    borderRadius: radius.full,
+  cell: {
+    flex: 1,
+    minHeight: 48,
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
+    gap: space.xs,
+    paddingVertical: 6,
+    borderRadius: radius.panel,
     borderWidth: 1.5,
     borderColor: 'transparent',
   },
-  full: { backgroundColor: t.colors.primary },
-  partial: { backgroundColor: t.colors.flourish },
+  blank: { flex: 1 },
   today: { borderColor: t.colors.ring },
-  selected: { borderColor: t.colors.foreground, borderWidth: 2 },
-  dot: { width: 5, height: 5, borderRadius: radius.full },
-  occasionDot: { backgroundColor: t.colors.intentGoodDeed },
+  selected: { backgroundColor: t.colors.primary, borderColor: t.colors.primary },
+  pressed: { backgroundColor: t.colors.accent },
+  number: { lineHeight: 18 },
+  occasionDot: {
+    position: 'absolute' as const,
+    top: 5,
+    end: 5,
+    width: OCCASION_DOT,
+    height: OCCASION_DOT,
+    borderRadius: radius.full,
+    backgroundColor: t.colors.intentGoodDeed,
+  },
+  occasionOnSelected: { backgroundColor: t.colors.primaryForeground },
   step: { width: 48, height: 48, borderRadius: radius.full, alignItems: 'center' as const, justifyContent: 'center' as const },
   stepPressed: { backgroundColor: t.colors.accent },
 });
@@ -100,7 +113,8 @@ export function MonthGrid({ month, first, today, selected, marks, occasions, onS
       monthWeeks(month, first).map((week) =>
         week.map((date) => {
           if (!date) return null;
-          const mark = marks?.get(date);
+          // The week strip's marks: an empty ring on a past day with nothing logged, nothing on a day to come.
+          const mark = marks && date <= today ? (marks.get(date) ?? 'none') : undefined;
           const occasion = occasions?.has(date) ?? false;
           const parts = [dayTitle(date, hijriOffset, names)];
           if (date === today) parts.push(t('practice.today'));
@@ -155,13 +169,14 @@ export function MonthGrid({ month, first, today, selected, marks, occasions, onS
                 date={cell.date}
                 label={cell.label}
                 mark={cell.mark}
+                hasMarks={Boolean(marks)}
                 occasion={cell.occasion}
                 isToday={cell.date === today}
                 isSelected={cell.date === selected}
                 onSelect={onSelect}
               />
             ) : (
-              <View key={`blank-${i}`} style={styles.cell} />
+              <View key={`blank-${i}`} style={styles.blank} />
             ),
           )}
         </View>
@@ -174,15 +189,16 @@ interface MonthCellProps {
   date: LocalDate;
   label: string;
   mark: PresenceMark | undefined;
+  /** The hub shows presence under the number; the calendar page does not. */
+  hasMarks: boolean;
   occasion: boolean;
   isToday: boolean;
   isSelected: boolean;
   onSelect: (date: LocalDate) => void;
 }
 
-const MonthCell = memo(function MonthCell({ date, label, mark, occasion, isToday, isSelected, onSelect }: MonthCellProps) {
+const MonthCell = memo(function MonthCell({ date, label, mark, hasMarks, occasion, isToday, isSelected, onSelect }: MonthCellProps) {
   const styles = useStyles(makeStyles);
-  const { colors } = useTheme();
   const handlePress = useCallback(() => onSelect(date), [onSelect, date]);
   return (
     <Pressable
@@ -190,23 +206,19 @@ const MonthCell = memo(function MonthCell({ date, label, mark, occasion, isToday
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ selected: isSelected }}
-      android_ripple={{ color: colors.accent, borderless: true, radius: 24 }}
-      style={styles.cell}
+      style={({ pressed }) => [styles.cell, isToday && styles.today, pressed && !isSelected && styles.pressed, isSelected && styles.selected]}
     >
-      <View
-        style={[
-          styles.day,
-          mark === 'full' && styles.full,
-          mark === 'partial' && styles.partial,
-          isToday && styles.today,
-          isSelected && styles.selected,
-        ]}
+      {occasion ? <View style={[styles.occasionDot, isSelected && styles.occasionOnSelected]} /> : null}
+      <Text
+        variant="small"
+        weight={isToday || isSelected ? 'semibold' : 'medium'}
+        tone={isSelected ? 'inverse' : 'default'}
+        style={styles.number}
+        maxFontSizeMultiplier={1.2}
       >
-        <Text variant="small" weight={isToday || isSelected ? 'semibold' : 'regular'} tone={mark === 'full' ? 'inverse' : 'default'}>
-          {String(Number(date.slice(8, 10)))}
-        </Text>
-      </View>
-      <View style={[styles.dot, occasion && styles.occasionDot]} />
+        {String(Number(date.slice(8, 10)))}
+      </Text>
+      {hasMarks ? <PresenceDot level={mark} inverted={isSelected} /> : null}
     </Pressable>
   );
 });

@@ -43,6 +43,13 @@ export interface Palette {
   primarySoft: string;
   /** Pathway-card flourish and quiet decoration. */
   flourish: string;
+  /**
+   * Stroke of the line ornaments (frontend/public/ornaments/*.svg draw in #41816D in both themes; the page sets how
+   * faint they are: `decorOpacity`).
+   */
+  decor: string;
+  /** The plant drawn on the filled pathway card (`--pathway-flourish`, the same in both themes). */
+  pathwayFlourish: string;
   overlay: string;
 }
 
@@ -77,6 +84,8 @@ export const light: Palette = {
   gradeMawduForeground: '#fffcf9',
   primarySoft: 'rgba(50, 108, 89, 0.10)',
   flourish: '#d9e5d8',
+  decor: '#41816d',
+  pathwayFlourish: '#d9e5d8',
   overlay: 'rgba(16, 16, 16, 0.45)',
 };
 
@@ -111,5 +120,7 @@ export const dark: Palette = {
   gradeMawduForeground: '#101010',
   primarySoft: 'rgba(50, 108, 89, 0.18)',
   flourish: '#2a3a32',
+  decor: '#41816d',
+  pathwayFlourish: '#d9e5d8',
   overlay: 'rgba(0, 0, 0, 0.6)',
 };

@@ -1,17 +1,23 @@
 /**
- * Home, after the website's home (frontend/src/app/[locale]/page.tsx): the brand bar, the entry question, the two
- * doors (Pathways: «أعنّي على ترك معصية» filled, «أعنّي على فعل طاعة» quiet), the ornament, and the moments list.
- * Guest-first: nothing here needs an account.
- * Copy is the site's own (`home.*`).
+ * Home, after the website's home (frontend/src/app/[locale]/page.tsx), in its order: the brand bar with the tagline
+ * («لِمَن كَانَ لَهُۥ قَلْبٌ», the site header's `.brand-message`), the entry question, the doors (Pathways: «أعنّي على ترك
+ * معصية» filled, «أعنّي على فعل طاعة» quiet, «شُعَب الإيمان» compact like the site's `.pathway-faith` at phone width),
+ * the compact «استكشف النصوص» door to the texts (app/browse.tsx), the ornament, the moments list, «تذكرة مختارة»
+ * (the API's text of the day, with share and save) and «تذكير تعرف مصدره» (the source strip).
+ * Guest-first: nothing here needs an account. Copy is the site's own (`home.*`).
  */
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View } from 'react-native';
 import { router, type Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { DoorOpen, Heart, MessageCircle, Pause, Sprout, Sun, type LucideIcon } from 'lucide-react-native';
-import { space } from '@/theme';
-import { BrandBar, ListRow, Ornament, PageHeader, PathwayCard, Screen, Section } from '@/ui';
+import { BookOpen, DoorOpen, Heart, MessageCircle, Pause, Search, Sprout, Sun, type LucideIcon } from 'lucide-react-native';
+import { useReminderOfTheDay } from '@/lib/api/quotes';
+import { useSourceStripNames } from '@/lib/api/sources';
+import { FeaturedReminder } from '@/components/home/FeaturedReminder';
+import { SourceStrip } from '@/components/home/SourceStrip';
+import { space, useStyles, useTheme, type Theme } from '@/theme';
+import { BrandBar, ListRow, Ornament, PageHeader, PathwayCard, Screen, Section, Text } from '@/ui';
 
 interface Moment {
   href: Href;
@@ -27,19 +33,55 @@ const MOMENTS: Moment[] = [
   { href: '/good-deeds/kalam-tayyib', labelKey: 'home.momentKindness', icon: Heart },
 ];
 
+const openSins = () => router.push('/sins');
+const openGoodDeeds = () => router.push('/good-deeds');
+const openBranches = () => router.push('/branches');
+const openBrowse = () => router.push('/browse');
+
+const makeStyles = (t: Theme) => ({
+  doors: { gap: space.md },
+  /** `.brand-message`: Amiri Quran, muted, after a hairline (English: the UI serif). */
+  tagline: {
+    borderStartWidth: 1,
+    borderStartColor: t.colors.border,
+    paddingStart: space.md,
+    ...(t.english ? {} : { fontSize: 16, lineHeight: 30 }),
+  },
+});
+
+/** The tagline is Quran text (Qaf 50:37) in Arabic, so it takes the Quran face; English reads it in the UI face. */
+function Tagline() {
+  const { t } = useTranslation();
+  const { english } = useTheme();
+  const styles = useStyles(makeStyles);
+  return (
+    <Text variant={english ? 'small' : 'quran'} tone="muted" style={styles.tagline} numberOfLines={1}>
+      {t('app.tagline')}
+    </Text>
+  );
+}
+
 export default function HomeScreen() {
   const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
+  const reminder = useReminderOfTheDay();
+  const sources = useSourceStripNames();
+  const { refetch: refetchReminder } = reminder;
+  const { refetch: refetchSources } = sources;
+
+  const handleRetryReminder = useCallback(() => void refetchReminder(), [refetchReminder]);
+  const handleRefresh = useCallback(() => {
+    void refetchReminder();
+    void refetchSources();
+  }, [refetchReminder, refetchSources]);
 
   return (
-    <Screen>
-      <BrandBar />
+    <Screen decor refreshing={reminder.isRefetching} onRefresh={handleRefresh}>
+      <BrandBar trailing={<Tagline />} />
 
-      <PageHeader
-        eyebrow={t('home.eyebrow')}
-        title={t('home.entryTitle')}
-      />
+      <PageHeader eyebrow={t('home.eyebrow')} title={t('home.entryTitle')} />
 
-      <View style={{ gap: space.md }}>
+      <View style={styles.doors}>
         <PathwayCard
           primary
           icon={DoorOpen}
@@ -47,7 +89,7 @@ export default function HomeScreen() {
           title={t('home.sinEntryLabel')}
           body={t('home.sinEntryDescription')}
           action={t('home.sinCta')}
-          onPress={() => router.push('/sins')}
+          onPress={openSins}
         />
         <PathwayCard
           icon={Sprout}
@@ -55,7 +97,23 @@ export default function HomeScreen() {
           title={t('home.deedEntryLabel')}
           body={t('home.deedEntryDescription')}
           action={t('home.deedCta')}
-          onPress={() => router.push('/good-deeds')}
+          onPress={openGoodDeeds}
+        />
+        <PathwayCard
+          size="row"
+          icon={BookOpen}
+          title={t('home.branchEntryLabel')}
+          body={t('home.branchEntryDescription')}
+          action={t('home.branchCta')}
+          onPress={openBranches}
+        />
+        <PathwayCard
+          size="row"
+          icon={Search}
+          title={t('home.browseTitle')}
+          body={t('home.browseBody')}
+          action={t('home.browseCta')}
+          onPress={openBrowse}
         />
       </View>
 
@@ -67,6 +125,15 @@ export default function HomeScreen() {
           ))}
         </View>
       </Section>
+
+      <FeaturedReminder
+        quote={reminder.data}
+        isLoading={reminder.isLoading}
+        isError={reminder.isError}
+        onRetry={handleRetryReminder}
+      />
+
+      <SourceStrip names={sources.data} isLoading={sources.isLoading} />
     </Screen>
   );
 }

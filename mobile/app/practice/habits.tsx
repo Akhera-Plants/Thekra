@@ -94,7 +94,7 @@ export default function HabitsTrackScreen() {
   }
 
   return (
-    <Screen edges={['bottom']}>
+    <Screen edges={['bottom']} decor>
       <PageHeader eyebrow={t('practice.title')} title={t('practice.hub.habitsTrack')} lead={t('practice.lead')} />
       <Notice icon={HardDrive}>{t('practice.privateNote')}</Notice>
 

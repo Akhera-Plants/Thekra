@@ -7,13 +7,15 @@ import React, { memo, useCallback, useMemo } from 'react';
 import { FlatList, RefreshControl, View, type ListRenderItem } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { WifiOff } from 'lucide-react-native';
 import { useQuotesInfinite } from '@/lib/api/quotes';
 import { useTag } from '@/lib/api/tags';
 import { useToggleFavorite } from '@/lib/api/favorites';
 import type { QuoteDto } from '@/lib/types/api';
 import { QuoteCard } from '@/components/QuoteCard';
 import { GUTTER, space, useStyles, useTheme } from '@/theme';
-import { EmptyState, ErrorState, PageHeader, QuoteCardSkeleton, Screen, Skeleton } from '@/ui';
+import { useIsOffline } from '@/lib/query-client';
+import { EmptyState, ErrorState, Notice, PageHeader, QuoteCardSkeleton, Screen, Skeleton } from '@/ui';
 
 const LOADING_CARDS = ['q1', 'q2', 'q3'];
 const keyExtractor = (item: QuoteDto) => item.id;
@@ -21,7 +23,7 @@ const keyExtractor = (item: QuoteDto) => item.id;
 const makeStyles = () => ({
   frame: { paddingHorizontal: 0, paddingTop: 0 },
   list: { paddingHorizontal: GUTTER, paddingTop: space.lg, paddingBottom: space['4xl'] },
-  header: { paddingBottom: space['2xl'] },
+  header: { gap: space.lg, paddingBottom: space['2xl'] },
   gap: { height: space.lg },
   stack: { gap: space.lg },
   footer: { paddingTop: space.lg },
@@ -45,6 +47,7 @@ export default function FeelingsScreen() {
   const { t } = useTranslation();
   const { english, colors } = useTheme();
   const styles = useStyles(makeStyles);
+  const isOffline = useIsOffline();
 
   const { data: tag, isLoading: tagLoading } = useTag(tagSlug ?? '');
 
@@ -77,8 +80,9 @@ export default function FeelingsScreen() {
       {tagLoading ? (
         <Skeleton width="60%" height={30} />
       ) : (
-        <PageHeader title={tagName || t('feelings.title')} />
+        <PageHeader title={tagName ? t('feelings.title', { tag: tagName }) : t('feelings.titleNoTag')} />
       )}
+      {isOffline ? <Notice icon={WifiOff}>{t('common.offlineBanner')}</Notice> : null}
     </View>
   );
 

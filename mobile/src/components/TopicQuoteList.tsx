@@ -1,22 +1,22 @@
 /**
  * The quote list of one topic (a sin's reminders, a good deed's motivations), after the website's topic pages:
- * the page header, the type filter (SegmentTabs with the counts read under «الكل»), a section title, the quote
- * cards, «تذكير آخر», and whatever the page adds above the list (`intro`) or after it (`footer`).
+ * the page header, the type filter (SegmentTabs with the counts read under «الكل»), the reading sections with
+ * their headings (see `buildTopicSections`), and whatever the page adds above the list (`intro`) or after it
+ * (`footer`). The API's reading order is kept: no shuffle (owner rule, PROJECT_GUIDE §6).
  * The screen owns the query; this renders its states (skeletons, error, empty, refresh, next page).
  */
 
 import React, { memo, useCallback, useMemo, useState } from 'react';
-import { FlatList, RefreshControl, View, type ListRenderItem } from 'react-native';
+import { RefreshControl, SectionList, View, type SectionListRenderItem } from 'react-native';
 import type { UseInfiniteQueryResult } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Shuffle } from 'lucide-react-native';
 import { useToggleFavorite } from '@/lib/api/favorites';
+import type { TopicSection } from '@/lib/topics';
 import type { QuoteDto } from '@/lib/types/api';
 import type { QuoteType } from '@/lib/types/enums';
 import { QuoteCard } from '@/components/QuoteCard';
 import { GUTTER, space, useStyles, useTheme } from '@/theme';
 import {
-  Button,
   EmptyState,
   ErrorState,
   PageHeader,
@@ -46,16 +46,14 @@ type TopicQueryState = Pick<
   'isLoading' | 'isError' | 'isRefetching' | 'isFetchNextPageError' | 'hasNextPage' | 'isFetchingNextPage' | 'fetchNextPage' | 'refetch'
 >;
 
-/** The filter and «تذكير آخر» order of a topic page, and the request params they give. */
+/** The type filter of a topic page and the request params it gives. */
 export function useTopicQuoteParams() {
   const [filter, setFilter] = useState<TopicFilter>('ALL');
-  const [seed, setSeed] = useState<string | undefined>(undefined);
-  const shuffle = useCallback(() => setSeed(String(Math.random()).slice(2)), []);
-  const params = { type: filter !== 'ALL' ? [filter] : undefined, seed, limit: PAGE_SIZE };
-  return { filter, setFilter, shuffle, params };
+  const params = { type: filter !== 'ALL' ? [filter] : undefined, limit: PAGE_SIZE };
+  return { filter, setFilter, params };
 }
 
-/** The last defined value: keeps the title and the tab counts in place while a new filter or order loads. */
+/** The last defined value: keeps the title and the tab counts in place while a new filter loads. */
 export function useLastDefined<T>(value: T | undefined): T | undefined {
   const [kept, setKept] = useState(value);
   if (value !== undefined && value !== kept) setKept(value);
@@ -64,17 +62,15 @@ export function useLastDefined<T>(value: T | undefined): T | undefined {
 
 interface TopicQuoteListProps {
   query: TopicQueryState;
-  quotes: QuoteDto[];
+  sections: TopicSection[];
   /** Counts per type from the response read under «الكل». */
   counts?: Partial<Record<QuoteType, number>>;
   filter: TopicFilter;
   onFilterChange: (filter: TopicFilter) => void;
-  onShuffle: () => void;
   eyebrow: string;
   /** Null while the topic itself is loading. */
   title: string | null;
   lead?: string | null;
-  sectionTitle: string;
   emptyMessage: string;
   intro?: React.ReactNode;
   footer?: React.ReactNode;
@@ -86,6 +82,7 @@ const makeStyles = () => ({
   header: { gap: space['2xl'], paddingBottom: space.lg },
   headerSkeleton: { gap: space.md },
   gap: { height: space.lg },
+  sectionTitle: { paddingTop: space.lg, paddingBottom: space.lg },
   stack: { gap: space.lg },
   footer: { gap: space['2xl'], paddingTop: space.lg },
 });
@@ -101,20 +98,29 @@ function CardGap() {
   return <View style={styles.gap} />;
 }
 
+function SectionTitle({ section }: { section: TopicSection }) {
+  const styles = useStyles(makeStyles);
+  if (!section.title) return null;
+  return (
+    <Text variant="title" accessibilityRole="header" style={styles.sectionTitle}>
+      {section.title}
+    </Text>
+  );
+}
+
 const keyExtractor = (quote: QuoteDto) => quote.id;
-const renderItem: ListRenderItem<QuoteDto> = ({ item }) => <QuoteItem quote={item} />;
+const renderItem: SectionListRenderItem<QuoteDto, TopicSection> = ({ item }) => <QuoteItem quote={item} />;
+const renderSectionHeader = ({ section }: { section: TopicSection }) => <SectionTitle section={section} />;
 
 export function TopicQuoteList({
   query,
-  quotes,
+  sections,
   counts,
   filter,
   onFilterChange,
-  onShuffle,
   eyebrow,
   title,
   lead,
-  sectionTitle,
   emptyMessage,
   intro,
   footer,
@@ -145,11 +151,6 @@ export function TopicQuoteList({
       <PageHeader eyebrow={eyebrow} title={title} lead={lead ?? undefined} />
       {intro}
       {showTabs ? <SegmentTabs items={tabs} value={filter} onChange={onFilterChange} /> : null}
-      {isLoading || quotes.length > 0 ? (
-        <Text variant="title" accessibilityRole="header">
-          {sectionTitle}
-        </Text>
-      ) : null}
     </View>
   ) : isLoading ? (
     <View style={[styles.header, styles.headerSkeleton]}>
@@ -175,17 +176,18 @@ export function TopicQuoteList({
     <View style={styles.footer}>
       {isFetchingNextPage ? <QuoteCardSkeleton /> : null}
       {isFetchNextPageError ? <ErrorState onRetry={handleRetryMore} /> : null}
-      {quotes.length > 0 ? <Button variant="outline" icon={Shuffle} label={t('reminders.anotherReminder')} onPress={onShuffle} /> : null}
       {footer}
     </View>
   );
 
   return (
     <Screen edges={['bottom']} scroll={false} contentStyle={styles.frame}>
-      <FlatList
-        data={isLoading ? [] : quotes}
+      <SectionList
+        sections={isLoading ? [] : sections}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
+        renderSectionHeader={renderSectionHeader}
+        stickySectionHeadersEnabled={false}
         ItemSeparatorComponent={CardGap}
         ListHeaderComponent={header}
         ListEmptyComponent={empty}

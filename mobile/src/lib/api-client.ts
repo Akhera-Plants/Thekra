@@ -226,6 +226,17 @@ export async function apiPost<T>(
   return { data: envelope.data, meta: envelope.meta };
 }
 
+export async function apiPut<T>(
+  path: string,
+  body?: unknown,
+  config?: AxiosRequestConfig,
+  client: AxiosInstance = apiClient,
+): Promise<{ data: T; meta?: PageMeta }> {
+  const response = await client.put<ApiEnvelope<T>>(path, body, config);
+  const envelope = response.data;
+  return { data: envelope.data, meta: envelope.meta };
+}
+
 export async function apiPatch<T>(
   path: string,
   body?: unknown,

@@ -7,11 +7,13 @@ import React, { memo, useCallback, useMemo, useState } from 'react';
 import { FlatList, RefreshControl, View, type ListRenderItem } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { SearchX, Sprout } from 'lucide-react-native';
+import { SearchX, Sprout, WifiOff } from 'lucide-react-native';
 import { useGoodDeeds } from '@/lib/api/good-deeds';
 import type { GoodDeedDto } from '@/lib/types/api';
 import { GUTTER, space, useStyles, useTheme, type Theme } from '@/theme';
-import { EmptyState, ErrorState, Field, ListRow, PageHeader, Screen, Skeleton } from '@/ui';
+import { useIsOffline } from '@/lib/query-client';
+import { topicMeta } from '@/lib/topics';
+import { EmptyState, ErrorState, Field, ListRow, Notice, PageHeader, Screen, Skeleton } from '@/ui';
 
 const SKELETON_ROWS = ['s1', 's2', 's3', 's4', 's5', 's6'];
 const keyExtractor = (item: GoodDeedDto) => item.id;
@@ -37,12 +39,13 @@ interface DeedRowProps {
 }
 
 const DeedRow = memo(function DeedRow({ deed, english }: DeedRowProps) {
+  const { t } = useTranslation();
   const handlePress = useCallback(() => router.push(`/good-deeds/${deed.slug}`), [deed.slug]);
   return (
     <ListRow
       icon={Sprout}
       title={english ? deed.name || deed.nameAr : deed.nameAr}
-      hint={deed.quoteCount > 0 ? String(deed.quoteCount) : undefined}
+      hint={topicMeta(deed, t)}
       onPress={handlePress}
     />
   );
@@ -71,6 +74,7 @@ export default function GoodDeedPickerScreen() {
   const { english, colors } = useTheme();
   const styles = useStyles(makeStyles);
   const [search, setSearch] = useState('');
+  const isOffline = useIsOffline();
 
   const { data: deeds, isLoading, isError, isRefetching, refetch } = useGoodDeeds({
     sort: 'quoteCount',
@@ -92,12 +96,12 @@ export default function GoodDeedPickerScreen() {
   const header = (
     <View style={styles.header}>
       <PageHeader eyebrow={t('goodDeedPicker.eyebrow')} title={t('goodDeedPicker.title')} lead={t('goodDeedPicker.lead')} />
+      {isOffline ? <Notice icon={WifiOff}>{t('common.offlineBanner')}</Notice> : null}
       <Field
         value={search}
         onChangeText={setSearch}
         placeholder={t('goodDeedPicker.searchPlaceholder')}
         accessibilityLabel={t('common.search')}
-        autoFocus
         autoCorrect={false}
         autoCapitalize="none"
         returnKeyType="search"

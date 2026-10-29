@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { Check, ChevronLeft, ChevronRight, Minus, PencilLine, Plus, Undo2 } from 'lucide-react-native';
 import { addDays, type Plan } from '@thekra/practice-core';
 import { shortDate } from '@/lib/practice/format';
-import type { PlanView } from '@/lib/practice/plan-view';
+import { fixLogStep, type PlanView } from '@/lib/practice/plan-view';
 import { space, useStyles, useTheme, type Theme } from '@/theme';
 import { Button, Card, Icon, IconButton, NextStep, Row, Text, Wrap } from '@/ui';
 
@@ -136,11 +136,11 @@ function FixPanel({ plan, today: d, amountLabel, onSave, onCancel }: FixPanelPro
         <IconButton icon={rtl ? ChevronLeft : ChevronRight} label={t('practice.plan.fixLater')} onPress={() => moveDay(-1)} disabled={back === 0} tone="link" bordered />
       </View>
       <View style={styles.stepper}>
-        <IconButton icon={Minus} label={t('practice.plan.fixLess')} onPress={() => setAmount(Math.max(0, amount - 1))} disabled={amount <= 0} tone="link" bordered />
+        <IconButton icon={Minus} label={t('practice.plan.fixLess')} onPress={() => setAmount(fixLogStep(amount, plan.unit, -1, FIX_MAX))} disabled={amount <= 0} tone="link" bordered />
         <Text variant="heading" align="center" style={styles.stepperValue} accessibilityLiveRegion="polite">
           {amountLabel(amount)}
         </Text>
-        <IconButton icon={Plus} label={t('practice.plan.fixMore')} onPress={() => setAmount(Math.min(FIX_MAX, amount + 1))} disabled={amount >= FIX_MAX} tone="link" bordered />
+        <IconButton icon={Plus} label={t('practice.plan.fixMore')} onPress={() => setAmount(fixLogStep(amount, plan.unit, 1, FIX_MAX))} disabled={amount >= FIX_MAX} tone="link" bordered />
       </View>
       <Wrap>
         <Button label={t('practice.plan.save')} onPress={() => onSave(date, amount)} />

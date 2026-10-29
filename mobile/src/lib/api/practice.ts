@@ -39,10 +39,9 @@ export async function fetchCalendarOccasions(from: string, to: string, hijriOffs
   });
 }
 
-/** `webcal://…/v1/calendar/occasions.ics?lang=…&months=12`: the public feed, the same for everyone. */
-export function calendarSubscribeUrl(lang: UiLocale, months = 12): string {
-  const base = getApiBaseUrl().replace(/^https?:\/\//i, 'webcal://');
-  return `${base}/v1/calendar/occasions.ics?lang=${lang}&months=${months}`;
+/** `https://…/v1/calendar/occasions.ics?lang=…&months=12`: the public feed, the same for everyone. */
+export function calendarFeedUrl(lang: UiLocale, months = 12): string {
+  return `${getApiBaseUrl()}/v1/calendar/occasions.ics?lang=${lang}&months=${months}`;
 }
 
 /** `skipLang` is a custom flag read by the api-client interceptor (no `?lang` on account calls). */

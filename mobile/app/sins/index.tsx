@@ -8,11 +8,13 @@ import React, { memo, useCallback, useMemo, useState } from 'react';
 import { FlatList, RefreshControl, View, type ListRenderItem } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { DoorOpen, SearchX } from 'lucide-react-native';
+import { DoorOpen, SearchX, WifiOff } from 'lucide-react-native';
 import { useSins } from '@/lib/api/sins';
 import type { SinDto } from '@/lib/types/api';
 import { GUTTER, space, useStyles, useTheme, type Theme } from '@/theme';
-import { EmptyState, ErrorState, Field, ListRow, PageHeader, Screen, Skeleton } from '@/ui';
+import { useIsOffline } from '@/lib/query-client';
+import { topicMeta } from '@/lib/topics';
+import { EmptyState, ErrorState, Field, ListRow, Notice, PageHeader, Screen, Skeleton } from '@/ui';
 
 const SKELETON_ROWS = ['s1', 's2', 's3', 's4', 's5', 's6'];
 const keyExtractor = (item: SinDto) => item.id;
@@ -38,12 +40,13 @@ interface SinRowProps {
 }
 
 const SinRow = memo(function SinRow({ sin, english }: SinRowProps) {
+  const { t } = useTranslation();
   const handlePress = useCallback(() => router.push(`/sins/${sin.slug}`), [sin.slug]);
   return (
     <ListRow
       icon={DoorOpen}
       title={english ? sin.name || sin.nameAr : sin.nameAr}
-      hint={sin.quoteCount > 0 ? String(sin.quoteCount) : undefined}
+      hint={topicMeta(sin, t)}
       onPress={handlePress}
     />
   );
@@ -72,6 +75,7 @@ export default function SinPickerScreen() {
   const { english, colors } = useTheme();
   const styles = useStyles(makeStyles);
   const [search, setSearch] = useState('');
+  const isOffline = useIsOffline();
 
   const { data: sins, isLoading, isError, isRefetching, refetch } = useSins({
     sort: 'quoteCount',
@@ -93,12 +97,12 @@ export default function SinPickerScreen() {
   const header = (
     <View style={styles.header}>
       <PageHeader eyebrow={t('sinPicker.eyebrow')} title={t('sinPicker.title')} lead={t('sinPicker.lead')} />
+      {isOffline ? <Notice icon={WifiOff}>{t('common.offlineBanner')}</Notice> : null}
       <Field
         value={search}
         onChangeText={setSearch}
         placeholder={t('sinPicker.searchPlaceholder')}
         accessibilityLabel={t('common.search')}
-        autoFocus
         autoCorrect={false}
         autoCapitalize="none"
         returnKeyType="search"

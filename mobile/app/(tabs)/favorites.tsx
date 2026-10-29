@@ -8,19 +8,20 @@ import React, { memo, useCallback, useState } from 'react';
 import { FlatList, RefreshControl, View, type ListRenderItem } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Bookmark, BookmarkPlus } from 'lucide-react-native';
+import { Bookmark, BookmarkPlus, WifiOff } from 'lucide-react-native';
 import { useFavorites, useToggleFavorite } from '@/lib/api/favorites';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { QuoteCard } from '@/components/QuoteCard';
 import { GUTTER, space, useStyles, useTheme, type Theme } from '@/theme';
-import { EmptyState, ErrorState, PageHeader, QuoteCardSkeleton, Screen } from '@/ui';
+import { useIsOffline } from '@/lib/query-client';
+import { EmptyState, ErrorState, Notice, PageHeader, QuoteCardSkeleton, Screen } from '@/ui';
 import type { QuoteDto } from '@/lib/types/api';
 
 const SKELETON_COUNT = 3;
 
 const makeStyles = (t: Theme) => ({
   list: { paddingHorizontal: GUTTER, paddingTop: space.lg, paddingBottom: space['4xl'] },
-  header: { paddingBottom: space.xl },
+  header: { gap: space.lg, paddingBottom: space.xl },
   gap: { height: space.lg },
   skeletons: { gap: space.lg },
   fill: { backgroundColor: t.colors.background },
@@ -42,9 +43,11 @@ function Gap() {
 function FavoritesHeader() {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
+  const isOffline = useIsOffline();
   return (
     <View style={styles.header}>
       <PageHeader title={t('favorites.title')} lead={t('favorites.lead')} />
+      {isOffline ? <Notice icon={WifiOff}>{t('common.offlineBanner')}</Notice> : null}
     </View>
   );
 }

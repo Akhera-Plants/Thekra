@@ -1,13 +1,14 @@
 /**
  * Register: optional account creation (mobile-plan §3), reached from the login screen. Same block as login:
  * the title, one quiet line, email and a new password (autofill offers a strong password and saves the pair),
- * one full-width action, then the way back to sign in. Failures show inline, never the raw API text.
+ * one full-width action with the privacy policy (the site) under it, then the way back to sign in. Failures show inline, never the raw API text.
  */
 
 import React, { useState } from 'react';
-import { View } from 'react-native';
+import { Linking, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { SITE_PRIVACY_PATH, sitePageUrl } from '@/lib/site';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { ApiError } from '@/lib/types/api';
 import { space, useStyles } from '@/theme';
@@ -20,7 +21,7 @@ const makeStyles = () => ({
 });
 
 export default function RegisterScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const styles = useStyles(makeStyles);
   const register = useAuthStore((s) => s.register);
   const isLoading = useAuthStore((s) => s.isLoading);
@@ -86,6 +87,11 @@ export default function RegisterScreen() {
             loading={isLoading}
             block
             large
+          />
+          <TextLink
+            label={t('settings.privacyPolicy')}
+            muted
+            onPress={() => void Linking.openURL(sitePageUrl(SITE_PRIVACY_PATH, i18n.language)).catch(() => undefined)}
           />
         </View>
         <View style={styles.switch}>

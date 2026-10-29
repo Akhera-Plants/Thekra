@@ -7,6 +7,16 @@
 import { addDays, isHijriSupported, toHijri, weekday, type HijriDate, type LocalDate } from '@thekra/practice-core';
 import type { UiLocale } from './catalog-types';
 
+/**
+ * The link that subscribes a calendar app to the public feed: `webcal://` on iOS (Apple Calendar subscribes);
+ * on Android, where most devices have no `webcal` handler, Google Calendar's add-by-URL page.
+ */
+export function calendarSubscribeLink(feedUrl: string, os: string): string {
+  const webcal = feedUrl.replace(/^https?:\/\//i, 'webcal://');
+  if (os !== 'android') return webcal;
+  return `https://calendar.google.com/calendar/render?cid=${encodeURIComponent(webcal)}`;
+}
+
 /** The first day of the week: Saturday in Arabic (as on Arab calendars), Sunday in English. 0 = Sunday. */
 export function firstWeekday(locale: UiLocale): number {
   return locale === 'ar' ? 6 : 0;
@@ -31,6 +41,20 @@ export function weekdayOrder(first: number): number[] {
 /** The first day of the month holding `date`. */
 export function monthStart(date: LocalDate): LocalDate {
   return `${date.slice(0, 7)}-01`;
+}
+
+/**
+ * The hub's selection after the date changed under it (midnight, or back from the background on another day): a
+ * selection still on the old today moves to the new one, with the month grid if it showed that day's month; a day
+ * the user picked stays where it is.
+ */
+export function followToday(
+  view: { selected: LocalDate; month: LocalDate },
+  previousToday: LocalDate,
+  newToday: LocalDate,
+): { selected: LocalDate; month: LocalDate } {
+  if (previousToday === newToday || view.selected !== previousToday) return view;
+  return { selected: newToday, month: view.month === monthStart(previousToday) ? monthStart(newToday) : view.month };
 }
 
 /** The last day of the month holding `date`. */

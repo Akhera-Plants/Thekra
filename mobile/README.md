@@ -22,7 +22,10 @@ Use a device/simulator with the API reachable (localhost works on iOS simulator;
 
 ## Screens
 
-Tabs: Home · My habits (عاداتي) · Browse · Favorites · Settings  
+Tabs: Home · My garden (بستاني) · My habits (عاداتي, centre) · Favorites · Settings  
+Garden: `(tabs)/garden` (بستاني): one plant per habit plan (+ صلة الرحم), grown by days tended, never shrinking, resting
+on «يومي ثقيل»; never a plant for the sin program (`src/lib/practice/garden.ts`, drawings in `src/components/garden/`)  
+Browse: `browse` (استكشف النصوص), a pushed screen opened from Home  
 Core: `sins/[slug]`, `good-deeds/[slug]`, `quotes/[id]`, `feelings/[tagSlug]`  
 Hub: `(tabs)/habits` (عاداتي): today across every track (practice-core `dayAgenda`), week strip, «أضف» sheet, the three
 tracks, «وين وصلت هذا الشهر» month grid (pieces in `src/components/practice/hub/`, hooks in `src/lib/practice/use-habits-hub.ts`)  

@@ -1,7 +1,7 @@
 /**
- * «أضف» from the hub: a bottom sheet in the kit's look (card fill, hairline, panel radius on top, a grab handle) with
- * three choices: a good habit (the setup wizard), a relative (the kinship page with its add form open), a program to
- * leave a sin (generic words only). It rises from the bottom (still when the system asks to reduce motion); the
+ * «أضف» from the hub: a bottom sheet in the kit's look (card fill, hairline, panel radius on top; no grab handle, as
+ * it does not drag) with three choices: a good habit (the setup wizard), a relative (the kinship page with its add
+ * form open), a program to leave a sin (generic words only). It rises from the bottom (still when the system asks to reduce motion); the
  * backdrop, «إلغاء» and Android back close it.
  */
 
@@ -43,7 +43,6 @@ const makeStyles = (t: Theme) => ({
     paddingTop: space.sm,
     gap: space.sm,
   },
-  handle: { alignSelf: 'center' as const, width: 36, height: 4, borderRadius: radius.full, backgroundColor: t.colors.border },
 });
 
 export interface AddSheetProps {
@@ -84,7 +83,6 @@ export function AddSheet({ visible, onClose }: AddSheetProps) {
           style={[styles.sheet, { paddingBottom: insets.bottom + space.lg, transform: [{ translateY: rise }] }]}
           accessibilityViewIsModal
         >
-          <View style={styles.handle} />
           <Text variant="heading" accessibilityRole="header">
             {t('practice.hub.addTitle')}
           </Text>

@@ -4,7 +4,8 @@
  * «يومي ثقيل», and the counts on the track rows. Every edit goes through practice-core store helpers.
  */
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 import {
@@ -30,8 +31,9 @@ import {
   type Store,
 } from '@thekra/practice-core';
 import { usePracticeCatalog } from '@/lib/api/practice';
+import { useCirclePresence } from '@/lib/circles/use-circle-presence';
 import { pick } from './catalog-types';
-import { addMonths, firstWeekday, monthStart, weekDays, type DateNames } from './calendar-grid';
+import { addMonths, firstWeekday, followToday, monthStart, weekDays, type DateNames } from './calendar-grid';
 import { dueNowCount, finishedDay, hasStarted, presenceMarks, type PresenceMark } from './hub';
 import { eachPlan } from './plan-view';
 import { today, usePracticeStore } from './practice-store';
@@ -51,13 +53,42 @@ export function useDateNames(): DateNames {
   );
 }
 
-/** The selected day (today at first), its week in reading order, and the month the grid shows. */
+/** How often an open hub checks whether the date changed (it also checks on every return to the foreground). */
+const TODAY_CHECK_MS = 60_000;
+
+/**
+ * The selected day (today at first), its week in reading order, and the month the grid shows. «Today» follows the
+ * clock: past midnight or back from the background on another day, it moves on, and so does a selection that was
+ * on it (`followToday`); a day the user picked stays.
+ */
 export function useHubDays() {
   const locale = useUiLocale();
   const first = firstWeekday(locale);
-  const d = today();
+  const [d, setToday] = useState(today);
   const [selected, setSelected] = useState(d);
-  const [month, setMonth] = useState(monthStart(d));
+  const [month, setMonth] = useState(() => monthStart(d));
+  const viewRef = useRef({ today: d, selected, month });
+  viewRef.current = { today: d, selected, month };
+
+  useEffect(() => {
+    function refreshToday() {
+      const { today: previous, selected: sel, month: shown } = viewRef.current;
+      const now = today();
+      if (now === previous) return;
+      const next = followToday({ selected: sel, month: shown }, previous, now);
+      setToday(now);
+      setSelected(next.selected);
+      setMonth(next.month);
+    }
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') refreshToday();
+    });
+    const timer = setInterval(refreshToday, TODAY_CHECK_MS);
+    return () => {
+      sub.remove();
+      clearInterval(timer);
+    };
+  }, []);
 
   const select = useCallback((date: LocalDate) => {
     setSelected(date);
@@ -65,7 +96,11 @@ export function useHubDays() {
   }, []);
   const shiftWeek = useCallback((delta: number) => select(addDays(selected, 7 * delta)), [select, selected]);
   const shiftMonth = useCallback((delta: number) => setMonth((m) => addMonths(m, delta)), []);
-  const goToday = useCallback(() => select(today()), [select]);
+  const goToday = useCallback(() => {
+    const now = today();
+    setToday(now);
+    select(now);
+  }, [select]);
   const week = useMemo(() => weekDays(selected, first), [selected, first]);
 
   return { today: d, selected, month, week, first, select, shiftWeek, shiftMonth, goToday };
@@ -160,6 +195,7 @@ export type HubLastLog =
  * a logged amount. One light haptic when the tap finishes the day.
  */
 export function useAgendaActions(date: LocalDate) {
+  useCirclePresence(); // «حضرت اليوم» to the user's circles (رفقة), when sharing is on there
   const setStore = usePracticeStore((s) => s.setStore);
   const [lastLog, setLastLog] = useState<HubLastLog | null>(null);
   const before = useRef(new Map<string, number>());
