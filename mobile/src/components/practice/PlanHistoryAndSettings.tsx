@@ -36,7 +36,7 @@ export function MonthPanel({ plan, view, today: d }: MonthPanelProps) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const days = Array.from({ length: MONTH_DAYS }, (_, i) => addDays(d, -(MONTH_DAYS - 1 - i)));
-  const daysText = t('practice.monthDays', { done: String(view.daysDone), target: String(view.targetDays) });
+  const daysText = t('practice.monthDays', { done: String(view.daysDone), count: view.targetDays });
   return (
     <Section title={t('practice.monthTitle')}>
       <View style={styles.tight}>

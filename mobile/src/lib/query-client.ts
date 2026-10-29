@@ -3,7 +3,8 @@
  * Design decision: mobile-plan.md §6 — AsyncStorage + TanStack Query persister.
  */
 
-import { QueryClient } from '@tanstack/react-query';
+import { useSyncExternalStore } from 'react';
+import { QueryClient, onlineManager } from '@tanstack/react-query';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import { PERSISTED_QUERY_KEYS } from './query-keys';
@@ -50,3 +51,13 @@ export function shouldPersistQuery(queryKey: readonly unknown[]): boolean {
 }
 
 export { MAX_AGE };
+
+// ── Connection state ──────────────────────────────────────────────────────────
+
+const subscribeOnline = (onChange: () => void) => onlineManager.subscribe(onChange);
+const readOffline = () => !onlineManager.isOnline();
+
+/** True while the device has no connection (NetInfo feeds `onlineManager` in app/_layout.tsx). */
+export function useIsOffline(): boolean {
+  return useSyncExternalStore(subscribeOnline, readOffline);
+}

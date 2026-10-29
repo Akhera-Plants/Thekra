@@ -231,8 +231,7 @@ function renderToday(main: HTMLElement, t: Translate): void {
     const plan = normalize(stored, day);
     const habit = habitOf(plan);
     const rule = ruleOf(plan);
-    const label = habit ? unitLabel(habit, lang) : '';
-    const amount = (n: number) => formatAmount(n, plan.unit, label);
+    const amount = (n: number) => formatAmount(n, plan.unit, habit, lang);
     const required = requiredOn(plan, day);
     const done = plan.log[day] ?? 0;
     const remaining = remainingOn(plan, day);
@@ -416,7 +415,7 @@ function renderSettings(main: HTMLElement, t: Translate): void {
         };
         card.append(
           h('fieldset', {}, h('legend', {}, t('distanceLabel')), radio('far', t('distanceFar')), radio('near', t('distanceNear'))),
-          h('p', { class: 'suggest' }, t('startSuggestion', formatAmount(suggestedStart(habit, hd.distance), habit.unit, label))),
+          h('p', { class: 'suggest' }, t('startSuggestion', formatAmount(suggestedStart(habit, hd.distance), habit.unit, habit, lang))),
           h('p', { class: 'muted' }, t('startHint')),
         );
       } else {

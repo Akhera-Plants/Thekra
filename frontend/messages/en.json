@@ -281,7 +281,12 @@
     "typeBook": "Books",
     "tabsLabel": "Filter texts",
     "themesLabel": "Themes on this page",
-    "themeAll": "All"
+    "themeAll": "All",
+    "habit": {
+      "title": "Make it a habit",
+      "start": "Start it",
+      "added": "In your habits"
+    }
   },
   "browse": {
     "pageTitle": "Browse",
@@ -933,7 +938,9 @@
     "units": {
       "minutes": "minutes",
       "count": "times",
-      "times": "times"
+      "times": "times",
+      "rakahPairs": "times, two rak'ahs each",
+      "rakahOdd": "times: one rak'ah, then two each time"
     },
     "setup": {
       "stepOf": "Step {step} of {total}",
@@ -973,7 +980,7 @@
       "required": "Today: {amount}",
       "done": "logged {amount}",
       "nextSlot": "Next reminder at {time}",
-      "fixItTitle": "It slipped? Mend it",
+      "fixItTitle": "Correct your log",
       "fixItBody": "Finish today with whatever you can: any amount counts, and nothing is added to tomorrow.",
       "markDone": "Done it",
       "partialLabel": "Amount done ({unit})",
@@ -1016,7 +1023,8 @@
         "save": "Save",
         "cancel": "Cancel"
       },
-      "unlogged": "Unmarked."
+      "unlogged": "Unmarked.",
+      "readAbout": "Read about this deed"
     },
     "progress": {
       "title": "Where you are",
@@ -1370,6 +1378,7 @@
         "save": "The encrypted copy could not be updated. What is on your device is saved.",
         "reopen": "The privacy code was changed on another device; open the program again."
       }
-    }
+    },
+    "continueFromSin": "Continue your program"
   }
 }

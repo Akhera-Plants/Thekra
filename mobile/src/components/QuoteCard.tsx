@@ -5,6 +5,7 @@
  *   at the end.
  * - Body: Uthmani verse text in Amiri Quran; hadith and sayings in Plex at reading size. English UI with a
  *   translation shows it in Source Serif under the Arabic.
+ * - «اقرأ التفسير» (verses) / «اقرأ الشرح» (hadith): the site's ghost study button, to quotes/study/[id].
  * - «اقرأ النص كاملًا» to the quote page, except on that page.
  * Share sends the text, its attribution and the public link only, never anything about the user.
  */
@@ -13,11 +14,12 @@ import React from 'react';
 import { Share, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { BookOpen, Bookmark, BookmarkCheck, MessageSquareQuote, Share2, type LucideIcon } from 'lucide-react-native';
+import { BookMarked, BookOpen, Bookmark, BookmarkCheck, MessageSquareQuote, Share2, type LucideIcon } from 'lucide-react-native';
 import { radius, space, useStyles, type Theme } from '@/theme';
-import { IconButton, TextLink } from '@/ui/Button';
+import { Button, IconButton, TextLink } from '@/ui/Button';
 import { Icon } from '@/ui/Icon';
 import { Text } from '@/ui/Text';
+import { Notice } from '@/ui/feedback';
 import { GradeBadge } from './GradeBadge';
 import { HadithGrade, QuoteType } from '@/lib/types/enums';
 import type { QuoteDto } from '@/lib/types/api';
@@ -27,11 +29,9 @@ interface QuoteCardProps {
   quote: QuoteDto;
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
-  /** Show the English translation if available. */
-  showTranslation?: boolean;
   /** Show the share action (default true). */
   shareable?: boolean;
-  /** On the quote page itself: no «read the full text» link. */
+  /** On the quote page itself: the site's weak and «ليس من الصحيحين» notices, and no «read the full text» link. */
   detail?: boolean;
 }
 
@@ -79,9 +79,11 @@ const makeStyles = (t: Theme) => ({
   capsuleRule: { width: 1, height: 12, backgroundColor: t.colors.border },
   actions: { flexDirection: 'row' as const, alignItems: 'center' as const },
   body: { gap: space.sm },
+  /** The ghost button's own padding, pulled back so its icon lines up with the text above. */
+  study: { marginStart: -space.sm, marginVertical: -space.sm },
 });
 
-export function QuoteCard({ quote, isFavorite = false, onToggleFavorite, showTranslation = false, shareable = true, detail }: QuoteCardProps) {
+export function QuoteCard({ quote, isFavorite = false, onToggleFavorite, shareable = true, detail }: QuoteCardProps) {
   const { t, i18n } = useTranslation();
   const styles = useStyles(makeStyles);
   const arabicUI = i18n.language !== 'en';
@@ -104,7 +106,9 @@ export function QuoteCard({ quote, isFavorite = false, onToggleFavorite, showTra
   const hadithRef = quote.hadith?.reference?.trim() || null;
   const narrator = arabicUI ? quote.hadith?.narratorAr : quote.hadith?.narrator || quote.hadith?.narratorAr;
   const showSourceInCapsule = Boolean(sourceName && !(hadithRef && sourceName && hadithRef.includes(sourceName)));
-  const translation = showTranslation || !arabicUI ? quote.translation?.text : null;
+  const translation = arabicUI ? null : quote.translation?.text;
+  const isWeak = grade === HadithGrade.DAIF || grade === HadithGrade.MAWDU;
+  const isOutsideSahihayn = isHadith && Boolean(quote.hadith?.outsideSahihayn);
 
   async function handleShare() {
     const message = quoteShareText(quote, {
@@ -222,17 +226,34 @@ export function QuoteCard({ quote, isFavorite = false, onToggleFavorite, showTra
         </View>
       </View>
 
+      {detail && isWeak ? <Notice>{t('quoteDetail.weakNotice')}</Notice> : null}
+      {detail && isOutsideSahihayn ? (
+        <Text variant="small" tone="muted">
+          {t('quoteDetail.outsideSahihayn')}
+        </Text>
+      ) : null}
+
       <View style={styles.body}>
         {/* Alignment follows the text itself (Arabic starts on the right in either app direction). */}
         <Text variant={isQuran ? 'quran' : 'reading'} textBreakStrategy="highQuality">
           {quote.textAr}
         </Text>
         {translation ? (
-          <Text variant="body" style={{ fontFamily: 'SourceSerif-Regular' }}>
+          <Text variant="body">
             {translation}
           </Text>
         ) : null}
       </View>
+
+      {isQuran || isHadith ? (
+        <Button
+          variant="ghost"
+          icon={BookMarked}
+          label={isQuran ? t('study.openTafsir') : t('study.openSharh')}
+          onPress={() => router.push(`/quotes/study/${quote.id}`)}
+          style={styles.study}
+        />
+      ) : null}
 
       {!detail ? <TextLink label={t('quoteCard.open')} onPress={() => router.push(`/quotes/${quote.id}`)} /> : null}
     </View>

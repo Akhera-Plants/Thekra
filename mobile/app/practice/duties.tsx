@@ -82,7 +82,7 @@ export default function DutiesScreen() {
         </Text>
         <Wrap>
           {PRESETS.map((m) => (
-            <Chip key={m} label={t('practice.duties.minutes', { n: String(m) })} selected={free === m} onPress={() => setFree(m)} />
+            <Chip key={m} label={t('practice.duties.minutes', { count: m })} selected={free === m} onPress={() => setFree(m)} />
           ))}
         </Wrap>
         <View style={styles.minutesField}>

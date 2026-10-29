@@ -55,7 +55,8 @@ export function LeaveSinView() {
   const evidenceIds = useMemo(() => (catalog.data ? allProgramEvidenceIds(catalog.data.sinPrograms) : []), [catalog.data]);
   const evidence = usePracticeEvidence(evidenceIds, Boolean(catalog.data));
   const preselected = useSyncExternalStore(noSubscribe, pendingProgramForSession, serverPending);
-  const [choosing, setChoosing] = useState(false);
+  /** null until the visitor opens or closes the chooser: a sin page's hand-off opens it even beside other programs. */
+  const [choosing, setChoosing] = useState<boolean | null>(null);
   const programCount = snapshot ? activePrograms(snapshot.store.programs).length : 0;
   const contentRef = useFocusOnChange<HTMLDivElement>(`${choosing}-${programCount}`);
 
@@ -86,8 +87,11 @@ export function LeaveSinView() {
     const entry = entries.find((e) => e.sin === program.sinSlug);
     return entry ? [{ program, entry }] : [];
   });
-  const showChooser = active.length === 0 || choosing;
-  const preselectNew = preselected && !active.some((a) => a.program.sinSlug === preselected) ? preselected : null;
+  const preselectNew =
+    preselected && entries.some((e) => e.sin === preselected) && !active.some((a) => a.program.sinSlug === preselected)
+      ? preselected
+      : null;
+  const showChooser = active.length === 0 || (choosing ?? preselectNew !== null);
 
   return (
     <div className="flex flex-col gap-10">

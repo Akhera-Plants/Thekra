@@ -63,7 +63,7 @@ export function HabitShape({ habit, control }: { habit: PracticeHabit; control: 
                     onChange={() => field.onChange(distance)}
                   />
                   <span>
-                    {t(distance)} — {t('startWith', { amount: amountLabel(habit.start[distance], habit.unit, label) })}
+                    {t(distance)} — {t('startWith', { amount: amountLabel(habit.start[distance], habit.unit, label, english, habit.rakah) })}
                   </span>
                 </label>
               ))}

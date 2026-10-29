@@ -92,6 +92,63 @@ export const RELAPSE_DAYS = 7;
 /** Share of free time nawafil may take before a load warning. */
 export const LOAD_SHARE = 0.5;
 
+/**
+ * How a prayer habit counts its unit in rak'ahs: `pairs` (Duha, the night prayer: one unit is two rak'ahs, so the
+ * amount is always even: 2, 4, 6…) or `odd` (Witr: 1, 3, 5…). The stored amount stays the unit count.
+ */
+export type RakahCount = 'pairs' | 'odd';
+
+export function rakahsOf(amount: number, rakah: RakahCount): number {
+  if (amount <= 0) return 0;
+  return rakah === 'pairs' ? amount * 2 : amount * 2 - 1;
+}
+
+/** «ركعة واحدة», «ركعتان», «4 ركعات», «12 ركعة»; "1 rak'ah", "4 rak'ahs". Western digits. */
+export function formatRakahs(n: number, lang: 'ar' | 'en'): string {
+  if (lang === 'en') return n === 1 ? "1 rak'ah" : `${n} rak'ahs`;
+  if (n === 0) return '0 ركعة';
+  if (n === 1) return 'ركعة واحدة';
+  if (n === 2) return 'ركعتان';
+  return n <= 10 ? `${n} ركعات` : `${n} ركعة`;
+}
+
+/** Arabic counted nouns the catalog's unit labels start with: one, two, 3–10, then 11 and up. */
+const ARABIC_COUNTED: Record<string, readonly [string, string, string]> = {
+  دقيقة: ['دقيقة واحدة', 'دقيقتان', 'دقائق'],
+  مرة: ['مرة واحدة', 'مرتان', 'مرات'],
+};
+
+/** «دقيقتان», «5 دقائق», «20 دقيقة»; «3 مرات في اليوم». Null when the label does not start with a known noun. */
+function arabicCounted(amount: number, label: string): string | null {
+  const [noun, ...rest] = label.split(' ');
+  const forms = ARABIC_COUNTED[noun ?? ''];
+  if (!forms || amount < 1) return null;
+  const tail = rest.length > 0 ? ` ${rest.join(' ')}` : '';
+  if (amount === 1) return forms[0] + tail;
+  if (amount === 2) return forms[1] + tail;
+  return `${amount} ${amount <= 10 ? forms[2] : noun}${tail}`;
+}
+
+/**
+ * A plan amount as people say it: «20 دقيقة», «3 مرات», «صدقة» (one `times` unit whose label names it),
+ * «2 × صدقة», and rak'ahs counted out («4 ركعات») for prayer habits. Western digits.
+ */
+export function formatPlanAmount(
+  amount: number,
+  unit: PlanUnit,
+  label: string,
+  lang: 'ar' | 'en',
+  rakah?: RakahCount,
+): string {
+  if (rakah) return formatRakahs(rakahsOf(amount, rakah), lang);
+  const n = String(amount);
+  if (!label) return n;
+  const counted = lang === 'ar' ? arabicCounted(amount, label) : null;
+  if (counted) return counted;
+  if (unit === 'times') return amount === 1 ? label : `${n} × ${label}`;
+  return `${n} ${label}`;
+}
+
 export function startSuggestion(distance: 'far' | 'near'): number {
   return distance === 'far' ? 2 : 5;
 }

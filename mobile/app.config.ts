@@ -20,6 +20,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     userInterfaceStyle: 'automatic',
     // Native accents (system dialog buttons, text selection) in the website's primary.
     primaryColor: '#326C59',
+    // The launcher name in Arabic on Arabic devices («ذكرى»); «Thekra» elsewhere.
+    locales: { ar: './locales/ar.json' },
     runtimeVersion: {
       policy: 'appVersion',
     },
@@ -45,6 +47,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         monochromeImage: './assets/android-icon-monochrome.png',
       },
       predictiveBackGestureEnabled: false,
+      // expo-screen-capture's manifest asks for photo access to detect screenshots; the app only blocks them
+      // (FLAG_SECURE on the sin-program page), so the photo permissions are removed from the build.
+      blockedPermissions: ['android.permission.READ_EXTERNAL_STORAGE', 'android.permission.READ_MEDIA_IMAGES'],
     },
     web: {
       output: 'static',
@@ -67,6 +72,13 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       ],
       'expo-secure-store',
       'expo-localization',
+      // The optional lock on a private page. Generic on purpose: it never says what the page holds.
+      // Arabic devices read the Arabic line from locales/ar.json.
+      [
+        'expo-local-authentication',
+        { faceIDPermission: 'Thekra uses Face ID to unlock the private pages you choose to lock.' },
+      ],
+      '@react-native-community/datetimepicker',
     ],
     experiments: {
       typedRoutes: true,

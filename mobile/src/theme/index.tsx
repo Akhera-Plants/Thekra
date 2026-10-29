@@ -46,6 +46,8 @@ export interface Theme {
   english: boolean;
   /** Layout direction of the app (I18nManager). */
   rtl: boolean;
+  /** How faint the page-edge arabesque is (site-public.css `--decor-opacity`: 0.065 light, 0.12 dark). */
+  decorOpacity: number;
   font: (weight?: FontWeightName) => string;
 }
 
@@ -63,6 +65,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       dark: isDark,
       english,
       rtl: I18nManager.isRTL,
+      decorOpacity: isDark ? 0.12 : 0.065,
       font: (weight = 'regular') => uiFont(weight, english),
     }),
     [isDark, english],

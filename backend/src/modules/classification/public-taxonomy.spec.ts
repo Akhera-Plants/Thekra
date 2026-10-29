@@ -11,6 +11,7 @@ describe('public taxonomy gate', () => {
     expect(readerLinkNote('باب تحريم الغيبة — رياض الصالحين')).toBeNull();
     expect(readerLinkNote('والغيبة ذكرك أخاك. تفسير السعدي، الحجرات 12')).toBeNull();
     expect(readerLinkNote('Al-Hujurat 49:12 — explicit primary prohibition.')).toContain('Al-Hujurat');
+    expect(readerLinkNote('أورده الأستاذ أنس شيخ اكريم في حلقة «بناء العادات»')).toBeNull();
     expect(readerLinkNote(null)).toBeNull();
   });
 });

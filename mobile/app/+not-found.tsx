@@ -14,6 +14,7 @@ export default function NotFound() {
       <EmptyState
         icon={Compass}
         message={t('common.notFound')}
+        hint={t('common.notFoundBody')}
         actionLabel={t('tabs.home')}
         onAction={() => router.navigate('/')}
       />

@@ -23,7 +23,7 @@ const MONOREPO_YAML = resolve(root, '../backend/prisma/taxonomy/deed-schedules.y
 const API_URL = 'https://thekra.vercel.app/v1/practice/catalog';
 
 const HABIT_FIELDS = [
-  'key', 'titleAr', 'titleEn', 'deed', 'unit', 'unitLabelAr', 'unitLabelEn', 'start', 'ceiling',
+  'key', 'titleAr', 'titleEn', 'deed', 'unit', 'unitLabelAr', 'unitLabelEn', 'rakah', 'start', 'ceiling',
   'defaultRule', 'timeHintAr', 'timeHintEn', 'defaultSlots', 'basis', 'evidence',
 ];
 

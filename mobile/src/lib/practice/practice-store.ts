@@ -97,6 +97,20 @@ export function setIdFactory(fn: () => string): void {
   idFactory = fn;
 }
 
+/**
+ * The sin chosen on a sin page («ابدأ برنامج الترك»), handed to the sin-program chooser. Memory only: never
+ * persisted and never in a route param, so no URL, history entry or file names the sin (roadmap §0.2).
+ */
+let pendingProgramSlug: string | null = null;
+
+export function setPendingProgram(slug: string | null): void {
+  pendingProgramSlug = slug;
+}
+
+export function pendingProgram(): string | null {
+  return pendingProgramSlug;
+}
+
 export const usePracticeStore = create<PracticeState>((set, get) => ({
   hydrated: false,
   store: emptyStore(),
@@ -143,6 +157,7 @@ export const usePracticeStore = create<PracticeState>((set, get) => ({
   wipePrograms: async () => {
     const next: Store = { ...get().store, programs: [] };
     const prefs: PracticePrefs = { ...get().prefs, sinReminders: false, rememberVaultKey: false };
+    pendingProgramSlug = null;
     set({ store: next, prefs });
     await persist(STORE_KEY, serializeStore(next));
     await persist(PREFS_KEY, JSON.stringify(prefs));

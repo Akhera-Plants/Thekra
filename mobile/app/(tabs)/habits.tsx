@@ -32,7 +32,7 @@ import { PresenceMonth } from '@/components/practice/hub/PresenceMonth';
 import { TrackRows } from '@/components/practice/hub/TrackRows';
 import { WeekStrip } from '@/components/practice/hub/WeekStrip';
 import { GUTTER, space, useStyles, type Theme } from '@/theme';
-import { Button, Notice, Rule, Screen, Skeleton, SwitchRow } from '@/ui';
+import { Button, Notice, Ornament, Screen, Skeleton, SwitchRow } from '@/ui';
 
 const SKELETON_DAYS = ['d1', 'd2', 'd3', 'd4', 'd5', 'd6', 'd7'];
 const SKELETON_ROWS = ['r1', 'r2', 'r3'];
@@ -42,8 +42,18 @@ const makeStyles = (t: Theme) => ({
   content: { paddingHorizontal: GUTTER, paddingTop: space.lg, paddingBottom: space['4xl'] + space.xl, gap: space['2xl'] },
   tight: { gap: space.xs },
   skeletonHeader: { gap: space.sm },
-  skeletonWeek: { flexDirection: 'row' as const, justifyContent: 'space-between' as const },
-  skeletonRow: { gap: space.sm, paddingVertical: space.lg, borderBottomWidth: 1, borderBottomColor: t.colors.border },
+  skeletonTop: { flexDirection: 'row' as const, alignItems: 'center' as const, justifyContent: 'space-between' as const },
+  skeletonWeek: { flexDirection: 'row' as const, gap: space.xs },
+  skeletonDay: { flex: 1 },
+  skeletonRow: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: space.md,
+    paddingVertical: space.md,
+    borderBottomWidth: 1,
+    borderBottomColor: t.colors.border,
+  },
+  skeletonTexts: { flex: 1, gap: space.sm },
 });
 
 export default function HabitsHubScreen() {
@@ -93,9 +103,11 @@ function HabitsHub() {
   const listTitle = selected === today ? t('practice.today') : shortDayTitle(selected, names);
 
   return (
-    <Screen scroll={false} contentStyle={styles.frame}>
+    <Screen scroll={false} contentStyle={styles.frame} decor>
       <ScrollView ref={scrollRef} contentContainerStyle={styles.content}>
         <HubHeader dateLabel={dayTitle(selected, hijriOffset, names)} onCalendar={handleCalendar} onAdd={handleAddOpen} />
+
+        {summary.started ? null : <TrackRows summary={summary} />}
 
         <WeekStrip
           week={week}
@@ -139,21 +151,22 @@ function HabitsHub() {
           />
         ) : null}
 
-        <Rule />
-        <TrackRows summary={summary} />
-
         {summary.started ? (
-          <PresenceMonth
-            summary={summary}
-            month={month}
-            first={first}
-            today={today}
-            selected={selected}
-            marks={monthMarks}
-            occasions={monthOccasions}
-            onSelect={handleGridSelect}
-            onShiftMonth={shiftMonth}
-          />
+          <>
+            <Ornament />
+            <TrackRows summary={summary} />
+            <PresenceMonth
+              summary={summary}
+              month={month}
+              first={first}
+              today={today}
+              selected={selected}
+              marks={monthMarks}
+              occasions={monthOccasions}
+              onSelect={handleGridSelect}
+              onShiftMonth={shiftMonth}
+            />
+          </>
         ) : null}
       </ScrollView>
 
@@ -162,26 +175,34 @@ function HabitsHub() {
   );
 }
 
-/** The shape of the hub while the device store loads: title, week strip, three rows. */
+/** The shape of the hub while the device store loads: title and «أضف», the week tiles, three rows. */
 function HubSkeleton() {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   return (
-    <Screen>
+    <Screen decor>
       <View style={styles.skeletonHeader} accessibilityLabel={t('common.loading')}>
-        <Skeleton width="35%" height={30} />
+        <View style={styles.skeletonTop}>
+          <Skeleton width="35%" height={30} />
+          <Skeleton width={84} height={43} />
+        </View>
         <Skeleton width="70%" height={14} />
       </View>
       <View style={styles.skeletonWeek}>
         {SKELETON_DAYS.map((key) => (
-          <Skeleton key={key} width={40} height={40} round />
+          <View key={key} style={styles.skeletonDay}>
+            <Skeleton height={76} />
+          </View>
         ))}
       </View>
       <View>
         {SKELETON_ROWS.map((key) => (
           <View key={key} style={styles.skeletonRow}>
-            <Skeleton width="55%" height={18} />
-            <Skeleton width="35%" height={12} />
+            <Skeleton width={28} height={28} round />
+            <View style={styles.skeletonTexts}>
+              <Skeleton width="55%" height={18} />
+              <Skeleton width="35%" height={12} />
+            </View>
           </View>
         ))}
       </View>

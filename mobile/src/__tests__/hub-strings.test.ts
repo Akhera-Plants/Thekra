@@ -41,6 +41,22 @@ describe('hub strings', () => {
     expect(t('practice.hub.habitsCount', { count: 3 })).toBe('3 habits');
   });
 
+  it('counts days and minutes in the practice screens with the right form', () => {
+    const ar = i18n.getFixedT('ar');
+    expect(ar('kinship.everyDays', { count: 3 })).toBe('كل 3 أيام');
+    expect(ar('kinship.everyDays', { count: 14 })).toBe('كل 14 يومًا');
+    expect(ar('kinship.overdueBy', { count: 1 })).toBe('تأخّر يومًا واحدًا');
+    expect(ar('kinship.overdueBy', { count: 3 })).toBe('تأخّر 3 أيام');
+    expect(ar('practice.add.daysCount', { count: 2 })).toBe('يومان');
+    expect(ar('practice.monthDays', { done: '4', count: 12 })).toBe('سجّلت في 4 من 12 يومًا');
+    expect(ar('practice.duties.minutes', { count: 120 })).toBe('120 دقيقة');
+    expect(ar('practice.notify.kinshipBodyGeneric', { count: 1 })).toBe('حان وقت التواصل مع أحد أقاربك');
+    const en = i18n.getFixedT('en');
+    expect(en('kinship.overdueBy', { count: 1 })).toBe('1 day late');
+    expect(en('kinship.overdueBy', { count: 4 })).toBe('4 days late');
+    expect(en('practice.monthDays', { done: '4', count: 12 })).toBe('You logged 4 of 12 days');
+  });
+
   it('has every hub key in both languages', () => {
     const base = (k: string) => k.replace(/_(zero|one|two|few|many|other)$/, '');
     const arKeys = new Set(keys(ar.practice.hub).map(base));

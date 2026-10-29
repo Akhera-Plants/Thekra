@@ -1,6 +1,6 @@
 /**
  * Page frame, header and spacing helpers, after the website's page layout (20 gutter, page-lead, eyebrow,
- * hairline rules, the arabesque ornament between sections).
+ * hairline rules), with the website's faint arabesque on the page edges where a page asks for it (`decor`).
  */
 
 import React, { useMemo } from 'react';
@@ -17,9 +17,9 @@ import {
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 import { useHeaderHeight } from 'expo-router/react-navigation';
 import { useTranslation } from 'react-i18next';
-import Svg, { Circle, Path } from 'react-native-svg';
 import { Sprout } from 'lucide-react-native';
 import { GUTTER, space, useStyles, useTheme, type Theme } from '@/theme';
+import { PageDecor } from './Decor';
 import { Icon } from './Icon';
 import { Text } from './Text';
 
@@ -33,8 +33,6 @@ const makeStyles = (t: Theme) => ({
   wrap: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: space.sm },
   section: { gap: space.md },
   rule: { height: 1, backgroundColor: t.colors.border },
-  ornamentRow: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.md, paddingVertical: space.sm },
-  ornamentLine: { flex: 1, height: 1, backgroundColor: t.colors.border },
   brand: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.sm },
   brandRow: {
     flexDirection: 'row' as const,
@@ -60,6 +58,8 @@ export interface ScreenProps {
   contentStyle?: StyleProp<ViewStyle>;
   /** A page with inputs: lifted above the keyboard so the field and the action under it stay visible. */
   keyboard?: boolean;
+  /** The website's page-edge arabesque, faint, behind the content (`PageDecor`). */
+  decor?: boolean;
 }
 
 export function Screen({ keyboard, ...props }: ScreenProps) {
@@ -81,11 +81,12 @@ function KeyboardFrame({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ScreenFrame({ children, edges = ['top'], scroll = true, refreshing, onRefresh, contentStyle }: Omit<ScreenProps, 'keyboard'>) {
+function ScreenFrame({ children, edges = ['top'], scroll = true, refreshing, onRefresh, contentStyle, decor }: Omit<ScreenProps, 'keyboard'>) {
   const styles = useStyles(makeStyles);
   const { colors } = useTheme();
   return (
     <SafeAreaView style={styles.safe} edges={edges}>
+      {decor ? <PageDecor /> : null}
       {scroll ? (
         <ScrollView
           contentContainerStyle={[styles.scroll, contentStyle]}
@@ -205,27 +206,6 @@ export function Wrap({ children, style }: { children: React.ReactNode; style?: S
 export function Rule({ style }: { style?: StyleProp<ViewStyle> }) {
   const styles = useStyles(makeStyles);
   return <View style={[styles.rule, style]} />;
-}
-
-/** The site's section ornament: two hairlines and a small rosette between them. */
-export function Ornament() {
-  const styles = useStyles(makeStyles);
-  const { colors } = useTheme();
-  return (
-    <View style={styles.ornamentRow} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <View style={styles.ornamentLine} />
-      <Svg width={46} height={22} viewBox="0 0 46 22" fill="none">
-        <Path d="M2 11h10M34 11h10" stroke={colors.link} strokeWidth={1} strokeLinecap="round" />
-        <Path
-          d="M23 3c2.2 2.6 2.2 5.4 0 8-2.2-2.6-2.2-5.4 0-8Zm0 16c2.2-2.6 2.2-5.4 0-8-2.2 2.6-2.2 5.4 0 8ZM15 11c2.6-2.2 5.4-2.2 8 0-2.6 2.2-5.4 2.2-8 0Zm16 0c-2.6-2.2-5.4-2.2-8 0 2.6 2.2 5.4 2.2 8 0Z"
-          stroke={colors.link}
-          strokeWidth={1}
-        />
-        <Circle cx={23} cy={11} r={1.4} fill={colors.link} />
-      </Svg>
-      <View style={styles.ornamentLine} />
-    </View>
-  );
 }
 
 export function Loading() {

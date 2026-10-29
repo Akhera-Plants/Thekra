@@ -5,52 +5,32 @@
  * text unless the user turns names on. `?add=1` opens the add form directly (the hub's «أضف»).
  *
  * Layout after the website's kinship page: the page title, the add form (a bordered card), the due buckets as
- * hairline-divided lists, then the reminders. Deleting a relative asks first (system alert).
+ * hairline-divided lists, then the reminders. A row's edit button opens the same form on that relative in place of
+ * the row (name, relation, rhythm), with «حذف» there; deleting asks first (system alert).
  */
 
 import React, { useState } from 'react';
-import { Alert, KeyboardAvoidingView, View } from 'react-native';
+import { Alert, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Check, Plus, Undo2, Users } from 'lucide-react-native';
-import { MAX_NAME_LENGTH, deleteRelative, dueList, logContact, undoContact, updateRelative, upsertRelative, type DueEntry, type Relative } from '@thekra/practice-core';
+import { Check, Pencil, Plus, Undo2, Users } from 'lucide-react-native';
+import { deleteRelative, dueList, logContact, undoContact, updateRelative, upsertRelative, type DueEntry } from '@thekra/practice-core';
 import { shortDate } from '@/lib/practice/format';
-import { relativeFromForm, type RelativeFormError, type RhythmChoice } from '@/lib/practice/kinship-form';
+import { editedRelative, relativeFromForm, type RelativeFormValues } from '@/lib/practice/kinship-form';
 import { ensurePermission } from '@/lib/practice/notifications';
 import { newPracticeId, today, usePracticeStore } from '@/lib/practice/practice-store';
-import { TimeField, WeekdayPicker } from '@/components/practice/editors';
+import { TimeField } from '@/components/practice/editors';
+import { RelativeForm } from '@/components/practice/RelativeForm';
 import { space, useStyles, type Theme } from '@/theme';
-import {
-  Button,
-  Card,
-  Chip,
-  EmptyState,
-  ErrorText,
-  Field,
-  Loading,
-  Notice,
-  PageHeader,
-  Row,
-  Rule,
-  Screen,
-  Section,
-  SwitchRow,
-  Text,
-  Wrap,
-} from '@/ui';
-
-const RHYTHMS: readonly RhythmChoice[] = ['weekly', 'biweekly', 'monthly', 'everyNDays'];
-const EVERY_DAYS = [3, 7, 10, 14, 21] as const;
-const DEFAULT_WEEKDAY = 5;
-const RELATION_MAX = 40;
+import { Button, EmptyState, IconButton, Loading, Notice, PageHeader, Row, Rule, Screen, Section, SwitchRow, Text } from '@/ui';
 
 const makeStyles = (t: Theme) => ({
-  flex: { flex: 1 },
   list: { borderTopWidth: 1, borderTopColor: t.colors.border },
   row: { paddingVertical: space.lg, gap: space.sm, borderBottomWidth: 1, borderBottomColor: t.colors.border },
-  rowText: { gap: 2 },
+  rowHead: { flexDirection: 'row' as const, alignItems: 'flex-start' as const, gap: space.sm },
+  rowText: { flex: 1, gap: 2 },
   actions: { flexWrap: 'wrap' as const, gap: space.sm },
-  formGroup: { gap: space.sm },
+  editing: { paddingVertical: space.lg, borderBottomWidth: 1, borderBottomColor: t.colors.border },
 });
 
 export default function KinshipScreen() {
@@ -62,6 +42,7 @@ export default function KinshipScreen() {
   /** `?add=1` (the hub's «أضف» → «قريب») opens the form at once. */
   const { add } = useLocalSearchParams<{ add?: string }>();
   const [adding, setAdding] = useState(add === '1');
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   if (!hydrated) return <Loading />;
   const d = today();
@@ -73,56 +54,77 @@ export default function KinshipScreen() {
       {
         text: t('common.delete'),
         style: 'destructive',
-        onPress: () => setStore((s) => deleteRelative(s, id)),
+        onPress: () => {
+          setStore((s) => deleteRelative(s, id));
+          setEditingId(null);
+        },
       },
     ]);
+  }
+
+  function saveNew(values: RelativeFormValues) {
+    const res = relativeFromForm(values, newPracticeId(), today());
+    if (!res.ok) return res.error;
+    setStore((s) => upsertRelative(s, res.relative));
+    setAdding(false);
+    return null;
+  }
+
+  function saveEdit(entry: DueEntry, values: RelativeFormValues) {
+    const res = editedRelative(entry.relative, values, today());
+    if (!res.ok) return res.error;
+    setStore((s) => updateRelative(s, entry.relative.id, () => res.relative));
+    setEditingId(null);
+    return null;
   }
 
   const bucket = (title: string, entries: DueEntry[]) =>
     entries.length > 0 ? (
       <Section title={title}>
         <View style={styles.list}>
-          {entries.map((e) => (
-            <RelativeRow
-              key={e.relative.id}
-              entry={e}
-              onContacted={() => setStore((s) => updateRelative(s, e.relative.id, (r) => logContact(r, d)))}
-              onUndo={() => setStore((s) => undoContact(s, e.relative.id))}
-              onDelete={() => remove(e.relative.id)}
-            />
-          ))}
+          {entries.map((e) =>
+            e.relative.id === editingId ? (
+              <View key={e.relative.id} style={styles.editing}>
+                <RelativeForm
+                  title={t('kinship.editTitle')}
+                  relative={e.relative}
+                  onSave={(values) => saveEdit(e, values)}
+                  onCancel={() => setEditingId(null)}
+                  onDelete={() => remove(e.relative.id)}
+                />
+              </View>
+            ) : (
+              <RelativeRow
+                key={e.relative.id}
+                entry={e}
+                onContacted={() => setStore((s) => updateRelative(s, e.relative.id, (r) => logContact(r, d)))}
+                onUndo={() => setStore((s) => undoContact(s, e.relative.id))}
+                onEdit={() => setEditingId(e.relative.id)}
+              />
+            ),
+          )}
         </View>
       </Section>
     ) : null;
 
-  const form = adding ? (
-    <AddRelativeForm
-      onCancel={() => setAdding(false)}
-      onSave={(rel) => {
-        setStore((s) => upsertRelative(s, rel));
-        setAdding(false);
-      }}
-    />
-  ) : null;
+  const form = adding ? <RelativeForm title={t('kinship.add')} onSave={saveNew} onCancel={() => setAdding(false)} /> : null;
 
   return (
-    <KeyboardAvoidingView style={styles.flex} behavior="padding">
-      <Screen edges={['bottom']}>
-        <PageHeader eyebrow={t('practice.title')} title={t('kinship.title')} lead={t('kinship.lead')} />
+    <Screen edges={['bottom']} keyboard decor>
+      <PageHeader eyebrow={t('practice.title')} title={t('kinship.title')} lead={t('kinship.lead')} />
 
-        {relatives.length === 0 && !adding ? (
-          <EmptyState icon={Users} message={t('kinship.empty')} actionLabel={t('kinship.add')} onAction={() => setAdding(true)} />
-        ) : (
-          form ?? <Button label={t('kinship.add')} icon={Plus} onPress={() => setAdding(true)} variant="outline" />
-        )}
+      {relatives.length === 0 && !adding ? (
+        <EmptyState icon={Users} message={t('kinship.empty')} actionLabel={t('kinship.add')} onAction={() => setAdding(true)} />
+      ) : (
+        form ?? <Button label={t('kinship.add')} icon={Plus} onPress={() => setAdding(true)} variant="outline" />
+      )}
 
-        {bucket(t('kinship.overdue'), due.overdue)}
-        {bucket(t('kinship.thisWeek'), due.thisWeek)}
-        {bucket(t('kinship.later'), due.later)}
+      {bucket(t('kinship.overdue'), due.overdue)}
+      {bucket(t('kinship.thisWeek'), due.thisWeek)}
+      {bucket(t('kinship.later'), due.later)}
 
-        <KinshipReminders />
-      </Screen>
-    </KeyboardAvoidingView>
+      <KinshipReminders />
+    </Screen>
   );
 }
 
@@ -130,40 +132,42 @@ interface RelativeRowProps {
   entry: DueEntry;
   onContacted: () => void;
   onUndo: () => void;
-  onDelete: () => void;
+  onEdit: () => void;
 }
 
-/** The website's relative row: name · relation, the due line, then «تواصلت معه», «تراجع», «حذف». */
-function RelativeRow({ entry, onContacted, onUndo, onDelete }: RelativeRowProps) {
+/** The website's relative row: name · relation and the due line, an edit button at the end, then «تواصلت معه», «تراجع». */
+function RelativeRow({ entry, onContacted, onUndo, onEdit }: RelativeRowProps) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const { relative, nextDue, daysUntilDue } = entry;
   const dueText =
     daysUntilDue < 0
-      ? t('kinship.overdueBy', { n: String(-daysUntilDue) })
+      ? t('kinship.overdueBy', { count: -daysUntilDue })
       : daysUntilDue === 0
         ? t('kinship.dueToday')
         : t('kinship.dueOn', { date: shortDate(nextDue) });
   const lastText = relative.lastContactedOn ? t('kinship.lastContact', { date: shortDate(relative.lastContactedOn) }) : t('kinship.never');
   return (
     <View style={styles.row}>
-      <View style={styles.rowText}>
-        <Text variant="body" weight="medium">
-          {relative.name}
-          {relative.relation ? (
-            <Text variant="small" tone="muted">
-              {` · ${relative.relation}`}
-            </Text>
-          ) : null}
-        </Text>
-        <Text variant="small" tone="muted">
-          {`${dueText} · ${lastText}`}
-        </Text>
+      <View style={styles.rowHead}>
+        <View style={styles.rowText}>
+          <Text variant="body" weight="medium">
+            {relative.name}
+            {relative.relation ? (
+              <Text variant="small" tone="muted">
+                {` · ${relative.relation}`}
+              </Text>
+            ) : null}
+          </Text>
+          <Text variant="small" tone="muted">
+            {`${dueText} · ${lastText}`}
+          </Text>
+        </View>
+        <IconButton icon={Pencil} label={t('kinship.edit', { name: relative.name })} onPress={onEdit} />
       </View>
       <Row style={styles.actions}>
         <Button label={t('kinship.contacted')} icon={Check} onPress={onContacted} />
         {relative.history.length > 0 ? <Button label={t('kinship.undo')} icon={Undo2} onPress={onUndo} variant="ghost" /> : null}
-        <Button label={t('kinship.delete')} onPress={onDelete} variant="ghost" />
       </Row>
     </View>
   );
@@ -202,103 +206,5 @@ function KinshipReminders() {
         </>
       ) : null}
     </Section>
-  );
-}
-
-interface AddRelativeFormProps {
-  onSave: (rel: Relative) => void;
-  onCancel: () => void;
-}
-
-/** «أضف قريبًا»: nickname, optional relation, rhythm. No contact autofill: this list never holds contact details. */
-function AddRelativeForm({ onSave, onCancel }: AddRelativeFormProps) {
-  const { t } = useTranslation();
-  const styles = useStyles(makeStyles);
-  const [name, setName] = useState('');
-  const [relation, setRelation] = useState('');
-  const [rhythm, setRhythm] = useState<RhythmChoice>('weekly');
-  const [weekday, setWeekday] = useState(DEFAULT_WEEKDAY);
-  const [everyDays, setEveryDays] = useState(10);
-  const [error, setError] = useState<RelativeFormError | null>(null);
-
-  function save() {
-    const res = relativeFromForm({ name, relation, rhythm, weekday, everyDays }, newPracticeId(), today());
-    if (!res.ok) {
-      setError(res.error);
-      return;
-    }
-    onSave(res.relative);
-  }
-
-  return (
-    <Card>
-      <Text variant="heading" accessibilityRole="header">
-        {t('kinship.add')}
-      </Text>
-      <Field
-        label={t('kinship.name')}
-        value={name}
-        onChangeText={(v) => {
-          setName(v);
-          setError(null);
-        }}
-        placeholder={t('kinship.namePlaceholder')}
-        hint={t('kinship.privacy')}
-        maxLength={MAX_NAME_LENGTH}
-        autoCorrect={false}
-        textContentType="none"
-        autoComplete="off"
-        importantForAutofill="no"
-        returnKeyType="next"
-      />
-      <Field
-        label={t('kinship.relation')}
-        value={relation}
-        onChangeText={(v) => {
-          setRelation(v);
-          setError(null);
-        }}
-        placeholder={t('kinship.relationPlaceholder')}
-        maxLength={RELATION_MAX}
-        textContentType="none"
-        autoComplete="off"
-        importantForAutofill="no"
-        returnKeyType="done"
-      />
-      <View style={styles.formGroup}>
-        <Text variant="label">{t('kinship.rhythm')}</Text>
-        <Wrap>
-          {RHYTHMS.map((r) => (
-            <Chip
-              key={r}
-              label={t(`kinship.rhythm${r.charAt(0).toUpperCase()}${r.slice(1)}`)}
-              selected={rhythm === r}
-              onPress={() => setRhythm(r)}
-            />
-          ))}
-        </Wrap>
-        <Text variant="caption" tone="muted">
-          {t('practice.basis.organizational')}
-        </Text>
-      </View>
-      {rhythm === 'weekly' || rhythm === 'biweekly' ? (
-        <View style={styles.formGroup}>
-          <Text variant="label">{t('kinship.weekday')}</Text>
-          <WeekdayPicker value={[weekday]} onChange={(v) => setWeekday(v[0] ?? DEFAULT_WEEKDAY)} single />
-        </View>
-      ) : null}
-      {rhythm === 'everyNDays' ? (
-        <Wrap>
-          {EVERY_DAYS.map((n) => (
-            <Chip key={n} label={t('kinship.everyDays', { n: String(n) })} selected={everyDays === n} onPress={() => setEveryDays(n)} />
-          ))}
-        </Wrap>
-      ) : null}
-      {error ? <ErrorText>{t(`kinship.errors.${error}`)}</ErrorText> : null}
-      <Row style={styles.actions}>
-        <Button label={t('kinship.save')} onPress={save} />
-        <Button label={t('kinship.cancel')} onPress={onCancel} variant="ghost" />
-      </Row>
-    </Card>
   );
 }

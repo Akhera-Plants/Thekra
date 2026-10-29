@@ -100,9 +100,9 @@ describe('planReminders — habits', () => {
     // Today: 06:00 has passed (now 08:00), 21:00 remains; then 13 days × 2 slots.
     expect(list).toHaveLength(1 + 13 * 2);
     expect(simple(list).slice(0, 3)).toEqual([
-      { date: '2026-10-28', time: '21:00', title: 'ورد القرآن', body: 'المطلوب اليوم: 2 دقيقة' },
-      { date: '2026-10-29', time: '06:00', title: 'ورد القرآن', body: 'المطلوب اليوم: 2 دقيقة' },
-      { date: '2026-10-29', time: '21:00', title: 'ورد القرآن', body: 'المطلوب اليوم: 2 دقيقة' },
+      { date: '2026-10-28', time: '21:00', title: 'ورد القرآن', body: 'المطلوب اليوم: دقيقتان' },
+      { date: '2026-10-29', time: '06:00', title: 'ورد القرآن', body: 'المطلوب اليوم: دقيقتان' },
+      { date: '2026-10-29', time: '21:00', title: 'ورد القرآن', body: 'المطلوب اليوم: دقيقتان' },
     ]);
     expect(list[list.length - 1]).toMatchObject({ date: '2026-11-10', time: '21:00' });
     // Sorted ascending.
@@ -137,9 +137,9 @@ describe('planReminders — habits', () => {
 
   it('asks for the ebb amount on a heavy day and never doubles a missed day', () => {
     const missedYesterday = plan(quran, 10, ['21:00']); // nothing logged yesterday
-    expect(planReminders(input({ ...emptyStore(), plans: [missedYesterday] }))[0]?.body).toBe('المطلوب اليوم: 10 دقيقة');
+    expect(planReminders(input({ ...emptyStore(), plans: [missedYesterday] }))[0]?.body).toBe('المطلوب اليوم: 10 دقائق');
     const ebb = startEbb(missedYesterday, TODAY);
-    expect(planReminders(input({ ...emptyStore(), plans: [ebb] }))[0]?.body).toBe('المطلوب اليوم: 2 دقيقة');
+    expect(planReminders(input({ ...emptyStore(), plans: [ebb] }))[0]?.body).toBe('المطلوب اليوم: دقيقتان');
   });
 
   it('uses English titles and units in the English UI', () => {

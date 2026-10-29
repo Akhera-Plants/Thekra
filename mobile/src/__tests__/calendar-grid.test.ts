@@ -5,6 +5,8 @@
 import { isHijriSupported, weekday } from '@thekra/practice-core';
 import {
   addMonths,
+  calendarSubscribeLink,
+  followToday,
   dayTitle,
   firstWeekday,
   hijriMonthsTitle,
@@ -85,5 +87,47 @@ describe('labels', () => {
     expect(title).toMatch(/1448$/);
     expect(title).toContain('جمادى الأولى');
     expect(title?.split('، ').length).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe('calendar subscribe link', () => {
+  const feed = 'https://api.example.com/v1/calendar/occasions.ics?lang=ar&months=12';
+
+  it('keeps webcal on iOS', () => {
+    expect(calendarSubscribeLink(feed, 'ios')).toBe('webcal://api.example.com/v1/calendar/occasions.ics?lang=ar&months=12');
+  });
+
+  it('opens Google Calendar with the encoded webcal url on Android', () => {
+    const link = calendarSubscribeLink(feed, 'android');
+    expect(link.startsWith('https://calendar.google.com/calendar/render?cid=')).toBe(true);
+    const cid = new URL(link).searchParams.get('cid');
+    expect(cid).toBe('webcal://api.example.com/v1/calendar/occasions.ics?lang=ar&months=12');
+    expect(link).toContain('webcal%3A%2F%2Fapi.example.com');
+  });
+});
+
+describe('followToday', () => {
+  it('moves a selection that was on today, with its month', () => {
+    expect(followToday({ selected: '2026-10-31', month: '2026-10-01' }, '2026-10-31', '2026-11-01')).toEqual({
+      selected: '2026-11-01',
+      month: '2026-11-01',
+    });
+  });
+
+  it('keeps a day the user picked', () => {
+    const view = { selected: '2026-10-20', month: '2026-10-01' };
+    expect(followToday(view, '2026-10-31', '2026-11-01')).toBe(view);
+  });
+
+  it('keeps a month the user moved to while today stayed selected', () => {
+    expect(followToday({ selected: '2026-10-30', month: '2026-08-01' }, '2026-10-30', '2026-10-31')).toEqual({
+      selected: '2026-10-31',
+      month: '2026-08-01',
+    });
+  });
+
+  it('changes nothing on the same day', () => {
+    const view = { selected: '2026-10-30', month: '2026-10-01' };
+    expect(followToday(view, '2026-10-30', '2026-10-30')).toBe(view);
   });
 });

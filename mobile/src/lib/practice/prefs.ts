@@ -1,6 +1,7 @@
 /**
  * App-only practice preferences, stored next to the practice-core Store (AsyncStorage
- * `thekra.practice.prefs.v1`). Never synced: reminder switches and times, and the «فروضي وأدواري» roles.
+ * `thekra.practice.prefs.v1`). Never synced: reminder switches and times, the «فروضي وأدواري» roles and the
+ * sin-program lock.
  * The reminder rule of a plan now lives on the plan (`plan.rule`, synced) and the free minutes in the Store
  * settings (`settings.freeMinutesPerDay`, synced); `legacyPrefs` reads the old fields once to migrate them.
  * Parsing is defensive and never throws.
@@ -28,6 +29,8 @@ export interface PracticePrefs {
   roles: RoleKey[];
   /** Remember the vault key in the device keystore («تذكّر على هذا الجهاز»). Off by default. */
   rememberVaultKey: boolean;
+  /** «قفل برنامج الترك بالبصمة»: the sin-program page opens only after the device's biometrics or passcode. Off by default. */
+  sinLock: boolean;
 }
 
 export const DEFAULT_PREFS: PracticePrefs = {
@@ -40,6 +43,7 @@ export const DEFAULT_PREFS: PracticePrefs = {
   sinReminderTime: '21:00',
   roles: [],
   rememberVaultKey: false,
+  sinLock: false,
 };
 
 function isRecord(v: unknown): v is Record<string, unknown> {
@@ -67,6 +71,7 @@ export function parsePrefs(json: unknown): PracticePrefs {
     sinReminders: bool('sinReminders'),
     sinReminderTime: time('sinReminderTime'),
     rememberVaultKey: bool('rememberVaultKey'),
+    sinLock: bool('sinLock'),
     roles: Array.isArray(raw.roles)
       ? (raw.roles.filter((r) => (ROLE_KEYS as readonly string[]).includes(r as string)) as RoleKey[])
       : [],

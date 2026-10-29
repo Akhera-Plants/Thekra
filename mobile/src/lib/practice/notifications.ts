@@ -95,12 +95,46 @@ async function doApply(planned: readonly PlannedReminder[], channelName: string)
   }
 }
 
-/** Opens the screen of a tapped reminder. Returns the unsubscribe function. */
+/** How many of this feature's reminders are scheduled on the device now (the Settings overview). Never throws. */
+export async function scheduledReminderCount(): Promise<number> {
+  if (!supported) return 0;
+  try {
+    const existing = await Notifications.getAllScheduledNotificationsAsync();
+    return existing.filter((n) => (n.content.data as Record<string, unknown> | undefined)?.source === REMINDER_SOURCE).length;
+  } catch {
+    return 0;
+  }
+}
+
+/** The tap already opened (the launch tap can come both from the last response and from the listener). */
+let handledTap: string | null = null;
+
+function openReminderTap(response: Notifications.NotificationResponse, open: (route: string) => void): void {
+  const key = `${response.notification.request.identifier}@${response.notification.date}`;
+  if (key === handledTap) return;
+  handledTap = key;
+  // Cleared so a later JS reload (language switch) does not open it again.
+  try {
+    Notifications.clearLastNotificationResponse();
+  } catch {
+    // Unavailable on this platform: the key above still keeps it to one open.
+  }
+  const data = response.notification.request.content.data as Record<string, unknown> | undefined;
+  if (data?.source === REMINDER_SOURCE && typeof data.route === 'string') open(data.route);
+}
+
+/**
+ * Opens the screen of a tapped reminder, once: a tap while the app runs, and the tap that launched it from closed
+ * (`getLastNotificationResponse`). Returns the unsubscribe function.
+ */
 export function onReminderTapped(open: (route: string) => void): () => void {
   if (!supported) return () => undefined;
-  const sub = Notifications.addNotificationResponseReceivedListener((response) => {
-    const data = response.notification.request.content.data as Record<string, unknown> | undefined;
-    if (data?.source === REMINDER_SOURCE && typeof data.route === 'string') open(data.route);
-  });
+  try {
+    const launchTap = Notifications.getLastNotificationResponse();
+    if (launchTap) openReminderTap(launchTap, open);
+  } catch {
+    // Unavailable on this platform.
+  }
+  const sub = Notifications.addNotificationResponseReceivedListener((response) => openReminderTap(response, open));
   return () => sub.remove();
 }

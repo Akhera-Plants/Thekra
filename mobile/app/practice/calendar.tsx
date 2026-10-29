@@ -1,21 +1,22 @@
 /**
  * Calendar (roadmap §2.2), after the website's calendar page: today in Hijri in a next-step note, a month grid with the
  * sunnah occasions marked (the hub's MonthGrid; the month's occasions from `GET /v1/calendar/occasions`) and the
- * selected day's occasions under it, the user's ±2 day Hijri offset, «اشترك في التقويم» (opens the public `webcal://`
- * feed: no personal data, no account), then the upcoming occasions as a hairline list, each opening its good deed.
+ * selected day's occasions under it, the user's ±2 day Hijri offset, «اشترك في التقويم» (the public feed: no personal
+ * data, no account; `webcal://` on iOS, Google Calendar's add-by-URL page on Android) and «نزّل ملف التقويم» (the same
+ * `.ics` over https), then the upcoming occasions as a hairline list, each opening its good deed.
  * The Hijri date is hidden when the runtime lacks Umm al-Qura (`isHijriSupported()` is false on a Hermes build with
  * reduced ICU).
  */
 
 import React, { useMemo, useState } from 'react';
-import { Linking, Pressable, View } from 'react-native';
+import { Linking, Platform, Pressable, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { CalendarDays, CalendarPlus } from 'lucide-react-native';
+import { CalendarDays, CalendarPlus, Download } from 'lucide-react-native';
 import { addDays, formatHijriAr, isHijriSupported, toHijri, updateSettings, weekday } from '@thekra/practice-core';
-import { calendarSubscribeUrl, useCalendarOccasions } from '@/lib/api/practice';
+import { calendarFeedUrl, useCalendarOccasions } from '@/lib/api/practice';
 import { pick, type CalendarOccasionDto } from '@/lib/practice/catalog-types';
-import { firstWeekday, monthEnd, monthStart, shortDayTitle } from '@/lib/practice/calendar-grid';
+import { calendarSubscribeLink, firstWeekday, monthEnd, monthStart, shortDayTitle } from '@/lib/practice/calendar-grid';
 import { shortDate } from '@/lib/practice/format';
 import { today, usePracticeStore } from '@/lib/practice/practice-store';
 import { useDateNames, useHubDays } from '@/lib/practice/use-habits-hub';
@@ -93,14 +94,17 @@ export default function CalendarScreen() {
     }
   }
 
-  async function handleSubscribe() {
+  async function openCalendarLink(url: string) {
     setOpenFailed(false);
     try {
-      await Linking.openURL(calendarSubscribeUrl(locale));
+      await Linking.openURL(url);
     } catch {
       setOpenFailed(true);
     }
   }
+
+  const handleSubscribe = () => void openCalendarLink(calendarSubscribeLink(calendarFeedUrl(locale), Platform.OS));
+  const handleDownload = () => void openCalendarLink(calendarFeedUrl(locale));
 
   const rows = occasions.data ?? [];
 
@@ -145,7 +149,8 @@ export default function CalendarScreen() {
       ) : null}
 
       <View style={styles.group}>
-        <Button label={t('calendar.subscribe')} icon={CalendarPlus} onPress={() => void handleSubscribe()} />
+        <Button label={t('calendar.subscribe')} icon={CalendarPlus} onPress={handleSubscribe} />
+        <Button label={t('calendar.download')} icon={Download} variant="outline" onPress={handleDownload} />
         {openFailed ? <ErrorText>{t('calendar.openFailed')}</ErrorText> : null}
         <Text variant="small" tone="muted">
           {t('calendar.subscribeHint')}

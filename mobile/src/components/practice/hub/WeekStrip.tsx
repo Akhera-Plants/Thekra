@@ -1,7 +1,8 @@
 /**
- * The hub's week strip: the week of the selected day in reading order (Saturday first in Arabic), each day a button
- * with its weekday letter and number, today outlined, the selected day a filled pill, and a small presence mark under
- * it (empty / ring / filled; nothing for days still to come). Previous and next week, and «اليوم» to come back.
+ * The hub's week strip, after the website's: the week of the selected day in reading order (Saturday first in
+ * Arabic), each day a tall tile with its weekday, its number and a presence mark (empty ring / half / full; nothing
+ * for days still to come). The selected day is a filled tile, today an outlined one. Above it the month, «اليوم» to
+ * come back when another day is open, and previous / next week.
  */
 
 import React, { memo, useCallback, useMemo } from 'react';
@@ -12,35 +13,32 @@ import { dayTitle, monthTitle } from '@/lib/practice/calendar-grid';
 import type { PresenceMark } from '@/lib/practice/hub';
 import { useDateNames } from '@/lib/practice/use-habits-hub';
 import { usePracticeStore } from '@/lib/practice/practice-store';
-import { radius, space, useStyles, useTheme, type Theme } from '@/theme';
+import { radius, space, useStyles, type Theme } from '@/theme';
 import { Button, Text } from '@/ui';
 import { StepButton } from './MonthGrid';
-
-const PILL = 40;
-const MARK = 6;
+import { PresenceDot } from './PresenceDot';
 
 const makeStyles = (t: Theme) => ({
-  root: { gap: space.xs },
+  root: { gap: space.sm },
   nav: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.xs },
   month: { flex: 1 },
-  days: { flexDirection: 'row' as const },
-  day: { flex: 1, alignItems: 'center' as const, gap: space.xs, paddingVertical: space.xs, borderRadius: radius.card },
-  dayPressed: { backgroundColor: t.colors.accent },
-  pill: {
-    width: PILL,
-    height: PILL,
-    borderRadius: radius.full,
+  days: { flexDirection: 'row' as const, gap: space.xs },
+  day: {
+    flex: 1,
+    minHeight: 76,
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
+    gap: 6,
+    paddingVertical: space.sm,
+    borderRadius: radius.card,
     borderWidth: 1.5,
     borderColor: 'transparent',
   },
-  pillToday: { borderColor: t.colors.ring },
-  pillSelected: { backgroundColor: t.colors.primary, borderColor: t.colors.primary },
-  mark: { width: MARK, height: MARK, borderRadius: radius.full, borderWidth: 1.5, borderColor: 'transparent' },
-  markNone: { borderColor: t.colors.border },
-  markPartial: { borderColor: t.colors.link },
-  markFull: { borderColor: t.colors.link, backgroundColor: t.colors.link },
+  dayToday: { borderColor: t.colors.ring },
+  daySelected: { backgroundColor: t.colors.primary, borderColor: t.colors.primary },
+  dayPressed: { backgroundColor: t.colors.accent },
+  number: { lineHeight: 22 },
+  letterSelected: { opacity: 0.85 },
 });
 
 export interface WeekStripProps {
@@ -77,10 +75,10 @@ export function WeekStrip({ week, today, selected, marks, onSelect, onShiftWeek,
   return (
     <View style={styles.root}>
       <View style={styles.nav}>
-        <Text variant="small" tone="muted" style={styles.month}>
+        <Text variant="body" weight="medium" style={styles.month} accessibilityRole="header">
           {monthTitle(selected, names)}
         </Text>
-        {selected !== today ? <Button label={t('practice.today')} onPress={onToday} variant="ghost" /> : null}
+        {selected !== today ? <Button label={t('practice.today')} onPress={onToday} variant="outline" /> : null}
         <StepButton direction="back" label={t('practice.hub.previousWeek')} onPress={handlePrev} />
         <StepButton direction="forward" label={t('practice.hub.nextWeek')} onPress={handleNext} />
       </View>
@@ -115,7 +113,6 @@ interface WeekDayProps {
 
 const WeekDay = memo(function WeekDay({ date, letter, label, mark, isToday, isSelected, onSelect }: WeekDayProps) {
   const styles = useStyles(makeStyles);
-  const { colors } = useTheme();
   const handlePress = useCallback(() => onSelect(date), [onSelect, date]);
   return (
     <Pressable
@@ -123,25 +120,26 @@ const WeekDay = memo(function WeekDay({ date, letter, label, mark, isToday, isSe
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ selected: isSelected }}
-      android_ripple={{ color: colors.accent, borderless: true, radius: 28 }}
-      style={({ pressed }) => [styles.day, pressed && styles.dayPressed]}
+      style={({ pressed }) => [
+        styles.day,
+        isToday && styles.dayToday,
+        pressed && !isSelected && styles.dayPressed,
+        isSelected && styles.daySelected,
+      ]}
     >
-      <Text variant="caption" tone={isSelected ? 'link' : 'muted'} weight={isSelected ? 'medium' : 'regular'}>
+      <Text variant="caption" tone={isSelected ? 'inverse' : 'muted'} style={isSelected && styles.letterSelected} maxFontSizeMultiplier={1.2}>
         {letter}
       </Text>
-      <View style={[styles.pill, isToday && styles.pillToday, isSelected && styles.pillSelected]}>
-        <Text variant="body" weight={isToday || isSelected ? 'semibold' : 'regular'} tone={isSelected ? 'inverse' : 'default'}>
-          {String(Number(date.slice(8, 10)))}
-        </Text>
-      </View>
-      <View
-        style={[
-          styles.mark,
-          mark === 'none' && styles.markNone,
-          mark === 'partial' && styles.markPartial,
-          mark === 'full' && styles.markFull,
-        ]}
-      />
+      <Text
+        variant="body"
+        weight={isToday || isSelected ? 'semibold' : 'medium'}
+        tone={isSelected ? 'inverse' : 'default'}
+        style={styles.number}
+        maxFontSizeMultiplier={1.2}
+      >
+        {String(Number(date.slice(8, 10)))}
+      </Text>
+      <PresenceDot level={mark} inverted={isSelected} />
     </Pressable>
   );
 });

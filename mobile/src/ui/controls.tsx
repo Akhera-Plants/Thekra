@@ -2,7 +2,7 @@
  * Selection and input controls after the website:
  * - SegmentTabs: the content filter («الكل · الآيات · الأحاديث»): muted track, full radius, the active tab a
  *   background-coloured pill, counts in muted digits;
- * - Chip: rounded outline chip, selected = sage fill;
+ * - Chip: rounded outline chip, selected = primary border and ink on a primary tint;
  * - CheckRow: the habit picker's option card (14 radius, 16 padding, a square check at the start);
  * - SwitchRow, Field (input: hairline, 7 radius, 44 high, card fill), ErrorText.
  */
@@ -43,7 +43,8 @@ const makeStyles = (t: Theme) => ({
     borderColor: t.colors.border,
     backgroundColor: t.colors.card,
   },
-  chipSelected: { backgroundColor: t.colors.muted, borderColor: t.colors.muted },
+  /** The site's chosen option: primary border and ink (`link`: primary in light, the readable ring in dark) on a primary tint. */
+  chipSelected: { backgroundColor: t.colors.primarySoft, borderColor: t.colors.link },
   checkRow: {
     flexDirection: 'row' as const,
     alignItems: 'flex-start' as const,
@@ -143,7 +144,7 @@ export function Chip({ label, selected, onPress, count }: { label: string; selec
       accessibilityState={{ selected: Boolean(selected) }}
       style={({ pressed }) => [styles.chip, selected && styles.chipSelected, pressed && { opacity: 0.75 }]}
     >
-      <Text variant="small" weight={selected ? 'medium' : 'regular'}>
+      <Text variant="small" weight={selected ? 'medium' : 'regular'} tone={selected ? 'link' : 'default'}>
         {label}
       </Text>
       {count !== undefined ? (
