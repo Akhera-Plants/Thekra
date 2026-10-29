@@ -844,6 +844,8 @@ model HabitPlan {
   ceiling           Float?
   activeDaysPerWeek Int
   slots             String[]
+  /// Slots that follow a prayer: [{ slot: "HH:MM", prayer: fajr|dhuhr|asr|maghrib|isha, offset: minutes }] (practice-core PlanAnchor).
+  anchors           Json?
   rule              Json?
   createdOn         DateTime    @db.Date
   amountChangedOn   DateTime    @db.Date
