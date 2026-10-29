@@ -92,6 +92,44 @@ export const RELAPSE_DAYS = 7;
 /** Share of free time nawafil may take before a load warning. */
 export const LOAD_SHARE = 0.5;
 
+/**
+ * How a prayer habit counts its unit in rak'ahs: `pairs` (Duha, the night prayer: one unit is two rak'ahs, so the
+ * amount is always even: 2, 4, 6…) or `odd` (Witr: 1, 3, 5…). The stored amount stays the unit count.
+ */
+export type RakahCount = 'pairs' | 'odd';
+
+export function rakahsOf(amount: number, rakah: RakahCount): number {
+  if (amount <= 0) return 0;
+  return rakah === 'pairs' ? amount * 2 : amount * 2 - 1;
+}
+
+/** «ركعة واحدة», «ركعتان», «4 ركعات», «12 ركعة»; "1 rak'ah", "4 rak'ahs". Western digits. */
+export function formatRakahs(n: number, lang: 'ar' | 'en'): string {
+  if (lang === 'en') return n === 1 ? "1 rak'ah" : `${n} rak'ahs`;
+  if (n === 0) return '0 ركعة';
+  if (n === 1) return 'ركعة واحدة';
+  if (n === 2) return 'ركعتان';
+  return n <= 10 ? `${n} ركعات` : `${n} ركعة`;
+}
+
+/**
+ * A plan amount as people say it: «10 دقيقة», «33 مرة», «صدقة» (one `times` unit whose label names it),
+ * «2 × صدقة», and rak'ahs counted out («4 ركعات») for prayer habits. Western digits.
+ */
+export function formatPlanAmount(
+  amount: number,
+  unit: PlanUnit,
+  label: string,
+  lang: 'ar' | 'en',
+  rakah?: RakahCount,
+): string {
+  if (rakah) return formatRakahs(rakahsOf(amount, rakah), lang);
+  const n = String(amount);
+  if (!label) return n;
+  if (unit === 'times') return amount === 1 ? label : `${n} × ${label}`;
+  return `${n} ${label}`;
+}
+
 export function startSuggestion(distance: 'far' | 'near'): number {
   return distance === 'far' ? 2 : 5;
 }

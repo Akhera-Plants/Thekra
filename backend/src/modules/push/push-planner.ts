@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import {
   addDays,
+  formatPlanAmount,
   nextDue,
   occurrences,
   requiredOn,
@@ -81,8 +82,7 @@ function habitFor(plan: Pick<Plan, 'id' | 'habitKey'>, habits: readonly Habit[])
 
 function formatAmount(amount: number, unit: PlanUnit, habit: Habit | undefined, locale: PushLocale): string {
   const label = habit ? (locale === 'ar' ? habit.unitLabelAr : habit.unitLabelEn) : TEXTS[locale].units[unit];
-  if (unit === 'times') return amount === 1 ? label : `${amount} × ${label}`;
-  return `${amount} ${label}`;
+  return formatPlanAmount(amount, unit, label, locale, habit?.rakah);
 }
 
 function digestOf(item: Omit<PlannedPush, 'digest'>): string {

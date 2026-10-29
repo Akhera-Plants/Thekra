@@ -183,7 +183,7 @@ async function showReminder(planId: string, date: string): Promise<void> {
   const habit = findHabit(await getCatalog(), plan);
   const lang = prefs.lang;
   const t = translator(lang);
-  const amountText = formatAmount(requiredOn(plan, today), plan.unit, habit ? unitLabel(habit, lang) : '');
+  const amountText = formatAmount(requiredOn(plan, today), plan.unit, habit, lang);
   const quote = habit ? pickQuote(habit.evidence, await getQuotes(), lang, t) : null;
   const text = buildNotification({ title: habit ? habitTitle(habit, lang) : plan.title, amountText, quote, t });
   const id = notificationId(plan.id, today);

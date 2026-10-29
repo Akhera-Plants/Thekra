@@ -81,7 +81,9 @@ habits:
     unit: times
     unitLabelAr: ركعتان
     unitLabelEn: two rak'ahs
+    rakah: pairs
     start: { far: 1, near: 1 }
+    ceiling: 4
     defaultRule: { kind: daily }
     timeHintAr: بعد ارتفاع الشمس إلى ما قبل الظهر
     timeHintEn: after the sun has risen, until before Dhuhr
@@ -89,30 +91,34 @@ habits:
     basis: text
     evidence: [93f7d1ab-b6f7-4521-bae8-f37cc1ff06a2, aa18c734-8541-4cea-a9b9-f3efcf432b31, 9b96171e-8218-49a3-bfdd-c94f65b126a1]
   - key: witr
-    titleAr: الوتر قبل النوم
-    titleEn: Witr before sleeping
+    titleAr: صلاة الوتر
+    titleEn: Witr prayer
     deed: nawafil
     unit: times
     unitLabelAr: ركعة واحدة على الأقل
     unitLabelEn: at least one rak'ah
+    rakah: odd
     start: { far: 1, near: 1 }
+    ceiling: 6
     defaultRule: { kind: daily }
-    timeHintAr: بعد العشاء وقبل النوم
-    timeHintEn: after Isha, before sleeping
+    timeHintAr: بعد العشاء إلى الفجر، وقبل النوم لمن خشي ألّا يقوم
+    timeHintEn: after Isha until Fajr; before sleeping if you may not wake
     defaultSlots: ['22:00', '23:00']
     basis: text
     evidence: [0bda155b-e786-4616-a380-56be0031c5c2, 93f7d1ab-b6f7-4521-bae8-f37cc1ff06a2]
   - key: qiyam-last-third
-    titleAr: قيام الليل في الثلث الأخير
-    titleEn: Night prayer in the last third of the night
+    titleAr: قيام الليل
+    titleEn: Night prayer
     deed: nawafil
     unit: times
     unitLabelAr: ركعتان
     unitLabelEn: two rak'ahs
+    rakah: pairs
     start: { far: 1, near: 1 }
+    ceiling: 5
     defaultRule: { kind: weekdays, days: [5] }
-    timeHintAr: الثلث الأخير من الليل
-    timeHintEn: the last third of the night
+    timeHintAr: بعد العشاء إلى الفجر، وأفضله الثلث الأخير
+    timeHintEn: after Isha until Fajr; best in the last third of the night
     defaultSlots: ['04:00']
     basis: text
     evidence: [dc522d5d-3652-4e08-9d60-652da8fe39f1]

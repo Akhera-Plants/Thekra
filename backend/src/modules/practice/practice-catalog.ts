@@ -4,6 +4,7 @@ import {
   stagesFor,
   validateRule,
   type PlanUnit,
+  type RakahCount,
   type Rule,
   type SinCategory,
   type Stage,
@@ -45,6 +46,8 @@ export interface Habit {
   unit: PlanUnit;
   unitLabelAr: string;
   unitLabelEn: string;
+  /** Prayer habits: the amount is said in rak'ahs (`pairs`: 2, 4, 6…; `odd`: 1, 3, 5…). */
+  rakah?: RakahCount;
   start: { far: number; near: number };
   ceiling?: number;
   defaultRule: Rule;
@@ -105,6 +108,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const KEY = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const BASES: readonly Basis[] = ['text', 'organizational'];
 const UNITS: readonly PlanUnit[] = ['times', 'count', 'minutes'];
+const RAKAH_COUNTS: readonly RakahCount[] = ['pairs', 'odd'];
 const CATEGORIES: readonly SinCategory[] = ['haqq_allah', 'haqq_ibad'];
 const ALL_STAGES: readonly Stage[] = [...new Set([...stagesFor('haqq_allah'), ...stagesFor('haqq_ibad')])];
 
@@ -248,7 +252,7 @@ function readOccasion(value: YamlValue, where: string): Occasion {
 }
 
 const HABIT_FIELDS = [
-  'key', 'titleAr', 'titleEn', 'deed', 'unit', 'unitLabelAr', 'unitLabelEn', 'start', 'ceiling', 'defaultRule',
+  'key', 'titleAr', 'titleEn', 'deed', 'unit', 'unitLabelAr', 'unitLabelEn', 'rakah', 'start', 'ceiling', 'defaultRule',
   'timeHintAr', 'timeHintEn', 'defaultSlots', 'basis', 'evidence',
 ];
 
@@ -256,6 +260,7 @@ function readHabit(value: YamlValue, where: string): Habit {
   const f = new Fields(asMap(value, where), where, HABIT_FIELDS);
   const start = new Fields(f.mapping('start'), `${where}.start`, ['far', 'near']);
   const ceiling = f.optionalInteger('ceiling', 1);
+  const rakah = f.optionalString('rakah') !== undefined ? f.oneOf('rakah', RAKAH_COUNTS) : undefined;
   const timeHintAr = f.optionalString('timeHintAr');
   const timeHintEn = f.optionalString('timeHintEn');
   if ((timeHintAr === undefined) !== (timeHintEn === undefined)) f.fail('timeHintAr and timeHintEn go together');
@@ -268,6 +273,7 @@ function readHabit(value: YamlValue, where: string): Habit {
     unit: f.oneOf('unit', UNITS),
     unitLabelAr: f.string('unitLabelAr'),
     unitLabelEn: f.string('unitLabelEn'),
+    ...(rakah !== undefined ? { rakah } : {}),
     start: { far: start.integer('far', 1), near: start.integer('near', 1) },
     ...(ceiling !== undefined ? { ceiling } : {}),
     defaultRule: f.rule('defaultRule'),
@@ -277,6 +283,7 @@ function readHabit(value: YamlValue, where: string): Habit {
     evidence: f.strings('evidence', UUID),
   };
   if (!KEY.test(habit.key)) f.fail(`key "${habit.key}" must be kebab-case`);
+  if (rakah !== undefined && habit.unit !== 'times') f.fail('rakah needs unit: times');
   if (habit.start.far > habit.start.near) f.fail('start.far must be ≤ start.near');
   if (ceiling !== undefined && ceiling < habit.start.near) f.fail('ceiling must be ≥ start.near');
   const badSlot = habit.defaultSlots.findIndex((slot) => !isValidTime(slot));

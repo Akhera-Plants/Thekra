@@ -2,7 +2,7 @@
  * Practice API shapes: `GET /v1/practice/catalog`, `GET /v1/calendar/occasions`.
  * The catalog objects mirror backend/prisma/taxonomy/deed-schedules.yaml and sin-programs.yaml field for field.
  */
-import type { HijriDate, PlanUnit, Rule, SinCategory, Stage } from '@thekra/practice-core';
+import type { HijriDate, PlanUnit, RakahCount, Rule, SinCategory, Stage } from '@thekra/practice-core';
 
 export type ScheduleBasis = 'text' | 'organizational';
 
@@ -25,6 +25,8 @@ export interface PracticeHabit {
   unit: PlanUnit;
   unitLabelAr: string;
   unitLabelEn: string;
+  /** Prayer habits: the amount is said in rak'ahs (`pairs`: 2, 4, 6…; `odd`: 1, 3, 5…). */
+  rakah?: RakahCount;
   start: { far: number; near: number };
   ceiling?: number;
   defaultRule: Rule;

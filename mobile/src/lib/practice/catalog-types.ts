@@ -4,7 +4,7 @@
  * sin-programs.yaml (reviewed content; the app never writes religious text of its own).
  */
 
-import type { PlanUnit, Rule, SinCategory, Stage, VaultPayload } from '@thekra/practice-core';
+import type { PlanUnit, RakahCount, Rule, SinCategory, Stage, VaultPayload } from '@thekra/practice-core';
 
 export type Basis = 'text' | 'organizational';
 
@@ -26,6 +26,8 @@ export interface CatalogHabit {
   unit: PlanUnit;
   unitLabelAr: string;
   unitLabelEn: string;
+  /** Prayer habits: the amount is said in rak'ahs (`pairs`: 2, 4, 6…; `odd`: 1, 3, 5…). */
+  rakah?: RakahCount;
   start: { far: number; near: number };
   ceiling?: number;
   defaultRule: Rule;

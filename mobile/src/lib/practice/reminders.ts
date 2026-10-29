@@ -17,6 +17,7 @@
 import {
   activePrograms,
   addDays,
+  formatPlanAmount,
   nextDue,
   occurrences,
   requiredOn,
@@ -90,7 +91,7 @@ export function planRule(plan: Pick<Plan, 'id' | 'habitKey' | 'rule'>, habits: r
   return plan.rule ?? habitFor(plan, habits)?.defaultRule ?? { kind: 'daily' };
 }
 
-/** «2 دقيقة», «ركعتان», «3 × ركعتان», "33 times". Western digits. */
+/** «2 دقيقة», «صدقة», «3 × صدقة», «4 ركعات», "33 times". Western digits. */
 export function formatAmount(
   amount: number,
   unit: PlanUnit,
@@ -99,8 +100,7 @@ export function formatAmount(
   unitFallback: Record<PlanUnit, string>,
 ): string {
   const label = habit ? pick(habit, 'unitLabel', locale) : unitFallback[unit];
-  if (unit === 'times') return amount === 1 ? label : `${amount} × ${label}`;
-  return `${amount} ${label}`;
+  return formatPlanAmount(amount, unit, label, locale, habit?.rakah);
 }
 
 function habitReminders(input: ReminderInput, end: LocalDate): PlannedReminder[] {

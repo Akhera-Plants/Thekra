@@ -3,7 +3,7 @@
  * GET https://thekra.vercel.app/v1/practice/catalog and bundled at build time (scripts/gen-catalog.mjs) as the
  * offline fallback. Every entry is validated here; an invalid entry is dropped, never "repaired".
  */
-import { isValidTime, validateRule, type PlanUnit, type Rule } from '@thekra/practice-core';
+import { formatPlanAmount, isValidTime, validateRule, type PlanUnit, type RakahCount, type Rule } from '@thekra/practice-core';
 
 export interface Habit {
   key: string;
@@ -14,6 +14,8 @@ export interface Habit {
   unit: PlanUnit;
   unitLabelAr: string;
   unitLabelEn: string;
+  /** Prayer habits: the amount is said in rak'ahs (`pairs`: 2, 4, 6…; `odd`: 1, 3, 5…). */
+  rakah?: RakahCount;
   /** Suggested small start for someone far from / near to the habit. */
   start?: { far: number; near: number };
   ceiling?: number;
@@ -63,6 +65,7 @@ export function parseHabit(raw: unknown): Habit | null {
   };
   if (isRecord(start) && isPositive(start.far) && isPositive(start.near)) habit.start = { far: start.far, near: start.near };
   if (isPositive(ceiling)) habit.ceiling = ceiling;
+  if (raw.rakah === 'pairs' || raw.rakah === 'odd') habit.rakah = raw.rakah;
   if (isText(raw.timeHintAr)) habit.timeHintAr = raw.timeHintAr.trim();
   if (isText(raw.timeHintEn)) habit.timeHintEn = raw.timeHintEn.trim();
   return habit;
@@ -95,15 +98,9 @@ export function unitLabel(h: Pick<Habit, 'unitLabelAr' | 'unitLabelEn'>, lang: '
   return lang === 'en' ? h.unitLabelEn : h.unitLabelAr;
 }
 
-/**
- * «2 دقيقة», «33 مرة», «ركعتان» (amount 1 of a `times` unit whose label already names the unit), «2 × ركعتان».
- * Western digits always.
- */
-export function formatAmount(amount: number, unit: PlanUnit, label: string): string {
-  const n = String(amount);
-  if (!label) return n;
-  if (unit === 'times') return amount === 1 ? label : `${n} × ${label}`;
-  return `${n} ${label}`;
+/** A plan amount in the habit's own words («10 دقيقة», «33 مرة», «4 ركعات»). Western digits always. */
+export function formatAmount(amount: number, unit: PlanUnit, habit: Habit | undefined, lang: 'ar' | 'en'): string {
+  return formatPlanAmount(amount, unit, habit ? unitLabel(habit, lang) : '', lang, habit?.rakah);
 }
 
 /** The deed page on the site: Arabic has no locale prefix, English is under /en. */
