@@ -1,5 +1,5 @@
 /**
- * «ترك المعصية» list changes (one program at a time; end markers kept only for the vault) and the private notebook.
+ * «ترك المعصية» list changes (several side by side; end markers kept only for the vault) and the private notebook.
  */
 
 import { checkIn, isActiveProgram, startProgram, type SinProgram } from '@thekra/practice-core';
@@ -10,19 +10,20 @@ const program = (sinSlug: string): SinProgram =>
   startProgram({ sinSlug, category: 'haqq_allah', hardToLeaveAtOnce: false, startedOn: '2026-10-01' }, '2026-10-01T08:00:00.000Z');
 
 describe('withProgramStarted', () => {
-  it('ends the active program and keeps its marker for the vault', () => {
+  it('runs the new program beside the active ones', () => {
+    const a = program('a');
     const next = program('b');
-    const result = withProgramStarted([program('a')], next, true, NOW);
-    expect(result).toHaveLength(2);
-    expect(result[0]).toMatchObject({ sinSlug: 'a', endedAt: NOW, checkIns: [] });
-    expect(result[1]).toBe(next);
-    expect(result.filter(isActiveProgram).map((p) => p.sinSlug)).toEqual(['b']);
+    const result = withProgramStarted([a], next);
+    expect(result).toEqual([a, next]);
+    expect(result.filter(isActiveProgram).map((p) => p.sinSlug)).toEqual(['a', 'b']);
   });
 
-  it('keeps nothing of the old program without a vault, and replaces an older copy of the same sin', () => {
+  it('replaces an older (ended) copy of the same sin', () => {
     const ended = { ...program('c'), endedAt: NOW };
-    expect(withProgramStarted([program('a'), ended], program('b'), false).map((p) => p.sinSlug)).toEqual(['c', 'b']);
-    expect(withProgramStarted([ended], program('c'), true).map((p) => [p.sinSlug, p.endedAt])).toEqual([['c', undefined]]);
+    expect(withProgramStarted([program('a'), ended], program('c')).map((p) => [p.sinSlug, p.endedAt])).toEqual([
+      ['a', undefined],
+      ['c', undefined],
+    ]);
   });
 });
 

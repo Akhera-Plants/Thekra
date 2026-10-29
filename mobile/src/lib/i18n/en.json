@@ -580,12 +580,6 @@
       "cancel": "Cancel",
       "confirm": "End it now",
       "done": "The program is closed. You can start it again or choose another whenever you wish."
-    },
-    "replace": {
-      "title": "Start a new program?",
-      "body": "Your current program is closed and its check-ins and notes are removed from this device, then the new one starts. You can start the first one again whenever you wish.",
-      "cancel": "Cancel",
-      "confirm": "Start the new one"
     }
   },
   "calendar": {

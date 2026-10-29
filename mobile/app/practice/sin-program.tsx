@@ -11,9 +11,9 @@
  * current stage (`currentStage`) with its reviewed title/body, practical steps, alternatives, evidence, the
  * daily check-in (held / weak / fell_repented + private note), `summary` (counts of days only) and, after
  * «وقعت ثم تبت», the `afterFall` («خربانة؟ صلّحها») content, and «دفتري الخاص» (past check-ins with their notes,
- * newest first, shown on this screen only). «أنهِ هذا البرنامج» (confirmed) closes the program and opens the chooser;
- * «ابدأ برنامجًا آخر», or a sin page's «ابدأ برنامج الترك» while another program runs, opens the chooser too, and
- * starting there ends the current program after a confirmation (one program at a time, see sin-program-view.ts).
+ * newest first, shown on this screen only). Several programs run side by side, as on the website: each has its own
+ * stage, check-in, notebook and «أنهِ هذا البرنامج» (confirmed); «ابدأ برنامجًا آخر», or a sin page's «ابدأ برنامج
+ * الترك», opens the chooser with the sins not already followed.
  * «احذف كل بيانات البرنامج» wipes it all at once (no confirmation step: «خروج آمن», roadmap §4.2): local data, the
  * vault key, the server vault, and the private reminders (wipePrograms turns `sinReminders` off, so the lifecycle
  * cancels them).
@@ -25,15 +25,15 @@
  * chooser or the program (stage, steps, check-in, texts), the reminders, and the wipe section last.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, KeyboardAvoidingView, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Check, Plus, ShieldCheck } from 'lucide-react-native';
 import {
+  activePrograms,
   addDays,
   afterFall,
-  isActiveProgram,
   checkIn,
   currentStage,
   startProgram,
@@ -132,11 +132,12 @@ function SinProgramContent() {
   const styles = useStyles(makeStyles);
   const locale = useUiLocale();
   const hydrated = usePracticeStore((s) => s.hydrated);
-  const program = usePracticeStore((s) => s.store.programs.find(isActiveProgram));
+  const allPrograms = usePracticeStore((s) => s.store.programs);
+  const programs = useMemo(() => activePrograms(allPrograms), [allPrograms]);
   const catalog = usePracticeCatalog(locale);
   const evidence = useSinProgramEvidence(catalog.data, locale);
   const sins = useSins({ limit: 100 });
-  const hasProgramData = usePracticeStore((s) => s.store.programs.length > 0);
+  const hasProgramData = allPrograms.length > 0;
   const userId = useAuthStore((s) => s.user?.id ?? null);
   const vaultStatus = useVaultState((s) => s.status);
   // An end marker is kept only while an encrypted copy may exist (also while that is not known yet).
@@ -167,8 +168,10 @@ function SinProgramContent() {
   };
 
   const entries = catalog.data.sinPrograms.programs;
-  const preselected = pendingSin && pendingSin !== program?.sinSlug && entries.some((p) => p.sin === pendingSin) ? pendingSin : null;
-  const showChooser = !program || (choosing ?? preselected !== null);
+  const following = new Set(programs.map((p) => p.sinSlug));
+  const preselected = pendingSin && !following.has(pendingSin) && entries.some((p) => p.sin === pendingSin) ? pendingSin : null;
+  const showChooser = programs.length === 0 || (choosing ?? preselected !== null);
+  const canAddAnother = entries.some((p) => !following.has(p.sin));
 
   function handleStarted() {
     setChoosing(false);
@@ -186,32 +189,35 @@ function SinProgramContent() {
       <Screen edges={['bottom']} decor>
         <PageHeader eyebrow={t('practice.title')} title={t('sinProgram.title')} lead={t('sinProgram.lead')} />
         <Notice icon={ShieldCheck}>{t('sinProgram.privacy')}</Notice>
-        {wiped && !program ? <Notice icon={Check}>{t('sinProgram.wiped')}</Notice> : null}
-        {ended && !program ? <Notice icon={Check}>{t('sinProgram.end.done')}</Notice> : null}
-        {userId ? <VaultCard userId={userId} hasProgram={Boolean(program)} /> : <VaultSignInNote />}
+        {wiped && programs.length === 0 ? <Notice icon={Check}>{t('sinProgram.wiped')}</Notice> : null}
+        {ended ? <Notice icon={Check}>{t('sinProgram.end.done')}</Notice> : null}
+        {userId ? <VaultCard userId={userId} hasProgram={programs.length > 0} /> : <VaultSignInNote />}
         {showChooser ? (
           <ChooseProgram
-            programs={entries}
+            programs={entries.filter((p) => !following.has(p.sin))}
             sinName={sinName}
             preselected={preselected}
-            active={program}
-            keepMarker={keepMarker}
             onStarted={handleStarted}
-            onCancel={program ? () => setChoosing(false) : undefined}
+            onCancel={programs.length > 0 ? () => setChoosing(false) : undefined}
           />
         ) : null}
-        {program && !showChooser ? (
+        {programs.length > 0 && !showChooser ? (
           <>
-            <ProgramView
-              program={program}
-              entry={entries.find((p) => p.sin === program.sinSlug)}
-              sinName={sinName(program.sinSlug)}
-              evidenceById={evidence.data}
-              evidenceLoading={evidence.isLoading}
-              evidenceError={evidence.isError}
-            />
-            <EndProgram sinSlug={program.sinSlug} keepMarker={keepMarker} onEnded={handleEnded} />
-            {entries.length > 1 ? (
+            {programs.map((program, index) => (
+              <View key={program.sinSlug} style={styles.block}>
+                {index > 0 ? <Rule /> : null}
+                <ProgramView
+                  program={program}
+                  entry={entries.find((p) => p.sin === program.sinSlug)}
+                  sinName={sinName(program.sinSlug)}
+                  evidenceById={evidence.data}
+                  evidenceLoading={evidence.isLoading}
+                  evidenceError={evidence.isError}
+                />
+                <EndProgram sinSlug={program.sinSlug} keepMarker={keepMarker} onEnded={handleEnded} />
+              </View>
+            ))}
+            {canAddAnother ? (
               <Button label={t('sinProgram.another')} icon={Plus} onPress={() => setChoosing(true)} variant="outline" />
             ) : null}
             <SinReminders />
@@ -248,29 +254,26 @@ interface ChooseProgramProps {
   sinName: (slug: string) => string;
   /** The sin a sin page handed over, if any. */
   preselected: string | null;
-  /** The program being followed: starting another ends it, after a confirmation. */
-  active: SinProgram | undefined;
-  keepMarker: boolean;
   onStarted: () => void;
-  /** Back to the current program (only when there is one). */
+  /** Back to the programs being followed (only when there are some). */
   onCancel?: () => void;
 }
 
-function ChooseProgram({ programs, sinName, preselected, active, keepMarker, onStarted, onCancel }: ChooseProgramProps) {
+/** The catalog programs not already followed; starting one runs it beside the others. */
+function ChooseProgram({ programs, sinName, preselected, onStarted, onCancel }: ChooseProgramProps) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const locale = useUiLocale();
   const catalog = usePracticeCatalog(locale);
   const setStore = usePracticeStore((s) => s.setStore);
-  const choices = active ? programs.filter((p) => p.sin !== active.sinSlug) : programs;
-  const [selected, setSelected] = useState<CatalogSinProgram | null>(() => choices.find((p) => p.sin === preselected) ?? null);
+  const [selected, setSelected] = useState<CatalogSinProgram | null>(() => programs.find((p) => p.sin === preselected) ?? null);
   const [hard, setHard] = useState<boolean | null>(null);
 
   const common = catalog.data?.sinPrograms.common;
   // Owner decision D1: the gradual path is offered only where the catalog allows it (haqq_allah programs).
   const asksWill = Boolean(selected?.gradualAllowed && selected.category === 'haqq_allah');
 
-  function commitStart() {
+  function handleStart() {
     if (!selected) return;
     const program = startProgram({
       sinSlug: selected.sin,
@@ -278,25 +281,14 @@ function ChooseProgram({ programs, sinName, preselected, active, keepMarker, onS
       hardToLeaveAtOnce: asksWill && hard === true,
       startedOn: today(),
     });
-    setStore((s) => ({ ...s, programs: withProgramStarted(s.programs, program, keepMarker) }));
+    setStore((s) => ({ ...s, programs: withProgramStarted(s.programs, program) }));
     onStarted();
-  }
-
-  function handleStart() {
-    if (!active) {
-      commitStart();
-      return;
-    }
-    Alert.alert(t('sinProgram.replace.title'), t('sinProgram.replace.body'), [
-      { text: t('sinProgram.replace.cancel'), style: 'cancel' },
-      { text: t('sinProgram.replace.confirm'), style: 'destructive', onPress: commitStart },
-    ]);
   }
 
   return (
     <Section title={t('sinProgram.choose')}>
       <View style={styles.options} accessibilityRole="radiogroup">
-        {choices.map((p) => (
+        {programs.map((p) => (
           <CheckRow
             key={p.sin}
             radio
@@ -318,7 +310,7 @@ function ChooseProgram({ programs, sinName, preselected, active, keepMarker, onS
         </View>
       ) : null}
       {selected ? <Button label={t('sinProgram.start')} onPress={handleStart} disabled={asksWill && hard === null} arrow large /> : null}
-      {onCancel ? <Button label={t('sinProgram.replace.cancel')} onPress={onCancel} variant="outline" /> : null}
+      {onCancel ? <Button label={t('common.cancel')} onPress={onCancel} variant="outline" /> : null}
     </Section>
   );
 }

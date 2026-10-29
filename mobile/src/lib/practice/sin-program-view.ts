@@ -1,9 +1,9 @@
 /**
  * «ترك المعصية» list changes and the private notebook. LOCAL ONLY (roadmap §0.1): nothing here leaves the device.
  *
- * The app follows one program at a time. Ending one keeps practice-core's end marker only while an encrypted copy
- * may exist in the account (`keepMarker`), so that copy does not bring the program back (`mergePrograms`); without
- * a vault nothing of the ended program is kept, as on the website's «أنهِ هذا البرنامج».
+ * Several programs can run side by side, as on the website. Ending one keeps practice-core's end marker only while an
+ * encrypted copy may exist in the account (`keepMarker`), so that copy does not bring the program back
+ * (`mergePrograms`); without a vault nothing of the ended program is kept, as on the website's «أنهِ هذا البرنامج».
  */
 
 import { endProgram, isActiveProgram, type CheckIn, type IsoTime, type LocalDate, type SinProgram } from '@thekra/practice-core';
@@ -15,12 +15,9 @@ function closeProgram(program: SinProgram, keepMarker: boolean, now?: IsoTime): 
   return keepMarker ? [endProgram(program, now)] : [];
 }
 
-/** The programs once `next` starts: the active one is ended, an older copy of the same sin is replaced. */
-export function withProgramStarted(programs: readonly SinProgram[], next: SinProgram, keepMarker: boolean, now?: IsoTime): SinProgram[] {
-  const others = programs
-    .filter((p) => p.sinSlug !== next.sinSlug)
-    .flatMap((p) => (isActiveProgram(p) ? closeProgram(p, keepMarker, now) : [p]));
-  return [...others, next];
+/** The programs once `next` starts: the others keep running; an older copy of the same sin is replaced. */
+export function withProgramStarted(programs: readonly SinProgram[], next: SinProgram): SinProgram[] {
+  return [...programs.filter((p) => p.sinSlug !== next.sinSlug), next];
 }
 
 /** The programs once the program of `sinSlug` ends. */
