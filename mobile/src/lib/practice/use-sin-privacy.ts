@@ -94,10 +94,15 @@ export type SinLockState = 'open' | 'locked' | 'unlocking';
 /**
  * The lock of the page when `enabled`: locked on opening, the system prompt shown at once, locked again after the
  * app has been in the background (and the prompt shown again on return). A cancelled or failed prompt stays
- * `locked`; `unlock` tries again.
+ * `locked`; `unlock` tries again. `startOpen`: a screen opened from the already unlocked program page starts open
+ * (no second prompt), and still locks after the background.
  */
-export function useSinProgramLock(enabled: boolean, { promptMessage, cancelLabel }: DeviceUnlockLabels): { state: SinLockState; unlock: () => void } {
-  const [state, setState] = useState<SinLockState>('locked');
+export function useSinProgramLock(
+  enabled: boolean,
+  { promptMessage, cancelLabel }: DeviceUnlockLabels,
+  startOpen = false,
+): { state: SinLockState; unlock: () => void } {
+  const [state, setState] = useState<SinLockState>(startOpen ? 'open' : 'locked');
   // The passcode screen on Android is its own activity: the app goes to the background while it is up.
   const prompting = useRef(false);
 
@@ -112,7 +117,7 @@ export function useSinProgramLock(enabled: boolean, { promptMessage, cancelLabel
   }, [promptMessage, cancelLabel]);
 
   useEffect(() => {
-    if (enabled) unlock();
+    if (enabled && !startOpen) unlock();
     // Once per opening (or when the lock is switched on): not again when only the prompt's words change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled]);

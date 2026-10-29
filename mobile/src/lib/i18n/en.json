@@ -310,7 +310,10 @@
       "kinshipBodyGeneric_other": "Time to get in touch with {{count}} of your relatives",
       "kinshipBodyNames": "Time to get in touch with: {{names}}",
       "sinBody": "A moment for yourself. Open Thekra.",
-      "channelName": "Reminders"
+      "channelName": "Reminders",
+      "doneAction": "Done",
+      "habitLogged": "Logged for today.",
+      "quietChannelName": "Logged notes"
     },
     "weekdays": {
       "0": "Sunday",
@@ -485,6 +488,35 @@
     "time": {
       "am": "AM",
       "pm": "PM"
+    },
+    "prayer": {
+      "names": {
+        "fajr": "Fajr",
+        "dhuhr": "Dhuhr",
+        "asr": "Asr",
+        "maghrib": "Maghrib",
+        "isha": "Isha"
+      },
+      "modeTime": "Set time",
+      "modePrayer": "After a prayer",
+      "modeHint": "A reminder after a prayer follows its time in your city, day by day.",
+      "whichPrayer": "After which prayer?",
+      "howLong": "How long after the adhan?",
+      "atAdhan": "At the adhan",
+      "minutes_one": "{{count}} minute",
+      "minutes_other": "{{count}} minutes",
+      "add": "Add reminder",
+      "after": "After {{prayer}}",
+      "afterBy": "{{minutes}} after {{prayer}}",
+      "todayAt": "today {{time}}",
+      "suggested": "Suggested for this habit: {{prayers}}",
+      "needPlace": "To work out prayer times we need your city. It stays on this device and is never sent anywhere.",
+      "useLocation": "Use my location",
+      "chooseCity": "Choose a city",
+      "locationDenied": "Location is not allowed. Choose your city from the list.",
+      "locationUnavailable": "Your location could not be found just now. Choose your city from the list.",
+      "alreadyAdded": "You have added this prayer.",
+      "listSeparator": ", "
     }
   },
   "kinship": {
@@ -582,6 +614,38 @@
       "cancel": "Cancel",
       "confirm": "End it now",
       "done": "The program is closed. You can start it again or choose another whenever you wish."
+    },
+    "urge": {
+      "button": "I feel weak right now",
+      "buttonHint": "A minute and a half, one step at a time; you can skip any step.",
+      "screenTitle": "A pause",
+      "progress": "Step {{n}} of {{total}}",
+      "next": "Next",
+      "inhale": "Breathe in",
+      "exhale": "Breathe out",
+      "breathDone": "Go on when you are ready",
+      "breathCount": "Breath {{n}} of {{total}}",
+      "noText": "The text could not load now. Go on to the next step.",
+      "delayButton": "Check on me in {{minutes}} minutes",
+      "delaySet": "We will check on you once in {{minutes}} minutes, with a notification that says only «تذكرة من ذكرى».",
+      "delayNoPermission": "Notifications are off, so keep an eye on the time and check on yourself in {{minutes}} minutes.",
+      "companionCircle": "Send «Pray for me» to {{name}}",
+      "companionSent": "«Pray for me» was sent to {{name}}.",
+      "companionShare": "Share a request for prayer",
+      "endTitle": "How are you now?",
+      "passed": "I got through it, alhamdulillah",
+      "fell": "I slipped",
+      "passedSaved": "Kept in your private notebook, on this device only.",
+      "back": "Back",
+      "unavailable": "Open these steps from your program page.",
+      "notebook": "A weak moment you got through",
+      "notebookCount": "Weak moments you got through ({{count}})"
+    },
+    "fall": {
+      "did": "I did it",
+      "later": "Later",
+      "deedDone": "Done: {{deed}}",
+      "notebookDeed": "Then a good deed: {{deed}}"
     }
   },
   "calendar": {
@@ -785,12 +849,14 @@
     "cheer": {
       "thabat": "I prayed for your steadfastness",
       "jazak": "May Allah reward you with good",
-      "dhakkarani": "Allah reminded me of you"
+      "dhakkarani": "Allah reminded me of you",
+      "ask_dua": "Pray for me"
     },
     "cheerAll": {
       "thabat": "I prayed for your steadfastness, all of you",
       "jazak": "May Allah reward you all with good",
-      "dhakkarani": "Allah reminded me of you all"
+      "dhakkarani": "Allah reminded me of you all",
+      "ask_dua": "Pray for me"
     },
     "inviteTitle": "Invite to it",
     "inviteLead": "Anyone with the code can join. Change it whenever you like, and the old one stops working.",
@@ -851,5 +917,55 @@
     "lockedTitle": "This page is locked",
     "lockedHint": "Open it with your fingerprint, face or device passcode.",
     "unlock": "Open"
+  },
+  "tazkiya": {
+    "niyyahTitle": "My intention today",
+    "niyyahNoteLabel": "A short line of intention (optional)",
+    "niyyahSave": "Save my intention",
+    "niyyahMark": "My intention today",
+    "niyyahLabel": "Intention",
+    "notNow": "Not now",
+    "eveningTitle": "Evening reflection",
+    "eveningWrite": "Write your reflection",
+    "eveningSave": "Save to the notebook",
+    "eveningSaved": "Saved in the reflection notebook",
+    "notebookTitle": "Reflection notebook",
+    "notebookPrivate": "This notebook stays on this device only: it is not synced and never appears in notifications or in the account export.",
+    "notebookEmpty": "Nothing in the notebook yet. Your morning intentions and evening reflections are kept here.",
+    "deleteDay": "Delete this day",
+    "deleteDayConfirm": "What you wrote on this day is deleted from this device and cannot be recovered.",
+    "deleteAll": "Delete the whole notebook",
+    "deleteAllConfirm": "The whole notebook is deleted from this device and cannot be recovered."
+  },
+  "prayerTimes": {
+    "title": "Prayer times",
+    "lead": "For reminders after a prayer. The times are worked out on this device; your location is never sent anywhere.",
+    "placeTitle": "Place",
+    "placeDevice": "My location",
+    "placeManual": "Coordinates you entered",
+    "placeNone": "Not set yet",
+    "cityTitle": "Or choose a city",
+    "manualTitle": "Or type coordinates",
+    "latitude": "Latitude",
+    "longitude": "Longitude",
+    "manualHint": "For example 21.42 and 39.83",
+    "invalidCoordinates": "Enter a latitude from -90 to 90 and a longitude from -180 to 180.",
+    "saveManual": "Save coordinates",
+    "methodTitle": "Calculation method",
+    "methodAuto": "By country: {{method}}",
+    "todayTitle": "Today's times",
+    "methods": {
+      "umm_al_qura": "Umm al-Qura (Makkah)",
+      "mwl": "Muslim World League",
+      "egyptian": "Egyptian General Authority of Survey",
+      "karachi": "University of Islamic Sciences, Karachi",
+      "dubai": "Dubai",
+      "kuwait": "Kuwait",
+      "qatar": "Qatar",
+      "turkey": "Diyanet, Turkey",
+      "singapore": "Singapore",
+      "north_america": "ISNA (North America)",
+      "moonsighting": "Moonsighting Committee"
+    }
   }
 }

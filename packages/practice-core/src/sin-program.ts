@@ -9,7 +9,10 @@
  * when leaving at once is very hard for the user. A sin against people's rights is always 'cut' (leave it, or
  * lighten it with strong effort) and adds a 'restore_rights' stage (رد الحقوق والاستحلال).
  *
- * Wording rule: no streaks, no counters of falls, no failure words. A fall leads to the «خربانة؟ صلّحها» content.
+ * Wording rule: no streaks, no counters of falls, no failure words. A fall leads to the «خربانة؟ صلّحها» content and
+ * «أتبِع السيئة الحسنة»: a small good deed right after it ({@link recordDeedAfterFall}), kept with that day's check-in.
+ * A weak moment the user passed («لحظة ضعف عبرتها», {@link recordUrgePassed}) is its own private mark: it is never a
+ * check-in, never a failure, and it does not move the stages ({@link currentStage} reads check-ins only).
  */
 import { diffDays, isIsoTime, isValidDate, isoMillis, nowIso, toDayNumber, fromDayNumber, type IsoTime, type LocalDate } from './dates.js';
 
@@ -25,6 +28,20 @@ export interface CheckIn {
   note?: string;
   /** When this check-in was last written. Merging two devices keeps the later one ({@link mergePrograms}). */
   updatedAt?: IsoTime;
+  /**
+   * «حسنة صغيرة الآن»: the catalog key of the small good deed done right after a fall (only with `fell_repented`).
+   * A key, never free text.
+   */
+  deed?: string;
+}
+
+/** «لحظة ضعف عبرتها»: how many weak moments the user passed on one date. */
+export interface UrgeMark {
+  date: LocalDate;
+  /** 1…{@link MAX_URGES_PER_DAY}. */
+  count: number;
+  /** When this mark was last written. */
+  updatedAt?: IsoTime;
 }
 
 export interface SinProgram {
@@ -34,6 +51,8 @@ export interface SinProgram {
   startedOn: LocalDate;
   /** One entry per date, ascending. */
   checkIns: CheckIn[];
+  /** Weak moments passed, one entry per date, ascending. Absent until the first one. */
+  urges?: UrgeMark[];
   /** When the program was started or ended. */
   updatedAt?: IsoTime;
   /**
@@ -50,6 +69,11 @@ export const CHECK_IN_VALUES: readonly CheckInValue[] = ['held', 'weak', 'fell_r
 export const STAGE_MIN_DAYS = 7;
 /** Check-ins needed in the stage's last 7 days to move on. */
 export const STAGE_MIN_CHECKINS = 4;
+/** A day's count of weak moments passed stops here (a mark, not a scoreboard). */
+export const MAX_URGES_PER_DAY = 99;
+/** A deed key: kebab-case, as the catalog writes it. */
+const DEED_KEY = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const DEED_KEY_MAX = 40;
 
 /** The ordered stages for a category. */
 export function stagesFor(category: SinCategory): readonly Stage[] {
@@ -97,7 +121,7 @@ export function activePrograms(programs: readonly SinProgram[]): SinProgram[] {
   return programs.filter(isActiveProgram);
 }
 
-const byDate = (a: CheckIn, b: CheckIn) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
+const byDate = (a: { date: LocalDate }, b: { date: LocalDate }) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
 
 /**
  * Merges this device's programs with another copy (the vault), one program per sin; the same result on every device
@@ -107,6 +131,7 @@ const byDate = (a: CheckIn, b: CheckIn) => (a.date < b.date ? -1 : a.date > b.da
  * - otherwise check-ins are united by date, and on the same date the later written one wins (`updatedAt`, absent
  *   counts as the oldest; a tie keeps this device's), with its note. The program's own fields come from the copy
  *   started later (a tie keeps this device's).
+ * - weak moments passed are united by date, the higher count on the same date.
  * The order is this device's, then programs only in the other copy.
  */
 export function mergePrograms(local: readonly SinProgram[], remote: readonly SinProgram[]): SinProgram[] {
@@ -132,7 +157,31 @@ function mergeProgram(mine: SinProgram, theirs: SinProgram): SinProgram {
     if (!kept || isoMillis(c.updatedAt) > isoMillis(kept.updatedAt)) dates.set(c.date, c);
   }
   const fields = started(theirs) > started(mine) ? theirs : mine;
-  return { ...fields, checkIns: [...dates.values()].sort(byDate) };
+  const merged: SinProgram = { ...fields, checkIns: [...dates.values()].sort(byDate) };
+  const urges = mergeUrges(mine.urges ?? [], theirs.urges ?? []);
+  if (urges.length > 0) merged.urges = urges;
+  else delete merged.urges;
+  return merged;
+}
+
+/**
+ * Weak moments passed, united by date. On the same date the higher count wins (a copy that already holds the other's
+ * moments must not count them twice), with the later `updatedAt`; the same result in either order.
+ */
+function mergeUrges(mine: readonly UrgeMark[], theirs: readonly UrgeMark[]): UrgeMark[] {
+  const dates = new Map<string, UrgeMark>(mine.map((u) => [u.date, u]));
+  for (const u of theirs) {
+    const kept = dates.get(u.date);
+    if (!kept) {
+      dates.set(u.date, u);
+      continue;
+    }
+    const later = isoMillis(u.updatedAt) > isoMillis(kept.updatedAt) ? u.updatedAt : kept.updatedAt;
+    const mark: UrgeMark = { date: u.date, count: Math.max(kept.count, u.count) };
+    if (later !== undefined) mark.updatedAt = later;
+    dates.set(u.date, mark);
+  }
+  return [...dates.values()].sort(byDate);
 }
 
 /** Returns an English error message, or `null` when well-formed (including the haqq_ibad ⇒ cut rule). */
@@ -151,7 +200,31 @@ export function validateProgram(program: unknown): string | null {
     const e = validateCheckIn(c);
     if (e) return e;
   }
+  if (p.urges !== undefined) {
+    if (!Array.isArray(p.urges)) return 'urges must be an array';
+    for (const u of p.urges as unknown[]) {
+      const e = validateUrgeMark(u);
+      if (e) return e;
+    }
+  }
   return null;
+}
+
+/** Returns an English error message for one weak-moment mark, or `null`. */
+export function validateUrgeMark(u: unknown): string | null {
+  if (typeof u !== 'object' || u === null) return 'urge mark must be an object';
+  const r = u as Record<string, unknown>;
+  if (!isValidDate(r.date)) return 'urge mark date must be YYYY-MM-DD';
+  if (typeof r.count !== 'number' || !Number.isInteger(r.count) || r.count < 1 || r.count > MAX_URGES_PER_DAY) {
+    return `urge mark count must be an integer 1..${MAX_URGES_PER_DAY}`;
+  }
+  if (r.updatedAt !== undefined && !isIsoTime(r.updatedAt)) return 'urge mark updatedAt must be an ISO time';
+  return null;
+}
+
+/** Whether `key` has the shape of a catalog deed key. */
+export function isDeedKey(key: unknown): key is string {
+  return typeof key === 'string' && key.length <= DEED_KEY_MAX && DEED_KEY.test(key);
 }
 
 /** Returns an English error message for one check-in, or `null`. */
@@ -162,12 +235,17 @@ export function validateCheckIn(c: unknown): string | null {
   if (!CHECK_IN_VALUES.includes(r.value as CheckInValue)) return 'check-in value must be held|weak|fell_repented';
   if (r.note !== undefined && typeof r.note !== 'string') return 'check-in note must be a string';
   if (r.updatedAt !== undefined && !isIsoTime(r.updatedAt)) return 'check-in updatedAt must be an ISO time';
+  if (r.deed !== undefined) {
+    if (!isDeedKey(r.deed)) return 'check-in deed must be a kebab-case key';
+    if (r.value !== 'fell_repented') return 'check-in deed goes only with fell_repented';
+  }
   return null;
 }
 
 /**
  * Records the day's check-in. One per date: a second check-in the same day replaces the value; its note
- * replaces the earlier note when given, otherwise the earlier note is kept.
+ * replaces the earlier note when given, otherwise the earlier note is kept. The deed after a fall is kept while the
+ * value stays `fell_repented`.
  */
 export function checkIn(
   program: SinProgram,
@@ -184,9 +262,59 @@ export function checkIn(
   const keptNote = note ?? previous?.note;
   if (keptNote !== undefined) entry.note = keptNote;
   entry.updatedAt = now;
+  if (value === 'fell_repented' && previous?.deed !== undefined) entry.deed = previous.deed;
   const checkIns = program.checkIns.filter((c) => c.date !== date).concat(entry);
   checkIns.sort(byDate);
   return { ...program, checkIns };
+}
+
+/**
+ * «أتبِع السيئة الحسنة»: keeps the small good deed done after the day's fall with that day's `fell_repented`
+ * check-in (record the check-in first). A second deed the same day replaces the first. The stages do not change.
+ */
+export function recordDeedAfterFall(program: SinProgram, date: LocalDate, deed: string, now: IsoTime = nowIso()): SinProgram {
+  if (!isValidDate(date)) throw new RangeError('Invalid date');
+  if (!isDeedKey(deed)) throw new RangeError('Invalid deed key');
+  if (program.endedAt !== undefined) throw new RangeError('The program has ended');
+  const day = program.checkIns.find((c) => c.date === date);
+  if (day?.value !== 'fell_repented') throw new RangeError('A deed after a fall needs that day\'s fell_repented check-in');
+  const checkIns = program.checkIns.map((c) => (c.date === date ? { ...c, deed, updatedAt: now } : c));
+  return { ...program, checkIns };
+}
+
+/** «تجاوزتها، الحمد لله»: one more weak moment passed on `date` (up to {@link MAX_URGES_PER_DAY}). Not a check-in. */
+export function recordUrgePassed(program: SinProgram, date: LocalDate, now: IsoTime = nowIso()): SinProgram {
+  if (!isValidDate(date)) throw new RangeError('Invalid date');
+  if (program.endedAt !== undefined) throw new RangeError('The program has ended');
+  const urges = program.urges ?? [];
+  const previous = urges.find((u) => u.date === date);
+  const mark: UrgeMark = { date, count: Math.min(MAX_URGES_PER_DAY, (previous?.count ?? 0) + 1), updatedAt: now };
+  const next = urges.filter((u) => u.date !== date).concat(mark);
+  next.sort(byDate);
+  return { ...program, urges: next };
+}
+
+/** One day of «دفتري الخاص»: its check-in (with note and deed), and the weak moments passed that day. */
+export interface NotebookDay {
+  date: LocalDate;
+  checkIn?: CheckIn;
+  urgesPassed: number;
+}
+
+/** «دفتري الخاص»: the latest `limit` days up to `today` with a check-in or a weak moment passed, newest first. */
+export function notebookDays(program: SinProgram, today: LocalDate, limit: number): NotebookDay[] {
+  const days = new Map<LocalDate, NotebookDay>();
+  const day = (date: LocalDate) => days.get(date) ?? days.set(date, { date, urgesPassed: 0 }).get(date)!;
+  for (const c of program.checkIns) if (c.date <= today) day(c.date).checkIn = c;
+  for (const u of program.urges ?? []) if (u.date <= today) day(u.date).urgesPassed = u.count;
+  return [...days.values()].sort((a, b) => -byDate(a, b)).slice(0, Math.max(0, limit));
+}
+
+/** Weak moments passed between `from` and `to` (inclusive): the notebook's «لحظة ضعف عبرتها». */
+export function urgesPassed(program: SinProgram, from: LocalDate, to: LocalDate): number {
+  let total = 0;
+  for (const u of program.urges ?? []) if (u.date >= from && u.date <= to) total += u.count;
+  return total;
 }
 
 export interface StageInfo {

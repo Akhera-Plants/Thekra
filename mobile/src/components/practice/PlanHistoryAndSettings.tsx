@@ -7,7 +7,7 @@ import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Check } from 'lucide-react-native';
-import { addDays, validatePlan, type LocalTime, type Plan } from '@thekra/practice-core';
+import { addDays, planAnchors, validatePlan, type LocalTime, type Plan, type PlanAnchor } from '@thekra/practice-core';
 import { sortSlots, weekdaysToRule } from '@/lib/practice/format';
 import { MONTH_DAYS, type PlanView } from '@/lib/practice/plan-view';
 import { ActiveDaysPicker, SlotsEditor, WeekdayPicker } from '@/components/practice/editors';
@@ -73,25 +73,33 @@ export function SettingsPanel({ plan, ruleWeekdays, onSave }: SettingsPanelProps
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const [slots, setSlots] = useState<LocalTime[]>(plan.slots);
+  const [anchors, setAnchors] = useState<PlanAnchor[]>(() => planAnchors(plan));
   const [activeDays, setActiveDays] = useState(plan.activeDaysPerWeek);
   const [weekdays, setWeekdays] = useState<number[] | null>(ruleWeekdays);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const ruleKey = JSON.stringify(ruleWeekdays);
+  const anchorsKey = JSON.stringify(planAnchors(plan));
   useEffect(() => {
     setSlots(plan.slots);
+    setAnchors(planAnchors(plan));
     setActiveDays(plan.activeDaysPerWeek);
     setWeekdays(ruleWeekdays);
     // Reset the editors when the stored plan's settings change, not on every log.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [plan.id, plan.slots.join(','), plan.activeDaysPerWeek, ruleKey]);
+  }, [plan.id, plan.slots.join(','), anchorsKey, plan.activeDaysPerWeek, ruleKey]);
 
   useEffect(() => {
     if (!saved) return;
     const timer = setTimeout(() => setSaved(false), SAVED_FLASH_MS);
     return () => clearTimeout(timer);
   }, [saved]);
+
+  function handleSlots(nextSlots: LocalTime[], nextAnchors: PlanAnchor[]) {
+    setSlots(nextSlots);
+    setAnchors(nextAnchors);
+  }
 
   function handleSave() {
     setError(null);
@@ -100,7 +108,7 @@ export function SettingsPanel({ plan, ruleWeekdays, onSave }: SettingsPanelProps
       setError(t('practice.add.noReminderDays'));
       return;
     }
-    const next: Plan = { ...plan, slots: sortSlots(slots), activeDaysPerWeek: activeDays, ...(rule ? { rule } : {}) };
+    const next: Plan = { ...plan, slots: sortSlots(slots), anchors, activeDaysPerWeek: activeDays, ...(rule ? { rule } : {}) };
     if (validatePlan(next) !== null) {
       setError(t('practice.add.noSlots'));
       return;
@@ -115,7 +123,7 @@ export function SettingsPanel({ plan, ruleWeekdays, onSave }: SettingsPanelProps
         <Text variant="heading" accessibilityRole="header">
           {t('practice.add.slots')}
         </Text>
-        <SlotsEditor slots={slots} onChange={setSlots} />
+        <SlotsEditor slots={slots} anchors={anchors} onChange={handleSlots} />
       </View>
       <View style={styles.group}>
         <Text variant="heading" accessibilityRole="header">

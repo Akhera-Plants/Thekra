@@ -4,7 +4,7 @@
  * sin-programs.yaml (reviewed content; the app never writes religious text of its own).
  */
 
-import type { PlanUnit, RakahCount, Rule, SinCategory, Stage, VaultPayload } from '@thekra/practice-core';
+import type { FreshStartKind, MuhasabaQuestion, PlanAnchor, PlanUnit, RakahCount, Rule, SinCategory, Stage, VaultPayload } from '@thekra/practice-core';
 
 export type Basis = 'text' | 'organizational';
 
@@ -34,6 +34,8 @@ export interface CatalogHabit {
   timeHintAr?: string;
   timeHintEn?: string;
   defaultSlots: string[];
+  /** Suggested prayers to remind after («بعد الفجر»); an organizational suggestion, never a rule. */
+  defaultAnchors?: Omit<PlanAnchor, 'slot'>[];
   basis: Basis;
   evidence: string[];
 }
@@ -47,12 +49,46 @@ export interface StageContent {
   evidence?: string[];
 }
 
+/** One pick in a guidance step: a practical move, or a small good deed after a fall. */
+export interface GuidanceChoice {
+  key: string;
+  titleAr: string;
+  titleEn: string;
+  bodyAr?: string;
+  bodyEn?: string;
+  evidence?: string[];
+}
+
+/** «لحظة الضعف»: the guided steps of a weak moment (sin-programs.yaml `common.urgeMoment`). */
+export interface UrgeMoment {
+  review: string;
+  breathe: StageContent & { breaths: number };
+  text: StageContent;
+  move: StageContent & { moves: GuidanceChoice[] };
+  delay: StageContent & { minutes: number };
+  companion: StageContent & { shareAr: string; shareEn: string };
+  passed: StageContent;
+}
+
+/** «أتبِع السيئة الحسنة» (sin-programs.yaml `common.followWithGood`). */
+export interface FollowWithGood {
+  review: string;
+  lines?: number[];
+  istighfar: StageContent & { lineAr: string; lineEn: string };
+  deeds: StageContent & { choices: GuidanceChoice[] };
+  close: StageContent;
+}
+
 export interface SinProgramsCommon {
   willQuestionAr: string;
   willQuestionEn: string;
   stageMinDays: number;
   stages: Partial<Record<Stage, StageContent>>;
   afterFall: StageContent;
+  /** Absent from an API that predates it: the app then hides «أشعر بضعف الآن». */
+  urgeMoment?: UrgeMoment;
+  /** Absent from an API that predates it: the app then shows the afterFall text only. */
+  followWithGood?: FollowWithGood;
   helpAr: string;
   helpEn: string;
 }
@@ -77,10 +113,35 @@ export interface SinProgramsCatalog {
   programs: CatalogSinProgram[];
 }
 
+/** backend/prisma/taxonomy/tazkiya-prompts.yaml: the intention, the evening questions, fresh starts, supplications. */
+export interface TazkiyaPrompts {
+  review: string;
+  niyyah: { introAr: string; introEn: string };
+  muhasaba: {
+    introAr: string;
+    introEn: string;
+    questions: { key: MuhasabaQuestion; textAr: string; textEn: string }[];
+    thanksAr: string;
+    thanksEn: string;
+  };
+  freshStarts: {
+    renewAr: string;
+    renewEn: string;
+    increaseAr: string;
+    increaseEn: string;
+    startAr: string;
+    startEn: string;
+    occasions: { kind: FreshStartKind; titleAr: string; titleEn: string; bodyAr: string; bodyEn: string; evidence?: string[] }[];
+  };
+  celebrations: { linesAr: string[]; linesEn: string[] };
+}
+
 export interface PracticeCatalog {
   occasions: CatalogOccasion[];
   habits: CatalogHabit[];
   sinPrograms: SinProgramsCatalog;
+  /** Optional until every API deploy sends it: without it the tazkiya cards and lines stay hidden. */
+  tazkiya?: TazkiyaPrompts;
 }
 
 export interface CalendarOccasionDto {
@@ -131,6 +192,15 @@ export function allSinProgramEvidenceIds(catalog: SinProgramsCatalog): string[] 
   const ids = new Set<string>();
   for (const stage of Object.values(catalog.common.stages)) stage?.evidence?.forEach((id) => ids.add(id));
   catalog.common.afterFall.evidence?.forEach((id) => ids.add(id));
+  guidanceEvidenceIds(catalog.common).forEach((id) => ids.add(id));
   for (const p of catalog.programs) p.evidence?.forEach((id) => ids.add(id));
   return [...ids].sort();
+}
+
+/** The evidence ids of «لحظة الضعف» and «أتبِع السيئة الحسنة», in reading order. */
+function guidanceEvidenceIds({ urgeMoment: u, followWithGood: f }: SinProgramsCommon): string[] {
+  const texts: { evidence?: string[] }[] = [];
+  if (u) texts.push(u.breathe, u.text, u.move, ...u.move.moves, u.delay, u.companion, u.passed);
+  if (f) texts.push(f.istighfar, f.deeds, ...f.deeds.choices, f.close);
+  return texts.flatMap((text) => text.evidence ?? []);
 }

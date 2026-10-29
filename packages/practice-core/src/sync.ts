@@ -321,6 +321,7 @@ function planFromWire(w: Record<string, unknown>, log: Record<string, number>, u
   if (w.habitKey !== null && w.habitKey !== undefined) plan.habitKey = w.habitKey;
   if (w.ceiling !== null && w.ceiling !== undefined) plan.ceiling = w.ceiling;
   if (w.rule !== null && w.rule !== undefined) plan.rule = w.rule as Rule;
+  if (Array.isArray(w.anchors) && w.anchors.length > 0) plan.anchors = w.anchors.map((a) => (isRecord(a) ? { ...a } : a));
   if (w.ebbSince !== null && w.ebbSince !== undefined) plan.ebb = { since: w.ebbSince };
   if (isRecord(w.season)) plan.season = { amount: w.season.amount, until: w.season.until, previous: w.season.previous };
   try {

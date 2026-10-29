@@ -37,6 +37,8 @@ pnpm --filter @thekra/practice-core typecheck  # tsc --noEmit
 | `sync` | `localChanges(store, {maxItems?, includeAcked?})`, `buildSyncRequest`, `applyServerChanges(store, response)`, `countChanges`, `compareVersions`, `mergeLogAmount`, wire types (`SyncChanges`, `SyncResponse`, `WirePlan`…) |
 | `vault` | `deriveKey(code, salt, iterations = 210000)`, `newSalt`, `sealPrograms`, `openPrograms`, `unlockVault`, `vaultPayload`, `VaultError`, `VaultLockedError` |
 | `base64` | `bytesToBase64`, `base64ToBytes` (strict) |
+| `tazkiya` | Private journal (`TazkiyaJournal` v1, device only, never synced): `emptyJournal`, `parseJournal` (never throws), `serializeJournal`, `setNiyyah`, `setMuhasaba`, `deleteDay`, `notebook` (newest first), `intendedPlan`, `dismiss`/`promptKey`, `duePrompt` (intention 04:00 to 12:00, evening from Maghrib or 18:00), `celebrationLine` |
+| `fresh-start` | `freshStarts(date, hijriOffset)` (ten days of Dhu al-Hijja, Sha'ban, Hijri month days 1 to 3, Friday, Monday, in that order), `freshStartFor` (one card, not set aside), `freshStartKey`, `freshStartAction` (`increase` via `canIncrease`, `start`, or `renew`) |
 
 ### Hijri
 

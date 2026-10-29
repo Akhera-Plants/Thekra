@@ -2,18 +2,25 @@
  * Editors shared by «أعِنّي على طاعة» and the plan screen (reminder slots, active days per week, reminder weekdays)
  * and the time field of the kinship and sin-program screens. Times are chosen with the system time picker
  * (TimePicker), stored as HH:MM and shown in the device's 12/24-hour style with Western digits.
+ * A reminder slot is either «وقت محدّد» (a clock time) or «بعد صلاة» (practice-core `PlanAnchor`, PrayerSlotPicker).
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useCalendars } from 'expo-localization';
 import { useTranslation } from 'react-i18next';
 import { Clock, Plus, X } from 'lucide-react-native';
-import type { LocalTime } from '@thekra/practice-core';
+import { anchorForSlot, type LocalTime, type PlanAnchor } from '@thekra/practice-core';
 import { displayTime, nowTime, sortSlots } from '@/lib/practice/format';
+import { today } from '@/lib/practice/practice-store';
+import { anchorSlot, anchorTimeOn, type PrayerContext } from '@/lib/practice/prayer-times';
+import { usePrayerContext } from '@/lib/practice/use-prayer-place';
 import { radius, space, useStyles, useTheme, type Theme } from '@/theme';
-import { Button, Chip, ErrorText, Icon, Text, Wrap } from '@/ui';
+import { Button, Chip, ErrorText, Icon, SegmentTabs, Text, Wrap, type SegmentItem } from '@/ui';
+import { PrayerSlotPicker } from './PrayerSlotPicker';
 import { TimePicker } from './TimePicker';
+
+type SlotMode = 'time' | 'prayer';
 
 /** Saturday first, as the week reads in the Arab world. */
 const WEEK = [6, 0, 1, 2, 3, 4, 5];
@@ -59,15 +66,38 @@ function useDisplayTime(): (time: LocalTime) => string {
 
 export interface SlotsEditorProps {
   slots: LocalTime[];
-  onChange: (slots: LocalTime[]) => void;
+  /** The slots that follow a prayer. */
+  anchors: PlanAnchor[];
+  onChange: (slots: LocalTime[], anchors: PlanAnchor[]) => void;
+  /** The catalog's suggested prayers for this habit; the editor then opens on «بعد صلاة». */
+  suggested?: readonly Omit<PlanAnchor, 'slot'>[];
 }
 
-export function SlotsEditor({ slots, onChange }: SlotsEditorProps) {
+export function SlotsEditor({ slots, anchors, onChange, suggested }: SlotsEditorProps) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const show = useDisplayTime();
+  const prayerContext = usePrayerContext();
+  const [mode, setMode] = useState<SlotMode>(suggested && suggested.length > 0 ? 'prayer' : 'time');
+  const modes: SegmentItem<SlotMode>[] = [
+    { key: 'time', label: t('practice.prayer.modeTime') },
+    { key: 'prayer', label: t('practice.prayer.modePrayer') },
+  ];
   // A new time opens on the last one chosen, else on the current hour.
   const start = slots[slots.length - 1] ?? `${nowTime().slice(0, 2)}:00`;
+  const plan = { slots, anchors };
+
+  function remove(slot: LocalTime) {
+    onChange(
+      slots.filter((x) => x !== slot),
+      anchors.filter((a) => a.slot !== slot),
+    );
+  }
+
+  function addAnchor(anchor: Omit<PlanAnchor, 'slot'>) {
+    const slot = anchorSlot(anchor, today(), prayerContext, slots);
+    onChange(sortSlots([...slots, slot]), [...anchors, { ...anchor, slot }]);
+  }
 
   return (
     <View style={styles.group}>
@@ -76,17 +106,29 @@ export function SlotsEditor({ slots, onChange }: SlotsEditorProps) {
       </Text>
       {slots.length > 0 ? (
         <Wrap>
-          {slots.map((slot) => (
-            <SlotChip key={slot} label={show(slot)} onRemove={() => onChange(slots.filter((x) => x !== slot))} />
-          ))}
+          {slots.map((slot) => {
+            const anchor = anchorForSlot(plan, slot);
+            const label = anchor ? anchorLabel(anchor, prayerContext, t, show) : show(slot);
+            return <SlotChip key={slot} label={label} onRemove={() => remove(slot)} />;
+          })}
         </Wrap>
       ) : null}
-      <TimePicker
-        value={start}
-        title={t('practice.add.slots')}
-        onPick={(time) => onChange(sortSlots([...slots, time]))}
-        renderTrigger={(open) => <Button label={t('practice.add.addSlot')} icon={Plus} onPress={open} variant="outline" />}
-      />
+      <SegmentTabs items={modes} value={mode} onChange={setMode} />
+      {mode === 'time' ? (
+        <TimePicker
+          value={start}
+          title={t('practice.add.slots')}
+          onPick={(time) => onChange(sortSlots([...slots, time]), anchors)}
+          renderTrigger={(open) => <Button label={t('practice.add.addSlot')} icon={Plus} onPress={open} variant="outline" />}
+        />
+      ) : (
+        <>
+          <Text variant="small" tone="muted">
+            {t('practice.prayer.modeHint')}
+          </Text>
+          <PrayerSlotPicker anchors={anchors} suggested={suggested} onAdd={addAnchor} />
+        </>
+      )}
       {slots.length === 0 ? <ErrorText>{t('practice.add.noSlots')}</ErrorText> : null}
       {slots.length === 1 ? (
         <Text variant="small" tone="muted">
@@ -95,6 +137,23 @@ export function SlotsEditor({ slots, onChange }: SlotsEditorProps) {
       ) : null}
     </View>
   );
+}
+
+type Translate = (key: string, options?: Record<string, unknown>) => string;
+
+/** «بعد الفجر بـ10 دقائق · اليوم 5:12» (today's time once a place is set). */
+function anchorLabel(anchor: PlanAnchor, ctx: PrayerContext | null, t: Translate, show: (time: LocalTime) => string): string {
+  const prayer = t(`practice.prayer.names.${anchor.prayer}`);
+  const base =
+    anchor.offset === 0
+      ? t('practice.prayer.after', { prayer })
+      : t('practice.prayer.afterBy', { prayer, minutes: t('practice.prayer.minutes', { count: anchor.offset }) });
+  if (!ctx) return base;
+  try {
+    return `${base} · ${t('practice.prayer.todayAt', { time: show(anchorTimeOn(anchor, today(), ctx)) })}`;
+  } catch {
+    return base;
+  }
 }
 
 interface SlotChipProps {

@@ -61,6 +61,8 @@ describe('mini-yaml', () => {
       expect(validateRule(h.defaultRule)).toBeNull();
       expect(h.evidence.length).toBeGreaterThan(0);
     }
+    // The optional prayer suggestions pass through to the bundled catalog.
+    expect(picked.find((h: { key: string }) => h.key === 'witr')?.defaultAnchors).toEqual([{ prayer: 'isha', offset: 60 }]);
   });
 });
 

@@ -51,6 +51,7 @@ function tombstonePlan(id: string, clientUpdatedAt: string, deletedAt: string): 
     ceiling: null,
     activeDaysPerWeek: 7,
     slots: [],
+    anchors: null,
     rule: null,
     createdOn: day,
     amountChangedOn: day,
@@ -230,24 +231,25 @@ export class PracticeSyncService {
     const column = <K extends keyof PlanWire>(key: K) => plans.map((plan) => plan[key]);
     await tx.$executeRaw`
       INSERT INTO "HabitPlan" ("id", "userId", "habitKey", "deedSlug", "title", "unit", "amount", "ceiling",
-        "activeDaysPerWeek", "slots", "rule", "createdOn", "amountChangedOn", "ebbSince", "season",
+        "activeDaysPerWeek", "slots", "anchors", "rule", "createdOn", "amountChangedOn", "ebbSince", "season",
         "clientUpdatedAt", "updatedAt", "deletedAt")
       SELECT t.id, ${userId}, t.habit_key, t.deed_slug, t.title, t.unit, t.amount, t.ceiling, t.active_days,
-        ARRAY(SELECT jsonb_array_elements_text(t.slots::jsonb)), t.rule::jsonb, t.created_on::date,
+        ARRAY(SELECT jsonb_array_elements_text(t.slots::jsonb)), t.anchors::jsonb, t.rule::jsonb, t.created_on::date,
         t.amount_changed_on::date, t.ebb_since::date, t.season::jsonb, t.client_updated_at::timestamp(3),
         now() AT TIME ZONE 'UTC', t.deleted_at::timestamp(3)
       FROM unnest(
         ${column('id')}::text[], ${column('habitKey')}::text[], ${column('deedSlug')}::text[], ${column('title')}::text[],
         ${column('unit')}::text[], ${column('amount')}::float8[], ${column('ceiling')}::float8[], ${column('activeDaysPerWeek')}::int[],
-        ${plans.map((plan) => JSON.stringify(plan.slots))}::text[], ${plans.map((plan) => json(plan.rule))}::text[],
+        ${plans.map((plan) => JSON.stringify(plan.slots))}::text[], ${plans.map((plan) => json(plan.anchors))}::text[],
+        ${plans.map((plan) => json(plan.rule))}::text[],
         ${column('createdOn')}::text[], ${column('amountChangedOn')}::text[], ${column('ebbSince')}::text[],
         ${plans.map((plan) => json(plan.season))}::text[], ${column('clientUpdatedAt')}::text[], ${column('deletedAt')}::text[]
-      ) AS t(id, habit_key, deed_slug, title, unit, amount, ceiling, active_days, slots, rule, created_on,
+      ) AS t(id, habit_key, deed_slug, title, unit, amount, ceiling, active_days, slots, anchors, rule, created_on,
              amount_changed_on, ebb_since, season, client_updated_at, deleted_at)
       ON CONFLICT ("id") DO UPDATE SET
         "habitKey" = EXCLUDED."habitKey", "deedSlug" = EXCLUDED."deedSlug", "title" = EXCLUDED."title",
         "unit" = EXCLUDED."unit", "amount" = EXCLUDED."amount", "ceiling" = EXCLUDED."ceiling",
-        "activeDaysPerWeek" = EXCLUDED."activeDaysPerWeek", "slots" = EXCLUDED."slots", "rule" = EXCLUDED."rule",
+        "activeDaysPerWeek" = EXCLUDED."activeDaysPerWeek", "slots" = EXCLUDED."slots", "anchors" = EXCLUDED."anchors", "rule" = EXCLUDED."rule",
         "createdOn" = EXCLUDED."createdOn", "amountChangedOn" = EXCLUDED."amountChangedOn",
         "ebbSince" = EXCLUDED."ebbSince", "season" = EXCLUDED."season",
         "clientUpdatedAt" = EXCLUDED."clientUpdatedAt", "updatedAt" = EXCLUDED."updatedAt",

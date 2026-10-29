@@ -1,7 +1,7 @@
 'use client';
 
 import { useId, type ReactNode } from 'react';
-import { Check, NotebookPen, Sparkles, Undo2 } from 'lucide-react';
+import { Check, HandHeart, NotebookPen, Sparkles, Undo2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import type { HabitItem, OccasionItem, Plan, ProgramItem, Relative, RelativeItem } from '@thekra/practice-core';
 import { Link } from '@/i18n/navigation';
@@ -99,11 +99,20 @@ function CheckControl({ label, state, detailId, isEnabled, disabledNoteId, onTog
 /** What the last quick action did to a row: «تراجع» puts back what was there before it. */
 export type UndoKind = 'logged' | 'cleared';
 
-function InlineUndo({ kind, onUndo }: { kind: UndoKind; onUndo: () => void }) {
+/** «سُجِّل · تراجع»; for about 2 s after a habit's tick the catalog's short supplication stands in for «سُجِّل». */
+function InlineUndo({ kind, celebration, onUndo }: { kind: UndoKind; celebration?: string; onUndo: () => void }) {
   const t = useTranslations('practice.today');
   return (
     <p className="flex items-center gap-1 ps-[3.25rem] text-sm text-muted-foreground">
-      {kind === 'cleared' ? t('unlogged') : t('logged')}
+      {celebration && kind === 'logged' ? (
+        <span className="font-medium text-primary motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200">
+          {celebration}
+        </span>
+      ) : kind === 'cleared' ? (
+        t('unlogged')
+      ) : (
+        t('logged')
+      )}
       <Button variant="ghost" tone="primary" size="sm" onClick={onUndo}>
         <Undo2 aria-hidden />
         {t('undo')}
@@ -133,13 +142,18 @@ interface HabitRowProps {
   isEnabled: boolean;
   disabledNoteId: string;
   undo: UndoKind | null;
+  /** The habit chosen in «نيّتي اليوم» for this day: a small quiet mark. */
+  isIntended?: boolean;
+  /** The short supplication after this row's tick, while it shows. */
+  celebration?: string;
   onToggle: () => void;
   onUndo: () => void;
 }
 
-export function HabitRow({ item, plan, habit, isEnabled, disabledNoteId, undo, onToggle, onUndo }: HabitRowProps) {
+export function HabitRow({ item, plan, habit, isEnabled, disabledNoteId, undo, isIntended = false, celebration, onToggle, onUndo }: HabitRowProps) {
   const t = useTranslations('practice.hub.day');
   const tToday = useTranslations('practice.today');
+  const tTazkiya = useTranslations('tazkiya');
   const words = usePlanWords(plan, habit);
   const detailId = useId();
   const detail = (
@@ -162,14 +176,22 @@ export function HabitRow({ item, plan, habit, isEnabled, disabledNoteId, undo, o
       }
       href={`/practice/habits#plan-${plan.id}`}
       title={
-        <span lang={words.titleLang} dir={words.titleLang ? 'rtl' : undefined}>
-          {words.title}
-        </span>
+        <>
+          <span lang={words.titleLang} dir={words.titleLang ? 'rtl' : undefined}>
+            {words.title}
+          </span>
+          {isIntended ? (
+            <span className="ms-2 inline-flex align-middle text-primary" title={tTazkiya('niyyahMark')}>
+              <HandHeart className="size-4" aria-hidden />
+              <span className="sr-only">{tTazkiya('niyyahMark')}</span>
+            </span>
+          ) : null}
+        </>
       }
       detail={detail}
       detailId={detailId}
       isMuted={item.complete}
-      undo={undo ? <InlineUndo kind={undo} onUndo={onUndo} /> : null}
+      undo={undo ? <InlineUndo kind={undo} celebration={celebration} onUndo={onUndo} /> : null}
     />
   );
 }

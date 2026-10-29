@@ -16,7 +16,15 @@ import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import { usePreventRemove } from 'expo-router/react-navigation';
 import { useTranslation } from 'react-i18next';
 import { CircleAlert, CircleCheck, HardDrive, Hourglass } from 'lucide-react-native';
-import { loadWarning, startSuggestion, upsertPlan, validatePlan, type LocalTime, type Plan } from '@thekra/practice-core';
+import {
+  loadWarning,
+  startSuggestion,
+  upsertPlan,
+  validatePlan,
+  type LocalTime,
+  type Plan,
+  type PlanAnchor,
+} from '@thekra/practice-core';
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { pick, type CatalogHabit, type UiLocale } from '@/lib/practice/catalog-types';
 import { ruleToWeekdays, sortSlots, weekdaysToRule } from '@/lib/practice/format';
@@ -86,6 +94,7 @@ export default function AddHabitScreen() {
   const [step, setStep] = useState<Step>(entryStep);
   const [distance, setDistance] = useState<Distance | null>(null);
   const [slots, setSlots] = useState<LocalTime[]>([]);
+  const [anchors, setAnchors] = useState<PlanAnchor[]>([]);
   const [activeDays, setActiveDays] = useState(3);
   const [weekdays, setWeekdays] = useState<number[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -98,6 +107,7 @@ export default function AddHabitScreen() {
     if (habit && initialized !== habit.key) {
       setInitialized(habit.key);
       setSlots(sortSlots(habit.defaultSlots));
+      setAnchors([]);
       setWeekdays(ruleToWeekdays(habit.defaultRule));
     }
   }, [habit, initialized]);
@@ -131,6 +141,11 @@ export default function AddHabitScreen() {
   };
   const amount = habit && distance ? startAmount(habit, distance, startSuggestion) : null;
 
+  function handleSlots(nextSlots: LocalTime[], nextAnchors: PlanAnchor[]) {
+    setSlots(nextSlots);
+    setAnchors(nextAnchors);
+  }
+
   function handleSelect(h: CatalogHabit) {
     if (h.key !== habitKey) setDistance(null);
     setHabitKey(h.key);
@@ -148,7 +163,7 @@ export default function AddHabitScreen() {
       setError(t('practice.add.noReminderDays'));
       return;
     }
-    const plan = planFromHabit({ id: newPracticeId(), habit, amount, slots, activeDaysPerWeek: activeDays, rule, today: today(), locale });
+    const plan = planFromHabit({ id: newPracticeId(), habit, amount, slots, anchors, activeDaysPerWeek: activeDays, rule, today: today(), locale });
     if (validatePlan(plan) !== null) {
       setError(t('practice.add.invalidPlan'));
       return;
@@ -220,7 +235,9 @@ export default function AddHabitScreen() {
       >
         <ScheduleFields
           slots={slots}
-          onSlots={setSlots}
+          anchors={anchors}
+          suggested={habit.defaultAnchors}
+          onSlots={handleSlots}
           activeDays={activeDays}
           onActiveDays={setActiveDays}
           weekdays={weekdays}
@@ -372,19 +389,21 @@ function ChooseStep({ habits, locale, selectedKey, planByHabit, onSelect, onNext
 
 interface ScheduleFieldsProps {
   slots: LocalTime[];
-  onSlots: (slots: LocalTime[]) => void;
+  anchors: PlanAnchor[];
+  suggested?: readonly Omit<PlanAnchor, 'slot'>[];
+  onSlots: (slots: LocalTime[], anchors: PlanAnchor[]) => void;
   activeDays: number;
   onActiveDays: (n: number) => void;
   weekdays: number[] | null;
   onWeekdays: (days: number[]) => void;
 }
 
-function ScheduleFields({ slots, onSlots, activeDays, onActiveDays, weekdays, onWeekdays }: ScheduleFieldsProps) {
+function ScheduleFields({ slots, anchors, suggested, onSlots, activeDays, onActiveDays, weekdays, onWeekdays }: ScheduleFieldsProps) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   return (
     <>
-      <SlotsEditor slots={slots} onChange={onSlots} />
+      <SlotsEditor slots={slots} anchors={anchors} onChange={onSlots} suggested={suggested} />
       <Rule />
       <View style={styles.group}>
         <Text variant="heading" accessibilityRole="header">

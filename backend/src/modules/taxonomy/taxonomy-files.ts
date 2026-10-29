@@ -4,7 +4,7 @@ import { join } from 'node:path';
 /**
  * The reviewer files under prisma/taxonomy/ that the API reads at runtime
  * (topic pairs, topic themes, the text review list, and the practice catalog:
- * deed schedules and sin programs).
+ * deed schedules, sin programs and the tazkiya prompts).
  *
  * Paths come from this module's location, never process.cwd(): src/ and dist/
  * both sit one level below backend/, so ../../../prisma/taxonomy is the same
@@ -23,6 +23,7 @@ export const TAXONOMY_FILES = [
   'text-review.yaml',
   'deed-schedules.yaml',
   'sin-programs.yaml',
+  'tazkiya-prompts.yaml',
 ] as const;
 export type TaxonomyFile = (typeof TAXONOMY_FILES)[number];
 

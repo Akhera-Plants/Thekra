@@ -25,16 +25,23 @@ const makeStyles = (t: Theme) => ({
   locked: { flexGrow: 1, justifyContent: 'center' as const },
 });
 
-export function SinProgramGuard({ children }: { children: React.ReactNode }) {
+interface ISinProgramGuardProps {
+  children: React.ReactNode;
+  /** Opened from the unlocked program page (the «لحظة الضعف» modal): no second prompt; the background still locks. */
+  startOpen?: boolean;
+}
+
+export function SinProgramGuard({ children, startOpen }: ISinProgramGuardProps) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const hydrated = usePracticeStore((s) => s.hydrated);
   const lockOn = usePracticeStore((s) => s.prefs.sinLock);
   const foreground = useAppInForeground();
-  const lock = useSinProgramLock(hydrated && lockOn, {
-    promptMessage: t('sinLock.prompt'),
-    cancelLabel: t('common.cancel'),
-  });
+  const lock = useSinProgramLock(
+    hydrated && lockOn,
+    { promptMessage: t('sinLock.prompt'), cancelLabel: t('common.cancel') },
+    startOpen,
+  );
   useHideFromCapture();
 
   // Until the saved prefs are read, whether the lock is on is not known: nothing of the page shows.

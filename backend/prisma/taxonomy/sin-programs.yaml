@@ -87,6 +87,124 @@ common:
       not mean you «never keep anything».
     lines: [448, 449, 1140, 1146]
     evidence: [5518a387-d429-4a90-be10-c0609f66d7c9, 8677aa91-33df-446c-ba76-e1de6aeb2336, 535ef498-7c9e-4eb8-93c7-a14f32782671, 4235f081-051f-44fc-bc51-3db0da8d2cb2, fb625acf-4317-45bc-b154-7dacb7179f44]
+  # «لحظة الضعف» (docs/plan/2026-10-tazkiya-tracker-proposals.md item 3): about 90 seconds, one step at a time, each
+  # step skippable. Basis: urges rise and fade within minutes; delaying and moving the body breaks the loop (Marlatt's
+  # relapse prevention; Bowen's urge surfing), and the lecturer's «change the place», «limits» and «good company».
+  # The step's text is read from the database: `text.evidence` first, then the program's own `evidence`.
+  urgeMoment:
+    review: pending-sheikh
+    breathe:
+      titleAr: تنفّس ببطء
+      titleEn: Breathe slowly
+      bodyAr: >-
+        توقّف هنا لحظة. خذ نفَسًا بطيئًا، ثم أخرجه على مهل، ثلاث مرات. هذه الرغبة موجة تعلو ثم تهدأ، ولن تبقى على
+        حالها.
+      bodyEn: >-
+        Pause here for a moment. Take a slow breath in, then let it out gently, three times. This urge is a wave: it rises
+        and then settles, and it will not stay as it is.
+      breaths: 3
+    text:
+      titleAr: تذكّر
+      titleEn: Remember
+      bodyAr: اقرأ هذا النص على مهل.
+      bodyEn: Read this text slowly.
+      evidence: [749f9828-e5f3-4a93-8d8c-1e0273ef5884]
+    move:
+      titleAr: تحرّك الآن
+      titleEn: Move now
+      bodyAr: اختر خطوة واحدة واعملها الآن، قبل أن تطيل التفكير.
+      bodyEn: Pick one step and do it now, before you think about it any longer.
+      lines: [690, 698, 1499, 1504]
+      moves:
+        - key: wudu
+          titleAr: توضأ
+          titleEn: Make wudu
+        - key: change-place
+          titleAr: غيّر مكانك
+          titleEn: Change your place
+          bodyAr: قم من مكانك، واخرج إلى مكان فيه أهلك أو ناس.
+          bodyEn: Get up and go somewhere your family or other people are.
+        - key: phone-away
+          titleAr: ضع الهاتف بعيدًا عنك
+          titleEn: Put the phone away from you
+          bodyAr: اتركه في غرفة أخرى حتى تمرّ هذه اللحظة.
+          bodyEn: Leave it in another room until this moment passes.
+    delay:
+      titleAr: أجّل عشر دقائق
+      titleEn: Put it off for ten minutes
+      bodyAr: >-
+        لا تقرّر الآن. قل لنفسك: «بعد عشر دقائق»، وانشغل فيها بشيء نافع. سنطمئن عليك مرة واحدة بعدها.
+      bodyEn: >-
+        Do not decide now. Tell yourself «in ten minutes», and spend them on something useful. We will check on you once
+        after that.
+      minutes: 10
+    companion:
+      titleAr: اطلب الدعاء
+      titleEn: Ask for a prayer
+      bodyAr: >-
+        الصحبة الصالحة عون. اطلب من أخ تثق به أن يدعو لك، ولا يلزمك أن تذكر ما تمرّ به.
+      bodyEn: >-
+        Good company is a help. Ask a friend you trust to pray for you; you do not have to say what you are going through.
+      shareAr: ادعُ لي بالثبات
+      shareEn: Please pray that I stay firm
+      lines: [1496, 1498]
+    passed:
+      titleAr: تجاوزتها، الحمد لله
+      titleEn: I got through it, praise be to Allah
+      bodyAr: >-
+        احمد الله الذي أعانك. كلما عبرت موجة كهذه صارت التي بعدها أهون بإذن الله.
+      bodyEn: >-
+        Praise Allah who helped you. Each wave like this you get through makes the next one easier, by Allah's leave.
+  # «أتبِع السيئة الحسنة» (item 4): after «وقعت ثم تبت», the istighfar line, one small good deed right away, then a
+  # hopeful close. Never a reset and never blame; the stages do not change.
+  followWithGood:
+    review: pending-sheikh
+    lines: [446, 449]
+    istighfar:
+      titleAr: استغفر الآن
+      titleEn: Ask forgiveness now
+      bodyAr: >-
+        قلها بقلب حاضر، واعزم ألّا تعود. كان النبي ﷺ يستغفر الله ويتوب إليه في اليوم أكثر من سبعين مرة.
+      bodyEn: >-
+        Say it with a present heart, and resolve not to return. The Prophet ﷺ asked Allah's forgiveness and turned to Him
+        more than seventy times a day.
+      lineAr: أستغفر الله وأتوب إليه
+      lineEn: I ask Allah's forgiveness and turn to Him in repentance
+      evidence: [ed7ba827-de1b-4b92-9816-ac0b407c104a]
+    deeds:
+      titleAr: حسنة صغيرة الآن
+      titleEn: A small good deed now
+      bodyAr: اختر واحدة واعملها الآن، فالحسنة تمحو السيئة بإذن الله.
+      bodyEn: Pick one and do it now; a good deed wipes out a bad one, by Allah's leave.
+      evidence: [535ef498-7c9e-4eb8-93c7-a14f32782671, 5518a387-d429-4a90-be10-c0609f66d7c9]
+      choices:
+        - key: two-rakahs
+          titleAr: ركعتان
+          titleEn: Two rak'ahs
+          bodyAr: توضأ فأحسن الوضوء، ثم صلِّ ركعتين، ثم استغفر الله.
+          bodyEn: Make wudu well, pray two rak'ahs, then ask Allah's forgiveness.
+          evidence: [4032e484-0bd4-4307-bbc8-1c77c53a4d57]
+        - key: sadaqa
+          titleAr: صدقة يسيرة
+          titleEn: A small charity
+          bodyAr: تصدّق بشيء يسير ولو قليلًا، الآن أو في أول فرصة.
+          bodyEn: Give a little in charity, now or at the first chance you get.
+          evidence: [aad9de0d-ed0f-4d10-b590-24e113985917]
+        - key: dhikr
+          titleAr: ذكر
+          titleEn: Remembrance
+          bodyAr: قل «سبحان الله وبحمده» مئة مرة.
+          bodyEn: Say «Subhan Allah wa bihamdih» a hundred times.
+          evidence: [e679bac6-d7bf-42a5-8f3a-74f18ebf0594]
+    close:
+      titleAr: أنت على الطريق
+      titleEn: You are still on the way
+      bodyAr: >-
+        التعثّر لا يمحو ما بنيت. ارجع إلى خطتك وعاداتك اليوم نفسه، ولا تيأس من رحمة الله، فهو يغفر الذنوب جميعًا.
+      bodyEn: >-
+        A slip does not erase what you have built. Return to your plan and your habits the same day, and do not despair of
+        Allah's mercy: He forgives all sins.
+      evidence: [fb625acf-4317-45bc-b154-7dacb7179f44]
   helpAr: >-
     إن كانت المعصية إدمانًا يصعب عليك وحدك (كالمخدرات أو المواد الإباحية أو القمار)، فطلب مساعدة طبيب أو مختص نفسي ثقة
     جزءٌ من الأخذ بالأسباب.

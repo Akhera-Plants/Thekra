@@ -80,6 +80,7 @@ const PLAN = {
   ceiling: null,
   activeDaysPerWeek: 7,
   slots: ['09:30', '11:00'],
+  anchors: null,
   rule: { kind: 'daily' },
   createdOn: '2026-10-01',
   amountChangedOn: '2026-10-01',

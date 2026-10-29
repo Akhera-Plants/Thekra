@@ -7,7 +7,7 @@ import { PracticeService } from './practice.service.js';
 export class PracticeController {
   constructor(private readonly practiceService: PracticeService) {}
 
-  /** The reviewed catalog: occasions, habit units and sin programs (deed-schedules.yaml, sin-programs.yaml). */
+  /** The reviewed catalog: occasions, habit units, sin programs and tazkiya prompts (deed-schedules.yaml, sin-programs.yaml, tazkiya-prompts.yaml). */
   @Get('catalog')
   @PublicCache(PUBLIC_CACHE.reference)
   catalog() {

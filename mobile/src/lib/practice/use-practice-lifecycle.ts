@@ -12,14 +12,16 @@ import { useCallback, useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { getLocales } from 'expo-localization';
 import { useQueryClient } from '@tanstack/react-query';
 import type { PlanUnit } from '@thekra/practice-core';
 import { useAuthStore } from '../stores/auth-store';
 import { queryKeys } from '../query-keys';
 import type { PracticeCatalog, UiLocale } from './catalog-types';
 import { nowTime } from './format';
-import { applyReminders, configureNotificationHandler, onReminderTapped } from './notifications';
+import { applyReminders, configureNotificationHandler, onReminderTapped, setupReminderActions } from './notifications';
 import { usePracticeStore, today } from './practice-store';
+import { prayerContext } from './prayer-times';
 import { planReminders, type ReminderTexts } from './reminders';
 import { pendingCount, syncPractice } from './sync-runner';
 import { isVaultUnlocked, pushVault, refreshVault } from './vault-runner';
@@ -37,6 +39,7 @@ export function reminderTexts(t: T, locale: UiLocale): ReminderTexts {
   };
   return {
     habitBody: (amount) => t('practice.notify.habitBody', { amount }),
+    habitLogged: t('practice.notify.habitLogged'),
     kinshipTitle: t('practice.notify.kinshipTitle'),
     kinshipBodyGeneric: (count) => t('practice.notify.kinshipBodyGeneric', { count }),
     kinshipBodyNames: (names) => t('practice.notify.kinshipBodyNames', { names }),
@@ -68,7 +71,11 @@ export function useRescheduleReminders(): () => Promise<void> {
       now: nowTime(),
       locale,
       texts: reminderTexts(t as unknown as T, locale),
+      prayer: prayerContext(prefs.prayerPlace, prefs.prayerMethod, getLocales()[0]?.regionCode ?? null),
     });
+    await setupReminderActions({ done: t('practice.notify.doneAction'), quietChannelName: t('practice.notify.quietChannelName') }).catch(
+      () => undefined,
+    );
     await applyReminders(planned, t('practice.notify.channelName'));
   }, [qc, locale, t]);
 }

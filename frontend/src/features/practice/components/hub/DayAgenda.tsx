@@ -10,6 +10,7 @@ import { habitOf, setEbbForAll } from '@/lib/practice/plans';
 import { updateStore } from '@/lib/practice/local-store';
 import type { PracticeHabit, ScheduleBasis } from '@/lib/types/practice';
 import { useAgendaActions } from '../../hooks/useAgendaActions';
+import { useCelebration } from '../../hooks/useCelebration';
 import { HabitRow, OccasionRow, ProgramRow, RelativeRow } from './AgendaRows';
 
 interface DayAgendaProps {
@@ -20,15 +21,21 @@ interface DayAgendaProps {
   habits: ReadonlyMap<string, PracticeHabit>;
   occasionBasis: ReadonlyMap<string, ScheduleBasis>;
   headingRef?: Ref<HTMLHeadingElement>;
+  /** The plan chosen in «نيّتي اليوم» for this day. */
+  intendedPlanId?: string | null;
 }
 
-/** The selected day across every track, in the engine's order, with round checks for what can be done. */
-export function DayAgenda({ items, store, date, today, habits, occasionBasis, headingRef }: DayAgendaProps) {
+/**
+ * The selected day across every track, in the engine's order, with round checks for what can be done. A habit's tick
+ * shows the catalog's short supplication under its row for a moment, announced politely; nothing else celebrates.
+ */
+export function DayAgenda({ items, store, date, today, habits, occasionBasis, headingRef, intendedPlanId }: DayAgendaProps) {
   const t = useTranslations('practice.hub.day');
   const tDays = useTranslations('practice.weekdays');
   const locale = useLocale() === 'en' ? 'en' : 'ar';
   const noteId = useId();
   const { lastKey, lastCleared, toggleHabit, toggleRelative, undoLast } = useAgendaActions();
+  const { celebration, celebrate } = useCelebration();
   const isLoggable = canLogOn(date, today);
   const isToday = date === today;
   const title =
@@ -72,7 +79,12 @@ export function DayAgenda({ items, store, date, today, habits, occasionBasis, he
                     isEnabled={isLoggable}
                     disabledNoteId={noteId}
                     undo={lastKey === `habit:${item.planId}:${date}` ? (lastCleared ? 'cleared' : 'logged') : null}
-                    onToggle={() => toggleHabit(item, date)}
+                    isIntended={item.planId === intendedPlanId}
+                    celebration={celebration?.key === `${item.planId}|${date}` ? celebration.line : undefined}
+                    onToggle={() => {
+                      toggleHabit(item, date);
+                      if (!item.complete) celebrate(`${item.planId}|${date}`);
+                    }}
                     onUndo={undoLast}
                   />
                 );
@@ -104,7 +116,7 @@ export function DayAgenda({ items, store, date, today, habits, occasionBasis, he
         {isDayComplete(items) ? (isToday ? t('complete') : t('completePast')) : null}
       </p>
       <p role="status" className="sr-only">
-        {lastKey ? (lastCleared ? t('unlogged') : t('logged')) : null}
+        {lastKey ? (lastCleared ? t('unlogged') : (celebration?.line ?? t('logged'))) : null}
       </p>
 
       {store.plans.length > 0 ? <EbbToggle store={store} today={today} /> : null}

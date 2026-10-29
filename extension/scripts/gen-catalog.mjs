@@ -24,7 +24,7 @@ const API_URL = 'https://thekra.vercel.app/v1/practice/catalog';
 
 const HABIT_FIELDS = [
   'key', 'titleAr', 'titleEn', 'deed', 'unit', 'unitLabelAr', 'unitLabelEn', 'rakah', 'start', 'ceiling',
-  'defaultRule', 'timeHintAr', 'timeHintEn', 'defaultSlots', 'basis', 'evidence',
+  'defaultRule', 'timeHintAr', 'timeHintEn', 'defaultSlots', 'defaultAnchors', 'basis', 'evidence',
 ];
 
 /** Copies known habit fields only and checks the required ones. Throws on a malformed habit. */

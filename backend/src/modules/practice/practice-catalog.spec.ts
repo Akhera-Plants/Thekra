@@ -3,10 +3,21 @@ import { tmpdir } from 'node:os';
 import { stagesFor, validateRule } from '@thekra/practice-core';
 import { taxonomyFilePath } from '../taxonomy/taxonomy-files.js';
 import { topicSide } from '../taxonomy/topic-pairs.js';
-import { buildPracticeCatalog, practiceCatalog, programForSin, scheduleForDeed } from './practice-catalog.js';
+import { buildPracticeCatalog, practiceCatalog, programForSin, scheduleForDeed, type SinProgramsCommon } from './practice-catalog.js';
 import { parseYaml, type YamlMap } from './practice-yaml.js';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Every evidence id of the urge moment and the follow-with-good flow. */
+function guidanceEvidence({ urgeMoment, followWithGood }: SinProgramsCommon): string[] {
+  const texts = [
+    ...Object.values(urgeMoment).filter((v): v is { evidence?: string[] } => typeof v === 'object'),
+    ...Object.values(followWithGood).filter((v): v is { evidence?: string[] } => typeof v === 'object' && !Array.isArray(v)),
+    ...urgeMoment.move.moves,
+    ...followWithGood.deeds.choices,
+  ];
+  return texts.flatMap((t) => t.evidence ?? []);
+}
 const schedulesText = readFileSync(taxonomyFilePath('deed-schedules.yaml'), 'utf8');
 const programsText = readFileSync(taxonomyFilePath('sin-programs.yaml'), 'utf8');
 
@@ -46,6 +57,7 @@ describe('practice catalog — the real reviewer files', () => {
       ...sinPrograms.programs.flatMap((p) => p.evidence),
       ...Object.values(sinPrograms.common.stages).flatMap((stage) => stage.evidence ?? []),
       ...(sinPrograms.common.afterFall.evidence ?? []),
+      ...guidanceEvidence(sinPrograms.common),
     ];
     expect(ids.length).toBeGreaterThan(20);
     for (const id of ids) expect(id).toMatch(UUID);
@@ -93,6 +105,28 @@ describe('practice catalog — the real reviewer files', () => {
     expect(sinPrograms.common.stages.harms.bodyAr.startsWith('اقرأ ما ورد فيها من نصوص')).toBe(true);
   });
 
+  it('has the «لحظة الضعف» steps and the «أتبِع السيئة الحسنة» flow, pending the sheikh\'s review', () => {
+    const { urgeMoment, followWithGood } = sinPrograms.common;
+    expect(urgeMoment.review).toBe('pending-sheikh');
+    expect(followWithGood.review).toBe('pending-sheikh');
+    expect(urgeMoment.breathe.breaths).toBe(3);
+    expect(urgeMoment.delay.minutes).toBe(10);
+    expect(urgeMoment.text.evidence?.length).toBeGreaterThan(0);
+    expect(urgeMoment.move.moves.map((m) => m.key)).toEqual(['wudu', 'change-place', 'phone-away']);
+    expect(followWithGood.deeds.choices.map((c) => c.key)).toEqual(['two-rakahs', 'sadaqa', 'dhikr']);
+    // «وأتبع السيئة الحسنة تمحها» (Riyad al-Salihin, from al-Tirmidhi), linked by id only.
+    expect(followWithGood.deeds.evidence).toContain('535ef498-7c9e-4eb8-93c7-a14f32782671');
+    for (const choice of [...urgeMoment.move.moves, ...followWithGood.deeds.choices]) {
+      expect(choice.titleEn, choice.key).toBeTruthy();
+    }
+  });
+
+  it('keeps every guidance line free of em dashes and Eastern Arabic digits', () => {
+    const text = JSON.stringify([sinPrograms.common.urgeMoment, sinPrograms.common.followWithGood]);
+    expect(text).not.toMatch(/[—–]/);
+    expect(text).not.toMatch(/[٠-٩]/);
+  });
+
   it('scheduleForDeed filters by deed slug', () => {
     const siyam = scheduleForDeed('siyam');
     expect(siyam.occasions.map((o) => o.key)).toEqual(['ayyam-bid', 'ithnayn-khamis', 'arafah', 'ashura', 'shawwal-six']);
@@ -131,6 +165,18 @@ describe('practice catalog — validation failures', () => {
     expect(build(schedulesText, programsText.replace('sin: ghadab', 'sin: siyam'))).toThrow('expected side AVOID');
   });
 
+  it('reads the suggested prayer anchors, and rejects a bad prayer, offset or a prayer named twice', () => {
+    const catalog = buildPracticeCatalog(schedulesText, programsText);
+    expect(catalog.habits.find((h) => h.key === 'witr')?.defaultAnchors).toEqual([{ prayer: 'isha', offset: 60 }]);
+    expect(catalog.habits.find((h) => h.key === 'duha')?.defaultAnchors).toBeUndefined();
+    const witr = '[{ prayer: isha, offset: 60 }]';
+    expect(schedulesText).toContain(witr);
+    expect(build(schedulesText.replace(witr, '[{ prayer: duha, offset: 60 }]'))).toThrow('prayer must be one of');
+    expect(build(schedulesText.replace(witr, '[{ prayer: isha, offset: 600 }]'))).toThrow('offset must be at most');
+    expect(build(schedulesText.replace(witr, '[{ prayer: isha, offset: 5 }, { prayer: isha, offset: 9 }]'))).toThrow('each prayer once');
+    expect(build(schedulesText.replace(witr, '[{ prayer: isha, offset: 5, slot: 22:00 }]'))).toThrow('unknown field "slot"');
+  });
+
   it('rejects an evidence id that is not a UUID', () => {
     expect(build(schedulesText.replace('0d77e977-f40b-473b-8b14-42b5fb82951a]', 'not-a-uuid]'))).toThrow('is not valid');
   });
@@ -139,6 +185,22 @@ describe('practice catalog — validation failures', () => {
     expect(build(schedulesText.replace('    basis: text\n', '    basis: text\n    note: x\n'))).toThrow('unknown field "note"');
     const split = programsText.replace("'When angry, fall silent and change your position'", 'When angry, fall silent and change your position');
     expect(build(schedulesText, split)).toThrow('actionsAr has 3 items but actionsEn has 4');
+  });
+
+  it('rejects a guidance step without its fields, a bad choice key and an unknown field', () => {
+    expect(build(schedulesText, programsText.replace('      breaths: 3\n', ''))).toThrow('breaths must be an integer');
+    expect(build(schedulesText, programsText.replace('      breaths: 3\n', '      breaths: 30\n'))).toThrow('breaths must be ≤');
+    expect(build(schedulesText, programsText.replace('      minutes: 10\n', '      minutes: 120\n'))).toThrow('minutes must be ≤');
+    expect(build(schedulesText, programsText.replace('- key: sadaqa', '- key: Sadaqa'))).toThrow('must be kebab-case');
+    expect(build(schedulesText, programsText.replace('- key: sadaqa', '- key: dhikr'))).toThrow('duplicate key "dhikr"');
+    expect(build(schedulesText, programsText.replace('      shareEn: Please pray that I stay firm\n', ''))).toThrow('shareEn');
+    expect(build(schedulesText, programsText.replace('  urgeMoment:\n    review: pending-sheikh\n', '  urgeMoment:\n    review: pending-sheikh\n    tone: x\n'))).toThrow(
+      'unknown field "tone"',
+    );
+    const noBodyEn = programsText.replace('          bodyEn: Leave it in another room until this moment passes.\n', '');
+    expect(build(schedulesText, noBodyEn)).toThrow('bodyAr and bodyEn go together');
+    const noTextEvidence = programsText.replace('      evidence: [749f9828-e5f3-4a93-8d8c-1e0273ef5884]\n', '');
+    expect(build(schedulesText, noTextEvidence)).toThrow('text.evidence is required');
   });
 
   it('rejects an alternative that is not a habit key', () => {

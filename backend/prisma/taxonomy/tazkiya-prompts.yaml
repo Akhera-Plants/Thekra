@@ -1,0 +1,95 @@
+# Tazkiya prompts: the morning intention, the evening reckoning, the fresh-start cards and the short supplication
+# after a tick. Plan: docs/plan/2026-10-tazkiya-tracker-proposals.md items 5, 6 and 7 (owner-approved 2026-10-29).
+# Served as `tazkiya` in GET /v1/practice/catalog; read by backend/src/modules/practice/tazkiya-prompts.ts.
+#
+# Rules
+#   - Everything the user writes in answer stays on their device (practice-core tazkiya.ts), never synced and never in
+#     a notification. This file holds only our own wording.
+#   - Guidance text is our own wording. It is not a fatwa and quotes no verse or hadith; a line that refers to a text
+#     names its public Quote id under `evidence` (read from the database, checked 2026-10-29 against production).
+#   - `questions[].key` follow practice-core MUHASABA_QUESTIONS; `occasions[].kind` follow FRESH_START_KINDS.
+#   - No streak, blame or counting words. Western digits. review: pending-sheikh (every line).
+
+review: pending-sheikh
+
+niyyah:
+  introAr: اختر عملًا واحدًا من أعمال اليوم، وأخلص فيه نيّتك لله.
+  introEn: Choose one of today's deeds and make your intention in it sincerely for Allah.
+
+muhasaba:
+  introAr: دقيقة مع نفسك قبل أن ينتهي اليوم، بلا لوم. اكتب ما شئت، أو اكتفِ بالحمد.
+  introEn: A minute with yourself before the day ends, without blame. Write what you like, or simply give thanks.
+  questions:
+    - key: helped
+      textAr: ما الذي أعانني اليوم؟
+      textEn: What helped me today?
+    - key: away
+      textAr: ما الذي أبعدني؟
+      textEn: What kept me away?
+    - key: tomorrow
+      textAr: شيء صغير للغد
+      textEn: One small thing for tomorrow
+  thanksAr: الحمد لله على ما كان
+  thanksEn: Praise be to Allah for what was
+
+freshStarts:
+  renewAr: جدّد نيّتك
+  renewEn: Renew your intention
+  increaseAr: زِد خطوة
+  increaseEn: Add one step
+  startAr: ابدأ عادة صغيرة
+  startEn: Start a small habit
+  occasions:
+    - kind: dhul-hijja-ten
+      titleAr: العشر الأوائل من ذي الحجة
+      titleEn: The first ten days of Dhu al-Hijja
+      bodyAr: >-
+        العمل الصالح في هذه الأيام أحبّ إلى الله منه في غيرها. جدّد نيّتك فيما أنت عليه، وزِد ما تقدر أن تداوم عليه.
+      bodyEn: >-
+        Good deeds in these days are dearer to Allah than in any others. Renew your intention in what you already do,
+        and add only what you can keep up.
+      evidence: [7ef3fb7a-e036-431a-a622-87805f2cf067]
+    - kind: shaban
+      titleAr: شعبان، تهيئة لرمضان
+      titleEn: Sha'ban, getting ready for Ramadan
+      bodyAr: >-
+        ابدأ الآن بقليل تداوم عليه، فيأتي رمضان وقد اعتدته.
+      bodyEn: >-
+        Start now with a little you can keep up, so Ramadan finds you already used to it.
+    - kind: month-start
+      titleAr: شهر هجري جديد
+      titleEn: A new Hijri month
+      bodyAr: >-
+        بداية الشهر فرصة للعودة. جدّد نيّتك وابدأ من حيث أنت، ولو بخطوة صغيرة.
+      bodyEn: >-
+        The start of a month is a chance to come back. Renew your intention and begin where you are, even with one
+        small step.
+    - kind: friday
+      titleAr: يوم الجمعة
+      titleEn: Friday
+      bodyAr: >-
+        راجع نيّتك فيما أنت عليه هذا الأسبوع، ولو كان قليلًا، واسأل الله الثبات عليه.
+      bodyEn: >-
+        Look again at your intention in what you do this week, however little it is, and ask Allah to keep you on it.
+    - kind: monday
+      titleAr: يوم الاثنين
+      titleEn: Monday
+      bodyAr: >-
+        يوم تُعرض فيه الأعمال. ابدأ أسبوعك بنيّة صادقة وخطوة صغيرة.
+      bodyEn: >-
+        A day on which deeds are presented. Begin your week with a sincere intention and one small step.
+      evidence: [28b92310-7fb6-4522-9d85-6a6c8282523f]
+
+celebrations:
+  linesAr:
+    - تقبّل الله منك
+    - جعله الله في ميزان حسناتك
+    - بارك الله لك فيما عملت
+    - ثبّتك الله على الخير
+    - تقبّله الله وأعانك على المداومة
+  linesEn:
+    - May Allah accept it from you
+    - May Allah place it among your good deeds
+    - May Allah bless what you did
+    - May Allah keep you firm upon good
+    - May Allah accept it and help you keep it up

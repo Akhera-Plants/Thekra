@@ -3,8 +3,10 @@
  * their member id only; the API never sends a user id or an email.
  */
 
-export type CheerMessage = 'thabat' | 'jazak' | 'dhakkarani';
+/** `ask_dua` («ادعُ لي») is sent from the sin program's «لحظة الضعف»; it shows here like any cheer received. */
+export type CheerMessage = 'thabat' | 'jazak' | 'dhakkarani' | 'ask_dua';
 
+/** The lines offered in «أرسل كلمة طيبة» (the request «ادعُ لي» is not among them). */
 export const CHEER_MESSAGES: readonly CheerMessage[] = ['thabat', 'jazak', 'dhakkarani'];
 
 /** A cheer to the whole circle targets this key in `cheeredToday`. */

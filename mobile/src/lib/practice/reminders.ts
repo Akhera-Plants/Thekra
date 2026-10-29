@@ -5,6 +5,9 @@
  * - Habits: every day the plan's rule fires (practice-core `occurrences`) in the next {@link REMINDER_DAYS}
  *   days, once per slot. Title = habit title; body = the amount asked for that day (`requiredOn`: ebb and
  *   season aware, never doubled). Today's slots are skipped once they have passed or the day is done.
+ *   A slot anchored to a prayer («بعد الفجر», practice-core `PlanAnchor`) fires at that day's prayer time plus its
+ *   offset, computed on the device (prayer-times.ts); without a place it keeps its stored clock time.
+ *   Habit reminders carry the «تمّ» action (notifications.ts), with the quiet confirmation text in `confirm`.
  * - Kinship: on each relative's next due date (overdue → the next slot from now), then weekly while it stays
  *   due. The title is always generic; names appear in the body only when the user turned that on.
  * - Sin program: one daily reminder whose title is ALWAYS {@link SIN_REMINDER_TITLE} and whose body is a
@@ -18,8 +21,10 @@ import {
   activePrograms,
   addDays,
   formatPlanAmount,
+  isValidTime,
   nextDue,
   occurrences,
+  planAnchors,
   requiredOn,
   type LocalDate,
   type LocalTime,
@@ -31,6 +36,7 @@ import {
 import { pick, type CatalogHabit, type UiLocale } from './catalog-types';
 import { sortSlots } from './format';
 import type { PracticePrefs } from './prefs';
+import { anchorTimeOn, type PrayerContext } from './prayer-times';
 
 /** The only title a sin-program reminder may carry, in every language (roadmap §0.2). */
 export const SIN_REMINDER_TITLE = 'تذكرة من ذكرى';
@@ -51,11 +57,15 @@ export interface PlannedReminder {
   body: string;
   /** expo-router path opened when the notification is tapped. */
   route: string;
+  /** Habit reminders: the quiet note shown after «تمّ» is pressed on the notification. */
+  confirm?: { title: string; body: string };
 }
 
 export interface ReminderTexts {
   /** e.g. «المطلوب اليوم: 2 دقيقة» from the formatted amount. */
   habitBody: (amountLabel: string) => string;
+  /** The quiet confirmation after «تمّ» from the notification. */
+  habitLogged: string;
   kinshipTitle: string;
   kinshipBodyGeneric: (count: number) => string;
   kinshipBodyNames: (names: string) => string;
@@ -76,6 +86,8 @@ export interface ReminderInput {
   now: LocalTime;
   locale: UiLocale;
   texts: ReminderTexts;
+  /** Place and method for anchored slots; null when the user has not set a place. */
+  prayer: PrayerContext | null;
   days?: number;
   limit?: number;
 }
@@ -103,8 +115,25 @@ export function formatAmount(
   return formatPlanAmount(amount, unit, label, locale, habit?.rakah);
 }
 
+/** The plan's reminder times on `date`: anchored slots at the prayer time + offset, the others as stored. */
+export function slotTimesOn(plan: Pick<Plan, 'slots' | 'anchors'>, date: LocalDate, prayer: PrayerContext | null): LocalTime[] {
+  const anchors = planAnchors(plan);
+  return sortSlots(
+    plan.slots.map((slot) => {
+      const anchor = anchors.find((a) => a.slot === slot);
+      if (!anchor || !prayer) return slot;
+      try {
+        const time = anchorTimeOn(anchor, date, prayer);
+        return isValidTime(time) ? time : slot;
+      } catch {
+        return slot; // no prayer time for this place and day (polar): the stored time rather than none
+      }
+    }),
+  );
+}
+
 function habitReminders(input: ReminderInput, end: LocalDate): PlannedReminder[] {
-  const { store, habits, today, now, locale, texts } = input;
+  const { store, habits, today, now, locale, texts, prayer } = input;
   const out: PlannedReminder[] = [];
   for (const plan of store.plans) {
     let dates: LocalDate[];
@@ -119,7 +148,7 @@ function habitReminders(input: ReminderInput, end: LocalDate): PlannedReminder[]
       const required = requiredOn(plan, date);
       if (date === today && (plan.log[today] ?? 0) >= required) continue;
       const body = texts.habitBody(formatAmount(required, plan.unit, habit, locale, texts.unitFallback));
-      for (const time of sortSlots(plan.slots)) {
+      for (const time of slotTimesOn(plan, date, prayer)) {
         if (date === today && time <= now) continue;
         out.push({
           id: `${REMINDER_SOURCE}:habit:${plan.id}:${date}:${time}`,
@@ -129,6 +158,7 @@ function habitReminders(input: ReminderInput, end: LocalDate): PlannedReminder[]
           title,
           body,
           route: `/practice/plan/${plan.id}`,
+          confirm: { title, body: texts.habitLogged },
         });
       }
     }

@@ -18,6 +18,7 @@ import { DEFAULT_ICS_MONTHS } from './dto/occasions-ics-query.dto.js';
 import type { OccasionsQueryDto } from './dto/occasions-query.dto.js';
 import type { OccasionOccurrenceDto } from './entities/practice.entity.js';
 import { practiceCatalog, type Occasion, type PracticeCatalog } from './practice-catalog.js';
+import { tazkiyaPrompts, type TazkiyaPrompts } from './tazkiya-prompts.js';
 
 /** GET /calendar/occasions without `to`: one year from `from`. */
 const DEFAULT_OCCASION_DAYS = 365;
@@ -57,8 +58,9 @@ function badRange(code: string, message: string): BadRequestException {
 export class PracticeService {
   constructor(private readonly quotes: QuotesService) {}
 
-  catalog(): PracticeCatalog {
-    return practiceCatalog();
+  /** The catalog files plus the tazkiya prompts (tazkiya-prompts.yaml), each read by its own reader. */
+  catalog(): PracticeCatalog & { tazkiya: TazkiyaPrompts } {
+    return { ...practiceCatalog(), tazkiya: tazkiyaPrompts() };
   }
 
   /** The published texts behind catalog `evidence` ids, in the order asked (duplicates once). */

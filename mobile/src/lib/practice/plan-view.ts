@@ -23,6 +23,7 @@ import {
   type LocalDate,
   type LocalTime,
   type Plan,
+  type PlanAnchor,
   type PlanUnit,
   type Rule,
   type Store,
@@ -99,6 +100,8 @@ export function planFromHabit(args: {
   habit: CatalogHabit;
   amount: number;
   slots: LocalTime[];
+  /** Slots that follow a prayer. */
+  anchors?: PlanAnchor[];
   activeDaysPerWeek: number;
   rule: Rule;
   today: LocalDate;
@@ -116,6 +119,7 @@ export function planFromHabit(args: {
     ...(habit.ceiling !== undefined ? { ceiling: habit.ceiling } : {}),
     activeDaysPerWeek: args.activeDaysPerWeek,
     slots: args.slots,
+    ...(args.anchors && args.anchors.length > 0 ? { anchors: args.anchors } : {}),
     createdOn: args.today,
   });
 }

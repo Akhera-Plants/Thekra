@@ -41,6 +41,25 @@ import { validateRule, type Rule } from './rules.js';
 
 export type PlanUnit = 'minutes' | 'count' | 'times';
 
+/** The five daily prayers a reminder can follow. */
+export type Prayer = 'fajr' | 'dhuhr' | 'asr' | 'maghrib' | 'isha';
+export const PRAYERS: readonly Prayer[] = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
+/** Minutes after the prayer when nothing else is chosen. */
+export const DEFAULT_PRAYER_OFFSET = 10;
+export const MAX_PRAYER_OFFSET = 180;
+
+/**
+ * «بعد الفجر»: the reminder slot `slot` follows a prayer, `offset` minutes after it. The prayer time is computed on
+ * the device that has the user's location (the mobile app); `slot` stays the clock time saved when the anchor was
+ * chosen, so clients that cannot compute prayer times (web, extension, web push) still remind close to it.
+ * An anchor whose `slot` is no longer in `plan.slots` (a client that edits slots without knowing anchors) is ignored.
+ */
+export interface PlanAnchor {
+  slot: LocalTime;
+  prayer: Prayer;
+  offset: number;
+}
+
 export interface Plan {
   /** Client UUID. */
   id: string;
@@ -57,6 +76,8 @@ export interface Plan {
   activeDaysPerWeek: number;
   /** Reminder times, `HH:MM`, at least one (the lecture recommends two or more). */
   slots: LocalTime[];
+  /** Slots that follow a prayer (see {@link PlanAnchor}). Absent when every slot is a clock time. */
+  anchors?: PlanAnchor[];
   createdOn: LocalDate;
   /** The day `amount` last changed through {@link increase} or {@link decreaseTo}. */
   amountChangedOn: LocalDate;
@@ -171,6 +192,39 @@ function isPositive(v: unknown): v is number {
   return typeof v === 'number' && Number.isFinite(v) && v > 0;
 }
 
+/** Returns an English error message, or `null` when `anchors` is a valid list (one anchor per slot at most). */
+export function validateAnchors(anchors: unknown): string | null {
+  if (!Array.isArray(anchors)) return 'anchors must be an array';
+  const slots = new Set<string>();
+  for (const a of anchors) {
+    if (typeof a !== 'object' || a === null || Array.isArray(a)) return 'anchors entries must be objects';
+    const { slot, prayer, offset } = a as Record<string, unknown>;
+    if (!isValidTime(slot)) return 'anchors[].slot must be HH:MM';
+    if (!(PRAYERS as readonly unknown[]).includes(prayer)) return `anchors[].prayer must be ${PRAYERS.join('|')}`;
+    if (typeof offset !== 'number' || !Number.isInteger(offset) || offset < 0 || offset > MAX_PRAYER_OFFSET) {
+      return `anchors[].offset must be an integer 0–${MAX_PRAYER_OFFSET}`;
+    }
+    if (slots.has(slot)) return 'anchors must name each slot once';
+    slots.add(slot);
+  }
+  return null;
+}
+
+/** The plan's anchors that name one of its slots, sorted by slot, as fresh `{slot, prayer, offset}` objects. */
+export function planAnchors(plan: Pick<Plan, 'slots' | 'anchors'>): PlanAnchor[] {
+  if (!plan.anchors) return [];
+  const slots = new Set(plan.slots);
+  return plan.anchors
+    .filter((a) => slots.has(a.slot))
+    .map((a) => ({ slot: a.slot, prayer: a.prayer, offset: a.offset }))
+    .sort((a, b) => (a.slot < b.slot ? -1 : a.slot > b.slot ? 1 : 0));
+}
+
+/** The anchor of one slot, or undefined when the slot is a clock time. */
+export function anchorForSlot(plan: Pick<Plan, 'slots' | 'anchors'>, slot: LocalTime): PlanAnchor | undefined {
+  return plan.slots.includes(slot) ? plan.anchors?.find((a) => a.slot === slot) : undefined;
+}
+
 /** Returns an English error message, or `null` when the plan is well-formed. Accepts any input. */
 export function validatePlan(plan: unknown): string | null {
   if (typeof plan !== 'object' || plan === null) return 'plan must be an object';
@@ -192,6 +246,10 @@ export function validatePlan(plan: unknown): string | null {
   }
   if (!Array.isArray(p.slots) || p.slots.length === 0 || !p.slots.every(isValidTime)) {
     return 'slots must be a non-empty array of HH:MM';
+  }
+  if (p.anchors !== undefined) {
+    const e = validateAnchors(p.anchors);
+    if (e) return e;
   }
   if (!isValidDate(p.createdOn)) return 'createdOn must be YYYY-MM-DD';
   if (!isValidDate(p.amountChangedOn)) return 'amountChangedOn must be YYYY-MM-DD';
@@ -235,6 +293,7 @@ export interface NewPlan {
   ceiling?: number;
   activeDaysPerWeek: number;
   slots: LocalTime[];
+  anchors?: PlanAnchor[];
   createdOn: LocalDate;
   habitKey?: string;
   rule?: Rule;
@@ -246,6 +305,8 @@ export function createPlan(input: NewPlan, now: IsoTime = nowIso()): Plan {
   if (plan.ceiling === undefined) delete plan.ceiling;
   if (plan.habitKey === undefined) delete plan.habitKey;
   if (plan.rule === undefined) delete plan.rule;
+  if (plan.anchors === undefined || plan.anchors.length === 0) delete plan.anchors;
+  else plan.anchors = plan.anchors.map((a) => ({ ...a }));
   assertPlan(plan);
   return plan;
 }

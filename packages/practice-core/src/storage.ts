@@ -21,9 +21,9 @@
 import { isIsoTime, isValidDate, isValidTime, isoMillis, nowIso, type IsoTime, type LocalTime } from './dates.js';
 import { HIJRI_OFFSET_MAX, HIJRI_OFFSET_MIN } from './hijri.js';
 import { latestDate, undoLastContact, validateRelative, type Relative } from './kinship.js';
-import { mergeLogs, validatePlan, type Plan, type PlanLog } from './plan.js';
+import { mergeLogs, planAnchors, validatePlan, type Plan, type PlanLog } from './plan.js';
 import type { Rule } from './rules.js';
-import { validateCheckIn, validateProgram, type CheckIn, type SinProgram } from './sin-program.js';
+import { validateCheckIn, validateProgram, validateUrgeMark, type CheckIn, type SinProgram, type UrgeMark } from './sin-program.js';
 
 export const STORE_VERSION = 2;
 
@@ -136,6 +136,8 @@ export function clonePlan(p: Plan): Plan {
   if (p.ebb) out.ebb = { since: p.ebb.since };
   if (p.season) out.season = { amount: p.season.amount, until: p.season.until, previous: p.season.previous };
   if (p.rule) out.rule = cloneRule(p.rule);
+  const anchors = planAnchors(p);
+  if (anchors.length > 0) out.anchors = anchors;
   if (p.updatedAt !== undefined) out.updatedAt = p.updatedAt;
   if (p.logCorrectedAt !== undefined) out.logCorrectedAt = { ...p.logCorrectedAt };
   return out;
@@ -158,6 +160,13 @@ function cloneCheckIn(c: CheckIn): CheckIn {
   const out: CheckIn = { date: c.date, value: c.value };
   if (c.note !== undefined) out.note = c.note;
   if (c.updatedAt !== undefined) out.updatedAt = c.updatedAt;
+  if (c.deed !== undefined) out.deed = c.deed;
+  return out;
+}
+
+function cloneUrgeMark(u: UrgeMark): UrgeMark {
+  const out: UrgeMark = { date: u.date, count: u.count };
+  if (u.updatedAt !== undefined) out.updatedAt = u.updatedAt;
   return out;
 }
 
@@ -169,6 +178,7 @@ function cloneProgram(p: SinProgram): SinProgram {
     startedOn: p.startedOn,
     checkIns: p.endedAt !== undefined ? [] : p.checkIns.map(cloneCheckIn),
   };
+  if (p.endedAt === undefined && p.urges !== undefined && p.urges.length > 0) out.urges = p.urges.map(cloneUrgeMark);
   if (p.updatedAt !== undefined) out.updatedAt = p.updatedAt;
   if (p.endedAt !== undefined) out.endedAt = p.endedAt;
   return out;
@@ -179,6 +189,7 @@ function cloneProgram(p: SinProgram): SinProgram {
  * order with `null` for absent values: the wire shape of contract §3.
  */
 export function planFields(p: Plan) {
+  const anchors = planAnchors(p);
   return {
     habitKey: p.habitKey ?? null,
     deedSlug: p.deedSlug,
@@ -193,6 +204,8 @@ export function planFields(p: Plan) {
     amountChangedOn: p.amountChangedOn,
     ebbSince: p.ebb?.since ?? null,
     season: p.season ? { amount: p.season.amount, until: p.season.until, previous: p.season.previous } : null,
+    // Last and only when present, so a plan without anchors keeps the content (and the synced version) it had before.
+    ...(anchors.length > 0 ? { anchors } : {}),
   };
 }
 
@@ -248,7 +261,13 @@ function keepValid<T>(raw: unknown, validate: (v: unknown) => string | null, clo
 export function parsePrograms(raw: unknown): SinProgram[] {
   if (!Array.isArray(raw)) return [];
   const cleaned = raw.map((p) =>
-    isRecord(p) && Array.isArray(p.checkIns) ? { ...p, checkIns: p.checkIns.filter((c) => validateCheckIn(c) === null) } : p,
+    isRecord(p) && Array.isArray(p.checkIns)
+      ? {
+          ...p,
+          checkIns: p.checkIns.filter((c) => validateCheckIn(c) === null),
+          ...(Array.isArray(p.urges) ? { urges: p.urges.filter((u) => validateUrgeMark(u) === null) } : {}),
+        }
+      : p,
   );
   return keepValid<SinProgram>(cleaned, validateProgram, cloneProgram, (p) => p.sinSlug);
 }

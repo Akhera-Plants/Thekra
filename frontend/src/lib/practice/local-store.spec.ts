@@ -122,4 +122,27 @@ describe('practice local store', () => {
     expect(JSON.parse(storage.getItem(STORE_KEY) ?? '{}').v).toBe(2);
     expect(storage.getItem('thekra.practice.prefs.v1')).toBe('{}');
   });
+
+  it('keeps the prayer anchors a phone set on a plan (the web does not compute prayer times, it must not drop them)', () => {
+    const storage = new MemoryStorage();
+    const plan = {
+      id: '0b9b0c1e-0000-4000-8000-000000000001',
+      deedSlug: 'dhikr',
+      title: 'أذكار',
+      unit: 'count',
+      amount: 10,
+      activeDaysPerWeek: 3,
+      slots: ['05:10', '21:00'],
+      anchors: [{ slot: '05:10', prayer: 'fajr', offset: 10 }],
+      createdOn: '2026-10-01',
+      amountChangedOn: '2026-10-01',
+      log: {},
+      updatedAt: '2026-10-29T08:00:00.000Z',
+    };
+    storage.setItem(STORE_KEY, JSON.stringify({ v: 2, plans: [plan], relatives: [], programs: [], settings: { hijriOffset: 0 } }));
+    installWindow(storage);
+    updateStore((store) => updateSettings(store, { freeMinutesPerDay: 60 }));
+    expect(getPracticeSnapshot().store.plans[0]?.anchors).toEqual([{ slot: '05:10', prayer: 'fajr', offset: 10 }]);
+    expect(JSON.parse(storage.getItem(STORE_KEY) ?? '{}').plans[0].anchors).toEqual([{ slot: '05:10', prayer: 'fajr', offset: 10 }]);
+  });
 });

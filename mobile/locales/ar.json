@@ -1,7 +1,8 @@
 {
   "ios": {
     "CFBundleDisplayName": "ذكرى",
-    "NSFaceIDUsageDescription": "يستعمل ذكرى بصمة الوجه لفتح الصفحات الخاصة التي تختار قفلها."
+    "NSFaceIDUsageDescription": "يستعمل ذكرى بصمة الوجه لفتح الصفحات الخاصة التي تختار قفلها.",
+    "NSLocationWhenInUseUsageDescription": "يستعمل ذكرى موقعك التقريبي لحساب أوقات الصلاة على جهازك، ولا يُرسَل إلى أي مكان."
   },
   "android": {
     "app_name": "ذكرى"

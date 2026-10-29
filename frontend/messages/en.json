@@ -1024,7 +1024,8 @@
         "cancel": "Cancel"
       },
       "unlogged": "Unmarked.",
-      "readAbout": "Read about this deed"
+      "readAbout": "Read about this deed",
+      "nextAfterPrayer": "Next reminder after {prayer}"
     },
     "progress": {
       "title": "Where you are",
@@ -1222,6 +1223,13 @@
       "presenceFull": "All of it done",
       "presencePartial": "Some of it done",
       "occasion": "A sunnah occasion"
+    },
+    "prayers": {
+      "fajr": "Fajr",
+      "dhuhr": "Dhuhr",
+      "asr": "Asr",
+      "maghrib": "Maghrib",
+      "isha": "Isha"
     }
   },
   "calendarPage": {
@@ -1318,7 +1326,11 @@
         "confirmBody": "Its check-ins and notes are removed from this device now, and from the encrypted copy in your account on its next save if you use one. You can start it again whenever you wish.",
         "cancel": "Cancel",
         "confirm": "End it now"
-      }
+      },
+      "urgesPassed": "Weak moments you got through",
+      "urgePassed": "A weak moment you got through",
+      "urgePassedCount": "Weak moments you got through ({n})",
+      "deedAfterFall": "Then a good deed: {deed}"
     },
     "checkIn": {
       "title": "How was your day?",
@@ -1379,6 +1391,61 @@
         "reopen": "The privacy code was changed on another device; open the program again."
       }
     },
-    "continueFromSin": "Continue your program"
+    "continueFromSin": "Continue your program",
+    "urge": {
+      "button": "I feel weak right now",
+      "buttonHint": "A minute and a half, one step at a time; you can skip any step.",
+      "screenTitle": "A pause",
+      "close": "Close",
+      "progress": "Step {n} of {total}",
+      "next": "Next",
+      "inhale": "Breathe in",
+      "exhale": "Breathe out",
+      "breathDone": "Go on when you are ready",
+      "breathCount": "Breath {n} of {total}",
+      "noText": "The text could not load now. Go on to the next step.",
+      "delayButton": "Remind me in {minutes} minutes",
+      "delaySet": "We will remind you once, here on this page, in {minutes} minutes.",
+      "companionShare": "Share a request for prayer",
+      "copied": "Copied. Send it to someone you trust.",
+      "endTitle": "How are you now?",
+      "passed": "I got through it, alhamdulillah",
+      "fell": "I slipped",
+      "passedSaved": "Kept in your private notebook, on this device only.",
+      "back": "Back",
+      "checkBack": "{minutes} minutes have passed. How are you now? If the urge comes back, open the steps again."
+    },
+    "fall": {
+      "progress": "Step {n} of {total}",
+      "next": "Next",
+      "did": "I did it",
+      "later": "Later",
+      "deedDone": "Done: {deed}",
+      "back": "Back"
+    }
+  },
+  "tazkiya": {
+    "niyyahTitle": "My intention today",
+    "niyyahChoices": "Today's deeds",
+    "niyyahNoteLabel": "A short line of intention (optional)",
+    "niyyahSave": "Save my intention",
+    "niyyahMark": "My intention today",
+    "niyyahLabel": "Intention",
+    "notNow": "Not now",
+    "eveningTitle": "Evening reflection",
+    "eveningSave": "Save to the notebook",
+    "eveningSaved": "Saved in the reflection notebook.",
+    "needAnswer": "Write at least one answer, or choose the thanks.",
+    "tooLong": "This text is longer than allowed.",
+    "notebookTitle": "Reflection notebook",
+    "notebookLead": "Morning intentions and evening reflections, newest first.",
+    "notebookPrivate": "This notebook stays in this browser only: it is not synced and never appears in notifications or in the account export.",
+    "notebookEmpty": "Nothing in the notebook yet. Your morning intentions and evening reflections are kept here.",
+    "deleteDay": "Delete this day",
+    "deleteDayConfirm": "What you wrote on this day is deleted from this browser and cannot be recovered.",
+    "deleteAll": "Delete the whole notebook",
+    "deleteAllConfirm": "The whole notebook is deleted from this browser and cannot be recovered.",
+    "confirmDelete": "Yes, delete",
+    "keep": "Keep it"
   }
 }

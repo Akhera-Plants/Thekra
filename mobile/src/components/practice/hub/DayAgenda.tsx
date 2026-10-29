@@ -1,7 +1,8 @@
 /**
  * The hub's day list: «اليوم» or the selected date, then one row per agenda item (occasions, habits, relatives, the
  * private check-in last, in practice-core's order). Logging works for today and the 6 days before; other days are
- * view-only with a quiet note. When every task of the day is done, one hopeful line; nothing else celebrates.
+ * view-only with a quiet note. When every task of the day is done, one hopeful line; a habit's tick gets only the
+ * catalog's short supplication under its row for a moment (no counter, no confetti).
  */
 
 import React from 'react';
@@ -29,6 +30,10 @@ export interface DayAgendaProps {
   /** Nothing was started yet (the tracks below show how to begin). */
   started: boolean;
   lastLog: HubLastLog | null;
+  /** The plan chosen in «نيّتي اليوم» for this day. */
+  intendedPlanId?: string | null;
+  /** The supplication after the last habit tick, keyed `${planId}|${date}`. */
+  celebration?: { key: string; line: string } | null;
   onToggleHabit: (item: HabitItem) => void;
   onToggleRelative: (item: RelativeItem) => void;
   onUndo: () => void;
@@ -43,6 +48,8 @@ export function DayAgenda({
   complete,
   started,
   lastLog,
+  intendedPlanId,
+  celebration,
   onToggleHabit,
   onToggleRelative,
   onUndo,
@@ -88,6 +95,8 @@ export function DayAgenda({
                     meta={row.meta}
                     canLog={canLog}
                     undo={undoFor('habit', row.item.planId)}
+                    intended={row.item.planId === intendedPlanId}
+                    celebration={celebration?.key === `${row.item.planId}|${date}` ? celebration.line : undefined}
                     onToggle={onToggleHabit}
                     onUndo={onUndo}
                   />
