@@ -63,3 +63,8 @@ export function kinshipEvents(
   }
   return events.sort((a, b) => a.date.localeCompare(b.date));
 }
+
+/** What the user typed may be in either script: mark Arabic so the English view keeps it isolated. */
+export function langOf(text: string): 'ar' | undefined {
+  return /[\u0600-\u06FF]/.test(text) ? 'ar' : undefined;
+}

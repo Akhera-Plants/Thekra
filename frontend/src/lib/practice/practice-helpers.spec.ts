@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createRelative, logDone, startProgram, checkIn, startEbb, type Plan } from '@thekra/practice-core';
 import type { OccasionDate, PracticeCatalog, PracticeHabit, PracticeOccasion } from '@/lib/types/practice';
-import { calendarRange, computeOccasionDates, groupOccasions, occasionsIcs } from './calendar';
+import { computeOccasionDates, groupOccasions, occasionsIcs } from './calendar';
 import { kinshipEvents, rhythmOf, rhythmRule } from './kinship';
 import { planFromHabit, planReminderEvents, planToday, progressDays, ramadanEnd } from './plans';
 import { allProgramEvidenceIds, chosenPath, programView } from './programs';
@@ -54,7 +54,7 @@ describe('calendar view-model', () => {
       basis: 'text',
       evidence: [],
     };
-    const { from } = calendarRange('2026-10-28');
+    const from = '2026-10-28';
     const dates = computeOccasionDates([white], from, '2026-11-30', 0).map((d) => d.date);
     // 17 Jumada al-Ula 1448 = 2026-10-28, so 13–15 Jumada al-Akhira are 2026-11-23…25.
     expect(dates).toEqual(['2026-11-23', '2026-11-24', '2026-11-25']);

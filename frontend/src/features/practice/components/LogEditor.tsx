@@ -11,11 +11,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatGregorian } from '@/lib/practice/format';
+import { EDITABLE_DAYS } from '@/lib/practice/hub';
 import { updateStore } from '@/lib/practice/local-store';
 import { z } from '@/lib/zod';
 
-/** How far back a forgotten day can be logged or fixed. */
-export const EDITABLE_DAYS = 7;
 const MAX_LOG = 1000;
 
 /** Today first, then back {@link EDITABLE_DAYS} days, never before the plan started. */

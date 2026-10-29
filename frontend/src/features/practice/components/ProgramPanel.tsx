@@ -131,7 +131,7 @@ export function ProgramPanel({ program, entry, common, name, habits, quotes, tod
                 : [];
             })}
           </ul>
-          <Link href="/practice" className="text-link self-start">
+          <Link href={{ pathname: '/practice/habits', query: { add: '1' } }} className="text-link self-start">
             {t('alternativesLink')} <DirectionalArrow />
           </Link>
         </section>

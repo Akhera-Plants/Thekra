@@ -84,7 +84,9 @@ export function PlanCard({ plan, habit, view, today, ramadanUntil }: PlanCardPro
 
   return (
     <article
-      className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 md:p-6"
+      id={`plan-${plan.id}`}
+      tabIndex={-1}
+      className="flex scroll-mt-24 flex-col gap-4 rounded-2xl border border-border bg-card p-5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring md:p-6"
       aria-labelledby={`${evidenceId}-title`}
     >
       <header className="flex flex-wrap items-baseline justify-between gap-2">

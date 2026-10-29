@@ -28,7 +28,7 @@
     "goodDeedsShort": "Doing good",
     "breadcrumbs": "Breadcrumb",
     "practice": "My habits",
-    "practiceLong": "Help me keep a good deed",
+    "practiceLong": "My good deeds",
     "kinship": "Ties of kinship",
     "calendar": "Calendar"
   },
@@ -920,7 +920,7 @@
     "home": "Home"
   },
   "practice": {
-    "title": "Help me keep a good deed",
+    "title": "My good deeds",
     "lead": "Start very small, keep at it, and increase only once it is steady. Everything here is saved on your device first.",
     "storage": {
       "local": "Your data is saved on this device only and is never sent to a server.",
@@ -1015,7 +1015,8 @@
         "error": "Enter a whole number from 0 to 1000.",
         "save": "Save",
         "cancel": "Cancel"
-      }
+      },
+      "unlogged": "Unmarked."
     },
     "progress": {
       "title": "Where you are",
@@ -1035,7 +1036,8 @@
       "label": "More pages",
       "kinship": "Ties of kinship",
       "leaveSin": "A program to leave a sin",
-      "calendar": "Calendar"
+      "calendar": "Calendar",
+      "hub": "My habits"
     },
     "weekdays": {
       "d0": "Sunday",
@@ -1128,6 +1130,90 @@
       "testSent": "We sent a test notification; it should arrive in a moment.",
       "testNotFound": "We can no longer reach this browser. Turn notifications off, then on again.",
       "failed": "That did not work just now. Please try again shortly."
+    },
+    "hub": {
+      "title": "My habits",
+      "lead": "Your whole day in one place: your habits, your ties of kinship and the year’s occasions. Any amount you do counts.",
+      "dateLine": "{weekday} {hijri}",
+      "calendar": "Calendar",
+      "add": {
+        "button": "Add",
+        "label": "Add a good habit, a relative or a program",
+        "habit": "A good habit",
+        "habitHint": "Start very small, at two times a day",
+        "relative": "A relative",
+        "relativeHint": "A name or nickname, and a rhythm",
+        "program": "A program to leave a sin",
+        "programHint": "Private, on this device only"
+      },
+      "week": {
+        "label": "Days of the week",
+        "range": "{from} to {to}",
+        "previous": "Previous week",
+        "next": "Next week",
+        "today": "Today"
+      },
+      "day": {
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "tomorrow": "Tomorrow",
+        "dayTitle": "{weekday} {date}",
+        "listLabel": "What this day holds",
+        "empty": "Nothing is asked of this day.",
+        "future": "A day to come: you can see it here and log it when it arrives.",
+        "tooOld": "From here you can log today and the six days before it. This day stays as it was saved.",
+        "required": "Asked: {amount}",
+        "relativeDue": "Due today",
+        "relativeOverdue": "{count, plural, one {Due since yesterday} other {Due for {n} days}}",
+        "relativeDone": "You were in touch",
+        "occasion": "A sunnah of this day",
+        "programToday": "Log how your day went",
+        "programDone": "You logged your day",
+        "programOpen": "Open your program",
+        "complete": "Your day is done. May Allah accept it from you and bless the rest of it.",
+        "completePast": "That day was done. May Allah accept it from you.",
+        "logged": "Logged.",
+        "unlogged": "Unmarked."
+      },
+      "tracks": {
+        "title": "Your paths",
+        "habits": "My good deeds",
+        "habitsCount": "{count, plural, =0 {Start with one small habit} one {One habit} other {{n} habits}}",
+        "kinship": "Ties of kinship",
+        "kinshipEmpty": "Add your relatives",
+        "kinshipDue": "{count, plural, =0 {Nobody is due now} one {One relative due now} other {{n} relatives due now}}",
+        "program": "Leaving a sin",
+        "programActive": "Your private program",
+        "programStart": "Start",
+        "band": {
+          "excellent": "Excellent",
+          "good": "Good",
+          "gentle": "Gently"
+        }
+      },
+      "start": {
+        "title": "Where to begin?",
+        "lead": "Choose one door to start with. Everything is saved on your device first.",
+        "habits": "A good habit",
+        "habitsLine": "Start very small, keep at it, and increase only once it is steady.",
+        "kinship": "Ties of kinship",
+        "kinshipLine": "Your relatives and a rhythm for keeping in touch, with no phone numbers.",
+        "program": "Leaving a sin",
+        "programLine": "A gradual program on this device only; its name appears nowhere."
+      },
+      "month": {
+        "title": "How far you have come this month",
+        "presentDays": "{count, plural, =0 {Start today with any amount; every amount counts} one {Present on one day of the last {total}} other {Present on {n} days of the last {total}}}"
+      }
+    },
+    "monthGrid": {
+      "previous": "Previous month",
+      "next": "Next month",
+      "today": "Today",
+      "separator": ", ",
+      "presenceFull": "All of it done",
+      "presencePartial": "Some of it done",
+      "occasion": "A sunnah occasion"
     }
   },
   "calendarPage": {
@@ -1164,7 +1250,14 @@
       "m9": "Ramadan",
       "m10": "Shawwal",
       "m11": "Dhu al-Qada",
-      "m12": "Dhu al-Hijja"
+      "m12": "Dhu al-Hijja",
+      "monthOne": "{month} {year} AH",
+      "monthTwo": "{from} – {to} {year} AH",
+      "monthTwoYears": "{from} {fromYear} – {to} {toYear} AH"
+    },
+    "month": {
+      "title": "The month",
+      "none": "No sunnah occasion on this day."
     }
   },
   "leaveSin": {
@@ -1198,8 +1291,8 @@
       "stagesLabel": "Program stages",
       "actionsTitle": "Practical steps",
       "alternativesTitle": "Good habits to put in its place",
-      "alternativesLead": "Start one of them in “Help me keep a good deed”, with a small amount.",
-      "alternativesLink": "Go to Help me keep a good deed",
+      "alternativesLead": "Start one of them in “My good deeds”, with a small amount.",
+      "alternativesLink": "Add a good deed instead",
       "summaryTitle": "The last {days} days",
       "summaryItem": "{label}: {n}",
       "summaryNote": "Counts only, with no streaks and no comparison. What matters is coming back every time.",
