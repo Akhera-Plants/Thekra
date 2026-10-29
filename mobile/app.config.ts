@@ -52,6 +52,10 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       [
         'expo-splash-screen',
         {
+          // Android's generated styles always point at `splashscreen_logo`; without an image the release build fails
+          // («resource drawable/splashscreen_logo not found»).
+          image: './assets/splash-icon.png',
+          imageWidth: 200,
           backgroundColor: '#1B6CA8',
           resizeMode: 'contain',
         },
