@@ -3,6 +3,7 @@
  */
 
 import {
+  EXCERPT_MAX_CHARS,
   LONG_PREVIEW_CHARS,
   availableStudyTabs,
   explanationSegments,
@@ -11,6 +12,7 @@ import {
   isArabicRow,
   pickTabRows,
   studyCaption,
+  studyExcerpt,
   studyTabsForQuote,
   verseTabsForLocale,
   type ExplanationRow,
@@ -129,5 +131,41 @@ describe('reading helpers', () => {
       'فتح الباري ١/٩',
     );
     expect(studyCaption(row({ id: 'c', kind: 'SHARH', languageCode: 'en', source: { name: 'HadeethEnc', nameAr: 'موسوعة' } }), false)).toBe('HadeethEnc');
+  });
+});
+
+describe('studyExcerpt (the card\'s «لماذا هذه الآية؟»)', () => {
+  it('keeps a short text whole, with its spacing tidied', () => {
+    expect(studyExcerpt('  يأمر الله   عباده بالصبر. ويعدهم الأجر.  ')).toBe('يأمر الله عباده بالصبر. ويعدهم الأجر.');
+  });
+
+  it('stops after three sentences', () => {
+    expect(studyExcerpt('أولى. ثانية؟ ثالثة! رابعة. خامسة.')).toBe('أولى. ثانية؟ ثالثة!');
+    expect(studyExcerpt('One. Two. Three. Four')).toBe('One. Two. Three.');
+  });
+
+  it('cuts a long text at the last sentence end that fits', () => {
+    const first = `${'كلمة '.repeat(40).trim()}.`;
+    const second = `${'أخرى '.repeat(40).trim()}.`;
+    const excerpt = studyExcerpt(`${first} ${second}`);
+    expect(excerpt).toBe(first);
+    expect(excerpt.length).toBeLessThanOrEqual(EXCERPT_MAX_CHARS);
+  });
+
+  it('cuts a first sentence longer than the limit at a word, with an ellipsis', () => {
+    const excerpt = studyExcerpt(`${'طويلة '.repeat(100).trim()}.`);
+    expect(excerpt.endsWith('طويلة…')).toBe(true);
+    expect(excerpt.length).toBeLessThanOrEqual(EXCERPT_MAX_CHARS + 1);
+  });
+
+  it('never ends inside a quoted verse', () => {
+    const verse = `{${'آية. '.repeat(10).trim()}}`;
+    const text = `قال تعالى: ${verse} والمعنى واضح. ${'زيادة '.repeat(80).trim()}.`;
+    const excerpt = studyExcerpt(text);
+    expect(excerpt).toBe(`قال تعالى: ${verse} والمعنى واضح.`);
+  });
+
+  it('does not take a decimal point for a sentence end', () => {
+    expect(studyExcerpt('Verse 2.5 explains it. Then more. And more. Last one.')).toBe('Verse 2.5 explains it. Then more. And more.');
   });
 });

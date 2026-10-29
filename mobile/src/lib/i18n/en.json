@@ -231,7 +231,8 @@
     "notFound": "Page not found",
     "notFoundBody": "The link may be old or incorrect.",
     "offlineBanner": "Showing saved content: no connection",
-    "done": "Done"
+    "done": "Done",
+    "more": "More"
   },
   "errors": {
     "network": "Could not reach the server",
@@ -375,7 +376,8 @@
       "fixItBody": "Finish today with whatever you can: any amount counts, and nothing is added to tomorrow.",
       "partialLabel": "Amount done ({{unit}})",
       "logPartial": "Log",
-      "readAbout": "Read about this deed"
+      "readAbout": "Read about this deed",
+      "helpers": "What helps"
     },
     "duties": {
       "title": "My duties and roles",
@@ -659,7 +661,10 @@
     "narrator": "Narrator",
     "favoriteAdd": "Add to favorites",
     "favoriteRemove": "Remove from favorites",
-    "open": "Read the full text"
+    "open": "Read the full text",
+    "whyVerse": "Why this verse?",
+    "whyHadith": "Why this hadith?",
+    "whyText": "Why this text?"
   },
   "theme": {
     "title": "Appearance",

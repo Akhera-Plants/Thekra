@@ -1,8 +1,9 @@
 /**
  * One habit plan, after the website's PlanCard: today's amount with «أتممتها» and a partial «+1», «سُجِّل · تراجع»,
  * «صحّح السجل» (a week back, steppers for the day and the amount), the increase and relapse offers as next-step
- * notes, the last 30 days (a kind band and a row of dots, no streaks and no failure words), slot/day settings, the
- * evidence texts from the API, and delete (confirmed). A quiet «اقرأ عن هذه الطاعة» opens the deed's page.
+ * notes, the last 30 days (a kind band and a row of dots, no streaks and no failure words), slot/day settings, and
+ * «المُعينات»: one evidence text from the API with «المزيد» to the deed's page, which reads the rest. Delete is the
+ * trash in the native header (confirmed), reachable without scrolling. A quiet «اقرأ عن هذه الطاعة» opens the deed's page.
  */
 
 import React, { useState } from 'react';
@@ -36,6 +37,7 @@ import { space, useStyles } from '@/theme';
 import {
   Button,
   EmptyState,
+  IconButton,
   Loading,
   NextStep,
   PageHeader,
@@ -128,9 +130,11 @@ export default function PlanScreen() {
     ]);
   }
 
+  const renderDeleteButton = () => <IconButton icon={Trash2} label={t('practice.plan.delete')} onPress={handleRemove} />;
+
   return (
     <Screen edges={['bottom']} keyboard>
-      <Stack.Screen options={{ title }} />
+      <Stack.Screen options={{ title, headerRight: renderDeleteButton }} />
       <PageHeader eyebrow={t('practice.title')} title={title} lead={habit ? t(`practice.basis.${habit.basis}`) : undefined}>
         {timeHint ? (
           <Text variant="small" tone="muted">
@@ -183,10 +187,15 @@ export default function PlanScreen() {
 
       <SettingsPanel plan={plan} ruleWeekdays={ruleToWeekdays(planRule(plan, habits))} onSave={(next) => update(() => next)} />
 
-      <EvidenceList ids={habit?.evidence} byId={evidence.data} loading={evidence.isLoading} error={evidence.isError} />
-
-      <Rule />
-      <Button label={t('practice.plan.delete')} icon={Trash2} onPress={handleRemove} variant="destructive" />
+      <EvidenceList
+        ids={habit?.evidence}
+        byId={evidence.data}
+        loading={evidence.isLoading}
+        error={evidence.isError}
+        title={t('practice.plan.helpers')}
+        limit={1}
+        moreHref={habit ? `/good-deeds/${habit.deed}` : undefined}
+      />
     </Screen>
   );
 }

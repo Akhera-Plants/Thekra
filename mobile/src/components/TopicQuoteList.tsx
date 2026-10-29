@@ -88,9 +88,9 @@ const makeStyles = () => ({
 });
 
 /** One row: a component, so the favorite hook runs under React's rules (never inside `renderItem` itself). */
-const QuoteItem = memo(function QuoteItem({ quote }: { quote: QuoteDto }) {
+const QuoteItem = memo(function QuoteItem({ quote, linkNote }: { quote: QuoteDto; linkNote?: string }) {
   const { isFavorite, toggle } = useToggleFavorite(quote.id);
-  return <QuoteCard quote={quote} isFavorite={isFavorite} onToggleFavorite={toggle} />;
+  return <QuoteCard quote={quote} isFavorite={isFavorite} onToggleFavorite={toggle} linkNote={linkNote} />;
 });
 
 function CardGap() {
@@ -109,7 +109,9 @@ function SectionTitle({ section }: { section: TopicSection }) {
 }
 
 const keyExtractor = (quote: QuoteDto) => quote.id;
-const renderItem: SectionListRenderItem<QuoteDto, TopicSection> = ({ item }) => <QuoteItem quote={item} />;
+const renderItem: SectionListRenderItem<QuoteDto, TopicSection> = ({ item, section }) => (
+  <QuoteItem quote={item} linkNote={section.notes[item.id]} />
+);
 const renderSectionHeader = ({ section }: { section: TopicSection }) => <SectionTitle section={section} />;
 
 export function TopicQuoteList({
