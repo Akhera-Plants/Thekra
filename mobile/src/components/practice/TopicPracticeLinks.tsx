@@ -102,20 +102,18 @@ function DeedHabitRow({ habit, planId }: { habit: CatalogHabit; planId: string |
 }
 
 /**
- * «ابدأ برنامج الترك» when the catalog has a program for this sin, «تابع برنامجك» when it is the active one. While
- * another program is active it is still offered: the chooser opens with this sin selected, and starting it there
- * ends the current one after a confirmation (the app keeps one program at a time).
+ * «ابدأ برنامج الترك» when the catalog has a program for this sin, «تابع برنامجك» when it is already running. Other
+ * programs keep running beside it (as on the website): the chooser opens with this sin selected.
  */
 export function SinProgramLink({ sin }: { sin: string }) {
   const { t } = useTranslation();
   const locale = useUiLocale();
   const styles = useStyles(makeStyles);
   const catalog = usePracticeCatalog(locale);
-  const active = usePracticeStore((s) => s.store.programs.find(isActiveProgram));
+  const isActive = usePracticeStore((s) => s.store.programs.some((p) => p.sinSlug === sin && isActiveProgram(p)));
 
   const hasProgram = catalog.data?.sinPrograms.programs.some((p) => p.sin === sin) ?? false;
   if (!hasProgram) return null;
-  const isActive = active?.sinSlug === sin;
 
   function handleOpen() {
     if (!isActive) setPendingProgram(sin);
