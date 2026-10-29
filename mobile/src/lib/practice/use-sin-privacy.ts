@@ -40,8 +40,10 @@ export async function isDeviceLockAvailable(): Promise<boolean> {
  */
 export async function unlockWithDevice({ promptMessage, cancelLabel }: DeviceUnlockLabels): Promise<boolean> {
   if (!NATIVE) return false;
-  if (!(await isDeviceLockAvailable())) return true;
   try {
+    // Only a confirmed «no lock at all» skips the prompt; an error while checking stays locked (fail closed).
+    const level = await LocalAuthentication.getEnrolledLevelAsync();
+    if (level === LocalAuthentication.SecurityLevel.NONE) return true;
     const result = await LocalAuthentication.authenticateAsync({ promptMessage, cancelLabel });
     return result.success;
   } catch {
