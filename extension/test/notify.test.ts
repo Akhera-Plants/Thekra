@@ -129,7 +129,7 @@ describe('buildNotification', () => {
   it('puts the amount first, then the quote and its source line', () => {
     const quran = habit('دقيقة', 'minutes', { unit: 'minutes' });
     const n = buildNotification({ title: 'ورد القرآن', amountText: formatAmount(2, 'minutes', quran, 'ar'), quote: { text: '«نص»', source: 'صحيح مسلم 720' }, t: ar });
-    expect(n).toEqual({ title: 'ورد القرآن', message: 'المطلوب اليوم: 2 دقيقة\n«نص»\nصحيح مسلم 720' });
+    expect(n).toEqual({ title: 'ورد القرآن', message: 'المطلوب اليوم: دقيقتان\n«نص»\nصحيح مسلم 720' });
   });
 
   it('shows only the amount when there is no published quote', () => {

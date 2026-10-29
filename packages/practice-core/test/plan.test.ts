@@ -326,7 +326,12 @@ describe('rakah amounts', () => {
 
   it('formats other units from the catalog label', () => {
     expect(formatPlanAmount(2, 'times', 'ركعتان', 'ar', 'pairs')).toBe('4 ركعات');
-    expect(formatPlanAmount(10, 'minutes', 'دقيقة', 'ar')).toBe('10 دقيقة');
+    expect(formatPlanAmount(10, 'minutes', 'دقيقة', 'ar')).toBe('10 دقائق');
+    expect(formatPlanAmount(2, 'minutes', 'دقيقة', 'ar')).toBe('دقيقتان');
+    expect(formatPlanAmount(20, 'minutes', 'دقيقة', 'ar')).toBe('20 دقيقة');
+    expect(formatPlanAmount(3, 'count', 'مرة في اليوم', 'ar')).toBe('3 مرات في اليوم');
+    expect(formatPlanAmount(33, 'count', 'مرة لكل ذكر', 'ar')).toBe('33 مرة لكل ذكر');
+    expect(formatPlanAmount(1, 'count', 'مرة', 'ar')).toBe('مرة واحدة');
     expect(formatPlanAmount(1, 'times', 'صدقة', 'ar')).toBe('صدقة');
     expect(formatPlanAmount(2, 'times', 'صدقة', 'ar')).toBe('2 × صدقة');
     expect(formatPlanAmount(3, 'count', '', 'en')).toBe('3');

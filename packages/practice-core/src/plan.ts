@@ -112,8 +112,25 @@ export function formatRakahs(n: number, lang: 'ar' | 'en'): string {
   return n <= 10 ? `${n} ركعات` : `${n} ركعة`;
 }
 
+/** Arabic counted nouns the catalog's unit labels start with: one, two, 3–10, then 11 and up. */
+const ARABIC_COUNTED: Record<string, readonly [string, string, string]> = {
+  دقيقة: ['دقيقة واحدة', 'دقيقتان', 'دقائق'],
+  مرة: ['مرة واحدة', 'مرتان', 'مرات'],
+};
+
+/** «دقيقتان», «5 دقائق», «20 دقيقة»; «3 مرات في اليوم». Null when the label does not start with a known noun. */
+function arabicCounted(amount: number, label: string): string | null {
+  const [noun, ...rest] = label.split(' ');
+  const forms = ARABIC_COUNTED[noun ?? ''];
+  if (!forms || amount < 1) return null;
+  const tail = rest.length > 0 ? ` ${rest.join(' ')}` : '';
+  if (amount === 1) return forms[0] + tail;
+  if (amount === 2) return forms[1] + tail;
+  return `${amount} ${amount <= 10 ? forms[2] : noun}${tail}`;
+}
+
 /**
- * A plan amount as people say it: «10 دقيقة», «33 مرة», «صدقة» (one `times` unit whose label names it),
+ * A plan amount as people say it: «20 دقيقة», «3 مرات», «صدقة» (one `times` unit whose label names it),
  * «2 × صدقة», and rak'ahs counted out («4 ركعات») for prayer habits. Western digits.
  */
 export function formatPlanAmount(
@@ -126,6 +143,8 @@ export function formatPlanAmount(
   if (rakah) return formatRakahs(rakahsOf(amount, rakah), lang);
   const n = String(amount);
   if (!label) return n;
+  const counted = lang === 'ar' ? arabicCounted(amount, label) : null;
+  if (counted) return counted;
   if (unit === 'times') return amount === 1 ? label : `${n} × ${label}`;
   return `${n} ${label}`;
 }
