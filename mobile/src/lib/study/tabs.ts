@@ -121,3 +121,45 @@ export function explanationSegments(text: string): ExplanationSegment[] {
 export function foldedText(text: string): string {
   return text.length > LONG_PREVIEW_CHARS ? `${text.slice(0, LONG_PREVIEW_CHARS).trimEnd()}…` : text;
 }
+
+/** The card's «لماذا هذه الآية؟» shows at most this much of the tafsir or sharh. */
+export const EXCERPT_MAX_CHARS = 350;
+export const EXCERPT_MAX_SENTENCES = 3;
+
+/** A sentence end (Latin or Arabic mark, closing quotes after it) followed by a space or the end of the text. */
+const SENTENCE_END = /[.!?؟۔]+["'»”)\]]*(?=\s|$)/g;
+
+/** True when the text opens a quoted verse ({ or ﴿) that it does not close. */
+function insideVerse(text: string): boolean {
+  const count = (char: string) => text.split(char).length - 1;
+  return count('{') > count('}') || count('﴿') > count('﴾');
+}
+
+/**
+ * A short excerpt for the card: whole sentences, at most EXCERPT_MAX_SENTENCES and EXCERPT_MAX_CHARS. When even the
+ * first sentence is longer, it is cut at a word with an ellipsis. Never cuts inside a quoted verse.
+ */
+export function studyExcerpt(text: string): string {
+  const clean = text.replace(/\s+/g, ' ').trim();
+  let cut = 0;
+  let sentences = 0;
+  for (const match of clean.matchAll(SENTENCE_END)) {
+    const end = (match.index ?? 0) + match[0].length;
+    if (end > EXCERPT_MAX_CHARS) break;
+    if (insideVerse(clean.slice(0, end))) continue;
+    cut = end;
+    sentences += 1;
+    if (sentences === EXCERPT_MAX_SENTENCES) break;
+  }
+  if (clean.length <= EXCERPT_MAX_CHARS && (sentences < EXCERPT_MAX_SENTENCES || cut === clean.length)) return clean;
+  if (cut > 0) return clean.slice(0, cut);
+
+  let head = clean.slice(0, EXCERPT_MAX_CHARS);
+  const space = head.lastIndexOf(' ');
+  if (space > 0) head = head.slice(0, space);
+  if (insideVerse(head)) {
+    const open = Math.max(head.lastIndexOf('{'), head.lastIndexOf('﴿'));
+    if (open > 0) head = head.slice(0, open);
+  }
+  return `${head.trimEnd()}…`;
+}

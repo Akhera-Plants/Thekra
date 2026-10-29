@@ -1,7 +1,8 @@
 /**
- * «التفسير» for a verse, «الشرح» for a hadith: the website's study page (StudyFullPage under the page title)
- * pushed from the quote card. The text on top (verses in Amiri Quran), then one tab per source that has a
- * reading in the UI language (rules in src/lib/study/tabs.ts), then the reading with its source and reference.
+ * «التفسير» for a verse, «الشرح» for a hadith: the website's study page (StudyFullPage), opened from the quote card as a
+ * native form sheet (app/_layout.tsx; deep links open it the same way). The sheet's top row has the generic title and
+ * close; then the text (verses in Amiri Quran), one tab per source that has a reading in the UI language (rules in
+ * src/lib/study/tabs.ts), and the reading with its source and reference.
  */
 
 import React, { useCallback, useMemo, useState } from 'react';
@@ -16,7 +17,7 @@ import type { QuoteDto } from '@/lib/types/api';
 import { StudyReading, StudyReadingSkeleton } from '@/components/StudyReading';
 import { space, useStyles, useTheme, type Theme } from '@/theme';
 import { useIsOffline } from '@/lib/query-client';
-import { EmptyState, ErrorState, Notice, PageHeader, Screen, SegmentTabs, Skeleton, Text } from '@/ui';
+import { EmptyState, ErrorState, Notice, SegmentTabs, SheetScreen, Skeleton, Text } from '@/ui';
 
 const NO_ROWS: ExplanationRow[] = [];
 
@@ -40,48 +41,46 @@ export default function QuoteStudyScreen() {
   const { t } = useTranslation();
   const isOffline = useIsOffline();
 
-  const { data: quote, isLoading, isError, isRefetching, refetch } = useQuote(quoteId);
+  const { data: quote, isLoading, isError, refetch } = useQuote(quoteId);
   const explanations = useQuoteExplanations(quoteId);
   const refetchExplanations = explanations.refetch;
-  const isRefreshing = isRefetching || explanations.isRefetching;
 
-  const handleRefresh = useCallback(() => {
+  const handleRetry = useCallback(() => {
     void refetch();
     void refetchExplanations();
   }, [refetch, refetchExplanations]);
 
   if (isLoading) {
     return (
-      <Screen edges={['bottom']}>
+      <SheetScreen>
         <StudyScreenSkeleton />
-      </Screen>
+      </SheetScreen>
     );
   }
 
   if (isError || !quote) {
     return (
-      <Screen edges={['bottom']} refreshing={isRefetching} onRefresh={handleRefresh}>
+      <SheetScreen>
         {isOffline ? <Notice icon={WifiOff}>{t('common.offlineBanner')}</Notice> : null}
-        <ErrorState message={isError ? undefined : t('errors.notFound')} onRetry={handleRefresh} />
-      </Screen>
+        <ErrorState message={isError ? undefined : t('errors.notFound')} onRetry={handleRetry} />
+      </SheetScreen>
     );
   }
 
   const isVerse = quote.type === QuoteType.QURAN_VERSE;
 
   return (
-    <Screen edges={['bottom']} refreshing={isRefreshing} onRefresh={handleRefresh}>
-      <PageHeader title={isVerse ? t('study.titleTafsir') : t('study.titleSharh')} />
+    <SheetScreen title={isVerse ? t('study.titleTafsir') : t('study.titleSharh')}>
       {isOffline ? <Notice icon={WifiOff}>{t('common.offlineBanner')}</Notice> : null}
       <StudyQuote quote={quote} />
       {explanations.isLoading ? (
         <StudyReadingSkeleton />
       ) : explanations.isError ? (
-        <ErrorState message={t('study.error')} onRetry={handleRefresh} />
+        <ErrorState message={t('study.error')} onRetry={handleRetry} />
       ) : (
         <StudyTabs quote={quote} rows={explanations.data ?? NO_ROWS} />
       )}
-    </Screen>
+    </SheetScreen>
   );
 }
 
@@ -161,12 +160,11 @@ function StudyQuote({ quote }: { quote: QuoteDto }) {
   );
 }
 
-/** The page's shape while the quote loads: title, the quoted text, then the readings. */
+/** The sheet's shape while the quote loads: the quoted text, then the readings. */
 function StudyScreenSkeleton() {
   const styles = useStyles(makeStyles);
   return (
     <View style={styles.skeleton}>
-      <Skeleton width={120} height={32} />
       <View style={styles.quote}>
         <Skeleton width={110} height={12} />
         <Skeleton height={18} />

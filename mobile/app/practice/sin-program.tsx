@@ -8,9 +8,9 @@
  *
  * Flow: choose a catalog program → the willpower question (only when the program's `gradualAllowed` is true
  * and it is a sin against the right of Allah: owner decision D1) → practice-core `startProgram`. Then the
- * current stage (`currentStage`) with its reviewed title/body, practical steps, alternatives, evidence, the
- * daily check-in (held / weak / fell_repented + private note), `summary` (counts of days only) and, after
- * «وقعت ثم تبت», the `afterFall` («خربانة؟ صلّحها») content, and «دفتري الخاص» (past check-ins with their notes,
+ * current stage (`currentStage`) with its reviewed title/body, practical steps, alternatives, evidence (one text
+ * per list, «المزيد» to the sin's page), the daily check-in (held / weak / fell_repented + private note), `summary`
+ * (counts of days only) and, after «وقعت ثم تبت», the `afterFall` («خربانة؟ صلّحها») content, and «دفتري الخاص» (past check-ins with their notes,
  * newest first, shown on this screen only). Several programs run side by side, as on the website: each has its own
  * stage, check-in, notebook and «أنهِ هذا البرنامج» (confirmed); «ابدأ برنامجًا آخر», or a sin page's «ابدأ برنامج
  * الترك», opens the chooser with the sins not already followed.
@@ -378,7 +378,8 @@ function ProgramView({ program, entry, sinName, evidenceById, evidenceLoading, e
   const showAfterFall = todayCheckIn?.value === 'fell_repented' && afterFall(program) === 'fixit';
   const actions = entry ? pickList(entry.actionsAr, entry.actionsEn, locale) : [];
   const gradual = entry && program.path === 'gradual' ? pickList(entry.gradualStepsAr, entry.gradualStepsEn, locale) : [];
-  const evidenceProps = { byId: evidenceById, loading: evidenceLoading, error: evidenceError };
+  // One text per list, «المزيد» to the sin's own page: the texts are read there, not repeated here.
+  const evidenceProps = { byId: evidenceById, loading: evidenceLoading, error: evidenceError, limit: 1, moreHref: `/sins/${program.sinSlug}` as const };
 
   return (
     <>

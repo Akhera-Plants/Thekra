@@ -1,9 +1,10 @@
 /**
  * Page frame, header and spacing helpers, after the website's page layout (20 gutter, page-lead, eyebrow,
  * hairline rules), with the website's faint arabesque on the page edges where a page asks for it (`decor`).
+ * `SheetScreen` frames a route presented as a native form sheet.
  */
 
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -15,10 +16,12 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 import { useHeaderHeight } from 'expo-router/react-navigation';
 import { useTranslation } from 'react-i18next';
-import { Sprout } from 'lucide-react-native';
-import { GUTTER, space, useStyles, useTheme, type Theme } from '@/theme';
+import { Sprout, X } from 'lucide-react-native';
+import { GUTTER, radius, space, useStyles, useTheme, type Theme } from '@/theme';
+import { IconButton } from './Button';
 import { PageDecor } from './Decor';
 import { Icon } from './Icon';
 import { Text } from './Text';
@@ -33,6 +36,25 @@ const makeStyles = (t: Theme) => ({
   wrap: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: space.sm },
   section: { gap: space.md },
   rule: { height: 1, backgroundColor: t.colors.border },
+  sheetHandle: {
+    alignSelf: 'center' as const,
+    width: 32,
+    height: 4,
+    marginTop: space.md,
+    borderRadius: radius.full,
+    backgroundColor: t.colors.mutedForeground,
+    opacity: 0.4,
+  },
+  sheetBar: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: space.sm,
+    paddingStart: GUTTER,
+    paddingEnd: space.sm,
+    paddingTop: space.md,
+  },
+  sheetTitle: { flex: 1 },
+  sheetScroll: { paddingHorizontal: GUTTER, paddingTop: space.sm, paddingBottom: space['4xl'], gap: space['2xl'] },
   brand: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.sm },
   brandRow: {
     flexDirection: 'row' as const,
@@ -102,6 +124,36 @@ function ScreenFrame({ children, edges = ['top'], scroll = true, refreshing, onR
       ) : (
         <View style={[styles.fill, contentStyle]}>{children}</View>
       )}
+    </SafeAreaView>
+  );
+}
+
+/**
+ * A route presented as a native form sheet (`presentation: 'formSheet'`, app/_layout.tsx). The sheet has no native
+ * header (Android's sheet draws none), so the top row holds the title and «إغلاق»; Android also gets the drag handle
+ * that iOS draws itself (`sheetGrabberVisible`). The content scrolls with `nestedScrollEnabled`, which lets Android's
+ * bottom sheet hand the drag over to it. No pull to refresh: pulling down moves the sheet.
+ */
+export function SheetScreen({ title, children }: { title?: string; children: React.ReactNode }) {
+  const styles = useStyles(makeStyles);
+  const { t } = useTranslation();
+  const handleClose = useCallback(() => router.back(), []);
+  return (
+    <SafeAreaView style={styles.safe} edges={['bottom']}>
+      {Platform.OS === 'android' ? <View style={styles.sheetHandle} /> : null}
+      <View style={styles.sheetBar}>
+        {title ? (
+          <Text variant="heading" accessibilityRole="header" numberOfLines={1} style={styles.sheetTitle}>
+            {title}
+          </Text>
+        ) : (
+          <View style={styles.sheetTitle} />
+        )}
+        <IconButton icon={X} label={t('common.close')} onPress={handleClose} />
+      </View>
+      <ScrollView nestedScrollEnabled contentContainerStyle={styles.sheetScroll}>
+        {children}
+      </ScrollView>
     </SafeAreaView>
   );
 }

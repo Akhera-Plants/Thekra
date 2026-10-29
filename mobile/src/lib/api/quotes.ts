@@ -40,14 +40,17 @@ export function useQuote(id: string, params: { lang?: string } = {}) {
   });
 }
 
-/** «التفسير» / «الشرح» of a quote in the UI language (the site's useExplanations). */
-export function useQuoteExplanations(quoteId: string) {
+/**
+ * «التفسير» / «الشرح» of a quote in the UI language (the site's useExplanations). `enabled: false` waits (the card's
+ * «لماذا هذه الآية؟» asks only when it is first opened); the key is the same, so the study sheet reuses the rows.
+ */
+export function useQuoteExplanations(quoteId: string, { enabled = true }: { enabled?: boolean } = {}) {
   const { i18n } = useTranslation();
   const lang = i18n.language === 'en' ? 'en' : 'ar';
   return useQuery({
     queryKey: queryKeys.quotes.explanations(quoteId, lang),
     queryFn: () => fetchQuoteExplanations(quoteId, lang),
-    enabled: Boolean(quoteId),
+    enabled: enabled && Boolean(quoteId),
     select: (r) => r.data,
   });
 }

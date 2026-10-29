@@ -30,6 +30,12 @@ describe('buildTopicSections', () => {
     ]);
   });
 
+  it('keeps each text\'s link note for its card', () => {
+    const noted: TopicText = { link: { id: 'l-n', relevanceScore: null, note: 'من كتاب الكبائر' }, quote: { id: 'n' } as QuoteDto };
+    const [own] = buildTopicSections([{ items: [noted, text('a')] }], options);
+    expect(own?.notes).toEqual({ n: 'من كتاب الكبائر' });
+  });
+
   it('leaves out empty sections and reads one untitled list under a filter', () => {
     expect(buildTopicSections([{ items: [], companion: { items: [] } }], options)).toEqual([]);
     const flat = buildTopicSections(

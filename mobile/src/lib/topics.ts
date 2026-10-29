@@ -7,7 +7,8 @@
  * `buildTopicSections`: the reading sections of a topic page, after the website's sin and good-deed pages (frontend
  * `app/[locale]/sins/[slug]/page.tsx`, `useTopicReader`): the topic's own texts, then its companion (the paired
  * deed's virtue on a sin, the opposite sin's warning on a deed), then a contemporary topic's derived groups.
- * Each text shows once: a quote already in an earlier section is left out of a later one.
+ * Each text shows once: a quote already in an earlier section is left out of a later one. Each section keeps the
+ * topic links' notes by quote id (`notes`) for the card's «لماذا هذا الحديث؟».
  * Under a type filter the website reads one list without headings; so does this.
  */
 
@@ -65,6 +66,8 @@ export interface TopicSection {
   /** Null: no heading (one flat list under a filter). */
   title: string | null;
   data: QuoteDto[];
+  /** The link note of each text that has one, by quote id. */
+  notes: Record<string, string>;
 }
 
 export interface TopicSectionOptions {
@@ -77,10 +80,12 @@ export interface TopicSectionOptions {
 
 export function buildTopicSections(pages: readonly TopicPageData[], options: TopicSectionOptions): TopicSection[] {
   const seen = new Set<string>();
+  const notes: Record<string, string> = {};
   const fresh = (rows: readonly TopicText[]) =>
     rows.flatMap((row) => {
       if (seen.has(row.quote.id)) return [];
       seen.add(row.quote.id);
+      if (row.link.note) notes[row.quote.id] = row.link.note;
       return [row.quote];
     });
 
@@ -92,7 +97,7 @@ export function buildTopicSections(pages: readonly TopicPageData[], options: Top
   }
   if (!options.sectioned) {
     const flat = [...own, ...companion];
-    return flat.length > 0 ? [{ key: 'all', title: null, data: flat }] : [];
+    return flat.length > 0 ? [{ key: 'all', title: null, data: flat, notes }] : [];
   }
 
   // Derived groups come page by page like the topic's own texts: one group per topic across the pages.
@@ -107,9 +112,9 @@ export function buildTopicSections(pages: readonly TopicPageData[], options: Top
   }
 
   const sections: TopicSection[] = [
-    { key: 'own', title: options.ownTitle, data: own },
-    { key: 'companion', title: options.companionTitle, data: companion },
-    ...[...groups.entries()].map(([key, { group, data }]) => ({ key: `derived:${key}`, title: options.groupTitle(group), data })),
+    { key: 'own', title: options.ownTitle, data: own, notes },
+    { key: 'companion', title: options.companionTitle, data: companion, notes },
+    ...[...groups.entries()].map(([key, { group, data }]) => ({ key: `derived:${key}`, title: options.groupTitle(group), data, notes })),
   ];
   return sections.filter((section) => section.data.length > 0);
 }

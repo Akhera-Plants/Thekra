@@ -27,7 +27,7 @@ import { initI18n, detectDeviceLocale, switchDirectionIfNeeded, type SupportedLo
 import i18n from '@/lib/i18n';
 import { setApiLocale } from '@/lib/api-client';
 import { useAuthStore } from '@/lib/stores/auth-store';
-import { dark, FontFiles, light, loadThemePreference, ThemeProvider, useTheme } from '@/theme';
+import { dark, FontFiles, light, loadThemePreference, radius, ThemeProvider, useTheme } from '@/theme';
 import { usePracticeLifecycle } from '@/lib/practice/use-practice-lifecycle';
 import { useStackScreenOptions } from '@/ui';
 
@@ -38,6 +38,20 @@ export const unstable_settings = { anchor: '(tabs)' };
 void SplashScreen.preventAutoHideAsync();
 
 const LOCALE_STORAGE_KEY = 'thekra_locale';
+
+/**
+ * «التفسير» / «الشرح» opens over the page as a native form sheet: UIKit's sheet on iOS (grabber, detents), Material's
+ * BottomSheetBehavior on Android (react-native-screens 4.26). It opens at 60% and pulls up to full height; its own top
+ * row has the title and close (SheetScreen), so the native header is off.
+ */
+const STUDY_SHEET = {
+  presentation: 'formSheet' as const,
+  headerShown: false,
+  sheetAllowedDetents: [0.6, 1],
+  sheetGrabberVisible: true,
+  sheetCornerRadius: radius.quote,
+};
+
 const queryClient = createQueryClient();
 
 onlineManager.setEventListener((setOnline) => {
@@ -138,6 +152,7 @@ function ThemedShell() {
         <Stack.Screen name="practice" options={{ headerShown: false }} />
         <Stack.Screen name="circles" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false, presentation: 'modal' }} />
+        <Stack.Screen name="quotes/study/[id]" options={STUDY_SHEET} />
       </Stack>
       <PracticeLifecycle />
       <StatusBar style={theme.dark ? 'light' : 'dark'} />

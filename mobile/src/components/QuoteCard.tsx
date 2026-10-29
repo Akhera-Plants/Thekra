@@ -5,22 +5,24 @@
  *   at the end.
  * - Body: Uthmani verse text in Amiri Quran; hadith and sayings in Plex at reading size. English UI with a
  *   translation shows it in Source Serif under the Arabic.
- * - «اقرأ التفسير» (verses) / «اقرأ الشرح» (hadith): the site's ghost study button, to quotes/study/[id].
- * - «اقرأ النص كاملًا» to the quote page, except on that page.
+ * - «لماذا هذه الآية؟» / «لماذا هذا الحديث؟» (QuoteWhy): the link note and a short tafsir or sharh, opened in place.
+ * - «اقرأ التفسير» (verses) / «اقرأ الشرح» (hadith): the card's main action, the study sheet (quotes/study/[id]).
+ * - Tapping the text opens the quote page, except on that page.
  * Share sends the text, its attribution and the public link only, never anything about the user.
  */
 
-import React from 'react';
-import { Share, View } from 'react-native';
+import React, { useCallback } from 'react';
+import { Pressable, Share, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { BookMarked, BookOpen, Bookmark, BookmarkCheck, MessageSquareQuote, Share2, type LucideIcon } from 'lucide-react-native';
 import { radius, space, useStyles, type Theme } from '@/theme';
-import { Button, IconButton, TextLink } from '@/ui/Button';
+import { Button, IconButton } from '@/ui/Button';
 import { Icon } from '@/ui/Icon';
 import { Text } from '@/ui/Text';
 import { Notice } from '@/ui/feedback';
 import { GradeBadge } from './GradeBadge';
+import { QuoteWhy } from './QuoteWhy';
 import { HadithGrade, QuoteType } from '@/lib/types/enums';
 import type { QuoteDto } from '@/lib/types/api';
 import { atharSpeakerLine, gradeCitationLine, quoteShareText, type QuoteShareLabels } from '@/lib/share/quote-share';
@@ -31,8 +33,10 @@ interface QuoteCardProps {
   onToggleFavorite?: () => void;
   /** Show the share action (default true). */
   shareable?: boolean;
-  /** On the quote page itself: the site's weak and «ليس من الصحيحين» notices, and no «read the full text» link. */
+  /** On the quote page itself: the site's weak and «ليس من الصحيحين» notices, and the text does not link to the page. */
   detail?: boolean;
+  /** The topic link's note (`TopicText.link.note`): shown under «لماذا…؟» when it is a public attribution. */
+  linkNote?: string | null;
 }
 
 const TYPE: Record<QuoteType, { key: string; icon: LucideIcon }> = {
@@ -79,11 +83,10 @@ const makeStyles = (t: Theme) => ({
   capsuleRule: { width: 1, height: 12, backgroundColor: t.colors.border },
   actions: { flexDirection: 'row' as const, alignItems: 'center' as const },
   body: { gap: space.sm },
-  /** The ghost button's own padding, pulled back so its icon lines up with the text above. */
-  study: { marginStart: -space.sm, marginVertical: -space.sm },
+  bodyPressed: { opacity: 0.7 },
 });
 
-export function QuoteCard({ quote, isFavorite = false, onToggleFavorite, shareable = true, detail }: QuoteCardProps) {
+export function QuoteCard({ quote, isFavorite = false, onToggleFavorite, shareable = true, detail, linkNote }: QuoteCardProps) {
   const { t, i18n } = useTranslation();
   const styles = useStyles(makeStyles);
   const arabicUI = i18n.language !== 'en';
@@ -109,6 +112,18 @@ export function QuoteCard({ quote, isFavorite = false, onToggleFavorite, shareab
   const translation = arabicUI ? null : quote.translation?.text;
   const isWeak = grade === HadithGrade.DAIF || grade === HadithGrade.MAWDU;
   const isOutsideSahihayn = isHadith && Boolean(quote.hadith?.outsideSahihayn);
+  const handleOpenQuote = useCallback(() => router.push(`/quotes/${quote.id}`), [quote.id]);
+  const handleOpenStudy = useCallback(() => router.push(`/quotes/study/${quote.id}`), [quote.id]);
+
+  const body = (
+    <>
+      {/* Alignment follows the text itself (Arabic starts on the right in either app direction). */}
+      <Text variant={isQuran ? 'quran' : 'reading'} textBreakStrategy="highQuality">
+        {quote.textAr}
+      </Text>
+      {translation ? <Text variant="body">{translation}</Text> : null}
+    </>
+  );
 
   async function handleShare() {
     const message = quoteShareText(quote, {
@@ -233,29 +248,29 @@ export function QuoteCard({ quote, isFavorite = false, onToggleFavorite, shareab
         </Text>
       ) : null}
 
-      <View style={styles.body}>
-        {/* Alignment follows the text itself (Arabic starts on the right in either app direction). */}
-        <Text variant={isQuran ? 'quran' : 'reading'} textBreakStrategy="highQuality">
-          {quote.textAr}
-        </Text>
-        {translation ? (
-          <Text variant="body">
-            {translation}
-          </Text>
-        ) : null}
-      </View>
+      {detail ? (
+        <View style={styles.body}>{body}</View>
+      ) : (
+        <Pressable
+          onPress={handleOpenQuote}
+          accessibilityRole="link"
+          accessibilityHint={t('quoteCard.open')}
+          style={({ pressed }) => [styles.body, pressed && styles.bodyPressed]}
+        >
+          {body}
+        </Pressable>
+      )}
+
+      <QuoteWhy quote={quote} linkNote={linkNote} />
 
       {isQuran || isHadith ? (
         <Button
-          variant="ghost"
           icon={BookMarked}
           label={isQuran ? t('study.openTafsir') : t('study.openSharh')}
-          onPress={() => router.push(`/quotes/study/${quote.id}`)}
-          style={styles.study}
+          onPress={handleOpenStudy}
+          block
         />
       ) : null}
-
-      {!detail ? <TextLink label={t('quoteCard.open')} onPress={() => router.push(`/quotes/${quote.id}`)} /> : null}
     </View>
   );
 }
