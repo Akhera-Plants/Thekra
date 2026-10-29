@@ -28,6 +28,7 @@ import type { QuoteDto } from '@/lib/types/api';
 import type { PracticeHabit, SinProgramCommon, SinProgramEntry } from '@/lib/types/practice';
 import { cn } from '@/lib/utils';
 import { z } from '@/lib/zod';
+import { useSinVault } from '../hooks/useSinVault';
 import { EvidenceQuotes } from './EvidenceQuotes';
 
 const MAX_NOTE = 500;
@@ -177,16 +178,21 @@ export function ProgramPanel({ program, entry, common, name, habits, quotes, tod
 }
 
 /**
- * «أنهِ هذا البرنامج»: ends this program only. Its check-ins and notes are removed from this device at once, and the
- * encrypted copy follows on the next save (practice-core `endProgram` keeps a marker so the vault does not bring it
- * back). Starting it again later is a fresh program.
+ * «أنهِ هذا البرنامج»: ends this program only; its check-ins and notes are removed from this device at once. Without
+ * an encrypted copy in the account nothing of it is kept. With one (or while that is not known yet), practice-core
+ * `endProgram` keeps an end marker, which the vault needs so its older copy does not bring the program back; the
+ * vault takes the end on its next save. Starting it again later is a fresh program.
  */
 function EndProgram({ program }: { program: SinProgram }) {
   const t = useTranslations('leaveSin.program.end');
+  const { userId, vault } = useSinVault();
+  const keepMarker = userId !== null && vault.data !== null;
   function handleConfirm() {
     updateStore((store) => ({
       ...store,
-      programs: store.programs.map((p) => (p.sinSlug === program.sinSlug ? endProgram(p) : p)),
+      programs: keepMarker
+        ? store.programs.map((p) => (p.sinSlug === program.sinSlug ? endProgram(p) : p))
+        : store.programs.filter((p) => p.sinSlug !== program.sinSlug),
     }));
   }
   return (

@@ -140,7 +140,8 @@ export function LeaveSinView() {
         </button>
       ) : null}
 
-      <WipeAll hasPrograms={active.length > 0} />
+      {/* Any program data counts, end markers included, so «احذف كل بيانات البرنامج» can always clear them. */}
+      <WipeAll hasPrograms={snapshot.store.programs.length > 0} />
     </div>
   );
 }
