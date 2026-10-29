@@ -1,45 +1,59 @@
 /**
- * Emotion entry — enter from a feeling when the user cannot name a sin.
- * mobile-plan §3 (Emotion entry screen).
+ * Quotes for a feeling, after the website's feelings page: the feeling's name as the page title, then the quote
+ * cards. The way in when the user cannot name a sin (mobile-plan §3, emotion entry).
  */
 
-import React from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-  ActivityIndicator,
-} from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
+import React, { memo, useCallback, useMemo } from 'react';
+import { FlatList, RefreshControl, View, type ListRenderItem } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useQuotesInfinite } from '@/lib/api/quotes';
 import { useTag } from '@/lib/api/tags';
 import { useToggleFavorite } from '@/lib/api/favorites';
+import type { QuoteDto } from '@/lib/types/api';
 import { QuoteCard } from '@/components/QuoteCard';
-import { EmptyState } from '@/components/EmptyState';
-import { ErrorState } from '@/components/ErrorState';
-import { Colors, FontSize, Spacing } from '@/lib/tokens';
+import { GUTTER, space, useStyles, useTheme } from '@/theme';
+import { EmptyState, ErrorState, PageHeader, QuoteCardSkeleton, Screen, Skeleton } from '@/ui';
 
-function QuoteItem({ quoteId, quote }: { quoteId: string; quote: any }) {
-  const { isFavorite, toggle } = useToggleFavorite(quoteId);
+const LOADING_CARDS = ['q1', 'q2', 'q3'];
+const keyExtractor = (item: QuoteDto) => item.id;
+
+const makeStyles = () => ({
+  frame: { paddingHorizontal: 0, paddingTop: 0 },
+  list: { paddingHorizontal: GUTTER, paddingTop: space.lg, paddingBottom: space['4xl'] },
+  header: { paddingBottom: space['2xl'] },
+  gap: { height: space.lg },
+  stack: { gap: space.lg },
+  footer: { paddingTop: space.lg },
+});
+
+/** One row: a component, so the favorite hook runs under React's rules (never inside `renderItem` itself). */
+const QuoteItem = memo(function QuoteItem({ quote }: { quote: QuoteDto }) {
+  const { isFavorite, toggle } = useToggleFavorite(quote.id);
   return <QuoteCard quote={quote} isFavorite={isFavorite} onToggleFavorite={toggle} />;
+});
+
+function CardGap() {
+  const styles = useStyles(makeStyles);
+  return <View style={styles.gap} />;
 }
+
+const renderItem: ListRenderItem<QuoteDto> = ({ item }) => <QuoteItem quote={item} />;
 
 export default function FeelingsScreen() {
   const { tagSlug } = useLocalSearchParams<{ tagSlug: string }>();
-  const { t, i18n } = useTranslation();
-  const isAr = i18n.language === 'ar';
+  const { t } = useTranslation();
+  const { english, colors } = useTheme();
+  const styles = useStyles(makeStyles);
 
-  const { data: tag } = useTag(tagSlug ?? '');
+  const { data: tag, isLoading: tagLoading } = useTag(tagSlug ?? '');
 
   const {
     data,
     isLoading,
     isError,
-    error,
+    isRefetching,
+    isFetchNextPageError,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
@@ -49,83 +63,69 @@ export default function FeelingsScreen() {
     limit: 20,
   });
 
-  const allQuotes = data?.pages.flatMap((p) => p.data) ?? [];
+  const allQuotes = useMemo(() => data?.pages.flatMap((p) => p.data) ?? [], [data]);
 
-  if (isLoading) {
-    return (
-      <SafeAreaView style={styles.safe}>
-        <ActivityIndicator color={Colors.primary} style={styles.loader} />
-      </SafeAreaView>
-    );
-  }
+  const handleRefresh = useCallback(() => void refetch(), [refetch]);
+  const handleEndReached = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage && !isFetchNextPageError) void fetchNextPage();
+  }, [hasNextPage, isFetchingNextPage, isFetchNextPageError, fetchNextPage]);
 
-  if (isError) {
-    return (
-      <ErrorState
-        message={error instanceof Error ? error.message : t('errors.unknown')}
-        onRetry={() => void refetch()}
-      />
-    );
-  }
+  const tagName = english ? tag?.name || tag?.nameAr : tag?.nameAr || tag?.name;
 
-  const tagLabel = isAr ? (tag?.nameAr ?? tag?.name ?? tagSlug) : (tag?.name ?? tagSlug);
+  const header = (
+    <View style={styles.header}>
+      {tagLoading ? (
+        <Skeleton width="60%" height={30} />
+      ) : (
+        <PageHeader title={tagName || t('feelings.title')} />
+      )}
+    </View>
+  );
+
+  const empty = isLoading ? (
+    <View style={styles.stack}>
+      {LOADING_CARDS.map((key) => (
+        <QuoteCardSkeleton key={key} />
+      ))}
+    </View>
+  ) : isError ? (
+    <ErrorState onRetry={handleRefresh} />
+  ) : (
+    <EmptyState message={t('feelings.empty')} />
+  );
+
+  const footer = isFetchingNextPage ? (
+    <View style={styles.footer}>
+      <QuoteCardSkeleton />
+    </View>
+  ) : isFetchNextPageError ? (
+    <View style={styles.footer}>
+      <ErrorState onRetry={() => void fetchNextPage()} />
+    </View>
+  ) : null;
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <Screen edges={['bottom']} scroll={false} contentStyle={styles.frame}>
       <FlatList
-        data={allQuotes}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <QuoteItem quoteId={item.id} quote={item} />
-        )}
-        ListHeaderComponent={() => (
-          <View style={styles.header}>
-            <TouchableOpacity
-              onPress={() => router.back()}
-              style={styles.backBtn}
-              accessibilityRole="button"
-              accessibilityLabel={t('common.back')}
-            >
-              <Text style={styles.backText}>←</Text>
-            </TouchableOpacity>
-            <Text style={styles.title}>{tagLabel}</Text>
-          </View>
-        )}
-        ListEmptyComponent={<EmptyState message={t('feelings.empty')} />}
-        onEndReached={() => {
-          if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
-        }}
+        data={isLoading ? [] : allQuotes}
+        keyExtractor={keyExtractor}
+        renderItem={renderItem}
+        ItemSeparatorComponent={CardGap}
+        ListHeaderComponent={header}
+        ListEmptyComponent={empty}
+        ListFooterComponent={footer}
+        onEndReached={handleEndReached}
         onEndReachedThreshold={0.3}
-        ListFooterComponent={
-          isFetchingNextPage
-            ? () => <ActivityIndicator color={Colors.primary} style={styles.loader} />
-            : null
-        }
         contentContainerStyle={styles.list}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching && !isFetchingNextPage && !isLoading}
+            onRefresh={handleRefresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
+        }
       />
-    </SafeAreaView>
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.background },
-  loader: { marginTop: Spacing['16'] },
-  list: { paddingBottom: Spacing['12'] },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing['4'],
-    paddingTop: Spacing['4'],
-    paddingBottom: Spacing['2'],
-    gap: Spacing['3'],
-  },
-  backBtn: { padding: Spacing['2'] },
-  backText: { fontSize: FontSize.xl, color: Colors.primary },
-  title: {
-    flex: 1,
-    fontSize: FontSize['2xl'],
-    fontWeight: '700',
-    color: Colors.primary,
-    textAlign: 'right',
-  },
-});

@@ -28,7 +28,7 @@
     "goodDeedsShort": "Doing good",
     "breadcrumbs": "Breadcrumb",
     "practice": "My habits",
-    "practiceLong": "Help me keep a good deed",
+    "practiceLong": "My good deeds",
     "kinship": "Ties of kinship",
     "calendar": "Calendar"
   },
@@ -920,8 +920,8 @@
     "home": "Home"
   },
   "practice": {
-    "title": "Help me keep a good deed",
-    "lead": "Start very small, keep at it, and increase only once it is steady. Everything here is saved on your device, and synced with your account when you sign in.",
+    "title": "My good deeds",
+    "lead": "Start very small, keep at it, and increase only once it is steady. Everything here is saved on your device first.",
     "storage": {
       "local": "Your data is saved on this device only and is never sent to a server.",
       "memoryOnly": "This browser does not allow saving (perhaps a private window), so your data will be lost when you close the page."
@@ -1002,7 +1002,21 @@
       "add": "Add a habit",
       "downloadReminders": "Download my reminders as a calendar file",
       "remindersHint": "A file for the next 30 days, built on your device. Open it in your calendar app to be reminded at your times.",
-      "icsName": "Thekra reminders"
+      "icsName": "Thekra reminders",
+      "logged": "Logged.",
+      "undo": "Undo",
+      "editLog": {
+        "open": "Fix the log",
+        "hint": "Log a day you forgot, or fix a number entered by mistake. Zero clears that day.",
+        "day": "Day",
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "amount": "Amount done ({unit})",
+        "error": "Enter a whole number from 0 to 1000.",
+        "save": "Save",
+        "cancel": "Cancel"
+      },
+      "unlogged": "Unmarked."
     },
     "progress": {
       "title": "Where you are",
@@ -1022,7 +1036,8 @@
       "label": "More pages",
       "kinship": "Ties of kinship",
       "leaveSin": "A program to leave a sin",
-      "calendar": "Calendar"
+      "calendar": "Calendar",
+      "hub": "My habits"
     },
     "weekdays": {
       "d0": "Sunday",
@@ -1115,6 +1130,90 @@
       "testSent": "We sent a test notification; it should arrive in a moment.",
       "testNotFound": "We can no longer reach this browser. Turn notifications off, then on again.",
       "failed": "That did not work just now. Please try again shortly."
+    },
+    "hub": {
+      "title": "My habits",
+      "lead": "Your whole day in one place: your habits, your ties of kinship and the year’s occasions. Any amount you do counts.",
+      "dateLine": "{weekday} {hijri}",
+      "calendar": "Calendar",
+      "add": {
+        "button": "Add",
+        "label": "Add a good habit, a relative or a program",
+        "habit": "A good habit",
+        "habitHint": "Start very small, at two times a day",
+        "relative": "A relative",
+        "relativeHint": "A name or nickname, and a rhythm",
+        "program": "A program to leave a sin",
+        "programHint": "Private, on this device only"
+      },
+      "week": {
+        "label": "Days of the week",
+        "range": "{from} to {to}",
+        "previous": "Previous week",
+        "next": "Next week",
+        "today": "Today"
+      },
+      "day": {
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "tomorrow": "Tomorrow",
+        "dayTitle": "{weekday} {date}",
+        "listLabel": "What this day holds",
+        "empty": "Nothing is asked of this day.",
+        "future": "A day to come: you can see it here and log it when it arrives.",
+        "tooOld": "From here you can log today and the six days before it. This day stays as it was saved.",
+        "required": "Asked: {amount}",
+        "relativeDue": "Due today",
+        "relativeOverdue": "{count, plural, one {Due since yesterday} other {Due for {n} days}}",
+        "relativeDone": "You were in touch",
+        "occasion": "A sunnah of this day",
+        "programToday": "Log how your day went",
+        "programDone": "You logged your day",
+        "programOpen": "Open your program",
+        "complete": "Your day is done. May Allah accept it from you and bless the rest of it.",
+        "completePast": "That day was done. May Allah accept it from you.",
+        "logged": "Logged.",
+        "unlogged": "Unmarked."
+      },
+      "tracks": {
+        "title": "Your paths",
+        "habits": "My good deeds",
+        "habitsCount": "{count, plural, =0 {Start with one small habit} one {One habit} other {{n} habits}}",
+        "kinship": "Ties of kinship",
+        "kinshipEmpty": "Add your relatives",
+        "kinshipDue": "{count, plural, =0 {Nobody is due now} one {One relative due now} other {{n} relatives due now}}",
+        "program": "Leaving a sin",
+        "programActive": "Your private program",
+        "programStart": "Start",
+        "band": {
+          "excellent": "Excellent",
+          "good": "Good",
+          "gentle": "Gently"
+        }
+      },
+      "start": {
+        "title": "Where to begin?",
+        "lead": "Choose one door to start with. Everything is saved on your device first.",
+        "habits": "A good habit",
+        "habitsLine": "Start very small, keep at it, and increase only once it is steady.",
+        "kinship": "Ties of kinship",
+        "kinshipLine": "Your relatives and a rhythm for keeping in touch, with no phone numbers.",
+        "program": "Leaving a sin",
+        "programLine": "A gradual program on this device only; its name appears nowhere."
+      },
+      "month": {
+        "title": "How far you have come this month",
+        "presentDays": "{count, plural, =0 {Start today with any amount; every amount counts} one {Present on one day of the last {total}} other {Present on {n} days of the last {total}}}"
+      }
+    },
+    "monthGrid": {
+      "previous": "Previous month",
+      "next": "Next month",
+      "today": "Today",
+      "separator": ", ",
+      "presenceFull": "All of it done",
+      "presencePartial": "Some of it done",
+      "occasion": "A sunnah occasion"
     }
   },
   "calendarPage": {
@@ -1151,14 +1250,21 @@
       "m9": "Ramadan",
       "m10": "Shawwal",
       "m11": "Dhu al-Qada",
-      "m12": "Dhu al-Hijja"
+      "m12": "Dhu al-Hijja",
+      "monthOne": "{month} {year} AH",
+      "monthTwo": "{from} – {to} {year} AH",
+      "monthTwoYears": "{from} {fromYear} – {to} {toYear} AH"
+    },
+    "month": {
+      "title": "The month",
+      "none": "No sunnah occasion on this day."
     }
   },
   "leaveSin": {
     "title": "A program to leave a sin",
     "genericTitle": "A reminder from Thekra",
     "lead": "A staged program on your device: know the harm, build the alternative, change your surroundings, set limits, stay firm.",
-    "privacy": "This program stays on your device alone: it is never sent to a server or used in any statistics, and the sin is never named in the page title or its link. If you choose to save it to your account, it is sent encrypted with a code only you know.",
+    "privacy": "This program lives on your device: it is never sent to a server in readable form, never used in any statistics, and the sin is never named in the page title or its link. If you choose to save it to your account, it is sent encrypted with a code only you know.",
     "startFromSin": "Start the leaving program",
     "another": "Start another program",
     "choose": {
@@ -1185,22 +1291,30 @@
       "stagesLabel": "Program stages",
       "actionsTitle": "Practical steps",
       "alternativesTitle": "Good habits to put in its place",
-      "alternativesLead": "Start one of them in “Help me keep a good deed”, with a small amount.",
-      "alternativesLink": "Go to Help me keep a good deed",
+      "alternativesLead": "Start one of them in “My good deeds”, with a small amount.",
+      "alternativesLink": "Add a good deed instead",
       "summaryTitle": "The last {days} days",
       "summaryItem": "{label}: {n}",
       "summaryNote": "Counts only, with no streaks and no comparison. What matters is coming back every time.",
-      "notesTitle": "My notebook (this device only)",
+      "notesTitle": "My private notebook",
       "textsTitle": "What the texts say",
       "values": {
         "held": "I held firm",
         "weak": "I was weak",
         "fell_repented": "I slipped, then repented"
+      },
+      "end": {
+        "lead": "Want to close this program alone? Its check-ins and notes are removed, and your other programs stay as they are.",
+        "button": "End this program",
+        "confirmTitle": "End this program?",
+        "confirmBody": "Its check-ins and notes are removed from this device now, and from the encrypted copy in your account on its next save if you use one. You can start it again whenever you wish.",
+        "cancel": "Cancel",
+        "confirm": "End it now"
       }
     },
     "checkIn": {
       "title": "How was your day?",
-      "note": "Private note (optional, stays on your device)",
+      "note": "Private note (optional, no one but you can read it)",
       "save": "Save",
       "saved": "Today’s check-in is saved",
       "errors": {
@@ -1233,7 +1347,7 @@
       "warning": "If you forget the privacy code, the saved program can never be recovered, and nobody can open or read it, not even us.",
       "code": "Privacy code",
       "codeConfirm": "Type the code again",
-      "codeHint": "At least 6 characters; do not reuse your account password.",
+      "codeHint": "At least 8 characters; a phrase of words you will remember is best. Do not use your account password or a run of digits.",
       "acknowledge": "I understand the code cannot be recovered",
       "save": "Encrypt and save",
       "cancel": "Cancel",
@@ -1246,7 +1360,8 @@
       "open": "Open the program",
       "retry": "Try again",
       "errors": {
-        "short": "The code needs at least 6 characters.",
+        "short": "The code must be at least 8 characters.",
+        "weak": "This code is easy to guess. Choose a phrase of two or more words, or a code without repeats or runs.",
         "mismatch": "The two codes do not match.",
         "ack": "Confirm that you understand the warning.",
         "wrongCode": "The privacy code is not correct.",

@@ -5,7 +5,10 @@ import {
   bytesToBase64,
   checkIn,
   deriveKey,
+  MAX_VAULT_ITERATIONS,
   MIN_VAULT_ITERATIONS,
+  VAULT_ITERATIONS,
+  privacyCodeProblem,
   newSalt,
   openPrograms,
   randomBytes,
@@ -23,9 +26,10 @@ const ITER = 1000;
 const SALT = bytesToBase64(new Uint8Array(16).map((_, i) => i + 1));
 
 function program(slug = 'ghiba', note = 'اغتبت اليوم ثم استغفرت'): SinProgram {
-  let p = startProgram({ sinSlug: slug, category: 'haqq_ibad', hardToLeaveAtOnce: false, startedOn: '2026-10-01' });
-  p = checkIn(p, '2026-10-02', 'held');
-  return checkIn(p, '2026-10-03', 'fell_repented', note);
+  const at = '2026-10-03T20:00:00.000Z';
+  let p = startProgram({ sinSlug: slug, category: 'haqq_ibad', hardToLeaveAtOnce: false, startedOn: '2026-10-01' }, at);
+  p = checkIn(p, '2026-10-02', 'held', undefined, at);
+  return checkIn(p, '2026-10-03', 'fell_repented', note, at);
 }
 
 /** Node's WebCrypto, typed loosely: used only to cross-check interoperability. */
@@ -186,12 +190,35 @@ describe('vaultPayload / unlockVault', () => {
 
   it('unlocks from the code with the vault salt and iterations', () => {
     const salt = newSalt();
-    const sealed = sealPrograms([program()], deriveKey('رمزي', salt, ITER));
-    const vault = { ...sealed, salt, kdf: 'pbkdf2-sha256' as const, iterations: ITER };
+    const sealed = sealPrograms([program()], deriveKey('رمزي', salt, MIN_VAULT_ITERATIONS));
+    const vault = { ...sealed, salt, kdf: 'pbkdf2-sha256' as const, iterations: MIN_VAULT_ITERATIONS };
     const { programs, key } = unlockVault(vault, 'رمزي');
     expect(programs).toEqual([program()]);
     expect(openPrograms(sealPrograms(programs, key), key)).toEqual(programs);
     expect(() => unlockVault(vault, 'خطأ')).toThrow(VaultLockedError);
     expect(() => unlockVault({ ...vault, kdf: 'scrypt' as never }, 'رمزي')).toThrow(VaultError);
+  });
+
+  it('refuses iteration counts a hostile server could send: too few (weak key) or too many (frozen device)', () => {
+    const salt = newSalt();
+    const sealed = sealPrograms([program()], deriveKey('رمزي', salt, ITER));
+    for (const iterations of [1, ITER, MIN_VAULT_ITERATIONS - 1, MAX_VAULT_ITERATIONS + 1, 1.5]) {
+      expect(() => unlockVault({ ...sealed, salt, kdf: 'pbkdf2-sha256', iterations }, 'رمزي')).toThrow(VaultError);
+    }
+    expect(() => vaultPayload(sealed, { salt, iterations: MAX_VAULT_ITERATIONS + 1, version: 0 })).toThrow(VaultError);
+    expect(vaultPayload(sealed, { salt, iterations: VAULT_ITERATIONS, version: 0 }).iterations).toBe(600_000);
+  });
+});
+
+describe('privacyCodeProblem', () => {
+  it('rejects short, repeated, sequential, two-digit and common codes', () => {
+    for (const code of ['', '1234567', 'رمز']) expect(privacyCodeProblem(code)).toBe('short');
+    for (const code of ['11111111', '12345678', '87654321', 'abcdefgh', '12121212', '10101010', 'Password', 'أأأأأأأأ']) {
+      expect(privacyCodeProblem(code)).toBe('weak');
+    }
+  });
+
+  it('accepts real codes and phrases, Arabic included', () => {
+    for (const code of ['73914862', 'صبر جميل', 'blue-river-7', 'نور على الطريق']) expect(privacyCodeProblem(code)).toBeNull();
   });
 });

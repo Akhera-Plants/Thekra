@@ -15,7 +15,7 @@ import { readPracticeChanges } from '../practice/practice-sync.js';
 import { open, seal, sealKey } from './payload-seal.js';
 import { PUSH_CONFIG } from './push.constants.js';
 import type { PushConfig } from './push-config.js';
-import { planPushes, type PlannedPush, type PushLocale } from './push-planner.js';
+import { planPushes, sitePath, type PlannedPush, type PushLocale } from './push-planner.js';
 import { DeliveryVerifier, PushScheduler, PushSender, type BrowserSubscription } from './push-transport.js';
 import { isValidTimeZone } from './zoned-time.js';
 
@@ -57,6 +57,10 @@ function isSealedReminder(value: unknown): value is SealedReminder {
     typeof v.n.tag === 'string'
   );
 }
+
+/** Tries to cancel scheduled messages, and the wait before the next try (×1, ×2). */
+const CANCEL_ATTEMPTS = 3;
+const CANCEL_RETRY_MS = 250;
 
 function disabled(): ServiceUnavailableException {
   return new ServiceUnavailableException({ code: 'PUSH_DISABLED', message: 'Web push is not configured on this server' });
@@ -122,8 +126,8 @@ export class PushService {
     }
     const n =
       locale === 'ar'
-        ? { title: 'ذكرى', body: 'التنبيهات تعمل على هذا المتصفح.', url: '/ar/practice', tag: 'test' }
-        : { title: 'Thekra', body: 'Reminders work in this browser.', url: '/en/practice', tag: 'test' };
+        ? { title: 'ذكرى', body: 'التنبيهات تعمل على هذا المتصفح.', url: sitePath('ar', '/practice'), tag: 'test' }
+        : { title: 'Thekra', body: 'Reminders work in this browser.', url: sitePath('en', '/practice'), tag: 'test' };
     const outcome = await this.sender.send(this.browserOf(sub), JSON.stringify(n), PUSH_TTL_SECONDS);
     if (outcome === 'gone') {
       await this.remove(sub);
@@ -266,12 +270,23 @@ export class PushService {
     await this.prisma.pushSubscription.deleteMany({ where: { id: sub.id } });
   }
 
+  /**
+   * Cancels scheduled messages, trying {@link CANCEL_ATTEMPTS} times: delivery never reads the database, so a message
+   * left scheduled for a removed browser would still be sent. Never throws (the caller's change must not fail).
+   */
   private async cancelQuietly(messageIds: string[]): Promise<void> {
     if (messageIds.length === 0) return;
-    try {
-      await this.scheduler.cancel(messageIds);
-    } catch (error: unknown) {
-      this.logger.warn(`push cancel failed for ${messageIds.length} messages: ${error instanceof Error ? error.name : 'unknown error'}`);
+    for (let attempt = 1; attempt <= CANCEL_ATTEMPTS; attempt += 1) {
+      try {
+        await this.scheduler.cancel(messageIds);
+        return;
+      } catch (error: unknown) {
+        if (attempt === CANCEL_ATTEMPTS) {
+          this.logger.warn(`push cancel failed for ${messageIds.length} messages: ${error instanceof Error ? error.name : 'unknown error'}`);
+          return;
+        }
+        await new Promise((resolve) => setTimeout(resolve, CANCEL_RETRY_MS * attempt));
+      }
     }
   }
 }

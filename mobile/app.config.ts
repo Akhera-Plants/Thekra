@@ -18,6 +18,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     orientation: 'portrait',
     icon: './assets/icon.png',
     userInterfaceStyle: 'automatic',
+    // Native accents (system dialog buttons, text selection) in the website's primary.
+    primaryColor: '#326C59',
     runtimeVersion: {
       policy: 'appVersion',
     },
@@ -35,8 +37,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
     android: {
       package: 'com.thekra.app',
+      // The website's mark (frontend/src/app/icon.svg), rendered to assets/*icon*.png.
       adaptiveIcon: {
-        backgroundColor: '#E6F4FE',
+        backgroundColor: '#326C59',
         foregroundImage: './assets/android-icon-foreground.png',
         backgroundImage: './assets/android-icon-background.png',
         monochromeImage: './assets/android-icon-monochrome.png',
@@ -52,7 +55,13 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       [
         'expo-splash-screen',
         {
-          backgroundColor: '#1B6CA8',
+          // Android's generated styles always point at `splashscreen_logo`; without an image the release build fails
+          // («resource drawable/splashscreen_logo not found»).
+          image: './assets/splash-icon.png',
+          imageWidth: 96,
+          // The website's page colour in each theme, so the first frame matches the app behind it.
+          backgroundColor: '#fffcf9',
+          dark: { backgroundColor: '#101010' },
           resizeMode: 'contain',
         },
       ],

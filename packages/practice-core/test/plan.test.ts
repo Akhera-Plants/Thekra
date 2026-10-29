@@ -5,6 +5,7 @@ import {
   adherence,
   adherenceBand,
   canIncrease,
+  correctLog,
   createPlan,
   dailyLoad,
   decreaseTo,
@@ -12,6 +13,8 @@ import {
   increase,
   loadWarning,
   logDone,
+  mergeLogEntry,
+  mergeLogs,
   nextStep,
   normalize,
   relapseSuggestion,
@@ -199,6 +202,35 @@ describe('logging and adherence', () => {
     expect(p.log['2026-09-02']).toBe(7);
     expect(p0.log).toEqual({});
     expect(() => logDone(p0, '2026-09-02', 0)).toThrow(RangeError);
+  });
+
+  it('correctLog sets the day (0 clears it) and stamps the correction; validatePlan accepts the cleared day', () => {
+    const p = correctLog(logDone(makePlan(), '2026-09-02', 100), '2026-09-02', 10, '2026-09-02T10:00:00.000Z');
+    expect(p.log['2026-09-02']).toBe(10);
+    expect(p.logCorrectedAt).toEqual({ '2026-09-02': '2026-09-02T10:00:00.000Z' });
+    const cleared = correctLog(p, '2026-09-02', 0, '2026-09-02T11:00:00.000Z');
+    expect(cleared.log['2026-09-02']).toBe(0);
+    expect(validatePlan(cleared)).toBeNull();
+    expect(adherence(cleared, '2026-09-02', '2026-09-02')).toBe(0);
+    expect(validatePlan({ ...makePlan(), log: { '2026-09-02': 0 } })).not.toBeNull();
+    expect(() => correctLog(p, '2026-09-02', -1)).toThrow(RangeError);
+    expect(() => correctLog(p, 'x', 1)).toThrow(RangeError);
+  });
+
+  it('mergeLogEntry: the later correction wins, else the larger amount; the same answer in either order', () => {
+    const plain = { amount: 9 };
+    const early = { amount: 3, correctedAt: '2026-09-02T10:00:00.000Z' };
+    const late = { amount: 0, correctedAt: '2026-09-02T11:00:00.000Z' };
+    expect(mergeLogEntry(plain, early)).toBe(early);
+    expect(mergeLogEntry(early, plain)).toBe(early);
+    expect(mergeLogEntry(early, late)).toBe(late);
+    expect(mergeLogEntry(late, early)).toBe(late);
+    expect(mergeLogEntry({ amount: 2 }, { amount: 5 })).toEqual({ amount: 5 });
+    expect(mergeLogEntry(undefined, plain)).toBe(plain);
+    expect(mergeLogs({ log: { a: 1, b: 4 } }, { log: { b: 2, c: 0 }, logCorrectedAt: { b: '2026-09-02T10:00:00.000Z', c: '2026-09-02T10:00:00.000Z' } })).toEqual({
+      log: { a: 1, b: 2, c: 0 },
+      logCorrectedAt: { b: '2026-09-02T10:00:00.000Z', c: '2026-09-02T10:00:00.000Z' },
+    });
   });
 
   it('prorates target days', () => {

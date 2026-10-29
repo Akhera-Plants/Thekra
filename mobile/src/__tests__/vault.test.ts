@@ -5,6 +5,7 @@
  */
 
 import {
+  MIN_VAULT_ITERATIONS,
   VaultError,
   VaultLockedError,
   checkIn,
@@ -48,9 +49,10 @@ import { VAULT_KEY_STORE, wipeSinProgramEverywhere } from '../lib/practice/vault
 const LOW = 1000; // tests only; the app and the server use ≥ 210,000
 
 function program() {
-  let p = startProgram({ sinSlug: 'nazar-shashat', category: 'haqq_allah', hardToLeaveAtOnce: true, startedOn: '2026-10-20' });
-  p = checkIn(p, '2026-10-26', 'held');
-  return checkIn(p, '2026-10-27', 'weak', 'ملاحظة خاصة');
+  const at = '2026-10-27T20:00:00.000Z';
+  let p = startProgram({ sinSlug: 'nazar-shashat', category: 'haqq_allah', hardToLeaveAtOnce: true, startedOn: '2026-10-20' }, at);
+  p = checkIn(p, '2026-10-26', 'held', undefined, at);
+  return checkIn(p, '2026-10-27', 'weak', 'ملاحظة خاصة', at);
 }
 
 describe('vault round trip', () => {
@@ -62,8 +64,10 @@ describe('vault round trip', () => {
     expect(raw).not.toContain('nazar');
     expect(raw).not.toContain('ملاحظة');
     expect(openPrograms(sealed, deriveKey('رمزي-السري', salt, LOW))).toEqual([program()]);
-    // Another device: unlockVault derives the key from the vault's own salt and iterations.
-    const opened = unlockVault({ ...sealed, salt, kdf: 'pbkdf2-sha256', iterations: LOW }, 'رمزي-السري');
+    // Another device: unlockVault derives the key from the vault's own salt and iterations (never below the minimum).
+    expect(() => unlockVault({ ...sealed, salt, kdf: 'pbkdf2-sha256', iterations: LOW }, 'رمزي-السري')).toThrow(VaultError);
+    const real = sealPrograms([program()], deriveKey('رمزي-السري', salt, MIN_VAULT_ITERATIONS));
+    const opened = unlockVault({ ...real, salt, kdf: 'pbkdf2-sha256', iterations: MIN_VAULT_ITERATIONS }, 'رمزي-السري');
     expect(opened.programs).toEqual([program()]);
   });
 
@@ -73,14 +77,14 @@ describe('vault round trip', () => {
     expect(() => openPrograms(sealed, deriveKey('wrong-code', salt, LOW))).toThrow(VaultLockedError);
   });
 
-  it('merges programs from two devices: union of check-ins, this device wins on the same date', () => {
-    const local = [checkIn(program(), '2026-10-28', 'held')];
-    const remote = [checkIn(program(), '2026-10-27', 'fell_repented')];
+  it('merges programs from two devices: union of check-ins, the later check-in wins on the same date', () => {
+    const local = [checkIn(program(), '2026-10-28', 'held', undefined, '2026-10-28T20:00:00.000Z')];
+    const remote = [checkIn(program(), '2026-10-27', 'fell_repented', undefined, '2026-10-28T21:00:00.000Z')];
     const merged = mergePrograms(local, remote);
     expect(merged).toHaveLength(1);
     expect(merged[0]!.checkIns.map((c) => [c.date, c.value])).toEqual([
       ['2026-10-26', 'held'],
-      ['2026-10-27', 'weak'],
+      ['2026-10-27', 'fell_repented'],
       ['2026-10-28', 'held'],
     ]);
   });

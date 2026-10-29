@@ -37,8 +37,10 @@ export function buildManifest(target, version) {
       gecko: {
         id: GECKO_ID,
         strict_min_version: '121.0',
-        // Required by AMO for new add-ons since 2025: the extension collects and transmits no user data.
-        data_collection_permissions: { required: ['none'] },
+        // Required by AMO for new add-ons since 2025. Nothing is collected without an account; the optional sign-in
+        // sends the email and password, then the tokens (Firefox 140+ asks for consent at sign-in: SIGN_IN_DATA in
+        // src/popup/popup.ts; keep the two lists the same).
+        data_collection_permissions: { required: ['none'], optional: ['authenticationInfo', 'personallyIdentifyingInfo'] },
       },
     },
   };

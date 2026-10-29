@@ -228,6 +228,8 @@ export async function enableVault(userId: string, code: string, remember: boolea
     }
     await yieldToUi();
     const salt = newSalt();
+    // 210,000, not practice-core VAULT_ITERATIONS: the KDF is pure JS, and on Hermes (no JIT) 600,000 may block the
+    // screen for many seconds. Raise it once it is measured on a low-end Android (each vault keeps its own count).
     const key = deriveKey(code, salt, MIN_VAULT_ITERATIONS);
     const s: Session = { userId, key, salt, iterations: MIN_VAULT_ITERATIONS, version: 0 };
     await put(s);

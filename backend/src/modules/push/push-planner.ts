@@ -90,6 +90,15 @@ function digestOf(item: Omit<PlannedPush, 'digest'>): string {
   return createHash('sha256').update(content).digest('hex').slice(0, 16);
 }
 
+/**
+ * A site path in the user's language. The site serves Arabic without a prefix and English under /en
+ * (next-intl `localePrefix: 'as-needed'`): `/ar/…` would only redirect, and the service worker would not find the
+ * open tab on the same page.
+ */
+export function sitePath(locale: 'ar' | 'en', path: string): string {
+  return locale === 'en' ? `/en${path}` : path;
+}
+
 export function planPushes(input: PushPlanInput): PlannedPush[] {
   const { store, habits, timeZone, locale, now } = input;
   const end = new Date(now.getTime() + (input.windowHours ?? PUSH_WINDOW_HOURS) * 3_600_000);
@@ -116,7 +125,7 @@ export function planPushes(input: PushPlanInput): PlannedPush[] {
       for (const time of [...new Set(plan.slots)].sort()) {
         const fireAt = zonedToUtc(date, time, timeZone);
         if (!inWindow(fireAt)) continue;
-        out.push({ key: `habit:${plan.id}:${date}:${time}`, fireAt, title, body, url: `/${locale}/practice`, tag: `habit-${plan.id}` });
+        out.push({ key: `habit:${plan.id}:${date}:${time}`, fireAt, title, body, url: sitePath(locale, '/practice'), tag: `habit-${plan.id}` });
       }
     }
   }
@@ -138,7 +147,7 @@ export function planPushes(input: PushPlanInput): PlannedPush[] {
       fireAt,
       title: texts.kinshipTitle,
       body: texts.kinshipBody(count),
-      url: `/${locale}/practice/kinship`,
+      url: sitePath(locale, '/practice/kinship'),
       tag: 'kinship',
     });
   }

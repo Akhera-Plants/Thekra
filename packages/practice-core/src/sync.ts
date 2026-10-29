@@ -7,7 +7,7 @@
  * | Kind | Rule |
  * | --- | --- |
  * | plan, relative, settings | last writer wins by `clientUpdatedAt`; a tombstone carries one too and wins only when newer. Equal times: a tombstone beats a live record, then the larger canonical JSON wins (so every replica picks the same) |
- * | log (plan, date) | `max(stored, incoming)`: logging never goes down |
+ * | log (plan, date) | the later correction wins (`correctedAt`, absent = oldest); at the same correction the larger amount: plain logging never goes down (`mergeLogEntry`) |
  * | contact (relative, date) | union; `deleted: true` removes it; a later non-deleted write restores it. A local change not yet pushed is kept (it is the later write) |
  *
  * Pending detection compares versions, not clocks: `store.sync.acked` remembers the version of each item the server
@@ -19,12 +19,14 @@
 import { isIsoTime, isValidDate, isValidTime, isoMillis, type IsoTime, type LocalDate, type LocalTime } from './dates.js';
 import { HIJRI_OFFSET_MAX, HIJRI_OFFSET_MIN } from './hijri.js';
 import { latestDate, validateRelative, type KinshipRule, type Relative } from './kinship.js';
-import { validatePlan, type Plan, type PlanUnit } from './plan.js';
+import { logEntry, mergeLogEntry, validatePlan, type LogEntry, type Plan, type PlanUnit } from './plan.js';
 import type { Rule } from './rules.js';
 import {
   contactId,
   planFields,
   relativeFields,
+  setTombLog,
+  withLog,
   type Settings,
   type Store,
   type Tombstone,
@@ -42,7 +44,10 @@ export type WirePlanItem = WirePlan | WirePlanDeleted;
 export interface WireLog {
   planId: string;
   date: LocalDate;
+  /** Above 0, or 0 for a day cleared by a correction. */
   amount: number;
+  /** Set when the day was corrected (undo, fixed amount); see `mergeLogEntry`. */
+  correctedAt?: IsoTime | null;
 }
 
 export type WireRelativeFields = ReturnType<typeof relativeFields>;
@@ -131,9 +136,14 @@ export function compareVersions(a: Version, b: Version): number {
   return a.content > b.content ? 1 : -1;
 }
 
-/** Log merge: logging never goes down. */
+/** Log merge for days never corrected: logging never goes down. Corrections: `mergeLogEntry`. */
 export function mergeLogAmount(stored: number | undefined, incoming: number): number {
   return Math.max(stored ?? 0, incoming);
+}
+
+/** The acked version of one day's log. Uncorrected days keep the old form (the amount), so old acks stay valid. */
+function logVersion(entry: LogEntry): string {
+  return entry.correctedAt === undefined ? String(entry.amount) : `${entry.amount}@${isoMillis(entry.correctedAt)}`;
 }
 
 /** FNV-1a 32-bit, to keep acked versions short. Not a security measure. */
@@ -249,8 +259,12 @@ export function localChanges(store: Store, opts: LocalChangesOptions = {}): Sync
   if (parentsComplete) {
     for (const p of store.plans) {
       for (const date of Object.keys(p.log).sort()) {
-        const amount = p.log[date] as number;
-        if (amount > 0 && pending(logKey(p.id, date), String(amount))) take(out.logs, { planId: p.id, date, amount });
+        const entry = logEntry(p.log[date] as number, p.logCorrectedAt?.[date]);
+        if (entry.amount <= 0 && entry.correctedAt === undefined) continue;
+        if (!pending(logKey(p.id, date), logVersion(entry))) continue;
+        const wire: WireLog = { planId: p.id, date, amount: entry.amount };
+        if (entry.correctedAt !== undefined) wire.correctedAt = toIso(isoMillis(entry.correctedAt));
+        take(out.logs, wire);
       }
     }
     for (const r of store.relatives) {
@@ -430,26 +444,34 @@ export function applyServerChanges(store: Store, response: SyncResponse | { data
     if (vAfter && versionKey(vAfter) === versionKey(vIn)) acked[relativeKey(id)] = versionKey(vIn);
   }
 
-  // Logs: max wins.
+  // Logs: the later correction wins, else the larger amount (mergeLogEntry).
   for (const item of arr(body.logs)) {
     if (!isRecord(item) || typeof item.planId !== 'string' || !isValidDate(item.date)) continue;
     const amount = item.amount;
-    if (typeof amount !== 'number' || !Number.isFinite(amount) || amount <= 0) continue;
+    const correctedAt = isIsoTime(item.correctedAt) ? item.correctedAt : undefined;
+    if (typeof amount !== 'number' || !Number.isFinite(amount) || amount < 0 || (amount === 0 && correctedAt === undefined)) continue;
+    const incoming = logEntry(amount, correctedAt);
+    const key = logKey(item.planId, item.date);
     const plan = plans.get(item.planId);
-    if (!plan) {
-      // A deleted plan keeps its logs in the tombstone (the server keeps them too).
-      const tomb = tombs.get(`plan:${item.planId}`);
-      if (tomb) {
-        const log = { ...(tomb.log ?? {}) };
-        log[item.date] = mergeLogAmount(log[item.date], amount);
-        tombs.set(`plan:${item.planId}`, { ...tomb, log });
-        if (log[item.date] === amount) acked[logKey(item.planId, item.date)] = String(amount);
+    const tomb = plan ? undefined : tombs.get(`plan:${item.planId}`);
+    // A deleted plan keeps its logs in the tombstone (the server keeps them too).
+    const holder = plan ?? (tomb ? { log: tomb.log ?? {}, logCorrectedAt: tomb.logCorrectedAt } : undefined);
+    if (!holder) continue;
+    const local = item.date in holder.log ? logEntry(holder.log[item.date] as number, holder.logCorrectedAt?.[item.date]) : undefined;
+    const merged = mergeLogEntry(local, incoming);
+    if (merged !== local) {
+      const corrected = { ...holder.logCorrectedAt };
+      if (merged.correctedAt !== undefined) corrected[item.date] = merged.correctedAt;
+      else delete corrected[item.date];
+      const next = { log: { ...holder.log, [item.date]: merged.amount }, ...(Object.keys(corrected).length > 0 ? { logCorrectedAt: corrected } : {}) };
+      if (plan) plans.set(plan.id, withLog(plan, next));
+      else if (tomb) {
+        const t: Tombstone = { kind: tomb.kind, id: tomb.id, deletedAt: tomb.deletedAt };
+        setTombLog(t, next);
+        tombs.set(`plan:${item.planId}`, t);
       }
-      continue;
     }
-    const merged = mergeLogAmount(plan.log[item.date], amount);
-    if (merged !== plan.log[item.date]) plans.set(plan.id, { ...plan, log: { ...plan.log, [item.date]: merged } });
-    if (merged === amount) acked[logKey(plan.id, item.date)] = String(amount);
+    if (logVersion(merged) === logVersion(incoming)) acked[key] = logVersion(incoming);
   }
 
   // Contacts: union with tombstones; an unpushed local change is the later write and stays.

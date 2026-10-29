@@ -1,34 +1,27 @@
 /**
- * QuoteCard — the core reading unit.
- *
- * Displays:
- *  - textAr at a comfortable Arabic reading size (≥18px, generous line height)
- *  - Grade badge (for hadith)
- *  - Source attribution
- *  - Quran reference or hadith reference
- *  - Favorite toggle button
- *  - Share action (React Native `Share`): the displayed text + attribution (+ «أثر، وليس حديثًا» for an
- *    athar) + the public page link. Never anything about the user (roadmap §0.5, §6).
- *
- * Design: mobile-plan §3, frontend-plan §5 (QuoteCard equivalent).
- * Never convey grade by colour alone (ARCHITECTURE.md authenticity requirement).
+ * QuoteCard: the website's quote card (frontend/src/components/shared/quote/QuoteCard.tsx) on the app theme.
+ * - Header: the type pill (primary at 10%, icon + «آية قرآنية» / «حديث نبوي» / «أثر»), the reference capsule
+ *   (surah | 2:255, or source | reference), the grade seal, narrator and grade-citation lines; share and favorite
+ *   at the end.
+ * - Body: Uthmani verse text in Amiri Quran; hadith and sayings in Plex at reading size. English UI with a
+ *   translation shows it in Source Serif under the Arabic.
+ * - «اقرأ النص كاملًا» to the quote page, except on that page.
+ * Share sends the text, its attribution and the public link only, never anything about the user.
  */
 
 import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Share,
-  useColorScheme,
-} from 'react-native';
+import { Share, View } from 'react-native';
+import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Colors, FontFamily, FontSize, LineHeight, Radius, Shadow, Spacing } from '@/lib/tokens';
+import { BookOpen, Bookmark, BookmarkCheck, MessageSquareQuote, Share2, type LucideIcon } from 'lucide-react-native';
+import { radius, space, useStyles, type Theme } from '@/theme';
+import { IconButton, TextLink } from '@/ui/Button';
+import { Icon } from '@/ui/Icon';
+import { Text } from '@/ui/Text';
 import { GradeBadge } from './GradeBadge';
-import { QuoteType } from '@/lib/types/enums';
+import { HadithGrade, QuoteType } from '@/lib/types/enums';
 import type { QuoteDto } from '@/lib/types/api';
-import { atharSpeakerLine, gradeCitationLine, quoteProvenance, quoteShareText, type QuoteShareLabels } from '@/lib/share/quote-share';
+import { atharSpeakerLine, gradeCitationLine, quoteShareText, type QuoteShareLabels } from '@/lib/share/quote-share';
 
 interface QuoteCardProps {
   quote: QuoteDto;
@@ -38,260 +31,210 @@ interface QuoteCardProps {
   showTranslation?: boolean;
   /** Show the share action (default true). */
   shareable?: boolean;
+  /** On the quote page itself: no «read the full text» link. */
+  detail?: boolean;
 }
 
-export function QuoteCard({
-  quote,
-  isFavorite = false,
-  onToggleFavorite,
-  showTranslation = false,
-  shareable = true,
-}: QuoteCardProps) {
+const TYPE: Record<QuoteType, { key: string; icon: LucideIcon }> = {
+  [QuoteType.QURAN_VERSE]: { key: 'quran', icon: BookOpen },
+  [QuoteType.HADITH]: { key: 'hadith', icon: MessageSquareQuote },
+  [QuoteType.SCHOLAR_QUOTE]: { key: 'scholar', icon: BookOpen },
+  [QuoteType.BOOK_EXCERPT]: { key: 'book', icon: BookOpen },
+};
+
+const makeStyles = (t: Theme) => ({
+  card: {
+    backgroundColor: t.colors.card,
+    borderColor: t.colors.border,
+    borderWidth: 1,
+    borderRadius: radius.quote,
+    padding: space.xl,
+    gap: space.xl,
+  },
+  header: { flexDirection: 'row' as const, alignItems: 'flex-start' as const, gap: space.md },
+  meta: { flex: 1, alignItems: 'flex-start' as const, gap: space.sm },
+  typePill: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 6,
+    minHeight: 32,
+    paddingHorizontal: 10,
+    borderRadius: radius.full,
+    backgroundColor: t.colors.primarySoft,
+  },
+  typePillQuiet: { backgroundColor: t.colors.muted },
+  capsuleRow: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, alignItems: 'center' as const, gap: space.sm },
+  capsule: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: space.sm,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: t.colors.border,
+    backgroundColor: t.colors.background,
+    maxWidth: '100%' as const,
+  },
+  capsuleRule: { width: 1, height: 12, backgroundColor: t.colors.border },
+  actions: { flexDirection: 'row' as const, alignItems: 'center' as const },
+  body: { gap: space.sm },
+});
+
+export function QuoteCard({ quote, isFavorite = false, onToggleFavorite, showTranslation = false, shareable = true, detail }: QuoteCardProps) {
   const { t, i18n } = useTranslation();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-
-  const isArabicUI = i18n.language === 'ar';
-
-  // Source display name
-  const sourceName = quote.source.nameAr ?? quote.source.name;
-
-  // Provenance line (varies by type)
-  const provenance = quoteProvenance(quote);
+  const styles = useStyles(makeStyles);
+  const arabicUI = i18n.language !== 'en';
+  const isQuran = quote.type === QuoteType.QURAN_VERSE;
+  const isHadith = quote.type === QuoteType.HADITH;
   const isAthar = Boolean(quote.isAthar);
+  const type = TYPE[quote.type];
+  const typeLabel = t(`quoteCard.type.${isAthar ? 'athar' : type.key}`);
+  const grade = isHadith && !isAthar ? quote.hadith?.grade : null;
 
   const shareLabels: QuoteShareLabels = {
     atharNotice: t('share.atharNotice'),
     atharNarrated: (speaker) => t('share.atharNarrated', { speaker }),
-    grade: {
-      SAHIH: t('grade.SAHIH'),
-      HASAN: t('grade.HASAN'),
-      DAIF: t('grade.DAIF'),
-      MAWDU: t('grade.MAWDU'),
-    },
+    grade: { SAHIH: t('grade.SAHIH'), HASAN: t('grade.HASAN'), DAIF: t('grade.DAIF'), MAWDU: t('grade.MAWDU') },
   };
   const speakerLine = atharSpeakerLine(quote, shareLabels);
-  // «رواه بمعناه … · حكمه الأستاذ …»: marks a lecturer's retelling, as on the web card.
-  const gradeLine = gradeCitationLine(quote, isArabicUI ? 'ar' : 'en');
+  const gradeLine = gradeCitationLine(quote, arabicUI ? 'ar' : 'en');
+  const sourceName = arabicUI ? quote.source.nameAr ?? quote.source.name : quote.source.name || quote.source.nameAr;
+  const surahName = arabicUI ? quote.quran?.surahNameAr : quote.quran?.surahName || quote.quran?.surahNameAr;
+  const hadithRef = quote.hadith?.reference?.trim() || null;
+  const narrator = arabicUI ? quote.hadith?.narratorAr : quote.hadith?.narrator || quote.hadith?.narratorAr;
+  const showSourceInCapsule = Boolean(sourceName && !(hadithRef && sourceName && hadithRef.includes(sourceName)));
+  const translation = showTranslation || !arabicUI ? quote.translation?.text : null;
 
   async function handleShare() {
     const message = quoteShareText(quote, {
-      locale: isArabicUI ? 'ar' : 'en',
-      showTranslation: Boolean(showTranslation && quote.translation),
+      locale: arabicUI ? 'ar' : 'en',
+      showTranslation: Boolean(translation),
       labels: shareLabels,
     });
     try {
       await Share.share({ message });
     } catch {
-      // The share sheet was dismissed or is unavailable: nothing to do.
+      // Dismissed or unavailable: nothing to do.
     }
   }
 
-  const grade = quote.type === QuoteType.HADITH ? quote.hadith?.grade : null;
-
   return (
-    <View
-      style={[
-        styles.card,
-        isDark && styles.cardDark,
-        Shadow.sm,
-      ]}
-    >
-      {/* Arabic text — always shown, always RTL, always primary */}
-      <Text
-        style={[styles.arabicText, isDark && styles.arabicTextDark]}
-        textBreakStrategy="highQuality"
-      >
-        {quote.textAr}
-      </Text>
+    <View style={styles.card} accessibilityLabel={typeLabel}>
+      <View style={styles.header}>
+        <View style={styles.meta}>
+          <View style={[styles.typePill, isAthar && styles.typePillQuiet]}>
+            <Icon icon={type.icon} size={14} tone={isAthar ? 'muted' : 'link'} />
+            <Text variant="caption" weight="medium" tone={isAthar ? 'muted' : 'link'}>
+              {typeLabel}
+            </Text>
+          </View>
 
-      {/* Translation (LTR, secondary, optional) */}
-      {showTranslation && quote.translation && (
-        <Text style={[styles.translation, isDark && styles.translationDark]}>
-          {quote.translation.text}
-        </Text>
-      )}
-
-      {/* Footer: grade + source + provenance + favorite */}
-      <View style={styles.footer}>
-        <View style={styles.footerLeft}>
-          {/* Grade badge — an athar is never shown as hadith: it gets its own label instead */}
-          {isAthar ? (
-            <View style={styles.atharBadge} accessibilityRole="text">
-              <Text style={styles.atharBadgeText}>{t('share.atharNotice')}</Text>
+          {isQuran && quote.quran ? (
+            <View style={styles.capsuleRow}>
+              {surahName || (quote.quran.surahNumber && quote.quran.ayahNumber) ? (
+                <View style={styles.capsule}>
+                  {surahName ? (
+                    <Text variant="caption" numberOfLines={1}>
+                      {surahName}
+                    </Text>
+                  ) : null}
+                  {quote.quran.surahNumber && quote.quran.ayahNumber ? (
+                    <>
+                      <View style={styles.capsuleRule} />
+                      <Text variant="caption" tone="muted" style={{ writingDirection: 'ltr' }}>
+                        {`${quote.quran.surahNumber}:${quote.quran.ayahNumber}`}
+                      </Text>
+                    </>
+                  ) : null}
+                </View>
+              ) : null}
+              {sourceName ? (
+                <Text variant="caption" tone="muted">
+                  {sourceName}
+                </Text>
+              ) : null}
             </View>
-          ) : quote.type === QuoteType.HADITH ? (
-            <GradeBadge grade={grade} compact />
           ) : null}
 
-          {gradeLine && (
-            <Text style={[styles.source, isDark && styles.sourceDark]}>
-              {gradeLine}
-            </Text>
-          )}
+          {isHadith ? (
+            <View style={{ alignItems: 'flex-start', gap: 6 }}>
+              <View style={styles.capsuleRow}>
+                {showSourceInCapsule || hadithRef ? (
+                  <View style={styles.capsule}>
+                    {showSourceInCapsule ? (
+                      <Text variant="caption" numberOfLines={1}>
+                        {sourceName}
+                      </Text>
+                    ) : null}
+                    {showSourceInCapsule && hadithRef ? <View style={styles.capsuleRule} /> : null}
+                    {hadithRef ? (
+                      <Text variant="caption" tone={showSourceInCapsule ? 'muted' : 'default'} numberOfLines={1} style={{ flexShrink: 1 }}>
+                        {hadithRef}
+                      </Text>
+                    ) : null}
+                  </View>
+                ) : null}
+                {grade && grade !== HadithGrade.UNGRADED ? <GradeBadge grade={grade} /> : null}
+              </View>
+              {narrator ? (
+                <Text variant="caption" tone="muted">
+                  {`${t('quoteCard.narrator')}: ${narrator}`}
+                </Text>
+              ) : null}
+              {gradeLine && !isAthar ? (
+                <Text variant="caption" tone="muted" style={{ fontSize: 12 }}>
+                  {gradeLine}
+                </Text>
+              ) : null}
+              {speakerLine ? (
+                <Text variant="caption" tone="muted">
+                  {speakerLine}
+                </Text>
+              ) : null}
+              {isAthar ? (
+                <Text variant="caption" tone="muted" style={{ fontSize: 12 }}>
+                  {t('share.atharNotice')}
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
 
-          {speakerLine && (
-            <Text style={[styles.source, isDark && styles.sourceDark]} numberOfLines={1}>
-              {speakerLine}
+          {!isQuran && !isHadith ? (
+            <Text variant="caption" tone="muted" style={{ fontSize: 12 }}>
+              {sourceName ?? quote.book?.bookTitle ?? typeLabel}
             </Text>
-          )}
-
-          {/* Source */}
-          <Text
-            style={[styles.source, isDark && styles.sourceDark]}
-            numberOfLines={1}
-          >
-            {sourceName}
-          </Text>
-
-          {/* Provenance (e.g. surah:ayah, hadith reference) */}
-          {provenance && (
-            <Text
-              style={[styles.provenance, isDark && styles.provenanceDark]}
-              numberOfLines={1}
-            >
-              {provenance}
-            </Text>
-          )}
+          ) : null}
         </View>
 
-        {/* Share button */}
-        {shareable && (
-          <TouchableOpacity
-            onPress={() => void handleShare()}
-            style={styles.favoriteBtn}
-            accessibilityRole="button"
-            accessibilityLabel={t('share.action')}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Text style={styles.shareIcon}>↗</Text>
-          </TouchableOpacity>
-        )}
-
-        {/* Favorite button */}
-        {onToggleFavorite && (
-          <TouchableOpacity
-            onPress={onToggleFavorite}
-            style={styles.favoriteBtn}
-            accessibilityRole="button"
-            accessibilityLabel={
-              isFavorite ? t('quoteDetail.unfavorite') : t('quoteDetail.favorite')
-            }
-            accessibilityState={{ selected: isFavorite }}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Text style={[styles.favoriteStar, isFavorite && styles.favoriteStarActive]}>
-              {isFavorite ? '★' : '☆'}
-            </Text>
-          </TouchableOpacity>
-        )}
+        <View style={styles.actions}>
+          {shareable && (isQuran || isHadith) ? (
+            <IconButton icon={Share2} label={t('share.action')} onPress={() => void handleShare()} />
+          ) : null}
+          {onToggleFavorite ? (
+            <IconButton
+              icon={isFavorite ? BookmarkCheck : Bookmark}
+              label={isFavorite ? t('quoteCard.favoriteRemove') : t('quoteCard.favoriteAdd')}
+              onPress={onToggleFavorite}
+              active={isFavorite}
+            />
+          ) : null}
+        </View>
       </View>
+
+      <View style={styles.body}>
+        {/* Alignment follows the text itself (Arabic starts on the right in either app direction). */}
+        <Text variant={isQuran ? 'quran' : 'reading'} textBreakStrategy="highQuality">
+          {quote.textAr}
+        </Text>
+        {translation ? (
+          <Text variant="body" style={{ fontFamily: 'SourceSerif-Regular' }}>
+            {translation}
+          </Text>
+        ) : null}
+      </View>
+
+      {!detail ? <TextLink label={t('quoteCard.open')} onPress={() => router.push(`/quotes/${quote.id}`)} /> : null}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: Colors.card,
-    borderRadius: Radius.lg,
-    padding: Spacing['6'],
-    marginHorizontal: Spacing['4'],
-    marginVertical: Spacing['2'],
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  cardDark: {
-    backgroundColor: Colors.cardDark,
-    borderColor: Colors.borderDark,
-  },
-
-  arabicText: {
-    fontFamily: FontFamily.arabic,
-    fontSize: FontSize.xl,
-    lineHeight: FontSize.xl * LineHeight.arabic,
-    color: Colors.text,
-    textAlign: 'right',
-    writingDirection: 'rtl',
-    fontWeight: '400',
-    marginBottom: Spacing['4'],
-  },
-  arabicTextDark: {
-    color: Colors.textDark,
-  },
-
-  translation: {
-    fontSize: FontSize.base,
-    lineHeight: FontSize.base * LineHeight.relaxed,
-    color: Colors.textMuted,
-    textAlign: 'left',
-    writingDirection: 'ltr',
-    marginBottom: Spacing['4'],
-    borderTopWidth: 1,
-    borderTopColor: Colors.separator,
-    paddingTop: Spacing['3'],
-  },
-  translationDark: {
-    color: Colors.textMutedDark,
-    borderTopColor: Colors.separatorDark,
-  },
-
-  footer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    gap: Spacing['2'],
-  },
-  footerLeft: {
-    flex: 1,
-    gap: Spacing['1'],
-    alignItems: 'flex-end',
-  },
-
-  source: {
-    fontSize: FontSize.sm,
-    color: Colors.textMuted,
-    textAlign: 'right',
-  },
-  sourceDark: {
-    color: Colors.textMutedDark,
-  },
-
-  provenance: {
-    fontSize: FontSize.xs,
-    color: Colors.textMuted,
-    textAlign: 'left',   // hadith references are LTR (e.g. "Bukhari 13")
-    writingDirection: 'ltr',
-  },
-  provenanceDark: {
-    color: Colors.textMutedDark,
-  },
-
-  favoriteBtn: {
-    paddingStart: Spacing['3'],
-  },
-  favoriteStar: {
-    fontSize: FontSize.xl,
-    color: Colors.textMuted,
-  },
-  favoriteStarActive: {
-    color: Colors.primary,
-  },
-  shareIcon: {
-    fontSize: FontSize.xl,
-    color: Colors.textMuted,
-  },
-  atharBadge: {
-    paddingHorizontal: Spacing['2'],
-    paddingVertical: 2,
-    borderRadius: Radius.full,
-    alignSelf: 'flex-start',
-    backgroundColor: Colors.gradeUngradedBg,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  atharBadgeText: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: Colors.gradeUngraded,
-  },
-});

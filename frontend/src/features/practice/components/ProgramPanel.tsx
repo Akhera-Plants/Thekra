@@ -4,9 +4,20 @@ import { useMemo } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { useLocale, useTranslations } from 'next-intl';
-import { afterFall, checkIn, CHECK_IN_VALUES, type CheckInValue, type SinProgram } from '@thekra/practice-core';
+import { afterFall, checkIn, CHECK_IN_VALUES, endProgram, type CheckInValue, type SinProgram } from '@thekra/practice-core';
 import { Link } from '@/i18n/navigation';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { formatDigits } from '@/lib/format/digits';
@@ -17,6 +28,7 @@ import type { QuoteDto } from '@/lib/types/api';
 import type { PracticeHabit, SinProgramCommon, SinProgramEntry } from '@/lib/types/practice';
 import { cn } from '@/lib/utils';
 import { z } from '@/lib/zod';
+import { useSinVault } from '../hooks/useSinVault';
 import { EvidenceQuotes } from './EvidenceQuotes';
 
 const MAX_NOTE = 500;
@@ -119,7 +131,7 @@ export function ProgramPanel({ program, entry, common, name, habits, quotes, tod
                 : [];
             })}
           </ul>
-          <Link href="/practice" className="text-link self-start">
+          <Link href={{ pathname: '/practice/habits', query: { add: '1' } }} className="text-link self-start">
             {t('alternativesLink')} <DirectionalArrow />
           </Link>
         </section>
@@ -159,7 +171,51 @@ export function ProgramPanel({ program, entry, common, name, habits, quotes, tod
         </h3>
         <EvidenceQuotes ids={entry.evidence} quotes={quotes} />
       </section>
+
+      <EndProgram program={program} />
     </article>
+  );
+}
+
+/**
+ * «أنهِ هذا البرنامج»: ends this program only; its check-ins and notes are removed from this device at once. Without
+ * an encrypted copy in the account nothing of it is kept. With one (or while that is not known yet), practice-core
+ * `endProgram` keeps an end marker, which the vault needs so its older copy does not bring the program back; the
+ * vault takes the end on its next save. Starting it again later is a fresh program.
+ */
+function EndProgram({ program }: { program: SinProgram }) {
+  const t = useTranslations('leaveSin.program.end');
+  const { userId, vault } = useSinVault();
+  const keepMarker = userId !== null && vault.data !== null;
+  function handleConfirm() {
+    updateStore((store) => ({
+      ...store,
+      programs: keepMarker
+        ? store.programs.map((p) => (p.sinSlug === program.sinSlug ? endProgram(p) : p))
+        : store.programs.filter((p) => p.sinSlug !== program.sinSlug),
+    }));
+  }
+  return (
+    <div className="flex flex-col items-start gap-2 border-t border-border pt-4">
+      <p className="text-sm leading-7 text-muted-foreground">{t('lead')}</p>
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <button type="button" className="outline-button button-wrap">
+            {t('button')}
+          </button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('confirmTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('confirmBody')}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirm}>{t('confirm')}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   );
 }
 

@@ -13,37 +13,63 @@
     "sinSubtitle": "Read what helps you resist it",
     "goodDeedAction": "Guide me to an act of obedience",
     "goodDeedSubtitle": "Read what motivates and rewards",
-    "continueReading": "Continue reading"
+    "continueReading": "Continue reading",
+    "eyebrow": "A reminder for every step",
+    "entryTitle": "Which door of good will you choose?",
+    "sinOverline": "A door of return",
+    "sinEntryLabel": "Help me leave a sin",
+    "sinEntryDescription": "A reminder that restrains you, and hope that helps you.",
+    "sinCta": "Choose a topic",
+    "deedOverline": "A step toward good",
+    "deedEntryLabel": "Help me do a good deed",
+    "deedEntryDescription": "Know its virtue, and take the first step.",
+    "deedCta": "Choose a deed",
+    "momentsHeading": "In moments like these",
+    "momentsLead": "From your day, to what helps you.",
+    "momentAnger": "Before you reply in anger",
+    "momentPrayer": "When prayer feels heavy",
+    "momentBackbiting": "Before you spread talk about someone",
+    "momentKindness": "When you want to lift someone’s spirit"
   },
   "sinPicker": {
     "title": "Choose a sin",
-    "searchPlaceholder": "Search...",
+    "searchPlaceholder": "What is weighing on you?",
     "recentLabel": "Recently used",
     "allLabel": "All sins",
-    "empty": "No results"
+    "empty": "No results",
+    "eyebrow": "A door of return",
+    "lead": "A reminder that restrains you, and hope that helps you."
   },
   "reminders": {
     "title": "Reminders",
     "anotherReminder": "Another reminder",
-    "alternatives": "Alternative deeds",
+    "alternatives": "Instead",
     "filterAll": "All",
     "filterQuran": "Quran",
     "filterHadith": "Hadith",
     "filterScholar": "Scholars",
     "filterBook": "Books",
     "empty": "No reminders for this sin yet",
-    "shuffleSeed": "Tap to shuffle"
+    "shuffleSeed": "Tap to shuffle",
+    "eyebrow": "Leaving a sin",
+    "filterVerses": "Verses",
+    "warningHeading": "What warns against it",
+    "startProgram": "Start the leaving program"
   },
   "goodDeedPicker": {
     "title": "Choose a good deed",
-    "searchPlaceholder": "Search...",
-    "empty": "No results"
+    "searchPlaceholder": "Which deed are you looking for?",
+    "empty": "No results",
+    "eyebrow": "A step toward good",
+    "lead": "Know its virtue, and take the first step."
   },
   "motivations": {
     "title": "Motivations",
     "reward": "Reward",
     "oppositeSin": "Opposite sin",
-    "empty": "No motivations yet"
+    "empty": "No motivations yet",
+    "eyebrow": "Doing good",
+    "virtueHeading": "Its merit and reward"
   },
   "browse": {
     "title": "Browse",
@@ -62,7 +88,9 @@
     "relatedGoodDeeds": "Related good deeds",
     "share": "Share",
     "favorite": "Save",
-    "unfavorite": "Unsave"
+    "unfavorite": "Unsave",
+    "tags": "Tags",
+    "weakNotice": "This narration is weak (da'if)"
   },
   "feelings": {
     "title": "Browse by feeling",
@@ -72,8 +100,9 @@
     "title": "Favorites",
     "empty": "No saved quotes yet",
     "emptyHint": "Tap the save icon on any quote to add it here",
-    "offlineBanner": "Showing saved content — no connection",
-    "signInPrompt": "Sign in to sync favorites across your devices"
+    "offlineBanner": "Showing saved content: no connection",
+    "signInPrompt": "Sign in to sync favorites across your devices",
+    "lead": "Texts you return to when you need them."
   },
   "settings": {
     "title": "Settings",
@@ -121,7 +150,9 @@
     "haveAccount": "Already have an account?",
     "register": "Register",
     "login": "Sign in",
-    "guestNote": "You can use the app without an account. An account is only needed to save and sync favorites."
+    "guestNote": "You can use the app without an account. An account is only needed to save and sync favorites.",
+    "loginError": "Login failed. Check your credentials.",
+    "registerError": "Registration failed. Please try again."
   },
   "grade": {
     "SAHIH": "Sahih",
@@ -154,7 +185,8 @@
     "network": "Could not reach the server",
     "unauthorized": "Please sign in first",
     "notFound": "Content not found",
-    "unknown": "An unexpected error occurred"
+    "unknown": "An unexpected error occurred",
+    "title": "This couldn't load right now"
   },
   "practice": {
     "title": "My habits",
@@ -263,7 +295,8 @@
       "next": "Next",
       "back": "Back",
       "loadTitle": "Your time",
-      "loadSetup": "Set your free time first"
+      "loadSetup": "Set your free time first",
+      "stepOf": "Step {{step}} of {{total}}"
     },
     "plan": {
       "required": "Today: {{amount}}",
@@ -273,7 +306,21 @@
       "saved": "Saved",
       "delete": "Delete the habit",
       "deleteConfirm": "The habit and its log are deleted from this device.",
-      "notFound": "This habit was not found."
+      "notFound": "This habit was not found.",
+      "logged": "Logged.",
+      "undo": "Undo",
+      "fixOpen": "Fix the log",
+      "fixHint": "Log a day you forgot, or fix a wrong number. Zero clears that day.",
+      "fixToday": "Today",
+      "fixYesterday": "Yesterday",
+      "fixEarlier": "Earlier day",
+      "fixLater": "Later day",
+      "fixLess": "One less",
+      "fixMore": "One more",
+      "fixItTitle": "It slipped? Mend it",
+      "fixItBody": "Finish today with whatever you can: any amount counts, and nothing is added to tomorrow.",
+      "partialLabel": "Amount done ({{unit}})",
+      "logPartial": "Log"
     },
     "duties": {
       "title": "My duties and roles",
@@ -294,6 +341,86 @@
       "over": "Your habits take more than half of your free time. Obligations come before voluntary deeds, so lighten them until you can keep them up.",
       "ok": "Your habits fit your time.",
       "notSet": "You have not set your free time yet."
+    },
+    "lead": "Start very small, keep at it, and increase only once it is steady. Everything here is saved on your device first.",
+    "dueNow": "Due now",
+    "hub": {
+      "add": "Add",
+      "addTitle": "What would you like to add?",
+      "addHabit": "A good habit",
+      "addRelative": "A relative",
+      "addRelativeHint": "A name or nickname, and how often to reach them.",
+      "addProgram": "A program to leave a sin",
+      "addProgramHint": "On your device only, never in a notification.",
+      "previousWeek": "Previous week",
+      "nextWeek": "Next week",
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month",
+      "markFull": "All of it done",
+      "markPartial": "Some of it done",
+      "occasionTag": "Sunnah occasion",
+      "required": "Asked: {{amount}}",
+      "logged": "logged {{amount}}",
+      "relativeOverdue_zero": "Due today",
+      "relativeOverdue_one": "Due 1 day ago",
+      "relativeOverdue_other": "Due {{count}} days ago",
+      "relativeContactedDay": "Contacted on this day",
+      "relativeDueDay": "Due on this day",
+      "programTitle": "A note from Thekra",
+      "programPending": "Note how your day went",
+      "programDone": "You noted your day",
+      "programDoneDay": "You noted this day",
+      "programOpen": "Open your private program",
+      "dayDone": "You did what today asked of you. May Allah accept it from you.",
+      "dayDonePast": "You did what this day asked of you. May Allah accept it from you.",
+      "dayEmpty": "Nothing is asked of you on this day.",
+      "dayEmptyStart": "The habits and relatives you add show up here on their day.",
+      "futureNote": "A coming day: you can see it now and log it on the day.",
+      "pastNote": "View only: logging here covers the last 7 days.",
+      "tracks": "Your paths",
+      "habitsTrack": "My good deeds",
+      "habitsCount_zero": "No habit yet",
+      "habitsCount_one": "1 habit",
+      "habitsCount_other": "{{count}} habits",
+      "kinshipDue_zero": "Nobody is due now",
+      "kinshipDue_one": "1 relative is due",
+      "kinshipDue_other": "{{count}} relatives are due",
+      "programActive": "Your private program",
+      "programStart": "Start",
+      "startTitle": "Where to begin?",
+      "startLead": "Pick one path and start small; what you add shows up in your day here.",
+      "monthTitle": "How far you came this month",
+      "monthLead": "Open it on any day, even a day you did nothing, to stay close to your habit.",
+      "presentDays_zero": "Nothing logged in the last 30 days yet, and today is a good start.",
+      "presentDays_one": "Present on 1 of the last 30 days",
+      "presentDays_other": "Present on {{count}} of the last 30 days",
+      "legendFull": "All done",
+      "legendPartial": "Some",
+      "months": {
+        "1": "January",
+        "2": "February",
+        "3": "March",
+        "4": "April",
+        "5": "May",
+        "6": "June",
+        "7": "July",
+        "8": "August",
+        "9": "September",
+        "10": "October",
+        "11": "November",
+        "12": "December"
+      },
+      "weekdayShort": {
+        "0": "S",
+        "1": "M",
+        "2": "T",
+        "3": "W",
+        "4": "T",
+        "5": "F",
+        "6": "S"
+      },
+      "separator": ", ",
+      "unlogged": "Unmarked."
     }
   },
   "kinship": {
@@ -335,7 +462,9 @@
     "reminders": "Remind me to keep in touch",
     "showNames": "Show names in the notification",
     "showNamesHint": "Notifications appear on the lock screen; without this option the text is generic.",
-    "time": "Reminder time"
+    "time": "Reminder time",
+    "lead": "A list on your device of your relatives and how often to reach each one. A name or nickname only, no phone numbers.",
+    "contactedToday": "Contacted today"
   },
   "sinProgram": {
     "title": "Leaving a sin",
@@ -370,7 +499,12 @@
     "time": "Reminder time",
     "wipe": "Delete all program data",
     "wipeHint": "Erases the program, your logs and your notes from this device at once; they cannot be recovered.",
-    "wiped": "Program data deleted from your device."
+    "wiped": "Program data deleted from your device.",
+    "lead": "A staged program on your device: know the harm, build the alternative, change your surroundings, set limits, stay firm.",
+    "unnamed": "Your program",
+    "notebook": "My private notebook",
+    "peopleRights": "This wrongs other people: there is no gradual path. It is left, or lightened with real effort, together with restoring rights, and the program helps you with that.",
+    "cutOnly": "Here the program is for leaving it, helped by means and alternatives."
   },
   "calendar": {
     "title": "Calendar",
@@ -396,7 +530,9 @@
       "10": "Shawwal",
       "11": "Dhu al-Qadah",
       "12": "Dhu al-Hijjah"
-    }
+    },
+    "dayEmpty": "No sunnah occasion on this day.",
+    "dayTitle": "Occasions on {{date}}"
   },
   "share": {
     "action": "Share",
@@ -420,13 +556,38 @@
     "signInHint": "If you sign in, you can save the program encrypted in your account and open it on another device.",
     "cancel": "Cancel",
     "errors": {
-      "tooShort": "The privacy code needs at least 6 characters.",
+      "tooShort": "The privacy code must be at least 8 characters.",
+      "weak": "This code is easy to guess. Choose a phrase of two or more words, or a code without repeats or runs.",
       "mismatch": "The two codes do not match.",
       "wrongCode": "Wrong code.",
       "exists": "A program is already saved in your account. Open it with its code first.",
       "missing": "No program is saved in your account.",
       "offline": "No connection.",
       "failed": "That did not work, try again."
-    }
+    },
+    "warningTitle": "Important"
+  },
+  "app": {
+    "name": "Thekra",
+    "tagline": "For whoever has a heart"
+  },
+  "quoteCard": {
+    "type": {
+      "quran": "Quranic verse",
+      "hadith": "Prophetic hadith",
+      "athar": "Saying of the Salaf",
+      "scholar": "Scholar quote",
+      "book": "Book excerpt"
+    },
+    "narrator": "Narrator",
+    "favoriteAdd": "Add to favorites",
+    "favoriteRemove": "Remove from favorites",
+    "open": "Read the full text"
+  },
+  "theme": {
+    "title": "Appearance",
+    "system": "Match device",
+    "light": "Light",
+    "dark": "Dark"
   }
 }

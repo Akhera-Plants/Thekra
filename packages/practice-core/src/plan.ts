@@ -18,7 +18,8 @@
  *
  * Sync (Store v2): helpers that change the plan's own fields take `now` and set `updatedAt`, the version used for
  * last-writer-wins. Two kinds of change deliberately do NOT touch `updatedAt`:
- * - `logDone`: logs sync per day (max wins), so logging never overwrites a plan edit made on another device;
+ * - `logDone` and `correctLog`: logs sync per day on their own rule (see {@link mergeLogEntry}), so logging never
+ *   overwrites a plan edit made on another device;
  * - `normalize`: the end of a season is derived from the date, every device reaches the same result on its own.
  */
 import {
@@ -27,6 +28,7 @@ import {
   isIsoTime,
   isValidDate,
   isValidTime,
+  isoMillis,
   maxDate,
   nowIso,
   toDayNumber,
@@ -58,8 +60,13 @@ export interface Plan {
   createdOn: LocalDate;
   /** The day `amount` last changed through {@link increase} or {@link decreaseTo}. */
   amountChangedOn: LocalDate;
-  /** Amount done per local date. Partial amounts on the same day add up. */
+  /** Amount done per local date. Partial amounts on the same day add up. 0 only for a day cleared by {@link correctLog}. */
   log: Record<LocalDate, number>;
+  /**
+   * Days whose amount was set by {@link correctLog} (undo of «تمّ», or a wrong amount fixed), with the time of the
+   * correction. A correction beats any amount logged before it on another device ({@link mergeLogEntry}).
+   */
+  logCorrectedAt?: Record<LocalDate, IsoTime>;
   /** «إدبار»: a low period; the plan asks only for a token amount while it lasts. */
   ebb?: { since: LocalDate };
   /** A season (e.g. Ramadan) with a higher amount until `until`, then back to `previous`. */
@@ -132,8 +139,17 @@ export function validatePlan(plan: unknown): string | null {
   if (!isValidDate(p.createdOn)) return 'createdOn must be YYYY-MM-DD';
   if (!isValidDate(p.amountChangedOn)) return 'amountChangedOn must be YYYY-MM-DD';
   if (typeof p.log !== 'object' || p.log === null || Array.isArray(p.log)) return 'log must be an object';
+  const corrected = p.logCorrectedAt;
+  if (corrected !== undefined) {
+    if (typeof corrected !== 'object' || corrected === null || Array.isArray(corrected)) return 'logCorrectedAt must be an object';
+    for (const [d, t] of Object.entries(corrected)) {
+      if (!isValidDate(d) || !isIsoTime(t)) return 'logCorrectedAt entries must map YYYY-MM-DD to an ISO time';
+    }
+  }
   for (const [d, v] of Object.entries(p.log)) {
-    if (!isValidDate(d) || !isPositive(v)) return 'log entries must map YYYY-MM-DD to a positive number';
+    if (!isValidDate(d)) return 'log entries must map YYYY-MM-DD to a positive number';
+    const fixed = (corrected as Record<string, unknown> | undefined)?.[d] !== undefined;
+    if (!isPositive(v) && !(fixed && v === 0)) return 'log entries must map YYYY-MM-DD to a positive number';
   }
   if (p.ebb !== undefined) {
     const e = p.ebb as Record<string, unknown> | null;
@@ -216,6 +232,68 @@ export function logDone(plan: Plan, date: LocalDate, amount: number): Plan {
   if (!isValidDate(date)) throw new RangeError('Invalid date');
   if (!isPositive(amount)) throw new RangeError('amount must be a positive number');
   return { ...plan, log: { ...plan.log, [date]: (plan.log[date] ?? 0) + amount } };
+}
+
+/**
+ * Sets what is logged for `date` to `amount` (0 clears the day): undo of «تمّ», a wrong amount fixed, or a day
+ * logged late. Stamped with `now`, so the correction also wins over a larger amount another device still holds.
+ * Does not change `updatedAt`.
+ */
+export function correctLog(plan: Plan, date: LocalDate, amount: number, now: IsoTime = nowIso()): Plan {
+  if (!isValidDate(date)) throw new RangeError('Invalid date');
+  if (typeof amount !== 'number' || !Number.isFinite(amount) || amount < 0) throw new RangeError('amount must be 0 or more');
+  if (!isIsoTime(now)) throw new RangeError('Invalid now');
+  return {
+    ...plan,
+    log: { ...plan.log, [date]: amount },
+    logCorrectedAt: { ...plan.logCorrectedAt, [date]: now },
+  };
+}
+
+/** One day of a log: the amount, and the time it was last corrected (absent when it was only ever added to). */
+export interface LogEntry {
+  amount: number;
+  correctedAt?: IsoTime;
+}
+
+/**
+ * Merges two copies of one day's log, the same on every replica and on the server: the later correction wins
+ * (no correction counts as the oldest); at the same correction, the larger amount wins, so plain logging never
+ * goes down.
+ */
+export function mergeLogEntry(a: LogEntry | undefined, b: LogEntry): LogEntry {
+  if (a === undefined) return b;
+  const ta = isoMillis(a.correctedAt);
+  const tb = isoMillis(b.correctedAt);
+  if (ta !== tb) return ta > tb ? a : b;
+  return b.amount > a.amount ? b : a;
+}
+
+export interface PlanLog {
+  log: Record<LocalDate, number>;
+  logCorrectedAt?: Record<LocalDate, IsoTime>;
+}
+
+/** Day by day {@link mergeLogEntry} of two logs. `logCorrectedAt` is left out when no day was corrected. */
+export function mergeLogs(a: PlanLog, b: PlanLog): PlanLog {
+  const log: Record<LocalDate, number> = {};
+  const corrected: Record<LocalDate, IsoTime> = {};
+  const put = (date: LocalDate, entry: LogEntry) => {
+    log[date] = entry.amount;
+    if (entry.correctedAt !== undefined) corrected[date] = entry.correctedAt;
+    else delete corrected[date];
+  };
+  for (const [d, amount] of Object.entries(a.log)) put(d, logEntry(amount, a.logCorrectedAt?.[d]));
+  for (const [d, amount] of Object.entries(b.log)) {
+    const mine = d in log ? logEntry(log[d] as number, corrected[d]) : undefined;
+    put(d, mergeLogEntry(mine, logEntry(amount, b.logCorrectedAt?.[d])));
+  }
+  return Object.keys(corrected).length > 0 ? { log, logCorrectedAt: corrected } : { log };
+}
+
+/** A {@link LogEntry} without an undefined `correctedAt` key. */
+export function logEntry(amount: number, correctedAt: IsoTime | undefined): LogEntry {
+  return correctedAt === undefined ? { amount } : { amount, correctedAt };
 }
 
 /** Prorated number of active days the plan aims for between `from` and `to` (inclusive). May be fractional. */

@@ -38,6 +38,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entry('/about', 0.5),
     entry('/calendar', 0.6),
     entry('/practice', 0.6),
+    entry('/practice/habits', 0.5),
     entry('/practice/kinship', 0.5),
     ...sins.map((slug) => entry(`/sins/${slug}`, 0.8)),
     ...deeds.map((slug) => entry(`/good-deeds/${slug}`, 0.8)),

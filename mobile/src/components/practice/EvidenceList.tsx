@@ -1,40 +1,58 @@
 /**
- * Evidence texts for a habit, an occasion or a program stage. The texts come only from the API
- * (`/v1/practice/evidence`, published quotes); ids the API does not return are skipped silently.
+ * Evidence texts for a habit, an occasion or a program stage, after the website's EvidenceQuotes: a section
+ * heading, then the quote cards. The texts come only from the API (`/v1/practice/evidence`, published quotes);
+ * ids the API does not return are skipped silently. While loading it shows a card-shaped placeholder.
  */
 
 import React from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { QuoteCard } from '@/components/QuoteCard';
 import type { QuoteDto } from '@/lib/types/api';
-import { Colors } from '@/lib/tokens';
-import { Body, SectionTitle } from './ui';
+import { space, useStyles } from '@/theme';
+import { QuoteCardSkeleton, Text } from '@/ui';
 
-export function EvidenceList({
-  ids,
-  byId,
-  loading,
-  error,
-  title,
-}: {
+interface EvidenceListProps {
   ids: readonly string[] | undefined;
   byId: Map<string, QuoteDto> | undefined;
   loading?: boolean;
   error?: boolean;
   title?: string;
-}) {
+}
+
+const makeStyles = () => ({
+  list: { gap: space.md },
+});
+
+export function EvidenceList({ ids, byId, loading, error, title }: EvidenceListProps) {
   const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
   if (!ids || ids.length === 0) return null;
   const quotes = ids.map((id) => byId?.get(id)).filter((q): q is QuoteDto => Boolean(q));
-  if (loading) return <ActivityIndicator color={Colors.primary} />;
-  if (error && quotes.length === 0) return <Body small muted>{t('practice.evidenceError')}</Body>;
+  const heading = (
+    <Text variant="heading" accessibilityRole="header">
+      {title ?? t('practice.evidence')}
+    </Text>
+  );
+  if (loading) {
+    return (
+      <View style={styles.list}>
+        {heading}
+        <QuoteCardSkeleton />
+      </View>
+    );
+  }
+  if (error && quotes.length === 0) {
+    return (
+      <Text variant="small" tone="muted">
+        {t('practice.evidenceError')}
+      </Text>
+    );
+  }
   if (quotes.length === 0) return null;
   return (
-    <View style={{ gap: 4, marginHorizontal: -16 }}>
-      <View style={{ paddingHorizontal: 16 }}>
-        <SectionTitle>{title ?? t('practice.evidence')}</SectionTitle>
-      </View>
+    <View style={styles.list}>
+      {heading}
       {quotes.map((q) => (
         <QuoteCard key={q.id} quote={q} />
       ))}

@@ -18,6 +18,9 @@
 }
 .dark {
   --decor-opacity: 0.12;
+  /* Accent text and outline-button labels: `--primary` on the dark page is 3.1:1, below the 4.5:1 small text
+     needs; the site's own dark accent (`--ring`) is 9.4:1. Solid buttons keep `--primary` as their fill. */
+  --green: var(--ring);
 }
 
 

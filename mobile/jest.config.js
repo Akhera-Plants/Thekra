@@ -14,12 +14,12 @@ module.exports = {
   transform: {
     '^.+\\.tsx?$': [
       'babel-jest',
-      { configFile: path.resolve(__dirname, 'babel.config.js') },
+      { configFile: path.resolve(__dirname, 'jest.babel.config.js') },
     ],
     // ESM .js from node_modules that is not ignored below (@noble/* for the vault).
     '^.+\\.m?js$': [
       'babel-jest',
-      { configFile: path.resolve(__dirname, 'babel.config.js') },
+      { configFile: path.resolve(__dirname, 'jest.babel.config.js') },
     ],
   },
   moduleNameMapper: {

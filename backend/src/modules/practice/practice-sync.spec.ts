@@ -103,6 +103,20 @@ describe('parseSyncRequest', () => {
     expect(request.contacts).toEqual([{ relativeId: REL_ID, date: '2026-10-20', deleted: true }]);
   });
 
+  it('a corrected day: 0 is allowed only with correctedAt, and the later correction wins a duplicate', () => {
+    const fixedAt = '2026-10-28T12:00:00.000Z';
+    const request = parse({
+      logs: [
+        { planId: PLAN_ID, date: '2026-10-28', amount: 9 },
+        { planId: PLAN_ID, date: '2026-10-28', amount: 0, correctedAt: fixedAt },
+        { planId: PLAN_ID, date: '2026-10-28', amount: 5, correctedAt: '2026-10-28T11:00:00.000Z' },
+      ],
+    });
+    expect(request.logs).toEqual([{ planId: PLAN_ID, date: '2026-10-28', amount: 0, correctedAt: fixedAt }]);
+    expect(errorOf(() => parse({ logs: [{ planId: PLAN_ID, date: '2026-10-28', amount: 0 }] })).status).toBe(400);
+    expect(errorOf(() => parse({ logs: [{ planId: PLAN_ID, date: '2026-10-28', amount: 1, correctedAt: 'yesterday' }] })).status).toBe(400);
+  });
+
   it('keeps values exactly as sent (client times, names, fractional amounts)', () => {
     const request = parse({
       plans: [{ ...PLAN, amount: 2.5, clientUpdatedAt: '2030-01-01T00:00:00.000Z' }],

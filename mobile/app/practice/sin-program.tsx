@@ -1,24 +1,32 @@
 /**
- * «ترك المعصية» — LOCAL ONLY (roadmap §0.1, §4). The chosen sin, the check-ins and the notes live in the
+ * «ترك المعصية»: LOCAL ONLY (roadmap §0.1, §4). The chosen sin, the check-ins and the notes live in the
  * practice-core Store on this device and are never synced, sent, logged or shown in a notification.
  * The only network calls here are public and identical for every user: the catalog, the evidence of ALL
  * programs at once (useSinProgramEvidence) and the public sins list for names.
+ * The sin's name is never a title: the native header and the page title stay generic («ترك المعصية», see
+ * practice/_layout.tsx), and the name shows only as plain text inside the page, never as a header element.
  *
  * Flow: choose a catalog program → the willpower question (only when the program's `gradualAllowed` is true
  * and it is a sin against the right of Allah: owner decision D1) → practice-core `startProgram`. Then the
  * current stage (`currentStage`) with its reviewed title/body, practical steps, alternatives, evidence, the
  * daily check-in (held / weak / fell_repented + private note), `summary` (counts of days only) and, after
  * «وقعت ثم تبت», the `afterFall` («خربانة؟ صلّحها») content. «احذف كل بيانات البرنامج» wipes it all at once
- * (no confirmation step): local data, the vault key, the server vault, and the private reminders.
+ * (no confirmation step: «خروج آمن», roadmap §4.2): local data, the vault key, the server vault, and the private
+ * reminders (wipePrograms turns `sinReminders` off, so the lifecycle cancels them).
+ *
+ * Layout after the website's leave-sin page: the title, the privacy line (ShieldCheck), the vault box, then the
+ * chooser or the program (stage, steps, check-in, texts), the reminders, and the wipe section last.
  */
 
 import React, { useState } from 'react';
-import { Alert, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { Check, Plus, ShieldCheck } from 'lucide-react-native';
 import {
   addDays,
   afterFall,
+  isActiveProgram,
   checkIn,
   currentStage,
   startProgram,
@@ -34,86 +42,154 @@ import { shortDate } from '@/lib/practice/format';
 import { ensurePermission } from '@/lib/practice/notifications';
 import { today, usePracticeStore } from '@/lib/practice/practice-store';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
+import { wipeSinProgramEverywhere } from '@/lib/practice/vault-runner';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import type { QuoteDto } from '@/lib/types/api';
-import { ErrorState } from '@/components/ErrorState';
 import { EvidenceList } from '@/components/practice/EvidenceList';
 import { TimeField } from '@/components/practice/editors';
-import { VaultCard } from '@/components/practice/VaultCard';
-import { useAuthStore } from '@/lib/stores/auth-store';
-import { wipeSinProgramEverywhere } from '@/lib/practice/vault-runner';
+import { VaultCard, VaultSignInNote } from '@/components/practice/VaultCard';
+import { radius, space, useStyles, type Theme } from '@/theme';
 import {
-  ArabicBody,
-  Body,
   Button,
-  Card,
-  Chip,
-  LinkRow,
-  Loading,
-  Row,
+  CheckRow,
+  ErrorState,
+  Field,
+  Icon,
+  NextStep,
+  Notice,
+  PageHeader,
+  Rule,
   Screen,
-  SectionTitle,
+  Section,
+  Skeleton,
   SwitchRow,
-  Wrap,
-  practiceStyles,
-} from '@/components/practice/ui';
+  Text,
+} from '@/ui';
 
 const CHECK_IN_KEYS: Record<CheckInValue, string> = {
   held: 'sinProgram.held',
   weak: 'sinProgram.weak',
   fell_repented: 'sinProgram.fell',
 };
+const CHECK_IN_VALUES: readonly CheckInValue[] = ['held', 'weak', 'fell_repented'];
+/** `summary` window: the last 30 days, today included. */
+const SUMMARY_SPAN = 29;
+
+const makeStyles = (t: Theme) => ({
+  flex: { flex: 1 },
+  block: { gap: space.md },
+  tight: { gap: space.xs },
+  options: { gap: space.sm },
+  note: { minHeight: 96, textAlignVertical: 'top' as const },
+  stages: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: space.sm },
+  stagePill: {
+    paddingHorizontal: space.md,
+    paddingVertical: space.xs,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: t.colors.border,
+  },
+  stagePillCurrent: { borderColor: t.colors.primary },
+  bulletRow: { flexDirection: 'row' as const, alignItems: 'flex-start' as const, gap: space.md },
+  bullet: { width: 5, height: 5, borderRadius: radius.full, backgroundColor: t.colors.mutedForeground, marginTop: 12 },
+  bulletText: { flex: 1 },
+  altList: { borderTopWidth: 1, borderTopColor: t.colors.border },
+  altRow: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: space.md,
+    minHeight: 64,
+    paddingVertical: space.md,
+    borderBottomWidth: 1,
+    borderBottomColor: t.colors.border,
+  },
+  added: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 6 },
+  wipe: { gap: space.md, paddingTop: space['2xl'], borderTopWidth: 1, borderTopColor: t.colors.border },
+});
 
 export default function SinProgramScreen() {
   const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
   const locale = useUiLocale();
   const hydrated = usePracticeStore((s) => s.hydrated);
-  const program = usePracticeStore((s) => s.store.programs[0]);
+  const program = usePracticeStore((s) => s.store.programs.find(isActiveProgram));
   const catalog = usePracticeCatalog(locale);
   const evidence = useSinProgramEvidence(catalog.data, locale);
   const sins = useSins({ limit: 100 });
   const userId = useAuthStore((s) => s.user?.id ?? null);
+  const [wiped, setWiped] = useState(false);
 
-  if (!hydrated || catalog.isLoading) return <Loading />;
+  if (!hydrated || catalog.isLoading || sins.isLoading) return <ProgramSkeleton />;
   if (catalog.isError || !catalog.data) {
-    return <ErrorState message={t('practice.catalogError')} onRetry={() => void catalog.refetch()} />;
+    return (
+      <Screen edges={['bottom']}>
+        <PageHeader eyebrow={t('practice.title')} title={t('sinProgram.title')} lead={t('sinProgram.lead')} />
+        <ErrorState message={t('practice.catalogError')} onRetry={() => void catalog.refetch()} />
+      </Screen>
+    );
   }
 
   const sinName = (slug: string) => {
     const s = sins.data?.find((x) => x.slug === slug);
-    if (!s) return slug;
+    // Never the raw slug: an unknown sin reads as «برنامجك».
+    if (!s) return t('sinProgram.unnamed');
     return locale === 'en' ? s.name || s.nameAr : s.nameAr || s.name;
   };
 
   return (
-    <Screen>
-      <Card tone="private">
-        <Body small>{t('sinProgram.privacy')}</Body>
-      </Card>
-      {userId ? (
-        <VaultCard userId={userId} hasProgram={Boolean(program)} />
-      ) : (
-        <Body small muted>
-          {t('vault.signInHint')}
-        </Body>
-      )}
-      {program ? (
-        <ProgramView
-          program={program}
-          entry={catalog.data.sinPrograms.programs.find((p) => p.sin === program.sinSlug)}
-          sinName={sinName(program.sinSlug)}
-          evidenceById={evidence.data}
-          evidenceLoading={evidence.isLoading}
-          evidenceError={evidence.isError}
-        />
-      ) : (
-        <ChooseProgram programs={catalog.data.sinPrograms.programs} sinName={sinName} />
-      )}
+    <KeyboardAvoidingView style={styles.flex} behavior="padding">
+      <Screen edges={['bottom']}>
+        <PageHeader eyebrow={t('practice.title')} title={t('sinProgram.title')} lead={t('sinProgram.lead')} />
+        <Notice icon={ShieldCheck}>{t('sinProgram.privacy')}</Notice>
+        {wiped && !program ? <Notice icon={Check}>{t('sinProgram.wiped')}</Notice> : null}
+        {userId ? <VaultCard userId={userId} hasProgram={Boolean(program)} /> : <VaultSignInNote />}
+        {program ? (
+          <ProgramView
+            program={program}
+            entry={catalog.data.sinPrograms.programs.find((p) => p.sin === program.sinSlug)}
+            sinName={sinName(program.sinSlug)}
+            evidenceById={evidence.data}
+            evidenceLoading={evidence.isLoading}
+            evidenceError={evidence.isError}
+          />
+        ) : (
+          <ChooseProgram programs={catalog.data.sinPrograms.programs} sinName={sinName} />
+        )}
+        {program ? <SinReminders /> : null}
+        {program ? <WipeSection userId={userId} onWiped={() => setWiped(true)} /> : null}
+      </Screen>
+    </KeyboardAvoidingView>
+  );
+}
+
+/** The page's shape while the store, the catalog and the names load. */
+function ProgramSkeleton() {
+  const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
+  return (
+    <Screen edges={['bottom']}>
+      <PageHeader eyebrow={t('practice.title')} title={t('sinProgram.title')} lead={t('sinProgram.lead')} />
+      <View style={styles.block} accessibilityLabel={t('common.loading')}>
+        <Skeleton height={16} />
+        <Skeleton width="80%" height={16} />
+      </View>
+      <View style={styles.options}>
+        <Skeleton height={64} />
+        <Skeleton height={64} />
+        <Skeleton height={64} />
+      </View>
     </Screen>
   );
 }
 
-function ChooseProgram({ programs, sinName }: { programs: CatalogSinProgram[]; sinName: (slug: string) => string }) {
+interface ChooseProgramProps {
+  programs: CatalogSinProgram[];
+  sinName: (slug: string) => string;
+}
+
+function ChooseProgram({ programs, sinName }: ChooseProgramProps) {
   const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
   const locale = useUiLocale();
   const catalog = usePracticeCatalog(locale);
   const setStore = usePracticeStore((s) => s.setStore);
@@ -136,84 +212,228 @@ function ChooseProgram({ programs, sinName }: { programs: CatalogSinProgram[]; s
   }
 
   return (
-    <>
-      <SectionTitle>{t('sinProgram.choose')}</SectionTitle>
-      <Card>
+    <Section title={t('sinProgram.choose')}>
+      <View style={styles.options} accessibilityRole="radiogroup">
         {programs.map((p) => (
-          <LinkRow
+          <CheckRow
             key={p.sin}
-            label={`${selected?.sin === p.sin ? '✓ ' : ''}${sinName(p.sin)}`}
+            radio
+            title={sinName(p.sin)}
             hint={p.category === 'haqq_ibad' ? t('sinProgram.categoryIbad') : t('sinProgram.categoryAllah')}
+            checked={selected?.sin === p.sin}
             onPress={() => {
               setSelected(p);
               setHard(null);
             }}
           />
         ))}
-      </Card>
+      </View>
       {selected && asksWill && common ? (
-        <Card>
-          <Body>{pick(common, 'willQuestion', locale)}</Body>
-          <Wrap>
-            <Chip label={t('sinProgram.yesHard')} selected={hard === true} onPress={() => setHard(true)} />
-            <Chip label={t('sinProgram.noCanLeave')} selected={hard === false} onPress={() => setHard(false)} />
-          </Wrap>
-        </Card>
+        <View style={styles.options} accessibilityRole="radiogroup">
+          <Text variant="heading">{pick(common, 'willQuestion', locale)}</Text>
+          <CheckRow radio title={t('sinProgram.yesHard')} checked={hard === true} onPress={() => setHard(true)} />
+          <CheckRow radio title={t('sinProgram.noCanLeave')} checked={hard === false} onPress={() => setHard(false)} />
+        </View>
       ) : null}
-      {selected ? (
-        <Button label={t('sinProgram.start')} onPress={start} disabled={asksWill && hard === null} />
-      ) : null}
-    </>
+      {selected ? <Button label={t('sinProgram.start')} onPress={start} disabled={asksWill && hard === null} arrow large /> : null}
+    </Section>
   );
 }
 
-function StageText({ content }: { content: StageContent }) {
-  const locale = useUiLocale();
-  const body = pick(content, 'body', locale);
+interface SubSectionProps {
+  title: string;
+  children: React.ReactNode;
+  tone?: 'default' | 'link';
+}
+
+/** A titled part of the program (the website's h3). */
+function SubSection({ title, children, tone }: SubSectionProps) {
+  const styles = useStyles(makeStyles);
   return (
-    <>
-      <Body>{pick(content, 'title', locale)}</Body>
-      {locale === 'ar' ? <ArabicBody>{body}</ArabicBody> : <Body>{body}</Body>}
-    </>
+    <View style={styles.block}>
+      <Text variant="heading" tone={tone} accessibilityRole="header">
+        {title}
+      </Text>
+      {children}
+    </View>
   );
 }
 
-function ProgramView({
-  program,
-  entry,
-  sinName,
-  evidenceById,
-  evidenceLoading,
-  evidenceError,
-}: {
+function StageBody({ content }: { content: StageContent }) {
+  const locale = useUiLocale();
+  return <Text variant={locale === 'ar' ? 'reading' : 'body'}>{pick(content, 'body', locale)}</Text>;
+}
+
+function BulletList({ items }: { items: string[] }) {
+  const styles = useStyles(makeStyles);
+  return (
+    <View style={styles.tight}>
+      {items.map((item) => (
+        <View key={item} style={styles.bulletRow}>
+          <View style={styles.bullet} />
+          <Text variant="body" style={styles.bulletText}>
+            {item}
+          </Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+interface ProgramViewProps {
   program: SinProgram;
   entry: CatalogSinProgram | undefined;
   sinName: string;
   evidenceById: Map<string, QuoteDto> | undefined;
   evidenceLoading: boolean;
   evidenceError: boolean;
-}) {
+}
+
+function ProgramView({ program, entry, sinName, evidenceById, evidenceLoading, evidenceError }: ProgramViewProps) {
   const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
+  const locale = useUiLocale();
+  const catalog = usePracticeCatalog(locale);
+  const common = catalog.data?.sinPrograms.common;
+  const d = today();
+  const stage = currentStage(program, d);
+  const stageKeys = stagesFor(program.category);
+  const stageContent = common?.stages[stage.stage];
+  const todayCheckIn = program.checkIns.find((c) => c.date === d);
+  const showAfterFall = todayCheckIn?.value === 'fell_repented' && afterFall(program) === 'fixit';
+  const actions = entry ? pickList(entry.actionsAr, entry.actionsEn, locale) : [];
+  const gradual = entry && program.path === 'gradual' ? pickList(entry.gradualStepsAr, entry.gradualStepsEn, locale) : [];
+  const evidenceProps = { byId: evidenceById, loading: evidenceLoading, error: evidenceError };
+
+  return (
+    <>
+      {/* The name is page content only: no header role, so it never lands in a title or the headings list. */}
+      <View style={styles.tight}>
+        <Text variant="title">{sinName}</Text>
+        <Text variant="small" tone="muted">
+          {`${program.path === 'gradual' ? t('sinProgram.pathGradual') : t('sinProgram.pathCut')} · ${
+            program.category === 'haqq_ibad' ? t('sinProgram.categoryIbad') : t('sinProgram.categoryAllah')
+          }`}
+        </Text>
+      </View>
+
+      {gradual.length > 0 ? (
+        <NextStep title={t('sinProgram.gradualSteps')}>
+          {gradual.map((step, i) => (
+            <Text key={step} variant="small">{`${i + 1}. ${step}`}</Text>
+          ))}
+        </NextStep>
+      ) : null}
+
+      {stageContent && common ? (
+        <View style={styles.block}>
+          <Text variant="eyebrow">
+            {`${t('sinProgram.stage', { n: String(stage.index + 1), total: String(stageKeys.length) })} · ${t('sinProgram.since', {
+              date: shortDate(stage.since),
+            })}`}
+          </Text>
+          <Text variant="heading" accessibilityRole="header">
+            {pick(stageContent, 'title', locale)}
+          </Text>
+          <StageBody content={stageContent} />
+          <Text variant="small" tone="muted">
+            {t('sinProgram.stageHint')}
+          </Text>
+          <View style={styles.stages}>
+            {stageKeys.map((key, index) => {
+              const content = common.stages[key];
+              if (!content) return null;
+              const current = index === stage.index;
+              return (
+                <View key={key} style={[styles.stagePill, current && styles.stagePillCurrent]} accessibilityState={{ selected: current }}>
+                  <Text variant="caption" tone={current ? 'link' : 'muted'}>
+                    {pick(content, 'title', locale)}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+      ) : null}
+      <EvidenceList ids={stageContent?.evidence} {...evidenceProps} />
+
+      {actions.length > 0 ? (
+        <SubSection title={t('sinProgram.actions')}>
+          <BulletList items={actions} />
+        </SubSection>
+      ) : null}
+
+      {entry?.alternatives && entry.alternatives.length > 0 ? <Alternatives keys={entry.alternatives} /> : null}
+
+      {entry?.help && common ? <NextStep title={t('sinProgram.help')}>{pick(common, 'help', locale)}</NextStep> : null}
+
+      <CheckInForm program={program} />
+
+      {showAfterFall && common ? (
+        <SubSection title={pick(common.afterFall, 'title', locale)} tone="link">
+          <StageBody content={common.afterFall} />
+          <EvidenceList ids={common.afterFall.evidence} {...evidenceProps} />
+        </SubSection>
+      ) : null}
+
+      <EvidenceList ids={entry?.evidence} {...evidenceProps} />
+    </>
+  );
+}
+
+/** Good habits in its place: each opens «أضف عادة» prefilled, or shows that it is already a habit. */
+function Alternatives({ keys }: { keys: string[] }) {
+  const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
   const locale = useUiLocale();
   const catalog = usePracticeCatalog(locale);
   const plans = usePracticeStore((s) => s.store.plans);
-  const prefs = usePracticeStore((s) => s.prefs);
+  const habits = catalog.data?.habits ?? [];
+  const planIds = new Set(plans.map((p) => p.habitKey ?? p.id));
+  return (
+    <SubSection title={t('sinProgram.alternatives')}>
+      <View style={styles.altList}>
+        {keys.map((key) => {
+          const h = habits.find((x) => x.key === key);
+          if (!h) return null;
+          return (
+            <View key={key} style={styles.altRow}>
+              <Text variant="body" style={styles.bulletText}>
+                {pick(h, 'title', locale)}
+              </Text>
+              {planIds.has(key) ? (
+                <View style={styles.added}>
+                  <Icon icon={Check} size={16} tone="link" />
+                  <Text variant="small" tone="muted">
+                    {t('sinProgram.added')}
+                  </Text>
+                </View>
+              ) : (
+                <Button
+                  label={t('sinProgram.addAlternative')}
+                  icon={Plus}
+                  onPress={() => router.push({ pathname: '/practice/add', params: { habit: key } })}
+                  variant="outline"
+                />
+              )}
+            </View>
+          );
+        })}
+      </View>
+    </SubSection>
+  );
+}
+
+/** «كيف كان يومك؟»: one of three, an optional private note (on this device only), then counts of days only. */
+function CheckInForm({ program }: { program: SinProgram }) {
+  const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
   const setStore = usePracticeStore((s) => s.setStore);
-  const setPrefs = usePracticeStore((s) => s.setPrefs);
-  const userId = useAuthStore((s) => s.user?.id ?? null);
   const [value, setValue] = useState<CheckInValue | null>(null);
   const [note, setNote] = useState('');
-
-  const common = catalog.data?.sinPrograms.common;
-  const habits = catalog.data?.habits ?? [];
   const d = today();
-  const stage = currentStage(program, d);
-  const total = stagesFor(program.category).length;
-  const stageContent = common?.stages[stage.stage];
   const todayCheckIn = program.checkIns.find((c) => c.date === d);
-  const counts = summary(program, addDays(d, -29), d);
-  const showAfterFall = todayCheckIn?.value === 'fell_repented' && afterFall(program) === 'fixit';
-  const planIds = new Set(plans.map((p) => p.habitKey ?? p.id));
+  const counts = summary(program, addDays(d, -SUMMARY_SPAN), d);
 
   function save() {
     if (!value) return;
@@ -225,160 +445,96 @@ function ProgramView({
     setNote('');
   }
 
+  return (
+    <SubSection title={t('sinProgram.checkInTitle')}>
+      {todayCheckIn ? (
+        <Text variant="small" tone="muted">
+          {t('sinProgram.todayValue', { value: t(CHECK_IN_KEYS[todayCheckIn.value]) })}
+        </Text>
+      ) : null}
+      <View style={styles.options} accessibilityRole="radiogroup">
+        {CHECK_IN_VALUES.map((v) => (
+          <CheckRow key={v} radio title={t(CHECK_IN_KEYS[v])} checked={value === v} onPress={() => setValue(v)} />
+        ))}
+      </View>
+      <Field
+        label={t('sinProgram.note')}
+        value={note}
+        onChangeText={setNote}
+        multiline
+        style={styles.note}
+        autoComplete="off"
+        importantForAutofill="no"
+      />
+      <Button label={t('sinProgram.saveCheckIn')} onPress={save} disabled={!value} />
+      <Text variant="small" tone="muted">
+        {t('sinProgram.summary', { days: String(counts.daysCheckedIn) })}
+      </Text>
+    </SubSection>
+  );
+}
+
+/** The private daily reminder: its text never names the program (see `sinProgram.remindersHint`). */
+function SinReminders() {
+  const { t } = useTranslation();
+  const prefs = usePracticeStore((s) => s.prefs);
+  const setPrefs = usePracticeStore((s) => s.setPrefs);
+  const [denied, setDenied] = useState(false);
+
   async function toggleReminders(on: boolean) {
+    setDenied(false);
     if (on && !(await ensurePermission(t('practice.notify.channelName')))) {
-      Alert.alert(t('practice.permissionDenied'));
+      setDenied(true);
       return;
     }
     setPrefs((p) => ({ ...p, sinReminders: on }));
   }
 
-  // «خروج آمن»: one tap erases everything at once (roadmap §4.2), no confirmation step in between.
-  function wipe() {
-    // Local programs and notes, the vault key (memory + keystore) and, signed in, the vault on the server.
-    void wipeSinProgramEverywhere(userId).then(() => Alert.alert(t('sinProgram.wiped')));
-  }
-
-  const actions = entry ? pickList(entry.actionsAr, entry.actionsEn, locale) : [];
-  const gradual = entry && program.path === 'gradual' ? pickList(entry.gradualStepsAr, entry.gradualStepsEn, locale) : [];
-
   return (
-    <>
-      <SectionTitle>{sinName}</SectionTitle>
-      <Body muted small>
-        {program.path === 'gradual' ? t('sinProgram.pathGradual') : t('sinProgram.pathCut')} ·{' '}
-        {program.category === 'haqq_ibad' ? t('sinProgram.categoryIbad') : t('sinProgram.categoryAllah')}
-      </Body>
-
-      {stageContent ? (
-        <Card tone="info">
-          <Body small muted>
-            {t('sinProgram.stage', { n: String(stage.index + 1), total: String(total) })} ·{' '}
-            {t('sinProgram.since', { date: shortDate(stage.since) })}
-          </Body>
-          <StageText content={stageContent} />
-          <Body small muted>
-            {t('sinProgram.stageHint')}
-          </Body>
-        </Card>
-      ) : null}
-      <EvidenceList ids={stageContent?.evidence} byId={evidenceById} loading={evidenceLoading} error={evidenceError} />
-
-      {entry?.help && common ? (
-        <Card tone="warning">
-          <Body>{t('sinProgram.help')}</Body>
-          <Body>{pick(common, 'help', locale)}</Body>
-        </Card>
-      ) : null}
-
-      <Card>
-        <Body>{t('sinProgram.checkInTitle')}</Body>
-        {todayCheckIn ? (
-          <Body muted small>
-            {t('sinProgram.todayValue', { value: t(CHECK_IN_KEYS[todayCheckIn.value]) })}
-          </Body>
-        ) : null}
-        <Wrap>
-          {(['held', 'weak', 'fell_repented'] as const).map((v) => (
-            <Chip key={v} label={t(CHECK_IN_KEYS[v])} selected={value === v} onPress={() => setValue(v)} />
-          ))}
-        </Wrap>
-        <TextInput
-          value={note}
-          onChangeText={setNote}
-          placeholder={t('sinProgram.note')}
-          multiline
-          style={[practiceStyles.input, { minHeight: 64, textAlignVertical: 'top' }]}
-          autoComplete="off"
-          accessibilityLabel={t('sinProgram.note')}
-        />
-        <Button label={t('sinProgram.saveCheckIn')} onPress={save} disabled={!value} compact />
-        <Body muted small>
-          {t('sinProgram.summary', { days: String(counts.daysCheckedIn) })}
-        </Body>
-      </Card>
-
-      {showAfterFall && common ? (
+    <Section title={t('practice.reminders')}>
+      <SwitchRow
+        label={t('sinProgram.reminders')}
+        hint={t('sinProgram.remindersHint')}
+        value={prefs.sinReminders}
+        onValueChange={(v) => void toggleReminders(v)}
+      />
+      {denied ? <Notice tone="destructive">{t('practice.permissionDenied')}</Notice> : null}
+      {prefs.sinReminders ? (
         <>
-          <Card tone="info">
-            <StageText content={common.afterFall} />
-          </Card>
-          <EvidenceList ids={common.afterFall.evidence} byId={evidenceById} loading={evidenceLoading} error={evidenceError} />
+          <Rule />
+          <TimeField label={t('sinProgram.time')} value={prefs.sinReminderTime} onChange={(time) => setPrefs((p) => ({ ...p, sinReminderTime: time }))} />
         </>
       ) : null}
+    </Section>
+  );
+}
 
-      {actions.length > 0 ? (
-        <Card>
-          <Body>{t('sinProgram.actions')}</Body>
-          {actions.map((a) => (
-            <Body key={a}>• {a}</Body>
-          ))}
-        </Card>
-      ) : null}
+interface WipeSectionProps {
+  userId: string | null;
+  onWiped: () => void;
+}
 
-      {gradual.length > 0 ? (
-        <Card>
-          <Body>{t('sinProgram.gradualSteps')}</Body>
-          {gradual.map((a, i) => (
-            <Body key={a}>
-              {i + 1}. {a}
-            </Body>
-          ))}
-        </Card>
-      ) : null}
+/** «خروج آمن»: one tap erases everything at once (roadmap §4.2), no confirmation step in between. */
+function WipeSection({ userId, onWiped }: WipeSectionProps) {
+  const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
 
-      {entry?.alternatives && entry.alternatives.length > 0 ? (
-        <Card>
-          <Body>{t('sinProgram.alternatives')}</Body>
-          {entry.alternatives.map((key) => {
-            const h = habits.find((x) => x.key === key);
-            if (!h) return null;
-            return (
-              <Row key={key} style={{ justifyContent: 'space-between' }}>
-                <View style={{ flex: 1 }}>
-                  <Body>{pick(h, 'title', locale)}</Body>
-                </View>
-                {planIds.has(key) ? (
-                  <Body muted small>
-                    {t('sinProgram.added')}
-                  </Body>
-                ) : (
-                  <Button
-                    label={t('sinProgram.addAlternative')}
-                    onPress={() => router.push({ pathname: '/practice/add', params: { habit: key } })}
-                    variant="outline"
-                    compact
-                  />
-                )}
-              </Row>
-            );
-          })}
-        </Card>
-      ) : null}
+  function wipe() {
+    // The local store empties at once (this section unmounts with the program); the parent says it is done.
+    onWiped();
+    // Local programs and notes, the vault key (memory + keystore) and, signed in, the vault on the server.
+    void wipeSinProgramEverywhere(userId);
+  }
 
-      <EvidenceList ids={entry?.evidence} byId={evidenceById} loading={evidenceLoading} error={evidenceError} />
-
-      <SectionTitle>{t('practice.reminders')}</SectionTitle>
-      <Card>
-        <SwitchRow
-          label={t('sinProgram.reminders')}
-          hint={t('sinProgram.remindersHint')}
-          value={prefs.sinReminders}
-          onValueChange={(v) => void toggleReminders(v)}
-        />
-        {prefs.sinReminders ? (
-          <TimeField
-            label={t('sinProgram.time')}
-            value={prefs.sinReminderTime}
-            onChange={(time) => setPrefs((p) => ({ ...p, sinReminderTime: time }))}
-          />
-        ) : null}
-      </Card>
-
-      <Button label={t('sinProgram.wipe')} onPress={wipe} variant="danger" />
-      <Body muted small>
+  return (
+    <View style={styles.wipe}>
+      <Text variant="heading" accessibilityRole="header">
+        {t('sinProgram.wipe')}
+      </Text>
+      <Text variant="small" tone="muted">
         {t('sinProgram.wipeHint')}
-      </Body>
-    </>
+      </Text>
+      <Button label={t('sinProgram.wipe')} onPress={wipe} variant="destructive" />
+    </View>
   );
 }

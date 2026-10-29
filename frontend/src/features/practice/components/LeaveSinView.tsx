@@ -4,6 +4,7 @@ import { useMemo, useState, useSyncExternalStore } from 'react';
 import { RefreshCw, ShieldCheck } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocale, useTranslations } from 'next-intl';
+import { activePrograms } from '@thekra/practice-core';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,7 +56,7 @@ export function LeaveSinView() {
   const evidence = usePracticeEvidence(evidenceIds, Boolean(catalog.data));
   const preselected = useSyncExternalStore(noSubscribe, pendingProgramForSession, serverPending);
   const [choosing, setChoosing] = useState(false);
-  const programCount = snapshot?.store.programs.length ?? 0;
+  const programCount = snapshot ? activePrograms(snapshot.store.programs).length : 0;
   const contentRef = useFocusOnChange<HTMLDivElement>(`${choosing}-${programCount}`);
 
   const names = useMemo(
@@ -81,7 +82,7 @@ export function LeaveSinView() {
   }
 
   const { common, programs: entries } = catalog.data.sinPrograms;
-  const active = snapshot.store.programs.flatMap((program) => {
+  const active = activePrograms(snapshot.store.programs).flatMap((program) => {
     const entry = entries.find((e) => e.sin === program.sinSlug);
     return entry ? [{ program, entry }] : [];
   });
@@ -139,6 +140,7 @@ export function LeaveSinView() {
         </button>
       ) : null}
 
+      {/* Any program data counts, end markers included, so «احذف كل بيانات البرنامج» can always clear them. */}
       <WipeAll hasPrograms={snapshot.store.programs.length > 0} />
     </div>
   );

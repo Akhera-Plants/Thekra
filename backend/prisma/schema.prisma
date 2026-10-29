@@ -855,14 +855,18 @@ model HabitPlan {
   @@index([userId, updatedAt])
 }
 
-/// Amount done per plan and day. Merge: the larger amount wins (logging never goes down). Kept while the plan
-/// is soft-deleted, so a newer edit that restores the plan restores its logs.
+/// Amount done per plan and day. Merge: the later `correctedAt` wins (null counts as the oldest), then the
+/// larger amount (plain logging never goes down). Kept while the plan is soft-deleted, so a newer edit that
+/// restores the plan restores its logs.
 model HabitLog {
-  planId    String
-  plan      HabitPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
-  date      DateTime  @db.Date
-  amount    Float
-  updatedAt DateTime  @updatedAt
+  planId      String
+  plan        HabitPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  date        DateTime  @db.Date
+  /// Above 0, or 0 for a day cleared by a correction.
+  amount      Float
+  /// Client time of the last correction (undo of «تمّ», a fixed amount); null when only ever added to.
+  correctedAt DateTime?
+  updatedAt   DateTime  @updatedAt
 
   @@id([planId, date])
 }

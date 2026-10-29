@@ -17,7 +17,7 @@ import { Button } from '@/components/shared/kit/button';
 import { formatDigits } from '@/lib/format/digits';
 import { downloadTextFile, ICS_MIME } from '@/lib/practice/download';
 import { formatGregorian } from '@/lib/practice/format';
-import { kinshipEvents, rhythmOf } from '@/lib/practice/kinship';
+import { kinshipEvents, langOf, rhythmOf } from '@/lib/practice/kinship';
 import { updatePrefs, updateStore } from '@/lib/practice/local-store';
 import { usePracticeStore } from '../hooks/usePracticeStore';
 import { useToday } from '../hooks/useToday';
@@ -26,11 +26,6 @@ import { PracticeLoading } from './PracticeLoading';
 import { RelativeForm } from './RelativeForm';
 
 const BUCKETS = ['overdue', 'thisWeek', 'later'] as const;
-
-/** What the user typed may be in either script: mark Arabic so the English view keeps it isolated. */
-function langOf(text: string): 'ar' | undefined {
-  return /[\u0600-\u06FF]/.test(text) ? 'ar' : undefined;
-}
 
 function changeRelative(id: string, change: (relative: Relative) => Relative): void {
   updateStore((store) => updateRelative(store, id, change));

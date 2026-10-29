@@ -162,6 +162,12 @@
   "logButton": {
     "message": "Log"
   },
+  "undoLog": {
+    "message": "Undo the last log"
+  },
+  "clearToday": {
+    "message": "Clear today's log"
+  },
   "bandExcellent": {
     "message": "Excellent consistency over the last 4 weeks"
   },
@@ -217,6 +223,9 @@
   },
   "signInInvalid": {
     "message": "Wrong email or password."
+  },
+  "signInConsent": {
+    "message": "You did not allow sending your email and sign-in details, so you are not signed in. The extension works fully on this device without an account."
   },
   "signInThrottled": {
     "message": "Too many attempts; try again shortly."

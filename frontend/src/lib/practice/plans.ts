@@ -23,11 +23,15 @@ import {
   timeToMinutes,
   toHijri,
   baseAmount,
+  endEbb,
+  startEbb,
+  updatePlan,
   type AdherenceBand,
   type IcsEvent,
   type LocalDate,
   type Plan,
   type Rule,
+  type Store,
 } from '@thekra/practice-core';
 import type { PracticeHabit } from '@/lib/types/practice';
 import { newUuid } from './ids';
@@ -196,4 +200,9 @@ export function planReminderEvents(
 
 export function planRemindersIcs(events: IcsEvent[], calendarName: string, now?: Date): string {
   return buildIcs({ calendarName, events, now });
+}
+
+/** «يومي ثقيل» for every plan at once (`on`), or back to the plans' own amounts. */
+export function setEbbForAll(store: Store, on: boolean, today: LocalDate): Store {
+  return store.plans.reduce((next, plan) => updatePlan(next, plan.id, (p) => (on ? startEbb(p, today) : endEbb(p))), store);
 }
