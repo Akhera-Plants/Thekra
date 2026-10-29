@@ -17,6 +17,8 @@ import {
   updatePlan,
   type Plan,
 } from '@thekra/practice-core';
+import { Link } from '@/i18n/navigation';
+import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { Button } from '@/components/shared/kit/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -52,10 +54,12 @@ export function usePlanWords(plan: Plan, habit: PracticeHabit | undefined) {
   const t = useTranslations('practice.units');
   const english = locale === 'en';
   const title = habit ? (english ? habit.titleEn : habit.titleAr) : plan.title;
-  const unit = habit ? (english ? habit.unitLabelEn : habit.unitLabelAr) : t(plan.unit);
+  const catalogUnit = habit ? (english ? habit.unitLabelEn : habit.unitLabelAr) : t(plan.unit);
+  // The number fields count units; for prayers the word says how a unit maps to rak'ahs.
+  const unit = habit?.rakah ? t(habit.rakah === 'pairs' ? 'rakahPairs' : 'rakahOdd') : catalogUnit;
   // Without the catalog the stored (Arabic) title is all there is: mark it as Arabic on /en.
   const titleLang = !habit && english ? 'ar' : undefined;
-  return { title, titleLang, unit, amount: (n: number) => amountLabel(n, plan.unit, unit) };
+  return { title, titleLang, unit, amount: (n: number) => amountLabel(n, plan.unit, unit, english, habit?.rakah) };
 }
 
 export function PlanCard({ plan, habit, view, today, ramadanUntil }: PlanCardProps) {
@@ -246,6 +250,11 @@ export function PlanCard({ plan, habit, view, today, ramadanUntil }: PlanCardPro
             {t('remove')}
           </Button>
         )}
+        {habit ? (
+          <Link href={`/good-deeds/${habit.deed}`} className="text-link ms-auto px-2">
+            {t('readAbout')} <DirectionalArrow />
+          </Link>
+        ) : null}
       </div>
       {showEvidence && habit ? (
         <div id={`${evidenceId}-evidence`}>

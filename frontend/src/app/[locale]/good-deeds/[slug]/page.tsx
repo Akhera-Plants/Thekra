@@ -5,6 +5,7 @@ import { ArabicText } from '@/components/shared/ArabicText';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import type { ReaderItem, ReaderSection } from '@/components/shared/editorial/ReminderReader';
 import { GoodDeedReader } from '@/features/good-deed-motivation/components/GoodDeedReader';
+import { DeedHabits } from '@/features/practice/components/DeedHabits';
 import { TOPIC_PAGE_SIZE, interleaveReading } from '@/lib/reading';
 import { getGoodDeed, getGoodDeedQuotes, getGoodDeeds } from '@/lib/api/good-deeds';
 import { rethrowUnlessNotFound, topSlugs } from '@/lib/api/server-guard';
@@ -130,6 +131,7 @@ export default async function GoodDeedDetailPage({
               {/[\u0600-\u06FF]/.test(reward) ? <ArabicText size="lg">{reward}</ArabicText> : <p>{reward}</p>}
             </aside>
           ) : null}
+          {deed.schedule ? <DeedHabits habits={deed.schedule.habits} /> : null}
           {deed.branches && deed.branches.length > 0 ? (
             <ul className="flex flex-col gap-1 text-sm text-muted-foreground">
               {deed.branches.map((branch) => (

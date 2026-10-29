@@ -26,7 +26,7 @@ import { PushRemindersCard } from './PushRemindersCard';
 
 /**
  * «طاعاتي»: setup, today's habits, in-app reminders, «وين وصلت», calendar file. `?add=1` (from «أضف» on the hub)
- * opens the setup at once; a `#plan-<id>` hash (a habit row on the hub) scrolls to that plan.
+ * opens the setup at once, with `&habit=<key>` (a good-deed page's «ابدأ بها») already chosen; a `#plan-<id>` hash (a habit row on the hub) scrolls to that plan.
  */
 export function PracticeView() {
   const t = useTranslations('practice.today');
@@ -35,7 +35,9 @@ export function PracticeView() {
   const clock = useToday();
   const catalog = usePracticeCatalog();
   const router = useRouter();
-  const isAddRequested = useSearchParams().get('add') === '1';
+  const searchParams = useSearchParams();
+  const isAddRequested = searchParams.get('add') === '1';
+  const requestedHabit = isAddRequested ? searchParams.get('habit') : null;
   const [adding, setAdding] = useState(isAddRequested);
   const today = clock?.today ?? null;
   const viewKey = !snapshot ? 'loading' : snapshot.store.plans.length === 0 || adding ? 'setup' : 'today';
@@ -76,6 +78,7 @@ export function PracticeView() {
         <PlanSetup
           habits={catalog.data.habits}
           existing={plans}
+          preselected={requestedHabit}
           freeMinutes={snapshot.store.settings.freeMinutesPerDay}
           today={today}
           onDone={finishAdding}

@@ -21,6 +21,8 @@ const CALM_SELECTION = 2;
 interface PlanSetupProps {
   habits: readonly PracticeHabit[];
   existing: readonly Plan[];
+  /** A habit key to start with already chosen (ignored when unknown or already a plan). */
+  preselected?: string | null;
   freeMinutes: number | undefined;
   today: string;
   onDone: () => void;
@@ -30,14 +32,16 @@ interface PlanSetupProps {
 type Step = 'choose' | 'shape' | 'roles';
 
 /** «أعِنّي على طاعة» setup: choose habits → distance, times, days → «فروضي وأدواري» (free time) → plans. */
-export function PlanSetup({ habits, existing, freeMinutes, today, onDone, onCancel }: PlanSetupProps) {
+export function PlanSetup({ habits, existing, preselected, freeMinutes, today, onDone, onCancel }: PlanSetupProps) {
   const t = useTranslations('practice.setup');
   const locale = useLocale();
   const [step, setStep] = useState<Step>('choose');
   const stepRef = useFocusOnChange<HTMLParagraphElement>(step);
-  const [selected, setSelected] = useState<string[]>([]);
-  const [chooseError, setChooseError] = useState(false);
   const available = habits.filter((habit) => !existing.some((plan) => (plan.habitKey ?? plan.id) === habit.key));
+  const [selected, setSelected] = useState<string[]>(() =>
+    preselected && available.some((habit) => habit.key === preselected) ? [preselected] : [],
+  );
+  const [chooseError, setChooseError] = useState(false);
   const chosen = available.filter((habit) => selected.includes(habit.key));
 
   const schema = useMemo(() => makeSetupSchema({ time: t('errors.time'), minutes: t('errors.minutes') }), [t]);
