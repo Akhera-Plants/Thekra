@@ -72,6 +72,10 @@ export function applyIncrease(plan: Plan, rule: Rule, quietDays: readonly number
   return { ...increase(eff, today), activeDaysPerWeek: plan.activeDaysPerWeek };
 }
 
+/**
+ * «يومي ثقيل» on or off. It covers `today` only (practice-core `isEbbOn`): the next day the plan asks its usual
+ * amount again with nothing to undo; turning it off the same day removes it.
+ */
 export function setEbb(plan: Plan, on: boolean, today: LocalDate): Plan {
   return on ? startEbb(plan, today) : endEbb(plan);
 }

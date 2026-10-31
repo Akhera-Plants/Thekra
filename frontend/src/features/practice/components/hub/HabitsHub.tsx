@@ -7,6 +7,7 @@ import { QueryErrorState } from '@/components/shared/feedback/QueryErrorState';
 import { Skeleton } from '@/components/ui/skeleton';
 import { isFirstRun, trackSummary, weekOf, weekStartFor } from '@/lib/practice/hub';
 import type { PracticeSnapshot } from '@/lib/practice/local-store';
+import { planDayOptions } from '@/lib/practice/plans';
 import type { PracticeHabit, ScheduleBasis } from '@/lib/types/practice';
 import { useDaySelection, type DaySelection } from '../../hooks/useDaySelection';
 import { useEndedSeasons } from '../../hooks/useEndedSeasons';
@@ -63,15 +64,17 @@ function HubBody({ snapshot, today, selection }: HubBodyProps) {
     () => new Map<string, ScheduleBasis>((occasions ?? []).map((o) => [o.key, o.basis])),
     [occasions],
   );
-  const items = useMemo(() => dayAgenda(store, selected, { occasions, hijriOffset }), [store, selected, occasions, hijriOffset]);
+  // A habit is listed on its own days only (its rule, else the catalog's, else daily), like its reminders.
+  const planDays = useMemo(() => planDayOptions(habits, hijriOffset), [habits, hijriOffset]);
+  const items = useMemo(() => dayAgenda(store, selected, { occasions, ...planDays }), [store, selected, occasions, planDays]);
   const week = weekOf(selected, weekStartFor(locale));
   const weekFrom = week[0] as string;
   const weekTo = week[6] as string;
   const weekPresence = useMemo(
-    () => new Map<string, DayPresence>(presence(store, weekFrom, weekTo).map((day) => [day.date, day])),
-    [store, weekFrom, weekTo],
+    () => new Map<string, DayPresence>(presence(store, weekFrom, weekTo, planDays).map((day) => [day.date, day])),
+    [store, weekFrom, weekTo, planDays],
   );
-  const summary = useMemo(() => trackSummary(store, today), [store, today]);
+  const summary = useMemo(() => trackSummary(store, today, planDays), [store, today, planDays]);
   const firstRun = isFirstRun(store);
 
   function handleGridSelect(date: string) {
@@ -106,6 +109,7 @@ function HubBody({ snapshot, today, selection }: HubBodyProps) {
             date={selected}
             today={today}
             habits={habits}
+            planDays={planDays}
             occasionBasis={occasionBasis}
             headingRef={dayRef}
           />
@@ -118,6 +122,7 @@ function HubBody({ snapshot, today, selection }: HubBodyProps) {
             selected={selected}
             month={selection.month}
             occasions={occasions}
+            planDays={planDays}
             summary={summary}
             onSelect={handleGridSelect}
             onMonthChange={selection.showMonth}

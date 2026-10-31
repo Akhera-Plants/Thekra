@@ -10,7 +10,7 @@
  * `correctLog` to 0): that day was never tended, so it is not counted. Time and missed days never lower it.
  */
 
-import { isValidDate, type LocalDate, type Plan, type Relative, type Store } from '@thekra/practice-core';
+import { isEbbOn, isValidDate, type LocalDate, type Plan, type Relative, type Store } from '@thekra/practice-core';
 
 /**
  * Days tended a plant needs for each growth stage: 0 seed, 1 sprout, 2 seedling, 3 in leaf, 4 in bud, 5 in bloom.
@@ -47,9 +47,9 @@ export function kinshipTendedDays(relatives: readonly Pick<Relative, 'history'>[
   return days.size;
 }
 
-/** «يومي ثقيل» is on for the plan: the plant rests, exactly as grown. */
-export function isResting(plan: Pick<Plan, 'ebb'>, today: LocalDate): boolean {
-  return plan.ebb !== undefined && plan.ebb.since <= today;
+/** «يومي ثقيل» is on for the plan today (one day only, practice-core `isEbbOn`): the plant rests, exactly as grown. */
+export function isResting(plan: Plan, today: LocalDate): boolean {
+  return isEbbOn(plan, today);
 }
 
 export interface GardenPlant {

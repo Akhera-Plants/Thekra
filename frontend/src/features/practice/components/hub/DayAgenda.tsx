@@ -3,10 +3,19 @@
 import { useId, type Ref } from 'react';
 import { Feather } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
-import { addDays, weekday, type AgendaItem, type Store } from '@thekra/practice-core';
+import {
+  addDays,
+  plansNotAskedOn,
+  requiredOn,
+  weekday,
+  type AgendaItem,
+  type HabitItem,
+  type PlanDayOptions,
+  type Store,
+} from '@thekra/practice-core';
 import { formatGregorian } from '@/lib/practice/format';
 import { canLogOn, isDayComplete } from '@/lib/practice/hub';
-import { habitOf, setEbbForAll } from '@/lib/practice/plans';
+import { habitOf, isEbbDay, setEbbForAll } from '@/lib/practice/plans';
 import { updateStore } from '@/lib/practice/local-store';
 import type { PracticeHabit, ScheduleBasis } from '@/lib/types/practice';
 import { useAgendaActions } from '../../hooks/useAgendaActions';
@@ -18,13 +27,16 @@ interface DayAgendaProps {
   date: string;
   today: string;
   habits: ReadonlyMap<string, PracticeHabit>;
+  /** Which days each plan asks for: the same options the agenda was built with. */
+  planDays: PlanDayOptions;
   occasionBasis: ReadonlyMap<string, ScheduleBasis>;
   headingRef?: Ref<HTMLHeadingElement>;
 }
 
 /** The selected day across every track, in the engine's order, with round checks for what can be done. */
-export function DayAgenda({ items, store, date, today, habits, occasionBasis, headingRef }: DayAgendaProps) {
+export function DayAgenda({ items, store, date, today, habits, planDays, occasionBasis, headingRef }: DayAgendaProps) {
   const t = useTranslations('practice.hub.day');
+  const tToday = useTranslations('practice.today');
   const tDays = useTranslations('practice.weekdays');
   const locale = useLocale() === 'en' ? 'en' : 'ar';
   const noteId = useId();
@@ -40,6 +52,8 @@ export function DayAgenda({ items, store, date, today, habits, occasionBasis, he
           ? t('tomorrow')
           : t('dayTitle', { weekday: tDays(`d${weekday(date)}`), date: formatGregorian(date, locale) });
   const hasTasks = items.some((item) => item.kind !== 'occasion');
+  // Habits this day does not ask for (not their days): still loggable, never counted as missed.
+  const notAsked = plansNotAskedOn(store, date, planDays).map((plan) => ({ plan, item: offDayItem(plan, date) }));
 
   return (
     <section aria-labelledby="hub-day-title" className="flex flex-col gap-2">
@@ -100,6 +114,28 @@ export function DayAgenda({ items, store, date, today, habits, occasionBasis, he
         </ul>
       )}
 
+      {notAsked.length > 0 ? (
+        <div className="mt-4 flex flex-col gap-1">
+          <h3 className="text-lg font-medium">{tToday('notDueTitle')}</h3>
+          <p className="text-sm leading-7 text-muted-foreground">{tToday('notDueNote')}</p>
+          <ul className="flex flex-col divide-y divide-border border-y border-border" aria-label={tToday('notDueTitle')}>
+            {notAsked.map(({ plan, item }) => (
+              <HabitRow
+                key={`habit-${plan.id}`}
+                item={item}
+                plan={plan}
+                habit={habitOf(plan, habits)}
+                isEnabled={isLoggable}
+                disabledNoteId={noteId}
+                undo={lastKey === `habit:${plan.id}:${date}` ? (lastCleared ? 'cleared' : 'logged') : null}
+                onToggle={() => toggleHabit(item, date)}
+                onUndo={undoLast}
+              />
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
       <p role="status" className="min-h-0 text-base leading-8 text-primary empty:hidden">
         {isDayComplete(items) ? (isToday ? t('complete') : t('completePast')) : null}
       </p>
@@ -112,10 +148,18 @@ export function DayAgenda({ items, store, date, today, habits, occasionBasis, he
   );
 }
 
-/** «يومي ثقيل»: every plan asks only its token amount until it is turned off (practice-core ebb). */
+/** The row of a habit on a day it does not ask for: its usual amount, so «تمّ» logs it like any other day. */
+function offDayItem(plan: Store['plans'][number], date: string): HabitItem {
+  const required = requiredOn(plan, date);
+  const done = plan.log[date] ?? 0;
+  const remaining = Math.max(0, required - done);
+  return { kind: 'habit', planId: plan.id, required, done, remaining, complete: remaining === 0 };
+}
+
+/** «يومي ثقيل»: every plan asks only its token amount for today; tomorrow the plans are back by themselves (isEbbOn). */
 function EbbToggle({ store, today }: { store: Store; today: string }) {
   const t = useTranslations('practice.today');
-  const isEbb = store.plans.some((plan) => plan.ebb);
+  const isEbb = isEbbDay(store.plans, today);
   return (
     <div className="mt-4 flex flex-col items-start gap-1">
       <button

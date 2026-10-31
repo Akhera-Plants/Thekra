@@ -2,6 +2,10 @@
  * Hooks of the «عاداتي» hub: the selected day and the visible week and month, the day's agenda and the presence
  * marks (practice-core `dayAgenda` / `presence`, memoized for the visible range only), the quick log with its undo,
  * «يومي ثقيل», and the counts on the track rows. Every edit goes through practice-core store helpers.
+ *
+ * A habit is asked for only on its own days (practice-core `planAsksOn` / `isPlanDueOn`: its rule, else the catalog
+ * habit's default rule, else daily), the same answer the reminders use; on other days it stays loggable in a
+ * «ليست مطلوبة اليوم» group and is never counted as missed.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -13,20 +17,21 @@ import {
   addDays,
   correctLog,
   dayAgenda,
-  endEbb,
   logContact,
   logDone,
   removeContact,
   minDate,
   monthSummary,
+  plansNotAskedOn,
   presence,
-  startEbb,
+  requiredOn,
   updatePlan,
   updateRelative,
   type AdherenceBand,
   type AgendaItem,
   type HabitItem,
   type LocalDate,
+  type PlanDayOptions,
   type RelativeItem,
   type Store,
 } from '@thekra/practice-core';
@@ -35,7 +40,7 @@ import { useCirclePresence } from '@/lib/circles/use-circle-presence';
 import { pick } from './catalog-types';
 import { addMonths, firstWeekday, followToday, monthStart, weekDays, type DateNames } from './calendar-grid';
 import { dueNowCount, finishedDay, hasStarted, presenceMarks, type PresenceMark } from './hub';
-import { eachPlan } from './plan-view';
+import { heavyDayOn, setHeavyDay } from './plan-view';
 import { today, usePracticeStore } from './practice-store';
 import { formatAmount, habitFor } from './reminders';
 import { useUiLocale } from './use-practice-lifecycle';
@@ -106,14 +111,45 @@ export function useHubDays() {
   return { today: d, selected, month, week, first, select, shiftWeek, shiftMonth, goToday };
 }
 
+/**
+ * Which days each plan asks for: the user's Hijri offset and the catalog habit's default rule for plans without a
+ * rule of their own (the same lookup as the reminders' `planDueOn`).
+ */
+export function usePlanDays(): PlanDayOptions {
+  const locale = useUiLocale();
+  const hijriOffset = usePracticeStore((s) => s.store.settings.hijriOffset);
+  const habits = usePracticeCatalog(locale).data?.habits;
+  return useMemo(
+    () => ({ hijriOffset, defaultRuleOf: (plan) => habitFor(plan, habits ?? [])?.defaultRule }),
+    [hijriOffset, habits],
+  );
+}
+
 /** Everything the selected day asks for (occasions from the practice catalog, Hijri-aware with the user's offset). */
 export function useDayAgenda(date: LocalDate): AgendaItem[] {
   const locale = useUiLocale();
   const store = usePracticeStore((s) => s.store);
   const occasions = usePracticeCatalog(locale).data?.occasions;
+  const planDays = usePlanDays();
+  return useMemo(() => dayAgenda(store, date, { occasions, ...planDays }), [store, date, occasions, planDays]);
+}
+
+/**
+ * Habits the selected day does not ask for (not their days), as habit items with their usual amount: still loggable
+ * from the hub («وما تعمله يُحسب»), never counted as missed.
+ */
+export function useOffDayHabits(date: LocalDate): HabitItem[] {
+  const store = usePracticeStore((s) => s.store);
+  const planDays = usePlanDays();
   return useMemo(
-    () => dayAgenda(store, date, { occasions, hijriOffset: store.settings.hijriOffset }),
-    [store, date, occasions],
+    () =>
+      plansNotAskedOn(store, date, planDays).map((plan) => {
+        const required = requiredOn(plan, date);
+        const done = plan.log[date] ?? 0;
+        const remaining = Math.max(0, required - done);
+        return { kind: 'habit' as const, planId: plan.id, required, done, remaining, complete: remaining === 0 };
+      }),
+    [store, date, planDays],
   );
 }
 
@@ -175,9 +211,10 @@ export function useAgendaRows(items: readonly AgendaItem[], date: LocalDate, tod
 /** Presence marks from `from` to `to`, computed up to today only (the future has no mark). */
 export function usePresenceMarks(from: LocalDate, to: LocalDate, todayDate: LocalDate): Map<LocalDate, PresenceMark> {
   const store = usePracticeStore((s) => s.store);
+  const planDays = usePlanDays();
   return useMemo(
-    () => (from > todayDate ? new Map() : presenceMarks(presence(store, from, minDate(to, todayDate)))),
-    [store, from, to, todayDate],
+    () => (from > todayDate ? new Map() : presenceMarks(presence(store, from, minDate(to, todayDate), planDays))),
+    [store, from, to, todayDate, planDays],
   );
 }
 
@@ -197,6 +234,7 @@ export type HubLastLog =
 export function useAgendaActions(date: LocalDate) {
   useCirclePresence(); // «حضرت اليوم» to the user's circles (رفقة), when sharing is on there
   const setStore = usePracticeStore((s) => s.setStore);
+  const planDays = usePlanDays();
   const [lastLog, setLastLog] = useState<HubLastLog | null>(null);
   const before = useRef(new Map<string, number>());
 
@@ -205,9 +243,11 @@ export function useAgendaActions(date: LocalDate) {
     (edit: (s: Store) => Store) => {
       const prev = usePracticeStore.getState().store;
       setStore(edit);
-      if (finishedDay(prev, usePracticeStore.getState().store, date)) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      if (finishedDay(prev, usePracticeStore.getState().store, date, planDays)) {
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
     },
-    [date, setStore],
+    [date, setStore, planDays],
   );
 
   const toggleHabit = useCallback(
@@ -256,16 +296,19 @@ export function useAgendaActions(date: LocalDate) {
   return { lastLog, toggleHabit, toggleRelative, undo };
 }
 
-/** «يومي ثقيل»: on = every plan at its minimum from today (practice-core `startEbb`), off = back to the plan. */
-export function useHeavyDay() {
+/**
+ * «يومي ثقيل» is one day (practice-core `isEbbOn`): on = every plan at its minimum for today only (`startEbb`), off =
+ * back to the plan the same day. The switch is on only when every plan is lightened today; tomorrow it is off by
+ * itself, with nothing to undo.
+ */
+export function useHeavyDay(todayDate: LocalDate = today()) {
   const plans = usePracticeStore((s) => s.store.plans);
   const setStore = usePracticeStore((s) => s.setStore);
   const hasPlans = plans.length > 0;
-  const heavy = hasPlans && plans.every((p) => p.ebb);
+  const heavy = heavyDayOn(plans, todayDate);
   const setHeavy = useCallback(
     (on: boolean) => {
-      const d = today();
-      setStore((s) => eachPlan(s, (p) => (on ? (p.ebb ? null : startEbb(p, d)) : p.ebb ? endEbb(p) : null)));
+      setStore((s) => setHeavyDay(s, on, today()));
     },
     [setStore],
   );
@@ -289,8 +332,9 @@ export interface TrackSummary {
 /** What the three track rows say: habits and their band, relatives due now, whether a program runs. */
 export function useTrackSummary(todayDate: LocalDate): TrackSummary {
   const store = usePracticeStore((s) => s.store);
+  const planDays = usePlanDays();
   return useMemo(() => {
-    const month = monthSummary(store, todayDate);
+    const month = monthSummary(store, todayDate, undefined, planDays);
     return {
       started: hasStarted(store),
       habits: store.plans.length,
@@ -300,5 +344,5 @@ export function useTrackSummary(todayDate: LocalDate): TrackSummary {
       hasRelatives: store.relatives.length > 0,
       hasProgram: activePrograms(store.programs).length > 0,
     };
-  }, [store, todayDate]);
+  }, [store, todayDate, planDays]);
 }

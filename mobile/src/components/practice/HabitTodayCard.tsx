@@ -1,14 +1,15 @@
 /**
  * One habit today on «طاعاتي» (moved from the old «عاداتي» tab): its title opens the plan; «أتممتها» and a partial «+1»
  * log without leaving the list (partial amounts add up, same-day make-up, never doubled); quiet status lines under
- * the amount (done, reminder day, heavy day, season).
+ * the amount (done, heavy day, season). A habit not asked for today (`compact`) shows only its title, what was logged
+ * and the log buttons: anything done still counts.
  */
 
 import React from 'react';
 import { Pressable, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { BellRing, Check, Feather, Moon, type LucideIcon } from 'lucide-react-native';
+import { Check, Feather, Moon, type LucideIcon } from 'lucide-react-native';
 import type { Plan } from '@thekra/practice-core';
 import { pick, type CatalogHabit } from '@/lib/practice/catalog-types';
 import { shortDate } from '@/lib/practice/format';
@@ -35,12 +36,13 @@ const makeStyles = () => ({
 export interface HabitTodayCardProps {
   plan: Plan;
   habit: CatalogHabit | undefined;
-  reminderDay: boolean;
   amountLabel: (n: number) => string;
   onLog: (amount: number, completes: boolean) => void;
+  /** Not asked for today (practice-core `isPlanDueOn`): title, what was logged and the log buttons only. */
+  compact?: boolean;
 }
 
-export function HabitTodayCard({ plan, habit, reminderDay, amountLabel, onLog }: HabitTodayCardProps) {
+export function HabitTodayCard({ plan, habit, amountLabel, onLog, compact = false }: HabitTodayCardProps) {
   const { t } = useTranslation();
   const locale = useUiLocale();
   const styles = useStyles(makeStyles);
@@ -62,8 +64,8 @@ export function HabitTodayCard({ plan, habit, reminderDay, amountLabel, onLog }:
       </Pressable>
 
       <View style={styles.tight}>
-        <Text variant="body">{t('practice.plan.required', { amount: amountLabel(view.required) })}</Text>
-        {view.done > 0 && !view.doneToday ? (
+        {compact ? null : <Text variant="body">{t('practice.plan.required', { amount: amountLabel(view.required) })}</Text>}
+        {view.done > 0 && (compact || !view.doneToday) ? (
           <Text variant="small" tone="muted">
             {t('practice.plan.done', { amount: amountLabel(view.done) })}
           </Text>
@@ -72,9 +74,8 @@ export function HabitTodayCard({ plan, habit, reminderDay, amountLabel, onLog }:
 
       <PlanMeta
         doneToday={view.doneToday}
-        reminderDay={reminderDay}
-        inEbb={view.inEbb}
-        seasonUntil={view.inSeason && plan.season ? plan.season.until : null}
+        inEbb={!compact && view.inEbb}
+        seasonUntil={!compact && view.inSeason && plan.season ? plan.season.until : null}
       />
 
       <Wrap>
@@ -87,18 +88,16 @@ export function HabitTodayCard({ plan, habit, reminderDay, amountLabel, onLog }:
 
 interface PlanMetaProps {
   doneToday: boolean;
-  reminderDay: boolean;
   inEbb: boolean;
   seasonUntil: string | null;
 }
 
-/** Quiet status lines under the amount: done, reminder day, heavy day, season. */
-function PlanMeta({ doneToday, reminderDay, inEbb, seasonUntil }: PlanMetaProps) {
+/** Quiet status lines under the amount: done, heavy day, season. */
+function PlanMeta({ doneToday, inEbb, seasonUntil }: PlanMetaProps) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const items: { key: string; icon: LucideIcon; label: string; strong?: boolean }[] = [];
   if (doneToday) items.push({ key: 'done', icon: Check, label: t('practice.doneToday'), strong: true });
-  if (reminderDay) items.push({ key: 'reminder', icon: BellRing, label: t('practice.reminderDay') });
   if (inEbb) items.push({ key: 'ebb', icon: Feather, label: t('practice.ebbActive') });
   if (seasonUntil) items.push({ key: 'season', icon: Moon, label: t('practice.seasonActive', { date: shortDate(seasonUntil) }) });
   if (items.length === 0) return null;

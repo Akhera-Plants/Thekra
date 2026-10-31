@@ -2,6 +2,7 @@
  * The hub's day list: «اليوم» or the selected date, then one row per agenda item (occasions, habits, relatives, the
  * private check-in last, in practice-core's order). Logging works for today and the 6 days before; other days are
  * view-only with a quiet note. When every task of the day is done, one hopeful line; nothing else celebrates.
+ * Habits the day does not ask for (not their days) follow under «ليست مطلوبة اليوم»: loggable, never missed.
  */
 
 import React from 'react';
@@ -17,6 +18,7 @@ import { HabitRow, OccasionRow, ProgramRow, RelativeRow, type UndoKind } from '.
 const makeStyles = (t: Theme) => ({
   root: { gap: space.md },
   list: { borderTopWidth: 1, borderTopColor: t.colors.border },
+  offDay: { gap: space.xs },
 });
 
 export interface DayAgendaProps {
@@ -24,6 +26,8 @@ export interface DayAgendaProps {
   date: LocalDate;
   today: LocalDate;
   rows: AgendaRowModel[];
+  /** Habit rows of plans this day does not ask for: shown after the list, still loggable. */
+  offDayRows?: AgendaRowModel[];
   canLog: boolean;
   complete: boolean;
   /** Nothing was started yet (the tracks below show how to begin). */
@@ -39,6 +43,7 @@ export function DayAgenda({
   date,
   today,
   rows,
+  offDayRows = [],
   canLog,
   complete,
   started,
@@ -110,6 +115,33 @@ export function DayAgenda({
                 return <ProgramRow key={row.key} done={row.done} meta={row.meta} />;
             }
           })}
+        </View>
+      ) : null}
+
+      {offDayRows.length > 0 ? (
+        <View style={styles.offDay}>
+          <Text variant="heading" accessibilityRole="header">
+            {t('practice.notDueTitle')}
+          </Text>
+          <Text variant="small" tone="muted">
+            {t('practice.notDueHint')}
+          </Text>
+          <View style={styles.list}>
+            {offDayRows.map((row) =>
+              row.kind === 'habit' ? (
+                <HabitRow
+                  key={row.key}
+                  item={row.item}
+                  title={row.title}
+                  meta={row.meta}
+                  canLog={canLog}
+                  undo={undoFor('habit', row.item.planId)}
+                  onToggle={onToggleHabit}
+                  onUndo={onUndo}
+                />
+              ) : null,
+            )}
+          </View>
         </View>
       ) : null}
 

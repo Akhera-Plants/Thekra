@@ -19,6 +19,7 @@ import { shortDate } from '@/lib/practice/format';
 import { editedRelative, relativeFromForm, type RelativeFormValues } from '@/lib/practice/kinship-form';
 import { ensurePermission } from '@/lib/practice/notifications';
 import { newPracticeId, today, usePracticeStore } from '@/lib/practice/practice-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { TimeField } from '@/components/practice/editors';
 import { RelativeForm } from '@/components/practice/RelativeForm';
 import { space, useStyles, type Theme } from '@/theme';
@@ -43,13 +44,15 @@ export default function KinshipScreen() {
   const { add } = useLocalSearchParams<{ add?: string }>();
   const [adding, setAdding] = useState(add === '1');
   const [editingId, setEditingId] = useState<string | null>(null);
+  const signedIn = useAuthStore((s) => Boolean(s.user));
 
   if (!hydrated) return <Loading />;
   const d = today();
   const due = dueList(relatives, d);
 
   function remove(id: string) {
-    Alert.alert(t('kinship.delete'), t('kinship.deleteConfirm'), [
+    // Signed in, the deletion syncs to the account (a tombstone), so it is not only «على هذا الجهاز».
+    Alert.alert(t('kinship.delete'), t(signedIn ? 'kinship.deleteConfirmSynced' : 'kinship.deleteConfirm'), [
       { text: t('common.cancel'), style: 'cancel' },
       {
         text: t('common.delete'),

@@ -49,7 +49,8 @@ Auth: `(auth)/login`, `(auth)/register`
   expo-secure-store when «تذكّر على هذا الجهاز» is on. The wipe button deletes local data, the key and the vault.
   `src/lib/crypto/install.ts` installs expo-crypto's `getRandomValues` on `globalThis.crypto` (Hermes has none).
 - Evidence for the sin programs is requested for **all** catalog programs at once, so the request reveals no choice.
-- Local notifications (`expo-notifications`, no push): permission asked when a reminder switch is turned on;
+- Local notifications (`expo-notifications`, no push): permission asked when a reminder switch is turned on, or
+  when the first habit is added (habit reminders are on by default; a stored choice is kept, a denial turns them off);
   a rolling 14-day window (max 60 pending, iOS limit) re-planned on every change and every foreground.
 - Metro: `metro.config.js` maps `./x.js` → `./x.ts` only inside `packages/practice-core` (Jest: `jest.resolver.js`;
   Jest also transforms the ESM-only `@noble/*` packages).

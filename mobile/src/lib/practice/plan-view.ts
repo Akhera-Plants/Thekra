@@ -10,16 +10,20 @@ import {
   canIncrease,
   createPlan,
   diffDays,
+  endEbb,
+  isEbbOn,
   isHijriSupported,
   normalize,
   nextStep,
   relapseSuggestion,
   requiredOn,
+  startEbb,
   status,
   targetDaysIn,
   toHijri,
   updatePlan,
   type AdherenceBand,
+  type IsoTime,
   type LocalDate,
   type LocalTime,
   type Plan,
@@ -29,6 +33,7 @@ import {
 } from '@thekra/practice-core';
 import type { CatalogHabit, UiLocale } from './catalog-types';
 import { pick } from './catalog-types';
+import { planDueOn } from './reminders';
 
 /** «A month» for the adherence band: the last 30 days including today. */
 export const MONTH_DAYS = 30;
@@ -81,9 +86,45 @@ export function planView(stored: Plan, today: LocalDate): PlanView {
     // Only suggest a cut when it really is lower than today's amount.
     relapse: relapse && relapseAmount < base,
     relapseAmount,
-    inEbb: Boolean(plan.ebb && today >= plan.ebb.since),
+    inEbb: isEbbOn(plan, today),
     inSeason: Boolean(plan.season && today <= plan.season.until),
   };
+}
+
+/**
+ * The «عاداتي» today list: habits asked for today first (practice-core `isPlanDueOn`, the same answer as the
+ * reminders), then the others, which stay loggable because anything done still counts. Store order is kept.
+ */
+export function splitByDue(
+  plans: readonly Plan[],
+  habits: readonly CatalogHabit[],
+  date: LocalDate,
+  hijriOffset: number,
+): { due: Plan[]; notDue: Plan[] } {
+  const due: Plan[] = [];
+  const notDue: Plan[] = [];
+  for (const p of plans) (planDueOn(p, habits, date, hijriOffset) ? due : notDue).push(p);
+  return { due, notDue };
+}
+
+/**
+ * «يومي ثقيل» is one day (practice-core `isEbbOn`): the switch is on when every plan is lightened for `date`, and
+ * it is off again by itself the next day.
+ */
+export function heavyDayOn(plans: readonly Plan[], date: LocalDate): boolean {
+  return plans.length > 0 && plans.every((p) => isEbbOn(p, date));
+}
+
+/**
+ * Turns «يومي ثقيل» on for `date` (practice-core `startEbb` on every plan not already lightened that day) or off
+ * (`endEbb` on the plans lightened that day). Goes through `updatePlan` so `updatedAt` is stamped for sync.
+ */
+export function setHeavyDay(store: Store, on: boolean, date: LocalDate, now?: IsoTime): Store {
+  return store.plans.reduce((acc, p) => {
+    const lightened = isEbbOn(p, date);
+    if (on === lightened) return acc;
+    return updatePlan(acc, p.id, (cur) => (on ? startEbb(cur, date, now) : endEbb(cur, now)), now);
+  }, store);
 }
 
 export type Distance = 'far' | 'near';

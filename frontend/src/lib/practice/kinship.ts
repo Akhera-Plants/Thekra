@@ -7,8 +7,11 @@ import {
   isValidDate,
   maxDate,
   nextDue,
+  nowIso,
   occurrencesToEvents,
+  validateRelative,
   type IcsEvent,
+  type IsoTime,
   type KinshipRule,
   type LocalDate,
   type Relative,
@@ -33,6 +36,36 @@ export function rhythmOf(rule: KinshipRule): { rhythm: Rhythm; weekday: number |
     return { rhythm: rule.n === 1 ? 'weekly' : 'biweekly', weekday: rule.weekday };
   }
   return null;
+}
+
+/** «تعديل» on a relative: the form's values. `custom` keeps a rule made elsewhere (no preset matches it). */
+export interface RelativeEdit {
+  name: string;
+  relation: string;
+  rhythm: Rhythm | 'custom';
+  weekday: number;
+}
+
+/**
+ * Applies an edit: name, relation and rhythm. An unchanged rhythm keeps the stored rule (and its anchor); a new one
+ * starts from `today`. Contacts are kept. `updatedAt` becomes `now` when something changed, so the edit syncs.
+ * Throws when the result is invalid (e.g. contact details in the name).
+ */
+export function editRelative(relative: Relative, edit: RelativeEdit, today: LocalDate, now: IsoTime = nowIso()): Relative {
+  const preset = rhythmOf(relative.rule);
+  const sameRhythm =
+    edit.rhythm === 'custom' ||
+    (preset !== null &&
+      preset.rhythm === edit.rhythm &&
+      (edit.rhythm === 'monthly' || preset.weekday === edit.weekday));
+  const rule = sameRhythm ? relative.rule : rhythmRule(edit.rhythm as Rhythm, edit.weekday, today);
+  const name = edit.name.trim();
+  const relation = edit.relation.trim();
+  if (sameRhythm && name === relative.name && relation === relative.relation) return relative;
+  const next: Relative = { ...relative, name, relation, rule, updatedAt: now };
+  const err = validateRelative(next);
+  if (err) throw new RangeError(`Invalid relative: ${err}`);
+  return next;
 }
 
 /**

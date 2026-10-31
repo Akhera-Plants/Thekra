@@ -16,7 +16,10 @@ export type RoleKey = (typeof ROLE_KEYS)[number];
 
 export interface PracticePrefs {
   v: 1;
-  /** Local notifications for habit plans. */
+  /**
+   * Local notifications for habit plans. On by default (the add flow asks for reminder times); the permission is
+   * asked when the first habit is added. A stored value, on or off, is always kept.
+   */
   habitReminders: boolean;
   kinshipReminders: boolean;
   /** Relatives' nicknames in the notification body. Off by default: notifications show on the lock screen. */
@@ -35,7 +38,7 @@ export interface PracticePrefs {
 
 export const DEFAULT_PREFS: PracticePrefs = {
   v: 1,
-  habitReminders: false,
+  habitReminders: true,
   kinshipReminders: false,
   kinshipShowNames: false,
   kinshipTime: '18:00',
@@ -76,6 +79,14 @@ export function parsePrefs(json: unknown): PracticePrefs {
       ? (raw.roles.filter((r) => (ROLE_KEYS as readonly string[]).includes(r as string)) as RoleKey[])
       : [],
   };
+}
+
+/**
+ * True when adding a habit should ask for the notification permission now: it is the first habit and habit
+ * reminders are on (the default). Someone who turned them off is never asked here.
+ */
+export function shouldAskOnFirstHabit(planCountBefore: number, prefs: Pick<PracticePrefs, 'habitReminders'>): boolean {
+  return planCountBefore === 0 && prefs.habitReminders;
 }
 
 /** Fields of the first prefs version that moved into the synced Store (migrated once by practice-store). */

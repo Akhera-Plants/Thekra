@@ -2,7 +2,9 @@
  * «طاعاتي»: the good-habits track of «عاداتي» («أعِنّي على طاعة», roadmap §3, lecture analysis §4 and §8), what the
  * «عاداتي» tab held before the hub. Where the data lives, «يومي ثقيل», today's habits (each a card with «أتممتها»
  * and a partial «+1»), «أضف عادة», the Ramadan season, habit reminders, and «فروضي وأدواري». All rules come from
- * @thekra/practice-core; data stays on the device (synced only when signed in).
+ * @thekra/practice-core; data stays on the device (synced only when signed in). Habits asked for today come first
+ * (practice-core `isPlanDueOn`, the same answer as the reminders and the hub); the others follow in a compact,
+ * still loggable group.
  */
 
 import React, { useState } from 'react';
@@ -11,11 +13,12 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 import { HardDrive, Hourglass, Sprout } from 'lucide-react-native';
-import { isDue, logDone, updatePlan, type Plan } from '@thekra/practice-core';
+import { logDone, updatePlan, type Plan } from '@thekra/practice-core';
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { ensurePermission } from '@/lib/practice/notifications';
 import { today, usePracticeStore } from '@/lib/practice/practice-store';
-import { formatAmount, habitFor, planRule } from '@/lib/practice/reminders';
+import { splitByDue } from '@/lib/practice/plan-view';
+import { formatAmount, habitFor } from '@/lib/practice/reminders';
 import { useHeavyDay } from '@/lib/practice/use-habits-hub';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { HabitTodayCard } from '@/components/practice/HabitTodayCard';
@@ -64,10 +67,10 @@ export default function HabitsTrackScreen() {
   const setStore = usePracticeStore((s) => s.setStore);
   const setPrefs = usePracticeStore((s) => s.setPrefs);
   const catalog = usePracticeCatalog(locale);
-  const { hasPlans, heavy, setHeavy } = useHeavyDay();
+  const d = today();
+  const { hasPlans, heavy, setHeavy } = useHeavyDay(d);
   const [permissionDenied, setPermissionDenied] = useState(false);
   const habits = catalog.data?.habits ?? [];
-  const d = today();
 
   if (!hydrated) return <HabitsSkeleton />;
 
@@ -77,6 +80,7 @@ export default function HabitsTrackScreen() {
     times: t('practice.units.times'),
   };
   const amountLabel = (plan: Plan, amount: number) => formatAmount(amount, plan.unit, habitFor(plan, habits), locale, unitFallback);
+  const { due, notDue } = splitByDue(store.plans, habits, d, store.settings.hijriOffset);
 
   function handleLog(plan: Plan, amount: number, completes: boolean) {
     if (amount <= 0) return;
@@ -109,12 +113,16 @@ export default function HabitsTrackScreen() {
         <>
           <SwitchRow label={t('practice.heavyDay')} hint={t('practice.heavyDayHint')} value={heavy} onValueChange={setHeavy} />
           <Section title={t('practice.today')}>
-            {store.plans.map((plan) => (
+            {due.length === 0 ? (
+              <Text variant="body" tone="muted">
+                {t('practice.nothingDueToday')}
+              </Text>
+            ) : null}
+            {due.map((plan) => (
               <HabitTodayCard
                 key={plan.id}
                 plan={plan}
                 habit={habitFor(plan, habits)}
-                reminderDay={safeIsDue(planRule(plan, habits), d, store.settings.hijriOffset)}
                 amountLabel={(n) => amountLabel(plan, n)}
                 onLog={(n, completes) => handleLog(plan, n, completes)}
               />
@@ -123,6 +131,23 @@ export default function HabitsTrackScreen() {
               {t('practice.partialHint')}
             </Text>
           </Section>
+          {notDue.length > 0 ? (
+            <Section title={t('practice.notDueTitle')}>
+              <Text variant="small" tone="muted">
+                {t('practice.notDueHint')}
+              </Text>
+              {notDue.map((plan) => (
+                <HabitTodayCard
+                  key={plan.id}
+                  plan={plan}
+                  habit={habitFor(plan, habits)}
+                  amountLabel={(n) => amountLabel(plan, n)}
+                  onLog={(n, completes) => handleLog(plan, n, completes)}
+                  compact
+                />
+              ))}
+            </Section>
+          ) : null}
           <Button label={t('practice.addHabit')} onPress={openAdd} arrow />
           <Rule />
           <RamadanBlock />
@@ -156,14 +181,6 @@ export default function HabitsTrackScreen() {
       </Section>
     </Screen>
   );
-}
-
-function safeIsDue(rule: Parameters<typeof isDue>[0], date: string, hijriOffset: number): boolean {
-  try {
-    return isDue(rule, date, { hijriOffset });
-  } catch {
-    return false;
-  }
 }
 
 /** The shape of the page while the device store loads. */

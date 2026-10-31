@@ -111,8 +111,17 @@ describe('rest («يومي ثقيل»)', () => {
     const resting = startEbb(grown, today, T);
     expect(isResting(resting, today)).toBe(true);
     expect(isResting(resting, addDays(today, -1))).toBe(false);
-    const [plant] = gardenPlants({ plans: [resting], relatives: [] }, addDays(today, 20), titleOf, 'صلة الرحم');
+    const [plant] = gardenPlants({ plans: [resting], relatives: [] }, today, titleOf, 'صلة الرحم');
     expect(plant).toMatchObject({ stage: 4, tendedDays: 40, resting: true });
+  });
+
+  it('«يومي ثقيل» is one day: the next day the plant is no longer resting', () => {
+    const grown = tended(40);
+    const today = addDays(START, 90);
+    const resting = startEbb(grown, today, T);
+    expect(isResting(resting, addDays(today, 1))).toBe(false);
+    const [plant] = gardenPlants({ plans: [resting], relatives: [] }, addDays(today, 20), titleOf, 'صلة الرحم');
+    expect(plant).toMatchObject({ stage: 4, tendedDays: 40, resting: false });
   });
 
   it('a season does not change the stage either', () => {

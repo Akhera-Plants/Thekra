@@ -1,6 +1,6 @@
 /**
- * The plan screen's today card, after the website's PlanCard: «المطلوب اليوم», «أتممتها» and «+1», «سُجِّل · تراجع»,
- * and «صحّح السجل» (a week back, steppers for the day and the amount; practice-core `correctLog` on save).
+ * The plan screen's today card, after the website's PlanCard: «المطلوب اليوم», «أتممتها» and «+1», a typed partial
+ * amount (whole numbers, practice-core `logDone`; partial amounts add up), «سُجِّل · تراجع», and «صحّح السجل» (a week back, steppers for the day and the amount; practice-core `correctLog` on save).
  */
 
 import React, { useState } from 'react';
@@ -8,10 +8,10 @@ import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Check, ChevronLeft, ChevronRight, Minus, PencilLine, Plus, Undo2 } from 'lucide-react-native';
 import { addDays, type Plan } from '@thekra/practice-core';
-import { shortDate } from '@/lib/practice/format';
+import { parseLogAmount, shortDate } from '@/lib/practice/format';
 import { fixLogStep, type PlanView } from '@/lib/practice/plan-view';
 import { space, useStyles, useTheme, type Theme } from '@/theme';
-import { Button, Card, Icon, IconButton, NextStep, Row, Text, Wrap } from '@/ui';
+import { Button, Card, Field, Icon, IconButton, NextStep, Row, Text, Wrap } from '@/ui';
 
 /** «صحّح السجل» reaches this many days back (today included). */
 const FIX_DAYS = 7;
@@ -23,6 +23,9 @@ const makeStyles = (t: Theme) => ({
   footer: { borderTopWidth: 1, borderTopColor: t.colors.border, paddingTop: space.sm, marginTop: space.xs },
   stepper: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.md },
   stepperValue: { flex: 1 },
+  partial: { flexDirection: 'row' as const, alignItems: 'flex-end' as const, gap: space.sm },
+  partialField: { flex: 1 },
+  partialInput: { writingDirection: 'ltr' as const, textAlign: 'center' as const },
 });
 
 export interface TodayPanelProps {
@@ -30,6 +33,8 @@ export interface TodayPanelProps {
   view: PlanView;
   today: string;
   amountLabel: (n: number) => string;
+  /** The word for one unit of the plan (the catalog's unit label), for the typed amount's label. */
+  unitLabel: string;
   logged: boolean;
   fixing: boolean;
   onLog: (amount: number) => void;
@@ -40,7 +45,20 @@ export interface TodayPanelProps {
 }
 
 /** «المطلوب اليوم», the log buttons, «سُجِّل · تراجع» and «صحّح السجل». */
-export function TodayPanel({ plan, view, today: d, amountLabel, logged, fixing, onLog, onUndo, onFixOpen, onFixSave, onFixCancel }: TodayPanelProps) {
+export function TodayPanel({
+  plan,
+  view,
+  today: d,
+  amountLabel,
+  unitLabel,
+  logged,
+  fixing,
+  onLog,
+  onUndo,
+  onFixOpen,
+  onFixSave,
+  onFixCancel,
+}: TodayPanelProps) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const partial = view.done > 0 && !view.doneToday;
@@ -74,6 +92,7 @@ export function TodayPanel({ plan, view, today: d, amountLabel, logged, fixing, 
         {!view.doneToday ? <Button label={t('practice.logRest')} icon={Check} onPress={() => onLog(view.remaining)} /> : null}
         <Button label={t('practice.logPlusOne')} onPress={() => onLog(1)} variant="outline" />
       </Wrap>
+      <PartialAmount unitLabel={unitLabel} onLog={onLog} />
 
       <View accessibilityLiveRegion="polite">
         {logged ? (
@@ -94,6 +113,47 @@ export function TodayPanel({ plan, view, today: d, amountLabel, logged, fixing, 
         </View>
       )}
     </Card>
+  );
+}
+
+/** «قدر عملته»: a typed whole amount, added to the day (Arabic-Indic digits accepted). */
+function PartialAmount({ unitLabel, onLog }: { unitLabel: string; onLog: (amount: number) => void }) {
+  const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
+  const [draft, setDraft] = useState('');
+  const [invalid, setInvalid] = useState(false);
+
+  function submit() {
+    const n = parseLogAmount(draft);
+    if (n === null) {
+      setInvalid(true);
+      return;
+    }
+    onLog(n);
+    setDraft('');
+    setInvalid(false);
+  }
+
+  return (
+    <View style={styles.partial}>
+      <Field
+        label={t('practice.plan.partialLabel', { unit: unitLabel })}
+        value={draft}
+        onChangeText={(text) => {
+          setDraft(text);
+          setInvalid(false);
+        }}
+        onSubmitEditing={submit}
+        placeholder={t('practice.logAmountPlaceholder')}
+        keyboardType="number-pad"
+        returnKeyType="done"
+        maxLength={4}
+        error={invalid ? t('practice.logAmountInvalid') : null}
+        containerStyle={styles.partialField}
+        style={styles.partialInput}
+      />
+      <Button label={t('practice.plan.logPartial')} onPress={submit} variant="outline" disabled={draft.trim() === ''} />
+    </View>
   );
 }
 

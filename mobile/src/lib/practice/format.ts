@@ -12,6 +12,21 @@ export function toWesternDigits(text: string): string {
     .replace(/[۰-۹]/g, (c) => String(c.charCodeAt(0) - 0x06f0));
 }
 
+/** Largest single typed log entry (same cap as the web «سجّل» form). */
+export const MAX_LOG_ENTRY = 1000;
+
+/**
+ * A typed log amount («3», «٣») → a whole positive number, else null (empty, zero, negative, a fraction, not a
+ * number, above {@link MAX_LOG_ENTRY}). Whole amounts only, like the web form: the account stores logs as integers
+ * (sync contract §2). Partial amounts add up through practice-core `logDone`.
+ */
+export function parseLogAmount(text: string): number | null {
+  const t = toWesternDigits(text).trim();
+  if (!/^\d+$/.test(t)) return null;
+  const n = Number(t);
+  return Number.isSafeInteger(n) && n > 0 && n <= MAX_LOG_ENTRY ? n : null;
+}
+
 /** «30/10» (day/month), Western digits. */
 export function shortDate(date: LocalDate): string {
   return `${Number(date.slice(8, 10))}/${Number(date.slice(5, 7))}`;

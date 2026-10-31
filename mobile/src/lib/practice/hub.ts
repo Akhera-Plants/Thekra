@@ -16,6 +16,7 @@ import {
   type AgendaOccasion,
   type DayPresence,
   type LocalDate,
+  type PlanDayOptions,
   type Relative,
   type Store,
 } from '@thekra/practice-core';
@@ -49,8 +50,8 @@ export function isDayComplete(items: readonly AgendaItem[]): boolean {
 }
 
 /** An edit from `before` to `after` finished `date`: its last open task is now done. */
-export function finishedDay(before: Store, after: Store, date: LocalDate): boolean {
-  return !isDayComplete(dayAgenda(before, date)) && isDayComplete(dayAgenda(after, date));
+export function finishedDay(before: Store, after: Store, date: LocalDate, planDays: PlanDayOptions = {}): boolean {
+  return !isDayComplete(dayAgenda(before, date, planDays)) && isDayComplete(dayAgenda(after, date, planDays));
 }
 
 /** Days from `from` to `to` with a sunnah occasion (practice-core `occurrences`; a Hijri rule the runtime cannot place is skipped). */

@@ -4,23 +4,37 @@
  * 1. choose a habit from the catalog (habits already in the list open their plan);
  * 2. the distance question (far/near) → a very small start amount;
  * 3. reminder slots (≥ 2 suggested) and active days per week (3 at the beginning) + reminder weekdays;
- * 4. «فروضي وأدواري»: the free time check (`loadWarning`), then create.
+ * 4. «فروضي وأدواري»: the free time check (practice-core `dailyLoad` / `loadWarning` for today, ebb and season
+ *    aware, as on the duties screen), then create. Adding the first habit asks for the notification permission
+ *    when habit reminders are on (the default); on a «يومي ثقيل» day the new habit is lightened too.
  * Optional param `habit` preselects a habit (e.g. an alternative from the sin program).
  * The system Back (Android button, iOS swipe, header) goes one step back inside the wizard, so no input is lost;
  * from the step the wizard opened on it leaves. «التالي» and «رجوع» stay pinned under the step, above the safe area.
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { Alert, ScrollView, View } from 'react-native';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import { usePreventRemove } from 'expo-router/react-navigation';
 import { useTranslation } from 'react-i18next';
 import { CircleAlert, CircleCheck, HardDrive, Hourglass } from 'lucide-react-native';
-import { loadWarning, startSuggestion, upsertPlan, validatePlan, type LocalTime, type Plan } from '@thekra/practice-core';
+import {
+  dailyLoad,
+  loadWarning,
+  startEbb,
+  startSuggestion,
+  upsertPlan,
+  validatePlan,
+  type LocalDate,
+  type LocalTime,
+  type Plan,
+} from '@thekra/practice-core';
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { pick, type CatalogHabit, type UiLocale } from '@/lib/practice/catalog-types';
 import { ruleToWeekdays, sortSlots, weekdaysToRule } from '@/lib/practice/format';
-import { planFromHabit, startAmount, type Distance } from '@/lib/practice/plan-view';
+import { ensurePermission } from '@/lib/practice/notifications';
+import { heavyDayOn, planFromHabit, startAmount, type Distance } from '@/lib/practice/plan-view';
+import { shouldAskOnFirstHabit } from '@/lib/practice/prefs';
 import { newPracticeId, today, usePracticeStore } from '@/lib/practice/practice-store';
 import { formatAmount } from '@/lib/practice/reminders';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
@@ -79,6 +93,7 @@ export default function AddHabitScreen() {
   const plans = usePracticeStore((s) => s.store.plans);
   const free = usePracticeStore((s) => s.store.settings.freeMinutesPerDay ?? null);
   const setStore = usePracticeStore((s) => s.setStore);
+  const setPrefs = usePracticeStore((s) => s.setPrefs);
   const navigation = useNavigation();
 
   const entryStep: Step = params.habit ? 'distance' : 'choose';
@@ -148,13 +163,27 @@ export default function AddHabitScreen() {
       setError(t('practice.add.noReminderDays'));
       return;
     }
-    const plan = planFromHabit({ id: newPracticeId(), habit, amount, slots, activeDaysPerWeek: activeDays, rule, today: today(), locale });
+    const d = today();
+    let plan = planFromHabit({ id: newPracticeId(), habit, amount, slots, activeDaysPerWeek: activeDays, rule, today: d, locale });
     if (validatePlan(plan) !== null) {
       setError(t('practice.add.invalidPlan'));
       return;
     }
+    const { store, prefs } = usePracticeStore.getState();
+    // «يومي ثقيل» is on for every habit today: the new one joins it, so the switch does not flip off.
+    if (heavyDayOn(store.plans, d)) plan = startEbb(plan, d);
+    const askPermission = shouldAskOnFirstHabit(store.plans.length, prefs);
     setStore((s) => upsertPlan(s, plan));
     router.replace(`/practice/plan/${plan.id}`);
+    if (askPermission) void askForReminders();
+  }
+
+  // The reminder times just chosen only work with the permission; asked once, when the first habit is added.
+  async function askForReminders() {
+    if (await ensurePermission(t('practice.notify.channelName'))) return;
+    // Denied: the switch must not claim reminders that cannot arrive. Turning it on later asks again.
+    setPrefs((p) => ({ ...p, habitReminders: false }));
+    Alert.alert(t('practice.permissionDenied'));
   }
 
   if (step === 'choose' || !habit) {
@@ -230,12 +259,14 @@ export default function AddHabitScreen() {
     );
   }
 
-  // step === 'load': «فروضي وأدواري» check with the new plan included.
+  // step === 'load': «فروضي وأدواري» check with the new plan included, for today (ebb and season aware), with the
+  // same practice-core functions as the duties screen.
+  const d = today();
   const preview =
     amount !== null
-      ? planFromHabit({ id: 'preview', habit, amount, slots, activeDaysPerWeek: activeDays, rule: habit.defaultRule, today: today(), locale })
+      ? planFromHabit({ id: 'preview', habit, amount, slots, activeDaysPerWeek: activeDays, rule: habit.defaultRule, today: d, locale })
       : null;
-  const allPlans = preview ? [...plans, preview] : plans;
+  const allPlans = preview ? [...plans, heavyDayOn(plans, d) ? startEbb(preview, d) : preview] : plans;
 
   return (
     <StepFrame
@@ -246,7 +277,7 @@ export default function AddHabitScreen() {
       onNext={handleCreate}
       onBack={() => setStep('schedule')}
     >
-      <LoadCheck plans={allPlans} free={free} />
+      <LoadCheck plans={allPlans} free={free} today={d} />
       {error ? (
         <Notice icon={CircleAlert} tone="destructive">
           {error}
@@ -408,8 +439,11 @@ function ScheduleFields({ slots, onSlots, activeDays, onActiveDays, weekdays, on
   );
 }
 
-/** «فروضي وأدواري» before creating: free time not set yet → a way to set it; else the load and its verdict. */
-function LoadCheck({ plans, free }: { plans: readonly Plan[]; free: number | null }) {
+/**
+ * «فروضي وأدواري» before creating: free time not set yet → a way to set it; else the load and its verdict, for today
+ * (practice-core `dailyLoad` / `loadWarning`, ebb and season aware), as on the duties screen.
+ */
+function LoadCheck({ plans, free, today: d }: { plans: readonly Plan[]; free: number | null; today: LocalDate }) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   if (free === null) {
@@ -420,8 +454,8 @@ function LoadCheck({ plans, free }: { plans: readonly Plan[]; free: number | nul
       </View>
     );
   }
-  const load = plans.reduce((sum, p) => sum + (p.unit === 'minutes' ? p.amount : 0), 0);
-  const over = loadWarning([...plans], free) === 'over';
+  const load = dailyLoad(plans, d);
+  const over = loadWarning(plans, free, d) === 'over';
   return (
     <View style={styles.group}>
       <Text variant="body">{t('practice.duties.load', { load: String(load), free: String(free) })}</Text>

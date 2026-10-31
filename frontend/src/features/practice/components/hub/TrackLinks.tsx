@@ -5,6 +5,7 @@ import { HeartHandshake, NotebookPen, Sprout } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
+import { accountsEnabled } from '@/lib/accounts';
 import { formatDigits } from '@/lib/format/digits';
 import type { TrackSummary } from '@/lib/practice/hub';
 
@@ -80,7 +81,8 @@ export function StartChoices() {
       <h2 id="hub-start-title" className="text-2xl font-medium">
         {t('title')}
       </h2>
-      <p className="text-muted-foreground">{t('lead')}</p>
+      {/* «أولًا» (then synced) only when accounts are on; otherwise nothing leaves the device. */}
+      <p className="text-muted-foreground">{accountsEnabled() ? t('lead') : t('leadLocal')}</p>
       <ul className="flex flex-col divide-y divide-border border-y border-border">
         {choices.map((choice) => (
           <TrackRow key={choice.href} href={choice.href} icon={choice.icon} title={choice.title} meta={choice.line} />

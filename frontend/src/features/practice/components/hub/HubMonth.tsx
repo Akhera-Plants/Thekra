@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
-import { presence, type DayPresence, type Store } from '@thekra/practice-core';
+import { presence, type DayPresence, type PlanDayOptions, type Store } from '@thekra/practice-core';
 import { formatDigits } from '@/lib/format/digits';
 import { computeOccasionDates, occasionsByDate } from '@/lib/practice/calendar';
 import { firstOfMonth, lastOfMonth, type TrackSummary, type YearMonth } from '@/lib/practice/hub';
@@ -17,6 +17,8 @@ interface HubMonthProps {
   selected: string;
   month: YearMonth;
   occasions: readonly PracticeOccasion[] | undefined;
+  /** Which days each plan asks for (its rule, else the catalog's): presence counts only what was asked. */
+  planDays: PlanDayOptions;
   summary: TrackSummary;
   onSelect: (date: string) => void;
   onMonthChange: (month: YearMonth) => void;
@@ -26,7 +28,7 @@ interface HubMonthProps {
  * «وين وصلت هذا الشهر»: days present in the last 30 and the plans' kind band, then the month with a presence mark per
  * day. Open on any day; never a run length, never a missed-day mark.
  */
-export function HubMonth({ store, today, selected, month, occasions, summary, onSelect, onMonthChange }: HubMonthProps) {
+export function HubMonth({ store, today, selected, month, occasions, planDays, summary, onSelect, onMonthChange }: HubMonthProps) {
   const t = useTranslations('practice.hub.month');
   const tGrid = useTranslations('practice.monthGrid');
   const tTracks = useTranslations('practice.hub.tracks');
@@ -37,8 +39,8 @@ export function HubMonth({ store, today, selected, month, occasions, summary, on
   const days = useMemo(() => {
     const end = last < today ? last : today;
     if (first > end) return new Map<string, DayPresence>();
-    return new Map(presence(store, first, end).map((day) => [day.date, day]));
-  }, [store, first, last, today]);
+    return new Map(presence(store, first, end, planDays).map((day) => [day.date, day]));
+  }, [store, first, last, today, planDays]);
 
   const marks = useMemo(
     () => occasionsByDate(occasions ? computeOccasionDates(occasions, first, last, hijriOffset) : []),

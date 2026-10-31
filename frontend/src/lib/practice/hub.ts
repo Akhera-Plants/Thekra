@@ -19,6 +19,7 @@ import {
   type AgendaItem,
   type DayPresence,
   type LocalDate,
+  type PlanDayOptions,
   type Store,
 } from '@thekra/practice-core';
 
@@ -134,8 +135,8 @@ export interface TrackSummary {
   hasProgram: boolean;
 }
 
-export function trackSummary(store: Store, today: LocalDate): TrackSummary {
-  const month = monthSummary(store, today);
+export function trackSummary(store: Store, today: LocalDate, planDays: PlanDayOptions = {}): TrackSummary {
+  const month = monthSummary(store, today, undefined, planDays);
   const due = dueList(store.relatives, today);
   return {
     habits: store.plans.length,

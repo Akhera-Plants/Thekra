@@ -2,8 +2,8 @@
  * Pure reminder planner: practice-core Store + prefs → the local notifications to schedule.
  * No React Native imports, so it runs in Jest; notifications.ts turns the list into expo-notifications calls.
  *
- * - Habits: every day the plan's rule fires (practice-core `occurrences`) in the next {@link REMINDER_DAYS}
- *   days, once per slot. Title = habit title; body = the amount asked for that day (`requiredOn`: ebb and
+ * - Habits: every day the plan is due (practice-core `isPlanDueOn`, the same answer the «عاداتي» today list uses)
+ *   in the next {@link REMINDER_DAYS} days, once per slot. Title = habit title; body = the amount asked for that day (`requiredOn`: ebb and
  *   season aware, never doubled). Today's slots are skipped once they have passed or the day is done.
  * - Kinship: on each relative's next due date (overdue → the next slot from now), then weekly while it stays
  *   due. The title is always generic; names appear in the body only when the user turned that on.
@@ -17,9 +17,9 @@
 import {
   activePrograms,
   addDays,
+  isPlanDueOn,
   formatPlanAmount,
   nextDue,
-  occurrences,
   requiredOn,
   type LocalDate,
   type LocalTime,
@@ -91,6 +91,19 @@ export function planRule(plan: Pick<Plan, 'id' | 'habitKey' | 'rule'>, habits: r
   return plan.rule ?? habitFor(plan, habits)?.defaultRule ?? { kind: 'daily' };
 }
 
+/**
+ * True when the habit is asked for on `date`: the plan's rule, else the catalog default, else daily (practice-core
+ * `isPlanDueOn`; a rule this runtime cannot evaluate counts as due). The today list and the reminders both use it.
+ */
+export function planDueOn(
+  plan: Plan,
+  habits: readonly CatalogHabit[],
+  date: LocalDate,
+  hijriOffset: number,
+): boolean {
+  return isPlanDueOn(plan, date, habitFor(plan, habits)?.defaultRule, { hijriOffset });
+}
+
 /** «2 دقيقة», «صدقة», «3 × صدقة», «4 ركعات», "33 times". Western digits. */
 export function formatAmount(
   amount: number,
@@ -107,11 +120,9 @@ function habitReminders(input: ReminderInput, end: LocalDate): PlannedReminder[]
   const { store, habits, today, now, locale, texts } = input;
   const out: PlannedReminder[] = [];
   for (const plan of store.plans) {
-    let dates: LocalDate[];
-    try {
-      dates = occurrences(planRule(plan, habits), today, end, { hijriOffset: store.settings.hijriOffset });
-    } catch {
-      continue; // e.g. a Hijri rule on a runtime without Umm al-Qura: no reminder rather than a wrong one
+    const dates: LocalDate[] = [];
+    for (let date = today; date <= end; date = addDays(date, 1)) {
+      if (planDueOn(plan, habits, date, store.settings.hijriOffset)) dates.push(date);
     }
     const habit = habitFor(plan, habits);
     const title = habit ? pick(habit, 'title', locale) : plan.title;

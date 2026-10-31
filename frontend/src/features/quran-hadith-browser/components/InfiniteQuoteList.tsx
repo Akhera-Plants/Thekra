@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { QueryErrorState } from '@/components/shared/feedback/QueryErrorState';
 import { Button } from '@/components/ui/button';
 import { useQuoteSearch } from '@/features/quran-hadith-browser/hooks/useQuoteSearch';
+import { useQuoteFavoriteProps } from '@/features/favorites/hooks/useQuoteFavoriteProps';
 import type { QuotesQuery } from '@/lib/types/api';
 
 interface InfiniteQuoteListProps {
@@ -15,6 +16,7 @@ interface InfiniteQuoteListProps {
 
 export function InfiniteQuoteList({ params }: InfiniteQuoteListProps) {
   const tBrowse = useTranslations('browse');
+  const favoriteProps = useQuoteFavoriteProps();
 
   const {
     data,
@@ -64,6 +66,7 @@ export function InfiniteQuoteList({ params }: InfiniteQuoteListProps) {
               <QuoteCard
                 quote={quote}
                 detailHref={`/quotes/${quote.id}`}
+                {...favoriteProps(quote)}
               />
             </div>
           ))}
@@ -73,6 +76,7 @@ export function InfiniteQuoteList({ params }: InfiniteQuoteListProps) {
             <QuoteCard
               quote={quote}
               detailHref={`/quotes/${quote.id}`}
+              {...favoriteProps(quote)}
             />
           </div>
         ))}

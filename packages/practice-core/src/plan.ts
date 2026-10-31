@@ -9,7 +9,8 @@
  * - same-day make-up, any amount counts («خربانة؟ صلّحها», س 434–449, 1028–1060);
  * - a missed day is never doubled the next day (س 1129–1136);
  * - adherence: ≥ 75% excellent, 50–70% fine at the beginning (س 1246–1251);
- * - ebb of the heart: lighten, never stop (س 1195–1219); seasons (Ramadan): increase, then return without
+ * - ebb of the heart: lighten, never stop (س 1195–1219). «يومي ثقيل» is one day: an ebb applies only on its own
+ *   `since` date and ends by itself (owner decision 2026-10-31); seasons (Ramadan): increase, then return without
  *   counting it as failure (س 948–966);
  * - after a relapse cut the goal by 50–80% (س 1442–1460);
  * - obligations come first; free time is usually 2–5 hours (س 1332–1376).
@@ -37,7 +38,7 @@ import {
   type LocalDate,
   type LocalTime,
 } from './dates.js';
-import { validateRule, type Rule } from './rules.js';
+import { isDue, validateRule, type Rule, type RuleOptions } from './rules.js';
 
 export type PlanUnit = 'minutes' | 'count' | 'times';
 
@@ -270,13 +271,34 @@ export function normalize(plan: Plan, today: LocalDate): Plan {
 }
 
 /**
+ * True when the plan asks for something on `date`: its own `rule`, else `fallback` (the catalog habit's default
+ * rule), else every day. Reminders, the today list and the calendar file must all use this one answer, so a habit
+ * never shows three different schedules. A rule the runtime cannot evaluate (Hijri without Umm al-Qura) counts as due.
+ * On other days anything logged still counts (adherence uses `activeDaysPerWeek`, not the rule).
+ */
+export function isPlanDueOn(plan: Plan, date: LocalDate, fallback?: Rule, opts?: RuleOptions): boolean {
+  const rule = plan.rule ?? fallback;
+  if (!rule) return true;
+  try {
+    return isDue(rule, date, opts);
+  } catch {
+    return true;
+  }
+}
+
+/** True when «يومي ثقيل» is on for `date`: an ebb covers its own day only and needs no undo the next day. */
+export function isEbbOn(plan: Plan, date: LocalDate): boolean {
+  return plan.ebb !== undefined && plan.ebb.since === date;
+}
+
+/**
  * The amount asked for on `date`. Ebb wins (a token amount), then an active season, else the base amount.
  * The log is never read: a missed day is never added to the next one.
  */
 export function requiredOn(plan: Plan, date: LocalDate): number {
   if (!isValidDate(date)) throw new RangeError('Invalid date');
   const base = baseAmount(plan);
-  if (plan.ebb && date >= plan.ebb.since) return Math.min(base, EBB_AMOUNT);
+  if (isEbbOn(plan, date)) return Math.min(base, EBB_AMOUNT);
   if (plan.season && date <= plan.season.until) return plan.season.amount;
   return base;
 }
@@ -392,12 +414,12 @@ export function adherenceBand(ratio: number, planAgeDays: number): AdherenceBand
 
 /**
  * True only when the amount has been held for {@link HOLD_DAYS}, adherence over the last {@link HOLD_DAYS} full
- * days (today excluded, it is still in progress) is ≥ 75%, there is no ebb or season, and the plan is below its
+ * days (today excluded, it is still in progress) is ≥ 75%, no ebb today and no season, and the plan is below its
  * ceiling and the top of the ladder.
  */
 export function canIncrease(plan: Plan, today: LocalDate): boolean {
   if (!isValidDate(today)) throw new RangeError('Invalid today');
-  if (plan.ebb || plan.season) return false;
+  if (isEbbOn(plan, today) || plan.season) return false;
   if (diffDays(plan.amountChangedOn, today) < HOLD_DAYS) return false;
   if (plan.ceiling !== undefined && plan.amount >= plan.ceiling) return false;
   if (nextStep(plan.amount) === null) return false;

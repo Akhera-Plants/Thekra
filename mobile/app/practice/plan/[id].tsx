@@ -1,6 +1,6 @@
 /**
  * One habit plan, after the website's PlanCard: today's amount with «أتممتها» and a partial «+1», «سُجِّل · تراجع»,
- * «صحّح السجل» (a week back, steppers for the day and the amount), the increase and relapse offers as next-step
+ * a typed partial amount, «صحّح السجل» (a week back, steppers for the day and the amount), the increase and relapse offers as next-step
  * notes, the last 30 days (a kind band and a row of dots, no streaks and no failure words), slot/day settings, and
  * «المُعينات»: one evidence text from the API with «المزيد» to the deed's page, which reads the rest. Delete is the
  * trash in the native header (confirmed), reachable without scrolling. A quiet «اقرأ عن هذه الطاعة» opens the deed's page.
@@ -30,6 +30,7 @@ import { planView } from '@/lib/practice/plan-view';
 import { today, usePracticeStore } from '@/lib/practice/practice-store';
 import { formatAmount, habitFor, planRule } from '@/lib/practice/reminders';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { EvidenceList } from '@/components/practice/EvidenceList';
 import { MonthPanel, SettingsPanel } from '@/components/practice/PlanHistoryAndSettings';
 import { TodayPanel } from '@/components/practice/PlanTodayCard';
@@ -65,6 +66,7 @@ export default function PlanScreen() {
   const habits = catalog.data?.habits ?? [];
   const habit = plan ? habitFor(plan, habits) : undefined;
   const evidence = useEvidence(habit?.evidence ?? [], locale);
+  const signedIn = useAuthStore((s) => Boolean(s.user));
 
   const [relapseDismissed, setRelapseDismissed] = useState(false);
   /** The last log in this visit, so it can be undone in one tap. */
@@ -117,7 +119,8 @@ export default function PlanScreen() {
   }
 
   function handleRemove() {
-    Alert.alert(t('practice.plan.delete'), t('practice.plan.deleteConfirm'), [
+    // Signed in, the deletion syncs to the account (a tombstone), so it is not only «من هذا الجهاز».
+    Alert.alert(t('practice.plan.delete'), t(signedIn ? 'practice.plan.deleteConfirmSynced' : 'practice.plan.deleteConfirm'), [
       { text: t('common.cancel'), style: 'cancel' },
       {
         text: t('common.delete'),
@@ -149,6 +152,7 @@ export default function PlanScreen() {
         view={view}
         today={d}
         amountLabel={amountLabel}
+        unitLabel={habit ? pick(habit, 'unitLabel', locale) : t(`practice.units.${plan.unit}`)}
         logged={lastLog !== null}
         fixing={fixing}
         onLog={handleLog}

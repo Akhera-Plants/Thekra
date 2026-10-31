@@ -3,6 +3,7 @@
  * links are rejected through practice-core `looksLikeContactDetails`.
  */
 
+import { emptyStore, updateRelative, upsertRelative } from '@thekra/practice-core';
 import {
   editedRelative,
   relativeFromForm,
@@ -85,5 +86,21 @@ describe('kinship edit form', () => {
 
   it('rejects contact details like the add form', () => {
     expect(editedRelative(saved, { ...base, name: '0599 123 456' }, '2026-10-28')).toEqual({ ok: false, error: 'contactDetails' });
+  });
+
+  it('a weekdays rule from another device survives an edit that leaves the rhythm alone', () => {
+    const multi = { ...saved, rule: { kind: 'weekdays' as const, days: [1, 4] } };
+    const res = editedRelative(multi, { ...relativeToFormValues(multi, 5), relation: 'عمة' }, '2026-10-28');
+    expect(res.ok && res.relative.rule).toEqual({ kind: 'weekdays', days: [1, 4] });
+  });
+
+  it('saved through practice-core updateRelative, the edit stamps updatedAt (so it syncs)', () => {
+    const t0 = '2026-10-01T00:00:00.000Z';
+    const t1 = '2026-10-28T10:00:00.000Z';
+    const store = upsertRelative(emptyStore(), saved, t0);
+    const res = editedRelative(store.relatives[0]!, { ...base, name: 'عمتي' }, '2026-10-28');
+    if (!res.ok) throw new Error('expected ok');
+    const next = updateRelative(store, 'r1', () => res.relative, t1);
+    expect(next.relatives[0]).toMatchObject({ name: 'عمتي', updatedAt: t1, history: ['2026-10-10'] });
   });
 });

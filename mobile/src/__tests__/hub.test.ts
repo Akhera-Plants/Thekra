@@ -65,6 +65,16 @@ describe('finishing a day', () => {
     expect(finishedDay(allDone, allDone, '2026-10-28')).toBe(false);
   });
 
+  it('a habit not asked for that day (its catalog rule) does not keep the day open', () => {
+    // 2026-10-28 is a Wednesday; the catalog asks for this habit on Monday and Thursday only.
+    const planDays = { defaultRuleOf: () => ({ kind: 'weekdays' as const, days: [1, 4] }) };
+    const s = store();
+    const contacted: Store = { ...s, relatives: s.relatives.map((r) => logContact(r, '2026-10-28')) };
+    expect(isDayComplete(dayAgenda(contacted, '2026-10-28', planDays))).toBe(true);
+    expect(finishedDay(s, contacted, '2026-10-28', planDays)).toBe(true);
+    expect(finishedDay(s, contacted, '2026-10-28')).toBe(false);
+  });
+
   it('a day with nothing to do is not «complete»', () => {
     expect(isDayComplete([])).toBe(false);
   });

@@ -998,18 +998,29 @@
       "remove": "Remove this habit",
       "removeConfirm": "Yes, remove it",
       "keep": "Keep it",
-      "dueTitle": "Due now",
-      "remaining": "{amount} left",
       "ebbOn": "Heavy day",
-      "ebbOff": "Lighter now, back to my plan",
-      "ebbHint": "On heavy days, lighten rather than stop: only the smallest amount is asked.",
-      "ebbActive": "Your habits are at their smallest amount. Keep the obligations, and come back when it lightens.",
+      "ebbOff": "Cancel today’s lightening",
+      "ebbHint": "On heavy days, lighten rather than stop: only the smallest amount is asked today, and your plan returns by itself tomorrow.",
+      "ebbActive": "Your habits are at their smallest amount for today only; tomorrow your plan returns as it was, with nothing to undo. Keep the obligations.",
       "loadOver": "Your plans take more than half of your free time. Lighten or postpone a habit so that extra deeds do not crowd out your duties.",
       "catalogError": "The habit details could not be loaded; your plan is saved as it is.",
       "add": "Add a habit",
       "downloadReminders": "Download my reminders as a calendar file",
       "remindersHint": "A file for the next 30 days, built on your device. Open it in your calendar app to be reminded at your times.",
       "icsName": "Thekra reminders",
+      "notDueTitle": "Not asked for today",
+      "notDueNote": "Anything you do still counts.",
+      "noneDueToday": "No habit is asked for today.",
+      "removeNoteDevice": "This habit is removed from this device.",
+      "removeNoteAccount": "This habit is removed from your account and all your devices.",
+      "edit": "Edit",
+      "editTitle": "Edit the habit",
+      "editAmount": "Amount a day",
+      "editAmountHint": "You can lighten it at any time; the settling period starts again. Going up is one step, after a steady month.",
+      "editSlotsHint": "Leave a time empty to remove it; at least one time stays.",
+      "editSlotsRequired": "Enter at least one time.",
+      "editSave": "Save changes",
+      "editCancel": "Cancel",
       "logged": "Logged.",
       "undo": "Undo",
       "editLog": {
@@ -1069,7 +1080,8 @@
         "rhythms": {
           "weekly": "Every week",
           "biweekly": "Every two weeks",
-          "monthly": "Every month"
+          "monthly": "Every month",
+          "custom": "Its current rhythm (custom)"
         },
         "weekday": "On",
         "submit": "Add",
@@ -1077,7 +1089,10 @@
           "nameRequired": "Write a name or nickname.",
           "nameLong": "Longer than 60 characters.",
           "contact": "Write a name or nickname only, with no phone number, email or link."
-        }
+        },
+        "editTitle": "Edit relative",
+        "save": "Save",
+        "cancel": "Cancel"
       },
       "empty": "No one added yet.",
       "buckets": {
@@ -1103,7 +1118,10 @@
       "export": "Download the calendar file",
       "icsTitle": "Ties of kinship",
       "icsTitleNamed": "Ties of kinship: {name}",
-      "icsName": "Ties of kinship"
+      "icsName": "Ties of kinship",
+      "edit": "Edit",
+      "removeNoteDevice": "This relative is removed from this device.",
+      "removeNoteAccount": "This relative is removed from your account and all your devices."
     },
     "sync": {
       "localGuest": "Your habits are always saved on this device. Sign in and they also stay in step with your account on all your devices.",
@@ -1139,6 +1157,7 @@
       "testNotFound": "We can no longer reach this browser. Turn notifications off, then on again.",
       "failed": "That did not work just now. Please try again shortly."
     },
+    "leadLocal": "Start very small, keep at it, and increase only once it is steady. Everything here is saved on your device.",
     "hub": {
       "title": "My habits",
       "lead": "Your whole day in one place: your habits, your ties of kinship and the year’s occasions. Any amount you do counts.",
@@ -1202,6 +1221,7 @@
       "start": {
         "title": "Where to begin?",
         "lead": "Choose one door to start with. Everything is saved on your device first.",
+        "leadLocal": "Choose one door to start with. Everything is saved on your device.",
         "habits": "A good habit",
         "habitsLine": "Start very small, keep at it, and increase only once it is steady.",
         "kinship": "Ties of kinship",
@@ -1379,6 +1399,7 @@
         "reopen": "The privacy code was changed on another device; open the program again."
       }
     },
+    "privacyLocal": "This program stays on your device alone: it is never sent to a server or used in any statistics, and the sin is never named in the page title or its link.",
     "continueFromSin": "Continue your program"
   }
 }

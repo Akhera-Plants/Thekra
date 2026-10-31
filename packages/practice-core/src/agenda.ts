@@ -8,8 +8,8 @@
  */
 import { addDays, diffDays, eachDay, type LocalDate } from './dates.js';
 import { latestDate, nextDue, type Relative } from './kinship.js';
-import { adherence, adherenceBand, requiredOn, type AdherenceBand, type Plan } from './plan.js';
-import { isDue, occurrences, type Rule } from './rules.js';
+import { adherence, adherenceBand, isPlanDueOn, requiredOn, type AdherenceBand, type Plan } from './plan.js';
+import { occurrences, type Rule } from './rules.js';
 import { activePrograms, type SinProgram } from './sin-program.js';
 import type { Store } from './storage.js';
 
@@ -59,12 +59,28 @@ export type AgendaItem = HabitItem | RelativeItem | ProgramItem | OccasionItem;
 export interface AgendaOptions {
   occasions?: readonly AgendaOccasion[];
   hijriOffset?: number;
+  /**
+   * The schedule a plan without its own `rule` follows: the catalog habit's `defaultRule` (e.g. Monday and Thursday
+   * for the sunnah fast). Without it such a plan is asked for every day. Pass the same lookup the reminders use.
+   */
+  defaultRuleOf?: (plan: Plan) => Rule | undefined;
 }
 
-/** A plan asks for something on `date` unless its own schedule (`rule`) says otherwise; it never asks before it starts. */
-function planAsksOn(plan: Plan, date: LocalDate): boolean {
+/** The options that decide which days a plan asks for (no occasions). */
+export type PlanDayOptions = Pick<AgendaOptions, 'hijriOffset' | 'defaultRuleOf'>;
+
+/**
+ * A plan asks for something on `date` on its own days only ({@link isPlanDueOn}: its `rule`, else the catalog rule,
+ * else every day); it never asks before it starts. A day it does not ask for can still be logged.
+ */
+export function planAsksOn(plan: Plan, date: LocalDate, opts: PlanDayOptions = {}): boolean {
   if (date < plan.createdOn) return false;
-  return plan.rule ? isDue(plan.rule, date) : true;
+  return isPlanDueOn(plan, date, opts.defaultRuleOf?.(plan), { hijriOffset: opts.hijriOffset ?? 0 });
+}
+
+/** Plans that exist on `date` but do not ask for it («ليست مطلوبة اليوم»): still loggable, never counted as missed. */
+export function plansNotAskedOn(store: Store, date: LocalDate, opts: PlanDayOptions = {}): Plan[] {
+  return store.plans.filter((p) => p.createdOn <= date && !planAsksOn(p, date, opts));
 }
 
 function habitItem(plan: Plan, date: LocalDate): HabitItem {
@@ -113,7 +129,7 @@ function occasionItems(occasions: readonly AgendaOccasion[], date: LocalDate, hi
  * relatives (overdue first), then the private check-in last. Pure; the store is not changed.
  */
 export function dayAgenda(store: Store, date: LocalDate, opts: AgendaOptions = {}): AgendaItem[] {
-  const habits = store.plans.filter((p) => planAsksOn(p, date)).map((p) => habitItem(p, date));
+  const habits = store.plans.filter((p) => planAsksOn(p, date, opts)).map((p) => habitItem(p, date));
   const relatives = store.relatives
     .map((r) => relativeItem(r, date))
     .filter((r): r is RelativeItem => r !== null)
@@ -148,9 +164,9 @@ export interface DayPresence {
 }
 
 /** Presence per day from `from` to `to` (inclusive): the week strip and «وين وصلت». Never a run length. */
-export function presence(store: Store, from: LocalDate, to: LocalDate): DayPresence[] {
+export function presence(store: Store, from: LocalDate, to: LocalDate, opts: PlanDayOptions = {}): DayPresence[] {
   return eachDay(from, to).map((date) => {
-    const items = actionable(dayAgenda(store, date));
+    const items = actionable(dayAgenda(store, date, opts));
     const doneCount = items.filter(isItemDone).length;
     const present =
       store.plans.some((p) => (p.log[date] ?? 0) > 0) ||
@@ -170,9 +186,9 @@ export interface MonthSummary {
 }
 
 /** «وين وصلت»: the last `days` days up to `today`. Plans younger than the window count from their start. */
-export function monthSummary(store: Store, today: LocalDate, days = 30): MonthSummary {
+export function monthSummary(store: Store, today: LocalDate, days = 30, opts: PlanDayOptions = {}): MonthSummary {
   const from = addDays(today, -(days - 1));
-  const presentDays = presence(store, from, today).filter((d) => d.present).length;
+  const presentDays = presence(store, from, today, opts).filter((d) => d.present).length;
   const plans = store.plans.filter((p) => p.createdOn <= today);
   if (plans.length === 0) return { presentDays, adherence: null, band: null };
   const mean = plans.reduce((sum, p) => sum + adherence(p, from, today), 0) / plans.length;

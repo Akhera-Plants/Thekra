@@ -4,11 +4,11 @@ import { useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { useLocale, useTranslations } from 'next-intl';
-import { updateSettings, upsertPlan, type Plan } from '@thekra/practice-core';
+import { startEbb, updateSettings, upsertPlan, type Plan } from '@thekra/practice-core';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { Form } from '@/components/ui/form';
 import { updateStore } from '@/lib/practice/local-store';
-import { DEFAULT_ACTIVE_DAYS, planFromHabit, type Distance } from '@/lib/practice/plans';
+import { DEFAULT_ACTIVE_DAYS, isEbbDay, planFromHabit, type Distance } from '@/lib/practice/plans';
 import type { PracticeHabit } from '@/lib/types/practice';
 import { formatDigits } from '@/lib/format/digits';
 import { useFocusOnChange } from '../hooks/useFocusOnChange';
@@ -94,12 +94,14 @@ export function PlanSetup({ habits, existing, preselected, freeMinutes, today, o
 
   function handleSubmit(values: SetupValues) {
     const created = buildPlans(values);
-    updateStore((store) =>
-      created.reduce(
-        (next, plan) => upsertPlan(next, plan),
+    updateStore((store) => {
+      // On a «يومي ثقيل» day the new habits are lightened too, so the day stays light and the toggle stays on.
+      const heavy = isEbbDay(store.plans, today);
+      return created.reduce(
+        (next, plan) => upsertPlan(next, heavy ? startEbb(plan, today) : plan),
         updateSettings(store, { freeMinutesPerDay: Number(values.freeMinutes) }),
-      ),
-    );
+      );
+    });
     onDone();
   }
 

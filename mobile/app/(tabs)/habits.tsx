@@ -4,6 +4,8 @@
  * strip with presence marks; the day's list across tracks with check controls (practice-core `dayAgenda`); «يومي
  * ثقيل»; the three tracks (or the three ways to begin); «وين وصلت هذا الشهر» as a month grid. No streaks, no
  * failure words; the private program shows only as one generic line. Habit management lives on «طاعاتي».
+ * A habit is listed on its own days only (its rule, else the catalog's, the same answer as its reminders); the
+ * others follow as «ليست مطلوبة اليوم», still loggable.
  */
 
 import React, { useCallback, useMemo, useRef, useState } from 'react';
@@ -21,6 +23,7 @@ import {
   useDayAgenda,
   useHeavyDay,
   useHubDays,
+  useOffDayHabits,
   usePresenceMarks,
   useTrackSummary,
 } from '@/lib/practice/use-habits-hub';
@@ -72,11 +75,13 @@ function HabitsHub() {
 
   const items = useDayAgenda(selected);
   const rows = useAgendaRows(items, selected, today);
+  const offDayItems = useOffDayHabits(selected);
+  const offDayRows = useAgendaRows(offDayItems, selected, today);
   const actions = useAgendaActions(selected);
   const weekMarks = usePresenceMarks(week[0]!, week[6]!, today);
   const monthMarks = usePresenceMarks(month, monthEnd(month), today);
   const summary = useTrackSummary(today);
-  const heavyDay = useHeavyDay();
+  const heavyDay = useHeavyDay(today);
   const monthOccasions = useMemo(
     () => occasionDates(catalog.data?.occasions ?? [], month, monthEnd(month), hijriOffset),
     [catalog.data?.occasions, month, hijriOffset],
@@ -132,6 +137,7 @@ function HabitsHub() {
             date={selected}
             today={today}
             rows={rows}
+            offDayRows={offDayRows}
             canLog={canLogOn(selected, today)}
             complete={selected <= today && isDayComplete(items)}
             started={summary.started}
