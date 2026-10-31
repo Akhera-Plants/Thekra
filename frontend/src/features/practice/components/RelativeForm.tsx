@@ -4,23 +4,37 @@ import { useMemo } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useWatch } from 'react-hook-form';
 import { useTranslations } from 'next-intl';
-import { createRelative, looksLikeContactDetails, MAX_NAME_LENGTH, upsertRelative } from '@thekra/practice-core';
+import {
+  createRelative,
+  looksLikeContactDetails,
+  MAX_NAME_LENGTH,
+  updateRelative,
+  upsertRelative,
+  type Relative,
+} from '@thekra/practice-core';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { newUuid } from '@/lib/practice/ids';
 import { updateStore } from '@/lib/practice/local-store';
-import { DEFAULT_WEEKDAY, RHYTHMS, rhythmRule, type Rhythm } from '@/lib/practice/kinship';
+import { DEFAULT_WEEKDAY, editRelative, RHYTHMS, rhythmOf, rhythmRule, type Rhythm } from '@/lib/practice/kinship';
 import { z } from '@/lib/zod';
 
 const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6];
 
 interface RelativeFormProps {
   today: string;
+  /** Edit this relative instead of adding one (name, relation, rhythm; contacts are kept). */
+  relative?: Relative;
+  /** Called after an edit is saved or cancelled. */
+  onDone?: () => void;
 }
 
-/** Nickname-only relative: contact details are refused (practice-core `looksLikeContactDetails`). */
-export function RelativeForm({ today }: RelativeFormProps) {
+/**
+ * Nickname-only relative: contact details are refused (practice-core `looksLikeContactDetails`). Adds a relative,
+ * or with `relative` edits it through `updateRelative`, which versions the change so it syncs.
+ */
+export function RelativeForm({ today, relative, onDone }: RelativeFormProps) {
   const t = useTranslations('practice.kinship.form');
   const tDays = useTranslations('practice.weekdays');
   const schema = useMemo(() => {
@@ -33,25 +47,41 @@ export function RelativeForm({ today }: RelativeFormProps) {
         .max(MAX_NAME_LENGTH, t('errors.nameLong'))
         .refine(noContact, t('errors.contact')),
       relation: z.string().trim().max(MAX_NAME_LENGTH, t('errors.nameLong')).refine(noContact, t('errors.contact')),
-      rhythm: z.enum(RHYTHMS),
+      rhythm: z.enum([...RHYTHMS, 'custom']),
       weekday: z.string(),
     });
   }, [t]);
   type Values = z.infer<typeof schema>;
+  // A rule made elsewhere (no preset matches it) is offered as «إيقاعه الحالي» and kept unless changed.
+  const preset = relative ? rhythmOf(relative.rule) : null;
+  const rhythmOptions: readonly (Rhythm | 'custom')[] = relative && !preset ? [...RHYTHMS, 'custom'] : RHYTHMS;
   const form = useForm<Values>({
     resolver: zodResolver(schema),
-    defaultValues: { name: '', relation: '', rhythm: 'weekly', weekday: String(DEFAULT_WEEKDAY) },
+    defaultValues: relative
+      ? {
+          name: relative.name,
+          relation: relative.relation,
+          rhythm: preset?.rhythm ?? 'custom',
+          weekday: String(preset?.weekday ?? DEFAULT_WEEKDAY),
+        }
+      : { name: '', relation: '', rhythm: 'weekly', weekday: String(DEFAULT_WEEKDAY) },
   });
   const rhythm = useWatch({ control: form.control, name: 'rhythm' });
 
   function handleSubmit(values: Values) {
-    const relative = createRelative({
+    if (relative) {
+      const edit = { name: values.name, relation: values.relation, rhythm: values.rhythm, weekday: Number(values.weekday) };
+      updateStore((store) => updateRelative(store, relative.id, (r) => editRelative(r, edit, today)));
+      onDone?.();
+      return;
+    }
+    const created = createRelative({
       id: newUuid(),
       name: values.name,
       relation: values.relation,
-      rule: rhythmRule(values.rhythm as Rhythm, Number(values.weekday), today),
+      rule: rhythmRule(values.rhythm === 'custom' ? 'weekly' : values.rhythm, Number(values.weekday), today),
     });
-    updateStore((store) => upsertRelative(store, relative));
+    updateStore((store) => upsertRelative(store, created));
     form.reset({ ...values, name: '', relation: '' });
   }
 
@@ -59,10 +89,15 @@ export function RelativeForm({ today }: RelativeFormProps) {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(handleSubmit)}
-        className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5"
+        className={
+          relative
+            ? 'flex flex-col gap-4 rounded-xl border border-border p-4'
+            : 'flex flex-col gap-4 rounded-2xl border border-border bg-card p-5'
+        }
         noValidate
+        aria-label={relative ? t('editTitle') : undefined}
       >
-        <h2 className="text-xl font-medium">{t('title')}</h2>
+        {relative ? null : <h2 className="text-xl font-medium">{t('title')}</h2>}
         <div className="grid gap-4 sm:grid-cols-2">
           <FormField
             control={form.control}
@@ -104,7 +139,7 @@ export function RelativeForm({ today }: RelativeFormProps) {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {RHYTHMS.map((value) => (
+                    {rhythmOptions.map((value) => (
                       <SelectItem key={value} value={value}>
                         {t(`rhythms.${value}`)}
                       </SelectItem>
@@ -115,7 +150,7 @@ export function RelativeForm({ today }: RelativeFormProps) {
               </FormItem>
             )}
           />
-          {rhythm !== 'monthly' ? (
+          {rhythm !== 'monthly' && rhythm !== 'custom' ? (
             <FormField
               control={form.control}
               name="weekday"
@@ -141,9 +176,20 @@ export function RelativeForm({ today }: RelativeFormProps) {
             />
           ) : null}
         </div>
-        <button type="submit" className="solid-button button-wrap self-start">
-          {t('submit')}
-        </button>
+        {relative ? (
+          <div className="flex flex-wrap gap-3">
+            <button type="submit" className="solid-button button-wrap">
+              {t('save')}
+            </button>
+            <button type="button" className="outline-button button-wrap" onClick={onDone}>
+              {t('cancel')}
+            </button>
+          </div>
+        ) : (
+          <button type="submit" className="solid-button button-wrap self-start">
+            {t('submit')}
+          </button>
+        )}
       </form>
     </Form>
   );

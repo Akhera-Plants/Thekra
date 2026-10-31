@@ -10,6 +10,7 @@ import type { QuoteCardIntent } from '@/components/shared/quote/QuoteCard';
 import type { CountsByKind, QuoteDto } from '@/lib/types/api';
 import { QuoteType } from '@/lib/types/enums';
 import { StudyPanel } from '@/features/study-panel/components/StudyPanel';
+import { useQuoteFavoriteProps } from '@/features/favorites/hooks/useQuoteFavoriteProps';
 import { cn } from '@/lib/utils';
 
 export interface ReaderItem {
@@ -127,6 +128,7 @@ export function ReminderReader({
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [localLoadingMore, setLocalLoadingMore] = useState(false);
   const [studyQuoteId, setStudyQuoteId] = useState<string | null>(null);
+  const favoriteProps = useQuoteFavoriteProps();
   const listId = useId();
 
   const baseSections = useMemo(
@@ -323,6 +325,7 @@ export function ReminderReader({
                     detailHref={`/quotes/${item.quote.id}`}
                     intent={intent}
                     onOpenStudy={(quote) => setStudyQuoteId(quote.id)}
+                    {...favoriteProps(item.quote)}
                   />
                 </li>
               ))}

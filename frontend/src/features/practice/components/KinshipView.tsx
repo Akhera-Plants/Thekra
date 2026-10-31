@@ -1,7 +1,7 @@
 'use client';
 
 import { useId, useState } from 'react';
-import { CalendarPlus, Check, Undo2 } from 'lucide-react';
+import { CalendarPlus, Check, Pencil, Undo2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
   buildIcs,
@@ -19,10 +19,12 @@ import { downloadTextFile, ICS_MIME } from '@/lib/practice/download';
 import { formatGregorian } from '@/lib/practice/format';
 import { kinshipEvents, rhythmOf } from '@/lib/practice/kinship';
 import { updatePrefs, updateStore } from '@/lib/practice/local-store';
+import { useDeletesEverywhere } from '../hooks/useDeletesEverywhere';
 import { usePracticeStore } from '../hooks/usePracticeStore';
 import { useToday } from '../hooks/useToday';
 import { SyncStatus } from './SyncStatus';
 import { PracticeLoading } from './PracticeLoading';
+import { PushRemindersCard } from './PushRemindersCard';
 import { RelativeForm } from './RelativeForm';
 
 const BUCKETS = ['overdue', 'thisWeek', 'later'] as const;
@@ -36,7 +38,10 @@ function changeRelative(id: string, change: (relative: Relative) => Relative): v
   updateStore((store) => updateRelative(store, id, change));
 }
 
-/** صلة الرحم: nicknames and a rhythm, «تواصلت معه», undo, due list, optional calendar file. */
+/**
+ * صلة الرحم: nicknames and a rhythm, «تواصلت معه», undo, edit, due list, optional calendar file, and the browser
+ * reminders card (its 18:00 kinship reminder is promised on /practice too; same gating as there).
+ */
 export function KinshipView() {
   const t = useTranslations('practice.kinship');
   const snapshot = usePracticeStore();
@@ -104,6 +109,8 @@ export function KinshipView() {
           </button>
         </section>
       ) : null}
+
+      <PushRemindersCard />
     </div>
   );
 }
@@ -113,6 +120,9 @@ function RelativeRow({ entry, today }: { entry: DueEntry; today: string }) {
   const tDays = useTranslations('practice.weekdays');
   const locale = useLocale() === 'en' ? 'en' : 'ar';
   const [confirmRemove, setConfirmRemove] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const everywhere = useDeletesEverywhere();
+  const editId = useId();
   const { relative, nextDue, daysUntilDue } = entry;
   const preset = rhythmOf(relative.rule);
   const rhythm = preset
@@ -128,61 +138,84 @@ function RelativeRow({ entry, today }: { entry: DueEntry; today: string }) {
         : formatGregorian(nextDue, locale, true);
   const contactedToday = relative.history.includes(today);
   return (
-    <li className="flex flex-col gap-2 py-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex min-w-0 flex-col gap-1">
-        <p className="text-lg font-medium break-words">
-          <bdi lang={langOf(relative.name)}>{relative.name}</bdi>
-          {relative.relation ? (
-            <span className="text-base font-normal text-muted-foreground">
-              {' · '}
-              <bdi lang={langOf(relative.relation)}>{relative.relation}</bdi>
-            </span>
-          ) : null}
-        </p>
-        <p className="text-sm leading-7 text-muted-foreground">
-          {rhythm} · {when}
-          {relative.lastContactedOn ? (
-            <> · {t('lastContact', { date: formatGregorian(relative.lastContactedOn, locale) })}</>
-          ) : null}
-        </p>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        <Button
-          variant={contactedToday ? 'outline' : 'solid'}
-          tone="primary"
-          size="sm"
-          disabled={contactedToday}
-          onClick={() => changeRelative(relative.id, (r) => logContact(r, today))}
-        >
-          <Check aria-hidden />
-          {contactedToday ? t('contactedToday') : t('contacted')}
-        </Button>
-        {relative.history.length > 0 ? (
-          <Button variant="ghost" tone="neutral" size="sm" onClick={() => updateStore((s) => undoContact(s, relative.id))}>
-            <Undo2 aria-hidden />
-            {t('undo')}
+    <li className="flex flex-col gap-3 py-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 flex-col gap-1">
+          <p className="text-lg font-medium break-words">
+            <bdi lang={langOf(relative.name)}>{relative.name}</bdi>
+            {relative.relation ? (
+              <span className="text-base font-normal text-muted-foreground">
+                {' · '}
+                <bdi lang={langOf(relative.relation)}>{relative.relation}</bdi>
+              </span>
+            ) : null}
+          </p>
+          <p className="text-sm leading-7 text-muted-foreground">
+            {rhythm} · {when}
+            {relative.lastContactedOn ? (
+              <> · {t('lastContact', { date: formatGregorian(relative.lastContactedOn, locale) })}</>
+            ) : null}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant={contactedToday ? 'outline' : 'solid'}
+            tone="primary"
+            size="sm"
+            disabled={contactedToday}
+            onClick={() => changeRelative(relative.id, (r) => logContact(r, today))}
+          >
+            <Check aria-hidden />
+            {contactedToday ? t('contactedToday') : t('contacted')}
           </Button>
-        ) : null}
-        {confirmRemove ? (
-          <>
-            <Button
-              variant="outline"
-              tone="destructive"
-              size="sm"
-              onClick={() => updateStore((s) => deleteRelative(s, relative.id))}
-            >
-              {t('removeConfirm')}
+          {relative.history.length > 0 ? (
+            <Button variant="ghost" tone="neutral" size="sm" onClick={() => updateStore((s) => undoContact(s, relative.id))}>
+              <Undo2 aria-hidden />
+              {t('undo')}
             </Button>
-            <Button variant="ghost" tone="neutral" size="sm" onClick={() => setConfirmRemove(false)}>
-              {t('keep')}
-            </Button>
-          </>
-        ) : (
-          <Button variant="ghost" tone="neutral" size="sm" onClick={() => setConfirmRemove(true)}>
-            {t('remove')}
+          ) : null}
+          <Button
+            variant="ghost"
+            tone="neutral"
+            size="sm"
+            aria-expanded={editing}
+            aria-controls={editId}
+            onClick={() => setEditing((open) => !open)}
+          >
+            <Pencil aria-hidden />
+            {t('edit')}
           </Button>
-        )}
+          {confirmRemove ? (
+            <>
+              <Button
+                variant="outline"
+                tone="destructive"
+                size="sm"
+                onClick={() => updateStore((s) => deleteRelative(s, relative.id))}
+              >
+                {t('removeConfirm')}
+              </Button>
+              <Button variant="ghost" tone="neutral" size="sm" onClick={() => setConfirmRemove(false)}>
+                {t('keep')}
+              </Button>
+            </>
+          ) : (
+            <Button variant="ghost" tone="neutral" size="sm" onClick={() => setConfirmRemove(true)}>
+              {t('remove')}
+            </Button>
+          )}
+        </div>
       </div>
+      {confirmRemove ? (
+        <p className="text-sm leading-7 text-muted-foreground" role="status">
+          {everywhere ? t('removeNoteAccount') : t('removeNoteDevice')}
+        </p>
+      ) : null}
+      {editing ? (
+        <div id={editId}>
+          <RelativeForm today={today} relative={relative} onDone={() => setEditing(false)} />
+        </div>
+      ) : null}
     </li>
   );
 }

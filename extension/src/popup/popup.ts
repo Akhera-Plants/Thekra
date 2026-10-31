@@ -7,6 +7,7 @@ import {
   decreaseTo,
   deletePlan,
   formatHijriAr,
+  isEbbOn,
   isHijriSupported,
   logDone,
   normalize,
@@ -209,13 +210,14 @@ function renderToday(main: HTMLElement, t: Translate): void {
   for (const stored of plans) {
     const plan = normalize(stored, day);
     const habit = habitOf(plan);
-    const rule = ruleOf(plan);
+    const fallback = habit?.defaultRule;
+    const rule = ruleOf(plan, fallback);
     const label = habit ? unitLabel(habit, lang) : '';
     const amount = (n: number) => formatAmount(n, plan.unit, label);
     const required = requiredOn(plan, day);
     const done = plan.log[day] ?? 0;
     const remaining = remainingOn(plan, day);
-    const due = isReminderDay(rule, state.prefs.quietDays, day, offset);
+    const due = isReminderDay(plan, fallback, state.prefs.quietDays, day, offset);
 
     const card = h('section', { class: 'card' });
     const title = habit ? habitTitle(habit, lang) : plan.title;
@@ -253,7 +255,8 @@ function renderToday(main: HTMLElement, t: Translate): void {
       card.append(h('div', { class: 'offer' }, h('p', {}, t('increaseOffer', amount(up))), b));
     }
 
-    card.append(toggle(t('ebbToggle'), Boolean(plan.ebb), (on) => editPlan(plan.id, (p) => setEbb(p, on, day))));
+    // «يومي ثقيل» is one day (practice-core isEbbOn): yesterday's ebb shows unchecked without any write.
+    card.append(toggle(t('ebbToggle'), isEbbOn(plan, day), (on) => editPlan(plan.id, (p) => setEbb(p, on, day))));
 
     const ramadan = isHijriSupported() ? ramadanEnd(day, offset) : null;
     const seasonUp = seasonAmount(plan);

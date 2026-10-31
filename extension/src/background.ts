@@ -76,11 +76,13 @@ async function reschedule(): Promise<void> {
     if (parseAlarmName(alarm.name)?.kind === 'remind') await api.alarms.clear(alarm.name);
   }
   if (!prefs.onboarded) return;
+  const habitRules = Object.fromEntries((await getCatalog()).map((h) => [h.key, h.defaultRule]));
   const reminders = upcomingReminders({
     plans: store.plans,
     quietDays: prefs.quietDays,
     hijriOffset: store.settings.hijriOffset,
     now: new Date(),
+    habitRules,
   });
   for (const r of reminders) await api.alarms.create(reminderAlarmName(r), { when: r.when });
 }

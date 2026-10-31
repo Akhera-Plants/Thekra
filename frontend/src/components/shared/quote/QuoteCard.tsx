@@ -79,6 +79,8 @@ export interface QuoteCardProps extends VariantProps<typeof quoteCardVariants> {
   detailHref?: string;
   intent?: QuoteCardIntent;
   showFavoriteButton?: boolean;
+  /** Saved state when the quote object does not carry it (public lists); defaults to `quote.isFavorite`. */
+  isFavorite?: boolean;
   onToggleFavorite?: (quoteId: string, currentlyFavorited: boolean) => void;
   isFavoritePending?: boolean;
   /** Opens the study panel (tafsir / sharh). */
@@ -130,6 +132,7 @@ export function QuoteCard({
   density,
   intent,
   showFavoriteButton = false,
+  isFavorite,
   onToggleFavorite,
   isFavoritePending = false,
   className,
@@ -415,7 +418,7 @@ export function QuoteCard({
               {showFavorite ? (
                 <FavoriteButton
                   quoteId={quote.id}
-                  isFavorite={quote.isFavorite ?? false}
+                  isFavorite={isFavorite ?? quote.isFavorite ?? false}
                   isPending={isFavoritePending}
                   label={tFav('add')}
                   labelRemove={tFav('remove')}

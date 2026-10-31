@@ -58,9 +58,26 @@ describe('upcomingReminders', () => {
   });
 
   it('an ebb asks for the token amount, so logging 2 completes the day', () => {
-    const p = logDone(startEbb(plan('a', ['09:30', '21:00']), '2026-10-27'), TODAY, 2);
+    const p = logDone(startEbb(plan('a', ['09:30', '21:00']), TODAY), TODAY, 2);
     expect(remainingOn(p, TODAY)).toBe(0);
     expect(upcomingReminders(input([p], at(TODAY, '10:00')))[0]?.date).toBe('2026-10-29');
+  });
+
+  it('a «heavy day» is one day: yesterday’s ebb no longer lightens today', () => {
+    const p = logDone(startEbb(plan('a', ['09:30', '21:00']), '2026-10-27'), TODAY, 2);
+    expect(remainingOn(p, '2026-10-27')).toBe(2);
+    expect(remainingOn(p, TODAY)).toBe(3);
+    expect(upcomingReminders(input([p], at(TODAY, '10:00')))[0]).toMatchObject({ date: TODAY, time: '21:00' });
+  });
+
+  it('follows the catalog default rule for a plan without its own rule', () => {
+    const p = { ...plan('a', ['04:00']), habitKey: 'qiyam-last-third' };
+    const habitRules = { 'qiyam-last-third': { kind: 'weekdays', days: [5] } as Rule };
+    expect(upcomingReminders(input([p], at(TODAY, '08:00'), { habitRules }))[0]?.date).toBe('2026-10-30');
+    // Without the catalog (or with its own rule) the plan keeps its own schedule.
+    expect(upcomingReminders(input([p], at(TODAY, '08:00')))[0]?.date).toBe('2026-10-29');
+    const own = { ...p, rule: { kind: 'daily' } as Rule };
+    expect(upcomingReminders(input([own], at(TODAY, '08:00'), { habitRules }))[0]?.date).toBe('2026-10-29');
   });
 
   it('skips quiet weekdays', () => {
@@ -103,11 +120,14 @@ describe('upcomingReminders', () => {
     expect(upcomingReminders(input([p], at(TODAY, '08:00'), { quietDays: [0, 1, 2, 3, 4, 5, 6] }))).toEqual([]);
   });
 
-  it('reports reminder days', () => {
+  it('reports reminder days through isPlanDueOn: plan rule, else the catalog rule, else daily', () => {
     const friday: Rule = { kind: 'weekdays', days: [5] };
-    expect(isReminderDay(friday, [], '2026-10-30', 0)).toBe(true);
-    expect(isReminderDay(friday, [5], '2026-10-30', 0)).toBe(false);
-    expect(isReminderDay(friday, [], TODAY, 0)).toBe(false);
+    const noRule = plan('a', ['09:30']);
+    expect(isReminderDay(noRule, friday, [], '2026-10-30', 0)).toBe(true);
+    expect(isReminderDay(noRule, friday, [5], '2026-10-30', 0)).toBe(false);
+    expect(isReminderDay(noRule, friday, [], TODAY, 0)).toBe(false);
+    expect(isReminderDay(noRule, undefined, [], TODAY, 0)).toBe(true);
+    expect(isReminderDay({ ...noRule, rule: { kind: 'daily' } }, friday, [], TODAY, 0)).toBe(true);
   });
 });
 

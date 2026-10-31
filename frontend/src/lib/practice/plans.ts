@@ -10,11 +10,15 @@ import {
   buildIcs,
   canIncrease,
   createPlan,
+  decreaseTo,
   diffDays,
   eachDay,
   HOLD_DAYS,
   isHijriSupported,
+  isPlanDueOn,
+  LADDER,
   nextStep,
+  nowIso,
   occurrences,
   occurrencesToEvents,
   relapseSuggestion,
@@ -23,8 +27,10 @@ import {
   timeToMinutes,
   toHijri,
   baseAmount,
+  validatePlan,
   type AdherenceBand,
   type IcsEvent,
+  type IsoTime,
   type LocalDate,
   type Plan,
   type Rule,
@@ -41,10 +47,10 @@ export function habitOf(plan: Plan, habits: ReadonlyMap<string, PracticeHabit>):
 export const DEFAULT_ACTIVE_DAYS = 3;
 /** The lecture asks for at least two times a day to do a habit. */
 export const SUGGESTED_SLOTS = 2;
-/** Days shown in «وين وصلت». */
-export const PROGRESS_DAYS = 28;
-/** Window of the monthly adherence band. */
+/** Window of the monthly adherence band and of the «آخر 30 يومًا» count. */
 export const MONTH_DAYS = 30;
+/** Days shown as dots in «وين وصلت»: the same window as the count beside them. */
+export const PROGRESS_DAYS = MONTH_DAYS;
 export const REMINDER_DAYS = 30;
 
 export type Distance = 'far' | 'near';
@@ -72,15 +78,28 @@ export function planFromHabit(habit: PracticeHabit, choice: PlanChoice, today: L
   });
 }
 
+/**
+ * What {@link planToday} needs to know about the plan's schedule: practice-core `isPlanDueOn` with the catalog
+ * habit's default rule as fallback, the same answer the reminders file and the push planner use.
+ */
+export interface PlanSchedule {
+  /** The catalog habit's default rule, used when the plan has no rule of its own. */
+  fallback?: Rule;
+  hijriOffset?: number;
+}
+
 export interface PlanToday {
+  /** The habit is asked for today (its rule fires). On other days anything logged still counts. */
+  isDueToday: boolean;
   required: number;
   done: number;
   remaining: number;
   isComplete: boolean;
-  /** Something done, not all of it: the «خربانة؟ صلّحها» moment. */
+  /** Something done, not all of it: the «أكمل يومك» moment (same-day make-up). */
   isPartial: boolean;
-  /** A reminder time has passed today and the amount is not done yet. */
+  /** Asked for today, a reminder time has passed and the amount is not done yet. */
   isDue: boolean;
+  /** The next reminder time today; null when none is left or the habit is not asked for today. */
   nextSlot: string | null;
   canIncrease: boolean;
   /** The single ladder step an increase would reach (capped at the ceiling). */
@@ -95,7 +114,8 @@ export interface PlanToday {
   doneDaysInMonth: number;
 }
 
-export function planToday(plan: Plan, today: LocalDate, nowMinutes: number): PlanToday {
+export function planToday(plan: Plan, today: LocalDate, nowMinutes: number, schedule: PlanSchedule = {}): PlanToday {
+  const isDueToday = isPlanDueOn(plan, today, schedule.fallback, { hijriOffset: schedule.hijriOffset ?? 0 });
   const required = requiredOn(plan, today);
   const done = plan.log[today] ?? 0;
   const remaining = Math.max(0, required - done);
@@ -110,13 +130,14 @@ export function planToday(plan: Plan, today: LocalDate, nowMinutes: number): Pla
   const base = baseAmount(plan);
   const suggestion = relapseSuggestion(base);
   return {
+    isDueToday,
     required,
     done,
     remaining,
     isComplete: remaining === 0,
     isPartial: done > 0 && remaining > 0,
-    isDue: remaining > 0 && passed.length > 0,
-    nextSlot: upcoming[0] ?? null,
+    isDue: isDueToday && remaining > 0 && passed.length > 0,
+    nextSlot: isDueToday ? (upcoming[0] ?? null) : null,
     canIncrease: canIncrease(plan, today),
     increaseTo,
     holdUntil: addDays(plan.amountChangedOn, HOLD_DAYS),
@@ -156,8 +177,9 @@ export function ramadanEnd(today: LocalDate, hijriOffset: number): LocalDate | n
 const DAILY: Rule = { kind: 'daily' };
 
 /**
- * Reminder events for the next {@link REMINDER_DAYS} days: every slot of every plan on the days its habit
- * rule fires (daily when the catalog is not loaded). Titles are the habit titles (good deeds, not private).
+ * Reminder events for the next {@link REMINDER_DAYS} days: every slot of every plan on the days it is due (the
+ * plan's rule, else its habit's default rule, else daily: the same answer as `isPlanDueOn`). Titles are the
+ * habit titles (good deeds, not private).
  */
 export function planReminderEvents(
   plans: readonly Plan[],
@@ -170,7 +192,7 @@ export function planReminderEvents(
   const events: IcsEvent[] = [];
   for (const plan of plans) {
     const habit = habitOf(plan, habits);
-    const rule = habit?.defaultRule ?? DAILY;
+    const rule = plan.rule ?? habit?.defaultRule ?? DAILY;
     if (rule.kind.startsWith('hijri') && !isHijriSupported()) continue;
     const title = lang === 'en' && habit ? habit.titleEn : plan.title;
     for (const slot of plan.slots) {
@@ -196,4 +218,41 @@ export function planReminderEvents(
 
 export function planRemindersIcs(events: IcsEvent[], calendarName: string, now?: Date): string {
   return buildIcs({ calendarName, events, now });
+}
+
+/** The fields «تعديل» changes on a habit. Increasing stays with the step rule ({@link canIncrease} / `increase`). */
+export interface PlanEdit {
+  slots: readonly string[];
+  activeDaysPerWeek: number;
+  /** The everyday amount: the current one, or lower (practice-core `decreaseTo`, which restarts the hold). */
+  amount: number;
+}
+
+/**
+ * Applies an edit through practice-core: a lower amount goes through `decreaseTo`; times and active days are set
+ * and `updatedAt` becomes `now` so the edit syncs. Throws on a higher amount or an invalid result.
+ */
+export function editPlan(plan: Plan, edit: PlanEdit, today: LocalDate, now: IsoTime = nowIso()): Plan {
+  const base = baseAmount(plan);
+  if (edit.amount > base) throw new RangeError('Increase through the step rule');
+  const lowered = edit.amount < base;
+  const slots = [...new Set(edit.slots)].sort();
+  const changed =
+    lowered || slots.join() !== [...plan.slots].sort().join() || edit.activeDaysPerWeek !== plan.activeDaysPerWeek;
+  if (!changed) return plan;
+  const next: Plan = {
+    ...(lowered ? decreaseTo(plan, edit.amount, today, now) : plan),
+    slots,
+    activeDaysPerWeek: edit.activeDaysPerWeek,
+    updatedAt: now,
+  };
+  const err = validatePlan(next);
+  if (err) throw new RangeError(`Invalid plan: ${err}`);
+  return next;
+}
+
+/** Amounts «تعديل» offers: the current everyday amount and the ladder values below it, largest first. */
+export function lowerAmounts(plan: Plan): number[] {
+  const base = baseAmount(plan);
+  return [base, ...LADDER.filter((v) => v < base).reverse()];
 }

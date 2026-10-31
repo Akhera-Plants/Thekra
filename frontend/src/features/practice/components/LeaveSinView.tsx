@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { QueryErrorState } from '@/components/shared/feedback/QueryErrorState';
 import { Button } from '@/components/shared/kit/button';
+import { accountsEnabled } from '@/lib/accounts';
 import { deleteSinVault } from '@/lib/api/practice-me';
 import { reportFailure } from '@/lib/errors';
 import { pendingProgramForSession, wipeSinPrograms } from '@/lib/practice/local-store';
@@ -93,7 +94,7 @@ export function LeaveSinView() {
       <div className="flex flex-col gap-2">
         <p className="flex items-start gap-2 leading-8">
           <ShieldCheck className="mt-1.5 size-5 shrink-0 text-primary" aria-hidden />
-          <span>{t('privacy')}</span>
+          <span>{accountsEnabled() ? t('privacy') : t('privacyLocal')}</span>
         </p>
         {snapshot.persistent ? null : <LocalOnlyNote persistent={false} />}
       </div>

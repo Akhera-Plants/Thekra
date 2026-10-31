@@ -1,13 +1,15 @@
 /**
  * Pure reminder scheduling on top of @thekra/practice-core. No chrome.* here, so it runs in Node tests.
  *
- * A reminder fires at each plan slot (`HH:MM`, local time) on each day the plan's rule (`Plan.rule`, daily when
- * absent) fires
- * (practice-core `nextOccurrences`, Hijri rules with the user's offset), except on the user's quiet weekdays.
+ * A reminder fires at each plan slot (`HH:MM`, local time) on each day the plan is due: its own rule (`Plan.rule`),
+ * else the catalog habit's default rule, else daily, the same answer as practice-core `isPlanDueOn` that the
+ * website, the push planner and the popup's today card use (practice-core `nextOccurrences`, Hijri rules with the
+ * user's offset), except on the user's quiet weekdays.
  * Today's remaining slots are skipped once today's required amount is logged (`requiredOn`; a missed day is
  * never added to the next one).
  */
 import {
+  isPlanDueOn,
   isValidDate,
   isValidTime,
   nextOccurrences,
@@ -27,6 +29,8 @@ export interface ScheduleInput {
   quietDays: readonly number[];
   hijriOffset: number;
   now: Date;
+  /** Catalog default rules by habit key, for plans without a rule of their own (e.g. made on the website). */
+  habitRules?: Readonly<Record<string, Rule>>;
 }
 
 export interface Reminder {
@@ -50,9 +54,14 @@ export function localInstant(date: LocalDate, time: LocalTime): number {
   return new Date(y, m - 1, d, hh, mm, 0, 0).getTime();
 }
 
-/** The plan's schedule; a plan without a rule (e.g. made on another device) is daily. */
-export function ruleOf(plan: Pick<Plan, 'rule'>): Rule {
-  return plan.rule ?? DAILY;
+/** The plan's schedule: its own rule, else `fallback` (the catalog habit's default rule), else daily. */
+export function ruleOf(plan: Pick<Plan, 'rule'>, fallback?: Rule): Rule {
+  return plan.rule ?? fallback ?? DAILY;
+}
+
+/** The catalog default rule of the plan's habit, from `habitRules` keyed by habit key. */
+export function fallbackRule(plan: Pick<Plan, 'habitKey'>, habitRules: Readonly<Record<string, Rule>> = {}): Rule | undefined {
+  return plan.habitKey === undefined ? undefined : habitRules[plan.habitKey];
 }
 
 /** What is still asked for on `date` (0 when the required amount is already logged). */
@@ -72,7 +81,8 @@ export function upcomingReminders(input: ScheduleInput, perPlan = 1): Reminder[]
     const plan = normalize(raw, today);
     const slots = [...new Set(plan.slots)].sort();
     const found: Reminder[] = [];
-    const days = nextOccurrences(ruleOf(plan), today, SEARCH_OCCURRENCES, { hijriOffset: input.hijriOffset });
+    const rule = ruleOf(plan, fallbackRule(plan, input.habitRules));
+    const days = nextOccurrences(rule, today, SEARCH_OCCURRENCES, { hijriOffset: input.hijriOffset });
     for (const date of days) {
       if (found.length >= perPlan) break;
       if (quiet.has(weekday(date))) continue;
@@ -89,10 +99,19 @@ export function upcomingReminders(input: ScheduleInput, perPlan = 1): Reminder[]
   return out.sort((a, b) => a.when - b.when || a.planId.localeCompare(b.planId));
 }
 
-/** True when `date` is a reminder day for the rule (rule fires and the weekday is not quiet). */
-export function isReminderDay(rule: Rule, quietDays: readonly number[], date: LocalDate, hijriOffset: number): boolean {
+/**
+ * True when `date` is a reminder day for the plan: practice-core `isPlanDueOn` (its rule, else `fallback`, the
+ * catalog habit's default rule, else daily) and the weekday is not one of the user's quiet days.
+ */
+export function isReminderDay(
+  plan: Plan,
+  fallback: Rule | undefined,
+  quietDays: readonly number[],
+  date: LocalDate,
+  hijriOffset: number,
+): boolean {
   if (quietDays.includes(weekday(date))) return false;
-  return nextOccurrences(rule, date, 1, { hijriOffset })[0] === date;
+  return isPlanDueOn(plan, date, fallback, { hijriOffset });
 }
 
 // ---- Alarm names -------------------------------------------------------------------------------------

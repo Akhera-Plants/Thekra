@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { BellRing, CalendarPlus, Feather } from 'lucide-react';
+import { CalendarPlus, Feather } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
-import { endEbb, loadWarning, normalize, startEbb, updatePlan } from '@thekra/practice-core';
+import { endEbb, isEbbOn, loadWarning, normalize, startEbb, updatePlan } from '@thekra/practice-core';
 import { Link } from '@/i18n/navigation';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { QueryErrorState } from '@/components/shared/feedback/QueryErrorState';
@@ -16,7 +16,7 @@ import { usePracticeStore } from '../hooks/usePracticeStore';
 import { useFocusOnChange } from '../hooks/useFocusOnChange';
 import { useToday } from '../hooks/useToday';
 import { SyncStatus } from './SyncStatus';
-import { PlanCard, usePlanWords } from './PlanCard';
+import { PlanCard } from './PlanCard';
 import { PlanSetup } from './PlanSetup';
 import { PracticeLoading } from './PracticeLoading';
 import { ProgressPanel } from './ProgressPanel';
@@ -71,19 +71,25 @@ export function PracticeView() {
     );
   }
 
-  const entries = plans.map((plan) => ({ plan, habit: habitOf(plan, habits), view: planToday(plan, today, clock.minutes) }));
-  const due = entries.filter((entry) => entry.view.isDue);
-  const isEbb = plans.some((plan) => plan.ebb);
+  const entries = plans.map((plan) => {
+    const habit = habitOf(plan, habits);
+    return { plan, habit, view: planToday(plan, today, clock.minutes, { fallback: habit?.defaultRule, hijriOffset }) };
+  });
+  const dueToday = entries.filter((entry) => entry.view.isDueToday);
+  const notDueToday = entries.filter((entry) => !entry.view.isDueToday);
+  // «يومي ثقيل» is one day (practice-core isEbbOn): an ebb from an earlier day is already over.
+  const isEbb = plans.some((plan) => isEbbOn(plan, today));
   const ramadanUntil = ramadanEnd(today, hijriOffset);
   const freeMinutes = snapshot.store.settings.freeMinutesPerDay;
   const overLoaded = freeMinutes !== undefined && loadWarning(plans, freeMinutes, today) === 'over';
 
   function toggleEbb() {
     updateStore((store) =>
-      store.plans.reduce(
-        (next, plan) => updatePlan(next, plan.id, (p) => (isEbb ? endEbb(p) : startEbb(p, today as string))),
-        store,
-      ),
+      store.plans.reduce((next, plan) => {
+        if (!isEbb) return updatePlan(next, plan.id, (p) => startEbb(p, today as string));
+        // Off again the same day; a plan without an ebb is left untouched (no needless edit to sync).
+        return plan.ebb ? updatePlan(next, plan.id, (p) => endEbb(p)) : next;
+      }, store),
     );
   }
 
@@ -95,20 +101,6 @@ export function PracticeView() {
   return (
     <div className="flex flex-col gap-10">
       <SyncStatus persistent={snapshot.persistent} />
-
-      {due.length > 0 ? (
-        <section className="next-step !mt-0 flex flex-col gap-2" aria-labelledby="due-title" role="status">
-          <strong id="due-title" className="inline-flex items-center gap-2">
-            <BellRing className="size-4" aria-hidden />
-            {t('dueTitle')}
-          </strong>
-          <ul className="flex flex-col gap-1">
-            {due.map((entry) => (
-              <DueItem key={entry.plan.id} entry={entry} />
-            ))}
-          </ul>
-        </section>
-      ) : null}
 
       <div className="flex flex-col items-start gap-2">
         <button type="button" className="outline-button button-wrap" aria-pressed={isEbb} onClick={toggleEbb}>
@@ -132,10 +124,23 @@ export function PracticeView() {
         <h2 id="today-title" ref={todayRef} tabIndex={-1} className="text-2xl font-medium focus:outline-none">
           {t('title')}
         </h2>
-        {entries.map(({ plan, habit, view }) => (
+        {dueToday.length === 0 ? <p className="text-muted-foreground">{t('noneDueToday')}</p> : null}
+        {dueToday.map(({ plan, habit, view }) => (
           <PlanCard key={plan.id} plan={plan} habit={habit} view={view} today={today} ramadanUntil={ramadanUntil} />
         ))}
       </section>
+
+      {notDueToday.length > 0 ? (
+        <section aria-labelledby="not-due-title" className="flex flex-col gap-3">
+          <h2 id="not-due-title" className="text-xl font-medium">
+            {t('notDueTitle')}
+          </h2>
+          <p className="-mt-1 text-sm leading-7 text-muted-foreground">{t('notDueNote')}</p>
+          {notDueToday.map(({ plan, habit, view }) => (
+            <PlanCard key={plan.id} plan={plan} habit={habit} view={view} today={today} ramadanUntil={ramadanUntil} />
+          ))}
+        </section>
+      ) : null}
 
       <div className="flex flex-wrap gap-3">
         <button type="button" className="solid-button button-wrap" onClick={() => setAdding(true)}>
@@ -152,20 +157,6 @@ export function PracticeView() {
       <ProgressPanel entries={entries} today={today} />
       <PracticePaths />
     </div>
-  );
-}
-
-function DueItem({
-  entry,
-}: {
-  entry: { plan: Parameters<typeof usePlanWords>[0]; habit: PracticeHabit | undefined; view: { remaining: number } };
-}) {
-  const t = useTranslations('practice.today');
-  const words = usePlanWords(entry.plan, entry.habit);
-  return (
-    <li>
-      <span lang={words.titleLang}>{words.title}</span>: {t('remaining', { amount: words.amount(entry.view.remaining) })}
-    </li>
   );
 }
 

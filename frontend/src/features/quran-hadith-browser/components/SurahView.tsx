@@ -9,6 +9,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { QueryErrorState } from '@/components/shared/feedback/QueryErrorState';
 import { ArabicText } from '@/components/shared/ArabicText';
 import { useSurahAyahs } from '@/features/quran-hadith-browser/hooks/useSurahs';
+import { useQuoteFavoriteProps } from '@/features/favorites/hooks/useQuoteFavoriteProps';
 import type { SurahDto } from '@/lib/types/api';
 
 interface SurahViewProps {
@@ -18,6 +19,7 @@ interface SurahViewProps {
 export function SurahView({ surah }: SurahViewProps) {
   const tSurah = useTranslations('surah');
   const tEmpty = useTranslations('emptyState');
+  const favoriteProps = useQuoteFavoriteProps();
 
   const { data, isPending, isError, error, refetch } = useSurahAyahs(surah.surahNumber);
   const ayahs = data?.data ?? [];
@@ -81,6 +83,7 @@ export function SurahView({ surah }: SurahViewProps) {
                 <QuoteCard
                   quote={ayah}
                   detailHref={`/quotes/${ayah.id}`}
+                  {...favoriteProps(ayah)}
                 />
               </div>
             ))}

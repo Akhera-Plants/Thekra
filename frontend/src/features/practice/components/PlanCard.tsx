@@ -3,7 +3,7 @@
 import { useId, useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { BookOpen, Check, Clock } from 'lucide-react';
+import { BookOpen, Check, Clock, Pencil } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
   baseAmount,
@@ -25,8 +25,10 @@ import { updateStore } from '@/lib/practice/local-store';
 import type { PlanToday } from '@/lib/practice/plans';
 import type { PracticeHabit } from '@/lib/types/practice';
 import { z } from '@/lib/zod';
+import { useDeletesEverywhere } from '../hooks/useDeletesEverywhere';
 import { amountLabel } from './amount-label';
 import { FetchedEvidence } from './EvidenceQuotes';
+import { PlanEditForm } from './PlanEditForm';
 
 /** Whole amounts only: the account stores logs as integers (sync contract §2). */
 const MAX_LOG = 1000;
@@ -39,6 +41,11 @@ interface PlanCardProps {
   /** Last day of Ramadan when today is in Ramadan, else null. */
   ramadanUntil: string | null;
 }
+
+/**
+ * A habit card. When the habit is not asked for today (`view.isDueToday` false) the card is compact: title, what is
+ * logged, logging (anything done still counts), and the edit / remove / texts row; the daily offers wait for its days.
+ */
 
 export function changePlan(id: string, change: (plan: Plan) => Plan): void {
   updateStore((store) => updatePlan(store, id, change));
@@ -62,19 +69,26 @@ export function PlanCard({ plan, habit, view, today, ramadanUntil }: PlanCardPro
   const words = usePlanWords(plan, habit);
   const [showEvidence, setShowEvidence] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const everywhere = useDeletesEverywhere();
   const evidenceId = useId();
+  const compact = !view.isDueToday;
   const seasonStep = nextStep(baseAmount(plan));
   const seasonAmount = seasonStep === null ? null : plan.ceiling !== undefined ? Math.min(seasonStep, plan.ceiling) : seasonStep;
 
   return (
     <article
-      className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 md:p-6"
+      className={
+        compact
+          ? 'flex flex-col gap-3 rounded-2xl border border-border bg-card p-4'
+          : 'flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 md:p-6'
+      }
       aria-labelledby={`${evidenceId}-title`}
     >
       <header className="flex flex-wrap items-baseline justify-between gap-2">
         <h3
           id={`${evidenceId}-title`}
-          className="text-xl font-medium"
+          className={compact ? 'text-lg font-medium' : 'text-xl font-medium'}
           lang={words.titleLang}
           dir={words.titleLang ? 'rtl' : undefined}
         >
@@ -93,14 +107,18 @@ export function PlanCard({ plan, habit, view, today, ramadanUntil }: PlanCardPro
         ) : null}
       </header>
 
-      <p className="text-base leading-8">
-        {t('required', { amount: words.amount(view.required) })}
-        {view.done > 0 ? <> · {t('done', { amount: words.amount(view.done) })}</> : null}
-      </p>
+      {compact ? (
+        view.done > 0 ? <p className="text-sm leading-7">{t('done', { amount: words.amount(view.done) })}</p> : null
+      ) : (
+        <p className="text-base leading-8">
+          {t('required', { amount: words.amount(view.required) })}
+          {view.done > 0 ? <> · {t('done', { amount: words.amount(view.done) })}</> : null}
+        </p>
+      )}
       {view.nextSlot && !view.isComplete ? (
         <p className="text-sm text-muted-foreground">{t('nextSlot', { time: formatDigits(view.nextSlot) })}</p>
       ) : null}
-      {view.isPartial ? (
+      {view.isPartial && !compact ? (
         <p className="next-step !mt-0">
           <strong>{t('fixItTitle')}</strong>
           {t('fixItBody')}
@@ -121,7 +139,7 @@ export function PlanCard({ plan, habit, view, today, ramadanUntil }: PlanCardPro
         </div>
       ) : null}
 
-      {view.canIncrease && view.increaseTo !== null ? (
+      {!compact && view.canIncrease && view.increaseTo !== null ? (
         <div className="next-step !mt-0 flex flex-col items-start gap-2">
           <p>{t('increaseOffer', { amount: words.amount(view.increaseTo) })}</p>
           <Button
@@ -136,7 +154,7 @@ export function PlanCard({ plan, habit, view, today, ramadanUntil }: PlanCardPro
         </div>
       ) : null}
 
-      {view.relapseTo !== null ? (
+      {!compact && view.relapseTo !== null ? (
         <div className="next-step !mt-0 flex flex-col items-start gap-2">
           <p>{t('relapse', { amount: words.amount(view.relapseTo) })}</p>
           <Button
@@ -151,7 +169,7 @@ export function PlanCard({ plan, habit, view, today, ramadanUntil }: PlanCardPro
         </div>
       ) : null}
 
-      {plan.season ? (
+      {compact ? null : plan.season ? (
         <p className="text-sm leading-7 text-muted-foreground">
           {t('seasonOn', { date: formatGregorian(plan.season.until, locale) })}
         </p>
@@ -184,6 +202,17 @@ export function PlanCard({ plan, habit, view, today, ramadanUntil }: PlanCardPro
             {showEvidence ? t('hideEvidence') : t('showEvidence')}
           </Button>
         ) : null}
+        <Button
+          variant="ghost"
+          tone="neutral"
+          size="sm"
+          aria-expanded={editing}
+          aria-controls={`${evidenceId}-edit`}
+          onClick={() => setEditing((open) => !open)}
+        >
+          <Pencil aria-hidden />
+          {t('edit')}
+        </Button>
         {confirmRemove ? (
           <>
             <Button variant="outline" tone="destructive" size="sm" onClick={() => updateStore((s) => deletePlan(s, plan.id))}>
@@ -199,6 +228,16 @@ export function PlanCard({ plan, habit, view, today, ramadanUntil }: PlanCardPro
           </Button>
         )}
       </div>
+      {confirmRemove ? (
+        <p className="text-sm leading-7 text-muted-foreground" role="status">
+          {everywhere ? t('removeNoteAccount') : t('removeNoteDevice')}
+        </p>
+      ) : null}
+      {editing ? (
+        <div id={`${evidenceId}-edit`}>
+          <PlanEditForm plan={plan} today={today} amountLabel={words.amount} onDone={() => setEditing(false)} />
+        </div>
+      ) : null}
       {showEvidence && habit ? (
         <div id={`${evidenceId}-evidence`}>
           <FetchedEvidence ids={habit.evidence} />

@@ -1,4 +1,4 @@
-import { addDays, createPlan, eachDay, logDone, toHijri, weekday, type Plan, type Rule } from '@thekra/practice-core';
+import { addDays, createPlan, eachDay, isEbbOn, logDone, requiredOn, toHijri, weekday, type Plan, type Rule } from '@thekra/practice-core';
 import { describe, expect, it } from 'vitest';
 import { applyIncrease, effectivePlan, increaseSuggestion, monthlyBand, ramadanEnd, seasonAmount, setEbb, setSeason } from '../src/progress.js';
 
@@ -57,6 +57,21 @@ describe('increase', () => {
   it('is never offered during an ebb', () => {
     expect(increaseSuggestion(setEbb(steady('2026-09-01'), true, TODAY), DAILY, [], TODAY, 0)).toBeNull();
     expect(setEbb(setEbb(plan(TODAY), true, TODAY), false, TODAY).ebb).toBeUndefined();
+  });
+});
+
+describe('heavy day («يومي ثقيل»)', () => {
+  it('is on for its own day only and ends by itself', () => {
+    const heavy = setEbb(plan('2026-09-01'), true, addDays(TODAY, -1));
+    expect(isEbbOn(heavy, addDays(TODAY, -1))).toBe(true);
+    expect(isEbbOn(heavy, TODAY)).toBe(false);
+    expect(requiredOn(heavy, addDays(TODAY, -1))).toBe(2);
+    expect(requiredOn(heavy, TODAY)).toBe(5);
+  });
+
+  it('does not block an increase the next day', () => {
+    const steady = logDays(plan('2026-09-01'), eachDay('2026-09-01', addDays(TODAY, -1)));
+    expect(increaseSuggestion(setEbb(steady, true, addDays(TODAY, -1)), DAILY, [], TODAY, 0)).toBe(7);
   });
 });
 
