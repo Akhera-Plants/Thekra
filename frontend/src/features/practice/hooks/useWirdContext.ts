@@ -11,6 +11,8 @@ import { useToday } from './useToday';
 export interface WirdContext {
   snapshot: PracticeSnapshot;
   today: string;
+  /** The local time now, `HH:MM` (follows the clock, every minute). */
+  time: string;
   /** Catalog habits by key (titles, units, default rules). Empty until the catalog arrives. */
   habits: ReadonlyMap<string, PracticeHabit>;
   occasions: readonly PracticeOccasion[] | undefined;
@@ -30,6 +32,8 @@ export function useWirdContext({ catalogOnlyWithPlans = false }: { catalogOnlyWi
   // The home card needs the catalog (default rules) only on a device with plans: no request for other visitors.
   const catalog = usePracticeCatalog(!catalogOnlyWithPlans || (snapshot?.store.plans.length ?? 0) > 0);
   const today = clock?.today ?? null;
+  const minutes = clock?.minutes ?? 0;
+  const time = `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
   useEndedSeasons(snapshot?.store.plans, today);
   const hijriOffset = snapshot?.store.settings.hijriOffset ?? 0;
   const occasions = catalog.data?.occasions;
@@ -45,7 +49,7 @@ export function useWirdContext({ catalogOnlyWithPlans = false }: { catalogOnlyWi
   const planDays = useMemo(() => planDayOptions(habits, hijriOffset), [habits, hijriOffset]);
 
   return useMemo(
-    () => (snapshot && today ? { snapshot, today, habits, occasions, occasionBasis, planDays, catalog } : null),
-    [snapshot, today, habits, occasions, occasionBasis, planDays, catalog],
+    () => (snapshot && today ? { snapshot, today, time, habits, occasions, occasionBasis, planDays, catalog } : null),
+    [snapshot, today, time, habits, occasions, occasionBasis, planDays, catalog],
   );
 }

@@ -16,16 +16,22 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
+  emptyHeart,
   emptyStore,
+  parseHeart,
   parseStore,
+  serializeHeart,
   serializeStore,
   todayFrom,
   updateSettings,
+  type HeartData,
   type Store,
 } from '@thekra/practice-core';
 import { DEFAULT_PREFS, PREFS_KEY, legacyPrefs, parsePrefs, type PracticePrefs } from './prefs';
 
 export const STORE_KEY = 'thekra.practice.v1';
+/** «المقامات» (practice-core `HeartData`): «نية اليوم», reviews, pledges. Device-local, never synced. */
+export const HEART_KEY = 'thekra.practice.heart.v1';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -62,7 +68,10 @@ interface PracticeState {
   hydrated: boolean;
   store: Store;
   prefs: PracticePrefs;
+  heart: HeartData;
   hydrate: () => Promise<void>;
+  /** Applies `fn` (practice-core heart helpers) and persists. Errors from invalid edits are swallowed. */
+  setHeart: (fn: (h: HeartData) => HeartData) => void;
   /** Applies `fn` (practice-core store helpers) and persists. Errors from invalid edits are swallowed. */
   setStore: (fn: (s: Store) => Store) => void;
   setPrefs: (fn: (p: PracticePrefs) => PracticePrefs) => void;
@@ -130,22 +139,29 @@ export const usePracticeStore = create<PracticeState>((set, get) => ({
   hydrated: false,
   store: emptyStore(),
   prefs: { ...DEFAULT_PREFS },
+  heart: emptyHeart(),
 
   hydrate: async () => {
     if (get().hydrated) return;
     let store = emptyStore();
     let prefs = parsePrefs(null);
     let rawPrefs: string | null = null;
+    let heart = emptyHeart();
     try {
-      const [rawStore, p] = await Promise.all([AsyncStorage.getItem(STORE_KEY), AsyncStorage.getItem(PREFS_KEY)]);
+      const [rawStore, p, rawHeart] = await Promise.all([
+        AsyncStorage.getItem(STORE_KEY),
+        AsyncStorage.getItem(PREFS_KEY),
+        AsyncStorage.getItem(HEART_KEY),
+      ]);
       rawPrefs = p;
+      if (rawHeart) heart = parseHeart(rawHeart);
       if (rawStore) store = parseStore(rawStore);
       if (rawPrefs) prefs = parsePrefs(rawPrefs);
     } catch {
       // Unreadable storage: start empty rather than crash.
     }
     const migrated = migrateLegacy(store, rawPrefs, newPracticeId);
-    set({ hydrated: true, store: migrated.store, prefs });
+    set({ hydrated: true, store: migrated.store, prefs, heart });
     if (migrated.changed) {
       void persist(STORE_KEY, serializeStore(migrated.store));
       void persist(PREFS_KEY, JSON.stringify(prefs));
@@ -161,6 +177,17 @@ export const usePracticeStore = create<PracticeState>((set, get) => ({
     }
     set({ store: next });
     void persist(STORE_KEY, serializeStore(next));
+  },
+
+  setHeart: (fn) => {
+    let next: HeartData;
+    try {
+      next = parseHeart(serializeHeart(fn(get().heart)));
+    } catch {
+      return;
+    }
+    set({ heart: next });
+    void persist(HEART_KEY, serializeHeart(next));
   },
 
   setPrefs: (fn) => {

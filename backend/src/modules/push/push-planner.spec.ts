@@ -1,4 +1,4 @@
-import { emptyStore, type Plan, type Relative, type Store } from '@thekra/practice-core';
+import { DEFAULT_NOTIFICATION_PREFS, emptyStore, type Plan, type Relative, type Store } from '@thekra/practice-core';
 import { practiceCatalog } from '../practice/practice-catalog.js';
 import { MAX_PUSH_PER_WINDOW, planPushes, sitePath, type PushPlanInput } from './push-planner.js';
 
@@ -29,8 +29,10 @@ function store(plans: Plan[] = [], relatives: Relative[] = []): Store {
   return { ...emptyStore(), plans, relatives };
 }
 
+// The Friday review reminder is on by default; most cases here look at habits and people only.
+const QUIET_PREFS = { ...DEFAULT_NOTIFICATION_PREFS, fridayReview: false };
 const run = (s: Store, extra: Partial<PushPlanInput> = {}) =>
-  planPushes({ store: s, habits, timeZone: ZONE, locale: 'ar', now: NOW, ...extra });
+  planPushes({ store: s, habits, timeZone: ZONE, locale: 'ar', now: NOW, prefs: QUIET_PREFS, ...extra });
 
 describe('planPushes', () => {
   it('a paused plan reminds of nothing; an established one reminds in its first slot only', () => {
@@ -105,9 +107,39 @@ describe('planPushes', () => {
     expect(JSON.stringify(out)).not.toMatch(/سعاد|عمي/);
   });
 
+  it('follows the shared policy: at most 4 a day with a digest, quiet hours, evening nudge and Friday review', () => {
+    const three = ['a', 'b', 'c'].map((id) => plan({ id }));
+    const out = run(store(three));
+    expect(out.map((p) => p.key)).toEqual([
+      'habit:a:2026-10-29:09:30',
+      'habit:b:2026-10-29:09:30',
+      'habit:c:2026-10-29:09:30',
+      'digest:2026-10-29',
+      'habit:a:2026-10-30:09:30',
+      'habit:b:2026-10-30:09:30',
+      'habit:c:2026-10-30:09:30',
+      'digest:2026-10-30',
+    ]);
+    expect(out[3]).toMatchObject({ title: 'ورد اليوم', body: 'عندك 3 أعمال اليوم', url: '/practice', tag: 'digest' });
+
+    // Witr's suggested 23:00 is in the quiet hours; 22:00 stays.
+    const witr = plan({ id: 'w', habitKey: 'witr', slots: ['22:00', '23:00'] });
+    expect(run(store([witr]), { windowHours: 24 }).map((p) => p.key)).toEqual(['habit:w:2026-10-28:22:00']);
+
+    const prefs = { ...DEFAULT_NOTIFICATION_PREFS, habits: false, eveningNudge: true };
+    const nudges = run(store([plan()]), { prefs, locale: 'en' });
+    expect(nudges.map((p) => [p.key, p.fireAt.toISOString(), p.body])).toEqual([
+      ['evening:2026-10-29', '2026-10-29T18:00:00.000Z', 'Little is left of your day; one minute keeps your streak'],
+      ['friday:2026-10-30', '2026-10-30T14:00:00.000Z', 'Two minutes with yourself: what you kept this week, and one step for the next'],
+      ['evening:2026-10-30', '2026-10-30T18:00:00.000Z', 'Little is left of your day; one minute keeps your streak'],
+    ]);
+    expect(JSON.stringify(nudges)).not.toMatch(/my own title/);
+  });
+
   it('caps the list and gives a digest that changes only with what the user sees', () => {
     const many = Array.from({ length: 30 }, (_, i) => plan({ id: `p${i}` }));
-    expect(run(store(many))).toHaveLength(MAX_PUSH_PER_WINDOW);
+    expect(run(store(many), { limit: 5 })).toHaveLength(5);
+    expect(MAX_PUSH_PER_WINDOW).toBe(40);
     const a = run(store([plan()]))[0]!;
     expect(run(store([plan()]))[0]!.digest).toBe(a.digest);
     expect(run(store([plan({ amount: 2 })]))[0]!.digest).not.toBe(a.digest);

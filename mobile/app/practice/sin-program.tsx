@@ -27,6 +27,7 @@
  * chooser or the program (stage, steps, check-in, texts), the reminders, and the wipe section last.
  */
 
+import { NotificationsLink } from '@/components/settings/NotificationsLink';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, KeyboardAvoidingView, ScrollView, View } from 'react-native';
 import { LimitSheet } from '@/components/practice/LimitSheet';
@@ -60,7 +61,6 @@ import { usePracticeCatalog, useSinProgramEvidence } from '@/lib/api/practice';
 import { useSins } from '@/lib/api/sins';
 import { pick, pickList, type CatalogSinProgram, type StageContent } from '@/lib/practice/catalog-types';
 import { shortDate } from '@/lib/practice/format';
-import { ensurePermission } from '@/lib/practice/notifications';
 import { pendingProgram, setMomentSource, setPendingProgram, today, usePracticeStore } from '@/lib/practice/practice-store';
 import { notebookEntries, withProgramEnded, withProgramStarted } from '@/lib/practice/sin-program-view';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
@@ -68,7 +68,6 @@ import { useVaultState, wipeSinProgramEverywhere } from '@/lib/practice/vault-ru
 import { useAuthStore } from '@/lib/stores/auth-store';
 import type { QuoteDto } from '@/lib/types/api';
 import { EvidenceList } from '@/components/practice/EvidenceList';
-import { TimeField } from '@/components/practice/editors';
 import { SinProgramGuard } from '@/components/practice/SinProgramGuard';
 import { FixItSheet, useLimitLabel } from '@/components/practice/sin/FixItSheet';
 import { TriggerChips } from '@/components/practice/sin/TriggerChips';
@@ -87,7 +86,6 @@ import {
   Screen,
   Section,
   Skeleton,
-  SwitchRow,
   Text,
 } from '@/ui';
 
@@ -254,7 +252,7 @@ function SinProgramContent() {
             {canAddAnother ? (
               <Button label={t('sinProgram.another')} icon={Plus} onPress={() => setChoosing(true)} variant="outline" />
             ) : null}
-            <SinReminders />
+            <NotificationsLink />
           </>
         ) : null}
         <LimitSheet
@@ -745,40 +743,7 @@ function EndProgram({ sinSlug, keepMarker, onEnded }: EndProgramProps) {
   );
 }
 
-/** The private daily reminder: its text never names the program (see `sinProgram.remindersHint`). */
-function SinReminders() {
-  const { t } = useTranslation();
-  const prefs = usePracticeStore((s) => s.prefs);
-  const setPrefs = usePracticeStore((s) => s.setPrefs);
-  const [denied, setDenied] = useState(false);
 
-  async function toggleReminders(on: boolean) {
-    setDenied(false);
-    if (on && !(await ensurePermission(t('practice.notify.channelName')))) {
-      setDenied(true);
-      return;
-    }
-    setPrefs((p) => ({ ...p, sinReminders: on }));
-  }
-
-  return (
-    <Section title={t('practice.reminders')}>
-      <SwitchRow
-        label={t('sinProgram.reminders')}
-        hint={t('sinProgram.remindersHint')}
-        value={prefs.sinReminders}
-        onValueChange={(v) => void toggleReminders(v)}
-      />
-      {denied ? <Notice tone="destructive">{t('practice.permissionDenied')}</Notice> : null}
-      {prefs.sinReminders ? (
-        <>
-          <Rule />
-          <TimeField label={t('sinProgram.time')} value={prefs.sinReminderTime} onChange={(time) => setPrefs((p) => ({ ...p, sinReminderTime: time }))} />
-        </>
-      ) : null}
-    </Section>
-  );
-}
 
 interface WipeSectionProps {
   userId: string | null;

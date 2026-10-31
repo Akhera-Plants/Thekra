@@ -38,6 +38,11 @@ const texts: ReminderTexts = {
   sinBody: 'لحظة لنفسك. افتح ذكرى.',
   unitFallback: { minutes: 'دقيقة', count: 'مرة', times: 'مرة' },
   listSeparator: '، ',
+  wirdTitle: 'ورد اليوم',
+  eveningBody: 'بقي من يومك قليل، ودقيقة واحدة تحفظ مداومتك',
+  fridayTitle: 'المحاسبة',
+  fridayBody: 'دقيقتان مع نفسك',
+  digestBody: (n) => `عندك ${n} أعمال اليوم`,
 };
 
 const quran: CatalogHabit = {
@@ -83,7 +88,8 @@ function plan(habit: CatalogHabit, amount: number, slots: string[]): Plan {
 function input(store: Store, prefs: Partial<PracticePrefs> = {}, extra: Partial<ReminderInput> = {}): ReminderInput {
   return {
     store,
-    prefs: { ...DEFAULT_PREFS, habitReminders: true, ...prefs },
+    // The Friday review reminder is on by default; most cases here look at one track at a time.
+    prefs: { ...DEFAULT_PREFS, habitReminders: true, fridayReminder: false, ...prefs },
     habits: [quran, duha],
     today: TODAY,
     now: '08:00',
@@ -169,12 +175,35 @@ describe('planReminders — habits', () => {
     expect(list[0]).toMatchObject({ title: 'Daily Quran reading', body: 'Today: 2 minutes' });
   });
 
-  it('nothing for habits when habit reminders are off; capped at MAX_PENDING', () => {
+  it('nothing for habits when habit reminders are off; at most 4 a day (then one digest); capped at MAX_PENDING', () => {
     const store = { ...emptyStore(), plans: [plan(quran, 2, ['05:00', '09:00', '13:00', '17:00', '21:00'])] };
     expect(planReminders(input(store, { habitReminders: false }))).toEqual([]);
-    const list = planReminders(input(store));
-    expect(REMINDER_DAYS * 5).toBeGreaterThan(MAX_PENDING);
-    expect(list).toHaveLength(MAX_PENDING);
+    const day = planReminders(input(store, {}, { now: '04:00', days: 1 }));
+    expect(day.map((r) => [r.kind, r.time])).toEqual([
+      ['habit', '05:00'],
+      ['habit', '09:00'],
+      ['habit', '13:00'],
+      ['digest', '17:00'],
+    ]);
+    expect(day[3]).toMatchObject({ title: 'ورد اليوم', body: 'عندك 1 أعمال اليوم', route: '/habits' });
+    expect(planReminders(input(store, {}, { limit: 10 }))).toHaveLength(10);
+    expect(MAX_PENDING).toBe(60);
+  });
+
+  it('quiet hours: a suggested slot inside 23:00–05:00 does not ring; the user’s own time does', () => {
+    const late = { ...plan(quran, 2, ['23:30']) };
+    expect(planReminders(input({ ...emptyStore(), plans: [late] }, {}, { days: 2 })).map((r) => r.time)).toEqual(['23:30', '23:30']);
+    const suggested = { ...plan({ ...quran, defaultSlots: ['23:30'] }, 2, ['23:30']) };
+    expect(planReminders(input({ ...emptyStore(), plans: [suggested] }, {}, { days: 2, habits: [{ ...quran, defaultSlots: ['23:30'] }] }))).toEqual([]);
+  });
+
+  it('evening nudge (opt-in) and the Friday review reminder (on by default, not once saved)', () => {
+    const store = { ...emptyStore(), plans: [plan(quran, 2, ['06:00'])] };
+    const evening = planReminders(input(store, { habitReminders: false, eveningNudge: true }, { days: 1 }));
+    expect(evening).toEqual([expect.objectContaining({ kind: 'evening', time: '21:00', body: texts.eveningBody })]);
+    const friday = planReminders(input(store, { habitReminders: false, fridayReminder: true }, { days: 7 }));
+    expect(friday.map((r) => [r.kind, r.date, r.time])).toEqual([['friday', '2026-10-30', '17:00']]);
+    expect(planReminders(input(store, { habitReminders: false, fridayReminder: true }, { days: 7, reviewDoneOn: () => true }))).toEqual([]);
   });
 });
 
@@ -245,5 +274,21 @@ describe('planReminders — privacy', () => {
     const named = planReminders(input(store, { kinshipReminders: true, kinshipShowNames: true, kinshipTime: '18:00' }));
     expect(named[0]?.title).toBe('صلة الرحم');
     expect(named[0]?.body).toBe('حان وقت التواصل مع: خالتي');
+  });
+});
+
+describe('the policy words match practice-core (one wording on every client)', () => {
+  it('app strings equal NOTIFY_TEXTS', () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { NOTIFY_TEXTS } = require('@thekra/practice-core') as typeof import('@thekra/practice-core');
+    for (const lang of ['ar', 'en'] as const) {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const notify = (require(`../lib/i18n/${lang}.json`) as { practice: { notify: Record<string, string> } }).practice.notify;
+      expect(notify.wirdTitle).toBe(NOTIFY_TEXTS[lang].wirdTitle);
+      expect(notify.eveningBody).toBe(NOTIFY_TEXTS[lang].eveningBody);
+      expect(notify.fridayTitle).toBe(NOTIFY_TEXTS[lang].fridayTitle);
+      expect(notify.fridayBody).toBe(NOTIFY_TEXTS[lang].fridayBody);
+      expect(notify.digestBody_other!.replace('{{count}}', '12')).toBe(NOTIFY_TEXTS[lang].digestBody(12));
+    }
   });
 });

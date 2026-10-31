@@ -12,7 +12,17 @@
  * Web-only preferences that are not synced (and that the practice-core envelope does not carry: it drops unknown
  * fields on purpose) live beside it under `thekra.practice.prefs.v1`.
  */
-import { emptyStore, parseStore, serializeStore, updateSettings, type Plan, type Store } from '@thekra/practice-core';
+import {
+  DEFAULT_NOTIFICATION_PREFS,
+  emptyStore,
+  parseNotificationPrefs,
+  parseStore,
+  serializeStore,
+  updateSettings,
+  type NotificationPrefs,
+  type Plan,
+  type Store,
+} from '@thekra/practice-core';
 import { isUuid, newUuid } from './ids';
 
 export const STORE_KEY = 'thekra.practice.v1';
@@ -27,6 +37,13 @@ export interface PracticePrefs {
   showHijri?: boolean;
   /** The account this device's copy was last synced with; another account must confirm before merging. */
   syncedUserId?: string;
+  /** «التنبيهات» on this browser (practice-core `NotificationPrefs`); absent = the defaults. Sent with the push subscription. */
+  notify?: NotificationPrefs;
+}
+
+/** This browser's notification switches, with the practice-core defaults for anything never set. */
+export function notificationPrefsOf(prefs: PracticePrefs): NotificationPrefs {
+  return prefs.notify ?? { ...DEFAULT_NOTIFICATION_PREFS };
 }
 
 export interface PracticeSnapshot {
@@ -79,6 +96,7 @@ export function parsePrefs(raw: string | null | undefined): { prefs: PracticePre
     if (record.kinshipNamesInCalendar === true) prefs.kinshipNamesInCalendar = true;
     if (record.showHijri === true) prefs.showHijri = true;
     if (typeof record.syncedUserId === 'string' && record.syncedUserId.length > 0) prefs.syncedUserId = record.syncedUserId;
+    if (typeof record.notify === 'object' && record.notify !== null) prefs.notify = parseNotificationPrefs(record.notify);
     const minutes = record.freeMinutesPerDay;
     const legacyFreeMinutes =
       typeof minutes === 'number' && Number.isInteger(minutes) && minutes >= 0 && minutes <= MAX_FREE_MINUTES

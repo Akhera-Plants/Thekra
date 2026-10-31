@@ -1176,7 +1176,7 @@
     },
     "push": {
       "title": "Browser notifications",
-      "note": "Reminders come at the times you chose for your habits, and the kinship reminder at 18:00. The “Lighten” program never appears in notifications.",
+      "note": "Reminders reach this browser at the times you choose on this page. The “Lighten” program never appears in browser notifications.",
       "unsupported": "This browser does not support notifications. Try another up-to-date browser.",
       "iosInstall": "On iPhone: add the site to your Home Screen, then open it from the icon to receive notifications.",
       "signedOut": "Notifications belong to your account, so sign in first to turn them on.",
@@ -1288,7 +1288,11 @@
       "lighten": "Lighten",
       "lightenHint": "A private program on your device",
       "saved": "Saved texts",
-      "savedHint": "Texts you saved"
+      "savedHint": "Texts you saved",
+      "reviews": "Self-review",
+      "reviewsHint": "Your weekly reviews",
+      "notifications": "Notifications",
+      "notificationsHint": "Notifications, today's intention and self-review"
     },
     "limits": {
       "keepGoing": "Keep up what I have",
@@ -1347,6 +1351,105 @@
         "hint": "Add someone when they fall ill; you are reminded every two days until you visit.",
         "visited": "Visited"
       }
+    },
+    "heart": {
+      "muraqabaLabel": "Today's reminder",
+      "intention": {
+        "offerTitle": "Today's intention",
+        "offerBody": "A small pledge each morning on your day's wird, one line and you go.",
+        "offerOn": "Turn it on",
+        "dismiss": "Not now",
+        "title": "Today's intention",
+        "lead": "Today I pledge to Allah:",
+        "noHabits": "No habit is asked today; write your pledge if you wish.",
+        "pledgeLabel": "Today's pledge (optional)",
+        "pledgePlaceholder": "One line for yourself",
+        "submit": "I pledge",
+        "made": "You made your pledge today. May Allah help you keep it.",
+        "pledgeLine": "Today's pledge: {text}"
+      },
+      "evening": {
+        "title": "Evening review",
+        "doneQ": "What did you complete?",
+        "doneSummary": "{total, plural, =0 {No habit was asked today.} other {You completed {done} of {totalN}.}}",
+        "keptQ": "Did you keep today's pledge?",
+        "yes": "Yes",
+        "partly": "Partly",
+        "no": "No",
+        "checkIn": "Check in on your private program",
+        "save": "Review done"
+      },
+      "weekly": {
+        "title": "Weekly review",
+        "lead": "Two minutes with yourself, without blame.",
+        "steady": "What you kept",
+        "steadyNone": "Nothing was complete this week; next week is a new chance.",
+        "weak": "Where you weakened",
+        "weakNone": "You missed nothing, praise be to Allah.",
+        "missed": "{count, plural, one {Missed 1 day} other {Missed {n} days}}",
+        "step": "One step for next week",
+        "stepHabit": "Habit",
+        "increase": "One step up",
+        "lighten": "Lighten",
+        "keep": "Keep",
+        "heart": "How is your heart this week?",
+        "present": "Present",
+        "middle": "In between",
+        "hard": "Hard",
+        "message": "A message to myself",
+        "messagePlaceholder": "A line to read next Friday",
+        "save": "Save the review"
+      },
+      "selfMessage": {
+        "title": "Your message to yourself",
+        "from": "Written in the review of {date}",
+        "read": "I read it"
+      },
+      "pledge": {
+        "title": "Your pledge: {text}",
+        "hint": "This is what you pledged to yourself when “{habit}” is missed two days in a row.",
+        "kept": "I kept it",
+        "sadaqah": "I give {text} in charity",
+        "sadaqahPlain": "I give in charity",
+        "rakatain": "I pray two rak'ahs"
+      },
+      "minimum": "The least I can",
+      "minimumMet": "The least logged",
+      "reviews": {
+        "title": "Self-review",
+        "lead": "Your weekly reviews, kept on this device only.",
+        "empty": "No review yet. Each Friday's review appears here.",
+        "weekOf": "Week of {date}",
+        "heart": "Heart: {value}",
+        "step": "Step: {habit} · {choice}",
+        "message": "Message to myself: {text}"
+      }
+    },
+    "notify": {
+      "title": "Notifications",
+      "lead": "All your notifications in one place: at most four a day, and nothing between 23:00 and 5:00 except the night prayer and times you set yourself.",
+      "habits": "Habit reminders at their times (the second skips once done)",
+      "periodic": "Periodic acts and ties of kinship",
+      "evening": "Evening nudge while a habit is not done",
+      "friday": "Friday review reminder",
+      "time": "Time",
+      "heartTitle": "Today's intention and self-review (this device only)",
+      "intention": "Today's intention in the morning",
+      "eveningReview": "Evening review after 19:00",
+      "fridayReview": "Friday review",
+      "pledges": "Personal pledge",
+      "pledgesHint": "A pledge you write for yourself, kept when a habit is missed two days in a row.",
+      "pledgeHabit": "Habit",
+      "pledgeIf": "If I miss it two days in a row:",
+      "pledgeSadaqah": "I give in charity…",
+      "pledgeRakatain": "I pray two rak'ahs",
+      "pledgeCustom": "My own words",
+      "pledgeText": "Text",
+      "pledgeAdd": "Add a pledge",
+      "pledgeRemove": "Remove",
+      "pledgeNone": "No pledge yet.",
+      "noHabits": "Add a habit first to tie a pledge to it.",
+      "linkHint": "Notifications, today's intention and self-review"
     }
   },
   "calendarPage": {

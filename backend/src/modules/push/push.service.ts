@@ -7,7 +7,7 @@ import {
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { applyServerChanges, emptyStore, type Store } from '@thekra/practice-core';
+import { applyServerChanges, emptyStore, parseNotificationPrefs, type Store } from '@thekra/practice-core';
 import type { PushSubscription } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { practiceCatalog } from '../practice/practice-catalog.js';
@@ -33,6 +33,22 @@ export interface SubscribeInput {
   keys: { p256dh: string; auth: string };
   timeZone: string;
   locale: PushLocale;
+  /** The browser's «التنبيهات» switches; absent keeps what is stored (or the defaults). */
+  prefs?: object;
+}
+
+/** The stored switches of a browser: only the fields the server plans for, validated again (never the private moment). */
+function storedPrefs(raw: object): Record<string, boolean | string> {
+  const all = parseNotificationPrefs(raw);
+  return {
+    habits: all.habits,
+    periodic: all.periodic,
+    periodicTime: all.periodicTime,
+    eveningNudge: all.eveningNudge,
+    eveningTime: all.eveningTime,
+    fridayReview: all.fridayReview,
+    fridayTime: all.fridayTime,
+  };
 }
 
 /** What the scheduler carries (sealed): enough to send without reading the database. */
@@ -99,7 +115,13 @@ export class PushService {
     }
     const existing = await this.prisma.pushSubscription.findUnique({ where: { endpoint: input.endpoint } });
     if (existing && existing.userId !== userId) await this.remove(existing); // the browser changed accounts
-    const fields = { p256dh: input.keys.p256dh, auth: input.keys.auth, timeZone: input.timeZone, locale: input.locale };
+    const fields = {
+      p256dh: input.keys.p256dh,
+      auth: input.keys.auth,
+      timeZone: input.timeZone,
+      locale: input.locale,
+      ...(input.prefs ? { prefs: storedPrefs(input.prefs) } : {}),
+    };
     const sub = await this.prisma.pushSubscription.upsert({
       where: { endpoint: input.endpoint },
       create: { userId, endpoint: input.endpoint, ...fields },
@@ -220,6 +242,7 @@ export class PushService {
       habits: practiceCatalog().habits,
       timeZone: sub.timeZone,
       locale: sub.locale === 'en' ? 'en' : 'ar',
+      prefs: parseNotificationPrefs(sub.prefs ?? null),
       now,
     });
     const wanted = new Map(planned.map((item) => [item.key, item]));

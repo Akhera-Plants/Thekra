@@ -1,6 +1,6 @@
 /**
  * App-only practice preferences, stored next to the practice-core Store (AsyncStorage
- * `thekra.practice.prefs.v1`). Never synced: reminder switches and times, the «فروضي وأدواري» roles, the
+ * `thekra.practice.prefs.v1`). Never synced: reminder switches and times («التنبيهات»: practice-core `NotificationPrefs`), the «فروضي وأدواري» roles, the
  * sin-program lock and «إظهار التاريخ الهجري».
  * The reminder rule of a plan now lives on the plan (`plan.rule`, synced) and the free minutes in the Store
  * settings (`settings.freeMinutesPerDay`, synced); `legacyPrefs` reads the old fields once to migrate them.
@@ -28,6 +28,12 @@ export interface PracticePrefs {
   /** Sin-program reminders. Their title is always the generic «تذكرة من ذكرى». */
   sinReminders: boolean;
   sinReminderTime: LocalTime;
+  /** «تنبيه المساء» (redesign §4.4): once a day while a habit is not done. Off by default. */
+  eveningNudge: boolean;
+  eveningTime: LocalTime;
+  /** «تذكير المحاسبة يوم الجمعة». On by default. */
+  fridayReminder: boolean;
+  fridayTime: LocalTime;
   /** «فروضي وأدواري» roles (the free minutes are in the Store settings). */
   roles: RoleKey[];
   /** Remember the vault key in the device keystore («تذكّر على هذا الجهاز»). Off by default. */
@@ -46,6 +52,10 @@ export const DEFAULT_PREFS: PracticePrefs = {
   kinshipTime: '18:00',
   sinReminders: false,
   sinReminderTime: '21:00',
+  eveningNudge: false,
+  eveningTime: '21:00',
+  fridayReminder: true,
+  fridayTime: '17:00',
   roles: [],
   rememberVaultKey: false,
   sinLock: false,
@@ -67,7 +77,7 @@ export function parsePrefs(json: unknown): PracticePrefs {
   }
   if (!isRecord(raw) || raw.v !== 1) return { ...DEFAULT_PREFS };
   const bool = (k: keyof PracticePrefs) => (typeof raw[k] === 'boolean' ? (raw[k] as boolean) : (DEFAULT_PREFS[k] as boolean));
-  const time = (k: 'kinshipTime' | 'sinReminderTime') => (isValidTime(raw[k]) ? (raw[k] as string) : DEFAULT_PREFS[k]);
+  const time = (k: 'kinshipTime' | 'sinReminderTime' | 'eveningTime' | 'fridayTime') => (isValidTime(raw[k]) ? (raw[k] as string) : DEFAULT_PREFS[k]);
   return {
     v: 1,
     habitReminders: bool('habitReminders'),
@@ -76,6 +86,10 @@ export function parsePrefs(json: unknown): PracticePrefs {
     kinshipTime: time('kinshipTime'),
     sinReminders: bool('sinReminders'),
     sinReminderTime: time('sinReminderTime'),
+    eveningNudge: bool('eveningNudge'),
+    eveningTime: time('eveningTime'),
+    fridayReminder: bool('fridayReminder'),
+    fridayTime: time('fridayTime'),
     rememberVaultKey: bool('rememberVaultKey'),
     sinLock: bool('sinLock'),
     showHijri: bool('showHijri'),

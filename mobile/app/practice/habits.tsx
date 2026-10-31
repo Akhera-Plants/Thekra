@@ -6,7 +6,8 @@
  * still loggable group.
  */
 
-import React, { useState } from 'react';
+import { NotificationsLink } from '@/components/settings/NotificationsLink';
+import React from 'react';
 import { View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -14,7 +15,6 @@ import * as Haptics from 'expo-haptics';
 import { HardDrive, Hourglass, Sprout } from 'lucide-react-native';
 import { isEstablished, isPaused, logDone, resumePlan, updatePlan, type Plan } from '@thekra/practice-core';
 import { usePracticeCatalog } from '@/lib/api/practice';
-import { ensurePermission } from '@/lib/practice/notifications';
 import { today, usePracticeStore } from '@/lib/practice/practice-store';
 import { splitByDue } from '@/lib/practice/plan-view';
 import { pick } from '@/lib/practice/catalog-types';
@@ -29,13 +29,13 @@ import {
   EmptyState,
   ListRow,
   Notice,
+  SwitchRow,
   Ornament,
   PageHeader,
   Rule,
   Screen,
   Section,
   Skeleton,
-  SwitchRow,
   Text,
 } from '@/ui';
 
@@ -63,13 +63,10 @@ export default function HabitsTrackScreen() {
   const styles = useStyles(makeStyles);
   const hydrated = usePracticeStore((s) => s.hydrated);
   const store = usePracticeStore((s) => s.store);
-  const prefs = usePracticeStore((s) => s.prefs);
   const setStore = usePracticeStore((s) => s.setStore);
-  const setPrefs = usePracticeStore((s) => s.setPrefs);
   const catalog = usePracticeCatalog(locale);
   const d = today();
   const { hasPlans, heavy, setHeavy } = useHeavyDay(d);
-  const [permissionDenied, setPermissionDenied] = useState(false);
   const habits = catalog.data?.habits ?? [];
 
   if (!hydrated) return <HabitsSkeleton />;
@@ -92,14 +89,6 @@ export default function HabitsTrackScreen() {
     if (completes) void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   }
 
-  async function handleReminders(on: boolean) {
-    setPermissionDenied(false);
-    if (on && !(await ensurePermission(t('practice.notify.channelName')))) {
-      setPermissionDenied(true);
-      return;
-    }
-    setPrefs((p) => ({ ...p, habitReminders: on }));
-  }
 
   return (
     <Screen edges={['bottom']} decor>
@@ -197,15 +186,7 @@ export default function HabitsTrackScreen() {
       )}
 
       <Rule />
-      <Section title={t('practice.reminders')}>
-        <SwitchRow
-          label={t('practice.remindersSwitch')}
-          hint={t('practice.remindersHint')}
-          value={prefs.habitReminders}
-          onValueChange={(v) => void handleReminders(v)}
-        />
-        {permissionDenied ? <Notice tone="destructive">{t('practice.permissionDenied')}</Notice> : null}
-      </Section>
+      <NotificationsLink />
 
       <Ornament />
       <Section title={t('practice.tools')}>

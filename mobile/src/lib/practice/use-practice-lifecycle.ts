@@ -43,6 +43,11 @@ export function reminderTexts(t: T, locale: UiLocale): ReminderTexts {
     sinBody: t('practice.notify.sinBody'),
     unitFallback,
     listSeparator: locale === 'ar' ? '، ' : ', ',
+    wirdTitle: t('practice.notify.wirdTitle'),
+    eveningBody: t('practice.notify.eveningBody'),
+    fridayTitle: t('practice.notify.fridayTitle'),
+    fridayBody: t('practice.notify.fridayBody'),
+    digestBody: (count) => t('practice.notify.digestBody', { count }),
   };
 }
 
@@ -57,7 +62,7 @@ export function useRescheduleReminders(): () => Promise<void> {
   const locale = useUiLocale();
   const qc = useQueryClient();
   return useCallback(async () => {
-    const { store, prefs, hydrated } = usePracticeStore.getState();
+    const { store, prefs, heart, hydrated } = usePracticeStore.getState();
     if (!hydrated) return;
     const catalog = qc.getQueryData<{ data: PracticeCatalog }>(queryKeys.practice.catalog(locale))?.data;
     const planned = planReminders({
@@ -68,6 +73,8 @@ export function useRescheduleReminders(): () => Promise<void> {
       now: nowTime(),
       locale,
       texts: reminderTexts(t as unknown as T, locale),
+      // No Friday reminder once that review is saved, or when the Friday review itself is off.
+      reviewDoneOn: (friday) => !heart.prefs.fridayReview || heart.weekly.some((w) => w.weekOf === friday),
     });
     await applyReminders(planned, t('practice.notify.channelName'));
   }, [qc, locale, t]);
@@ -99,7 +106,7 @@ export function usePracticeLifecycle(): void {
     let syncTimer: ReturnType<typeof setTimeout> | null = null;
     let vaultTimer: ReturnType<typeof setTimeout> | null = null;
     const unsub = usePracticeStore.subscribe((state, prev) => {
-      if (state.store === prev.store && state.prefs === prev.prefs) return;
+      if (state.store === prev.store && state.prefs === prev.prefs && state.heart === prev.heart) return;
       if (remindTimer) clearTimeout(remindTimer);
       remindTimer = setTimeout(() => void rescheduleRef.current(), 800);
       const userId = userIdRef.current;

@@ -1,5 +1,7 @@
 /**
  * «ورد اليوم» (the centre tab), top to bottom and nothing else:
+ * 0. on a Friday, last week's «رسالة إلى نفسي» first; under the header one rotating text (المراقبة) and the cards of
+ *    «نية اليوم», a due «التزام شخصي» and «المحاسبة» (components/practice/hub/HeartCards.tsx);
  * 1. the title, one date line (Gregorian; Hijri too with «إظهار التاريخ الهجري»), the streak chip and «أضف»;
  * 2. «اليوم»: today's sunnah occasion as one compact line, then one row per task from practice-core `dayAgenda`
  *    (habits asked for today, relatives due as periodic acts, the generic private check-in), done rows at the bottom;
@@ -32,6 +34,7 @@ import { upcomingPeriodic } from '@/lib/practice/wird';
 import { addDays } from '@thekra/practice-core';
 import { AddSheet } from '@/components/practice/hub/AddSheet';
 import { ExcuseChip } from '@/components/practice/hub/ExcuseChip';
+import { HeartTop, MuraqabaLine, SelfMessageCard } from '@/components/practice/hub/HeartCards';
 import { PeriodicRows } from '@/components/practice/hub/PeriodicRows';
 import { TodayList } from '@/components/practice/hub/TodayList';
 import { WirdHeader } from '@/components/practice/hub/WirdHeader';
@@ -98,12 +101,15 @@ function Wird() {
   return (
     <Screen scroll={false} contentStyle={styles.frame} decor>
       <ScrollView contentContainerStyle={styles.content}>
+        <SelfMessageCard today={today} />
         <WirdHeader
           dateLabel={dateLine(today, names, hijriOffset, showHijri)}
           streak={streak.hasPlans ? streak.current : null}
           freshLine={streak.display.kind === 'fresh' ? t('practice.wird.streakFresh', { n: streak.display.longest }) : null}
           onAdd={handleAddOpen}
         />
+        <MuraqabaLine today={today} />
+        <HeartTop today={today} />
 
         {catalog.isError ? (
           <View style={styles.tight}>
@@ -123,6 +129,7 @@ function Wird() {
           onToggleHabit={actions.toggleHabit}
           onToggleRelative={actions.toggleRelative}
           onUndo={actions.undo}
+          onMinimum={actions.logMinimum}
           onAddHabit={openAddHabit}
           footer={
             heavyDay.hasPlans ? (

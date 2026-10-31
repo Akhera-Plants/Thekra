@@ -17,5 +17,7 @@ export * from './agenda.js';
 export * from './streak.js';
 export * from './wird.js';
 export * from './limits.js';
+export * from './notify.js';
+export * from './heart.js';
 export * from './vault.js';
 export * from './base64.js';

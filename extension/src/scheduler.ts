@@ -9,21 +9,28 @@
  * `reminderSlots`, the same as the website, the push planner and the app).
  * Today's remaining slots are skipped once today's required amount is logged (`requiredOn`; a missed day is
  * never added to the next one).
+ *
+ * The policy is practice-core `notificationPlan` (redesign §4.4), the same as the app and the web push planner: a
+ * periodic plan once per due day, quiet hours 23:00–05:00 (the night prayer and the user's own times excepted), at most
+ * 4 a day and the rest as one digest alarm `digest|<date>|<time>` («عندك n أعمال اليوم»). The extension has habits only.
  */
 import {
+  DEFAULT_NOTIFICATION_PREFS,
+  emptyStore,
   isPaused,
   isPausedOn,
   isPlanDueOn,
   isValidDate,
   isValidTime,
-  nextOccurrences,
   normalize,
+  notificationPlan,
   reminderSlots,
   requiredOn,
   todayFrom,
   weekday,
   type LocalDate,
   type LocalTime,
+  type PlannedNotification,
   type Plan,
   type Rule,
 } from '@thekra/practice-core';
@@ -36,6 +43,8 @@ export interface ScheduleInput {
   now: Date;
   /** Catalog default rules by habit key, for plans without a rule of their own (e.g. made on the website). */
   habitRules?: Readonly<Record<string, Rule>>;
+  /** Catalog suggested slots by habit key: a slot among them inside the quiet hours does not ring. */
+  habitSlots?: Readonly<Record<string, readonly string[]>>;
 }
 
 export interface Reminder {
@@ -46,8 +55,8 @@ export interface Reminder {
   when: number;
 }
 
-/** Rule days searched ahead per plan (a weekly rule looks 14 weeks ahead). */
-export const SEARCH_OCCURRENCES = 14;
+/** Days searched ahead (a yearly Hijri rule fits). */
+export const SEARCH_DAYS = 400;
 
 const DAILY: Rule = { kind: 'daily' };
 
@@ -74,35 +83,67 @@ export function remainingOn(plan: Plan, date: LocalDate): number {
   return Math.max(0, requiredOn(plan, date) - (plan.log[date] ?? 0));
 }
 
+function localTime(now: Date): LocalTime {
+  return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+}
+
+/** The policy's habit and digest entries ahead of `now`, without the user's quiet weekdays. */
+export function plannedEntries(input: ScheduleInput, days = SEARCH_DAYS): PlannedNotification[] {
+  const today = todayFrom(input.now);
+  const base = emptyStore();
+  const store = { ...base, plans: input.plans.map((p) => normalize(p, today)), settings: { ...base.settings, hijriOffset: input.hijriOffset } };
+  const quiet = new Set(input.quietDays);
+  return notificationPlan({
+    store,
+    prefs: { ...DEFAULT_NOTIFICATION_PREFS, periodic: false, eveningNudge: false, fridayReview: false, privateMoment: false },
+    today,
+    now: localTime(input.now),
+    days,
+    dayOptions: { hijriOffset: input.hijriOffset, defaultRuleOf: (plan) => fallbackRule(plan, input.habitRules) },
+    defaultSlotsOf: (plan) => (plan.habitKey === undefined ? undefined : input.habitSlots?.[plan.habitKey]),
+    kinds: ['habit', 'digest'],
+  }).filter((e) => !quiet.has(weekday(e.date)) && localInstant(e.date, e.time) > input.now.getTime());
+}
+
 /**
  * The next reminders, at most `perPlan` for each plan, sorted by time. Only instants strictly after `now`.
  */
 export function upcomingReminders(input: ScheduleInput, perPlan = 1): Reminder[] {
-  const nowMs = input.now.getTime();
-  const today = todayFrom(input.now);
-  const quiet = new Set(input.quietDays);
+  const count = new Map<string, number>();
   const out: Reminder[] = [];
-  for (const raw of input.plans) {
-    const plan = normalize(raw, today);
-    const slots = reminderSlots(plan);
-    if (slots.length === 0) continue;
-    const found: Reminder[] = [];
-    const rule = ruleOf(plan, fallbackRule(plan, input.habitRules));
-    const days = nextOccurrences(rule, today, SEARCH_OCCURRENCES, { hijriOffset: input.hijriOffset });
-    for (const date of days) {
-      if (found.length >= perPlan) break;
-      if (quiet.has(weekday(date)) || isPausedOn(plan, date)) continue;
-      if (date === today && remainingOn(plan, today) === 0) continue;
-      for (const time of slots) {
-        const when = localInstant(date, time);
-        if (when <= nowMs) continue;
-        found.push({ planId: plan.id, date, time, when });
-        if (found.length >= perPlan) break;
-      }
-    }
-    out.push(...found);
+  for (const e of plannedEntries(input)) {
+    if (e.kind !== 'habit' || !e.planId) continue;
+    const n = count.get(e.planId) ?? 0;
+    if (n >= perPlan) continue;
+    count.set(e.planId, n + 1);
+    out.push({ planId: e.planId, date: e.date, time: e.time, when: localInstant(e.date, e.time) });
   }
   return out.sort((a, b) => a.when - b.when || a.planId.localeCompare(b.planId));
+}
+
+export interface Digest {
+  date: LocalDate;
+  time: LocalTime;
+  count: number;
+  when: number;
+}
+
+/** The next digest alarms (more than four reminders on a day become one), soonest first. */
+export function upcomingDigests(input: ScheduleInput, limit = 2): Digest[] {
+  return plannedEntries(input, 14)
+    .filter((e) => e.kind === 'digest')
+    .slice(0, limit)
+    .map((e) => ({ date: e.date, time: e.time, count: e.count ?? 1, when: localInstant(e.date, e.time) }));
+}
+
+/** How many plans still ask for something today (the digest's «n»). */
+export function openPlansToday(plans: readonly Plan[], now: Date, hijriOffset: number, habitRules: Readonly<Record<string, Rule>> = {}): number {
+  const today = todayFrom(now);
+  return plans.filter((raw) => {
+    const plan = normalize(raw, today);
+    if (isPausedOn(plan, today) || today < plan.createdOn) return false;
+    return isPlanDueOn(plan, today, fallbackRule(plan, habitRules), { hijriOffset }) && remainingOn(plan, today) > 0;
+  }).length;
 }
 
 /**
@@ -124,6 +165,7 @@ export function isReminderDay(
 
 const REMIND = 'remind';
 const SNOOZE = 'snooze';
+const DIGEST = 'digest';
 /** Plan ids are habit keys (slugs), so `|` never appears inside a field. */
 const SEP = '|';
 
@@ -135,13 +177,24 @@ export function snoozeAlarmName(planId: string, date: LocalDate): string {
   return [SNOOZE, planId, date].join(SEP);
 }
 
-export type ParsedAlarm = { kind: 'remind'; planId: string; date: LocalDate; time: LocalTime } | { kind: 'snooze'; planId: string; date: LocalDate };
+export function digestAlarmName(d: Pick<Digest, 'date' | 'time'>): string {
+  return [DIGEST, d.date, d.time].join(SEP);
+}
+
+export type ParsedAlarm =
+  | { kind: 'remind'; planId: string; date: LocalDate; time: LocalTime }
+  | { kind: 'snooze'; planId: string; date: LocalDate }
+  | { kind: 'digest'; date: LocalDate; time: LocalTime };
 
 export function parseAlarmName(name: string): ParsedAlarm | null {
   const parts = name.split(SEP);
   if (parts[0] === REMIND && parts.length === 4) {
     const [, planId, date, time] = parts as [string, string, string, string];
     if (planId && isValidDate(date) && isValidTime(time)) return { kind: 'remind', planId, date, time };
+  }
+  if (parts[0] === DIGEST && parts.length === 3) {
+    const [, date, time] = parts as [string, string, string];
+    if (isValidDate(date) && isValidTime(time)) return { kind: 'digest', date, time };
   }
   if (parts[0] === SNOOZE && parts.length === 3) {
     const [, planId, date] = parts as [string, string, string];

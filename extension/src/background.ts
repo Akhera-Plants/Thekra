@@ -1,7 +1,8 @@
 /**
  * Service worker (Chrome/Edge) / background script (Firefox).
  *
- * Alarms: one `remind|<plan>|<date>|<time>` alarm per plan for its next reminder, recomputed on install, on
+ * Alarms: one `remind|<plan>|<date>|<time>` alarm per plan for its next reminder (and `digest|<date>|<time>` when a day
+ * holds more than four: practice-core `notificationPlan`), recomputed on install, on
  * browser start, whenever the store or preferences change, and after each reminder fires. A «لاحقًا» press adds
  * a one-off `snooze|<plan>|<date>` alarm 30 minutes later. A `refresh` alarm refreshes the API caches (each at
  * most once a day). While signed in, a `sync` alarm syncs plans and logs every 15 minutes.
@@ -11,7 +12,7 @@
  *
  * All listeners are registered synchronously at the top level, as MV3 requires.
  */
-import { logDone, normalize, requiredOn, todayFrom, updatePlan, type Plan } from '@thekra/practice-core';
+import { logDone, normalize, NOTIFY_TEXTS, requiredOn, todayFrom, updatePlan, type Plan } from '@thekra/practice-core';
 import { AuthError } from './auth.js';
 import { deedUrl, formatAmount, habitTitle, unitLabel, type Habit } from './catalog.js';
 import {
@@ -33,12 +34,15 @@ import { translator } from './i18n.js';
 import { isMessage, type Message, type Reply } from './messages.js';
 import { buildNotification, pickQuote } from './quotes.js';
 import {
+  digestAlarmName,
+  openPlansToday,
   parseAlarmName,
   reminderAlarmName,
   remainingOn,
   shouldNotify,
   snoozeAlarmName,
   snoozeUntil,
+  upcomingDigests,
   upcomingReminders,
 } from './scheduler.js';
 import { PREFS_KEY, STORE_KEY } from './state.js';
@@ -50,6 +54,7 @@ const SYNC_ALARM = 'sync';
 const SYNC_PERIOD_MINUTES = 15;
 const SYNC_DEBOUNCE_MS = 3000;
 const NOTIFICATION_PREFIX = 'note';
+const DIGEST_NOTIFICATION_PREFIX = 'digest';
 
 /** The v1 → v2 storage upgrade, written once per wake before anything else reads the store. */
 const ready = migrateStorage().catch((err: unknown) => console.error('[thekra] migrate', err));
@@ -73,18 +78,21 @@ const syncSerial = queue();
 async function reschedule(): Promise<void> {
   const { store, prefs } = await loadState();
   for (const alarm of await api.alarms.getAll()) {
-    if (parseAlarmName(alarm.name)?.kind === 'remind') await api.alarms.clear(alarm.name);
+    const kind = parseAlarmName(alarm.name)?.kind;
+    if (kind === 'remind' || kind === 'digest') await api.alarms.clear(alarm.name);
   }
   if (!prefs.onboarded) return;
-  const habitRules = Object.fromEntries((await getCatalog()).map((h) => [h.key, h.defaultRule]));
-  const reminders = upcomingReminders({
+  const catalog = await getCatalog();
+  const input = {
     plans: store.plans,
     quietDays: prefs.quietDays,
     hijriOffset: store.settings.hijriOffset,
     now: new Date(),
-    habitRules,
-  });
-  for (const r of reminders) await api.alarms.create(reminderAlarmName(r), { when: r.when });
+    habitRules: Object.fromEntries(catalog.map((h) => [h.key, h.defaultRule])),
+    habitSlots: Object.fromEntries(catalog.map((h) => [h.key, h.defaultSlots])),
+  };
+  for (const r of upcomingReminders(input)) await api.alarms.create(reminderAlarmName(r), { when: r.when });
+  for (const d of upcomingDigests(input)) await api.alarms.create(digestAlarmName(d), { when: d.when });
 }
 
 async function ensureAlarms(): Promise<void> {
@@ -204,6 +212,25 @@ async function showReminder(planId: string, date: string): Promise<void> {
   await api.notifications.create(id, options);
 }
 
+/** «عندك n أعمال اليوم»: the reminders past the day's four, as one notification (only while something is open). */
+async function showDigest(date: string): Promise<void> {
+  const { store, prefs } = await loadState();
+  const now = new Date();
+  if (date !== todayFrom(now)) return;
+  const habitRules = Object.fromEntries((await getCatalog()).map((h) => [h.key, h.defaultRule]));
+  const open = openPlansToday(store.plans, now, store.settings.hijriOffset, habitRules);
+  if (open === 0) return;
+  const words = NOTIFY_TEXTS[prefs.lang];
+  const id = [DIGEST_NOTIFICATION_PREFIX, date].join('|');
+  await api.notifications.clear(id);
+  await api.notifications.create(id, {
+    type: 'basic',
+    iconUrl: api.runtime.getURL('icons/icon-128.png'),
+    title: words.wirdTitle,
+    message: words.digestBody(open),
+  });
+}
+
 async function markDone(planId: string): Promise<void> {
   const store = await loadStore();
   const today = todayFrom(new Date());
@@ -275,6 +302,13 @@ api.alarms.onAlarm.addListener((alarm) => {
   }
   const parsed = parseAlarmName(alarm.name);
   if (!parsed) return;
+  if (parsed.kind === 'digest') {
+    void serial(async () => {
+      await showDigest(parsed.date);
+      await reschedule();
+    });
+    return;
+  }
   void serial(async () => {
     await showReminder(parsed.planId, parsed.date);
     if (parsed.kind === 'remind') await reschedule();
@@ -282,6 +316,14 @@ api.alarms.onAlarm.addListener((alarm) => {
 });
 
 api.notifications.onClicked.addListener((id) => {
+  if (id.startsWith(`${DIGEST_NOTIFICATION_PREFIX}|`)) {
+    void serial(async () => {
+      await api.notifications.clear(id);
+      const { prefs } = await loadState();
+      await api.tabs.create({ url: `https://thekra-web.vercel.app${prefs.lang === 'en' ? '/en' : ''}/practice` });
+    });
+    return;
+  }
   const parsed = parseNotificationId(id);
   if (!parsed) return;
   void serial(async () => {

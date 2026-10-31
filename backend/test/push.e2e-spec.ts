@@ -94,6 +94,8 @@ const subscription = (n: number) => ({
   keys: { p256dh: 'BKeyForTests_-', auth: 'AuthForTests' },
   timeZone: 'Asia/Amman',
   locale: 'ar',
+  // The Friday review reminder is on by default; these cases count habit reminders only, whatever the weekday.
+  prefs: { fridayReview: false },
 });
 
 describe('Web push (e2e)', () => {
@@ -228,6 +230,24 @@ describe('Web push (e2e)', () => {
     expect((await prisma.pushSubscription.findUnique({ where: { endpoint: sub.endpoint } }))?.userId).toBe(first.userId);
     await request(server()).post('/v1/me/push/subscriptions').set(second.auth).send(sub).expect(200);
     expect((await prisma.pushSubscription.findUnique({ where: { endpoint: sub.endpoint } }))?.userId).toBe(second.userId);
+  });
+
+  it('stores the browser\'s notification switches and plans with them', async () => {
+    const { auth } = await register();
+    await sync(auth, { plans: [{ ...PLAN, id: '77777777-7777-4777-8777-777777777777' }] });
+    const sub = { ...subscription(7), prefs: { habits: false, eveningNudge: true, eveningTime: '20:30', fridayReview: false } };
+    const created = await request(server()).post('/v1/me/push/subscriptions').set(auth).send(sub).expect(200);
+    const stored = await prisma.pushSubscription.findUnique({ where: { id: created.body.data.id } });
+    expect(stored?.prefs).toMatchObject({ habits: false, eveningNudge: true, eveningTime: '20:30', fridayReview: false });
+    expect(stored?.prefs).not.toHaveProperty('privateMoment');
+    const rows = await prisma.pushReminder.findMany({ where: { subscriptionId: created.body.data.id } });
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.every((r) => r.key.startsWith('evening:'))).toBe(true);
+    await request(server())
+      .post('/v1/me/push/subscriptions')
+      .set(auth)
+      .send({ ...subscription(8), prefs: { eveningTime: '25:00' } })
+      .expect(400);
   });
 
   it('validates the subscription', async () => {

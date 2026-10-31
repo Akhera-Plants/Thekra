@@ -136,11 +136,16 @@ interface HabitRowProps {
   undo: UndoKind | null;
   onToggle: () => void;
   onUndo: () => void;
+  /** «أقل ما يمكن»: logs the heavy-day minimum (it counts for the streak); absent when nothing is left to add. */
+  onMinimum?: () => void;
+  /** The day holds the minimum but not the whole amount. */
+  minimumMet?: boolean;
 }
 
-export function HabitRow({ item, plan, habit, isEnabled, disabledNoteId, undo, onToggle, onUndo }: HabitRowProps) {
+export function HabitRow({ item, plan, habit, isEnabled, disabledNoteId, undo, onToggle, onUndo, onMinimum, minimumMet = false }: HabitRowProps) {
   const t = useTranslations('practice.hub.day');
   const tToday = useTranslations('practice.today');
+  const tHeart = useTranslations('practice.heart');
   const words = usePlanWords(plan, habit);
   const detailId = useId();
   const detail = (
@@ -152,9 +157,18 @@ export function HabitRow({ item, plan, habit, isEnabled, disabledNoteId, undo, o
       ) : (
         t('required', { amount: words.amount(item.required) })
       )}
-      {item.done > 0 ? <> · {tToday('done', { amount: words.amount(item.done) })}</> : null}
+      {minimumMet ? <> · {tHeart('minimumMet')}</> : item.done > 0 ? <> · {tToday('done', { amount: words.amount(item.done) })}</> : null}
     </>
   );
+  const secondary = undo ? (
+    <InlineUndo kind={undo} onUndo={onUndo} />
+  ) : onMinimum && isEnabled ? (
+    <p className="ps-[3.25rem]">
+      <Button variant="ghost" tone="primary" size="sm" onClick={onMinimum}>
+        {tHeart('minimum')}
+      </Button>
+    </p>
+  ) : null;
   return (
     <RowShell
       lead={
@@ -176,7 +190,7 @@ export function HabitRow({ item, plan, habit, isEnabled, disabledNoteId, undo, o
       detail={detail}
       detailId={detailId}
       isMuted={item.complete}
-      undo={undo ? <InlineUndo kind={undo} onUndo={onUndo} /> : null}
+      undo={secondary}
     />
   );
 }

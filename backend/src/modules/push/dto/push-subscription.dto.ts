@@ -1,7 +1,22 @@
 import { Type } from 'class-transformer';
-import { IsIn, IsString, IsUrl, Matches, MaxLength, ValidateNested } from 'class-validator';
+import { IsBoolean, IsIn, IsOptional, IsString, IsUrl, Matches, MaxLength, ValidateNested } from 'class-validator';
 
 const BASE64URL = /^[A-Za-z0-9_-]+={0,2}$/;
+const HH_MM = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+/**
+ * This browser's switches of «التنبيهات» (practice-core `NotificationPrefs` without the private moment, which never
+ * reaches the server). Every field is optional; a missing one keeps the practice-core default.
+ */
+export class PushPrefsDto {
+  @IsOptional() @IsBoolean() habits?: boolean;
+  @IsOptional() @IsBoolean() periodic?: boolean;
+  @IsOptional() @IsString() @Matches(HH_MM) periodicTime?: string;
+  @IsOptional() @IsBoolean() eveningNudge?: boolean;
+  @IsOptional() @IsString() @Matches(HH_MM) eveningTime?: string;
+  @IsOptional() @IsBoolean() fridayReview?: boolean;
+  @IsOptional() @IsString() @Matches(HH_MM) fridayTime?: string;
+}
 
 export class PushKeysDto {
   @IsString()
@@ -32,6 +47,11 @@ export class PushSubscriptionDto {
 
   @IsIn(['ar', 'en'])
   locale!: 'ar' | 'en';
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => PushPrefsDto)
+  prefs?: PushPrefsDto;
 }
 
 export class PushEndpointDto {

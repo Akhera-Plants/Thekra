@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { stagesFor, validateRule } from '@thekra/practice-core';
+import { MURAQABA_QUOTE_IDS, stagesFor, validateRule } from '@thekra/practice-core';
 import { taxonomyFilePath } from '../taxonomy/taxonomy-files.js';
 import { topicSide } from '../taxonomy/topic-pairs.js';
 import { buildPracticeCatalog, practiceCatalog, programForSin, scheduleForDeed } from './practice-catalog.js';
@@ -185,5 +185,13 @@ describe('practice catalog — validation failures', () => {
     expect(build(schedulesText, programsText.replace('alternatives: [smile, adhkar-sabah-masa]', 'alternatives: [nope]'))).toThrow(
       'alternative "nope"',
     );
+  });
+});
+
+describe('المراقبة texts (redesign §4.4)', () => {
+  it('rotates only published ids already listed as evidence in the reviewed YAML files', () => {
+    expect(MURAQABA_QUOTE_IDS.length).toBeGreaterThan(0);
+    const evidence = [...practiceCatalog().habits.flatMap((h) => h.evidence), ...programsText.match(/[0-9a-f]{8}-[0-9a-f-]{27}/g)!];
+    for (const id of MURAQABA_QUOTE_IDS) expect(evidence).toContain(id);
   });
 });

@@ -9,7 +9,7 @@ import { groupToday, type HabitItem, type RelativeItem } from '@thekra/practice-
 /** One row of a day list, with its words ready (titles from the catalog, amounts as the plan screens write them). */
 export type AgendaRowModel =
   | { key: string; kind: 'occasion'; title: string; deed: string }
-  | { key: string; kind: 'habit'; item: HabitItem; title: string; meta: string }
+  | { key: string; kind: 'habit'; item: HabitItem; title: string; meta: string; canMinimum?: boolean }
   | { key: string; kind: 'relative'; item: RelativeItem; title: string; relation: string; meta: string }
   | { key: string; kind: 'program'; done: boolean; meta: string };
 

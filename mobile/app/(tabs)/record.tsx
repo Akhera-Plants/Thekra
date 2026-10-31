@@ -10,7 +10,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { router, type Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Bookmark, Lock, Repeat, Sprout, Users, type LucideIcon } from 'lucide-react-native';
+import { Bookmark, Lock, NotebookPen, Repeat, Sprout, Users, type LucideIcon } from 'lucide-react-native';
 import { establishPlan, graduationReady, updatePlan, type LocalDate } from '@thekra/practice-core';
 import { pick } from '@/lib/practice/catalog-types';
 import { habitFor } from '@/lib/practice/reminders';
@@ -90,6 +90,7 @@ function Record() {
     { key: 'habits', icon: Sprout, title: t('practice.hub.habitsTrack'), hint: t('practice.hub.habitsCount', { count: plans.length }), href: '/practice/habits' },
     { key: 'periodic', icon: Repeat, title: t('practice.periodic.title'), hint: t('record.periodicCount', { count: periodic.length }), href: '/practice/periodic' },
     { key: 'program', icon: Lock, title: t('sinProgram.title'), hint: t('record.programHint'), href: '/practice/sin-program' },
+    { key: 'reviews', icon: NotebookPen, title: t('record.reviews'), hint: t('record.reviewsHint'), href: '/practice/reviews' },
     { key: 'circles', icon: Users, title: t('circles.title'), hint: t('record.circlesHint'), href: '/circles' },
     { key: 'saved', icon: Bookmark, title: t('favorites.title'), hint: t('record.savedHint'), href: '/favorites' },
   ];

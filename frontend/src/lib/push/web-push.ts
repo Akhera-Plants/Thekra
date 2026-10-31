@@ -9,8 +9,10 @@ import {
   postPushSubscription,
   postPushTest,
   type PushConfig,
+  type PushPrefsBody,
 } from '@/lib/api/push';
 import { reportFailure } from '@/lib/errors';
+import { getPracticeSnapshot, notificationPrefsOf } from '@/lib/practice/local-store';
 import type { LocaleCode } from '@/lib/types/enums';
 import { base64UrlToUint8Array, isSameServerKey, needsHomeScreenInstall, type PushDeviceSupport } from './push-support';
 
@@ -109,7 +111,39 @@ async function sendSubscription(subscription: PushSubscription, locale: LocaleCo
     keys: { p256dh: keys.p256dh, auth: keys.auth },
     timeZone: browserTimeZone(),
     locale,
+    prefs: pushPrefsBody(),
   });
+}
+
+/** The switches the server plans with (the private moment never leaves the device). */
+function pushPrefsBody(): PushPrefsBody {
+  const n = notificationPrefsOf(getPracticeSnapshot().prefs);
+  return {
+    habits: n.habits,
+    periodic: n.periodic,
+    periodicTime: n.periodicTime,
+    eveningNudge: n.eveningNudge,
+    eveningTime: n.eveningTime,
+    fridayReview: n.fridayReview,
+    fridayTime: n.fridayTime,
+  };
+}
+
+/**
+ * After a switch in «التنبيهات» changed: if this browser receives reminders, send its subscription again with the new
+ * switches, so the server re-plans at once. Quiet on failure (the next visit sends it again).
+ */
+export async function resendPushPrefs(locale: LocaleCode): Promise<void> {
+  if (!hasPushApis() || Notification.permission !== 'granted') return;
+  try {
+    const registration = await existingRegistration();
+    if (!registration || !(await registration.pushManager.getSubscription())) return;
+    const config = await loadPushConfig();
+    if (!config.enabled || !config.publicKey) return;
+    await sendSubscription(await subscriptionForKey(registration, config.publicKey), locale);
+  } catch (error) {
+    reportFailure('push prefs', error);
+  }
 }
 
 /**

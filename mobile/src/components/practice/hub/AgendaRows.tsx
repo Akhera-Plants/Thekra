@@ -229,11 +229,15 @@ export interface HabitRowProps {
   undo: UndoKind | null;
   onToggle: (item: HabitItem) => void;
   onUndo: () => void;
+  /** «أقل ما يمكن»: logs the heavy-day minimum (counts for the streak). Absent when nothing is left to add. */
+  onMinimum?: (item: HabitItem) => void;
 }
 
-export const HabitRow = memo(function HabitRow({ item, title, meta, canLog, undo, onToggle, onUndo }: HabitRowProps) {
+export const HabitRow = memo(function HabitRow({ item, title, meta, canLog, undo, onToggle, onUndo, onMinimum }: HabitRowProps) {
+  const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const handleToggle = useCallback(() => onToggle(item), [onToggle, item]);
+  const handleMinimum = useCallback(() => onMinimum?.(item), [onMinimum, item]);
   const handleOpen = useCallback(() => router.push(`/practice/plan/${item.planId}`), [item.planId]);
   return (
     <View style={styles.row}>
@@ -241,7 +245,22 @@ export const HabitRow = memo(function HabitRow({ item, title, meta, canLog, undo
         <CheckControl label={title} checked={item.complete} partial={item.done > 0} disabled={!canLog} onPress={handleToggle} />
         <RowBody title={title} meta={meta} settled={item.complete} onPress={handleOpen} />
       </View>
-      {undo ? <UndoLine kind={undo} onUndo={onUndo} /> : null}
+      {undo ? (
+        <UndoLine kind={undo} onUndo={onUndo} />
+      ) : onMinimum ? (
+        <View style={styles.undo}>
+          <Pressable
+            onPress={handleMinimum}
+            accessibilityRole="button"
+            hitSlop={{ top: 6, bottom: 6 }}
+            style={({ pressed }) => [styles.undoButton, pressed && styles.bodyPressed]}
+          >
+            <Text variant="caption" weight="medium" tone="link">
+              {t('practice.heart.minimum')}
+            </Text>
+          </Pressable>
+        </View>
+      ) : null}
     </View>
   );
 });

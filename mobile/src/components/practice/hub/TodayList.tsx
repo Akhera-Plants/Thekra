@@ -46,6 +46,8 @@ export interface TodayListProps {
   onToggleHabit: (item: HabitItem) => void;
   onToggleRelative: (item: RelativeItem) => void;
   onUndo: () => void;
+  /** «أقل ما يمكن» on a habit row (today's list). */
+  onMinimum?: (item: HabitItem) => void;
   /** «أضف عادة» under the empty line (on «ورد اليوم» only). */
   onAddHabit?: () => void;
   /** Under the list (the «يومي ثقيل» chip). */
@@ -63,6 +65,7 @@ export function TodayList({
   onToggleHabit,
   onToggleRelative,
   onUndo,
+  onMinimum,
   onAddHabit,
   footer,
 }: TodayListProps) {
@@ -100,6 +103,7 @@ export function TodayList({
             undo={undoFor('habit', row.item.planId)}
             onToggle={onToggleHabit}
             onUndo={onUndo}
+            onMinimum={canLog && row.canMinimum ? onMinimum : undefined}
           />
         );
       case 'relative':

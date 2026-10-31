@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState, type ReactNode } from 'react';
-import { Bookmark, Feather, Repeat, Sprout } from 'lucide-react';
+import { Bell, Bookmark, Feather, NotebookPen, Repeat, Sprout } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { establishPlan, graduationReady, periodicActs, updatePlan, type Plan } from '@thekra/practice-core';
 import { Button } from '@/components/shared/kit/button';
@@ -26,7 +26,7 @@ import { TodayList } from './TodayList';
 /**
  * «سجلّي», in this order (mirrors the app's tab): the streak (the number with the gold flame, and «أطول مداومة»), the one
  * month calendar (a tapped day opens its list under it, loggable for the last 7 days), «إظهار التاريخ الهجري», then
- * simple rows: «عاداتي», «أعمال دورية», «تخفَّف» and «المحفوظات».
+ * simple rows: «عاداتي», «أعمال دورية», «تخفَّف», «المحاسبة» (weekly reviews), «التنبيهات» and «المحفوظات».
  */
 export function RecordView() {
   const context = useWirdContext();
@@ -66,6 +66,8 @@ function Record({ context }: { context: WirdContext }) {
       hint: t('periodicCount', { count: periodicCount, n: formatDigits(periodicCount) }),
     },
     { key: 'lighten', href: '/practice/leave-sin', icon: <Feather />, title: t('lighten'), hint: t('lightenHint') },
+    { key: 'reviews', href: '/practice/reviews', icon: <NotebookPen />, title: t('reviews'), hint: t('reviewsHint') },
+    { key: 'notifications', href: '/practice/notifications', icon: <Bell />, title: t('notifications'), hint: t('notificationsHint') },
   ];
   if (accountsEnabled()) {
     links.push({ key: 'saved', href: '/favorites', icon: <Bookmark />, title: t('saved'), hint: t('savedHint') });

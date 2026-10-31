@@ -129,3 +129,9 @@ Export (`GET /v1/auth/me/export`) includes settings, plans, logs, relatives, con
 | Extension | email + password in the popup (token in `chrome.storage.local`) | plans and logs only | not in the extension |
 
 Sync runs on sign-in, on app focus, after a local edit (debounced 3 s) and every 15 minutes while open.
+
+**Phase 4 (2026-11-01, «المقامات الستة»):** «نية اليوم», the evening and Friday reviews, «رسالة إلى نفسي» and
+«التزام شخصي» are practice-core `HeartData`, kept by each client on the device (web `thekra.practice.heart.v1`, app
+AsyncStorage `thekra.practice.heart.v1`) and never synced or sent. The sync contract is unchanged; only a step chosen in a
+Friday review edits a plan's amount (the usual `increase` / `decreaseTo`, synced like any plan edit). The notification
+switches are device-local too; the web sends its own with the push subscription (docs/plan/2026-10-web-push.md).

@@ -1,42 +1,32 @@
 /**
- * Pure reminder planner: practice-core Store + prefs → the local notifications to schedule.
+ * Pure reminder planner: practice-core Store + prefs → the local notifications to schedule. The policy is practice-core
+ * `notificationPlan` (redesign §4.4), shared with the web push planner and the extension: habits at their slots (the
+ * second only while the day is not done; one slot once «راسخة»; a periodic plan once per due day), people lists once per
+ * due day, the evening nudge (opt-in), the Friday review reminder (on by default), the private moment, quiet hours
+ * 23:00–05:00 (the night prayer and the user's own times excepted) and at most 4 a day, then one digest.
  * No React Native imports, so it runs in Jest; notifications.ts turns the list into expo-notifications calls.
  *
- * - Paused plans remind of nothing; an established («راسخة») plan reminds in its first slot only (practice-core
- *   `reminderSlots`). A visited sick person is no longer due; an unvisited one repeats every 2 days.
- * - Habits: every day the plan is due (practice-core `isPlanDueOn`, the same answer the «عاداتي» today list uses)
- *   in the next {@link REMINDER_DAYS} days, once per slot. Title = habit title; body = the amount asked for that day (`requiredOn`: ebb and
- *   season aware, never doubled). Today's slots are skipped once they have passed or the day is done.
- * - Kinship: on each relative's next due date (overdue → the next slot from now), then weekly while it stays
- *   due. The title is always generic; names appear in the body only when the user turned that on.
- * - Sin program: one daily reminder whose title is ALWAYS {@link SIN_REMINDER_TITLE} and whose body is a
- *   fixed generic text. Neither the sin nor anything the user wrote ever reaches a notification
- *   (roadmap §0.2), and the notification id carries no slug.
+ * - The sin program reminder's title is ALWAYS {@link SIN_REMINDER_TITLE} and its body a fixed generic text. Neither
+ *   the sin nor anything the user wrote ever reaches a notification (roadmap §0.2), and the id carries no slug.
+ * - People lists: the title is always generic; names appear in the body only when the user turned that on.
  * - iOS keeps a limited number of pending local notifications (commonly 64), so the list is cut to the
  *   soonest {@link MAX_PENDING}; the app re-plans on every change and every foreground.
  */
 
 import {
-  activePrograms,
-  addDays,
-  circleOf,
-  isPausedOn,
   isPlanDueOn,
-  isRelativeOpen,
-  reminderSlots,
-  SICK_VISIT_EVERY_DAYS,
   formatPlanAmount,
-  nextDue,
+  notificationPlan,
   requiredOn,
   type LocalDate,
   type LocalTime,
+  type NotificationPrefs,
   type Plan,
   type PlanUnit,
   type Rule,
   type Store,
 } from '@thekra/practice-core';
 import { pick, type CatalogHabit, type UiLocale } from './catalog-types';
-import { sortSlots } from './format';
 import type { PracticePrefs } from './prefs';
 
 /** The only title a sin-program reminder may carry, in every language (roadmap §0.2). */
@@ -45,9 +35,8 @@ export const SIN_REMINDER_TITLE = 'تذكرة من ذكرى';
 export const REMINDER_SOURCE = 'thekra-practice';
 export const REMINDER_DAYS = 14;
 export const MAX_PENDING = 60;
-const KINSHIP_REPEAT_DAYS = 7;
 
-export type ReminderKind = 'habit' | 'kinship' | 'sin';
+export type ReminderKind = 'habit' | 'kinship' | 'sin' | 'evening' | 'friday' | 'digest';
 
 export interface PlannedReminder {
   id: string;
@@ -72,6 +61,12 @@ export interface ReminderTexts {
   unitFallback: Record<PlanUnit, string>;
   /** Separator between names («، » / «, »). */
   listSeparator: string;
+  /** The policy's own words (practice-core `NOTIFY_TEXTS`, mirrored in the app's i18n). */
+  wirdTitle: string;
+  eveningBody: string;
+  fridayTitle: string;
+  fridayBody: string;
+  digestBody: (count: number) => string;
 }
 
 export interface ReminderInput {
@@ -85,6 +80,8 @@ export interface ReminderInput {
   texts: ReminderTexts;
   days?: number;
   limit?: number;
+  /** True when that Friday's review is saved (no reminder). */
+  reviewDoneOn?: (friday: LocalDate) => boolean;
 }
 
 /** The catalog habit of a plan (`habitKey`; plans from tests or old data may carry the key as their id). */
@@ -123,100 +120,75 @@ export function formatAmount(
   return formatPlanAmount(amount, unit, label, locale, habit?.rakah);
 }
 
-function habitReminders(input: ReminderInput, end: LocalDate): PlannedReminder[] {
-  const { store, habits, today, now, locale, texts } = input;
-  const out: PlannedReminder[] = [];
-  for (const plan of store.plans) {
-    const slots = reminderSlots(plan);
-    if (slots.length === 0) continue;
-    const dates: LocalDate[] = [];
-    for (let date = today; date <= end; date = addDays(date, 1)) {
-      if (!isPausedOn(plan, date) && planDueOn(plan, habits, date, store.settings.hijriOffset)) dates.push(date);
-    }
-    const habit = habitFor(plan, habits);
-    const title = habit ? pick(habit, 'title', locale) : plan.title;
-    for (const date of dates) {
-      const required = requiredOn(plan, date);
-      if (date === today && (plan.log[today] ?? 0) >= required) continue;
-      const body = texts.habitBody(formatAmount(required, plan.unit, habit, locale, texts.unitFallback));
-      for (const time of sortSlots(slots)) {
-        if (date === today && time <= now) continue;
-        out.push({
-          id: `${REMINDER_SOURCE}:habit:${plan.id}:${date}:${time}`,
-          kind: 'habit',
-          date,
-          time,
-          title,
-          body,
-          route: `/practice/plan/${plan.id}`,
-        });
-      }
-    }
-  }
-  return out;
+/** The policy's switches from the app prefs (practice-core `NotificationPrefs`). */
+export function notificationPrefsOf(prefs: PracticePrefs): NotificationPrefs {
+  return {
+    habits: prefs.habitReminders,
+    periodic: prefs.kinshipReminders,
+    periodicTime: prefs.kinshipTime,
+    eveningNudge: prefs.eveningNudge,
+    eveningTime: prefs.eveningTime,
+    fridayReview: prefs.fridayReminder,
+    fridayTime: prefs.fridayTime,
+    privateMoment: prefs.sinReminders,
+    privateTime: prefs.sinReminderTime,
+  };
 }
 
-function kinshipReminders(input: ReminderInput, end: LocalDate): PlannedReminder[] {
-  const { store, prefs, today, now, texts } = input;
-  if (!prefs.kinshipReminders || store.relatives.length === 0) return [];
-  const time = prefs.kinshipTime;
-  const firstSlot = time > now ? today : addDays(today, 1);
-  const byDate = new Map<LocalDate, string[]>();
-  for (const rel of store.relatives) {
-    if (!isRelativeOpen(rel)) continue;
-    const due = nextDue(rel, today);
-    const repeat = circleOf(rel) === 'sick' ? SICK_VISIT_EVERY_DAYS : KINSHIP_REPEAT_DAYS;
-    for (let date = due < firstSlot ? firstSlot : due; date <= end; date = addDays(date, repeat)) {
-      const names = byDate.get(date) ?? [];
-      names.push(rel.name);
-      byDate.set(date, names);
-    }
-  }
-  return [...byDate.entries()].map(([date, names]) => ({
-    id: `${REMINDER_SOURCE}:kinship:${date}`,
-    kind: 'kinship' as const,
-    date,
-    time,
-    title: texts.kinshipTitle,
-    body: prefs.kinshipShowNames ? texts.kinshipBodyNames(names.join(texts.listSeparator)) : texts.kinshipBodyGeneric(names.length),
-    route: '/practice/kinship',
-  }));
-}
-
-function sinReminders(input: ReminderInput, days: number): PlannedReminder[] {
-  const { store, prefs, today, now, texts } = input;
-  const programs = activePrograms(store.programs);
-  if (!prefs.sinReminders || programs.length === 0) return [];
-  const time = prefs.sinReminderTime;
-  const checkedInToday = programs.some((p) => p.checkIns.some((c) => c.date === today));
-  const out: PlannedReminder[] = [];
-  for (let i = 0; i < days; i++) {
-    const date = addDays(today, i);
-    if (date === today && (time <= now || checkedInToday)) continue;
-    out.push({
-      id: `${REMINDER_SOURCE}:private:${date}`,
-      kind: 'sin',
-      date,
-      time,
-      title: SIN_REMINDER_TITLE,
-      body: texts.sinBody,
-      route: '/practice/sin-program',
-    });
-  }
-  return out;
-}
-
-/** Everything to schedule, soonest first, at most `limit` entries. */
+/** Everything to schedule under practice-core `notificationPlan`, soonest first, at most `limit` entries. */
 export function planReminders(input: ReminderInput): PlannedReminder[] {
+  const { store, habits, today, now, locale, texts, prefs } = input;
   const days = input.days ?? REMINDER_DAYS;
   const limit = input.limit ?? MAX_PENDING;
   if (days <= 0) return [];
-  const end = addDays(input.today, days - 1);
-  const all = [
-    ...(input.prefs.habitReminders ? habitReminders(input, end) : []),
-    ...kinshipReminders(input, end),
-    ...sinReminders(input, days),
-  ];
-  all.sort((a, b) => (a.date + a.time < b.date + b.time ? -1 : a.date + a.time > b.date + b.time ? 1 : a.id < b.id ? -1 : 1));
-  return all.slice(0, limit);
+  const entries = notificationPlan({
+    store,
+    prefs: notificationPrefsOf(prefs),
+    today,
+    now,
+    days,
+    dayOptions: { hijriOffset: store.settings.hijriOffset, defaultRuleOf: (plan) => habitFor(plan, habits)?.defaultRule },
+    defaultSlotsOf: (plan) => habitFor(plan, habits)?.defaultSlots,
+    reviewDoneOn: input.reviewDoneOn,
+  });
+  const plans = new Map(store.plans.map((p) => [p.id, p]));
+  const names = new Map(store.relatives.map((r) => [r.id, r.name]));
+  const out: PlannedReminder[] = [];
+  for (const e of entries) {
+    const base = { date: e.date, time: e.time };
+    if (e.kind === 'habit') {
+      const plan = plans.get(e.planId ?? '');
+      if (!plan) continue;
+      const habit = habitFor(plan, habits);
+      out.push({
+        ...base,
+        id: `${REMINDER_SOURCE}:${e.key}`,
+        kind: 'habit',
+        title: habit ? pick(habit, 'title', locale) : plan.title,
+        body: texts.habitBody(formatAmount(requiredOn(plan, e.date), plan.unit, habit, locale, texts.unitFallback)),
+        route: `/practice/plan/${plan.id}`,
+      });
+    } else if (e.kind === 'periodic') {
+      const ids = e.relativeIds ?? [];
+      out.push({
+        ...base,
+        id: `${REMINDER_SOURCE}:kinship:${e.date}`,
+        kind: 'kinship',
+        title: texts.kinshipTitle,
+        body: prefs.kinshipShowNames
+          ? texts.kinshipBodyNames(ids.map((id) => names.get(id) ?? '').filter(Boolean).join(texts.listSeparator))
+          : texts.kinshipBodyGeneric(e.count ?? ids.length),
+        route: '/practice/kinship',
+      });
+    } else if (e.kind === 'private') {
+      out.push({ ...base, id: `${REMINDER_SOURCE}:private:${e.date}`, kind: 'sin', title: SIN_REMINDER_TITLE, body: texts.sinBody, route: '/practice/sin-program' });
+    } else if (e.kind === 'evening') {
+      out.push({ ...base, id: `${REMINDER_SOURCE}:${e.key}`, kind: 'evening', title: texts.wirdTitle, body: texts.eveningBody, route: '/habits' });
+    } else if (e.kind === 'friday') {
+      out.push({ ...base, id: `${REMINDER_SOURCE}:${e.key}`, kind: 'friday', title: texts.fridayTitle, body: texts.fridayBody, route: '/habits' });
+    } else if (e.kind === 'digest') {
+      out.push({ ...base, id: `${REMINDER_SOURCE}:${e.key}`, kind: 'digest', title: texts.wirdTitle, body: texts.digestBody(e.count ?? 1), route: '/habits' });
+    }
+  }
+  return out.slice(0, limit);
 }

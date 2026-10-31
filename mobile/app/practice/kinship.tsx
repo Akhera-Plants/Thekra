@@ -9,6 +9,7 @@
  * the row (name, relation, rhythm), with «حذف» there; deleting asks first (system alert).
  */
 
+import { NotificationsLink } from '@/components/settings/NotificationsLink';
 import React, { useMemo, useState } from 'react';
 import { Alert, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
@@ -31,13 +32,11 @@ import { useLimits } from '@/lib/practice/use-habits-hub';
 import { LimitSheet } from '@/components/practice/LimitSheet';
 import { shortDate } from '@/lib/practice/format';
 import { editedRelative, relativeFromForm, type RelativeFormValues } from '@/lib/practice/kinship-form';
-import { ensurePermission } from '@/lib/practice/notifications';
 import { newPracticeId, today, usePracticeStore } from '@/lib/practice/practice-store';
 import { useAuthStore } from '@/lib/stores/auth-store';
-import { TimeField } from '@/components/practice/editors';
 import { RelativeForm } from '@/components/practice/RelativeForm';
 import { space, useStyles, type Theme } from '@/theme';
-import { Button, EmptyState, IconButton, ListRow, Loading, Notice, PageHeader, Row, Rule, Screen, Section, SwitchRow, Text } from '@/ui';
+import { Button, EmptyState, IconButton, ListRow, Loading, PageHeader, Row, Screen, Section, Text } from '@/ui';
 
 const makeStyles = (t: Theme) => ({
   list: { borderTopWidth: 1, borderTopColor: t.colors.border },
@@ -164,7 +163,7 @@ export default function KinshipScreen() {
 
       <LimitSheet kind="periodic" visible={limitOpen} limits={planLimits} onClose={() => setLimitOpen(false)} onFreed={() => setLimitOpen(false)} />
 
-      <KinshipReminders />
+      <NotificationsLink />
     </Screen>
   );
 }
@@ -214,38 +213,4 @@ function RelativeRow({ entry, onContacted, onUndo, onEdit }: RelativeRowProps) {
   );
 }
 
-/** Reminders: generic notification text unless names are turned on; notifications asked for only when switched on. */
-function KinshipReminders() {
-  const { t } = useTranslation();
-  const prefs = usePracticeStore((s) => s.prefs);
-  const setPrefs = usePracticeStore((s) => s.setPrefs);
-  const [denied, setDenied] = useState(false);
 
-  async function toggleReminders(on: boolean) {
-    setDenied(false);
-    if (on && !(await ensurePermission(t('practice.notify.channelName')))) {
-      setDenied(true);
-      return;
-    }
-    setPrefs((p) => ({ ...p, kinshipReminders: on }));
-  }
-
-  return (
-    <Section title={t('practice.reminders')}>
-      <SwitchRow label={t('kinship.reminders')} value={prefs.kinshipReminders} onValueChange={(v) => void toggleReminders(v)} />
-      {denied ? <Notice tone="destructive">{t('practice.permissionDenied')}</Notice> : null}
-      {prefs.kinshipReminders ? (
-        <>
-          <Rule />
-          <SwitchRow
-            label={t('kinship.showNames')}
-            hint={t('kinship.showNamesHint')}
-            value={prefs.kinshipShowNames}
-            onValueChange={(v) => setPrefs((p) => ({ ...p, kinshipShowNames: v }))}
-          />
-          <TimeField label={t('kinship.time')} value={prefs.kinshipTime} onChange={(time) => setPrefs((p) => ({ ...p, kinshipTime: time }))} />
-        </>
-      ) : null}
-    </Section>
-  );
-}

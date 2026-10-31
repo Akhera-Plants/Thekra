@@ -8,7 +8,9 @@ import { Link } from '@/i18n/navigation';
 import { QueryErrorState } from '@/components/shared/feedback/QueryErrorState';
 import { Skeleton } from '@/components/ui/skeleton';
 import { wirdDay, wirdSummary } from '@/lib/practice/wird';
+import { useHeart } from '../../hooks/useHeart';
 import { useWirdContext, type WirdContext } from '../../hooks/useWirdContext';
+import { HeartTop, MuraqabaLine, SelfMessageCard } from './HeartCards';
 import { SyncStatus } from '../SyncStatus';
 import { ExcuseToggle } from './ExcuseToggle';
 import { HeavyDayToggle } from './HeavyDayToggle';
@@ -21,7 +23,9 @@ const UPCOMING_LIMIT = 3;
 
 /**
  * «ورد اليوم», top to bottom and nothing else (mirrors the app's centre tab):
+ * 0. on a Friday, last week's «رسالة إلى نفسي» before anything else;
  * 1. the title, one date line (Gregorian; Hijri too with «إظهار التاريخ الهجري»), the streak chip and «أضف»;
+ *    then one rotating text (المراقبة) and the cards of «نية اليوم», a due «التزام شخصي» and «المحاسبة»;
  * 2. «اليوم»: today's occasion as one compact line, one row per task, done rows at the bottom, off-day habits behind
  *    one collapsed row, and «يومي ثقيل» as a one-line toggle;
  * 3. «أعمال دورية»: the next three periodic acts and «الكل».
@@ -31,6 +35,7 @@ export function WirdView() {
   const context = useWirdContext();
   const addOpen = useSearchParams().get('add') === '1';
   const snapshot = context?.snapshot;
+  const heart = useHeart();
   const summary = useMemo(
     () => (context ? wirdSummary(context.snapshot.store, context.today, context.planDays) : null),
     [context],
@@ -38,6 +43,11 @@ export function WirdView() {
 
   return (
     <>
+      {context && heart ? (
+        <div className="mb-6 max-w-3xl empty:hidden">
+          <SelfMessageCard heart={heart} today={context.today} />
+        </div>
+      ) : null}
       <WirdHeader
         date={context?.today ?? null}
         hijriOffset={snapshot?.store.settings.hijriOffset ?? 0}
@@ -46,6 +56,7 @@ export function WirdView() {
         longest={summary?.longest ?? 0}
         addOpen={addOpen}
       />
+      {context ? <MuraqabaLine today={context.today} /> : null}
       {context ? <WirdBody context={context} /> : <WirdSkeleton />}
     </>
   );
@@ -57,12 +68,14 @@ function WirdBody({ context }: { context: WirdContext }) {
   const tToday = useTranslations('practice.today');
   const { snapshot, today, habits, occasions, occasionBasis, planDays, catalog } = context;
   const { store } = snapshot;
+  const heart = useHeart();
   const day = useMemo(() => wirdDay(store, today, { occasions, ...planDays }), [store, today, occasions, planDays]);
   const acts = useMemo(() => periodicActs(store, today, planDays), [store, today, planDays]);
   const upcoming = upcomingPeriodic(acts.map((act) => ({ act })), today, UPCOMING_LIMIT).map((row) => row.act);
 
   return (
     <div className="flex max-w-3xl flex-col gap-10">
+      {heart ? <HeartTop ctx={{ store, heart, today, time: context.time, habits, planDays }} /> : null}
       {catalog.isError ? (
         <QueryErrorState error={catalog.error} onRetry={() => void catalog.refetch()} message={tToday('catalogError')} className="py-4" />
       ) : null}

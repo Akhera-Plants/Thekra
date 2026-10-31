@@ -20,6 +20,18 @@ export interface PushSubscriptionBody {
   /** IANA zone of the browser. */
   timeZone: string;
   locale: LocaleCode;
+  /** This browser's «التنبيهات» switches (practice-core `NotificationPrefs` without the private moment). */
+  prefs?: PushPrefsBody;
+}
+
+export interface PushPrefsBody {
+  habits: boolean;
+  periodic: boolean;
+  periodicTime: string;
+  eveningNudge: boolean;
+  eveningTime: string;
+  fridayReview: boolean;
+  fridayTime: string;
 }
 
 export async function getPushConfig(): Promise<PushConfig> {

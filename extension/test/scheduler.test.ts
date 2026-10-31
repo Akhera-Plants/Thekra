@@ -1,7 +1,10 @@
 import { addDays, createPlan, logDone, startEbb, toHijri, weekday, type Plan, type Rule } from '@thekra/practice-core';
 import { describe, expect, it } from 'vitest';
 import {
+  digestAlarmName,
   isReminderDay,
+  openPlansToday,
+  upcomingDigests,
   localInstant,
   parseAlarmName,
   remainingOn,
@@ -152,5 +155,26 @@ describe('alarms', () => {
     expect(shouldNotify(p, '2026-10-27', at(TODAY, '09:31'))).toBe(false);
     expect(shouldNotify(undefined, TODAY, at(TODAY, '09:31'))).toBe(false);
     expect(shouldNotify(logDone(p, TODAY, 5), TODAY, at(TODAY, '09:31'))).toBe(false);
+  });
+});
+
+describe('the shared notification policy (practice-core notificationPlan)', () => {
+  it('more than four reminders a day: the rest becomes one digest alarm', () => {
+    const plans = ['a', 'b', 'c', 'd', 'e'].map((id) => plan(id, ['09:00']));
+    const now = at(TODAY, '08:00');
+    const reminders = upcomingReminders(input(plans, now));
+    expect(reminders.filter((r) => r.date === TODAY).map((r) => r.planId)).toEqual(['a', 'b', 'c']);
+    const digests = upcomingDigests(input(plans, now));
+    expect(digests[0]).toMatchObject({ date: TODAY, time: '09:00', count: 2 });
+    expect(parseAlarmName(digestAlarmName(digests[0]!))).toEqual({ kind: 'digest', date: TODAY, time: '09:00' });
+    expect(openPlansToday(plans, now, 0)).toBe(5);
+  });
+
+  it('quiet hours: a suggested night slot does not ring, the night prayer does', () => {
+    const witr = plan('w', ['23:00'], { habitKey: 'witr' });
+    const qiyam = plan('q', ['04:00'], { habitKey: 'qiyam-last-third' });
+    const habitSlots = { witr: ['22:00', '23:00'], 'qiyam-last-third': ['04:00'] };
+    const out = upcomingReminders(input([witr, qiyam], at(TODAY, '08:00'), { habitSlots }));
+    expect(out.map((r) => r.planId)).toEqual(['q']);
   });
 });

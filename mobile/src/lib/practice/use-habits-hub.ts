@@ -24,6 +24,9 @@ import {
   limits,
   logContact,
   logForDay,
+  logMinimum,
+  minimumMet,
+  minimumToLog,
   longestStreak,
   streakDisplay,
   toggleExcusedDay,
@@ -180,8 +183,13 @@ export function useAgendaRows(items: readonly AgendaItem[], date: LocalDate, tod
         const required = missed
           ? `${t('practice.hub.missedYesterday')} · ${t('practice.hub.required', { amount: amount(item.minimum as number) })}`
           : t('practice.hub.required', { amount: amount(item.required) });
-        const meta = item.done > 0 ? `${required} · ${t('practice.hub.logged', { amount: amount(item.done) })}` : required;
-        rows.push({ key: `h-${item.planId}`, kind: 'habit', item, title: habit ? pick(habit, 'title', locale) : plan.title, meta });
+        const meta = minimumMet(plan, date)
+          ? `${required} · ${t('practice.heart.minimumMet')}`
+          : item.done > 0
+            ? `${required} · ${t('practice.hub.logged', { amount: amount(item.done) })}`
+            : required;
+        const canMinimum = !item.complete && minimumToLog(plan, date) !== null;
+        rows.push({ key: `h-${item.planId}`, kind: 'habit', item, title: habit ? pick(habit, 'title', locale) : plan.title, meta, canMinimum });
       } else if (item.kind === 'relative') {
         const rel = relatives.find((r) => r.id === item.relativeId);
         if (!rel) continue;
@@ -297,7 +305,17 @@ export function useAgendaActions(date: LocalDate) {
     setLastLog(null);
   }, [lastLog, setStore]);
 
-  return { lastLog, toggleHabit, toggleRelative, undo };
+  /** «أقل ما يمكن»: the heavy-day minimum for the day (it counts for the streak). */
+  const logMinimumFor = useCallback(
+    (item: HabitItem) => {
+      before.current.set(`${item.planId}|${date}`, item.done);
+      apply((s) => updatePlan(s, item.planId, (p) => logMinimum(p, date, today())));
+      setLastLog({ kind: 'habit', planId: item.planId, date, before: item.done, cleared: false });
+    },
+    [date, apply],
+  );
+
+  return { lastLog, toggleHabit, toggleRelative, undo, logMinimum: logMinimumFor };
 }
 
 /**

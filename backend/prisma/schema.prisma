@@ -938,6 +938,8 @@ model PushSubscription {
   timeZone  String
   /// ar | en
   locale    String
+  /// This browser's «التنبيهات» switches (practice-core NotificationPrefs, no private moment); null = defaults
+  prefs     Json?
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
   reminders PushReminder[]

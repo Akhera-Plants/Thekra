@@ -3,10 +3,11 @@
 import { useId, useState, type ReactNode } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { canMakeUp, type HabitItem, type Store } from '@thekra/practice-core';
+import { canMakeUp, logMinimum, minimumMet, minimumToLog, updatePlan, type HabitItem, type Store } from '@thekra/practice-core';
 import { Link } from '@/i18n/navigation';
 import { formatDigits } from '@/lib/format/digits';
 import { canLogOn } from '@/lib/practice/hub';
+import { updateStore } from '@/lib/practice/local-store';
 import { habitOf } from '@/lib/practice/plans';
 import type { TaskItem, WirdDay } from '@/lib/practice/wird';
 import type { PracticeHabit, ScheduleBasis } from '@/lib/types/practice';
@@ -64,6 +65,12 @@ export function TodayList({ title, store, date, today, day, habits, occasionBasi
         undo={undoOf(`habit:${item.planId}:${date}`)}
         onToggle={() => toggleHabit(item, date, today)}
         onUndo={undoLast}
+        minimumMet={minimumMet(plan, date)}
+        onMinimum={
+          !item.complete && minimumToLog(plan, date) !== null
+            ? () => updateStore((s) => updatePlan(s, plan.id, (p) => logMinimum(p, date, today)))
+            : undefined
+        }
       />
     );
   }

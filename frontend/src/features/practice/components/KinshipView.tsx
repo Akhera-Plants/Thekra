@@ -30,7 +30,7 @@ import { usePracticeStore } from '../hooks/usePracticeStore';
 import { useToday } from '../hooks/useToday';
 import { SyncStatus } from './SyncStatus';
 import { PracticeLoading } from './PracticeLoading';
-import { PushRemindersCard } from './PushRemindersCard';
+import { NotificationsLink } from './NotificationsLink';
 import { RelativeForm } from './RelativeForm';
 import { LimitSheet } from './LimitSheet';
 import { usePracticeCatalog } from '../hooks/usePracticeCatalog';
@@ -165,7 +165,7 @@ export function KinshipView() {
         </section>
       ) : null}
 
-      <PushRemindersCard />
+      <NotificationsLink />
     </div>
   );
 }

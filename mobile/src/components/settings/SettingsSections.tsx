@@ -1,7 +1,8 @@
 /**
  * The sections of Settings after its account and appearance parts: a titled group of hairline rows
  * (`SettingsGroup`), «الخصوصية» (the sin-program lock, the encrypted backup, export, the sin-program wipe, the
- * offline copy), «التذكيرات» (what this device has scheduled and each track's switch) and «عن التطبيق».
+ * offline copy), «التنبيهات» (every reminder switch and time, the only place for them), «نية اليوم والمحاسبة» and
+ * «عن التطبيق».
  */
 
 import React, { useCallback, useState } from 'react';
@@ -18,15 +19,16 @@ import {
   Download,
   ExternalLink,
   FileText,
-  HeartHandshake,
+  HandHeart,
   Info,
   KeyRound,
-  ShieldCheck,
-  Sprout,
+  NotebookPen,
   Trash2,
 } from 'lucide-react-native';
+import { setHeartPrefs, type HeartPrefs } from '@thekra/practice-core';
+import { TimeField } from '@/components/practice/editors';
 import { exportAccountData } from '@/lib/api/practice';
-import { scheduledReminderCount } from '@/lib/practice/notifications';
+import { ensurePermission, scheduledReminderCount } from '@/lib/practice/notifications';
 import { usePracticeStore } from '@/lib/practice/practice-store';
 import { unlockWithDevice, useDeviceLockAvailable } from '@/lib/practice/use-sin-privacy';
 import { wipeSinProgramEverywhere } from '@/lib/practice/vault-runner';
@@ -161,11 +163,19 @@ export function PrivacySection() {
   );
 }
 
-/** What this device will remind of: the scheduled count (re-read on every visit) and each track's switch. */
-export function RemindersSection() {
+/**
+ * «التنبيهات» (redesign §4.4): the one place for every reminder switch and time on this device (practice-core
+ * `notificationPlan`: at most 4 a day then a digest, quiet 23:00–05:00), with the scheduled count; then «نية اليوم
+ * والمحاسبة» (device-local) and «التزام شخصي». The permission is asked when a switch is turned on.
+ */
+export function NotificationsSection() {
   const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
   const prefs = usePracticeStore((s) => s.prefs);
+  const setPrefs = usePracticeStore((s) => s.setPrefs);
+  const hasProgram = usePracticeStore((s) => s.store.programs.length > 0);
   const [count, setCount] = useState<number | null>(null);
+  const [denied, setDenied] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -179,31 +189,92 @@ export function RemindersSection() {
     }, []),
   );
 
-  const state = (on: boolean) => (on ? t('settings.on') : t('settings.off'));
+  /** Turning a switch on asks for the permission first; a refusal leaves it off. */
+  async function toggle(key: 'habitReminders' | 'kinshipReminders' | 'eveningNudge' | 'fridayReminder' | 'sinReminders', on: boolean) {
+    setDenied(false);
+    if (on && !(await ensurePermission(t('practice.notify.channelName')))) {
+      setDenied(true);
+      return;
+    }
+    setPrefs((p) => ({ ...p, [key]: on }));
+  }
+
+  const row = (label: string, key: Parameters<typeof toggle>[0], extra?: React.ReactNode) => (
+    <View style={styles.switchRow}>
+      <SwitchRow label={label} value={prefs[key]} onValueChange={(v) => void toggle(key, v)} />
+      {prefs[key] ? extra : null}
+    </View>
+  );
 
   return (
-    <SettingsGroup title={t('settings.reminders')} lead={count === null ? undefined : t('settings.remindersCount', { count })}>
-      <ListRow
-        icon={Sprout}
-        title={t('practice.hub.habitsTrack')}
-        value={state(prefs.habitReminders)}
-        chevron
-        onPress={() => router.push('/practice/habits')}
-      />
-      <ListRow
-        icon={HeartHandshake}
-        title={t('kinship.title')}
-        value={state(prefs.kinshipReminders)}
-        chevron
-        onPress={() => router.push('/practice/kinship')}
-      />
-      <ListRow
-        icon={ShieldCheck}
-        title={t('sinProgram.title')}
-        value={state(prefs.sinReminders)}
-        chevron
-        onPress={() => router.push('/practice/sin-program')}
-      />
+    <SettingsGroup
+      title={t('practice.notifyPrefs.title')}
+      lead={count === null ? t('practice.notifyPrefs.lead') : `${t('practice.notifyPrefs.lead')} ${t('settings.remindersCount', { count })}`}
+    >
+      {row(t('practice.notifyPrefs.habits'), 'habitReminders')}
+      {row(
+        t('practice.notifyPrefs.periodic'),
+        'kinshipReminders',
+        <>
+          <SwitchRow
+            label={t('kinship.showNames')}
+            hint={t('kinship.showNamesHint')}
+            value={prefs.kinshipShowNames}
+            onValueChange={(v) => setPrefs((p) => ({ ...p, kinshipShowNames: v }))}
+          />
+          <TimeField label={t('practice.notifyPrefs.time')} value={prefs.kinshipTime} onChange={(time) => setPrefs((p) => ({ ...p, kinshipTime: time }))} />
+        </>,
+      )}
+      {row(
+        t('practice.notifyPrefs.evening'),
+        'eveningNudge',
+        <TimeField label={t('practice.notifyPrefs.time')} value={prefs.eveningTime} onChange={(time) => setPrefs((p) => ({ ...p, eveningTime: time }))} />,
+      )}
+      {row(
+        t('practice.notifyPrefs.friday'),
+        'fridayReminder',
+        <TimeField label={t('practice.notifyPrefs.time')} value={prefs.fridayTime} onChange={(time) => setPrefs((p) => ({ ...p, fridayTime: time }))} />,
+      )}
+      {hasProgram || prefs.sinReminders
+        ? row(
+            t('practice.notifyPrefs.private'),
+            'sinReminders',
+            <TimeField label={t('practice.notifyPrefs.time')} value={prefs.sinReminderTime} onChange={(time) => setPrefs((p) => ({ ...p, sinReminderTime: time }))} />,
+          )
+        : null}
+      {denied ? <Notice tone="destructive">{t('practice.permissionDenied')}</Notice> : null}
+    </SettingsGroup>
+  );
+}
+
+/** «نية اليوم والمحاسبة»: device-local switches (practice-core `HeartPrefs`), and «التزام شخصي» with its pledges. */
+export function HeartSection() {
+  const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
+  const heart = usePracticeStore((s) => s.heart);
+  const setHeart = usePracticeStore((s) => s.setHeart);
+  const set = (patch: Partial<HeartPrefs>) => setHeart((h) => setHeartPrefs(h, patch));
+  const sw = (label: string, key: keyof HeartPrefs, hint?: string) => (
+    <View style={styles.switchRow}>
+      <SwitchRow label={label} hint={hint} value={heart.prefs[key]} onValueChange={(v) => set({ [key]: v })} />
+    </View>
+  );
+  return (
+    <SettingsGroup title={t('practice.notifyPrefs.heartTitle')}>
+      {sw(t('practice.notifyPrefs.intention'), 'intention')}
+      {sw(t('practice.notifyPrefs.eveningReview'), 'eveningReview')}
+      {sw(t('practice.notifyPrefs.fridayReview'), 'fridayReview')}
+      {sw(t('practice.notifyPrefs.pledges'), 'pledges', t('practice.notifyPrefs.pledgesHint'))}
+      {heart.prefs.pledges ? (
+        <ListRow
+          icon={HandHeart}
+          title={t('practice.notifyPrefs.pledges')}
+          value={String(heart.pledges.length)}
+          chevron
+          onPress={() => router.push('/practice/pledges')}
+        />
+      ) : null}
+      <ListRow icon={NotebookPen} title={t('record.reviews')} hint={t('record.reviewsHint')} chevron onPress={() => router.push('/practice/reviews')} />
     </SettingsGroup>
   );
 }
