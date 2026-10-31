@@ -10,6 +10,8 @@ import {
   decreaseTo,
   endEbb,
   increase,
+  isEbbOn,
+  isPlanDueOn,
   loadWarning,
   logDone,
   nextStep,
@@ -23,6 +25,7 @@ import {
   targetDaysIn,
   validatePlan,
   type Plan,
+  type Rule,
 } from '../src/index.js';
 
 const START = '2026-09-01';
@@ -122,6 +125,7 @@ describe('increase gating («وحش الزيادة»)', () => {
     const ready = withDays(makePlan(), START, 28);
     expect(canIncrease(ready, day28)).toBe(true);
     expect(canIncrease(startEbb(ready, day28), day28)).toBe(false);
+    expect(canIncrease(startEbb(ready, addDays(day28, -1)), day28)).toBe(true); // yesterday's heavy day is over
     expect(canIncrease(startSeason(ready, 10, addDays(day28, 10)), day28)).toBe(false);
     expect(canIncrease({ ...ready, ceiling: 5 }, day28)).toBe(false);
     expect(canIncrease({ ...ready, amount: 60 }, day28)).toBe(false);
@@ -161,6 +165,13 @@ describe('requiredOn: no doubling, ebb, season', () => {
     expect(requiredOn(startEbb(makePlan({ amount: 1 }), START), START)).toBe(1);
     expect(requiredOn(endEbb(p), '2026-09-10')).toBe(10);
     expect('ebb' in endEbb(p)).toBe(false);
+  });
+
+  it('keeps «يومي ثقيل» to its own day: the next day asks for the full amount again', () => {
+    const p = startEbb(makePlan({ amount: 10 }), '2026-09-10');
+    expect(isEbbOn(p, '2026-09-10')).toBe(true);
+    expect(isEbbOn(p, '2026-09-11')).toBe(false);
+    expect(requiredOn(p, '2026-09-11')).toBe(10);
   });
 
   it('uses the season amount until `until`, then the previous amount, even before normalize', () => {
@@ -266,5 +277,17 @@ describe('daily load', () => {
     expect(loadWarning([a, b, c], 69)).toBe('over');
     expect(loadWarning([startEbb(a, '2026-10-01'), b], 40, '2026-10-01')).toBe('ok');
     expect(loadWarning([a], 0)).toBe('over');
+  });
+});
+
+describe('isPlanDueOn', () => {
+  // 2026-10-30 is a Friday (weekday 5), 2026-10-29 a Thursday.
+  it("uses the plan's rule, else the fallback, else every day", () => {
+    const fridays: Rule = { kind: 'weekdays', days: [5] };
+    expect(isPlanDueOn(makePlan({ rule: fridays }), '2026-10-30')).toBe(true);
+    expect(isPlanDueOn(makePlan({ rule: fridays }), '2026-10-29')).toBe(false);
+    expect(isPlanDueOn(makePlan(), '2026-10-29', fridays)).toBe(false);
+    expect(isPlanDueOn(makePlan({ rule: { kind: 'daily' } }), '2026-10-29', fridays)).toBe(true);
+    expect(isPlanDueOn(makePlan(), '2026-10-29')).toBe(true);
   });
 });

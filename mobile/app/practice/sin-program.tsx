@@ -7,9 +7,12 @@
  * Flow: choose a catalog program → the willpower question (only when the program's `gradualAllowed` is true
  * and it is a sin against the right of Allah: owner decision D1) → practice-core `startProgram`. Then the
  * current stage (`currentStage`) with its reviewed title/body, practical steps, alternatives, evidence, the
- * daily check-in (held / weak / fell_repented + private note), `summary` (counts of days only) and, after
+ * daily check-in (held / weak / fell_repented + private note), `summary` (counts of days only), «سجلّي» (the last
+ * check-ins with their notes, newest first, read from this device only) and, after
  * «وقعت ثم تبت», the `afterFall` («خربانة؟ صلّحها») content. «احذف كل بيانات البرنامج» wipes it all at once
  * (no confirmation step): local data, the vault key, the server vault, and the private reminders.
+ * Titles on this screen never name the sin (the program view is titled «برنامجك»); the name appears only in the
+ * list the user picks from.
  */
 
 import React, { useState } from 'react';
@@ -57,6 +60,9 @@ import {
   practiceStyles,
 } from '@/components/practice/ui';
 
+/** How many past check-ins «سجلّي» shows. */
+const HISTORY_COUNT = 14;
+
 const CHECK_IN_KEYS: Record<CheckInValue, string> = {
   held: 'sinProgram.held',
   weak: 'sinProgram.weak',
@@ -100,7 +106,6 @@ export default function SinProgramScreen() {
         <ProgramView
           program={program}
           entry={catalog.data.sinPrograms.programs.find((p) => p.sin === program.sinSlug)}
-          sinName={sinName(program.sinSlug)}
           evidenceById={evidence.data}
           evidenceLoading={evidence.isLoading}
           evidenceError={evidence.isError}
@@ -181,14 +186,12 @@ function StageText({ content }: { content: StageContent }) {
 function ProgramView({
   program,
   entry,
-  sinName,
   evidenceById,
   evidenceLoading,
   evidenceError,
 }: {
   program: SinProgram;
   entry: CatalogSinProgram | undefined;
-  sinName: string;
   evidenceById: Map<string, QuoteDto> | undefined;
   evidenceLoading: boolean;
   evidenceError: boolean;
@@ -214,6 +217,8 @@ function ProgramView({
   const counts = summary(program, addDays(d, -29), d);
   const showAfterFall = todayCheckIn?.value === 'fell_repented' && afterFall(program) === 'fixit';
   const planIds = new Set(plans.map((p) => p.habitKey ?? p.id));
+  // On-device only: never synced, never in a notification. `checkIns` is ascending, one per date.
+  const history = program.checkIns.slice(-HISTORY_COUNT).reverse();
 
   function save() {
     if (!value) return;
@@ -244,7 +249,7 @@ function ProgramView({
 
   return (
     <>
-      <SectionTitle>{sinName}</SectionTitle>
+      <SectionTitle>{t('sinProgram.yourProgram')}</SectionTitle>
       <Body muted small>
         {program.path === 'gradual' ? t('sinProgram.pathGradual') : t('sinProgram.pathCut')} ·{' '}
         {program.category === 'haqq_ibad' ? t('sinProgram.categoryIbad') : t('sinProgram.categoryAllah')}
@@ -296,6 +301,28 @@ function ProgramView({
         <Body muted small>
           {t('sinProgram.summary', { days: String(counts.daysCheckedIn) })}
         </Body>
+      </Card>
+
+      <Card>
+        <Body>{t('sinProgram.history')}</Body>
+        {history.length === 0 ? (
+          <Body muted small>
+            {t('sinProgram.historyEmpty')}
+          </Body>
+        ) : (
+          history.map((c) => (
+            <View key={c.date} style={{ gap: 2 }}>
+              <Body small>
+                {shortDate(c.date)} · {t(CHECK_IN_KEYS[c.value])}
+              </Body>
+              {c.note ? (
+                <Body muted small>
+                  {c.note}
+                </Body>
+              ) : null}
+            </View>
+          ))
+        )}
       </Card>
 
       {showAfterFall && common ? (

@@ -71,3 +71,44 @@ export function relativeFromForm(
     return { ok: false, error: 'invalidRhythm' };
   }
 }
+
+/**
+ * The form values for editing an existing relative. A rule the form cannot show exactly (a weekdays rule from
+ * another device, every 3+ weeks) is shown as its nearest choice; {@link relativeEditFromForm} keeps the stored
+ * rule unless the user changes the rhythm.
+ */
+export function formFromRelative(rel: Relative): RelativeFormValues {
+  const base = { name: rel.name, relation: rel.relation, weekday: 5, everyDays: 10 };
+  const rule = rel.rule;
+  switch (rule.kind) {
+    case 'everyNWeeks':
+      return { ...base, rhythm: rule.n === 2 ? 'biweekly' : 'weekly', weekday: rule.weekday };
+    case 'everyNDays':
+      return rule.n === 30 ? { ...base, rhythm: 'monthly' } : { ...base, rhythm: 'everyNDays', everyDays: rule.n };
+    case 'weekdays':
+      return { ...base, rhythm: 'weekly', weekday: rule.days[0] ?? 5 };
+  }
+}
+
+function sameRhythm(a: RelativeFormValues, b: RelativeFormValues): boolean {
+  if (a.rhythm !== b.rhythm) return false;
+  if (a.rhythm === 'weekly' || a.rhythm === 'biweekly') return a.weekday === b.weekday;
+  if (a.rhythm === 'everyNDays') return a.everyDays === b.everyDays;
+  return true;
+}
+
+/**
+ * The edited relative (same id, history and contacts), or the form error. Name and relation are taken from the
+ * form; the rule changes only when the rhythm was changed (then anchored on `today`). Save it with practice-core
+ * `updateRelative`, which stamps `updatedAt` so the edit syncs. Never throws.
+ */
+export function relativeEditFromForm(
+  values: RelativeFormValues,
+  existing: Relative,
+  today: LocalDate,
+): { ok: true; relative: Relative } | { ok: false; error: RelativeFormError } {
+  const error = validateRelativeForm(values);
+  if (error) return { ok: false, error };
+  const rule = sameRhythm(values, formFromRelative(existing)) ? existing.rule : rhythmToRule(values, today);
+  return { ok: true, relative: { ...existing, name: values.name.trim(), relation: values.relation.trim(), rule } };
+}

@@ -1,18 +1,27 @@
 /**
  * صلة الرحم, on the device (roadmap §2.4, silat-rahim-plan): a nickname and a rhythm per relative, never
  * contact details (practice-core `looksLikeContactDetails` through kinship-form.ts). «تواصلت معه» restarts the
- * cycle, «تراجع» removes the last log. Due list: overdue / this week / later. Optional reminders: generic
+ * cycle, «تراجع» removes the last log, «تعديل» reopens the same form (saved with practice-core `updateRelative`,
+ * which stamps `updatedAt` so the edit syncs). Due list: overdue / this week / later. Optional reminders: generic
  * text unless the user turns names on.
  */
 
 import React, { useState } from 'react';
 import { Alert, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { deleteRelative, dueList, logContact, undoContact, updateRelative, upsertRelative, type DueEntry, type Relative } from '@thekra/practice-core';
+import { deleteRelative, dueList, logContact, undoContact, updateRelative, upsertRelative, type DueEntry } from '@thekra/practice-core';
 import { shortDate } from '@/lib/practice/format';
-import { relativeFromForm, type RelativeFormError, type RhythmChoice } from '@/lib/practice/kinship-form';
+import {
+  formFromRelative,
+  relativeEditFromForm,
+  relativeFromForm,
+  type RelativeFormError,
+  type RelativeFormValues,
+  type RhythmChoice,
+} from '@/lib/practice/kinship-form';
 import { ensurePermission } from '@/lib/practice/notifications';
 import { newPracticeId, today, usePracticeStore } from '@/lib/practice/practice-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { TimeField, WeekdayPicker } from '@/components/practice/editors';
 import {
   Body,
@@ -38,6 +47,8 @@ export default function KinshipScreen() {
   const setStore = usePracticeStore((s) => s.setStore);
   const setPrefs = usePracticeStore((s) => s.setPrefs);
   const [adding, setAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const signedIn = useAuthStore((s) => Boolean(s.user));
 
   if (!hydrated) return <Loading />;
   const d = today();
@@ -54,7 +65,8 @@ export default function KinshipScreen() {
 
 
   function remove(id: string) {
-    Alert.alert(t('kinship.delete'), t('kinship.deleteConfirm'), [
+    // Signed in, the deletion syncs to the account (a tombstone), so it is not only «على هذا الجهاز».
+    Alert.alert(t('kinship.delete'), t(signedIn ? 'kinship.deleteConfirmSynced' : 'kinship.deleteConfirm'), [
       { text: t('common.cancel'), style: 'cancel' },
       {
         text: t('common.delete'),
@@ -68,15 +80,34 @@ export default function KinshipScreen() {
     entries.length > 0 ? (
       <View style={{ gap: 8 }}>
         <SectionTitle>{title}</SectionTitle>
-        {entries.map((e) => (
-          <RelativeCard
-            key={e.relative.id}
-            entry={e}
-            onContacted={() => setStore((s) => updateRelative(s, e.relative.id, (r) => logContact(r, d)))}
-            onUndo={() => setStore((s) => undoContact(s, e.relative.id))}
-            onDelete={() => remove(e.relative.id)}
-          />
-        ))}
+        {entries.map((e) =>
+          editingId === e.relative.id ? (
+            <RelativeForm
+              key={e.relative.id}
+              initial={formFromRelative(e.relative)}
+              onCancel={() => setEditingId(null)}
+              submit={(values) => {
+                const res = relativeEditFromForm(values, e.relative, today());
+                if (!res.ok) return res.error;
+                setStore((s) => updateRelative(s, e.relative.id, () => res.relative));
+                setEditingId(null);
+                return null;
+              }}
+            />
+          ) : (
+            <RelativeCard
+              key={e.relative.id}
+              entry={e}
+              onContacted={() => setStore((s) => updateRelative(s, e.relative.id, (r) => logContact(r, d)))}
+              onUndo={() => setStore((s) => undoContact(s, e.relative.id))}
+              onEdit={() => {
+                setAdding(false);
+                setEditingId(e.relative.id);
+              }}
+              onDelete={() => remove(e.relative.id)}
+            />
+          ),
+        )}
       </View>
     ) : null;
 
@@ -90,15 +121,25 @@ export default function KinshipScreen() {
       </Card>
 
       {adding ? (
-        <AddRelativeForm
+        <RelativeForm
           onCancel={() => setAdding(false)}
-          onSave={(rel) => {
-            setStore((s) => upsertRelative(s, rel));
+          submit={(values) => {
+            const res = relativeFromForm(values, newPracticeId(), today());
+            if (!res.ok) return res.error;
+            setStore((s) => upsertRelative(s, res.relative));
             setAdding(false);
+            return null;
           }}
         />
       ) : (
-        <Button label={t('kinship.add')} onPress={() => setAdding(true)} variant="outline" />
+        <Button
+          label={t('kinship.add')}
+          onPress={() => {
+            setEditingId(null);
+            setAdding(true);
+          }}
+          variant="outline"
+        />
       )}
 
       {relatives.length === 0 ? <Body muted>{t('kinship.empty')}</Body> : null}
@@ -133,11 +174,13 @@ function RelativeCard({
   entry,
   onContacted,
   onUndo,
+  onEdit,
   onDelete,
 }: {
   entry: DueEntry;
   onContacted: () => void;
   onUndo: () => void;
+  onEdit: () => void;
   onDelete: () => void;
 }) {
   const { t } = useTranslation();
@@ -163,34 +206,33 @@ function RelativeCard({
       <Row style={{ flexWrap: 'wrap' }}>
         <Button label={t('kinship.contacted')} onPress={onContacted} compact />
         {relative.history.length > 0 ? <Button label={t('kinship.undo')} onPress={onUndo} variant="outline" compact /> : null}
+        <Button label={t('kinship.edit')} onPress={onEdit} variant="outline" compact />
         <Button label={t('kinship.delete')} onPress={onDelete} variant="ghost" compact />
       </Row>
     </Card>
   );
 }
 
-function AddRelativeForm({
-  onSave,
+/** The add and edit form. `submit` saves and returns null, or returns the form error to show. */
+function RelativeForm({
+  initial,
+  submit,
   onCancel,
 }: {
-  onSave: (rel: Relative) => void;
+  initial?: RelativeFormValues;
+  submit: (values: RelativeFormValues) => RelativeFormError | null;
   onCancel: () => void;
 }) {
   const { t } = useTranslation();
-  const [name, setName] = useState('');
-  const [relation, setRelation] = useState('');
-  const [rhythm, setRhythm] = useState<RhythmChoice>('weekly');
-  const [weekday, setWeekday] = useState(5);
-  const [everyDays, setEveryDays] = useState(10);
+  const [name, setName] = useState(initial?.name ?? '');
+  const [relation, setRelation] = useState(initial?.relation ?? '');
+  const [rhythm, setRhythm] = useState<RhythmChoice>(initial?.rhythm ?? 'weekly');
+  const [weekday, setWeekday] = useState(initial?.weekday ?? 5);
+  const [everyDays, setEveryDays] = useState(initial?.everyDays ?? 10);
   const [error, setError] = useState<RelativeFormError | null>(null);
 
   function save() {
-    const res = relativeFromForm({ name, relation, rhythm, weekday, everyDays }, newPracticeId(), today());
-    if (!res.ok) {
-      setError(res.error);
-      return;
-    }
-    onSave(res.relative);
+    setError(submit({ name, relation, rhythm, weekday, everyDays }));
   }
 
   return (

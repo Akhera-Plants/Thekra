@@ -1,24 +1,26 @@
 /**
  * One habit plan: today's amount and log, the monthly adherence band (no streaks, no failure words), the
+ * typed amount next to «+1» / «أتممتها» (practice-core `logDone`, any positive amount), the
  * one-step increase (only when practice-core `canIncrease`), the relapse suggestion (`status` = 'relapse' →
  * `relapseSuggestion`), slot/day settings, and the evidence texts from the API.
  */
 
 import React, { useEffect, useState } from 'react';
-import { Alert } from 'react-native';
+import { Alert, TextInput } from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { decreaseTo, deletePlan, increase, logDone, normalize, updatePlan, validatePlan, type LocalTime, type Plan } from '@thekra/practice-core';
 import { useEvidence, usePracticeCatalog } from '@/lib/api/practice';
 import { pick } from '@/lib/practice/catalog-types';
-import { ruleToWeekdays, sortSlots, weekdaysToRule } from '@/lib/practice/format';
+import { parseLogAmount, ruleToWeekdays, sortSlots, weekdaysToRule } from '@/lib/practice/format';
 import { planView } from '@/lib/practice/plan-view';
 import { today, usePracticeStore } from '@/lib/practice/practice-store';
 import { formatAmount, habitFor, planRule } from '@/lib/practice/reminders';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { EvidenceList } from '@/components/practice/EvidenceList';
 import { ActiveDaysPicker, SlotsEditor, WeekdayPicker } from '@/components/practice/editors';
-import { Body, Button, Card, ErrorText, Loading, Row, Screen, SectionTitle, Title } from '@/components/practice/ui';
+import { Body, Button, Card, ErrorText, Loading, Row, Screen, SectionTitle, Title, practiceStyles } from '@/components/practice/ui';
 
 export default function PlanScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -31,6 +33,7 @@ export default function PlanScreen() {
   const habits = catalog.data?.habits ?? [];
   const habit = plan ? habitFor(plan, habits) : undefined;
   const evidence = useEvidence(habit?.evidence ?? [], locale);
+  const signedIn = useAuthStore((s) => Boolean(s.user));
 
   const [slots, setSlots] = useState<LocalTime[]>([]);
   const [activeDays, setActiveDays] = useState(3);
@@ -38,6 +41,8 @@ export default function PlanScreen() {
   const [relapseDismissed, setRelapseDismissed] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [amountDraft, setAmountDraft] = useState('');
+  const [amountError, setAmountError] = useState(false);
 
   const ruleKey = plan ? JSON.stringify(planRule(plan, habits)) : '';
   useEffect(() => {
@@ -74,6 +79,17 @@ export default function PlanScreen() {
     setStore((s) => updatePlan(s, id as string, fn));
   }
 
+  function logTyped() {
+    const n = parseLogAmount(amountDraft);
+    if (n === null) {
+      setAmountError(true);
+      return;
+    }
+    update((p) => logDone(p, d, n));
+    setAmountDraft('');
+    setAmountError(false);
+  }
+
   function saveSettings() {
     setError(null);
     const rule = weekdays ? weekdaysToRule(weekdays) : null;
@@ -92,7 +108,8 @@ export default function PlanScreen() {
   }
 
   function remove() {
-    Alert.alert(t('practice.plan.delete'), t('practice.plan.deleteConfirm'), [
+    // Signed in, the deletion syncs to the account (a tombstone), so it is not only «من هذا الجهاز».
+    Alert.alert(t('practice.plan.delete'), t(signedIn ? 'practice.plan.deleteConfirmSynced' : 'practice.plan.deleteConfirm'), [
       { text: t('common.cancel'), style: 'cancel' },
       {
         text: t('common.delete'),
@@ -124,6 +141,25 @@ export default function PlanScreen() {
             <Body>{t('practice.doneToday')}</Body>
           )}
         </Row>
+        <Body small>{t('practice.logAmountLabel')}</Body>
+        <Row>
+          <TextInput
+            value={amountDraft}
+            onChangeText={(text) => {
+              setAmountDraft(text);
+              setAmountError(false);
+            }}
+            onSubmitEditing={logTyped}
+            placeholder={t('practice.logAmountPlaceholder')}
+            keyboardType="decimal-pad"
+            returnKeyType="done"
+            maxLength={6}
+            style={[practiceStyles.input, { flex: 1, writingDirection: 'ltr', textAlign: 'center' }]}
+            accessibilityLabel={t('practice.logAmountLabel')}
+          />
+          <Button label={t('practice.logAmount')} onPress={logTyped} variant="outline" compact disabled={amountDraft.trim() === ''} />
+        </Row>
+        {amountError ? <ErrorText>{t('practice.logAmountInvalid')}</ErrorText> : null}
         <Body muted small>
           {t('practice.partialHint')}
         </Body>

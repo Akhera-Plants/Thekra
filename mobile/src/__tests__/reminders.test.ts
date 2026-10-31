@@ -5,6 +5,7 @@
  */
 
 import {
+  addDays,
   checkIn,
   createPlan,
   createRelative,
@@ -21,6 +22,7 @@ import {
   MAX_PENDING,
   REMINDER_DAYS,
   SIN_REMINDER_TITLE,
+  planDueOn,
   planReminders,
   type ReminderInput,
   type ReminderTexts,
@@ -154,6 +156,31 @@ describe('planReminders — habits', () => {
     const list = planReminders(input(store));
     expect(REMINDER_DAYS * 5).toBeGreaterThan(MAX_PENDING);
     expect(list).toHaveLength(MAX_PENDING);
+  });
+});
+
+describe('planReminders — agrees with the today list (practice-core isPlanDueOn)', () => {
+  it('a habit has reminders on exactly the days it is due', () => {
+    const plans: Plan[] = [
+      plan(quran, 2, ['21:00']), // catalog daily
+      plan(duha, 1, ['21:00']), // catalog Mon/Thu
+      { ...plan(duha, 1, ['21:00']), id: 'own-rule', rule: { kind: 'weekdays', days: [0, 3] } }, // own rule
+      { ...plan(quran, 2, ['21:00']), id: 'no-catalog' }, // no rule, unknown habit: daily
+    ];
+    const store = { ...emptyStore(), plans };
+    const list = planReminders(input(store, {}, { limit: 1000 }));
+    for (const p of plans) {
+      const reminded = new Set(list.filter((r) => r.route === `/practice/plan/${p.id}`).map((r) => r.date));
+      for (let i = 0; i < REMINDER_DAYS; i++) {
+        const date = addDays(TODAY, i);
+        expect([p.id, date, reminded.has(date)]).toEqual([p.id, date, planDueOn(p, [quran, duha], date, 0)]);
+      }
+    }
+  });
+
+  it('yesterday’s heavy day does not lighten today’s reminder', () => {
+    const p = startEbb(plan(quran, 10, ['21:00']), addDays(TODAY, -1));
+    expect(planReminders(input({ ...emptyStore(), plans: [p] }))[0]?.body).toBe('المطلوب اليوم: 10 دقيقة');
   });
 });
 

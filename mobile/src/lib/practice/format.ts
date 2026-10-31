@@ -12,6 +12,21 @@ export function toWesternDigits(text: string): string {
     .replace(/[۰-۹]/g, (c) => String(c.charCodeAt(0) - 0x06f0));
 }
 
+/** Largest single typed log entry (same cap as the web «سجّل قدرًا» form). */
+export const MAX_LOG_ENTRY = 1000;
+
+/**
+ * A typed log amount («3», «٣», «1.5», «1٫5») → a positive number, else null (empty, zero, negative, not a
+ * number, above {@link MAX_LOG_ENTRY}, the web form's cap). practice-core `logDone` accepts any positive amount;
+ * partial amounts add up.
+ */
+export function parseLogAmount(text: string): number | null {
+  const t = toWesternDigits(text).trim().replace(/[٫,]/g, '.');
+  if (!/^\d+(\.\d+)?$/.test(t)) return null;
+  const n = Number(t);
+  return Number.isFinite(n) && n > 0 && n <= MAX_LOG_ENTRY ? n : null;
+}
+
 /** «9:5», «09.05», «٩:٠٥» → «09:05»; anything else → null. */
 export function normalizeTimeInput(text: string): LocalTime | null {
   const m = /^\s*(\d{1,2})\s*[:.٫]\s*(\d{2})\s*$/.exec(toWesternDigits(text));

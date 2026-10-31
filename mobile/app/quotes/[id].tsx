@@ -1,5 +1,6 @@
 /**
- * Quote detail — full text, all translations, provenance, native share.
+ * Quote detail — full text, all translations, provenance, native share. Opened from QuoteCard.
+ * An athar is never shown as hadith: it gets «أثر، وليس حديثًا» and its speaker instead of a grade badge.
  * mobile-plan §3 (Quote detail screen).
  */
 
@@ -22,7 +23,7 @@ import { GradeBadge } from '@/components/GradeBadge';
 import { ErrorState } from '@/components/ErrorState';
 import { Colors, FontSize, LineHeight, Radius, Spacing } from '@/lib/tokens';
 import { QuoteType } from '@/lib/types/enums';
-import { quoteShareText } from '@/lib/share/quote-share';
+import { atharSpeakerLine, gradeCitationLine, quoteShareText } from '@/lib/share/quote-share';
 
 export default function QuoteDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -69,6 +70,9 @@ export default function QuoteDetailScreen() {
   }
 
   const grade = quote.type === QuoteType.HADITH ? quote.hadith?.grade : null;
+  const isAthar = Boolean(quote.isAthar);
+  const speakerLine = atharSpeakerLine(quote, { atharNarrated: (speaker) => t('share.atharNarrated', { speaker }) });
+  const gradeLine = gradeCitationLine(quote, isAr ? 'ar' : 'en');
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -111,12 +115,18 @@ export default function QuoteDetailScreen() {
         {/* Arabic text */}
         <Text style={styles.arabicText}>{quote.textAr}</Text>
 
-        {/* Grade badge */}
-        {quote.type === QuoteType.HADITH && (
+        {/* Grade badge — an athar gets its own label, never a hadith grade */}
+        {isAthar ? (
+          <View style={[styles.badge, styles.atharBadge]} accessibilityRole="text">
+            <Text style={styles.atharBadgeText}>{t('share.atharNotice')}</Text>
+          </View>
+        ) : quote.type === QuoteType.HADITH ? (
           <View style={styles.badge}>
             <GradeBadge grade={grade} />
           </View>
-        )}
+        ) : null}
+        {speakerLine ? <Text style={styles.provenanceValue}>{speakerLine}</Text> : null}
+        {gradeLine ? <Text style={styles.provenanceValue}>{gradeLine}</Text> : null}
 
         {/* Source + provenance */}
         <View style={styles.provenanceBlock}>
@@ -218,6 +228,16 @@ const styles = StyleSheet.create({
     fontWeight: '400',
   },
   badge: { alignItems: 'flex-end' },
+  atharBadge: {
+    alignSelf: 'flex-end',
+    paddingHorizontal: Spacing['2'],
+    paddingVertical: 2,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.gradeUngradedBg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  atharBadgeText: { fontSize: FontSize.xs, fontWeight: '600', color: Colors.gradeUngraded },
   provenanceBlock: {
     padding: Spacing['4'],
     backgroundColor: Colors.card,

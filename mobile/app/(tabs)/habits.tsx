@@ -1,7 +1,9 @@
 /**
  * «عاداتي» — «أعِنّي على طاعة» (roadmap §3, lecture analysis §4 and §8).
- * Today's list with a log button (partial amounts add up, same-day make-up, never doubled), the «يومي ثقيل»
- * ebb switch, the Ramadan season, habit reminders, and the entry points to the other practice tools.
+ * Today's list with a log button (partial amounts add up, same-day make-up, never doubled): habits asked for
+ * today first (practice-core `isPlanDueOn`, the same answer as the reminders), the others in a compact group that
+ * stays loggable. The «يومي ثقيل» switch (one day only, practice-core `isEbbOn`), the Ramadan season, habit
+ * reminders, and the entry points to the other practice tools.
  * All rules come from @thekra/practice-core; data stays on the device (synced only when signed in).
  */
 
@@ -9,14 +11,14 @@ import React from 'react';
 import { Alert, Pressable, StyleSheet, Text } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { addDays, endEbb, isDue, logDone, normalize, startEbb, startSeason, updatePlan, type Plan, type Store } from '@thekra/practice-core';
+import { addDays, logDone, normalize, startSeason, updatePlan, type Plan, type Store } from '@thekra/practice-core';
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { pick, type CatalogHabit } from '@/lib/practice/catalog-types';
 import { shortDate } from '@/lib/practice/format';
 import { ensurePermission } from '@/lib/practice/notifications';
-import { planView, ramadanSeasonUntil, seasonAmount } from '@/lib/practice/plan-view';
+import { heavyDayOn, planView, ramadanSeasonUntil, seasonAmount, setHeavyDay, splitByDue } from '@/lib/practice/plan-view';
 import { today, usePracticeStore } from '@/lib/practice/practice-store';
-import { formatAmount, habitFor, planRule } from '@/lib/practice/reminders';
+import { formatAmount, habitFor } from '@/lib/practice/reminders';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { Colors, FontSize, Radius, Spacing } from '@/lib/tokens';
 import {
@@ -55,7 +57,9 @@ export default function HabitsScreen() {
   const amountLabel = (plan: Plan, amount: number) =>
     formatAmount(amount, plan.unit, habitFor(plan, habits), locale, unitFallback);
 
-  const heavy = store.plans.length > 0 && store.plans.every((p) => p.ebb);
+  // One day only: on when every plan is lightened today, off again by itself tomorrow.
+  const heavy = heavyDayOn(store.plans, d);
+  const { due, notDue } = splitByDue(store.plans, habits, d, store.settings.hijriOffset);
   const seasonPlans = store.plans.filter((p) => p.season && d <= p.season.until);
   const season = ramadanSeasonUntil(d, store.settings.hijriOffset);
 
@@ -72,7 +76,7 @@ export default function HabitsScreen() {
   }
 
   function toggleHeavy(on: boolean) {
-    setStore((s) => eachPlan(s, (p) => (on ? (p.ebb ? null : startEbb(p, d)) : p.ebb ? endEbb(p) : null)));
+    setStore((s) => setHeavyDay(s, on, d));
   }
 
   function startRamadan() {
@@ -112,16 +116,34 @@ export default function HabitsScreen() {
         </Card>
       ) : (
         <>
-          {store.plans.map((plan) => (
+          {due.length === 0 ? <Body muted>{t('practice.nothingDueToday')}</Body> : null}
+          {due.map((plan) => (
             <TodayCard
               key={plan.id}
               plan={plan}
               habit={habitFor(plan, habits)}
-              reminderDay={safeIsDue(planRule(plan, habits), d, store.settings.hijriOffset)}
               amountLabel={(n) => amountLabel(plan, n)}
               onLog={(n) => log(plan, n)}
             />
           ))}
+          {notDue.length > 0 ? (
+            <>
+              <SectionTitle>{t('practice.notDueTitle')}</SectionTitle>
+              <Body muted small>
+                {t('practice.notDueHint')}
+              </Body>
+              {notDue.map((plan) => (
+                <TodayCard
+                  key={plan.id}
+                  plan={plan}
+                  habit={habitFor(plan, habits)}
+                  amountLabel={(n) => amountLabel(plan, n)}
+                  onLog={(n) => log(plan, n)}
+                  compact
+                />
+              ))}
+            </>
+          ) : null}
           <Body small muted>
             {t('practice.partialHint')}
           </Body>
@@ -189,26 +211,19 @@ export default function HabitsScreen() {
   );
 }
 
-function safeIsDue(rule: Parameters<typeof isDue>[0], date: string, hijriOffset: number): boolean {
-  try {
-    return isDue(rule, date, { hijriOffset });
-  } catch {
-    return false;
-  }
-}
-
 function TodayCard({
   plan,
   habit,
-  reminderDay,
   amountLabel,
   onLog,
+  compact,
 }: {
   plan: Plan;
   habit: CatalogHabit | undefined;
-  reminderDay: boolean;
   amountLabel: (n: number) => string;
   onLog: (amount: number) => void;
+  /** A habit not asked for today: title, what was logged, and the log buttons only. */
+  compact?: boolean;
 }) {
   const { t } = useTranslation();
   const locale = useUiLocale();
@@ -219,25 +234,31 @@ function TodayCard({
     <Pressable
       onPress={() => router.push(`/practice/plan/${plan.id}`)}
       accessibilityRole="button"
-      style={({ pressed }) => [styles.card, view.doneToday && styles.cardDone, pressed && { opacity: 0.85 }]}
+      style={({ pressed }) => [
+        styles.card,
+        compact && styles.cardCompact,
+        view.doneToday && styles.cardDone,
+        pressed && { opacity: 0.85 },
+      ]}
     >
       <Row style={{ justifyContent: 'space-between' }}>
-        <Text style={styles.title}>{title}</Text>
+        <Text style={[styles.title, compact && styles.titleCompact]}>{title}</Text>
         {view.doneToday ? <Text style={styles.doneBadge}>{t('practice.doneToday')}</Text> : null}
       </Row>
-      <Body>{t('practice.plan.required', { amount: amountLabel(view.required) })}</Body>
-      {view.done > 0 && !view.doneToday ? (
+      {compact ? null : <Body>{t('practice.plan.required', { amount: amountLabel(view.required) })}</Body>}
+      {view.done > 0 && (compact || !view.doneToday) ? (
         <Body muted small>
           {t('practice.plan.done', { amount: amountLabel(view.done) })}
         </Body>
       ) : null}
-      <Row style={{ flexWrap: 'wrap' }}>
-        {reminderDay ? <Text style={styles.tag}>{t('practice.reminderDay')}</Text> : null}
-        {view.inEbb ? <Text style={styles.tag}>{t('practice.ebbActive')}</Text> : null}
-        {view.inSeason && plan.season ? (
-          <Text style={styles.tag}>{t('practice.seasonActive', { date: shortDate(plan.season.until) })}</Text>
-        ) : null}
-      </Row>
+      {compact ? null : (
+        <Row style={{ flexWrap: 'wrap' }}>
+          {view.inEbb ? <Text style={styles.tag}>{t('practice.ebbActive')}</Text> : null}
+          {view.inSeason && plan.season ? (
+            <Text style={styles.tag}>{t('practice.seasonActive', { date: shortDate(plan.season.until) })}</Text>
+          ) : null}
+        </Row>
+      )}
       <Row>
         <Button label={t('practice.logPlusOne')} onPress={() => onLog(1)} variant="outline" compact />
         {!view.doneToday ? (
@@ -257,8 +278,10 @@ const styles = StyleSheet.create({
     padding: Spacing['4'],
     gap: Spacing['2'],
   },
+  cardCompact: { padding: Spacing['3'] },
   cardDone: { borderColor: Colors.success },
   title: { fontSize: FontSize.lg, fontWeight: '700', color: Colors.text, flexShrink: 1 },
+  titleCompact: { fontSize: FontSize.base },
   doneBadge: {
     fontSize: FontSize.xs,
     color: Colors.success,

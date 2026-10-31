@@ -7,6 +7,8 @@
  *  - Source attribution
  *  - Quran reference or hadith reference
  *  - Favorite toggle button
+ *  - Tapping the text or the attribution opens the quote page (`/quotes/[id]`); the share and favorite
+ *    buttons are separate touch targets and keep working
  *  - Share action (React Native `Share`): the displayed text + attribution (+ «أثر، وليس حديثًا» for an
  *    athar) + the public page link. Never anything about the user (roadmap §0.5, §6).
  *
@@ -18,12 +20,14 @@ import React from 'react';
 import {
   View,
   Text,
+  Pressable,
   TouchableOpacity,
   StyleSheet,
   Share,
   useColorScheme,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { router } from 'expo-router';
 import { Colors, FontFamily, FontSize, LineHeight, Radius, Shadow, Spacing } from '@/lib/tokens';
 import { GradeBadge } from './GradeBadge';
 import { QuoteType } from '@/lib/types/enums';
@@ -38,6 +42,8 @@ interface QuoteCardProps {
   showTranslation?: boolean;
   /** Show the share action (default true). */
   shareable?: boolean;
+  /** Open the quote page on press (default true). */
+  linkToDetail?: boolean;
 }
 
 export function QuoteCard({
@@ -46,6 +52,7 @@ export function QuoteCard({
   onToggleFavorite,
   showTranslation = false,
   shareable = true,
+  linkToDetail = true,
 }: QuoteCardProps) {
   const { t, i18n } = useTranslation();
   const colorScheme = useColorScheme();
@@ -89,6 +96,10 @@ export function QuoteCard({
 
   const grade = quote.type === QuoteType.HADITH ? quote.hadith?.grade : null;
 
+  const openDetail = linkToDetail
+    ? () => router.push({ pathname: '/quotes/[id]', params: { id: quote.id } })
+    : undefined;
+
   return (
     <View
       style={[
@@ -97,24 +108,40 @@ export function QuoteCard({
         Shadow.sm,
       ]}
     >
-      {/* Arabic text — always shown, always RTL, always primary */}
-      <Text
-        style={[styles.arabicText, isDark && styles.arabicTextDark]}
-        textBreakStrategy="highQuality"
+      {/* Text: a link to the quote page (the screen reader reads the text, then the hint). */}
+      <Pressable
+        onPress={openDetail}
+        disabled={!openDetail}
+        accessibilityRole={openDetail ? 'link' : 'text'}
+        accessibilityHint={openDetail ? t('quoteDetail.open') : undefined}
+        style={({ pressed }) => pressed && openDetail ? styles.pressed : null}
       >
-        {quote.textAr}
-      </Text>
-
-      {/* Translation (LTR, secondary, optional) */}
-      {showTranslation && quote.translation && (
-        <Text style={[styles.translation, isDark && styles.translationDark]}>
-          {quote.translation.text}
+        {/* Arabic text — always shown, always RTL, always primary */}
+        <Text
+          style={[styles.arabicText, isDark && styles.arabicTextDark]}
+          textBreakStrategy="highQuality"
+        >
+          {quote.textAr}
         </Text>
-      )}
+
+        {/* Translation (LTR, secondary, optional) */}
+        {showTranslation && quote.translation && (
+          <Text style={[styles.translation, isDark && styles.translationDark]}>
+            {quote.translation.text}
+          </Text>
+        )}
+      </Pressable>
 
       {/* Footer: grade + source + provenance + favorite */}
       <View style={styles.footer}>
-        <View style={styles.footerLeft}>
+        {/* Same link for sighted users; not a second stop for the screen reader, which reads each line. */}
+        <Pressable
+          onPress={openDetail}
+          disabled={!openDetail}
+          accessible={false}
+          importantForAccessibility="no"
+          style={({ pressed }) => [styles.footerLeft, pressed && openDetail ? styles.pressed : null]}
+        >
           {/* Grade badge — an athar is never shown as hadith: it gets its own label instead */}
           {isAthar ? (
             <View style={styles.atharBadge} accessibilityRole="text">
@@ -153,7 +180,7 @@ export function QuoteCard({
               {provenance}
             </Text>
           )}
-        </View>
+        </Pressable>
 
         {/* Share button */}
         {shareable && (
@@ -241,6 +268,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: Spacing['2'],
   },
+  pressed: { opacity: 0.7 },
   footerLeft: {
     flex: 1,
     gap: Spacing['1'],

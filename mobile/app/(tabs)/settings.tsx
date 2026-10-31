@@ -11,7 +11,6 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  Switch,
   StyleSheet,
   SafeAreaView,
   ScrollView,
@@ -44,7 +43,6 @@ export default function SettingsScreen() {
   const clearSession = useAuthStore((s) => s.clearSession);
   const qc = useQueryClient();
 
-  const [showTranslations, setShowTranslations] = useState(false);
   const syncStatus = useSyncStatus((s) => s.status);
   const lastOkAt = useSyncStatus((s) => s.lastOkAt);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -143,6 +141,10 @@ export default function SettingsScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.scroll}>
+        <Text style={styles.title} accessibilityRole="header">
+          {t('settings.title')}
+        </Text>
+
         {/* Language */}
         <Section title={t('settings.language')}>
           <LanguageRow
@@ -157,18 +159,6 @@ export default function SettingsScreen() {
             currentLocale={currentLocale}
             onSelect={changeLocale}
           />
-        </Section>
-
-        {/* Content */}
-        <Section title={t('common.ok')}>
-          <Row label={t('settings.translations')}>
-            <Switch
-              value={showTranslations}
-              onValueChange={setShowTranslations}
-              trackColor={{ false: Colors.border, true: Colors.primary }}
-              thumbColor={Colors.textInverse}
-            />
-          </Row>
         </Section>
 
         {/* Account */}
@@ -336,6 +326,7 @@ function LanguageRow({
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
   scroll: { padding: Spacing['4'], gap: Spacing['4'] },
+  title: { fontSize: FontSize['2xl'], fontWeight: '700', color: Colors.text },
   primaryBtn: {
     backgroundColor: Colors.primary,
     padding: Spacing['4'],
