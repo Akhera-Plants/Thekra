@@ -692,7 +692,6 @@
     "note": "ملاحظة خاصة (اختياري)",
     "saveCheckIn": "سجّل",
     "todayValue": "سجّلت اليوم: {{value}}",
-    "summary": "في آخر 30 يومًا سجّلت {{days}} من 30 يومًا.",
     "reminders": "تذكير يومي",
     "remindersHint": "عنوان الإشعار دائمًا «تذكرة من ذكرى»، ولا يُذكر فيه شيء من البرنامج.",
     "time": "وقت التذكير",
@@ -713,7 +712,131 @@
       "cancel": "إلغاء",
       "confirm": "أنهِه الآن",
       "done": "أُغلق البرنامج. يمكنك أن تبدأه من جديد أو تختار غيره متى شئت."
-    }
+    },
+    "moment": {
+      "title": "لحظة ضعف",
+      "lead": "هي موجة وتمرّ. ابقَ هنا عشر دقائق، واختر ما يعينك.",
+      "open": "لحظة ضعف",
+      "openFromSin": "أنا في لحظة ضعف",
+      "timer": "الوقت الباقي من عشر دقائق",
+      "remaining": "{{time}} باقية",
+      "actionsTitle": "افعل واحدة الآن",
+      "actions": {
+        "wudu": "توضأ",
+        "move": "غيّر مكانك",
+        "pray": "صلِّ ركعتين",
+        "call": "اتصل بأحد",
+        "dhikr": "ذكر قصير"
+      },
+      "textLabel": "تذكرة",
+      "question": "عبرت الموجة؟",
+      "yes": "نعم، عبرت",
+      "no": "لا، وقعت",
+      "answerEarly": "أجب الآن",
+      "heldSaved": "الحمد لله. سُجّل «ثبتّ» لهذا اليوم.",
+      "heldKept": "الحمد لله. تسجيل اليوم باقٍ كما كتبته.",
+      "heldNoProgram": "الحمد لله على الثبات.",
+      "back": "ارجع إلى «تخفَّف»",
+      "callHint": "يفتح الهاتف بلا رقم",
+      "verseCitation": "سورة {{surah}}، الآية {{ayah}}"
+    },
+    "triggers": {
+      "title": "ما الذي سبقها؟ (اختياري)",
+      "when": "متى؟",
+      "where": "أين؟",
+      "feeling": "بماذا شعرت؟",
+      "times": {
+        "fajr_morning": "الفجر والصباح",
+        "dhuhr_asr": "الظهر والعصر",
+        "maghrib_isha": "المغرب والعشاء",
+        "after_isha": "بعد العشاء",
+        "late_night": "آخر الليل"
+      },
+      "places": {
+        "alone": "وحدي",
+        "with_someone": "مع أحد",
+        "outside": "خارج البيت"
+      },
+      "feelings": {
+        "boredom": "ملل",
+        "tiredness": "تعب",
+        "anger": "غضب",
+        "loneliness": "وحدة",
+        "stress": "توتر",
+        "sadness": "حزن"
+      }
+    },
+    "pattern": {
+      "title": "متى تضعف؟",
+      "lead": "من تسجيلاتك على هذا الجهاز وحده، ولا يُرسل إلى أي مكان.",
+      "when": "أكثر الأوقات: {{value}}",
+      "where": "أكثر الأماكن: {{value}}",
+      "feeling": "أكثر المشاعر: {{value}}",
+      "suggestion": "حدّ مقترح: {{limit}}"
+    },
+    "limits": {
+      "today": "حدّك اليوم: {{limit}}",
+      "phone_outside_room": "الهاتف خارج الغرفة بعد العشاء",
+      "stay_near_people": "اجلس حيث يكون أهلك في أوقات ضعفك",
+      "plan_before_going_out": "حدّد وجهتك ووقت رجوعك قبل أن تخرج",
+      "leave_gathering_early": "غادر المجلس أو غيّر الحديث عند أول بادرة",
+      "plan_free_time": "جهّز عملًا نافعًا لوقت فراغك",
+      "sleep_early": "نم مبكرًا ولا تسهر وحدك مع الهاتف",
+      "wudu_when_angry": "إذا غضبت فاسكت وغيّر جلستك",
+      "call_someone_daily": "كلّم صديقًا صالحًا كل يوم",
+      "walk_with_dhikr": "امشِ قليلًا مع ذكر قصير عند الضيق"
+    },
+    "fixit": {
+      "lead": "أربع خطوات قصيرة، الآن.",
+      "open": "صلّحها الآن",
+      "step1": "تب الآن",
+      "repent": "تبتُ إلى الله",
+      "repented": "سُجّل «وقعت ثم تبت» لهذا اليوم.",
+      "step2": "أتبع السيئة الحسنة",
+      "logHabit": "سجّل الحد الأدنى من «{{habit}}»",
+      "habitLogged": "سُجّل في «{{habit}}».",
+      "goodDeed": "عملت حسنة الآن",
+      "goodDeedHint": "صدقة، أو ذكر، أو ركعتان، أو برّ.",
+      "goodDeedDone": "سُجّلت الحسنة.",
+      "step3": "ما الذي سبقها؟",
+      "step4": "حدّ صغير لغد",
+      "limitPicked": "يظهر لك غدًا في «تخفَّف».",
+      "needCheckIn": "سجّل التوبة أولًا لتُحفظ الخطوات.",
+      "done": "تمّ"
+    },
+    "stages": {
+      "track": "مراحل البرنامج",
+      "done": "مرحلة مضت",
+      "current": "المرحلة الحالية",
+      "next": "مرحلة قادمة",
+      "taskTitle": "مهمة هذا الأسبوع",
+      "tasks": {
+        "write_three_harms": "اكتب ثلاثة أضرار في دفترك",
+        "add_alternative_habit": "أضف عادة بديلة",
+        "change_one_place_or_time": "غيّر مكانًا أو وقتًا واحدًا",
+        "choose_one_limit": "اختر حدًّا واحدًا",
+        "restore_one_right": "ردّ حقًا واحدًا أو استحلّ",
+        "keep_alternative_habits": "حافظ على عاداتك البديلة"
+      }
+    },
+    "counters": {
+      "held": "ثبتّ {{n}} من {{total}}",
+      "sinceRepentance_zero": "آخر توبة: اليوم",
+      "sinceRepentance_one": "منذ آخر توبة: يوم واحد",
+      "sinceRepentance_two": "منذ آخر توبة: يومان",
+      "sinceRepentance_few": "منذ آخر توبة: {{count}} أيام",
+      "sinceRepentance_many": "منذ آخر توبة: {{count}} يومًا",
+      "sinceRepentance_other": "منذ آخر توبة: {{count}} يوم",
+      "sinceStart_zero": "بدأت اليوم",
+      "sinceStart_one": "منذ البداية: يوم واحد",
+      "sinceStart_two": "منذ البداية: يومان",
+      "sinceStart_few": "منذ البداية: {{count}} أيام",
+      "sinceStart_many": "منذ البداية: {{count}} يومًا",
+      "sinceStart_other": "منذ البداية: {{count}} يوم",
+      "note": "لا عدّاد يرجع إلى الصفر: كل يوم ثبتّ فيه يبقى لك.",
+      "hope": "نص رجاء"
+    },
+    "textsTitle": "ما ورد فيها"
   },
   "calendar": {
     "title": "مواسم الخير",

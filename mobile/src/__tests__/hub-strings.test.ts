@@ -85,6 +85,23 @@ describe('practice strings', () => {
     expect(visible.filter((v) => typeof v === 'string' && v.includes('ترك المعصية'))).toEqual([]);
   });
 
+  it('counts «تخفَّف» days without a resetting streak, in both languages', () => {
+    const ar = i18n.getFixedT('ar');
+    expect(ar('sinProgram.counters.held', { n: '12', total: '30' })).toBe('ثبتّ 12 من 30');
+    expect(ar('sinProgram.counters.sinceRepentance', { count: 0 })).toBe('آخر توبة: اليوم');
+    expect(ar('sinProgram.counters.sinceRepentance', { count: 2 })).toBe('منذ آخر توبة: يومان');
+    expect(ar('sinProgram.counters.sinceRepentance', { count: 5 })).toBe('منذ آخر توبة: 5 أيام');
+    expect(ar('sinProgram.counters.sinceStart', { count: 14 })).toBe('منذ البداية: 14 يومًا');
+    const en = i18n.getFixedT('en');
+    expect(en('sinProgram.counters.sinceRepentance', { count: 0 })).toBe('Last repentance: today');
+    expect(en('sinProgram.counters.sinceRepentance', { count: 3 })).toBe('Since the last repentance: 3 days');
+  });
+
+  it('keeps the «لحظة ضعف» title generic', () => {
+    expect(i18n.getFixedT('ar')('sinProgram.moment.title')).toBe('لحظة ضعف');
+    expect(i18n.getFixedT('en')('sinProgram.moment.title')).toBe('A weak moment');
+  });
+
   it('has every key in both languages', () => {
     const base = (k: string) => k.replace(/_(zero|one|two|few|many|other)$/, '');
     const arKeys = new Set(keys(ar).map(base));

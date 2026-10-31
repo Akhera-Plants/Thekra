@@ -117,7 +117,7 @@ export function TodayList({
           />
         );
       case 'program':
-        return <ProgramRow key={row.key} done={row.done} meta={row.meta} />;
+        return <ProgramRow key={row.key} done={row.done} meta={row.meta} showMoment={isToday} />;
     }
   };
 

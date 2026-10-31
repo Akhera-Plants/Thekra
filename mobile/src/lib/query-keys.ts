@@ -69,6 +69,9 @@ export const queryKeys = {
     /** `ids` is the sorted, comma-joined id list, so one list is one cache entry. */
     evidence: (ids: string, lang: string) => ['practice', 'evidence', ids, lang] as const,
   },
+  quran: {
+    ayah: (surah: number, ayah: number, lang: string) => ['quran', 'ayah', surah, ayah, lang] as const,
+  },
   calendar: {
     occasions: (from: string, to: string, hijriOffset: number, lang: string) =>
       ['calendar', 'occasions', from, to, hijriOffset, lang] as const,

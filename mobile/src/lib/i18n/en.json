@@ -651,7 +651,6 @@
     "note": "Private note (optional)",
     "saveCheckIn": "Log",
     "todayValue": "Logged today: {{value}}",
-    "summary": "In the last 30 days you logged {{days}} of 30 days.",
     "reminders": "Daily reminder",
     "remindersHint": "The notification title is always «تذكرة من ذكرى» and nothing from the program appears in it.",
     "time": "Reminder time",
@@ -672,7 +671,125 @@
       "cancel": "Cancel",
       "confirm": "End it now",
       "done": "The program is closed. You can start it again or choose another whenever you wish."
-    }
+    },
+    "moment": {
+      "title": "A weak moment",
+      "lead": "It is a wave, and it passes. Stay here for ten minutes and pick what helps.",
+      "open": "A weak moment",
+      "openFromSin": "I am in a weak moment",
+      "timer": "Time left of ten minutes",
+      "remaining": "{{time}} left",
+      "actionsTitle": "Do one now",
+      "actions": {
+        "wudu": "Make wudu",
+        "move": "Change your place",
+        "pray": "Pray two rak'ahs",
+        "call": "Call someone",
+        "dhikr": "A short dhikr"
+      },
+      "textLabel": "A reminder",
+      "question": "Did the wave pass?",
+      "yes": "Yes, it passed",
+      "no": "No, I slipped",
+      "answerEarly": "Answer now",
+      "heldSaved": "Praise be to Allah. Today is marked «held».",
+      "heldKept": "Praise be to Allah. Today's check-in stays as you wrote it.",
+      "heldNoProgram": "Praise be to Allah for holding firm.",
+      "back": "Back to «Lighten»",
+      "callHint": "Opens the phone with no number",
+      "verseCitation": "{{surah}} {{chapter}}:{{ayah}}"
+    },
+    "triggers": {
+      "title": "What came before it? (optional)",
+      "when": "When?",
+      "where": "Where?",
+      "feeling": "How did you feel?",
+      "times": {
+        "fajr_morning": "Dawn and morning",
+        "dhuhr_asr": "Noon and afternoon",
+        "maghrib_isha": "Sunset and evening",
+        "after_isha": "After the night prayer",
+        "late_night": "Late night"
+      },
+      "places": {
+        "alone": "Alone",
+        "with_someone": "With someone",
+        "outside": "Out of the house"
+      },
+      "feelings": {
+        "boredom": "Boredom",
+        "tiredness": "Tiredness",
+        "anger": "Anger",
+        "loneliness": "Loneliness",
+        "stress": "Stress",
+        "sadness": "Sadness"
+      }
+    },
+    "pattern": {
+      "title": "When do you weaken?",
+      "lead": "From your check-ins on this device only; it is sent nowhere.",
+      "when": "Most often: {{value}}",
+      "where": "Most often: {{value}}",
+      "feeling": "Most often: {{value}}",
+      "suggestion": "A suggested limit: {{limit}}"
+    },
+    "limits": {
+      "today": "Your limit today: {{limit}}",
+      "phone_outside_room": "Phone outside the room after the night prayer",
+      "stay_near_people": "Sit where your family is at your weak times",
+      "plan_before_going_out": "Decide where you are going and when you will be back before you leave",
+      "leave_gathering_early": "Leave the gathering or change the subject at the first sign",
+      "plan_free_time": "Prepare something useful for your free time",
+      "sleep_early": "Sleep early; do not stay up alone with the phone",
+      "wudu_when_angry": "When angry, fall silent and change how you sit",
+      "call_someone_daily": "Talk to a good friend every day",
+      "walk_with_dhikr": "Walk a little with a short dhikr when you feel tight"
+    },
+    "fixit": {
+      "lead": "Four short steps, now.",
+      "open": "Mend it now",
+      "step1": "Repent now",
+      "repent": "I repent to Allah",
+      "repented": "Today is marked «slipped, then repented».",
+      "step2": "Follow the wrong with a good deed",
+      "logHabit": "Log the minimum of «{{habit}}»",
+      "habitLogged": "Logged in «{{habit}}».",
+      "goodDeed": "I did a good deed now",
+      "goodDeedHint": "Charity, dhikr, two rak'ahs or kindness.",
+      "goodDeedDone": "The good deed is marked.",
+      "step3": "What came before it?",
+      "step4": "A small limit for tomorrow",
+      "limitPicked": "It shows tomorrow in «Lighten».",
+      "needCheckIn": "Mark the repentance first so the steps are kept.",
+      "done": "Done"
+    },
+    "stages": {
+      "track": "Program stages",
+      "done": "A past stage",
+      "current": "The current stage",
+      "next": "A coming stage",
+      "taskTitle": "This week's task",
+      "tasks": {
+        "write_three_harms": "Write three harms in your notebook",
+        "add_alternative_habit": "Add an alternative habit",
+        "change_one_place_or_time": "Change one place or one time",
+        "choose_one_limit": "Choose one limit",
+        "restore_one_right": "Return one right or ask to be pardoned",
+        "keep_alternative_habits": "Keep your alternative habits"
+      }
+    },
+    "counters": {
+      "held": "Held {{n}} of {{total}}",
+      "sinceRepentance_zero": "Last repentance: today",
+      "sinceRepentance_one": "Since the last repentance: 1 day",
+      "sinceRepentance_other": "Since the last repentance: {{count}} days",
+      "sinceStart_zero": "Started today",
+      "sinceStart_one": "Since you started: 1 day",
+      "sinceStart_other": "Since you started: {{count}} days",
+      "note": "No counter goes back to zero: every day you held stays yours.",
+      "hope": "A text of hope"
+    },
+    "textsTitle": "What the texts say"
   },
   "calendar": {
     "title": "Seasons of good",

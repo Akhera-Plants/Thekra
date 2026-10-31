@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState, useSyncExternalStore } from 'react';
-import { RefreshCw, ShieldCheck } from 'lucide-react';
+import { RefreshCw, ShieldCheck, Waves } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocale, useTranslations } from 'next-intl';
 import { activePrograms, limits } from '@thekra/practice-core';
@@ -21,7 +21,8 @@ import { Button } from '@/components/shared/kit/button';
 import { accountsEnabled } from '@/lib/accounts';
 import { deleteSinVault } from '@/lib/api/practice-me';
 import { reportFailure } from '@/lib/errors';
-import { pendingProgramForSession, wipeSinPrograms } from '@/lib/practice/local-store';
+import { pendingProgramForSession, setMomentSource, wipeSinPrograms } from '@/lib/practice/local-store';
+import { Link } from '@/i18n/navigation';
 import { setVaultSession } from '@/lib/practice/vault-flow';
 import { queryKeys } from '@/lib/query-keys';
 import { allProgramEvidenceIds } from '@/lib/practice/programs';
@@ -107,6 +108,17 @@ export function LeaveSinView() {
         </p>
         {snapshot.persistent ? null : <LocalOnlyNote persistent={false} />}
       </div>
+
+      {active.length > 0 ? (
+        <Link
+          href="/practice/leave-sin/moment"
+          className="outline-button button-wrap self-start"
+          onClick={() => setMomentSource(null)}
+        >
+          <Waves aria-hidden />
+          {t('moment.open')}
+        </Link>
+      ) : null}
 
       <VaultPanel programs={snapshot.store.programs} />
 

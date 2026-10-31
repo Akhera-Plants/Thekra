@@ -111,6 +111,21 @@ export function pendingProgram(): string | null {
   return pendingProgramSlug;
 }
 
+/**
+ * Where «لحظة ضعف» was opened from, in memory only (never persisted, never a route param): a sin page passes its slug
+ * (the screen then uses that sin's program only if the user follows it, and nothing personal otherwise); «ورد اليوم»
+ * and «تخفَّف» pass `null` (the program in focus, practice-core `momentProgram`). `undefined` when nothing was handed.
+ */
+let momentSourceSlug: string | null | undefined;
+
+export function setMomentSource(slug: string | null): void {
+  momentSourceSlug = slug;
+}
+
+export function momentSource(): string | null | undefined {
+  return momentSourceSlug;
+}
+
 export const usePracticeStore = create<PracticeState>((set, get) => ({
   hydrated: false,
   store: emptyStore(),
@@ -158,6 +173,7 @@ export const usePracticeStore = create<PracticeState>((set, get) => ({
     const next: Store = { ...get().store, programs: [] };
     const prefs: PracticePrefs = { ...get().prefs, sinReminders: false, rememberVaultKey: false };
     pendingProgramSlug = null;
+    momentSourceSlug = undefined;
     set({ store: next, prefs });
     await persist(STORE_KEY, serializeStore(next));
     await persist(PREFS_KEY, JSON.stringify(prefs));

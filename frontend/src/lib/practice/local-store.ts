@@ -113,6 +113,8 @@ export function migrateStore(store: Store, legacyFreeMinutes: number | undefined
 
 let snapshot: PracticeSnapshot | null = null;
 let pendingForSession: string | null | undefined;
+/** «لحظة ضعف» hand-off, in memory only (never storage, never the URL): see {@link setMomentSource}. */
+let momentSource: string | null | undefined;
 const listeners = new Set<() => void>();
 
 function load(): PracticeSnapshot {
@@ -197,6 +199,7 @@ export function resetSyncState(): void {
 export function wipeSinPrograms(): void {
   writeItem(PENDING_PROGRAM_KEY, null);
   pendingForSession = null;
+  momentSource = undefined;
   updateStore((store) => ({ ...store, programs: [] }));
 }
 
@@ -223,8 +226,23 @@ export function pendingProgramForSession(): string | null {
   return pendingForSession;
 }
 
+/**
+ * Where «لحظة ضعف» was opened from, kept in memory for the client-side navigation only: a sin page passes its slug
+ * (the screen then uses that sin's program if the visitor follows it, and nothing personal otherwise); «ورد اليوم» and
+ * «تخفَّف» pass `null` (the program in focus, practice-core `focusProgram`). A reload forgets it.
+ */
+export function setMomentSource(slug: string | null): void {
+  momentSource = slug;
+}
+
+/** `undefined` when nothing was handed over (a direct visit or a reload). */
+export function momentSourceForView(): string | null | undefined {
+  return momentSource;
+}
+
 /** Test hook: forget the cached snapshot so the next read goes back to storage. */
 export function resetPracticeSnapshotForTests(): void {
   snapshot = null;
   pendingForSession = undefined;
+  momentSource = undefined;
 }

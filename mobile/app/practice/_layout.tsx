@@ -1,5 +1,5 @@
 /**
- * Stack for the practice screens: «عاداتي», add habit, plan, «فروضي وأدواري», «أعمال دورية», صلة الرحم, «تخفَّف»,
+ * Stack for the practice screens: «عاداتي», add habit, plan, «فروضي وأدواري», «أعمال دورية», صلة الرحم, «تخفَّف», «لحظة ضعف»,
  * «مواسم الخير» (the occasions calendar).
  * The native header shows only Back; each screen shows its own title. The `title` options below name the
  * screens for accessibility and the Android task switcher; they stay generic on purpose (the sin-program screen
@@ -22,6 +22,7 @@ export default function PracticeLayout() {
       <Stack.Screen name="periodic" options={{ title: t('practice.periodic.title') }} />
       <Stack.Screen name="kinship" options={{ title: t('kinship.title') }} />
       <Stack.Screen name="sin-program" options={{ title: t('sinProgram.title') }} />
+      <Stack.Screen name="moment" options={{ title: t('sinProgram.moment.title') }} />
       <Stack.Screen name="calendar" options={{ title: t('calendar.title') }} />
     </Stack>
   );

@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { isActiveProgram } from '@thekra/practice-core';
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { pick, type CatalogHabit } from '@/lib/practice/catalog-types';
-import { setPendingProgram, usePracticeStore } from '@/lib/practice/practice-store';
+import { setMomentSource, setPendingProgram, usePracticeStore } from '@/lib/practice/practice-store';
 import { formatAmount } from '@/lib/practice/reminders';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { space, useStyles, type Theme } from '@/theme';
@@ -120,6 +120,13 @@ export function SinProgramLink({ sin }: { sin: string }) {
     router.push('/practice/sin-program');
   }
 
+  // «أنا في لحظة ضعف»: shown on every program sin page whatever the device holds, so it tells nothing; the screen
+  // uses this sin's program only if the user follows it (in-memory hand-off, never a route param).
+  function handleMoment() {
+    setMomentSource(sin);
+    router.push('/practice/moment');
+  }
+
   return (
     <View style={styles.program}>
       <Button
@@ -131,6 +138,7 @@ export function SinProgramLink({ sin }: { sin: string }) {
       <Text variant="caption" tone="muted">
         {t('practice.hub.addProgramHint')}
       </Text>
+      <Button label={t('sinProgram.moment.openFromSin')} variant="ghost" arrow onPress={handleMoment} />
     </View>
   );
 }

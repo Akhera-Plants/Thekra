@@ -1,10 +1,29 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { Check } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { useLocale, useTranslations } from 'next-intl';
-import { afterFall, checkIn, CHECK_IN_VALUES, endProgram, type CheckInValue, type SinProgram } from '@thekra/practice-core';
+import {
+  afterFall,
+  annotateCheckIn,
+  checkIn,
+  CHECK_IN_VALUES,
+  endProgram,
+  hasTriggers,
+  hopeTextFor,
+  shortestTextId,
+  limitForToday,
+  programCounters,
+  STAGE_TASKS,
+  stageTrack,
+  suggestedLimit,
+  weakPattern,
+  type CheckInValue,
+  type SinProgram,
+  type Triggers,
+} from '@thekra/practice-core';
 import { Link } from '@/i18n/navigation';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import {
@@ -23,13 +42,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { formatDigits } from '@/lib/format/digits';
 import { formatGregorian } from '@/lib/practice/format';
 import { updateStore } from '@/lib/practice/local-store';
-import { programView, SUMMARY_DAYS } from '@/lib/practice/programs';
+import { programTextIds, programView } from '@/lib/practice/programs';
 import type { QuoteDto } from '@/lib/types/api';
 import type { PracticeHabit, SinProgramCommon, SinProgramEntry } from '@/lib/types/practice';
 import { cn } from '@/lib/utils';
 import { z } from '@/lib/zod';
+import { useLimitLabel } from '../hooks/useLimitLabel';
 import { useSinVault } from '../hooks/useSinVault';
 import { EvidenceQuotes } from './EvidenceQuotes';
+import { FixItSheet } from './FixItSheet';
+import { TriggerChips } from './TriggerChips';
 
 const MAX_NOTE = 500;
 
@@ -53,6 +75,18 @@ export function ProgramPanel({ program, entry, common, name, habits, quotes, tod
   const steps = english ? entry.gradualStepsEn : entry.gradualStepsAr;
   const actions = english ? entry.actionsEn : entry.actionsAr;
   const fell = view.today?.value === 'fell_repented' && afterFall(program) === 'fixit';
+  const tLimits = useTranslations('leaveSin.limits');
+  const tCounters = useTranslations('leaveSin.counters');
+  const tStages = useTranslations('leaveSin.stages');
+  const tFix = useTranslations('leaveSin.fixit');
+  const limitLabel = useLimitLabel(actions);
+  const [fixOpen, setFixOpen] = useState(false);
+  const counters = programCounters(program, today);
+  const todayLimit = limitForToday(program, today);
+  const todayLimitText = todayLimit ? limitLabel(todayLimit) : null;
+  const track = stageTrack(program, today);
+  const afterFallIds = common.afterFall.evidence ?? [];
+  const hopeId = fell ? hopeTextFor(afterFallIds, quotes, today, shortestTextId(afterFallIds, quotes)) : null;
 
   return (
     <article className="flex flex-col gap-8" aria-labelledby={`program-${program.sinSlug}`}>
@@ -64,6 +98,21 @@ export function ProgramPanel({ program, entry, common, name, habits, quotes, tod
           {program.path === 'gradual' ? t('pathGradual') : program.category === 'haqq_ibad' ? t('pathPeople') : t('pathCut')}
         </p>
       </header>
+
+      {todayLimitText ? <p className="next-step !mt-0">{tLimits('today', { limit: todayLimitText })}</p> : null}
+
+      <div className="flex flex-col gap-1">
+        <p className="flex flex-wrap gap-x-4 gap-y-1 text-lg font-medium">
+          <span>{tCounters('held', { n: formatDigits(counters.held), total: formatDigits(counters.window) })}</span>
+          <span className="text-muted-foreground">
+            {tCounters(counters.fromStart ? 'sinceStart' : 'sinceRepentance', {
+              count: counters.daysSinceRepentance,
+              n: formatDigits(counters.daysSinceRepentance),
+            })}
+          </span>
+        </p>
+        <p className="text-sm text-muted-foreground">{tCounters('note')}</p>
+      </div>
 
       {program.path === 'gradual' && steps && steps.length > 0 ? (
         <section className="next-step !mt-0 flex flex-col gap-2" aria-label={t('gradualTitle')}>
@@ -77,27 +126,39 @@ export function ProgramPanel({ program, entry, common, name, habits, quotes, tod
       ) : null}
 
       <section aria-labelledby={`stage-${program.sinSlug}`} className="flex flex-col gap-3">
+        <ol className="flex items-center gap-1 overflow-x-auto pb-1" aria-label={tStages('track')}>
+          {track.map(({ stage: key, state }, index) => (
+            <li
+              key={key}
+              aria-current={state === 'current' ? 'step' : undefined}
+              className="flex min-w-0 shrink-0 items-center gap-1"
+            >
+              {index > 0 ? <span className={cn('h-px w-4', state === 'next' ? 'bg-border' : 'bg-primary')} aria-hidden /> : null}
+              <span
+                className={cn(
+                  'flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs whitespace-nowrap',
+                  state === 'current' && 'border-primary bg-primary text-primary-foreground',
+                  state === 'done' && 'border-primary text-primary',
+                  state === 'next' && 'border-border text-muted-foreground',
+                )}
+              >
+                {state === 'done' ? <Check className="size-3" aria-hidden /> : null}
+                <span className="sr-only">{tStages(state)}: </span>
+                {english ? common.stages[key].titleEn : common.stages[key].titleAr}
+              </span>
+            </li>
+          ))}
+        </ol>
         <p className="eyebrow">{t('stageOf', { n: formatDigits(view.stageIndex + 1), total: formatDigits(view.stageCount) })}</p>
         <h3 id={`stage-${program.sinSlug}`} className="text-xl font-medium">
           {english ? stage.titleEn : stage.titleAr}
         </h3>
         <p className="max-w-3xl text-lg leading-9">{english ? stage.bodyEn : stage.bodyAr}</p>
+        <div className="next-step !mt-0 flex flex-col gap-1">
+          <strong>{tStages('taskTitle')}</strong>
+          <span>{tStages(`tasks.${STAGE_TASKS[view.stage]}`)}</span>
+        </div>
         <p className="text-sm leading-7 text-muted-foreground">{t('stageRule', { days: formatDigits(common.stageMinDays) })}</p>
-        <ol className="flex flex-wrap gap-2" aria-label={t('stagesLabel')}>
-          {view.stages.map((key, index) => (
-            <li
-              key={key}
-              aria-current={index === view.stageIndex ? 'step' : undefined}
-              className={cn(
-                'rounded-full border px-3 py-1 text-sm',
-                index === view.stageIndex ? 'border-primary text-primary' : 'border-border text-muted-foreground',
-              )}
-            >
-              {english ? common.stages[key].titleEn : common.stages[key].titleAr}
-            </li>
-          ))}
-        </ol>
-        {stage.evidence && stage.evidence.length > 0 ? <EvidenceQuotes ids={stage.evidence} quotes={quotes} /> : null}
       </section>
 
       {actions.length > 0 ? (
@@ -139,7 +200,7 @@ export function ProgramPanel({ program, entry, common, name, habits, quotes, tod
 
       {entry.help ? <p className="next-step !mt-0">{english ? common.helpEn : common.helpAr}</p> : null}
 
-      <CheckInForm program={program} today={today} />
+      <CheckInForm program={program} today={today} onFell={() => setFixOpen(true)} />
 
       {fell ? (
         <section className="flex flex-col gap-3" aria-labelledby={`fall-${program.sinSlug}`}>
@@ -147,21 +208,28 @@ export function ProgramPanel({ program, entry, common, name, habits, quotes, tod
             {english ? common.afterFall.titleEn : common.afterFall.titleAr}
           </h3>
           <p className="max-w-3xl text-lg leading-9">{english ? common.afterFall.bodyEn : common.afterFall.bodyAr}</p>
-          {common.afterFall.evidence ? <EvidenceQuotes ids={common.afterFall.evidence} quotes={quotes} /> : null}
+          {hopeId ? (
+            <div aria-label={tCounters('hope')} role="group">
+              <EvidenceQuotes ids={[hopeId]} quotes={quotes} />
+            </div>
+          ) : null}
+          <button type="button" className="solid-button button-wrap self-start" onClick={() => setFixOpen(true)}>
+            {tFix('open')}
+          </button>
         </section>
       ) : null}
+      <FixItSheet
+        open={fixOpen}
+        onOpenChange={setFixOpen}
+        program={program}
+        entry={entry}
+        common={common}
+        habits={habits}
+        quotes={quotes}
+        today={today}
+      />
 
-      <section className="flex flex-col gap-2" aria-labelledby={`summary-${program.sinSlug}`}>
-        <h3 id={`summary-${program.sinSlug}`} className="text-xl font-medium">
-          {t('summaryTitle', { days: formatDigits(SUMMARY_DAYS) })}
-        </h3>
-        <p className="leading-8">
-          {CHECK_IN_VALUES.map((value) =>
-            t('summaryItem', { label: t(`values.${value}`), n: formatDigits(view.summary[value]) }),
-          ).join(' · ')}
-        </p>
-        <p className="text-sm text-muted-foreground">{t('summaryNote')}</p>
-      </section>
+      <WeakPatternCard program={program} actions={actions} />
 
       {view.recent.length > 0 ? <RecentCheckIns recent={view.recent} /> : null}
 
@@ -169,11 +237,35 @@ export function ProgramPanel({ program, entry, common, name, habits, quotes, tod
         <h3 id={`texts-${program.sinSlug}`} className="text-xl font-medium">
           {t('textsTitle')}
         </h3>
-        <EvidenceQuotes ids={entry.evidence} quotes={quotes} />
+        <EvidenceQuotes ids={programTextIds(entry, common, view.stage)} quotes={quotes} />
       </section>
 
       <EndProgram program={program} />
     </article>
+  );
+}
+
+/** «متى تضعف؟»: derived on this device from the trigger chips; shown after 14 tagged check-ins, never sent. */
+function WeakPatternCard({ program, actions }: { program: SinProgram; actions: readonly string[] }) {
+  const t = useTranslations('leaveSin.pattern');
+  const tTriggers = useTranslations('leaveSin.triggers');
+  const limitLabel = useLimitLabel(actions);
+  const pattern = weakPattern(program);
+  if (!pattern) return null;
+  const limit = limitLabel(suggestedLimit(pattern, actions.length));
+  return (
+    <section className="flex flex-col gap-2 rounded-2xl border border-border bg-card p-5" aria-labelledby={`pattern-${program.sinSlug}`}>
+      <h3 id={`pattern-${program.sinSlug}`} className="text-xl font-medium">
+        {t('title')}
+      </h3>
+      <p className="text-sm text-muted-foreground">{t('lead')}</p>
+      <ul className="flex flex-col gap-1 leading-8">
+        {pattern.when ? <li>{t('when', { value: tTriggers(`times.${pattern.when}`) })}</li> : null}
+        {pattern.where ? <li>{t('where', { value: tTriggers(`places.${pattern.where}`) })}</li> : null}
+        {pattern.feeling ? <li>{t('feeling', { value: tTriggers(`feelings.${pattern.feeling}`) })}</li> : null}
+      </ul>
+      {limit ? <p className="font-medium">{t('suggestion', { limit })}</p> : null}
+    </section>
   );
 }
 
@@ -229,6 +321,7 @@ function RecentCheckIns({ recent }: { recent: ReturnType<typeof programView>['re
         {recent.map((c) => (
           <li key={c.date} className="leading-8">
             <span className="text-muted-foreground">{formatGregorian(c.date, locale)}</span> · {t(`values.${c.value}`)}
+            {hasTriggers(c.triggers) ? <TriggerLine triggers={c.triggers} /> : null}
             {c.note ? <p className="break-words whitespace-pre-line">{c.note}</p> : null}
           </li>
         ))}
@@ -237,10 +330,29 @@ function RecentCheckIns({ recent }: { recent: ReturnType<typeof programView>['re
   );
 }
 
-function CheckInForm({ program, today }: { program: SinProgram; today: string }) {
+function TriggerLine({ triggers }: { triggers: Triggers }) {
+  const t = useTranslations('leaveSin.triggers');
+  const parts = [
+    triggers.when ? t(`times.${triggers.when}`) : null,
+    triggers.where ? t(`places.${triggers.where}`) : null,
+    triggers.feeling ? t(`feelings.${triggers.feeling}`) : null,
+  ].filter((p): p is string => p !== null);
+  return <span className="text-sm text-muted-foreground"> · {parts.join('، ')}</span>;
+}
+
+interface CheckInFormProps {
+  program: SinProgram;
+  today: string;
+  /** After «وقعت ثم تبت» is saved: the page opens «خربانة؟ صلّحها». */
+  onFell: () => void;
+}
+
+function CheckInForm({ program, today, onFell }: CheckInFormProps) {
   const t = useTranslations('leaveSin.checkIn');
   const tValues = useTranslations('leaveSin.program.values');
   const existing = program.checkIns.find((c) => c.date === today);
+  const [triggers, setTriggers] = useState<Triggers | null>(null);
+  const shownTriggers = triggers ?? existing?.triggers ?? {};
   const schema = useMemo(
     () =>
       z.object({
@@ -255,14 +367,21 @@ function CheckInForm({ program, today }: { program: SinProgram; today: string })
     values: { value: existing?.value ?? '', note: existing?.note ?? '' },
   });
 
+  const chosen = useWatch({ control: form.control, name: 'value' });
+
   function handleSubmit(values: Values) {
     const note = values.note.trim();
+    const value = values.value as CheckInValue;
     updateStore((store) => ({
       ...store,
-      programs: store.programs.map((p) =>
-        p.sinSlug === program.sinSlug ? checkIn(p, today, values.value as CheckInValue, note || undefined) : p,
-      ),
+      programs: store.programs.map((p) => {
+        if (p.sinSlug !== program.sinSlug) return p;
+        const saved = checkIn(p, today, value, note || undefined);
+        return value === 'held' ? saved : annotateCheckIn(saved, today, { triggers: shownTriggers });
+      }),
     }));
+    setTriggers(null);
+    if (value === 'fell_repented' && existing?.value !== 'fell_repented') onFell();
   }
 
   return (
@@ -297,6 +416,7 @@ function CheckInForm({ program, today }: { program: SinProgram; today: string })
             </FormItem>
           )}
         />
+        {chosen === 'weak' || chosen === 'fell_repented' ? <TriggerChips value={shownTriggers} onChange={setTriggers} /> : null}
         <FormField
           control={form.control}
           name="note"

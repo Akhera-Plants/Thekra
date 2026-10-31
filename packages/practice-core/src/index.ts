@@ -9,6 +9,7 @@ export * from './rules.js';
 export * from './ics.js';
 export * from './plan.js';
 export * from './sin-program.js';
+export * from './sin-support.js';
 export * from './kinship.js';
 export * from './storage.js';
 export * from './sync.js';

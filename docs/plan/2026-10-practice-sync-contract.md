@@ -92,6 +92,12 @@ a failure there is logged and never fails the sync.
   `version` → 409 `SIN_VAULT_CONFLICT` with the current vault in `details`. The server checks only base64 shape, sizes,
   `kdf === 'pbkdf2-sha256'` and `iterations >= 210000`.
 - `DELETE /v1/me/sin-vault` → 204.
+- **Phase 3 (2026-10-31, «تخفَّف»), inside the plaintext only:** a check-in may carry `triggers` (`when` / `where` /
+  `feeling`, chip keys from practice-core `TRIGGER_TIMES` / `TRIGGER_PLACES` / `TRIGGER_FEELINGS`, only on `weak` or
+  `fell_repented`), `goodDeed: true` («حسنة الآن») and `nextLimit` (a `GENERIC_LIMITS` key or `action:<n>`). They travel
+  only inside the encrypted vault with the check-in and merge with it by date. Stored programs without them read as
+  none; an unknown or invalid part is dropped (`sanitizeCheckIn`), never the day. «متى تضعف؟», the counters and the
+  weekly task are derived on the device and stored nowhere. The server is unchanged (it never sees the plaintext).
 
 After a sync the web push planner follows practice-core: a paused plan reminds of nothing (and no day inside a pause),
 an established plan in its first slot only (`reminderSlots`); a visited sick person is no longer due, an unvisited one

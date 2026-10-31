@@ -7,11 +7,13 @@
  * practice/_layout.tsx), and the name shows only as plain text inside the page, never as a header element.
  *
  * Flow: choose a catalog program → the willpower question (only when the program's `gradualAllowed` is true
- * and it is a sin against the right of Allah: owner decision D1) → practice-core `startProgram`. Then the
- * current stage (`currentStage`) with its reviewed title/body, practical steps, alternatives, evidence (one text
- * per list, «المزيد» to the sin's page), the daily check-in (held / weak / fell_repented + private note), `summary`
- * (counts of days only) and, after «وقعت ثم تبت», the `afterFall` («خربانة؟ صلّحها») content, and «دفتري الخاص» (past check-ins with their notes,
- * newest first, shown on this screen only). Several programs run side by side, as on the website: each has its own
+ * and it is a sin against the right of Allah: owner decision D1) → practice-core `startProgram`. Then (redesign phase 3):
+ * «لحظة ضعف» (practice/moment), yesterday's «حدّ صغير لغد», the no-reset counters («ثبتّ X من 30», «منذ آخر توبة»), the
+ * stages as a compact line with only the current one open and its one task for the week, practical steps, alternatives,
+ * the daily check-in (held / weak / fell_repented, optional trigger chips after a weak day or a fall, private note),
+ * after «وقعت ثم تبت» the `afterFall` content with one hope text and the four-step «خربانة؟ صلّحها» sheet, «متى تضعف؟»
+ * (derived here after 14 tagged check-ins), «دفتري الخاص» (past check-ins with their chips and notes, newest first)
+ * and the texts once under «ما ورد فيها». Several programs run side by side, as on the website: each has its own
  * stage, check-in, notebook and «أنهِ هذا البرنامج» (confirmed); «ابدأ برنامجًا آخر», or a sin page's «ابدأ برنامج
  * الترك», opens the chooser with the sins not already followed.
  * «احذف كل بيانات البرنامج» wipes it all at once (no confirmation step: «خروج آمن», roadmap §4.2): local data, the
@@ -26,30 +28,40 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, KeyboardAvoidingView, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, ScrollView, View } from 'react-native';
 import { LimitSheet } from '@/components/practice/LimitSheet';
 import { useLimits } from '@/lib/practice/use-habits-hub';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Check, Plus, ShieldCheck } from 'lucide-react-native';
+import { Check, Plus, ShieldCheck, Waves } from 'lucide-react-native';
 import {
   activePrograms,
-  addDays,
   afterFall,
+  annotateCheckIn,
   checkIn,
   currentStage,
+  hasTriggers,
+  hopeTextFor,
+  limitForToday,
+  programCounters,
+  shortestTextId,
+  STAGE_TASKS,
+  stageTrack,
   startProgram,
   stagesFor,
-  summary,
+  suggestedLimit,
+  weakPattern,
+  type CheckIn,
   type CheckInValue,
   type SinProgram,
+  type Triggers,
 } from '@thekra/practice-core';
 import { usePracticeCatalog, useSinProgramEvidence } from '@/lib/api/practice';
 import { useSins } from '@/lib/api/sins';
 import { pick, pickList, type CatalogSinProgram, type StageContent } from '@/lib/practice/catalog-types';
 import { shortDate } from '@/lib/practice/format';
 import { ensurePermission } from '@/lib/practice/notifications';
-import { pendingProgram, setPendingProgram, today, usePracticeStore } from '@/lib/practice/practice-store';
+import { pendingProgram, setMomentSource, setPendingProgram, today, usePracticeStore } from '@/lib/practice/practice-store';
 import { notebookEntries, withProgramEnded, withProgramStarted } from '@/lib/practice/sin-program-view';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { useVaultState, wipeSinProgramEverywhere } from '@/lib/practice/vault-runner';
@@ -58,6 +70,8 @@ import type { QuoteDto } from '@/lib/types/api';
 import { EvidenceList } from '@/components/practice/EvidenceList';
 import { TimeField } from '@/components/practice/editors';
 import { SinProgramGuard } from '@/components/practice/SinProgramGuard';
+import { FixItSheet, useLimitLabel } from '@/components/practice/sin/FixItSheet';
+import { TriggerChips } from '@/components/practice/sin/TriggerChips';
 import { VaultCard, VaultSignInNote } from '@/components/practice/VaultCard';
 import { radius, space, useStyles, type Theme } from '@/theme';
 import {
@@ -83,8 +97,6 @@ const CHECK_IN_KEYS: Record<CheckInValue, string> = {
   fell_repented: 'sinProgram.fell',
 };
 const CHECK_IN_VALUES: readonly CheckInValue[] = ['held', 'weak', 'fell_repented'];
-/** `summary` window: the last 30 days, today included. */
-const SUMMARY_SPAN = 29;
 
 const makeStyles = (t: Theme) => ({
   flex: { flex: 1 },
@@ -92,15 +104,23 @@ const makeStyles = (t: Theme) => ({
   tight: { gap: space.xs },
   options: { gap: space.sm },
   note: { minHeight: 96, textAlignVertical: 'top' as const },
-  stages: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: space.sm },
+  track: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.xs, paddingVertical: space.xs },
+  trackLine: { width: 12, height: 1, backgroundColor: t.colors.border },
+  trackLineDone: { backgroundColor: t.colors.primary },
   stagePill: {
-    paddingHorizontal: space.md,
-    paddingVertical: space.xs,
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 4,
+    paddingHorizontal: space.sm,
+    paddingVertical: 4,
     borderRadius: radius.full,
     borderWidth: 1,
     borderColor: t.colors.border,
   },
-  stagePillCurrent: { borderColor: t.colors.primary },
+  stagePillDone: { borderColor: t.colors.primary },
+  stagePillCurrent: { borderColor: t.colors.primary, backgroundColor: t.colors.primary },
+  counters: { gap: 2 },
+  pattern: { gap: space.sm, padding: space.lg, borderRadius: radius.panel, borderWidth: 1, borderColor: t.colors.border, backgroundColor: t.colors.card },
   bulletRow: { flexDirection: 'row' as const, alignItems: 'flex-start' as const, gap: space.md },
   bullet: { width: 5, height: 5, borderRadius: radius.full, backgroundColor: t.colors.mutedForeground, marginTop: 12 },
   bulletText: { flex: 1 },
@@ -208,6 +228,15 @@ function SinProgramContent() {
         ) : null}
         {programs.length > 0 && !showChooser ? (
           <>
+            <Button
+              label={t('sinProgram.moment.open')}
+              icon={Waves}
+              variant="outline"
+              onPress={() => {
+                setMomentSource(null);
+                router.push('/practice/moment');
+              }}
+            />
             {programs.map((program, index) => (
               <View key={program.sinSlug} style={styles.block}>
                 {index > 0 ? <Rule /> : null}
@@ -382,16 +411,26 @@ function ProgramView({ program, entry, sinName, evidenceById, evidenceLoading, e
   const locale = useUiLocale();
   const catalog = usePracticeCatalog(locale);
   const common = catalog.data?.sinPrograms.common;
+  const [fixOpen, setFixOpen] = useState(false);
   const d = today();
   const stage = currentStage(program, d);
   const stageKeys = stagesFor(program.category);
+  const track = stageTrack(program, d);
   const stageContent = common?.stages[stage.stage];
   const todayCheckIn = program.checkIns.find((c) => c.date === d);
   const showAfterFall = todayCheckIn?.value === 'fell_repented' && afterFall(program) === 'fixit';
   const actions = entry ? pickList(entry.actionsAr, entry.actionsEn, locale) : [];
+  const limitLabel = useLimitLabel(actions);
+  const todayLimit = limitForToday(program, d);
+  const todayLimitText = todayLimit ? limitLabel(todayLimit) : null;
+  const counters = programCounters(program, d);
   const gradual = entry && program.path === 'gradual' ? pickList(entry.gradualStepsAr, entry.gradualStepsEn, locale) : [];
-  // One text per list, «المزيد» to the sin's own page: the texts are read there, not repeated here.
-  const evidenceProps = { byId: evidenceById, loading: evidenceLoading, error: evidenceError, limit: 1, moreHref: `/sins/${program.sinSlug}` as const };
+  const evidenceProps = { byId: evidenceById, loading: evidenceLoading, error: evidenceError };
+  const afterFallIds = common?.afterFall.evidence ?? [];
+  const texts = evidenceById ? [...evidenceById.values()] : [];
+  const hopeId = showAfterFall ? hopeTextFor(afterFallIds, texts, d, shortestTextId(afterFallIds, texts)) : null;
+  // «ما ورد فيها»: the program's texts and the current stage's, each once.
+  const textIds = [...new Set([...(entry?.evidence ?? []), ...(stageContent?.evidence ?? [])])];
 
   return (
     <>
@@ -405,6 +444,24 @@ function ProgramView({ program, entry, sinName, evidenceById, evidenceLoading, e
         </Text>
       </View>
 
+      {todayLimitText ? (
+        <NextStep>
+          <Text variant="body">{t('sinProgram.limits.today', { limit: todayLimitText })}</Text>
+        </NextStep>
+      ) : null}
+
+      <View style={styles.counters}>
+        <Text variant="heading">
+          {`${t('sinProgram.counters.held', { n: String(counters.held), total: String(counters.window) })} · ${t(
+            counters.fromStart ? 'sinProgram.counters.sinceStart' : 'sinProgram.counters.sinceRepentance',
+            { count: counters.daysSinceRepentance },
+          )}`}
+        </Text>
+        <Text variant="small" tone="muted">
+          {t('sinProgram.counters.note')}
+        </Text>
+      </View>
+
       {gradual.length > 0 ? (
         <NextStep title={t('sinProgram.gradualSteps')}>
           {gradual.map((step, i) => (
@@ -415,6 +472,30 @@ function ProgramView({ program, entry, sinName, evidenceById, evidenceLoading, e
 
       {stageContent && common ? (
         <View style={styles.block}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} accessibilityLabel={t('sinProgram.stages.track')}>
+            <View style={styles.track}>
+              {track.map(({ stage: key, state }, index) => {
+                const content = common.stages[key];
+                if (!content) return null;
+                return (
+                  <React.Fragment key={key}>
+                    {index > 0 ? <View style={[styles.trackLine, state !== 'next' && styles.trackLineDone]} /> : null}
+                    <View
+                      style={[styles.stagePill, state === 'done' && styles.stagePillDone, state === 'current' && styles.stagePillCurrent]}
+                      accessible
+                      accessibilityLabel={`${t(`sinProgram.stages.${state}`)}: ${pick(content, 'title', locale)}`}
+                      accessibilityState={{ selected: state === 'current' }}
+                    >
+                      {state === 'done' ? <Icon icon={Check} size={12} tone="link" /> : null}
+                      <Text variant="caption" tone={state === 'current' ? 'inverse' : state === 'done' ? 'link' : 'muted'}>
+                        {pick(content, 'title', locale)}
+                      </Text>
+                    </View>
+                  </React.Fragment>
+                );
+              })}
+            </View>
+          </ScrollView>
           <Text variant="eyebrow">
             {`${t('sinProgram.stage', { n: String(stage.index + 1), total: String(stageKeys.length) })} · ${t('sinProgram.since', {
               date: shortDate(stage.since),
@@ -424,26 +505,14 @@ function ProgramView({ program, entry, sinName, evidenceById, evidenceLoading, e
             {pick(stageContent, 'title', locale)}
           </Text>
           <StageBody content={stageContent} />
+          <NextStep title={t('sinProgram.stages.taskTitle')}>
+            <Text variant="body">{t(`sinProgram.stages.tasks.${STAGE_TASKS[stage.stage]}`)}</Text>
+          </NextStep>
           <Text variant="small" tone="muted">
             {t('sinProgram.stageHint')}
           </Text>
-          <View style={styles.stages}>
-            {stageKeys.map((key, index) => {
-              const content = common.stages[key];
-              if (!content) return null;
-              const current = index === stage.index;
-              return (
-                <View key={key} style={[styles.stagePill, current && styles.stagePillCurrent]} accessibilityState={{ selected: current }}>
-                  <Text variant="caption" tone={current ? 'link' : 'muted'}>
-                    {pick(content, 'title', locale)}
-                  </Text>
-                </View>
-              );
-            })}
-          </View>
         </View>
       ) : null}
-      <EvidenceList ids={stageContent?.evidence} {...evidenceProps} />
 
       {actions.length > 0 ? (
         <SubSection title={t('sinProgram.actions')}>
@@ -455,19 +524,60 @@ function ProgramView({ program, entry, sinName, evidenceById, evidenceLoading, e
 
       {entry?.help && common ? <NextStep title={t('sinProgram.help')}>{pick(common, 'help', locale)}</NextStep> : null}
 
-      <CheckInForm program={program} />
-
-      <Notebook program={program} />
+      <CheckInForm program={program} onFell={() => setFixOpen(true)} />
 
       {showAfterFall && common ? (
         <SubSection title={pick(common.afterFall, 'title', locale)} tone="link">
           <StageBody content={common.afterFall} />
-          <EvidenceList ids={common.afterFall.evidence} {...evidenceProps} />
+          {hopeId ? <EvidenceList ids={[hopeId]} {...evidenceProps} title={t('sinProgram.counters.hope')} /> : null}
+          <Button label={t('sinProgram.fixit.open')} onPress={() => setFixOpen(true)} />
         </SubSection>
       ) : null}
+      {entry && common ? (
+        <FixItSheet
+          visible={fixOpen}
+          onClose={() => setFixOpen(false)}
+          program={program}
+          entry={entry}
+          common={common}
+          habits={catalog.data?.habits ?? []}
+          evidenceById={evidenceById}
+          today={d}
+        />
+      ) : null}
 
-      <EvidenceList ids={entry?.evidence} {...evidenceProps} />
+      <WeakPatternCard program={program} actions={actions} />
+
+      <Notebook program={program} />
+
+      <EvidenceList ids={textIds} {...evidenceProps} title={t('sinProgram.textsTitle')} />
     </>
+  );
+}
+
+/** «متى تضعف؟»: derived on this device from the trigger chips; shown after 14 tagged check-ins, never sent. */
+function WeakPatternCard({ program, actions }: { program: SinProgram; actions: readonly string[] }) {
+  const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
+  const limitLabel = useLimitLabel(actions);
+  const pattern = weakPattern(program);
+  if (!pattern) return null;
+  const limit = limitLabel(suggestedLimit(pattern, actions.length));
+  return (
+    <View style={styles.pattern}>
+      <Text variant="heading" accessibilityRole="header">
+        {t('sinProgram.pattern.title')}
+      </Text>
+      <Text variant="small" tone="muted">
+        {t('sinProgram.pattern.lead')}
+      </Text>
+      {pattern.when ? <Text variant="body">{t('sinProgram.pattern.when', { value: t(`sinProgram.triggers.times.${pattern.when}`) })}</Text> : null}
+      {pattern.where ? <Text variant="body">{t('sinProgram.pattern.where', { value: t(`sinProgram.triggers.places.${pattern.where}`) })}</Text> : null}
+      {pattern.feeling ? (
+        <Text variant="body">{t('sinProgram.pattern.feeling', { value: t(`sinProgram.triggers.feelings.${pattern.feeling}`) })}</Text>
+      ) : null}
+      {limit ? <Text variant="label">{t('sinProgram.pattern.suggestion', { limit })}</Text> : null}
+    </View>
   );
 }
 
@@ -514,25 +624,32 @@ function Alternatives({ keys }: { keys: string[] }) {
   );
 }
 
-/** «كيف كان يومك؟»: one of three, an optional private note (on this device only), then counts of days only. */
-function CheckInForm({ program }: { program: SinProgram }) {
+/** «كيف كان يومك؟»: one of three, optional trigger chips after «ضعفت» / «وقعت ثم تبت», an optional private note. */
+function CheckInForm({ program, onFell }: { program: SinProgram; onFell: () => void }) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const setStore = usePracticeStore((s) => s.setStore);
   const [value, setValue] = useState<CheckInValue | null>(null);
+  const [triggers, setTriggers] = useState<Triggers | null>(null);
   const [note, setNote] = useState('');
   const d = today();
   const todayCheckIn = program.checkIns.find((c) => c.date === d);
-  const counts = summary(program, addDays(d, -SUMMARY_SPAN), d);
+  const shownTriggers = triggers ?? todayCheckIn?.triggers ?? {};
 
   function save() {
     if (!value) return;
     const trimmed = note.trim();
     setStore((s) => ({
       ...s,
-      programs: s.programs.map((p) => (p.sinSlug === program.sinSlug ? checkIn(p, d, value, trimmed || undefined) : p)),
+      programs: s.programs.map((p) => {
+        if (p.sinSlug !== program.sinSlug) return p;
+        const saved = checkIn(p, d, value, trimmed || undefined);
+        return value === 'held' ? saved : annotateCheckIn(saved, d, { triggers: shownTriggers });
+      }),
     }));
     setNote('');
+    setTriggers(null);
+    if (value === 'fell_repented' && todayCheckIn?.value !== 'fell_repented') onFell();
   }
 
   return (
@@ -547,6 +664,7 @@ function CheckInForm({ program }: { program: SinProgram }) {
           <CheckRow key={v} radio title={t(CHECK_IN_KEYS[v])} checked={value === v} onPress={() => setValue(v)} />
         ))}
       </View>
+      {value === 'weak' || value === 'fell_repented' ? <TriggerChips value={shownTriggers} onChange={setTriggers} /> : null}
       <Field
         label={t('sinProgram.note')}
         value={note}
@@ -557,11 +675,18 @@ function CheckInForm({ program }: { program: SinProgram }) {
         importantForAutofill="no"
       />
       <Button label={t('sinProgram.saveCheckIn')} onPress={save} disabled={!value} />
-      <Text variant="small" tone="muted">
-        {t('sinProgram.summary', { days: String(counts.daysCheckedIn) })}
-      </Text>
     </SubSection>
   );
+}
+
+function triggerLine(c: CheckIn, t: (key: string) => string): string | null {
+  if (!hasTriggers(c.triggers)) return null;
+  const parts = [
+    c.triggers.when ? t(`sinProgram.triggers.times.${c.triggers.when}`) : null,
+    c.triggers.where ? t(`sinProgram.triggers.places.${c.triggers.where}`) : null,
+    c.triggers.feeling ? t(`sinProgram.triggers.feelings.${c.triggers.feeling}`) : null,
+  ].filter((x): x is string => x !== null);
+  return parts.join('، ');
 }
 
 /** «دفتري الخاص»: past check-ins with their notes, newest first. Shown here only; the name of the sin is not in it. */
@@ -575,7 +700,9 @@ function Notebook({ program }: { program: SinProgram }) {
       <View style={styles.altList}>
         {entries.map((c) => (
           <View key={c.date} style={styles.noteRow}>
-            <Text variant="small" tone="muted">{`${shortDate(c.date)} · ${t(CHECK_IN_KEYS[c.value])}`}</Text>
+            <Text variant="small" tone="muted">
+              {[shortDate(c.date), t(CHECK_IN_KEYS[c.value]), triggerLine(c, t)].filter(Boolean).join(' · ')}
+            </Text>
             {c.note ? <Text variant="body">{c.note}</Text> : null}
           </View>
         ))}

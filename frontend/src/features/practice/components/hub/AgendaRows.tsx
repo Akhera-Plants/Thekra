@@ -9,6 +9,7 @@ import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { Button } from '@/components/shared/kit/button';
 import { formatDigits } from '@/lib/format/digits';
 import { langOf } from '@/lib/practice/kinship';
+import { setMomentSource } from '@/lib/practice/local-store';
 import type { PracticeHabit, ScheduleBasis } from '@/lib/types/practice';
 import { cn } from '@/lib/utils';
 import { usePlanWords } from '../PlanCard';
@@ -272,6 +273,18 @@ export function ProgramRow({ item, isToday }: ProgramRowProps) {
       title={tLeave('genericTitle')}
       detail={item.done ? t('programDone') : isToday ? t('programToday') : t('programOpen')}
       isMuted={item.done}
+      undo={
+        isToday ? (
+          // «لحظة ضعف», quiet and generic: it names nothing, and opens the program in focus on this device.
+          <Link
+            href="/practice/leave-sin/moment"
+            className="ms-12 self-start text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            onClick={() => setMomentSource(null)}
+          >
+            {tLeave('moment.open')}
+          </Link>
+        ) : undefined
+      }
     />
   );
 }

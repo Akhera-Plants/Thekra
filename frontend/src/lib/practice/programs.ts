@@ -14,7 +14,7 @@ import {
   type SinProgram,
   type Stage,
 } from '@thekra/practice-core';
-import type { PracticeCatalog, SinProgramEntry } from '@/lib/types/practice';
+import type { PracticeCatalog, SinProgramCommon, SinProgramEntry } from '@/lib/types/practice';
 
 export const SUMMARY_DAYS = 30;
 export const RECENT_CHECKINS = 7;
@@ -67,4 +67,9 @@ export function programView(program: SinProgram, today: LocalDate): ProgramView 
       .slice(-RECENT_CHECKINS)
       .reverse(),
   };
+}
+
+/** «ما ورد فيها»: the program's texts, then the current stage's, each once. */
+export function programTextIds(entry: SinProgramEntry, common: SinProgramCommon, stage: Stage): string[] {
+  return [...new Set([...entry.evidence, ...(common.stages[stage].evidence ?? [])])];
 }

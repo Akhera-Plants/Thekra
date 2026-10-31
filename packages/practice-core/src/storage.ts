@@ -23,7 +23,7 @@ import { HIJRI_OFFSET_MAX, HIJRI_OFFSET_MIN } from './hijri.js';
 import { latestDate, undoLastContact, validateRelative, type PeopleCircle, type Relative } from './kinship.js';
 import { mergeLogs, validatePlan, type Plan, type PlanLog } from './plan.js';
 import type { Rule } from './rules.js';
-import { validateCheckIn, validateProgram, type CheckIn, type SinProgram } from './sin-program.js';
+import { sanitizeCheckIn, validateCheckIn, validateProgram, type CheckIn, type SinProgram } from './sin-program.js';
 
 export const STORE_VERSION = 2;
 /** Most excused days kept (the newest win). */
@@ -171,6 +171,9 @@ function cloneCheckIn(c: CheckIn): CheckIn {
   const out: CheckIn = { date: c.date, value: c.value };
   if (c.note !== undefined) out.note = c.note;
   if (c.updatedAt !== undefined) out.updatedAt = c.updatedAt;
+  if (c.triggers !== undefined) out.triggers = { ...c.triggers };
+  if (c.goodDeed === true) out.goodDeed = true;
+  if (c.nextLimit !== undefined) out.nextLimit = c.nextLimit;
   return out;
 }
 
@@ -293,7 +296,9 @@ function keepValid<T>(raw: unknown, validate: (v: unknown) => string | null, clo
 export function parsePrograms(raw: unknown): SinProgram[] {
   if (!Array.isArray(raw)) return [];
   const cleaned = raw.map((p) =>
-    isRecord(p) && Array.isArray(p.checkIns) ? { ...p, checkIns: p.checkIns.filter((c) => validateCheckIn(c) === null) } : p,
+    isRecord(p) && Array.isArray(p.checkIns)
+      ? { ...p, checkIns: p.checkIns.map(sanitizeCheckIn).filter((c) => validateCheckIn(c) === null) }
+      : p,
   );
   return keepValid<SinProgram>(cleaned, validateProgram, cloneProgram, (p) => p.sinSlug);
 }

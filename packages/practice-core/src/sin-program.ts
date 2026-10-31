@@ -10,6 +10,11 @@
  * lighten it with strong effort) and adds a 'restore_rights' stage (رد الحقوق والاستحلال).
  *
  * Wording rule: no streaks, no counters of falls, no failure words. A fall leads to the «خربانة؟ صلّحها» content.
+ *
+ * Phase 3 (2026-10-31): a check-in after «ضعفت» / «وقعت ثم تبت» may carry optional triggers (when / where / feeling,
+ * chips only), a «حسنة الآن» mark and one small limit for the next day. They live on the check-in, so they travel
+ * only inside the encrypted vault with the rest of the program and merge with it by date. Stored programs from before
+ * simply have none ({@link sanitizeCheckIn} drops anything unknown instead of losing the check-in).
  */
 import { diffDays, isIsoTime, isValidDate, isoMillis, nowIso, toDayNumber, fromDayNumber, type IsoTime, type LocalDate } from './dates.js';
 
@@ -18,11 +23,60 @@ export type Path = 'cut' | 'gradual';
 export type Stage = 'harms' | 'alternatives' | 'environment' | 'limits' | 'restore_rights' | 'leave';
 export type CheckInValue = 'held' | 'weak' | 'fell_repented';
 
+/** «متى؟»: the part of the day. */
+export type TriggerTime = 'fajr_morning' | 'dhuhr_asr' | 'maghrib_isha' | 'after_isha' | 'late_night';
+/** «أين؟» */
+export type TriggerPlace = 'alone' | 'with_someone' | 'outside';
+/** «بماذا شعرت؟» */
+export type TriggerFeeling = 'boredom' | 'tiredness' | 'anger' | 'loneliness' | 'stress' | 'sadness';
+
+export const TRIGGER_TIMES: readonly TriggerTime[] = ['fajr_morning', 'dhuhr_asr', 'maghrib_isha', 'after_isha', 'late_night'];
+export const TRIGGER_PLACES: readonly TriggerPlace[] = ['alone', 'with_someone', 'outside'];
+export const TRIGGER_FEELINGS: readonly TriggerFeeling[] = ['boredom', 'tiredness', 'anger', 'loneliness', 'stress', 'sadness'];
+
+/** Optional chips after «ضعفت» / «وقعت ثم تبت». Every part is optional; an empty object is not stored. */
+export interface Triggers {
+  when?: TriggerTime;
+  where?: TriggerPlace;
+  feeling?: TriggerFeeling;
+}
+
+/**
+ * Generic small limits, chosen by trigger when the program has none that fits (the client translates the key).
+ * A program's own practical steps are referred to as `action:<index>` (index into the catalog's `actions`).
+ */
+export const GENERIC_LIMITS = [
+  'phone_outside_room',
+  'stay_near_people',
+  'plan_before_going_out',
+  'leave_gathering_early',
+  'plan_free_time',
+  'sleep_early',
+  'wudu_when_angry',
+  'call_someone_daily',
+  'walk_with_dhikr',
+] as const;
+export type GenericLimit = (typeof GENERIC_LIMITS)[number];
+/** A generic limit key or `action:<n>`. */
+export type LimitRef = GenericLimit | `action:${number}`;
+
+export function isLimitRef(value: unknown): value is LimitRef {
+  if (typeof value !== 'string') return false;
+  if ((GENERIC_LIMITS as readonly string[]).includes(value)) return true;
+  return /^action:(0|[1-9][0-9]?)$/.test(value);
+}
+
 export interface CheckIn {
   date: LocalDate;
   value: CheckInValue;
   /** Free text kept on the device only. */
   note?: string;
+  /** Only with 'weak' or 'fell_repented'. */
+  triggers?: Triggers;
+  /** «أتبع السيئة الحسنة»: a good deed marked right after the fall (when no matching habit was logged instead). */
+  goodDeed?: true;
+  /** «حدّ صغير لغد»: shown on the next day's page. */
+  nextLimit?: LimitRef;
   /** When this check-in was last written. Merging two devices keeps the later one ({@link mergePrograms}). */
   updatedAt?: IsoTime;
 }
@@ -162,7 +216,55 @@ export function validateCheckIn(c: unknown): string | null {
   if (!CHECK_IN_VALUES.includes(r.value as CheckInValue)) return 'check-in value must be held|weak|fell_repented';
   if (r.note !== undefined && typeof r.note !== 'string') return 'check-in note must be a string';
   if (r.updatedAt !== undefined && !isIsoTime(r.updatedAt)) return 'check-in updatedAt must be an ISO time';
+  if (r.triggers !== undefined) {
+    const e = validateTriggers(r.triggers);
+    if (e) return e;
+    if (r.value === 'held') return 'triggers only follow weak|fell_repented';
+  }
+  if (r.goodDeed !== undefined && r.goodDeed !== true) return 'check-in goodDeed must be true when present';
+  if (r.nextLimit !== undefined && !isLimitRef(r.nextLimit)) return 'check-in nextLimit must be a limit key or action:<n>';
   return null;
+}
+
+/** Returns an English error message for the trigger chips, or `null`. */
+export function validateTriggers(t: unknown): string | null {
+  if (typeof t !== 'object' || t === null || Array.isArray(t)) return 'triggers must be an object';
+  const r = t as Record<string, unknown>;
+  for (const key of Object.keys(r)) if (key !== 'when' && key !== 'where' && key !== 'feeling') return `unknown trigger ${key}`;
+  if (r.when !== undefined && !TRIGGER_TIMES.includes(r.when as TriggerTime)) return 'trigger when is not known';
+  if (r.where !== undefined && !TRIGGER_PLACES.includes(r.where as TriggerPlace)) return 'trigger where is not known';
+  if (r.feeling !== undefined && !TRIGGER_FEELINGS.includes(r.feeling as TriggerFeeling)) return 'trigger feeling is not known';
+  return null;
+}
+
+/** True when at least one chip is chosen. */
+export function hasTriggers(t: Triggers | undefined): t is Triggers {
+  return t !== undefined && (t.when !== undefined || t.where !== undefined || t.feeling !== undefined);
+}
+
+/**
+ * Stored-data migration for one check-in: keeps the known, valid parts and drops the rest (an unknown chip, a
+ * trigger on a 'held' day, a bad limit), so an older or damaged copy never loses the day itself. Missing = none.
+ * Returns the input unchanged when it is not a check-in-shaped object (the validator then rejects it).
+ */
+export function sanitizeCheckIn(c: unknown): unknown {
+  if (typeof c !== 'object' || c === null) return c;
+  const r = { ...(c as Record<string, unknown>) };
+  if (r.triggers !== undefined) {
+    const t = r.triggers;
+    const kept: Triggers = {};
+    if (typeof t === 'object' && t !== null && r.value !== 'held') {
+      const tr = t as Record<string, unknown>;
+      if (TRIGGER_TIMES.includes(tr.when as TriggerTime)) kept.when = tr.when as TriggerTime;
+      if (TRIGGER_PLACES.includes(tr.where as TriggerPlace)) kept.where = tr.where as TriggerPlace;
+      if (TRIGGER_FEELINGS.includes(tr.feeling as TriggerFeeling)) kept.feeling = tr.feeling as TriggerFeeling;
+    }
+    if (hasTriggers(kept)) r.triggers = kept;
+    else delete r.triggers;
+  }
+  if (r.goodDeed !== undefined && r.goodDeed !== true) delete r.goodDeed;
+  if (r.nextLimit !== undefined && !isLimitRef(r.nextLimit)) delete r.nextLimit;
+  return r;
 }
 
 /**
@@ -183,10 +285,56 @@ export function checkIn(
   const entry: CheckIn = { date, value };
   const keptNote = note ?? previous?.note;
   if (keptNote !== undefined) entry.note = keptNote;
+  // The chips describe a weak day or a fall: a day changed to «ثبتّ» drops them (and the limit that came with a fall).
+  if (value !== 'held' && previous?.triggers) entry.triggers = { ...previous.triggers };
+  if (value !== 'held' && previous?.nextLimit) entry.nextLimit = previous.nextLimit;
+  if (previous?.goodDeed) entry.goodDeed = true;
   entry.updatedAt = now;
   const checkIns = program.checkIns.filter((c) => c.date !== date).concat(entry);
   checkIns.sort(byDate);
   return { ...program, checkIns };
+}
+
+/** What {@link annotateCheckIn} may change. `null` clears a part. */
+export interface CheckInDetails {
+  triggers?: Triggers | null;
+  goodDeed?: boolean;
+  nextLimit?: LimitRef | null;
+}
+
+/**
+ * Adds or changes the optional details of the day's check-in (it must exist). Triggers are kept only on a weak day
+ * or a fall; an empty set of chips clears them.
+ */
+export function annotateCheckIn(program: SinProgram, date: LocalDate, details: CheckInDetails, now: IsoTime = nowIso()): SinProgram {
+  if (program.endedAt !== undefined) throw new RangeError('The program has ended');
+  const previous = program.checkIns.find((c) => c.date === date);
+  if (!previous) throw new RangeError('No check-in on this date');
+  const entry: CheckIn = { ...previous };
+  if (details.triggers !== undefined) {
+    if (details.triggers === null || !hasTriggers(details.triggers)) delete entry.triggers;
+    else {
+      const e = validateTriggers(details.triggers);
+      if (e) throw new RangeError(e);
+      if (previous.value === 'held') throw new RangeError('Triggers only follow a weak day or a fall');
+      const t: Triggers = {};
+      if (details.triggers.when) t.when = details.triggers.when;
+      if (details.triggers.where) t.where = details.triggers.where;
+      if (details.triggers.feeling) t.feeling = details.triggers.feeling;
+      entry.triggers = t;
+    }
+  }
+  if (details.goodDeed !== undefined) {
+    if (details.goodDeed) entry.goodDeed = true;
+    else delete entry.goodDeed;
+  }
+  if (details.nextLimit !== undefined) {
+    if (details.nextLimit === null) delete entry.nextLimit;
+    else if (!isLimitRef(details.nextLimit)) throw new RangeError('Invalid limit');
+    else entry.nextLimit = details.nextLimit;
+  }
+  entry.updatedAt = now;
+  return { ...program, checkIns: program.checkIns.map((c) => (c.date === date ? entry : c)) };
 }
 
 export interface StageInfo {

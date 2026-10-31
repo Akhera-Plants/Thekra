@@ -15,6 +15,7 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Check, NotebookPen, Sparkles, type LucideIcon } from 'lucide-react-native';
 import type { HabitItem, RelativeItem } from '@thekra/practice-core';
+import { setMomentSource } from '@/lib/practice/practice-store';
 import { radius, space, useStyles, useTheme, type Theme } from '@/theme';
 import { ForwardArrow, Icon, Text } from '@/ui';
 
@@ -303,9 +304,16 @@ export const OccasionRow = memo(function OccasionRow({ title, deed }: OccasionRo
 });
 
 const openProgram = () => router.push('/practice/sin-program');
+const openMoment = () => {
+  setMomentSource(null);
+  router.push('/practice/moment');
+};
 
-/** The private program, generic on purpose: no name, a neutral notebook, «تذكرة من ذكرى». */
-export const ProgramRow = memo(function ProgramRow({ done, meta }: { done: boolean; meta: string }) {
+/**
+ * The private program, generic on purpose: no name, a neutral notebook, «تذكرة من ذكرى». On today a quiet
+ * «لحظة ضعف» link sits under it (generic too: it opens the program in focus on this device).
+ */
+export const ProgramRow = memo(function ProgramRow({ done, meta, showMoment = false }: { done: boolean; meta: string; showMoment?: boolean }) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   return (
@@ -314,6 +322,20 @@ export const ProgramRow = memo(function ProgramRow({ done, meta }: { done: boole
         <IconLead icon={NotebookPen} />
         <RowBody title={t('practice.hub.programTitle')} meta={meta} metaIcon={done ? Check : undefined} settled={done} onPress={openProgram} />
       </View>
+      {showMoment ? (
+        <View style={styles.undo}>
+          <Pressable
+            onPress={openMoment}
+            accessibilityRole="link"
+            hitSlop={6}
+            style={({ pressed }) => [styles.undoButton, pressed && styles.bodyPressed]}
+          >
+            <Text variant="small" tone="muted">
+              {t('sinProgram.moment.open')}
+            </Text>
+          </Pressable>
+        </View>
+      ) : null}
     </View>
   );
 });
