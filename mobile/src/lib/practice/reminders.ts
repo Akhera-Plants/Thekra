@@ -15,8 +15,10 @@
  */
 
 import {
+  activePrograms,
   addDays,
   isPlanDueOn,
+  formatPlanAmount,
   nextDue,
   requiredOn,
   type LocalDate,
@@ -102,7 +104,7 @@ export function planDueOn(
   return isPlanDueOn(plan, date, habitFor(plan, habits)?.defaultRule, { hijriOffset });
 }
 
-/** «2 دقيقة», «ركعتان», «3 × ركعتان», "33 times". Western digits. */
+/** «2 دقيقة», «صدقة», «3 × صدقة», «4 ركعات», "33 times". Western digits. */
 export function formatAmount(
   amount: number,
   unit: PlanUnit,
@@ -111,8 +113,7 @@ export function formatAmount(
   unitFallback: Record<PlanUnit, string>,
 ): string {
   const label = habit ? pick(habit, 'unitLabel', locale) : unitFallback[unit];
-  if (unit === 'times') return amount === 1 ? label : `${amount} × ${label}`;
-  return `${amount} ${label}`;
+  return formatPlanAmount(amount, unit, label, locale, habit?.rakah);
 }
 
 function habitReminders(input: ReminderInput, end: LocalDate): PlannedReminder[] {
@@ -173,9 +174,10 @@ function kinshipReminders(input: ReminderInput, end: LocalDate): PlannedReminder
 
 function sinReminders(input: ReminderInput, days: number): PlannedReminder[] {
   const { store, prefs, today, now, texts } = input;
-  if (!prefs.sinReminders || store.programs.length === 0) return [];
+  const programs = activePrograms(store.programs);
+  if (!prefs.sinReminders || programs.length === 0) return [];
   const time = prefs.sinReminderTime;
-  const checkedInToday = store.programs.some((p) => p.checkIns.some((c) => c.date === today));
+  const checkedInToday = programs.some((p) => p.checkIns.some((c) => c.date === today));
   const out: PlannedReminder[] = [];
   for (let i = 0; i < days; i++) {
     const date = addDays(today, i);

@@ -4,11 +4,13 @@ import {
   compareVersions,
   isValidDate,
   isValidTime,
+  mergeLogEntry,
   planFields,
   relativeFields,
   validatePlan,
   validateRelative,
   validateRule,
+  type LogEntry,
   type Plan,
   type Relative,
   type Rule,
@@ -91,7 +93,10 @@ export interface DeletedWire {
 export interface LogWire {
   planId: string;
   date: string;
+  /** Above 0, or 0 for a day cleared by a correction. */
   amount: number;
+  /** Set when the day was corrected (undo, fixed amount). Absent from the wire when null. */
+  correctedAt?: string | null;
 }
 
 export interface RelativeWire {
@@ -344,10 +349,17 @@ function parseRelative(raw: unknown): RelativeChange {
   };
 }
 
+/** A day's log. A corrected day (`correctedAt`) may be 0: the user undid «تمّ». */
 function parseLog(raw: unknown): LogWire {
   if (!isRecord(raw)) throw new ItemError('log must be an object');
-  if (!isAmount(raw['amount'])) throw new ItemError(`amount must be a number above 0 and at most ${MAX_AMOUNT}`);
-  return { planId: uuid(raw['planId'], 'planId'), date: date(raw['date'], 'date'), amount: raw['amount'] };
+  const correctedAt = optionalTimestamp(raw['correctedAt'], 'correctedAt');
+  const amount = raw['amount'];
+  if (!isAmount(amount) && !(correctedAt !== null && amount === 0)) {
+    throw new ItemError(`amount must be a number above 0 (0 only with correctedAt) and at most ${MAX_AMOUNT}`);
+  }
+  const log: LogWire = { planId: uuid(raw['planId'], 'planId'), date: date(raw['date'], 'date'), amount: amount as number };
+  if (correctedAt !== null) log.correctedAt = correctedAt;
+  return log;
 }
 
 function parseContact(raw: unknown): ContactWire {
@@ -375,6 +387,13 @@ function parseEach<T>(items: unknown[], kind: Kind, parse: (raw: unknown) => T):
 }
 
 /** Last item wins for equal keys, except that `prefer` may keep the earlier one. */
+/** Of two copies of one day's log in a request, the one practice-core `mergeLogEntry` keeps. */
+function preferLog(kept: LogWire, next: LogWire): LogWire {
+  const entry = (log: LogWire): LogEntry => (log.correctedAt ? { amount: log.amount, correctedAt: log.correctedAt } : { amount: log.amount });
+  const a = entry(kept);
+  return mergeLogEntry(a, entry(next)) === a ? kept : next;
+}
+
 function dedupe<T>(items: T[], key: (item: T) => string, prefer: (kept: T, next: T) => T = (_kept, next) => next): T[] {
   const byKey = new Map<string, T>();
   for (const item of items) {
@@ -491,7 +510,7 @@ export function parseSyncRequest(body: unknown): SyncRequest {
     logs: dedupe(
       parseEach(raw.logs, 'logs', parseLog),
       (log) => `${log.planId}|${log.date}`,
-      (kept, next) => (next.amount > kept.amount ? next : kept),
+      preferLog,
     ),
     relatives: dedupe(parseEach(raw.relatives, 'relatives', parseRelative), changeId, (kept, next) =>
       wins(relativeVersion(kept), relativeVersion(next)) ? next : kept,
@@ -611,7 +630,12 @@ export async function readPracticeChanges(
         }
       : null,
     plans: plans.map(planRowToWire),
-    logs: logs.map((log) => ({ planId: log.planId, date: day(log.date), amount: log.amount })),
+    logs: logs.map((log) => ({
+      planId: log.planId,
+      date: day(log.date),
+      amount: log.amount,
+      ...(log.correctedAt ? { correctedAt: log.correctedAt.toISOString() } : {}),
+    })),
     relatives: relatives.map(relativeRowToWire),
     contacts: contacts.map((contact) => ({ relativeId: contact.relativeId, date: day(contact.date), deleted: contact.deletedAt !== null })),
   };

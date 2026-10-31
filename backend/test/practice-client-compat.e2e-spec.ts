@@ -12,6 +12,7 @@ import type { App } from 'supertest/types.js';
 import {
   applyServerChanges,
   buildSyncRequest,
+  correctLog,
   countChanges,
   createPlan,
   createRelative,
@@ -190,6 +191,31 @@ describe('practice-core client ↔ server compatibility (e2e)', () => {
     expect(a.store.plans.find((p) => p.id === p2)).toMatchObject({ title: 'الوتر (B)', log: { '2026-10-28': 2.5 } });
     expect(a.store.plans.some((p) => p.id === p3)).toBe(false);
     expect(synced(a.store).deletedPlans).toEqual([p3]);
+  });
+
+  it('an undo of «تمّ» and a fixed amount win over the larger amount a stale device still holds', async () => {
+    const auth = await signUp();
+    const a: Device = { name: 'A', store: emptyStore() };
+    const b: Device = { name: 'B', store: emptyStore() };
+    const p1 = randomUUID();
+    a.store = upsertPlan(a.store, plan(p1, 'الضحى', at(1)), at(1));
+    a.store = updatePlan(a.store, p1, (p) => logDone(logDone(p, '2026-10-27', 100), '2026-10-28', 4), at(2));
+    await sync(a, auth);
+    await sync(b, auth);
+    // B adds offline without knowing about the correction; A fixes 100 → 10 and undoes the 28th.
+    b.store = updatePlan(b.store, p1, (p) => logDone(p, '2026-10-27', 1), at(3));
+    a.store = updatePlan(a.store, p1, (p) => correctLog(correctLog(p, '2026-10-27', 10, at(4)), '2026-10-28', 0, at(4)), at(4));
+    for (let i = 0; i < 2; i += 1) {
+      await sync(a, auth);
+      await sync(b, auth);
+    }
+    expect(synced(a.store)).toEqual(synced(b.store));
+    expect(b.store.plans[0]?.log).toEqual({ '2026-10-27': 10, '2026-10-28': 0 });
+    const res = await request(server()).get('/v1/me/practice').set(auth).expect(200);
+    expect(res.body.data.logs).toEqual([
+      { planId: p1, date: '2026-10-27', amount: 10, correctedAt: at(4) },
+      { planId: p1, date: '2026-10-28', amount: 0, correctedAt: at(4) },
+    ]);
   });
 
   it('a first sync with more than 500 items goes out in batches and arrives whole', async () => {

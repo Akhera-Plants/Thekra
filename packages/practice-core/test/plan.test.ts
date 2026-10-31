@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
   LADDER,
+  formatPlanAmount,
+  formatRakahs,
+  rakahsOf,
   addDays,
   adherence,
   adherenceBand,
   canIncrease,
+  correctLog,
   createPlan,
   dailyLoad,
   decreaseTo,
@@ -14,6 +18,8 @@ import {
   isPlanDueOn,
   loadWarning,
   logDone,
+  mergeLogEntry,
+  mergeLogs,
   nextStep,
   normalize,
   relapseSuggestion,
@@ -212,6 +218,35 @@ describe('logging and adherence', () => {
     expect(() => logDone(p0, '2026-09-02', 0)).toThrow(RangeError);
   });
 
+  it('correctLog sets the day (0 clears it) and stamps the correction; validatePlan accepts the cleared day', () => {
+    const p = correctLog(logDone(makePlan(), '2026-09-02', 100), '2026-09-02', 10, '2026-09-02T10:00:00.000Z');
+    expect(p.log['2026-09-02']).toBe(10);
+    expect(p.logCorrectedAt).toEqual({ '2026-09-02': '2026-09-02T10:00:00.000Z' });
+    const cleared = correctLog(p, '2026-09-02', 0, '2026-09-02T11:00:00.000Z');
+    expect(cleared.log['2026-09-02']).toBe(0);
+    expect(validatePlan(cleared)).toBeNull();
+    expect(adherence(cleared, '2026-09-02', '2026-09-02')).toBe(0);
+    expect(validatePlan({ ...makePlan(), log: { '2026-09-02': 0 } })).not.toBeNull();
+    expect(() => correctLog(p, '2026-09-02', -1)).toThrow(RangeError);
+    expect(() => correctLog(p, 'x', 1)).toThrow(RangeError);
+  });
+
+  it('mergeLogEntry: the later correction wins, else the larger amount; the same answer in either order', () => {
+    const plain = { amount: 9 };
+    const early = { amount: 3, correctedAt: '2026-09-02T10:00:00.000Z' };
+    const late = { amount: 0, correctedAt: '2026-09-02T11:00:00.000Z' };
+    expect(mergeLogEntry(plain, early)).toBe(early);
+    expect(mergeLogEntry(early, plain)).toBe(early);
+    expect(mergeLogEntry(early, late)).toBe(late);
+    expect(mergeLogEntry(late, early)).toBe(late);
+    expect(mergeLogEntry({ amount: 2 }, { amount: 5 })).toEqual({ amount: 5 });
+    expect(mergeLogEntry(undefined, plain)).toBe(plain);
+    expect(mergeLogs({ log: { a: 1, b: 4 } }, { log: { b: 2, c: 0 }, logCorrectedAt: { b: '2026-09-02T10:00:00.000Z', c: '2026-09-02T10:00:00.000Z' } })).toEqual({
+      log: { a: 1, b: 2, c: 0 },
+      logCorrectedAt: { b: '2026-09-02T10:00:00.000Z', c: '2026-09-02T10:00:00.000Z' },
+    });
+  });
+
   it('prorates target days', () => {
     const p = makePlan({ activeDaysPerWeek: 5 });
     expect(targetDaysIn(p, '2026-09-01', '2026-09-07')).toBe(5);
@@ -277,6 +312,40 @@ describe('daily load', () => {
     expect(loadWarning([a, b, c], 69)).toBe('over');
     expect(loadWarning([startEbb(a, '2026-10-01'), b], 40, '2026-10-01')).toBe('ok');
     expect(loadWarning([a], 0)).toBe('over');
+  });
+});
+
+describe('rakah amounts', () => {
+  it('keeps Duha even and Witr odd', () => {
+    expect([1, 2, 3, 4].map((n) => rakahsOf(n, 'pairs'))).toEqual([2, 4, 6, 8]);
+    expect([1, 2, 3, 6].map((n) => rakahsOf(n, 'odd'))).toEqual([1, 3, 5, 11]);
+    expect(rakahsOf(0, 'odd')).toBe(0);
+    expect(formatPlanAmount(0, 'times', 'ركعة', 'ar', 'odd')).toBe('0 ركعة');
+  });
+
+  it('says the count the Arabic way', () => {
+    expect([1, 2, 4, 10, 11].map((n) => formatRakahs(n, 'ar'))).toEqual([
+      'ركعة واحدة',
+      'ركعتان',
+      '4 ركعات',
+      '10 ركعات',
+      '11 ركعة',
+    ]);
+    expect(formatRakahs(1, 'en')).toBe("1 rak'ah");
+    expect(formatRakahs(4, 'en')).toBe("4 rak'ahs");
+  });
+
+  it('formats other units from the catalog label', () => {
+    expect(formatPlanAmount(2, 'times', 'ركعتان', 'ar', 'pairs')).toBe('4 ركعات');
+    expect(formatPlanAmount(10, 'minutes', 'دقيقة', 'ar')).toBe('10 دقائق');
+    expect(formatPlanAmount(2, 'minutes', 'دقيقة', 'ar')).toBe('دقيقتان');
+    expect(formatPlanAmount(20, 'minutes', 'دقيقة', 'ar')).toBe('20 دقيقة');
+    expect(formatPlanAmount(3, 'count', 'مرة في اليوم', 'ar')).toBe('3 مرات في اليوم');
+    expect(formatPlanAmount(33, 'count', 'مرة لكل ذكر', 'ar')).toBe('33 مرة لكل ذكر');
+    expect(formatPlanAmount(1, 'count', 'مرة', 'ar')).toBe('مرة واحدة');
+    expect(formatPlanAmount(1, 'times', 'صدقة', 'ar')).toBe('صدقة');
+    expect(formatPlanAmount(2, 'times', 'صدقة', 'ar')).toBe('2 × صدقة');
+    expect(formatPlanAmount(3, 'count', '', 'en')).toBe('3');
   });
 });
 

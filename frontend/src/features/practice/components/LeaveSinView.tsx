@@ -4,6 +4,7 @@ import { useMemo, useState, useSyncExternalStore } from 'react';
 import { RefreshCw, ShieldCheck } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocale, useTranslations } from 'next-intl';
+import { activePrograms } from '@thekra/practice-core';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,8 +56,9 @@ export function LeaveSinView() {
   const evidenceIds = useMemo(() => (catalog.data ? allProgramEvidenceIds(catalog.data.sinPrograms) : []), [catalog.data]);
   const evidence = usePracticeEvidence(evidenceIds, Boolean(catalog.data));
   const preselected = useSyncExternalStore(noSubscribe, pendingProgramForSession, serverPending);
-  const [choosing, setChoosing] = useState(false);
-  const programCount = snapshot?.store.programs.length ?? 0;
+  /** null until the visitor opens or closes the chooser: a sin page's hand-off opens it even beside other programs. */
+  const [choosing, setChoosing] = useState<boolean | null>(null);
+  const programCount = snapshot ? activePrograms(snapshot.store.programs).length : 0;
   const contentRef = useFocusOnChange<HTMLDivElement>(`${choosing}-${programCount}`);
 
   const names = useMemo(
@@ -82,12 +84,15 @@ export function LeaveSinView() {
   }
 
   const { common, programs: entries } = catalog.data.sinPrograms;
-  const active = snapshot.store.programs.flatMap((program) => {
+  const active = activePrograms(snapshot.store.programs).flatMap((program) => {
     const entry = entries.find((e) => e.sin === program.sinSlug);
     return entry ? [{ program, entry }] : [];
   });
-  const showChooser = active.length === 0 || choosing;
-  const preselectNew = preselected && !active.some((a) => a.program.sinSlug === preselected) ? preselected : null;
+  const preselectNew =
+    preselected && entries.some((e) => e.sin === preselected) && !active.some((a) => a.program.sinSlug === preselected)
+      ? preselected
+      : null;
+  const showChooser = active.length === 0 || (choosing ?? preselectNew !== null);
 
   return (
     <div className="flex flex-col gap-10">
@@ -140,6 +145,7 @@ export function LeaveSinView() {
         </button>
       ) : null}
 
+      {/* Any program data counts, end markers included, so «احذف كل بيانات البرنامج» can always clear them. */}
       <WipeAll hasPrograms={snapshot.store.programs.length > 0} />
     </div>
   );

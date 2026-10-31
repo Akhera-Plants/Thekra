@@ -12,6 +12,7 @@ import type {
   SourceType,
   TagCategory,
 } from './enums';
+import type { PracticeHabit, PracticeOccasion } from './practice';
 
 export interface PageMeta {
   page: number;
@@ -214,6 +215,11 @@ export interface GoodDeedDto {
   createdAt: string;
   updatedAt: string;
   branches?: { number: number; titleAr: string; title?: string | null }[];
+  /**
+   * Detail only: the reminder habits and sunnah occasions of this deed (deed-schedules.yaml). Optional until every
+   * API deploy sends it.
+   */
+  schedule?: { habits: PracticeHabit[]; occasions: PracticeOccasion[] } | null;
 }
 
 export interface QuoteLinkDto {

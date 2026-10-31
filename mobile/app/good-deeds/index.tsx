@@ -1,32 +1,82 @@
 /**
- * Good deed picker — full-screen searchable list.
- * Mirrors the sin picker (mobile-plan §3).
+ * Good-deed picker: the website's topic catalogue (TopicCatalog, `.topic-item` rows) as a full-screen searchable
+ * list, mirroring the sin picker (mobile-plan §3). The native header owns Back; the page shows its own title.
  */
 
-import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  FlatList,
-  TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-  ActivityIndicator,
-} from 'react-native';
+import React, { memo, useCallback, useMemo, useState } from 'react';
+import { FlatList, RefreshControl, View, type ListRenderItem } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { SearchX, Sprout, WifiOff } from 'lucide-react-native';
 import { useGoodDeeds } from '@/lib/api/good-deeds';
-import { EmptyState } from '@/components/EmptyState';
-import { ErrorState } from '@/components/ErrorState';
-import { Colors, FontSize, Radius, Spacing } from '@/lib/tokens';
+import type { GoodDeedDto } from '@/lib/types/api';
+import { GUTTER, space, useStyles, useTheme, type Theme } from '@/theme';
+import { useIsOffline } from '@/lib/query-client';
+import { topicMeta } from '@/lib/topics';
+import { EmptyState, ErrorState, Field, ListRow, Notice, PageHeader, Screen, Skeleton } from '@/ui';
+
+const SKELETON_ROWS = ['s1', 's2', 's3', 's4', 's5', 's6'];
+const keyExtractor = (item: GoodDeedDto) => item.id;
+
+const makeStyles = (t: Theme) => ({
+  frame: { paddingHorizontal: 0, paddingTop: 0 },
+  list: { paddingHorizontal: GUTTER, paddingTop: space.lg, paddingBottom: space['4xl'] },
+  header: { gap: space.xl, paddingBottom: space.sm },
+  skeletonRow: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: space.md,
+    minHeight: 64,
+    borderBottomWidth: 1,
+    borderBottomColor: t.colors.border,
+  },
+  skeletonText: { flex: 1, gap: space.sm },
+});
+
+interface DeedRowProps {
+  deed: GoodDeedDto;
+  english: boolean;
+}
+
+const DeedRow = memo(function DeedRow({ deed, english }: DeedRowProps) {
+  const { t } = useTranslation();
+  const handlePress = useCallback(() => router.push(`/good-deeds/${deed.slug}`), [deed.slug]);
+  return (
+    <ListRow
+      icon={Sprout}
+      title={english ? deed.name || deed.nameAr : deed.nameAr}
+      hint={topicMeta(deed, t)}
+      onPress={handlePress}
+    />
+  );
+});
+
+function TopicRowsSkeleton() {
+  const styles = useStyles(makeStyles);
+  const { t } = useTranslation();
+  return (
+    <View accessibilityLabel={t('common.loading')}>
+      {SKELETON_ROWS.map((key) => (
+        <View key={key} style={styles.skeletonRow}>
+          <Skeleton width={24} height={24} round />
+          <View style={styles.skeletonText}>
+            <Skeleton width="55%" height={16} />
+            <Skeleton width={36} height={12} />
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
 
 export default function GoodDeedPickerScreen() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const { english, colors } = useTheme();
+  const styles = useStyles(makeStyles);
   const [search, setSearch] = useState('');
-  const isAr = i18n.language === 'ar';
+  const isOffline = useIsOffline();
 
-  const { data: deeds, isLoading, isError, refetch } = useGoodDeeds({
+  const { data: deeds, isLoading, isError, isRefetching, refetch } = useGoodDeeds({
     sort: 'quoteCount',
     limit: 100,
   });
@@ -36,133 +86,58 @@ export default function GoodDeedPickerScreen() {
     if (!search.trim()) return deeds;
     const q = search.toLowerCase();
     return deeds.filter(
-      (d) =>
-        d.nameAr.includes(q) ||
-        d.name.toLowerCase().includes(q) ||
-        (d.descriptionAr ?? '').includes(q),
+      (d) => d.nameAr.includes(q) || d.name.toLowerCase().includes(q) || (d.descriptionAr ?? '').includes(q),
     );
   }, [deeds, search]);
 
-  if (isError) {
-    return <ErrorState message={t('errors.network')} onRetry={() => void refetch()} />;
-  }
+  const renderItem = useCallback<ListRenderItem<GoodDeedDto>>(({ item }) => <DeedRow deed={item} english={english} />, [english]);
+  const handleRefresh = useCallback(() => void refetch(), [refetch]);
+
+  const header = (
+    <View style={styles.header}>
+      <PageHeader eyebrow={t('goodDeedPicker.eyebrow')} title={t('goodDeedPicker.title')} lead={t('goodDeedPicker.lead')} />
+      {isOffline ? <Notice icon={WifiOff}>{t('common.offlineBanner')}</Notice> : null}
+      <Field
+        value={search}
+        onChangeText={setSearch}
+        placeholder={t('goodDeedPicker.searchPlaceholder')}
+        accessibilityLabel={t('common.search')}
+        autoCorrect={false}
+        autoCapitalize="none"
+        returnKeyType="search"
+        clearButtonMode="while-editing"
+      />
+    </View>
+  );
+
+  const empty = isLoading ? (
+    <TopicRowsSkeleton />
+  ) : isError ? (
+    <ErrorState message={t('errors.network')} onRetry={handleRefresh} />
+  ) : (
+    <EmptyState icon={SearchX} message={t('goodDeedPicker.empty')} />
+  );
 
   return (
-    <SafeAreaView style={styles.safe}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backBtn}
-          accessibilityRole="button"
-          accessibilityLabel={t('common.back')}
-        >
-          <Text style={styles.backText}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.title}>{t('goodDeedPicker.title')}</Text>
-      </View>
-
-      {/* Search */}
-      <View style={styles.searchBar}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder={t('goodDeedPicker.searchPlaceholder')}
-          placeholderTextColor={Colors.textMuted}
-          value={search}
-          onChangeText={setSearch}
-          autoFocus
-          returnKeyType="search"
-          accessibilityLabel={t('common.search')}
-        />
-      </View>
-
-      {/* List */}
-      {isLoading ? (
-        <ActivityIndicator color={Colors.primary} style={styles.loader} />
-      ) : filtered.length === 0 ? (
-        <EmptyState message={t('goodDeedPicker.empty')} />
-      ) : (
-        <FlatList
-          data={filtered}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.item}
-              onPress={() => router.push(`/good-deeds/${item.slug}`)}
-              accessibilityRole="button"
-            >
-              <Text style={styles.itemName}>{isAr ? item.nameAr : item.name}</Text>
-              {item.rewardAr && isAr && (
-                <Text style={styles.itemReward} numberOfLines={2}>
-                  {item.rewardAr}
-                </Text>
-              )}
-              <Text style={styles.itemCount}>
-                {item.quoteCount} {isAr ? 'محفّز' : 'motivations'}
-              </Text>
-            </TouchableOpacity>
-          )}
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
-          contentContainerStyle={styles.list}
-        />
-      )}
-    </SafeAreaView>
+    <Screen edges={['bottom']} scroll={false} contentStyle={styles.frame}>
+      <FlatList
+        data={filtered}
+        keyExtractor={keyExtractor}
+        renderItem={renderItem}
+        ListHeaderComponent={header}
+        ListEmptyComponent={empty}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        contentContainerStyle={styles.list}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching && !isLoading}
+            onRefresh={handleRefresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
+        }
+      />
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.background },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing['4'],
-    paddingTop: Spacing['4'],
-    paddingBottom: Spacing['2'],
-    gap: Spacing['3'],
-  },
-  backBtn: { padding: Spacing['2'] },
-  backText: { fontSize: FontSize.xl, color: Colors.primary },
-  title: {
-    flex: 1,
-    fontSize: FontSize['2xl'],
-    fontWeight: '700',
-    color: Colors.intentGoodDeed,
-    textAlign: 'right',
-  },
-  searchBar: { paddingHorizontal: Spacing['4'], paddingBottom: Spacing['2'] },
-  searchInput: {
-    backgroundColor: Colors.card,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing['4'],
-    paddingVertical: Spacing['3'],
-    fontSize: FontSize.base,
-    color: Colors.text,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    textAlign: 'right',
-  },
-  list: { paddingBottom: Spacing['8'] },
-  loader: { marginTop: Spacing['16'] },
-  item: {
-    paddingHorizontal: Spacing['5'],
-    paddingVertical: Spacing['4'],
-    gap: Spacing['1'],
-  },
-  itemName: {
-    fontSize: FontSize.lg,
-    fontWeight: '600',
-    color: Colors.text,
-    textAlign: 'right',
-  },
-  itemReward: {
-    fontSize: FontSize.sm,
-    color: Colors.textMuted,
-    textAlign: 'right',
-  },
-  itemCount: {
-    fontSize: FontSize.xs,
-    color: Colors.intentGoodDeed,
-    textAlign: 'right',
-  },
-  separator: { height: 1, backgroundColor: Colors.separator, marginHorizontal: Spacing['4'] },
-});

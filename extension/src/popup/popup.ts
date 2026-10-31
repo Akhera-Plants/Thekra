@@ -3,6 +3,7 @@
  * Plain DOM, no framework, no innerHTML: every string is set with textContent.
  */
 import {
+  correctLog,
   createPlan,
   decreaseTo,
   deletePlan,
@@ -109,6 +110,9 @@ function editPlan(planId: string, change: (p: Plan) => Plan): Promise<void> {
   return editStore((store) => updatePlan(store, planId, change));
 }
 
+/** Plan id → the day and amount before the last log made in this popup, so it can be undone. */
+const lastLogs = new Map<string, { date: LocalDate; before: number }>();
+
 function habitOf(plan: Plan): Habit | undefined {
   return plan.habitKey === undefined ? undefined : catalog.find((x) => x.key === plan.habitKey);
 }
@@ -164,6 +168,23 @@ function render(): void {
   root.replaceChildren(header, main);
 }
 
+/** The data the optional sign-in sends; the same list as `data_collection_permissions.optional` (scripts/manifest.mjs). */
+const SIGN_IN_DATA = ['authenticationInfo', 'personallyIdentifyingInfo'];
+
+/**
+ * Firefox 140+ built-in data consent for the sign-in (granted once, then no prompt). Chrome has no such API, and older
+ * Firefox rejects the unknown `data_collection` key: there the sign-in form itself is the consent, so this resolves true.
+ */
+function askSignInConsent(): Promise<boolean> {
+  if (TARGET !== 'firefox' || !api.permissions) return Promise.resolve(true);
+  const permissions = api.permissions as unknown as { request(p: { data_collection: string[] }): Promise<boolean> };
+  try {
+    return permissions.request({ data_collection: SIGN_IN_DATA }).catch(() => true);
+  } catch {
+    return Promise.resolve(true);
+  }
+}
+
 async function hostPermissionBlock(t: Translate): Promise<HTMLElement | null> {
   if (TARGET !== 'firefox' || !api.permissions) return null;
   const has = await api.permissions.contains({ origins: HOST_ORIGINS });
@@ -212,8 +233,7 @@ function renderToday(main: HTMLElement, t: Translate): void {
     const habit = habitOf(plan);
     const fallback = habit?.defaultRule;
     const rule = ruleOf(plan, fallback);
-    const label = habit ? unitLabel(habit, lang) : '';
-    const amount = (n: number) => formatAmount(n, plan.unit, label);
+    const amount = (n: number) => formatAmount(n, plan.unit, habit, lang);
     const required = requiredOn(plan, day);
     const done = plan.log[day] ?? 0;
     const remaining = remainingOn(plan, day);
@@ -236,9 +256,21 @@ function renderToday(main: HTMLElement, t: Translate): void {
       e.preventDefault();
       const n = Number(input.value);
       if (!Number.isFinite(n) || n <= 0) return;
+      lastLogs.set(plan.id, { date: day, before: done });
       void editPlan(plan.id, (p) => logDone(p, day, n)).then(render);
     });
     card.append(form);
+
+    // Undo the last log made here; otherwise (e.g. «تمّ» from a notification) clear today's log.
+    const last = lastLogs.get(plan.id);
+    if (done > 0 || last) {
+      const undo = h('button', { type: 'button', class: 'secondary' }, last ? t('undoLog') : t('clearToday'));
+      undo.addEventListener('click', () => {
+        lastLogs.delete(plan.id);
+        void editPlan(plan.id, (p) => correctLog(p, last?.date ?? day, last?.before ?? 0)).then(render);
+      });
+      card.append(undo);
+    }
 
     const band = monthlyBand(plan, rule, state.prefs.quietDays, day, offset);
     if (band) {
@@ -386,7 +418,7 @@ function renderSettings(main: HTMLElement, t: Translate): void {
         };
         card.append(
           h('fieldset', {}, h('legend', {}, t('distanceLabel')), radio('far', t('distanceFar')), radio('near', t('distanceNear'))),
-          h('p', { class: 'suggest' }, t('startSuggestion', formatAmount(suggestedStart(habit, hd.distance), habit.unit, label))),
+          h('p', { class: 'suggest' }, t('startSuggestion', formatAmount(suggestedStart(habit, hd.distance), habit.unit, habit, lang))),
           h('p', { class: 'muted' }, t('startHint')),
         );
       } else {
@@ -550,11 +582,18 @@ function accountContent(t: Translate): Node[] {
     e.preventDefault();
     submit.disabled = true;
     message.textContent = '';
-    void send({ type: 'signIn', email: email.value, password: password.value }).then((r) => {
-      password.value = '';
-      submit.disabled = false;
-      if (!r.ok) message.textContent = accountError(t, r.error);
-    });
+    // Asked first, inside the submit (a user gesture), before anything leaves the device.
+    void askSignInConsent()
+      .then((consented) => {
+        if (!consented) return { ok: false as const, error: 'consent' };
+        return send({ type: 'signIn', email: email.value, password: password.value });
+      })
+      .then((r) => {
+        password.value = '';
+        submit.disabled = false;
+        if (r.ok) return;
+        message.textContent = r.error === 'consent' ? t('signInConsent') : accountError(t, r.error);
+      });
   });
   return [heading, h('p', { class: 'muted' }, t('accountIntro')), form, message];
 }

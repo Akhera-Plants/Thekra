@@ -120,15 +120,14 @@ describe('habit reminders default', () => {
 });
 
 describe('typed log amount', () => {
-  it('accepts any positive amount, Arabic-Indic digits and decimal separators', () => {
+  it('accepts whole positive amounts, Arabic-Indic digits included', () => {
     expect(parseLogAmount('3')).toBe(3);
     expect(parseLogAmount(' ٣ ')).toBe(3);
-    expect(parseLogAmount('1.5')).toBe(1.5);
-    expect(parseLogAmount('١٫٥')).toBe(1.5);
+    expect(parseLogAmount('١٢')).toBe(12);
     expect(parseLogAmount(String(MAX_LOG_ENTRY))).toBe(MAX_LOG_ENTRY);
   });
 
-  it('rejects empty, zero, negative, text and too large', () => {
-    for (const v of ['', '0', '-2', 'abc', '1e3', String(MAX_LOG_ENTRY + 1)]) expect(parseLogAmount(v)).toBeNull();
+  it('rejects empty, zero, negative, fractions (the account stores whole amounts), text and too large', () => {
+    for (const v of ['', '0', '-2', '1.5', '١٫٥', 'abc', '1e3', String(MAX_LOG_ENTRY + 1)]) expect(parseLogAmount(v)).toBeNull();
   });
 });

@@ -3,7 +3,10 @@ import {
   addDays,
   afterFall,
   checkIn,
+  activePrograms,
   currentStage,
+  endProgram,
+  mergePrograms,
   pathFor,
   stagesFor,
   startProgram,
@@ -52,10 +55,11 @@ describe('checkIn', () => {
     let q = checkIn(p, '2026-11-03', 'held', 'بعد الفجر كان أسهل');
     q = checkIn(q, '2026-11-02', 'weak');
     q = checkIn(q, '2026-11-03', 'fell_repented');
-    expect(q.checkIns).toEqual([
+    expect(q.checkIns.map(({ updatedAt: _, ...c }) => c)).toEqual([
       { date: '2026-11-02', value: 'weak' },
       { date: '2026-11-03', value: 'fell_repented', note: 'بعد الفجر كان أسهل' },
     ]);
+    expect(q.checkIns.every((c) => typeof c.updatedAt === 'string')).toBe(true);
     expect(checkIn(q, '2026-11-03', 'held', 'جديد').checkIns[1]?.note).toBe('جديد');
     expect(p.checkIns).toEqual([]);
   });
@@ -125,5 +129,40 @@ describe('summary and afterFall', () => {
   it('afterFall points to the «خربانة؟ صلّحها» content', () => {
     const p = startProgram({ sinSlug: 'reels', category: 'haqq_allah', hardToLeaveAtOnce: false, startedOn: START });
     expect(afterFall(checkIn(p, START, 'fell_repented'))).toBe('fixit');
+  });
+});
+
+describe('endProgram / mergePrograms', () => {
+  const T = (h: number) => `2026-11-0${h}T10:00:00.000Z`;
+  const base = (at: string) => startProgram({ sinSlug: 'ghiba', category: 'haqq_ibad', hardToLeaveAtOnce: false, startedOn: '2026-11-01' }, at);
+
+  it('ending drops check-ins and notes and keeps only a marker; an ended program takes no check-in', () => {
+    const p = checkIn(base(T(1)), '2026-11-02', 'held', 'سرّ', T(2));
+    const ended = endProgram(p, T(3));
+    expect(ended).toEqual({ sinSlug: 'ghiba', category: 'haqq_ibad', path: 'cut', startedOn: '2026-11-01', checkIns: [], updatedAt: T(3), endedAt: T(3) });
+    expect(JSON.stringify(ended)).not.toContain('سرّ');
+    expect(activePrograms([ended, base(T(1))])).toHaveLength(1);
+    expect(() => checkIn(ended, '2026-11-04', 'held')).toThrow(RangeError);
+    expect(validateProgram(ended)).toBeNull();
+  });
+
+  it('an end beats an older copy (it does not come back), and a later restart beats the end, in either order', () => {
+    const old = checkIn(base(T(1)), '2026-11-02', 'held', undefined, T(4));
+    const ended = endProgram(base(T(1)), T(5));
+    expect(mergePrograms([old], [ended])).toEqual([ended]);
+    expect(mergePrograms([ended], [old])).toEqual([ended]);
+    const again = base(T(6));
+    expect(mergePrograms([ended], [again])).toEqual([again]);
+    expect(mergePrograms([again], [ended])).toEqual([again]);
+  });
+
+  it('on the same date the later check-in wins with its note, whichever device has more check-ins', () => {
+    let many = base(T(1));
+    for (const d of ['2026-11-01', '2026-11-02', '2026-11-03']) many = checkIn(many, d, 'held', 'قديم', T(2));
+    const edited = checkIn(base(T(1)), '2026-11-03', 'weak', 'تعديل اليوم', T(3));
+    for (const merged of [mergePrograms([many], [edited]), mergePrograms([edited], [many])]) {
+      expect(merged[0]?.checkIns).toHaveLength(3);
+      expect(merged[0]?.checkIns[2]).toMatchObject({ date: '2026-11-03', value: 'weak', note: 'تعديل اليوم' });
+    }
   });
 });

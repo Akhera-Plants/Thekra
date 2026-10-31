@@ -18,6 +18,10 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     orientation: 'portrait',
     icon: './assets/icon.png',
     userInterfaceStyle: 'automatic',
+    // Native accents (system dialog buttons, text selection) in the website's primary.
+    primaryColor: '#326C59',
+    // The launcher name in Arabic on Arabic devices («ذكرى»); «Thekra» elsewhere.
+    locales: { ar: './locales/ar.json' },
     runtimeVersion: {
       policy: 'appVersion',
     },
@@ -35,13 +39,17 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
     android: {
       package: 'com.thekra.app',
+      // The website's mark (frontend/src/app/icon.svg), rendered to assets/*icon*.png.
       adaptiveIcon: {
-        backgroundColor: '#E6F4FE',
+        backgroundColor: '#326C59',
         foregroundImage: './assets/android-icon-foreground.png',
         backgroundImage: './assets/android-icon-background.png',
         monochromeImage: './assets/android-icon-monochrome.png',
       },
       predictiveBackGestureEnabled: false,
+      // expo-screen-capture's manifest asks for photo access to detect screenshots; the app only blocks them
+      // (FLAG_SECURE on the sin-program page), so the photo permissions are removed from the build.
+      blockedPermissions: ['android.permission.READ_EXTERNAL_STORAGE', 'android.permission.READ_MEDIA_IMAGES'],
     },
     web: {
       output: 'static',
@@ -52,12 +60,25 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       [
         'expo-splash-screen',
         {
-          backgroundColor: '#1B6CA8',
+          // Android's generated styles always point at `splashscreen_logo`; without an image the release build fails
+          // («resource drawable/splashscreen_logo not found»).
+          image: './assets/splash-icon.png',
+          imageWidth: 96,
+          // The website's page colour in each theme, so the first frame matches the app behind it.
+          backgroundColor: '#fffcf9',
+          dark: { backgroundColor: '#101010' },
           resizeMode: 'contain',
         },
       ],
       'expo-secure-store',
       'expo-localization',
+      // The optional lock on a private page. Generic on purpose: it never says what the page holds.
+      // Arabic devices read the Arabic line from locales/ar.json.
+      [
+        'expo-local-authentication',
+        { faceIDPermission: 'Thekra uses Face ID to unlock the private pages you choose to lock.' },
+      ],
+      '@react-native-community/datetimepicker',
     ],
     experiments: {
       typedRoutes: true,

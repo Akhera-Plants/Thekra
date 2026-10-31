@@ -1,252 +1,100 @@
 /**
- * Reminders screen — vertically scrolled quote cards for a sin.
+ * Reminders for one sin, after the website's sin page (sins/[slug]): the sin's name and description, «كبيرة» with
+ * its reference, the contemporary note, «ابدأ برنامج الترك» when the catalog has a program for it, the type filter,
+ * then the reading sections: what warns against it, the paired deed's virtue (or the reward of leaving it for
+ * Allah), a contemporary topic's derived groups; the alternative good deeds last, only on an unpaired sin.
  * Core screen: sin → reminders (mobile-plan §3).
  */
 
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-  ActivityIndicator,
-} from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
+import React, { useCallback, useMemo } from 'react';
+import { View } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { useSinQuotesInfinite } from '@/lib/api/sins';
-import { useToggleFavorite } from '@/lib/api/favorites';
-import { QuoteCard } from '@/components/QuoteCard';
-import { EmptyState } from '@/components/EmptyState';
-import { ErrorState } from '@/components/ErrorState';
-import { Colors, FontSize, Radius, Spacing } from '@/lib/tokens';
-import type { QuoteType } from '@/lib/types/enums';
-
-type FilterKey = QuoteType | 'ALL';
-
-const FILTERS: Array<{ key: FilterKey; labelKey: string }> = [
-  { key: 'ALL',          labelKey: 'reminders.filterAll' },
-  { key: 'QURAN_VERSE',  labelKey: 'reminders.filterQuran' },
-  { key: 'HADITH',       labelKey: 'reminders.filterHadith' },
-  { key: 'SCHOLAR_QUOTE',labelKey: 'reminders.filterScholar' },
-  { key: 'BOOK_EXCERPT', labelKey: 'reminders.filterBook' },
-];
-
-function QuoteItem({ quoteId, quote }: { quoteId: string; quote: any }) {
-  const { isFavorite, toggle } = useToggleFavorite(quoteId);
-  return <QuoteCard quote={quote} isFavorite={isFavorite} onToggleFavorite={toggle} />;
-}
+import { Sprout } from 'lucide-react-native';
+import { useSin, useSinQuotesInfinite } from '@/lib/api/sins';
+import { buildTopicSections } from '@/lib/topics';
+import type { SinQuotesMeta, TopicGroup } from '@/lib/types/api';
+import { SinRank } from '@/lib/types/enums';
+import { TopicQuoteList, useLastDefined, useTopicQuoteParams } from '@/components/TopicQuoteList';
+import { SinProgramLink } from '@/components/practice/TopicPracticeLinks';
+import { useTheme } from '@/theme';
+import { ListRow, Section, Text } from '@/ui';
 
 export default function RemindersScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
-  const { t, i18n } = useTranslation();
-  const [filter, setFilter] = useState<FilterKey>('ALL');
-  const [seed, setSeed] = useState<string | undefined>(undefined);
-  const isAr = i18n.language === 'ar';
+  const { t } = useTranslation();
+  const { english } = useTheme();
+  const { filter, setFilter, params } = useTopicQuoteParams();
+  const query = useSinQuotesInfinite(slug ?? '', params);
+  // The detail carries what the quotes page does not: the pair, the rank reference, the contemporary flag.
+  const detail = useSin(slug ?? '');
 
-  const params = {
-    type: filter !== 'ALL' ? ([filter] as QuoteType[]) : undefined,
-    seed,
-    limit: 10,
-  };
-
-  const {
-    data,
-    isLoading,
-    isError,
-    error,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    refetch,
-  } = useSinQuotesInfinite(slug ?? '', params);
-
-  const firstPage = data?.pages[0];
-  const sin = firstPage?.data.sin;
-  const allItems = data?.pages.flatMap((p) => p.data.items) ?? [];
-  const alternatives = firstPage?.data.alternatives ?? [];
-
-  function shuffle() {
-    setSeed(String(Math.random()).slice(2));
-  }
-
-  if (isLoading) {
-    return (
-      <SafeAreaView style={styles.safe}>
-        <ActivityIndicator color={Colors.primary} style={styles.loader} />
-      </SafeAreaView>
-    );
-  }
-
-  if (isError) {
-    return (
-      <ErrorState
-        message={error instanceof Error ? error.message : t('errors.unknown')}
-        onRetry={() => void refetch()}
-      />
-    );
-  }
+  const firstPage = query.data?.pages[0];
+  const sin = useLastDefined(firstPage?.data.sin);
+  // The API counts within the active filter, so the tab counts are the ones read under «الكل».
+  const counts = useLastDefined(filter === 'ALL' ? (firstPage?.meta as SinQuotesMeta | undefined)?.countsByType : undefined);
+  const paired = Boolean(detail.data?.pair);
+  const groupTitle = useCallback((group: TopicGroup) => (english ? group.name || group.nameAr : group.nameAr), [english]);
+  const sections = useMemo(
+    () =>
+      buildTopicSections(query.data?.pages.map((p) => p.data) ?? [], {
+        sectioned: filter === 'ALL',
+        ownTitle: paired ? t('reminders.pairWarningHeading') : t('reminders.warningHeading'),
+        companionTitle: paired ? t('reminders.pairRewardHeading') : t('reminders.rewardHeading'),
+        groupTitle,
+      }),
+    [query.data, filter, paired, t, groupTitle],
+  );
+  // A paired page is one topic with its virtue: «بدلًا من ذلك» is for an unpaired sin only (as on the website).
+  const alternatives = detail.isLoading || paired ? [] : (firstPage?.data.alternatives ?? []);
+  const isKabira = detail.data?.rank === SinRank.KABIRA && Boolean(detail.data.rankReference);
+  const isContemporary = detail.data?.isContemporary ?? sin?.isContemporary ?? false;
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <FlatList
-        data={allItems}
-        keyExtractor={(item) => item.quote.id}
-        renderItem={({ item }) => (
-          <QuoteItem quoteId={item.quote.id} quote={item.quote} />
-        )}
-        ListHeaderComponent={() => (
-          <View>
-            {/* Back + Sin name */}
-            <View style={styles.header}>
-              <TouchableOpacity
-                onPress={() => router.back()}
-                style={styles.backBtn}
-                accessibilityRole="button"
-                accessibilityLabel={t('common.back')}
-              >
-                <Text style={styles.backText}>←</Text>
-              </TouchableOpacity>
-              <Text style={styles.sinName} numberOfLines={2}>
-                {isAr ? (sin?.nameAr ?? slug) : (sin?.name ?? slug)}
+    <TopicQuoteList
+      query={query}
+      sections={sections}
+      counts={counts}
+      filter={filter}
+      onFilterChange={setFilter}
+      eyebrow={t('reminders.eyebrow')}
+      title={sin ? (english ? sin.name || sin.nameAr : sin.nameAr) : null}
+      lead={sin ? (english ? sin.description : sin.descriptionAr) : null}
+      emptyMessage={t('reminders.empty')}
+      intro={
+        sin ? (
+          <>
+            {isKabira && detail.data ? (
+              <Text variant="lead" tone="muted">
+                {/* The reference is stored in Arabic: the English view shows the rank alone. */}
+                {english ? t('reminders.kabira') : `${t('reminders.kabira')} · ${detail.data.rankReference}`}
               </Text>
-            </View>
-
-            {/* Type filter chips */}
-            <View style={styles.filterRow}>
-              {FILTERS.map((f) => (
-                <TouchableOpacity
-                  key={f.key}
-                  onPress={() => setFilter(f.key)}
-                  style={[styles.chip, filter === f.key && styles.chipActive]}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: filter === f.key }}
-                >
-                  <Text style={[styles.chipText, filter === f.key && styles.chipTextActive]}>
-                    {t(f.labelKey)}
-                  </Text>
-                </TouchableOpacity>
+            ) : null}
+            {isContemporary ? (
+              <Text variant="lead" tone="muted">
+                {t('reminders.contemporaryNote')}
+              </Text>
+            ) : null}
+            <SinProgramLink sin={sin.slug} />
+          </>
+        ) : null
+      }
+      footer={
+        alternatives.length > 0 ? (
+          <Section title={t('reminders.alternatives')}>
+            <View>
+              {alternatives.map((alt) => (
+                <ListRow
+                  key={alt.id}
+                  icon={Sprout}
+                  title={english ? alt.name || alt.nameAr : alt.nameAr}
+                  onPress={() => router.push(`/good-deeds/${alt.slug}`)}
+                />
               ))}
             </View>
-          </View>
-        )}
-        ListFooterComponent={() => (
-          <View>
-            {isFetchingNextPage && (
-              <ActivityIndicator color={Colors.primary} style={styles.loader} />
-            )}
-
-            {/* Another reminder button */}
-            <TouchableOpacity
-              style={styles.shuffleBtn}
-              onPress={shuffle}
-              accessibilityRole="button"
-            >
-              <Text style={styles.shuffleBtnText}>{t('reminders.anotherReminder')}</Text>
-            </TouchableOpacity>
-
-            {/* Alternatives block */}
-            {alternatives.length > 0 && (
-              <View style={styles.alternatives}>
-                <Text style={styles.alternativesTitle}>{t('reminders.alternatives')}</Text>
-                {alternatives.map((alt) => (
-                  <TouchableOpacity
-                    key={alt.id}
-                    style={styles.altItem}
-                    onPress={() => router.push(`/good-deeds/${alt.slug}`)}
-                    accessibilityRole="button"
-                  >
-                    <Text style={styles.altName}>{isAr ? alt.nameAr : alt.name}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          </View>
-        )}
-        ListEmptyComponent={<EmptyState message={t('reminders.empty')} />}
-        onEndReached={() => {
-          if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
-        }}
-        onEndReachedThreshold={0.3}
-        contentContainerStyle={styles.list}
-      />
-    </SafeAreaView>
+          </Section>
+        ) : null
+      }
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.background },
-  loader: { marginTop: Spacing['16'] },
-  list: { paddingBottom: Spacing['12'] },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing['4'],
-    paddingTop: Spacing['4'],
-    paddingBottom: Spacing['2'],
-    gap: Spacing['3'],
-  },
-  backBtn: { padding: Spacing['2'] },
-  backText: { fontSize: FontSize.xl, color: Colors.primary },
-  sinName: {
-    flex: 1,
-    fontSize: FontSize['2xl'],
-    fontWeight: '700',
-    color: Colors.intentSin,
-    textAlign: 'right',
-  },
-  filterRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: Spacing['4'],
-    paddingBottom: Spacing['2'],
-    gap: Spacing['2'],
-  },
-  chip: {
-    paddingHorizontal: Spacing['3'],
-    paddingVertical: Spacing['1.5'],
-    borderRadius: Radius.full,
-    backgroundColor: Colors.card,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  chipActive: { backgroundColor: Colors.intentSin, borderColor: Colors.intentSin },
-  chipText: { fontSize: FontSize.xs, color: Colors.textMuted },
-  chipTextActive: { color: Colors.textInverse, fontWeight: '600' },
-  shuffleBtn: {
-    margin: Spacing['4'],
-    padding: Spacing['4'],
-    backgroundColor: Colors.intentSinLight,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.intentSin,
-    alignItems: 'center',
-  },
-  shuffleBtnText: { color: Colors.intentSin, fontWeight: '600', fontSize: FontSize.base },
-  alternatives: {
-    margin: Spacing['4'],
-    padding: Spacing['4'],
-    backgroundColor: Colors.intentGoodDeedLight,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.intentGoodDeed,
-    gap: Spacing['3'],
-  },
-  alternativesTitle: {
-    fontSize: FontSize.base,
-    fontWeight: '700',
-    color: Colors.intentGoodDeed,
-    textAlign: 'right',
-  },
-  altItem: {
-    paddingVertical: Spacing['2'],
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.separator,
-  },
-  altName: {
-    fontSize: FontSize.base,
-    color: Colors.intentGoodDeed,
-    textAlign: 'right',
-  },
-});

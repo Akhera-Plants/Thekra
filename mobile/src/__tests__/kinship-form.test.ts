@@ -5,9 +5,9 @@
 
 import { emptyStore, updateRelative, upsertRelative } from '@thekra/practice-core';
 import {
-  formFromRelative,
-  relativeEditFromForm,
+  editedRelative,
   relativeFromForm,
+  relativeToFormValues,
   validateRelativeForm,
   type RelativeFormValues,
 } from '../lib/practice/kinship-form';
@@ -60,46 +60,47 @@ describe('kinship form', () => {
 });
 
 describe('kinship edit form', () => {
-  const existing = {
-    ...(relativeFromForm(base, 'r1', '2026-10-01') as { ok: true; relative: import('@thekra/practice-core').Relative }).relative,
-    history: ['2026-10-20'],
-    lastContactedOn: '2026-10-20',
-  };
+  const saved = (() => {
+    const res = relativeFromForm(base, 'r1', '2026-10-01');
+    if (!res.ok) throw new Error('fixture');
+    return { ...res.relative, history: ['2026-10-10'], lastContactedOn: '2026-10-10' };
+  })();
 
-  it('prefills the form from the relative', () => {
-    expect(formFromRelative(existing)).toEqual(base);
-    expect(formFromRelative({ ...existing, rule: { kind: 'everyNDays', n: 30, anchor: '2026-10-01' } }).rhythm).toBe('monthly');
-    expect(formFromRelative({ ...existing, rule: { kind: 'everyNDays', n: 5, anchor: '2026-10-01' } })).toMatchObject({ rhythm: 'everyNDays', everyDays: 5 });
+  it('opens on the saved values', () => {
+    expect(relativeToFormValues(saved, 0)).toEqual(base);
+    const monthly = { ...saved, rule: { kind: 'everyNDays' as const, n: 30, anchor: '2026-10-01' } };
+    expect(relativeToFormValues(monthly, 5)).toMatchObject({ rhythm: 'monthly', weekday: 5 });
+    const weekdays = { ...saved, rule: { kind: 'weekdays' as const, days: [2, 4] } };
+    expect(relativeToFormValues(weekdays, 5)).toMatchObject({ rhythm: 'weekly', weekday: 2 });
   });
 
-  it('keeps the id, history and stored rule when only the name changes', () => {
-    const res = relativeEditFromForm({ ...base, name: ' عمتي ' }, existing, '2026-10-28');
-    expect(res.ok).toBe(true);
-    if (res.ok) {
-      expect(res.relative).toMatchObject({ id: 'r1', name: 'عمتي', history: ['2026-10-20'] });
-      expect(res.relative.rule).toEqual(existing.rule);
-    }
+  it('renames without moving the rhythm or losing contacts', () => {
+    const res = editedRelative(saved, { ...base, name: ' عمّي ' }, '2026-10-28');
+    expect(res).toMatchObject({ ok: true, relative: { id: 'r1', name: 'عمّي', rule: saved.rule, history: ['2026-10-10'] } });
+  });
+
+  it('starts a new rhythm from today when it changes', () => {
+    const res = editedRelative(saved, { ...base, rhythm: 'everyNDays', everyDays: 14 }, '2026-10-28');
+    expect(res).toMatchObject({ ok: true, relative: { rule: { kind: 'everyNDays', n: 14, anchor: '2026-10-28' } } });
+  });
+
+  it('rejects contact details like the add form', () => {
+    expect(editedRelative(saved, { ...base, name: '0599 123 456' }, '2026-10-28')).toEqual({ ok: false, error: 'contactDetails' });
   });
 
   it('a weekdays rule from another device survives an edit that leaves the rhythm alone', () => {
-    const multi = { ...existing, rule: { kind: 'weekdays' as const, days: [1, 4] } };
-    const res = relativeEditFromForm({ ...formFromRelative(multi), relation: 'عمة' }, multi, '2026-10-28');
+    const multi = { ...saved, rule: { kind: 'weekdays' as const, days: [1, 4] } };
+    const res = editedRelative(multi, { ...relativeToFormValues(multi, 5), relation: 'عمة' }, '2026-10-28');
     expect(res.ok && res.relative.rule).toEqual({ kind: 'weekdays', days: [1, 4] });
-  });
-
-  it('a changed rhythm gets a new rule anchored today; contact details are still rejected', () => {
-    const res = relativeEditFromForm({ ...base, rhythm: 'monthly' }, existing, '2026-10-28');
-    expect(res.ok && res.relative.rule).toEqual({ kind: 'everyNDays', n: 30, anchor: '2026-10-28' });
-    expect(relativeEditFromForm({ ...base, name: '0501234567' }, existing, '2026-10-28')).toEqual({ ok: false, error: 'contactDetails' });
   });
 
   it('saved through practice-core updateRelative, the edit stamps updatedAt (so it syncs)', () => {
     const t0 = '2026-10-01T00:00:00.000Z';
     const t1 = '2026-10-28T10:00:00.000Z';
-    const store = upsertRelative(emptyStore(), existing, t0);
-    const res = relativeEditFromForm({ ...base, name: 'عمتي' }, store.relatives[0]!, '2026-10-28');
+    const store = upsertRelative(emptyStore(), saved, t0);
+    const res = editedRelative(store.relatives[0]!, { ...base, name: 'عمتي' }, '2026-10-28');
     if (!res.ok) throw new Error('expected ok');
     const next = updateRelative(store, 'r1', () => res.relative, t1);
-    expect(next.relatives[0]).toMatchObject({ name: 'عمتي', updatedAt: t1, history: ['2026-10-20'] });
+    expect(next.relatives[0]).toMatchObject({ name: 'عمتي', updatedAt: t1, history: ['2026-10-10'] });
   });
 });

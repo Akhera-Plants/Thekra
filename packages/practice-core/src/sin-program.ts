@@ -11,7 +11,7 @@
  *
  * Wording rule: no streaks, no counters of falls, no failure words. A fall leads to the «خربانة؟ صلّحها» content.
  */
-import { diffDays, isValidDate, toDayNumber, fromDayNumber, type LocalDate } from './dates.js';
+import { diffDays, isIsoTime, isValidDate, isoMillis, nowIso, toDayNumber, fromDayNumber, type IsoTime, type LocalDate } from './dates.js';
 
 export type SinCategory = 'haqq_allah' | 'haqq_ibad';
 export type Path = 'cut' | 'gradual';
@@ -23,6 +23,8 @@ export interface CheckIn {
   value: CheckInValue;
   /** Free text kept on the device only. */
   note?: string;
+  /** When this check-in was last written. Merging two devices keeps the later one ({@link mergePrograms}). */
+  updatedAt?: IsoTime;
 }
 
 export interface SinProgram {
@@ -32,6 +34,13 @@ export interface SinProgram {
   startedOn: LocalDate;
   /** One entry per date, ascending. */
   checkIns: CheckIn[];
+  /** When the program was started or ended. */
+  updatedAt?: IsoTime;
+  /**
+   * Set by {@link endProgram}: the program is over and its check-ins and notes are gone. It stays in the list as a
+   * marker, so the copy in the vault or on another device does not bring it back ({@link mergePrograms}).
+   */
+  endedAt?: IsoTime;
 }
 
 const STAGES_ALLAH: readonly Stage[] = ['harms', 'alternatives', 'environment', 'limits', 'leave'];
@@ -59,7 +68,7 @@ export interface StartProgramInput {
   startedOn: LocalDate;
 }
 
-export function startProgram(input: StartProgramInput): SinProgram {
+export function startProgram(input: StartProgramInput, now: IsoTime = nowIso()): SinProgram {
   if (!input.sinSlug) throw new RangeError('sinSlug is required');
   if (input.category !== 'haqq_allah' && input.category !== 'haqq_ibad') throw new RangeError('Invalid category');
   if (!isValidDate(input.startedOn)) throw new RangeError('Invalid startedOn');
@@ -69,7 +78,61 @@ export function startProgram(input: StartProgramInput): SinProgram {
     path: pathFor(input.category, input.hardToLeaveAtOnce),
     startedOn: input.startedOn,
     checkIns: [],
+    updatedAt: now,
   };
+}
+
+/** Ends one program: its check-ins and notes are dropped, and only an end marker is kept ({@link SinProgram.endedAt}). */
+export function endProgram(program: SinProgram, now: IsoTime = nowIso()): SinProgram {
+  return { sinSlug: program.sinSlug, category: program.category, path: program.path, startedOn: program.startedOn, checkIns: [], updatedAt: now, endedAt: now };
+}
+
+/** A program the user is following (not ended). */
+export function isActiveProgram(program: SinProgram): boolean {
+  return program.endedAt === undefined;
+}
+
+/** The programs the user is following, without end markers. */
+export function activePrograms(programs: readonly SinProgram[]): SinProgram[] {
+  return programs.filter(isActiveProgram);
+}
+
+const byDate = (a: CheckIn, b: CheckIn) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
+
+/**
+ * Merges this device's programs with another copy (the vault), one program per sin; the same result on every device
+ * that holds both copies. For a sin in both copies:
+ * - an end wins over a copy last started before it, so an ended program does not come back; a program started
+ *   again after the end wins over the end;
+ * - otherwise check-ins are united by date, and on the same date the later written one wins (`updatedAt`, absent
+ *   counts as the oldest; a tie keeps this device's), with its note. The program's own fields come from the copy
+ *   started later (a tie keeps this device's).
+ * The order is this device's, then programs only in the other copy.
+ */
+export function mergePrograms(local: readonly SinProgram[], remote: readonly SinProgram[]): SinProgram[] {
+  const remoteBySlug = new Map(remote.map((p) => [p.sinSlug, p]));
+  const merged = local.map((mine) => {
+    const theirs = remoteBySlug.get(mine.sinSlug);
+    return theirs ? mergeProgram(mine, theirs) : mine;
+  });
+  const localSlugs = new Set(local.map((p) => p.sinSlug));
+  return [...merged, ...remote.filter((p) => !localSlugs.has(p.sinSlug))];
+}
+
+function mergeProgram(mine: SinProgram, theirs: SinProgram): SinProgram {
+  const started = (p: SinProgram) => isoMillis(p.updatedAt);
+  if (mine.endedAt !== undefined || theirs.endedAt !== undefined) {
+    if (mine.endedAt !== undefined && theirs.endedAt !== undefined) return started(theirs) > started(mine) ? theirs : mine;
+    const [ended, live] = mine.endedAt !== undefined ? [mine, theirs] : [theirs, mine];
+    return started(live) > isoMillis(ended.endedAt) ? live : ended;
+  }
+  const dates = new Map<string, CheckIn>(mine.checkIns.map((c) => [c.date, c]));
+  for (const c of theirs.checkIns) {
+    const kept = dates.get(c.date);
+    if (!kept || isoMillis(c.updatedAt) > isoMillis(kept.updatedAt)) dates.set(c.date, c);
+  }
+  const fields = started(theirs) > started(mine) ? theirs : mine;
+  return { ...fields, checkIns: [...dates.values()].sort(byDate) };
 }
 
 /** Returns an English error message, or `null` when well-formed (including the haqq_ibad ⇒ cut rule). */
@@ -82,6 +145,8 @@ export function validateProgram(program: unknown): string | null {
   if (p.category === 'haqq_ibad' && p.path === 'gradual') return 'haqq_ibad programs cannot be gradual';
   if (!isValidDate(p.startedOn)) return 'startedOn must be YYYY-MM-DD';
   if (!Array.isArray(p.checkIns)) return 'checkIns must be an array';
+  if (p.updatedAt !== undefined && !isIsoTime(p.updatedAt)) return 'updatedAt must be an ISO time';
+  if (p.endedAt !== undefined && !isIsoTime(p.endedAt)) return 'endedAt must be an ISO time';
   for (const c of p.checkIns as unknown[]) {
     const e = validateCheckIn(c);
     if (e) return e;
@@ -96,6 +161,7 @@ export function validateCheckIn(c: unknown): string | null {
   if (!isValidDate(r.date)) return 'check-in date must be YYYY-MM-DD';
   if (!CHECK_IN_VALUES.includes(r.value as CheckInValue)) return 'check-in value must be held|weak|fell_repented';
   if (r.note !== undefined && typeof r.note !== 'string') return 'check-in note must be a string';
+  if (r.updatedAt !== undefined && !isIsoTime(r.updatedAt)) return 'check-in updatedAt must be an ISO time';
   return null;
 }
 
@@ -103,15 +169,23 @@ export function validateCheckIn(c: unknown): string | null {
  * Records the day's check-in. One per date: a second check-in the same day replaces the value; its note
  * replaces the earlier note when given, otherwise the earlier note is kept.
  */
-export function checkIn(program: SinProgram, date: LocalDate, value: CheckInValue, note?: string): SinProgram {
+export function checkIn(
+  program: SinProgram,
+  date: LocalDate,
+  value: CheckInValue,
+  note?: string,
+  now: IsoTime = nowIso(),
+): SinProgram {
   if (!isValidDate(date)) throw new RangeError('Invalid date');
   if (!CHECK_IN_VALUES.includes(value)) throw new RangeError('Invalid check-in value');
+  if (program.endedAt !== undefined) throw new RangeError('The program has ended');
   const previous = program.checkIns.find((c) => c.date === date);
   const entry: CheckIn = { date, value };
   const keptNote = note ?? previous?.note;
   if (keptNote !== undefined) entry.note = keptNote;
+  entry.updatedAt = now;
   const checkIns = program.checkIns.filter((c) => c.date !== date).concat(entry);
-  checkIns.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  checkIns.sort(byDate);
   return { ...program, checkIns };
 }
 

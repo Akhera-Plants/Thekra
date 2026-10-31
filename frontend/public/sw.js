@@ -117,7 +117,7 @@ self.addEventListener('fetch', (event) => {
 
 const NOTIFICATION_ICON = '/icons/icon-192.png';
 
-/** A same-origin path (`/ar/practice`), or '/' for anything else (absolute, protocol-relative, not a string). */
+/** A same-origin path (`/practice`, `/en/practice`), or '/' for anything else (absolute, protocol-relative, not a string). */
 function sameOriginPath(value) {
   if (typeof value !== 'string' || !value.startsWith('/') || value.startsWith('//')) return '/';
   try {

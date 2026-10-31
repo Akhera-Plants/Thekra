@@ -36,6 +36,8 @@ const CONFIG: PushConfig = {
 class FakeScheduler extends PushScheduler {
   scheduled: (ScheduledMessage & { id: string })[] = [];
   cancelled: string[] = [];
+  /** How many of the next cancel calls fail (a scheduler hiccup). */
+  failCancels = 0;
   private next = 0;
   async schedule(messages: ScheduledMessage[]): Promise<string[]> {
     return messages.map((message) => {
@@ -45,6 +47,10 @@ class FakeScheduler extends PushScheduler {
     });
   }
   async cancel(messageIds: string[]): Promise<void> {
+    if (this.failCancels > 0) {
+      this.failCancels -= 1;
+      throw new Error('scheduler unavailable');
+    }
     this.cancelled.push(...messageIds);
   }
 }
@@ -170,7 +176,7 @@ describe('Web push (e2e)', () => {
       .expect(({ body }) => expect(body.data.outcome).toBe('sent'));
     const delivered = sender.sent.at(-1)!;
     expect(delivered.to.endpoint).toBe(sub.endpoint);
-    expect(JSON.parse(delivered.payload)).toMatchObject({ title: 'صلاة الضحى', url: '/ar/practice', tag: `habit-${PLAN.id}` });
+    expect(JSON.parse(delivered.payload)).toMatchObject({ title: 'صلاة الضحى', url: '/practice', tag: `habit-${PLAN.id}` });
     expect(JSON.parse(delivered.payload).body).toContain('المطلوب اليوم');
 
     await request(server())
@@ -249,6 +255,19 @@ describe('Web push (e2e)', () => {
     await request(server()).delete('/v1/auth/me').set(auth).send({ password }).expect(204);
     expect(scheduler.cancelled).toEqual(expect.arrayContaining(ids));
     expect(await prisma.pushSubscription.count({ where: { userId } })).toBe(0);
+  });
+
+  it('retries a failed cancel when a browser is removed, so nothing stays scheduled for it', async () => {
+    const { auth, userId } = await register();
+    await sync(auth, { plans: [{ ...PLAN, id: '33333333-3333-4333-8333-333333333336' }] });
+    const sub = subscription(7);
+    await request(server()).post('/v1/me/push/subscriptions').set(auth).send(sub).expect(200);
+    const ids = (await prisma.pushReminder.findMany({ where: { subscription: { userId } } })).map((r) => r.messageId);
+    expect(ids.length).toBeGreaterThan(0);
+    scheduler.failCancels = 2;
+    await request(server()).delete('/v1/me/push/subscriptions').set(auth).send({ endpoint: sub.endpoint }).expect(204);
+    expect(scheduler.failCancels).toBe(0);
+    expect(scheduler.cancelled).toEqual(expect.arrayContaining(ids));
   });
 });
 

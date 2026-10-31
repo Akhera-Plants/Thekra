@@ -4,6 +4,7 @@ import {
   buildSyncRequest,
   checkIn,
   compareVersions,
+  correctLog,
   countChanges,
   createPlan,
   createRelative,
@@ -422,5 +423,84 @@ describe('properties', () => {
     b = server.sync(b);
     a = server.sync(a);
     expect(a.relatives[0]?.history).toEqual(['2026-10-10']);
+  });
+});
+
+describe('log corrections (undo of «تمّ», a fixed amount)', () => {
+  it('a correction wins over the larger amount on every device, and is sent with correctedAt', () => {
+    clock = Date.parse('2026-10-28T12:00:00.000Z');
+    const server = new FakeServer();
+    let a = upsertPlan(emptyStore(), plan('p1', at(1)), at(1));
+    a = server.sync(updatePlan(a, 'p1', (p) => logDone(p, '2026-10-20', 100), at(1)));
+    let b = server.sync(emptyStore());
+    expect(b.plans[0]?.log['2026-10-20']).toBe(100);
+
+    a = updatePlan(a, 'p1', (p) => correctLog(p, '2026-10-20', 10, at(2)), at(2));
+    expect(localChanges(a).logs).toEqual([{ planId: 'p1', date: '2026-10-20', amount: 10, correctedAt: at(2) }]);
+    a = server.sync(a);
+    b = server.sync(b);
+    expect(a.plans[0]?.log['2026-10-20']).toBe(10);
+    expect(b.plans[0]?.log['2026-10-20']).toBe(10);
+    expect(server.state.plans[0]?.log['2026-10-20']).toBe(10);
+    expect(countChanges(localChanges(a))).toBe(0);
+    expect(countChanges(localChanges(b))).toBe(0);
+  });
+
+  it('an undo to 0 clears the day everywhere; a later «تمّ» counts again', () => {
+    clock = Date.parse('2026-10-28T13:00:00.000Z');
+    const server = new FakeServer();
+    let a = upsertPlan(emptyStore(), plan('p1', at(1)), at(1));
+    a = server.sync(updatePlan(a, 'p1', (p) => logDone(p, '2026-10-20', 5), at(1)));
+    let b = server.sync(emptyStore());
+    a = server.sync(updatePlan(a, 'p1', (p) => correctLog(p, '2026-10-20', 0, at(2)), at(2)));
+    b = server.sync(b);
+    expect(b.plans[0]?.log['2026-10-20']).toBe(0);
+    b = server.sync(updatePlan(b, 'p1', (p) => logDone(p, '2026-10-20', 3), at(3)));
+    a = server.sync(a);
+    expect(a.plans[0]?.log['2026-10-20']).toBe(3);
+    expect(data(a)).toEqual(data(b));
+  });
+
+  it('a stale device cannot bring back the amount that was corrected', () => {
+    clock = Date.parse('2026-10-28T14:00:00.000Z');
+    const server = new FakeServer();
+    let a = upsertPlan(emptyStore(), plan('p1', at(1)), at(1));
+    a = server.sync(updatePlan(a, 'p1', (p) => logDone(p, '2026-10-20', 5), at(1)));
+    let b = server.sync(emptyStore());
+    // B adds more offline (no correction known), then A undoes.
+    b = updatePlan(b, 'p1', (p) => logDone(p, '2026-10-20', 2), at(2));
+    a = server.sync(updatePlan(a, 'p1', (p) => correctLog(p, '2026-10-20', 0, at(3)), at(3)));
+    b = server.sync(b);
+    a = server.sync(a);
+    expect(a.plans[0]?.log['2026-10-20']).toBe(0);
+    expect(data(a)).toEqual(data(b));
+  });
+
+  it('plain logging after the same correction still merges by max', () => {
+    clock = Date.parse('2026-10-28T15:00:00.000Z');
+    const server = new FakeServer();
+    let a = upsertPlan(emptyStore(), plan('p1', at(1)), at(1));
+    a = server.sync(updatePlan(a, 'p1', (p) => correctLog(p, '2026-10-20', 2, at(1)), at(1)));
+    let b = server.sync(emptyStore());
+    a = updatePlan(a, 'p1', (p) => logDone(p, '2026-10-20', 3), at(2));
+    b = updatePlan(b, 'p1', (p) => logDone(p, '2026-10-20', 1), at(2));
+    a = server.sync(a);
+    b = server.sync(b);
+    a = server.sync(a);
+    expect(a.plans[0]?.log['2026-10-20']).toBe(5);
+    expect(data(a)).toEqual(data(b));
+  });
+
+  it('a deleted plan keeps its corrections, and restoring it brings them back', () => {
+    clock = Date.parse('2026-10-28T16:00:00.000Z');
+    let s = upsertPlan(emptyStore(), plan('p1', at(1)), at(1));
+    s = updatePlan(s, 'p1', (p) => correctLog(logDone(p, '2026-10-20', 9), '2026-10-20', 1, at(2)), at(2));
+    s = deletePlan(s, 'p1', at(3));
+    expect(s.tombstones[0]).toMatchObject({ log: { '2026-10-20': 1 }, logCorrectedAt: { '2026-10-20': at(2) } });
+    const late = applyServerChanges(s, { serverTime: at(4), settings: null, plans: [], logs: [{ planId: 'p1', date: '2026-10-20', amount: 9 }], relatives: [], contacts: [] });
+    expect(late.tombstones[0]?.log).toEqual({ '2026-10-20': 1 });
+    const back = upsertPlan(late, plan('p1', at(5), 'أعدتها'), at(5));
+    expect(back.plans[0]?.log).toEqual({ '2026-10-20': 1 });
+    expect(back.plans[0]?.logCorrectedAt).toEqual({ '2026-10-20': at(2) });
   });
 });

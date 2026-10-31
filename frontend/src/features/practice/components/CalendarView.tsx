@@ -19,16 +19,18 @@ import { downloadTextFile, ICS_MIME } from '@/lib/practice/download';
 import { formatGregorian } from '@/lib/practice/format';
 import { localePath } from '@/lib/seo';
 import { formatDigits } from '@/lib/format/digits';
+import type { OccasionDate } from '@/lib/types/practice';
 import { useCalendarOccasions } from '../hooks/useCalendarOccasions';
 import { useHijriLabel } from '../hooks/useHijriLabel';
 import { usePracticeCatalog } from '../hooks/usePracticeCatalog';
 import { usePracticeStore } from '../hooks/usePracticeStore';
 import { useToday } from '../hooks/useToday';
+import { CalendarMonth } from './CalendarMonth';
 import { HijriOffsetSelect } from './HijriOffsetSelect';
 import { PracticeLoading } from './PracticeLoading';
 import { SyncStatus } from './SyncStatus';
 
-/** «التقويم»: today in Hijri, the sunnah occasions of the coming year, subscribe or download. */
+/** «التقويم»: today in Hijri, the month with its sunnah occasions, the coming year's list, subscribe or download. */
 export function CalendarView() {
   const t = useTranslations('calendarPage');
   const tFeedback = useTranslations('feedback');
@@ -43,14 +45,16 @@ export function CalendarView() {
   // The catalog is the fallback: the same occasions computed on the device with practice-core.
   const catalog = usePracticeCatalog(occasions.isError);
 
-  const rows = useMemo<UpcomingOccasion[] | null>(() => {
-    if (!today || !range) return null;
-    if (occasions.data) return groupOccasions(occasions.data, today);
-    if (occasions.isError && catalog.data) {
-      return groupOccasions(computeOccasionDates(catalog.data.occasions, range.from, range.to, offset), today);
-    }
+  const entries = useMemo<OccasionDate[] | null>(() => {
+    if (!range) return null;
+    if (occasions.data) return occasions.data;
+    if (occasions.isError && catalog.data) return computeOccasionDates(catalog.data.occasions, range.from, range.to, offset);
     return null;
-  }, [today, range, occasions.data, occasions.isError, catalog.data, offset]);
+  }, [range, occasions.data, occasions.isError, catalog.data, offset]);
+  const rows = useMemo<UpcomingOccasion[] | null>(
+    () => (entries && today ? groupOccasions(entries, today) : null),
+    [entries, today],
+  );
 
   if (!clock || !snapshot) return <PracticeLoading />;
 
@@ -95,6 +99,8 @@ export function CalendarView() {
         </button>
       </div>
       <p className="-mt-6 text-sm leading-7 text-muted-foreground">{t('subscribeHint')}</p>
+
+      {entries && range ? <CalendarMonth entries={entries} today={clock.today} hijriOffset={offset} to={range.to} /> : null}
 
       <section aria-labelledby="calendar-upcoming" className="flex flex-col gap-4">
         <h2 id="calendar-upcoming" className="text-2xl font-medium">

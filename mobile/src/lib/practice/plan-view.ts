@@ -21,14 +21,15 @@ import {
   status,
   targetDaysIn,
   toHijri,
+  updatePlan,
   type AdherenceBand,
   type IsoTime,
   type LocalDate,
   type LocalTime,
   type Plan,
+  type PlanUnit,
   type Rule,
   type Store,
-  updatePlan,
 } from '@thekra/practice-core';
 import type { CatalogHabit, UiLocale } from './catalog-types';
 import { pick } from './catalog-types';
@@ -185,4 +186,27 @@ export function seasonAmount(plan: Plan): number {
   const base = baseAmount(plan);
   const next = nextStep(base) ?? base;
   return plan.ceiling !== undefined ? Math.max(base, Math.min(next, plan.ceiling)) : next;
+}
+
+/** Minutes move by this much on the «صحّح السجل» stepper (by 1 below it). */
+const MINUTES_STEP = 5;
+
+/**
+ * The next amount on the «صحّح السجل» stepper: minutes by 5 (snapping to the 5-minute marks, by 1 under 5), counts
+ * and times by 1. Never below 0 nor above `max`.
+ */
+export function fixLogStep(amount: number, unit: PlanUnit, direction: 1 | -1, max: number): number {
+  let next: number;
+  if (unit !== 'minutes') next = amount + direction;
+  else if (direction > 0) next = amount < MINUTES_STEP ? amount + 1 : (Math.floor(amount / MINUTES_STEP) + 1) * MINUTES_STEP;
+  else next = amount <= MINUTES_STEP ? amount - 1 : (Math.ceil(amount / MINUTES_STEP) - 1) * MINUTES_STEP;
+  return Math.min(max, Math.max(0, next));
+}
+
+/** Applies a change to every plan through practice-core `updatePlan` (it stamps versions for sync); null = unchanged. */
+export function eachPlan(s: Store, change: (p: Plan) => Plan | null): Store {
+  return s.plans.reduce((acc, p) => {
+    const next = change(p);
+    return next ? updatePlan(acc, p.id, () => next) : acc;
+  }, s);
 }

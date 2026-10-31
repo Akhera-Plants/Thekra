@@ -45,6 +45,7 @@ export function publicAcceptedLinkWhere() {
 
 /** The one curated link whose note was overwritten still returns the verse, without the generated sentence. */
 export function readerLinkNote(note: string | null | undefined): string | null {
-  if (!note || note.startsWith('باب ') || note.includes('تفسير السعدي')) return null;
+  // «أورده الأستاذ … في حلقة …»: how a lecture text was found, not something the reader needs (owner, 2026-10-29).
+  if (!note || note.startsWith('باب ') || note.includes('تفسير السعدي') || note.startsWith('أورده ')) return null;
   return note;
 }

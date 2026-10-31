@@ -1,6 +1,6 @@
 import { emptyStore, type Plan, type Relative, type Store } from '@thekra/practice-core';
 import { practiceCatalog } from '../practice/practice-catalog.js';
-import { MAX_PUSH_PER_WINDOW, planPushes, type PushPlanInput } from './push-planner.js';
+import { MAX_PUSH_PER_WINDOW, planPushes, sitePath, type PushPlanInput } from './push-planner.js';
 
 const habits = practiceCatalog().habits;
 // 2026-10-28 18:00 UTC = 21:00 in Amman (UTC+3).
@@ -41,7 +41,7 @@ describe('planPushes', () => {
       ['habit:plan-duha:2026-10-30:09:30', '2026-10-30T06:30:00.000Z'],
       ['habit:plan-duha:2026-10-30:11:00', '2026-10-30T08:00:00.000Z'],
     ]);
-    expect(out[0]).toMatchObject({ title: 'صلاة الضحى', body: 'المطلوب اليوم: ركعتان', url: '/ar/practice', tag: 'habit-plan-duha' });
+    expect(out[0]).toMatchObject({ title: 'صلاة الضحى', body: 'المطلوب اليوم: ركعتان', url: '/practice', tag: 'habit-plan-duha' });
   });
 
   it('skips the rest of today once the day is logged, and slots already past', () => {
@@ -72,7 +72,7 @@ describe('planPushes', () => {
     };
     const out = run(store([], [rel, { ...rel, id: 'r2', name: 'عمي' }]));
     expect(out).toHaveLength(1);
-    expect(out[0]).toMatchObject({ key: 'kinship:2026-10-29', title: 'صلة الرحم', body: 'حان وقت التواصل مع 2 من أقاربك', url: '/ar/practice/kinship' });
+    expect(out[0]).toMatchObject({ key: 'kinship:2026-10-29', title: 'صلة الرحم', body: 'حان وقت التواصل مع 2 من أقاربك', url: '/practice/kinship' });
     expect(out[0]!.fireAt.toISOString()).toBe('2026-10-29T15:00:00.000Z');
     expect(JSON.stringify(out)).not.toMatch(/سعاد|عمي/);
   });
@@ -83,5 +83,12 @@ describe('planPushes', () => {
     const a = run(store([plan()]))[0]!;
     expect(run(store([plan()]))[0]!.digest).toBe(a.digest);
     expect(run(store([plan({ amount: 2 })]))[0]!.digest).not.toBe(a.digest);
+  });
+});
+
+describe('sitePath', () => {
+  it('Arabic has no prefix (the site default), English is under /en', () => {
+    expect(sitePath('ar', '/practice')).toBe('/practice');
+    expect(sitePath('en', '/practice/kinship')).toBe('/en/practice/kinship');
   });
 });

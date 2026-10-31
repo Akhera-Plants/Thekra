@@ -7,7 +7,7 @@ React Native app consuming the same `/v1` API as the web frontend.
 - Expo SDK 57 + **expo-router** (file-based navigation)
 - TanStack Query + AsyncStorage persister, axios, Zustand (auth/session)
 - i18next (`ar` default, `en`), RTL via `I18nManager`
-- Design tokens in `src/lib/tokens.ts` (Phase 8 will swap values only)
+- Design system in `src/theme` (the website's palette and fonts, light and dark) and `src/ui` (the component kit). No colour or icon outside them
 
 ## Run
 
@@ -22,10 +22,15 @@ Use a device/simulator with the API reachable (localhost works on iOS simulator;
 
 ## Screens
 
-Tabs: Home · My habits (عاداتي) · Browse · Favorites · Settings  
+Tabs: Home · My garden (بستاني) · My habits (عاداتي, centre) · Favorites · Settings  
+Garden: `(tabs)/garden` (بستاني): one plant per habit plan (+ صلة الرحم), grown by days tended, never shrinking, resting
+on «يومي ثقيل»; never a plant for the sin program (`src/lib/practice/garden.ts`, drawings in `src/components/garden/`)  
+Browse: `browse` (استكشف النصوص), a pushed screen opened from Home  
 Core: `sins/[slug]`, `good-deeds/[slug]`, `quotes/[id]`, `feelings/[tagSlug]`  
-Practice (`app/practice/`): `add` (أعِنّي على طاعة), `plan/[id]`, `duties` (فروضي وأدواري), `kinship` (صلة الرحم),
-`sin-program` (ترك المعصية), `calendar`  
+Hub: `(tabs)/habits` (عاداتي): today across every track (practice-core `dayAgenda`), week strip, «أضف» sheet, the three
+tracks, «وين وصلت هذا الشهر» month grid (pieces in `src/components/practice/hub/`, hooks in `src/lib/practice/use-habits-hub.ts`)  
+Practice (`app/practice/`): `habits` (طاعاتي: plans, يومي ثقيل, Ramadan, reminders), `add` (أعِنّي على طاعة), `plan/[id]`,
+`duties` (فروضي وأدواري), `kinship` (صلة الرحم; `?add=1` opens the form), `sin-program` (ترك المعصية), `calendar` (month grid)  
 Auth: `(auth)/login`, `(auth)/register`
 
 ## Practice features (roadmap docs/plan/2026-10-features-roadmap.md §2–§4, §6, §8; sync contract docs/plan/2026-10-practice-sync-contract.md)

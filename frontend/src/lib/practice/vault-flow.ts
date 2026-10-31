@@ -8,21 +8,21 @@
  * The flows take the API as a parameter so they can be tested without a network.
  */
 import {
-  MIN_VAULT_ITERATIONS,
+  VAULT_ITERATIONS,
   deriveKey,
+  mergePrograms,
   newSalt,
   openPrograms,
+  privacyCodeProblem,
   sealPrograms,
   unlockVault,
   vaultPayload,
-  type CheckIn,
   type SinProgram,
   type VaultPayload,
   VaultLockedError,
 } from '@thekra/practice-core';
 import { ApiError } from '@/lib/types/api';
 
-export const MIN_CODE_LENGTH = 6;
 /** Conflict retries before giving up (another device keeps writing). */
 const MAX_CONFLICT_RETRIES = 3;
 
@@ -62,27 +62,8 @@ export function isVaultConflict(error: unknown): boolean {
   return error instanceof ApiError && error.status === 409;
 }
 
-/**
- * Merges two copies of the programs (this device, the vault): one program per sin. For a sin in both copies the
- * check-ins are united by date; when both copies have a check-in on the same date, the one from the copy with more
- * check-ins overall wins (ties: this device), with its note. That copy's path, category and start also win, except
- * that the start is the earlier of the two. Pure; the order is this device's, then programs only in the vault.
- */
-export function mergePrograms(local: readonly SinProgram[], remote: readonly SinProgram[]): SinProgram[] {
-  const remoteBySlug = new Map(remote.map((p) => [p.sinSlug, p]));
-  const merged = local.map((mine) => {
-    const theirs = remoteBySlug.get(mine.sinSlug);
-    if (!theirs) return mine;
-    const [winner, loser] = theirs.checkIns.length > mine.checkIns.length ? [theirs, mine] : [mine, theirs];
-    const byDate = new Map<string, CheckIn>(loser.checkIns.map((c) => [c.date, c]));
-    for (const c of winner.checkIns) byDate.set(c.date, c);
-    const checkIns = [...byDate.values()].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
-    const startedOn = mine.startedOn < theirs.startedOn ? mine.startedOn : theirs.startedOn;
-    return { ...winner, startedOn, checkIns };
-  });
-  const localSlugs = new Set(local.map((p) => p.sinSlug));
-  return [...merged, ...remote.filter((p) => !localSlugs.has(p.sinSlug))];
-}
+/** Merging this device's programs with the vault's: practice-core `mergePrograms` (shared with the mobile app). */
+export { mergePrograms };
 
 /** Stable text of a program list, to tell whether the vault needs a new seal. */
 export function programsFingerprint(programs: readonly SinProgram[]): string {
@@ -91,13 +72,13 @@ export function programsFingerprint(programs: readonly SinProgram[]): string {
 
 /** «احفظ البرنامج مشفّرًا»: a new salt and key from the code, sealed and saved as version 0 → 1. */
 export async function createVault(api: VaultApi, programs: readonly SinProgram[], code: string): Promise<VaultSession> {
-  if (code.length < MIN_CODE_LENGTH) throw new RangeError('The privacy code is too short');
+  if (privacyCodeProblem(code) !== null) throw new RangeError('The privacy code is too easy to guess');
   if (await api.get()) throw new VaultExistsError();
   const salt = newSalt();
-  const key = deriveKey(code, salt, MIN_VAULT_ITERATIONS);
-  const body = vaultPayload(sealPrograms(programs, key), { salt, iterations: MIN_VAULT_ITERATIONS, version: 0 });
+  const key = deriveKey(code, salt, VAULT_ITERATIONS);
+  const body = vaultPayload(sealPrograms(programs, key), { salt, iterations: VAULT_ITERATIONS, version: 0 });
   const version = await api.put(body);
-  return { key, salt, iterations: MIN_VAULT_ITERATIONS, version };
+  return { key, salt, iterations: VAULT_ITERATIONS, version };
 }
 
 /** «افتح البرنامج»: the vault's programs and a session key, or null when the account has no vault. Wrong code → VaultLockedError. */

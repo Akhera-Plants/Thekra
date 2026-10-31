@@ -20,8 +20,14 @@ import { validateProgram, type SinProgram } from './sin-program.js';
 import { parsePrograms } from './storage.js';
 
 export const VAULT_KDF = 'pbkdf2-sha256';
-/** The server rejects fewer iterations (contract §3). */
+/** The server rejects fewer iterations (contract §3). Vaults made before 2026-10-29 use this. */
 export const MIN_VAULT_ITERATIONS = 210_000;
+/** For new vaults where the KDF runs fast enough (OWASP 2023 for PBKDF2-HMAC-SHA256). ~0.6 s in V8. */
+export const VAULT_ITERATIONS = 600_000;
+/** {@link unlockVault} refuses more: a vault from a hostile server must not freeze the device. */
+export const MAX_VAULT_ITERATIONS = 5_000_000;
+/** A new privacy code is at least this long ({@link privacyCodeProblem}). */
+export const MIN_PRIVACY_CODE_LENGTH = 8;
 export const VAULT_KEY_BYTES = 32;
 export const VAULT_SALT_BYTES = 16;
 export const VAULT_IV_BYTES = 12;
@@ -107,6 +113,27 @@ export function deriveKey(code: string, salt: string | Uint8Array, iterations: n
   return pbkdf2(sha256, utf8ToBytes(code.normalize('NFC')), saltBytes, { c: iterations, dkLen: VAULT_KEY_BYTES });
 }
 
+/** Codes people pick first, which an attacker tries first. Compared after lowercasing and NFC. */
+const COMMON_CODES = new Set(['password', 'passw0rd', 'qwertyui', 'qwerty123', 'iloveyou', 'abcdefgh', 'abcd1234', '1q2w3e4r', 'asdfghjk']);
+
+/**
+ * Why a new privacy code is too easy to guess, or null when it may be used. The vault is only as strong as this
+ * code: anyone holding the ciphertext can try codes offline. Rejects short codes, one repeated character, runs
+ * of consecutive digits or letters (12345678, 87654321, abcdefgh), digits with at most two distinct values, and
+ * common codes. Existing vaults are not affected: this runs only when a code is chosen.
+ */
+export function privacyCodeProblem(code: string): 'short' | 'weak' | null {
+  const chars = [...code.normalize('NFC')];
+  if (chars.length < MIN_PRIVACY_CODE_LENGTH) return 'short';
+  if (new Set(chars).size === 1) return 'weak';
+  const points = chars.map((c) => c.codePointAt(0) as number);
+  const steps = new Set(points.slice(1).map((p, i) => p - (points[i] as number)));
+  if (steps.size === 1 && (steps.has(1) || steps.has(-1))) return 'weak';
+  if (/^\d+$/.test(code) && new Set(chars).size <= 2) return 'weak';
+  if (COMMON_CODES.has(code.normalize('NFC').toLowerCase())) return 'weak';
+  return null;
+}
+
 function assertKey(key: Uint8Array): void {
   if (!(key instanceof Uint8Array) || key.length !== VAULT_KEY_BYTES) throw new VaultError('key must be 32 bytes');
 }
@@ -154,11 +181,15 @@ export function openPrograms(sealed: SealedPrograms, key: Uint8Array): SinProgra
   return parsePrograms((parsed as { programs?: unknown }).programs);
 }
 
-/** The PUT body. Throws when `iterations` is below the server minimum or a field is malformed. */
-export function vaultPayload(sealed: SealedPrograms, opts: { salt: string; iterations: number; version: number }): VaultPayload {
-  if (!Number.isInteger(opts.iterations) || opts.iterations < MIN_VAULT_ITERATIONS) {
-    throw new VaultError(`iterations must be at least ${MIN_VAULT_ITERATIONS}`);
+function assertIterations(iterations: number): void {
+  if (!Number.isInteger(iterations) || iterations < MIN_VAULT_ITERATIONS || iterations > MAX_VAULT_ITERATIONS) {
+    throw new VaultError(`iterations must be ${MIN_VAULT_ITERATIONS}–${MAX_VAULT_ITERATIONS}`);
   }
+}
+
+/** The PUT body. Throws when `iterations` is outside the allowed range or a field is malformed. */
+export function vaultPayload(sealed: SealedPrograms, opts: { salt: string; iterations: number; version: number }): VaultPayload {
+  assertIterations(opts.iterations);
   if (!Number.isInteger(opts.version) || opts.version < 0) throw new VaultError('version must be a non-negative integer');
   decodeField(opts.salt, 'salt', VAULT_SALT_BYTES);
   decodeField(sealed.iv, 'iv', VAULT_IV_BYTES);
@@ -169,12 +200,15 @@ export function vaultPayload(sealed: SealedPrograms, opts: { salt: string; itera
 /**
  * Opens a vault as the server returns it, from the privacy code: derives the key with the vault's own salt and
  * iterations. Returns the key too, to keep in memory for the session (and re-seal with the same salt).
+ * Refuses iterations outside {@link MIN_VAULT_ITERATIONS}–{@link MAX_VAULT_ITERATIONS}, so a server cannot weaken
+ * the key (1 iteration) or freeze the device (a huge count).
  */
 export function unlockVault(
   vault: Pick<VaultPayload, 'ciphertext' | 'iv' | 'salt' | 'kdf' | 'iterations'>,
   code: string,
 ): { programs: SinProgram[]; key: Uint8Array } {
   if (vault.kdf !== VAULT_KDF) throw new VaultError(`Unsupported kdf: ${String(vault.kdf)}`);
+  assertIterations(vault.iterations);
   const key = deriveKey(code, vault.salt, vault.iterations);
   return { programs: openPrograms(vault, key), key };
 }

@@ -1,5 +1,5 @@
 /**
- * Validation of the «أضف قريبًا» form. A relative is a nickname and a rhythm, never a phone number, an
+ * Validation of the relative form («أضف قريبًا» and its edit). A relative is a nickname and a rhythm, never a phone number, an
  * email or a link (practice-core `looksLikeContactDetails`, silat-rahim-plan §4). Pure, for Jest.
  */
 
@@ -40,6 +40,30 @@ export function rhythmToRule(values: Pick<RelativeFormValues, 'rhythm' | 'weekda
   }
 }
 
+/** Monthly is saved as every 30 days (`rhythmToRule`). */
+const MONTH_DAYS = 30;
+/** The «عدد أيام» choice the form starts on when the rhythm is not a day count. */
+const DEFAULT_EVERY_DAYS = 10;
+
+/** The form's rhythm for a saved rule (a `weekdays` rule from another device opens as weekly on its first day). */
+export function ruleToFormValues(rule: KinshipRule, fallbackWeekday: number): Pick<RelativeFormValues, 'rhythm' | 'weekday' | 'everyDays'> {
+  switch (rule.kind) {
+    case 'everyNWeeks':
+      return { rhythm: rule.n === 2 ? 'biweekly' : 'weekly', weekday: rule.weekday, everyDays: DEFAULT_EVERY_DAYS };
+    case 'everyNDays':
+      return rule.n === MONTH_DAYS
+        ? { rhythm: 'monthly', weekday: fallbackWeekday, everyDays: DEFAULT_EVERY_DAYS }
+        : { rhythm: 'everyNDays', weekday: fallbackWeekday, everyDays: rule.n };
+    case 'weekdays':
+      return { rhythm: 'weekly', weekday: rule.days[0] ?? fallbackWeekday, everyDays: DEFAULT_EVERY_DAYS };
+  }
+}
+
+/** The form values of a saved relative (the edit form opens on them). */
+export function relativeToFormValues(relative: Relative, fallbackWeekday: number): RelativeFormValues {
+  return { name: relative.name, relation: relative.relation, ...ruleToFormValues(relative.rule, fallbackWeekday) };
+}
+
 export function validateRelativeForm(values: RelativeFormValues): RelativeFormError | null {
   const name = values.name.trim();
   if (name.length === 0) return 'nameRequired';
@@ -73,42 +97,28 @@ export function relativeFromForm(
 }
 
 /**
- * The form values for editing an existing relative. A rule the form cannot show exactly (a weekdays rule from
- * another device, every 3+ weeks) is shown as its nearest choice; {@link relativeEditFromForm} keeps the stored
- * rule unless the user changes the rhythm.
+ * The relative after the edit form, or the form error. An unchanged rhythm keeps the saved rule (and its anchor), so
+ * renaming someone does not move their next due date. Contacts and history stay as they are. Never throws.
  */
-export function formFromRelative(rel: Relative): RelativeFormValues {
-  const base = { name: rel.name, relation: rel.relation, weekday: 5, everyDays: 10 };
-  const rule = rel.rule;
-  switch (rule.kind) {
-    case 'everyNWeeks':
-      return { ...base, rhythm: rule.n === 2 ? 'biweekly' : 'weekly', weekday: rule.weekday };
-    case 'everyNDays':
-      return rule.n === 30 ? { ...base, rhythm: 'monthly' } : { ...base, rhythm: 'everyNDays', everyDays: rule.n };
-    case 'weekdays':
-      return { ...base, rhythm: 'weekly', weekday: rule.days[0] ?? 5 };
-  }
-}
-
-function sameRhythm(a: RelativeFormValues, b: RelativeFormValues): boolean {
-  if (a.rhythm !== b.rhythm) return false;
-  if (a.rhythm === 'weekly' || a.rhythm === 'biweekly') return a.weekday === b.weekday;
-  if (a.rhythm === 'everyNDays') return a.everyDays === b.everyDays;
-  return true;
-}
-
-/**
- * The edited relative (same id, history and contacts), or the form error. Name and relation are taken from the
- * form; the rule changes only when the rhythm was changed (then anchored on `today`). Save it with practice-core
- * `updateRelative`, which stamps `updatedAt` so the edit syncs. Never throws.
- */
-export function relativeEditFromForm(
-  values: RelativeFormValues,
+export function editedRelative(
   existing: Relative,
+  values: RelativeFormValues,
   today: LocalDate,
 ): { ok: true; relative: Relative } | { ok: false; error: RelativeFormError } {
   const error = validateRelativeForm(values);
   if (error) return { ok: false, error };
-  const rule = sameRhythm(values, formFromRelative(existing)) ? existing.rule : rhythmToRule(values, today);
-  return { ok: true, relative: { ...existing, name: values.name.trim(), relation: values.relation.trim(), rule } };
+  const saved = ruleToFormValues(existing.rule, values.weekday);
+  const sameRhythm =
+    saved.rhythm === values.rhythm &&
+    (values.rhythm === 'monthly' ||
+      (values.rhythm === 'everyNDays' ? saved.everyDays === values.everyDays : saved.weekday === values.weekday));
+  return {
+    ok: true,
+    relative: {
+      ...existing,
+      name: values.name.trim(),
+      relation: values.relation.trim(),
+      rule: sameRhythm ? existing.rule : rhythmToRule(values, today),
+    },
+  };
 }

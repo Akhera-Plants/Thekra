@@ -148,10 +148,29 @@ function shuabAlsoIn(row: QuoteRowForDto, locale: 'ar' | 'en'): string | null {
     : `ورد في الجامع لشعب الإيمان للبيهقي، رقم ${number}`;
 }
 
+/**
+ * A text the owner took from a lecture (`apiProvider` `lecture:*`, e.g. the batch 2026-10-anas-habits). The lecture
+ * is how the text was found, not its source: the public card shows no source, episode or grader for it (owner
+ * decision 2026-10-29).
+ */
+function isLectureCitation(row: Pick<QuoteRowForDto, 'apiProvider'>): boolean {
+  return row.apiProvider?.startsWith('lecture:') ?? false;
+}
+
+/**
+ * The one part of a lecture citation that stays public: a text reported by its meaning is never shown as the
+ * Prophet's ﷺ wording (PROJECT_GUIDE §3.12). The import writes «رواه بمعناه…» for those; who said it is dropped.
+ */
+function lectureWordingNote(row: Pick<QuoteRowForDto, 'gradeReference'>, locale: 'ar' | 'en'): string | null {
+  if (!row.gradeReference?.startsWith('رواه بمعناه')) return null;
+  return locale === 'ar' ? 'رُوي بالمعنى' : 'Reported by meaning';
+}
+
 export function mapQuoteToDto(
   row: QuoteRowForDto,
   locale: 'ar' | 'en',
 ): QuoteDto {
+  const lecture = isLectureCitation(row);
   const translation =
     locale === 'ar'
       ? null
@@ -181,7 +200,7 @@ export function mapQuoteToDto(
             narratorAr: row.narratorAr,
             // Athar never carry a hadith grade on the public card.
             grade: row.isAthar ? null : row.grade,
-            reference: formatPrintedReference({
+            reference: lecture ? null : formatPrintedReference({
               locale,
               workAr: row.source.nameAr,
               workEn: row.source.name,
@@ -202,17 +221,17 @@ export function mapQuoteToDto(
     citation: {
       volume: row.volume,
       page: row.page,
-      gradeAuthority: row.isAthar ? null : row.gradeAuthority,
-      gradeReference: row.isAthar ? null : row.gradeReference,
+      gradeAuthority: row.isAthar || lecture ? null : row.gradeAuthority,
+      gradeReference: row.isAthar ? null : lecture ? lectureWordingNote(row, locale) : row.gradeReference,
       alsoIn: shuabAlsoIn(row, locale),
     },
     source: {
       id: row.source.id,
-      name: row.source.name,
-      nameAr: row.source.nameAr,
+      name: lecture ? '' : row.source.name,
+      nameAr: lecture ? null : row.source.nameAr,
       type: row.source.type,
-      author: row.source.author,
-      authorAr: row.source.authorAr,
+      author: lecture ? null : row.source.author,
+      authorAr: lecture ? null : row.source.authorAr,
       isExternalApi: row.source.isExternalApi,
       apiProvider: row.source.apiProvider,
     },

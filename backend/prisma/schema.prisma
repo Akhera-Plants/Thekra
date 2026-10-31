@@ -811,6 +811,8 @@ model User {
   sinVault         SinVault?
   /// Web push: one row per browser that turned reminders on (docs/plan/2026-10-web-push.md).
   pushSubscriptions PushSubscription[]
+  /// رفقة: private circles this user belongs to (cascade with the user).
+  circleMemberships CircleMember[]
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 }
@@ -855,14 +857,18 @@ model HabitPlan {
   @@index([userId, updatedAt])
 }
 
-/// Amount done per plan and day. Merge: the larger amount wins (logging never goes down). Kept while the plan
-/// is soft-deleted, so a newer edit that restores the plan restores its logs.
+/// Amount done per plan and day. Merge: the later `correctedAt` wins (null counts as the oldest), then the
+/// larger amount (plain logging never goes down). Kept while the plan is soft-deleted, so a newer edit that
+/// restores the plan restores its logs.
 model HabitLog {
-  planId    String
-  plan      HabitPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
-  date      DateTime  @db.Date
-  amount    Float
-  updatedAt DateTime  @updatedAt
+  planId      String
+  plan        HabitPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  date        DateTime  @db.Date
+  /// Above 0, or 0 for a day cleared by a correction.
+  amount      Float
+  /// Client time of the last correction (undo of «تمّ», a fixed amount); null when only ever added to.
+  correctedAt DateTime?
+  updatedAt   DateTime  @updatedAt
 
   @@id([planId, date])
 }
@@ -944,6 +950,73 @@ model PushReminder {
 
   @@unique([subscriptionId, key])
   @@index([fireAt])
+}
+
+/// رفقة (docs/plan/2026-10-features-roadmap.md §0.5 note of 2026-10-29): a private, invite-only circle of at most
+/// 12 members. Joined only with `inviteCode` (random, never derived from anything). Deleting the circle deletes its
+/// members, marks and cheers.
+model Circle {
+  id         String         @id @default(uuid())
+  name       String
+  /// «نيّتنا», optional.
+  intention  String?
+  inviteCode String         @unique
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  members    CircleMember[]
+  cheers     CircleCheer[]
+}
+
+/// A user inside a circle. Clients only ever see `id` (the member id), never `userId`. `displayName` is chosen per
+/// circle on join. `sharesPresence` is off until the member turns it on.
+model CircleMember {
+  id             String           @id @default(uuid())
+  circleId       String
+  circle         Circle           @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  displayName    String
+  /// The creator, or the earliest member after the creator left or deleted their account.
+  isOwner        Boolean          @default(false)
+  sharesPresence Boolean          @default(false)
+  joinedAt       DateTime         @default(now())
+  presences      CirclePresence[]
+  cheersSent     CircleCheer[]    @relation("CircleCheerSender")
+  cheersReceived CircleCheer[]    @relation("CircleCheerReceiver")
+
+  @@unique([circleId, userId])
+  @@index([userId])
+}
+
+/// «حضرت اليوم»: the member logged something on this local date. Nothing else (no habit, no amount).
+model CirclePresence {
+  memberId  String
+  member    CircleMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  date      DateTime     @db.Date
+  createdAt DateTime     @default(now())
+
+  @@id([memberId, date])
+}
+
+/// A preset encouragement line (`message` is a key, never free text). `receiverId` null = the whole circle.
+/// `target` is the receiver's member id or `circle`; with `day` (server UTC date) it limits a sender to one cheer
+/// per target per day.
+model CircleCheer {
+  id         String        @id @default(uuid())
+  circleId   String
+  circle     Circle        @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  senderId   String
+  sender     CircleMember  @relation("CircleCheerSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId String?
+  receiver   CircleMember? @relation("CircleCheerReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  target     String
+  message    String
+  day        DateTime      @db.Date
+  createdAt  DateTime      @default(now())
+
+  @@unique([senderId, target, day])
+  @@index([circleId, createdAt])
+  @@index([receiverId])
 }
 
 model Favorite {

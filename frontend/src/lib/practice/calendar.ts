@@ -86,8 +86,23 @@ export function groupOccasions(entries: readonly OccasionDate[], today: LocalDat
   return rows.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.key.localeCompare(b.key)));
 }
 
+/**
+ * From the first day of this month (the month grid marks the days already past too) to one year on. Within the
+ * API's 400-day limit.
+ */
 export function calendarRange(today: LocalDate): { from: LocalDate; to: LocalDate } {
-  return { from: today, to: addDays(today, CALENDAR_RANGE_DAYS) };
+  return { from: `${today.slice(0, 8)}01`, to: addDays(today, CALENDAR_RANGE_DAYS) };
+}
+
+/** Occasion titles per date, for the month grid's day marks and the selected-day panel. */
+export function occasionsByDate(entries: readonly OccasionDate[]): Map<LocalDate, OccasionDate[]> {
+  const byDate = new Map<LocalDate, OccasionDate[]>();
+  for (const entry of entries) {
+    const list = byDate.get(entry.date);
+    if (list) list.push(entry);
+    else byDate.set(entry.date, [entry]);
+  }
+  return byDate;
 }
 
 /** The visible list as an all-day `.ics`, built on the device (titles are public occasion names). */

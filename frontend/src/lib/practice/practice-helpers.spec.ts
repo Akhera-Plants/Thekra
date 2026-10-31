@@ -1,18 +1,32 @@
 import { describe, expect, it } from 'vitest';
-import { createRelative, logDone, startProgram, checkIn, startEbb, type Plan } from '@thekra/practice-core';
+import {
+  createRelative,
+  dayAgenda,
+  emptyStore,
+  isEbbOn,
+  logDone,
+  startProgram,
+  checkIn,
+  startEbb,
+  upsertPlan,
+  type Plan,
+} from '@thekra/practice-core';
 import type { OccasionDate, PracticeCatalog, PracticeHabit, PracticeOccasion } from '@/lib/types/practice';
-import { calendarRange, computeOccasionDates, groupOccasions, occasionsIcs } from './calendar';
+import { computeOccasionDates, groupOccasions, occasionsIcs } from './calendar';
 import { editRelative, kinshipEvents, rhythmOf, rhythmRule } from './kinship';
 import {
   editPlan,
+  isEbbDay,
   lowerAmounts,
   MONTH_DAYS,
   PROGRESS_DAYS,
+  planDayOptions,
   planFromHabit,
   planReminderEvents,
   planToday,
   progressDays,
   ramadanEnd,
+  setEbbForAll,
 } from './plans';
 import { allProgramEvidenceIds, chosenPath, programView } from './programs';
 
@@ -64,7 +78,7 @@ describe('calendar view-model', () => {
       basis: 'text',
       evidence: [],
     };
-    const { from } = calendarRange('2026-10-28');
+    const from = '2026-10-28';
     const dates = computeOccasionDates([white], from, '2026-11-30', 0).map((d) => d.date);
     // 17 Jumada al-Ula 1448 = 2026-10-28, so 13–15 Jumada al-Akhira are 2026-11-23…25.
     expect(dates).toEqual(['2026-11-23', '2026-11-24', '2026-11-25']);
@@ -193,6 +207,40 @@ describe('habit schedule (isPlanDueOn)', () => {
     const heavy = startEbb(plan, '2026-10-27');
     expect(planToday(heavy, '2026-10-27', 0).required).toBe(2);
     expect(planToday(heavy, '2026-10-28', 0).required).toBe(10);
+  });
+});
+
+describe('the hub agrees with the habit page (planDayOptions)', () => {
+  it('lists a habit without its own rule only on its catalog days', () => {
+    // 2026-10-28 is a Wednesday, 2026-10-29 a Thursday.
+    const fast: PracticeHabit = { ...habit, key: 'fast-mon-thu', defaultRule: { kind: 'weekdays', days: [1, 4] } };
+    const p = planFromHabit(fast, { distance: 'far', slots: ['06:00'], activeDaysPerWeek: 2 }, '2026-10-01');
+    const store = upsertPlan(emptyStore(), p);
+    const opts = planDayOptions(new Map([[fast.key, fast]]), 0);
+    const habitsOn = (date: string) => dayAgenda(store, date, opts).filter((i) => i.kind === 'habit').length;
+    expect(habitsOn('2026-10-28')).toBe(0);
+    expect(habitsOn('2026-10-29')).toBe(1);
+    expect(planToday(p, '2026-10-28', 0, { fallback: fast.defaultRule }).isDueToday).toBe(false);
+  });
+});
+
+describe('«يومي ثقيل» is one day', () => {
+  const a = planFromHabit(habit, { distance: 'near', slots: ['06:00'], activeDaysPerWeek: 3 }, '2026-10-01');
+  const b = { ...a, id: 'b' };
+  it('turns on for today only and is off by itself the next day', () => {
+    const store = setEbbForAll(upsertPlan(upsertPlan(emptyStore(), a), b), true, '2026-10-28');
+    expect(isEbbDay(store.plans, '2026-10-28')).toBe(true);
+    expect(isEbbDay(store.plans, '2026-10-29')).toBe(false);
+    expect(store.plans.every((p) => isEbbOn(p, '2026-10-28'))).toBe(true);
+  });
+
+  it('turning off leaves a plan without an ebb untouched', () => {
+    const lightened = startEbb(a, '2026-10-28');
+    const store = upsertPlan(upsertPlan(emptyStore(), lightened), b);
+    expect(isEbbDay(store.plans, '2026-10-28')).toBe(false);
+    const off = setEbbForAll(store, false, '2026-10-28');
+    expect(off.plans.find((p) => p.id === 'b')).toBe(store.plans.find((p) => p.id === 'b'));
+    expect(off.plans.some((p) => p.ebb)).toBe(false);
   });
 });
 

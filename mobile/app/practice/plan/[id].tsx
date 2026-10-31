@@ -1,64 +1,84 @@
 /**
- * One habit plan: today's amount and log, the monthly adherence band (no streaks, no failure words), the
- * typed amount next to «+1» / «أتممتها» (practice-core `logDone`, any positive amount), the
- * one-step increase (only when practice-core `canIncrease`), the relapse suggestion (`status` = 'relapse' →
- * `relapseSuggestion`), slot/day settings, and the evidence texts from the API.
+ * One habit plan, after the website's PlanCard: today's amount with «أتممتها» and a partial «+1», «سُجِّل · تراجع»,
+ * a typed partial amount, «صحّح السجل» (a week back, steppers for the day and the amount), the increase and relapse offers as next-step
+ * notes, the last 30 days (a kind band and a row of dots, no streaks and no failure words), slot/day settings, and
+ * «المُعينات»: one evidence text from the API with «المزيد» to the deed's page, which reads the rest. Delete is the
+ * trash in the native header (confirmed), reachable without scrolling. A quiet «اقرأ عن هذه الطاعة» opens the deed's page.
  */
 
-import React, { useEffect, useState } from 'react';
-import { Alert, TextInput } from 'react-native';
+import React, { useState } from 'react';
+import { Alert } from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { decreaseTo, deletePlan, increase, logDone, normalize, updatePlan, validatePlan, type LocalTime, type Plan } from '@thekra/practice-core';
+import * as Haptics from 'expo-haptics';
+import { SearchX, Trash2 } from 'lucide-react-native';
+import {
+  correctLog,
+  decreaseTo,
+  deletePlan,
+  increase,
+  logDone,
+  normalize,
+  updatePlan,
+  type Plan,
+} from '@thekra/practice-core';
 import { useEvidence, usePracticeCatalog } from '@/lib/api/practice';
+import { useCirclePresence } from '@/lib/circles/use-circle-presence';
 import { pick } from '@/lib/practice/catalog-types';
-import { parseLogAmount, ruleToWeekdays, sortSlots, weekdaysToRule } from '@/lib/practice/format';
+import { ruleToWeekdays } from '@/lib/practice/format';
 import { planView } from '@/lib/practice/plan-view';
 import { today, usePracticeStore } from '@/lib/practice/practice-store';
 import { formatAmount, habitFor, planRule } from '@/lib/practice/reminders';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { EvidenceList } from '@/components/practice/EvidenceList';
-import { ActiveDaysPicker, SlotsEditor, WeekdayPicker } from '@/components/practice/editors';
-import { Body, Button, Card, ErrorText, Loading, Row, Screen, SectionTitle, Title, practiceStyles } from '@/components/practice/ui';
+import { MonthPanel, SettingsPanel } from '@/components/practice/PlanHistoryAndSettings';
+import { TodayPanel } from '@/components/practice/PlanTodayCard';
+import { space, useStyles } from '@/theme';
+import {
+  Button,
+  EmptyState,
+  IconButton,
+  Loading,
+  NextStep,
+  PageHeader,
+  Rule,
+  Screen,
+  Text,
+  TextLink,
+  Wrap,
+} from '@/ui';
+
+const makeStyles = () => ({
+  offerActions: { marginTop: space.sm },
+});
 
 export default function PlanScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation();
   const locale = useUiLocale();
+  const styles = useStyles(makeStyles);
   const hydrated = usePracticeStore((s) => s.hydrated);
   const plan = usePracticeStore((s) => s.store.plans.find((p) => p.id === id));
   const setStore = usePracticeStore((s) => s.setStore);
+  useCirclePresence(); // «حضرت اليوم» to the user's circles (رفقة), when sharing is on there
   const catalog = usePracticeCatalog(locale);
   const habits = catalog.data?.habits ?? [];
   const habit = plan ? habitFor(plan, habits) : undefined;
   const evidence = useEvidence(habit?.evidence ?? [], locale);
   const signedIn = useAuthStore((s) => Boolean(s.user));
 
-  const [slots, setSlots] = useState<LocalTime[]>([]);
-  const [activeDays, setActiveDays] = useState(3);
-  const [weekdays, setWeekdays] = useState<number[] | null>(null);
   const [relapseDismissed, setRelapseDismissed] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [amountDraft, setAmountDraft] = useState('');
-  const [amountError, setAmountError] = useState(false);
-
-  const ruleKey = plan ? JSON.stringify(planRule(plan, habits)) : '';
-  useEffect(() => {
-    if (!plan) return;
-    setSlots(plan.slots);
-    setActiveDays(plan.activeDaysPerWeek);
-    setWeekdays(ruleToWeekdays(planRule(plan, habits)));
-    // Reset the editors when the stored plan's settings change, not on every log.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [plan?.id, plan?.slots.join(','), plan?.activeDaysPerWeek, ruleKey]);
+  /** The last log in this visit, so it can be undone in one tap. */
+  const [lastLog, setLastLog] = useState<{ date: string; before: number } | null>(null);
+  /** «صحّح السجل» is open. */
+  const [fixing, setFixing] = useState(false);
 
   if (!hydrated) return <Loading />;
   if (!plan) {
     return (
-      <Screen>
-        <Body>{t('practice.plan.notFound')}</Body>
+      <Screen edges={['bottom']}>
+        <EmptyState icon={SearchX} message={t('practice.plan.notFound')} actionLabel={t('common.back')} onAction={() => router.back()} />
       </Screen>
     );
   }
@@ -79,35 +99,26 @@ export default function PlanScreen() {
     setStore((s) => updatePlan(s, id as string, fn));
   }
 
-  function logTyped() {
-    const n = parseLogAmount(amountDraft);
-    if (n === null) {
-      setAmountError(true);
-      return;
-    }
-    update((p) => logDone(p, d, n));
-    setAmountDraft('');
-    setAmountError(false);
+  function handleLog(amount: number) {
+    setLastLog({ date: d, before: plan!.log[d] ?? 0 });
+    update((p) => logDone(p, d, amount));
+    if (!view.doneToday && amount >= view.remaining) void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   }
 
-  function saveSettings() {
-    setError(null);
-    const rule = weekdays ? weekdaysToRule(weekdays) : null;
-    if (weekdays && !rule) {
-      setError(t('practice.add.noReminderDays'));
-      return;
-    }
-    const next: Plan = { ...plan!, slots: sortSlots(slots), activeDaysPerWeek: activeDays, ...(rule ? { rule } : {}) };
-    if (validatePlan(next) !== null) {
-      setError(t('practice.add.noSlots'));
-      return;
-    }
-    update(() => next);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 1500);
+  function handleUndo() {
+    if (!lastLog) return;
+    const { date, before } = lastLog;
+    update((p) => correctLog(p, date, before));
+    setLastLog(null);
   }
 
-  function remove() {
+  function handleFixSave(date: string, amount: number) {
+    update((p) => correctLog(p, date, amount));
+    setFixing(false);
+    setLastLog(null);
+  }
+
+  function handleRemove() {
     // Signed in, the deletion syncs to the account (a tombstone), so it is not only «من هذا الجهاز».
     Alert.alert(t('practice.plan.delete'), t(signedIn ? 'practice.plan.deleteConfirmSynced' : 'practice.plan.deleteConfirm'), [
       { text: t('common.cancel'), style: 'cancel' },
@@ -122,108 +133,73 @@ export default function PlanScreen() {
     ]);
   }
 
+  const renderDeleteButton = () => <IconButton icon={Trash2} label={t('practice.plan.delete')} onPress={handleRemove} />;
+
   return (
-    <Screen>
-      <Stack.Screen options={{ title }} />
-      <Title>{title}</Title>
-      {habit ? <Body muted small>{t(`practice.basis.${habit.basis}`)}</Body> : null}
-      {timeHint ? <Body muted small>{t('practice.add.timeHint', { hint: timeHint })}</Body> : null}
+    <Screen edges={['bottom']} keyboard>
+      <Stack.Screen options={{ title, headerRight: renderDeleteButton }} />
+      <PageHeader eyebrow={t('practice.title')} title={title} lead={habit ? t(`practice.basis.${habit.basis}`) : undefined}>
+        {timeHint ? (
+          <Text variant="small" tone="muted">
+            {t('practice.add.timeHint', { hint: timeHint })}
+          </Text>
+        ) : null}
+        {habit ? <TextLink label={t('practice.plan.readAbout')} onPress={() => router.push(`/good-deeds/${habit.deed}`)} muted /> : null}
+      </PageHeader>
 
-      <Card>
-        <Body>{t('practice.plan.required', { amount: amountLabel(view.required) })}</Body>
-        {view.done > 0 ? <Body muted>{t('practice.plan.done', { amount: amountLabel(view.done) })}</Body> : null}
-        {view.inEbb ? <Body muted small>{t('practice.ebbActive')}</Body> : null}
-        <Row>
-          <Button label={t('practice.logPlusOne')} onPress={() => update((p) => logDone(p, d, 1))} variant="outline" compact />
-          {!view.doneToday ? (
-            <Button label={t('practice.logRest')} onPress={() => update((p) => logDone(p, d, view.remaining))} compact />
-          ) : (
-            <Body>{t('practice.doneToday')}</Body>
-          )}
-        </Row>
-        <Body small>{t('practice.logAmountLabel')}</Body>
-        <Row>
-          <TextInput
-            value={amountDraft}
-            onChangeText={(text) => {
-              setAmountDraft(text);
-              setAmountError(false);
-            }}
-            onSubmitEditing={logTyped}
-            placeholder={t('practice.logAmountPlaceholder')}
-            keyboardType="decimal-pad"
-            returnKeyType="done"
-            maxLength={6}
-            style={[practiceStyles.input, { flex: 1, writingDirection: 'ltr', textAlign: 'center' }]}
-            accessibilityLabel={t('practice.logAmountLabel')}
-          />
-          <Button label={t('practice.logAmount')} onPress={logTyped} variant="outline" compact disabled={amountDraft.trim() === ''} />
-        </Row>
-        {amountError ? <ErrorText>{t('practice.logAmountInvalid')}</ErrorText> : null}
-        <Body muted small>
-          {t('practice.partialHint')}
-        </Body>
-      </Card>
-
-      <Card tone="info">
-        <Body>{t('practice.monthTitle')}: {t(`practice.band.${view.band}`)}</Body>
-        <Body muted small>
-          {t(`practice.band.${view.band}Hint`)}
-        </Body>
-        <Body muted small>
-          {t('practice.monthDays', { done: String(view.daysDone), target: String(view.targetDays) })}
-        </Body>
-      </Card>
+      <TodayPanel
+        plan={plan}
+        view={view}
+        today={d}
+        amountLabel={amountLabel}
+        unitLabel={habit ? pick(habit, 'unitLabel', locale) : t(`practice.units.${plan.unit}`)}
+        logged={lastLog !== null}
+        fixing={fixing}
+        onLog={handleLog}
+        onUndo={handleUndo}
+        onFixOpen={() => setFixing(true)}
+        onFixSave={handleFixSave}
+        onFixCancel={() => setFixing(false)}
+      />
 
       {view.relapse && !relapseDismissed ? (
-        <Card tone="warning">
-          <Body>{t('practice.relapse.title')}</Body>
-          <Body muted>{t('practice.relapse.body', { amount: amountLabel(view.relapseAmount) })}</Body>
-          <Row style={{ flexWrap: 'wrap' }}>
+        <NextStep title={t('practice.relapse.title')}>
+          <Text variant="small">{t('practice.relapse.body', { amount: amountLabel(view.relapseAmount) })}</Text>
+          <Wrap style={styles.offerActions}>
             <Button
               label={t('practice.relapse.action', { amount: amountLabel(view.relapseAmount) })}
               onPress={() => update((p) => decreaseTo(normalize(p, d), view.relapseAmount, d))}
-              compact
+              variant="outline"
             />
-            <Button label={t('practice.relapse.keep')} onPress={() => setRelapseDismissed(true)} variant="ghost" compact />
-          </Row>
-        </Card>
+            <Button label={t('practice.relapse.keep')} onPress={() => setRelapseDismissed(true)} variant="ghost" />
+          </Wrap>
+        </NextStep>
       ) : null}
 
       {view.canIncrease && view.nextAmount !== null ? (
-        <Card tone="info">
-          <Body>{t('practice.increase.title')}</Body>
-          <Body muted>{t('practice.increase.body', { amount: amountLabel(view.nextAmount) })}</Body>
-          <Button label={t('practice.increase.action')} onPress={() => update((p) => increase(normalize(p, d), d))} compact />
-        </Card>
+        <NextStep title={t('practice.increase.title')}>
+          <Text variant="small">{t('practice.increase.body', { amount: amountLabel(view.nextAmount) })}</Text>
+          <Wrap style={styles.offerActions}>
+            <Button label={t('practice.increase.action')} onPress={() => update((p) => increase(normalize(p, d), d))} variant="outline" />
+          </Wrap>
+        </NextStep>
       ) : null}
 
-      <SectionTitle>{t('practice.plan.settings')}</SectionTitle>
-      <Card>
-        <Body>{t('practice.add.slots')}</Body>
-        <SlotsEditor slots={slots} onChange={setSlots} />
-      </Card>
-      <Card>
-        <Body>{t('practice.add.activeDays')}</Body>
-        <ActiveDaysPicker value={activeDays} onChange={setActiveDays} />
-      </Card>
-      {weekdays ? (
-        <Card>
-          <Body>{t('practice.add.reminderDays')}</Body>
-          <WeekdayPicker value={weekdays} onChange={setWeekdays} />
-        </Card>
-      ) : null}
-      {error ? <ErrorText>{error}</ErrorText> : null}
-      <Button label={saved ? t('practice.plan.saved') : t('practice.plan.save')} onPress={saveSettings} />
+      <MonthPanel plan={plan} view={view} today={d} />
+
+      <Rule />
+
+      <SettingsPanel plan={plan} ruleWeekdays={ruleToWeekdays(planRule(plan, habits))} onSave={(next) => update(() => next)} />
 
       <EvidenceList
         ids={habit?.evidence}
         byId={evidence.data}
         loading={evidence.isLoading}
         error={evidence.isError}
+        title={t('practice.plan.helpers')}
+        limit={1}
+        moreHref={habit ? `/good-deeds/${habit.deed}` : undefined}
       />
-
-      <Button label={t('practice.plan.delete')} onPress={remove} variant="danger" />
     </Screen>
   );
 }

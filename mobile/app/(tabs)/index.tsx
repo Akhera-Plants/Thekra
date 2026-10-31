@@ -1,140 +1,139 @@
 /**
- * Home screen — two primary entry points phrased as moments.
- * Guest-first: no sign-in required.
- * mobile-plan §3 (Home screen).
+ * Home, after the website's home (frontend/src/app/[locale]/page.tsx), in its order: the brand bar with the tagline
+ * («لِمَن كَانَ لَهُۥ قَلْبٌ», the site header's `.brand-message`), the entry question, the doors (Pathways: «أعنّي على ترك
+ * معصية» filled, «أعنّي على فعل طاعة» quiet, «شُعَب الإيمان» compact like the site's `.pathway-faith` at phone width),
+ * the compact «استكشف النصوص» door to the texts (app/browse.tsx), the ornament, the moments list, «تذكرة مختارة»
+ * (the API's text of the day, with share and save) and «تذكير تعرف مصدره» (the source strip).
+ * Guest-first: nothing here needs an account. Copy is the site's own (`home.*`).
  */
 
-import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  SafeAreaView,
-} from 'react-native';
-import { router } from 'expo-router';
+import React, { useCallback } from 'react';
+import { View } from 'react-native';
+import { router, type Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Colors, FontSize, Radius, Shadow, Spacing } from '@/lib/tokens';
+import { BookOpen, DoorOpen, Heart, MessageCircle, Pause, Search, Sprout, Sun, type LucideIcon } from 'lucide-react-native';
+import { useReminderOfTheDay } from '@/lib/api/quotes';
+import { useSourceStripNames } from '@/lib/api/sources';
+import { FeaturedReminder } from '@/components/home/FeaturedReminder';
+import { SourceStrip } from '@/components/home/SourceStrip';
+import { space, useStyles, useTheme, type Theme } from '@/theme';
+import { BrandBar, ListRow, Ornament, PageHeader, PathwayCard, Screen, Section, Text } from '@/ui';
 
-export default function HomeScreen() {
+interface Moment {
+  href: Href;
+  labelKey: string;
+  icon: LucideIcon;
+}
+
+/** The site's curated moments (frontend/src/components/home/Moments.tsx), on the app's topic routes. */
+const MOMENTS: Moment[] = [
+  { href: '/sins/ghadab', labelKey: 'home.momentAnger', icon: Pause },
+  { href: '/good-deeds/salah', labelKey: 'home.momentPrayer', icon: Sun },
+  { href: '/sins/ghibah', labelKey: 'home.momentBackbiting', icon: MessageCircle },
+  { href: '/good-deeds/kalam-tayyib', labelKey: 'home.momentKindness', icon: Heart },
+];
+
+const openSins = () => router.push('/sins');
+const openGoodDeeds = () => router.push('/good-deeds');
+const openBranches = () => router.push('/branches');
+const openBrowse = () => router.push('/browse');
+
+const makeStyles = (t: Theme) => ({
+  doors: { gap: space.md },
+  /** `.brand-message`: Amiri Quran, muted, after a hairline (English: the UI serif). */
+  tagline: {
+    borderStartWidth: 1,
+    borderStartColor: t.colors.border,
+    paddingStart: space.md,
+    ...(t.english ? {} : { fontSize: 16, lineHeight: 30 }),
+  },
+});
+
+/** The tagline is Quran text (Qaf 50:37) in Arabic, so it takes the Quran face; English reads it in the UI face. */
+function Tagline() {
   const { t } = useTranslation();
-
+  const { english } = useTheme();
+  const styles = useStyles(makeStyles);
   return (
-    <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.scroll} bounces={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.appTitle}>{t('home.title')}</Text>
-          <Text style={styles.subtitle}>{t('home.subtitle')}</Text>
-        </View>
-
-        {/* Entry action: Sin */}
-        <TouchableOpacity
-          style={[styles.actionCard, styles.sinCard]}
-          onPress={() => router.push('/sins')}
-          accessibilityRole="button"
-          activeOpacity={0.85}
-        >
-          <Text style={styles.actionEmoji}>🛑</Text>
-          <View style={styles.actionText}>
-            <Text style={[styles.actionTitle, styles.sinTitle]}>
-              {t('home.sinAction')}
-            </Text>
-            <Text style={styles.actionSubtitle}>
-              {t('home.sinSubtitle')}
-            </Text>
-          </View>
-        </TouchableOpacity>
-
-        {/* Entry action: Good deed */}
-        <TouchableOpacity
-          style={[styles.actionCard, styles.deedCard]}
-          onPress={() => router.push('/good-deeds')}
-          accessibilityRole="button"
-          activeOpacity={0.85}
-        >
-          <Text style={styles.actionEmoji}>✨</Text>
-          <View style={styles.actionText}>
-            <Text style={[styles.actionTitle, styles.deedTitle]}>
-              {t('home.goodDeedAction')}
-            </Text>
-            <Text style={styles.actionSubtitle}>
-              {t('home.goodDeedSubtitle')}
-            </Text>
-          </View>
-        </TouchableOpacity>
-      </ScrollView>
-    </SafeAreaView>
+    <Text variant={english ? 'small' : 'quran'} tone="muted" style={styles.tagline} numberOfLines={1}>
+      {t('app.tagline')}
+    </Text>
   );
 }
 
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  scroll: {
-    flexGrow: 1,
-    padding: Spacing['6'],
-    gap: Spacing['5'],
-  },
-  header: {
-    marginBottom: Spacing['4'],
-    alignItems: 'center',
-    paddingTop: Spacing['8'],
-  },
-  appTitle: {
-    fontSize: FontSize['4xl'],
-    fontWeight: '700',
-    color: Colors.primary,
-    textAlign: 'center',
-    marginBottom: Spacing['2'],
-  },
-  subtitle: {
-    fontSize: FontSize.lg,
-    color: Colors.textMuted,
-    textAlign: 'center',
-  },
-  actionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: Spacing['6'],
-    borderRadius: Radius.xl,
-    gap: Spacing['4'],
-    ...Shadow.md,
-  },
-  sinCard: {
-    backgroundColor: Colors.intentSinLight,
-    borderWidth: 1.5,
-    borderColor: Colors.intentSin,
-  },
-  deedCard: {
-    backgroundColor: Colors.intentGoodDeedLight,
-    borderWidth: 1.5,
-    borderColor: Colors.intentGoodDeed,
-  },
-  actionEmoji: {
-    fontSize: 40,
-  },
-  actionText: {
-    flex: 1,
-    gap: Spacing['1'],
-  },
-  actionTitle: {
-    fontSize: FontSize.xl,
-    fontWeight: '700',
-    textAlign: 'right',
-  },
-  sinTitle: {
-    color: Colors.intentSin,
-  },
-  deedTitle: {
-    color: Colors.intentGoodDeed,
-  },
-  actionSubtitle: {
-    fontSize: FontSize.sm,
-    color: Colors.textMuted,
-    textAlign: 'right',
-  },
-});
+export default function HomeScreen() {
+  const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
+  const reminder = useReminderOfTheDay();
+  const sources = useSourceStripNames();
+  const { refetch: refetchReminder } = reminder;
+  const { refetch: refetchSources } = sources;
+
+  const handleRetryReminder = useCallback(() => void refetchReminder(), [refetchReminder]);
+  const handleRefresh = useCallback(() => {
+    void refetchReminder();
+    void refetchSources();
+  }, [refetchReminder, refetchSources]);
+
+  return (
+    <Screen decor refreshing={reminder.isRefetching} onRefresh={handleRefresh}>
+      <BrandBar trailing={<Tagline />} />
+
+      <PageHeader eyebrow={t('home.eyebrow')} title={t('home.entryTitle')} />
+
+      <View style={styles.doors}>
+        <PathwayCard
+          primary
+          icon={DoorOpen}
+          label={t('home.sinOverline')}
+          title={t('home.sinEntryLabel')}
+          body={t('home.sinEntryDescription')}
+          action={t('home.sinCta')}
+          onPress={openSins}
+        />
+        <PathwayCard
+          icon={Sprout}
+          label={t('home.deedOverline')}
+          title={t('home.deedEntryLabel')}
+          body={t('home.deedEntryDescription')}
+          action={t('home.deedCta')}
+          onPress={openGoodDeeds}
+        />
+        <PathwayCard
+          size="row"
+          icon={BookOpen}
+          title={t('home.branchEntryLabel')}
+          body={t('home.branchEntryDescription')}
+          action={t('home.branchCta')}
+          onPress={openBranches}
+        />
+        <PathwayCard
+          size="row"
+          icon={Search}
+          title={t('home.browseTitle')}
+          body={t('home.browseBody')}
+          action={t('home.browseCta')}
+          onPress={openBrowse}
+        />
+      </View>
+
+      <Ornament />
+      <Section title={t('home.momentsHeading')} lead={t('home.momentsLead')}>
+        <View>
+          {MOMENTS.map((moment) => (
+            <ListRow key={moment.labelKey} icon={moment.icon} title={t(moment.labelKey)} onPress={() => router.push(moment.href)} />
+          ))}
+        </View>
+      </Section>
+
+      <FeaturedReminder
+        quote={reminder.data}
+        isLoading={reminder.isLoading}
+        isError={reminder.isError}
+        onRetry={handleRetryReminder}
+      />
+
+      <SourceStrip names={sources.data} isLoading={sources.isLoading} />
+    </Screen>
+  );
+}

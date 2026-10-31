@@ -3,6 +3,8 @@ import { IsStrictInt } from '../../../common/decorators/is-strict-int.decorator.
 
 export const SIN_VAULT_KDF = 'pbkdf2-sha256';
 export const SIN_VAULT_MIN_ITERATIONS = 210_000;
+/** Clients refuse to unlock a vault above this (practice-core MAX_VAULT_ITERATIONS), so never store one. */
+export const SIN_VAULT_MAX_ITERATIONS = 5_000_000;
 /** Largest ciphertext, in bytes after base64 decoding (contract §2: ≤ 128 KB). */
 export const SIN_VAULT_MAX_CIPHERTEXT_BYTES = 128 * 1024;
 /** Base64 length of {@link SIN_VAULT_MAX_CIPHERTEXT_BYTES}. */
@@ -31,7 +33,7 @@ export class PutSinVaultDto {
 
   @IsStrictInt()
   @Min(SIN_VAULT_MIN_ITERATIONS)
-  @Max(10_000_000)
+  @Max(SIN_VAULT_MAX_ITERATIONS)
   iterations!: number;
 
   @IsStrictInt()

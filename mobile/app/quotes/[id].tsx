@@ -1,305 +1,119 @@
 /**
- * Quote detail — full text, all translations, provenance, native share. Opened from QuoteCard.
- * An athar is never shown as hadith: it gets «أثر، وليس حديثًا» and its speaker instead of a grade badge.
- * mobile-plan §3 (Quote detail screen).
+ * One text, after the website's quote page (quotes/[id] → QuoteDetail): the quote card in full (type, reference,
+ * grade, share and favorite live in the card), in the English UI the other translations under their language
+ * names, then the related sins and good deeds as chips. The website's page title is for screen readers only, so
+ * the card is the page. A quiet notice says when the device is offline.
  */
 
-import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-  ScrollView,
-  Share,
-  ActivityIndicator,
-} from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
+import React, { useCallback } from 'react';
+import { View } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { WifiOff } from 'lucide-react-native';
 import { useQuote } from '@/lib/api/quotes';
 import { useToggleFavorite } from '@/lib/api/favorites';
-import { GradeBadge } from '@/components/GradeBadge';
-import { ErrorState } from '@/components/ErrorState';
-import { Colors, FontSize, LineHeight, Radius, Spacing } from '@/lib/tokens';
-import { QuoteType } from '@/lib/types/enums';
-import { atharSpeakerLine, gradeCitationLine, quoteShareText } from '@/lib/share/quote-share';
+import { QuoteCard } from '@/components/QuoteCard';
+import { space, useStyles, useTheme } from '@/theme';
+import { useIsOffline } from '@/lib/query-client';
+import { Chip, ErrorState, Notice, QuoteCardSkeleton, Rule, Screen, Text, Wrap } from '@/ui';
+
+/** Translation languages written right to left; every other translation reads left to right in either UI. */
+const RTL_LANGUAGES = new Set(['ar', 'fa', 'ur', 'he']);
+
+const makeStyles = () => ({
+  group: { gap: space.md },
+  translation: { gap: space.xs },
+  ltr: { writingDirection: 'ltr' as const },
+  rtl: { writingDirection: 'rtl' as const },
+});
 
 export default function QuoteDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { t, i18n } = useTranslation();
-  const isAr = i18n.language === 'ar';
+  const { t } = useTranslation();
+  const { english } = useTheme();
+  const styles = useStyles(makeStyles);
+  const isOffline = useIsOffline();
 
-  const { data: quote, isLoading, isError, error, refetch } = useQuote(id ?? '');
+  const { data: quote, isLoading, isError, isRefetching, refetch } = useQuote(id ?? '');
   const { isFavorite, toggle } = useToggleFavorite(id ?? '');
-
-  async function handleShare() {
-    if (!quote) return;
-    // Same text as the QuoteCard share: displayed text + attribution (+ athar label) + public page link.
-    const message = quoteShareText(quote, {
-      locale: isAr ? 'ar' : 'en',
-      showTranslation: false,
-      labels: {
-        atharNotice: t('share.atharNotice'),
-        atharNarrated: (speaker) => t('share.atharNarrated', { speaker }),
-        grade: { SAHIH: t('grade.SAHIH'), HASAN: t('grade.HASAN'), DAIF: t('grade.DAIF'), MAWDU: t('grade.MAWDU') },
-      },
-    });
-    try {
-      await Share.share({ message });
-    } catch {
-      // dismissed
-    }
-  }
+  const handleRefresh = useCallback(() => void refetch(), [refetch]);
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.safe}>
-        <ActivityIndicator color={Colors.primary} style={styles.loader} />
-      </SafeAreaView>
+      <Screen edges={['bottom']}>
+        <QuoteCardSkeleton />
+      </Screen>
     );
   }
 
   if (isError || !quote) {
     return (
-      <ErrorState
-        message={error instanceof Error ? error.message : t('errors.unknown')}
-        onRetry={() => void refetch()}
-      />
+      <Screen edges={['bottom']} refreshing={isRefetching} onRefresh={handleRefresh}>
+        {isOffline ? <Notice icon={WifiOff}>{t('common.offlineBanner')}</Notice> : null}
+        <ErrorState message={isError ? undefined : t('errors.notFound')} onRetry={handleRefresh} />
+      </Screen>
     );
   }
 
-  const grade = quote.type === QuoteType.HADITH ? quote.hadith?.grade : null;
-  const isAthar = Boolean(quote.isAthar);
-  const speakerLine = atharSpeakerLine(quote, { atharNarrated: (speaker) => t('share.atharNarrated', { speaker }) });
-  const gradeLine = gradeCitationLine(quote, isAr ? 'ar' : 'en');
+  // The Arabic UI shows no translations (Arabic only). In English the card already shows the English one.
+  const translations = english ? (quote.allTranslations ?? []).filter((tr) => tr.text !== quote.translation?.text) : [];
+  const hasRelated = quote.relatedSins.length > 0 || quote.relatedGoodDeeds.length > 0;
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.scroll}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backBtn}
-            accessibilityRole="button"
-            accessibilityLabel={t('common.back')}
-          >
-            <Text style={styles.backText}>←</Text>
-          </TouchableOpacity>
-          <View style={styles.headerActions}>
-            {/* Share */}
-            <TouchableOpacity
-              onPress={() => void handleShare()}
-              style={styles.actionBtn}
-              accessibilityRole="button"
-              accessibilityLabel={t('quoteDetail.share')}
-            >
-              <Text style={styles.actionBtnText}>↗</Text>
-            </TouchableOpacity>
-            {/* Favorite */}
-            <TouchableOpacity
-              onPress={() => toggle()}
-              style={styles.actionBtn}
-              accessibilityRole="button"
-              accessibilityLabel={isFavorite ? t('quoteDetail.unfavorite') : t('quoteDetail.favorite')}
-              accessibilityState={{ selected: isFavorite }}
-            >
-              <Text style={[styles.actionBtnText, isFavorite && { color: Colors.primary }]}>
-                {isFavorite ? '★' : '☆'}
+    <Screen edges={['bottom']} refreshing={isRefetching} onRefresh={handleRefresh}>
+      {isOffline ? <Notice icon={WifiOff}>{t('common.offlineBanner')}</Notice> : null}
+      <QuoteCard quote={quote} isFavorite={isFavorite} onToggleFavorite={toggle} detail />
+
+      {translations.length > 0 ? (
+        <View style={styles.group}>
+          {translations.map((tr) => (
+            <View key={tr.languageCode} style={styles.translation}>
+              <Text variant="eyebrow" tone="muted">
+                {t(`quoteDetail.languages.${tr.languageCode}`, { defaultValue: tr.languageCode })}
               </Text>
-            </TouchableOpacity>
-          </View>
+              <Text variant="body" style={RTL_LANGUAGES.has(tr.languageCode) ? styles.rtl : styles.ltr}>
+                {tr.text}
+              </Text>
+            </View>
+          ))}
         </View>
+      ) : null}
 
-        {/* Arabic text */}
-        <Text style={styles.arabicText}>{quote.textAr}</Text>
+      {hasRelated ? <Rule /> : null}
 
-        {/* Grade badge — an athar gets its own label, never a hadith grade */}
-        {isAthar ? (
-          <View style={[styles.badge, styles.atharBadge]} accessibilityRole="text">
-            <Text style={styles.atharBadgeText}>{t('share.atharNotice')}</Text>
-          </View>
-        ) : quote.type === QuoteType.HADITH ? (
-          <View style={styles.badge}>
-            <GradeBadge grade={grade} />
-          </View>
-        ) : null}
-        {speakerLine ? <Text style={styles.provenanceValue}>{speakerLine}</Text> : null}
-        {gradeLine ? <Text style={styles.provenanceValue}>{gradeLine}</Text> : null}
-
-        {/* Source + provenance */}
-        <View style={styles.provenanceBlock}>
-          <Text style={styles.provenanceLabel}>{t('quoteDetail.source')}</Text>
-          <Text style={styles.provenanceValue}>
-            {quote.source.nameAr ?? quote.source.name}
+      {quote.relatedSins.length > 0 ? (
+        <View style={styles.group}>
+          <Text variant="small" weight="semibold" tone="muted" accessibilityRole="header">
+            {t('quoteDetail.relatedSins')}
           </Text>
-          {quote.type === QuoteType.QURAN_VERSE && quote.quran && (
-            <Text style={[styles.provenanceValue, styles.ltrText]}>
-              {`${quote.quran.surahNameAr} (${quote.quran.surahNumber}:${quote.quran.ayahNumber})`}
-            </Text>
-          )}
-          {quote.type === QuoteType.HADITH && quote.hadith?.narrator && (
-            <Text style={styles.provenanceValue}>
-              {isAr ? (quote.hadith.narratorAr ?? quote.hadith.narrator) : quote.hadith.narrator}
-            </Text>
-          )}
-          {quote.type === QuoteType.HADITH && quote.hadith?.reference && (
-            <Text style={[styles.provenanceValue, styles.ltrText]}>
-              {quote.hadith.reference}
-            </Text>
-          )}
+          <Wrap>
+            {quote.relatedSins.map((sin) => (
+              <Chip
+                key={sin.id}
+                label={english ? sin.name || sin.nameAr : sin.nameAr}
+                onPress={() => router.push(`/sins/${sin.slug}`)}
+              />
+            ))}
+          </Wrap>
         </View>
+      ) : null}
 
-        {/* All translations */}
-        {quote.allTranslations && quote.allTranslations.length > 0 && (
-          <View style={styles.translationsBlock}>
-            {quote.allTranslations.map((tr) => (
-              <View key={tr.languageCode} style={styles.translation}>
-                <Text style={styles.translationLang}>{tr.languageCode.toUpperCase()}</Text>
-                <Text style={styles.translationText}>{tr.text}</Text>
-              </View>
+      {quote.relatedGoodDeeds.length > 0 ? (
+        <View style={styles.group}>
+          <Text variant="small" weight="semibold" tone="muted" accessibilityRole="header">
+            {t('quoteDetail.relatedGoodDeeds')}
+          </Text>
+          <Wrap>
+            {quote.relatedGoodDeeds.map((deed) => (
+              <Chip
+                key={deed.id}
+                label={english ? deed.name || deed.nameAr : deed.nameAr}
+                onPress={() => router.push(`/good-deeds/${deed.slug}`)}
+              />
             ))}
-          </View>
-        )}
-
-        {/* Related sins */}
-        {quote.relatedSins.length > 0 && (
-          <View style={styles.relatedBlock}>
-            <Text style={styles.relatedLabel}>{t('quoteDetail.relatedSins')}</Text>
-            {quote.relatedSins.map((s) => (
-              <TouchableOpacity
-                key={s.id}
-                onPress={() => router.push(`/sins/${s.slug}`)}
-                style={styles.relatedItem}
-                accessibilityRole="link"
-              >
-                <Text style={styles.relatedItemText}>{isAr ? s.nameAr : s.name}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-
-        {/* Related good deeds */}
-        {quote.relatedGoodDeeds.length > 0 && (
-          <View style={styles.relatedBlock}>
-            <Text style={[styles.relatedLabel, { color: Colors.intentGoodDeed }]}>
-              {t('quoteDetail.relatedGoodDeeds')}
-            </Text>
-            {quote.relatedGoodDeeds.map((d) => (
-              <TouchableOpacity
-                key={d.id}
-                onPress={() => router.push(`/good-deeds/${d.slug}`)}
-                style={styles.relatedItem}
-                accessibilityRole="link"
-              >
-                <Text style={[styles.relatedItemText, { color: Colors.intentGoodDeed }]}>
-                  {isAr ? d.nameAr : d.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-      </ScrollView>
-    </SafeAreaView>
+          </Wrap>
+        </View>
+      ) : null}
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.background },
-  loader: { marginTop: Spacing['16'] },
-  scroll: { padding: Spacing['5'], gap: Spacing['5'] },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  backBtn: { padding: Spacing['2'] },
-  backText: { fontSize: FontSize.xl, color: Colors.primary },
-  headerActions: { flexDirection: 'row', gap: Spacing['3'] },
-  actionBtn: { padding: Spacing['2'] },
-  actionBtnText: { fontSize: FontSize.xl, color: Colors.textMuted },
-  arabicText: {
-    fontSize: FontSize['2xl'],
-    lineHeight: FontSize['2xl'] * LineHeight.arabic,
-    color: Colors.text,
-    textAlign: 'right',
-    writingDirection: 'rtl',
-    fontWeight: '400',
-  },
-  badge: { alignItems: 'flex-end' },
-  atharBadge: {
-    alignSelf: 'flex-end',
-    paddingHorizontal: Spacing['2'],
-    paddingVertical: 2,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.gradeUngradedBg,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  atharBadgeText: { fontSize: FontSize.xs, fontWeight: '600', color: Colors.gradeUngraded },
-  provenanceBlock: {
-    padding: Spacing['4'],
-    backgroundColor: Colors.card,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    gap: Spacing['1'],
-  },
-  provenanceLabel: {
-    fontSize: FontSize.xs,
-    fontWeight: '700',
-    color: Colors.textMuted,
-    textAlign: 'right',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  provenanceValue: {
-    fontSize: FontSize.sm,
-    color: Colors.text,
-    textAlign: 'right',
-  },
-  ltrText: {
-    textAlign: 'left',
-    writingDirection: 'ltr',
-  },
-  translationsBlock: { gap: Spacing['3'] },
-  translation: {
-    padding: Spacing['4'],
-    backgroundColor: Colors.card,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    gap: Spacing['2'],
-  },
-  translationLang: {
-    fontSize: FontSize.xs,
-    fontWeight: '700',
-    color: Colors.textMuted,
-    letterSpacing: 1,
-  },
-  translationText: {
-    fontSize: FontSize.base,
-    color: Colors.text,
-    lineHeight: FontSize.base * LineHeight.relaxed,
-  },
-  relatedBlock: { gap: Spacing['2'] },
-  relatedLabel: {
-    fontSize: FontSize.sm,
-    fontWeight: '700',
-    color: Colors.intentSin,
-    textAlign: 'right',
-  },
-  relatedItem: {
-    padding: Spacing['3'],
-    backgroundColor: Colors.card,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  relatedItemText: {
-    fontSize: FontSize.base,
-    color: Colors.intentSin,
-    textAlign: 'right',
-  },
-});

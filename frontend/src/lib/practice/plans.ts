@@ -15,6 +15,7 @@ import {
   eachDay,
   HOLD_DAYS,
   isHijriSupported,
+  isEbbOn,
   isPlanDueOn,
   LADDER,
   nextStep,
@@ -28,15 +29,28 @@ import {
   toHijri,
   baseAmount,
   validatePlan,
+  endEbb,
+  startEbb,
+  updatePlan,
   type AdherenceBand,
   type IcsEvent,
   type IsoTime,
   type LocalDate,
   type Plan,
+  type PlanDayOptions,
   type Rule,
+  type Store,
 } from '@thekra/practice-core';
 import type { PracticeHabit } from '@/lib/types/practice';
 import { newUuid } from './ids';
+
+/**
+ * The days a plan asks for on the hub and the habits page (practice-core `planAsksOn` / `isPlanDueOn`): its own rule,
+ * else its catalog habit's default rule, else every day. The same answer as {@link planToday} and the reminders.
+ */
+export function planDayOptions(habits: ReadonlyMap<string, PracticeHabit>, hijriOffset: number): PlanDayOptions {
+  return { hijriOffset, defaultRuleOf: (plan) => habitOf(plan, habits)?.defaultRule };
+}
 
 /** The catalog habit of a plan (`habitKey`; plans from before accounts used the key as their id). */
 export function habitOf(plan: Plan, habits: ReadonlyMap<string, PracticeHabit>): PracticeHabit | undefined {
@@ -255,4 +269,20 @@ export function editPlan(plan: Plan, edit: PlanEdit, today: LocalDate, now: IsoT
 export function lowerAmounts(plan: Plan): number[] {
   const base = baseAmount(plan);
   return [base, ...LADDER.filter((v) => v < base).reverse()];
+}
+
+/**
+ * «يومي ثقيل» for every plan, for `today` only (`on`; practice-core `isEbbOn`), or back to the plans' own amounts the
+ * same day. Turning it off leaves a plan without an ebb untouched (no needless edit to sync).
+ */
+export function setEbbForAll(store: Store, on: boolean, today: LocalDate): Store {
+  return store.plans.reduce((next, plan) => {
+    if (on) return updatePlan(next, plan.id, (p) => startEbb(p, today));
+    return plan.ebb ? updatePlan(next, plan.id, (p) => endEbb(p)) : next;
+  }, store);
+}
+
+/** «يومي ثقيل» is on today: every plan is lightened for `today` (an ebb from an earlier day is over). */
+export function isEbbDay(plans: readonly Plan[], today: LocalDate): boolean {
+  return plans.length > 0 && plans.every((plan) => isEbbOn(plan, today));
 }

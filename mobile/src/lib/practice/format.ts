@@ -12,29 +12,19 @@ export function toWesternDigits(text: string): string {
     .replace(/[۰-۹]/g, (c) => String(c.charCodeAt(0) - 0x06f0));
 }
 
-/** Largest single typed log entry (same cap as the web «سجّل قدرًا» form). */
+/** Largest single typed log entry (same cap as the web «سجّل» form). */
 export const MAX_LOG_ENTRY = 1000;
 
 /**
- * A typed log amount («3», «٣», «1.5», «1٫5») → a positive number, else null (empty, zero, negative, not a
- * number, above {@link MAX_LOG_ENTRY}, the web form's cap). practice-core `logDone` accepts any positive amount;
- * partial amounts add up.
+ * A typed log amount («3», «٣») → a whole positive number, else null (empty, zero, negative, a fraction, not a
+ * number, above {@link MAX_LOG_ENTRY}). Whole amounts only, like the web form: the account stores logs as integers
+ * (sync contract §2). Partial amounts add up through practice-core `logDone`.
  */
 export function parseLogAmount(text: string): number | null {
-  const t = toWesternDigits(text).trim().replace(/[٫,]/g, '.');
-  if (!/^\d+(\.\d+)?$/.test(t)) return null;
+  const t = toWesternDigits(text).trim();
+  if (!/^\d+$/.test(t)) return null;
   const n = Number(t);
-  return Number.isFinite(n) && n > 0 && n <= MAX_LOG_ENTRY ? n : null;
-}
-
-/** «9:5», «09.05», «٩:٠٥» → «09:05»; anything else → null. */
-export function normalizeTimeInput(text: string): LocalTime | null {
-  const m = /^\s*(\d{1,2})\s*[:.٫]\s*(\d{2})\s*$/.exec(toWesternDigits(text));
-  if (!m) return null;
-  const h = Number(m[1]);
-  const min = Number(m[2]);
-  if (h > 23 || min > 59) return null;
-  return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
+  return Number.isSafeInteger(n) && n > 0 && n <= MAX_LOG_ENTRY ? n : null;
 }
 
 /** «30/10» (day/month), Western digits. */
@@ -45,6 +35,21 @@ export function shortDate(date: LocalDate): string {
 /** Current local wall time as HH:MM. */
 export function nowTime(now: Date = new Date()): LocalTime {
   return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+}
+
+/** Today at `time` on the device clock (the value a native time picker starts from). */
+export function timeToDate(time: LocalTime, today: Date = new Date()): Date {
+  const date = new Date(today);
+  date.setHours(Number(time.slice(0, 2)), Number(time.slice(3, 5)), 0, 0);
+  return date;
+}
+
+/** «21:00» on a 24-hour device, «9:00 م» / «9:00 PM» on a 12-hour one; Western digits either way. */
+export function displayTime(time: LocalTime, uses24hourClock: boolean, dayPeriod: { am: string; pm: string }): string {
+  if (uses24hourClock) return time;
+  const h = Number(time.slice(0, 2));
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}:${time.slice(3, 5)} ${h < 12 ? dayPeriod.am : dayPeriod.pm}`;
 }
 
 export function compareTime(a: LocalTime, b: LocalTime): number {

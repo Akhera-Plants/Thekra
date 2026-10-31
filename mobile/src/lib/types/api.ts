@@ -107,6 +107,8 @@ export interface QuoteDto {
     narratorAr: string | null;
     grade: HadithGrade | null;
     reference: string | null;
+    /** Graded by a tahqiq edition (not al-Bukhari or Muslim): the site's «ليس من الصحيحين» line. */
+    outsideSahihayn?: boolean;
   } | null;
   book: {
     bookTitle: string | null;
@@ -149,9 +151,20 @@ export interface SinDto {
   rank: SinRank | null;
   rankReference: string | null;
   rankSource: { id: string; name: string; nameAr: string | null } | null;
+  domainKey?: string | null;
+  isContemporary?: boolean;
+  pair?: TopicPairDto | null;
   quoteCount: number;
   createdAt: string;
   updatedAt: string;
+}
+
+/** A paired sin/deed is one page (PROJECT_GUIDE §3.10): the two slugs and the page's shared title. */
+export interface TopicPairDto {
+  avoid: string;
+  do: string;
+  titleAr: string;
+  titleEn: string;
 }
 
 export interface GoodDeedSummaryDto {
@@ -179,6 +192,9 @@ export interface GoodDeedDto {
     name: string;
     nameAr: string;
   } | null;
+  domainKey?: string | null;
+  isContemporary?: boolean;
+  pair?: TopicPairDto | null;
   quoteCount: number;
   createdAt: string;
   updatedAt: string;
@@ -190,9 +206,26 @@ export interface QuoteLinkDto {
   note: string | null;
 }
 
+export interface TopicText {
+  link: QuoteLinkDto;
+  quote: QuoteDto;
+}
+
+/** A contemporary topic's texts drawn from another sin (AVOID) or good deed (DO), page by page like `items`. */
+export interface TopicGroup {
+  slug: string;
+  name?: string | null;
+  nameAr: string;
+  side: 'AVOID' | 'DO';
+  items: TopicText[];
+}
+
 export interface SinQuotesResponse {
-  sin: Pick<SinDto, 'id' | 'slug' | 'name' | 'nameAr' | 'rank' | 'description' | 'descriptionAr'>;
-  items: Array<{ link: QuoteLinkDto; quote: QuoteDto }>;
+  sin: Pick<SinDto, 'id' | 'slug' | 'name' | 'nameAr' | 'rank' | 'description' | 'descriptionAr' | 'isContemporary'>;
+  items: TopicText[];
+  /** The paired deed's texts (or «الترك لله» for an unpaired sin). Absent in a theme or shuffle response. */
+  companion?: { items: TopicText[] };
+  derived?: TopicGroup[];
   alternatives: GoodDeedSummaryDto[];
 }
 
@@ -205,15 +238,64 @@ export interface SinQuotesMeta extends PageMeta {
 export interface GoodDeedQuotesResponse {
   goodDeed: Pick<
     GoodDeedDto,
-    'id' | 'slug' | 'name' | 'nameAr' | 'reward' | 'rewardAr' | 'description' | 'descriptionAr'
+    'id' | 'slug' | 'name' | 'nameAr' | 'reward' | 'rewardAr' | 'description' | 'descriptionAr' | 'isContemporary'
   >;
-  items: Array<{ link: QuoteLinkDto; quote: QuoteDto }>;
+  items: TopicText[];
+  /** The opposite sin's warning texts. Absent in a theme or shuffle response. */
+  companion?: { items: TopicText[] };
+  derived?: TopicGroup[];
 }
 
 export interface GoodDeedQuotesMeta extends PageMeta {
   ordering?: string;
   countsByType?: Partial<Record<QuoteType, number>>;
   appliedGrades?: HadithGrade[];
+}
+
+/** One of the 77 شعب الإيمان (`GET /v1/branches`). English title and summary are often missing (no machine translation). */
+export interface ImanBranchDto {
+  id: string;
+  number: number;
+  titleAr: string;
+  title: string | null;
+  summaryAr: string | null;
+  summary: string | null;
+  quoteCount: number;
+  source: { id: string; name: string; nameAr: string | null } | null;
+  sourceReference: string | null;
+}
+
+export type ImanBranchNeighbourDto = Pick<ImanBranchDto, 'number' | 'titleAr' | 'title'>;
+
+/** `GET /v1/branches/:number`: the branch with the book's own words on it (BRANCH_SHARH) and its neighbours. */
+export interface ImanBranchDetailDto extends ImanBranchDto {
+  explanations: Array<{
+    id: string;
+    kind: string;
+    languageCode: string;
+    text: string;
+    reference: string | null;
+  }>;
+  goodDeeds: Array<{ slug: string; name: string; nameAr: string }>;
+  sins: Array<{ slug: string; name: string; nameAr: string; rank: SinRank | null }>;
+  prev: ImanBranchNeighbourDto | null;
+  next: ImanBranchNeighbourDto | null;
+}
+
+export interface BranchQuotesResponse {
+  branch: Pick<ImanBranchDto, 'number' | 'titleAr' | 'title' | 'summaryAr'>;
+  items: TopicText[];
+}
+
+export interface BranchQuotesMeta extends PageMeta {
+  ordering?: string;
+  countsByType?: Partial<Record<QuoteType, number>>;
+  appliedGrades?: HadithGrade[];
+}
+
+/** A row of `GET /v1/sources`: the home «تذكير تعرف مصدره» strip reads the names and the published count. */
+export interface SourceListDto extends QuoteSourceDto {
+  publishedQuoteCount: number;
 }
 
 // ── Query parameter types ─────────────────────────────────────────────────────
@@ -261,6 +343,17 @@ export interface GoodDeedQuotesQuery {
   shuffle?: boolean;
   seed?: string;
 }
+
+export interface BranchesQuery {
+  page?: number;
+  limit?: number;
+  lang?: LocaleCode;
+  q?: string;
+  sort?: 'number' | 'quoteCount';
+}
+
+/** The branch quotes endpoint reads the sin quotes query (backend `SinQuotesQueryDto`). */
+export type BranchQuotesQuery = SinQuotesQuery;
 
 export interface QuotesQuery {
   page?: number;

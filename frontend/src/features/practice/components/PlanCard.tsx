@@ -3,10 +3,11 @@
 import { useId, useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { BookOpen, Check, Clock, Pencil } from 'lucide-react';
+import { BookOpen, Check, Clock, Pencil, PencilLine, Undo2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
   baseAmount,
+  correctLog,
   decreaseTo,
   deletePlan,
   increase,
@@ -16,6 +17,8 @@ import {
   updatePlan,
   type Plan,
 } from '@thekra/practice-core';
+import { Link } from '@/i18n/navigation';
+import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { Button } from '@/components/shared/kit/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -28,6 +31,7 @@ import { z } from '@/lib/zod';
 import { useDeletesEverywhere } from '../hooks/useDeletesEverywhere';
 import { amountLabel } from './amount-label';
 import { FetchedEvidence } from './EvidenceQuotes';
+import { LogEditor } from './LogEditor';
 import { PlanEditForm } from './PlanEditForm';
 
 /** Whole amounts only: the account stores logs as integers (sync contract §2). */
@@ -42,11 +46,6 @@ interface PlanCardProps {
   ramadanUntil: string | null;
 }
 
-/**
- * A habit card. When the habit is not asked for today (`view.isDueToday` false) the card is compact: title, what is
- * logged, logging (anything done still counts), and the edit / remove / texts row; the daily offers wait for its days.
- */
-
 export function changePlan(id: string, change: (plan: Plan) => Plan): void {
   updateStore((store) => updatePlan(store, id, change));
 }
@@ -57,12 +56,18 @@ export function usePlanWords(plan: Plan, habit: PracticeHabit | undefined) {
   const t = useTranslations('practice.units');
   const english = locale === 'en';
   const title = habit ? (english ? habit.titleEn : habit.titleAr) : plan.title;
-  const unit = habit ? (english ? habit.unitLabelEn : habit.unitLabelAr) : t(plan.unit);
+  const catalogUnit = habit ? (english ? habit.unitLabelEn : habit.unitLabelAr) : t(plan.unit);
+  // The number fields count units; for prayers the word says how a unit maps to rak'ahs.
+  const unit = habit?.rakah ? t(habit.rakah === 'pairs' ? 'rakahPairs' : 'rakahOdd') : catalogUnit;
   // Without the catalog the stored (Arabic) title is all there is: mark it as Arabic on /en.
   const titleLang = !habit && english ? 'ar' : undefined;
-  return { title, titleLang, unit, amount: (n: number) => amountLabel(n, plan.unit, unit) };
+  return { title, titleLang, unit, amount: (n: number) => amountLabel(n, plan.unit, unit, english, habit?.rakah) };
 }
 
+/**
+ * A habit card. When the habit is not asked for today (`view.isDueToday` false) the card is compact: title, what is
+ * logged, logging (anything done still counts), and the edit / remove / texts row; the daily offers wait for its days.
+ */
 export function PlanCard({ plan, habit, view, today, ramadanUntil }: PlanCardProps) {
   const t = useTranslations('practice.today');
   const locale = useLocale() === 'en' ? 'en' : 'ar';
@@ -71,17 +76,33 @@ export function PlanCard({ plan, habit, view, today, ramadanUntil }: PlanCardPro
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [editing, setEditing] = useState(false);
   const everywhere = useDeletesEverywhere();
+  const [editingLog, setEditingLog] = useState(false);
+  /** The last «تمّ» or partial log in this visit, so it can be undone in one tap. */
+  const [lastLog, setLastLog] = useState<{ date: string; before: number } | null>(null);
   const evidenceId = useId();
   const compact = !view.isDueToday;
   const seasonStep = nextStep(baseAmount(plan));
   const seasonAmount = seasonStep === null ? null : plan.ceiling !== undefined ? Math.min(seasonStep, plan.ceiling) : seasonStep;
 
+  function log(amount: number) {
+    setLastLog({ date: today, before: plan.log[today] ?? 0 });
+    changePlan(plan.id, (p) => logDone(p, today, amount));
+  }
+
+  function undoLastLog() {
+    if (!lastLog) return;
+    changePlan(plan.id, (p) => correctLog(p, lastLog.date, lastLog.before));
+    setLastLog(null);
+  }
+
   return (
     <article
+      id={`plan-${plan.id}`}
+      tabIndex={-1}
       className={
         compact
-          ? 'flex flex-col gap-3 rounded-2xl border border-border bg-card p-4'
-          : 'flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 md:p-6'
+          ? 'flex scroll-mt-24 flex-col gap-3 rounded-2xl border border-border bg-card p-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+          : 'flex scroll-mt-24 flex-col gap-4 rounded-2xl border border-border bg-card p-5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring md:p-6'
       }
       aria-labelledby={`${evidenceId}-title`}
     >
@@ -130,13 +151,37 @@ export function PlanCard({ plan, habit, view, today, ramadanUntil }: PlanCardPro
           <button
             type="button"
             className="solid-button button-wrap"
-            onClick={() => changePlan(plan.id, (p) => logDone(p, today, view.remaining))}
+            onClick={() => log(view.remaining)}
           >
             <Check aria-hidden />
             {t('markDone')}
           </button>
-          <PartialLog plan={plan} today={today} unit={words.unit} />
+          <PartialLog unit={words.unit} onLog={log} />
         </div>
+      ) : null}
+
+      <div role="status" aria-live="polite" className="empty:hidden">
+        {lastLog ? (
+          <p className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            {t('logged')}
+            <Button variant="ghost" tone="primary" size="sm" onClick={undoLastLog}>
+              <Undo2 aria-hidden />
+              {t('undo')}
+            </Button>
+          </p>
+        ) : null}
+      </div>
+
+      {editingLog ? (
+        <LogEditor
+          plan={plan}
+          today={today}
+          unit={words.unit}
+          onDone={() => {
+            setEditingLog(false);
+            setLastLog(null);
+          }}
+        />
       ) : null}
 
       {!compact && view.canIncrease && view.increaseTo !== null ? (
@@ -213,6 +258,12 @@ export function PlanCard({ plan, habit, view, today, ramadanUntil }: PlanCardPro
           <Pencil aria-hidden />
           {t('edit')}
         </Button>
+        {!editingLog ? (
+          <Button variant="ghost" tone="neutral" size="sm" onClick={() => setEditingLog(true)}>
+            <PencilLine aria-hidden />
+            {t('editLog.open')}
+          </Button>
+        ) : null}
         {confirmRemove ? (
           <>
             <Button variant="outline" tone="destructive" size="sm" onClick={() => updateStore((s) => deletePlan(s, plan.id))}>
@@ -227,6 +278,11 @@ export function PlanCard({ plan, habit, view, today, ramadanUntil }: PlanCardPro
             {t('remove')}
           </Button>
         )}
+        {habit ? (
+          <Link href={`/good-deeds/${habit.deed}`} className="text-link ms-auto px-2">
+            {t('readAbout')} <DirectionalArrow />
+          </Link>
+        ) : null}
       </div>
       {confirmRemove ? (
         <p className="text-sm leading-7 text-muted-foreground" role="status">
@@ -247,7 +303,7 @@ export function PlanCard({ plan, habit, view, today, ramadanUntil }: PlanCardPro
   );
 }
 
-function PartialLog({ plan, today, unit }: { plan: Plan; today: string; unit: string }) {
+function PartialLog({ unit, onLog }: { unit: string; onLog: (amount: number) => void }) {
   const t = useTranslations('practice.today');
   const schema = useMemo(
     () =>
@@ -262,7 +318,7 @@ function PartialLog({ plan, today, unit }: { plan: Plan; today: string; unit: st
   const form = useForm<{ amount: string }>({ resolver: zodResolver(schema), defaultValues: { amount: '' } });
 
   function handleSubmit(values: { amount: string }) {
-    changePlan(plan.id, (p) => logDone(p, today, Number(values.amount)));
+    onLog(Number(values.amount));
     form.reset({ amount: '' });
   }
 

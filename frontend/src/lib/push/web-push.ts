@@ -163,19 +163,20 @@ export async function enablePush(locale: LocaleCode, permissionRequest: Promise<
 }
 
 /**
- * «إيقاف» and sign-out: tell the server to forget this browser, then drop the subscription. The local unsubscribe
- * always runs, so no reminder can show here even if the server could not be reached (it drops the dead address at
- * its next delivery).
+ * «إيقاف» and sign-out: drop the subscription here first, then tell the server to forget this browser. Unsubscribing
+ * first kills the address at once, so no reminder already scheduled can show here, even if the page closes before
+ * the server answers or the server cannot cancel it (it drops the dead address at its next delivery).
  */
 export async function disablePush(): Promise<void> {
   const subscription = await currentSubscription();
   if (!subscription) return;
+  const { endpoint } = subscription;
+  await subscription.unsubscribe();
   try {
-    await deletePushSubscription(subscription.endpoint);
+    await deletePushSubscription(endpoint);
   } catch (error) {
     reportFailure('push unsubscribe', error);
   }
-  await subscription.unsubscribe();
 }
 
 /** Best effort while the access token is still valid; never fails or delays sign-out beyond a few seconds. */

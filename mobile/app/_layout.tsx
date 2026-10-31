@@ -6,8 +6,8 @@
 // First: `globalThis.crypto.getRandomValues` from expo-crypto, before practice-core's vault can run (Hermes).
 import '@/lib/crypto/install';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, View } from 'react-native';
-import { Stack } from 'expo-router';
+import { ActivityIndicator, View, useColorScheme } from 'react-native';
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider as NavigationThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
@@ -23,17 +23,35 @@ import {
   shouldPersistQuery,
   MAX_AGE,
 } from '@/lib/query-client';
-import { initI18n, detectDeviceLocale, applyRtlIfNeeded, type SupportedLocale } from '@/lib/i18n';
+import { initI18n, detectDeviceLocale, switchDirectionIfNeeded, type SupportedLocale } from '@/lib/i18n';
 import i18n from '@/lib/i18n';
 import { setApiLocale } from '@/lib/api-client';
 import { useAuthStore } from '@/lib/stores/auth-store';
-import { Colors, FontFamily } from '@/lib/tokens';
+import { dark, FontFiles, light, loadThemePreference, radius, ThemeProvider, useTheme } from '@/theme';
 import { usePracticeLifecycle } from '@/lib/practice/use-practice-lifecycle';
+import { useStackScreenOptions } from '@/ui';
+
+// A deep link or a reminder tap that cold-starts the app lands on its screen with the tabs under it, so Back works.
+export const unstable_settings = { anchor: '(tabs)' };
 
 // Keep splash visible until fonts + bootstrap finish.
 void SplashScreen.preventAutoHideAsync();
 
 const LOCALE_STORAGE_KEY = 'thekra_locale';
+
+/**
+ * «التفسير» / «الشرح» opens over the page as a native form sheet: UIKit's sheet on iOS (grabber, detents), Material's
+ * BottomSheetBehavior on Android (react-native-screens 4.26). It opens at 60% and pulls up to full height; its own top
+ * row has the title and close (SheetScreen), so the native header is off.
+ */
+const STUDY_SHEET = {
+  presentation: 'formSheet' as const,
+  headerShown: false,
+  sheetAllowedDetents: [0.6, 1],
+  sheetGrabberVisible: true,
+  sheetCornerRadius: radius.quote,
+};
+
 const queryClient = createQueryClient();
 
 onlineManager.setEventListener((setOnline) => {
@@ -47,9 +65,8 @@ export default function RootLayout() {
   const [ready, setReady] = useState(false);
   const rehydrate = useAuthStore((s) => s.rehydrate);
 
-  const [fontsLoaded, fontError] = useFonts({
-    [FontFamily.arabic]: require('../assets/fonts/NotoNaskhArabic-Regular.ttf'),
-  });
+  const systemScheme = useColorScheme();
+  const [fontsLoaded, fontError] = useFonts(FontFiles);
 
   useEffect(() => {
     if (!fontsLoaded && !fontError) return;
@@ -65,17 +82,11 @@ export default function RootLayout() {
 
       initI18n(locale);
 
-      const directionChanged = applyRtlIfNeeded(locale);
-      if (directionChanged) {
-        Alert.alert(
-          locale === 'ar' ? 'يتطلب إعادة التشغيل' : 'Restart required',
-          locale === 'ar'
-            ? 'سيُطبَّق تغيير اتجاه اللغة بعد إعادة تشغيل التطبيق.'
-            : 'Language direction change will take effect after restarting the app.',
-        );
-      }
+      // Still behind the splash: a direction change reloads now, invisibly, instead of asking for a restart.
+      if (await switchDirectionIfNeeded(locale)) return;
 
       setApiLocale(locale === 'ar' ? 'ar' : 'en');
+      await loadThemePreference();
       await rehydrate();
       setReady(true);
       await SplashScreen.hideAsync();
@@ -85,16 +96,18 @@ export default function RootLayout() {
   }, [fontsLoaded, fontError, rehydrate]);
 
   if (!ready) {
+    // Before the theme provider: the system scheme; `link` is primary in light and the readable ring in dark.
+    const bootColors = systemScheme === 'dark' ? dark : light;
     return (
       <View
         style={{
           flex: 1,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: Colors.background,
+          backgroundColor: bootColors.background,
         }}
       >
-        <ActivityIndicator color={Colors.primary} />
+        <ActivityIndicator color={bootColors.link} />
       </View>
     );
   }
@@ -112,20 +125,38 @@ export default function RootLayout() {
       }}
     >
       <I18nextProvider i18n={i18n}>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="sins" options={{ headerShown: false }} />
-          <Stack.Screen name="good-deeds" options={{ headerShown: false }} />
-          <Stack.Screen name="quotes" options={{ headerShown: false }} />
-          <Stack.Screen name="feelings" options={{ headerShown: false }} />
-          <Stack.Screen name="practice" options={{ headerShown: false }} />
-          <Stack.Screen name="(auth)" options={{ headerShown: false, presentation: 'modal' }} />
-          <Stack.Screen name="+not-found" />
-        </Stack>
-        <PracticeLifecycle />
-        <StatusBar style="auto" />
+        <ThemeProvider>
+          <ThemedShell />
+        </ThemeProvider>
       </I18nextProvider>
     </PersistQueryClientProvider>
+  );
+}
+
+/** Navigation and status bar in the app theme (no white flash between screens in dark mode). */
+function ThemedShell() {
+  const theme = useTheme();
+  const stackOptions = useStackScreenOptions();
+  const c = theme.colors;
+  const base = theme.dark ? DarkTheme : DefaultTheme;
+  const navTheme = {
+    ...base,
+    dark: theme.dark,
+    colors: { ...base.colors, primary: c.primary, background: c.background, card: c.background, text: c.foreground, border: c.border, notification: c.destructive },
+  };
+  return (
+    <NavigationThemeProvider value={navTheme}>
+      {/* Pushed screens get the native header (system Back); tabs, the practice stack and auth own theirs. */}
+      <Stack screenOptions={stackOptions}>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="practice" options={{ headerShown: false }} />
+        <Stack.Screen name="circles" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)" options={{ headerShown: false, presentation: 'modal' }} />
+        <Stack.Screen name="quotes/study/[id]" options={STUDY_SHEET} />
+      </Stack>
+      <PracticeLifecycle />
+      <StatusBar style={theme.dark ? 'light' : 'dark'} />
+    </NavigationThemeProvider>
   );
 }
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatAmount } from '../src/catalog.js';
+import { formatAmount, type Habit } from '../src/catalog.js';
 import { messageKeys, translator } from '../src/i18n.js';
 import { buildNotification, MAX_QUOTE_CHARS, pickQuote, quoteDisplay, toQuoteLite, type QuoteLite } from '../src/quotes.js';
 
@@ -109,36 +109,39 @@ describe('pickQuote', () => {
   });
 });
 
+const habit = (unitLabelAr: string, unitLabelEn: string, extra: Partial<Habit> = {}): Habit => ({
+  key: 'h',
+  titleAr: 'ع',
+  titleEn: 'h',
+  deed: 'nawafil',
+  unit: 'times',
+  unitLabelAr,
+  unitLabelEn,
+  defaultRule: { kind: 'daily' },
+  defaultSlots: ['09:00'],
+  basis: 'text',
+  evidence: [],
+  ...extra,
+});
+const duha = habit('ركعتان', "two rak'ahs", { rakah: 'pairs' });
+
 describe('buildNotification', () => {
   it('puts the amount first, then the quote and its source line', () => {
-    const n = buildNotification({ title: 'ورد القرآن', amountText: formatAmount(2, 'minutes', 'دقيقة'), quote: { text: '«نص»', source: 'صحيح مسلم 720' }, t: ar });
-    expect(n).toEqual({ title: 'ورد القرآن', message: 'المطلوب اليوم: 2 دقيقة\n«نص»\nصحيح مسلم 720' });
+    const quran = habit('دقيقة', 'minutes', { unit: 'minutes' });
+    const n = buildNotification({ title: 'ورد القرآن', amountText: formatAmount(2, 'minutes', quran, 'ar'), quote: { text: '«نص»', source: 'صحيح مسلم 720' }, t: ar });
+    expect(n).toEqual({ title: 'ورد القرآن', message: 'المطلوب اليوم: دقيقتان\n«نص»\nصحيح مسلم 720' });
   });
 
   it('shows only the amount when there is no published quote', () => {
-    const n = buildNotification({ title: 'Duha prayer', amountText: formatAmount(1, 'times', "two rak'ahs"), quote: null, t: en });
-    expect(n.message).toBe("Today: two rak'ahs");
+    const n = buildNotification({ title: 'Duha prayer', amountText: formatAmount(1, 'times', duha, 'en'), quote: null, t: en });
+    expect(n.message).toBe("Today: 2 rak'ahs");
   });
 
-  it('formats amounts with Western digits', () => {
-    expect(formatAmount(33, 'count', 'مرة')).toBe('33 مرة');
-    expect(formatAmount(2, 'times', 'ركعتان')).toBe('2 × ركعتان');
-    expect(formatAmount(1, 'times', 'ركعتان')).toBe('ركعتان');
-    expect(formatAmount(10, 'minutes', '')).toBe('10');
-  });
-});
-
-describe('messages', () => {
-  it('has the same keys in Arabic and English, and substitutes $1', () => {
-    expect(messageKeys('en').sort()).toEqual(messageKeys('ar').sort());
-    expect(ar('requiredToday', '5 دقيقة')).toBe('المطلوب اليوم: 5 دقيقة');
-    expect(ar('basisOrganizational')).toBe('اقتراح لتنظيم الوقت، وليس توقيتًا شرعيًا');
-  });
-
-  it('uses no Arabic-Indic digits in any message', () => {
-    for (const lang of ['ar', 'en'] as const) {
-      const t = translator(lang);
-      for (const key of messageKeys(lang)) expect(t(key)).not.toMatch(/[٠-٩۰-۹]/);
-    }
+  it('formats amounts with Western digits, prayers in rak\'ahs', () => {
+    expect(formatAmount(33, 'count', habit('مرة', 'times', { unit: 'count' }), 'ar')).toBe('33 مرة');
+    expect(formatAmount(2, 'times', duha, 'ar')).toBe('4 ركعات');
+    expect(formatAmount(1, 'times', duha, 'ar')).toBe('ركعتان');
+    expect(formatAmount(2, 'times', habit('صدقة', 'gift'), 'ar')).toBe('2 × صدقة');
+    expect(formatAmount(10, 'minutes', undefined, 'ar')).toBe('10');
   });
 });

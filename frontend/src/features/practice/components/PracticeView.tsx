@@ -1,18 +1,20 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { CalendarPlus, Feather } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
-import { endEbb, isEbbOn, loadWarning, normalize, startEbb, updatePlan } from '@thekra/practice-core';
-import { Link } from '@/i18n/navigation';
+import { loadWarning } from '@thekra/practice-core';
+import { Link, useRouter } from '@/i18n/navigation';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { QueryErrorState } from '@/components/shared/feedback/QueryErrorState';
 import { downloadTextFile, ICS_MIME } from '@/lib/practice/download';
 import { updateStore } from '@/lib/practice/local-store';
-import { habitOf, planReminderEvents, planRemindersIcs, planToday, ramadanEnd } from '@/lib/practice/plans';
+import { habitOf, isEbbDay, planReminderEvents, planRemindersIcs, planToday, ramadanEnd, setEbbForAll } from '@/lib/practice/plans';
 import type { PracticeHabit } from '@/lib/types/practice';
 import { usePracticeCatalog } from '../hooks/usePracticeCatalog';
 import { usePracticeStore } from '../hooks/usePracticeStore';
+import { useEndedSeasons } from '../hooks/useEndedSeasons';
 import { useFocusOnChange } from '../hooks/useFocusOnChange';
 import { useToday } from '../hooks/useToday';
 import { SyncStatus } from './SyncStatus';
@@ -22,25 +24,34 @@ import { PracticeLoading } from './PracticeLoading';
 import { ProgressPanel } from './ProgressPanel';
 import { PushRemindersCard } from './PushRemindersCard';
 
-/** «أعِنّي على طاعة»: setup, today's habits, in-app reminders, «وين وصلت», calendar file. */
+/**
+ * «طاعاتي»: setup, today's habits, in-app reminders, «وين وصلت», calendar file. `?add=1` (from «أضف» on the hub)
+ * opens the setup at once, with `&habit=<key>` (a good-deed page's «ابدأ بها») already chosen; a `#plan-<id>` hash (a habit row on the hub) scrolls to that plan.
+ */
 export function PracticeView() {
   const t = useTranslations('practice.today');
   const locale = useLocale() === 'en' ? 'en' : 'ar';
   const snapshot = usePracticeStore();
   const clock = useToday();
   const catalog = usePracticeCatalog();
-  const [adding, setAdding] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const isAddRequested = searchParams.get('add') === '1';
+  const requestedHabit = isAddRequested ? searchParams.get('habit') : null;
+  const [adding, setAdding] = useState(isAddRequested);
   const today = clock?.today ?? null;
   const viewKey = !snapshot ? 'loading' : snapshot.store.plans.length === 0 || adding ? 'setup' : 'today';
   const todayRef = useFocusOnChange<HTMLHeadingElement>(viewKey);
-
-  // A season that has ended returns the plan to its everyday amount, with no penalty (practice-core normalize).
-  // Deliberately not through updatePlan: the end is derived from the date, so it is not a new edit (no updatedAt).
   const plans = snapshot?.store.plans;
+  useEndedSeasons(plans, today);
+
+  const arePlansShown = viewKey === 'today' && clock !== null;
   useEffect(() => {
-    if (!today || !plans?.some((plan) => plan.season && today > plan.season.until)) return;
-    updateStore((store) => ({ ...store, plans: store.plans.map((plan) => normalize(plan, today)) }));
-  }, [plans, today]);
+    if (!arePlansShown) return;
+    const target = window.location.hash.startsWith('#plan-') ? document.getElementById(window.location.hash.slice(1)) : null;
+    target?.scrollIntoView({ block: 'start' });
+    target?.focus({ preventScroll: true });
+  }, [arePlansShown]);
 
   const habits = useMemo(
     () => new Map<string, PracticeHabit>((catalog.data?.habits ?? []).map((h) => [h.key, h])),
@@ -52,6 +63,12 @@ export function PracticeView() {
   const hijriOffset = snapshot.store.settings.hijriOffset;
   const settingUp = plans.length === 0 || adding;
 
+  function finishAdding() {
+    setAdding(false);
+    // Drop `?add=1`, so a reload shows the plans instead of the setup again.
+    if (isAddRequested) router.replace('/practice/habits');
+  }
+
   if (settingUp) {
     if (catalog.isPending) return <PracticeLoading />;
     if (catalog.isError) return <QueryErrorState error={catalog.error} onRetry={() => void catalog.refetch()} />;
@@ -61,10 +78,11 @@ export function PracticeView() {
         <PlanSetup
           habits={catalog.data.habits}
           existing={plans}
+          preselected={requestedHabit}
           freeMinutes={snapshot.store.settings.freeMinutesPerDay}
           today={today}
-          onDone={() => setAdding(false)}
-          onCancel={plans.length > 0 ? () => setAdding(false) : undefined}
+          onDone={finishAdding}
+          onCancel={plans.length > 0 ? finishAdding : undefined}
         />
         {plans.length === 0 ? <PracticePaths /> : null}
       </div>
@@ -78,19 +96,13 @@ export function PracticeView() {
   const dueToday = entries.filter((entry) => entry.view.isDueToday);
   const notDueToday = entries.filter((entry) => !entry.view.isDueToday);
   // «يومي ثقيل» is one day (practice-core isEbbOn): an ebb from an earlier day is already over.
-  const isEbb = plans.some((plan) => isEbbOn(plan, today));
+  const isEbb = isEbbDay(plans, today);
   const ramadanUntil = ramadanEnd(today, hijriOffset);
   const freeMinutes = snapshot.store.settings.freeMinutesPerDay;
   const overLoaded = freeMinutes !== undefined && loadWarning(plans, freeMinutes, today) === 'over';
 
   function toggleEbb() {
-    updateStore((store) =>
-      store.plans.reduce((next, plan) => {
-        if (!isEbb) return updatePlan(next, plan.id, (p) => startEbb(p, today as string));
-        // Off again the same day; a plan without an ebb is left untouched (no needless edit to sync).
-        return plan.ebb ? updatePlan(next, plan.id, (p) => endEbb(p)) : next;
-      }, store),
-    );
+    updateStore((store) => setEbbForAll(store, !isEbb, today as string));
   }
 
   function handleReminders() {
@@ -165,6 +177,9 @@ export function PracticePaths() {
   const t = useTranslations('practice.paths');
   return (
     <nav className="about-paths" aria-label={t('label')}>
+      <Link className="outline-button button-wrap" href="/practice">
+        {t('hub')} <DirectionalArrow />
+      </Link>
       <Link className="outline-button button-wrap" href="/practice/kinship">
         {t('kinship')} <DirectionalArrow />
       </Link>
