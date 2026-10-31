@@ -29,7 +29,8 @@
     "practiceLong": "عاداتي",
     "calendar": "مواسم الخير",
     "record": "سجلّي",
-    "gateways": "الأبواب"
+    "gateways": "الأبواب",
+    "names": "الأسماء الحسنى"
   },
   "about": {
     "pageTitle": "عن ذِكرى",
@@ -225,7 +226,11 @@
     "wirdLeft": "بقي عليك اليوم {n}",
     "wirdDone": "تمّ وردك اليوم",
     "seasonsTitle": "مواسم الخير",
-    "seasonsDescription": "المناسبات المسنونة القادمة، وتقويم تشترك فيه."
+    "seasonsDescription": "المناسبات المسنونة القادمة، وتقويم تشترك فيه.",
+    "namesOverline": "معرفة الله",
+    "namesEntryLabel": "الأسماء الحسنى",
+    "namesEntryDescription": "اسمٌ ومعناه، وآيةٌ ورد فيها.",
+    "namesCta": "تعرّف على الأسماء"
   },
   "sinRank": {
     "KABIRA": "كبيرة",
@@ -935,7 +940,8 @@
     "goodDeeds": "الطاعات",
     "branches": "شُعَب الإيمان",
     "favorites": "المفضلة",
-    "about": "عن ذِكرى"
+    "about": "عن ذِكرى",
+    "names": "الأسماء الحسنى"
   },
   "feedback": {
     "loading": "جارٍ التحميل",
@@ -1667,6 +1673,9 @@
       "helper": "تُجلب الأوقات من خدمة «الأذان» وتُحفظ على جهازك 30 يومًا.",
       "anchorsTitle": "مواعيد اليوم",
       "defaults": "أوقات افتراضية، حتى تختار مدينتك."
+    },
+    "weekName": {
+      "title": "اسم الأسبوع"
     }
   },
   "calendarPage": {
@@ -1944,5 +1953,22 @@
     "makeHabit": "اجعلها عادتي",
     "makeHabitHint": "ابدأ بقدر صغير جدًا، وداوم عليه.",
     "habitAdded": "في عاداتك"
+  },
+  "names": {
+    "pageTitle": "الأسماء الحسنى",
+    "eyebrow": "معرفة الله",
+    "lead": "أسماء الله الواردة في القرآن، لكل اسم آيةٌ ذُكر فيها ومعنًى موجز.",
+    "searchPlaceholder": "ابحث عن اسم…",
+    "empty": "لا اسم يطابق بحثك.",
+    "verseLead": "آيةٌ ورد فيها هذا الاسم.",
+    "verseMissing": "تعذّر عرض الآية الآن.",
+    "meaningTitle": "المعنى",
+    "pendingReview": "قيد المراجعة",
+    "worshipTitle": "التعبّد بهذا الاسم",
+    "kindDeed": "طاعة",
+    "kindSin": "معصية تُترك",
+    "kindAction": "برنامج",
+    "otherVersesTitle": "آيات أخرى ورد فيها اللفظ",
+    "number": "الاسم {number}"
   }
 }

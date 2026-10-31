@@ -13,7 +13,7 @@ import { resendPushPrefs } from '@/lib/push/web-push';
 import { useHeart } from '../../hooks/useHeart';
 import { useWirdContext, type WirdContext } from '../../hooks/useWirdContext';
 import { HeartTop, MuraqabaLine, SelfMessageCard } from './HeartCards';
-import { DayDoneCard, WeekBranchCard } from './KnowledgeCards';
+import { DayDoneCard, WeekCard } from './KnowledgeCards';
 import { SyncStatus } from '../SyncStatus';
 import { ExcuseToggle } from './ExcuseToggle';
 import { HeavyDayToggle } from './HeavyDayToggle';
@@ -132,7 +132,7 @@ function WirdBody({ context }: { context: WirdContext }) {
         ) : null}
       </section>
 
-      <WeekBranchCard today={today} />
+      <WeekCard today={today} />
 
       <SyncStatus persistent={snapshot.persistent} quiet />
     </div>

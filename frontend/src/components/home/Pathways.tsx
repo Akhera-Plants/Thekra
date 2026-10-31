@@ -1,11 +1,11 @@
-import { BookOpen, CalendarDays, DoorOpen, Leaf, Sprout } from 'lucide-react';
+import { BookOpen, CalendarDays, DoorOpen, Leaf, Sparkles, Sprout } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 
 /**
- * «أبواب الخير» (the header's «الأبواب» lands here, `#paths`): «المعاصي», «الطاعات», «شُعب الإيمان», and a fourth,
- * smaller door «مواسم الخير» (the occasions page, `/calendar`).
+ * «أبواب الخير» (the header's «الأبواب» lands here, `#paths`): «المعاصي», «الطاعات», «شُعب الإيمان», the fourth door
+ * «الأسماء الحسنى» (`/names`, redesign §4.7, a full-width row under the three), and the smaller «مواسم الخير» link.
  */
 export async function Pathways() {
   const t = await getTranslations('home');
@@ -79,6 +79,22 @@ export async function Pathways() {
           <span className="pathway-description">{t('branchEntryDescription')}</span>
           <span className="pathway-cta">
             {t('branchCta')}{' '}
+            <span className="pathway-arrow">
+              <DirectionalArrow className="size-[19px]" />
+            </span>
+          </span>
+        </Link>
+        <Link className="pathway pathway-faith pathway-names" href="/names">
+          <span className="pathway-top">
+            <span className="pathway-icon">
+              <Sparkles className="size-7" aria-hidden />
+            </span>
+            <span className="pathway-overline">{t('namesOverline')}</span>
+          </span>
+          <span className="pathway-title">{t('namesEntryLabel')}</span>
+          <span className="pathway-description">{t('namesEntryDescription')}</span>
+          <span className="pathway-cta">
+            {t('namesCta')}{' '}
             <span className="pathway-arrow">
               <DirectionalArrow className="size-[19px]" />
             </span>

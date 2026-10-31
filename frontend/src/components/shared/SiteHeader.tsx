@@ -8,11 +8,15 @@ import { LocaleSwitcher } from './LocaleSwitcher';
 import { ThemeToggle } from './ThemeToggle';
 import { AuthNavItems } from './AuthNavItems';
 
+/** The doors of «أبواب الخير»: «الأبواب» is the current place on their pages. */
+const GATEWAY_PATHS = ['/sins', '/good-deeds', '/branches', '/names', '/calendar'] as const;
+
 /** The three places of the site: «ورد اليوم» · «الأبواب» (the home doors) · «سجلّي». */
 function usePrimaryLinks() {
   const pathname = usePathname();
   const tNav = useTranslations('nav');
   const recordCurrent = pathname === '/practice/record';
+  const gatewayCurrent = GATEWAY_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
   return [
     {
       key: 'wird',
@@ -20,7 +24,7 @@ function usePrimaryLinks() {
       label: tNav('practice'),
       current: !recordCurrent && (pathname === '/practice' || pathname.startsWith('/practice/')),
     },
-    { key: 'gateways', href: '/#paths', label: tNav('gateways'), current: false },
+    { key: 'gateways', href: '/#paths', label: tNav('gateways'), current: gatewayCurrent },
     { key: 'record', href: '/practice/record', label: tNav('record'), current: recordCurrent },
   ];
 }

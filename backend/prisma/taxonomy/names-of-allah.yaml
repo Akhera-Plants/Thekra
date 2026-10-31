@@ -1,238 +1,544 @@
 # أسماء الله الحسنى — each name with one Quran verse that contains it (ref = surah:ayah).
 # Verified 2026-11-01 against the production Quran text: the name occurs in the verse (normalized, diacritics removed).
 # quoteId is the production Quote id of that verse (the API serves the text; never type verse text).
-# Meanings and links are added in the app layer and are pending the sheikh. Order follows the verses, not a fixed list
+# slug, meaningAr/meaningEn, links (deed:<slug>, sin:<slug>, action:leave-sin) and bare (false = do not search the word
+# without «ال» for more verses) are app-layer additions, pending the sheikh. Order follows the verses, not a fixed list
 # of 99 (the enumerated list in al-Tirmidhi is weak per the scholars; the names here are taken from the Quran).
 review: pending-sheikh
 names:
   - name: الله
+    slug: allah
     ref: '59:22'
     quoteId: 9d794b31-1319-4655-a0b8-364d1fd98260
+    meaningAr: 'المألوه المعبود بحقّ، ذو الألوهية على خلقه أجمعين'
+    meaningEn: 'The One truly worshipped, to whom all worship is due'
+    links: ['deed:tawhid', 'sin:shirk']
+    bare: false
   - name: الرحمن
+    slug: ar-rahman
     ref: '59:22'
     quoteId: 9d794b31-1319-4655-a0b8-364d1fd98260
+    meaningAr: 'ذو الرحمة الواسعة الشاملة لجميع الخلق'
+    meaningEn: 'Owner of the vast mercy that reaches all creation'
+    links: ['deed:rahma-khalq']
   - name: الرحيم
+    slug: ar-rahim
     ref: '59:22'
     quoteId: 9d794b31-1319-4655-a0b8-364d1fd98260
+    meaningAr: 'يرحم عباده المؤمنين ويوصل إليهم رحمته'
+    meaningEn: 'Who bestows His mercy upon His believing servants'
+    links: ['deed:rahma-khalq']
   - name: الملك
+    slug: al-malik
     ref: '59:23'
     quoteId: b18f868d-16bf-4575-ab0f-db470ba552f9
+    meaningAr: 'المالك لكل شيء، المتصرّف في خلقه بأمره'
+    meaningEn: 'Sovereign of all things, who governs His creation by His command'
+    bare: false
   - name: القدوس
+    slug: al-quddus
     ref: '59:23'
     quoteId: b18f868d-16bf-4575-ab0f-db470ba552f9
+    meaningAr: 'المنزّه عن كل نقص وعيب'
+    meaningEn: 'Free of every deficiency and fault'
   - name: السلام
+    slug: as-salam
     ref: '59:23'
     quoteId: b18f868d-16bf-4575-ab0f-db470ba552f9
+    meaningAr: 'السالم من كل نقص وآفة في ذاته وصفاته وأفعاله'
+    meaningEn: 'Free from every flaw in His essence, attributes and acts'
+    links: ['deed:salam']
+    bare: false
   - name: المؤمن
+    slug: al-mumin
     ref: '59:23'
     quoteId: b18f868d-16bf-4575-ab0f-db470ba552f9
+    meaningAr: 'المصدّق رسلَه بالآيات والبراهين، المؤمِّن عباده من أن يظلمهم'
+    meaningEn: 'Who confirms His messengers with signs, and keeps His servants safe from injustice'
+    bare: false
   - name: المهيمن
+    slug: al-muhaymin
     ref: '59:23'
     quoteId: b18f868d-16bf-4575-ab0f-db470ba552f9
+    meaningAr: 'المطّلع على خفايا الأمور، الرقيب الشاهد على خلقه'
+    meaningEn: 'Who watches over all things and witnesses His creation'
+    links: ['deed:muraqaba']
   - name: العزيز
+    slug: al-aziz
     ref: '59:23'
     quoteId: b18f868d-16bf-4575-ab0f-db470ba552f9
+    meaningAr: 'له العزة كلها: عزة القوة والغلبة والامتناع'
+    meaningEn: 'All might is His: of strength, dominance and invincibility'
   - name: الجبار
+    slug: al-jabbar
     ref: '59:23'
     quoteId: b18f868d-16bf-4575-ab0f-db470ba552f9
+    meaningAr: 'العلي على خلقه، يجبر كسر عباده، ويقهر كل شيء'
+    meaningEn: 'Exalted over His creation, who mends the broken and subdues all things'
   - name: المتكبر
+    slug: al-mutakabbir
     ref: '59:23'
     quoteId: b18f868d-16bf-4575-ab0f-db470ba552f9
+    meaningAr: 'المتعالي عن صفات الخلق، المتنزّه عن كل سوء'
+    meaningEn: 'Exalted above the attributes of creatures and above every evil'
+    links: ['sin:kibr', 'deed:tawadu']
   - name: الخالق
+    slug: al-khaliq
     ref: '59:24'
     quoteId: 63d0125e-dbda-4449-b403-1cb495e8ba5d
+    meaningAr: 'الذي خلق جميع الموجودات وقدّرها'
+    meaningEn: 'Who created all that exists and determined its measure'
   - name: البارئ
+    slug: al-bari
     ref: '59:24'
     quoteId: 63d0125e-dbda-4449-b403-1cb495e8ba5d
+    meaningAr: 'الذي أوجد الخلق بعد العدم'
+    meaningEn: 'Who brought creation into being from nothing'
   - name: المصور
+    slug: al-musawwir
     ref: '59:24'
     quoteId: 63d0125e-dbda-4449-b403-1cb495e8ba5d
+    meaningAr: 'الذي صوّر خلقه على ما شاء من الصور'
+    meaningEn: 'Who fashions His creation in whatever forms He wills'
   - name: الحكيم
+    slug: al-hakim
     ref: '59:24'
     quoteId: 63d0125e-dbda-4449-b403-1cb495e8ba5d
+    meaningAr: 'يضع الأشياء مواضعها، وله الحكمة في خلقه وأمره'
+    meaningEn: 'Who puts everything in its place; wisdom is His in creating and commanding'
   - name: الأول
+    slug: al-awwal
     ref: '57:3'
     quoteId: 980f69b3-4f7b-43de-9403-e74cbca36738
+    meaningAr: 'السابق لكل شيء، فلا شيء قبله'
+    meaningEn: 'Before all things; nothing is before Him'
+    bare: false
   - name: الآخر
+    slug: al-akhir
     ref: '57:3'
     quoteId: 980f69b3-4f7b-43de-9403-e74cbca36738
+    meaningAr: 'الباقي بعد كل شيء، فلا شيء بعده'
+    meaningEn: 'Who remains after all things; nothing is after Him'
+    bare: false
   - name: الظاهر
+    slug: az-zahir
     ref: '57:3'
     quoteId: 980f69b3-4f7b-43de-9403-e74cbca36738
+    meaningAr: 'العالي فوق كل شيء، فلا شيء فوقه'
+    meaningEn: 'Above all things; nothing is above Him'
+    bare: false
   - name: الباطن
+    slug: al-batin
     ref: '57:3'
     quoteId: 980f69b3-4f7b-43de-9403-e74cbca36738
+    meaningAr: 'القريب المطّلع على كل شيء، فلا شيء أقرب منه'
+    meaningEn: 'Near and aware of all things; nothing is closer than Him'
+    bare: false
   - name: العليم
+    slug: al-alim
     ref: '57:3'
     quoteId: 980f69b3-4f7b-43de-9403-e74cbca36738
+    meaningAr: 'أحاط علمه بكل شيء: الظاهر والباطن، والسرّ والعلانية'
+    meaningEn: 'Whose knowledge covers all things, the open and the hidden'
+    links: ['deed:muraqaba']
+    bare: false
   - name: الحي
+    slug: al-hayy
     ref: '2:255'
     quoteId: 0fa365be-3f20-4cba-9aec-88e86a587c1e
+    meaningAr: 'ذو الحياة الكاملة التي لا يعتريها نقص ولا فناء'
+    meaningEn: 'Of perfect life, untouched by deficiency or end'
+    links: ['deed:tawakkul']
+    bare: false
   - name: القيوم
+    slug: al-qayyum
     ref: '2:255'
     quoteId: 0fa365be-3f20-4cba-9aec-88e86a587c1e
+    meaningAr: 'القائم بنفسه، المقيم لغيره من خلقه'
+    meaningEn: 'Self-subsisting, who sustains all His creation'
   - name: العلي
+    slug: al-ali
     ref: '2:255'
     quoteId: 0fa365be-3f20-4cba-9aec-88e86a587c1e
+    meaningAr: 'له العلوّ المطلق: علوّ الذات والقدر والقهر'
+    meaningEn: 'Absolutely exalted: in essence, in rank and in dominion'
+    bare: false
   - name: العظيم
+    slug: al-azim
     ref: '2:255'
     quoteId: 0fa365be-3f20-4cba-9aec-88e86a587c1e
+    meaningAr: 'الجامع لصفات العظمة والكبرياء والمجد'
+    meaningEn: 'Who unites all attributes of greatness, majesty and glory'
+    bare: false
   - name: الحق
+    slug: al-haqq
     ref: '22:6'
     quoteId: 07876453-91ef-46a5-94e9-385b90de46fa
+    meaningAr: 'الثابت في ذاته وصفاته، وقوله حق ووعده حق'
+    meaningEn: 'The Truth in His essence and attributes; His word and promise are true'
+    bare: false
   - name: الولي
+    slug: al-wali
     ref: '42:9'
     quoteId: 0b633402-03a1-4b71-8b4a-324873bc31ed
+    meaningAr: 'يتولّى عباده المؤمنين بالنصر والتوفيق والتدبير'
+    meaningEn: 'Who takes the believers into His care with help, success and guidance'
+    bare: false
   - name: الواحد
+    slug: al-wahid
     ref: '13:16'
     quoteId: 081574cf-b996-4932-8cc1-04ae543a5cf7
+    meaningAr: 'المتفرّد بالكمال، لا شريك له في ربوبيته ولا ألوهيته'
+    meaningEn: 'Unique in perfection, without partner in lordship or worship'
+    links: ['deed:tawhid', 'sin:shirk']
+    bare: false
   - name: القهار
+    slug: al-qahhar
     ref: '13:16'
     quoteId: 081574cf-b996-4932-8cc1-04ae543a5cf7
+    meaningAr: 'قهر كل شيء، فخضعت له المخلوقات وذلّت لعظمته'
+    meaningEn: 'Who subdues all things; all creation submits to His greatness'
   - name: الصمد
+    slug: as-samad
     ref: '112:2'
     quoteId: 37606126-9844-42c8-87bb-f25da1affb82
+    meaningAr: 'السيد الكامل في سؤدده، تقصده الخلائق في حوائجها'
+    meaningEn: 'The Master perfect in His mastery, to whom all creatures turn in their needs'
+    links: ['deed:tawhid']
   - name: الأحد
+    slug: al-ahad
     ref: '112:1'
     quoteId: 3e955275-2323-4fd0-b19f-7ab0deaf4927
+    meaningAr: 'المتفرّد بجميع الكمالات، لا نظير له'
+    meaningEn: 'Alone in every perfection, with none like Him'
+    links: ['deed:tawhid', 'sin:shirk']
+    bare: false
   - name: الرزاق
+    slug: ar-razzaq
     ref: '51:58'
     quoteId: 14c9749e-e448-4f37-b6e7-53a37b2eb1d2
+    meaningAr: 'يرزق جميع خلقه، رزق الأبدان ورزق القلوب'
+    meaningEn: 'Who provides for all creation: sustenance for bodies and for hearts'
+    links: ['sin:akl-haram', 'deed:kasb-halal']
   - name: المتين
+    slug: al-matin
     ref: '51:58'
     quoteId: 14c9749e-e448-4f37-b6e7-53a37b2eb1d2
+    meaningAr: 'الشديد القوة، الذي لا يلحقه في أفعاله تعب'
+    meaningEn: 'Firm in strength; no weariness touches Him in His acts'
   - name: الفتاح
+    slug: al-fattah
     ref: '34:26'
     quoteId: 5c42bb52-6bea-442f-b2ba-5201e2dfb1a5
+    meaningAr: 'يفتح لعباده أبواب الرحمة والرزق، ويحكم بينهم بالحق'
+    meaningEn: 'Who opens doors of mercy and provision, and judges between His servants with truth'
   - name: الوهاب
+    slug: al-wahhab
     ref: '38:9'
     quoteId: 3546d5b7-eeaf-41df-afdd-f3bd1f9dcdfe
+    meaningAr: 'كثير العطاء والهبات من غير عوض'
+    meaningEn: 'Who gives abundantly, asking nothing in return'
   - name: الغفار
+    slug: al-ghaffar
     ref: '38:66'
     quoteId: 0d3ee74e-b035-4e74-a137-542d64ee2619
+    meaningAr: 'كثير المغفرة لمن تاب إليه واستغفره'
+    meaningEn: 'Abundant in forgiveness for whoever repents and seeks His pardon'
+    links: ['deed:tawba']
   - name: اللطيف
+    slug: al-latif
     ref: '67:14'
     quoteId: 9e8c1bd3-c1a5-4afa-8287-ff28f29a1d90
+    meaningAr: 'يعلم دقائق الأمور، ويوصل إلى عباده الخير من حيث لا يشعرون'
+    meaningEn: 'Aware of the finest matters, who brings good to His servants in ways they do not perceive'
   - name: الخبير
+    slug: al-khabir
     ref: '67:14'
     quoteId: 9e8c1bd3-c1a5-4afa-8287-ff28f29a1d90
+    meaningAr: 'العليم ببواطن الأمور وخفاياها'
+    meaningEn: 'Who knows the inner reality and secrets of all things'
+    links: ['deed:muraqaba']
   - name: البر
+    slug: al-barr
     ref: '52:28'
     quoteId: cdee12bd-f940-445f-8463-068d8dfc1860
+    meaningAr: 'واسع الإحسان والبرّ بعباده'
+    meaningEn: 'Vast in kindness and goodness toward His servants'
+    bare: false
   - name: التواب
+    slug: at-tawwab
     ref: '2:37'
     quoteId: c0939c6a-7964-4ad1-b161-fd680f67c736
+    meaningAr: 'يقبل توبة عباده ويوفّقهم لها'
+    meaningEn: 'Who accepts His servants'' repentance and grants them success in it'
+    links: ['deed:tawba', 'action:leave-sin']
   - name: الودود
+    slug: al-wadud
     ref: '85:14'
     quoteId: 9284423d-e1c4-44ab-9df2-034b5514e8a2
+    meaningAr: 'يحبّ أولياءه ويحبّونه، ويتودّد إليهم بنعمه'
+    meaningEn: 'Who loves His devoted servants and is loved by them, drawing near with His favours'
+    links: ['deed:silat-ar-rahim', 'deed:hubb-fillah']
   - name: الغفور
+    slug: al-ghafur
     ref: '85:14'
     quoteId: 9284423d-e1c4-44ab-9df2-034b5514e8a2
+    meaningAr: 'يستر ذنوب عباده ويتجاوز عن مؤاخذتهم'
+    meaningEn: 'Who covers His servants'' sins and pardons them'
+    links: ['deed:tawba']
   - name: الكريم
+    slug: al-karim
     ref: '82:6'
     quoteId: 7501c984-c379-4fb8-a7ca-f3f1a94ba56a
+    meaningAr: 'كثير الخير، جواد بالعطاء والفضل'
+    meaningEn: 'Abundant in good, generous in giving and grace'
+    bare: false
   - name: الغني
+    slug: al-ghani
     ref: '35:15'
     quoteId: 58232e32-2c6a-4702-b4b1-e8ae07e7e955
+    meaningAr: 'الغني بذاته عن كل ما سواه، وكل شيء مفتقر إليه'
+    meaningEn: 'Free of need of all besides Him, while all things need Him'
+    bare: false
   - name: الحميد
+    slug: al-hamid
     ref: '35:15'
     quoteId: 58232e32-2c6a-4702-b4b1-e8ae07e7e955
+    meaningAr: 'المحمود في ذاته وصفاته وأفعاله'
+    meaningEn: 'Praiseworthy in His essence, attributes and acts'
+    links: ['deed:shukr']
+    bare: false
   - name: الكبير
+    slug: al-kabir
     ref: '13:9'
     quoteId: 87eb0f48-8d5c-4ed0-938b-ae9057aaae6a
+    meaningAr: 'العظيم الذي كل شيء دونه'
+    meaningEn: 'The Great, beneath whom all things are'
+    bare: false
   - name: المتعال
+    slug: al-mutaal
     ref: '13:9'
     quoteId: 87eb0f48-8d5c-4ed0-938b-ae9057aaae6a
+    meaningAr: 'العالي على خلقه بذاته وقدره وقهره'
+    meaningEn: 'Exalted over His creation in essence, rank and dominion'
   - name: السميع
+    slug: as-sami
     ref: '42:11'
     quoteId: cc4fe52d-d5ab-45b2-bd83-3f5d3be24459
+    meaningAr: 'يسمع جميع الأصوات على اختلاف اللغات والحاجات'
+    meaningEn: 'Who hears all voices, whatever their tongues and needs'
+    links: ['deed:muraqaba', 'deed:hifz-al-lisan']
   - name: البصير
+    slug: al-basir
     ref: '42:11'
     quoteId: cc4fe52d-d5ab-45b2-bd83-3f5d3be24459
+    meaningAr: 'يبصر كل شيء وإن دقّ وخفي'
+    meaningEn: 'Who sees all things, however small or hidden'
+    links: ['deed:muraqaba', 'deed:ghadd-basar']
   - name: الرقيب
+    slug: ar-raqib
     ref: '5:117'
     quoteId: a9a7c8a6-d46b-4ee3-8705-6048e43c635b
+    meaningAr: 'المطّلع على ما في الضمائر، الحافظ لأعمال عباده'
+    meaningEn: 'Who watches what hearts conceal and keeps account of deeds'
+    links: ['deed:muraqaba', 'deed:muhasaba']
+    bare: false
   - name: الشهيد
+    slug: ash-shahid
     ref: '5:117'
     quoteId: a9a7c8a6-d46b-4ee3-8705-6048e43c635b
+    meaningAr: 'المطّلع على كل شيء، الشاهد على عباده بما عملوا'
+    meaningEn: 'Witness to all things and to what His servants do'
+    links: ['deed:muraqaba']
+    bare: false
   - name: المجيب
+    slug: al-mujib
     ref: '11:61'
     quoteId: cccf7cf1-0703-4359-a99e-03573cb5efaf
+    meaningAr: 'يجيب دعاء الداعين وسؤال السائلين'
+    meaningEn: 'Who answers those who call upon Him and ask of Him'
+    links: ['deed:dua']
   - name: القريب
+    slug: al-qarib
     ref: '11:61'
     quoteId: cccf7cf1-0703-4359-a99e-03573cb5efaf
+    meaningAr: 'القريب من عباده بعلمه، ومن الداعين بالإجابة'
+    meaningEn: 'Near to His servants by His knowledge, and to those who call by answering'
+    links: ['deed:dua']
+    bare: false
   - name: الواسع
+    slug: al-wasi
     ref: '2:115'
     quoteId: d15e4c31-99b1-4b06-89f9-9d177de686b6
+    meaningAr: 'واسع الصفات والفضل والرحمة'
+    meaningEn: 'Vast in attributes, bounty and mercy'
+    bare: false
   - name: الوكيل
+    slug: al-wakil
     ref: '3:173'
     quoteId: a6b536aa-b104-42f7-b647-9443553ef48f
+    meaningAr: 'المتكفّل بأرزاق خلقه، القائم بمصالح من توكّل عليه'
+    meaningEn: 'Guardian of His creation''s provision, who sees to the affairs of whoever relies on Him'
+    links: ['deed:tawakkul']
+    bare: false
   - name: القوي
+    slug: al-qawiyy
     ref: '42:19'
     quoteId: 440b0912-8dfe-42fc-b882-65c0f2b349e0
+    meaningAr: 'ذو القوة الكاملة التي لا يعجزها شيء'
+    meaningEn: 'Of perfect strength that nothing can thwart'
+    bare: false
   - name: المولى
+    slug: al-mawla
     ref: '8:40'
     quoteId: 1ea21744-ad5b-47a9-ab62-245192fd02b6
+    meaningAr: 'السيد المالك، الناصر لأوليائه'
+    meaningEn: 'The Lord and Master, Helper of His devoted servants'
+    bare: false
   - name: النصير
+    slug: an-nasir
     ref: '8:40'
     quoteId: 1ea21744-ad5b-47a9-ab62-245192fd02b6
+    meaningAr: 'ينصر عباده المؤمنين ويدفع عنهم'
+    meaningEn: 'Who helps the believers and defends them'
+    bare: false
   - name: العفو
+    slug: al-afuww
     ref: '22:60'
     quoteId: e932c2be-1db2-4c92-a50e-f4d1d486dbf6
+    meaningAr: 'يعفو عن الذنوب ويمحو أثرها'
+    meaningEn: 'Who pardons sins and erases their trace'
+    links: ['deed:afw', 'deed:tawba']
   - name: الرؤوف
+    slug: ar-rauf
     ref: '2:143'
     quoteId: 0af9476d-d7c5-417a-81f3-06aa440c492e
+    meaningAr: 'شديد الرأفة والرحمة بعباده'
+    meaningEn: 'Most kind and compassionate toward His servants'
+    links: ['deed:rahma-khalq']
+    bare: false
   - name: القادر
+    slug: al-qaadir
     ref: '6:65'
     quoteId: eee0c4b5-aefb-43e7-9333-e741200c6def
+    meaningAr: 'له القدرة التامة، لا يعجزه شيء'
+    meaningEn: 'Whose power is complete; nothing is beyond Him'
+    bare: false
   - name: القاهر
+    slug: al-qahir
     ref: '6:18'
     quoteId: 0fd9130e-26b1-4914-adfb-bf8e7511f6a1
+    meaningAr: 'الغالب الذي خضع له كل شيء'
+    meaningEn: 'The Dominant, to whom all things submit'
+    bare: false
   - name: الحفيظ
+    slug: al-hafiz
     ref: '11:57'
     quoteId: f2398f78-8514-41ec-bc71-17a3689e6138
+    meaningAr: 'يحفظ ما خلق، ويحفظ أعمال عباده، ويحفظ أولياءه'
+    meaningEn: 'Who preserves His creation, records His servants'' deeds and protects His devoted servants'
+    bare: false
   - name: الخلاق
+    slug: al-khallaq
     ref: '15:86'
     quoteId: a38b9fed-2a4e-42d6-a8a5-d513e2646d6a
+    meaningAr: 'كثير الخلق، يخلق ما يشاء'
+    meaningEn: 'Who creates abundantly whatever He wills'
   - name: المقيت
+    slug: al-muqit
     ref: '4:85'
     quoteId: 2dcf681c-3176-4548-97cb-f0c866d3d114
+    meaningAr: 'يوصل إلى كل مخلوق قوته، ويحفظه'
+    meaningEn: 'Who brings every creature its nourishment and keeps it'
   - name: الأكرم
+    slug: al-akram
     ref: '96:3'
     quoteId: 59c5eff1-ccb0-4a4a-a760-7401cebabd8c
+    meaningAr: 'الأوسع كرمًا، لا يبلغ كرمَه أحد'
+    meaningEn: 'Most Generous; none reaches His generosity'
+    bare: false
   - name: الأعلى
+    slug: al-ala
     ref: '87:1'
     quoteId: 630534ce-4fd3-4cb1-a71f-270a42c484e3
+    meaningAr: 'له العلوّ المطلق من كل وجه'
+    meaningEn: 'Most High in every respect'
+    bare: false
   - name: المحيط
+    slug: al-muhit
     ref: '41:54'
     quoteId: 9cc77ac1-65e6-4670-9064-db3fcff75394
+    meaningAr: 'لا يخرج شيء عن علمه وقدرته'
+    meaningEn: 'Nothing lies outside His knowledge and power'
+    bare: false
   - name: القدير
+    slug: al-qadir
     ref: '2:20'
     quoteId: d3ced74f-5246-448e-b64f-5c754f7c0208
+    meaningAr: 'كامل القدرة، يوجد ما شاء ويدبّره'
+    meaningEn: 'Perfect in power, who brings into being whatever He wills'
   - name: المستعان
+    slug: al-mustaan
     ref: '12:18'
     quoteId: 70a4ed70-0815-4caa-9b6e-21c1f8251d8d
+    meaningAr: 'الذي يُطلب منه العون وحده'
+    meaningEn: 'The One alone whose help is sought'
+    links: ['deed:dua', 'deed:sabr']
   - name: الحليم
+    slug: al-halim
     ref: '2:225'
     quoteId: e6b2adf9-191b-44cf-8bfb-22ff6efa8bb9
+    meaningAr: 'لا يعاجل العصاة بالعقوبة، ويمهلهم ليتوبوا'
+    meaningEn: 'Who does not hasten punishment upon the disobedient, granting them time to repent'
+    links: ['sin:ghadab', 'deed:kaff-al-ghadab']
   - name: الشكور
+    slug: ash-shakur
     ref: '35:34'
     quoteId: 74a9d47f-a3c3-4427-83bb-bdb6a6cf3bc1
+    meaningAr: 'يقبل القليل من العمل ويثيب عليه الكثير'
+    meaningEn: 'Who accepts little deeds and rewards them abundantly'
+    links: ['deed:shukr']
   - name: الحسيب
+    slug: al-hasib
     ref: '4:6'
     quoteId: 3bbb8e82-e9ca-4513-ac3d-f49c01a27da3
+    meaningAr: 'الكافي عباده، المحاسب لهم على أعمالهم'
+    meaningEn: 'Sufficient for His servants, who holds them to account for their deeds'
+    links: ['deed:muhasaba']
+    bare: false
   - name: الهادي
+    slug: al-hadi
     ref: '22:54'
     quoteId: c35c363b-a27f-474d-8b99-cbbf4152a391
+    meaningAr: 'يهدي عباده إلى ما ينفعهم، ويدلّهم على الحق'
+    meaningEn: 'Who guides His servants to what benefits them and to the truth'
+    bare: false
   - name: الوارث
+    slug: al-warith
     ref: '15:23'
     quoteId: e8a9eff1-98a0-4115-ac37-2c57b54faf3e
+    meaningAr: 'الباقي بعد فناء خلقه، وإليه يرجع كل شيء'
+    meaningEn: 'Who remains after His creation passes away; to Him all things return'
+    bare: false
   - name: النور
+    slug: an-nur
     ref: '24:35'
     quoteId: ce407c96-c812-4ae0-b4db-f42ec392d320
+    meaningAr: 'منوّر السماوات والأرض، وهادي قلوب المؤمنين'
+    meaningEn: 'Who illuminates the heavens and the earth and guides the hearts of the believers'
+    bare: false
   - name: الرب
+    slug: ar-rabb
     ref: '1:2'
     quoteId: 4ea24b92-ba43-40b8-92a2-6e1c48586e53
+    meaningAr: 'المربّي جميع عباده بالتدبير وأصناف النعم'
+    meaningEn: 'Who nurtures all His servants with His care and every kind of blessing'
+    links: ['deed:tawhid']
+    bare: false
   - name: المجيد
+    slug: al-majid
     ref: '11:73'
     quoteId: 6a423a94-52d6-4dad-85b1-5f6638c5a64b
+    meaningAr: 'الواسع في صفات المجد والعظمة والجلال'
+    meaningEn: 'Vast in the attributes of glory, greatness and majesty'
+    bare: false

@@ -36,6 +36,11 @@ export const queryKeys = {
     today: (lang: string, utcDay: number) => ['quotes', 'today', lang, utcDay] as const,
   },
   /** شعب الإيمان: `number` is the branch number (1–77), the site's route key. */
+  namesOfAllah: {
+    all: ['names-of-allah'] as const,
+    list: ['names-of-allah', 'list'] as const,
+    detail: (slug: string, lang: string) => ['names-of-allah', 'detail', slug, lang] as const,
+  },
   branches: {
     all: ['branches'] as const,
     list: (p: BranchesQuery, lang: string) => ['branches', 'list', p, lang] as const,
@@ -101,6 +106,8 @@ export const PERSISTED_QUERY_KEYS = [
   'favorites',
   'quotes',
   'branches',
+  // The Names of Allah list and pages (public).
+  'names-of-allah',
   // Public catalog + evidence texts: needed offline for reminder titles and the habit screens.
   // Nothing user-specific lives under this key.
   'practice',

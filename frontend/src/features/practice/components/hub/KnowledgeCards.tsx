@@ -8,9 +8,11 @@ import {
   branchOfWeek,
   dayCompletion,
   gratitudeAyah,
+  nameOfWeekIndex,
   rewardQuoteId,
   storyQuoteId,
   tallies,
+  weekCardKind,
   type HabitTally,
   type Plan,
   type PlanDayOptions,
@@ -21,6 +23,7 @@ import { Link } from '@/i18n/navigation';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { QuoteCard } from '@/components/shared/quote';
 import { getBranch } from '@/lib/api/branches';
+import { getNamesOfAllah } from '@/lib/api/names';
 import { getAyah } from '@/lib/api/quran';
 import { formatDigits } from '@/lib/format/digits';
 import { habitOf } from '@/lib/practice/plans';
@@ -188,7 +191,38 @@ export function StoryLine({ moment }: { moment: StoryMoment }) {
   );
 }
 
-// ── «شعبة الأسبوع» ──────────────────────────────────────────────────────────────────────────────────────────
+// ── «شعبة الأسبوع» / «اسم الأسبوع» ──────────────────────────────────────────────────────────────────────────
+
+/** «ورد اليوم»'s weekly card (redesign §4.7): even ISO weeks «شعبة الأسبوع», odd weeks «اسم الأسبوع» (practice-core). */
+export function WeekCard({ today }: { today: string }) {
+  return weekCardKind(today) === 'branch' ? <WeekBranchCard today={today} /> : <WeekNameCard today={today} />;
+}
+
+/** «اسم الأسبوع»: the same Name of Allah for everyone this name week, walking the API list in turn; links to its page. */
+export function WeekNameCard({ today }: { today: string }) {
+  const t = useTranslations('practice.weekName');
+  const names = useQuery({
+    queryKey: queryKeys.namesOfAllah.all,
+    queryFn: async () => (await getNamesOfAllah()).data,
+    staleTime: TEXT_STALE_MS,
+  });
+  if (!names.data || names.data.length === 0) return null;
+  const name = names.data[nameOfWeekIndex(today, names.data.length)];
+  if (!name) return null;
+  return (
+    <section aria-labelledby="week-name-title" className="flex flex-col gap-1">
+      <h2 id="week-name-title" className="text-sm font-medium text-muted-foreground">
+        {t('title')}
+      </h2>
+      <Link href={`/names/${name.slug}`} className="text-link self-start text-lg">
+        <span lang="ar" dir="rtl" className="font-arabic-display">
+          {name.nameAr}
+        </span>{' '}
+        <DirectionalArrow />
+      </Link>
+    </section>
+  );
+}
 
 /** «شعبة الأسبوع» on «ورد اليوم»: the same branch for everyone this ISO week, linking to its page. */
 export function WeekBranchCard({ today }: { today: string }) {

@@ -231,7 +231,7 @@ const isBuildPhase = () => process.env.NEXT_PHASE === 'phase-production-build';
 const BUILD_TIMEOUT_MS = 30_000;
 const BUILD_ATTEMPTS = 3;
 /** Whole-catalogue reads that change on a publish, not per visitor or per hour. */
-const CATALOGUE_PATHS = new Set(['/sins', '/good-deeds', '/branches', '/sources', '/topic-themes']);
+const CATALOGUE_PATHS = new Set(['/sins', '/good-deeds', '/branches', '/names-of-allah', '/sources', '/topic-themes']);
 
 export function serverRevalidateFor(path: string): number {
   return CATALOGUE_PATHS.has(path) ? CATALOGUE_REVALIDATE_SECONDS : CONTENT_REVALIDATE_SECONDS;

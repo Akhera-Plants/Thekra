@@ -43,7 +43,10 @@
     "sourcesAria": "Text sources",
     "seasonsTitle": "Seasons of good",
     "seasonsBody": "The coming sunnah occasions, and a calendar to subscribe to.",
-    "seasonsCta": "Open the seasons"
+    "seasonsCta": "Open the seasons",
+    "namesEntryLabel": "The Beautiful Names",
+    "namesEntryDescription": "A name, its meaning, and a verse that mentions it.",
+    "namesCta": "Explore the names"
   },
   "sinPicker": {
     "title": "Sins",
@@ -837,6 +840,9 @@
       "evening": "Evening self-review",
       "eveningHint": "One question in the evening: what did you keep today?",
       "done": "Start"
+    },
+    "weekName": {
+      "title": "Name of the week"
     }
   },
   "kinship": {
@@ -1416,5 +1422,24 @@
     "todayOccasion": "Today: {title}",
     "nextOccasion": "Next: {title}, {date}",
     "months": "January,February,March,April,May,June,July,August,September,October,November,December"
+  },
+  "names": {
+    "pageTitle": "The Beautiful Names",
+    "eyebrow": "Knowing Allah",
+    "lead": "The names of Allah found in the Quran, each with a verse that mentions it and a brief meaning.",
+    "searchPlaceholder": "Search for a name…",
+    "empty": "No name matches your search.",
+    "verseLead": "A verse in which this name occurs.",
+    "verseMissing": "The verse cannot be shown right now.",
+    "meaningTitle": "Meaning",
+    "pendingReview": "Under review",
+    "worshipTitle": "Worshipping by this name",
+    "kindDeed": "Good deed",
+    "kindSin": "A sin to leave",
+    "kindAction": "Program",
+    "otherVersesTitle": "Other verses with this word",
+    "number": "Name {{number}}",
+    "prev": "Previous",
+    "next": "Next"
   }
 }

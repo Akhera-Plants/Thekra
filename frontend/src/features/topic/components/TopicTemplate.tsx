@@ -3,6 +3,7 @@ import { Link } from '@/i18n/navigation';
 import { CatalogName } from '@/components/shared/CatalogName';
 import { FormattedNumber } from '@/components/shared/FormattedNumber';
 import { QuoteCard, type QuoteCardIntent } from '@/components/shared/quote';
+import { nameLinkHref } from '@/lib/api/names';
 import type { MizanDto } from '@/lib/types/api';
 
 /** At most this many texts in «الميزان». */
@@ -11,6 +12,8 @@ const MIZAN_MAX = 2;
 interface MizanBlockProps {
   mizan: MizanDto | null | undefined;
   intent: QuoteCardIntent;
+  /** Replaces the default helper line (a name page says «آيةٌ ورد فيها هذا الاسم»). */
+  lead?: string;
 }
 
 /**
@@ -18,7 +21,7 @@ interface MizanBlockProps {
  * (heart-texts.yaml), or the topic's top-ranked published text, said plainly as the first text of the page.
  * Hidden when the API sends none (older API, or no published text).
  */
-export function MizanBlock({ mizan, intent }: MizanBlockProps) {
+export function MizanBlock({ mizan, intent, lead }: MizanBlockProps) {
   const t = useTranslations('topic');
   const items = mizan?.items.slice(0, MIZAN_MAX) ?? [];
   if (!mizan || items.length === 0) return null;
@@ -27,7 +30,7 @@ export function MizanBlock({ mizan, intent }: MizanBlockProps) {
       <h2 id="mizan-title" className="text-2xl font-medium">
         {t('mizanTitle')}
       </h2>
-      <p className="text-sm leading-7 text-muted-foreground">{mizan.source === 'top' ? t('mizanTop') : t('mizanLead')}</p>
+      <p className="text-sm leading-7 text-muted-foreground">{lead ?? (mizan.source === 'top' ? t('mizanTop') : t('mizanLead'))}</p>
       <ul className="flex flex-col gap-4">
         {items.map((quote) => (
           <li key={quote.id}>
@@ -107,6 +110,38 @@ export function BranchRelatedLinks({ goodDeeds, sins }: BranchRelatedProps) {
       </h2>
       {group(tBranches('goodDeeds'), goodDeeds, '/good-deeds', 'text-intent-good-deed')}
       {group(tBranches('sins'), sins, '/sins', 'text-intent-sin')}
+    </section>
+  );
+}
+
+interface NameLinksProps {
+  links: readonly { kind: 'deed' | 'sin' | 'action'; slug: string; nameAr: string; name: string }[];
+}
+
+/** «التعبّد بهذا الاسم» on a name page (redesign §4.7): the topics and actions the name calls to, as links. */
+export function NameWorshipLinks({ links }: NameLinksProps) {
+  const t = useTranslations('names');
+  if (links.length === 0) return null;
+  const kindLabel = { deed: t('kindDeed'), sin: t('kindSin'), action: t('kindAction') } as const;
+  const tone = { deed: 'text-intent-good-deed', sin: 'text-intent-sin', action: 'text-intent-good-deed' } as const;
+  return (
+    <section aria-labelledby="name-worship-title" className="flex flex-col gap-3">
+      <h2 id="name-worship-title" className="text-xl font-medium">
+        {t('worshipTitle')}
+      </h2>
+      <ul className="flex flex-col">
+        {links.map((link) => (
+          <li key={`${link.kind}:${link.slug}`} className="border-b border-border">
+            <Link
+              href={nameLinkHref(link)}
+              className={`flex min-h-12 min-w-0 items-center gap-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${tone[link.kind]}`}
+            >
+              <span className="text-sm text-muted-foreground">{kindLabel[link.kind]}</span>
+              <CatalogName nameAr={link.nameAr} name={link.name} />
+            </Link>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

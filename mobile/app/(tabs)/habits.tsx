@@ -37,7 +37,7 @@ import { addDays, minimumMet } from '@thekra/practice-core';
 import { AddSheet } from '@/components/practice/hub/AddSheet';
 import { ExcuseChip } from '@/components/practice/hub/ExcuseChip';
 import { HeartTop, MuraqabaLine, SelfMessageCard } from '@/components/practice/hub/HeartCards';
-import { Cheer, DayDoneCard, StoryLine, WeekBranchCard } from '@/components/practice/hub/KnowledgeCards';
+import { Cheer, DayDoneCard, StoryLine, WeekCard } from '@/components/practice/hub/KnowledgeCards';
 import { PeriodicRows } from '@/components/practice/hub/PeriodicRows';
 import { TodayList } from '@/components/practice/hub/TodayList';
 import { WirdHeader } from '@/components/practice/hub/WirdHeader';
@@ -168,7 +168,7 @@ function Wird() {
           ) : null}
         </View>
 
-        <WeekBranchCard today={today} />
+        <WeekCard today={today} />
       </ScrollView>
 
       <AddSheet visible={adding} onClose={handleAddClose} />

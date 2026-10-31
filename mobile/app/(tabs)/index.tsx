@@ -11,7 +11,7 @@ import React, { useCallback } from 'react';
 import { View } from 'react-native';
 import { router, type Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { BookOpen, CalendarDays, DoorOpen, Heart, MessageCircle, Pause, Search, Sprout, Sun, type LucideIcon } from 'lucide-react-native';
+import { BookOpen, CalendarDays, DoorOpen, Heart, MessageCircle, Pause, Search, Sparkles, Sprout, Sun, type LucideIcon } from 'lucide-react-native';
 import { useReminderOfTheDay } from '@/lib/api/quotes';
 import { useSourceStripNames } from '@/lib/api/sources';
 import { FeaturedReminder } from '@/components/home/FeaturedReminder';
@@ -36,6 +36,7 @@ const MOMENTS: Moment[] = [
 const openSins = () => router.push('/sins');
 const openGoodDeeds = () => router.push('/good-deeds');
 const openBranches = () => router.push('/branches');
+const openNames = () => router.push('/names');
 const openBrowse = () => router.push('/browse');
 const openSeasons = () => router.push('/practice/calendar');
 
@@ -107,6 +108,14 @@ export default function HomeScreen() {
           body={t('home.branchEntryDescription')}
           action={t('home.branchCta')}
           onPress={openBranches}
+        />
+        <PathwayCard
+          size="row"
+          icon={Sparkles}
+          title={t('home.namesEntryLabel')}
+          body={t('home.namesEntryDescription')}
+          action={t('home.namesCta')}
+          onPress={openNames}
         />
         <PathwayCard
           size="row"

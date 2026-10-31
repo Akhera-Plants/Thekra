@@ -68,6 +68,8 @@ const CACHEABLE = [
   'GET /branches',
   'GET /branches/:number',
   'GET /branches/:number/quotes',
+  'GET /names-of-allah',
+  'GET /names-of-allah/:slug',
   'GET /sources',
   'GET /sources/:id',
   'GET /topic-themes',

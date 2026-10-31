@@ -26,6 +26,7 @@ export async function SiteFooter() {
           <Link href="/sins">{tNav('sins')}</Link>
           <Link href="/good-deeds">{tNav('goodDeeds')}</Link>
           <Link href="/branches">{tNav('branches')}</Link>
+          <Link href="/names">{tNav('names')}</Link>
           <Link href="/calendar">{tNav('calendar')}</Link>
           <Link href="/practice">{tNav('practice')}</Link>
           <Link href="/practice/record">{tNav('record')}</Link>

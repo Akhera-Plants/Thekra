@@ -146,6 +146,36 @@ export interface MizanDto {
   items: QuoteDto[];
 }
 
+/** GET /v1/names-of-allah: one Name of Allah (names-of-allah.yaml order). */
+export interface NameOfAllahDto {
+  number: number;
+  slug: string;
+  nameAr: string;
+  /** `surah:ayah` of the verse that contains the name. */
+  ref: string;
+}
+
+export interface NameLinkDto {
+  kind: 'deed' | 'sin' | 'action';
+  slug: string;
+  nameAr: string;
+  name: string;
+}
+
+/** GET /v1/names-of-allah/:slug */
+export interface NameOfAllahDetailDto extends NameOfAllahDto {
+  meaningAr: string;
+  meaningEn: string;
+  /** `pending-sheikh` while meanings and links are under review. */
+  review: string;
+  /** The verse that contains the name (from the database); null when it is not published. */
+  verse: QuoteDto | null;
+  links: NameLinkDto[];
+  otherVerses: QuoteDto[];
+  prev: NameOfAllahDto | null;
+  next: NameOfAllahDto | null;
+}
+
 /** A branch of faith a sin or good deed belongs to (detail endpoints). */
 export interface TopicBranchDto {
   number: number;

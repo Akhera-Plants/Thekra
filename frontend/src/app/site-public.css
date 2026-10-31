@@ -165,3 +165,5 @@
 .mobile-menu-auth:empty{display:none}
 @media(max-width:650px){.main-nav .nav-link.nav-link-primary{display:none}.main-nav .menu-toggle{display:inline-flex}}
 @media(min-width:651px){.mobile-menu{display:none}}
+/* «الأسماء الحسنى»: the fourth door, a full-width row under the three (redesign §4.7). */
+.pathways>.pathway-names{grid-column:1/-1;min-height:0}

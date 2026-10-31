@@ -1,7 +1,7 @@
 /**
  * «المعرفة والقلب» on the app (redesign §4.5), mirroring the website's KnowledgeCards and HabitCards: «حصيلتي» with its
  * gratitude line and «والقبول من الله», the brief «تقبّل الله منك» after a tick, «تمّ وردك اليوم» with one reward text,
- * the stories at moments (by Quote id only; hidden while an id is not filled), «شعبة الأسبوع», and the educational
+ * the stories at moments (by Quote id only; hidden while an id is not filled), «شعبة الأسبوع» / «اسم الأسبوع», and the educational
  * cards («حلقة العادة», how a sin grows, «الاستمرار: ثلاث حقائق»). Rules are practice-core; texts come from the API.
  */
 
@@ -16,14 +16,17 @@ import {
   dayCompletion,
   gratitudeAyah,
   HABIT_LOOP_STEPS,
+  nameOfWeekIndex,
   rewardQuoteId,
   SIN_STEPS,
   storyQuoteId,
   tallies,
+  weekCardKind,
   type LocalDate,
   type StoryMoment,
 } from '@thekra/practice-core';
 import { useBranch } from '@/lib/api/branches';
+import { useNamesOfAllah } from '@/lib/api/names';
 import { useEvidence, usePracticeCatalog } from '@/lib/api/practice';
 import { useAyah } from '@/lib/api/quran';
 import { usePracticeStore } from '@/lib/practice/practice-store';
@@ -207,7 +210,30 @@ export function StoryLine({ moment }: { moment: StoryMoment }) {
   );
 }
 
-// ── «شعبة الأسبوع» ──────────────────────────────────────────────────────────────────────────────────────────
+// ── «شعبة الأسبوع» / «اسم الأسبوع» ──────────────────────────────────────────────────────────────────────────
+
+/** «ورد اليوم»'s weekly card (redesign §4.7): even ISO weeks «شعبة الأسبوع», odd weeks «اسم الأسبوع» (practice-core). */
+export function WeekCard({ today }: { today: LocalDate }) {
+  return weekCardKind(today) === 'branch' ? <WeekBranchCard today={today} /> : <WeekNameCard today={today} />;
+}
+
+/** «اسم الأسبوع»: one Name of Allah for everyone this name week, walking the API list in turn; opens its page. */
+export function WeekNameCard({ today }: { today: LocalDate }) {
+  const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
+  const names = useNamesOfAllah();
+  const list = names.data ?? [];
+  const name = list.length > 0 ? list[nameOfWeekIndex(today, list.length)] : undefined;
+  if (!name) return null;
+  return (
+    <View style={styles.section}>
+      <Text variant="small" weight="medium" tone="muted" accessibilityRole="header">
+        {t('practice.weekName.title')}
+      </Text>
+      <TextLink label={name.nameAr} onPress={() => router.push(`/names/${name.slug}`)} />
+    </View>
+  );
+}
 
 /** «شعبة الأسبوع» on «ورد اليوم»: one branch for everyone this ISO week, opening its page. */
 export function WeekBranchCard({ today }: { today: LocalDate }) {

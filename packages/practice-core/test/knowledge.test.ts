@@ -12,6 +12,8 @@ import {
   habitTally,
   heldDaysTotal,
   isoWeek,
+  nameOfWeekIndex,
+  weekCardKind,
   notificationPlan,
   NOTIFY_TEXTS,
   parseNotificationPrefs,
@@ -112,6 +114,32 @@ describe('شعبة الأسبوع', () => {
       expect(n).toBeGreaterThanOrEqual(1);
       expect(n).toBeLessThanOrEqual(77);
     }
+  });
+});
+
+describe('«اسم الأسبوع» alternates with «شعبة الأسبوع»', () => {
+  it('even ISO weeks show the branch, odd weeks the name, for the whole week', () => {
+    expect(weekCardKind('2026-10-28')).toBe('branch'); // week 44
+    expect(weekCardKind('2026-11-01')).toBe('branch');
+    expect(weekCardKind('2026-11-02')).toBe('name'); // week 45
+    expect(weekCardKind('2026-11-08')).toBe('name');
+  });
+
+  it('is the same name for a whole week, steps one name per name week, and stays in range', () => {
+    const first = nameOfWeekIndex('2026-11-02');
+    for (const d of ['2026-11-03', '2026-11-08']) expect(nameOfWeekIndex(d)).toBe(first);
+    expect(nameOfWeekIndex('2026-11-16')).toBe((first + 1) % 77); // week 47, the next name week
+    const seen = new Set<number>();
+    const start = Date.UTC(2026, 10, 2);
+    for (let w = 0; w < 200; w++) {
+      const index = nameOfWeekIndex(new Date(start + w * 14 * 86_400_000).toISOString().slice(0, 10));
+      expect(index).toBeGreaterThanOrEqual(0);
+      expect(index).toBeLessThan(77);
+      seen.add(index);
+    }
+    expect(seen.size).toBe(77);
+    expect(nameOfWeekIndex('2026-11-02', 10)).toBeLessThan(10);
+    expect(nameOfWeekIndex('2026-11-02', 0)).toBe(0);
   });
 });
 

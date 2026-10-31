@@ -12,6 +12,7 @@ import { ClassificationModule } from './modules/classification/classification.mo
 import { GoodDeedsModule } from './modules/good-deeds/good-deeds.module.js';
 import { HadithModule } from './modules/hadith/hadith.module.js';
 import { ImanBranchesModule } from './modules/iman-branches/iman-branches.module.js';
+import { NamesOfAllahModule } from './modules/names-of-allah/names-of-allah.module.js';
 import { QuranModule } from './modules/quran/quran.module.js';
 import { QuotesModule } from './modules/quotes/quotes.module.js';
 import { ReviewModule } from './modules/review/review.module.js';
@@ -115,6 +116,7 @@ const REQUEST_ID_RE = /^[A-Za-z0-9._-]{1,128}$/;
     GoodDeedsModule,
     SinsModule,
     ImanBranchesModule,
+    NamesOfAllahModule,
     // Reminders, habit plans, the occasion calendar and the practice store sync
     PracticeModule,
     PushModule,

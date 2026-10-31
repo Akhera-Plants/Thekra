@@ -132,3 +132,9 @@ export function topicSide(slug: string): TopicSide | null {
 export function topicBranches(slug: string): readonly number[] {
   return load().topics.get(slug)?.branches ?? [];
 }
+
+/** Arabic and English names of a taxonomy.yaml topic, or null when the slug is not a topic. */
+export function topicNames(slug: string): { ar: string; en: string } | null {
+  const row = load().topics.get(slug);
+  return row ? { ar: row.ar, en: row.en } : null;
+}

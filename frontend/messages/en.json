@@ -29,7 +29,8 @@
     "practiceLong": "My habits",
     "calendar": "Seasons of good",
     "record": "My record",
-    "gateways": "Gateways"
+    "gateways": "Gateways",
+    "names": "The Beautiful Names"
   },
   "about": {
     "pageTitle": "About Thekra",
@@ -225,7 +226,11 @@
     "wirdLeft": "Left today: {n}",
     "wirdDone": "Today's wird is done",
     "seasonsTitle": "Seasons of good",
-    "seasonsDescription": "The coming sunnah occasions, and a calendar to subscribe to."
+    "seasonsDescription": "The coming sunnah occasions, and a calendar to subscribe to.",
+    "namesOverline": "Knowing Allah",
+    "namesEntryLabel": "The Beautiful Names",
+    "namesEntryDescription": "A name, its meaning, and a verse that mentions it.",
+    "namesCta": "Explore the names"
   },
   "sinRank": {
     "KABIRA": "Major sin",
@@ -935,7 +940,8 @@
     "goodDeeds": "Good deeds",
     "branches": "Branches of Faith",
     "favorites": "Favorites",
-    "about": "About Thekra"
+    "about": "About Thekra",
+    "names": "The Beautiful Names"
   },
   "feedback": {
     "loading": "Loading",
@@ -1667,6 +1673,9 @@
       "helper": "The times come from the AlAdhan service and are kept on your device for 30 days.",
       "anchorsTitle": "Today's times",
       "defaults": "Default times, until you choose your city."
+    },
+    "weekName": {
+      "title": "Name of the week"
     }
   },
   "calendarPage": {
@@ -1944,5 +1953,22 @@
     "makeHabit": "Make it my habit",
     "makeHabitHint": "Start very small, and keep at it.",
     "habitAdded": "In your habits"
+  },
+  "names": {
+    "pageTitle": "The Beautiful Names",
+    "eyebrow": "Knowing Allah",
+    "lead": "The names of Allah found in the Quran, each with a verse that mentions it and a brief meaning.",
+    "searchPlaceholder": "Search for a name…",
+    "empty": "No name matches your search.",
+    "verseLead": "A verse in which this name occurs.",
+    "verseMissing": "The verse cannot be shown right now.",
+    "meaningTitle": "Meaning",
+    "pendingReview": "Under review",
+    "worshipTitle": "Worshipping by this name",
+    "kindDeed": "Good deed",
+    "kindSin": "A sin to leave",
+    "kindAction": "Program",
+    "otherVersesTitle": "Other verses with this word",
+    "number": "Name {number}"
   }
 }

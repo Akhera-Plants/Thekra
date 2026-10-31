@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { getBranches } from '@/lib/api/branches';
 import { getGoodDeeds } from '@/lib/api/good-deeds';
+import { getNamesOfAllah } from '@/lib/api/names';
 import { getSins } from '@/lib/api/sins';
 import { reportFailure } from '@/lib/errors';
 import { env } from '@/lib/env';
@@ -25,16 +26,18 @@ async function slugs<T>(scope: string, load: () => Promise<T[]>, pick: (row: T) 
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [sins, deeds, branches] = await Promise.all([
+  const [sins, deeds, branches, names] = await Promise.all([
     slugs('sins', async () => (await getSins({ limit: 100, lang: 'ar' })).data, (sin) => (sin.quoteCount > 0 ? sin.slug : null)),
     slugs('good-deeds', async () => (await getGoodDeeds({ limit: 100, lang: 'ar' })).data, (deed) => (deed.quoteCount > 0 ? deed.slug : null)),
     slugs('branches', async () => (await getBranches({ limit: 100, lang: 'ar' })).data, (branch) => String(branch.number)),
+    slugs('names', async () => (await getNamesOfAllah()).data, (name) => name.slug),
   ]);
   return [
     entry('/', 1),
     entry('/sins', 0.9),
     entry('/good-deeds', 0.9),
     entry('/branches', 0.9),
+    entry('/names', 0.8),
     entry('/about', 0.5),
     entry('/calendar', 0.6),
     entry('/practice', 0.6),
@@ -50,5 +53,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...sins.map((slug) => entry(`/sins/${slug}`, 0.8)),
     ...deeds.map((slug) => entry(`/good-deeds/${slug}`, 0.8)),
     ...branches.map((number) => entry(`/branches/${number}`, 0.7)),
+    ...names.map((slug) => entry(`/names/${slug}`, 0.6)),
   ];
 }

@@ -8,11 +8,12 @@ import React from 'react';
 import { View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { BookHeart, Feather, Sprout } from 'lucide-react-native';
+import { BookHeart, Feather, Leaf, Sprout } from 'lucide-react-native';
+import { nameLinkRoute } from '@/lib/api/names';
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { usePracticeStore } from '@/lib/practice/practice-store';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
-import type { MizanDto, TopicBranchDto } from '@/lib/types/api';
+import type { MizanDto, NameLinkDto, TopicBranchDto } from '@/lib/types/api';
 import { QuoteCard } from '@/components/QuoteCard';
 import { space, useStyles, type Theme } from '@/theme';
 import { Button, ListRow, Section, Text, TextLink } from '@/ui';
@@ -25,7 +26,8 @@ const makeStyles = (_t: Theme) => ({
   action: { gap: space.xs, alignItems: 'flex-start' as const },
 });
 
-export function MizanBlock({ mizan }: { mizan: MizanDto | null | undefined }) {
+/** `lead` replaces the default helper line (a name page says «آيةٌ ورد فيها هذا الاسم»). */
+export function MizanBlock({ mizan, lead }: { mizan: MizanDto | null | undefined; lead?: string }) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const items = mizan?.items.slice(0, MIZAN_MAX) ?? [];
@@ -34,7 +36,7 @@ export function MizanBlock({ mizan }: { mizan: MizanDto | null | undefined }) {
     <Section title={t('topic.mizanTitle')}>
       <View style={styles.stack}>
         <Text variant="small" tone="muted">
-          {mizan.source === 'top' ? t('topic.mizanTop') : t('topic.mizanLead')}
+          {lead ?? (mizan.source === 'top' ? t('topic.mizanTop') : t('topic.mizanLead'))}
         </Text>
         {items.map((quote) => (
           <QuoteCard key={quote.id} quote={quote} />
@@ -85,6 +87,30 @@ export function BranchRelatedLinks({
         ))}
         {sins.map((sin) => (
           <ListRow key={`s-${sin.slug}`} icon={Feather} title={label(sin)} onPress={() => router.push(`/sins/${sin.slug}`)} />
+        ))}
+      </View>
+    </Section>
+  );
+}
+
+/** «التعبّد بهذا الاسم» on a name page (redesign §4.7): the topics and the action the name calls to, as links. */
+export function NameWorshipLinks({ links }: { links: readonly NameLinkDto[] }) {
+  const { t } = useTranslation();
+  const locale = useUiLocale();
+  if (links.length === 0) return null;
+  const icon = { deed: Sprout, sin: Feather, action: Leaf } as const;
+  const kind = { deed: t('names.kindDeed'), sin: t('names.kindSin'), action: t('names.kindAction') } as const;
+  return (
+    <Section title={t('names.worshipTitle')}>
+      <View>
+        {links.map((link) => (
+          <ListRow
+            key={`${link.kind}:${link.slug}`}
+            icon={icon[link.kind]}
+            title={locale === 'en' ? link.name || link.nameAr : link.nameAr}
+            hint={kind[link.kind]}
+            onPress={() => router.push(nameLinkRoute(link))}
+          />
         ))}
       </View>
     </Section>

@@ -130,6 +130,29 @@ export function branchOfWeek(date: LocalDate, count: number = BRANCH_COUNT): num
   return index + 1;
 }
 
+/** The number of Names of Allah in names-of-allah.yaml (the API list is the truth; this is the default count). */
+export const NAMES_OF_ALLAH_COUNT = 77;
+
+export type WeekCardKind = 'branch' | 'name';
+
+/**
+ * «شعبة الأسبوع» / «اسم الأسبوع» (redesign §4.7) alternate on «ورد اليوم» by ISO week parity: even weeks show the
+ * branch of the week, odd weeks the name of the week.
+ */
+export function weekCardKind(date: LocalDate): WeekCardKind {
+  return isoWeek(date).week % 2 === 0 ? 'branch' : 'name';
+}
+
+/**
+ * «اسم الأسبوع»: a 0-based index into the names list (in its API order), the same for everyone during one ISO week.
+ * Consecutive odd weeks step one name forward, so the list is walked in turn.
+ */
+export function nameOfWeekIndex(date: LocalDate, count: number = NAMES_OF_ALLAH_COUNT): number {
+  if (count <= 0) return 0;
+  const { year, week } = isoWeek(date);
+  return Math.floor((year * 53 + week) / 2) % count;
+}
+
 // ── Onboarding («ماذا؟ متى؟ كم؟») ────────────────────────────────────────────────────────────────────────────
 
 /** «تخطَّ» on «ماذا؟» chooses this catalog habit when it is offered, else the first one offered. */
