@@ -1,8 +1,9 @@
 /**
- * «أضف» from the hub: a bottom sheet in the kit's look (card fill, hairline, panel radius on top; no grab handle, as
- * it does not drag) with three choices: a good habit (the setup wizard), a relative (the kinship page with its add
- * form open), a program to leave a sin (generic words only). It rises from the bottom (still when the system asks to reduce motion); the
- * backdrop, «إلغاء» and Android back close it.
+ * «أضف» from «ورد اليوم»: a bottom sheet in the kit's look (card fill, hairline, panel radius on top; no grab handle,
+ * as it does not drag) with three choices: a habit (the setup wizard), a relative (the kinship page with its add form
+ * open), «تخفَّف» (generic words only). From «أعمال دورية» it offers the two periodic kinds (`periodic`): a relative,
+ * or a habit (whose days are chosen in the wizard). It rises from the bottom (still when the system asks to reduce
+ * motion); the backdrop, «إلغاء» and Android back close it.
  */
 
 import React, { useEffect, useRef } from 'react';
@@ -17,7 +18,15 @@ import { Button, ListRow, Text } from '@/ui';
 const RISE = 360;
 const RISE_MS = 240;
 
-const CHOICES: { key: string; icon: LucideIcon; titleKey: string; hintKey: string; href: Href }[] = [
+interface Choice {
+  key: string;
+  icon: LucideIcon;
+  titleKey: string;
+  hintKey: string;
+  href: Href;
+}
+
+const CHOICES: Choice[] = [
   { key: 'habit', icon: Sprout, titleKey: 'practice.hub.addHabit', hintKey: 'practice.noPlansHint', href: '/practice/add' },
   {
     key: 'relative',
@@ -27,6 +36,11 @@ const CHOICES: { key: string; icon: LucideIcon; titleKey: string; hintKey: strin
     href: { pathname: '/practice/kinship', params: { add: '1' } },
   },
   { key: 'program', icon: ShieldCheck, titleKey: 'practice.hub.addProgram', hintKey: 'practice.hub.addProgramHint', href: '/practice/sin-program' },
+];
+
+const PERIODIC_CHOICES: Choice[] = [
+  CHOICES[1]!,
+  { key: 'habit', icon: Sprout, titleKey: 'practice.periodic.addHabit', hintKey: 'practice.periodic.addHabitHint', href: '/practice/add' },
 ];
 
 const makeStyles = (t: Theme) => ({
@@ -48,9 +62,11 @@ const makeStyles = (t: Theme) => ({
 export interface AddSheetProps {
   visible: boolean;
   onClose: () => void;
+  /** Only the periodic kinds (the «أعمال دورية» screen). */
+  periodic?: boolean;
 }
 
-export function AddSheet({ visible, onClose }: AddSheetProps) {
+export function AddSheet({ visible, onClose, periodic }: AddSheetProps) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const insets = useSafeAreaInsets();
@@ -84,10 +100,10 @@ export function AddSheet({ visible, onClose }: AddSheetProps) {
           accessibilityViewIsModal
         >
           <Text variant="heading" accessibilityRole="header">
-            {t('practice.hub.addTitle')}
+            {t(periodic ? 'practice.periodic.add' : 'practice.hub.addTitle')}
           </Text>
           <View>
-            {CHOICES.map((choice) => (
+            {(periodic ? PERIODIC_CHOICES : CHOICES).map((choice) => (
               <ListRow
                 key={choice.key}
                 icon={choice.icon}

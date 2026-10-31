@@ -1,12 +1,12 @@
 /**
- * Favorites, after the website's favorites page: the title and lead, then the saved quote cards. A guest sees why
+ * «المحفوظات» (favorites), a pushed screen opened from «سجلّي», after the website's favorites page: the title and lead, then the saved quote cards. A guest sees why
  * to sign in and the way to do it; an empty list points to where texts are found. Offline-capable: the list is
  * served from the cache when there is no connection (see `useFavorites`).
  */
 
 import React, { memo, useCallback, useState } from 'react';
 import { FlatList, RefreshControl, View, type ListRenderItem } from 'react-native';
-import { router } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Bookmark, BookmarkPlus, WifiOff } from 'lucide-react-native';
 import { useFavorites, useToggleFavorite } from '@/lib/api/favorites';
@@ -71,7 +71,8 @@ export default function FavoritesScreen() {
 
   if (!user) {
     return (
-      <Screen>
+      <Screen edges={['bottom']}>
+        <Stack.Screen options={{ title: t('favorites.title') }} />
         <FavoritesHeader />
         <EmptyState
           icon={BookmarkPlus}
@@ -103,7 +104,8 @@ export default function FavoritesScreen() {
   );
 
   return (
-    <Screen scroll={false} contentStyle={{ paddingHorizontal: 0, paddingTop: 0 }}>
+    <Screen edges={['bottom']} scroll={false} contentStyle={{ paddingHorizontal: 0, paddingTop: 0 }}>
+      <Stack.Screen options={{ title: t('favorites.title') }} />
       <FlatList
         data={isError ? [] : (favorites ?? [])}
         keyExtractor={keyOf}

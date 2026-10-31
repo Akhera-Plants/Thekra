@@ -1,8 +1,9 @@
 /**
  * Settings, crafted like the website's settings page: titled groups of hairline rows (kit `ListRow`: an icon, the
  * value on the end, a chevron), on the page decor. Order: «الحساب والمزامنة», «المظهر واللغة» (a direction change
- * reloads the app at once), «الخصوصية» (the sin-program lock, the encrypted backup, export, the wipe), «التذكيرات»,
- * «عن التطبيق» (the site's about and privacy pages), then signing out and deleting the account last.
+ * reloads the app at once; «إظهار التاريخ الهجري», off by default, for «ورد اليوم» and «سجلّي»), «الخصوصية» (the
+ * sin-program lock, the encrypted backup, export, the wipe), «التذكيرات», «عن التطبيق» (the site's about and privacy
+ * pages), then signing out and deleting the account last.
  * Signed in: practice sync now, «تصدير بياناتي» (GET /v1/auth/me/export shared as JSON text: expo-file-system and
  * expo-sharing are not installed) and «حذف الحساب» (password → DELETE /v1/auth/me → local sign-out; the practice
  * data on this device is kept).
@@ -20,12 +21,13 @@ import { switchDirectionIfNeeded, type SupportedLocale } from '@/lib/i18n';
 import { setApiLocale } from '@/lib/api-client';
 import { deleteAccount } from '@/lib/api/practice';
 import { syncPractice, useSyncStatus } from '@/lib/practice/sync-runner';
+import { usePracticeStore } from '@/lib/practice/practice-store';
 import { nowTime } from '@/lib/practice/format';
 import { queryKeys } from '@/lib/query-keys';
 import { ApiError } from '@/lib/types/api';
 import { AboutSection, PrivacySection, RemindersSection, SettingsGroup } from '@/components/settings/SettingsSections';
 import { radius, space, useStyles, useTheme, useThemePreference, type Theme, type ThemePreference } from '@/theme';
-import { Button, Field, ListRow, Notice, PageHeader, Screen, SegmentTabs, Text, type SegmentItem } from '@/ui';
+import { Button, Field, ListRow, Notice, PageHeader, Screen, SegmentTabs, SwitchRow, Text, type SegmentItem } from '@/ui';
 
 const LOCALE_STORAGE_KEY = 'thekra_locale';
 
@@ -171,13 +173,15 @@ function AccountSection({ accountDeleted }: { accountDeleted: boolean }) {
   );
 }
 
-/** Theme (device, light, dark) and language, each a segmented choice like the site's. */
+/** Theme (device, light, dark) and language, each a segmented choice like the site's; then «إظهار التاريخ الهجري». */
 function AppearanceSection() {
   const { t, i18n } = useTranslation();
   const styles = useStyles(makeStyles);
   const themePref = useThemePreference((s) => s.pref);
   const setThemePref = useThemePreference((s) => s.setPref);
   const currentLocale: SupportedLocale = i18n.language === 'en' ? 'en' : 'ar';
+  const showHijri = usePracticeStore((s) => s.prefs.showHijri);
+  const setPrefs = usePracticeStore((s) => s.setPrefs);
 
   const themeItems: SegmentItem<ThemePreference>[] = THEME_OPTIONS.map((key) => ({ key, label: t(`theme.${key}`) }));
   const localeItems: SegmentItem<SupportedLocale>[] = [
@@ -204,6 +208,11 @@ function AppearanceSection() {
         <Text variant="label">{t('settings.language')}</Text>
         <SegmentTabs items={localeItems} value={currentLocale} onChange={(locale) => void changeLocale(locale)} />
       </View>
+      <SwitchRow
+        label={t('settings.showHijri')}
+        value={showHijri}
+        onValueChange={(on) => setPrefs((p) => ({ ...p, showHijri: on }))}
+      />
     </SettingsGroup>
   );
 }

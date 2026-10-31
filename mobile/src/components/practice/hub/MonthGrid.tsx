@@ -1,17 +1,17 @@
 /**
- * A month as a 7-column grid, shared by the «عاداتي» hub («وين وصلت هذا الشهر»: presence marks) and the calendar page
- * (sunnah occasions only), after the website's MonthGrid. The first day of the week sits at the reading start; each
+ * A month as a 7-column grid, shared by «سجلّي» (presence marks) and the calendar page (sunnah occasions only), after
+ * the website's MonthGrid. The first day of the week sits at the reading start; each
  * day is a rounded tile and a button labelled with its full Gregorian and Hijri date; the selected day is filled,
  * today outlined, a small gold dot in the end corner marks an occasion, and on the hub a mark under the number shows
- * whether some or all of the day was done, with the week strip's marks (PresenceDot: empty ring, half, full). No run
- * lengths.
+ * whether some or all of the day was done (PresenceDot: empty ring, half, full). The Hijri months under the title and
+ * in the day labels can be left out (`showHijri`, «إظهار التاريخ الهجري» in «سجلّي»).
  */
 
 import React, { memo, useCallback, useMemo } from 'react';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { LocalDate } from '@thekra/practice-core';
-import { dayTitle, hijriMonthsTitle, monthTitle, monthWeeks, weekdayOrder } from '@/lib/practice/calendar-grid';
+import { dayTitle, hijriMonthsTitle, monthTitle, monthWeeks, shortDayTitle, weekdayOrder } from '@/lib/practice/calendar-grid';
 import type { PresenceMark } from '@/lib/practice/hub';
 import { useDateNames } from '@/lib/practice/use-habits-hub';
 import { usePracticeStore } from '@/lib/practice/practice-store';
@@ -87,7 +87,9 @@ export interface MonthGridProps {
   first: number;
   today: LocalDate;
   selected: LocalDate | null;
-  /** Presence per day (the hub); absent on the calendar page. */
+  /** The Hijri months and dates (default on: the calendar page is a Hijri calendar). */
+  showHijri?: boolean;
+  /** Presence per day («سجلّي»); absent on the calendar page. */
   marks?: ReadonlyMap<LocalDate, PresenceMark>;
   /** Days with a sunnah occasion. */
   occasions?: ReadonlySet<LocalDate>;
@@ -102,7 +104,7 @@ interface CellModel {
   occasion: boolean;
 }
 
-export function MonthGrid({ month, first, today, selected, marks, occasions, onSelect, onShiftMonth }: MonthGridProps) {
+export function MonthGrid({ month, first, today, selected, showHijri = true, marks, occasions, onSelect, onShiftMonth }: MonthGridProps) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const names = useDateNames();
@@ -113,10 +115,10 @@ export function MonthGrid({ month, first, today, selected, marks, occasions, onS
       monthWeeks(month, first).map((week) =>
         week.map((date) => {
           if (!date) return null;
-          // The week strip's marks: an empty ring on a past day with nothing logged, nothing on a day to come.
+          // An empty ring on a past day with nothing logged, nothing on a day to come.
           const mark = marks && date <= today ? (marks.get(date) ?? 'none') : undefined;
           const occasion = occasions?.has(date) ?? false;
-          const parts = [dayTitle(date, hijriOffset, names)];
+          const parts = [showHijri ? dayTitle(date, hijriOffset, names) : shortDayTitle(date, names)];
           if (date === today) parts.push(t('practice.today'));
           if (mark === 'full') parts.push(t('practice.hub.markFull'));
           if (mark === 'partial') parts.push(t('practice.hub.markPartial'));
@@ -124,11 +126,11 @@ export function MonthGrid({ month, first, today, selected, marks, occasions, onS
           return { date, label: parts.join(t('practice.hub.separator')), mark, occasion };
         }),
       ),
-    [month, first, marks, occasions, hijriOffset, names, today, t],
+    [month, first, marks, occasions, showHijri, hijriOffset, names, today, t],
   );
   const hijri = useMemo(
-    () => hijriMonthsTitle(month, hijriOffset, names, t('practice.hub.separator')),
-    [month, hijriOffset, names, t],
+    () => (showHijri ? hijriMonthsTitle(month, hijriOffset, names, t('practice.hub.separator')) : null),
+    [showHijri, month, hijriOffset, names, t],
   );
   const handlePrev = useCallback(() => onShiftMonth(-1), [onShiftMonth]);
   const handleNext = useCallback(() => onShiftMonth(1), [onShiftMonth]);
@@ -189,7 +191,7 @@ interface MonthCellProps {
   date: LocalDate;
   label: string;
   mark: PresenceMark | undefined;
-  /** The hub shows presence under the number; the calendar page does not. */
+  /** «سجلّي» shows presence under the number; the calendar page does not. */
   hasMarks: boolean;
   occasion: boolean;
   isToday: boolean;

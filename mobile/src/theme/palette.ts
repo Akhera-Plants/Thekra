@@ -31,6 +31,11 @@ export interface Palette {
   intentGoodDeedForeground: string;
   intentImanBranch: string;
   intentImanBranchForeground: string;
+  /**
+   * Warm gold of the streak flame in «ورد اليوم» and «سجلّي» (app only; the website has no streak yet). Never red:
+   * the streak is a quiet count, not an alarm. Readable as text on the background (≥ 4.5:1).
+   */
+  gold: string;
   gradeSahih: string;
   gradeSahihForeground: string;
   gradeHasan: string;
@@ -74,6 +79,7 @@ export const light: Palette = {
   intentGoodDeedForeground: '#ffffff',
   intentImanBranch: '#3d4a5c',
   intentImanBranchForeground: '#ffffff',
+  gold: '#8f6514',
   gradeSahih: '#326c59',
   gradeSahihForeground: '#ffffff',
   gradeHasan: '#8a6a2f',
@@ -110,6 +116,7 @@ export const dark: Palette = {
   intentGoodDeedForeground: '#101010',
   intentImanBranch: '#9aa3b2',
   intentImanBranchForeground: '#101010',
+  gold: '#e0b555',
   gradeSahih: '#8bc2aa',
   gradeSahihForeground: '#101010',
   gradeHasan: '#c4a35a',

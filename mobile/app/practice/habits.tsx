@@ -1,9 +1,8 @@
 /**
- * «طاعاتي»: the good-habits track of «عاداتي» («أعِنّي على طاعة», roadmap §3, lecture analysis §4 and §8), what the
- * «عاداتي» tab held before the hub. Where the data lives, «يومي ثقيل», today's habits (each a card with «أتممتها»
+ * «عاداتي»: habit management, opened from «سجلّي» («أعِنّي على طاعة», roadmap §3, lecture analysis §4 and §8). Where the data lives, «يومي ثقيل», today's habits (each a card with «أتممتها»
  * and a partial «+1»), «أضف عادة», the Ramadan season, habit reminders, and «فروضي وأدواري». All rules come from
  * @thekra/practice-core; data stays on the device (synced only when signed in). Habits asked for today come first
- * (practice-core `isPlanDueOn`, the same answer as the reminders and the hub); the others follow in a compact,
+ * (practice-core `isPlanDueOn`, the same answer as the reminders and «ورد اليوم»); the others follow in a compact,
  * still loggable group.
  */
 
@@ -99,7 +98,7 @@ export default function HabitsTrackScreen() {
 
   return (
     <Screen edges={['bottom']} decor>
-      <PageHeader eyebrow={t('practice.title')} title={t('practice.hub.habitsTrack')} lead={t('practice.lead')} />
+      <PageHeader eyebrow={t('record.title')} title={t('practice.hub.habitsTrack')} lead={t('practice.lead')} />
       <Notice icon={HardDrive}>{t('practice.privateNote')}</Notice>
 
       {catalog.isError ? (

@@ -22,15 +22,23 @@ Use a device/simulator with the API reachable (localhost works on iOS simulator;
 
 ## Screens
 
-Tabs: Home · My garden (بستاني) · My habits (عاداتي, centre) · Favorites · Settings  
-Garden: `(tabs)/garden` (بستاني): one plant per habit plan (+ صلة الرحم), grown by days tended, never shrinking, resting
-on «يومي ثقيل»; never a plant for the sin program (`src/lib/practice/garden.ts`, drawings in `src/components/garden/`)  
+Tabs: Home (الرئيسية) · Today's wird (ورد اليوم, centre) · My record (سجلّي) · Settings  
+Today's wird: `(tabs)/habits` (ورد اليوم): the title, one date line (Gregorian; Hijri too with «إظهار التاريخ الهجري»),
+the streak chip (gold flame, practice-core `currentStreak`) and «أضف»; «اليوم» from practice-core `dayAgenda` (done rows
+sink to the bottom; habits not asked today behind one collapsed row; «يومي ثقيل» chip); «أعمال دورية» (next three, «الكل»)
+(pieces in `src/components/practice/hub/`, pure helpers in `src/lib/practice/wird.ts` and `hub.ts`, hooks in
+`src/lib/practice/use-habits-hub.ts`)  
+My record: `(tabs)/record` (سجلّي): the streak and «أطول مداومة», the one month calendar (a tapped day opens its list),
+then «عاداتي», «أعمال دورية», «تخفَّف», «بستاني», «رفقة», «المحفوظات»  
+Garden: `garden` (بستاني, pushed from سجلّي): one plant per habit plan (+ صلة الرحم), grown by days tended, never
+shrinking, resting on «يومي ثقيل»; never a plant for the sin program (`src/lib/practice/garden.ts`, drawings in
+`src/components/garden/`)  
+Saved: `favorites` (المحفوظات, pushed from سجلّي)  
 Browse: `browse` (استكشف النصوص), a pushed screen opened from Home  
 Core: `sins/[slug]`, `good-deeds/[slug]`, `quotes/[id]`, `feelings/[tagSlug]`  
-Hub: `(tabs)/habits` (عاداتي): today across every track (practice-core `dayAgenda`), week strip, «أضف» sheet, the three
-tracks, «وين وصلت هذا الشهر» month grid (pieces in `src/components/practice/hub/`, hooks in `src/lib/practice/use-habits-hub.ts`)  
-Practice (`app/practice/`): `habits` (طاعاتي: plans, يومي ثقيل, Ramadan, reminders), `add` (أعِنّي على طاعة), `plan/[id]`,
-`duties` (فروضي وأدواري), `kinship` (صلة الرحم; `?add=1` opens the form), `sin-program` (ترك المعصية), `calendar` (month grid)  
+Practice (`app/practice/`): `habits` (عاداتي: plans, يومي ثقيل, Ramadan, reminders), `add` (أعِنّي على طاعة), `plan/[id]`,
+`periodic` (أعمال دورية: relatives and non-daily habits), `duties` (فروضي وأدواري), `kinship` (صلة الرحم; `?add=1` opens
+the form), `sin-program` (تخفَّف), `calendar` (occasions month grid and feed)  
 Auth: `(auth)/login`, `(auth)/register`
 
 ## Practice features (roadmap docs/plan/2026-10-features-roadmap.md §2–§4, §6, §8; sync contract docs/plan/2026-10-practice-sync-contract.md)
@@ -43,7 +51,7 @@ Auth: `(auth)/login`, `(auth)/register`
 - Sync (signed in): `POST /v1/me/practice/sync` with `buildSyncRequest` in batches until nothing is pending, else
   `GET /v1/me/practice?since=`; merged with `applyServerChanges`. Runs on sign-in, foreground, 3 s after an edit
   and every 15 minutes while active. Status in Settings.
-- Sin program («ترك المعصية»): in clear only on the device; never in a sync body or a notification (title always
+- Sin program («تخفَّف»): in clear only on the device; never in a sync body or a notification (title always
   «تذكرة من ذكرى»). Optional encrypted vault (`GET/PUT/DELETE /v1/me/sin-vault`): sealed on the device with a key
   derived from the user's «رمز الخصوصية» (PBKDF2-SHA256 210,000, AES-256-GCM); the key stays in memory, or in
   expo-secure-store when «تذكّر على هذا الجهاز» is on. The wipe button deletes local data, the key and the vault.

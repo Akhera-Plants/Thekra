@@ -1,6 +1,6 @@
 /**
- * «عاداتي» hub helpers: presence marks (any amount counts, never a run length), the logging window, finishing a day,
- * occasion days and the track counts.
+ * «ورد اليوم» / «سجلّي» helpers: presence marks (any amount counts), the logging window, finishing a day and the
+ * occasion days.
  */
 
 import {
@@ -10,14 +10,13 @@ import {
   emptyStore,
   logContact,
   logDone,
-  startProgram,
   upsertPlan,
   upsertRelative,
   type AgendaOccasion,
   type DayPresence,
   type Store,
 } from '@thekra/practice-core';
-import { canLogOn, dueNowCount, finishedDay, hasStarted, isDayComplete, occasionDates, presenceMark } from '../lib/practice/hub';
+import { canLogOn, finishedDay, isDayComplete, occasionDates, presenceMark } from '../lib/practice/hub';
 
 const T = '2026-10-28T10:00:00.000Z';
 const day = (over: Partial<DayPresence>): DayPresence => ({ date: '2026-10-28', asked: true, present: false, share: 0, ...over });
@@ -84,15 +83,5 @@ describe('occasionDates', () => {
   it('marks every day a rule fires in the range', () => {
     const monday: AgendaOccasion = { key: 'monday', titleAr: 'صيام الاثنين', titleEn: 'Monday fast', deed: 'siyam', rule: { kind: 'weekdays', days: [1] } };
     expect([...occasionDates([monday], '2026-10-01', '2026-10-31', 0)]).toEqual(['2026-10-05', '2026-10-12', '2026-10-19', '2026-10-26']);
-  });
-});
-
-describe('tracks', () => {
-  it('counts relatives due now and knows when nothing was started', () => {
-    expect(dueNowCount(store().relatives, '2026-10-28')).toBe(1);
-    expect(hasStarted(emptyStore())).toBe(false);
-    expect(hasStarted(store())).toBe(true);
-    const withProgram = { ...emptyStore(), programs: [startProgram({ sinSlug: 'x', category: 'haqq_allah', hardToLeaveAtOnce: false, startedOn: '2026-10-20' }, T)] };
-    expect(hasStarted(withProgram)).toBe(true);
   });
 });

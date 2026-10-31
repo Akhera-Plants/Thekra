@@ -1,20 +1,20 @@
 /**
- * «عاداتي»: the hub of the practice tracks (docs: hub spec; roadmap §0 rules; lecture analysis §8). It opens on today:
- * the title with the day in Hijri and Gregorian, «أضف» (a sheet: habit, relative, program) and the calendar; the week
- * strip with presence marks; the day's list across tracks with check controls (practice-core `dayAgenda`); «يومي
- * ثقيل»; the three tracks (or the three ways to begin); «وين وصلت هذا الشهر» as a month grid. No streaks, no
- * failure words; the private program shows only as one generic line. Habit management lives on «طاعاتي».
- * A habit is listed on its own days only (its rule, else the catalog's, the same answer as its reminders); the
- * others follow as «ليست مطلوبة اليوم», still loggable.
+ * «ورد اليوم» (the centre tab), top to bottom and nothing else:
+ * 1. the title, one date line (Gregorian; Hijri too with «إظهار التاريخ الهجري»), the streak chip and «أضف»;
+ * 2. «اليوم»: today's sunnah occasion as one compact line, then one row per task from practice-core `dayAgenda`
+ *    (habits asked for today, relatives due as periodic acts, the generic private check-in), done rows at the bottom;
+ *    habits not asked for today behind ONE collapsed row; «يومي ثقيل» as a compact chip at the end (today only,
+ *    practice-core `isEbbOn`);
+ * 3. «أعمال دورية»: the next three periodic acts with their dates and «الكل».
+ * The month calendar, the habit management, «تخفَّف», «بستاني», «رفقة» and the saved texts live in «سجلّي».
  */
 
-import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { ScrollView, View, type LayoutChangeEvent } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { ScrollView, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { usePracticeCatalog } from '@/lib/api/practice';
-import { dayTitle, monthEnd, shortDayTitle } from '@/lib/practice/calendar-grid';
-import { canLogOn, isDayComplete, occasionDates } from '@/lib/practice/hub';
+import { dateLine } from '@/lib/practice/calendar-grid';
 import { usePracticeStore } from '@/lib/practice/practice-store';
 import {
   useAgendaActions,
@@ -24,30 +24,31 @@ import {
   useHeavyDay,
   useHubDays,
   useOffDayHabits,
-  usePresenceMarks,
-  useTrackSummary,
+  usePeriodicRows,
+  useStreak,
 } from '@/lib/practice/use-habits-hub';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
+import { upcomingPeriodic } from '@/lib/practice/wird';
 import { AddSheet } from '@/components/practice/hub/AddSheet';
-import { DayAgenda } from '@/components/practice/hub/DayAgenda';
-import { HubHeader } from '@/components/practice/hub/HubHeader';
-import { PresenceMonth } from '@/components/practice/hub/PresenceMonth';
-import { TrackRows } from '@/components/practice/hub/TrackRows';
-import { WeekStrip } from '@/components/practice/hub/WeekStrip';
+import { PeriodicRows } from '@/components/practice/hub/PeriodicRows';
+import { TodayList } from '@/components/practice/hub/TodayList';
+import { WirdHeader } from '@/components/practice/hub/WirdHeader';
 import { GUTTER, space, useStyles, type Theme } from '@/theme';
-import { Button, Notice, Ornament, Screen, Skeleton, SwitchRow } from '@/ui';
+import { Button, Chip, Notice, Screen, Skeleton, Text, TextLink } from '@/ui';
 
-const SKELETON_DAYS = ['d1', 'd2', 'd3', 'd4', 'd5', 'd6', 'd7'];
 const SKELETON_ROWS = ['r1', 'r2', 'r3'];
+/** How many periodic acts the daily screen shows; the rest is behind «الكل». */
+const UPCOMING_LIMIT = 3;
 
 const makeStyles = (t: Theme) => ({
   frame: { paddingHorizontal: 0, paddingTop: 0 },
   content: { paddingHorizontal: GUTTER, paddingTop: space.lg, paddingBottom: space['4xl'] + space.xl, gap: space['2xl'] },
   tight: { gap: space.xs },
+  section: { gap: space.md },
+  sectionHead: { flexDirection: 'row' as const, alignItems: 'center' as const, justifyContent: 'space-between' as const },
+  heavy: { flexDirection: 'row' as const },
   skeletonHeader: { gap: space.sm },
   skeletonTop: { flexDirection: 'row' as const, alignItems: 'center' as const, justifyContent: 'space-between' as const },
-  skeletonWeek: { flexDirection: 'row' as const, gap: space.xs },
-  skeletonDay: { flex: 1 },
   skeletonRow: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
@@ -59,69 +60,46 @@ const makeStyles = (t: Theme) => ({
   skeletonTexts: { flex: 1, gap: space.sm },
 });
 
-export default function HabitsHubScreen() {
+const openPeriodic = () => router.push('/practice/periodic');
+const openAddHabit = () => router.push('/practice/add');
+
+export default function WirdScreen() {
   const hydrated = usePracticeStore((s) => s.hydrated);
-  return hydrated ? <HabitsHub /> : <HubSkeleton />;
+  return hydrated ? <Wird /> : <WirdSkeleton />;
 }
 
-function HabitsHub() {
+function Wird() {
   const { t } = useTranslation();
   const locale = useUiLocale();
   const styles = useStyles(makeStyles);
   const names = useDateNames();
   const hijriOffset = usePracticeStore((s) => s.store.settings.hijriOffset);
+  const showHijri = usePracticeStore((s) => s.prefs.showHijri);
   const catalog = usePracticeCatalog(locale);
-  const { today, selected, month, week, first, select, shiftWeek, shiftMonth, goToday } = useHubDays();
+  const { today } = useHubDays();
 
-  const items = useDayAgenda(selected);
-  const rows = useAgendaRows(items, selected, today);
-  const offDayItems = useOffDayHabits(selected);
-  const offDayRows = useAgendaRows(offDayItems, selected, today);
-  const actions = useAgendaActions(selected);
-  const weekMarks = usePresenceMarks(week[0]!, week[6]!, today);
-  const monthMarks = usePresenceMarks(month, monthEnd(month), today);
-  const summary = useTrackSummary(today);
+  const items = useDayAgenda(today);
+  const rows = useAgendaRows(items, today, today);
+  const offDayItems = useOffDayHabits(today);
+  const offDayRows = useAgendaRows(offDayItems, today, today);
+  const actions = useAgendaActions(today);
   const heavyDay = useHeavyDay(today);
-  const monthOccasions = useMemo(
-    () => occasionDates(catalog.data?.occasions ?? [], month, monthEnd(month), hijriOffset),
-    [catalog.data?.occasions, month, hijriOffset],
-  );
+  const streak = useStreak(today);
+  const periodic = usePeriodicRows(today);
+  const upcoming = useMemo(() => upcomingPeriodic(periodic, today, UPCOMING_LIMIT), [periodic, today]);
 
   const [adding, setAdding] = useState(false);
-  const scrollRef = useRef<ScrollView>(null);
-  const listY = useRef(0);
-
-  const handleListLayout = useCallback((e: LayoutChangeEvent) => {
-    listY.current = e.nativeEvent.layout.y;
-  }, []);
-  const handleGridSelect = useCallback(
-    (date: string) => {
-      select(date);
-      scrollRef.current?.scrollTo({ y: Math.max(0, listY.current - space.lg), animated: true });
-    },
-    [select],
-  );
   const handleAddOpen = useCallback(() => setAdding(true), []);
   const handleAddClose = useCallback(() => setAdding(false), []);
-  const handleCalendar = useCallback(() => router.push('/practice/calendar'), []);
-
-  const listTitle = selected === today ? t('practice.today') : shortDayTitle(selected, names);
+  const toggleHeavy = useCallback(() => heavyDay.setHeavy(!heavyDay.heavy), [heavyDay]);
 
   return (
     <Screen scroll={false} contentStyle={styles.frame} decor>
-      <ScrollView ref={scrollRef} contentContainerStyle={styles.content}>
-        <HubHeader dateLabel={dayTitle(selected, hijriOffset, names)} onCalendar={handleCalendar} onAdd={handleAddOpen} />
-
-        {summary.started ? null : <TrackRows summary={summary} />}
-
-        <WeekStrip
-          week={week}
-          today={today}
-          selected={selected}
-          marks={weekMarks}
-          onSelect={select}
-          onShiftWeek={shiftWeek}
-          onToday={goToday}
+      <ScrollView contentContainerStyle={styles.content}>
+        <WirdHeader
+          dateLabel={dateLine(today, names, hijriOffset, showHijri)}
+          streak={streak.hasPlans ? streak.current : null}
+          onAdd={handleAddOpen}
         />
 
         {catalog.isError ? (
@@ -131,49 +109,40 @@ function HabitsHub() {
           </View>
         ) : null}
 
-        <View onLayout={handleListLayout}>
-          <DayAgenda
-            title={listTitle}
-            date={selected}
-            today={today}
-            rows={rows}
-            offDayRows={offDayRows}
-            canLog={canLogOn(selected, today)}
-            complete={selected <= today && isDayComplete(items)}
-            started={summary.started}
-            lastLog={actions.lastLog}
-            onToggleHabit={actions.toggleHabit}
-            onToggleRelative={actions.toggleRelative}
-            onUndo={actions.undo}
-          />
+        <TodayList
+          title={t('practice.today')}
+          date={today}
+          today={today}
+          rows={rows}
+          offDayRows={offDayRows}
+          canLog
+          lastLog={actions.lastLog}
+          onToggleHabit={actions.toggleHabit}
+          onToggleRelative={actions.toggleRelative}
+          onUndo={actions.undo}
+          onAddHabit={openAddHabit}
+          footer={
+            heavyDay.hasPlans ? (
+              <View style={styles.heavy}>
+                <Chip label={t('practice.heavyDay')} selected={heavyDay.heavy} onPress={toggleHeavy} />
+              </View>
+            ) : null
+          }
+        />
+
+        <View style={styles.section}>
+          <View style={styles.sectionHead}>
+            <Text variant="title" accessibilityRole="header">
+              {t('practice.periodic.title')}
+            </Text>
+            {periodic.length > 0 ? <TextLink label={t('practice.periodic.all')} onPress={openPeriodic} /> : null}
+          </View>
+          {periodic.length === 0 ? (
+            <TextLink label={t('practice.periodic.add')} onPress={openPeriodic} />
+          ) : upcoming.length > 0 ? (
+            <PeriodicRows rows={upcoming} />
+          ) : null}
         </View>
-
-        {heavyDay.hasPlans ? (
-          <SwitchRow
-            label={t('practice.heavyDay')}
-            hint={t('practice.heavyDayHint')}
-            value={heavyDay.heavy}
-            onValueChange={heavyDay.setHeavy}
-          />
-        ) : null}
-
-        {summary.started ? (
-          <>
-            <Ornament />
-            <TrackRows summary={summary} />
-            <PresenceMonth
-              summary={summary}
-              month={month}
-              first={first}
-              today={today}
-              selected={selected}
-              marks={monthMarks}
-              occasions={monthOccasions}
-              onSelect={handleGridSelect}
-              onShiftMonth={shiftMonth}
-            />
-          </>
-        ) : null}
       </ScrollView>
 
       <AddSheet visible={adding} onClose={handleAddClose} />
@@ -181,25 +150,18 @@ function HabitsHub() {
   );
 }
 
-/** The shape of the hub while the device store loads: title and «أضف», the week tiles, three rows. */
-function HubSkeleton() {
+/** The shape of «ورد اليوم» while the device store loads: title and «أضف», then three rows. */
+function WirdSkeleton() {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   return (
     <Screen decor>
       <View style={styles.skeletonHeader} accessibilityLabel={t('common.loading')}>
         <View style={styles.skeletonTop}>
-          <Skeleton width="35%" height={30} />
+          <Skeleton width="40%" height={30} />
           <Skeleton width={84} height={43} />
         </View>
-        <Skeleton width="70%" height={14} />
-      </View>
-      <View style={styles.skeletonWeek}>
-        {SKELETON_DAYS.map((key) => (
-          <View key={key} style={styles.skeletonDay}>
-            <Skeleton height={76} />
-          </View>
-        ))}
+        <Skeleton width="55%" height={14} />
       </View>
       <View>
         {SKELETON_ROWS.map((key) => (

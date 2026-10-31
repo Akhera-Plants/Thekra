@@ -1,11 +1,12 @@
 /**
- * Hooks of the «عاداتي» hub: the selected day and the visible week and month, the day's agenda and the presence
- * marks (practice-core `dayAgenda` / `presence`, memoized for the visible range only), the quick log with its undo,
- * «يومي ثقيل», and the counts on the track rows. Every edit goes through practice-core store helpers.
+ * Hooks of «ورد اليوم» and «سجلّي»: today (following the clock) and the month the grid shows, the day's agenda and
+ * the presence marks (practice-core `dayAgenda` / `presence`, memoized for the visible range only), the quick log with
+ * its undo, «يومي ثقيل», the streak (practice-core `currentStreak` / `longestStreak`), the month summary and the
+ * periodic acts. Every edit goes through practice-core store helpers.
  *
  * A habit is asked for only on its own days (practice-core `planAsksOn` / `isPlanDueOn`: its rule, else the catalog
- * habit's default rule, else daily), the same answer the reminders use; on other days it stays loggable in a
- * «ليست مطلوبة اليوم» group and is never counted as missed.
+ * habit's default rule, else daily), the same answer the reminders use; on other days it stays loggable in the
+ * collapsed «ليست مطلوبة اليوم» row and is never counted as missed.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -13,12 +14,14 @@ import { AppState } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 import {
-  activePrograms,
   addDays,
   correctLog,
+  diffDays,
+  currentStreak,
   dayAgenda,
   logContact,
   logDone,
+  longestStreak,
   removeContact,
   minDate,
   monthSummary,
@@ -38,12 +41,15 @@ import {
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { useCirclePresence } from '@/lib/circles/use-circle-presence';
 import { pick } from './catalog-types';
-import { addMonths, firstWeekday, followToday, monthStart, weekDays, type DateNames } from './calendar-grid';
-import { dueNowCount, finishedDay, hasStarted, presenceMarks, type PresenceMark } from './hub';
+import { addMonths, firstWeekday, followToday, monthStart, shortDayTitle, type DateNames } from './calendar-grid';
+import { finishedDay, presenceMarks, type PresenceMark } from './hub';
 import { heavyDayOn, setHeavyDay } from './plan-view';
 import { today, usePracticeStore } from './practice-store';
 import { formatAmount, habitFor } from './reminders';
 import { useUiLocale } from './use-practice-lifecycle';
+import { periodicActs, type AgendaRowModel, type PeriodicAct } from './wird';
+
+export type { AgendaRowModel } from './wird';
 
 /** Weekday, Gregorian and Hijri month names from i18n (Western digits are added by the label helpers). */
 export function useDateNames(): DateNames {
@@ -62,9 +68,9 @@ export function useDateNames(): DateNames {
 const TODAY_CHECK_MS = 60_000;
 
 /**
- * The selected day (today at first), its week in reading order, and the month the grid shows. «Today» follows the
- * clock: past midnight or back from the background on another day, it moves on, and so does a selection that was
- * on it (`followToday`); a day the user picked stays.
+ * Today, the selected day (today at first) and the month the grid shows. «Today» follows the clock: past midnight or
+ * back from the background on another day, it moves on, and so does a selection that was on it (`followToday`); a
+ * day the user picked stays.
  */
 export function useHubDays() {
   const locale = useUiLocale();
@@ -99,16 +105,9 @@ export function useHubDays() {
     setSelected(date);
     setMonth(monthStart(date));
   }, []);
-  const shiftWeek = useCallback((delta: number) => select(addDays(selected, 7 * delta)), [select, selected]);
   const shiftMonth = useCallback((delta: number) => setMonth((m) => addMonths(m, delta)), []);
-  const goToday = useCallback(() => {
-    const now = today();
-    setToday(now);
-    select(now);
-  }, [select]);
-  const week = useMemo(() => weekDays(selected, first), [selected, first]);
 
-  return { today: d, selected, month, week, first, select, shiftWeek, shiftMonth, goToday };
+  return { today: d, selected, month, first, select, shiftMonth };
 }
 
 /**
@@ -135,8 +134,8 @@ export function useDayAgenda(date: LocalDate): AgendaItem[] {
 }
 
 /**
- * Habits the selected day does not ask for (not their days), as habit items with their usual amount: still loggable
- * from the hub («وما تعمله يُحسب»), never counted as missed.
+ * Habits the day does not ask for (not their days), as habit items with their usual amount: still loggable from the
+ * collapsed «ليست مطلوبة اليوم» row, never counted as missed.
  */
 export function useOffDayHabits(date: LocalDate): HabitItem[] {
   const store = usePracticeStore((s) => s.store);
@@ -153,14 +152,10 @@ export function useOffDayHabits(date: LocalDate): HabitItem[] {
   );
 }
 
-/** One row of the day list, with its words ready (titles from the catalog, amounts as the plan screens write them). */
-export type AgendaRowModel =
-  | { key: string; kind: 'occasion'; title: string; deed: string }
-  | { key: string; kind: 'habit'; item: HabitItem; title: string; meta: string }
-  | { key: string; kind: 'relative'; item: RelativeItem; title: string; relation: string; meta: string }
-  | { key: string; kind: 'program'; done: boolean; meta: string };
-
-/** The rows of the day list from its agenda. The program row never carries anything but generic words. */
+/**
+ * The rows of the day list from its agenda. A relative is a periodic act («صلة الرحم» before its status); the program
+ * row never carries anything but generic words.
+ */
 export function useAgendaRows(items: readonly AgendaItem[], date: LocalDate, todayDate: LocalDate): AgendaRowModel[] {
   const { t } = useTranslation();
   const locale = useUiLocale();
@@ -196,7 +191,14 @@ export function useAgendaRows(items: readonly AgendaItem[], date: LocalDate, tod
           : item.overdueDays === 0 && !isToday
             ? t('practice.hub.relativeDueDay')
             : t('practice.hub.relativeOverdue', { count: item.overdueDays });
-        rows.push({ key: `r-${item.relativeId}`, kind: 'relative', item, title: rel.name, relation: rel.relation, meta });
+        rows.push({
+          key: `r-${item.relativeId}`,
+          kind: 'relative',
+          item,
+          title: rel.name,
+          relation: rel.relation,
+          meta: `${t('kinship.title')} · ${meta}`,
+        });
       } else {
         const meta = item.done
           ? t(isToday ? 'practice.hub.programDone' : 'practice.hub.programDoneDay')
@@ -218,7 +220,6 @@ export function usePresenceMarks(from: LocalDate, to: LocalDate, todayDate: Loca
   );
 }
 
-/** The last quick log on the hub, shown as «سُجِّل · تراجع» on its row. */
 /** The last tick or untick of the day list; «تراجع» puts back exactly what was there before it. */
 export type HubLastLog =
   | { kind: 'habit'; planId: string; date: LocalDate; before: number; cleared: boolean }
@@ -315,34 +316,78 @@ export function useHeavyDay(todayDate: LocalDate = today()) {
   return { hasPlans, heavy, setHeavy };
 }
 
-/** What the track rows and «وين وصلت» say. */
-export interface TrackSummary {
-  /** Anything started at all (else the hub shows the three ways to begin). */
-  started: boolean;
-  habits: number;
+/** What «سجلّي» says of the last 30 days: days with anything done and the kind band of the plans. */
+export interface MonthPresence {
+  presentDays: number;
   /** The kind band of the last 30 days, null without plans. */
   band: AdherenceBand | null;
-  /** Days with anything done in the last 30 days («أي قدر يُحسب»). */
-  presentDays: number;
-  relativesDue: number;
-  hasRelatives: boolean;
-  hasProgram: boolean;
 }
 
-/** What the three track rows say: habits and their band, relatives due now, whether a program runs. */
-export function useTrackSummary(todayDate: LocalDate): TrackSummary {
+/** Days present in the last 30 and the plans' band (practice-core `monthSummary`). */
+export function useMonthPresence(todayDate: LocalDate): MonthPresence {
   const store = usePracticeStore((s) => s.store);
   const planDays = usePlanDays();
   return useMemo(() => {
     const month = monthSummary(store, todayDate, undefined, planDays);
-    return {
-      started: hasStarted(store),
-      habits: store.plans.length,
-      band: month.band,
-      presentDays: month.presentDays,
-      relativesDue: dueNowCount(store.relatives, todayDate),
-      hasRelatives: store.relatives.length > 0,
-      hasProgram: activePrograms(store.programs).length > 0,
-    };
+    return { presentDays: month.presentDays, band: month.band };
   }, [store, todayDate, planDays]);
+}
+
+/** The streak of complete days and the longest one (practice-core `currentStreak` / `longestStreak`). */
+export function useStreak(todayDate: LocalDate): { current: number; longest: number; hasPlans: boolean } {
+  const store = usePracticeStore((s) => s.store);
+  const planDays = usePlanDays();
+  return useMemo(
+    () => ({
+      current: currentStreak(store, todayDate, planDays),
+      longest: longestStreak(store, todayDate, planDays),
+      hasPlans: store.plans.length > 0,
+    }),
+    [store, todayDate, planDays],
+  );
+}
+
+/** One periodic act with its words ready: the name, a relative's relation, and when it is next due. */
+export interface PeriodicRowModel {
+  key: string;
+  act: PeriodicAct;
+  title: string;
+  /** A relative's relation, or «صلة الرحم» when it has none; a habit's next-date rule stays on its page. */
+  note: string;
+  /** «اليوم», «غدًا», «الجمعة 6 نوفمبر», «فات موعده منذ 3 أيام». */
+  when: string;
+}
+
+/** Every periodic act, soonest first (relatives and the habits whose rule is not daily; see `periodicActs`). */
+export function usePeriodicRows(todayDate: LocalDate): PeriodicRowModel[] {
+  const { t } = useTranslation();
+  const locale = useUiLocale();
+  const store = usePracticeStore((s) => s.store);
+  const habits = usePracticeCatalog(locale).data?.habits;
+  const planDays = usePlanDays();
+  const names = useDateNames();
+  return useMemo(() => {
+    const tomorrow = addDays(todayDate, 1);
+    const when = (act: PeriodicAct): string => {
+      if (act.next === null) return t('practice.periodic.noNext');
+      if (act.next < todayDate) return t('practice.hub.relativeOverdue', { count: diffDays(act.next, todayDate) });
+      if (act.next === todayDate) return t('practice.today');
+      if (act.next === tomorrow) return t('practice.periodic.tomorrow');
+      return shortDayTitle(act.next, names);
+    };
+    const rows: PeriodicRowModel[] = [];
+    for (const act of periodicActs(store, todayDate, planDays)) {
+      if (act.kind === 'relative') {
+        const rel = store.relatives.find((r) => r.id === act.id);
+        if (!rel) continue;
+        rows.push({ key: `r-${act.id}`, act, title: rel.name, note: rel.relation || t('kinship.title'), when: when(act) });
+      } else {
+        const plan = store.plans.find((p) => p.id === act.id);
+        if (!plan) continue;
+        const habit = habitFor(plan, habits ?? []);
+        rows.push({ key: `h-${act.id}`, act, title: habit ? pick(habit, 'title', locale) : plan.title, note: '', when: when(act) });
+      }
+    }
+    return rows;
+  }, [store, todayDate, planDays, habits, locale, names, t]);
 }

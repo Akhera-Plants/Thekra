@@ -154,7 +154,7 @@ function SinProgramContent() {
   if (catalog.isError || !catalog.data) {
     return (
       <Screen edges={['bottom']}>
-        <PageHeader eyebrow={t('practice.title')} title={t('sinProgram.title')} lead={t('sinProgram.lead')} />
+        <PageHeader eyebrow={t('record.title')} title={t('sinProgram.title')} lead={t('sinProgram.lead')} />
         <ErrorState message={t('practice.catalogError')} onRetry={() => void catalog.refetch()} />
       </Screen>
     );
@@ -187,7 +187,7 @@ function SinProgramContent() {
   return (
     <KeyboardAvoidingView style={styles.flex} behavior="padding">
       <Screen edges={['bottom']} decor>
-        <PageHeader eyebrow={t('practice.title')} title={t('sinProgram.title')} lead={t('sinProgram.lead')} />
+        <PageHeader eyebrow={t('record.title')} title={t('sinProgram.title')} lead={t('sinProgram.lead')} />
         <Notice icon={ShieldCheck}>{t('sinProgram.privacy')}</Notice>
         {wiped && programs.length === 0 ? <Notice icon={Check}>{t('sinProgram.wiped')}</Notice> : null}
         {ended ? <Notice icon={Check}>{t('sinProgram.end.done')}</Notice> : null}
@@ -235,7 +235,7 @@ function ProgramSkeleton() {
   const styles = useStyles(makeStyles);
   return (
     <Screen edges={['bottom']}>
-      <PageHeader eyebrow={t('practice.title')} title={t('sinProgram.title')} lead={t('sinProgram.lead')} />
+      <PageHeader eyebrow={t('record.title')} title={t('sinProgram.title')} lead={t('sinProgram.lead')} />
       <View style={styles.block} accessibilityLabel={t('common.loading')}>
         <Skeleton height={16} />
         <Skeleton width="80%" height={16} />

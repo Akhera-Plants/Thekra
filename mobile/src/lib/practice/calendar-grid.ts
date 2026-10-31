@@ -1,5 +1,5 @@
 /**
- * Calendar math for the week strip and the month grid («عاداتي» hub and the calendar page), and the date labels
+ * Calendar math for the month grid («سجلّي» and the calendar page), and the date labels
  * they show. Pure (no React Native), so it runs in Jest. Dates are practice-core local `YYYY-MM-DD` strings;
  * names come in from i18n, digits stay Western (PROJECT_GUIDE §3.7).
  */
@@ -119,6 +119,16 @@ export function dayTitle(date: LocalDate, hijriOffset: number, names: DateNames)
   const day = names.weekday(weekday(date));
   if (!h) return `${day} ${gregorian(date, names)}`;
   return `${day} ${h.day} ${names.hijriMonth(h.month)} ${h.year} · ${gregorian(date, names)}`;
+}
+
+/**
+ * The date line of «ورد اليوم»: Gregorian by default («السبت 31 أكتوبر 2026»); with «إظهار التاريخ الهجري» on, the
+ * Hijri date follows («السبت 31 أكتوبر 2026 · 9 جمادى الأولى 1448»), and is left out where the runtime lacks it.
+ */
+export function dateLine(date: LocalDate, names: DateNames, hijriOffset: number, showHijri: boolean): string {
+  const greg = `${names.weekday(weekday(date))} ${gregorian(date, names)} ${date.slice(0, 4)}`;
+  const h = showHijri ? safeHijri(date, hijriOffset) : null;
+  return h ? `${greg} · ${h.day} ${names.hijriMonth(h.month)} ${h.year}` : greg;
 }
 
 /** «الخميس 29 أكتوبر»: the day list header for a day other than today. */

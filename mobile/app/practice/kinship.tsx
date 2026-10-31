@@ -114,7 +114,7 @@ export default function KinshipScreen() {
 
   return (
     <Screen edges={['bottom']} keyboard decor>
-      <PageHeader eyebrow={t('practice.title')} title={t('kinship.title')} lead={t('kinship.lead')} />
+      <PageHeader eyebrow={t('practice.periodic.title')} title={t('kinship.title')} lead={t('kinship.lead')} />
 
       {relatives.length === 0 && !adding ? (
         <EmptyState icon={Users} message={t('kinship.empty')} actionLabel={t('kinship.add')} onAction={() => setAdding(true)} />

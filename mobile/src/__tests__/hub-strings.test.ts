@@ -1,6 +1,7 @@
 /**
- * The hub's counted strings resolve through i18next plural rules in both languages (Arabic has zero/one/two/few/many
- * forms), every hub key exists in both files, and no visible string carries an em or en dash.
+ * The counted strings of «ورد اليوم» and «سجلّي» resolve through i18next plural rules in both languages (Arabic has
+ * zero/one/two/few/many forms), the screens carry the owner's names, every key exists in both files, and no visible
+ * string carries an em or en dash.
  */
 
 import i18next from 'i18next';
@@ -11,7 +12,7 @@ function keys(obj: object, prefix = ''): string[] {
   return Object.entries(obj).flatMap(([k, v]) => (v && typeof v === 'object' ? keys(v as object, `${prefix}${k}.`) : [`${prefix}${k}`]));
 }
 
-describe('hub strings', () => {
+describe('practice strings', () => {
   const i18n = i18next.createInstance();
 
   beforeAll(async () => {
@@ -57,10 +58,37 @@ describe('hub strings', () => {
     expect(en('practice.monthDays', { done: '4', count: 12 })).toBe('You logged 4 of 12 days');
   });
 
-  it('has every hub key in both languages', () => {
+  it('counts the streak, the longest one and the periodic acts with the right form', () => {
+    const ar = i18n.getFixedT('ar');
+    expect(ar('practice.wird.streakLabel', { count: 0 })).toBe('لا مداومة بعد');
+    expect(ar('practice.wird.streakLabel', { count: 2 })).toBe('مداومة يومين');
+    expect(ar('practice.wird.streakLabel', { count: 5 })).toBe('مداومة 5 أيام');
+    expect(ar('record.longest', { count: 1 })).toBe('أطول مداومة: يوم واحد');
+    expect(ar('record.longest', { count: 14 })).toBe('أطول مداومة: 14 يومًا');
+    expect(ar('record.periodicCount', { count: 3 })).toBe('3 أعمال');
+    expect(ar('practice.wird.notDueToday', { count: 2 })).toBe('ليست مطلوبة اليوم (2)');
+    const en = i18n.getFixedT('en');
+    expect(en('practice.wird.streakLabel', { count: 1 })).toBe('1-day streak');
+    expect(en('record.longest', { count: 7 })).toBe('Longest streak: 7 days');
+  });
+
+  it('names the screens and the private program as the owner chose, never naming a sin', () => {
+    const ar = i18n.getFixedT('ar');
+    expect(ar('tabs.wird')).toBe('ورد اليوم');
+    expect(ar('practice.wird.title')).toBe('ورد اليوم');
+    expect(ar('tabs.record')).toBe('سجلّي');
+    expect(ar('practice.periodic.title')).toBe('أعمال دورية');
+    expect(ar('practice.hub.habitsTrack')).toBe('عاداتي');
+    expect(ar('sinProgram.title')).toBe('تخفَّف');
+    expect(ar('settings.showHijri')).toBe('إظهار التاريخ الهجري');
+    const visible = keys(ar).map((k) => k.split('.').reduce<unknown>((o, part) => (o as Record<string, unknown>)[part], ar));
+    expect(visible.filter((v) => typeof v === 'string' && v.includes('ترك المعصية'))).toEqual([]);
+  });
+
+  it('has every key in both languages', () => {
     const base = (k: string) => k.replace(/_(zero|one|two|few|many|other)$/, '');
-    const arKeys = new Set(keys(ar.practice.hub).map(base));
-    const enKeys = new Set(keys(en.practice.hub).map(base));
+    const arKeys = new Set(keys(ar).map(base));
+    const enKeys = new Set(keys(en).map(base));
     expect([...arKeys].sort()).toEqual([...enKeys].sort());
   });
 

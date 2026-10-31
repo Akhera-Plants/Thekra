@@ -6,6 +6,7 @@ import { isHijriSupported, weekday } from '@thekra/practice-core';
 import {
   addMonths,
   calendarSubscribeLink,
+  dateLine,
   followToday,
   dayTitle,
   firstWeekday,
@@ -80,6 +81,15 @@ describe('labels', () => {
   hijri('shows the Hijri date (with the user offset) before the Gregorian one', () => {
     expect(dayTitle('2026-10-29', 0, names)).toBe('الخميس 18 جمادى الأولى 1448 · 29 أكتوبر');
     expect(dayTitle('2026-10-29', -1, names)).toBe('الخميس 17 جمادى الأولى 1448 · 29 أكتوبر');
+  });
+
+  it('the «ورد اليوم» date line is Gregorian with the year by default', () => {
+    expect(dateLine('2026-10-29', names, 0, false)).toBe('الخميس 29 أكتوبر 2026');
+  });
+
+  hijri('the date line adds the Hijri date only with «إظهار التاريخ الهجري»', () => {
+    expect(dateLine('2026-10-29', names, 0, true)).toBe('الخميس 29 أكتوبر 2026 · 18 جمادى الأولى 1448');
+    expect(dateLine('2026-10-29', names, -1, true)).toBe('الخميس 29 أكتوبر 2026 · 17 جمادى الأولى 1448');
   });
 
   hijri('lists the Hijri months a Gregorian month touches', () => {

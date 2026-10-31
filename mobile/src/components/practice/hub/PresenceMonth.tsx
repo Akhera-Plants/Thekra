@@ -1,7 +1,7 @@
 /**
- * «وين وصلت هذا الشهر»: the days present in the last 30 and the kind band (practice-core `monthSummary`, never a run
- * length), then the month grid of the selected day with presence marks and occasion dots, and a small legend drawn
- * with the same marks.
+ * The one month calendar, in «سجلّي»: the days present in the last 30 and the kind band (practice-core
+ * `monthSummary`), then the month grid with presence marks and occasion dots, and a small legend drawn with the same
+ * marks. The Hijri months under the title follow «إظهار التاريخ الهجري».
  */
 
 import React from 'react';
@@ -9,7 +9,7 @@ import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { LocalDate } from '@thekra/practice-core';
 import type { PresenceMark } from '@/lib/practice/hub';
-import type { TrackSummary } from '@/lib/practice/use-habits-hub';
+import type { MonthPresence } from '@/lib/practice/use-habits-hub';
 import { radius, space, useStyles, type Theme } from '@/theme';
 import { Section, Text } from '@/ui';
 import { MonthGrid } from './MonthGrid';
@@ -22,22 +22,23 @@ const makeStyles = (t: Theme) => ({
 });
 
 export interface PresenceMonthProps {
-  summary: TrackSummary;
+  summary: MonthPresence;
   month: LocalDate;
   first: number;
   today: LocalDate;
-  selected: LocalDate;
+  selected: LocalDate | null;
+  showHijri: boolean;
   marks: ReadonlyMap<LocalDate, PresenceMark>;
   occasions: ReadonlySet<LocalDate>;
   onSelect: (date: LocalDate) => void;
   onShiftMonth: (delta: number) => void;
 }
 
-export function PresenceMonth({ summary, month, first, today, selected, marks, occasions, onSelect, onShiftMonth }: PresenceMonthProps) {
+export function PresenceMonth({ summary, month, first, today, selected, showHijri, marks, occasions, onSelect, onShiftMonth }: PresenceMonthProps) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   return (
-    <Section title={t('practice.hub.monthTitle')} lead={t('practice.hub.monthLead')}>
+    <Section title={t('practice.hub.monthTitle')}>
       <Text variant="body">
         {t('practice.hub.presentDays', { count: summary.presentDays })}
         {summary.band ? (
@@ -51,6 +52,7 @@ export function PresenceMonth({ summary, month, first, today, selected, marks, o
         first={first}
         today={today}
         selected={selected}
+        showHijri={showHijri}
         marks={marks}
         occasions={occasions}
         onSelect={onSelect}

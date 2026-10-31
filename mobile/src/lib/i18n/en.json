@@ -1,9 +1,8 @@
 {
   "tabs": {
     "home": "Home",
-    "garden": "My garden",
-    "habits": "My habits",
-    "favorites": "Favorites",
+    "wird": "Today's wird",
+    "record": "My record",
     "settings": "Settings",
     "browse": "Browse"
   },
@@ -64,7 +63,7 @@
     "eyebrow": "Leaving a sin",
     "filterVerses": "Verses",
     "warningHeading": "What warns against it",
-    "startProgram": "Start the leaving program",
+    "startProgram": "Start the \"Lighten\" program",
     "continueProgram": "Continue your program",
     "pairWarningHeading": "What warns against it",
     "rewardHeading": "The reward of leaving it for Allah",
@@ -138,7 +137,7 @@
     "empty": "No quotes for this feeling"
   },
   "favorites": {
-    "title": "Favorites",
+    "title": "Saved",
     "empty": "No saved quotes yet",
     "emptyHint": "Tap the save icon on any quote to add it here",
     "signInPrompt": "Sign in to sync favorites across your devices",
@@ -158,7 +157,7 @@
     "syncOk": "Synced",
     "syncOffline": "No connection; we will try later",
     "syncError": "Sync failed",
-    "syncNote": "Your habits, kinship list and settings sync with your account. The sin-leaving program syncs only encrypted with your privacy code, if you choose so.",
+    "syncNote": "Your habits, kinship list and settings sync with your account. The \"Lighten\" program syncs only encrypted with your privacy code, if you choose so.",
     "exportData": "Export my data",
     "exportFailed": "Could not export the data.",
     "deleteAccount": "Delete account",
@@ -186,7 +185,8 @@
     "about": "About",
     "aboutThekra": "About Thekra and its method",
     "privacyPolicy": "Privacy policy",
-    "signOutGroup": "Sign out"
+    "signOutGroup": "Sign out",
+    "showHijri": "Show the Hijri date"
   },
   "auth": {
     "loginTitle": "Sign in",
@@ -199,7 +199,7 @@
     "haveAccount": "Already have an account?",
     "register": "Register",
     "login": "Sign in",
-    "guestNote": "You can use the app without an account. Sign in and your favorites are saved, your habits stay in step with your account on all your devices, and you can save the program to leave a sin encrypted to open it on another device.",
+    "guestNote": "You can use the app without an account. Sign in and your favorites are saved, your habits stay in step with your account on all your devices, and you can save the \"Lighten\" program encrypted to open it on another device.",
     "loginError": "Login failed. Check your credentials.",
     "registerError": "Registration failed. Please try again."
   },
@@ -410,13 +410,11 @@
     "hub": {
       "add": "Add",
       "addTitle": "What would you like to add?",
-      "addHabit": "A good habit",
+      "addHabit": "A habit",
       "addRelative": "A relative",
       "addRelativeHint": "A name or nickname, and how often to reach them.",
-      "addProgram": "A program to leave a sin",
+      "addProgram": "Lighten",
       "addProgramHint": "On your device only, never in a notification.",
-      "previousWeek": "Previous week",
-      "nextWeek": "Next week",
       "previousMonth": "Previous month",
       "nextMonth": "Next month",
       "markFull": "All of it done",
@@ -434,28 +432,14 @@
       "programDone": "You noted your day",
       "programDoneDay": "You noted this day",
       "programOpen": "Open your private program",
-      "dayDone": "You did what today asked of you. May Allah accept it from you.",
-      "dayDonePast": "You did what this day asked of you. May Allah accept it from you.",
       "dayEmpty": "Nothing is asked of you on this day.",
-      "dayEmptyStart": "The habits and relatives you add show up here on their day.",
       "futureNote": "A coming day: you can see it now and log it on the day.",
       "pastNote": "View only: logging here covers the last 7 days.",
-      "tracks": "Your paths",
-      "habitsTrack": "My good deeds",
+      "habitsTrack": "My habits",
       "habitsCount_zero": "No habit yet",
       "habitsCount_one": "1 habit",
       "habitsCount_other": "{{count}} habits",
-      "kinshipDue_zero": "Nobody is due now",
-      "kinshipDue_one": "1 relative is due",
-      "kinshipDue_other": "{{count}} relatives are due",
-      "programActive": "Your private program",
-      "programStart": "Start",
-      "startTitle": "Where to begin?",
-      "startLead": "Pick one path and start small; what you add shows up in your day here.",
-      "startHabitCta": "Add a habit",
-      "startKinshipCta": "Add a relative",
-      "monthTitle": "How far you came this month",
-      "monthLead": "Open it on any day, even a day you did nothing, to stay close to your habit.",
+      "monthTitle": "Calendar",
       "presentDays_zero": "Nothing logged in the last 30 days yet, and today is a good start.",
       "presentDays_one": "Present on 1 of the last 30 days",
       "presentDays_other": "Present on {{count}} of the last 30 days",
@@ -490,6 +474,27 @@
     "time": {
       "am": "AM",
       "pm": "PM"
+    },
+    "wird": {
+      "title": "Today's wird",
+      "streakLabel_one": "1-day streak",
+      "streakLabel_other": "{{count}}-day streak",
+      "empty": "Nothing is required of you today",
+      "notDueToday": "Not required today ({{count}})",
+      "notDueDay": "Not required on this day ({{count}})"
+    },
+    "periodic": {
+      "title": "Periodic acts",
+      "lead": "Ties of kinship and the habits that do not repeat every day.",
+      "all": "All",
+      "add": "Add a periodic act",
+      "addHabit": "A habit on set days",
+      "addHabitHint": "A weekly sadaqah or the Friday night prayer, for example; you choose its days when adding it.",
+      "habitsTitle": "Periodic habits",
+      "manageKinship": "Manage ties of kinship",
+      "empty": "No periodic acts yet",
+      "tomorrow": "Tomorrow",
+      "noNext": "No date soon"
     }
   },
   "kinship": {
@@ -541,7 +546,7 @@
     "contactedToday": "Contacted today"
   },
   "sinProgram": {
-    "title": "Leaving a sin",
+    "title": "Lighten",
     "privacy": "Everything on this page stays on your device and never appears in a notification. It leaves the device only encrypted with your code, if you choose to save it in your account.",
     "choose": "Choose what you want to leave",
     "categoryAllah": "Against the right of Allah",
@@ -809,7 +814,7 @@
     "settings": "My circle settings",
     "settingsTitle": "My circle settings",
     "shareLabel": "Share my presence",
-    "shareHint": "One mark a day when you log anything in My habits. The deed and its amount never show.",
+    "shareHint": "One mark a day when you log anything in Today's wird. The deed and its amount never show.",
     "saveName": "Save name",
     "saved": "Saved",
     "membersTitle": "Members",
@@ -850,12 +855,26 @@
     "nextLabel": "Next branch: {{title}}"
   },
   "sinLock": {
-    "switch": "Lock the program with biometrics",
+    "switch": "Lock \"Lighten\" with biometrics",
     "switchHint": "The program page opens only with your fingerprint, face or device passcode.",
     "prompt": "Open your private page",
     "confirmPrompt": "Confirm it is you",
     "lockedTitle": "This page is locked",
     "lockedHint": "Open it with your fingerprint, face or device passcode.",
     "unlock": "Open"
+  },
+  "record": {
+    "title": "My record",
+    "current": "Current streak",
+    "longest_one": "Longest streak: 1 day",
+    "longest_other": "Longest streak: {{count}} days",
+    "periodicCount_zero": "None yet",
+    "periodicCount_one": "1 act",
+    "periodicCount_other": "{{count}} acts",
+    "programHint": "A private program on your device",
+    "gardenHint": "How your habits grow",
+    "circlesHint": "Keep up with people you love",
+    "savedHint": "Texts you saved",
+    "occasionsCalendar": "Occasions calendar"
   }
 }

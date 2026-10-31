@@ -1,8 +1,9 @@
 /**
- * Bottom tab bar: Home · My garden · My habits (centre) · Favorites · Settings, in reading order (Home at the start:
+ * Bottom tab bar, four tabs: «الرئيسية» · «ورد اليوم» · «سجلّي» · «الإعدادات», in reading order (Home at the start:
  * the right in Arabic, the left in English), in the website's look (background fill, hairline on top, thin lucide
- * icons, Plex labels, the primary colour for the current tab). «عاداتي» is the centre of the app, so its icon sits in
- * a soft pill, stronger when it is the current tab. Texts browsing lives on the home page («استكشف النصوص»).
+ * icons, Plex labels, the primary colour for the current tab). «ورد اليوم» is the centre of the app, so its icon sits
+ * in a soft pill, stronger when it is the current tab. «بستاني» and «المحفوظات» are pushed screens opened from
+ * «سجلّي»; texts browsing lives on the home page («استكشف النصوص»).
  *
  * Height and bottom padding add the safe-area inset (home indicator, Android's edge-to-edge navigation bar): the tab
  * bar uses a custom height as is, so the inset has to be in it.
@@ -13,7 +14,7 @@ import { View, type ColorValue } from 'react-native';
 import { Tabs } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Bookmark, Flower2, House, Settings2, Sprout, type LucideIcon } from 'lucide-react-native';
+import { ChartNoAxesColumn, House, Settings2, Sprout, type LucideIcon } from 'lucide-react-native';
 import { radius, useTheme } from '@/theme';
 
 /** Tab bar height above the safe-area inset. */
@@ -27,7 +28,7 @@ interface ITabIconProps {
   focused: boolean;
 }
 
-/** «عاداتي»: the sprout in a soft pill (sage when current, the quiet surface otherwise). */
+/** «ورد اليوم»: the sprout in a soft pill (sage when current, the quiet surface otherwise). */
 function CenterTabIcon({ color, focused }: ITabIconProps) {
   const { colors } = useTheme();
   return (
@@ -75,12 +76,11 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen name="index" options={{ title: t('tabs.home'), tabBarIcon: icon(House) }} />
-      <Tabs.Screen name="garden" options={{ title: t('tabs.garden'), tabBarIcon: icon(Flower2) }} />
       <Tabs.Screen
         name="habits"
-        options={{ title: t('tabs.habits'), tabBarIcon: CenterTabIcon, tabBarIconStyle: CENTER_PILL }}
+        options={{ title: t('tabs.wird'), tabBarIcon: CenterTabIcon, tabBarIconStyle: CENTER_PILL }}
       />
-      <Tabs.Screen name="favorites" options={{ title: t('tabs.favorites'), tabBarIcon: icon(Bookmark) }} />
+      <Tabs.Screen name="record" options={{ title: t('tabs.record'), tabBarIcon: icon(ChartNoAxesColumn) }} />
       <Tabs.Screen name="settings" options={{ title: t('tabs.settings'), tabBarIcon: icon(Settings2) }} />
     </Tabs>
   );

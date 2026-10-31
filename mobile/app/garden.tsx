@@ -1,13 +1,13 @@
 /**
- * «بستاني»: a calm garden that grows with the user's presence. One plant per habit plan, and one for صلة الرحم when
- * relatives exist; never anything for the sin program. A plant grows with the days anything was logged for it, never
- * shrinks, and rests with the user on «يومي ثقيل» (src/lib/practice/garden.ts). No streaks, no failure words, no
- * public counter: the garden lives in the device store and only its owner sees it.
+ * «بستاني», a pushed screen opened from «سجلّي»: a calm garden that grows with the user's presence. One plant per
+ * habit plan, and one for صلة الرحم when relatives exist; never anything for the sin program. A plant grows with the
+ * days anything was logged for it, never shrinks, and rests with the user on «يومي ثقيل» (src/lib/practice/garden.ts).
+ * No failure words, no public counter: the garden lives in the device store and only its owner sees it.
  */
 
 import React, { useCallback } from 'react';
 import { useWindowDimensions, View } from 'react-native';
-import { router } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Lock, Moon } from 'lucide-react-native';
 import { GardenPlantTile } from '@/components/garden/GardenPlantTile';
@@ -42,7 +42,8 @@ export default function GardenScreen() {
   const hydrated = usePracticeStore((s) => s.hydrated);
   const { t } = useTranslation();
   return (
-    <Screen decor>
+    <Screen edges={['bottom']} decor>
+      <Stack.Screen options={{ title: t('garden.title') }} />
       <PageHeader title={t('garden.title')} lead={t('garden.lead')} />
       {hydrated ? <Garden /> : <GardenSkeleton />}
     </Screen>

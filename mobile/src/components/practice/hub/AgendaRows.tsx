@@ -1,11 +1,11 @@
 /**
- * Rows of the hub's day list, after the website's AgendaRows (hairline between rows, the lead at the reading start,
- * a forward arrow when the row opens a page):
- * - habit and relative: a round check (a checkbox named after the item: empty, half filled while only part of a
+ * Rows of a day list («ورد اليوم», and a day picked in «سجلّي»), after the website's AgendaRows (hairline between
+ * rows, the lead at the reading start, a forward arrow when the row opens a page):
+ * - habit and relative: one round check (a checkbox named after the item: empty, half filled while only part of a
  *   habit is logged, filled with a tick when done; it settles with a small spring when ticked, still when the system
- *   asks to reduce motion) and the body that opens the plan / the kinship page, with «سُجِّل · تراجع» under the last
- *   quick log;
- * - occasion: a sparkle on a soft gold disc and the title, opening its good deed;
+ *   asks to reduce motion), the title and one short subtitle, opening the plan / the kinship page, with
+ *   «سُجِّل · تراجع» under the last quick log. A done row is dimmed (the list puts it at the bottom);
+ * - occasion: one compact line (a small gold sparkle and the title), opening its good deed;
  * - program: a neutral notebook on a quiet disc and generic words only, opening the private program.
  */
 
@@ -26,6 +26,16 @@ const UNDO_INDENT = TARGET + space.xs;
 
 const makeStyles = (t: Theme) => ({
   row: { paddingVertical: space.sm, borderBottomWidth: 1, borderBottomColor: t.colors.border },
+  settledLine: { opacity: 0.55 },
+  occasionLine: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: space.sm,
+    minHeight: 44,
+    paddingHorizontal: space.xs,
+    borderRadius: radius.control,
+  },
+  occasionText: { flex: 1 },
   line: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.xs, minHeight: 56 },
   lead: { width: TARGET, height: TARGET, alignItems: 'center' as const, justifyContent: 'center' as const },
   body: {
@@ -57,7 +67,6 @@ const makeStyles = (t: Theme) => ({
   checkLockedState: { opacity: 0.6 },
   checkPressed: { transform: [{ scale: 0.9 }] },
   disc: { width: DISC, height: DISC, borderRadius: radius.full, alignItems: 'center' as const, justifyContent: 'center' as const, overflow: 'hidden' as const },
-  discTint: { position: 'absolute' as const, top: 0, bottom: 0, start: 0, end: 0, opacity: 0.12 },
   discQuiet: { backgroundColor: t.colors.muted },
   undo: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.sm, paddingStart: UNDO_INDENT + space.sm },
   undoButton: { minHeight: 36, justifyContent: 'center' as const, paddingHorizontal: space.sm, borderRadius: radius.control },
@@ -130,15 +139,14 @@ function CheckControl({ label, checked, partial, disabled, onPress }: CheckContr
   );
 }
 
-/** A small icon on a disc, for rows that open a page instead of being ticked. */
-function IconLead({ icon, tone }: { icon: LucideIcon; tone: 'occasion' | 'quiet' }) {
+/** A small icon on a quiet disc, for the row that opens a page instead of being ticked. */
+function IconLead({ icon }: { icon: LucideIcon }) {
   const styles = useStyles(makeStyles);
   const { colors } = useTheme();
   return (
     <View style={styles.lead}>
-      <View style={[styles.disc, tone === 'quiet' && styles.discQuiet]}>
-        {tone === 'occasion' ? <View style={[styles.discTint, { backgroundColor: colors.intentGoodDeed }]} /> : null}
-        <Icon icon={icon} size={18} color={tone === 'occasion' ? colors.intentGoodDeed : colors.mutedForeground} />
+      <View style={[styles.disc, styles.discQuiet]}>
+        <Icon icon={icon} size={18} color={colors.mutedForeground} />
       </View>
     </View>
   );
@@ -228,7 +236,7 @@ export const HabitRow = memo(function HabitRow({ item, title, meta, canLog, undo
   const handleOpen = useCallback(() => router.push(`/practice/plan/${item.planId}`), [item.planId]);
   return (
     <View style={styles.row}>
-      <View style={styles.line}>
+      <View style={[styles.line, item.complete && styles.settledLine]}>
         <CheckControl label={title} checked={item.complete} partial={item.done > 0} disabled={!canLog} onPress={handleToggle} />
         <RowBody title={title} meta={meta} settled={item.complete} onPress={handleOpen} />
       </View>
@@ -255,7 +263,7 @@ export const RelativeRow = memo(function RelativeRow({ item, name, relation, met
   const handleToggle = useCallback(() => onToggle(item), [onToggle, item]);
   return (
     <View style={styles.row}>
-      <View style={styles.line}>
+      <View style={[styles.line, item.done && styles.settledLine]}>
         <CheckControl label={name} checked={item.done} disabled={!canLog} onPress={handleToggle} />
         <RowBody title={name} titleNote={relation || undefined} meta={meta} settled={item.done} onPress={openKinship} />
       </View>
@@ -269,17 +277,28 @@ export interface OccasionRowProps {
   deed: string;
 }
 
+/** Today's sunnah occasion: one compact line, not a card. */
 export const OccasionRow = memo(function OccasionRow({ title, deed }: OccasionRowProps) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
+  const { colors } = useTheme();
   const handleOpen = useCallback(() => router.push(`/good-deeds/${deed}`), [deed]);
   return (
-    <View style={styles.row}>
-      <View style={styles.line}>
-        <IconLead icon={Sparkles} tone="occasion" />
-        <RowBody title={title} meta={t('practice.hub.occasionTag')} onPress={handleOpen} />
-      </View>
-    </View>
+    <Pressable
+      onPress={handleOpen}
+      accessibilityRole="button"
+      accessibilityLabel={`${title}. ${t('practice.hub.occasionTag')}`}
+      style={({ pressed }) => [styles.occasionLine, pressed && styles.bodyPressed]}
+    >
+      <Icon icon={Sparkles} size={16} color={colors.intentGoodDeed} />
+      <Text variant="small" weight="medium" numberOfLines={1} style={styles.occasionText}>
+        {title}
+        <Text variant="caption" tone="muted">
+          {` · ${t('practice.hub.occasionTag')}`}
+        </Text>
+      </Text>
+      <ForwardArrow size={14} tone="muted" />
+    </Pressable>
   );
 });
 
@@ -291,8 +310,8 @@ export const ProgramRow = memo(function ProgramRow({ done, meta }: { done: boole
   const styles = useStyles(makeStyles);
   return (
     <View style={styles.row}>
-      <View style={styles.line}>
-        <IconLead icon={NotebookPen} tone="quiet" />
+      <View style={[styles.line, done && styles.settledLine]}>
+        <IconLead icon={NotebookPen} />
         <RowBody title={t('practice.hub.programTitle')} meta={meta} metaIcon={done ? Check : undefined} settled={done} onPress={openProgram} />
       </View>
     </View>

@@ -39,6 +39,14 @@ describe('sin-program lock pref', () => {
   });
 });
 
+describe('«إظهار التاريخ الهجري» pref', () => {
+  it('is off by default (Gregorian only) and kept when saved', () => {
+    expect(DEFAULT_PREFS.showHijri).toBe(false);
+    expect(parsePrefs(JSON.stringify({ ...DEFAULT_PREFS, showHijri: true })).showHijri).toBe(true);
+    expect(parsePrefs(JSON.stringify({ v: 1, showHijri: 'yes' })).showHijri).toBe(false);
+  });
+});
+
 describe('settings strings', () => {
   const i18n = i18next.createInstance();
 

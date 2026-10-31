@@ -2,9 +2,10 @@
  * «عاداتي» today view, shared by the website, the extension and the app: what one day asks for across every track
  * (good habits, صلة الرحم, the sin program, sunnah occasions), and how present the user was on each day.
  *
- * Method (docs/research/anas-sheikh-akrim/4EkrbmmIlno-analysis.md §8): any amount logged counts as a day; there are no
- * streaks and no failure words, so this module exposes presence and the plans' own adherence band, never a run
- * length. The sin program appears only as a generic check-in (roadmap §0.2): no slug ever leaves `programs`.
+ * Method (docs/research/anas-sheikh-akrim/4EkrbmmIlno-analysis.md §8): any amount logged counts as a day and there are
+ * no failure words, so this module exposes presence and the plans' own adherence band. The run of complete days
+ * («سجلّي», owner decision 2026-10-31) lives in `streak.ts`. The sin program appears only as a generic check-in
+ * (roadmap §0.2): no slug ever leaves `programs`.
  */
 import { addDays, diffDays, eachDay, type LocalDate } from './dates.js';
 import { latestDate, nextDue, type Relative } from './kinship.js';
@@ -163,7 +164,7 @@ export interface DayPresence {
   share: number;
 }
 
-/** Presence per day from `from` to `to` (inclusive): the week strip and «وين وصلت». Never a run length. */
+/** Presence per day from `from` to `to` (inclusive): the marks of the month grid in «سجلّي». */
 export function presence(store: Store, from: LocalDate, to: LocalDate, opts: PlanDayOptions = {}): DayPresence[] {
   return eachDay(from, to).map((date) => {
     const items = actionable(dayAgenda(store, date, opts));

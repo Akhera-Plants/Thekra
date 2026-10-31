@@ -1,0 +1,61 @@
+/**
+ * The title block of «ورد اليوم»: the title and one date line (Gregorian; the Hijri date too when «إظهار التاريخ
+ * الهجري» is on), and on the other side the streak chip (a gold flame and the number, never red) and «أضف», the
+ * page's one solid control.
+ */
+
+import React from 'react';
+import { View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { Plus } from 'lucide-react-native';
+import { radius, space, useStyles, type Theme } from '@/theme';
+import { Button, Text } from '@/ui';
+import { StreakFlame } from './StreakFlame';
+
+const makeStyles = (t: Theme) => ({
+  root: { gap: 2 },
+  top: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.sm },
+  title: { flex: 1 },
+  chip: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 4,
+    minHeight: 36,
+    paddingHorizontal: space.md,
+    borderRadius: radius.full,
+    backgroundColor: t.colors.muted,
+  },
+});
+
+export interface WirdHeaderProps {
+  dateLabel: string;
+  /** The current streak; null hides the chip (no habit yet). */
+  streak: number | null;
+  onAdd: () => void;
+}
+
+export function WirdHeader({ dateLabel, streak, onAdd }: WirdHeaderProps) {
+  const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
+  return (
+    <View style={styles.root}>
+      <View style={styles.top}>
+        <Text variant="display" accessibilityRole="header" style={styles.title} numberOfLines={1}>
+          {t('practice.wird.title')}
+        </Text>
+        {streak !== null ? (
+          <View style={styles.chip} accessible accessibilityLabel={t('practice.wird.streakLabel', { count: streak })}>
+            <StreakFlame size={18} />
+            <Text variant="body" weight="semibold">
+              {String(streak)}
+            </Text>
+          </View>
+        ) : null}
+        <Button label={t('practice.hub.add')} icon={Plus} onPress={onAdd} />
+      </View>
+      <Text variant="small" tone="muted">
+        {dateLabel}
+      </Text>
+    </View>
+  );
+}
