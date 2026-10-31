@@ -1,0 +1,58 @@
+# Android APK for testing on a phone (no Expo account needed)
+#
+# Builds the mobile app on GitHub's runner (Android SDK and JDK are preinstalled) with
+# `expo prebuild` + Gradle, and attaches the APK to a GitHub pre-release, so it can be
+# downloaded straight from the phone. The APK is signed with the template's debug key:
+# for testing only, never for the Play Store (that goes through EAS, mobile-release.yml).
+#
+# Run it from Actions → "Android APK" → Run workflow.
+
+name: Android APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-apk
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '24'
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      EXPO_PUBLIC_API_URL: https://thekra.vercel.app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - run: pnpm install --frozen-lockfile
+      - name: Generate the native Android project
+        working-directory: mobile
+        run: pnpm exec expo prebuild --platform android --no-install --clean
+      - name: Build the release APK (arm64 phones)
+        working-directory: mobile/android
+        run: ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a
+      - name: Publish as a pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="android-test-${GITHUB_RUN_NUMBER}"
+          cp mobile/android/app/build/outputs/apk/release/app-release.apk "thekra-${tag}.apk"
+          gh release create "$tag" "thekra-${tag}.apk" \
+            --target "$GITHUB_SHA" --prerelease \
+            --title "ذكرى أندرويد (تجريبي) ${GITHUB_RUN_NUMBER}" \
+            --notes "نسخة تجريبية من ${GITHUB_SHA::7}. للتجربة فقط، وليست نسخة المتجر."
