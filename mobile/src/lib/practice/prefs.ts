@@ -7,7 +7,22 @@
  * Parsing is defensive and never throws.
  */
 
-import { cleanStrategyKeys, isValidTime, validateRule, type LocalTime, type Rule } from '@thekra/practice-core';
+import {
+  cleanStrategyKeys,
+  DEFAULT_TODAY_TEXT_SOURCE,
+  isValidTime,
+  parseMyReminders,
+  parsePrayerCache,
+  parsePrayerSettings,
+  parseTodayTextSource,
+  validateRule,
+  type LocalTime,
+  type MyReminder,
+  type PrayerCache,
+  type PrayerSettings,
+  type Rule,
+  type TodayTextSource,
+} from '@thekra/practice-core';
 
 export const PREFS_KEY = 'thekra.practice.prefs.v1';
 
@@ -45,6 +60,14 @@ export interface PracticePrefs {
   /** «ذكّرني بها» on «استراتيجيات العادات»: chosen strategy keys (opt-in, empty by default); one reminder a week at most. */
   strategies: string[];
   strategyTime: LocalTime;
+  /** «تذكيراتي» (phase 6): the user's own short lines, on this device only (≤ 120 characters, at most 20). */
+  myReminders: MyReminder[];
+  /** «أوقات الصلاة»: the city whose prayer times anchor «بعد الفجر»… slots; null = default times. */
+  prayer: PrayerSettings | null;
+  /** 30 days of AlAdhan times for `prayer` (fetched on foreground when it runs low). */
+  prayerCache: PrayerCache | null;
+  /** «نص اليوم» of the home-screen widget: where its daily text comes from. */
+  todayText: TodayTextSource;
 }
 
 export const DEFAULT_PREFS: PracticePrefs = {
@@ -65,6 +88,10 @@ export const DEFAULT_PREFS: PracticePrefs = {
   showHijri: false,
   strategies: [],
   strategyTime: '10:00',
+  myReminders: [],
+  prayer: null,
+  prayerCache: null,
+  todayText: DEFAULT_TODAY_TEXT_SOURCE,
 };
 
 function isRecord(v: unknown): v is Record<string, unknown> {
@@ -77,10 +104,10 @@ export function parsePrefs(json: unknown): PracticePrefs {
     try {
       raw = JSON.parse(json);
     } catch {
-      return { ...DEFAULT_PREFS, strategies: [] };
+      return { ...DEFAULT_PREFS, strategies: [], myReminders: [] };
     }
   }
-  if (!isRecord(raw) || raw.v !== 1) return { ...DEFAULT_PREFS, strategies: [] };
+  if (!isRecord(raw) || raw.v !== 1) return { ...DEFAULT_PREFS, strategies: [], myReminders: [] };
   const bool = (k: keyof PracticePrefs) => (typeof raw[k] === 'boolean' ? (raw[k] as boolean) : (DEFAULT_PREFS[k] as boolean));
   const time = (k: 'kinshipTime' | 'sinReminderTime' | 'eveningTime' | 'fridayTime' | 'strategyTime') => (isValidTime(raw[k]) ? (raw[k] as string) : DEFAULT_PREFS[k]);
   return {
@@ -100,6 +127,10 @@ export function parsePrefs(json: unknown): PracticePrefs {
     showHijri: bool('showHijri'),
     strategies: cleanStrategyKeys(raw.strategies),
     strategyTime: time('strategyTime'),
+    myReminders: parseMyReminders(raw.myReminders),
+    prayer: parsePrayerSettings(raw.prayer),
+    prayerCache: parsePrayerCache(raw.prayerCache),
+    todayText: parseTodayTextSource(raw.todayText),
     roles: Array.isArray(raw.roles)
       ? (raw.roles.filter((r) => (ROLE_KEYS as readonly string[]).includes(r as string)) as RoleKey[])
       : [],

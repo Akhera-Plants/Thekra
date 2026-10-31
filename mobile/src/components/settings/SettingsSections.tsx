@@ -15,6 +15,7 @@ import Constants from 'expo-constants';
 import {
   BookOpen,
   Check,
+  Clock,
   Database,
   Download,
   ExternalLink,
@@ -285,6 +286,26 @@ export function HeartSection() {
         />
       ) : null}
       <ListRow icon={NotebookPen} title={t('record.reviews')} hint={t('record.reviewsHint')} chevron onPress={() => router.push('/practice/reviews')} />
+    </SettingsGroup>
+  );
+}
+
+/** Phase 6: «نص اليوم» (the widget's source), «تذكيراتي» and «أوقات الصلاة» (prayer anchors). */
+export function ScreenSection() {
+  const { t } = useTranslation();
+  const mine = usePracticeStore((s) => s.prefs.myReminders.length);
+  const prayer = usePracticeStore((s) => s.prefs.prayer);
+  return (
+    <SettingsGroup title={t('dailyText.group')} lead={t('dailyText.groupLead')}>
+      <ListRow icon={BookOpen} title={t('dailyText.title')} chevron onPress={() => router.push('/practice/daily-text')} />
+      <ListRow icon={NotebookPen} title={t('myReminders.title')} value={String(mine)} chevron onPress={() => router.push('/practice/my-reminders')} />
+      <ListRow
+        icon={Clock}
+        title={t('prayerTimes.title')}
+        value={prayer ? prayer.city : t('prayerTimes.notSet')}
+        chevron
+        onPress={() => router.push('/practice/prayer-times')}
+      />
     </SettingsGroup>
   );
 }

@@ -65,6 +65,26 @@ Auth: `(auth)/login`, `(auth)/register`
 - Metro: `metro.config.js` maps `./x.js` → `./x.ts` only inside `packages/practice-core` (Jest: `jest.resolver.js`;
   Jest also transforms the ESM-only `@noble/*` packages).
 
+## Phase 6: screen and devices (redesign §4.6)
+
+- **Home-screen widgets (Android)** with `react-native-android-widget` 0.22.1 (its Expo config plugin in `app.config.ts`
+  writes the three providers, their XML and the manifest receivers at `expo prebuild`; nothing works in Expo Go):
+  «المداومة» (2×2: streak + «بقي n»), «ورد اليوم» (4×2: today's habits with done marks, habits only) and «نص اليوم»
+  (4×2: one text a day from the source chosen in الإعدادات ← نص اليوم: a reminder set, the saved texts, «تذكيراتي», or
+  «مواسم الخير»). `index.ts` (the app entry) registers the widget task; `src/widget/` holds the pure snapshot
+  (`snapshot.ts`, tested), the widgets and the update call. The app saves a snapshot and calls `requestWidgetUpdate` on
+  foreground and after every change; the task only reads it. Tapping a widget opens «ورد اليوم» (`thekra://habits`):
+  ticking from the widget is not offered, so only the app ever writes the practice store. A snapshot from an earlier day
+  shows no stale done marks; the daily text still turns over (the candidates are saved).
+- **iOS widget: next step, not built.** It needs a WidgetKit extension target (Swift/SwiftUI), an App Group shared with
+  the app for the snapshot, and a config plugin that adds the target at prebuild (e.g. Apple targets via a vetted
+  first-party-documented plugin), then the same snapshot written to the App Group instead of AsyncStorage.
+- **«تذكيراتي»**: the user's own lines (≤ 120 characters, at most 20), on this device only (prefs).
+- **Prayer-time anchors**: «متى؟» offers «بعد الفجر»… first, then «وقت أختاره». «أوقات الصلاة» (city, country code,
+  method by country, manual minutes) fetches 30 days from AlAdhan (`calendarByCity`) into the prefs on foreground when
+  fewer than 7 days are left; offline or without a city the anchors use default times. Local reminders resolve anchors
+  per day (practice-core `notificationPlan` with `prayerTimesOn`).
+
 ## Tests
 
 ```bash

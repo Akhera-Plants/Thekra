@@ -61,11 +61,14 @@ function scalar(raw: string): YamlValue {
 /** One flow value (`{…}`, `[…]`, quoted or plain) on a single line. */
 class FlowReader {
   private at = 0;
+  // Plain fields (no parameter properties): the import commands load this file with Node's type stripping.
+  private readonly text: string;
+  private readonly fail: (message: string) => never;
 
-  constructor(
-    private readonly text: string,
-    private readonly fail: (message: string) => never,
-  ) {}
+  constructor(text: string, fail: (message: string) => never) {
+    this.text = text;
+    this.fail = fail;
+  }
 
   read(): YamlValue {
     const value = this.value(false);
@@ -169,11 +172,10 @@ class FlowReader {
 class BlockParser {
   private index = 0;
   private readonly lines: string[];
+  private readonly name: string;
 
-  constructor(
-    source: string,
-    private readonly name: string,
-  ) {
+  constructor(source: string, name: string) {
+    this.name = name;
     this.lines = source.split(/\r?\n/);
   }
 

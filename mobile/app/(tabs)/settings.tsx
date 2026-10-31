@@ -25,7 +25,7 @@ import { usePracticeStore } from '@/lib/practice/practice-store';
 import { nowTime } from '@/lib/practice/format';
 import { queryKeys } from '@/lib/query-keys';
 import { ApiError } from '@/lib/types/api';
-import { AboutSection, HeartSection, NotificationsSection, PrivacySection, SettingsGroup } from '@/components/settings/SettingsSections';
+import { AboutSection, HeartSection, NotificationsSection, PrivacySection, ScreenSection, SettingsGroup } from '@/components/settings/SettingsSections';
 import { radius, space, useStyles, useTheme, useThemePreference, type Theme, type ThemePreference } from '@/theme';
 import { Button, Field, ListRow, Notice, PageHeader, Screen, SegmentTabs, SwitchRow, Text, type SegmentItem } from '@/ui';
 
@@ -108,6 +108,7 @@ export default function SettingsScreen() {
       <PrivacySection />
       <NotificationsSection />
       <HeartSection />
+      <ScreenSection />
       <AboutSection />
 
       {user ? (

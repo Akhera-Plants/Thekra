@@ -445,3 +445,22 @@ export interface QuoteDetailQuery {
   lang?: LocaleCode;
   includeAllTranslations?: boolean;
 }
+
+/** «مجموعات التذكير» (redesign §4.6): a published set with its texts (`GET /v1/reminder-sets`). */
+export interface ReminderSetDto {
+  id: string;
+  slug: string;
+  titleAr: string;
+  titleEn: string;
+  sortOrder: number;
+  published: boolean;
+  itemCount: number;
+  items: QuoteDto[];
+}
+
+/** A set as the curation desk sees it: stored ids in order (`GET /v1/admin/reminder-sets`). */
+export interface AdminReminderSetDto extends Omit<ReminderSetDto, 'items'> {
+  quoteIds: string[];
+  /** Only on the single-set read: the texts that pass the reader gate today. */
+  items?: QuoteDto[];
+}

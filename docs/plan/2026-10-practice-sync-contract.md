@@ -36,6 +36,14 @@ Dates on the wire are `YYYY-MM-DD`; timestamps are ISO 8601 UTC.
 ≤ 60). `resumedOn` is not in the redesign list: it keeps the paused days out of the streak after «استأنف» (a pause is
 `[pausedOn, resumedOn)`); it is valid only with `pausedOn` and never before it.
 
+**Phase 6 (2026-11-02, migration `20261102090000_reminder_sets_prayer_anchors`, additive):** `HabitPlan.slotAnchors
+Json?`: one prayer anchor per slot (`after-fajr | after-dhuhr | after-asr | after-maghrib | after-isha | before-sleep`, or
+`null` for a fixed time), same length as `slots`; `null` when the plan has no anchor. An anchored slot keeps the anchor's
+default time in `slots` (practice-core `DEFAULT_ANCHOR_TIMES`), so a client that does not know anchors still has a time.
+On the wire `slotAnchors` is in the canonical content only when at least one slot is anchored (older plans keep their
+acked versions); a client that omits it sends none (last writer wins on the whole plan, as for the phase-2 fields).
+Each client resolves anchors from its own 30-day AlAdhan cache (practice-core `prayer.ts`); the server never does.
+
 ## 3. Sync API (all JWT, `private, no-store`, throttled like other user routes)
 
 ### `GET /v1/me/practice?since=<ISO>` → changes after `since` (everything when absent)

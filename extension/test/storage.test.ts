@@ -29,7 +29,7 @@ function sample(): State {
   let quran = createPlan({ id: QURAN, habitKey: 'quran-wird', rule: { kind: 'weekdays', days: [0, 1, 2, 3] }, deedSlug: 'quran', title: 'ورد القرآن', unit: 'minutes', amount: 5, ceiling: 30, activeDaysPerWeek: 4, slots: ['06:00'], createdOn: '2026-09-01' }, T0);
   quran = startSeason(startEbb(logDone(quran, '2026-10-28', 2), '2026-10-28', T0), 7, '2026-11-10', T0);
   store = upsertPlan(upsertPlan(store, duha, T0), quran, T0);
-  return { store: { ...store, settings: { hijriOffset: -1, updatedAt: T0 } }, prefs: { v: 2, lang: 'en', quietDays: [5, 6], onboarded: true } };
+  return { store: { ...store, settings: { hijriOffset: -1, updatedAt: T0 } }, prefs: { ...defaultPrefs(), lang: 'en', quietDays: [5, 6], onboarded: true } };
 }
 
 describe('storage round-trip (Store v2)', () => {
@@ -68,7 +68,7 @@ describe('storage round-trip (Store v2)', () => {
 
   it('validates preferences field by field and drops unknown keys', () => {
     const p = parsePrefs({ v: 2, lang: 'fr', quietDays: [5, 5, 9, -1, 1.5, 0], onboarded: 'yes', rules: {}, extra: 1 });
-    expect(p).toEqual({ v: 2, lang: 'ar', quietDays: [0, 5], onboarded: false });
+    expect(p).toEqual({ ...defaultPrefs(), quietDays: [0, 5] });
   });
 
   it('holds no sin-program data (the extension is for good deeds only)', () => {
@@ -105,7 +105,7 @@ describe('upgrade from the first extension version', () => {
     expect(out.store.plans[0]?.updatedAt).toBe(T0);
     expect(out.store.settings).toEqual({ hijriOffset: 1, updatedAt: T0 });
     expect(out.store.tombstones).toEqual([]);
-    expect(out.prefs).toEqual({ v: 2, lang: 'en', quietDays: [5], onboarded: true });
+    expect(out.prefs).toEqual({ ...defaultPrefs(), lang: 'en', quietDays: [5], onboarded: true });
     // Written back, it reads as already migrated.
     const again = decodeState(encodeState(out));
     expect(again.migrated).toBe(false);

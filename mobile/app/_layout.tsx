@@ -29,6 +29,7 @@ import { setApiLocale } from '@/lib/api-client';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { dark, FontFiles, light, loadThemePreference, radius, ThemeProvider, useTheme } from '@/theme';
 import { usePracticeLifecycle } from '@/lib/practice/use-practice-lifecycle';
+import { useWidgetSync } from '@/widget/use-widget-sync';
 import { useStackScreenOptions } from '@/ui';
 
 // A deep link or a reminder tap that cold-starts the app lands on its screen with the tabs under it, so Back works.
@@ -163,5 +164,6 @@ function ThemedShell() {
 /** Background work of the practice feature (store, local reminders, account sync). Renders nothing. */
 function PracticeLifecycle() {
   usePracticeLifecycle();
+  useWidgetSync();
   return null;
 }

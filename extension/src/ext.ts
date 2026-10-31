@@ -3,13 +3,26 @@
  * `chrome.storage.local`, the catalog / evidence caches, account tokens and the sync status. Everything else is
  * pure and tested in Node.
  */
-import { serializeStore, type Store } from '@thekra/practice-core';
+import {
+  alAdhanCalendarUrl,
+  mergePrayerCache,
+  monthsToFetch,
+  parseAlAdhan,
+  prayerCacheStale,
+  serializeStore,
+  todayFrom,
+  type PrayerTimes,
+  type Store,
+} from '@thekra/practice-core';
 import { createAuthClient, parseTokens, type HttpFetch, type TokenStore, type Tokens } from './auth.js';
 import { parseCatalog, type Habit } from './catalog.js';
 import {
   evidenceIsFresh,
   fetchCatalog,
   fetchEvidence,
+  fetchReminderSets,
+  parseReminderSetsCache,
+  type ReminderSetLite,
   isFresh,
   parseCatalogCache,
   parseEvidenceCache,
@@ -23,6 +36,7 @@ import {
   encodeState,
   EVIDENCE_KEY,
   PREFS_KEY,
+  REMINDER_SETS_KEY,
   STORE_KEY,
   SYNC_STATUS_KEY,
   type State,
@@ -106,6 +120,43 @@ export async function getQuotes(): Promise<Record<string, QuoteLite>> {
   return parseEvidenceCache(raw[EVIDENCE_KEY])?.quotes ?? {};
 }
 
+/** Cached published reminder sets (possibly empty). Never touches the network. */
+export async function getReminderSets(): Promise<ReminderSetLite[]> {
+  const raw = await api.storage.local.get(REMINDER_SETS_KEY);
+  return parseReminderSetsCache(raw[REMINDER_SETS_KEY])?.sets ?? [];
+}
+
+/** The AlAdhan origin, an optional host permission asked when the user saves a city (scripts/manifest.mjs). */
+export const PRAYER_ORIGINS = ['https://api.aladhan.com/*'];
+
+/**
+ * Fetches 30 days of prayer times for the chosen city when the cache is stale (or `force`), only when the user granted
+ * the AlAdhan host permission. Failures keep the old cache; anchored slots then use the default times.
+ */
+export async function refreshPrayerTimes(force = false): Promise<'fresh' | 'updated' | 'unset' | 'failed'> {
+  const state = await loadState();
+  const settings = state.prefs.prayer;
+  if (!settings) return 'unset';
+  const day = todayFrom(new Date());
+  if (!force && !prayerCacheStale(state.prefs.prayerCache, settings, day)) return 'fresh';
+  try {
+    if (api.permissions && !(await api.permissions.contains({ origins: PRAYER_ORIGINS }))) return 'failed';
+    const fetched: Record<string, PrayerTimes> = {};
+    for (const { year, month } of monthsToFetch(day)) {
+      const res = await doFetch(alAdhanCalendarUrl(settings, year, month), { headers: { accept: 'application/json' } });
+      if (!res.ok) return 'failed';
+      Object.assign(fetched, parseAlAdhan(await res.json()));
+    }
+    if (Object.keys(fetched).length === 0) return 'failed';
+    const latest = await loadState();
+    if (!latest.prefs.prayer) return 'unset';
+    await saveState({ ...latest, prefs: { ...latest.prefs, prayerCache: mergePrayerCache(latest.prefs.prayerCache, latest.prefs.prayer, fetched, day) } });
+    return 'updated';
+  } catch {
+    return 'failed';
+  }
+}
+
 /**
  * Refreshes the catalog and the evidence of the chosen habits when older than a day (or when a newly chosen
  * habit's ids are missing). Failures are swallowed: the previous cache stays, and the failed call is retried
@@ -146,6 +197,18 @@ export async function refreshCaches(now = Date.now(), force = false): Promise<vo
     } else if (typeof stored?.[key] === 'number') {
       failed[key] = stored[key] as number;
     }
+  }
+  // «مجموعات التذكير» for the new-tab page (public, once a day per language).
+  const setsKey = `sets:${prefs.lang}`;
+  const setsCache = parseReminderSetsCache((await api.storage.local.get(REMINDER_SETS_KEY))[REMINDER_SETS_KEY]);
+  if ((!setsCache || setsCache.lang !== prefs.lang || !isFresh(setsCache.fetchedAt, now)) && mayTry(setsKey)) {
+    try {
+      await api.storage.local.set({ [REMINDER_SETS_KEY]: await fetchReminderSets(doFetch, now, prefs.lang) });
+    } catch {
+      failed[setsKey] = now;
+    }
+  } else if (typeof stored?.[setsKey] === 'number') {
+    failed[setsKey] = stored[setsKey] as number;
   }
   if (JSON.stringify(failed) !== JSON.stringify(stored ?? {})) await api.storage.local.set({ [ATTEMPT_KEY]: failed });
 }

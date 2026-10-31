@@ -7,8 +7,8 @@ import {
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { applyServerChanges, emptyStore, parseNotificationPrefs, type Store } from '@thekra/practice-core';
-import type { PushSubscription } from '@prisma/client';
+import { applyServerChanges, emptyStore, parseNotificationPrefs, parseResolvedAnchorTimes, type Store } from '@thekra/practice-core';
+import type { Prisma, PushSubscription } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { practiceCatalog } from '../practice/practice-catalog.js';
 import { readPracticeChanges } from '../practice/practice-sync.js';
@@ -38,9 +38,11 @@ export interface SubscribeInput {
 }
 
 /** The stored switches of a browser: only the fields the server plans for, validated again (never the private moment). */
-function storedPrefs(raw: object): Record<string, boolean | string | string[]> {
+function storedPrefs(raw: object): Prisma.InputJsonObject {
   const all = parseNotificationPrefs(raw);
+  const anchorTimes = parseResolvedAnchorTimes((raw as { anchorTimes?: unknown }).anchorTimes);
   return {
+    ...(Object.keys(anchorTimes).length > 0 ? { anchorTimes } : {}),
     habits: all.habits,
     periodic: all.periodic,
     periodicTime: all.periodicTime,
@@ -245,6 +247,7 @@ export class PushService {
       timeZone: sub.timeZone,
       locale: sub.locale === 'en' ? 'en' : 'ar',
       prefs: parseNotificationPrefs(sub.prefs ?? null),
+      anchorTimes: parseResolvedAnchorTimes((sub.prefs as { anchorTimes?: unknown } | null)?.anchorTimes),
       now,
     });
     const wanted = new Map(planned.map((item) => [item.key, item]));

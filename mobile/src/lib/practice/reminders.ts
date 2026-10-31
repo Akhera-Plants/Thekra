@@ -17,6 +17,7 @@ import {
   isPlanDueOn,
   formatPlanAmount,
   notificationPlan,
+  prayerLookup,
   NOTIFY_TEXTS,
   requiredOn,
   type LocalDate,
@@ -152,6 +153,8 @@ export function planReminders(input: ReminderInput): PlannedReminder[] {
     days,
     dayOptions: { hijriOffset: store.settings.hijriOffset, defaultRuleOf: (plan) => habitFor(plan, habits)?.defaultRule },
     defaultSlotsOf: (plan) => habitFor(plan, habits)?.defaultSlots,
+    // Prayer anchors («بعد الفجر»…) from the 30-day AlAdhan cache; default times when unset or not cached.
+    prayerTimesOn: prayerLookup(prefs.prayerCache, prefs.prayer),
     reviewDoneOn: input.reviewDoneOn,
   });
   const plans = new Map(store.plans.map((p) => [p.id, p]));

@@ -724,7 +724,8 @@
       "newQuote": "New text",
       "quote": "Text",
       "intention": "Intention",
-      "navLabel": "Review navigation"
+      "navLabel": "Review navigation",
+      "reminderSets": "Reminder sets"
     },
     "command": {
       "title": "Command palette",
@@ -887,6 +888,29 @@
       "loadError": "Could not load links",
       "reason": "Why proposed",
       "total": "{count} links"
+    },
+    "reminderSets": {
+      "title": "Reminder sets",
+      "helper": "Sets of published texts for the daily text. Only verses and sahih or hasan hadith are accepted.",
+      "newSet": "New set",
+      "newTitle": "Add a set",
+      "editTitle": "Edit set",
+      "editItems": "Set texts",
+      "itemsTitle": "Texts of «{title}»",
+      "itemsHelp": "One text id per line, in the order shown.",
+      "invalidIds": "{count, plural, one {# invalid id} other {# invalid ids}}",
+      "notAllowed": "Some texts are not a published verse or sahih/hasan hadith, so nothing was saved.",
+      "hidden": "Not published now",
+      "items": "Texts",
+      "state": "State",
+      "sortOrder": "Order",
+      "published": "Published",
+      "draft": "Draft",
+      "empty": "No sets yet",
+      "saveSuccess": "Set saved",
+      "saveError": "Could not save the set",
+      "deleteSuccess": "Set deleted",
+      "deleteError": "Could not delete the set"
     }
   },
   "footer": {
@@ -1600,7 +1624,49 @@
       "intentionHint": "A short morning card to renew your intention.",
       "evening": "Evening self-review",
       "eveningHint": "One question in the evening: what did you keep today?",
-      "done": "Start"
+      "done": "Start",
+      "customTime": "A time I choose",
+      "noSecondSlot": "No second time"
+    },
+    "myReminders": {
+      "title": "My reminders",
+      "lead": "Short lines you write for yourself, shown as the daily text if you choose them.",
+      "deviceOnly": "On my device only: they stay in this browser and are sent nowhere.",
+      "newLabel": "New line",
+      "add": "Add",
+      "remove": "Remove",
+      "count": "{n} of {max}",
+      "empty": "You have not written a reminder yet.",
+      "errors": {
+        "empty": "Write the line first.",
+        "tooLong": "The line is longer than {max} characters.",
+        "full": "You reached the limit of {n} lines.",
+        "duplicate": "This line is already there."
+      }
+    },
+    "prayer": {
+      "title": "Prayer times",
+      "lead": "Your city sets «After Fajr» and the other reminders to the prayer times.",
+      "city": "City",
+      "country": "Country code (two letters)",
+      "method": "Calculation method",
+      "methodByCountry": "By country",
+      "offsets": "Manual adjustment in minutes",
+      "prayers": {
+        "fajr": "Fajr",
+        "dhuhr": "Dhuhr",
+        "asr": "Asr",
+        "maghrib": "Maghrib",
+        "isha": "Isha"
+      },
+      "save": "Save and load the times",
+      "saving": "Loading…",
+      "clear": "Clear the city",
+      "saved": "30 days of times are saved on this device.",
+      "failed": "The times could not be loaded; default times are used until the device is online.",
+      "helper": "The times come from the AlAdhan service and are kept on your device for 30 days.",
+      "anchorsTitle": "Today's times",
+      "defaults": "Default times, until you choose your city."
     }
   },
   "calendarPage": {

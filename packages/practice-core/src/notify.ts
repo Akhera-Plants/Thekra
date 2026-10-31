@@ -28,6 +28,7 @@ import { activePrograms } from './sin-program.js';
 import { isExcused, type Store } from './storage.js';
 import { isPeriodicPlan } from './wird.js';
 import { cleanStrategyKeys, strategyByKey, strategyOfWeek } from './strategies.js';
+import type { PrayerTimesLookup } from './prayer.js';
 
 /** No reminder chosen by the policy rings from this time… */
 export const QUIET_START: LocalTime = '23:00';
@@ -122,6 +123,11 @@ export interface NotificationPlanInput {
   days: number;
   /** Which days a plan asks for (the same lookup as «ورد اليوم»). */
   dayOptions?: PlanDayOptions;
+  /**
+   * Prayer times per day for anchored slots («بعد الفجر»…). Unknown days (or no lookup) use the default prayer times.
+   * The server passes the times the browser resolved and sent with its subscription.
+   */
+  prayerTimesOn?: PrayerTimesLookup;
   /** The catalog's suggested slots of a plan: a slot among them was not set by the user (quiet hours apply). */
   defaultSlotsOf?: (plan: Plan) => readonly LocalTime[] | undefined;
   /** The kinds this client delivers (default all). The server never plans `private`. */
@@ -140,6 +146,8 @@ function byTime(a: PlannedNotification, b: PlannedNotification): number {
 /** True when a habit slot may ring in the quiet hours: the night prayer, or a time the user set himself. */
 function quietExempt(plan: Plan, time: LocalTime, defaultSlotsOf: NotificationPlanInput['defaultSlotsOf']): boolean {
   if (plan.habitKey !== undefined && NIGHT_HABIT_KEYS.includes(plan.habitKey)) return true;
+  // A prayer anchor is the user's own choice (after Fajr may be before 05:00 in summer).
+  if (plan.slotAnchors?.some((a) => a !== null)) return true;
   const suggested = defaultSlotsOf?.(plan);
   return suggested === undefined || !suggested.includes(time);
 }
@@ -148,11 +156,12 @@ function habitEntries(input: NotificationPlanInput, dates: readonly LocalDate[])
   const { store, today, now, dayOptions = {} } = input;
   const out: PlannedNotification[] = [];
   for (const plan of store.plans) {
-    let slots = reminderSlots(plan);
-    if (slots.length === 0) continue;
-    if (isPeriodicPlan(plan, dayOptions)) slots = slots.slice(0, 1);
+    if (reminderSlots(plan).length === 0) continue;
+    const periodic = isPeriodicPlan(plan, dayOptions);
     for (const date of dates) {
       if (isExcused(store, date) || !planAsksOn(plan, date, dayOptions)) continue;
+      let slots = reminderSlots(plan, input.prayerTimesOn?.(date));
+      if (periodic) slots = slots.slice(0, 1);
       if (date === today && (plan.log[today] ?? 0) >= requiredOn(plan, today)) continue;
       for (const time of slots) {
         if (date === today && time <= now) continue;

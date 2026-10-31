@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { Separator } from '@/components/ui/separator';
 import { NotificationsLink } from '@/features/practice/components/NotificationsLink';
+import { ScreenSettingsLinks } from '@/features/practice/components/screen/ScreenSettingsLinks';
 import { LocaleSwitcher } from '@/components/shared/LocaleSwitcher';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { useSession } from '@/features/auth/hooks/useSession';
@@ -32,8 +33,9 @@ export function SettingsView() {
         )}
 
         {/* «التنبيهات»: every reminder switch lives on its own page */}
-        <section>
+        <section className="flex flex-col gap-3">
           <NotificationsLink />
+          <ScreenSettingsLinks />
         </section>
 
         <Separator />

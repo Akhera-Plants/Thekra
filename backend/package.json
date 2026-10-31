@@ -10,6 +10,7 @@
     "db:seed": "prisma db seed",
     "import:book": "node --env-file=.env --experimental-strip-types prisma/imports/run.ts",
     "import:taxonomy": "node --env-file=.env --experimental-strip-types prisma/imports/run.ts taxonomy",
+    "reminder-sets:import": "node --env-file=.env --experimental-strip-types prisma/imports/reminder-sets-run.ts",
     "taxonomy:themes": "node --env-file=.env --experimental-strip-types prisma/imports/themes-run.ts",
     "admin:create": "node --experimental-strip-types scripts/admin/run.ts",
     "push:keys": "web-push generate-vapid-keys --json",

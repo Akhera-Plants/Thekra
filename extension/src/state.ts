@@ -4,11 +4,29 @@
  *     as `serializeStore` text. Relatives, contacts and settings that arrive from the account are kept untouched
  *     even though the extension does not show relatives, so a later sync never deletes them. The extension never
  *     creates or reads sin programs;
- *   - `thekra.prefs`: device-only UI preferences (language, quiet days, onboarded);
+ *   - `thekra.prefs`: device-only UI preferences (language, quiet days, onboarded) and, since phase 6, the new-tab page
+ *     (on/off, its text source, the Hijri line), «تذكيراتي» (this browser's own list; the app and the site keep theirs)
+ *     and the prayer-time city with its 30-day cache;
  *   - `thekra.auth` / `thekra.syncStatus`: account tokens and the last sync result (auth.ts, sync-runner.ts);
  *   - `thekra.catalog` / `thekra.evidence`: caches of the two public API answers (cache.ts).
  */
-import { emptyStore, parseStore, serializeStore, validateRule, type Plan, type Rule, type Store } from '@thekra/practice-core';
+import {
+  emptyStore,
+  parseMyReminders,
+  parsePrayerCache,
+  parsePrayerSettings,
+  parseStore,
+  parseTodayTextSource,
+  serializeStore,
+  validateRule,
+  type MyReminder,
+  type Plan,
+  type PrayerCache,
+  type PrayerSettings,
+  type Rule,
+  type Store,
+  type TodayTextSource,
+} from '@thekra/practice-core';
 import { SLUG, UUID } from './catalog.js';
 
 export const STORE_KEY = 'thekra.store';
@@ -17,6 +35,7 @@ export const CATALOG_KEY = 'thekra.catalog';
 export const EVIDENCE_KEY = 'thekra.evidence';
 export const AUTH_KEY = 'thekra.auth';
 export const SYNC_STATUS_KEY = 'thekra.syncStatus';
+export const REMINDER_SETS_KEY = 'thekra.reminderSets';
 
 export type Lang = 'ar' | 'en';
 
@@ -27,6 +46,20 @@ export interface Prefs {
   quietDays: number[];
   /** True once the user saved the onboarding form. */
   onboarded: boolean;
+  /**
+   * The new-tab page (phase 6). Off: the override cannot be removed at runtime, so the page shows only the date on a
+   * plain background.
+   */
+  newTab: boolean;
+  /** Where the new-tab text comes from: a reminder set, a habit's evidence, or «تذكيراتي». */
+  newTabSource: TodayTextSource;
+  /** The Hijri date under the Gregorian one on the new-tab page. Off by default. */
+  showHijri: boolean;
+  /** «تذكيراتي» of this browser (practice-core: ≤ 120 characters, at most 20). */
+  myReminders: MyReminder[];
+  /** The city whose prayer times anchor «بعد الفجر»… reminders; null = default times. */
+  prayer: PrayerSettings | null;
+  prayerCache: PrayerCache | null;
 }
 
 export interface State {
@@ -35,7 +68,18 @@ export interface State {
 }
 
 export function defaultPrefs(): Prefs {
-  return { v: 2, lang: 'ar', quietDays: [], onboarded: false };
+  return {
+    v: 2,
+    lang: 'ar',
+    quietDays: [],
+    onboarded: false,
+    newTab: true,
+    newTabSource: { kind: 'mine' },
+    showHijri: false,
+    myReminders: [],
+    prayer: null,
+    prayerCache: null,
+  };
 }
 
 function isRecord(v: unknown): v is Record<string, unknown> {
@@ -61,6 +105,16 @@ export function parsePrefs(raw: unknown): Prefs {
     out.quietDays = [...new Set(p.quietDays.filter((d): d is number => Number.isInteger(d) && d >= 0 && d <= 6))].sort();
   }
   out.onboarded = p.onboarded === true;
+  out.newTab = p.newTab !== false;
+  if (p.newTabSource !== undefined) {
+    const source = parseTodayTextSource(p.newTabSource);
+    // The extension offers a set, a habit's evidence or «تذكيراتي»; nothing else is a source here.
+    if (source.kind === 'set' || source.kind === 'habit' || source.kind === 'mine') out.newTabSource = source;
+  }
+  out.showHijri = p.showHijri === true;
+  out.myReminders = parseMyReminders(p.myReminders);
+  out.prayer = parsePrayerSettings(p.prayer);
+  out.prayerCache = parsePrayerCache(p.prayerCache);
   return out;
 }
 

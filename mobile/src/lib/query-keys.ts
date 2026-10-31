@@ -42,6 +42,9 @@ export const queryKeys = {
     detail: (number: number, lang: string) => ['branches', 'detail', number, lang] as const,
     quotes: (number: number, p: BranchQuotesQuery, lang: string) => ['branches', number, 'quotes', p, lang] as const,
   },
+  reminderSets: {
+    all: ['reminder-sets'] as const,
+  },
   favorites: {
     all: ['favorites'] as const,
     quoteIds: ['favorites', 'quote-ids'] as const,
@@ -101,4 +104,6 @@ export const PERSISTED_QUERY_KEYS = [
   // Public catalog + evidence texts: needed offline for reminder titles and the habit screens.
   // Nothing user-specific lives under this key.
   'practice',
+  // Published «مجموعات التذكير» (public): the widget's daily text works offline.
+  'reminder-sets',
 ] as const;

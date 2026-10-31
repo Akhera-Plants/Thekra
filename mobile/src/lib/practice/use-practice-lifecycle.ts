@@ -23,6 +23,7 @@ import { usePracticeStore, today } from './practice-store';
 import { planReminders, type ReminderTexts } from './reminders';
 import { pendingCount, syncPractice } from './sync-runner';
 import { isVaultUnlocked, pushVault, refreshVault } from './vault-runner';
+import { refreshPrayerTimes } from './prayer';
 
 const SYNC_INTERVAL_MS = 15 * 60 * 1000;
 import { usePracticeCatalog } from '../api/practice';
@@ -121,6 +122,8 @@ export function usePracticeLifecycle(): void {
       }
     });
     void rescheduleRef.current();
+    // Prayer anchors: fetch 30 days of times for the chosen city when they run low (the store change re-plans).
+    void refreshPrayerTimes();
     return () => {
       unsub();
       if (remindTimer) clearTimeout(remindTimer);
@@ -162,6 +165,7 @@ export function usePracticeLifecycle(): void {
       startInterval();
       if (!usePracticeStore.getState().hydrated) return;
       void rescheduleRef.current();
+      void refreshPrayerTimes();
       const id = userIdRef.current;
       if (id) void syncPractice(id).then(() => refreshVault(id));
     });

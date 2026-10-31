@@ -27,6 +27,9 @@ export default function PracticeLayout() {
       <Stack.Screen name="pledges" options={{ title: t('practice.notifyPrefs.pledges') }} />
       <Stack.Screen name="reviews" options={{ title: t('record.reviews') }} />
       <Stack.Screen name="strategies" options={{ title: t('practice.strategies.title') }} />
+      <Stack.Screen name="my-reminders" options={{ title: t('myReminders.title') }} />
+      <Stack.Screen name="prayer-times" options={{ title: t('prayerTimes.title') }} />
+      <Stack.Screen name="daily-text" options={{ title: t('dailyText.title') }} />
     </Stack>
   );
 }

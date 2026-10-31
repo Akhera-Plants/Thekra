@@ -94,6 +94,10 @@ export const queryKeys = {
   adminTags: {
     all: ['admin', 'tags'] as const,
   },
+  adminReminderSets: {
+    all: ['admin', 'reminder-sets'] as const,
+    detail: (id: string) => ['admin', 'reminder-sets', id] as const,
+  },
   adminSinQuotes: {
     all: ['admin', 'sin-quotes'] as const,
     list: (p: SinQuotesAdminQuery) => ['admin', 'sin-quotes', 'list', p] as const,

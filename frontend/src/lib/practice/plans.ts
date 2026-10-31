@@ -4,6 +4,10 @@
  * for the page and builds the reminder calendar file.
  */
 import {
+  orderedSlots,
+  planSlotTimes,
+  type PrayerAnchor,
+  type PrayerTimes,
   addDays,
   adherence,
   adherenceBand,
@@ -72,7 +76,8 @@ export type Distance = 'far' | 'near';
 
 export interface PlanChoice {
   distance: Distance;
-  slots: string[];
+  /** `HH:MM` times and/or prayer anchors («after-fajr»…), from the «متى؟» step. */
+  slots: (string | PrayerAnchor)[];
   activeDaysPerWeek: number;
 }
 
@@ -88,9 +93,14 @@ export function planFromHabit(habit: PracticeHabit, choice: PlanChoice, today: L
     amount: habit.ceiling !== undefined ? Math.min(amount, habit.ceiling) : amount,
     ceiling: habit.ceiling,
     activeDaysPerWeek: choice.activeDaysPerWeek,
-    slots: [...new Set(choice.slots)].sort(),
+    ...sortedSlots(choice.slots),
     createdOn: today,
   });
+}
+
+/** Unique choices in the order they ring by default (practice-core `orderedSlots`). */
+export function sortedSlots(choices: readonly (string | PrayerAnchor)[]): Pick<Plan, 'slots' | 'slotAnchors'> {
+  return orderedSlots(choices);
 }
 
 /**
@@ -101,6 +111,8 @@ export interface PlanSchedule {
   /** The catalog habit's default rule, used when the plan has no rule of its own. */
   fallback?: Rule;
   hijriOffset?: number;
+  /** Today's prayer times for anchored slots («بعد الفجر»…); default times when absent. */
+  prayer?: PrayerTimes;
 }
 
 export interface PlanToday {
@@ -134,8 +146,9 @@ export function planToday(plan: Plan, today: LocalDate, nowMinutes: number, sche
   const required = requiredOn(plan, today);
   const done = plan.log[today] ?? 0;
   const remaining = Math.max(0, required - done);
-  const passed = plan.slots.filter((slot) => timeToMinutes(slot) <= nowMinutes);
-  const upcoming = plan.slots.filter((slot) => timeToMinutes(slot) > nowMinutes);
+  const times = [...planSlotTimes(plan, schedule.prayer)].sort();
+  const passed = times.filter((slot) => timeToMinutes(slot) <= nowMinutes);
+  const upcoming = times.filter((slot) => timeToMinutes(slot) > nowMinutes);
   const ageDays = diffDays(plan.createdOn, today);
   const monthStart = addDays(today, -(MONTH_DAYS - 1));
   const ratio = adherence(plan, monthStart, today);
@@ -258,12 +271,15 @@ export function editPlan(plan: Plan, edit: PlanEdit, today: LocalDate, now: IsoT
   const changed =
     lowered || slots.join() !== [...plan.slots].sort().join() || edit.activeDaysPerWeek !== plan.activeDaysPerWeek;
   if (!changed) return plan;
+  const sameSlots = slots.join() === [...plan.slots].sort().join();
   const next: Plan = {
     ...(lowered ? decreaseTo(plan, edit.amount, today, now) : plan),
-    slots,
+    // Unchanged times keep their prayer anchors; new times are the user's own fixed times.
+    slots: sameSlots ? plan.slots : slots,
     activeDaysPerWeek: edit.activeDaysPerWeek,
     updatedAt: now,
   };
+  if (!sameSlots) delete next.slotAnchors;
   const err = validatePlan(next);
   if (err) throw new RangeError(`Invalid plan: ${err}`);
   return next;

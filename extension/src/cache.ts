@@ -98,3 +98,46 @@ export async function fetchEvidence(fetchFn: FetchLike, ids: readonly string[], 
   }
   return { fetchedAt: now, lang, ids: wanted, quotes };
 }
+
+// ── «مجموعات التذكير» (phase 6, the new-tab text) ─────────────────────────────────────────────────────────────
+
+export const REMINDER_SETS_URL = `${API_ORIGIN}/v1/reminder-sets`;
+
+export interface ReminderSetLite {
+  slug: string;
+  titleAr: string;
+  titleEn: string;
+  items: QuoteLite[];
+}
+
+export interface ReminderSetsCache {
+  fetchedAt: number;
+  lang: Lang;
+  sets: ReminderSetLite[];
+}
+
+function parseSets(raw: unknown): ReminderSetLite[] {
+  if (!Array.isArray(raw)) return [];
+  const out: ReminderSetLite[] = [];
+  for (const s of raw) {
+    if (!isRecord(s) || typeof s.slug !== 'string' || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(s.slug)) continue;
+    if (typeof s.titleAr !== 'string' || typeof s.titleEn !== 'string' || !Array.isArray(s.items)) continue;
+    const items = s.items.map(toQuoteLite).filter((q): q is QuoteLite => q !== null);
+    if (items.length > 0) out.push({ slug: s.slug, titleAr: s.titleAr, titleEn: s.titleEn, items });
+  }
+  return out;
+}
+
+export function parseReminderSetsCache(raw: unknown): ReminderSetsCache | null {
+  if (!isRecord(raw) || typeof raw.fetchedAt !== 'number') return null;
+  return { fetchedAt: raw.fetchedAt, lang: raw.lang === 'en' ? 'en' : 'ar', sets: parseSets(raw.sets) };
+}
+
+/** Published sets with their texts (the API applies the publishing gate). Throws on a network error or non-2xx. */
+export async function fetchReminderSets(fetchFn: FetchLike, now: number, lang: Lang): Promise<ReminderSetsCache> {
+  const res = await fetchFn(`${REMINDER_SETS_URL}?lang=${lang}`, { headers: { accept: 'application/json' } });
+  if (!res.ok) throw new Error(`reminder-sets: HTTP ${res.status}`);
+  const body = await res.json();
+  if (!isRecord(body) || !Array.isArray(body.data)) throw new Error('reminder-sets: unexpected answer');
+  return { fetchedAt: now, lang, sets: parseSets(body.data) };
+}

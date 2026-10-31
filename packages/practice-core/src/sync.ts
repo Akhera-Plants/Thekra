@@ -342,6 +342,8 @@ function planFromWire(w: Record<string, unknown>, log: Record<string, number>, u
   for (const k of ['pausedOn', 'resumedOn', 'establishedOn'] as const) {
     if (w[k] !== null && w[k] !== undefined) plan[k] = w[k];
   }
+  // Phase-6 prayer anchors: null or absent means none.
+  if (Array.isArray(w.slotAnchors) && w.slotAnchors.some((a) => a !== null)) plan.slotAnchors = [...w.slotAnchors];
   try {
     return validatePlan(plan) === null ? (plan as unknown as Plan) : null;
   } catch {

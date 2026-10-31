@@ -35,6 +35,8 @@ export interface PushPrefsBody {
   /** «ذكّرني بها»: chosen strategy keys (at most one reminder a week). */
   strategies: string[];
   strategyTime: string;
+  /** Phase 6: prayer anchors resolved by this browser for the next days (`{ date: { 'after-fajr': 'HH:MM', … } }`). */
+  anchorTimes?: Record<string, Record<string, string>>;
 }
 
 export async function getPushConfig(): Promise<PushConfig> {

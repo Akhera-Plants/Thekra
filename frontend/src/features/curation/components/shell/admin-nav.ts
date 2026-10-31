@@ -5,6 +5,7 @@ import {
   Inbox,
   Library,
   Link2,
+  ListChecks,
   RefreshCcw,
   Scale,
   Tags,
@@ -19,6 +20,7 @@ export type AdminNavKey =
   | 'goodDeeds'
   | 'sources'
   | 'tags'
+  | 'reminderSets'
   | 'sync';
 
 export interface AdminNavItem {
@@ -50,6 +52,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { key: 'goodDeeds', href: '/admin/good-deeds', icon: HandHeart },
       { key: 'sources', href: '/admin/sources', icon: Library },
       { key: 'tags', href: '/admin/tags', icon: Tags },
+      { key: 'reminderSets', href: '/admin/reminder-sets', icon: ListChecks },
     ],
   },
   {

@@ -79,6 +79,48 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         { faceIDPermission: 'Thekra uses Face ID to unlock the private pages you choose to lock.' },
       ],
       '@react-native-community/datetimepicker',
+      // Android home-screen widgets (redesign §4.6). The plugin writes the providers, their XML and the manifest
+      // receivers during `expo prebuild`; the widgets are drawn by the JS task registered in index.ts. iOS: next step.
+      [
+        'react-native-android-widget',
+        {
+          widgets: [
+            {
+              name: 'StreakWidget',
+              label: 'المداومة',
+              description: 'المداومة وما بقي من ورد اليوم',
+              minWidth: '110dp',
+              minHeight: '110dp',
+              targetCellWidth: 2,
+              targetCellHeight: 2,
+              resizeMode: 'horizontal|vertical',
+              updatePeriodMillis: 1800000,
+            },
+            {
+              name: 'WirdWidget',
+              label: 'ورد اليوم',
+              description: 'أعمال اليوم وما تمّ منها',
+              minWidth: '250dp',
+              minHeight: '110dp',
+              targetCellWidth: 4,
+              targetCellHeight: 2,
+              resizeMode: 'horizontal|vertical',
+              updatePeriodMillis: 1800000,
+            },
+            {
+              name: 'DailyTextWidget',
+              label: 'نص اليوم',
+              description: 'نص واحد كل يوم من المصدر الذي تختاره',
+              minWidth: '250dp',
+              minHeight: '110dp',
+              targetCellWidth: 4,
+              targetCellHeight: 2,
+              resizeMode: 'horizontal|vertical',
+              updatePeriodMillis: 1800000,
+            },
+          ],
+        },
+      ],
     ],
     experiments: {
       typedRoutes: true,

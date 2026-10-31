@@ -13,6 +13,7 @@ import {
 } from '@/lib/api/push';
 import { reportFailure } from '@/lib/errors';
 import { getPracticeSnapshot, notificationPrefsOf } from '@/lib/practice/local-store';
+import { anchorTimesForPush } from '@/lib/practice/screen-stores';
 import type { LocaleCode } from '@/lib/types/enums';
 import { base64UrlToUint8Array, isSameServerKey, needsHomeScreenInstall, type PushDeviceSupport } from './push-support';
 
@@ -128,6 +129,8 @@ function pushPrefsBody(): PushPrefsBody {
     fridayTime: n.fridayTime,
     strategies: n.strategies,
     strategyTime: n.strategyTime,
+    // Prayer anchors («بعد الفجر»…) resolved on this device; the server never calls AlAdhan.
+    anchorTimes: anchorTimesForPush(),
   };
 }
 

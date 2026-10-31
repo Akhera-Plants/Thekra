@@ -148,7 +148,11 @@ Thekra/                       pnpm workspace (Node 24 target; local machine has 
 4. **Numbers to remember** (database, 2026-10-22; re-run `docs/methodology/queries.sql`): 36,850 hadith
    (14,322 published), 5,111 athar (550 published), 6,236 verses (989 linked to topics), 89 Source rows,
    84 sins, 80 good deeds, 77 branches, 31 migrations.
-5. **Release copy** for production: `scripts/release-db.sh build` → clean (removes User/Favorite/SyncLog) →
+5. **«مجموعات التذكير»** (phase 6): sets of published verse/sahih-hasan ids for «نص اليوم», seeded from
+   `backend/prisma/taxonomy/reminder-sets.yaml` with `pnpm --filter backend reminder-sets:import` (dry run by default,
+   `--apply` writes; skips ids that are not publishable in the target DB; second run writes 0) and edited in the desk
+   (`/admin/reminder-sets`). Public read `GET /v1/reminder-sets`. Every id must already appear in a reviewed file (unit test).
+6. **Release copy** for production: `scripts/release-db.sh build` → clean (removes User/Favorite/SyncLog) →
    verify (87 checks) → `/tmp/thekra-release.dump`; `push` restores to Neon after a typed confirmation.
    Details: [docs/build/RELEASE_DB.md](../build/RELEASE_DB.md).
 

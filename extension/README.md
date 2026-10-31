@@ -17,6 +17,10 @@ Good deeds only: the sin-leaving program is not in the extension.
   وعند فتح النافذة، وبعد كل تعديل (بعد 3 ثوانٍ)، وكل 15 دقيقة. الخروج يُبقي بياناتك على الجهاز.
 - **الخصوصية:** كل شيء في `chrome.storage.local` على جهازك. الطلبات كلها إلى `thekra.vercel.app` فقط: الكتالوج والنصوص،
   والمزامنة إن سجّلت الدخول. لا يُرسل برنامج ترك المعصية أبدًا (وليس في الإضافة أصلًا).
+- **التبويب الجديد:** خلفية هادئة بالـCSS فقط، ونص اليوم من مصدر تختاره (مجموعة تذكير، أو دليل عادة عندك، أو «تذكيراتي»
+  الخاصة بهذا المتصفح)، وورد اليوم بعلامات الإنجاز والمداومة، والتاريخ الميلادي (والهجري إن اخترته). لا يظهر فيه شيء من
+  برنامج ترك المعصية. إطفاؤه من الخيارات يُبقي التاريخ وحده: المتصفح لا يسمح للإضافة بإرجاع الصفحة الافتراضية وهي تعمل.
+- **أوقات الصلاة:** المدينة ورمز الدولة لتذكيرات «بعد الفجر» وأخواتها؛ يُطلب إذن `api.aladhan.com` عند الحفظ فقط.
 - **البناء:** `pnpm --filter thekra-extension build` ثم حمّل `dist/chrome` أو `dist/firefox` (الخطوات بالإنجليزية أدناه).
 
 ## Build
@@ -75,12 +79,14 @@ Sync contract: [docs/plan/2026-10-practice-sync-contract.md](../docs/plan/2026-1
 | Path | What |
 | --- | --- |
 | `src/background.ts` | Service worker (Firefox: background script). Alarms, notifications, buttons, cache refresh |
-| `src/popup/` | Onboarding/settings and the Today view (plain DOM, logical CSS, RTL in Arabic, site palette) |
+| `src/popup/` | Onboarding/settings and the Today view (plain DOM, logical CSS, RTL in Arabic, site palette); `screen-section.ts`: new-tab, «تذكيراتي», prayer-time options |
+| `src/newtab/` | The new-tab page (`chrome_url_overrides.newtab`, Chrome and Firefox): CSS-only background; off = date only |
+| `src/newtab-model.ts` | Pure: the new-tab date, text, habits and streak (practice-core) |
 | `src/scheduler.ts` | Pure: next reminder instants from plans + rules + quiet days + Hijri offset |
 | `src/quotes.ts` | Pure: which published quote a notification shows, labels, notification text |
 | `src/progress.ts` | Pure: adherence band, increase, ebb, Ramadan season (all through practice-core) |
 | `src/state.ts` | Storage envelope (Store v2 via `serializeStore` / `parseStore`, UI prefs, v1 upgrade) |
-| `src/cache.ts` | The two public API calls and their daily caches |
+| `src/cache.ts` | The public API calls (catalog, evidence, reminder sets) and their daily caches |
 | `src/auth.ts` | Sign-in, token refresh on expiry and on 401, sign-out |
 | `src/sync-runner.ts` | Pure sync run (plans and logs only), status, `programs` guard |
 | `src/messages.ts` | Popup → background messages (`ready`, `sync`, `signIn`, `signOut`) |

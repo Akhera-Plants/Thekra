@@ -1,6 +1,8 @@
 import { createHash } from 'node:crypto';
 import {
+  AFTER_PRAYER_MINUTES,
   DEFAULT_NOTIFICATION_PREFS,
+  shiftTime,
   diffDays,
   formatPlanAmount,
   notificationPlan,
@@ -8,6 +10,8 @@ import {
   requiredOn,
   type NotificationPrefs,
   type Plan,
+  type PrayerAnchor,
+  type PrayerTimes,
   type PlanUnit,
   type Store,
 } from '@thekra/practice-core';
@@ -27,6 +31,9 @@ import { zonedParts, zonedToUtc } from './zoned-time.js';
  *   (`PushSubscription.prefs`, sent by the web app with the subscription).
  * - Quiet hours 23:00–05:00 (the night prayer and the user's own times excepted), at most 4 a day and then one digest.
  * - The sin program is never here: the server cannot read it.
+ * - Prayer anchors («بعد الفجر»…): the server never calls AlAdhan. The browser resolves the anchors from its own 30-day
+ *   cache and sends the times of the next days with its prefs (`anchorTimes`); a day without them uses the default
+ *   prayer times (practice-core `DEFAULT_ANCHOR_TIMES`).
  */
 
 /** Long enough to outlast one missed daily refill (Vercel Hobby cron fires once a day, ±59 min). */
@@ -80,6 +87,8 @@ export interface PushPlanInput {
   now: Date;
   /** The browser's switches of «التنبيهات» (default: practice-core defaults). */
   prefs?: NotificationPrefs;
+  /** Anchor times resolved by the browser, per local date (practice-core `resolvedAnchorTimes`). */
+  anchorTimes?: Record<string, Record<PrayerAnchor, string>>;
   windowHours?: number;
   limit?: number;
 }
@@ -108,6 +117,23 @@ export function sitePath(locale: 'ar' | 'en', path: string): string {
   return locale === 'en' ? `/en${path}` : path;
 }
 
+/**
+ * Prayer times that resolve back to the browser's anchor times (`resolveAnchor` adds the fixed minutes after a prayer).
+ * Only the five «after-…» anchors are mapped back; «before-sleep» is recomputed from isha with the same clamp the
+ * browser used, so it matches.
+ */
+function anchorPrayerTimes(times: Record<PrayerAnchor, string> | undefined): PrayerTimes | undefined {
+  if (!times) return undefined;
+  const back = (t: string) => shiftTime(t, -AFTER_PRAYER_MINUTES);
+  return {
+    fajr: back(times['after-fajr']),
+    dhuhr: back(times['after-dhuhr']),
+    asr: back(times['after-asr']),
+    maghrib: back(times['after-maghrib']),
+    isha: back(times['after-isha']),
+  };
+}
+
 export function planPushes(input: PushPlanInput): PlannedPush[] {
   const { store, habits, timeZone, locale, now } = input;
   const end = new Date(now.getTime() + (input.windowHours ?? PUSH_WINDOW_HOURS) * 3_600_000);
@@ -128,6 +154,7 @@ export function planPushes(input: PushPlanInput): PlannedPush[] {
       defaultRuleOf: (plan) => habitFor(plan, habits)?.defaultRule,
     },
     defaultSlotsOf: (plan) => habitFor(plan, habits)?.defaultSlots,
+    prayerTimesOn: (date) => anchorPrayerTimes(input.anchorTimes?.[date]),
     kinds: ['habit', 'periodic', 'evening', 'friday', 'strategy', 'digest'],
   });
 

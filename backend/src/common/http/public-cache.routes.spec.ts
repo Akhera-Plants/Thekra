@@ -71,6 +71,8 @@ const CACHEABLE = [
   'GET /sources',
   'GET /sources/:id',
   'GET /topic-themes',
+  'GET /reminder-sets',
+  'GET /reminder-sets/:slug',
   'GET /quotes',
   'GET /quotes/today',
   'GET /quotes/:id',

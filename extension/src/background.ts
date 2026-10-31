@@ -12,7 +12,7 @@
  *
  * All listeners are registered synchronously at the top level, as MV3 requires.
  */
-import { logDone, normalize, NOTIFY_TEXTS, requiredOn, todayFrom, updatePlan, type Plan } from '@thekra/practice-core';
+import { logDone, normalize, NOTIFY_TEXTS, prayerLookup, requiredOn, todayFrom, updatePlan, type Plan } from '@thekra/practice-core';
 import { AuthError } from './auth.js';
 import { deedUrl, formatAmount, habitTitle, unitLabel, type Habit } from './catalog.js';
 import {
@@ -25,6 +25,7 @@ import {
   loadStore,
   migrateStorage,
   refreshCaches,
+  refreshPrayerTimes,
   saveStore,
   setSyncStatus,
   TARGET,
@@ -90,6 +91,7 @@ async function reschedule(): Promise<void> {
     now: new Date(),
     habitRules: Object.fromEntries(catalog.map((h) => [h.key, h.defaultRule])),
     habitSlots: Object.fromEntries(catalog.map((h) => [h.key, h.defaultSlots])),
+    prayerTimesOn: prayerLookup(prefs.prayerCache, prefs.prayer),
   };
   for (const r of upcomingReminders(input)) await api.alarms.create(reminderAlarmName(r), { when: r.when });
   for (const d of upcomingDigests(input)) await api.alarms.create(digestAlarmName(d), { when: d.when });
@@ -257,6 +259,7 @@ api.runtime.onInstalled.addListener((details) => {
     await ensureAlarms();
     await reschedule();
     await refreshCaches();
+    await refreshPrayerTimes();
   });
   void syncSerial(syncNow);
   if (details.reason === 'install') void api.runtime.openOptionsPage();
@@ -267,6 +270,7 @@ api.runtime.onStartup.addListener(() => {
     await ensureAlarms();
     await reschedule();
     await refreshCaches();
+    await refreshPrayerTimes();
   });
   void syncSerial(syncNow);
 });
@@ -293,7 +297,11 @@ api.storage.onChanged.addListener((changes, area) => {
 
 api.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === REFRESH_ALARM) {
-    void serial(() => refreshCaches());
+    // The prayer-time refresh writes prefs only when the cache was stale, so this cannot loop.
+    void serial(async () => {
+      await refreshCaches();
+      await refreshPrayerTimes();
+    });
     return;
   }
   if (alarm.name === SYNC_ALARM) {

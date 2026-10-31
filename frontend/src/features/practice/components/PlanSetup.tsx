@@ -3,8 +3,12 @@
 import { useId, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
+  ANCHOR_LABELS,
   defaultHabitKey,
+  isPrayerAnchor,
   isValidTime,
+  PRAYER_ANCHORS,
+  resolveAnchor,
   loadWarning,
   ONBOARDING_STEPS,
   setHeartPrefs,
@@ -18,6 +22,7 @@ import { Input } from '@/components/ui/input';
 import { formatDigits } from '@/lib/format/digits';
 import { updateHeart } from '@/lib/practice/heart-store';
 import { updateStore } from '@/lib/practice/local-store';
+import { usePrayerTimesToday } from '@/lib/practice/screen-stores';
 import { DEFAULT_ACTIVE_DAYS, isEbbDay, planFromHabit, type Distance } from '@/lib/practice/plans';
 import type { PracticeHabit } from '@/lib/types/practice';
 import { cn } from '@/lib/utils';
@@ -99,7 +104,7 @@ export function PlanSetup({ habits, existing, preselected, freeMinutes, today, o
     else onDone();
   }
 
-  const validSlots = () => [slots[0], slots[1]].filter((s) => isValidTime(s));
+  const validSlots = () => [slots[0], slots[1]].filter((s) => isValidTime(s) || isPrayerAnchor(s));
   const defaultsFor = (h: PracticeHabit) => [h.defaultSlots[0] ?? '08:00', h.defaultSlots[1] ?? ''].filter((s) => isValidTime(s));
 
   return (
@@ -348,14 +353,13 @@ function WhenFields({
       <fieldset className="grid gap-4 sm:grid-cols-2">
         <legend className="mb-2">{t('slots')}</legend>
         {([0, 1] as const).map((i) => (
-          <label key={i} className="flex flex-col gap-1 text-sm">
-            {tSetup('slot', { n: String(i + 1) })}
-            <Input
-              type="time"
-              value={slots[i]}
-              onChange={(e) => onSlots(i === 0 ? [e.target.value, slots[1]] : [slots[0], e.target.value])}
-            />
-          </label>
+          <SlotPicker
+            key={i}
+            label={tSetup('slot', { n: String(i + 1) })}
+            value={slots[i]}
+            optional={i === 1}
+            onChange={(value) => onSlots(i === 0 ? [value, slots[1]] : [slots[0], value])}
+          />
         ))}
       </fieldset>
       <div className="flex flex-col gap-1 text-sm">
@@ -373,6 +377,55 @@ function WhenFields({
           ))}
         </select>
       </div>
+    </div>
+  );
+}
+
+const CUSTOM = 'custom';
+const NONE = 'none';
+
+/**
+ * One reminder slot of «متى؟»: the prayer anchors first («بعد الفجر»…, resolved from the city chosen in «أوقات الصلاة»,
+ * default times otherwise), then «وقت أختاره» with a time field; the second slot may be «بدون».
+ */
+function SlotPicker({ label, value, optional, onChange }: { label: string; value: string; optional: boolean; onChange: (value: string) => void }) {
+  const t = useTranslations('practice.onboarding');
+  const english = useLocale() === 'en';
+  const prayer = usePrayerTimesToday();
+  const selectId = useId();
+  const timeId = useId();
+  const mode = isPrayerAnchor(value) ? value : isValidTime(value) ? CUSTOM : value === '' && optional ? NONE : CUSTOM;
+  return (
+    <div className="flex flex-col gap-2 text-sm">
+      <label htmlFor={selectId}>{label}</label>
+      <select
+        id={selectId}
+        className="h-11 rounded-md border border-input bg-background px-3"
+        value={mode}
+        onChange={(e) => {
+          const next = e.target.value;
+          if (next === NONE) onChange('');
+          else if (next === CUSTOM) onChange(isValidTime(value) ? value : '08:00');
+          else onChange(next);
+        }}
+      >
+        {PRAYER_ANCHORS.map((anchor) => (
+          <option key={anchor} value={anchor}>
+            {ANCHOR_LABELS[english ? 'en' : 'ar'][anchor]}
+            {prayer ? ` (${formatDigits(resolveAnchor(anchor, prayer))})` : ''}
+          </option>
+        ))}
+        <option value={CUSTOM}>{t('customTime')}</option>
+        {optional ? <option value={NONE}>{t('noSecondSlot')}</option> : null}
+      </select>
+      {mode === CUSTOM ? (
+        <>
+          <label htmlFor={timeId} className="sr-only">
+            {t('customTime')}
+          </label>
+          <Input id={timeId} type="time" value={value} onChange={(e) => onChange(e.target.value)} />
+        </>
+      ) : null}
     </div>
   );
 }

@@ -24,6 +24,7 @@ import { PlanSetup } from './PlanSetup';
 import { PracticeLoading } from './PracticeLoading';
 import { ProgressPanel } from './ProgressPanel';
 import { NotificationsLink } from './NotificationsLink';
+import { currentPrayerLookup } from '@/lib/practice/screen-stores';
 
 /**
  * «عاداتي» (habit management, reached from «سجلّي»): setup, today's habits, in-app reminders, «وين وصلت», calendar file. `?add=1` (from «أضف» on the hub)
@@ -105,7 +106,7 @@ export function PracticeView() {
 
   const entries = plans.map((plan) => {
     const habit = habitOf(plan, habits);
-    return { plan, habit, view: planToday(plan, today, clock.minutes, { fallback: habit?.defaultRule, hijriOffset }) };
+    return { plan, habit, view: planToday(plan, today, clock.minutes, { fallback: habit?.defaultRule, hijriOffset, prayer: currentPrayerLookup()(today) }) };
   });
   // «عاداتي»: the saplings and periodic acts by today, then «عادات راسخة» and «موقوفة مؤقتًا» apart.
   const active = entries.filter((entry) => !isPaused(entry.plan) && !isEstablished(entry.plan));

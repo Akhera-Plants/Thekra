@@ -1,0 +1,65 @@
+# «مجموعات التذكير» (redesign phase 6, docs/plan/2026-10-31-redesign-final.md §4.6): starter sets for «نص اليوم» on the
+# home-screen widget, the extension's new-tab page and the app. Imported into the database with
+#   pnpm --filter backend reminder-sets:import            (dry run: shows what would change)
+#   pnpm --filter backend reminder-sets:import --apply    (writes; local database only unless you mean otherwise)
+# and edited afterwards in the curation desk (/admin/reminder-sets). Re-running the import sets these slugs back to
+# this file; a second run writes nothing.
+#
+# Rules
+#   - Items are public Quote ids only (a Quran verse or a sahih/hasan hadith; no athar). The text is always read from
+#     the database by id; nothing in this file is a quoted text, and no id here is invented.
+#   - Every id already appears in another reviewed file (deed-schedules.yaml, sin-programs.yaml, heart-texts.yaml or
+#     docs/research/**/citations.yaml); the unit test checks it. The note after each id says where it comes from.
+#   - The import and the desk both refuse an id that is not a published verse or sahih/hasan hadith in the database
+#     they write to, and the public read filters again, so an unpublished text never shows.
+#   - A set with few items stays short until more ids are checked; nothing is added to fill it.
+#   - Reviewed by: pending the sheikh.
+
+review: pending-sheikh
+
+sets:
+  - slug: ayat-al-raja
+    titleAr: آيات الرجاء
+    titleEn: Verses of hope
+    sortOrder: 10
+    published: true
+    items:
+      - 5518a387-d429-4a90-be10-c0609f66d7c9 # Hud 11:114 «إن الحسنات يذهبن السيئات» (sin-programs.yaml afterFall)
+
+  - slug: adhkar-sabah-masa
+    titleAr: أذكار الصباح والمساء
+    titleEn: Morning and evening remembrance
+    sortOrder: 20
+    published: true
+    items:
+      - 7fc63d7e-136b-44ad-bd31-ce0bc8ed3922 # evidence of the morning and evening dhikr (deed-schedules.yaml adhkar-sabah-masa)
+      - 0398949f-e730-40e5-afcd-d083ecdef12b # evidence of the morning and evening dhikr (deed-schedules.yaml adhkar-sabah-masa)
+
+  - slug: sabr-inda-al-bala
+    titleAr: الصبر عند البلاء
+    titleEn: Patience in hardship
+    sortOrder: 30
+    published: true
+    items:
+      - e54053bc-8067-4a2e-aff7-6d00b3a45f94 # «إذا مرض العبد أو سافر…» (heart-texts.yaml stories marad-safar)
+
+  - slug: qabl-al-nawm
+    titleAr: قبل النوم
+    titleEn: Before sleep
+    sortOrder: 40
+    published: true
+    items:
+      - 0bda155b-e786-4616-a380-56be0031c5c2 # «اجعلوا آخر صلاتكم بالليل وترًا» (deed-schedules.yaml witr)
+      - 93f7d1ab-b6f7-4521-bae8-f37cc1ff06a2 # evidence of witr before sleeping, also used for duha and the white days (deed-schedules.yaml witr)
+
+  - slug: al-tawba
+    titleAr: التوبة
+    titleEn: Repentance
+    sortOrder: 50
+    published: true
+    items:
+      - dc522d5d-3652-4e08-9d60-652da8fe39f1 # «ينزل ربنا كل ليلة… من يستغفرني فأغفر له» (deed-schedules.yaml qiyam-last-third)
+      - 3c233fed-9a9a-4f8b-82bc-89bb177dab0d # the man who killed a hundred (heart-texts.yaml stories qatil-al-mia)
+      - 7d5afc99-719d-4cca-bbd0-d6b9958f547b # «من كانت له مظلمة لأخيه فليتحلله منه اليوم» (sin-programs.yaml restore rights)
+      - 8677aa91-33df-446c-ba76-e1de6aeb2336 # repent at once after a slip (sin-programs.yaml afterFall evidence)
+      - d96ef685-dc25-4fc1-a589-12af672251d2 # repent at once after a slip (sin-programs.yaml afterFall evidence)

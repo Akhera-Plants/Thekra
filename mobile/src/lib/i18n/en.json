@@ -364,7 +364,8 @@
       "loadTitle": "Your time",
       "loadSetup": "Set your free time first",
       "stepOf": "Step {{step}} of {{total}}",
-      "invalidPlan": "This habit could not be saved. Check the times and days, then try again."
+      "invalidPlan": "This habit could not be saved. Check the times and days, then try again.",
+      "customTime": "A time I choose"
     },
     "plan": {
       "required": "Today: {{amount}}",
@@ -1348,5 +1349,72 @@
     "habitAdded": "In your habits",
     "pairTitle": "Opposite virtue",
     "oppositeTitle": "Opposite sin"
+  },
+  "myReminders": {
+    "title": "My reminders",
+    "lead": "Short lines you write for yourself; they can be the widget's daily text.",
+    "deviceOnly": "On my device only: they stay on this device and are sent nowhere.",
+    "newLabel": "New line",
+    "add": "Add",
+    "remove": "Remove",
+    "count": "{n} of {max}",
+    "empty": "You have not written a reminder yet.",
+    "errors": {
+      "empty": "Write the line first.",
+      "tooLong": "The line is longer than {max} characters.",
+      "full": "You reached the limit of {n} lines.",
+      "duplicate": "This line is already there."
+    }
+  },
+  "prayerTimes": {
+    "title": "Prayer times",
+    "lead": "Your city sets «After Fajr» and the other reminders to the prayer times.",
+    "city": "City",
+    "country": "Country code (two letters)",
+    "method": "Calculation method",
+    "offsets": "Manual adjustment in minutes",
+    "prayers": {
+      "fajr": "Fajr",
+      "dhuhr": "Dhuhr",
+      "asr": "Asr",
+      "maghrib": "Maghrib",
+      "isha": "Isha"
+    },
+    "save": "Save and load the times",
+    "saving": "Loading…",
+    "clear": "Clear the city",
+    "saved": "30 days of times are saved on this device.",
+    "failed": "The times could not be loaded; default times are used until the device is online.",
+    "helper": "The times come from the AlAdhan service and are kept on your device for 30 days.",
+    "anchorsTitle": "Today's times",
+    "defaults": "Default times, until you choose your city.",
+    "notSet": "Not set"
+  },
+  "dailyText": {
+    "group": "Screen and widget",
+    "groupLead": "What the home-screen widget shows.",
+    "title": "Daily text",
+    "lead": "One text a day on the home-screen widget, from the source you choose.",
+    "seasons": "Seasons of good: today's date and the next occasion",
+    "mine": "My reminders",
+    "mineEmpty": "Write your reminders first.",
+    "saved": "Saved texts",
+    "savedSignIn": "Needs signing in.",
+    "sets": "Reminder sets",
+    "setsOffline": "The sets could not be loaded now."
+  },
+  "widget": {
+    "streak": "Streak",
+    "remaining": "{n} left",
+    "allDone": "Today's wird is done",
+    "wird": "Today's wird",
+    "openApp": "Open the app to see today's wird",
+    "noHabits": "Open the app and start a small sapling",
+    "dailyText": "Daily text",
+    "noText": "Open the app and choose the daily text source",
+    "seasons": "Seasons of good",
+    "todayOccasion": "Today: {title}",
+    "nextOccasion": "Next: {title}, {date}",
+    "months": "January,February,March,April,May,June,July,August,September,October,November,December"
   }
 }

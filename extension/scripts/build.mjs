@@ -49,7 +49,11 @@ for (const [target, esTarget] of Object.entries(TARGETS)) {
   const out = join(dist, target);
   mkdirSync(out, { recursive: true });
   const result = await build({
-    entryPoints: { background: join(root, 'src/background.ts'), popup: join(root, 'src/popup/popup.ts') },
+    entryPoints: {
+      background: join(root, 'src/background.ts'),
+      popup: join(root, 'src/popup/popup.ts'),
+      newtab: join(root, 'src/newtab/newtab.ts'),
+    },
     outdir: out,
     bundle: true,
     format: 'esm',
@@ -70,6 +74,8 @@ for (const [target, esTarget] of Object.entries(TARGETS)) {
 
   cpSync(join(root, 'src/popup/popup.html'), join(out, 'popup.html'));
   cpSync(join(root, 'src/popup/popup.css'), join(out, 'popup.css'));
+  cpSync(join(root, 'src/newtab/newtab.html'), join(out, 'newtab.html'));
+  cpSync(join(root, 'src/newtab/newtab.css'), join(out, 'newtab.css'));
   cpSync(join(root, '_locales'), join(out, '_locales'), { recursive: true });
   cpSync(iconSource, join(out, 'icons'), { recursive: true });
   writeFileSync(join(out, 'manifest.json'), `${JSON.stringify(buildManifest(/** @type {any} */ (target), pkg.version), null, 2)}\n`);

@@ -5,6 +5,7 @@ import {
   MAX_EXCUSED_DAYS,
   PEOPLE_CIRCLES,
   settingsContent,
+  isPrayerAnchor,
   isValidDate,
   isValidTime,
   mergeLogEntry,
@@ -15,6 +16,7 @@ import {
   validateRule,
   type LogEntry,
   type PeopleCircle,
+  type PrayerAnchor,
   type Plan,
   type Relative,
   type Rule,
@@ -89,6 +91,8 @@ export interface PlanWire {
   pausedOn: string | null;
   resumedOn: string | null;
   establishedOn: string | null;
+  /** Phase 6 prayer anchors, one per slot (`null` = fixed time); null when none. An older client omits it. */
+  slotAnchors: (PrayerAnchor | null)[] | null;
   clientUpdatedAt: string;
   deletedAt: string | null;
 }
@@ -277,6 +281,9 @@ function parsePlan(raw: unknown): PlanChange {
   const pausedOn = optionalDate(raw['pausedOn'], 'pausedOn');
   const resumedOn = optionalDate(raw['resumedOn'], 'resumedOn');
   const establishedOn = optionalDate(raw['establishedOn'], 'establishedOn');
+  const rawAnchors = raw['slotAnchors'] ?? null;
+  const slotAnchors = Array.isArray(rawAnchors) && rawAnchors.some((a) => a !== null) ? (rawAnchors as (PrayerAnchor | null)[]) : null;
+  if (rawAnchors !== null && !Array.isArray(rawAnchors)) throw new ItemError('slotAnchors must be null or an array');
   // The practice-core shape: `log` travels separately, `ebb`/`season`/`ceiling` are optional.
   check(
     validatePlan({
@@ -296,6 +303,7 @@ function parsePlan(raw: unknown): PlanChange {
       ...(pausedOn ? { pausedOn } : {}),
       ...(resumedOn ? { resumedOn } : {}),
       ...(establishedOn ? { establishedOn } : {}),
+      ...(slotAnchors ? { slotAnchors } : {}),
     }),
   );
   const plan = raw as Record<string, unknown> & {
@@ -339,6 +347,7 @@ function parsePlan(raw: unknown): PlanChange {
       pausedOn,
       resumedOn,
       establishedOn,
+      slotAnchors: slotAnchors ? [...slotAnchors] : null,
       clientUpdatedAt,
       deletedAt: null,
     },
@@ -461,6 +470,7 @@ function corePlan(plan: PlanWire): Plan {
     ...(plan.pausedOn ? { pausedOn: plan.pausedOn } : {}),
     ...(plan.resumedOn ? { resumedOn: plan.resumedOn } : {}),
     ...(plan.establishedOn ? { establishedOn: plan.establishedOn } : {}),
+    ...(plan.slotAnchors ? { slotAnchors: plan.slotAnchors } : {}),
   };
 }
 
@@ -604,6 +614,7 @@ export function planToWire(row: PlanRow): PlanWire {
     pausedOn: optionalDay(row.pausedOn),
     resumedOn: optionalDay(row.resumedOn),
     establishedOn: optionalDay(row.establishedOn),
+    slotAnchors: anchorsOf(row.slotAnchors),
     clientUpdatedAt: row.clientUpdatedAt.toISOString(),
     deletedAt: iso(row.deletedAt),
   };
@@ -687,4 +698,10 @@ export async function readPracticeChanges(
     relatives: relatives.map(relativeRowToWire),
     contacts: contacts.map((contact) => ({ relativeId: contact.relativeId, date: day(contact.date), deleted: contact.deletedAt !== null })),
   };
+}
+
+/** A stored `slotAnchors` value: an array with at least one anchor, else null (old rows, bad data). */
+function anchorsOf(value: unknown): (PrayerAnchor | null)[] | null {
+  if (!Array.isArray(value) || !value.every((a) => a === null || isPrayerAnchor(a)) || !value.some((a) => a !== null)) return null;
+  return value as (PrayerAnchor | null)[];
 }

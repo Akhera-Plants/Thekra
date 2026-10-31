@@ -1,9 +1,43 @@
 import { Type } from 'class-transformer';
-import { STRATEGY_KEYS } from '@thekra/practice-core';
-import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsOptional, IsString, IsUrl, Matches, MaxLength, ValidateNested } from 'class-validator';
+import { parseResolvedAnchorTimes, PRAYER_CACHE_DAYS, STRATEGY_KEYS } from '@thekra/practice-core';
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsBoolean,
+  IsIn,
+  IsOptional,
+  IsString,
+  IsUrl,
+  Matches,
+  MaxLength,
+  ValidateBy,
+  ValidateNested,
+  type ValidationOptions,
+} from 'class-validator';
 
 const BASE64URL = /^[A-Za-z0-9_-]+={0,2}$/;
 const HH_MM = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+/**
+ * Prayer-time anchors resolved by the browser (practice-core `resolvedAnchorTimes`): `{ 'YYYY-MM-DD': { 'after-fajr':
+ * 'HH:MM', … } }`, at most {@link PRAYER_CACHE_DAYS} days, every anchor of a day present. The server never calls AlAdhan.
+ */
+function IsAnchorTimes(options?: ValidationOptions): PropertyDecorator {
+  return ValidateBy(
+    {
+      name: 'isAnchorTimes',
+      validator: {
+        validate: (value: unknown) => {
+          if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+          const keys = Object.keys(value);
+          return keys.length <= PRAYER_CACHE_DAYS && Object.keys(parseResolvedAnchorTimes(value)).length === keys.length;
+        },
+        defaultMessage: () => `anchorTimes must map at most ${PRAYER_CACHE_DAYS} dates to every prayer anchor's HH:MM`,
+      },
+    },
+    options,
+  );
+}
 
 /**
  * This browser's switches of «التنبيهات» (practice-core `NotificationPrefs` without the private moment, which never
@@ -20,6 +54,8 @@ export class PushPrefsDto {
   /** «ذكّرني بها»: chosen strategy keys (practice-core `STRATEGY_KEYS`); one reminder a week at most. */
   @IsOptional() @IsArray() @ArrayMaxSize(STRATEGY_KEYS.length) @IsIn(STRATEGY_KEYS, { each: true }) strategies?: string[];
   @IsOptional() @IsString() @Matches(HH_MM) strategyTime?: string;
+  /** Phase 6: anchored habit slots («بعد الفجر»…) resolve from these per day; days without an entry use the defaults. */
+  @IsOptional() @IsAnchorTimes() anchorTimes?: Record<string, Record<string, string>>;
 }
 
 export class PushKeysDto {

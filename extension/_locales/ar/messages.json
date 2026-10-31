@@ -259,5 +259,129 @@
   },
   "errorLimitPeriodic": {
     "message": "عندك سبعة أعمال دورية. القليل الدائم خير من الكثير المنقطع."
+  },
+  "newTabTitle": {
+    "message": "تبويب جديد · ذكرى",
+    "description": "New-tab page title."
+  },
+  "newTabToday": {
+    "message": "ورد اليوم",
+    "description": "New tab: heading of today's habits."
+  },
+  "newTabNoText": {
+    "message": "اختر مصدر النص من خيارات الإضافة.",
+    "description": "New tab: no text for the chosen source."
+  },
+  "newTabNothingToday": {
+    "message": "لا شيء مطلوب اليوم.",
+    "description": "New tab: no habit asked today."
+  },
+  "newTabHeading": {
+    "message": "صفحة التبويب الجديد",
+    "description": "Options section heading."
+  },
+  "newTabHelper": {
+    "message": "نص واحد كل يوم مع ورد اليوم. إن أطفأتها بقي التاريخ وحده، لأن المتصفح لا يسمح بإرجاع الصفحة الافتراضية من الإضافة.",
+    "description": "Options helper line for the new tab."
+  },
+  "newTabToggle": {
+    "message": "إظهار النص وورد اليوم في التبويب الجديد",
+    "description": "Options toggle."
+  },
+  "newTabHijri": {
+    "message": "إظهار التاريخ الهجري",
+    "description": "Options toggle."
+  },
+  "newTabSource": {
+    "message": "مصدر النص",
+    "description": "Options select label."
+  },
+  "newTabSourceMine": {
+    "message": "تذكيراتي",
+    "description": "Source option."
+  },
+  "newTabSourceHabit": {
+    "message": "دليل: $1",
+    "description": "Source option. $1 = habit title."
+  },
+  "newTabSourceUnavailable": {
+    "message": "مصدر غير متاح الآن",
+    "description": "Source option when the saved one is gone."
+  },
+  "myRemindersHeading": {
+    "message": "تذكيراتي",
+    "description": "Options heading."
+  },
+  "myRemindersNew": {
+    "message": "عبارة جديدة",
+    "description": "Input label."
+  },
+  "myRemindersAdd": {
+    "message": "أضف",
+    "description": "Button."
+  },
+  "myRemindersRemove": {
+    "message": "احذف",
+    "description": "Button."
+  },
+  "myRemindersEmpty": {
+    "message": "لم تكتب تذكيرًا بعد.",
+    "description": "Empty list."
+  },
+  "myRemindersDeviceOnly": {
+    "message": "على هذا المتصفح فقط، ولا تُرسل إلى أي مكان.",
+    "description": "Privacy line."
+  },
+  "myRemindersError_empty": {
+    "message": "اكتب العبارة أولًا.",
+    "description": "Error."
+  },
+  "myRemindersError_tooLong": {
+    "message": "العبارة أطول من $1 حرفًا.",
+    "description": "Error. $1 = max length."
+  },
+  "myRemindersError_full": {
+    "message": "بلغت الحد: $2 عبارة.",
+    "description": "Error. $2 = max lines."
+  },
+  "myRemindersError_duplicate": {
+    "message": "هذه العبارة موجودة.",
+    "description": "Error."
+  },
+  "prayerHeading": {
+    "message": "أوقات الصلاة",
+    "description": "Options heading."
+  },
+  "prayerHelper": {
+    "message": "لتذكيرات «بعد الفجر» وأخواتها. تُجلب الأوقات من خدمة «الأذان» بعد إذنك، وتُحفظ 30 يومًا.",
+    "description": "Options helper line."
+  },
+  "prayerCity": {
+    "message": "المدينة",
+    "description": "Input label."
+  },
+  "prayerCountry": {
+    "message": "رمز الدولة (حرفان)",
+    "description": "Input label."
+  },
+  "prayerSave": {
+    "message": "احفظ وحمّل الأوقات",
+    "description": "Button."
+  },
+  "prayerClear": {
+    "message": "امسح المدينة",
+    "description": "Button."
+  },
+  "prayerInvalid": {
+    "message": "اكتب المدينة ورمز الدولة من حرفين.",
+    "description": "Error."
+  },
+  "prayerSaved": {
+    "message": "حُفظت أوقات 30 يومًا.",
+    "description": "Status."
+  },
+  "prayerFailed": {
+    "message": "تعذّر تحميل الأوقات؛ تُستعمل الأوقات الافتراضية.",
+    "description": "Status."
   }
 }

@@ -3,6 +3,8 @@
  */
 
 import {
+  orderedSlots,
+  type PrayerAnchor,
   addDays,
   adherence,
   adherenceBand,
@@ -139,7 +141,8 @@ export function planFromHabit(args: {
   id: string;
   habit: CatalogHabit;
   amount: number;
-  slots: LocalTime[];
+  /** Fixed times and/or prayer anchors («after-fajr»…). */
+  slots: (LocalTime | PrayerAnchor)[];
   activeDaysPerWeek: number;
   rule: Rule;
   today: LocalDate;
@@ -156,7 +159,7 @@ export function planFromHabit(args: {
     amount: args.amount,
     ...(habit.ceiling !== undefined ? { ceiling: habit.ceiling } : {}),
     activeDaysPerWeek: args.activeDaysPerWeek,
-    slots: args.slots,
+    ...orderedSlots(args.slots),
     createdOn: args.today,
   });
 }

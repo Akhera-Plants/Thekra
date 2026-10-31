@@ -142,6 +142,9 @@ describe('manifests', () => {
       expect(m.manifest_version).toBe(3);
       expect(m.permissions).toEqual(['alarms', 'notifications', 'storage']);
       expect(m.host_permissions).toEqual(['https://thekra.vercel.app/*']);
+      // Phase 6: AlAdhan only as an optional host (asked when a city is saved), and the new-tab page.
+      expect(m.optional_host_permissions).toEqual(['https://api.aladhan.com/*']);
+      expect(m.chrome_url_overrides).toEqual({ newtab: 'newtab.html' });
       for (const key of ['content_scripts', 'optional_permissions', 'content_security_policy', 'web_accessible_resources']) expect(m).not.toHaveProperty(key);
     });
   }

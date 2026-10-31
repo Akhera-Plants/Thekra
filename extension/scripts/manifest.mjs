@@ -1,10 +1,14 @@
 /**
  * The two manifests. Permissions are the same for both and deliberately minimal (roadmap §5):
- * alarms, notifications, storage, and the Thekra API host only. No content scripts, no tabs/history access,
- * default CSP (no `content_security_policy` key).
+ * alarms, notifications, storage, and the Thekra API host only (AlAdhan as an optional host, asked when a city is
+ * saved). No content scripts, no tabs/history access, default CSP (no `content_security_policy` key).
+ * Both browsers override the new-tab page (`chrome_url_overrides.newtab`, supported by Chrome and Firefox MV3). An
+ * override cannot be switched off at runtime, so «صفحة التبويب الجديد» off in the options shows only the date.
  */
 export const PERMISSIONS = ['alarms', 'notifications', 'storage'];
 export const HOST_PERMISSIONS = ['https://thekra.vercel.app/*'];
+/** Asked only when the user saves a city for prayer-time reminders (src/ext.ts PRAYER_ORIGINS). */
+export const OPTIONAL_HOST_PERMISSIONS = ['https://api.aladhan.com/*'];
 /** Placeholder add-on id for AMO; replace before the first Firefox submission if another id is wanted. */
 export const GECKO_ID = 'thekra@akhera-plants';
 
@@ -24,6 +28,8 @@ export function buildManifest(target, version) {
     options_ui: { page: 'popup.html', open_in_tab: true },
     permissions: PERMISSIONS,
     host_permissions: HOST_PERMISSIONS,
+    optional_host_permissions: OPTIONAL_HOST_PERMISSIONS,
+    chrome_url_overrides: { newtab: 'newtab.html' },
   };
   if (target === 'chrome') {
     return { ...base, minimum_chrome_version: '114', background: { service_worker: 'background.js', type: 'module' } };

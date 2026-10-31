@@ -1,0 +1,144 @@
+/*
+ * The new-tab page: a calm background drawn with CSS only (gradients from the palette in popup.css, itself copied
+ * from frontend/src/app/globals.css); no remote images, no fonts from the network. Logical properties only.
+ */
+:root {
+  --background: #fffcf9;
+  --foreground: #263d35;
+  --muted-foreground: #64746c;
+  --border: #dce3db;
+  --primary: #326c59;
+  --gold: #8f6514;
+  --pathway-flourish: #d9e5d8;
+  --muted: #edf4ef;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #101010;
+    --foreground: #eeede9;
+    --muted-foreground: #aaa9a4;
+    --border: #333532;
+    --primary: #326c59;
+    --gold: #e0b555;
+    --pathway-flourish: #1e1f1e;
+    --muted: #1e1f1e;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-block-size: 100%;
+}
+
+body {
+  min-block-size: 100vh;
+  color: var(--foreground);
+  font-family: system-ui, -apple-system, 'Segoe UI', 'Noto Naskh Arabic', 'Noto Sans Arabic', sans-serif;
+  background-color: var(--background);
+  background-image:
+    radial-gradient(circle at 20% 15%, var(--pathway-flourish) 0, transparent 38%),
+    radial-gradient(circle at 85% 80%, var(--muted) 0, transparent 42%),
+    repeating-linear-gradient(45deg, transparent 0 22px, color-mix(in srgb, var(--border) 35%, transparent) 22px 23px);
+}
+
+body.plain {
+  background-image: none;
+}
+
+.tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  min-block-size: 100vh;
+  padding: 3rem 1.5rem;
+  text-align: center;
+}
+
+.date {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--muted-foreground);
+}
+
+.hijri {
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+  color: var(--muted-foreground);
+}
+
+.text {
+  max-inline-size: 42rem;
+  margin: 0;
+}
+
+.text blockquote {
+  margin: 0;
+  font-size: clamp(1.4rem, 2.4vw, 2rem);
+  line-height: 1.9;
+}
+
+.text figcaption {
+  margin-block-start: 0.75rem;
+  font-size: 0.9rem;
+  color: var(--muted-foreground);
+}
+
+.hint {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.95rem;
+}
+
+.today {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-inline-size: 16rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 0.875rem;
+  background: color-mix(in srgb, var(--background) 82%, transparent);
+}
+
+.today h2 {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.streak {
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+
+.today ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  text-align: start;
+}
+
+.today li {
+  padding-block: 0.2rem;
+}
+
+.today li.done {
+  color: var(--muted-foreground);
+}
+
+a {
+  color: var(--primary);
+}

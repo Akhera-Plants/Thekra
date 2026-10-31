@@ -35,11 +35,12 @@ const PLAN = {
   pausedOn: null,
   resumedOn: null,
   establishedOn: null,
+  slotAnchors: null,
   clientUpdatedAt: '2026-10-28T10:00:00.000Z',
   deletedAt: null,
 };
-/** A plan as a client from before 2026-10-31 sends it: no pausedOn / resumedOn / establishedOn. */
-const { pausedOn: _p, resumedOn: _r, establishedOn: _e, ...OLD_PLAN } = PLAN;
+/** A plan as a client from before 2026-10-31 sends it: no pausedOn / resumedOn / establishedOn / slotAnchors. */
+const { pausedOn: _p, resumedOn: _r, establishedOn: _e, slotAnchors: _a, ...OLD_PLAN } = PLAN;
 const RELATIVE = {
   id: REL_ID,
   name: 'خالتي',
@@ -266,6 +267,12 @@ describe('versions (must match practice-core compareVersions on every replica)',
     expect(planVersion(old!).content).toBe(planVersion(live()).content);
     const paused = planVersion(live({ pausedOn: '2026-10-29', establishedOn: '2026-10-28' })).content;
     expect(JSON.parse(paused)).toMatchObject({ pausedOn: '2026-10-29', establishedOn: '2026-10-28' });
+    const anchored = live({ slotAnchors: ['after-fajr', null] });
+    expect(anchored.kind === 'live' && anchored.plan.slotAnchors).toEqual(['after-fajr', null]);
+    expect(JSON.parse(planVersion(anchored).content)).toMatchObject({ slotAnchors: ['after-fajr', null] });
+    expect(live({ slotAnchors: [null, null] })).toEqual({ kind: 'live', plan: PLAN });
+    expect(() => parse({ plans: [{ ...PLAN, slotAnchors: ['after-noon', null] }] })).toThrow();
+    expect(() => parse({ plans: [{ ...PLAN, slotAnchors: ['after-fajr'] }] })).toThrow();
     const { circle: _c, ...oldRelative } = RELATIVE;
     expect(parse({ relatives: [oldRelative] }).relatives[0]).toMatchObject({ relative: { circle: 'kin' } });
     const [neighbor] = parse({ relatives: [{ ...RELATIVE, circle: 'neighbors' }] }).relatives;

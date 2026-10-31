@@ -1,13 +1,15 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { periodicActs, upcomingPeriodic } from '@thekra/practice-core';
 import { Link } from '@/i18n/navigation';
 import { QueryErrorState } from '@/components/shared/feedback/QueryErrorState';
 import { Skeleton } from '@/components/ui/skeleton';
 import { wirdDay, wirdSummary } from '@/lib/practice/wird';
+import { refreshPrayerTimes } from '@/lib/practice/screen-stores';
+import { resendPushPrefs } from '@/lib/push/web-push';
 import { useHeart } from '../../hooks/useHeart';
 import { useWirdContext, type WirdContext } from '../../hooks/useWirdContext';
 import { HeartTop, MuraqabaLine, SelfMessageCard } from './HeartCards';
@@ -36,6 +38,13 @@ const UPCOMING_LIMIT = 3;
  */
 export function WirdView() {
   const context = useWirdContext();
+  const locale = useLocale() === 'en' ? 'en' : 'ar';
+  // Prayer anchors: refresh the 30-day prayer times when they run low, then let the push planner know.
+  useEffect(() => {
+    void refreshPrayerTimes().then((result) => {
+      if (result === 'updated') void resendPushPrefs(locale);
+    });
+  }, [locale]);
   const addOpen = useSearchParams().get('add') === '1';
   const snapshot = context?.snapshot;
   const heart = useHeart();

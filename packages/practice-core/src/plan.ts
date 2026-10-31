@@ -39,6 +39,7 @@ import {
   type LocalTime,
 } from './dates.js';
 import { isDue, validateRule, type Rule, type RuleOptions } from './rules.js';
+import { isPrayerAnchor, resolveAnchor, DEFAULT_ANCHOR_TIMES, type PrayerAnchor, type PrayerTimes } from './prayer.js';
 
 export type PlanUnit = 'minutes' | 'count' | 'times';
 
@@ -58,6 +59,12 @@ export interface Plan {
   activeDaysPerWeek: number;
   /** Reminder times, `HH:MM`, at least one (the lecture recommends two or more). */
   slots: LocalTime[];
+  /**
+   * Phase 6: a prayer anchor per slot (same length as `slots`), `null` for a fixed time. An anchored slot keeps the
+   * anchor's default time in `slots` (older clients, the calendar file); {@link planSlotTimes} resolves it from the
+   * day's prayer times. Absent on plans without anchors.
+   */
+  slotAnchors?: (PrayerAnchor | null)[];
   createdOn: LocalDate;
   /** The day `amount` last changed through {@link increase} or {@link decreaseTo}. */
   amountChangedOn: LocalDate;
@@ -213,6 +220,12 @@ export function validatePlan(plan: unknown): string | null {
   if (!Array.isArray(p.slots) || p.slots.length === 0 || !p.slots.every(isValidTime)) {
     return 'slots must be a non-empty array of HH:MM';
   }
+  if (p.slotAnchors !== undefined) {
+    const a = p.slotAnchors;
+    if (!Array.isArray(a) || a.length !== (p.slots as unknown[]).length || !a.every((x) => x === null || isPrayerAnchor(x))) {
+      return 'slotAnchors must list a prayer anchor or null for each slot';
+    }
+  }
   if (!isValidDate(p.createdOn)) return 'createdOn must be YYYY-MM-DD';
   if (!isValidDate(p.amountChangedOn)) return 'amountChangedOn must be YYYY-MM-DD';
   if (typeof p.log !== 'object' || p.log === null || Array.isArray(p.log)) return 'log must be an object';
@@ -261,6 +274,7 @@ export interface NewPlan {
   ceiling?: number;
   activeDaysPerWeek: number;
   slots: LocalTime[];
+  slotAnchors?: (PrayerAnchor | null)[];
   createdOn: LocalDate;
   habitKey?: string;
   rule?: Rule;
@@ -272,6 +286,8 @@ export function createPlan(input: NewPlan, now: IsoTime = nowIso()): Plan {
   if (plan.ceiling === undefined) delete plan.ceiling;
   if (plan.habitKey === undefined) delete plan.habitKey;
   if (plan.rule === undefined) delete plan.rule;
+  if (input.slotAnchors === undefined || input.slotAnchors.every((a) => a === null)) delete plan.slotAnchors;
+  else plan.slotAnchors = [...input.slotAnchors];
   assertPlan(plan);
   return plan;
 }
@@ -580,12 +596,42 @@ export function unestablishPlan(plan: Plan, now: IsoTime = nowIso()): Plan {
 }
 
 /**
+ * The plan's slot times on a day with these prayer times: an anchored slot resolves from them (or from the default
+ * prayer times when they are unknown), a fixed slot stays. Same order as `slots`.
+ */
+export function planSlotTimes(plan: Plan, prayer?: PrayerTimes): LocalTime[] {
+  return plan.slots.map((time, i) => {
+    const anchor = plan.slotAnchors?.[i];
+    return anchor ? resolveAnchor(anchor, prayer) : time;
+  });
+}
+
+/** Slots from a picker: an anchor stores its default time (the fallback older clients read), a time stays. */
+export function slotsFromChoices(choices: readonly (PrayerAnchor | LocalTime)[]): { slots: LocalTime[]; slotAnchors?: (PrayerAnchor | null)[] } {
+  const slots = choices.map((c) => (isPrayerAnchor(c) ? DEFAULT_ANCHOR_TIMES[c] : c));
+  const anchors = choices.map((c) => (isPrayerAnchor(c) ? c : null));
+  return anchors.some((a) => a !== null) ? { slots, slotAnchors: anchors } : { slots };
+}
+
+/** Unique choices ordered by the time they ring by default (an anchor by its default time), as slots and anchors. */
+export function orderedSlots(choices: readonly (PrayerAnchor | LocalTime)[]): { slots: LocalTime[]; slotAnchors?: (PrayerAnchor | null)[] } {
+  const at = (c: string) => (isPrayerAnchor(c) ? DEFAULT_ANCHOR_TIMES[c] : c);
+  const unique = [...new Set(choices)].sort((a, b) => (at(a) < at(b) ? -1 : at(a) > at(b) ? 1 : 0));
+  return slotsFromChoices(unique);
+}
+
+/** The picker choices of a plan: its anchors where set, else its times. */
+export function slotChoices(plan: Pick<Plan, 'slots' | 'slotAnchors'>): (PrayerAnchor | LocalTime)[] {
+  return plan.slots.map((t, i) => plan.slotAnchors?.[i] ?? t);
+}
+
+/**
  * The reminder times of a plan, shared by the web push planner, the app and the extension: none while paused, the
  * first slot only once established («راسخة»: lighter reminders), else every slot (sorted, unique).
  */
-export function reminderSlots(plan: Plan): LocalTime[] {
+export function reminderSlots(plan: Plan, prayer?: PrayerTimes): LocalTime[] {
   if (isPaused(plan)) return [];
-  const slots = [...new Set(plan.slots)].sort();
+  const slots = [...new Set(planSlotTimes(plan, prayer))].sort();
   return isEstablished(plan) ? slots.slice(0, 1) : slots;
 }
 

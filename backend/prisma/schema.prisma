@@ -334,6 +334,7 @@ model Quote {
   matches         HadithMatch[]
   flags           QuoteFlag[]
   sectionItems    SectionItem[]
+  reminderSetItems ReminderSetItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -857,6 +858,8 @@ model HabitPlan {
   resumedOn         DateTime?   @db.Date
   /// «عادة راسخة»: moved out of the saplings by the user; one reminder slot.
   establishedOn     DateTime?   @db.Date
+  /// Phase 6 prayer anchors: one per slot («after-fajr»… or null for a fixed time); null when the plan has none.
+  slotAnchors       Json?
   clientUpdatedAt   DateTime
   updatedAt         DateTime    @updatedAt
   deletedAt         DateTime?
@@ -1054,4 +1057,36 @@ model ImportChange {
 
   @@unique([batch, quoteId])
   @@index([batch])
+}
+
+/// «مجموعات التذكير» (redesign §4.6): curated sets of published texts (verses, sahih/hasan hadith) for the daily text
+/// of the widget and the new-tab page. Edited in the curation desk and seeded from prisma/taxonomy/reminder-sets.yaml
+/// (`reminder-sets:import`). The text itself is always read from Quote by id; a set holds ids only.
+model ReminderSet {
+  id        String            @id @default(uuid())
+  slug      String            @unique
+  titleAr   String
+  titleEn   String
+  sortOrder Int               @default(0)
+  /// Unpublished sets are visible in the desk only.
+  published Boolean           @default(false)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  items     ReminderSetItem[]
+
+  @@index([published, sortOrder])
+}
+
+/// One text of a set. Only published verses and sahih/hasan hadith are accepted on write (no athar); the public read
+/// filters again through the reader gate, so a text that later loses its publication disappears from the set.
+model ReminderSetItem {
+  setId    String
+  set      ReminderSet @relation(fields: [setId], references: [id], onDelete: Cascade)
+  quoteId  String
+  quote    Quote       @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  position Int
+
+  @@id([setId, quoteId])
+  @@index([setId, position])
+  @@index([quoteId])
 }

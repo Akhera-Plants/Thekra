@@ -9,7 +9,17 @@ import { Pressable, View } from 'react-native';
 import { useCalendars } from 'expo-localization';
 import { useTranslation } from 'react-i18next';
 import { Clock, Plus, X } from 'lucide-react-native';
-import type { LocalTime } from '@thekra/practice-core';
+import {
+  ANCHOR_LABELS,
+  isPrayerAnchor,
+  orderedSlots,
+  PRAYER_ANCHORS,
+  resolveAnchor,
+  type LocalTime,
+  type PrayerAnchor,
+} from '@thekra/practice-core';
+import { currentPrayerLookup } from '@/lib/practice/prayer';
+import { today } from '@/lib/practice/practice-store';
 import { displayTime, nowTime, sortSlots } from '@/lib/practice/format';
 import { radius, space, useStyles, useTheme, type Theme } from '@/theme';
 import { Button, Chip, ErrorText, Icon, Text, Wrap } from '@/ui';
@@ -51,32 +61,60 @@ const makeStyles = (t: Theme) => ({
 });
 
 /** HH:MM as this device shows times: «21:00», or «9:00 م» / «9:00 PM» where the clock is 12-hour. */
-function useDisplayTime(): (time: LocalTime) => string {
+export function useDisplayTime(): (time: LocalTime) => string {
   const { t } = useTranslation();
   const uses24hourClock = useCalendars()[0]?.uses24hourClock ?? true;
   return (time) => displayTime(time, uses24hourClock, { am: t('practice.time.am'), pm: t('practice.time.pm') });
 }
 
-export interface SlotsEditorProps {
-  slots: LocalTime[];
-  onChange: (slots: LocalTime[]) => void;
+/** A reminder slot as picked: a fixed `HH:MM` or a prayer anchor («after-fajr»…). */
+export type SlotChoice = LocalTime | PrayerAnchor;
+
+/** Choices ordered by the time they ring by default, without duplicates. */
+export function sortChoices(choices: readonly SlotChoice[]): SlotChoice[] {
+  const { slots, slotAnchors } = orderedSlots(choices);
+  return slots.map((time, i) => slotAnchors?.[i] ?? time);
 }
 
+export interface SlotsEditorProps {
+  slots: SlotChoice[];
+  onChange: (slots: SlotChoice[]) => void;
+}
+
+/**
+ * Reminder slots: the prayer anchors first («بعد الفجر»…, resolved from «أوقات الصلاة», default times otherwise), then
+ * «وقت أختاره» to add a fixed time. Tapping a chosen time removes it.
+ */
 export function SlotsEditor({ slots, onChange }: SlotsEditorProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const styles = useStyles(makeStyles);
   const show = useDisplayTime();
+  const lang = i18n.language === 'en' ? 'en' : 'ar';
+  const prayer = currentPrayerLookup()(today());
+  const times = slots.filter((s) => !isPrayerAnchor(s));
   // A new time opens on the last one chosen, else on the current hour.
-  const start = slots[slots.length - 1] ?? `${nowTime().slice(0, 2)}:00`;
+  const start = times[times.length - 1] ?? `${nowTime().slice(0, 2)}:00`;
+  const toggle = (anchor: PrayerAnchor) =>
+    onChange(slots.includes(anchor) ? slots.filter((x) => x !== anchor) : sortChoices([...slots, anchor]));
 
   return (
     <View style={styles.group}>
       <Text variant="small" tone="muted">
         {t('practice.add.slotsHint')}
       </Text>
-      {slots.length > 0 ? (
+      <Wrap>
+        {PRAYER_ANCHORS.map((anchor) => (
+          <Chip
+            key={anchor}
+            label={`${ANCHOR_LABELS[lang][anchor]}${prayer ? ` · ${show(resolveAnchor(anchor, prayer))}` : ''}`}
+            selected={slots.includes(anchor)}
+            onPress={() => toggle(anchor)}
+          />
+        ))}
+      </Wrap>
+      {times.length > 0 ? (
         <Wrap>
-          {slots.map((slot) => (
+          {times.map((slot) => (
             <SlotChip key={slot} label={show(slot)} onRemove={() => onChange(slots.filter((x) => x !== slot))} />
           ))}
         </Wrap>
@@ -84,8 +122,8 @@ export function SlotsEditor({ slots, onChange }: SlotsEditorProps) {
       <TimePicker
         value={start}
         title={t('practice.add.slots')}
-        onPick={(time) => onChange(sortSlots([...slots, time]))}
-        renderTrigger={(open) => <Button label={t('practice.add.addSlot')} icon={Plus} onPress={open} variant="outline" />}
+        onPick={(time) => onChange(sortChoices([...slots, time]))}
+        renderTrigger={(open) => <Button label={t('practice.add.customTime')} icon={Plus} onPress={open} variant="outline" />}
       />
       {slots.length === 0 ? <ErrorText>{t('practice.add.noSlots')}</ErrorText> : null}
       {slots.length === 1 ? (

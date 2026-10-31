@@ -31,6 +31,7 @@ import {
   type LocalDate,
   type LocalTime,
   type PlannedNotification,
+  type PrayerTimesLookup,
   type Plan,
   type Rule,
 } from '@thekra/practice-core';
@@ -45,6 +46,8 @@ export interface ScheduleInput {
   habitRules?: Readonly<Record<string, Rule>>;
   /** Catalog suggested slots by habit key: a slot among them inside the quiet hours does not ring. */
   habitSlots?: Readonly<Record<string, readonly string[]>>;
+  /** Prayer times per day for anchored slots («بعد الفجر»…); default times when absent. */
+  prayerTimesOn?: PrayerTimesLookup;
 }
 
 export interface Reminder {
@@ -101,6 +104,7 @@ export function plannedEntries(input: ScheduleInput, days = SEARCH_DAYS): Planne
     days,
     dayOptions: { hijriOffset: input.hijriOffset, defaultRuleOf: (plan) => fallbackRule(plan, input.habitRules) },
     defaultSlotsOf: (plan) => (plan.habitKey === undefined ? undefined : input.habitSlots?.[plan.habitKey]),
+    prayerTimesOn: input.prayerTimesOn,
     kinds: ['habit', 'digest'],
   }).filter((e) => !quiet.has(weekday(e.date)) && localInstant(e.date, e.time) > input.now.getTime());
 }

@@ -259,5 +259,129 @@
   },
   "errorLimitPeriodic": {
     "message": "You have seven periodic acts. A little that lasts is better than much that stops."
+  },
+  "newTabTitle": {
+    "message": "New tab · Thekra",
+    "description": "New-tab page title."
+  },
+  "newTabToday": {
+    "message": "Today's wird",
+    "description": "New tab: heading of today's habits."
+  },
+  "newTabNoText": {
+    "message": "Choose the text source in the extension options.",
+    "description": "New tab: no text for the chosen source."
+  },
+  "newTabNothingToday": {
+    "message": "Nothing is asked today.",
+    "description": "New tab: no habit asked today."
+  },
+  "newTabHeading": {
+    "message": "New-tab page",
+    "description": "Options section heading."
+  },
+  "newTabHelper": {
+    "message": "One text a day with today's wird. Turned off, only the date stays, because the browser does not let an extension restore the default page.",
+    "description": "Options helper line for the new tab."
+  },
+  "newTabToggle": {
+    "message": "Show the text and today's wird on a new tab",
+    "description": "Options toggle."
+  },
+  "newTabHijri": {
+    "message": "Show the Hijri date",
+    "description": "Options toggle."
+  },
+  "newTabSource": {
+    "message": "Text source",
+    "description": "Options select label."
+  },
+  "newTabSourceMine": {
+    "message": "My reminders",
+    "description": "Source option."
+  },
+  "newTabSourceHabit": {
+    "message": "Evidence: $1",
+    "description": "Source option. $1 = habit title."
+  },
+  "newTabSourceUnavailable": {
+    "message": "Source not available now",
+    "description": "Source option when the saved one is gone."
+  },
+  "myRemindersHeading": {
+    "message": "My reminders",
+    "description": "Options heading."
+  },
+  "myRemindersNew": {
+    "message": "New line",
+    "description": "Input label."
+  },
+  "myRemindersAdd": {
+    "message": "Add",
+    "description": "Button."
+  },
+  "myRemindersRemove": {
+    "message": "Remove",
+    "description": "Button."
+  },
+  "myRemindersEmpty": {
+    "message": "You have not written a reminder yet.",
+    "description": "Empty list."
+  },
+  "myRemindersDeviceOnly": {
+    "message": "On this browser only; sent nowhere.",
+    "description": "Privacy line."
+  },
+  "myRemindersError_empty": {
+    "message": "Write the line first.",
+    "description": "Error."
+  },
+  "myRemindersError_tooLong": {
+    "message": "The line is longer than $1 characters.",
+    "description": "Error. $1 = max length."
+  },
+  "myRemindersError_full": {
+    "message": "You reached the limit of $2 lines.",
+    "description": "Error. $2 = max lines."
+  },
+  "myRemindersError_duplicate": {
+    "message": "This line is already there.",
+    "description": "Error."
+  },
+  "prayerHeading": {
+    "message": "Prayer times",
+    "description": "Options heading."
+  },
+  "prayerHelper": {
+    "message": "For «After Fajr» and the other reminders. The times come from the AlAdhan service after you allow it, and are kept for 30 days.",
+    "description": "Options helper line."
+  },
+  "prayerCity": {
+    "message": "City",
+    "description": "Input label."
+  },
+  "prayerCountry": {
+    "message": "Country code (two letters)",
+    "description": "Input label."
+  },
+  "prayerSave": {
+    "message": "Save and load the times",
+    "description": "Button."
+  },
+  "prayerClear": {
+    "message": "Clear the city",
+    "description": "Button."
+  },
+  "prayerInvalid": {
+    "message": "Enter the city and a two-letter country code.",
+    "description": "Error."
+  },
+  "prayerSaved": {
+    "message": "30 days of times are saved.",
+    "description": "Status."
+  },
+  "prayerFailed": {
+    "message": "The times could not be loaded; default times are used.",
+    "description": "Status."
   }
 }

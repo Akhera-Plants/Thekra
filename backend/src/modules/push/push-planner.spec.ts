@@ -156,6 +156,28 @@ describe('planPushes', () => {
   });
 });
 
+describe('planPushes with prayer anchors', () => {
+  it('uses the anchor times the browser sent, and the default times on days without them', () => {
+    const anchored = plan({ slots: ['05:20', '11:00'], slotAnchors: ['after-fajr', null] });
+    const anchorTimes = {
+      '2026-10-29': {
+        'after-fajr': '05:07',
+        'after-dhuhr': '11:55',
+        'after-asr': '15:05',
+        'after-maghrib': '17:35',
+        'after-isha': '19:05',
+        'before-sleep': '21:30',
+      },
+    };
+    expect(run(store([anchored]), { anchorTimes }).map((p) => p.key)).toEqual([
+      'habit:plan-duha:2026-10-29:05:07',
+      'habit:plan-duha:2026-10-29:11:00',
+      'habit:plan-duha:2026-10-30:05:20',
+      'habit:plan-duha:2026-10-30:11:00',
+    ]);
+  });
+});
+
 describe('sitePath', () => {
   it('Arabic has no prefix (the site default), English is under /en', () => {
     expect(sitePath('ar', '/practice')).toBe('/practice');

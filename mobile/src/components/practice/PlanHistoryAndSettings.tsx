@@ -7,10 +7,10 @@ import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Check } from 'lucide-react-native';
-import { addDays, validatePlan, type LocalTime, type Plan } from '@thekra/practice-core';
+import { addDays, orderedSlots, slotChoices, validatePlan, type Plan } from '@thekra/practice-core';
 import { sortSlots, weekdaysToRule } from '@/lib/practice/format';
 import { MONTH_DAYS, type PlanView } from '@/lib/practice/plan-view';
-import { ActiveDaysPicker, SlotsEditor, WeekdayPicker } from '@/components/practice/editors';
+import { ActiveDaysPicker, SlotsEditor, WeekdayPicker, type SlotChoice } from '@/components/practice/editors';
 import { radius, space, useStyles, type Theme } from '@/theme';
 import { Button, ErrorText, Section, Text } from '@/ui';
 
@@ -72,7 +72,7 @@ interface SettingsPanelProps {
 export function SettingsPanel({ plan, ruleWeekdays, onSave }: SettingsPanelProps) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
-  const [slots, setSlots] = useState<LocalTime[]>(plan.slots);
+  const [slots, setSlots] = useState<SlotChoice[]>(slotChoices(plan));
   const [activeDays, setActiveDays] = useState(plan.activeDaysPerWeek);
   const [weekdays, setWeekdays] = useState<number[] | null>(ruleWeekdays);
   const [saved, setSaved] = useState(false);
@@ -80,7 +80,7 @@ export function SettingsPanel({ plan, ruleWeekdays, onSave }: SettingsPanelProps
 
   const ruleKey = JSON.stringify(ruleWeekdays);
   useEffect(() => {
-    setSlots(plan.slots);
+    setSlots(slotChoices(plan));
     setActiveDays(plan.activeDaysPerWeek);
     setWeekdays(ruleWeekdays);
     // Reset the editors when the stored plan's settings change, not on every log.
@@ -100,7 +100,10 @@ export function SettingsPanel({ plan, ruleWeekdays, onSave }: SettingsPanelProps
       setError(t('practice.add.noReminderDays'));
       return;
     }
-    const next: Plan = { ...plan, slots: sortSlots(slots), activeDaysPerWeek: activeDays, ...(rule ? { rule } : {}) };
+    const ordered = orderedSlots(slots);
+    const next: Plan = { ...plan, slots: ordered.slots, activeDaysPerWeek: activeDays, ...(rule ? { rule } : {}) };
+    if (ordered.slotAnchors) next.slotAnchors = ordered.slotAnchors;
+    else delete next.slotAnchors;
     if (validatePlan(next) !== null) {
       setError(t('practice.add.noSlots'));
       return;

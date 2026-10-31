@@ -32,7 +32,10 @@ All `private, no-store`. Responses use the usual `{ data }` envelope.
 | Route | Auth | Body | Answer |
 | --- | --- | --- | --- |
 | `GET /v1/push/config` | none | — | `{ enabled, publicKey }` (`publicKey` = VAPID public key, base64url; `null` when off) |
-| `POST /v1/me/push/subscriptions` | JWT | `{ endpoint, keys: { p256dh, auth }, timeZone, locale, prefs? }` (the browser's `subscription.toJSON()` plus zone, language and the optional switches `{ habits, periodic, periodicTime, eveningNudge, eveningTime, fridayReview, fridayTime, strategies, strategyTime }`; an absent `prefs` keeps what is stored) | `{ id, scheduled }`; 503 `PUSH_DISABLED` when off; 400 `PUSH_INVALID` for an unknown zone |
+| `POST /v1/me/push/subscriptions` | JWT | `{ endpoint, keys: { p256dh, auth }, timeZone, locale, prefs? }` (the browser's `subscription.toJSON()` plus zone, language and the optional switches `{ habits, periodic, periodicTime, eveningNudge, eveningTime, fridayReview, fridayTime, strategies, strategyTime, anchorTimes? }`; an absent `prefs` keeps what is stored. `anchorTimes` (phase 6) =
+`{ 'YYYY-MM-DD': { 'after-fajr': 'HH:MM', … every anchor } }` for at most 30 days, resolved by the browser from its own
+AlAdhan cache (practice-core `resolvedAnchorTimes`, 14 days sent): the server cannot call AlAdhan per user, so anchored
+habit slots use these times and fall back to the default anchor times on days without an entry) | `{ id, scheduled }`; 503 `PUSH_DISABLED` when off; 400 `PUSH_INVALID` for an unknown zone |
 | `DELETE /v1/me/push/subscriptions` | JWT | `{ endpoint }` | 204 (idempotent) |
 | `POST /v1/me/push/test` | JWT | `{ endpoint, locale }` | 204 after sending one notification now; 404 when the browser is not registered or dropped it |
 | `POST /v1/push/deliver` | QStash signature (`Upstash-Signature`) | sealed text (`text/plain`) | 200 `{ outcome }` |

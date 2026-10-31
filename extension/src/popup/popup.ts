@@ -45,6 +45,7 @@ import { isReminderDay, remainingOn, ruleOf } from '../scheduler.js';
 import type { Message, Reply } from '../messages.js';
 import { AUTH_KEY, PREFS_KEY, STORE_KEY, SYNC_STATUS_KEY, type Lang, type State } from '../state.js';
 import type { SyncStatus } from '../sync-runner.js';
+import { screenSection } from './screen-section.js';
 
 type Child = Node | string | null | undefined | false;
 
@@ -527,6 +528,9 @@ function renderSettings(main: HTMLElement, t: Translate): void {
   });
   main.append(save, message);
 
+  // The new-tab page, «تذكيراتي» and prayer times: saved at once, like the account.
+  main.append(screenSection(t, catalog));
+
   // The account is separate from the form above: signing in or out takes effect at once.
   const accountBox = h('section', { class: 'card account' });
   redrawAccount = () => accountBox.replaceChildren(...accountContent(translator(d.lang)));
@@ -634,6 +638,9 @@ async function saveDraft(d: Draft): Promise<void> {
     if (existing) {
       store = updatePlan(store, existing.id, (p) => {
         let plan: Plan = { ...p, title: habit.titleAr, slots, activeDaysPerWeek };
+        // Prayer anchors (set on the website or in the app) stay while the times are unchanged; new times are fixed.
+        if (slots.join() === [...p.slots].sort().join()) plan.slots = p.slots;
+        else delete plan.slotAnchors;
         if (!plan.rule) plan.rule = habit.defaultRule;
         const base = plan.season ? plan.season.previous : plan.amount;
         if (hd.amount < base) plan = decreaseTo(plan, hd.amount, day);

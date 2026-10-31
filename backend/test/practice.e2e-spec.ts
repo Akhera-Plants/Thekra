@@ -45,8 +45,8 @@ const RELATIVE = {
   clientUpdatedAt: T(0),
   deletedAt: null,
 };
-/** What the server returns for a plan / relative an older client sent (missing phase-2 fields = defaults). */
-const PHASE2_PLAN_DEFAULTS = { pausedOn: null, resumedOn: null, establishedOn: null };
+/** What the server returns for a plan / relative an older client sent (missing phase-2/6 fields = defaults). */
+const PHASE2_PLAN_DEFAULTS = { pausedOn: null, resumedOn: null, establishedOn: null, slotAnchors: null };
 const planOut = <T extends object>(plan: T) => ({ ...PHASE2_PLAN_DEFAULTS, ...plan });
 const relativeOut = <T extends object>(relative: T) => ({ circle: 'kin', ...relative });
 const b64 = (bytes: number) => Buffer.alloc(bytes, 9).toString('base64');
@@ -394,7 +394,7 @@ describe('Practice, calendar and account endpoints (e2e)', () => {
         relatives: [sick],
       },
     }).expect(200);
-    expect(first.body.data.plans).toEqual([paused]);
+    expect(first.body.data.plans).toEqual([planOut(paused)]);
     expect(first.body.data.relatives).toEqual([sick]);
     expect(first.body.data.settings).toMatchObject({ excusedDays: ['2026-10-26', '2026-10-27'] });
     const row = await prisma.habitPlan.findUniqueOrThrow({ where: { id } });
@@ -406,7 +406,7 @@ describe('Practice, calendar and account endpoints (e2e)', () => {
     const resumed = { ...paused, resumedOn: '2026-10-31', clientUpdatedAt: T(32) };
     await sync(auth, { since: null, changes: { plans: [resumed] } }).expect(200);
     const stale = await sync(auth, { since: null, changes: { plans: [{ ...paused, clientUpdatedAt: T(31) }] } }).expect(200);
-    expect(stale.body.data.plans.find((p: { id: string }) => p.id === id)).toEqual(resumed);
+    expect(stale.body.data.plans.find((p: { id: string }) => p.id === id)).toEqual(planOut(resumed));
 
     // An older client (no phase-2 fields) that writes later sets the defaults (last writer wins on the whole plan).
     const { pausedOn: _p, resumedOn: _r, establishedOn: _e, ...oldShape } = resumed;
@@ -428,6 +428,13 @@ describe('Practice, calendar and account endpoints (e2e)', () => {
     expect(exported.body.data.practice.relatives).toEqual([expect.objectContaining({ id: rid, circle: 'sick' })]);
     expect(exported.body.data.practice.settings).toMatchObject({ excusedDays: ['2026-10-26', '2026-10-27'] });
     expect(exported.body.data.practice.plans).toEqual([expect.objectContaining({ id, pausedOn: null })]);
+
+    // Phase 6: prayer anchors per slot round-trip; an invalid anchor is refused.
+    const anchored = { ...resumed, slotAnchors: ['after-fajr', null], clientUpdatedAt: T(34) };
+    const withAnchors = await sync(auth, { since: null, changes: { plans: [anchored] } }).expect(200);
+    expect(withAnchors.body.data.plans.find((p: { id: string }) => p.id === id)).toMatchObject({ slotAnchors: ['after-fajr', null] });
+    expect((await prisma.habitPlan.findUniqueOrThrow({ where: { id } })).slotAnchors).toEqual(['after-fajr', null]);
+    await sync(auth, { since: null, changes: { plans: [{ ...anchored, slotAnchors: ['at-noon', null], clientUpdatedAt: T(35) }] } }).expect(400);
   });
 
   it('export carries practice data and the vault ciphertext; DELETE /auth/me cascades all of it', async () => {

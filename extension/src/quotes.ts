@@ -38,6 +38,8 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 }
 const text = (v: unknown): string | null => (typeof v === 'string' && v.trim().length > 0 ? v.trim() : null);
 
+const positiveInt = (v: unknown): number | null => (typeof v === 'number' && Number.isInteger(v) && v > 0 ? v : null);
+
 /** Copies the known fields of one QuoteDto. `null` when the id, type or Arabic text is missing. */
 export function toQuoteLite(raw: unknown): QuoteLite | null {
   if (!isRecord(raw)) return null;
@@ -53,18 +55,21 @@ export function toQuoteLite(raw: unknown): QuoteLite | null {
   const lc = typeof tr.languageCode === 'string' ? tr.languageCode.toLowerCase() : '';
   const ayah = quran.ayahNumber;
   const citation = isRecord(raw.citation) ? raw.citation : {};
+  // A QuoteLite read back from a cache in chrome.storage carries these fields at the top level (no `hadith`/`quran`).
+  const stored = !isRecord(raw.hadith) && !isRecord(raw.quran) && 'reference' in raw;
+  const storedAyah = raw.ayahNumber;
   return {
     id: id.toLowerCase(),
     type,
     textAr,
-    translationEn: lc === 'en' || lc.startsWith('en-') ? text(tr.text) : null,
-    reference: text(hadith.reference),
-    surahNameAr: text(quran.surahNameAr),
-    surahName: text(quran.surahName),
-    ayahNumber: typeof ayah === 'number' && Number.isInteger(ayah) && ayah > 0 ? ayah : null,
+    translationEn: stored ? text(raw.translationEn) : lc === 'en' || lc.startsWith('en-') ? text(tr.text) : null,
+    reference: stored ? text(raw.reference) : text(hadith.reference),
+    surahNameAr: stored ? text(raw.surahNameAr) : text(quran.surahNameAr),
+    surahName: stored ? text(raw.surahName) : text(quran.surahName),
+    ayahNumber: positiveInt(stored ? storedAyah : ayah),
     isAthar: raw.isAthar === true,
     atharSpeakerAr: text(raw.atharSpeakerAr),
-    paraphrase: (text(citation.gradeReference) ?? '').startsWith('رواه بمعناه'),
+    paraphrase: stored ? raw.paraphrase === true : (text(citation.gradeReference) ?? '').startsWith('رواه بمعناه'),
   };
 }
 

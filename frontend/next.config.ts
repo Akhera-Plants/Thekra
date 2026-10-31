@@ -27,6 +27,8 @@ const apiIsHttps = api?.startsWith('https://') ?? false;
  * - 'unsafe-eval' and the HMR websocket are allowed only by `next dev`.
  * - upgrade-insecure-requests only when the API is https (a local production
  *   build talks to http://localhost:3001).
+ * - connect-src allows https://api.aladhan.com: the browser fetches the prayer times of the city the user chose
+ *   (redesign §4.6, prayer-time anchors). No credentials are sent there.
  */
 const csp = [
   "default-src 'self'",
@@ -34,7 +36,7 @@ const csp = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self'",
-  ['connect-src', "'self'", api, isDev ? 'ws: wss:' : null].filter(Boolean).join(' '),
+  ['connect-src', "'self'", api, 'https://api.aladhan.com', isDev ? 'ws: wss:' : null].filter(Boolean).join(' '),
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",

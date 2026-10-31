@@ -23,6 +23,7 @@ import { HIJRI_OFFSET_MAX, HIJRI_OFFSET_MIN } from './hijri.js';
 import { latestDate, undoLastContact, validateRelative, type PeopleCircle, type Relative } from './kinship.js';
 import { mergeLogs, validatePlan, type Plan, type PlanLog } from './plan.js';
 import type { Rule } from './rules.js';
+import type { PrayerAnchor } from './prayer.js';
 import { sanitizeCheckIn, validateCheckIn, validateProgram, type CheckIn, type SinProgram } from './sin-program.js';
 
 export const STORE_VERSION = 2;
@@ -148,6 +149,7 @@ export function clonePlan(p: Plan): Plan {
   if (p.pausedOn !== undefined) out.pausedOn = p.pausedOn;
   if (p.resumedOn !== undefined) out.resumedOn = p.resumedOn;
   if (p.establishedOn !== undefined) out.establishedOn = p.establishedOn;
+  if (p.slotAnchors !== undefined) out.slotAnchors = [...p.slotAnchors];
   if (p.updatedAt !== undefined) out.updatedAt = p.updatedAt;
   if (p.logCorrectedAt !== undefined) out.logCorrectedAt = { ...p.logCorrectedAt };
   return out;
@@ -195,6 +197,8 @@ export interface PlanStateFields {
   pausedOn?: LocalDate;
   resumedOn?: LocalDate;
   establishedOn?: LocalDate;
+  /** Phase 6 (prayer anchors), only when the plan has one. */
+  slotAnchors?: (PrayerAnchor | null)[];
 }
 
 /**
@@ -208,6 +212,7 @@ export function planFields(p: Plan) {
   if (p.pausedOn !== undefined) state.pausedOn = p.pausedOn;
   if (p.resumedOn !== undefined) state.resumedOn = p.resumedOn;
   if (p.establishedOn !== undefined) state.establishedOn = p.establishedOn;
+  if (p.slotAnchors !== undefined && p.slotAnchors.some((a) => a !== null)) state.slotAnchors = [...p.slotAnchors];
   return {
     habitKey: p.habitKey ?? null,
     deedSlug: p.deedSlug,
