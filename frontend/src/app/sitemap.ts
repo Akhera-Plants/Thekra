@@ -44,6 +44,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entry('/practice/kinship', 0.5),
     entry('/practice/notifications', 0.3),
     entry('/practice/reviews', 0.3),
+    entry('/practice/strategies', 0.3),
     ...sins.map((slug) => entry(`/sins/${slug}`, 0.8)),
     ...deeds.map((slug) => entry(`/good-deeds/${slug}`, 0.8)),
     ...branches.map((number) => entry(`/branches/${number}`, 0.7)),

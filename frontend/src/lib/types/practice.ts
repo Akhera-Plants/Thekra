@@ -81,6 +81,10 @@ export interface PracticeCatalog {
     common: SinProgramCommon;
     programs: SinProgramEntry[];
   };
+  /** Habit deed → its branches of faith. Optional until every API deploy sends it. */
+  deedBranches?: Record<string, number[]>;
+  /** Story key → Quote id, or null while not found (the UI hides it). Optional until every API deploy sends it. */
+  stories?: Record<string, string | null>;
 }
 
 /** One dated occurrence, as `GET /v1/calendar/occasions` returns it (or as computed on the device). */

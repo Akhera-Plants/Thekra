@@ -44,6 +44,8 @@ export interface HeartPrefs {
   fridayReview: boolean;
   /** «التزام شخصي»: opt-in. */
   pledges: boolean;
+  /** «حلقة العادة» and «الاستمرار: ثلاث حقائق» were shown once (after the first habit). */
+  cardsSeen: boolean;
 }
 
 export const DEFAULT_HEART_PREFS: HeartPrefs = {
@@ -52,6 +54,7 @@ export const DEFAULT_HEART_PREFS: HeartPrefs = {
   eveningReview: false,
   fridayReview: true,
   pledges: false,
+  cardsSeen: false,
 };
 
 /** «اليوم أعاهد الله على: …»: the habits ticked and an optional line of the user's own. */

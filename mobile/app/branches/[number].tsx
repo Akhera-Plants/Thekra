@@ -14,6 +14,7 @@ import { useBranch, useBranchQuotesInfinite } from '@/lib/api/branches';
 import { buildTopicSections } from '@/lib/topics';
 import type { BranchQuotesMeta, ImanBranchDetailDto, ImanBranchNeighbourDto } from '@/lib/types/api';
 import { TopicQuoteList, useLastDefined, useTopicQuoteParams } from '@/components/TopicQuoteList';
+import { BranchRelatedLinks, MizanBlock } from '@/components/TopicTemplate';
 import { space, useStyles, useTheme } from '@/theme';
 import { BackChevron, Card, EmptyState, ForwardChevron, Icon, Row, Screen, Section, Text } from '@/ui';
 
@@ -147,8 +148,23 @@ export default function BranchScreen() {
       title={branch ? branchName(branch, english, t) : null}
       lead={summary}
       emptyMessage={t('branches.noQuotes')}
-      intro={detail.data ? <BranchExplanations items={detail.data.explanations} /> : null}
-      footer={detail.data ? <BranchNav detail={detail.data} /> : null}
+      intro={
+        detail.data ? (
+          <>
+            {/* The topic template (redesign §4.5): الميزان → texts → this branch's sins and deeds. No action here. */}
+            <MizanBlock mizan={detail.data.mizan} />
+            <BranchExplanations items={detail.data.explanations} />
+          </>
+        ) : null
+      }
+      footer={
+        detail.data ? (
+          <>
+            <BranchRelatedLinks goodDeeds={detail.data.goodDeeds} sins={detail.data.sins} />
+            <BranchNav detail={detail.data} />
+          </>
+        ) : null
+      }
     />
   );
 }

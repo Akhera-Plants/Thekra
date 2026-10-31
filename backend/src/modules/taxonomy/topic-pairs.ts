@@ -16,6 +16,8 @@ interface TopicRow {
   ar: string;
   en: string;
   side: TopicSide | null;
+  /** `branches:` — Shu'ab al-Iman branch numbers this topic is linked to. */
+  branches: number[];
 }
 
 let cached: {
@@ -53,7 +55,12 @@ function parseTopics(text: string): Map<string, TopicRow> {
     const ar = field(inner, 'ar');
     const en = field(inner, 'en');
     const side = field(inner, 'side');
-    if (slug && ar && en) topics.set(slug, { slug, ar, en, side: side === 'AVOID' || side === 'DO' ? side : null });
+    const branchList = /(?:^|,)\s*branches\s*:\s*\[([^\]]*)\]/.exec(inner)?.[1] ?? '';
+    const branches = branchList
+      .split(',')
+      .map((part) => Number(part.trim()))
+      .filter((n) => Number.isInteger(n) && n > 0);
+    if (slug && ar && en) topics.set(slug, { slug, ar, en, side: side === 'AVOID' || side === 'DO' ? side : null, branches });
   }
   return topics;
 }
@@ -119,4 +126,9 @@ export function isPairedSlug(slug: string): boolean {
 /** `side:` of a taxonomy.yaml topic (AVOID = sin, DO = good deed), or null when the slug is not a topic. */
 export function topicSide(slug: string): TopicSide | null {
   return load().topics.get(slug)?.side ?? null;
+}
+
+/** `branches:` of a taxonomy.yaml topic (Shu'ab al-Iman numbers), empty when none or not a topic. */
+export function topicBranches(slug: string): readonly number[] {
+  return load().topics.get(slug)?.branches ?? [];
 }

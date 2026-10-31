@@ -259,7 +259,16 @@ function TopicCatalogShell({
                 <Link key={entry.href} href={entry.href} className="topic-item" {...reach(entry.href)}>
                   <Icon className="size-[26px]" aria-hidden />
                   <span>
-                    <strong>{label} <LinkPending /></strong>
+                    <strong>
+                      {/* شعب الإيمان: the map is the numbered list of the 77 branches (no grouping data exists). */}
+                      {intent === 'branch' && entry.taxonomyOrder ? (
+                        <>
+                          <FormattedNumber value={entry.taxonomyOrder} />
+                          {' · '}
+                        </>
+                      ) : null}
+                      {label} <LinkPending />
+                    </strong>
                     {meta ? <small>{meta}</small> : null}
                     {!meta && entry.quoteCount > 0 ? (
                       <small>

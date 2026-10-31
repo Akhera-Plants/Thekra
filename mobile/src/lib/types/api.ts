@@ -140,6 +140,19 @@ export interface QuoteDetailDto extends QuoteDto {
   allTranslations?: Array<{ languageCode: string; text: string }>;
 }
 
+/** «الميزان» (redesign §4.5): the texts that open a topic page; `top` = the topic's top-ranked text (no curated ids). */
+export interface MizanDto {
+  source: 'curated' | 'top';
+  items: QuoteDto[];
+}
+
+/** A branch of faith a sin or good deed belongs to (detail endpoints). */
+export interface TopicBranchDto {
+  number: number;
+  titleAr: string;
+  title?: string | null;
+}
+
 export interface SinDto {
   id: string;
   name: string;
@@ -157,6 +170,10 @@ export interface SinDto {
   quoteCount: number;
   createdAt: string;
   updatedAt: string;
+  /** Detail only: the branches of faith of this sin. */
+  branches?: TopicBranchDto[];
+  /** Detail only: «الميزان». Optional until every API deploy sends it. */
+  mizan?: MizanDto | null;
 }
 
 /** A paired sin/deed is one page (PROJECT_GUIDE §3.10): the two slugs and the page's shared title. */
@@ -198,6 +215,10 @@ export interface GoodDeedDto {
   quoteCount: number;
   createdAt: string;
   updatedAt: string;
+  /** Detail only: the branches of faith of this deed. */
+  branches?: TopicBranchDto[];
+  /** Detail only: «الميزان». Optional until every API deploy sends it. */
+  mizan?: MizanDto | null;
 }
 
 export interface QuoteLinkDto {
@@ -280,6 +301,8 @@ export interface ImanBranchDetailDto extends ImanBranchDto {
   sins: Array<{ slug: string; name: string; nameAr: string; rank: SinRank | null }>;
   prev: ImanBranchNeighbourDto | null;
   next: ImanBranchNeighbourDto | null;
+  /** «الميزان». Optional until every API deploy sends it. */
+  mizan?: MizanDto | null;
 }
 
 export interface BranchQuotesResponse {

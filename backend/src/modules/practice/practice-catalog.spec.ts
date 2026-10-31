@@ -129,6 +129,17 @@ describe('practice catalog — the real reviewer files', () => {
     }
   });
 
+  it('maps each habit deed to its branches of faith (taxonomy.yaml) and carries the story ids (heart-texts.yaml)', () => {
+    const { deedBranches, stories } = practiceCatalog();
+    const deeds = new Set(practiceCatalog().habits.map((h) => h.deed));
+    for (const [deed, branches] of Object.entries(deedBranches)) {
+      expect(deeds.has(deed), deed).toBe(true);
+      expect(branches.length).toBeGreaterThan(0);
+      for (const n of branches) expect(n >= 1 && n <= 77, `${deed} ${n}`).toBe(true);
+    }
+    expect(Object.keys(stories).sort()).toEqual(['fasila', 'ghusn-shawk', 'marad-safar', 'qatil-al-mia']);
+  });
+
   it('programForSin exposes only availability and category', () => {
     expect(programForSin('ghibah')).toEqual({ available: true, category: 'haqq_ibad' });
     expect(programForSin('waqt-tawasul')).toEqual({ available: true, category: 'haqq_allah' });

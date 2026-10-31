@@ -95,6 +95,9 @@ describe('Good-deeds endpoints (e2e)', () => {
       // deed-schedules.yaml has no habit or occasion for this deed.
       schedule: { habits: [], occasions: [] },
     });
+    // «الميزان» is always present: the deed's top published text, or null when it has none.
+    expect(res.body.data).toHaveProperty('mizan');
+    if (res.body.data.mizan) expect(res.body.data.mizan.source).toBe('top');
   });
 
   it('GET /v1/good-deeds/does-not-exist → 404', async () => {

@@ -21,3 +21,5 @@ export * from './notify.js';
 export * from './heart.js';
 export * from './vault.js';
 export * from './base64.js';
+export * from './strategies.js';
+export * from './knowledge.js';

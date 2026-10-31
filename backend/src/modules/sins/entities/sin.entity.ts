@@ -1,5 +1,6 @@
 import type { SinRank } from '@prisma/client';
 import type { SinCategory } from '@thekra/practice-core';
+import type { MizanDto } from '../../quotes/quotes.service.js';
 import type { GoodDeedSummary } from '../../good-deeds/entities/good-deed.entity.js';
 
 export interface SinRankSourceDto {
@@ -45,4 +46,6 @@ export type SinDetailDto = SinDto & {
   branches: { number: number; titleAr: string; title: string | null }[];
   /** Whether sin-programs.yaml has a leaving program for this sin, and its category. */
   program: { available: boolean; category: SinCategory | null };
+  /** «الميزان»: curated texts (heart-texts.yaml) or the top-ranked published text; null without a published text. */
+  mizan: MizanDto | null;
 };

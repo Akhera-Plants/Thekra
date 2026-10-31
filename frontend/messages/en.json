@@ -1292,7 +1292,9 @@
       "reviews": "Self-review",
       "reviewsHint": "Your weekly reviews",
       "notifications": "Notifications",
-      "notificationsHint": "Notifications, today's intention and self-review"
+      "notificationsHint": "Notifications, today's intention and self-review",
+      "strategies": "Habit strategies",
+      "strategiesHint": "Ways that help you stay steady"
     },
     "limits": {
       "keepGoing": "Keep up what I have",
@@ -1449,7 +1451,156 @@
       "pledgeRemove": "Remove",
       "pledgeNone": "No pledge yet.",
       "noHabits": "Add a habit first to tie a pledge to it.",
-      "linkHint": "Notifications, today's intention and self-review"
+      "linkHint": "Notifications, today's intention and self-review",
+      "strategies": "{count, plural, =0 {No strategy chosen for reminders yet} one {A weekly reminder of 1 strategy} other {A weekly reminder of {n} strategies, in turn}}",
+      "strategiesLink": "Choose from habit strategies"
+    },
+    "tally": {
+      "title": "My tally",
+      "lead": "What each habit has gathered, in its own unit.",
+      "month": "This month: {amount}",
+      "total": "Since the start: {amount}",
+      "branches": "{count, plural, one {You are working on 1 branch of faith} other {You are working on {n} branches of faith}}",
+      "acceptance": "And acceptance is from Allah",
+      "empty": "Your tally appears here after your first log.",
+      "heldTotal": "{count, plural, =0 {No days marked yet} one {You held firm 1 day since the start} other {You held firm {n} days since the start}}"
+    },
+    "celebrate": {
+      "accepted": "May Allah accept it from you",
+      "dayDone": "Your wird is complete today"
+    },
+    "story": {
+      "afterFall": "Do not despair: the door of repentance is open",
+      "heavyDay": "Your usual deed is written for you",
+      "lateStart": "It is not too late",
+      "smallDeed": "A small deed, a great reward"
+    },
+    "weekBranch": {
+      "title": "Branch of the week",
+      "open": "Read about it"
+    },
+    "cards": {
+      "loopTitle": "The habit loop",
+      "loopHint": "Every habit turns in this loop, and each turn makes it stronger.",
+      "loop": {
+        "cue": "Cue",
+        "intention": "Intention",
+        "smallDeed": "A small deed",
+        "joy": "Acceptance and joy",
+        "repeat": "Repeat"
+      },
+      "sinTitle": "How a sin grows",
+      "sinHint": "Pushing it away as a passing thought is easier than as a habit.",
+      "sin": {
+        "passing": "A passing thought",
+        "thought": "A thought",
+        "desire": "A desire",
+        "resolve": "A resolve",
+        "act": "An act",
+        "habit": "A habit"
+      },
+      "sinSource": "This progression follows Ibn al-Qayyim's description in \"al-Fawaid\"; the wording here is ours.",
+      "consistencyTitle": "Consistency: three facts",
+      "facts": {
+        "twoMonths": "A habit takes about two months on average to settle.",
+        "oneDay": "One missed day does not undo what you built.",
+        "neglect": "A habit fades when neglected, so return to it quickly."
+      },
+      "gotIt": "Got it"
+    },
+    "strategies": {
+      "title": "Habit strategies",
+      "lead": "Fourteen ways that help you build good and leave bad.",
+      "try": "Try it",
+      "remind": "Remind me",
+      "remindHint": "At most one reminder a week, on Saturday; turn it off any time.",
+      "cardsTitle": "Before you start",
+      "time": "Reminder time",
+      "items": {
+        "start-tiny": {
+          "idea": "Start with an amount so small it needs no effort.",
+          "example": "Example: two minutes of Quran instead of a whole juz."
+        },
+        "anchor-prayer": {
+          "idea": "Place the habit after a set prayer, so the prayer reminds you of it.",
+          "example": "Example: the adhkar right after the Fajr prayer."
+        },
+        "if-then": {
+          "idea": "Decide in advance what you will do when the moment comes.",
+          "example": "Example: if I miss my wird, then I will read one page before sleep."
+        },
+        "prepare-place": {
+          "idea": "Set out what the habit needs before its time.",
+          "example": "Example: the mushaf on the desk, the prayer mat laid out."
+        },
+        "block-sin": {
+          "idea": "Keep the means of the sin out of reach, and make the way to it long.",
+          "example": "Example: delete the app, and leave the phone outside the room at night."
+        },
+        "never-twice": {
+          "idea": "If you miss the habit one day, do not miss it a second day.",
+          "example": "Example: after a missed day, start your day with its smallest amount."
+        },
+        "make-up": {
+          "idea": "What you missed yesterday can be made up until Dhuhr the next day.",
+          "example": "Example: you missed your night wird, so read it in the forenoon."
+        },
+        "bundle": {
+          "idea": "Pair the habit with something you enjoy and look forward to.",
+          "example": "Example: tasbih on your way to work."
+        },
+        "season": {
+          "idea": "Seasons of good help a start; hearts are more willing in them.",
+          "example": "Example: begin fasting Mondays and Thursdays in Shaban."
+        },
+        "know-weak": {
+          "idea": "Notice the time, place and state in which you weaken.",
+          "example": "Example: after midnight, when you are alone."
+        },
+        "ride-wave": {
+          "idea": "An urge rises and then falls; hold on for a few minutes.",
+          "example": "Example: make wudu, or change your place for ten minutes."
+        },
+        "follow-good": {
+          "idea": "If you slip, repent, and follow it with a good deed at once.",
+          "example": "Example: a small charity or two rakahs after the slip."
+        },
+        "company": {
+          "idea": "Keep company that helps you to good, and look in on your friends.",
+          "example": "Example: agree with a friend on a shared wird."
+        },
+        "self-review": {
+          "idea": "Take a minute each evening: what did you keep, and what did you miss?",
+          "example": "Example: a short review before sleep."
+        }
+      }
+    },
+    "onboarding": {
+      "stepOf": "Step {step} of 3",
+      "skip": "Skip",
+      "what": {
+        "title": "What?",
+        "hint": "Choose one habit to begin with.",
+        "example": "Example: the morning and evening adhkar."
+      },
+      "when": {
+        "title": "When?",
+        "hint": "Tie it to a fixed time of your day; two times are better.",
+        "example": "Example: after the Fajr prayer, and after the Maghrib prayer."
+      },
+      "howMuch": {
+        "title": "How much?",
+        "hint": "Start with an amount light enough for your busiest day.",
+        "example": "Example: two minutes, or 10 times."
+      },
+      "slots": "Reminder times",
+      "finishTitle": "Your first habit is ready",
+      "finishLead": "Choose what helps you with it; you can change it later in Notifications.",
+      "intention": "Today's intention",
+      "intentionHint": "A short morning card to renew your intention.",
+      "evening": "Evening self-review",
+      "eveningHint": "One question in the evening: what did you keep today?",
+      "done": "Start"
     }
   },
   "calendarPage": {
@@ -1501,7 +1652,7 @@
     "genericTitle": "A reminder from Thekra",
     "lead": "A staged program on your device: know the harm, build the alternative, change your surroundings, set limits, stay firm.",
     "privacy": "This program lives on your device: it is never sent to a server in readable form, never used in any statistics, and the sin is never named in the page title or its link. If you choose to save it to your account, it is sent encrypted with a code only you know.",
-    "startFromSin": "Start the leaving program",
+    "startFromSin": "Start \"Lighten\"",
     "another": "Start another program",
     "choose": {
       "title": "Choose the program",
@@ -1717,5 +1868,15 @@
         "keep_alternative_habits": "Keep your alternative habits"
       }
     }
+  },
+  "topic": {
+    "mizanTitle": "The scale",
+    "mizanLead": "Texts that show the weight of this deed with Allah.",
+    "mizanTop": "The first text of this topic.",
+    "branchesTitle": "From the branches of faith",
+    "branchRelatedTitle": "Linked to this branch",
+    "makeHabit": "Make it my habit",
+    "makeHabitHint": "Start very small, and keep at it.",
+    "habitAdded": "In your habits"
   }
 }

@@ -1,8 +1,9 @@
 /**
  * «سجلّي», in this order: the streak (the number with the gold flame, and «أطول مداومة»; practice-core
  * `currentStreak` / `longestStreak`), the one month calendar (presence marks and occasion dots; a tapped day opens its
- * list under the grid, loggable for the last 7 days), then simple rows: «عاداتي» (habit management), «أعمال دورية»,
- * «تخفَّف» (the private program, behind its own lock), «رفقة» and «المحفوظات». «مواسم الخير» (the occasions
+ * list under the grid, loggable for the last 7 days), «حصيلتي» (totals per habit, the branches being worked on, a
+ * gratitude line), then simple rows: «عاداتي» (habit management), «أعمال دورية», «تخفَّف» (the private program, behind
+ * its own lock), «المحاسبة», «استراتيجيات العادات», «رفقة» and «المحفوظات». «مواسم الخير» (the occasions
  * calendar) is a door on the home screen; «بستاني» has no entry point (redesign §1; its screen and data stay).
  */
 
@@ -10,7 +11,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { router, type Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Bookmark, Lock, NotebookPen, Repeat, Sprout, Users, type LucideIcon } from 'lucide-react-native';
+import { Bookmark, Lightbulb, Lock, NotebookPen, Repeat, Sprout, Users, type LucideIcon } from 'lucide-react-native';
 import { establishPlan, graduationReady, updatePlan, type LocalDate } from '@thekra/practice-core';
 import { pick } from '@/lib/practice/catalog-types';
 import { habitFor } from '@/lib/practice/reminders';
@@ -35,6 +36,7 @@ import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { PresenceMonth } from '@/components/practice/hub/PresenceMonth';
 import { StreakFlame } from '@/components/practice/hub/StreakFlame';
 import { TodayList } from '@/components/practice/hub/TodayList';
+import { TallySection } from '@/components/practice/hub/KnowledgeCards';
 import { space, useStyles, type Theme } from '@/theme';
 import { Button, ListRow, Notice, PageHeader, Screen, Skeleton, Text } from '@/ui';
 
@@ -91,6 +93,7 @@ function Record() {
     { key: 'periodic', icon: Repeat, title: t('practice.periodic.title'), hint: t('record.periodicCount', { count: periodic.length }), href: '/practice/periodic' },
     { key: 'program', icon: Lock, title: t('sinProgram.title'), hint: t('record.programHint'), href: '/practice/sin-program' },
     { key: 'reviews', icon: NotebookPen, title: t('record.reviews'), hint: t('record.reviewsHint'), href: '/practice/reviews' },
+    { key: 'strategies', icon: Lightbulb, title: t('record.strategies'), hint: t('record.strategiesHint'), href: '/practice/strategies' },
     { key: 'circles', icon: Users, title: t('circles.title'), hint: t('record.circlesHint'), href: '/circles' },
     { key: 'saved', icon: Bookmark, title: t('favorites.title'), hint: t('record.savedHint'), href: '/favorites' },
   ];
@@ -133,6 +136,8 @@ function Record() {
       />
 
       {picked ? <PickedDay date={picked} today={today} title={picked === today ? t('practice.today') : shortDayTitle(picked, names)} /> : null}
+
+      <TallySection today={today} />
 
       <View style={styles.list}>
         {links.map((link) => (

@@ -11,6 +11,7 @@
  * - Evening nudge (opt-in, off by default): at most once a day, only while a habit asked that day is not done.
  * - Friday review reminder (on by default): Friday at {@link DEFAULT_NOTIFICATION_PREFS}.fridayTime, unless saved.
  * - The private moment reminder (the sin program's generic check-in): unchanged, generic, never a name.
+ * - «ذكّرني بها» (opt-in): at most one strategy a week, on Saturday at the user's time (strategies.ts).
  * - Quiet hours {@link QUIET_START}–{@link QUIET_END}: nothing the policy chose rings inside them. A habit slot inside
  *   them rings only for the night prayer ({@link NIGHT_HABIT_KEYS}) or when the user set that time himself (it is not
  *   one of the catalog's suggested slots). Times the user picks in «التنبيهات» are his own choice.
@@ -26,6 +27,7 @@ import { isPaused, reminderSlots, requiredOn, type Plan } from './plan.js';
 import { activePrograms } from './sin-program.js';
 import { isExcused, type Store } from './storage.js';
 import { isPeriodicPlan } from './wird.js';
+import { cleanStrategyKeys, strategyByKey, strategyOfWeek } from './strategies.js';
 
 /** No reminder chosen by the policy rings from this time… */
 export const QUIET_START: LocalTime = '23:00';
@@ -38,7 +40,7 @@ export const DAILY_CAP = 4;
 /** A people list reminds again after this many days while someone stays due. */
 export const PERIODIC_REPEAT_DAYS = 7;
 
-export type NotificationKind = 'habit' | 'periodic' | 'evening' | 'friday' | 'private' | 'digest';
+export type NotificationKind = 'habit' | 'periodic' | 'evening' | 'friday' | 'private' | 'strategy' | 'digest';
 
 /** Every switch and time of «التنبيهات». Device-local on each client (the web sends it with its push subscription). */
 export interface NotificationPrefs {
@@ -56,6 +58,9 @@ export interface NotificationPrefs {
   /** The private moment (generic check-in) reminder. Off by default; never on the server. */
   privateMoment: boolean;
   privateTime: LocalTime;
+  /** «ذكّرني بها»: the strategies chosen on «استراتيجيات العادات» (opt-in, empty by default); one a week at most. */
+  strategies: string[];
+  strategyTime: LocalTime;
 }
 
 export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
@@ -68,18 +73,21 @@ export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
   fridayTime: '17:00',
   privateMoment: false,
   privateTime: '21:00',
+  strategies: [],
+  strategyTime: '10:00',
 };
 
 const PREF_BOOLS = ['habits', 'periodic', 'eveningNudge', 'fridayReview', 'privateMoment'] as const;
-const PREF_TIMES = ['periodicTime', 'eveningTime', 'fridayTime', 'privateTime'] as const;
+const PREF_TIMES = ['periodicTime', 'eveningTime', 'fridayTime', 'privateTime', 'strategyTime'] as const;
 
 /** Never throws: unknown or invalid fields fall back to the defaults, unknown keys are dropped. */
 export function parseNotificationPrefs(raw: unknown, defaults: NotificationPrefs = DEFAULT_NOTIFICATION_PREFS): NotificationPrefs {
-  const out: NotificationPrefs = { ...defaults };
+  const out: NotificationPrefs = { ...defaults, strategies: [...defaults.strategies] };
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return out;
   const r = raw as Record<string, unknown>;
   for (const k of PREF_BOOLS) if (typeof r[k] === 'boolean') out[k] = r[k] as boolean;
   for (const k of PREF_TIMES) if (isValidTime(r[k])) out[k] = r[k] as LocalTime;
+  if (Array.isArray(r.strategies)) out.strategies = cleanStrategyKeys(r.strategies);
   return out;
 }
 
@@ -100,6 +108,8 @@ export interface PlannedNotification {
   relativeIds?: string[];
   /** `periodic`: people due; `digest`: acts merged into it. */
   count?: number;
+  /** `strategy`: the key of the strategy of the week (practice-core `STRATEGIES`). */
+  strategy?: string;
 }
 
 export interface NotificationPlanInput {
@@ -214,6 +224,18 @@ function privateEntries(input: NotificationPlanInput, dates: readonly LocalDate[
     .map((date) => ({ kind: 'private' as const, key: `private:${date}`, date, time }));
 }
 
+/** «ذكّرني بها»: one chosen strategy a week, on {@link STRATEGY_WEEKDAY}, at the user's time. */
+function strategyEntries(input: NotificationPlanInput, dates: readonly LocalDate[]): PlannedNotification[] {
+  const { prefs, today, now } = input;
+  const out: PlannedNotification[] = [];
+  for (const date of dates) {
+    const strategy = strategyOfWeek(prefs.strategies, date);
+    if (!strategy || (date === today && prefs.strategyTime <= now)) continue;
+    out.push({ kind: 'strategy', key: `strategy:${date}`, date, time: prefs.strategyTime, strategy });
+  }
+  return out;
+}
+
 /** How many acts a group of merged entries stands for: each habit once, each person due, the check-in once. */
 function actsIn(entries: readonly PlannedNotification[]): number {
   const plans = new Set<string>();
@@ -256,7 +278,7 @@ export function capPerDay(entries: readonly PlannedNotification[], cap = DAILY_C
 export function notificationPlan(input: NotificationPlanInput): PlannedNotification[] {
   const { prefs, today } = input;
   if (input.days <= 0) return [];
-  const kinds = new Set<NotificationKind>(input.kinds ?? ['habit', 'periodic', 'evening', 'friday', 'private', 'digest']);
+  const kinds = new Set<NotificationKind>(input.kinds ?? ['habit', 'periodic', 'evening', 'friday', 'private', 'strategy', 'digest']);
   const dates: LocalDate[] = [];
   for (let i = 0; i < input.days; i++) dates.push(addDays(today, i));
   const end = dates[dates.length - 1] as LocalDate;
@@ -266,6 +288,7 @@ export function notificationPlan(input: NotificationPlanInput): PlannedNotificat
     ...(kinds.has('evening') && prefs.eveningNudge ? eveningEntries(input, dates) : []),
     ...(kinds.has('friday') && prefs.fridayReview ? fridayEntries(input, dates) : []),
     ...(kinds.has('private') && prefs.privateMoment ? privateEntries(input, dates) : []),
+    ...(kinds.has('strategy') && prefs.strategies.length > 0 ? strategyEntries(input, dates) : []),
   ].sort(byTime);
   const capped = capPerDay(all, input.dailyCap ?? DAILY_CAP);
   return kinds.has('digest') ? capped : capped.filter((e) => e.kind !== 'digest');
@@ -287,6 +310,8 @@ export const NOTIFY_TEXTS = {
     fridayTitle: 'المحاسبة',
     fridayBody: 'دقيقتان مع نفسك: ما ثبتَّ عليه هذا الأسبوع، وخطوة للأسبوع القادم',
     digestBody: (n: number) => `عندك ${arabicActs(n)} اليوم`,
+    strategyTitle: 'استراتيجية الأسبوع',
+    strategyBody: (key: string) => strategyByKey(key)?.titleAr ?? '',
   },
   en: {
     wirdTitle: "Today's wird",
@@ -294,6 +319,8 @@ export const NOTIFY_TEXTS = {
     fridayTitle: 'Self-review',
     fridayBody: 'Two minutes with yourself: what you kept this week, and one step for the next',
     digestBody: (n: number) => (n === 1 ? 'You have 1 act today' : `You have ${n} acts today`),
+    strategyTitle: 'Strategy of the week',
+    strategyBody: (key: string) => strategyByKey(key)?.titleEn ?? '',
   },
 } as const;
 

@@ -11,6 +11,7 @@ import { wirdDay, wirdSummary } from '@/lib/practice/wird';
 import { useHeart } from '../../hooks/useHeart';
 import { useWirdContext, type WirdContext } from '../../hooks/useWirdContext';
 import { HeartTop, MuraqabaLine, SelfMessageCard } from './HeartCards';
+import { DayDoneCard, WeekBranchCard } from './KnowledgeCards';
 import { SyncStatus } from '../SyncStatus';
 import { ExcuseToggle } from './ExcuseToggle';
 import { HeavyDayToggle } from './HeavyDayToggle';
@@ -28,7 +29,9 @@ const UPCOMING_LIMIT = 3;
  *    then one rotating text (المراقبة) and the cards of «نية اليوم», a due «التزام شخصي» and «المحاسبة»;
  * 2. «اليوم»: today's occasion as one compact line, one row per task, done rows at the bottom, off-day habits behind
  *    one collapsed row, and «يومي ثقيل» as a one-line toggle;
- * 3. «أعمال دورية»: the next three periodic acts and «الكل».
+ * 3. «أعمال دورية»: the next three periodic acts and «الكل»;
+ * 4. «شعبة الأسبوع»: one branch of faith for the ISO week, linking to its page.
+ * A tick shows «تقبّل الله منك» for a moment; a complete day shows «تمّ وردك اليوم» with one reward text.
  * The month calendar, habit management, «تخفَّف» and the saved texts live in «سجلّي». `?add=1` opens «أضف».
  */
 export function WirdView() {
@@ -89,6 +92,7 @@ function WirdBody({ context }: { context: WirdContext }) {
         habits={habits}
         occasionBasis={occasionBasis}
         canAdd
+        completeCard={<DayDoneCard store={store} today={today} habits={habits} planDays={planDays} />}
         footer={
           store.plans.length > 0 ? (
             <div className="flex flex-wrap gap-3">
@@ -118,6 +122,8 @@ function WirdBody({ context }: { context: WirdContext }) {
           <PeriodicRows acts={upcoming} store={store} today={today} habits={habits} />
         ) : null}
       </section>
+
+      <WeekBranchCard today={today} />
 
       <SyncStatus persistent={snapshot.persistent} quiet />
     </div>

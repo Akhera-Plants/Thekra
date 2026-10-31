@@ -126,6 +126,8 @@ function pushPrefsBody(): PushPrefsBody {
     eveningTime: n.eveningTime,
     fridayReview: n.fridayReview,
     fridayTime: n.fridayTime,
+    strategies: n.strategies,
+    strategyTime: n.strategyTime,
   };
 }
 

@@ -7,6 +7,7 @@ import { AlternativeDeedsBlock } from '@/features/sin-reminder/components/Altern
 import type { ReaderItem, ReaderSection } from '@/components/shared/editorial/ReminderReader';
 import { SinReader } from '@/features/sin-reminder/components/SinReader';
 import { StartProgramLink } from '@/features/practice/components/StartProgramLink';
+import { MizanBlock, TopicBranchLinks } from '@/features/topic/components/TopicTemplate';
 import { TOPIC_PAGE_SIZE, interleaveReading } from '@/lib/reading';
 import { getSin, getSinQuotes, getSins } from '@/lib/api/sins';
 import { rethrowUnlessNotFound, topSlugs } from '@/lib/api/server-guard';
@@ -130,14 +131,6 @@ export default async function SinDetailPage({
           >
             {heading}
           </h1>
-          {counterpart && sin.pair ? (
-            <p className="page-lead">
-              {t('pairCounterpart')}
-              <Link href={`/good-deeds/${sin.pair.do}`} className="text-link">
-                {counterpart}
-              </Link>
-            </p>
-          ) : null}
           {description ? <p className="page-lead">{description}</p> : null}
           {sin.rank === SinRank.KABIRA && sin.rankReference && (
             <p className="page-lead">
@@ -150,22 +143,14 @@ export default async function SinDetailPage({
               ) : null}
             </p>
           )}
-          {sin.branches && sin.branches.length > 0 ? (
-            <ul className="flex flex-col gap-1 text-sm text-muted-foreground">
-              {sin.branches.map((branch) => (
-                <li key={branch.number} lang={locale === 'en' ? 'en' : 'ar'} dir={locale === 'en' ? 'ltr' : 'rtl'}>
-                  {locale === 'en'
-                    ? (branch.title || `Branch ${branch.number}`)
-                    : branch.titleAr}
-                </li>
-              ))}
-            </ul>
-          ) : null}
           {sin.isContemporary ? (
             <p className="page-lead">{t('contemporaryNote')}</p>
           ) : null}
-          {sin.program?.available ? <StartProgramLink slug={slug} /> : null}
         </header>
+
+        {/* The topic template (redesign §4.5): الميزان → one action → texts → شعب الإيمان → the opposite. */}
+        <MizanBlock mizan={sin.mizan} intent="sin" />
+        {sin.program?.available ? <StartProgramLink slug={slug} /> : null}
 
         {items.length === 0 ? (
           <div className="next-step">
@@ -194,6 +179,18 @@ export default async function SinDetailPage({
         />
         )}
 
+        <TopicBranchLinks branches={sin.branches} />
+
+        {counterpart && sin.pair ? (
+          <section aria-labelledby="pair-title" className="flex flex-col gap-2">
+            <h2 id="pair-title" className="text-xl font-medium">
+              {t('pairCounterpart')}
+            </h2>
+            <Link href={`/good-deeds/${sin.pair.do}`} className="text-link self-start">
+              {counterpart}
+            </Link>
+          </section>
+        ) : null}
         <AlternativeDeedsBlock alternatives={alternatives} heading={t('alternativesHeading')} />
       </article>
     </div>

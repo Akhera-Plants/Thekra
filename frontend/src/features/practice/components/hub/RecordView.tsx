@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState, type ReactNode } from 'react';
-import { Bell, Bookmark, Feather, NotebookPen, Repeat, Sprout } from 'lucide-react';
+import { Bell, Bookmark, Feather, Lightbulb, NotebookPen, Repeat, Sprout } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { establishPlan, graduationReady, periodicActs, updatePlan, type Plan } from '@thekra/practice-core';
 import { Button } from '@/components/shared/kit/button';
@@ -20,13 +20,15 @@ import { wirdDay, wirdSummary } from '@/lib/practice/wird';
 import { useWirdContext, type WirdContext } from '../../hooks/useWirdContext';
 import { PracticeLoading } from '../PracticeLoading';
 import { HubMonth } from './HubMonth';
+import { TallySection } from './KnowledgeCards';
 import { StreakFlame } from './StreakFlame';
 import { TodayList } from './TodayList';
 
 /**
  * «سجلّي», in this order (mirrors the app's tab): the streak (the number with the gold flame, and «أطول مداومة»), the one
  * month calendar (a tapped day opens its list under it, loggable for the last 7 days), «إظهار التاريخ الهجري», then
- * simple rows: «عاداتي», «أعمال دورية», «تخفَّف», «المحاسبة» (weekly reviews), «التنبيهات» and «المحفوظات».
+ * «حصيلتي» (totals per habit, the branches being worked on, one gratitude line), then simple rows: «عاداتي»,
+ * «أعمال دورية», «تخفَّف», «المحاسبة» (weekly reviews), «التنبيهات», «استراتيجيات العادات» and «المحفوظات».
  */
 export function RecordView() {
   const context = useWirdContext();
@@ -68,6 +70,7 @@ function Record({ context }: { context: WirdContext }) {
     { key: 'lighten', href: '/practice/leave-sin', icon: <Feather />, title: t('lighten'), hint: t('lightenHint') },
     { key: 'reviews', href: '/practice/reviews', icon: <NotebookPen />, title: t('reviews'), hint: t('reviewsHint') },
     { key: 'notifications', href: '/practice/notifications', icon: <Bell />, title: t('notifications'), hint: t('notificationsHint') },
+    { key: 'strategies', href: '/practice/strategies', icon: <Lightbulb />, title: t('strategies'), hint: t('strategiesHint') },
   ];
   if (accountsEnabled()) {
     links.push({ key: 'saved', href: '/favorites', icon: <Bookmark />, title: t('saved'), hint: t('savedHint') });
@@ -137,6 +140,8 @@ function Record({ context }: { context: WirdContext }) {
           footer={store.plans.length > 0 ? <ExcuseToggle store={store} today={today} date={picked} /> : null}
         />
       ) : null}
+
+      <TallySection store={store} today={today} habits={habits} />
 
       <nav aria-label={t('linksLabel')}>
         <ul className="flex flex-col divide-y divide-border border-y border-border">

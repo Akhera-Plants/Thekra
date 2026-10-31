@@ -5,3 +5,4 @@ export { QuoteCard } from './QuoteCard';
 export { QuoteCardSkeleton } from './QuoteCardSkeleton';
 export { SourceAttribution } from './SourceAttribution';
 export type { QuoteCardProps } from './QuoteCard';
+export type { QuoteCardIntent } from './QuoteCard';

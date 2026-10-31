@@ -1,5 +1,5 @@
 import { apiGet, type ApiGetConfig } from '@/lib/api-client';
-import type { CountsByKind, PageMeta, QuoteDto, QuoteKind } from '@/lib/types/api';
+import type { CountsByKind, MizanDto, PageMeta, QuoteDto, QuoteKind } from '@/lib/types/api';
 
 export interface ImanBranchDto {
   id: string;
@@ -25,6 +25,8 @@ export interface ImanBranchDetailDto extends ImanBranchDto {
   sins: Array<{ slug: string; name: string; nameAr: string; rank: string | null }>;
   prev: { number: number; titleAr: string; title: string | null } | null;
   next: { number: number; titleAr: string; title: string | null } | null;
+  /** «الميزان». Optional until every API deploy sends it. */
+  mizan?: MizanDto | null;
 }
 
 export interface BranchQuotesMeta extends PageMeta {

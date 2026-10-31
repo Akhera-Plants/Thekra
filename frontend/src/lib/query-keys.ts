@@ -43,6 +43,12 @@ export const queryKeys = {
     all: ['surahs'] as const,
     ayahs: (number: number, p?: SurahAyahsQuery) =>
       ['surahs', number, 'ayahs', p] as const,
+    /** One verse by surah and ayah (e.g. the lines under «حصيلتي»). */
+    ayah: (surah: number, ayah: number, lang: string) => ['surahs', surah, 'ayah', ayah, lang] as const,
+  },
+  branches: {
+    /** One branch of faith (title) for «شعبة الأسبوع». */
+    detail: (number: number, lang: string) => ['branches', 'detail', number, lang] as const,
   },
   hadithCollections: {
     all: ['hadith-collections'] as const,

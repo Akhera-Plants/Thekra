@@ -85,6 +85,10 @@ export interface PracticeCatalog {
   occasions: CatalogOccasion[];
   habits: CatalogHabit[];
   sinPrograms: SinProgramsCatalog;
+  /** Habit deed → its branches of faith. Optional until every API deploy sends it. */
+  deedBranches?: Record<string, number[]>;
+  /** Story key → Quote id, or null while not found (the UI hides it). Optional until every API deploy sends it. */
+  stories?: Record<string, string | null>;
 }
 
 export interface CalendarOccasionDto {

@@ -158,6 +158,19 @@ describe('Sins endpoints (e2e)', () => {
     });
   });
 
+  it('GET /v1/sins/ghibah → «الميزان»: no curated ids yet, so the top-ranked published text of its list', async () => {
+    const [detail, list] = await Promise.all([
+      request(app.getHttpServer()).get('/v1/sins/ghibah').expect(200),
+      request(app.getHttpServer()).get('/v1/sins/ghibah/quotes?limit=50').expect(200),
+    ]);
+    const mizan = detail.body.data.mizan as { source: string; items: Array<{ id: string; hadith: { grade: string | null } | null; type: string }> };
+    expect(mizan.source).toBe('top');
+    expect(mizan.items).toHaveLength(1);
+    const listed = (list.body.data.items as Array<{ quote: { id: string } }>).map((item) => item.quote.id);
+    expect(listed).toContain(mizan.items[0]!.id);
+    expect(mizan.items[0]!.type === 'QURAN_VERSE' || ['SAHIH', 'HASAN'].includes(mizan.items[0]!.hadith?.grade ?? '')).toBe(true);
+  });
+
   it('GET /v1/sins/does-not-exist → 404', async () => {
     const res = await request(app.getHttpServer()).get('/v1/sins/does-not-exist').expect(404);
     expect(res.body.error.code).toBe('RESOURCE_NOT_FOUND');

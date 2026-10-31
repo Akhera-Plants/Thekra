@@ -40,8 +40,10 @@ export function PracticeView() {
   const isAddRequested = searchParams.get('add') === '1';
   const requestedHabit = isAddRequested ? searchParams.get('habit') : null;
   const [adding, setAdding] = useState(isAddRequested);
+  // The first habit's setup stays open after the plan is saved, for its last screen (the two switches).
+  const [finishingFirst, setFinishingFirst] = useState(false);
   const today = clock?.today ?? null;
-  const viewKey = !snapshot ? 'loading' : snapshot.store.plans.length === 0 || adding ? 'setup' : 'today';
+  const viewKey = !snapshot ? 'loading' : snapshot.store.plans.length === 0 || adding || finishingFirst ? 'setup' : 'today';
   const todayRef = useFocusOnChange<HTMLHeadingElement>(viewKey);
   const plans = snapshot?.store.plans;
   useEndedSeasons(plans, today);
@@ -71,10 +73,11 @@ export function PracticeView() {
   const preselectedHabit = requestedHabit ? habits.get(requestedHabit) : undefined;
   const addKind: LimitKind = isPeriodicTemplate(preselectedHabit) ? 'periodic' : 'sapling';
   const limitReached = adding && plans.length > 0 && catalog.isSuccess && !planLimits.canAdd(addKind);
-  const settingUp = plans.length === 0 || (adding && !limitReached);
+  const settingUp = plans.length === 0 || finishingFirst || (adding && !limitReached);
 
   function finishAdding() {
     setAdding(false);
+    setFinishingFirst(false);
     // Drop `?add=1`, so a reload shows the plans instead of the setup again.
     if (isAddRequested) router.replace('/practice/habits');
   }
@@ -93,8 +96,9 @@ export function PracticeView() {
           today={today}
           onDone={finishAdding}
           onCancel={plans.length > 0 ? finishAdding : undefined}
+          onFirstPlan={() => setFinishingFirst(true)}
         />
-        {plans.length === 0 ? <PracticePaths /> : null}
+        {plans.length === 0 && !finishingFirst ? <PracticePaths /> : null}
       </div>
     );
   }

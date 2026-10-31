@@ -31,6 +31,7 @@ import { findIdsByNormalizedArabic } from '../../common/text/arabic-search.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { GoodDeedsService } from '../good-deeds/good-deeds.service.js';
 import { programForSin } from '../practice/practice-catalog.js';
+import { mizanIdsFor } from '../practice/heart-texts.js';
 import {
   PUBLISHED_LINK_REVIEW_STATUS,
   QuotesService,
@@ -231,10 +232,27 @@ export class SinsService {
         message: 'Sin not found',
       });
     }
-    const relatedGoodDeeds = await this.goodDeeds.findByOppositeSinId(row.id);
+    const locale = lang === 'en' ? 'en' : 'ar';
+    const [relatedGoodDeeds, mizan] = await Promise.all([
+      this.goodDeeds.findByOppositeSinId(row.id),
+      this.quotes.mizan(
+        mizanIdsFor(row.slug),
+        async (quote) =>
+          (
+            await this.prisma.sinQuote.findFirst({
+              where: { sinId: row.id, reviewStatus: PUBLISHED_LINK_REVIEW_STATUS, ...autoLinkExclusion(), quote },
+              orderBy: this.quotes.linkOrderBy(),
+              select: { quoteId: true },
+            })
+          )?.quoteId ?? null,
+        locale,
+      ),
+    ]);
     return {
       ...this.toDto(row),
       relatedGoodDeeds,
+      // «الميزان»: the texts that open the page (redesign §4.5). Older clients ignore it.
+      mizan,
       locale: lang,
       isContemporary: row.isContemporary,
       branches: row.imanBranches.map((link) => ({

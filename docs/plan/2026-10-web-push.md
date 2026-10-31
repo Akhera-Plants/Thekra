@@ -22,7 +22,7 @@
 | `PushSubscription` | `id`, `userId`→User (cascade), `endpoint` (unique), `p256dh`, `auth`, `timeZone` (IANA), `locale` (`ar`/`en`), `prefs Json?`, timestamps | one per browser; max 10 per user (oldest dropped); `prefs` = this browser's «التنبيهات» switches (2026-11-01, migration `20261101090000_push_subscription_prefs`; null = defaults) |
 | `PushReminder` | `id`, `subscriptionId`→PushSubscription (cascade), `key`, `digest`, `fireAt`, `messageId` | `@@unique([subscriptionId, key])`; what is scheduled at QStash |
 
-`key` = `habit:<planId>:<date>:<time>`, `kinship:<date>`, `evening:<date>`, `friday:<date>` or `digest:<date>`; `digest` changes when the time, title, text or link
+`key` = `habit:<planId>:<date>:<time>`, `kinship:<date>`, `evening:<date>`, `friday:<date>`, `strategy:<date>` or `digest:<date>`; `digest` changes when the time, title, text or link
 changes. A re-plan cancels rows that are gone or changed, publishes what is new and deletes rows already fired.
 
 ## 3. API
@@ -32,7 +32,7 @@ All `private, no-store`. Responses use the usual `{ data }` envelope.
 | Route | Auth | Body | Answer |
 | --- | --- | --- | --- |
 | `GET /v1/push/config` | none | — | `{ enabled, publicKey }` (`publicKey` = VAPID public key, base64url; `null` when off) |
-| `POST /v1/me/push/subscriptions` | JWT | `{ endpoint, keys: { p256dh, auth }, timeZone, locale, prefs? }` (the browser's `subscription.toJSON()` plus zone, language and the optional switches `{ habits, periodic, periodicTime, eveningNudge, eveningTime, fridayReview, fridayTime }`; an absent `prefs` keeps what is stored) | `{ id, scheduled }`; 503 `PUSH_DISABLED` when off; 400 `PUSH_INVALID` for an unknown zone |
+| `POST /v1/me/push/subscriptions` | JWT | `{ endpoint, keys: { p256dh, auth }, timeZone, locale, prefs? }` (the browser's `subscription.toJSON()` plus zone, language and the optional switches `{ habits, periodic, periodicTime, eveningNudge, eveningTime, fridayReview, fridayTime, strategies, strategyTime }`; an absent `prefs` keeps what is stored) | `{ id, scheduled }`; 503 `PUSH_DISABLED` when off; 400 `PUSH_INVALID` for an unknown zone |
 | `DELETE /v1/me/push/subscriptions` | JWT | `{ endpoint }` | 204 (idempotent) |
 | `POST /v1/me/push/test` | JWT | `{ endpoint, locale }` | 204 after sending one notification now; 404 when the browser is not registered or dropped it |
 | `POST /v1/push/deliver` | QStash signature (`Upstash-Signature`) | sealed text (`text/plain`) | 200 `{ outcome }` |
@@ -48,7 +48,8 @@ once «راسخة»; a periodic plan once per due day), people lists once per du
 `eveningTime`, only while a habit asked that day is not done), the Friday review reminder (on by default, `fridayTime`
 17:00), quiet hours 23:00–05:00 (except the night prayer `qiyam-last-third` and slots that are not the catalog's
 suggestions), at most 4 a day and the rest as one digest «عندك n أعمال اليوم». Texts: practice-core `NOTIFY_TEXTS`;
-`url` = `/<locale>/practice`, `tag` = `evening` / `friday` / `digest`. The private moment never reaches the server.
+`url` = `/<locale>/practice`, `tag` = `evening` / `friday` / `digest`. «ذكّرني بها» (phase 5, opt-in): one chosen strategy a
+week on Saturday at `strategyTime` (`strategies` = practice-core `STRATEGY_KEYS`), `tag` = `strategy`, `url` = `/<locale>/practice/strategies`. The private moment never reaches the server.
 
 
 The service worker receives JSON `{ title, body, url, tag }` and shows it; a click focuses an open tab of the site or

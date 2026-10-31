@@ -7,7 +7,9 @@
  *    (habits asked for today, relatives due as periodic acts, the generic private check-in), done rows at the bottom;
  *    habits not asked for today behind ONE collapsed row; «يومي ثقيل» as a compact chip at the end (today only,
  *    practice-core `isEbbOn`);
- * 3. «أعمال دورية»: the next three periodic acts with their dates and «الكل».
+ * 3. «أعمال دورية»: the next three periodic acts with their dates and «الكل»;
+ * 4. «شعبة الأسبوع» (one branch of faith per ISO week). A tick shows «تقبّل الله منك» with a light haptic; a complete
+ *    day shows «تمّ وردك اليوم» with one reward text; stories appear at their moments (by id only).
  * The month calendar, the habit management, «تخفَّف», «بستاني», «رفقة» and the saved texts live in «سجلّي».
  */
 
@@ -31,10 +33,11 @@ import {
 } from '@/lib/practice/use-habits-hub';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { upcomingPeriodic } from '@/lib/practice/wird';
-import { addDays } from '@thekra/practice-core';
+import { addDays, minimumMet } from '@thekra/practice-core';
 import { AddSheet } from '@/components/practice/hub/AddSheet';
 import { ExcuseChip } from '@/components/practice/hub/ExcuseChip';
 import { HeartTop, MuraqabaLine, SelfMessageCard } from '@/components/practice/hub/HeartCards';
+import { Cheer, DayDoneCard, StoryLine, WeekBranchCard } from '@/components/practice/hub/KnowledgeCards';
 import { PeriodicRows } from '@/components/practice/hub/PeriodicRows';
 import { TodayList } from '@/components/practice/hub/TodayList';
 import { WirdHeader } from '@/components/practice/hub/WirdHeader';
@@ -97,6 +100,8 @@ function Wird() {
   const handleAddOpen = useCallback(() => setAdding(true), []);
   const handleAddClose = useCallback(() => setAdding(false), []);
   const toggleHeavy = useCallback(() => heavyDay.setHeavy(!heavyDay.heavy), [heavyDay]);
+  const plans = usePracticeStore((s) => s.store.plans);
+  const usedMinimum = plans.some((plan) => minimumMet(plan, today));
 
   return (
     <Screen scroll={false} contentStyle={styles.frame} decor>
@@ -133,10 +138,17 @@ function Wird() {
           onAddHabit={openAddHabit}
           footer={
             heavyDay.hasPlans ? (
-              <View style={styles.heavy}>
-                <Chip label={t('practice.heavyDay')} selected={heavyDay.heavy} onPress={toggleHeavy} />
-                <ExcuseChip date={today} today={today} label={t('practice.excuse.today')} />
-                <ExcuseChip date={addDays(today, -1)} today={today} label={t('practice.excuse.yesterday')} />
+              <View style={styles.section}>
+                <Cheer at={actions.cheerAt} />
+                <DayDoneCard today={today} />
+                {/* A small-deed nudge once «أقل ما يمكن» kept a habit today (by id only; hidden until filled). */}
+                {usedMinimum ? <StoryLine moment="smallDeed" /> : null}
+                <View style={styles.heavy}>
+                  <Chip label={t('practice.heavyDay')} selected={heavyDay.heavy} onPress={toggleHeavy} />
+                  <ExcuseChip date={today} today={today} label={t('practice.excuse.today')} />
+                  <ExcuseChip date={addDays(today, -1)} today={today} label={t('practice.excuse.yesterday')} />
+                </View>
+                {heavyDay.heavy ? <StoryLine moment="heavyDay" /> : null}
               </View>
             ) : null
           }
@@ -155,6 +167,8 @@ function Wird() {
             <PeriodicRows rows={upcoming} />
           ) : null}
         </View>
+
+        <WeekBranchCard today={today} />
       </ScrollView>
 
       <AddSheet visible={adding} onClose={handleAddClose} />

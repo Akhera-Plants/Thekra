@@ -1,0 +1,31 @@
+# «المعرفة والقلب» (redesign phase 5, docs/plan/2026-10-31-redesign-final.md §4.5): which published texts open a topic
+# page («الميزان») and which story is shown at a moment of the habits screens. Read by the API at runtime (embedded in
+# the Vercel bundle like the other reviewer files) and validated by backend/src/modules/practice/heart-texts.ts.
+#
+# Rules
+#   - Every value is a public Quote id (verse, sahih/hasan hadith, or a kept athar shown as athar). The text is always
+#     read from the database by id; nothing in this file is a quoted text, and no id here is invented.
+#   - An id may be added only after it is checked against the production database (published, and the text really
+#     states what the entry says). The unit test also requires that an id already appears in another reviewed file
+#     (deed-schedules.yaml, sin-programs.yaml) or is reviewed here with a `# checked:` note naming the text.
+#   - Reviewed by: pending the sheikh.
+
+review: pending-sheikh
+
+# «الميزان»: 1–2 texts that state a topic's weight (reward, punishment or effect), shown first on its page.
+# Key: a sin or good-deed slug of taxonomy.yaml, or `branch-<number>` for a branch of faith (1–77).
+# A topic without an entry shows its top-ranked published text from the topic list instead (the API marks it `top`).
+# No curated entry yet: none of the ids in the reviewed files has been checked for this use.
+mizan: {}
+
+# Stories at moments. Key = the moment's story (practice-core STORY_MOMENTS); value = its Quote id, or empty while the id
+# is not found in the repository (the screen then shows nothing). To fill from the production database.
+stories:
+  # After a fall in «تخفَّف»: the man who killed ninety-nine, then a hundred (al-Bukhari 3470, Muslim 2766).
+  qatil-al-mia: 3c233fed-9a9a-4f8b-82bc-89bb177dab0d # checked: 2026-11-01 production Quote, grade SAHIH, provider sahihayn
+  # On a heavy day: the hadith «إذا مرض العبد أو سافر…» (al-Bukhari 2996).
+  marad-safar: e54053bc-8067-4a2e-aff7-6d00b3a45f94 # checked: 2026-11-01 production Quote, grade SAHIH, provider book:nawawi-riyad
+  # Starting late («ابدأ بغرسٍ صغير», first time): the hadith of the sapling «فسيلة» (HadeethEnc 66161).
+  fasila: 5fbf67d4-c118-4029-87af-4f6381ce86e6 # checked: 2026-11-01 production Quote, grade SAHIH, provider hadeethenc.com
+  # A small-deed nudge: the man who removed a thorny branch from the road (al-Bukhari 652, Muslim 1914).
+  ghusn-shawk: dc1006ed-41d7-48f0-ba1a-f39a1067d56c # checked: 2026-11-01 production Quote, grade SAHIH, provider sahihayn

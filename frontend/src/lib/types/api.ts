@@ -159,6 +159,12 @@ export interface TopicPairDto {
   titleEn: string;
 }
 
+/** «الميزان» (redesign §4.5): the texts that open a topic page; `top` = the topic's top-ranked text (no curated ids). */
+export interface MizanDto {
+  source: 'curated' | 'top';
+  items: QuoteDto[];
+}
+
 export interface SinDto {
   id: string;
   name: string;
@@ -180,6 +186,8 @@ export interface SinDto {
   branches?: { number: number; titleAr: string; title?: string | null }[];
   /** «تخفَّف» program for this sin (sin-programs.yaml). Optional until every API deploy sends it. */
   program?: { available: boolean; category: 'haqq_allah' | 'haqq_ibad' | null } | null;
+  /** Detail only: «الميزان». Optional until every API deploy sends it. */
+  mizan?: MizanDto | null;
 }
 
 export interface GoodDeedSummaryDto {
@@ -220,6 +228,8 @@ export interface GoodDeedDto {
    * API deploy sends it.
    */
   schedule?: { habits: PracticeHabit[]; occasions: PracticeOccasion[] } | null;
+  /** Detail only: «الميزان». Optional until every API deploy sends it. */
+  mizan?: MizanDto | null;
 }
 
 export interface QuoteLinkDto {

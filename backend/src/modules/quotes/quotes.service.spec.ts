@@ -576,3 +576,32 @@ describe('QuotesService — findPublishedByIds (practice evidence)', () => {
     expect(findMany).not.toHaveBeenCalled();
   });
 });
+
+describe('QuotesService — mizan («الميزان», redesign §4.5)', () => {
+  const curated = makeRow({ id: 'aaaaaaaa-0000-4000-8000-0000000000c1' });
+  const top = makeRow({ id: 'aaaaaaaa-0000-4000-8000-0000000000f1' });
+  const service = (rows: ReturnType<typeof makeRow>[]) =>
+    new QuotesService(
+      { quote: { findMany: vi.fn().mockResolvedValue(rows) } } as unknown as PrismaService,
+      makeConfigMock() as unknown as ConfigService<EnvironmentVariables>,
+    );
+
+  it('uses the curated ids when one is published, without asking for the top text', async () => {
+    const topQuoteId = vi.fn();
+    const result = await service([curated]).mizan([curated.id], topQuoteId, 'ar');
+    expect(result).toMatchObject({ source: 'curated', items: [{ id: curated.id }] });
+    expect(topQuoteId).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the top-ranked published text with the reader gate when none is curated or published', async () => {
+    const topQuoteId = vi.fn().mockResolvedValue(top.id);
+    const result = await service([top]).mizan([], topQuoteId, 'en');
+    expect(result).toMatchObject({ source: 'top', items: [{ id: top.id }] });
+    const filter = topQuoteId.mock.calls[0][0] as { AND: Prisma.QuoteWhereInput[] };
+    expect(filter.AND).toContainEqual(GradePolicy.readerClause());
+  });
+
+  it('is null when the topic has no published text', async () => {
+    expect(await service([]).mizan([], async () => null, 'ar')).toBeNull();
+  });
+});

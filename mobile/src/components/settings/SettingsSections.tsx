@@ -242,6 +242,16 @@ export function NotificationsSection() {
             <TimeField label={t('practice.notifyPrefs.time')} value={prefs.sinReminderTime} onChange={(time) => setPrefs((p) => ({ ...p, sinReminderTime: time }))} />,
           )
         : null}
+      {/* «ذكّرني بها»: chosen on «استراتيجيات العادات»; one a week at most, on Saturday at this time. */}
+      <ListRow
+        title={t('practice.notifyPrefs.strategiesLink')}
+        hint={t('practice.notifyPrefs.strategies', { count: prefs.strategies.length })}
+        chevron
+        onPress={() => router.push('/practice/strategies')}
+      />
+      {prefs.strategies.length > 0 ? (
+        <TimeField label={t('practice.notifyPrefs.time')} value={prefs.strategyTime} onChange={(time) => setPrefs((p) => ({ ...p, strategyTime: time }))} />
+      ) : null}
       {denied ? <Notice tone="destructive">{t('practice.permissionDenied')}</Notice> : null}
     </SettingsGroup>
   );

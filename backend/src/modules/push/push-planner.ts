@@ -128,7 +128,7 @@ export function planPushes(input: PushPlanInput): PlannedPush[] {
       defaultRuleOf: (plan) => habitFor(plan, habits)?.defaultRule,
     },
     defaultSlotsOf: (plan) => habitFor(plan, habits)?.defaultSlots,
-    kinds: ['habit', 'periodic', 'evening', 'friday', 'digest'],
+    kinds: ['habit', 'periodic', 'evening', 'friday', 'strategy', 'digest'],
   });
 
   const out: Omit<PlannedPush, 'digest'>[] = [];
@@ -159,6 +159,15 @@ export function planPushes(input: PushPlanInput): PlannedPush[] {
       out.push({ key: entry.key, fireAt, title: policy.wirdTitle, body: policy.eveningBody, url: practice, tag: 'evening' });
     } else if (entry.kind === 'friday') {
       out.push({ key: entry.key, fireAt, title: policy.fridayTitle, body: policy.fridayBody, url: practice, tag: 'friday' });
+    } else if (entry.kind === 'strategy' && entry.strategy) {
+      out.push({
+        key: entry.key,
+        fireAt,
+        title: policy.strategyTitle,
+        body: policy.strategyBody(entry.strategy),
+        url: sitePath(locale, '/practice/strategies'),
+        tag: 'strategy',
+      });
     } else if (entry.kind === 'digest') {
       out.push({ key: entry.key, fireAt, title: policy.wirdTitle, body: policy.digestBody(entry.count ?? 1), url: practice, tag: 'digest' });
     }

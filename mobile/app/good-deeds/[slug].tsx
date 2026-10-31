@@ -1,21 +1,24 @@
 /**
  * Motivations for one good deed, after the website's good-deed page (good-deeds/[slug]): the deed's name (a paired
- * page's shared title) and description, its reward as a next-step note (unpaired only), «اجعلها عادة» (the catalog
- * habits of this deed), the contemporary note, the type filter, then the reading sections: its merit and reward,
- * the opposite sin's warning, a contemporary topic's derived groups.
+ * page's shared title) and description, its reward as a next-step note (unpaired only), «الميزان», ONE action
+ * («اجعلها عادتي», when a catalog habit maps to the deed), the contemporary note, the type filter, the reading sections
+ * (its merit and reward, the opposite sin's warning, a contemporary topic's derived groups), «من شعب الإيمان», and the
+ * opposite sin on an unpaired page.
  * Core screen: good deed → motivations (mobile-plan §3).
  */
 
 import React, { useCallback, useMemo } from 'react';
-import { useLocalSearchParams } from 'expo-router';
+import { View } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import { Feather } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useGoodDeed, useGoodDeedQuotesInfinite } from '@/lib/api/good-deeds';
 import { buildTopicSections } from '@/lib/topics';
 import type { GoodDeedQuotesMeta, TopicGroup } from '@/lib/types/api';
 import { TopicQuoteList, useLastDefined, useTopicQuoteParams } from '@/components/TopicQuoteList';
-import { DeedHabits } from '@/components/practice/TopicPracticeLinks';
+import { DeedHabitAction, MizanBlock, TopicBranchLinks } from '@/components/TopicTemplate';
 import { useTheme } from '@/theme';
-import { NextStep, Text } from '@/ui';
+import { ListRow, NextStep, Section, Text } from '@/ui';
 
 export default function MotivationsScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
@@ -67,11 +70,29 @@ export default function MotivationsScreen() {
               <Text variant={english ? 'body' : 'reading'}>{reward}</Text>
             </NextStep>
           ) : null}
-          {deed ? <DeedHabits deed={deed.slug} /> : null}
+          {/* The topic template (redesign §4.5): الميزان → one action → texts → شعب الإيمان → the opposite. */}
+          <MizanBlock mizan={detail.data?.mizan} />
+          {deed ? <DeedHabitAction deed={deed.slug} /> : null}
           {isContemporary ? (
             <Text variant="lead" tone="muted">
               {t('motivations.contemporaryNote')}
             </Text>
+          ) : null}
+        </>
+      }
+      footer={
+        <>
+          <TopicBranchLinks branches={detail.data?.branches} />
+          {!pair && detail.data?.oppositeSin ? (
+            <Section title={t('topic.oppositeTitle')}>
+              <View>
+                <ListRow
+                  icon={Feather}
+                  title={english ? detail.data.oppositeSin.name || detail.data.oppositeSin.nameAr : detail.data.oppositeSin.nameAr}
+                  onPress={() => router.push(`/sins/${detail.data?.oppositeSin?.slug ?? ''}`)}
+                />
+              </View>
+            </Section>
           ) : null}
         </>
       }

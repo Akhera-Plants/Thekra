@@ -14,6 +14,7 @@ import type { PracticeHabit, ScheduleBasis } from '@/lib/types/practice';
 import { cn } from '@/lib/utils';
 import { useAgendaActions } from '../../hooks/useAgendaActions';
 import { HabitRow, OccasionLine, ProgramRow, RelativeRow } from './AgendaRows';
+import { Cheer, StoryLine } from './KnowledgeCards';
 
 interface TodayListProps {
   /** «اليوم», or the title of a day picked in «سجلّي». */
@@ -28,6 +29,8 @@ interface TodayListProps {
   canAdd?: boolean;
   /** Under the list (the «يومي ثقيل» toggle). */
   footer?: ReactNode;
+  /** Replaces the «تمّ ما في يومك» line on «ورد اليوم» (the «تمّ وردك اليوم» card with its reward text). */
+  completeCard?: ReactNode;
 }
 
 /**
@@ -36,13 +39,14 @@ interface TodayListProps {
  * inline undo; done rows sink to the bottom, dimmed. Habits the day does not ask for sit behind ONE collapsed row
  * «ليست مطلوبة اليوم (n)», still loggable and never counted as missed. Logging works for today and the 6 days before.
  */
-export function TodayList({ title, store, date, today, day, habits, occasionBasis, canAdd = false, footer }: TodayListProps) {
+export function TodayList({ title, store, date, today, day, habits, occasionBasis, canAdd = false, footer, completeCard }: TodayListProps) {
   const t = useTranslations('practice.wird');
   const tDay = useTranslations('practice.hub.day');
   const headingId = useId();
   const noteId = useId();
   const offDayId = useId();
   const [offDayOpen, setOffDayOpen] = useState(false);
+  const [cheerAt, setCheerAt] = useState<number | null>(null);
   const { lastKey, lastCleared, toggleHabit, toggleRelative, undoLast } = useAgendaActions();
   const isLoggable = canLogOn(date, today);
   const isToday = date === today;
@@ -63,12 +67,19 @@ export function TodayList({ title, store, date, today, day, habits, occasionBasi
         isEnabled={isLoggable}
         disabledNoteId={noteId}
         undo={undoOf(`habit:${item.planId}:${date}`)}
-        onToggle={() => toggleHabit(item, date, today)}
+        onToggle={() => {
+          toggleHabit(item, date, today);
+          // «تقبّل الله منك» after a tick (not an untick).
+          if (!item.complete) setCheerAt(Date.now());
+        }}
         onUndo={undoLast}
         minimumMet={minimumMet(plan, date)}
         onMinimum={
           !item.complete && minimumToLog(plan, date) !== null
-            ? () => updateStore((s) => updatePlan(s, plan.id, (p) => logMinimum(p, date, today)))
+            ? () => {
+                updateStore((s) => updatePlan(s, plan.id, (p) => logMinimum(p, date, today)));
+                setCheerAt(Date.now());
+              }
             : undefined
         }
       />
@@ -158,9 +169,16 @@ export function TodayList({ title, store, date, today, day, habits, occasionBasi
         </div>
       ) : null}
 
-      <p role="status" className="text-base leading-8 text-primary empty:hidden">
-        {isComplete ? (isToday ? tDay('complete') : tDay('completePast')) : null}
-      </p>
+      {isComplete && isToday && completeCard ? (
+        completeCard
+      ) : (
+        <p role="status" className="text-base leading-8 text-primary empty:hidden">
+          {isComplete ? (isToday ? tDay('complete') : tDay('completePast')) : null}
+        </p>
+      )}
+      {isToday && !isComplete ? <Cheer at={cheerAt} /> : null}
+      {/* A small-deed nudge once «أقل ما يمكن» kept a habit today. */}
+      {isToday && store.plans.some((plan) => minimumMet(plan, date)) ? <StoryLine moment="smallDeed" /> : null}
       <p role="status" className="sr-only">
         {lastKey ? (lastCleared ? tDay('unlogged') : tDay('logged')) : null}
       </p>

@@ -12,7 +12,8 @@ import {
   type Stage,
 } from '@thekra/practice-core';
 import { readTaxonomyFile } from '../taxonomy/taxonomy-files.js';
-import { topicSide } from '../taxonomy/topic-pairs.js';
+import { topicBranches, topicSide } from '../taxonomy/topic-pairs.js';
+import { heartTexts } from './heart-texts.js';
 import { parseYaml, type YamlMap, type YamlValue } from './practice-yaml.js';
 
 /**
@@ -108,6 +109,10 @@ export interface PracticeCatalog {
   occasions: Occasion[];
   habits: Habit[];
   sinPrograms: SinProgramsCatalog;
+  /** The deed of each habit → its Shu'ab al-Iman branch numbers (taxonomy.yaml `branches:`), for «أنت تعمل على N شعب». */
+  deedBranches: Record<string, number[]>;
+  /** Story key → Quote id, or null while not found (heart-texts.yaml `stories:`; the UI hides a null story). */
+  stories: Record<string, string | null>;
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -413,6 +418,12 @@ export function buildPracticeCatalog(schedulesText: string, programsText: string
   );
   assertUniqueKeys(programs.map((program) => ({ key: program.sin })), 'sin-programs.yaml programs');
 
+  const deedBranches: Record<string, number[]> = {};
+  for (const habit of habits) {
+    const branches = topicBranches(habit.deed);
+    if (branches.length > 0) deedBranches[habit.deed] = [...branches];
+  }
+
   return {
     occasions,
     habits,
@@ -421,6 +432,8 @@ export function buildPracticeCatalog(schedulesText: string, programsText: string
       common: readCommon(programsFile['common'], 'sin-programs.yaml common'),
       programs,
     },
+    deedBranches,
+    stories: { ...heartTexts().stories },
   };
 }
 

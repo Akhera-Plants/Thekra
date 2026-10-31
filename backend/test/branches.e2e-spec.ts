@@ -166,6 +166,9 @@ describe('Branches of faith (e2e)', () => {
     expect(res.body.data.summaryAr).toBe('خلاصة من نص البيهقي');
     expect(res.body.data.sins[0]).toMatchObject({ slug: 'ghibah', rank: null });
     expect(res.body.data.sins[0]).not.toHaveProperty('severity');
+    // «الميزان»: the branch's top published text (weak narrations never open the page).
+    expect(res.body.data.mizan).toMatchObject({ source: 'top', items: [{ id: expect.any(String) }] });
+    expect(['SAHIH', 'HASAN']).toContain(res.body.data.mizan.items[0].hadith.grade);
   });
 
   it('GET /v1/branches/nope → 400 and an unknown number → 404', async () => {

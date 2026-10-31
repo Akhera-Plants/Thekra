@@ -8,6 +8,7 @@ import { ArabicText } from '@/components/shared/ArabicText';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { FormattedNumber } from '@/components/shared/FormattedNumber';
 import { BranchReader } from '@/features/iman-branches/components/BranchReader';
+import { BranchRelatedLinks, MizanBlock } from '@/features/topic/components/TopicTemplate';
 import type { BranchQuotesMeta } from '@/lib/api/branches';
 import { TOPIC_PAGE_SIZE } from '@/lib/reading';
 import { localeAlternates } from '@/lib/seo';
@@ -100,6 +101,9 @@ export default async function BranchDetailPage({
           ) : null}
         </header>
 
+        {/* The topic template (redesign §4.5): الميزان → texts → the sins and deeds of this branch. No action here. */}
+        <MizanBlock mizan={detail.mizan} intent="iman-branch" />
+
         {detail.explanations.length > 0 && (
           <section className="flex flex-col gap-3">
             <h2>{t('explanations')}</h2>
@@ -131,6 +135,8 @@ export default async function BranchDetailPage({
             initialHasNext={(branchQuotes.meta as BranchQuotesMeta | undefined)?.hasNext ?? false}
           />
         )}
+
+        <BranchRelatedLinks goodDeeds={detail.goodDeeds} sins={detail.sins} />
 
         <nav className="reader-end" aria-label={tCrumbs('branches')}>
           {detail.prev ? (

@@ -12,6 +12,7 @@ import {
   CHECK_IN_VALUES,
   endProgram,
   hasTriggers,
+  heldDaysTotal,
   hopeTextFor,
   shortestTextId,
   limitForToday,
@@ -51,6 +52,7 @@ import { useLimitLabel } from '../hooks/useLimitLabel';
 import { useSinVault } from '../hooks/useSinVault';
 import { EvidenceQuotes } from './EvidenceQuotes';
 import { FixItSheet } from './FixItSheet';
+import { StoryLine } from './hub/KnowledgeCards';
 import { TriggerChips } from './TriggerChips';
 
 const MAX_NOTE = 500;
@@ -77,6 +79,7 @@ export function ProgramPanel({ program, entry, common, name, habits, quotes, tod
   const fell = view.today?.value === 'fell_repented' && afterFall(program) === 'fixit';
   const tLimits = useTranslations('leaveSin.limits');
   const tCounters = useTranslations('leaveSin.counters');
+  const tTally = useTranslations('practice.tally');
   const tStages = useTranslations('leaveSin.stages');
   const tFix = useTranslations('leaveSin.fixit');
   const limitLabel = useLimitLabel(actions);
@@ -112,7 +115,14 @@ export function ProgramPanel({ program, entry, common, name, habits, quotes, tod
           </span>
         </p>
         <p className="text-sm text-muted-foreground">{tCounters('note')}</p>
+        {/* «حصيلتي» of this program: only here, inside its locked page. */}
+        <p className="text-sm text-muted-foreground">
+          {tTally('heldTotal', { count: heldDaysTotal(program, today), n: formatDigits(heldDaysTotal(program, today)) })}
+        </p>
       </div>
+
+      {/* After a fall: the story of the man who killed a hundred, by id only (hidden until the id is filled). */}
+      {fell ? <StoryLine moment="afterFall" /> : null}
 
       {program.path === 'gradual' && steps && steps.length > 0 ? (
         <section className="next-step !mt-0 flex flex-col gap-2" aria-label={t('gradualTitle')}>

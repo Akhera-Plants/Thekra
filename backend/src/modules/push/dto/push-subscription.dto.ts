@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
-import { IsBoolean, IsIn, IsOptional, IsString, IsUrl, Matches, MaxLength, ValidateNested } from 'class-validator';
+import { STRATEGY_KEYS } from '@thekra/practice-core';
+import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsOptional, IsString, IsUrl, Matches, MaxLength, ValidateNested } from 'class-validator';
 
 const BASE64URL = /^[A-Za-z0-9_-]+={0,2}$/;
 const HH_MM = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -16,6 +17,9 @@ export class PushPrefsDto {
   @IsOptional() @IsString() @Matches(HH_MM) eveningTime?: string;
   @IsOptional() @IsBoolean() fridayReview?: boolean;
   @IsOptional() @IsString() @Matches(HH_MM) fridayTime?: string;
+  /** «ذكّرني بها»: chosen strategy keys (practice-core `STRATEGY_KEYS`); one reminder a week at most. */
+  @IsOptional() @IsArray() @ArrayMaxSize(STRATEGY_KEYS.length) @IsIn(STRATEGY_KEYS, { each: true }) strategies?: string[];
+  @IsOptional() @IsString() @Matches(HH_MM) strategyTime?: string;
 }
 
 export class PushKeysDto {

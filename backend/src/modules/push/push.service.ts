@@ -38,7 +38,7 @@ export interface SubscribeInput {
 }
 
 /** The stored switches of a browser: only the fields the server plans for, validated again (never the private moment). */
-function storedPrefs(raw: object): Record<string, boolean | string> {
+function storedPrefs(raw: object): Record<string, boolean | string | string[]> {
   const all = parseNotificationPrefs(raw);
   return {
     habits: all.habits,
@@ -48,6 +48,8 @@ function storedPrefs(raw: object): Record<string, boolean | string> {
     eveningTime: all.eveningTime,
     fridayReview: all.fridayReview,
     fridayTime: all.fridayTime,
+    strategies: all.strategies,
+    strategyTime: all.strategyTime,
   };
 }
 

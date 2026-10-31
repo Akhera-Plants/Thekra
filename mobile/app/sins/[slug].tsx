@@ -1,8 +1,9 @@
 /**
  * Reminders for one sin, after the website's sin page (sins/[slug]): the sin's name and description, «كبيرة» with
- * its reference, the contemporary note, «ابدأ برنامج الترك» when the catalog has a program for it, the type filter,
+ * its reference, the contemporary note, «الميزان», «ابدأ «تخفَّف»» when the catalog has a program for it, the type filter,
  * then the reading sections: what warns against it, the paired deed's virtue (or the reward of leaving it for
- * Allah), a contemporary topic's derived groups; the alternative good deeds last, only on an unpaired sin.
+ * Allah), a contemporary topic's derived groups; then «من شعب الإيمان», the paired virtue, and the alternative good
+ * deeds last, only on an unpaired sin.
  * Core screen: sin → reminders (mobile-plan §3).
  */
 
@@ -17,6 +18,7 @@ import type { SinQuotesMeta, TopicGroup } from '@/lib/types/api';
 import { SinRank } from '@/lib/types/enums';
 import { TopicQuoteList, useLastDefined, useTopicQuoteParams } from '@/components/TopicQuoteList';
 import { SinProgramLink } from '@/components/practice/TopicPracticeLinks';
+import { MizanBlock, TopicBranchLinks } from '@/components/TopicTemplate';
 import { useTheme } from '@/theme';
 import { ListRow, Section, Text } from '@/ui';
 
@@ -75,12 +77,27 @@ export default function RemindersScreen() {
                 {t('reminders.contemporaryNote')}
               </Text>
             ) : null}
+            {/* The topic template (redesign §4.5): الميزان → one action → texts → شعب الإيمان → the opposite. */}
+            <MizanBlock mizan={detail.data?.mizan} />
             <SinProgramLink sin={sin.slug} />
           </>
         ) : null
       }
       footer={
-        alternatives.length > 0 ? (
+        <>
+        <TopicBranchLinks branches={detail.data?.branches} />
+        {detail.data?.pair ? (
+          <Section title={t('topic.pairTitle')}>
+            <View>
+              <ListRow
+                icon={Sprout}
+                title={english ? detail.data.pair.titleEn : detail.data.pair.titleAr}
+                onPress={() => router.push(`/good-deeds/${detail.data?.pair?.do ?? ''}`)}
+              />
+            </View>
+          </Section>
+        ) : null}
+        {alternatives.length > 0 ? (
           <Section title={t('reminders.alternatives')}>
             <View>
               {alternatives.map((alt) => (
@@ -93,7 +110,8 @@ export default function RemindersScreen() {
               ))}
             </View>
           </Section>
-        ) : null
+        ) : null}
+        </>
       }
     />
   );

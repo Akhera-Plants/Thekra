@@ -45,6 +45,12 @@ import { checkQuoteShape } from './dto/valid-quote-shape.decorator.js';
  * Human-readable ordering label echoed in `meta.ordering` for normal (non-shuffle) link pages.
  * Exported so sins/good-deeds services can reuse the same string.
  */
+/** «الميزان» of a topic page: curated ids, or the topic's top-ranked published text. */
+export interface MizanDto {
+  source: 'curated' | 'top';
+  items: QuoteDto[];
+}
+
 export const LINK_ORDERING_LABEL = 'relevanceScore:desc,grade:asc,createdAt:desc';
 
 /**
@@ -252,6 +258,26 @@ export class QuotesService {
       const row = byId.get(id);
       return row ? [this.toQuoteDto(row, locale)] : [];
     });
+  }
+
+  /**
+   * «الميزان» (redesign §4.5): the 1–2 texts that open a topic page. The curated ids of heart-texts.yaml when any of
+   * them is published (`source: 'curated'`), else the topic's top-ranked published text — the first text of its own
+   * list (`source: 'top'`, read with `topQuoteId`). Null when the topic has no published text.
+   */
+  async mizan(
+    curatedIds: readonly string[],
+    topQuoteId: (quoteFilter: Prisma.QuoteWhereInput) => Promise<string | null>,
+    locale: 'ar' | 'en',
+  ): Promise<MizanDto | null> {
+    if (curatedIds.length > 0) {
+      const items = await this.findPublishedByIds(curatedIds, locale);
+      if (items.length > 0) return { source: 'curated', items };
+    }
+    const id = await topQuoteId(this.buildLinkQuoteFilter({}).quoteFilter);
+    if (!id) return null;
+    const items = await this.findPublishedByIds([id], locale);
+    return items.length > 0 ? { source: 'top', items } : null;
   }
 
   linkOrderBy() {

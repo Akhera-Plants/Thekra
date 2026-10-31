@@ -13,6 +13,9 @@ import {
 } from '@thekra/practice-core';
 import { Button } from '@/components/shared/kit/button';
 import { Input } from '@/components/ui/input';
+import { Link } from '@/i18n/navigation';
+import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
+import { formatDigits } from '@/lib/format/digits';
 import { updateHeart } from '@/lib/practice/heart-store';
 import { newUuid } from '@/lib/practice/ids';
 import { notificationPrefsOf, updatePrefs } from '@/lib/practice/local-store';
@@ -97,6 +100,16 @@ export function NotificationsView() {
           <Toggle label={t('friday')} checked={notify.fridayReview} onChange={(on) => setNotify({ fridayReview: on })}>
             <TimeInput label={t('time')} value={notify.fridayTime} onChange={(time) => setNotify({ fridayTime: time })} />
           </Toggle>
+          {/* «ذكّرني بها»: chosen on «استراتيجيات العادات»; one a week at most, on Saturday at this time. */}
+          <li className="flex flex-col gap-2 py-3">
+            <p className="text-base">{t('strategies', { count: notify.strategies.length, n: formatDigits(notify.strategies.length) })}</p>
+            {notify.strategies.length > 0 ? (
+              <TimeInput label={t('time')} value={notify.strategyTime} onChange={(time) => setNotify({ strategyTime: time })} />
+            ) : null}
+            <Link href="/practice/strategies" className="text-link self-start text-sm">
+              {t('strategiesLink')} <DirectionalArrow />
+            </Link>
+          </li>
         </ul>
       </section>
 

@@ -32,6 +32,9 @@ export interface PushPrefsBody {
   eveningTime: string;
   fridayReview: boolean;
   fridayTime: string;
+  /** «ذكّرني بها»: chosen strategy keys (at most one reminder a week). */
+  strategies: string[];
+  strategyTime: string;
 }
 
 export async function getPushConfig(): Promise<PushConfig> {

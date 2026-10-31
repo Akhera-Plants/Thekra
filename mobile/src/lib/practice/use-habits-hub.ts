@@ -239,23 +239,31 @@ export type HubLastLog =
  * complete habit it puts back the amount from before the hub's own log (`correctLog`), or clears the day when the
  * hub did not log it. A relative's check is «تواصلت معه» for that day; on a done one it removes that day's contact
  * (`updateRelative` records the tombstone). Every tick and untick can be undone inline, so a stray tap never loses
- * a logged amount. One light haptic when the tap finishes the day.
+ * a logged amount. A light haptic on each tick, a success haptic when the tap finishes the day.
  */
 export function useAgendaActions(date: LocalDate) {
   useCirclePresence(); // «حضرت اليوم» to the user's circles (رفقة), when sharing is on there
   const setStore = usePracticeStore((s) => s.setStore);
   const planDays = usePlanDays();
   const [lastLog, setLastLog] = useState<HubLastLog | null>(null);
+  // «تقبّل الله منك»: the time of the last tick (not an untick), so the screen shows it for a moment.
+  const [cheerAt, setCheerAt] = useState<number | null>(null);
   const before = useRef(new Map<string, number>());
 
-  /** Applies an edit; a light confirmation when it closed the day's last open task. */
+  /**
+   * Applies an edit. A tick answers with a light haptic and «تقبّل الله منك»; the tick that closes the day's last open
+   * task with a success haptic instead.
+   */
   const apply = useCallback(
-    (edit: (s: Store) => Store) => {
+    (edit: (s: Store) => Store, tick = false) => {
       const prev = usePracticeStore.getState().store;
       setStore(edit);
       if (finishedDay(prev, usePracticeStore.getState().store, date, planDays)) {
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } else if (tick) {
         void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
+      if (tick) setCheerAt(Date.now());
     },
     [date, setStore, planDays],
   );
@@ -273,7 +281,7 @@ export function useAgendaActions(date: LocalDate) {
       before.current.set(key, item.done);
       // «قضاء»: today, and yesterday until noon, log plainly; an older day is saved but does not count for the streak.
       const amount = item.missedYesterday && item.done === 0 && item.minimum ? item.minimum : item.remaining;
-      apply((s) => updatePlan(s, item.planId, (p) => logForDay(p, date, amount, today())));
+      apply((s) => updatePlan(s, item.planId, (p) => logForDay(p, date, amount, today())), true);
       setLastLog({ kind: 'habit', planId: item.planId, date, before: item.done, cleared: false });
     },
     [date, apply],
@@ -286,7 +294,7 @@ export function useAgendaActions(date: LocalDate) {
         setLastLog({ kind: 'relative', relativeId: item.relativeId, date, cleared: true });
         return;
       }
-      apply((s) => updateRelative(s, item.relativeId, (r) => logContact(r, date)));
+      apply((s) => updateRelative(s, item.relativeId, (r) => logContact(r, date)), true);
       setLastLog({ kind: 'relative', relativeId: item.relativeId, date, cleared: false });
     },
     [date, apply],
@@ -309,13 +317,13 @@ export function useAgendaActions(date: LocalDate) {
   const logMinimumFor = useCallback(
     (item: HabitItem) => {
       before.current.set(`${item.planId}|${date}`, item.done);
-      apply((s) => updatePlan(s, item.planId, (p) => logMinimum(p, date, today())));
+      apply((s) => updatePlan(s, item.planId, (p) => logMinimum(p, date, today())), true);
       setLastLog({ kind: 'habit', planId: item.planId, date, before: item.done, cleared: false });
     },
     [date, apply],
   );
 
-  return { lastLog, toggleHabit, toggleRelative, undo, logMinimum: logMinimumFor };
+  return { lastLog, cheerAt, toggleHabit, toggleRelative, undo, logMinimum: logMinimumFor };
 }
 
 /**

@@ -1,22 +1,34 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useId, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { startEbb, updateSettings, upsertPlan, type Plan } from '@thekra/practice-core';
+import {
+  defaultHabitKey,
+  isValidTime,
+  loadWarning,
+  ONBOARDING_STEPS,
+  setHeartPrefs,
+  startEbb,
+  upsertPlan,
+  type OnboardingStep,
+  type Plan,
+} from '@thekra/practice-core';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
-import { Form } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { formatDigits } from '@/lib/format/digits';
+import { updateHeart } from '@/lib/practice/heart-store';
 import { updateStore } from '@/lib/practice/local-store';
 import { DEFAULT_ACTIVE_DAYS, isEbbDay, planFromHabit, type Distance } from '@/lib/practice/plans';
 import type { PracticeHabit } from '@/lib/types/practice';
-import { formatDigits } from '@/lib/format/digits';
+import { cn } from '@/lib/utils';
 import { useFocusOnChange } from '../hooks/useFocusOnChange';
-import { HabitShape, makeSetupSchema, RolesStep, type SetupValues } from './PlanSetupSteps';
+import { useHeart } from '../hooks/useHeart';
+import { amountLabel } from './amount-label';
+import { ConsistencyCard, HabitLoopCard } from './hub/HabitCards';
+import { StoryLine } from './hub/KnowledgeCards';
 
-const DEFAULT_FREE_MINUTES = 120;
-/** The lecture's advice: two or three habits at a time, built slowly. */
-const CALM_SELECTION = 2;
+const ACTIVE_DAYS = [2, 3, 4, 5, 6, 7];
+const DISTANCES: Distance[] = ['far', 'near'];
 
 interface PlanSetupProps {
   habits: readonly PracticeHabit[];
@@ -27,164 +39,363 @@ interface PlanSetupProps {
   today: string;
   onDone: () => void;
   onCancel?: () => void;
+  /** Called just before the first habit is saved, so the parent keeps this setup open for its last screen. */
+  onFirstPlan?: () => void;
 }
 
-type Step = 'choose' | 'shape' | 'roles';
+type Step = OnboardingStep | 'finish';
 
-/** «أعِنّي على طاعة» setup: choose habits → distance, times, days → «فروضي وأدواري» (free time) → plans. */
-export function PlanSetup({ habits, existing, preselected, freeMinutes, today, onDone, onCancel }: PlanSetupProps) {
-  const t = useTranslations('practice.setup');
-  const locale = useLocale();
-  const [step, setStep] = useState<Step>('choose');
-  const stepRef = useFocusOnChange<HTMLParagraphElement>(step);
+/**
+ * Adding a habit in three short screens (redesign §4.5), the first habit and every later one alike: «ماذا؟» (the habit),
+ * «متى؟» (two reminder times and the active days), «كم؟» (far/near → a very small start). Each screen has one hint line,
+ * one example and «تخطَّ», which keeps the defaults (the suggested habit, the catalog's times, the «far» start); progress
+ * dots on top. After the FIRST habit only: the two switches «نية اليوم» and «المحاسبة المسائية» (opt-in) and, once,
+ * «حلقة العادة» and «الاستمرار: ثلاث حقائق».
+ */
+export function PlanSetup({ habits, existing, preselected, freeMinutes, today, onDone, onCancel, onFirstPlan }: PlanSetupProps) {
+  const t = useTranslations('practice.onboarding');
+  const tSetup = useTranslations('practice.setup');
+  const english = useLocale() === 'en';
+  const heart = useHeart();
+  const firstHabit = existing.length === 0;
   const available = habits.filter((habit) => !existing.some((plan) => (plan.habitKey ?? plan.id) === habit.key));
-  const [selected, setSelected] = useState<string[]>(() =>
-    preselected && available.some((habit) => habit.key === preselected) ? [preselected] : [],
-  );
-  const [chooseError, setChooseError] = useState(false);
-  const chosen = available.filter((habit) => selected.includes(habit.key));
-
-  const schema = useMemo(() => makeSetupSchema({ time: t('errors.time'), minutes: t('errors.minutes') }), [t]);
-  const form = useForm<SetupValues>({
-    resolver: zodResolver(schema),
-    defaultValues: { plans: {}, freeMinutes: String(freeMinutes ?? DEFAULT_FREE_MINUTES) },
+  const preselectedOk = preselected && available.some((habit) => habit.key === preselected) ? preselected : null;
+  const [step, setStep] = useState<Step>(preselectedOk ? 'when' : 'what');
+  const [habitKey, setHabitKey] = useState<string | null>(preselectedOk);
+  const [slots, setSlots] = useState<[string, string]>(() => {
+    const chosen = available.find((h) => h.key === preselectedOk);
+    return chosen ? [chosen.defaultSlots[0] ?? '08:00', chosen.defaultSlots[1] ?? ''] : ['', ''];
   });
+  const [activeDays, setActiveDays] = useState(DEFAULT_ACTIVE_DAYS);
+  const [distance, setDistance] = useState<Distance>('far');
+  const [error, setError] = useState<string | null>(null);
+  const stepRef = useFocusOnChange<HTMLHeadingElement>(step);
+  const habit = available.find((h) => h.key === habitKey);
+  const index = step === 'finish' ? ONBOARDING_STEPS.length : ONBOARDING_STEPS.indexOf(step);
 
-  function toggle(key: string) {
-    setChooseError(false);
-    setSelected((current) => (current.includes(key) ? current.filter((k) => k !== key) : [...current, key]));
+  function choose(key: string) {
+    const chosen = available.find((h) => h.key === key);
+    setHabitKey(key);
+    setError(null);
+    if (chosen) setSlots([chosen.defaultSlots[0] ?? '08:00', chosen.defaultSlots[1] ?? '']);
   }
 
-  function handleChosen() {
-    if (chosen.length === 0) {
-      setChooseError(true);
+  function goWhen(key: string | null) {
+    if (!key) {
+      setError(tSetup('errors.chooseOne'));
       return;
     }
-    for (const habit of chosen) {
-      if (form.getValues(`plans.${habit.key}`)) continue;
-      form.setValue(`plans.${habit.key}`, {
-        distance: 'far',
-        slot1: habit.defaultSlots[0] ?? '08:00',
-        slot2: habit.defaultSlots[1] ?? '',
-        activeDays: String(DEFAULT_ACTIVE_DAYS),
-      });
-    }
-    setStep('shape');
+    if (key !== habitKey || !slots[0]) choose(key);
+    setStep('when');
   }
 
-  async function handleShaped() {
-    const ok = await form.trigger(chosen.map((habit) => `plans.${habit.key}` as const));
-    if (ok) setStep('roles');
+  function create(choice: { slots: string[]; activeDays: number; distance: Distance }) {
+    if (!habit) return;
+    const plan = planFromHabit(habit, { distance: choice.distance, slots: choice.slots, activeDaysPerWeek: choice.activeDays }, today);
+    if (firstHabit) onFirstPlan?.();
+    // On a «يومي ثقيل» day the new habit is lightened too, so the day stays light and the toggle stays on.
+    updateStore((store) => upsertPlan(store, isEbbDay(store.plans, today) ? startEbb(plan, today) : plan));
+    if (firstHabit) setStep('finish');
+    else onDone();
   }
 
-  function buildPlans(values: SetupValues): Plan[] {
-    return chosen.map((habit) => {
-      const entry = values.plans[habit.key];
-      return planFromHabit(
-        habit,
-        {
-          distance: (entry?.distance ?? 'far') as Distance,
-          slots: [entry?.slot1 ?? '08:00', entry?.slot2 ?? ''].filter(Boolean),
-          activeDaysPerWeek: Number(entry?.activeDays ?? DEFAULT_ACTIVE_DAYS),
-        },
-        today,
-      );
-    });
-  }
-
-  function handleSubmit(values: SetupValues) {
-    const created = buildPlans(values);
-    updateStore((store) => {
-      // On a «يومي ثقيل» day the new habits are lightened too, so the day stays light and the toggle stays on.
-      const heavy = isEbbDay(store.plans, today);
-      return created.reduce(
-        (next, plan) => upsertPlan(next, heavy ? startEbb(plan, today) : plan),
-        updateSettings(store, { freeMinutesPerDay: Number(values.freeMinutes) }),
-      );
-    });
-    onDone();
-  }
+  const validSlots = () => [slots[0], slots[1]].filter((s) => isValidTime(s));
+  const defaultsFor = (h: PracticeHabit) => [h.defaultSlots[0] ?? '08:00', h.defaultSlots[1] ?? ''].filter((s) => isValidTime(s));
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col gap-8" noValidate>
-        <p ref={stepRef} tabIndex={-1} className="eyebrow focus:outline-none">
-          {t('stepOf', { step: formatDigits(step === 'choose' ? 1 : step === 'shape' ? 2 : 3), total: '3' })}
-        </p>
+    <div className="flex max-w-3xl flex-col gap-8">
+      <div className="flex flex-col gap-2">
+        <p className="eyebrow">{t('stepOf', { step: formatDigits(Math.min(index + 1, 3)) })}</p>
+        <ol className="flex gap-2" aria-label={t('stepOf', { step: formatDigits(Math.min(index + 1, 3)) })}>
+          {ONBOARDING_STEPS.map((key, i) => (
+            <li key={key} aria-current={i === index ? 'step' : undefined}>
+              <span aria-hidden className={cn('block size-2.5 rounded-full', i <= index ? 'bg-primary' : 'bg-border')} />
+            </li>
+          ))}
+        </ol>
+      </div>
 
-        {step === 'choose' ? (
-          <fieldset className="flex flex-col gap-4" aria-describedby={chooseError ? 'choose-error' : undefined}>
-            <legend className="mb-2 text-2xl font-medium">{t('chooseTitle')}</legend>
-            <p className="text-muted-foreground">{t('chooseLead')}</p>
-            {available.length === 0 ? <p>{t('allChosen')}</p> : null}
+      {step === 'what' ? (
+        <StepFrame
+          headingRef={stepRef}
+          title={t('what.title')}
+          hint={t('what.hint')}
+          example={t('what.example')}
+          onNext={() => goWhen(habitKey)}
+          onSkip={() => goWhen(habitKey ?? defaultHabitKey(available.map((h) => h.key)))}
+          onBack={onCancel}
+          backLabel={tSetup('cancel')}
+        >
+          {firstHabit ? <StoryLine moment="lateStart" /> : null}
+          {available.length === 0 ? <p>{tSetup('allChosen')}</p> : null}
+          <fieldset className="flex flex-col gap-3" aria-describedby={error ? 'setup-error' : undefined}>
+            <legend className="sr-only">{t('what.title')}</legend>
             <ul className="grid gap-3 sm:grid-cols-2">
-              {available.map((habit) => (
-                <li key={habit.key}>
+              {available.map((h) => (
+                <li key={h.key}>
                   <label className="flex h-full cursor-pointer items-start gap-3 rounded-xl border border-border bg-card p-4 has-[:checked]:border-primary has-[:focus-visible]:border-primary">
                     <input
-                      type="checkbox"
+                      type="radio"
+                      name="habit"
                       className="mt-1.5 size-4 shrink-0 accent-primary"
-                      checked={selected.includes(habit.key)}
-                      onChange={() => toggle(habit.key)}
+                      checked={habitKey === h.key}
+                      onChange={() => choose(h.key)}
                     />
                     <span className="flex flex-col gap-1">
-                      <span className="text-lg font-medium">{locale === 'en' ? habit.titleEn : habit.titleAr}</span>
-                      {(locale === 'en' ? habit.timeHintEn : habit.timeHintAr) ? (
-                        <span className="text-sm text-muted-foreground">
-                          {locale === 'en' ? habit.timeHintEn : habit.timeHintAr}
-                        </span>
+                      <span className="text-lg font-medium">{english ? h.titleEn : h.titleAr}</span>
+                      {(english ? h.timeHintEn : h.timeHintAr) ? (
+                        <span className="text-sm text-muted-foreground">{english ? h.timeHintEn : h.timeHintAr}</span>
                       ) : null}
                     </span>
                   </label>
                 </li>
               ))}
             </ul>
-            {chooseError ? (
-              <p id="choose-error" className="text-sm text-destructive" role="alert">
-                {t('errors.chooseOne')}
-              </p>
-            ) : null}
-            {chosen.length > CALM_SELECTION ? <p className="next-step">{t('calmSelection')}</p> : null}
-            <div className="flex flex-wrap gap-3">
-              <button type="button" className="solid-button button-wrap" onClick={handleChosen}>
-                {t('next')} <DirectionalArrow />
-              </button>
-              {onCancel ? (
-                <button type="button" className="outline-button button-wrap" onClick={onCancel}>
-                  {t('cancel')}
-                </button>
-              ) : null}
-            </div>
           </fieldset>
-        ) : null}
+          {error ? (
+            <p id="setup-error" className="text-sm text-destructive" role="alert">
+              {error}
+            </p>
+          ) : null}
+        </StepFrame>
+      ) : null}
 
-        {step === 'shape' ? (
-          <div className="flex flex-col gap-6">
-            <h2 className="text-2xl font-medium">{t('shapeTitle')}</h2>
-            <p className="text-muted-foreground">{t('shapeLead')}</p>
-            {chosen.map((habit) => (
-              <HabitShape key={habit.key} habit={habit} control={form.control} />
+      {step === 'when' && habit ? (
+        <StepFrame
+          headingRef={stepRef}
+          eyebrow={english ? habit.titleEn : habit.titleAr}
+          title={t('when.title')}
+          hint={t('when.hint')}
+          example={t('when.example')}
+          onNext={() => {
+            if (validSlots().length === 0) {
+              setError(tSetup('errors.time'));
+              return;
+            }
+            setError(null);
+            setStep('howMuch');
+          }}
+          onSkip={() => {
+            setSlots([habit.defaultSlots[0] ?? '08:00', habit.defaultSlots[1] ?? '']);
+            setActiveDays(DEFAULT_ACTIVE_DAYS);
+            setError(null);
+            setStep('howMuch');
+          }}
+          onBack={() => setStep('what')}
+          backLabel={tSetup('back')}
+        >
+          <WhenFields slots={slots} onSlots={setSlots} activeDays={activeDays} onActiveDays={setActiveDays} />
+          {error ? (
+            <p className="text-sm text-destructive" role="alert">
+              {error}
+            </p>
+          ) : null}
+        </StepFrame>
+      ) : null}
+
+      {step === 'howMuch' && habit ? (
+        <StepFrame
+          headingRef={stepRef}
+          eyebrow={english ? habit.titleEn : habit.titleAr}
+          title={t('howMuch.title')}
+          hint={t('howMuch.hint')}
+          example={t('howMuch.example')}
+          nextLabel={tSetup('create')}
+          onNext={() => create({ slots: validSlots(), activeDays, distance })}
+          onSkip={() => create({ slots: validSlots().length > 0 ? validSlots() : defaultsFor(habit), activeDays, distance: 'far' })}
+          onBack={() => setStep('when')}
+          backLabel={tSetup('back')}
+        >
+          <fieldset className="flex flex-col gap-2">
+            <legend className="mb-2">{tSetup('distanceQuestion')}</legend>
+            {DISTANCES.map((d) => (
+              <label key={d} className="flex min-h-11 cursor-pointer items-center gap-3">
+                <input type="radio" name="distance" className="size-4 accent-primary" checked={distance === d} onChange={() => setDistance(d)} />
+                <span>
+                  {tSetup(d)} —{' '}
+                  {tSetup('startWith', {
+                    amount: amountLabel(habit.start[d], habit.unit, english ? habit.unitLabelEn : habit.unitLabelAr, english, habit.rakah),
+                  })}
+                </span>
+              </label>
             ))}
-            <div className="flex flex-wrap gap-3">
-              <button type="button" className="solid-button button-wrap" onClick={() => void handleShaped()}>
-                {t('next')} <DirectionalArrow />
-              </button>
-              <button type="button" className="outline-button button-wrap" onClick={() => setStep('choose')}>
-                {t('back')}
-              </button>
-            </div>
-          </div>
-        ) : null}
+          </fieldset>
+          {freeMinutes !== undefined &&
+          loadWarning(
+            [
+              ...existing,
+              planFromHabit(
+                habit,
+                { distance, slots: validSlots().length > 0 ? validSlots() : defaultsFor(habit), activeDaysPerWeek: activeDays },
+                today,
+                'preview',
+              ),
+            ],
+            freeMinutes,
+          ) ===
+            'over' ? (
+            <p className="next-step" role="status">
+              {tSetup('loadOver')}
+            </p>
+          ) : null}
+        </StepFrame>
+      ) : null}
 
-        {step === 'roles' ? (
-          <RolesStep
-            control={form.control}
-            existing={existing}
-            build={() => buildPlans(form.getValues())}
-            onBack={() => setStep('shape')}
-          />
+      {step === 'finish' ? (
+        <section className="flex flex-col gap-6" aria-labelledby="setup-finish-title">
+          <h2 id="setup-finish-title" ref={stepRef} tabIndex={-1} className="text-2xl font-medium focus:outline-none">
+            {t('finishTitle')}
+          </h2>
+          <p className="text-muted-foreground">{t('finishLead')}</p>
+          <ul className="flex flex-col divide-y divide-border border-y border-border">
+            <Switch
+              label={t('intention')}
+              hint={t('intentionHint')}
+              checked={heart?.prefs.intention ?? false}
+              onChange={(on) => updateHeart((h) => setHeartPrefs(h, { intention: on }))}
+            />
+            <Switch
+              label={t('evening')}
+              hint={t('eveningHint')}
+              checked={heart?.prefs.eveningReview ?? false}
+              onChange={(on) => updateHeart((h) => setHeartPrefs(h, { eveningReview: on }))}
+            />
+          </ul>
+          {heart && !heart.prefs.cardsSeen ? (
+            <div className="flex flex-col gap-4">
+              <HabitLoopCard />
+              <ConsistencyCard />
+            </div>
+          ) : null}
+          <button
+            type="button"
+            className="solid-button button-wrap self-start"
+            onClick={() => {
+              updateHeart((h) => setHeartPrefs(h, { cardsSeen: true }));
+              onDone();
+            }}
+          >
+            {t('done')} <DirectionalArrow />
+          </button>
+        </section>
+      ) : null}
+    </div>
+  );
+}
+
+interface StepFrameProps {
+  headingRef: React.Ref<HTMLHeadingElement>;
+  eyebrow?: string;
+  title: string;
+  hint: string;
+  example: string;
+  children: React.ReactNode;
+  nextLabel?: string;
+  onNext: () => void;
+  onSkip: () => void;
+  onBack?: () => void;
+  backLabel: string;
+}
+
+/** One screen: the question, ONE hint line, one example, the fields, then «التالي», «تخطَّ» and «السابق». */
+function StepFrame({ headingRef, eyebrow, title, hint, example, children, nextLabel, onNext, onSkip, onBack, backLabel }: StepFrameProps) {
+  const tSetup = useTranslations('practice.setup');
+  const t = useTranslations('practice.onboarding');
+  return (
+    <section className="flex flex-col gap-5">
+      <div className="flex flex-col gap-1">
+        {eyebrow ? <p className="text-sm text-muted-foreground">{eyebrow}</p> : null}
+        <h2 ref={headingRef} tabIndex={-1} className="text-3xl font-medium focus:outline-none">
+          {title}
+        </h2>
+        <p className="text-base leading-8">{hint}</p>
+        <p className="text-sm leading-7 text-muted-foreground">{example}</p>
+      </div>
+      {children}
+      <div className="flex flex-wrap gap-3">
+        <button type="button" className="solid-button button-wrap" onClick={onNext}>
+          {nextLabel ?? tSetup('next')} <DirectionalArrow />
+        </button>
+        <button type="button" className="outline-button button-wrap" onClick={onSkip}>
+          {t('skip')}
+        </button>
+        {onBack ? (
+          <button type="button" className="text-link min-h-11 px-2" onClick={onBack}>
+            {backLabel}
+          </button>
         ) : null}
-      </form>
-    </Form>
+      </div>
+    </section>
+  );
+}
+
+function WhenFields({
+  slots,
+  onSlots,
+  activeDays,
+  onActiveDays,
+}: {
+  slots: [string, string];
+  onSlots: (slots: [string, string]) => void;
+  activeDays: number;
+  onActiveDays: (n: number) => void;
+}) {
+  const tSetup = useTranslations('practice.setup');
+  const t = useTranslations('practice.onboarding');
+  const daysId = useId();
+  return (
+    <div className="flex flex-col gap-4">
+      <fieldset className="grid gap-4 sm:grid-cols-2">
+        <legend className="mb-2">{t('slots')}</legend>
+        {([0, 1] as const).map((i) => (
+          <label key={i} className="flex flex-col gap-1 text-sm">
+            {tSetup('slot', { n: String(i + 1) })}
+            <Input
+              type="time"
+              value={slots[i]}
+              onChange={(e) => onSlots(i === 0 ? [e.target.value, slots[1]] : [slots[0], e.target.value])}
+            />
+          </label>
+        ))}
+      </fieldset>
+      <div className="flex flex-col gap-1 text-sm">
+        <label htmlFor={daysId}>{tSetup('activeDays')}</label>
+        <select
+          id={daysId}
+          className="h-11 w-40 rounded-md border border-input bg-background px-3"
+          value={activeDays}
+          onChange={(e) => onActiveDays(Number(e.target.value))}
+        >
+          {ACTIVE_DAYS.map((n) => (
+            <option key={n} value={n}>
+              {tSetup('daysPerWeek', { n: String(n) })}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
+}
+
+function Switch({ label, hint, checked, onChange }: { label: string; hint: string; checked: boolean; onChange: (on: boolean) => void }) {
+  const hintId = useId();
+  return (
+    <li className="flex flex-col gap-1 py-3">
+      <label className="flex min-h-11 items-center gap-3">
+        <input
+          type="checkbox"
+          role="switch"
+          aria-checked={checked}
+          aria-describedby={hintId}
+          className="size-4 accent-primary"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+        />
+        <span className="text-base">{label}</span>
+      </label>
+      <p id={hintId} className="ps-7 text-sm leading-7 text-muted-foreground">
+        {hint}
+      </p>
+    </li>
   );
 }

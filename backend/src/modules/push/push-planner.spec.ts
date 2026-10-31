@@ -136,6 +136,16 @@ describe('planPushes', () => {
     expect(JSON.stringify(nudges)).not.toMatch(/my own title/);
   });
 
+  it('«ذكّرني بها»: one opted-in strategy on Saturday at its time, linking to the strategies page', () => {
+    const prefs = { ...QUIET_PREFS, habits: false, strategies: ['start-tiny'], strategyTime: '10:00' };
+    const out = run(store([]), { prefs, windowHours: 96 });
+    // Saturday 2026-10-31 10:00 in Amman (UTC+3) = 07:00 UTC.
+    expect(out.map((p) => [p.key, p.fireAt.toISOString(), p.title, p.body, p.url])).toEqual([
+      ['strategy:2026-10-31', '2026-10-31T07:00:00.000Z', 'استراتيجية الأسبوع', 'ابدأ صغيرًا جدًا', '/practice/strategies'],
+    ]);
+    expect(run(store([]), { prefs: { ...prefs, strategies: [] }, windowHours: 96 })).toEqual([]);
+  });
+
   it('caps the list and gives a digest that changes only with what the user sees', () => {
     const many = Array.from({ length: 30 }, (_, i) => plan({ id: `p${i}` }));
     expect(run(store(many), { limit: 5 })).toHaveLength(5);

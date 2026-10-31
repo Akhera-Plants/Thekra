@@ -7,7 +7,7 @@
  * Parsing is defensive and never throws.
  */
 
-import { isValidTime, validateRule, type LocalTime, type Rule } from '@thekra/practice-core';
+import { cleanStrategyKeys, isValidTime, validateRule, type LocalTime, type Rule } from '@thekra/practice-core';
 
 export const PREFS_KEY = 'thekra.practice.prefs.v1';
 
@@ -42,6 +42,9 @@ export interface PracticePrefs {
   sinLock: boolean;
   /** «إظهار التاريخ الهجري»: the Hijri date next to the Gregorian one on «ورد اليوم» and «سجلّي». Off by default. */
   showHijri: boolean;
+  /** «ذكّرني بها» on «استراتيجيات العادات»: chosen strategy keys (opt-in, empty by default); one reminder a week at most. */
+  strategies: string[];
+  strategyTime: LocalTime;
 }
 
 export const DEFAULT_PREFS: PracticePrefs = {
@@ -60,6 +63,8 @@ export const DEFAULT_PREFS: PracticePrefs = {
   rememberVaultKey: false,
   sinLock: false,
   showHijri: false,
+  strategies: [],
+  strategyTime: '10:00',
 };
 
 function isRecord(v: unknown): v is Record<string, unknown> {
@@ -72,12 +77,12 @@ export function parsePrefs(json: unknown): PracticePrefs {
     try {
       raw = JSON.parse(json);
     } catch {
-      return { ...DEFAULT_PREFS };
+      return { ...DEFAULT_PREFS, strategies: [] };
     }
   }
-  if (!isRecord(raw) || raw.v !== 1) return { ...DEFAULT_PREFS };
+  if (!isRecord(raw) || raw.v !== 1) return { ...DEFAULT_PREFS, strategies: [] };
   const bool = (k: keyof PracticePrefs) => (typeof raw[k] === 'boolean' ? (raw[k] as boolean) : (DEFAULT_PREFS[k] as boolean));
-  const time = (k: 'kinshipTime' | 'sinReminderTime' | 'eveningTime' | 'fridayTime') => (isValidTime(raw[k]) ? (raw[k] as string) : DEFAULT_PREFS[k]);
+  const time = (k: 'kinshipTime' | 'sinReminderTime' | 'eveningTime' | 'fridayTime' | 'strategyTime') => (isValidTime(raw[k]) ? (raw[k] as string) : DEFAULT_PREFS[k]);
   return {
     v: 1,
     habitReminders: bool('habitReminders'),
@@ -93,6 +98,8 @@ export function parsePrefs(json: unknown): PracticePrefs {
     rememberVaultKey: bool('rememberVaultKey'),
     sinLock: bool('sinLock'),
     showHijri: bool('showHijri'),
+    strategies: cleanStrategyKeys(raw.strategies),
+    strategyTime: time('strategyTime'),
     roles: Array.isArray(raw.roles)
       ? (raw.roles.filter((r) => (ROLE_KEYS as readonly string[]).includes(r as string)) as RoleKey[])
       : [],

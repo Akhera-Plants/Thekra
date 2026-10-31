@@ -42,6 +42,7 @@ import {
   checkIn,
   currentStage,
   hasTriggers,
+  heldDaysTotal,
   hopeTextFor,
   limitForToday,
   programCounters,
@@ -57,6 +58,7 @@ import {
   type SinProgram,
   type Triggers,
 } from '@thekra/practice-core';
+import { StoryLine } from '@/components/practice/hub/KnowledgeCards';
 import { usePracticeCatalog, useSinProgramEvidence } from '@/lib/api/practice';
 import { useSins } from '@/lib/api/sins';
 import { pick, pickList, type CatalogSinProgram, type StageContent } from '@/lib/practice/catalog-types';
@@ -458,7 +460,14 @@ function ProgramView({ program, entry, sinName, evidenceById, evidenceLoading, e
         <Text variant="small" tone="muted">
           {t('sinProgram.counters.note')}
         </Text>
+        {/* «حصيلتي» of this program: only here, inside its locked page. */}
+        <Text variant="small" tone="muted">
+          {t('practice.tally.heldTotal', { count: heldDaysTotal(program, d) })}
+        </Text>
       </View>
+
+      {/* After a fall: the story of the man who killed a hundred, by id only (hidden until the id is filled). */}
+      {showAfterFall ? <StoryLine moment="afterFall" /> : null}
 
       {gradual.length > 0 ? (
         <NextStep title={t('sinProgram.gradualSteps')}>

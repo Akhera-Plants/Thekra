@@ -17,6 +17,7 @@ import {
   isPlanDueOn,
   formatPlanAmount,
   notificationPlan,
+  NOTIFY_TEXTS,
   requiredOn,
   type LocalDate,
   type LocalTime,
@@ -36,7 +37,7 @@ export const REMINDER_SOURCE = 'thekra-practice';
 export const REMINDER_DAYS = 14;
 export const MAX_PENDING = 60;
 
-export type ReminderKind = 'habit' | 'kinship' | 'sin' | 'evening' | 'friday' | 'digest';
+export type ReminderKind = 'habit' | 'kinship' | 'sin' | 'evening' | 'friday' | 'strategy' | 'digest';
 
 export interface PlannedReminder {
   id: string;
@@ -132,6 +133,8 @@ export function notificationPrefsOf(prefs: PracticePrefs): NotificationPrefs {
     fridayTime: prefs.fridayTime,
     privateMoment: prefs.sinReminders,
     privateTime: prefs.sinReminderTime,
+    strategies: prefs.strategies,
+    strategyTime: prefs.strategyTime,
   };
 }
 
@@ -186,6 +189,10 @@ export function planReminders(input: ReminderInput): PlannedReminder[] {
       out.push({ ...base, id: `${REMINDER_SOURCE}:${e.key}`, kind: 'evening', title: texts.wirdTitle, body: texts.eveningBody, route: '/habits' });
     } else if (e.kind === 'friday') {
       out.push({ ...base, id: `${REMINDER_SOURCE}:${e.key}`, kind: 'friday', title: texts.fridayTitle, body: texts.fridayBody, route: '/habits' });
+    } else if (e.kind === 'strategy' && e.strategy) {
+      // «ذكّرني بها»: the shared words of the policy (practice-core NOTIFY_TEXTS), the strategy's short title.
+      const words = NOTIFY_TEXTS[locale];
+      out.push({ ...base, id: `${REMINDER_SOURCE}:${e.key}`, kind: 'strategy', title: words.strategyTitle, body: words.strategyBody(e.strategy), route: '/practice/strategies' });
     } else if (e.kind === 'digest') {
       out.push({ ...base, id: `${REMINDER_SOURCE}:${e.key}`, kind: 'digest', title: texts.wirdTitle, body: texts.digestBody(e.count ?? 1), route: '/habits' });
     }

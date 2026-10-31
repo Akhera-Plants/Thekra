@@ -29,6 +29,7 @@ import {
 } from '../quotes/quotes.service.js';
 import type { GoodDeedQuotesQueryDto } from '../sins/dto/sin-quotes-query.dto.js';
 import { scheduleForDeed } from '../practice/practice-catalog.js';
+import { mizanIdsFor } from '../practice/heart-texts.js';
 import { pairForSlug } from '../taxonomy/topic-pairs.js';
 import { findActiveTheme, mergePageThemes, readThemedPage, summariseThemes } from '../taxonomy/theme-reading.js';
 import { themesForTopics } from '../taxonomy/topic-themes.js';
@@ -225,10 +226,24 @@ export class GoodDeedsService {
         message: 'Good deed not found',
       });
     }
+    const mizan = await this.quotes.mizan(
+      mizanIdsFor(row.slug),
+      async (quote) =>
+        (
+          await this.prisma.goodDeedQuote.findFirst({
+            where: { goodDeedId: row.id, reviewStatus: PUBLISHED_LINK_REVIEW_STATUS, ...autoLinkExclusion(), quote },
+            orderBy: this.quotes.linkOrderBy(),
+            select: { quoteId: true },
+          })
+        )?.quoteId ?? null,
+      lang === 'en' ? 'en' : 'ar',
+    );
     return {
       ...this.toDto(row),
       locale: lang,
       isContemporary: row.isContemporary,
+      // «الميزان»: the texts that open the page (redesign §4.5). Older clients ignore it.
+      mizan,
       branches: row.imanBranches.map((link) => ({
         number: link.imanBranch.number,
         titleAr: link.imanBranch.titleAr,

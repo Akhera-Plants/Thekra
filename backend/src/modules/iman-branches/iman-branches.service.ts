@@ -9,6 +9,7 @@ import { buildPageMeta, paginated } from '../../common/dto/paginated-result.js';
 import { findIdsByNormalizedArabic } from '../../common/text/arabic-search.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { GradePolicy } from '../hadith/grade-policy.js';
+import { mizanIdsFor } from '../practice/heart-texts.js';
 import { SinQuotesQueryDto } from '../sins/dto/sin-quotes-query.dto.js';
 import {
   LINK_ORDERING_LABEL,
@@ -128,7 +129,7 @@ export class ImanBranchesService {
       });
     }
 
-    const [prev, next] = await Promise.all([
+    const [prev, next, mizan] = await Promise.all([
       this.prisma.imanBranch.findFirst({
         where: { number: { lt: number } },
         orderBy: { number: 'desc' },
@@ -139,11 +140,25 @@ export class ImanBranchesService {
         orderBy: { number: 'asc' },
         select: { number: true, titleAr: true, title: true },
       }),
+      this.quotes.mizan(
+        mizanIdsFor(number),
+        async (quote) =>
+          (
+            await this.prisma.imanBranchQuote.findFirst({
+              where: { imanBranchId: row.id, reviewStatus: PUBLISHED_LINK_REVIEW_STATUS, quote },
+              orderBy: this.quotes.linkOrderBy(),
+              select: { quoteId: true },
+            })
+          )?.quoteId ?? null,
+        lang === 'en' ? 'en' : 'ar',
+      ),
     ]);
 
     return {
       data: {
         ...this.toDto(row),
+        // «الميزان»: the texts that open the page (redesign §4.5). Older clients ignore it.
+        mizan,
         explanations: row.explanations.map((item) => ({
           id: item.id,
           kind: item.kind,

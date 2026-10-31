@@ -5,7 +5,8 @@ import { ArabicText } from '@/components/shared/ArabicText';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import type { ReaderItem, ReaderSection } from '@/components/shared/editorial/ReminderReader';
 import { GoodDeedReader } from '@/features/good-deed-motivation/components/GoodDeedReader';
-import { DeedHabits } from '@/features/practice/components/DeedHabits';
+import { DeedHabitAction } from '@/features/practice/components/DeedHabitAction';
+import { MizanBlock, TopicBranchLinks } from '@/features/topic/components/TopicTemplate';
 import { TOPIC_PAGE_SIZE, interleaveReading } from '@/lib/reading';
 import { getGoodDeed, getGoodDeedQuotes, getGoodDeeds } from '@/lib/api/good-deeds';
 import { rethrowUnlessNotFound, topSlugs } from '@/lib/api/server-guard';
@@ -131,22 +132,14 @@ export default async function GoodDeedDetailPage({
               {/[\u0600-\u06FF]/.test(reward) ? <ArabicText size="lg">{reward}</ArabicText> : <p>{reward}</p>}
             </aside>
           ) : null}
-          {deed.schedule ? <DeedHabits habits={deed.schedule.habits} /> : null}
-          {deed.branches && deed.branches.length > 0 ? (
-            <ul className="flex flex-col gap-1 text-sm text-muted-foreground">
-              {deed.branches.map((branch) => (
-                <li key={branch.number} lang={locale === 'en' ? 'en' : 'ar'} dir={locale === 'en' ? 'ltr' : 'rtl'}>
-                  {locale === 'en'
-                    ? (branch.title || `Branch ${branch.number}`)
-                    : branch.titleAr}
-                </li>
-              ))}
-            </ul>
-          ) : null}
           {deed.isContemporary ? (
             <p className="page-lead">{t('contemporaryNote')}</p>
           ) : null}
         </header>
+
+        {/* The topic template (redesign §4.5): الميزان → one action → texts → شعب الإيمان → the opposite. */}
+        <MizanBlock mizan={deed.mizan} intent="good-deed" />
+        <DeedHabitAction habits={deed.schedule?.habits} />
 
         {items.length === 0 ? (
           <div className="next-step">
@@ -178,14 +171,19 @@ export default async function GoodDeedDetailPage({
           />
         )}
 
+        <TopicBranchLinks branches={deed.branches} />
+
         {deed.oppositeSin && opposite ? (
-          <p className="page-footnote">
-            <Link href={`/sins/${deed.oppositeSin.slug}`} className="text-link">
+          <section aria-labelledby="opposite-title" className="flex flex-col gap-2">
+            <h2 id="opposite-title" className="text-xl font-medium">
+              {t('oppositeSin')}
+            </h2>
+            <Link href={`/sins/${deed.oppositeSin.slug}`} className="text-link self-start">
               <span lang={/[\u0600-\u06FF]/.test(opposite) ? 'ar' : undefined} dir={/[\u0600-\u06FF]/.test(opposite) ? 'rtl' : undefined}>
                 {opposite}
               </span>
             </Link>
-          </p>
+          </section>
         ) : null}
       </article>
     </div>

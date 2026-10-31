@@ -42,7 +42,8 @@ const BranchRow = memo(function BranchRow({ branch, english }: { branch: ImanBra
   return (
     <ListRow
       icon={BookOpen}
-      title={english ? branch.title || t('branches.branchFallback', { number: branch.number }) : branch.titleAr}
+      // شعب الإيمان: the map is the numbered list of the 77 branches (no grouping data exists in the database).
+      title={`${branch.number} · ${english ? branch.title || t('branches.branchFallback', { number: branch.number }) : branch.titleAr}`}
       hint={topicMeta({ quoteCount: branch.quoteCount }, t)}
       onPress={handlePress}
     />
