@@ -16,6 +16,8 @@ interface WirdHeaderProps {
   showHijri: boolean;
   /** The current streak; null hides the chip (no habit yet). */
   streak: number | null;
+  /** The longest run: with a current streak of 0 the chip says «ابدأ مداومة جديدة اليوم» instead of a 0. */
+  longest?: number;
   /** Opens «أضف» at once (`?add=1`, from the home page's «ابدأ بغرسٍ صغير»). */
   addOpen?: boolean;
 }
@@ -24,7 +26,7 @@ interface WirdHeaderProps {
  * The title block of «ورد اليوم»: the title and one date line (Gregorian; the Hijri date too when the setting is on),
  * and on the other side the streak chip (a gold flame and the number, never red) and «أضف», the page's one solid control.
  */
-export function WirdHeader({ date, hijriOffset, showHijri, streak, addOpen = false }: WirdHeaderProps) {
+export function WirdHeader({ date, hijriOffset, showHijri, streak, longest = 0, addOpen = false }: WirdHeaderProps) {
   const t = useTranslations('practice.wird');
   const locale = useLocale() === 'en' ? 'en' : 'ar';
   const hijriLabel = useHijriLabel();
@@ -46,7 +48,12 @@ export function WirdHeader({ date, hijriOffset, showHijri, streak, addOpen = fal
         )}
       </div>
       <div className="flex items-center gap-2">
-        {streak !== null ? (
+        {streak === 0 && longest > 0 ? (
+          <p className="flex min-h-11 items-center gap-1.5 rounded-full bg-muted px-4 text-sm font-medium">
+            <StreakFlame />
+            {t('streakFresh', { n: formatDigits(longest) })}
+          </p>
+        ) : streak !== null ? (
           <p
             className="flex min-h-11 items-center gap-1.5 rounded-full bg-muted px-4 text-base font-medium"
             aria-label={t('streakLabel', { count: streak, n: formatDigits(streak) })}

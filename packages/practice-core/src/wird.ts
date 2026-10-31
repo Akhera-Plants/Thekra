@@ -14,8 +14,8 @@ import {
   type HabitItem,
   type PlanDayOptions,
 } from './agenda.js';
-import { nextDue } from './kinship.js';
-import { requiredOn, type Plan } from './plan.js';
+import { isRelativeOpen, nextDue } from './kinship.js';
+import { isPaused, requiredOn, type Plan } from './plan.js';
 import type { Rule } from './rules.js';
 import type { Store } from './storage.js';
 
@@ -113,12 +113,15 @@ export type PeriodicAct =
 
 /**
  * Every periodic act with its next date, soonest first: relatives ({@link nextDue}, so an overdue one is in the past)
- * and non-daily habits (today while today is asked and not done, else the next day asked).
+ * and non-daily habits (today while today is asked and not done, else the next day asked). Paused plans and visited
+ * sick people are left out.
  */
 export function periodicActs(store: Store, today: LocalDate, opts: PlanDayOptions = {}): PeriodicAct[] {
-  const acts: PeriodicAct[] = store.relatives.map((r) => ({ kind: 'relative' as const, id: r.id, next: nextDue(r, today) }));
+  const acts: PeriodicAct[] = store.relatives
+    .filter(isRelativeOpen)
+    .map((r) => ({ kind: 'relative' as const, id: r.id, next: nextDue(r, today) }));
   for (const plan of store.plans) {
-    if (!isPeriodicPlan(plan, opts)) continue;
+    if (isPaused(plan) || !isPeriodicPlan(plan, opts)) continue;
     const openToday = planAsksOn(plan, today, opts) && (plan.log[today] ?? 0) < requiredOn(plan, today);
     acts.push({ kind: 'habit', id: plan.id, next: openToday ? today : nextAskedOn(plan, addDays(today, 1), opts) });
   }

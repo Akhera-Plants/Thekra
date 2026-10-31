@@ -8,8 +8,19 @@
  * (roadmap §0.2): no slug ever leaves `programs`.
  */
 import { addDays, diffDays, eachDay, type LocalDate } from './dates.js';
-import { latestDate, nextDue, type Relative } from './kinship.js';
-import { adherence, adherenceBand, isPlanDueOn, requiredOn, type AdherenceBand, type Plan } from './plan.js';
+import { isRelativeOpen, latestDate, nextDue, type Relative } from './kinship.js';
+import {
+  adherence,
+  adherenceBand,
+  isPaused,
+  isPausedOn,
+  isPlanDueOn,
+  minimumOf,
+  requiredOn,
+  type AdherenceBand,
+  type Plan,
+} from './plan.js';
+import { isExcused } from './storage.js';
 import { occurrences, type Rule } from './rules.js';
 import { activePrograms, type SinProgram } from './sin-program.js';
 import type { Store } from './storage.js';
@@ -30,6 +41,13 @@ export interface HabitItem {
   done: number;
   remaining: number;
   complete: boolean;
+  /**
+   * «لا تفوّتها مرتين»: the day before asked for this plan and nothing was logged (and it was not excused). The row
+   * goes first, with {@link minimum} and the line «أمس فات، واليوم ولو بالقليل».
+   */
+  missedYesterday?: true;
+  /** With {@link missedYesterday}: the smallest amount that keeps the day (`minimumOf`). */
+  minimum?: number;
 }
 
 export interface RelativeItem {
@@ -75,13 +93,26 @@ export type PlanDayOptions = Pick<AgendaOptions, 'hijriOffset' | 'defaultRuleOf'
  * else every day); it never asks before it starts. A day it does not ask for can still be logged.
  */
 export function planAsksOn(plan: Plan, date: LocalDate, opts: PlanDayOptions = {}): boolean {
-  if (date < plan.createdOn) return false;
+  if (date < plan.createdOn || isPausedOn(plan, date)) return false;
   return isPlanDueOn(plan, date, opts.defaultRuleOf?.(plan), { hijriOffset: opts.hijriOffset ?? 0 });
 }
 
-/** Plans that exist on `date` but do not ask for it («ليست مطلوبة اليوم»): still loggable, never counted as missed. */
+/**
+ * Plans that exist on `date` but do not ask for it («ليست مطلوبة اليوم»): still loggable, never counted as missed.
+ * A plan paused on that day is not among them (it lives under «موقوفة مؤقتًا» in «عاداتي»).
+ */
 export function plansNotAskedOn(store: Store, date: LocalDate, opts: PlanDayOptions = {}): Plan[] {
-  return store.plans.filter((p) => p.createdOn <= date && !planAsksOn(p, date, opts));
+  return store.plans.filter((p) => p.createdOn <= date && !isPausedOn(p, date) && !planAsksOn(p, date, opts));
+}
+
+/**
+ * «لا تفوّتها مرتين»: true when the day before `date` asked for the plan, nothing was logged that day and the day was
+ * not marked «عذر».
+ */
+export function missedDayBefore(store: Store, plan: Plan, date: LocalDate, opts: PlanDayOptions = {}): boolean {
+  const before = addDays(date, -1);
+  if (!planAsksOn(plan, before, opts) || isExcused(store, before)) return false;
+  return (plan.log[before] ?? 0) <= 0;
 }
 
 function habitItem(plan: Plan, date: LocalDate): HabitItem {
@@ -127,11 +158,22 @@ function occasionItems(occasions: readonly AgendaOccasion[], date: LocalDate, hi
 
 /**
  * Everything one day asks for, in reading order: sunnah occasions first (they shape the day), then habits, then
- * relatives (overdue first), then the private check-in last. Pure; the store is not changed.
+ * relatives (overdue first), then the private check-in last. A habit missed the day before («لا تفوّتها مرتين») is the
+ * first habit; paused plans and visited sick people are not in the day. Pure; the store is not changed.
  */
 export function dayAgenda(store: Store, date: LocalDate, opts: AgendaOptions = {}): AgendaItem[] {
-  const habits = store.plans.filter((p) => planAsksOn(p, date, opts)).map((p) => habitItem(p, date));
+  const asked = store.plans.filter((p) => planAsksOn(p, date, opts)).map((p) => {
+    const item = habitItem(p, date);
+    if (missedDayBefore(store, p, date, opts)) {
+      item.missedYesterday = true;
+      item.minimum = Math.min(minimumOf(p), item.required);
+    }
+    return item;
+  });
+  // «لا تفوّتها مرتين»: a habit missed the day before goes first (each group keeps its order).
+  const habits = [...asked.filter((h) => h.missedYesterday), ...asked.filter((h) => !h.missedYesterday)];
   const relatives = store.relatives
+    .filter((r) => isRelativeOpen(r) || r.history.includes(date))
     .map((r) => relativeItem(r, date))
     .filter((r): r is RelativeItem => r !== null)
     .sort((a, b) => Number(a.done) - Number(b.done) || b.overdueDays - a.overdueDays);
@@ -190,7 +232,7 @@ export interface MonthSummary {
 export function monthSummary(store: Store, today: LocalDate, days = 30, opts: PlanDayOptions = {}): MonthSummary {
   const from = addDays(today, -(days - 1));
   const presentDays = presence(store, from, today, opts).filter((d) => d.present).length;
-  const plans = store.plans.filter((p) => p.createdOn <= today);
+  const plans = store.plans.filter((p) => p.createdOn <= today && !isPaused(p));
   if (plans.length === 0) return { presentDays, adherence: null, band: null };
   const mean = plans.reduce((sum, p) => sum + adherence(p, from, today), 0) / plans.length;
   const youngest = Math.min(...plans.map((p) => diffDays(p.createdOn, today)));

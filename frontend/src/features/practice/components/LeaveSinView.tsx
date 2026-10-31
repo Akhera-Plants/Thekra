@@ -4,7 +4,7 @@ import { useMemo, useState, useSyncExternalStore } from 'react';
 import { RefreshCw, ShieldCheck } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocale, useTranslations } from 'next-intl';
-import { activePrograms } from '@thekra/practice-core';
+import { activePrograms, limits } from '@thekra/practice-core';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,6 +36,7 @@ import { useToday } from '../hooks/useToday';
 import { LocalOnlyNote } from './LocalOnlyNote';
 import { VaultPanel } from './VaultPanel';
 import { PracticeLoading } from './PracticeLoading';
+import { LimitSheet } from './LimitSheet';
 import { ProgramChooser } from './ProgramChooser';
 import { ProgramPanel } from './ProgramPanel';
 
@@ -92,7 +93,10 @@ export function LeaveSinView() {
     preselected && entries.some((e) => e.sin === preselected) && !active.some((a) => a.program.sinSlug === preselected)
       ? preselected
       : null;
-  const showChooser = active.length === 0 || (choosing ?? preselectNew !== null);
+  // One «تخفَّف» program until it reaches its last stage (practice-core `limits`).
+  const programLimits = limits(snapshot.store, clock.today);
+  const canStart = active.length === 0 || programLimits.canAdd('program');
+  const showChooser = active.length === 0 || (canStart && (choosing ?? preselectNew !== null));
 
   return (
     <div className="flex flex-col gap-10">
@@ -144,6 +148,14 @@ export function LeaveSinView() {
           {t('another')}
         </button>
       ) : null}
+      <LimitSheet
+        kind="program"
+        open={choosing === true && !canStart}
+        onOpenChange={(open) => (open ? undefined : setChoosing(false))}
+        limits={programLimits}
+        habits={new Map()}
+        today={clock.today}
+      />
 
       {/* Any program data counts, end markers included, so «احذف كل بيانات البرنامج» can always clear them. */}
       <WipeAll hasPrograms={snapshot.store.programs.length > 0} />

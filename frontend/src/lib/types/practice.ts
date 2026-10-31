@@ -2,7 +2,7 @@
  * Practice API shapes: `GET /v1/practice/catalog`, `GET /v1/calendar/occasions`.
  * The catalog objects mirror backend/prisma/taxonomy/deed-schedules.yaml and sin-programs.yaml field for field.
  */
-import type { HijriDate, PlanUnit, RakahCount, Rule, SinCategory, Stage } from '@thekra/practice-core';
+import type { HijriDate, PeopleCircle, PlanUnit, RakahCount, Rule, SinCategory, Stage } from '@thekra/practice-core';
 
 export type ScheduleBasis = 'text' | 'organizational';
 
@@ -19,6 +19,10 @@ export interface PracticeOccasion {
 
 export interface PracticeHabit {
   key: string;
+  /** `periodic`: a template of «أعمال دورية» (counts toward the 7 periodic acts, not the 3 saplings). */
+  kind?: 'periodic';
+  /** A people list: people are added on the kinship page with this circle; `defaultRule` is each person's rhythm. */
+  people?: PeopleCircle;
   titleAr: string;
   titleEn: string;
   deed: string;

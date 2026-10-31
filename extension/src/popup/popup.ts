@@ -5,6 +5,7 @@
 import {
   correctLog,
   createPlan,
+  isPaused,
   decreaseTo,
   deletePlan,
   formatHijriAr,
@@ -25,6 +26,7 @@ import {
   type Store,
 } from '@thekra/practice-core';
 import { deedUrl, formatAmount, habitTitle, unitLabel, type Habit } from '../catalog.js';
+import { draftLimitError } from '../limits.js';
 import { API_ORIGIN } from '../cache.js';
 import { api, getCatalog, getSyncStatus, loadState, loadStore, refreshCaches, saveState, saveStore, TARGET, tokenStore } from '../ext.js';
 import { translator } from '../i18n.js';
@@ -227,7 +229,8 @@ function renderToday(main: HTMLElement, t: Translate): void {
     return;
   }
 
-  const plans = [...state.store.plans].sort((a, b) => (a.slots[0] ?? '').localeCompare(b.slots[0] ?? ''));
+  // A paused plan is hidden here (it asks for nothing); resume it on the website or in the app.
+  const plans = [...state.store.plans].filter((p) => !isPaused(p)).sort((a, b) => (a.slots[0] ?? '').localeCompare(b.slots[0] ?? ''));
   for (const stored of plans) {
     const plan = normalize(stored, day);
     const habit = habitOf(plan);
@@ -388,6 +391,8 @@ function renderSettings(main: HTMLElement, t: Translate): void {
   main.append(h('h2', { class: 'section' }, t('habitsHeading')));
 
   for (const habit of catalog) {
+    // People lists (صلة الرحم…) live on the website and in the app.
+    if (habit.people) continue;
     const hd = d.habits[habit.key] as HabitDraft;
     const card = h('section', { class: hd.selected ? 'card habit selected' : 'card habit' });
     const box = h('input', { type: 'checkbox', checked: hd.selected });
@@ -601,6 +606,9 @@ function accountContent(t: Translate): Node[] {
 function validateDraft(d: Draft): string | null {
   const chosen = Object.values(d.habits).filter((x) => x.selected);
   if (chosen.length === 0 && !state.prefs.onboarded) return 'errorChooseOne';
+  const selected = new Set(Object.entries(d.habits).filter(([, x]) => x.selected).map(([key]) => key));
+  const limitError = draftLimitError(state.store, selected, catalog, today());
+  if (limitError) return limitError;
   for (const hd of chosen) {
     if (!Number.isFinite(hd.amount) || hd.amount <= 0) return 'errorAmount';
     if (hd.slots.some((s) => !/^([01]\d|2[0-3]):[0-5]\d$/.test(s)) || new Set(hd.slots).size !== hd.slots.length) return 'errorSlots';
@@ -613,6 +621,7 @@ async function saveDraft(d: Draft): Promise<void> {
   const fresh = await loadState();
   let store = fresh.store;
   for (const habit of catalog) {
+    if (habit.people) continue;
     const hd = d.habits[habit.key];
     const existing = store.plans.find((p) => p.habitKey === habit.key);
     if (!hd?.selected) {

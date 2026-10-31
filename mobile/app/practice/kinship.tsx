@@ -9,12 +9,26 @@
  * the row (name, relation, rhythm), with «حذف» there; deleting asks first (system alert).
  */
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Alert, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Check, Pencil, Plus, Undo2, Users } from 'lucide-react-native';
-import { deleteRelative, dueList, logContact, undoContact, updateRelative, upsertRelative, type DueEntry } from '@thekra/practice-core';
+import { Check, Pencil, Plus, Trash2, Undo2, Users } from 'lucide-react-native';
+import {
+  circleOf,
+  deleteRelative,
+  dueList,
+  isRelativeOpen,
+  logContact,
+  PEOPLE_CIRCLES,
+  undoContact,
+  updateRelative,
+  upsertRelative,
+  type DueEntry,
+  type PeopleCircle,
+} from '@thekra/practice-core';
+import { useLimits } from '@/lib/practice/use-habits-hub';
+import { LimitSheet } from '@/components/practice/LimitSheet';
 import { shortDate } from '@/lib/practice/format';
 import { editedRelative, relativeFromForm, type RelativeFormValues } from '@/lib/practice/kinship-form';
 import { ensurePermission } from '@/lib/practice/notifications';
@@ -23,7 +37,7 @@ import { useAuthStore } from '@/lib/stores/auth-store';
 import { TimeField } from '@/components/practice/editors';
 import { RelativeForm } from '@/components/practice/RelativeForm';
 import { space, useStyles, type Theme } from '@/theme';
-import { Button, EmptyState, IconButton, Loading, Notice, PageHeader, Row, Rule, Screen, Section, SwitchRow, Text } from '@/ui';
+import { Button, EmptyState, IconButton, ListRow, Loading, Notice, PageHeader, Row, Rule, Screen, Section, SwitchRow, Text } from '@/ui';
 
 const makeStyles = (t: Theme) => ({
   list: { borderTopWidth: 1, borderTopColor: t.colors.border },
@@ -38,10 +52,14 @@ export default function KinshipScreen() {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const hydrated = usePracticeStore((s) => s.hydrated);
-  const relatives = usePracticeStore((s) => s.store.relatives);
+  const allRelatives = usePracticeStore((s) => s.store.relatives);
   const setStore = usePracticeStore((s) => s.setStore);
-  /** `?add=1` (the hub's «أضف» → «قريب») opens the form at once. */
-  const { add } = useLocalSearchParams<{ add?: string }>();
+  /** `?add=1` (the hub's «أضف» → «قريب») opens the form at once; `?circle=` makes this screen that people list. */
+  const { add, circle: circleParam } = useLocalSearchParams<{ add?: string; circle?: string }>();
+  const circle: PeopleCircle = PEOPLE_CIRCLES.includes(circleParam as PeopleCircle) ? (circleParam as PeopleCircle) : 'kin';
+  const relatives = useMemo(() => allRelatives.filter((r) => circleOf(r) === circle), [allRelatives, circle]);
+  const planLimits = useLimits();
+  const [limitOpen, setLimitOpen] = useState(false);
   const [adding, setAdding] = useState(add === '1');
   const [editingId, setEditingId] = useState<string | null>(null);
   const signedIn = useAuthStore((s) => Boolean(s.user));
@@ -66,7 +84,12 @@ export default function KinshipScreen() {
   }
 
   function saveNew(values: RelativeFormValues) {
-    const res = relativeFromForm(values, newPracticeId(), today());
+    // A new list is one more periodic act (7 at most); a person added to a list in use adds none.
+    if (!planLimits.canAdd('periodic', { circle })) {
+      setLimitOpen(true);
+      return null;
+    }
+    const res = relativeFromForm(values, newPracticeId(), today(), circle);
     if (!res.ok) return res.error;
     setStore((s) => upsertRelative(s, res.relative));
     setAdding(false);
@@ -110,11 +133,16 @@ export default function KinshipScreen() {
       </Section>
     ) : null;
 
-  const form = adding ? <RelativeForm title={t('kinship.add')} onSave={saveNew} onCancel={() => setAdding(false)} /> : null;
+  const form = adding ? (
+    <RelativeForm title={t('kinship.add')} onSave={saveNew} onCancel={() => setAdding(false)} noRhythm={circle === 'sick'} />
+  ) : null;
+  const visited = relatives.filter((r) => !isRelativeOpen(r));
+  const pageTitle = circle === 'kin' ? t('kinship.title') : t(`practice.circles.${circle}.title`);
+  const pageLead = circle === 'kin' ? t('kinship.lead') : t(`practice.circles.${circle}.hint`);
 
   return (
     <Screen edges={['bottom']} keyboard decor>
-      <PageHeader eyebrow={t('practice.periodic.title')} title={t('kinship.title')} lead={t('kinship.lead')} />
+      <PageHeader eyebrow={t('practice.periodic.title')} title={pageTitle} lead={pageLead} />
 
       {relatives.length === 0 && !adding ? (
         <EmptyState icon={Users} message={t('kinship.empty')} actionLabel={t('kinship.add')} onAction={() => setAdding(true)} />
@@ -125,6 +153,16 @@ export default function KinshipScreen() {
       {bucket(t('kinship.overdue'), due.overdue)}
       {bucket(t('kinship.thisWeek'), due.thisWeek)}
       {bucket(t('kinship.later'), due.later)}
+
+      {visited.length > 0 ? (
+        <Section title={t('practice.circles.sick.visited')}>
+          {visited.map((r) => (
+            <ListRow key={r.id} title={r.name} onPress={() => remove(r.id)} trailing={<Trash2 size={18} />} />
+          ))}
+        </Section>
+      ) : null}
+
+      <LimitSheet kind="periodic" visible={limitOpen} limits={planLimits} onClose={() => setLimitOpen(false)} onFreed={() => setLimitOpen(false)} />
 
       <KinshipReminders />
     </Screen>

@@ -8,6 +8,8 @@ import {
   createRelative,
   looksLikeContactDetails,
   MAX_NAME_LENGTH,
+  sickRule,
+  type PeopleCircle,
   updateRelative,
   upsertRelative,
   type Relative,
@@ -28,13 +30,18 @@ interface RelativeFormProps {
   relative?: Relative;
   /** Called after an edit is saved or cancelled. */
   onDone?: () => void;
+  /** The people list a new person joins (default `kin`). `sick` has no rhythm: due every two days until visited. */
+  circle?: PeopleCircle;
+  /** Asked before adding: false refuses (the caller shows the limit sheet). */
+  canAdd?: () => boolean;
 }
 
 /**
  * Nickname-only relative: contact details are refused (practice-core `looksLikeContactDetails`). Adds a relative,
  * or with `relative` edits it through `updateRelative`, which versions the change so it syncs.
  */
-export function RelativeForm({ today, relative, onDone }: RelativeFormProps) {
+export function RelativeForm({ today, relative, onDone, circle = 'kin', canAdd }: RelativeFormProps) {
+  const isSick = (relative?.circle ?? circle) === 'sick';
   const t = useTranslations('practice.kinship.form');
   const tDays = useTranslations('practice.weekdays');
   const schema = useMemo(() => {
@@ -75,11 +82,13 @@ export function RelativeForm({ today, relative, onDone }: RelativeFormProps) {
       onDone?.();
       return;
     }
+    if (canAdd && !canAdd()) return;
     const created = createRelative({
       id: newUuid(),
       name: values.name,
       relation: values.relation,
-      rule: rhythmRule(values.rhythm === 'custom' ? 'weekly' : values.rhythm, Number(values.weekday), today),
+      circle,
+      rule: isSick ? sickRule(today) : rhythmRule(values.rhythm === 'custom' ? 'weekly' : values.rhythm, Number(values.weekday), today),
     });
     updateStore((store) => upsertRelative(store, created));
     form.reset({ ...values, name: '', relation: '' });
@@ -126,6 +135,7 @@ export function RelativeForm({ today, relative, onDone }: RelativeFormProps) {
               </FormItem>
             )}
           />
+          {isSick ? null : (
           <FormField
             control={form.control}
             name="rhythm"
@@ -150,7 +160,8 @@ export function RelativeForm({ today, relative, onDone }: RelativeFormProps) {
               </FormItem>
             )}
           />
-          {rhythm !== 'monthly' && rhythm !== 'custom' ? (
+          )}
+          {!isSick && rhythm !== 'monthly' && rhythm !== 'custom' ? (
             <FormField
               control={form.control}
               name="weekday"

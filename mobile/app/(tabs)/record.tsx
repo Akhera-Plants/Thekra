@@ -11,7 +11,10 @@ import { View } from 'react-native';
 import { router, type Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Bookmark, Lock, Repeat, Sprout, Users, type LucideIcon } from 'lucide-react-native';
-import type { LocalDate } from '@thekra/practice-core';
+import { establishPlan, graduationReady, updatePlan, type LocalDate } from '@thekra/practice-core';
+import { pick } from '@/lib/practice/catalog-types';
+import { habitFor } from '@/lib/practice/reminders';
+import { ExcuseChip } from '@/components/practice/hub/ExcuseChip';
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { monthEnd, shortDayTitle } from '@/lib/practice/calendar-grid';
 import { canLogOn, occasionDates } from '@/lib/practice/hub';
@@ -33,7 +36,7 @@ import { PresenceMonth } from '@/components/practice/hub/PresenceMonth';
 import { StreakFlame } from '@/components/practice/hub/StreakFlame';
 import { TodayList } from '@/components/practice/hub/TodayList';
 import { space, useStyles, type Theme } from '@/theme';
-import { ListRow, PageHeader, Screen, Skeleton, Text } from '@/ui';
+import { Button, ListRow, Notice, PageHeader, Screen, Skeleton, Text } from '@/ui';
 
 const makeStyles = (t: Theme) => ({
   streak: { gap: space.xs },
@@ -93,6 +96,12 @@ function Record() {
 
   return (
     <>
+      {streak.display.kind === 'fresh' ? (
+        <View style={styles.streakTop}>
+          <StreakFlame size={26} />
+          <Text variant="body">{t('practice.wird.streakFresh', { n: streak.display.longest })}</Text>
+        </View>
+      ) : (
       <View style={styles.streak} accessible accessibilityLabel={`${t('practice.wird.streakLabel', { count: streak.current })}. ${t('record.longest', { count: streak.longest })}`}>
         <View style={styles.streakTop}>
           <StreakFlame size={34} />
@@ -105,6 +114,9 @@ function Record() {
           {t('record.longest', { count: streak.longest })}
         </Text>
       </View>
+      )}
+
+      <GraduationOffers today={today} />
 
       <PresenceMonth
         summary={summary}
@@ -132,6 +144,7 @@ function Record() {
 
 /** The list of a day tapped in the month: the same rows as «ورد اليوم», loggable for the last 7 days. */
 function PickedDay({ date, today, title }: { date: LocalDate; today: LocalDate; title: string }) {
+  const { t } = useTranslation();
   const items = useDayAgenda(date);
   const rows = useAgendaRows(items, date, today);
   const offDayItems = useOffDayHabits(date);
@@ -149,6 +162,34 @@ function PickedDay({ date, today, title }: { date: LocalDate; today: LocalDate; 
       onToggleHabit={actions.toggleHabit}
       onToggleRelative={actions.toggleRelative}
       onUndo={actions.undo}
+      footer={<ExcuseChip date={date} today={today} label={t('practice.excuse.day')} />}
     />
+  );
+}
+
+/** «رسخت هذه العادة بفضل الله. انقلها إلى الراسخة؟» for each graduation-ready sapling: offered, never automatic. */
+function GraduationOffers({ today }: { today: LocalDate }) {
+  const { t } = useTranslation();
+  const locale = useUiLocale();
+  const plans = usePracticeStore((s) => s.store.plans);
+  const setStore = usePracticeStore((s) => s.setStore);
+  const habits = usePracticeCatalog(locale).data?.habits ?? [];
+  const ready = plans.filter((plan) => graduationReady(plan, today));
+  return (
+    <>
+      {ready.map((plan) => {
+        const habit = habitFor(plan, habits);
+        return (
+          <View key={plan.id} style={{ gap: space.sm }}>
+            <Notice tone="muted">{`${habit ? pick(habit, 'title', locale) : plan.title} · ${t('practice.graduation.offer')}`}</Notice>
+            <Button
+              label={t('practice.graduation.action')}
+              variant="outline"
+              onPress={() => setStore((s) => updatePlan(s, plan.id, (p) => establishPlan(p, today)))}
+            />
+          </View>
+        );
+      })}
+    </>
   );
 }

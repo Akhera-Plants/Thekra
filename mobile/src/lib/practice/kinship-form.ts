@@ -7,7 +7,9 @@ import {
   MAX_NAME_LENGTH,
   createRelative,
   looksLikeContactDetails,
+  sickRule,
   type KinshipRule,
+  type PeopleCircle,
   type LocalDate,
   type Relative,
 } from '@thekra/practice-core';
@@ -83,13 +85,16 @@ export function relativeFromForm(
   values: RelativeFormValues,
   id: string,
   today: LocalDate,
+  circle: PeopleCircle = 'kin',
 ): { ok: true; relative: Relative } | { ok: false; error: RelativeFormError } {
   const error = validateRelativeForm(values);
   if (error) return { ok: false, error };
   try {
+    // «عيادة المريض» has no rhythm of its own: due now, then every two days until visited (practice-core `sickRule`).
+    const rule = circle === 'sick' ? sickRule(today) : rhythmToRule(values, today);
     return {
       ok: true,
-      relative: createRelative({ id, name: values.name.trim(), relation: values.relation.trim(), rule: rhythmToRule(values, today) }),
+      relative: createRelative({ id, name: values.name.trim(), relation: values.relation.trim(), rule, circle }),
     };
   } catch {
     return { ok: false, error: 'invalidRhythm' };

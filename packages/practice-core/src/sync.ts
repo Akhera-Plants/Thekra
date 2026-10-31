@@ -22,6 +22,7 @@ import { latestDate, validateRelative, type KinshipRule, type Relative } from '.
 import { logEntry, mergeLogEntry, validatePlan, type LogEntry, type Plan, type PlanUnit } from './plan.js';
 import type { Rule } from './rules.js';
 import {
+  cleanExcusedDays,
   contactId,
   planFields,
   relativeFields,
@@ -75,6 +76,8 @@ export interface WireSettings {
   hijriOffset: number;
   reminderTimes: LocalTime[];
   freeMinutesPerDay: number | null;
+  /** «عذر» days (2026-10-31). An older server or client omits it: none. */
+  excusedDays: LocalDate[];
   clientUpdatedAt: IsoTime;
 }
 
@@ -97,6 +100,7 @@ export interface ServerSettings {
   hijriOffset: number;
   reminderTimes: LocalTime[];
   freeMinutesPerDay: number | null;
+  excusedDays?: LocalDate[];
   clientUpdatedAt?: IsoTime;
   updatedAt?: IsoTime;
 }
@@ -168,8 +172,18 @@ const relativeVersion = (r: Relative): Version => ({
 });
 const tombVersion = (t: Tombstone): Version => ({ time: isoMillis(t.deletedAt), deleted: true, content: '' });
 
-function settingsContent(s: { hijriOffset: number; reminderTimes?: LocalTime[]; freeMinutesPerDay?: number | null }): string {
-  return JSON.stringify({ hijriOffset: s.hijriOffset, reminderTimes: s.reminderTimes ?? [], freeMinutesPerDay: s.freeMinutesPerDay ?? null });
+/**
+ * The canonical settings content. `excusedDays` is added only when not empty, so settings without excused days keep
+ * the content older clients and acks know.
+ */
+export function settingsContent(s: {
+  hijriOffset: number;
+  reminderTimes?: LocalTime[];
+  freeMinutesPerDay?: number | null;
+  excusedDays?: LocalDate[];
+}): string {
+  const base = { hijriOffset: s.hijriOffset, reminderTimes: s.reminderTimes ?? [], freeMinutesPerDay: s.freeMinutesPerDay ?? null };
+  return JSON.stringify(s.excusedDays && s.excusedDays.length > 0 ? { ...base, excusedDays: s.excusedDays } : base);
 }
 const settingsVersion = (s: Settings): Version => ({ time: isoMillis(s.updatedAt), deleted: false, content: settingsContent(s) });
 
@@ -242,6 +256,7 @@ export function localChanges(store: Store, opts: LocalChangesOptions = {}): Sync
       hijriOffset: s.hijriOffset,
       reminderTimes: [...(s.reminderTimes ?? [])],
       freeMinutesPerDay: s.freeMinutesPerDay ?? null,
+      excusedDays: [...(s.excusedDays ?? [])],
       clientUpdatedAt: toIso(isoMillis(s.updatedAt)),
     };
     budget--;
@@ -323,6 +338,10 @@ function planFromWire(w: Record<string, unknown>, log: Record<string, number>, u
   if (w.rule !== null && w.rule !== undefined) plan.rule = w.rule as Rule;
   if (w.ebbSince !== null && w.ebbSince !== undefined) plan.ebb = { since: w.ebbSince };
   if (isRecord(w.season)) plan.season = { amount: w.season.amount, until: w.season.until, previous: w.season.previous };
+  // Phase-2 fields: null or absent (an older server) means not set.
+  for (const k of ['pausedOn', 'resumedOn', 'establishedOn'] as const) {
+    if (w[k] !== null && w[k] !== undefined) plan[k] = w[k];
+  }
   try {
     return validatePlan(plan) === null ? (plan as unknown as Plan) : null;
   } catch {
@@ -332,6 +351,8 @@ function planFromWire(w: Record<string, unknown>, log: Record<string, number>, u
 
 function relativeFromWire(w: Record<string, unknown>, history: LocalDate[], updatedAt: IsoTime): Relative | null {
   const rel: Record<string, unknown> = { id: w.id, name: w.name, relation: w.relation, rule: w.rule as KinshipRule, history: [...history], updatedAt };
+  // `kin` (or absent: an older server) is stored as no circle, like every relative before 2026-10-31.
+  if (w.circle !== null && w.circle !== undefined && w.circle !== 'kin') rel.circle = w.circle;
   try {
     return validateRelative(rel) === null ? (rel as unknown as Relative) : null;
   } catch {
@@ -382,10 +403,14 @@ export function applyServerChanges(store: Store, response: SyncResponse | { data
       Array.isArray(w.reminderTimes) &&
       w.reminderTimes.every(isValidTime) &&
       (free === null || free === undefined || (typeof free === 'number' && Number.isInteger(free) && free >= 0 && free <= 1440));
-    if (valid) {
+    const excused = w.excusedDays;
+    const excusedValid = excused === null || excused === undefined || (Array.isArray(excused) && excused.every(isValidDate));
+    if (valid && excusedValid) {
       const incoming: Settings = { hijriOffset: off, updatedAt: time };
       if ((w.reminderTimes as LocalTime[]).length > 0) incoming.reminderTimes = [...(w.reminderTimes as LocalTime[])];
       if (typeof free === 'number') incoming.freeMinutesPerDay = free;
+      const days = cleanExcusedDays(excused);
+      if (days.length > 0) incoming.excusedDays = days;
       const vIn = settingsVersion(incoming);
       if (compareVersions(settingsVersion(settings), vIn) < 0) settings = incoming;
       if (versionKey(settingsVersion(settings)) === versionKey(vIn)) acked.settings = versionKey(vIn);

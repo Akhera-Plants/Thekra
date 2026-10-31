@@ -3,14 +3,19 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { Bookmark, Feather, Repeat, Sprout } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
-import { periodicActs } from '@thekra/practice-core';
+import { establishPlan, graduationReady, periodicActs, updatePlan, type Plan } from '@thekra/practice-core';
+import { Button } from '@/components/shared/kit/button';
+import { habitOf } from '@/lib/practice/plans';
+import type { PracticeHabit } from '@/lib/types/practice';
+import { usePlanWords } from '../PlanCard';
+import { ExcuseToggle } from './ExcuseToggle';
 import { Link } from '@/i18n/navigation';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { accountsEnabled } from '@/lib/accounts';
 import { formatDigits } from '@/lib/format/digits';
 import { formatGregorian } from '@/lib/practice/format';
 import { monthOf, type YearMonth } from '@/lib/practice/hub';
-import { updatePrefs } from '@/lib/practice/local-store';
+import { updatePrefs, updateStore } from '@/lib/practice/local-store';
 import { wirdDay, wirdSummary } from '@/lib/practice/wird';
 import { useWirdContext, type WirdContext } from '../../hooks/useWirdContext';
 import { PracticeLoading } from '../PracticeLoading';
@@ -37,6 +42,7 @@ function Record({ context }: { context: WirdContext }) {
   const showHijri = prefs.showHijri === true;
   const summary = useMemo(() => wirdSummary(store, today, planDays), [store, today, planDays]);
   const periodicCount = useMemo(() => periodicActs(store, today, planDays).length, [store, today, planDays]);
+  const ready = useMemo(() => store.plans.filter((plan) => graduationReady(plan, today)), [store, today]);
   const [picked, setPicked] = useState<string | null>(null);
   const [month, setMonth] = useState<YearMonth>(() => monthOf(today));
   const pickedDay = useMemo(
@@ -71,15 +77,28 @@ function Record({ context }: { context: WirdContext }) {
         <h2 id="record-streak" className="sr-only">
           {t('current')}
         </h2>
-        <p className="flex items-center gap-2">
-          <StreakFlame className="size-9" />
-          <span className="text-5xl leading-none font-medium tabular-nums">{formatDigits(summary.streak)}</span>
-        </p>
-        <p className="text-lg">{t('current')}</p>
-        <p className="text-sm text-muted-foreground">
-          {t('longest', { count: summary.longest, n: formatDigits(summary.longest) })}
-        </p>
+        {summary.display.kind === 'fresh' ? (
+          <p className="flex items-center gap-2 text-lg">
+            <StreakFlame className="size-7" />
+            {tWird('streakFresh', { n: formatDigits(summary.display.longest) })}
+          </p>
+        ) : (
+          <>
+            <p className="flex items-center gap-2">
+              <StreakFlame className="size-9" />
+              <span className="text-5xl leading-none font-medium tabular-nums">{formatDigits(summary.streak)}</span>
+            </p>
+            <p className="text-lg">{t('current')}</p>
+            <p className="text-sm text-muted-foreground">
+              {t('longest', { count: summary.longest, n: formatDigits(summary.longest) })}
+            </p>
+          </>
+        )}
       </section>
+
+      {ready.map((plan) => (
+        <GraduationOffer key={plan.id} plan={plan} habits={habits} today={today} />
+      ))}
 
       <div className="flex flex-col gap-3">
         <HubMonth
@@ -113,6 +132,7 @@ function Record({ context }: { context: WirdContext }) {
           day={pickedDay}
           habits={habits}
           occasionBasis={occasionBasis}
+          footer={store.plans.length > 0 ? <ExcuseToggle store={store} today={today} date={picked} /> : null}
         />
       ) : null}
 
@@ -137,6 +157,28 @@ function Record({ context }: { context: WirdContext }) {
           ))}
         </ul>
       </nav>
+    </div>
+  );
+}
+
+/** «رسخت هذه العادة بفضل الله. انقلها إلى الراسخة؟»: offered, never automatic. */
+function GraduationOffer({ plan, habits, today }: { plan: Plan; habits: ReadonlyMap<string, PracticeHabit>; today: string }) {
+  const t = useTranslations('practice.today');
+  const words = usePlanWords(plan, habitOf(plan, habits));
+  return (
+    <div className="next-step !mt-0 flex flex-col items-start gap-2">
+      <p>
+        <strong lang={words.titleLang}>{words.title}</strong> · {t('graduateOffer')}
+      </p>
+      <Button
+        className="h-auto whitespace-normal py-2 text-start"
+        variant="outline"
+        tone="primary"
+        size="sm"
+        onClick={() => updateStore((s) => updatePlan(s, plan.id, (p) => establishPlan(p, today)))}
+      >
+        {t('graduate')}
+      </Button>
     </div>
   );
 }

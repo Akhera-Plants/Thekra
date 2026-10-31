@@ -144,7 +144,13 @@ export function HabitRow({ item, plan, habit, isEnabled, disabledNoteId, undo, o
   const detailId = useId();
   const detail = (
     <>
-      {t('required', { amount: words.amount(item.required) })}
+      {item.missedYesterday && item.minimum && item.done === 0 ? (
+        <>
+          {t('missedYesterday')} · {t('required', { amount: words.amount(item.minimum) })}
+        </>
+      ) : (
+        t('required', { amount: words.amount(item.required) })
+      )}
       {item.done > 0 ? <> · {tToday('done', { amount: words.amount(item.done) })}</> : null}
     </>
   );

@@ -16,6 +16,11 @@ import {
   correctLog,
   decreaseTo,
   deletePlan,
+  establishPlan,
+  graduationReady,
+  isPaused,
+  pausePlan,
+  resumePlan,
   increase,
   logDone,
   normalize,
@@ -147,6 +152,23 @@ export default function PlanScreen() {
         {habit ? <TextLink label={t('practice.plan.readAbout')} onPress={() => router.push(`/good-deeds/${habit.deed}`)} muted /> : null}
       </PageHeader>
 
+      {isPaused(plan) ? (
+        <NextStep title={t('practice.paused.since', { date: plan.pausedOn })}>
+          <Wrap style={styles.offerActions}>
+            <Button label={t('practice.paused.resume')} onPress={() => update((p) => resumePlan(p, d))} />
+          </Wrap>
+        </NextStep>
+      ) : null}
+
+      {graduationReady(plan, d) ? (
+        <NextStep title={t('practice.graduation.offer')}>
+          <Wrap style={styles.offerActions}>
+            <Button label={t('practice.graduation.action')} onPress={() => update((p) => establishPlan(p, d))} variant="outline" />
+          </Wrap>
+        </NextStep>
+      ) : null}
+
+      {isPaused(plan) ? null : (
       <TodayPanel
         plan={plan}
         view={view}
@@ -161,6 +183,7 @@ export default function PlanScreen() {
         onFixSave={handleFixSave}
         onFixCancel={() => setFixing(false)}
       />
+      )}
 
       {view.relapse && !relapseDismissed ? (
         <NextStep title={t('practice.relapse.title')}>
@@ -188,6 +211,10 @@ export default function PlanScreen() {
       <MonthPanel plan={plan} view={view} today={d} />
 
       <Rule />
+
+      {isPaused(plan) ? null : (
+        <Button label={t('practice.paused.pause')} variant="ghost" onPress={() => update((p) => pausePlan(p, d))} />
+      )}
 
       <SettingsPanel plan={plan} ruleWeekdays={ruleToWeekdays(planRule(plan, habits))} onSave={(next) => update(() => next)} />
 

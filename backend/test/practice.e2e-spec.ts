@@ -45,6 +45,10 @@ const RELATIVE = {
   clientUpdatedAt: T(0),
   deletedAt: null,
 };
+/** What the server returns for a plan / relative an older client sent (missing phase-2 fields = defaults). */
+const PHASE2_PLAN_DEFAULTS = { pausedOn: null, resumedOn: null, establishedOn: null };
+const planOut = <T extends object>(plan: T) => ({ ...PHASE2_PLAN_DEFAULTS, ...plan });
+const relativeOut = <T extends object>(relative: T) => ({ circle: 'kin', ...relative });
 const b64 = (bytes: number) => Buffer.alloc(bytes, 9).toString('base64');
 const VAULT = { ciphertext: b64(300), iv: b64(12), salt: b64(16), kdf: 'pbkdf2-sha256', iterations: 210000 };
 
@@ -215,9 +219,9 @@ describe('Practice, calendar and account endpoints (e2e)', () => {
     const data = first.body.data;
     expect(data.serverTime).toEqual(expect.any(String));
     expect(data.settings).toMatchObject({ hijriOffset: 1, reminderTimes: ['07:00'], freeMinutesPerDay: 60, clientUpdatedAt: T(0) });
-    expect(data.plans).toEqual([PLAN]);
+    expect(data.plans).toEqual([planOut(PLAN)]);
     expect(data.logs).toEqual([{ planId: PLAN_ID, date: '2026-10-28', amount: 2 }]);
-    expect(data.relatives).toEqual([RELATIVE]);
+    expect(data.relatives).toEqual([relativeOut(RELATIVE)]);
     expect(data.contacts).toEqual([{ relativeId: REL_ID, date: '2026-10-20', deleted: false }]);
 
     // Older writes lose (and come back with the winning copy); a smaller log never lowers the amount.
@@ -230,7 +234,7 @@ describe('Practice, calendar and account endpoints (e2e)', () => {
       },
     }).expect(200);
     expect(stale.body.data.settings.hijriOffset).toBe(1);
-    expect(stale.body.data.plans).toEqual([PLAN]);
+    expect(stale.body.data.plans).toEqual([planOut(PLAN)]);
     expect(stale.body.data.logs).toEqual([{ planId: PLAN_ID, date: '2026-10-28', amount: 2 }]);
 
     // Newer writes win; a larger log raises it; a contact undo is a tombstone; a plan tombstone wins when newer.
@@ -294,7 +298,7 @@ describe('Practice, calendar and account endpoints (e2e)', () => {
     // A newer edit restores the plan, with its logs.
     await sync(auth, { since: null, changes: { plans: [{ ...plan, title: 'restored', clientUpdatedAt: T(21) }] } }).expect(200);
     view = await request(server()).get('/v1/me/practice').set(auth).expect(200);
-    expect(view.body.data.plans).toEqual([{ ...plan, title: 'restored', clientUpdatedAt: T(21) }]);
+    expect(view.body.data.plans).toEqual([planOut({ ...plan, title: 'restored', clientUpdatedAt: T(21) })]);
     expect(view.body.data.logs).toHaveLength(2);
     // Settings: the client time is stored and echoed.
     const settings = await sync(auth, {
@@ -338,7 +342,7 @@ describe('Practice, calendar and account endpoints (e2e)', () => {
     }
     expect((await request(server()).get('/v1/me/practice').set(other.auth).expect(200)).body.data.plans).toEqual([]);
     const ownerView = await request(server()).get('/v1/me/practice').set(owner.auth).expect(200);
-    expect(ownerView.body.data.plans).toEqual([planA]);
+    expect(ownerView.body.data.plans).toEqual([planOut(planA)]);
     expect(ownerView.body.data.logs).toEqual([]);
     expect(ownerView.body.data.contacts).toEqual([]);
 
@@ -374,6 +378,56 @@ describe('Practice, calendar and account endpoints (e2e)', () => {
 
     await request(server()).delete('/v1/me/sin-vault').set(auth).expect(204);
     expect((await request(server()).get('/v1/me/sin-vault').set(auth).expect(200)).body.data.vault).toBeNull();
+  });
+
+  it('phase 2: pause, graduation, people circles and excused days sync with LWW; old clients get defaults', async () => {
+    const { auth } = await register();
+    const id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+    const rid = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+    const paused = { ...PLAN, id, pausedOn: '2026-10-29', resumedOn: null, establishedOn: '2026-10-28', clientUpdatedAt: T(30) };
+    const sick = { ...RELATIVE, id: rid, circle: 'sick', rule: { kind: 'everyNDays', n: 2, anchor: '2026-10-28' }, clientUpdatedAt: T(30) };
+    const first = await sync(auth, {
+      since: null,
+      changes: {
+        settings: { hijriOffset: 0, reminderTimes: [], excusedDays: ['2026-10-26', '2026-10-27'], clientUpdatedAt: T(30) },
+        plans: [paused],
+        relatives: [sick],
+      },
+    }).expect(200);
+    expect(first.body.data.plans).toEqual([paused]);
+    expect(first.body.data.relatives).toEqual([sick]);
+    expect(first.body.data.settings).toMatchObject({ excusedDays: ['2026-10-26', '2026-10-27'] });
+    const row = await prisma.habitPlan.findUniqueOrThrow({ where: { id } });
+    expect(row.pausedOn?.toISOString().slice(0, 10)).toBe('2026-10-29');
+    expect(row.establishedOn?.toISOString().slice(0, 10)).toBe('2026-10-28');
+    expect((await prisma.relative.findUniqueOrThrow({ where: { id: rid } })).circle).toBe('sick');
+
+    // Resume (newer) wins; an older write that still has the pause loses.
+    const resumed = { ...paused, resumedOn: '2026-10-31', clientUpdatedAt: T(32) };
+    await sync(auth, { since: null, changes: { plans: [resumed] } }).expect(200);
+    const stale = await sync(auth, { since: null, changes: { plans: [{ ...paused, clientUpdatedAt: T(31) }] } }).expect(200);
+    expect(stale.body.data.plans.find((p: { id: string }) => p.id === id)).toEqual(resumed);
+
+    // An older client (no phase-2 fields) that writes later sets the defaults (last writer wins on the whole plan).
+    const { pausedOn: _p, resumedOn: _r, establishedOn: _e, ...oldShape } = resumed;
+    const old = await sync(auth, { since: null, changes: { plans: [{ ...oldShape, title: 'old client', clientUpdatedAt: T(33) }] } }).expect(200);
+    expect(old.body.data.plans.find((p: { id: string }) => p.id === id)).toMatchObject({ title: 'old client', ...PHASE2_PLAN_DEFAULTS });
+    // An older client's settings (no excusedDays) clear them only when newer.
+    const settings = await sync(auth, { since: null, changes: { settings: { hijriOffset: 1, clientUpdatedAt: T(29) } } }).expect(200);
+    expect(settings.body.data.settings).toMatchObject({ hijriOffset: 0, excusedDays: ['2026-10-26', '2026-10-27'] });
+
+    // Invalid phase-2 values are refused with the item index, nothing applied.
+    const bad = await sync(auth, { since: null, changes: { plans: [{ ...paused, pausedOn: null, resumedOn: '2026-10-30' }] } }).expect(400);
+    expect(bad.body.error.code).toBe('PRACTICE_INVALID');
+    await sync(auth, { since: null, changes: { relatives: [{ ...sick, circle: 'colleagues' }] } }).expect(400);
+    await sync(auth, { since: null, changes: { settings: { excusedDays: ['2026-10-27', '2026-10-26'], clientUpdatedAt: T(40) } } }).expect(400);
+    const tooMany = Array.from({ length: 61 }, (_, i) => new Date(Date.UTC(2026, 7, 1 + i)).toISOString().slice(0, 10));
+    await sync(auth, { since: null, changes: { settings: { excusedDays: tooMany, clientUpdatedAt: T(40) } } }).expect(400);
+
+    const exported = await request(server()).get('/v1/auth/me/export').set(auth).expect(200);
+    expect(exported.body.data.practice.relatives).toEqual([expect.objectContaining({ id: rid, circle: 'sick' })]);
+    expect(exported.body.data.practice.settings).toMatchObject({ excusedDays: ['2026-10-26', '2026-10-27'] });
+    expect(exported.body.data.practice.plans).toEqual([expect.objectContaining({ id, pausedOn: null })]);
   });
 
   it('export carries practice data and the vault ciphertext; DELETE /auth/me cascades all of it', async () => {

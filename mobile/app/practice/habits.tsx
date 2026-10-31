@@ -12,11 +12,12 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 import { HardDrive, Hourglass, Sprout } from 'lucide-react-native';
-import { logDone, updatePlan, type Plan } from '@thekra/practice-core';
+import { isEstablished, isPaused, logDone, resumePlan, updatePlan, type Plan } from '@thekra/practice-core';
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { ensurePermission } from '@/lib/practice/notifications';
 import { today, usePracticeStore } from '@/lib/practice/practice-store';
 import { splitByDue } from '@/lib/practice/plan-view';
+import { pick } from '@/lib/practice/catalog-types';
 import { formatAmount, habitFor } from '@/lib/practice/reminders';
 import { useHeavyDay } from '@/lib/practice/use-habits-hub';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
@@ -79,7 +80,11 @@ export default function HabitsTrackScreen() {
     times: t('practice.units.times'),
   };
   const amountLabel = (plan: Plan, amount: number) => formatAmount(amount, plan.unit, habitFor(plan, habits), locale, unitFallback);
-  const { due, notDue } = splitByDue(store.plans, habits, d, store.settings.hijriOffset);
+  // «عاداتي»: saplings and periodic acts by today; «عادات راسخة» and «موقوفة مؤقتًا» apart.
+  const established = store.plans.filter((p) => !isPaused(p) && isEstablished(p));
+  const paused = store.plans.filter(isPaused);
+  const active = store.plans.filter((p) => !isPaused(p) && !isEstablished(p));
+  const { due, notDue } = splitByDue(active, habits, d, store.settings.hijriOffset);
 
   function handleLog(plan: Plan, amount: number, completes: boolean) {
     if (amount <= 0) return;
@@ -145,6 +150,36 @@ export default function HabitsTrackScreen() {
                   compact
                 />
               ))}
+            </Section>
+          ) : null}
+          {established.length > 0 ? (
+            <Section title={t('practice.established.title')}>
+              {established.map((plan) => (
+                <HabitTodayCard
+                  key={plan.id}
+                  plan={plan}
+                  habit={habitFor(plan, habits)}
+                  amountLabel={(n) => amountLabel(plan, n)}
+                  onLog={(n, completes) => handleLog(plan, n, completes)}
+                  compact
+                />
+              ))}
+            </Section>
+          ) : null}
+          {paused.length > 0 ? (
+            <Section title={t('practice.paused.title')}>
+              {paused.map((plan) => {
+                const habit = habitFor(plan, habits);
+                return (
+                  <ListRow
+                    key={plan.id}
+                    title={habit ? pick(habit, 'title', locale) : plan.title}
+                    hint={t('practice.paused.since', { date: plan.pausedOn })}
+                    trailing={<Button label={t('practice.paused.resume')} variant="ghost" onPress={() => setStore((s) => updatePlan(s, plan.id, (p) => resumePlan(p, d)))} />}
+                    onPress={() => router.push(`/practice/plan/${plan.id}`)}
+                  />
+                );
+              })}
             </Section>
           ) : null}
           <Button label={t('practice.addHabit')} onPress={openAdd} arrow />

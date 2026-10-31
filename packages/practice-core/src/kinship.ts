@@ -12,6 +12,16 @@ import { firstWeekdayOnOrAfter, validateRule, type Rule } from './rules.js';
 
 export type KinshipRule = Extract<Rule, { kind: 'everyNDays' | 'everyNWeeks' | 'weekdays' }>;
 
+/**
+ * Which people list («أعمال دورية» with people) a person belongs to: صلة الرحم (`kin`), برّ الوالدين (`parents`),
+ * تفقّد الجيران (`neighbors`), تفقّد صديق (`friends`), عيادة المريض (`sick`, on demand: added while sick, due every
+ * two days until visited once, then no longer due). Each list counts as one periodic act.
+ */
+export type PeopleCircle = 'kin' | 'parents' | 'neighbors' | 'friends' | 'sick';
+export const PEOPLE_CIRCLES: readonly PeopleCircle[] = ['kin', 'parents', 'neighbors', 'friends', 'sick'];
+/** A sick person is reminded every this many days until visited. */
+export const SICK_VISIT_EVERY_DAYS = 2;
+
 export interface Relative {
   id: string;
   /** Nickname only. Max {@link MAX_NAME_LENGTH} characters; contact details are rejected. */
@@ -19,6 +29,8 @@ export interface Relative {
   /** Free label, e.g. 'aunt', 'خالة'. */
   relation: string;
   rule: KinshipRule;
+  /** The people list; absent means `kin` (every relative before 2026-10-31). */
+  circle?: PeopleCircle;
   lastContactedOn?: LocalDate;
   /** Logged contact dates in the order they were logged (no duplicates). */
   history: LocalDate[];
@@ -64,6 +76,9 @@ export function validateRelative(rel: unknown): string | null {
   }
   const ruleErr = validateRule(rule);
   if (ruleErr) return ruleErr;
+  if (r.circle !== undefined && !PEOPLE_CIRCLES.includes(r.circle as PeopleCircle)) {
+    return `circle must be one of ${PEOPLE_CIRCLES.join(', ')}`;
+  }
   if (r.lastContactedOn !== undefined && !isValidDate(r.lastContactedOn)) return 'lastContactedOn must be YYYY-MM-DD';
   if (!Array.isArray(r.history) || !r.history.every(isValidDate)) return 'history must be an array of YYYY-MM-DD';
   if (r.updatedAt !== undefined && !isIsoTime(r.updatedAt)) return 'updatedAt must be an ISO time';
@@ -75,6 +90,8 @@ export interface NewRelative {
   name: string;
   relation: string;
   rule: KinshipRule;
+  /** Default `kin`. */
+  circle?: PeopleCircle;
 }
 
 /** A new relative with no contacts. Throws when invalid (including contact details in the name). */
@@ -87,9 +104,28 @@ export function createRelative(input: NewRelative, now: IsoTime = nowIso()): Rel
     history: [],
     updatedAt: now,
   };
+  if (input.circle !== undefined && input.circle !== 'kin') rel.circle = input.circle;
   const err = validateRelative(rel);
   if (err) throw new RangeError(`Invalid relative: ${err}`);
   return rel;
+}
+
+/** The person's list (`kin` when absent). */
+export function circleOf(rel: Pick<Relative, 'circle'>): PeopleCircle {
+  return rel.circle ?? 'kin';
+}
+
+/**
+ * False for a sick person already visited: «عيادة المريض» is on demand, so after the visit the person is no longer
+ * due (the user removes them, or adds them again when sick again). Everyone else is always open.
+ */
+export function isRelativeOpen(rel: Relative): boolean {
+  return !(circleOf(rel) === 'sick' && rel.history.length > 0);
+}
+
+/** The rule for a sick person added on `today`: due now, then every {@link SICK_VISIT_EVERY_DAYS} days. */
+export function sickRule(today: LocalDate): KinshipRule {
+  return { kind: 'everyNDays', n: SICK_VISIT_EVERY_DAYS, anchor: today };
 }
 
 /** The latest date in a list (`undefined` when empty). */
@@ -139,11 +175,12 @@ export interface DueList {
   later: DueEntry[];
 }
 
-/** Buckets relatives by next due date; each bucket is sorted by due date, then name. */
+/** Buckets relatives by next due date (a visited sick person is left out); each bucket is sorted by due date, then name. */
 export function dueList(relatives: readonly Relative[], today: LocalDate): DueList {
   if (!isValidDate(today)) throw new RangeError('Invalid today');
   const out: DueList = { overdue: [], thisWeek: [], later: [] };
   for (const relative of relatives) {
+    if (!isRelativeOpen(relative)) continue;
     const due = nextDue(relative, today);
     const entry: DueEntry = { relative, nextDue: due, daysUntilDue: diffDays(today, due) };
     if (entry.daysUntilDue < 0) out.overdue.push(entry);

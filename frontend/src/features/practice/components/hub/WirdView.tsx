@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { wirdDay, wirdSummary } from '@/lib/practice/wird';
 import { useWirdContext, type WirdContext } from '../../hooks/useWirdContext';
 import { SyncStatus } from '../SyncStatus';
+import { ExcuseToggle } from './ExcuseToggle';
 import { HeavyDayToggle } from './HeavyDayToggle';
 import { PeriodicRows } from './PeriodicRows';
 import { TodayList } from './TodayList';
@@ -42,6 +43,7 @@ export function WirdView() {
         hijriOffset={snapshot?.store.settings.hijriOffset ?? 0}
         showHijri={snapshot?.prefs.showHijri === true}
         streak={summary?.hasPlans ? summary.streak : null}
+        longest={summary?.longest ?? 0}
         addOpen={addOpen}
       />
       {context ? <WirdBody context={context} /> : <WirdSkeleton />}
@@ -74,7 +76,14 @@ function WirdBody({ context }: { context: WirdContext }) {
         habits={habits}
         occasionBasis={occasionBasis}
         canAdd
-        footer={store.plans.length > 0 ? <HeavyDayToggle store={store} today={today} /> : null}
+        footer={
+          store.plans.length > 0 ? (
+            <div className="flex flex-wrap gap-3">
+              <HeavyDayToggle store={store} today={today} />
+              <ExcuseToggle store={store} today={today} />
+            </div>
+          ) : null
+        }
       />
 
       <section aria-labelledby="wird-periodic-title" className="flex flex-col gap-3">

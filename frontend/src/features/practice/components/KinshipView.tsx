@@ -1,12 +1,18 @@
 'use client';
 
-import { useId, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { CalendarPlus, Check, Pencil, Undo2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
   buildIcs,
+  circleOf,
   deleteRelative,
   dueList,
+  isRelativeOpen,
+  limits,
+  PEOPLE_CIRCLES,
+  type PeopleCircle,
   logContact,
   undoContact,
   updateRelative,
@@ -26,6 +32,10 @@ import { SyncStatus } from './SyncStatus';
 import { PracticeLoading } from './PracticeLoading';
 import { PushRemindersCard } from './PushRemindersCard';
 import { RelativeForm } from './RelativeForm';
+import { LimitSheet } from './LimitSheet';
+import { usePracticeCatalog } from '../hooks/usePracticeCatalog';
+import { limitOptions } from '@/lib/practice/limits';
+import type { PracticeHabit } from '@/lib/types/practice';
 
 const BUCKETS = ['overdue', 'thisWeek', 'later'] as const;
 
@@ -39,13 +49,31 @@ function changeRelative(id: string, change: (relative: Relative) => Relative): v
  */
 export function KinshipView() {
   const t = useTranslations('practice.kinship');
+  const tCircles = useTranslations('practice.circles');
   const snapshot = usePracticeStore();
   const clock = useToday();
   const namesId = useId();
+  const requested = useSearchParams().get('circle');
+  // `?circle=` (from «أعمال دورية»): this page becomes that template's people list. Default صلة الرحم.
+  const circle: PeopleCircle = PEOPLE_CIRCLES.includes(requested as PeopleCircle) ? (requested as PeopleCircle) : 'kin';
+  const catalog = usePracticeCatalog();
+  const habits = useMemo(
+    () => new Map<string, PracticeHabit>((catalog.data?.habits ?? []).map((h) => [h.key, h])),
+    [catalog.data],
+  );
+  const [limitOpen, setLimitOpen] = useState(false);
   if (!snapshot || !clock) return <PracticeLoading />;
   const today = clock.today;
-  const relatives = snapshot.store.relatives;
+  const all = snapshot.store.relatives.filter((r) => circleOf(r) === circle);
+  const relatives = all;
+  const visited = all.filter((r) => !isRelativeOpen(r));
   const list = dueList(relatives, today);
+  const planLimits = limits(snapshot.store, today, limitOptions(habits));
+  function canAdd() {
+    if (planLimits.canAdd('periodic', { circle })) return true;
+    setLimitOpen(true);
+    return false;
+  }
   const withNames = snapshot.prefs.kinshipNamesInCalendar === true;
 
   function handleExport() {
@@ -58,7 +86,21 @@ export function KinshipView() {
   return (
     <div className="flex flex-col gap-10">
       <SyncStatus persistent={snapshot.persistent} />
-      <RelativeForm today={today} />
+      {circle !== 'kin' ? (
+        <div className="flex flex-col gap-1">
+          <h2 className="text-2xl font-medium">{tCircles(`${circle}.title`)}</h2>
+          <p className="text-sm leading-7 text-muted-foreground">{tCircles(`${circle}.hint`)}</p>
+        </div>
+      ) : null}
+      <RelativeForm today={today} circle={circle} canAdd={canAdd} />
+      <LimitSheet
+        kind="periodic"
+        open={limitOpen}
+        onOpenChange={setLimitOpen}
+        limits={planLimits}
+        habits={habits}
+        today={today}
+      />
 
       {relatives.length === 0 ? (
         <p className="text-muted-foreground">{t('empty')}</p>
@@ -78,6 +120,24 @@ export function KinshipView() {
           ) : null,
         )
       )}
+
+      {visited.length > 0 ? (
+        <section aria-labelledby="kin-visited" className="flex flex-col gap-3">
+          <h2 id="kin-visited" className="text-2xl font-medium">
+            {tCircles('sick.visited')}
+          </h2>
+          <ul className="flex flex-col divide-y divide-border border-y border-border">
+            {visited.map((relative) => (
+              <li key={relative.id} className="flex min-h-11 items-center justify-between gap-3 py-2">
+                <bdi lang={langOf(relative.name)}>{relative.name}</bdi>
+                <Button variant="ghost" tone="neutral" size="sm" onClick={() => updateStore((s) => deleteRelative(s, relative.id))}>
+                  {t('remove')}
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       {relatives.length > 0 ? (
         <section aria-labelledby="kin-export" className="flex flex-col gap-3">

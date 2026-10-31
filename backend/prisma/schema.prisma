@@ -826,6 +826,8 @@ model PracticeSettings {
   hijriOffset       Int      @default(0)
   reminderTimes     String[]
   freeMinutesPerDay Int?
+  /// «عذر» days (sick or travelling), YYYY-MM-DD ascending, at most 60. Neither break nor add to the streak.
+  excusedDays       String[] @default([])
   clientUpdatedAt   DateTime
   updatedAt         DateTime @updatedAt
 }
@@ -849,6 +851,12 @@ model HabitPlan {
   amountChangedOn   DateTime    @db.Date
   ebbSince          DateTime?   @db.Date
   season            Json?
+  /// «أوقِف مؤقتًا»: asks for nothing from this day (no reminders, not in limits or streak); history kept.
+  pausedOn          DateTime?   @db.Date
+  /// The day the last pause ended («استأنف»); only with pausedOn, never before it.
+  resumedOn         DateTime?   @db.Date
+  /// «عادة راسخة»: moved out of the saplings by the user; one reminder slot.
+  establishedOn     DateTime?   @db.Date
   clientUpdatedAt   DateTime
   updatedAt         DateTime    @updatedAt
   deletedAt         DateTime?
@@ -881,6 +889,8 @@ model Relative {
   name            String
   relation        String
   rule            Json
+  /// People list: kin | parents | neighbors | friends | sick (each list is one periodic act).
+  circle          String            @default("kin")
   lastContactedOn DateTime?         @db.Date
   clientUpdatedAt DateTime
   updatedAt       DateTime          @updatedAt

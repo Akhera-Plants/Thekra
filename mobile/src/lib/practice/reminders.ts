@@ -2,6 +2,8 @@
  * Pure reminder planner: practice-core Store + prefs → the local notifications to schedule.
  * No React Native imports, so it runs in Jest; notifications.ts turns the list into expo-notifications calls.
  *
+ * - Paused plans remind of nothing; an established («راسخة») plan reminds in its first slot only (practice-core
+ *   `reminderSlots`). A visited sick person is no longer due; an unvisited one repeats every 2 days.
  * - Habits: every day the plan is due (practice-core `isPlanDueOn`, the same answer the «عاداتي» today list uses)
  *   in the next {@link REMINDER_DAYS} days, once per slot. Title = habit title; body = the amount asked for that day (`requiredOn`: ebb and
  *   season aware, never doubled). Today's slots are skipped once they have passed or the day is done.
@@ -17,7 +19,12 @@
 import {
   activePrograms,
   addDays,
+  circleOf,
+  isPausedOn,
   isPlanDueOn,
+  isRelativeOpen,
+  reminderSlots,
+  SICK_VISIT_EVERY_DAYS,
   formatPlanAmount,
   nextDue,
   requiredOn,
@@ -120,9 +127,11 @@ function habitReminders(input: ReminderInput, end: LocalDate): PlannedReminder[]
   const { store, habits, today, now, locale, texts } = input;
   const out: PlannedReminder[] = [];
   for (const plan of store.plans) {
+    const slots = reminderSlots(plan);
+    if (slots.length === 0) continue;
     const dates: LocalDate[] = [];
     for (let date = today; date <= end; date = addDays(date, 1)) {
-      if (planDueOn(plan, habits, date, store.settings.hijriOffset)) dates.push(date);
+      if (!isPausedOn(plan, date) && planDueOn(plan, habits, date, store.settings.hijriOffset)) dates.push(date);
     }
     const habit = habitFor(plan, habits);
     const title = habit ? pick(habit, 'title', locale) : plan.title;
@@ -130,7 +139,7 @@ function habitReminders(input: ReminderInput, end: LocalDate): PlannedReminder[]
       const required = requiredOn(plan, date);
       if (date === today && (plan.log[today] ?? 0) >= required) continue;
       const body = texts.habitBody(formatAmount(required, plan.unit, habit, locale, texts.unitFallback));
-      for (const time of sortSlots(plan.slots)) {
+      for (const time of sortSlots(slots)) {
         if (date === today && time <= now) continue;
         out.push({
           id: `${REMINDER_SOURCE}:habit:${plan.id}:${date}:${time}`,
@@ -154,8 +163,10 @@ function kinshipReminders(input: ReminderInput, end: LocalDate): PlannedReminder
   const firstSlot = time > now ? today : addDays(today, 1);
   const byDate = new Map<LocalDate, string[]>();
   for (const rel of store.relatives) {
+    if (!isRelativeOpen(rel)) continue;
     const due = nextDue(rel, today);
-    for (let date = due < firstSlot ? firstSlot : due; date <= end; date = addDays(date, KINSHIP_REPEAT_DAYS)) {
+    const repeat = circleOf(rel) === 'sick' ? SICK_VISIT_EVERY_DAYS : KINSHIP_REPEAT_DAYS;
+    for (let date = due < firstSlot ? firstSlot : due; date <= end; date = addDays(date, repeat)) {
       const names = byDate.get(date) ?? [];
       names.push(rel.name);
       byDate.set(date, names);

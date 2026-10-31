@@ -1,5 +1,7 @@
 import {
   isValidTime,
+  PEOPLE_CIRCLES,
+  type PeopleCircle,
   STAGE_MIN_DAYS,
   stagesFor,
   validateRule,
@@ -40,6 +42,10 @@ export interface Occasion {
 
 export interface Habit {
   key: string;
+  /** `periodic`: a template of «أعمال دورية» (7 periodic acts, not the 3 saplings). Absent: a habit to build. */
+  kind?: 'periodic';
+  /** A people list: the user adds people with this circle; `defaultRule` is each person's rhythm. */
+  people?: PeopleCircle;
   titleAr: string;
   titleEn: string;
   deed: string;
@@ -178,6 +184,13 @@ class Fields {
     });
   }
 
+  /** A list that may be empty (`[]`), each item matching `pattern`. */
+  stringsOrEmpty(key: string, pattern?: RegExp): string[] {
+    const value = this.map[key];
+    if (Array.isArray(value) && value.length === 0) return [];
+    return this.strings(key, pattern);
+  }
+
   optionalStrings(key: string, pattern?: RegExp): string[] | undefined {
     return this.has(key) ? this.strings(key, pattern) : undefined;
   }
@@ -252,7 +265,7 @@ function readOccasion(value: YamlValue, where: string): Occasion {
 }
 
 const HABIT_FIELDS = [
-  'key', 'titleAr', 'titleEn', 'deed', 'unit', 'unitLabelAr', 'unitLabelEn', 'rakah', 'start', 'ceiling', 'defaultRule',
+  'key', 'kind', 'people', 'titleAr', 'titleEn', 'deed', 'unit', 'unitLabelAr', 'unitLabelEn', 'rakah', 'start', 'ceiling', 'defaultRule',
   'timeHintAr', 'timeHintEn', 'defaultSlots', 'basis', 'evidence',
 ];
 
@@ -264,9 +277,14 @@ function readHabit(value: YamlValue, where: string): Habit {
   const timeHintAr = f.optionalString('timeHintAr');
   const timeHintEn = f.optionalString('timeHintEn');
   if ((timeHintAr === undefined) !== (timeHintEn === undefined)) f.fail('timeHintAr and timeHintEn go together');
+  const kind = f.optionalString('kind') !== undefined ? f.oneOf('kind', ['periodic'] as const) : undefined;
+  const people = f.optionalString('people') !== undefined ? f.oneOf('people', PEOPLE_CIRCLES) : undefined;
+  if (people !== undefined && kind !== 'periodic') f.fail('people needs kind: periodic');
   // Built in the file's field order; optional fields only when present.
   const habit: Habit = {
     key: f.string('key'),
+    ...(kind !== undefined ? { kind } : {}),
+    ...(people !== undefined ? { people } : {}),
     titleAr: f.string('titleAr'),
     titleEn: f.string('titleEn'),
     deed: f.string('deed'),
@@ -280,9 +298,13 @@ function readHabit(value: YamlValue, where: string): Habit {
     ...(timeHintAr !== undefined && timeHintEn !== undefined ? { timeHintAr, timeHintEn } : {}),
     defaultSlots: f.strings('defaultSlots'),
     basis: f.oneOf('basis', BASES),
-    evidence: f.strings('evidence', UUID),
+    // A periodic template may wait for a verified Quote id (`evidence: []`); a habit always has evidence.
+    evidence: kind === 'periodic' ? f.stringsOrEmpty('evidence', UUID) : f.strings('evidence', UUID),
   };
   if (!KEY.test(habit.key)) f.fail(`key "${habit.key}" must be kebab-case`);
+  if (people !== undefined && !['everyNDays', 'everyNWeeks', 'weekdays'].includes(habit.defaultRule.kind)) {
+    f.fail('a people template needs an everyNDays, everyNWeeks or weekdays defaultRule (a person\'s rhythm)');
+  }
   if (rakah !== undefined && habit.unit !== 'times') f.fail('rakah needs unit: times');
   if (habit.start.far > habit.start.near) f.fail('start.far must be ≤ start.near');
   if (ceiling !== undefined && ceiling < habit.start.near) f.fail('ceiling must be ≥ start.near');
@@ -379,6 +401,9 @@ export function buildPracticeCatalog(schedulesText: string, programsText: string
   );
   assertUniqueKeys(occasions, 'deed-schedules.yaml occasions');
   assertUniqueKeys(habits, 'deed-schedules.yaml habits');
+  const circles = habits.flatMap((habit) => (habit.people ? [habit.people] : []));
+  const twice = circles.find((circle, index) => circles.indexOf(circle) !== index);
+  if (twice) throw new Error(`deed-schedules.yaml habits: two people templates for circle "${twice}"`);
 
   const programsFile = asMap(parseYaml(programsText, 'sin-programs.yaml'), 'sin-programs.yaml');
   const top = new Fields(programsFile, 'sin-programs.yaml', ['review', 'common', 'programs']);

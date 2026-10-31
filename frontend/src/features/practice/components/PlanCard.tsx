@@ -3,14 +3,19 @@
 import { useId, useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { BookOpen, Check, Clock, Pencil, PencilLine, Undo2 } from 'lucide-react';
+import { BookOpen, Check, Clock, Pause, Pencil, PencilLine, Play, Undo2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
   baseAmount,
   correctLog,
   decreaseTo,
   deletePlan,
+  establishPlan,
+  graduationReady,
   increase,
+  isPaused,
+  pausePlan,
+  resumePlan,
   logDone,
   nextStep,
   startSeason,
@@ -80,7 +85,9 @@ export function PlanCard({ plan, habit, view, today, ramadanUntil }: PlanCardPro
   /** The last «تمّ» or partial log in this visit, so it can be undone in one tap. */
   const [lastLog, setLastLog] = useState<{ date: string; before: number } | null>(null);
   const evidenceId = useId();
-  const compact = !view.isDueToday;
+  const paused = isPaused(plan);
+  const compact = !view.isDueToday || paused;
+  const canGraduate = graduationReady(plan, today);
   const seasonStep = nextStep(baseAmount(plan));
   const seasonAmount = seasonStep === null ? null : plan.ceiling !== undefined ? Math.min(seasonStep, plan.ceiling) : seasonStep;
 
@@ -115,7 +122,11 @@ export function PlanCard({ plan, habit, view, today, ramadanUntil }: PlanCardPro
         >
           {words.title}
         </h3>
-        {view.isComplete ? (
+        {paused ? (
+          <span className="text-sm text-muted-foreground">
+            {t('pausedSince', { date: formatGregorian(plan.pausedOn as string, locale) })}
+          </span>
+        ) : view.isComplete ? (
           <span className="inline-flex items-center gap-1 text-sm font-medium text-primary">
             <Check className="size-4" aria-hidden />
             {t('complete')}
@@ -146,7 +157,33 @@ export function PlanCard({ plan, habit, view, today, ramadanUntil }: PlanCardPro
         </p>
       ) : null}
 
-      {!view.isComplete ? (
+      {paused ? (
+        <button
+          type="button"
+          className="solid-button button-wrap self-start"
+          onClick={() => changePlan(plan.id, (p) => resumePlan(p, today))}
+        >
+          <Play aria-hidden />
+          {t('resume')}
+        </button>
+      ) : null}
+
+      {canGraduate ? (
+        <div className="next-step !mt-0 flex flex-col items-start gap-2">
+          <p>{t('graduateOffer')}</p>
+          <Button
+            className="h-auto whitespace-normal py-2 text-start"
+            variant="outline"
+            tone="primary"
+            size="sm"
+            onClick={() => changePlan(plan.id, (p) => establishPlan(p, today))}
+          >
+            {t('graduate')}
+          </Button>
+        </div>
+      ) : null}
+
+      {!view.isComplete && !paused ? (
         <div className="flex flex-wrap items-end gap-3">
           <button
             type="button"
@@ -258,6 +295,12 @@ export function PlanCard({ plan, habit, view, today, ramadanUntil }: PlanCardPro
           <Pencil aria-hidden />
           {t('edit')}
         </Button>
+        {!paused ? (
+          <Button variant="ghost" tone="neutral" size="sm" onClick={() => changePlan(plan.id, (p) => pausePlan(p, today))}>
+            <Pause aria-hidden />
+            {t('pause')}
+          </Button>
+        ) : null}
         {!editingLog ? (
           <Button variant="ghost" tone="neutral" size="sm" onClick={() => setEditingLog(true)}>
             <PencilLine aria-hidden />

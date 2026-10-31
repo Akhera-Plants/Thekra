@@ -1061,7 +1061,14 @@
         "cancel": "Cancel"
       },
       "unlogged": "Unmarked.",
-      "readAbout": "Read about this deed"
+      "readAbout": "Read about this deed",
+      "pausedSince": "Paused since {date}",
+      "resume": "Resume",
+      "pause": "Pause",
+      "graduateOffer": "This habit has taken root, by the grace of Allah. Move it to the established habits?",
+      "graduate": "Move to established habits",
+      "establishedTitle": "Established habits",
+      "pausedTitle": "Paused"
     },
     "progress": {
       "title": "Where you are",
@@ -1211,7 +1218,9 @@
         "complete": "Your day is done. May Allah accept it from you and bless the rest of it.",
         "completePast": "That day was done. May Allah accept it from you.",
         "logged": "Logged.",
-        "unlogged": "Unmarked."
+        "unlogged": "Unmarked.",
+        "missedYesterday": "Yesterday was missed; today, even a little",
+        "afterMakeUp": "What you log here is saved but does not count for the streak; a make-up is open until noon the next day."
       },
       "month": {
         "title": "This month",
@@ -1242,7 +1251,8 @@
       "notDueToday": "Not asked for today ({n})",
       "notDueDay": "Not asked for that day ({n})",
       "heavyDay": "Heavy day",
-      "heavyDayHint": "Only the smallest amount today; your plan returns by itself tomorrow."
+      "heavyDayHint": "Only the smallest amount today; your plan returns by itself tomorrow.",
+      "streakFresh": "Start a new streak today · Longest streak: {n}"
     },
     "periodic": {
       "title": "Periodic acts",
@@ -1252,13 +1262,17 @@
       "addRelative": "Add a relative",
       "addHabit": "Add a habit on set days",
       "empty": "No periodic acts yet: a relative to keep in touch with, or a habit on set days.",
-      "kinship": "Ties of kinship",
+      "kinship": "People lists",
       "habitsTitle": "Habits on set days",
       "habitNote": "A habit on set days",
       "none": "No date soon",
       "overdue": "Past due",
       "today": "Today",
-      "tomorrow": "Tomorrow"
+      "tomorrow": "Tomorrow",
+      "count": "{n} of {max}",
+      "openList": "Open the list",
+      "added": "Added",
+      "addOne": "Add"
     },
     "record": {
       "title": "My record",
@@ -1275,6 +1289,64 @@
       "lightenHint": "A private program on your device",
       "saved": "Saved texts",
       "savedHint": "Texts you saved"
+    },
+    "limits": {
+      "keepGoing": "Keep up what I have",
+      "pickPause": "Choose what to pause; its record is kept.",
+      "pickDelete": "Choose what to delete.",
+      "pauseAction": "Pause",
+      "deleteAction": "Delete",
+      "deleteConfirm": "Yes, delete",
+      "deleteNote": "It is deleted with its record and cannot be restored.",
+      "back": "Back",
+      "establishAndStart": "Establish “{title}” and start the new one",
+      "sapling": {
+        "title": "You have three saplings. A little that lasts is better than much that stops.",
+        "hint": "Keep up what you have, or pause a sapling to start another.",
+        "pause": "Pause a sapling",
+        "delete": "Delete a sapling"
+      },
+      "periodic": {
+        "title": "You have seven periodic acts. A little that lasts is better than much that stops.",
+        "hint": "Keep up what you have, or pause an act to start another.",
+        "pause": "Pause an act",
+        "delete": "Delete an act"
+      },
+      "program": {
+        "title": "One “Lighten” program until it reaches its last stage. A little that lasts is better than much that stops.",
+        "hint": "Complete your program, then start another.",
+        "pause": "Pause",
+        "delete": "Delete"
+      }
+    },
+    "excuse": {
+      "today": "Excused today (sick or travelling)",
+      "yesterday": "Excused yesterday (sick or travelling)",
+      "day": "Excused (sick or travelling)",
+      "hint": "An excused day neither breaks nor adds to the streak."
+    },
+    "circles": {
+      "kin": {
+        "title": "Ties of kinship",
+        "hint": "Your relatives, and how often to reach each one."
+      },
+      "parents": {
+        "title": "Kindness to parents",
+        "hint": "A call or a visit every week."
+      },
+      "neighbors": {
+        "title": "Checking on the neighbours",
+        "hint": "A call or a visit every month."
+      },
+      "friends": {
+        "title": "Checking on a friend",
+        "hint": "A call every two weeks."
+      },
+      "sick": {
+        "title": "Visiting the sick",
+        "hint": "Add someone when they fall ill; you are reminded every two days until you visit.",
+        "visited": "Visited"
+      }
     }
   },
   "calendarPage": {

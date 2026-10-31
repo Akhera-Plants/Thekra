@@ -3,7 +3,7 @@
 import { useId, useState, type ReactNode } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import type { HabitItem, Store } from '@thekra/practice-core';
+import { canMakeUp, type HabitItem, type Store } from '@thekra/practice-core';
 import { Link } from '@/i18n/navigation';
 import { formatDigits } from '@/lib/format/digits';
 import { canLogOn } from '@/lib/practice/hub';
@@ -62,7 +62,7 @@ export function TodayList({ title, store, date, today, day, habits, occasionBasi
         isEnabled={isLoggable}
         disabledNoteId={noteId}
         undo={undoOf(`habit:${item.planId}:${date}`)}
-        onToggle={() => toggleHabit(item, date)}
+        onToggle={() => toggleHabit(item, date, today)}
         onUndo={undoLast}
       />
     );
@@ -103,6 +103,8 @@ export function TodayList({ title, store, date, today, day, habits, occasionBasi
         <p id={noteId} className="text-sm leading-7 text-muted-foreground">
           {date > today ? tDay('future') : tDay('tooOld')}
         </p>
+      ) : isLoggable && !canMakeUp(date, today) && (tasks.length > 0 || day.offDay.length > 0) ? (
+        <p className="text-sm leading-7 text-muted-foreground">{tDay('afterMakeUp')}</p>
       ) : null}
 
       {day.occasions.length > 0 ? (

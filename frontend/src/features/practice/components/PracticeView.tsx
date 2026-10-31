@@ -4,11 +4,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { CalendarPlus } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
-import { loadWarning } from '@thekra/practice-core';
+import { isEstablished, isPaused, limits, loadWarning, type LimitKind } from '@thekra/practice-core';
 import { Link, useRouter } from '@/i18n/navigation';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { QueryErrorState } from '@/components/shared/feedback/QueryErrorState';
 import { downloadTextFile, ICS_MIME } from '@/lib/practice/download';
+import { isPeriodicTemplate, limitOptions } from '@/lib/practice/limits';
 import { habitOf, planReminderEvents, planRemindersIcs, planToday, ramadanEnd } from '@/lib/practice/plans';
 import type { PracticeHabit } from '@/lib/types/practice';
 import { usePracticeCatalog } from '../hooks/usePracticeCatalog';
@@ -17,6 +18,7 @@ import { useEndedSeasons } from '../hooks/useEndedSeasons';
 import { useFocusOnChange } from '../hooks/useFocusOnChange';
 import { useToday } from '../hooks/useToday';
 import { SyncStatus } from './SyncStatus';
+import { LimitSheet } from './LimitSheet';
 import { PlanCard } from './PlanCard';
 import { PlanSetup } from './PlanSetup';
 import { PracticeLoading } from './PracticeLoading';
@@ -57,10 +59,19 @@ export function PracticeView() {
     [catalog.data],
   );
 
-  if (!snapshot || !clock || !today || !plans) return <PracticeLoading />;
+  const planLimits = useMemo(
+    () => (snapshot && today ? limits(snapshot.store, today, limitOptions(habits)) : null),
+    [snapshot, today, habits],
+  );
+
+  if (!snapshot || !clock || !today || !plans || !planLimits) return <PracticeLoading />;
 
   const hijriOffset = snapshot.store.settings.hijriOffset;
-  const settingUp = plans.length === 0 || adding;
+  // A periodic template (from a good-deed page) falls under the periodic limit; any other habit is a sapling.
+  const preselectedHabit = requestedHabit ? habits.get(requestedHabit) : undefined;
+  const addKind: LimitKind = isPeriodicTemplate(preselectedHabit) ? 'periodic' : 'sapling';
+  const limitReached = adding && plans.length > 0 && catalog.isSuccess && !planLimits.canAdd(addKind);
+  const settingUp = plans.length === 0 || (adding && !limitReached);
 
   function finishAdding() {
     setAdding(false);
@@ -75,7 +86,7 @@ export function PracticeView() {
       <div className="flex flex-col gap-6">
         <SyncStatus persistent={snapshot.persistent} />
         <PlanSetup
-          habits={catalog.data.habits}
+          habits={catalog.data.habits.filter((h) => !isPeriodicTemplate(h) || h.key === requestedHabit)}
           existing={plans}
           preselected={requestedHabit}
           freeMinutes={snapshot.store.settings.freeMinutesPerDay}
@@ -92,8 +103,12 @@ export function PracticeView() {
     const habit = habitOf(plan, habits);
     return { plan, habit, view: planToday(plan, today, clock.minutes, { fallback: habit?.defaultRule, hijriOffset }) };
   });
-  const dueToday = entries.filter((entry) => entry.view.isDueToday);
-  const notDueToday = entries.filter((entry) => !entry.view.isDueToday);
+  // «عاداتي»: the saplings and periodic acts by today, then «عادات راسخة» and «موقوفة مؤقتًا» apart.
+  const active = entries.filter((entry) => !isPaused(entry.plan) && !isEstablished(entry.plan));
+  const established = entries.filter((entry) => !isPaused(entry.plan) && isEstablished(entry.plan));
+  const paused = entries.filter((entry) => isPaused(entry.plan));
+  const dueToday = active.filter((entry) => entry.view.isDueToday);
+  const notDueToday = active.filter((entry) => !entry.view.isDueToday);
   const ramadanUntil = ramadanEnd(today, hijriOffset);
   const freeMinutes = snapshot.store.settings.freeMinutesPerDay;
   const overLoaded = freeMinutes !== undefined && loadWarning(plans, freeMinutes, today) === 'over';
@@ -106,6 +121,15 @@ export function PracticeView() {
   return (
     <div className="flex flex-col gap-10">
       <SyncStatus persistent={snapshot.persistent} />
+      <LimitSheet
+        kind={addKind}
+        open={limitReached}
+        onOpenChange={(open) => (open ? undefined : finishAdding())}
+        limits={planLimits}
+        habits={habits}
+        today={today}
+        onFreed={() => undefined}
+      />
 
       {overLoaded ? <p className="next-step !mt-0">{t('loadOver')}</p> : null}
       {catalog.isError ? (
@@ -134,6 +158,28 @@ export function PracticeView() {
           </h2>
           <p className="-mt-1 text-sm leading-7 text-muted-foreground">{t('notDueNote')}</p>
           {notDueToday.map(({ plan, habit, view }) => (
+            <PlanCard key={plan.id} plan={plan} habit={habit} view={view} today={today} ramadanUntil={ramadanUntil} />
+          ))}
+        </section>
+      ) : null}
+
+      {established.length > 0 ? (
+        <section aria-labelledby="established-title" className="flex flex-col gap-3">
+          <h2 id="established-title" className="text-xl font-medium">
+            {t('establishedTitle')}
+          </h2>
+          {established.map(({ plan, habit, view }) => (
+            <PlanCard key={plan.id} plan={plan} habit={habit} view={view} today={today} ramadanUntil={ramadanUntil} />
+          ))}
+        </section>
+      ) : null}
+
+      {paused.length > 0 ? (
+        <section aria-labelledby="paused-title" className="flex flex-col gap-3">
+          <h2 id="paused-title" className="text-xl font-medium">
+            {t('pausedTitle')}
+          </h2>
+          {paused.map(({ plan, habit, view }) => (
             <PlanCard key={plan.id} plan={plan} habit={habit} view={view} today={today} ramadanUntil={ramadanUntil} />
           ))}
         </section>

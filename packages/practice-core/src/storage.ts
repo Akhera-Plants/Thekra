@@ -18,14 +18,18 @@
  * `upsertRelative` / `updateRelative` / `deleteRelative` / `undoContact` and `updateSettings`: they keep
  * `updatedAt` and the tombstones right even when the entity-level helper did not.
  */
-import { isIsoTime, isValidDate, isValidTime, isoMillis, nowIso, type IsoTime, type LocalTime } from './dates.js';
+import { addDays, isIsoTime, isValidDate, isValidTime, isoMillis, nowIso, type IsoTime, type LocalDate, type LocalTime } from './dates.js';
 import { HIJRI_OFFSET_MAX, HIJRI_OFFSET_MIN } from './hijri.js';
-import { latestDate, undoLastContact, validateRelative, type Relative } from './kinship.js';
+import { latestDate, undoLastContact, validateRelative, type PeopleCircle, type Relative } from './kinship.js';
 import { mergeLogs, validatePlan, type Plan, type PlanLog } from './plan.js';
 import type { Rule } from './rules.js';
 import { validateCheckIn, validateProgram, type CheckIn, type SinProgram } from './sin-program.js';
 
 export const STORE_VERSION = 2;
+/** Most excused days kept (the newest win). */
+export const MAX_EXCUSED_DAYS = 60;
+/** An excused day can be set this many days back (today included); older ones are dropped on the next toggle. */
+export const EXCUSE_WINDOW_DAYS = 90;
 
 export interface Settings {
   /** −2…+2, see `hijri.ts`. */
@@ -33,6 +37,11 @@ export interface Settings {
   reminderTimes?: LocalTime[];
   /** Free minutes per day, for `loadWarning`. 0…1440. */
   freeMinutesPerDay?: number;
+  /**
+   * «عذر (مرض أو سفر)»: days that neither break nor add to the streak, ascending, unique, at most
+   * {@link MAX_EXCUSED_DAYS} (the newest kept). Absent or empty: none. Edit through {@link toggleExcusedDay}.
+   */
+  excusedDays?: LocalDate[];
   /** ISO time of the last local edit. Absent while the settings were never edited (any synced version wins). */
   updatedAt?: IsoTime;
 }
@@ -136,6 +145,9 @@ export function clonePlan(p: Plan): Plan {
   if (p.ebb) out.ebb = { since: p.ebb.since };
   if (p.season) out.season = { amount: p.season.amount, until: p.season.until, previous: p.season.previous };
   if (p.rule) out.rule = cloneRule(p.rule);
+  if (p.pausedOn !== undefined) out.pausedOn = p.pausedOn;
+  if (p.resumedOn !== undefined) out.resumedOn = p.resumedOn;
+  if (p.establishedOn !== undefined) out.establishedOn = p.establishedOn;
   if (p.updatedAt !== undefined) out.updatedAt = p.updatedAt;
   if (p.logCorrectedAt !== undefined) out.logCorrectedAt = { ...p.logCorrectedAt };
   return out;
@@ -149,6 +161,7 @@ export function cloneRelative(r: Relative): Relative {
     rule: cloneRule(r.rule) as Relative['rule'],
     history: [...r.history],
   };
+  if (r.circle !== undefined && r.circle !== 'kin') out.circle = r.circle;
   if (r.lastContactedOn !== undefined) out.lastContactedOn = r.lastContactedOn;
   if (r.updatedAt !== undefined) out.updatedAt = r.updatedAt;
   return out;
@@ -174,11 +187,24 @@ function cloneProgram(p: SinProgram): SinProgram {
   return out;
 }
 
+/** The phase-2 plan fields (2026-10-31), present only when set (see {@link planFields}). */
+export interface PlanStateFields {
+  pausedOn?: LocalDate;
+  resumedOn?: LocalDate;
+  establishedOn?: LocalDate;
+}
+
 /**
  * The fields of a plan that last-writer-wins versions (everything but `id`, `log` and `updatedAt`), in a fixed
- * order with `null` for absent values: the wire shape of contract §3.
+ * order with `null` for absent values: the wire shape of contract §3. The phase-2 fields (`pausedOn`, `resumedOn`,
+ * `establishedOn`) come last and only when set, so the canonical content of every older plan is unchanged (acked
+ * versions stay valid and old clients compute the same content).
  */
 export function planFields(p: Plan) {
+  const state: PlanStateFields = {};
+  if (p.pausedOn !== undefined) state.pausedOn = p.pausedOn;
+  if (p.resumedOn !== undefined) state.resumedOn = p.resumedOn;
+  if (p.establishedOn !== undefined) state.establishedOn = p.establishedOn;
   return {
     habitKey: p.habitKey ?? null,
     deedSlug: p.deedSlug,
@@ -193,12 +219,22 @@ export function planFields(p: Plan) {
     amountChangedOn: p.amountChangedOn,
     ebbSince: p.ebb?.since ?? null,
     season: p.season ? { amount: p.season.amount, until: p.season.until, previous: p.season.previous } : null,
+    ...state,
   };
 }
 
-/** The last-writer-wins fields of a relative (contacts and `lastContactedOn` sync separately). */
-export function relativeFields(r: Relative) {
-  return { name: r.name, relation: r.relation, rule: cloneRule(r.rule) };
+/**
+ * The last-writer-wins fields of a relative (contacts and `lastContactedOn` sync separately). `circle` only when it
+ * is not `kin`, so older relatives keep their canonical content.
+ */
+export function relativeFields(r: Relative): { name: string; relation: string; rule: Rule; circle?: Exclude<PeopleCircle, 'kin'> } {
+  const out: { name: string; relation: string; rule: Rule; circle?: Exclude<PeopleCircle, 'kin'> } = {
+    name: r.name,
+    relation: r.relation,
+    rule: cloneRule(r.rule),
+  };
+  if (r.circle !== undefined && r.circle !== 'kin') out.circle = r.circle;
+  return out;
 }
 
 const sameJson = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
@@ -215,12 +251,21 @@ function parseSettings(raw: unknown, upgradeTime: IsoTime | null): Settings {
   if (Array.isArray(s.reminderTimes)) settings.reminderTimes = s.reminderTimes.filter(isValidTime);
   const free = s.freeMinutesPerDay;
   if (typeof free === 'number' && Number.isInteger(free) && free >= 0 && free <= 1440) settings.freeMinutesPerDay = free;
+  const excused = cleanExcusedDays(s.excusedDays);
+  if (excused.length > 0) settings.excusedDays = excused;
   if (isIsoTime(s.updatedAt)) settings.updatedAt = s.updatedAt;
   else if (upgradeTime !== null && (settings.hijriOffset !== 0 || (settings.reminderTimes?.length ?? 0) > 0)) {
     // A v1 store whose settings were changed from the defaults: give them a version so they sync.
     settings.updatedAt = upgradeTime;
   }
   return settings;
+}
+
+/** Valid dates only, ascending and unique, the newest {@link MAX_EXCUSED_DAYS}. Never throws. */
+export function cleanExcusedDays(raw: unknown): LocalDate[] {
+  if (!Array.isArray(raw)) return [];
+  const days = [...new Set(raw.filter(isValidDate))].sort();
+  return days.slice(Math.max(0, days.length - MAX_EXCUSED_DAYS));
 }
 
 /** Keeps valid entries, then removes later duplicates of the same key. */
@@ -517,5 +562,28 @@ export function updateSettings(store: Store, patch: Partial<Omit<Settings, 'upda
   if (merged.freeMinutesPerDay !== undefined && parsed.freeMinutesPerDay !== merged.freeMinutesPerDay) {
     throw new RangeError('Invalid freeMinutesPerDay');
   }
+  if (merged.excusedDays !== undefined && !merged.excusedDays.every(isValidDate)) throw new RangeError('Invalid excused day');
   return { ...store, settings: { ...parsed, updatedAt: now } };
+}
+
+/** True when `date` is marked «عذر» (sick or travelling). */
+export function isExcused(store: Pick<Store, 'settings'>, date: LocalDate): boolean {
+  return store.settings.excusedDays?.includes(date) ?? false;
+}
+
+/** True when `date` may be marked or unmarked as excused on `today`: not in the future, within {@link EXCUSE_WINDOW_DAYS}. */
+export function canExcuse(date: LocalDate, today: LocalDate): boolean {
+  return isValidDate(date) && date <= today && date > addDays(today, -EXCUSE_WINDOW_DAYS);
+}
+
+/**
+ * Marks or unmarks `date` as «عذر». Days older than {@link EXCUSE_WINDOW_DAYS} are dropped on the way, and at most
+ * {@link MAX_EXCUSED_DAYS} are kept. Throws when {@link canExcuse} is false.
+ */
+export function toggleExcusedDay(store: Store, date: LocalDate, today: LocalDate, now: IsoTime = nowIso()): Store {
+  if (!canExcuse(date, today)) throw new RangeError('This day cannot be excused');
+  const floor = addDays(today, -EXCUSE_WINDOW_DAYS);
+  const current = (store.settings.excusedDays ?? []).filter((d) => d > floor);
+  const next = current.includes(date) ? current.filter((d) => d !== date) : [...current, date];
+  return updateSettings(store, { excusedDays: cleanExcusedDays(next) }, now);
 }

@@ -4,7 +4,7 @@
  * sin-programs.yaml (reviewed content; the app never writes religious text of its own).
  */
 
-import type { PlanUnit, RakahCount, Rule, SinCategory, Stage, VaultPayload } from '@thekra/practice-core';
+import type { PeopleCircle, PlanUnit, RakahCount, Rule, SinCategory, Stage, VaultPayload } from '@thekra/practice-core';
 
 export type Basis = 'text' | 'organizational';
 
@@ -20,6 +20,10 @@ export interface CatalogOccasion {
 
 export interface CatalogHabit {
   key: string;
+  /** `periodic`: a template of «أعمال دورية» (7 periodic acts, not the 3 saplings). */
+  kind?: 'periodic';
+  /** A people list: people are added on the kinship screen with this circle. */
+  people?: PeopleCircle;
   titleAr: string;
   titleEn: string;
   deed: string;

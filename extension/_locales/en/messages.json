@@ -253,5 +253,11 @@
   },
   "syncSignedOut": {
     "message": "Session ended; sign in again in Settings."
+  },
+  "errorLimitSapling": {
+    "message": "You have three saplings. A little that lasts is better than much that stops. Pause or establish one on the website or in the app."
+  },
+  "errorLimitPeriodic": {
+    "message": "You have seven periodic acts. A little that lasts is better than much that stops."
   }
 }

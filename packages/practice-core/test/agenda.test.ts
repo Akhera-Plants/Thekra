@@ -57,7 +57,8 @@ describe('dayAgenda', () => {
     const defaultRuleOf = (p: Plan) => (p.habitKey === 'fast-mon-thu' ? monThu : undefined);
     const habitIds = (date: string) =>
       dayAgenda(s, date, { defaultRuleOf }).flatMap((i) => (i.kind === 'habit' ? [i.planId] : []));
-    expect(habitIds('2026-10-26')).toEqual(['own', 'cat', 'daily']);
+    // «لا تفوّتها مرتين»: the daily plan was asked on Sunday and not logged, so it goes first.
+    expect(habitIds('2026-10-26')).toEqual(['daily', 'own', 'cat']);
     expect(habitIds('2026-10-27')).toEqual(['daily']);
     expect(plansNotAskedOn(s, '2026-10-27', { defaultRuleOf }).map((p) => p.id)).toEqual(['own', 'cat']);
     // Without the catalog lookup a plan without its own rule is asked for every day.

@@ -35,9 +35,11 @@ interface RelativeFormProps {
   onCancel: () => void;
   /** Edit only: delete this relative (the screen confirms first). */
   onDelete?: () => void;
+  /** «عيادة المريض»: no rhythm (due every two days until visited). */
+  noRhythm?: boolean;
 }
 
-export function RelativeForm({ title, relative, onSave, onCancel, onDelete }: RelativeFormProps) {
+export function RelativeForm({ title, relative, onSave, onCancel, onDelete, noRhythm = false }: RelativeFormProps) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const [initial] = useState(() => (relative ? relativeToFormValues(relative, DEFAULT_WEEKDAY) : EMPTY));
@@ -87,6 +89,7 @@ export function RelativeForm({ title, relative, onSave, onCancel, onDelete }: Re
         importantForAutofill="no"
         returnKeyType="done"
       />
+      {noRhythm ? null : (
       <View style={styles.formGroup}>
         <Text variant="label">{t('kinship.rhythm')}</Text>
         <Wrap>
@@ -103,13 +106,14 @@ export function RelativeForm({ title, relative, onSave, onCancel, onDelete }: Re
           {t('practice.basis.organizational')}
         </Text>
       </View>
-      {rhythm === 'weekly' || rhythm === 'biweekly' ? (
+      )}
+      {!noRhythm && (rhythm === 'weekly' || rhythm === 'biweekly') ? (
         <View style={styles.formGroup}>
           <Text variant="label">{t('kinship.weekday')}</Text>
           <WeekdayPicker value={[weekday]} onChange={(v) => setWeekday(v[0] ?? DEFAULT_WEEKDAY)} single />
         </View>
       ) : null}
-      {rhythm === 'everyNDays' ? (
+      {!noRhythm && rhythm === 'everyNDays' ? (
         <Wrap>
           {EVERY_DAYS.map((n) => (
             <Chip key={n} label={t('kinship.everyDays', { count: n })} selected={everyDays === n} onPress={() => setEveryDays(n)} />

@@ -74,6 +74,19 @@ export interface Plan {
   season?: { amount: number; until: LocalDate; previous: number };
   /** Optional schedule of active days (the server stores it as `rule`). */
   rule?: Rule;
+  /**
+   * «أوقِف مؤقتًا»: the plan asks for nothing from this day on (no reminders, not in the limits or the streak); its
+   * history is kept. Set by {@link pausePlan}; {@link resumePlan} sets {@link resumedOn} and keeps this date, so the
+   * paused days stay out of the streak after the plan is resumed.
+   */
+  pausedOn?: LocalDate;
+  /** The day the last pause ended («استأنف»). Only with {@link pausedOn}, never before it. */
+  resumedOn?: LocalDate;
+  /**
+   * «عادة راسخة»: the user moved the habit out of the saplings ({@link graduationReady}, offered and never automatic).
+   * Still tracked and asked; it does not count toward the three saplings and reminds in one slot only.
+   */
+  establishedOn?: LocalDate;
   /** ISO time of the last local edit of the plan's own fields (not its log). Set by the helpers; v1 data gets it on upgrade. */
   updatedAt?: IsoTime;
 }
@@ -92,6 +105,12 @@ export const EARLY_DAYS = 60;
 export const RELAPSE_DAYS = 7;
 /** Share of free time nawafil may take before a load warning. */
 export const LOAD_SHARE = 0.5;
+/** A sapling may become «راسخة» from this age on (days since `createdOn`). */
+export const GRADUATION_MIN_DAYS = 66;
+/** The window, in full days before today, whose adherence decides graduation. */
+export const GRADUATION_WINDOW_DAYS = 30;
+/** Adherence over {@link GRADUATION_WINDOW_DAYS} needed to offer graduation. */
+export const GRADUATION_ADHERENCE = 0.8;
 
 /**
  * How a prayer habit counts its unit in rak'ahs: `pairs` (Duha, the night prayer: one unit is two rak'ahs, so the
@@ -218,6 +237,12 @@ export function validatePlan(plan: unknown): string | null {
     if (typeof s !== 'object' || s === null || !isPositive(s.amount) || !isValidDate(s.until) || !isPositive(s.previous)) {
       return 'season must be {amount>0, until: YYYY-MM-DD, previous>0}';
     }
+  }
+  for (const k of ['pausedOn', 'resumedOn', 'establishedOn'] as const) {
+    if (p[k] !== undefined && !isValidDate(p[k])) return `${k} must be YYYY-MM-DD`;
+  }
+  if (p.resumedOn !== undefined && (p.pausedOn === undefined || (p.resumedOn as string) < (p.pausedOn as string))) {
+    return 'resumedOn needs pausedOn and must not be before it';
   }
   return null;
 }
@@ -495,4 +520,76 @@ export function loadWarning(plans: readonly Plan[], freeMinutesPerDay: number, d
       ? dailyLoad(plans, date)
       : plans.reduce((sum, p) => sum + (p.unit === 'minutes' ? p.amount : 0), 0);
   return load > Math.max(0, freeMinutesPerDay) * LOAD_SHARE ? 'over' : 'ok';
+}
+
+// ── Pause, graduation, reminders (redesign §3) ───────────────────────────────────────────────────────────────
+
+/** True while the plan is paused (paused and not resumed since). */
+export function isPaused(plan: Plan): boolean {
+  return plan.pausedOn !== undefined && plan.resumedOn === undefined;
+}
+
+/** True when `date` falls in the plan's last pause: on or after `pausedOn` and before `resumedOn` (if any). */
+export function isPausedOn(plan: Plan, date: LocalDate): boolean {
+  if (plan.pausedOn === undefined || date < plan.pausedOn) return false;
+  return plan.resumedOn === undefined || date < plan.resumedOn;
+}
+
+/** «أوقِف مؤقتًا» from `today` on. The log stays. A paused plan is not asked, not reminded, not in limits or streak. */
+export function pausePlan(plan: Plan, today: LocalDate, now: IsoTime = nowIso()): Plan {
+  if (!isValidDate(today)) throw new RangeError('Invalid today');
+  const copy: Plan = { ...plan, pausedOn: today, updatedAt: now };
+  delete copy.resumedOn;
+  return copy;
+}
+
+/** «استأنف»: asked again from `today`. The paused days stay out of the streak. No-op data when not paused. */
+export function resumePlan(plan: Plan, today: LocalDate, now: IsoTime = nowIso()): Plan {
+  if (!isValidDate(today)) throw new RangeError('Invalid today');
+  if (!isPaused(plan)) return plan;
+  return { ...plan, resumedOn: maxDate(today, plan.pausedOn as LocalDate), updatedAt: now };
+}
+
+export function isEstablished(plan: Plan): boolean {
+  return plan.establishedOn !== undefined;
+}
+
+/**
+ * True when a sapling may be offered «رسخت هذه العادة»: not established, not paused, at least
+ * {@link GRADUATION_MIN_DAYS} old and adherence over the last {@link GRADUATION_WINDOW_DAYS} full days (today
+ * excluded) ≥ {@link GRADUATION_ADHERENCE}. Only an offer: {@link establishPlan} is the user's choice.
+ */
+export function graduationReady(plan: Plan, today: LocalDate): boolean {
+  if (!isValidDate(today)) throw new RangeError('Invalid today');
+  if (isEstablished(plan) || isPaused(plan)) return false;
+  if (diffDays(plan.createdOn, today) < GRADUATION_MIN_DAYS) return false;
+  return adherence(plan, addDays(today, -GRADUATION_WINDOW_DAYS), addDays(today, -1)) >= GRADUATION_ADHERENCE;
+}
+
+/** Moves a habit to «عادات راسخة» on `today`. */
+export function establishPlan(plan: Plan, today: LocalDate, now: IsoTime = nowIso()): Plan {
+  if (!isValidDate(today)) throw new RangeError('Invalid today');
+  return { ...plan, establishedOn: today, updatedAt: now };
+}
+
+/** Back to the saplings (undo of {@link establishPlan}). */
+export function unestablishPlan(plan: Plan, now: IsoTime = nowIso()): Plan {
+  const copy: Plan = { ...plan, updatedAt: now };
+  delete copy.establishedOn;
+  return copy;
+}
+
+/**
+ * The reminder times of a plan, shared by the web push planner, the app and the extension: none while paused, the
+ * first slot only once established («راسخة»: lighter reminders), else every slot (sorted, unique).
+ */
+export function reminderSlots(plan: Plan): LocalTime[] {
+  if (isPaused(plan)) return [];
+  const slots = [...new Set(plan.slots)].sort();
+  return isEstablished(plan) ? slots.slice(0, 1) : slots;
+}
+
+/** The smallest amount that keeps the day («ولو بالقليل»): the heavy-day amount. */
+export function minimumOf(plan: Plan): number {
+  return Math.min(baseAmount(plan), EBB_AMOUNT);
 }

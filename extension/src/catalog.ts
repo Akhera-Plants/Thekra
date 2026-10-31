@@ -7,6 +7,10 @@ import { formatPlanAmount, isValidTime, validateRule, type PlanUnit, type RakahC
 
 export interface Habit {
   key: string;
+  /** `periodic`: a template of «أعمال دورية» (counts toward the 7 periodic acts, not the 3 saplings). */
+  kind?: 'periodic';
+  /** A people list (صلة الرحم…): people live on the website and the app, not in the extension. */
+  people?: string;
   titleAr: string;
   titleEn: string;
   /** GoodDeed slug: the site page the reminder opens. */
@@ -66,6 +70,8 @@ export function parseHabit(raw: unknown): Habit | null {
   if (isRecord(start) && isPositive(start.far) && isPositive(start.near)) habit.start = { far: start.far, near: start.near };
   if (isPositive(ceiling)) habit.ceiling = ceiling;
   if (raw.rakah === 'pairs' || raw.rakah === 'odd') habit.rakah = raw.rakah;
+  if (raw.kind === 'periodic') habit.kind = 'periodic';
+  if (typeof raw.people === 'string' && SLUG.test(raw.people)) habit.people = raw.people;
   if (isText(raw.timeHintAr)) habit.timeHintAr = raw.timeHintAr.trim();
   if (isText(raw.timeHintEn)) habit.timeHintEn = raw.timeHintEn.trim();
   return habit;

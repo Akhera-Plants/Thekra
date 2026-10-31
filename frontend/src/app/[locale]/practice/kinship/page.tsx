@@ -1,7 +1,9 @@
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { KinshipView } from '@/features/practice/components/KinshipView';
+import { PracticeLoading } from '@/features/practice/components/PracticeLoading';
 import { localeAlternates } from '@/lib/seo';
 
 export async function generateMetadata({ params }: PageProps<'/[locale]/practice/kinship'>): Promise<Metadata> {
@@ -29,7 +31,10 @@ export default async function KinshipPage({ params }: PageProps<'/[locale]/pract
         </h1>
         <p className="page-lead">{t('lead')}</p>
       </header>
-      <KinshipView />
+      {/* KinshipView reads `?circle=` (the people list of a periodic template), so it renders under Suspense. */}
+      <Suspense fallback={<PracticeLoading />}>
+        <KinshipView />
+      </Suspense>
     </div>
   );
 }

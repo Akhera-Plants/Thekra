@@ -1,5 +1,5 @@
 import { BadRequestException, HttpException, PayloadTooLargeException } from '@nestjs/common';
-import { compareVersions, planFields, relativeFields, type Plan } from '@thekra/practice-core';
+import { compareVersions, planFields, relativeFields, settingsContent, type Plan } from '@thekra/practice-core';
 import {
   containsProgramsKey,
   MAX_SYNC_ITEMS,
@@ -32,14 +32,20 @@ const PLAN = {
   amountChangedOn: '2026-10-28',
   ebbSince: null,
   season: null,
+  pausedOn: null,
+  resumedOn: null,
+  establishedOn: null,
   clientUpdatedAt: '2026-10-28T10:00:00.000Z',
   deletedAt: null,
 };
+/** A plan as a client from before 2026-10-31 sends it: no pausedOn / resumedOn / establishedOn. */
+const { pausedOn: _p, resumedOn: _r, establishedOn: _e, ...OLD_PLAN } = PLAN;
 const RELATIVE = {
   id: REL_ID,
   name: 'خالتي',
   relation: 'خالة',
   rule: { kind: 'everyNWeeks', n: 1, weekday: 5, anchor: '2026-10-30' },
+  circle: 'kin',
   lastContactedOn: null,
   clientUpdatedAt: '2026-10-28T10:00:00.000Z',
   deletedAt: null,
@@ -71,7 +77,7 @@ describe('parseSyncRequest', () => {
       '2026-10-27T00:00:00.000Z',
     );
     expect(request.since?.toISOString()).toBe('2026-10-27T00:00:00.000Z');
-    expect(request.settings).toEqual({ hijriOffset: 1, reminderTimes: ['07:00'], freeMinutesPerDay: 60, clientUpdatedAt: '2026-10-28T09:00:00.000Z' });
+    expect(request.settings).toEqual({ hijriOffset: 1, reminderTimes: ['07:00'], freeMinutesPerDay: 60, excusedDays: [], clientUpdatedAt: '2026-10-28T09:00:00.000Z' });
     expect(request.plans).toEqual([{ kind: 'live', plan: PLAN }]);
     expect(request.relatives).toEqual([{ kind: 'live', relative: RELATIVE }]);
     expect(request.logs).toEqual([{ planId: PLAN_ID, date: '2026-10-28', amount: 1 }]);
@@ -160,6 +166,12 @@ describe('parseSyncRequest', () => {
       [{ contacts: [{ relativeId: REL_ID, date: '2026-10-28', deleted: 'yes' }] }, 'contacts', 0],
       [{ settings: { hijriOffset: 3, clientUpdatedAt: '2026-10-28T09:00:00.000Z' } }, 'settings', 0],
       [{ plans: [{ ...PLAN, clientUpdatedAt: '2026-10-28 10:00' }] }, 'plans', 0],
+      [{ plans: [{ ...PLAN, resumedOn: '2026-10-29' }] }, 'plans', 0],
+      [{ plans: [{ ...PLAN, pausedOn: '2026-10-30', resumedOn: '2026-10-29' }] }, 'plans', 0],
+      [{ plans: [{ ...PLAN, establishedOn: 'soon' }] }, 'plans', 0],
+      [{ relatives: [{ ...RELATIVE, circle: 'colleagues' }] }, 'relatives', 0],
+      [{ settings: { excusedDays: ['2026-10-28', '2026-10-27'], clientUpdatedAt: '2026-10-28T09:00:00.000Z' } }, 'settings', 0],
+      [{ settings: { excusedDays: ['2026-13-01'], clientUpdatedAt: '2026-10-28T09:00:00.000Z' } }, 'settings', 0],
     ];
     for (const [changes, kind, index] of cases) {
       const { status, body } = errorOf(() => parse(changes));
@@ -182,11 +194,27 @@ describe('parseSyncRequest', () => {
       amountChangedOn: new Date('2026-10-28T00:00:00.000Z'),
       ebbSince: null,
       season: null,
+      pausedOn: null,
+      resumedOn: null,
+      establishedOn: null,
       clientUpdatedAt: new Date('2026-10-28T10:00:00.000Z'),
       updatedAt: NOW,
       deletedAt: null,
     });
     expect(wire).toEqual(PLAN);
+    const paused = planToWire({
+      ...PLAN,
+      userId: 'u',
+      createdOn: new Date('2026-10-28T00:00:00.000Z'),
+      amountChangedOn: new Date('2026-10-28T00:00:00.000Z'),
+      pausedOn: new Date('2026-10-29T00:00:00.000Z'),
+      resumedOn: null,
+      establishedOn: new Date('2026-10-28T00:00:00.000Z'),
+      clientUpdatedAt: new Date('2026-10-28T10:00:00.000Z'),
+      updatedAt: NOW,
+      deletedAt: null,
+    });
+    expect(paused).toMatchObject({ pausedOn: '2026-10-29', resumedOn: null, establishedOn: '2026-10-28' });
   });
 
   it('serialises a deleted row as {id, clientUpdatedAt, deletedAt} only', () => {
@@ -196,6 +224,9 @@ describe('parseSyncRequest', () => {
       createdOn: new Date('2026-10-28T00:00:00.000Z'),
       amountChangedOn: new Date('2026-10-28T00:00:00.000Z'),
       ebbSince: null,
+      pausedOn: null,
+      resumedOn: null,
+      establishedOn: null,
       clientUpdatedAt: new Date('2026-10-28T11:00:00.000Z'),
       updatedAt: NOW,
       deletedAt: new Date('2026-10-28T11:00:00.000Z'),
@@ -221,9 +252,24 @@ describe('versions (must match practice-core compareVersions on every replica)',
     expect(relativeVersion(rel!).content).toBe(
       JSON.stringify(relativeFields({ id: REL_ID, name: RELATIVE.name, relation: RELATIVE.relation, rule: RELATIVE.rule as Plan['rule'] & { kind: 'everyNWeeks' }, history: [] })),
     );
-    expect(settingsVersion({ hijriOffset: 1, reminderTimes: ['07:00'], freeMinutesPerDay: null, clientUpdatedAt: NOW.toISOString() }).content).toBe(
-      '{"hijriOffset":1,"reminderTimes":["07:00"],"freeMinutesPerDay":null}',
-    );
+    expect(
+      settingsVersion({ hijriOffset: 1, reminderTimes: ['07:00'], freeMinutesPerDay: null, excusedDays: [], clientUpdatedAt: NOW.toISOString() }).content,
+    ).toBe('{"hijriOffset":1,"reminderTimes":["07:00"],"freeMinutesPerDay":null}');
+    expect(
+      settingsVersion({ hijriOffset: 1, reminderTimes: [], freeMinutesPerDay: null, excusedDays: ['2026-10-27'], clientUpdatedAt: NOW.toISOString() }).content,
+    ).toBe(settingsContent({ hijriOffset: 1, reminderTimes: [], freeMinutesPerDay: null, excusedDays: ['2026-10-27'] }));
+  });
+
+  it('phase-2 fields: in the canonical content only when set, so old and new clients agree on older plans', () => {
+    const [old] = parse({ plans: [OLD_PLAN] }).plans;
+    expect(old).toEqual({ kind: 'live', plan: PLAN });
+    expect(planVersion(old!).content).toBe(planVersion(live()).content);
+    const paused = planVersion(live({ pausedOn: '2026-10-29', establishedOn: '2026-10-28' })).content;
+    expect(JSON.parse(paused)).toMatchObject({ pausedOn: '2026-10-29', establishedOn: '2026-10-28' });
+    const { circle: _c, ...oldRelative } = RELATIVE;
+    expect(parse({ relatives: [oldRelative] }).relatives[0]).toMatchObject({ relative: { circle: 'kin' } });
+    const [neighbor] = parse({ relatives: [{ ...RELATIVE, circle: 'neighbors' }] }).relatives;
+    expect(JSON.parse(relativeVersion(neighbor!).content)).toMatchObject({ circle: 'neighbors' });
   });
 
   it('later time wins; at equal times a tombstone wins, then the larger canonical JSON; equal never rewrites', () => {

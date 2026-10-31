@@ -2,6 +2,9 @@ import { BadRequestException, PayloadTooLargeException } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import {
   compareVersions,
+  MAX_EXCUSED_DAYS,
+  PEOPLE_CIRCLES,
+  settingsContent,
   isValidDate,
   isValidTime,
   mergeLogEntry,
@@ -11,6 +14,7 @@ import {
   validateRelative,
   validateRule,
   type LogEntry,
+  type PeopleCircle,
   type Plan,
   type Relative,
   type Rule,
@@ -51,6 +55,8 @@ export interface SettingsWire {
   hijriOffset: number;
   reminderTimes: string[];
   freeMinutesPerDay: number | null;
+  /** «عذر» days, ascending and unique (an older client omits it: none). */
+  excusedDays: string[];
   /** The device time of the edit (last-writer-wins key). */
   clientUpdatedAt: string;
   /** The server time of the last write. */
@@ -79,6 +85,10 @@ export interface PlanWire {
   amountChangedOn: string;
   ebbSince: string | null;
   season: SeasonWire | null;
+  /** Phase 2 (2026-10-31). An older client omits them: null. */
+  pausedOn: string | null;
+  resumedOn: string | null;
+  establishedOn: string | null;
   clientUpdatedAt: string;
   deletedAt: string | null;
 }
@@ -104,6 +114,8 @@ export interface RelativeWire {
   name: string;
   relation: string;
   rule: Rule;
+  /** The people list; an older client omits it: `kin`. */
+  circle: PeopleCircle;
   lastContactedOn: string | null;
   clientUpdatedAt: string;
   deletedAt: string | null;
@@ -226,10 +238,20 @@ function parseSettings(raw: unknown): SettingsChange {
   if (freeMinutesPerDay !== null && !isInt(freeMinutesPerDay, 0, 1440)) {
     throw new ItemError('freeMinutesPerDay must be null or an integer 0…1440');
   }
+  const excusedDays = raw['excusedDays'] ?? [];
+  if (
+    !Array.isArray(excusedDays) ||
+    excusedDays.length > MAX_EXCUSED_DAYS ||
+    !excusedDays.every(isValidDate) ||
+    excusedDays.some((day, index) => index > 0 && day <= excusedDays[index - 1])
+  ) {
+    throw new ItemError(`excusedDays must be at most ${MAX_EXCUSED_DAYS} YYYY-MM-DD dates, ascending and unique`);
+  }
   return {
     hijriOffset,
     reminderTimes: [...reminderTimes],
     freeMinutesPerDay,
+    excusedDays: [...(excusedDays as string[])],
     clientUpdatedAt: timestamp(raw['clientUpdatedAt'], 'clientUpdatedAt'),
   };
 }
@@ -252,6 +274,9 @@ function parsePlan(raw: unknown): PlanChange {
   const ceiling = raw['ceiling'] ?? null;
   const season = parseSeason(raw['season']);
   const ebbSince = optionalDate(raw['ebbSince'], 'ebbSince');
+  const pausedOn = optionalDate(raw['pausedOn'], 'pausedOn');
+  const resumedOn = optionalDate(raw['resumedOn'], 'resumedOn');
+  const establishedOn = optionalDate(raw['establishedOn'], 'establishedOn');
   // The practice-core shape: `log` travels separately, `ebb`/`season`/`ceiling` are optional.
   check(
     validatePlan({
@@ -268,6 +293,9 @@ function parsePlan(raw: unknown): PlanChange {
       log: {},
       ...(ebbSince ? { ebb: { since: ebbSince } } : {}),
       ...(season ? { season } : {}),
+      ...(pausedOn ? { pausedOn } : {}),
+      ...(resumedOn ? { resumedOn } : {}),
+      ...(establishedOn ? { establishedOn } : {}),
     }),
   );
   const plan = raw as Record<string, unknown> & {
@@ -308,6 +336,9 @@ function parsePlan(raw: unknown): PlanChange {
       amountChangedOn: plan.amountChangedOn,
       ebbSince,
       season,
+      pausedOn,
+      resumedOn,
+      establishedOn,
       clientUpdatedAt,
       deletedAt: null,
     },
@@ -322,6 +353,8 @@ function parseRelative(raw: unknown): RelativeChange {
   if (deletedAt) return { kind: 'tombstone', id, clientUpdatedAt, deletedAt };
 
   const lastContactedOn = optionalDate(raw['lastContactedOn'], 'lastContactedOn');
+  const circle = raw['circle'] ?? 'kin';
+  if (!PEOPLE_CIRCLES.includes(circle as PeopleCircle)) throw new ItemError(`circle must be one of ${PEOPLE_CIRCLES.join(', ')}`);
   // validateRelative also applies looksLikeContactDetails to name and relation; contacts travel separately.
   check(
     validateRelative({
@@ -342,6 +375,7 @@ function parseRelative(raw: unknown): RelativeChange {
       name: raw['name'] as string,
       relation,
       rule: raw['rule'] as Rule,
+      circle: circle as PeopleCircle,
       lastContactedOn,
       clientUpdatedAt,
       deletedAt: null,
@@ -424,11 +458,21 @@ function corePlan(plan: PlanWire): Plan {
     ...(plan.season ? { season: plan.season } : {}),
     ...(plan.habitKey ? { habitKey: plan.habitKey } : {}),
     ...(plan.rule ? { rule: plan.rule } : {}),
+    ...(plan.pausedOn ? { pausedOn: plan.pausedOn } : {}),
+    ...(plan.resumedOn ? { resumedOn: plan.resumedOn } : {}),
+    ...(plan.establishedOn ? { establishedOn: plan.establishedOn } : {}),
   };
 }
 
 function coreRelative(relative: RelativeWire): Relative {
-  return { id: relative.id, name: relative.name, relation: relative.relation, rule: relative.rule as Relative['rule'], history: [] };
+  return {
+    id: relative.id,
+    name: relative.name,
+    relation: relative.relation,
+    rule: relative.rule as Relative['rule'],
+    ...(relative.circle !== 'kin' ? { circle: relative.circle } : {}),
+    history: [],
+  };
 }
 
 const tombstoneVersion = (clientUpdatedAt: string): Version => ({ time: Date.parse(clientUpdatedAt), deleted: true, content: '' });
@@ -447,10 +491,9 @@ export function relativeVersion(change: RelativeChange): Version {
   };
 }
 
-/** Settings content as practice-core builds it ({hijriOffset, reminderTimes, freeMinutesPerDay}). */
+/** Settings content as practice-core builds it (`settingsContent`: excusedDays only when not empty). */
 export function settingsVersion(settings: SettingsChange): Version {
-  const { hijriOffset, reminderTimes, freeMinutesPerDay } = settings;
-  return { time: Date.parse(settings.clientUpdatedAt), deleted: false, content: JSON.stringify({ hijriOffset, reminderTimes, freeMinutesPerDay }) };
+  return { time: Date.parse(settings.clientUpdatedAt), deleted: false, content: settingsContent(settings) };
 }
 
 /** True when `incoming` wins over `stored` (none stored: it wins). Equal versions do not win, so nothing is rewritten. */
@@ -558,6 +601,9 @@ export function planToWire(row: PlanRow): PlanWire {
     amountChangedOn: day(row.amountChangedOn),
     ebbSince: optionalDay(row.ebbSince),
     season: (row.season ?? null) as SeasonWire | null,
+    pausedOn: optionalDay(row.pausedOn),
+    resumedOn: optionalDay(row.resumedOn),
+    establishedOn: optionalDay(row.establishedOn),
     clientUpdatedAt: row.clientUpdatedAt.toISOString(),
     deletedAt: iso(row.deletedAt),
   };
@@ -569,6 +615,7 @@ export function relativeToWire(row: RelativeRow): RelativeWire {
     name: row.name,
     relation: row.relation,
     rule: row.rule as unknown as Rule,
+    circle: (PEOPLE_CIRCLES.includes(row.circle as PeopleCircle) ? row.circle : 'kin') as PeopleCircle,
     lastContactedOn: optionalDay(row.lastContactedOn),
     clientUpdatedAt: row.clientUpdatedAt.toISOString(),
     deletedAt: iso(row.deletedAt),
@@ -625,6 +672,7 @@ export async function readPracticeChanges(
           hijriOffset: settings.hijriOffset,
           reminderTimes: settings.reminderTimes,
           freeMinutesPerDay: settings.freeMinutesPerDay,
+          excusedDays: settings.excusedDays,
           clientUpdatedAt: settings.clientUpdatedAt.toISOString(),
           updatedAt: settings.updatedAt.toISOString(),
         }

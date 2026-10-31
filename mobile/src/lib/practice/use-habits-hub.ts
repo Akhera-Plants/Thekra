@@ -19,9 +19,14 @@ import {
   diffDays,
   currentStreak,
   dayAgenda,
+  canExcuse,
+  isExcused,
+  limits,
   logContact,
-  logDone,
+  logForDay,
   longestStreak,
+  streakDisplay,
+  toggleExcusedDay,
   removeContact,
   minDate,
   monthSummary,
@@ -35,7 +40,9 @@ import {
   type LocalDate,
   type PlanDayOptions,
   type RelativeItem,
+  type Limits,
   type Store,
+  type StreakDisplay,
 } from '@thekra/practice-core';
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { useCirclePresence } from '@/lib/circles/use-circle-presence';
@@ -168,7 +175,11 @@ export function useAgendaRows(items: readonly AgendaItem[], date: LocalDate, tod
         if (!plan) continue;
         const habit = habitFor(plan, habits ?? []);
         const amount = (n: number) => formatAmount(n, plan.unit, habit, locale, unitFallback);
-        const required = t('practice.hub.required', { amount: amount(item.required) });
+        // «لا تفوّتها مرتين»: missed yesterday, so the row asks for its minimum with one gentle line.
+        const missed = item.missedYesterday && item.minimum && item.done === 0;
+        const required = missed
+          ? `${t('practice.hub.missedYesterday')} · ${t('practice.hub.required', { amount: amount(item.minimum as number) })}`
+          : t('practice.hub.required', { amount: amount(item.required) });
         const meta = item.done > 0 ? `${required} · ${t('practice.hub.logged', { amount: amount(item.done) })}` : required;
         rows.push({ key: `h-${item.planId}`, kind: 'habit', item, title: habit ? pick(habit, 'title', locale) : plan.title, meta });
       } else if (item.kind === 'relative') {
@@ -252,7 +263,9 @@ export function useAgendaActions(date: LocalDate) {
         return;
       }
       before.current.set(key, item.done);
-      apply((s) => updatePlan(s, item.planId, (p) => logDone(p, date, item.remaining)));
+      // «قضاء»: today, and yesterday until noon, log plainly; an older day is saved but does not count for the streak.
+      const amount = item.missedYesterday && item.done === 0 && item.minimum ? item.minimum : item.remaining;
+      apply((s) => updatePlan(s, item.planId, (p) => logForDay(p, date, amount, today())));
       setLastLog({ kind: 'habit', planId: item.planId, date, before: item.done, cleared: false });
     },
     [date, apply],
@@ -323,17 +336,36 @@ export function useMonthPresence(todayDate: LocalDate): MonthPresence {
   }, [store, todayDate, planDays]);
 }
 
-/** The streak of complete days and the longest one (practice-core `currentStreak` / `longestStreak`). */
-export function useStreak(todayDate: LocalDate): { current: number; longest: number; hasPlans: boolean } {
+/**
+ * The streak of complete days and the longest one (practice-core `currentStreak` / `longestStreak`), and how to show
+ * it (`streakDisplay`: never 0 as a failure).
+ */
+export function useStreak(todayDate: LocalDate): { current: number; longest: number; display: StreakDisplay; hasPlans: boolean } {
   const store = usePracticeStore((s) => s.store);
   const planDays = usePlanDays();
+  return useMemo(() => {
+    const current = currentStreak(store, todayDate, planDays);
+    const longest = longestStreak(store, todayDate, planDays);
+    return { current, longest, display: streakDisplay(current, longest), hasPlans: store.plans.length > 0 };
+  }, [store, todayDate, planDays]);
+}
+
+/** «عذر (مرض أو سفر)» for one day: whether it is marked, whether it may be, and the toggle (practice-core). */
+export function useExcuse(date: LocalDate, todayDate: LocalDate) {
+  const store = usePracticeStore((s) => s.store);
+  const setStore = usePracticeStore((s) => s.setStore);
+  const toggle = useCallback(() => setStore((s) => toggleExcusedDay(s, date, todayDate)), [setStore, date, todayDate]);
+  return { excused: isExcused(store, date), allowed: canExcuse(date, todayDate) && store.plans.length > 0, toggle };
+}
+
+/** The limits (3 saplings, 7 periodic acts, 1 «تخفَّف» program); periodic acts come from the catalog's templates. */
+export function useLimits(todayDate: LocalDate = today()): Limits {
+  const locale = useUiLocale();
+  const store = usePracticeStore((s) => s.store);
+  const habits = usePracticeCatalog(locale).data?.habits;
   return useMemo(
-    () => ({
-      current: currentStreak(store, todayDate, planDays),
-      longest: longestStreak(store, todayDate, planDays),
-      hasPlans: store.plans.length > 0,
-    }),
-    [store, todayDate, planDays],
+    () => limits(store, todayDate, { isPeriodicAct: (plan) => habitFor(plan, habits ?? [])?.kind === 'periodic' }),
+    [store, todayDate, habits],
   );
 }
 

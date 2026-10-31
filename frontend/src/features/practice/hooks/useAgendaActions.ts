@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   correctLog,
   logContact,
-  logDone,
+  logForDay,
   removeContact,
   updatePlan,
   updateRelative,
@@ -23,7 +23,12 @@ type LastAction =
 export function useAgendaActions() {
   const [last, setLast] = useState<LastAction | null>(null);
 
-  function toggleHabit(item: HabitItem, date: string) {
+  /**
+   * `today` decides «قضاء»: today, and yesterday until noon, log plainly; an older day is still saved but stamped as a
+   * late fix, so it does not count for the streak (practice-core `logForDay`). A habit missed the day before
+   * («لا تفوّتها مرتين») logs its minimum first.
+   */
+  function toggleHabit(item: HabitItem, date: string, today: string) {
     if (item.complete) {
       // Back to the amount before this visit's «تمّ»; without one, the day is cleared (0). Undo restores it.
       const before = last?.kind === 'habit' && last.planId === item.planId && last.date === date && !last.cleared ? last.before : 0;
@@ -31,7 +36,8 @@ export function useAgendaActions() {
       setLast({ kind: 'habit', planId: item.planId, date, before: item.done, cleared: true });
       return;
     }
-    updateStore((store) => updatePlan(store, item.planId, (plan) => logDone(plan, date, item.remaining)));
+    const amount = item.missedYesterday && item.done === 0 && item.minimum ? item.minimum : item.remaining;
+    updateStore((store) => updatePlan(store, item.planId, (plan) => logForDay(plan, date, amount, today)));
     setLast({ kind: 'habit', planId: item.planId, date, before: item.done, cleared: false });
   }
 

@@ -56,6 +56,9 @@ function tombstonePlan(id: string, clientUpdatedAt: string, deletedAt: string): 
     amountChangedOn: day,
     ebbSince: null,
     season: null,
+    pausedOn: null,
+    resumedOn: null,
+    establishedOn: null,
     clientUpdatedAt,
     deletedAt,
   };
@@ -67,6 +70,7 @@ function tombstoneRelative(id: string, clientUpdatedAt: string, deletedAt: strin
     name: '',
     relation: '',
     rule: { kind: 'everyNDays', n: 1, anchor: clientUpdatedAt.slice(0, 10) },
+    circle: 'kin',
     lastContactedOn: null,
     clientUpdatedAt,
     deletedAt,
@@ -203,6 +207,7 @@ export class PracticeSyncService {
           hijriOffset: row.hijriOffset,
           reminderTimes: row.reminderTimes,
           freeMinutesPerDay: row.freeMinutesPerDay,
+          excusedDays: row.excusedDays,
           clientUpdatedAt: row.clientUpdatedAt.toISOString(),
         })
       : null;
@@ -212,13 +217,15 @@ export class PracticeSyncService {
   /** Writes settings that won (see settingsWin); never over a newer concurrent write. */
   private async upsertSettings(tx: Tx, userId: string, settings: NonNullable<SyncRequest['settings']>): Promise<void> {
     await tx.$executeRaw`
-      INSERT INTO "PracticeSettings" ("userId", "hijriOffset", "reminderTimes", "freeMinutesPerDay", "clientUpdatedAt", "updatedAt")
+      INSERT INTO "PracticeSettings" ("userId", "hijriOffset", "reminderTimes", "freeMinutesPerDay", "excusedDays",
+        "clientUpdatedAt", "updatedAt")
       VALUES (${userId}, ${settings.hijriOffset}, ${settings.reminderTimes}::text[], ${settings.freeMinutesPerDay}::int,
-              ${settings.clientUpdatedAt}::timestamp(3), now() AT TIME ZONE 'UTC')
+              ${settings.excusedDays}::text[], ${settings.clientUpdatedAt}::timestamp(3), now() AT TIME ZONE 'UTC')
       ON CONFLICT ("userId") DO UPDATE SET
         "hijriOffset" = EXCLUDED."hijriOffset",
         "reminderTimes" = EXCLUDED."reminderTimes",
         "freeMinutesPerDay" = EXCLUDED."freeMinutesPerDay",
+        "excusedDays" = EXCLUDED."excusedDays",
         "clientUpdatedAt" = EXCLUDED."clientUpdatedAt",
         "updatedAt" = EXCLUDED."updatedAt"
       WHERE "PracticeSettings"."clientUpdatedAt" <= EXCLUDED."clientUpdatedAt"`;
@@ -231,25 +238,27 @@ export class PracticeSyncService {
     await tx.$executeRaw`
       INSERT INTO "HabitPlan" ("id", "userId", "habitKey", "deedSlug", "title", "unit", "amount", "ceiling",
         "activeDaysPerWeek", "slots", "rule", "createdOn", "amountChangedOn", "ebbSince", "season",
-        "clientUpdatedAt", "updatedAt", "deletedAt")
+        "pausedOn", "resumedOn", "establishedOn", "clientUpdatedAt", "updatedAt", "deletedAt")
       SELECT t.id, ${userId}, t.habit_key, t.deed_slug, t.title, t.unit, t.amount, t.ceiling, t.active_days,
         ARRAY(SELECT jsonb_array_elements_text(t.slots::jsonb)), t.rule::jsonb, t.created_on::date,
-        t.amount_changed_on::date, t.ebb_since::date, t.season::jsonb, t.client_updated_at::timestamp(3),
-        now() AT TIME ZONE 'UTC', t.deleted_at::timestamp(3)
+        t.amount_changed_on::date, t.ebb_since::date, t.season::jsonb, t.paused_on::date, t.resumed_on::date,
+        t.established_on::date, t.client_updated_at::timestamp(3), now() AT TIME ZONE 'UTC', t.deleted_at::timestamp(3)
       FROM unnest(
         ${column('id')}::text[], ${column('habitKey')}::text[], ${column('deedSlug')}::text[], ${column('title')}::text[],
         ${column('unit')}::text[], ${column('amount')}::float8[], ${column('ceiling')}::float8[], ${column('activeDaysPerWeek')}::int[],
         ${plans.map((plan) => JSON.stringify(plan.slots))}::text[], ${plans.map((plan) => json(plan.rule))}::text[],
         ${column('createdOn')}::text[], ${column('amountChangedOn')}::text[], ${column('ebbSince')}::text[],
-        ${plans.map((plan) => json(plan.season))}::text[], ${column('clientUpdatedAt')}::text[], ${column('deletedAt')}::text[]
+        ${plans.map((plan) => json(plan.season))}::text[], ${column('pausedOn')}::text[], ${column('resumedOn')}::text[],
+        ${column('establishedOn')}::text[], ${column('clientUpdatedAt')}::text[], ${column('deletedAt')}::text[]
       ) AS t(id, habit_key, deed_slug, title, unit, amount, ceiling, active_days, slots, rule, created_on,
-             amount_changed_on, ebb_since, season, client_updated_at, deleted_at)
+             amount_changed_on, ebb_since, season, paused_on, resumed_on, established_on, client_updated_at, deleted_at)
       ON CONFLICT ("id") DO UPDATE SET
         "habitKey" = EXCLUDED."habitKey", "deedSlug" = EXCLUDED."deedSlug", "title" = EXCLUDED."title",
         "unit" = EXCLUDED."unit", "amount" = EXCLUDED."amount", "ceiling" = EXCLUDED."ceiling",
         "activeDaysPerWeek" = EXCLUDED."activeDaysPerWeek", "slots" = EXCLUDED."slots", "rule" = EXCLUDED."rule",
         "createdOn" = EXCLUDED."createdOn", "amountChangedOn" = EXCLUDED."amountChangedOn",
         "ebbSince" = EXCLUDED."ebbSince", "season" = EXCLUDED."season",
+        "pausedOn" = EXCLUDED."pausedOn", "resumedOn" = EXCLUDED."resumedOn", "establishedOn" = EXCLUDED."establishedOn",
         "clientUpdatedAt" = EXCLUDED."clientUpdatedAt", "updatedAt" = EXCLUDED."updatedAt",
         "deletedAt" = EXCLUDED."deletedAt"
       WHERE "HabitPlan"."userId" = EXCLUDED."userId"
@@ -279,17 +288,17 @@ export class PracticeSyncService {
     if (relatives.length === 0) return;
     const column = <K extends keyof RelativeWire>(key: K) => relatives.map((relative) => relative[key]);
     await tx.$executeRaw`
-      INSERT INTO "Relative" ("id", "userId", "name", "relation", "rule", "lastContactedOn", "clientUpdatedAt",
+      INSERT INTO "Relative" ("id", "userId", "name", "relation", "rule", "circle", "lastContactedOn", "clientUpdatedAt",
         "updatedAt", "deletedAt")
-      SELECT t.id, ${userId}, t.name, t.relation, t.rule::jsonb, t.last_contacted_on::date,
+      SELECT t.id, ${userId}, t.name, t.relation, t.rule::jsonb, t.circle, t.last_contacted_on::date,
         t.client_updated_at::timestamp(3), now() AT TIME ZONE 'UTC', t.deleted_at::timestamp(3)
       FROM unnest(
         ${column('id')}::text[], ${column('name')}::text[], ${column('relation')}::text[],
-        ${relatives.map((relative) => JSON.stringify(relative.rule))}::text[], ${column('lastContactedOn')}::text[],
-        ${column('clientUpdatedAt')}::text[], ${column('deletedAt')}::text[]
-      ) AS t(id, name, relation, rule, last_contacted_on, client_updated_at, deleted_at)
+        ${relatives.map((relative) => JSON.stringify(relative.rule))}::text[], ${column('circle')}::text[],
+        ${column('lastContactedOn')}::text[], ${column('clientUpdatedAt')}::text[], ${column('deletedAt')}::text[]
+      ) AS t(id, name, relation, rule, circle, last_contacted_on, client_updated_at, deleted_at)
       ON CONFLICT ("id") DO UPDATE SET
-        "name" = EXCLUDED."name", "relation" = EXCLUDED."relation", "rule" = EXCLUDED."rule",
+        "name" = EXCLUDED."name", "relation" = EXCLUDED."relation", "rule" = EXCLUDED."rule", "circle" = EXCLUDED."circle",
         "lastContactedOn" = EXCLUDED."lastContactedOn", "clientUpdatedAt" = EXCLUDED."clientUpdatedAt",
         "updatedAt" = EXCLUDED."updatedAt", "deletedAt" = EXCLUDED."deletedAt"
       WHERE "Relative"."userId" = EXCLUDED."userId"

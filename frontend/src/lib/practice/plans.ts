@@ -23,6 +23,7 @@ import {
   occurrences,
   occurrencesToEvents,
   relapseSuggestion,
+  reminderSlots,
   requiredOn,
   status,
   timeToMinutes,
@@ -191,7 +192,7 @@ export function ramadanEnd(today: LocalDate, hijriOffset: number): LocalDate | n
 const DAILY: Rule = { kind: 'daily' };
 
 /**
- * Reminder events for the next {@link REMINDER_DAYS} days: every slot of every plan on the days it is due (the
+ * Reminder events for the next {@link REMINDER_DAYS} days: every reminder slot (`reminderSlots`) of every plan on the days it is due (the
  * plan's rule, else its habit's default rule, else daily: the same answer as `isPlanDueOn`). Titles are the
  * habit titles (good deeds, not private).
  */
@@ -205,11 +206,14 @@ export function planReminderEvents(
   const to = addDays(today, REMINDER_DAYS - 1);
   const events: IcsEvent[] = [];
   for (const plan of plans) {
+    // practice-core `reminderSlots`: nothing while paused, the first slot only for an established habit.
+    const slots = reminderSlots(plan);
+    if (slots.length === 0) continue;
     const habit = habitOf(plan, habits);
     const rule = plan.rule ?? habit?.defaultRule ?? DAILY;
     if (rule.kind.startsWith('hijri') && !isHijriSupported()) continue;
     const title = lang === 'en' && habit ? habit.titleEn : plan.title;
-    for (const slot of plan.slots) {
+    for (const slot of slots) {
       events.push(
         ...occurrencesToEvents(
           rule,

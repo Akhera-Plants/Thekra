@@ -27,6 +27,8 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, KeyboardAvoidingView, View } from 'react-native';
+import { LimitSheet } from '@/components/practice/LimitSheet';
+import { useLimits } from '@/lib/practice/use-habits-hub';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Check, Plus, ShieldCheck } from 'lucide-react-native';
@@ -149,6 +151,8 @@ function SinProgramContent() {
   useEffect(() => setPendingProgram(null), []);
   /** Null until the user opens or closes the chooser: a sin page's hand-off opens it beside the current program. */
   const [choosing, setChoosing] = useState<boolean | null>(null);
+  // One «تخفَّف» program until it reaches its last stage (practice-core `limits`).
+  const planLimits = useLimits();
 
   if (!hydrated || catalog.isLoading || sins.isLoading) return <ProgramSkeleton />;
   if (catalog.isError || !catalog.data) {
@@ -170,7 +174,8 @@ function SinProgramContent() {
   const entries = catalog.data.sinPrograms.programs;
   const following = new Set(programs.map((p) => p.sinSlug));
   const preselected = pendingSin && !following.has(pendingSin) && entries.some((p) => p.sin === pendingSin) ? pendingSin : null;
-  const showChooser = programs.length === 0 || (choosing ?? preselected !== null);
+  const canStart = programs.length === 0 || planLimits.canAdd('program');
+  const showChooser = programs.length === 0 || (canStart && (choosing ?? preselected !== null));
   const canAddAnother = entries.some((p) => !following.has(p.sin));
 
   function handleStarted() {
@@ -223,6 +228,13 @@ function SinProgramContent() {
             <SinReminders />
           </>
         ) : null}
+        <LimitSheet
+          kind="program"
+          visible={choosing === true && !canStart}
+          limits={planLimits}
+          onClose={() => setChoosing(false)}
+          onFreed={() => setChoosing(false)}
+        />
         {hasProgramData ? <WipeSection userId={userId} onWiped={() => setWiped(true)} /> : null}
       </Screen>
     </KeyboardAvoidingView>

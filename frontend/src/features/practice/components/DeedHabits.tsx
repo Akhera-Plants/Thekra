@@ -61,7 +61,12 @@ function DeedHabitItem({ habit, planId }: { habit: PracticeHabit; planId: string
         <span className="font-medium">{english ? habit.titleEn : habit.titleAr}</span>
         <span className="text-sm leading-7 text-muted-foreground">{timeHint ? `${timeHint} · ${start}` : start}</span>
       </span>
-      {planId ? (
+      {habit.people ? (
+        // A people list (صلة الرحم, الجيران…): people are added on its list, not as a plan.
+        <Link href={{ pathname: '/practice/kinship', query: { circle: habit.people } }} className="outline-button button-wrap">
+          {t('start')} <DirectionalArrow />
+        </Link>
+      ) : planId ? (
         <Link href={`/practice/habits#plan-${planId}`} className="text-link">
           <Check aria-hidden />
           {t('added')}

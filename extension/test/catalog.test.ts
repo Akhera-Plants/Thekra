@@ -59,7 +59,7 @@ describe('mini-yaml', () => {
     expect(habits.length).toBeGreaterThan(0);
     for (const h of habits) {
       expect(validateRule(h.defaultRule)).toBeNull();
-      expect(h.evidence.length).toBeGreaterThan(0);
+      if (h.kind !== 'periodic') expect(h.evidence.length).toBeGreaterThan(0); // periodic templates may wait for a verified id
     }
   });
 });

@@ -29,7 +29,9 @@ import {
 } from '@/lib/practice/use-habits-hub';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { upcomingPeriodic } from '@/lib/practice/wird';
+import { addDays } from '@thekra/practice-core';
 import { AddSheet } from '@/components/practice/hub/AddSheet';
+import { ExcuseChip } from '@/components/practice/hub/ExcuseChip';
 import { PeriodicRows } from '@/components/practice/hub/PeriodicRows';
 import { TodayList } from '@/components/practice/hub/TodayList';
 import { WirdHeader } from '@/components/practice/hub/WirdHeader';
@@ -46,7 +48,7 @@ const makeStyles = (t: Theme) => ({
   tight: { gap: space.xs },
   section: { gap: space.md },
   sectionHead: { flexDirection: 'row' as const, alignItems: 'center' as const, justifyContent: 'space-between' as const },
-  heavy: { flexDirection: 'row' as const },
+  heavy: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: space.sm },
   skeletonHeader: { gap: space.sm },
   skeletonTop: { flexDirection: 'row' as const, alignItems: 'center' as const, justifyContent: 'space-between' as const },
   skeletonRow: {
@@ -99,6 +101,7 @@ function Wird() {
         <WirdHeader
           dateLabel={dateLine(today, names, hijriOffset, showHijri)}
           streak={streak.hasPlans ? streak.current : null}
+          freshLine={streak.display.kind === 'fresh' ? t('practice.wird.streakFresh', { n: streak.display.longest }) : null}
           onAdd={handleAddOpen}
         />
 
@@ -125,6 +128,8 @@ function Wird() {
             heavyDay.hasPlans ? (
               <View style={styles.heavy}>
                 <Chip label={t('practice.heavyDay')} selected={heavyDay.heavy} onPress={toggleHeavy} />
+                <ExcuseChip date={today} today={today} label={t('practice.excuse.today')} />
+                <ExcuseChip date={addDays(today, -1)} today={today} label={t('practice.excuse.yesterday')} />
               </View>
             ) : null
           }

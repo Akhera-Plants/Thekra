@@ -15,6 +15,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, ScrollView, View } from 'react-native';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
+import { LimitSheet } from '@/components/practice/LimitSheet';
+import { useLimits } from '@/lib/practice/use-habits-hub';
 import { usePreventRemove } from 'expo-router/react-navigation';
 import { useTranslation } from 'react-i18next';
 import { CircleAlert, CircleCheck, HardDrive, Hourglass } from 'lucide-react-native';
@@ -106,6 +108,16 @@ export default function AddHabitScreen() {
   const [error, setError] = useState<string | null>(null);
 
   const habit = useMemo(() => catalog.data?.habits.find((h) => h.key === habitKey), [catalog.data, habitKey]);
+  // Limits (redesign §3): a periodic template falls under the 7 periodic acts, anything else under the 3 saplings.
+  const planLimits = useLimits();
+  const preselected = catalog.data?.habits.find((h) => h.key === params.habit);
+  const limitKind = preselected?.kind === 'periodic' ? 'periodic' : 'sapling';
+  const limitReached = Boolean(catalog.data) && plans.length > 0 && !planLimits.canAdd(limitKind);
+  // A people template (a good-deed page's «ابدأ») adds people on its list, not a plan.
+  const peopleCircle = preselected?.people;
+  useEffect(() => {
+    if (peopleCircle) router.replace({ pathname: '/practice/kinship', params: { circle: peopleCircle } });
+  }, [peopleCircle]);
 
   // A preselected habit (route param) gets its catalog defaults once the catalog is there.
   const [initialized, setInitialized] = useState<string | null>(null);
@@ -128,6 +140,14 @@ export default function AddHabitScreen() {
     navigation.dispatch(data.action);
   });
 
+  if (limitReached) {
+    return (
+      <>
+        <ChooseSkeleton />
+        <LimitSheet kind={limitKind} visible limits={planLimits} onClose={() => router.back()} onFreed={() => undefined} />
+      </>
+    );
+  }
   if (catalog.isLoading) return <ChooseSkeleton />;
   if (catalog.isError || !catalog.data) {
     return (
@@ -189,7 +209,7 @@ export default function AddHabitScreen() {
   if (step === 'choose' || !habit) {
     return (
       <ChooseStep
-        habits={catalog.data.habits}
+        habits={catalog.data.habits.filter((h) => !h.people && (h.kind !== 'periodic' || h.key === params.habit))}
         locale={locale}
         selectedKey={habit && !planByHabit.has(habit.key) ? habit.key : null}
         planByHabit={planByHabit}

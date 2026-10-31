@@ -95,6 +95,25 @@ function input(store: Store, prefs: Partial<PracticePrefs> = {}, extra: Partial<
 
 const simple = (list: ReturnType<typeof planReminders>) => list.map(({ date, time, title, body }) => ({ date, time, title, body }));
 
+describe('planReminders — pause, «راسخة», sick', () => {
+  it('a paused plan reminds of nothing; an established one only in its first slot; resumed days remind again', () => {
+    const base = plan(quran, 2, ['21:00', '06:00']);
+    expect(planReminders(input({ ...emptyStore(), plans: [{ ...base, pausedOn: '2026-10-20' }] }))).toEqual([]);
+    const established = planReminders(input({ ...emptyStore(), plans: [{ ...base, establishedOn: '2026-10-20' }] }));
+    expect(new Set(established.map((r) => r.time))).toEqual(new Set(['06:00']));
+    const resumed = planReminders(input({ ...emptyStore(), plans: [{ ...base, pausedOn: '2026-10-20', resumedOn: '2026-10-30' }] }));
+    expect(resumed[0]?.date).toBe('2026-10-30');
+  });
+
+  it('a sick person reminds every two days until visited', () => {
+    const sick = createRelative({ id: 's', name: 'أبو محمد', relation: '', circle: 'sick', rule: { kind: 'everyNDays', n: 2, anchor: TODAY } });
+    const list = planReminders(input({ ...emptyStore(), relatives: [sick] }, { kinshipReminders: true }, { days: 6 }));
+    expect(list.map((r) => r.date)).toEqual(['2026-10-28', '2026-10-30', '2026-11-01']);
+    const visited = { ...sick, history: [TODAY], lastContactedOn: TODAY };
+    expect(planReminders(input({ ...emptyStore(), relatives: [visited] }, { kinshipReminders: true }, { days: 6 }))).toEqual([]);
+  });
+});
+
 describe('planReminders — habits', () => {
   it('schedules every slot of every rule day for the next 14 days, skipping slots already past today', () => {
     const store = { ...emptyStore(), plans: [plan(quran, 2, ['21:00', '06:00'])] };

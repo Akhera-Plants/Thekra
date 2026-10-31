@@ -31,10 +31,12 @@ export interface WirdHeaderProps {
   dateLabel: string;
   /** The current streak; null hides the chip (no habit yet). */
   streak: number | null;
+  /** With a current streak of 0 after an earlier run: «ابدأ مداومة جديدة اليوم · أطول مداومة: N» instead of a 0. */
+  freshLine?: string | null;
   onAdd: () => void;
 }
 
-export function WirdHeader({ dateLabel, streak, onAdd }: WirdHeaderProps) {
+export function WirdHeader({ dateLabel, streak, freshLine, onAdd }: WirdHeaderProps) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   return (
@@ -43,7 +45,7 @@ export function WirdHeader({ dateLabel, streak, onAdd }: WirdHeaderProps) {
         <Text variant="display" accessibilityRole="header" style={styles.title} numberOfLines={1}>
           {t('practice.wird.title')}
         </Text>
-        {streak !== null ? (
+        {streak !== null && !freshLine ? (
           <View style={styles.chip} accessible accessibilityLabel={t('practice.wird.streakLabel', { count: streak })}>
             <StreakFlame size={18} />
             <Text variant="body" weight="semibold">
@@ -56,6 +58,12 @@ export function WirdHeader({ dateLabel, streak, onAdd }: WirdHeaderProps) {
       <Text variant="small" tone="muted">
         {dateLabel}
       </Text>
+      {freshLine ? (
+        <View style={styles.top}>
+          <StreakFlame size={16} />
+          <Text variant="small">{freshLine}</Text>
+        </View>
+      ) : null}
     </View>
   );
 }

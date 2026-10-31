@@ -5,15 +5,20 @@
  * else the catalog habit's default rule, else daily, the same answer as practice-core `isPlanDueOn` that the
  * website, the push planner and the popup's today card use (practice-core `nextOccurrences`, Hijri rules with the
  * user's offset), except on the user's quiet weekdays.
+ * A paused plan reminds of nothing and an established («راسخة») one only in its first slot (practice-core
+ * `reminderSlots`, the same as the website, the push planner and the app).
  * Today's remaining slots are skipped once today's required amount is logged (`requiredOn`; a missed day is
  * never added to the next one).
  */
 import {
+  isPaused,
+  isPausedOn,
   isPlanDueOn,
   isValidDate,
   isValidTime,
   nextOccurrences,
   normalize,
+  reminderSlots,
   requiredOn,
   todayFrom,
   weekday,
@@ -79,13 +84,14 @@ export function upcomingReminders(input: ScheduleInput, perPlan = 1): Reminder[]
   const out: Reminder[] = [];
   for (const raw of input.plans) {
     const plan = normalize(raw, today);
-    const slots = [...new Set(plan.slots)].sort();
+    const slots = reminderSlots(plan);
+    if (slots.length === 0) continue;
     const found: Reminder[] = [];
     const rule = ruleOf(plan, fallbackRule(plan, input.habitRules));
     const days = nextOccurrences(rule, today, SEARCH_OCCURRENCES, { hijriOffset: input.hijriOffset });
     for (const date of days) {
       if (found.length >= perPlan) break;
-      if (quiet.has(weekday(date))) continue;
+      if (quiet.has(weekday(date)) || isPausedOn(plan, date)) continue;
       if (date === today && remainingOn(plan, today) === 0) continue;
       for (const time of slots) {
         const when = localInstant(date, time);
@@ -110,7 +116,7 @@ export function isReminderDay(
   date: LocalDate,
   hijriOffset: number,
 ): boolean {
-  if (quietDays.includes(weekday(date))) return false;
+  if (quietDays.includes(weekday(date)) || isPausedOn(plan, date)) return false;
   return isPlanDueOn(plan, date, fallback, { hijriOffset });
 }
 
@@ -157,7 +163,7 @@ export function snoozeUntil(now: Date): number {
  * existing plan, and only while something is still asked for today.
  */
 export function shouldNotify(plan: Plan | undefined, date: LocalDate, now: Date): boolean {
-  if (!plan) return false;
+  if (!plan || isPaused(plan)) return false;
   const today = todayFrom(now);
   if (date !== today) return false;
   return remainingOn(normalize(plan, today), today) > 0;

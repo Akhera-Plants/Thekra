@@ -1,10 +1,15 @@
 import { createHash } from 'node:crypto';
 import {
   addDays,
+  circleOf,
   formatPlanAmount,
+  isPausedOn,
+  isRelativeOpen,
   nextDue,
   occurrences,
+  reminderSlots,
   requiredOn,
+  SICK_VISIT_EVERY_DAYS,
   type LocalDate,
   type LocalTime,
   type Plan,
@@ -20,10 +25,12 @@ import { zonedParts, zonedToUtc } from './zoned-time.js';
  * {@link PUSH_WINDOW_HOURS}. It follows the mobile planner (mobile/src/lib/practice/reminders.ts) so a habit
  * reminds at the same times on the phone and in the browser:
  *
- * - Habits: every day the plan's rule fires, once per slot; the body is the amount asked for that day
- *   (`requiredOn`). Today's slots are left out once the day is done, so logging cancels the rest of the day.
- * - Kinship: one generic reminder on each day relatives are due (no names: the text passes through the
- *   scheduler, docs/plan/2026-10-web-push.md §4).
+ * - Habits: every day the plan's rule fires, once per slot of practice-core `reminderSlots` (none while paused, one
+ *   once «راسخة»); the body is the amount asked for that day (`requiredOn`). Today's slots are left out once the day is
+ *   done, so logging cancels the rest of the day. Days inside a pause are skipped.
+ * - People lists (صلة الرحم and the other periodic lists): one generic reminder on each day people are due (no names:
+ *   the text passes through the scheduler, docs/plan/2026-10-web-push.md §4). A sick person repeats every
+ *   {@link SICK_VISIT_EVERY_DAYS} days until visited, then not at all.
  * - The sin program is never here: the server cannot read it.
  */
 
@@ -55,12 +62,16 @@ const TEXTS = {
     habitBody: (amount: string) => `المطلوب اليوم: ${amount}`,
     kinshipTitle: 'صلة الرحم',
     kinshipBody: (n: number) => `حان وقت التواصل مع ${n} من أقاربك`,
+    peopleTitle: 'أعمال دورية',
+    peopleBody: (n: number) => `حان وقت التواصل مع ${n} من قوائمك`,
     units: { minutes: 'دقيقة', count: 'مرة', times: 'مرة' } as Record<PlanUnit, string>,
   },
   en: {
     habitBody: (amount: string) => `Today: ${amount}`,
     kinshipTitle: 'Ties of kinship',
     kinshipBody: (n: number) => `Time to get in touch with ${n} of your relatives`,
+    peopleTitle: 'Periodic acts',
+    peopleBody: (n: number) => `Time to get in touch with ${n} people from your lists`,
     units: { minutes: 'minutes', count: 'times', times: 'times' } as Record<PlanUnit, string>,
   },
 } as const;
@@ -109,6 +120,8 @@ export function planPushes(input: PushPlanInput): PlannedPush[] {
   const out: Omit<PlannedPush, 'digest'>[] = [];
 
   for (const plan of store.plans) {
+    const slots = reminderSlots(plan);
+    if (slots.length === 0) continue;
     const habit = habitFor(plan, habits);
     const rule: Rule = plan.rule ?? habit?.defaultRule ?? { kind: 'daily' };
     let dates: LocalDate[];
@@ -119,10 +132,11 @@ export function planPushes(input: PushPlanInput): PlannedPush[] {
     }
     const title = habit ? (locale === 'ar' ? habit.titleAr : habit.titleEn) : plan.title;
     for (const date of dates) {
+      if (date < plan.createdOn || isPausedOn(plan, date)) continue;
       const required = requiredOn(plan, date);
       if (date === today && (plan.log[today] ?? 0) >= required) continue;
       const body = texts.habitBody(formatAmount(required, plan.unit, habit, locale));
-      for (const time of [...new Set(plan.slots)].sort()) {
+      for (const time of slots) {
         const fireAt = zonedToUtc(date, time, timeZone);
         if (!inWindow(fireAt)) continue;
         out.push({ key: `habit:${plan.id}:${date}:${time}`, fireAt, title, body, url: sitePath(locale, '/practice'), tag: `habit-${plan.id}` });
@@ -133,20 +147,25 @@ export function planPushes(input: PushPlanInput): PlannedPush[] {
   // As on mobile: an overdue relative reminds at the next kinship time from now, then weekly while still due.
   const firstSlot = zonedToUtc(today, KINSHIP_PUSH_TIME, timeZone) > now ? today : addDays(today, 1);
   const dueCount = new Map<LocalDate, number>();
+  const onlyKin = new Map<LocalDate, boolean>();
   for (const rel of store.relatives) {
+    if (!isRelativeOpen(rel)) continue;
     const due = nextDue(rel, today);
-    for (let date = due < firstSlot ? firstSlot : due; date <= lastDay; date = addDays(date, KINSHIP_REPEAT_DAYS)) {
+    const repeat = circleOf(rel) === 'sick' ? SICK_VISIT_EVERY_DAYS : KINSHIP_REPEAT_DAYS;
+    for (let date = due < firstSlot ? firstSlot : due; date <= lastDay; date = addDays(date, repeat)) {
       dueCount.set(date, (dueCount.get(date) ?? 0) + 1);
+      onlyKin.set(date, (onlyKin.get(date) ?? true) && circleOf(rel) === 'kin');
     }
   }
   for (const [date, count] of dueCount) {
     const fireAt = zonedToUtc(date, KINSHIP_PUSH_TIME, timeZone);
     if (!inWindow(fireAt)) continue;
+    const kin = onlyKin.get(date) ?? true;
     out.push({
       key: `kinship:${date}`,
       fireAt,
-      title: texts.kinshipTitle,
-      body: texts.kinshipBody(count),
+      title: kin ? texts.kinshipTitle : texts.peopleTitle,
+      body: kin ? texts.kinshipBody(count) : texts.peopleBody(count),
       url: sitePath(locale, '/practice/kinship'),
       tag: 'kinship',
     });

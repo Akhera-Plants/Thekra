@@ -30,6 +30,12 @@
 
 Dates on the wire are `YYYY-MM-DD`; timestamps are ISO 8601 UTC.
 
+**Phase 2 (2026-10-31, migration `20261031120000_phase2_practice`, additive):** `HabitPlan.pausedOn @db.Date?`,
+`HabitPlan.resumedOn @db.Date?`, `HabitPlan.establishedOn @db.Date?`, `Relative.circle String @default("kin")`
+(`kin | parents | neighbors | friends | sick`), `PracticeSettings.excusedDays String[] @default([])` (ascending, unique,
+≤ 60). `resumedOn` is not in the redesign list: it keeps the paused days out of the streak after «استأنف» (a pause is
+`[pausedOn, resumedOn)`); it is valid only with `pausedOn` and never before it.
+
 ## 3. Sync API (all JWT, `private, no-store`, throttled like other user routes)
 
 ### `GET /v1/me/practice?since=<ISO>` → changes after `since` (everything when absent)
@@ -37,13 +43,15 @@ Dates on the wire are `YYYY-MM-DD`; timestamps are ISO 8601 UTC.
 ```json
 { "data": {
   "serverTime": "2026-10-28T18:00:00.000Z",
-  "settings": { "hijriOffset": 0, "reminderTimes": ["07:00"], "freeMinutesPerDay": 60, "updatedAt": "…" } | null,
+  "settings": { "hijriOffset": 0, "reminderTimes": ["07:00"], "freeMinutesPerDay": 60, "excusedDays": [],
+                "clientUpdatedAt": "…", "updatedAt": "…" } | null,
   "plans": [ { "id": "…", "habitKey": "duha", "deedSlug": "nawafil", "title": "…", "unit": "times", "amount": 1,
                "ceiling": null, "activeDaysPerWeek": 3, "slots": ["09:30","11:00"], "rule": {…}|null,
                "createdOn": "2026-10-28", "amountChangedOn": "2026-10-28", "ebbSince": null, "season": null,
+               "pausedOn": null, "resumedOn": null, "establishedOn": null,
                "clientUpdatedAt": "…", "deletedAt": null } ],
   "logs": [ { "planId": "…", "date": "2026-10-28", "amount": 1 }, { "planId": "…", "date": "2026-10-27", "amount": 0, "correctedAt": "<ISO>" } ],
-  "relatives": [ { "id": "…", "name": "…", "relation": "…", "rule": {…}, "lastContactedOn": null,
+  "relatives": [ { "id": "…", "name": "…", "relation": "…", "rule": {…}, "circle": "kin", "lastContactedOn": null,
                    "clientUpdatedAt": "…", "deletedAt": null } ],
   "contacts": [ { "relativeId": "…", "date": "2026-10-20", "deleted": false } ]
 } }
@@ -63,6 +71,12 @@ Merge rules (server and practice-core apply the same ones):
 | log (plan, date) | the later `correctedAt` wins (absent/null counts as the oldest); at the same `correctedAt` the larger amount wins. So plain logging never goes down (same-day partial amounts add up on the device first), and an undo of «تمّ» or a fixed amount (practice-core `correctLog`, which sets `correctedAt`; `amount` may then be 0) is not undone by a device that still holds the old amount. Added 2026-10-29 (`HabitLog.correctedAt`); a client that never sends `correctedAt` keeps the old max rule |
 | contact (relative, date) | union; `deleted: true` sets a tombstone; a later non-deleted write clears it |
 
+Phase-2 compatibility: a client that omits `pausedOn` / `resumedOn` / `establishedOn` sends null, `circle` → `kin`,
+`excusedDays` → `[]`. The canonical content (`planFields`, `relativeFields`, `settingsContent`) carries the new values
+only when set (`circle` only when not `kin`, `excusedDays` only when not empty), so every older record keeps the
+content it had and acked versions stay valid. Last writer wins on the whole record: an older client that edits a paused
+plan later than the pause clears it (expected; the pause can be set again).
+
 Validation: practice-core `validatePlan` / `validateRule` / `validateRelative` / `looksLikeContactDetails`; unknown
 fields are dropped; a log for a plan the user does not own is rejected (404 for the whole request, nothing applied).
 Errors: 400 `PRACTICE_INVALID` (with the item index), 413 `PRACTICE_TOO_LARGE`, 422 `PRACTICE_LIMIT_REACHED`.
@@ -78,6 +92,10 @@ a failure there is logged and never fails the sync.
   `version` → 409 `SIN_VAULT_CONFLICT` with the current vault in `details`. The server checks only base64 shape, sizes,
   `kdf === 'pbkdf2-sha256'` and `iterations >= 210000`.
 - `DELETE /v1/me/sin-vault` → 204.
+
+After a sync the web push planner follows practice-core: a paused plan reminds of nothing (and no day inside a pause),
+an established plan in its first slot only (`reminderSlots`); a visited sick person is no longer due, an unvisited one
+repeats every 2 days.
 
 Export (`GET /v1/auth/me/export`) includes settings, plans, logs, relatives, contacts and the vault **ciphertext**
 (still unreadable). `DELETE /v1/auth/me` cascades everything.

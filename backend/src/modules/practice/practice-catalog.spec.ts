@@ -96,9 +96,37 @@ describe('practice catalog — the real reviewer files', () => {
   it('scheduleForDeed filters by deed slug', () => {
     const siyam = scheduleForDeed('siyam');
     expect(siyam.occasions.map((o) => o.key)).toEqual(['ayyam-bid', 'ithnayn-khamis', 'arafah', 'ashura', 'shawwal-six']);
-    expect(siyam.habits).toEqual([]);
+    expect(siyam.habits.map((h) => h.key)).toEqual(['siyam-ayyam-bid', 'siyam-ithnayn-khamis']);
     expect(scheduleForDeed('dhikr').habits.map((h) => h.key)).toEqual(['adhkar-sabah-masa', 'tasbih-after-salah']);
     expect(scheduleForDeed('no-such-deed')).toEqual({ habits: [], occasions: [] });
+  });
+
+  it('lists the «أعمال دورية» templates: people lists (one per circle) and dated acts; old habit keys stay', () => {
+    const periodic = practiceCatalog().habits.filter((h) => h.kind === 'periodic');
+    expect(periodic.map((h) => [h.key, h.people ?? null])).toEqual([
+      ['sadaqah-weekly', null],
+      ['silat-ar-rahim', 'kin'],
+      ['birr-walidayn', 'parents'],
+      ['tafaqqud-jiran', 'neighbors'],
+      ['tafaqqud-sadiq', 'friends'],
+      ['iyadat-marid', 'sick'],
+      ['siyam-ayyam-bid', null],
+      ['siyam-ithnayn-khamis', null],
+      ['kahf-jumua', null],
+      ['khatma', null],
+      ['ziyarat-qubur', null],
+    ]);
+    expect(practiceCatalog().habits.find((h) => h.key === 'birr-call')?.kind).toBeUndefined();
+    // The templates added on 2026-10-31 reuse only ids already used (and verified) elsewhere in the file, or none yet.
+    const before = new Set(['sadaqah-weekly', 'silat-ar-rahim']);
+    const known = new Set(
+      [...practiceCatalog().occasions, ...practiceCatalog().habits.filter((h) => h.kind !== 'periodic' || before.has(h.key))].flatMap(
+        (x) => x.evidence,
+      ),
+    );
+    for (const h of periodic.filter((x) => !before.has(x.key))) {
+      for (const id of h.evidence) expect(known.has(id), `${h.key} ${id}`).toBe(true);
+    }
   });
 
   it('programForSin exposes only availability and category', () => {
@@ -129,6 +157,18 @@ describe('practice catalog — validation failures', () => {
     expect(build(schedulesText.replace('deed: jumua', 'deed: ghibah'))).toThrow('"ghibah" is a topic with side AVOID');
     expect(build(schedulesText.replace('deed: jumua', 'deed: not-a-topic'))).toThrow('not a topic');
     expect(build(schedulesText, programsText.replace('sin: ghadab', 'sin: siyam'))).toThrow('expected side AVOID');
+  });
+
+  it('periodic templates: empty evidence allowed only for kind periodic; people needs periodic and a person rhythm', () => {
+    const habitEmpty = schedulesText.replace('evidence: [f285c188-c4f1-472b-bd64-e249d479ed3d]', 'evidence: []');
+    expect(habitEmpty).not.toBe(schedulesText);
+    expect(build(habitEmpty)).toThrow('evidence must be a non-empty list');
+    expect(build(schedulesText.replace('    kind: periodic\n    people: kin\n', '    people: kin\n'))).toThrow('people needs kind: periodic');
+    expect(build(schedulesText.replace('people: neighbors', 'people: colleagues'))).toThrow('people must be one of');
+    expect(build(schedulesText.replace('people: neighbors', 'people: kin'))).toThrow('two people templates for circle "kin"');
+    expect(
+      build(schedulesText.replace("defaultRule: { kind: everyNDays, n: 30, anchor: '2026-10-31' }", 'defaultRule: { kind: monthlyDay, day: 1 }')),
+    ).toThrow("a person's rhythm");
   });
 
   it('rejects an evidence id that is not a UUID', () => {

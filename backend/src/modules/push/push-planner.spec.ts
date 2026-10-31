@@ -33,6 +33,34 @@ const run = (s: Store, extra: Partial<PushPlanInput> = {}) =>
   planPushes({ store: s, habits, timeZone: ZONE, locale: 'ar', now: NOW, ...extra });
 
 describe('planPushes', () => {
+  it('a paused plan reminds of nothing; an established one reminds in its first slot only', () => {
+    expect(run(store([plan({ pausedOn: '2026-10-28' })]))).toEqual([]);
+    // Resumed on the 30th: the 29th is still inside the pause.
+    expect(run(store([plan({ pausedOn: '2026-10-20', resumedOn: '2026-10-30' })])).map((p) => p.key)).toEqual([
+      'habit:plan-duha:2026-10-30:09:30',
+      'habit:plan-duha:2026-10-30:11:00',
+    ]);
+    expect(run(store([plan({ establishedOn: '2026-10-20' })])).map((p) => p.key)).toEqual([
+      'habit:plan-duha:2026-10-29:09:30',
+      'habit:plan-duha:2026-10-30:09:30',
+    ]);
+  });
+
+  it('a sick person reminds every two days until visited; other lists use the generic wording', () => {
+    const sick: Relative = {
+      id: 'r-sick',
+      name: 'أبو محمد',
+      relation: '',
+      circle: 'sick',
+      rule: { kind: 'everyNDays', n: 2, anchor: '2026-10-28' },
+      history: [],
+    };
+    const out = run(store([], [sick]), { windowHours: 96 });
+    expect(out.map((p) => p.key)).toEqual(['kinship:2026-10-29', 'kinship:2026-10-31']);
+    expect(out[0]).toMatchObject({ title: 'أعمال دورية', body: 'حان وقت التواصل مع 1 من قوائمك' });
+    expect(run(store([], [{ ...sick, history: ['2026-10-28'], lastContactedOn: '2026-10-28' }]), { windowHours: 96 })).toEqual([]);
+  });
+
   it('reminds at every slot of the next 48 hours, in the browser zone, soonest first', () => {
     const out = run(store([plan()]));
     expect(out.map((p) => [p.key, p.fireAt.toISOString()])).toEqual([

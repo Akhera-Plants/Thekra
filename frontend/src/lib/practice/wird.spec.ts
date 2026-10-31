@@ -4,6 +4,7 @@ import {
   createPlan,
   createRelative,
   emptyStore,
+  limits,
   logContact,
   logDone,
   startProgram,
@@ -13,7 +14,24 @@ import {
   type Rule,
   type Store,
 } from '@thekra/practice-core';
+import type { PracticeHabit } from '@/lib/types/practice';
+import { limitOptions, periodicTemplates, planFromTemplate } from './limits';
 import { periodicHref, wirdDay, wirdSummary } from './wird';
+
+const HABIT: PracticeHabit = {
+  key: 'duha',
+  titleAr: 'صلاة الضحى',
+  titleEn: 'Duha prayer',
+  deed: 'nawafil',
+  unit: 'times',
+  unitLabelAr: 'ركعتان',
+  unitLabelEn: "two rak'ahs",
+  start: { far: 1, near: 1 },
+  defaultRule: { kind: 'daily' },
+  defaultSlots: ['09:30'],
+  basis: 'text',
+  evidence: [],
+};
 
 const T = '2026-10-28T10:00:00.000Z';
 const TODAY = '2026-10-28'; // a Wednesday
@@ -51,17 +69,36 @@ describe('wirdDay', () => {
   });
 });
 
+describe('limits and templates', () => {
+  it('a plan from a periodic template is a periodic act, not a sapling; a people template makes no plan', () => {
+    const habits = new Map<string, PracticeHabit>([
+      ['sadaqah-weekly', { ...HABIT, key: 'sadaqah-weekly', kind: 'periodic', defaultRule: { kind: 'weekdays', days: [5] } }],
+      ['silat-ar-rahim', { ...HABIT, key: 'silat-ar-rahim', kind: 'periodic', people: 'kin' }],
+      ['duha', HABIT],
+    ]);
+    const weekly = planFromTemplate(habits.get('sadaqah-weekly') as PracticeHabit, TODAY, 'p1');
+    expect(weekly).toMatchObject({ habitKey: 'sadaqah-weekly', activeDaysPerWeek: 2, createdOn: TODAY });
+    expect(weekly.rule).toBeUndefined();
+    expect(() => planFromTemplate(habits.get('silat-ar-rahim') as PracticeHabit, TODAY)).toThrow();
+    const s = storeOf(weekly, plan('a'), plan('b'), plan('c'));
+    const l = limits(s, TODAY, limitOptions(habits));
+    expect(l.sapling).toMatchObject({ count: 3, full: true });
+    expect(l.periodic.count).toBe(1);
+    expect(periodicTemplates([...habits.values()]).map((h) => h.key)).toEqual(['silat-ar-rahim', 'sadaqah-weekly']);
+  });
+});
+
 describe('wirdSummary', () => {
   it('counts what is left today and the streak', () => {
     const a = ['2026-10-26', '2026-10-27'].reduce((p, d) => logDone(p, d, 1), plan('a'));
     const s = storeOf(a, plan('b', { createdOn: TODAY }));
-    expect(wirdSummary(s, TODAY)).toEqual({ remaining: 2, streak: 2, longest: 2, hasPlans: true });
+    expect(wirdSummary(s, TODAY)).toEqual({ remaining: 2, streak: 2, longest: 2, display: { kind: 'current', current: 2, longest: 2 }, hasPlans: true });
     const done = { ...s, plans: s.plans.map((p) => logDone(p, TODAY, 1)) };
     expect(wirdSummary(done, TODAY)).toMatchObject({ remaining: 0, streak: 3 });
   });
 
   it('is empty without plans; a relative alone is left but has no streak', () => {
-    expect(wirdSummary(emptyStore(), TODAY)).toEqual({ remaining: 0, streak: 0, longest: 0, hasPlans: false });
+    expect(wirdSummary(emptyStore(), TODAY)).toEqual({ remaining: 0, streak: 0, longest: 0, display: { kind: 'none' }, hasPlans: false });
     let s = upsertRelative(emptyStore(), createRelative({ id: 'r', name: 'خالي', relation: '', rule: { kind: 'everyNDays', n: 7, anchor: '2026-10-01' } }, T), T);
     expect(wirdSummary(s, TODAY)).toMatchObject({ remaining: 1, hasPlans: false });
     s = { ...s, relatives: s.relatives.map((r) => logContact(r, TODAY)) };

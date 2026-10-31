@@ -11,6 +11,7 @@ import {
   longestStreak,
   offDayItems,
   remainingCount,
+  streakDisplay,
   type AgendaItem,
   type AgendaOptions,
   type HabitItem,
@@ -19,6 +20,7 @@ import {
   type PeriodicAct,
   type PlanDayOptions,
   type Store,
+  type StreakDisplay,
 } from '@thekra/practice-core';
 
 /** A task row of the day (an occasion is information, not a task). */
@@ -52,15 +54,20 @@ export interface WirdSummary {
   /** Complete days in a row up to today (today only once complete). */
   streak: number;
   longest: number;
+  /** How to show it: never 0 as a failure («ابدأ مداومة جديدة اليوم · أطول مداومة: N»). */
+  display: StreakDisplay;
   hasPlans: boolean;
 }
 
 /** The numbers of the streak chip, «سجلّي» and the home card. */
 export function wirdSummary(store: Store, today: LocalDate, opts: PlanDayOptions = {}): WirdSummary {
+  const streak = currentStreak(store, today, opts);
+  const longest = longestStreak(store, today, opts);
   return {
     remaining: remainingCount(dayAgenda(store, today, opts)),
-    streak: currentStreak(store, today, opts),
-    longest: longestStreak(store, today, opts),
+    streak,
+    longest,
+    display: streakDisplay(streak, longest),
     hasPlans: store.plans.length > 0,
   };
 }

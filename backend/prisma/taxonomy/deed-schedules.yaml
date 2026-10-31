@@ -13,6 +13,11 @@
 #   - Units: `start.far` for someone far from the habit, `start.near` for someone close to it (lecture: «دقيقتان» / 5–10).
 #     Increase only with the ladder in practice-core, never before 4 weeks of steady practice.
 #   - Reviewed by: pending the sheikh (owner approved publishing 2026-10-28).
+#   - `kind: periodic` (2026-10-31, redesign §3–§4.2): a template of «أعمال دورية» (counts toward the 7 periodic acts, not
+#     the 3 saplings). `people: kin|parents|neighbors|friends|sick` makes it a people list: the user adds people (the
+#     practice-core Relative with that `circle`) and the default rule is each person's rhythm; `sick` is on demand
+#     (a person is added while sick, reminded every 2 days until visited). A periodic template may have `evidence: []`
+#     until a published Quote id is verified for it (never an invented id).
 
 occasions:
   - key: ayyam-bid
@@ -198,6 +203,7 @@ habits:
     basis: organizational
     evidence: [75f6d47d-8217-4ac3-bb1f-e512aee22640]
   - key: sadaqah-weekly
+    kind: periodic
     titleAr: صدقة ولو قليلة
     titleEn: Charity, even a little
     deed: sadaqah
@@ -210,6 +216,8 @@ habits:
     basis: organizational
     evidence: [393df1bd-4342-4d44-81eb-ef3b0dc5752d]
   - key: silat-ar-rahim
+    kind: periodic
+    people: kin
     titleAr: صلة الرحم (اتصال أو زيارة أو رسالة)
     titleEn: Keeping ties of kinship (a call, a visit or a message)
     deed: silat-ar-rahim
@@ -233,3 +241,125 @@ habits:
     defaultSlots: ['18:00', '21:00']
     basis: organizational
     evidence: [7e67d670-22ca-4088-a2db-0ed905e3908c]
+  # «أعمال دورية» templates (2026-10-31). People lists first, then the dated acts.
+  - key: birr-walidayn
+    kind: periodic
+    people: parents
+    titleAr: برّ الوالدين
+    titleEn: Kindness to parents
+    deed: birr-al-walidayn
+    unit: times
+    unitLabelAr: اتصال أو زيارة
+    unitLabelEn: call or visit
+    start: { far: 1, near: 1 }
+    defaultRule: { kind: everyNWeeks, n: 1, weekday: 5, anchor: '2026-10-30' }
+    defaultSlots: ['18:00']
+    basis: organizational
+    evidence: [7e67d670-22ca-4088-a2db-0ed905e3908c]
+  - key: tafaqqud-jiran
+    kind: periodic
+    people: neighbors
+    titleAr: تفقّد الجيران
+    titleEn: Checking on the neighbours
+    deed: haqq-jar
+    unit: times
+    unitLabelAr: زيارة أو سؤال
+    unitLabelEn: visit or call
+    start: { far: 1, near: 1 }
+    defaultRule: { kind: everyNDays, n: 30, anchor: '2026-10-31' }
+    defaultSlots: ['18:00']
+    basis: organizational
+    evidence: []
+  - key: tafaqqud-sadiq
+    kind: periodic
+    people: friends
+    titleAr: تفقّد صديق
+    titleEn: Checking on a friend
+    deed: hubb-fillah
+    unit: times
+    unitLabelAr: سؤال
+    unitLabelEn: call or message
+    start: { far: 1, near: 1 }
+    defaultRule: { kind: everyNWeeks, n: 2, weekday: 5, anchor: '2026-10-30' }
+    defaultSlots: ['18:00']
+    basis: organizational
+    evidence: []
+  - key: iyadat-marid
+    kind: periodic
+    people: sick
+    titleAr: عيادة المريض
+    titleEn: Visiting the sick
+    deed: iyadat-marid
+    unit: times
+    unitLabelAr: زيارة
+    unitLabelEn: visit
+    start: { far: 1, near: 1 }
+    defaultRule: { kind: everyNDays, n: 2, anchor: '2026-10-31' }
+    defaultSlots: ['18:00']
+    basis: organizational
+    evidence: []
+  - key: siyam-ayyam-bid
+    kind: periodic
+    titleAr: صيام الأيام البيض
+    titleEn: Fasting the White Days
+    deed: siyam
+    unit: times
+    unitLabelAr: يوم
+    unitLabelEn: day
+    start: { far: 1, near: 1 }
+    defaultRule: { kind: hijriMonthDays, days: [13, 14, 15] }
+    defaultSlots: ['04:30']
+    basis: text
+    evidence: [e4a9c1f0-c53a-4f1c-9418-aaf4bbb8cd13, 93f7d1ab-b6f7-4521-bae8-f37cc1ff06a2]
+  - key: siyam-ithnayn-khamis
+    kind: periodic
+    titleAr: صيام الاثنين والخميس
+    titleEn: Fasting Mondays and Thursdays
+    deed: siyam
+    unit: times
+    unitLabelAr: يوم
+    unitLabelEn: day
+    start: { far: 1, near: 1 }
+    defaultRule: { kind: weekdays, days: [1, 4] }
+    defaultSlots: ['04:30']
+    basis: text
+    evidence: [54cb1111-a5da-412a-a828-90989973ef18, 28b92310-7fb6-4522-9d85-6a6c8282523f]
+  - key: kahf-jumua
+    kind: periodic
+    titleAr: سورة الكهف يوم الجمعة
+    titleEn: Surat al-Kahf on Friday
+    deed: jumua
+    unit: times
+    unitLabelAr: قراءة
+    unitLabelEn: reading
+    start: { far: 1, near: 1 }
+    defaultRule: { kind: weekdays, days: [5] }
+    defaultSlots: ['10:00']
+    basis: text
+    evidence: []
+  - key: khatma
+    kind: periodic
+    titleAr: ختمة القرآن
+    titleEn: Completing the Quran
+    deed: quran
+    unit: times
+    unitLabelAr: ختمة
+    unitLabelEn: completion
+    start: { far: 1, near: 1 }
+    defaultRule: { kind: monthlyDay, day: 28 }
+    defaultSlots: ['20:00']
+    basis: organizational
+    evidence: []
+  - key: ziyarat-qubur
+    kind: periodic
+    titleAr: زيارة القبور
+    titleEn: Visiting the graves
+    deed: zuhd
+    unit: times
+    unitLabelAr: زيارة
+    unitLabelEn: visit
+    start: { far: 1, near: 1 }
+    defaultRule: { kind: monthlyDay, day: 1 }
+    defaultSlots: ['16:00']
+    basis: organizational
+    evidence: []

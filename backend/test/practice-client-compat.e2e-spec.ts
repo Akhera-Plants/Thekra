@@ -19,6 +19,11 @@ import {
   deletePlan,
   deriveKey,
   emptyStore,
+  establishPlan,
+  pausePlan,
+  resumePlan,
+  sickRule,
+  toggleExcusedDay,
   localChanges,
   logContact,
   logDone,
@@ -57,7 +62,13 @@ function synced(store: Store) {
   const byId = <T extends { id: string }>(items: T[]) => [...items].sort((a, b) => a.id.localeCompare(b.id));
   const s = store.settings;
   return {
-    settings: { hijriOffset: s.hijriOffset, reminderTimes: s.reminderTimes ?? [], freeMinutesPerDay: s.freeMinutesPerDay ?? null, updatedAt: s.updatedAt },
+    settings: {
+      hijriOffset: s.hijriOffset,
+      reminderTimes: s.reminderTimes ?? [],
+      freeMinutesPerDay: s.freeMinutesPerDay ?? null,
+      excusedDays: s.excusedDays ?? [],
+      updatedAt: s.updatedAt,
+    },
     plans: byId(store.plans).map((p) => ({
       id: p.id,
       ...planFields(p),
@@ -216,6 +227,40 @@ describe('practice-core client ↔ server compatibility (e2e)', () => {
       { planId: p1, date: '2026-10-27', amount: 10, correctedAt: at(4) },
       { planId: p1, date: '2026-10-28', amount: 0, correctedAt: at(4) },
     ]);
+  });
+
+  it('phase 2: pause / resume, «راسخة», people circles and «عذر» days converge on two devices', async () => {
+    const auth = await signUp();
+    const a: Device = { name: 'A', store: emptyStore() };
+    const b: Device = { name: 'B', store: emptyStore() };
+    const [p1, p2, r1, r2] = [randomUUID(), randomUUID(), randomUUID(), randomUUID()];
+    a.store = upsertPlan(a.store, plan(p1, 'الضحى', at(1)), at(1));
+    a.store = upsertPlan(a.store, plan(p2, 'الوتر', at(1)), at(1));
+    a.store = updatePlan(a.store, p1, (p) => pausePlan(p, '2026-10-29', at(2)), at(2));
+    a.store = updatePlan(a.store, p2, (p) => establishPlan(p, '2026-10-29', at(2)), at(2));
+    a.store = upsertRelative(
+      a.store,
+      createRelative({ id: r1, name: 'جاري', relation: '', circle: 'neighbors', rule: { kind: 'everyNDays', n: 30, anchor: '2026-10-28' } }, at(3)),
+      at(3),
+    );
+    a.store = upsertRelative(a.store, createRelative({ id: r2, name: 'أبو محمد', relation: '', circle: 'sick', rule: sickRule('2026-10-28') }, at(3)), at(3));
+    a.store = toggleExcusedDay(a.store, '2026-10-27', '2026-10-29', at(4));
+    await sync(a, auth);
+    await sync(b, auth);
+    expect(synced(b.store)).toEqual(synced(a.store));
+    expect(b.store.plans.find((p) => p.id === p1)?.pausedOn).toBe('2026-10-29');
+    expect(b.store.plans.find((p) => p.id === p2)?.establishedOn).toBe('2026-10-29');
+    expect(b.store.relatives.find((r) => r.id === r2)?.circle).toBe('sick');
+    expect(b.store.settings.excusedDays).toEqual(['2026-10-27']);
+    // B resumes and visits the sick person; A sees both. Nothing stays pending on either device.
+    b.store = updatePlan(b.store, p1, (p) => resumePlan(p, '2026-10-31', at(10)), at(10));
+    b.store = updateRelative(b.store, r2, (r) => logContact(r, '2026-10-31'), at(10));
+    await sync(b, auth);
+    await sync(a, auth);
+    expect(synced(a.store)).toEqual(synced(b.store));
+    expect(a.store.plans.find((p) => p.id === p1)).toMatchObject({ pausedOn: '2026-10-29', resumedOn: '2026-10-31' });
+    expect(countChanges(localChanges(a.store))).toBe(0);
+    expect(countChanges(localChanges(b.store))).toBe(0);
   });
 
   it('a first sync with more than 500 items goes out in batches and arrives whole', async () => {
