@@ -1,0 +1,238 @@
+# أسماء الله الحسنى — each name with one Quran verse that contains it (ref = surah:ayah).
+# Verified 2026-11-01 against the production Quran text: the name occurs in the verse (normalized, diacritics removed).
+# quoteId is the production Quote id of that verse (the API serves the text; never type verse text).
+# Meanings and links are added in the app layer and are pending the sheikh. Order follows the verses, not a fixed list
+# of 99 (the enumerated list in al-Tirmidhi is weak per the scholars; the names here are taken from the Quran).
+review: pending-sheikh
+names:
+  - name: الله
+    ref: '59:22'
+    quoteId: 9d794b31-1319-4655-a0b8-364d1fd98260
+  - name: الرحمن
+    ref: '59:22'
+    quoteId: 9d794b31-1319-4655-a0b8-364d1fd98260
+  - name: الرحيم
+    ref: '59:22'
+    quoteId: 9d794b31-1319-4655-a0b8-364d1fd98260
+  - name: الملك
+    ref: '59:23'
+    quoteId: b18f868d-16bf-4575-ab0f-db470ba552f9
+  - name: القدوس
+    ref: '59:23'
+    quoteId: b18f868d-16bf-4575-ab0f-db470ba552f9
+  - name: السلام
+    ref: '59:23'
+    quoteId: b18f868d-16bf-4575-ab0f-db470ba552f9
+  - name: المؤمن
+    ref: '59:23'
+    quoteId: b18f868d-16bf-4575-ab0f-db470ba552f9
+  - name: المهيمن
+    ref: '59:23'
+    quoteId: b18f868d-16bf-4575-ab0f-db470ba552f9
+  - name: العزيز
+    ref: '59:23'
+    quoteId: b18f868d-16bf-4575-ab0f-db470ba552f9
+  - name: الجبار
+    ref: '59:23'
+    quoteId: b18f868d-16bf-4575-ab0f-db470ba552f9
+  - name: المتكبر
+    ref: '59:23'
+    quoteId: b18f868d-16bf-4575-ab0f-db470ba552f9
+  - name: الخالق
+    ref: '59:24'
+    quoteId: 63d0125e-dbda-4449-b403-1cb495e8ba5d
+  - name: البارئ
+    ref: '59:24'
+    quoteId: 63d0125e-dbda-4449-b403-1cb495e8ba5d
+  - name: المصور
+    ref: '59:24'
+    quoteId: 63d0125e-dbda-4449-b403-1cb495e8ba5d
+  - name: الحكيم
+    ref: '59:24'
+    quoteId: 63d0125e-dbda-4449-b403-1cb495e8ba5d
+  - name: الأول
+    ref: '57:3'
+    quoteId: 980f69b3-4f7b-43de-9403-e74cbca36738
+  - name: الآخر
+    ref: '57:3'
+    quoteId: 980f69b3-4f7b-43de-9403-e74cbca36738
+  - name: الظاهر
+    ref: '57:3'
+    quoteId: 980f69b3-4f7b-43de-9403-e74cbca36738
+  - name: الباطن
+    ref: '57:3'
+    quoteId: 980f69b3-4f7b-43de-9403-e74cbca36738
+  - name: العليم
+    ref: '57:3'
+    quoteId: 980f69b3-4f7b-43de-9403-e74cbca36738
+  - name: الحي
+    ref: '2:255'
+    quoteId: 0fa365be-3f20-4cba-9aec-88e86a587c1e
+  - name: القيوم
+    ref: '2:255'
+    quoteId: 0fa365be-3f20-4cba-9aec-88e86a587c1e
+  - name: العلي
+    ref: '2:255'
+    quoteId: 0fa365be-3f20-4cba-9aec-88e86a587c1e
+  - name: العظيم
+    ref: '2:255'
+    quoteId: 0fa365be-3f20-4cba-9aec-88e86a587c1e
+  - name: الحق
+    ref: '22:6'
+    quoteId: 07876453-91ef-46a5-94e9-385b90de46fa
+  - name: الولي
+    ref: '42:9'
+    quoteId: 0b633402-03a1-4b71-8b4a-324873bc31ed
+  - name: الواحد
+    ref: '13:16'
+    quoteId: 081574cf-b996-4932-8cc1-04ae543a5cf7
+  - name: القهار
+    ref: '13:16'
+    quoteId: 081574cf-b996-4932-8cc1-04ae543a5cf7
+  - name: الصمد
+    ref: '112:2'
+    quoteId: 37606126-9844-42c8-87bb-f25da1affb82
+  - name: الأحد
+    ref: '112:1'
+    quoteId: 3e955275-2323-4fd0-b19f-7ab0deaf4927
+  - name: الرزاق
+    ref: '51:58'
+    quoteId: 14c9749e-e448-4f37-b6e7-53a37b2eb1d2
+  - name: المتين
+    ref: '51:58'
+    quoteId: 14c9749e-e448-4f37-b6e7-53a37b2eb1d2
+  - name: الفتاح
+    ref: '34:26'
+    quoteId: 5c42bb52-6bea-442f-b2ba-5201e2dfb1a5
+  - name: الوهاب
+    ref: '38:9'
+    quoteId: 3546d5b7-eeaf-41df-afdd-f3bd1f9dcdfe
+  - name: الغفار
+    ref: '38:66'
+    quoteId: 0d3ee74e-b035-4e74-a137-542d64ee2619
+  - name: اللطيف
+    ref: '67:14'
+    quoteId: 9e8c1bd3-c1a5-4afa-8287-ff28f29a1d90
+  - name: الخبير
+    ref: '67:14'
+    quoteId: 9e8c1bd3-c1a5-4afa-8287-ff28f29a1d90
+  - name: البر
+    ref: '52:28'
+    quoteId: cdee12bd-f940-445f-8463-068d8dfc1860
+  - name: التواب
+    ref: '2:37'
+    quoteId: c0939c6a-7964-4ad1-b161-fd680f67c736
+  - name: الودود
+    ref: '85:14'
+    quoteId: 9284423d-e1c4-44ab-9df2-034b5514e8a2
+  - name: الغفور
+    ref: '85:14'
+    quoteId: 9284423d-e1c4-44ab-9df2-034b5514e8a2
+  - name: الكريم
+    ref: '82:6'
+    quoteId: 7501c984-c379-4fb8-a7ca-f3f1a94ba56a
+  - name: الغني
+    ref: '35:15'
+    quoteId: 58232e32-2c6a-4702-b4b1-e8ae07e7e955
+  - name: الحميد
+    ref: '35:15'
+    quoteId: 58232e32-2c6a-4702-b4b1-e8ae07e7e955
+  - name: الكبير
+    ref: '13:9'
+    quoteId: 87eb0f48-8d5c-4ed0-938b-ae9057aaae6a
+  - name: المتعال
+    ref: '13:9'
+    quoteId: 87eb0f48-8d5c-4ed0-938b-ae9057aaae6a
+  - name: السميع
+    ref: '42:11'
+    quoteId: cc4fe52d-d5ab-45b2-bd83-3f5d3be24459
+  - name: البصير
+    ref: '42:11'
+    quoteId: cc4fe52d-d5ab-45b2-bd83-3f5d3be24459
+  - name: الرقيب
+    ref: '5:117'
+    quoteId: a9a7c8a6-d46b-4ee3-8705-6048e43c635b
+  - name: الشهيد
+    ref: '5:117'
+    quoteId: a9a7c8a6-d46b-4ee3-8705-6048e43c635b
+  - name: المجيب
+    ref: '11:61'
+    quoteId: cccf7cf1-0703-4359-a99e-03573cb5efaf
+  - name: القريب
+    ref: '11:61'
+    quoteId: cccf7cf1-0703-4359-a99e-03573cb5efaf
+  - name: الواسع
+    ref: '2:115'
+    quoteId: d15e4c31-99b1-4b06-89f9-9d177de686b6
+  - name: الوكيل
+    ref: '3:173'
+    quoteId: a6b536aa-b104-42f7-b647-9443553ef48f
+  - name: القوي
+    ref: '42:19'
+    quoteId: 440b0912-8dfe-42fc-b882-65c0f2b349e0
+  - name: المولى
+    ref: '8:40'
+    quoteId: 1ea21744-ad5b-47a9-ab62-245192fd02b6
+  - name: النصير
+    ref: '8:40'
+    quoteId: 1ea21744-ad5b-47a9-ab62-245192fd02b6
+  - name: العفو
+    ref: '22:60'
+    quoteId: e932c2be-1db2-4c92-a50e-f4d1d486dbf6
+  - name: الرؤوف
+    ref: '2:143'
+    quoteId: 0af9476d-d7c5-417a-81f3-06aa440c492e
+  - name: القادر
+    ref: '6:65'
+    quoteId: eee0c4b5-aefb-43e7-9333-e741200c6def
+  - name: القاهر
+    ref: '6:18'
+    quoteId: 0fd9130e-26b1-4914-adfb-bf8e7511f6a1
+  - name: الحفيظ
+    ref: '11:57'
+    quoteId: f2398f78-8514-41ec-bc71-17a3689e6138
+  - name: الخلاق
+    ref: '15:86'
+    quoteId: a38b9fed-2a4e-42d6-a8a5-d513e2646d6a
+  - name: المقيت
+    ref: '4:85'
+    quoteId: 2dcf681c-3176-4548-97cb-f0c866d3d114
+  - name: الأكرم
+    ref: '96:3'
+    quoteId: 59c5eff1-ccb0-4a4a-a760-7401cebabd8c
+  - name: الأعلى
+    ref: '87:1'
+    quoteId: 630534ce-4fd3-4cb1-a71f-270a42c484e3
+  - name: المحيط
+    ref: '41:54'
+    quoteId: 9cc77ac1-65e6-4670-9064-db3fcff75394
+  - name: القدير
+    ref: '2:20'
+    quoteId: d3ced74f-5246-448e-b64f-5c754f7c0208
+  - name: المستعان
+    ref: '12:18'
+    quoteId: 70a4ed70-0815-4caa-9b6e-21c1f8251d8d
+  - name: الحليم
+    ref: '2:225'
+    quoteId: e6b2adf9-191b-44cf-8bfb-22ff6efa8bb9
+  - name: الشكور
+    ref: '35:34'
+    quoteId: 74a9d47f-a3c3-4427-83bb-bdb6a6cf3bc1
+  - name: الحسيب
+    ref: '4:6'
+    quoteId: 3bbb8e82-e9ca-4513-ac3d-f49c01a27da3
+  - name: الهادي
+    ref: '22:54'
+    quoteId: c35c363b-a27f-474d-8b99-cbbf4152a391
+  - name: الوارث
+    ref: '15:23'
+    quoteId: e8a9eff1-98a0-4115-ac37-2c57b54faf3e
+  - name: النور
+    ref: '24:35'
+    quoteId: ce407c96-c812-4ae0-b4db-f42ec392d320
+  - name: الرب
+    ref: '1:2'
+    quoteId: 4ea24b92-ba43-40b8-92a2-6e1c48586e53
+  - name: المجيد
+    ref: '11:73'
+    quoteId: 6a423a94-52d6-4dad-85b1-5f6638c5a64b

@@ -269,7 +269,7 @@ habits:
     defaultRule: { kind: everyNDays, n: 30, anchor: '2026-10-31' }
     defaultSlots: ['18:00']
     basis: organizational
-    evidence: []
+    evidence: [a46a8d54-a30b-410a-9478-4c19385542eb] # checked: 2026-11-01 production, sahih
   - key: tafaqqud-sadiq
     kind: periodic
     people: friends
@@ -283,7 +283,7 @@ habits:
     defaultRule: { kind: everyNWeeks, n: 2, weekday: 5, anchor: '2026-10-30' }
     defaultSlots: ['18:00']
     basis: organizational
-    evidence: []
+    evidence: [257d186a-6089-4826-9506-76962725f305] # checked: 2026-11-01 production, sahih
   - key: iyadat-marid
     kind: periodic
     people: sick
@@ -297,7 +297,7 @@ habits:
     defaultRule: { kind: everyNDays, n: 2, anchor: '2026-10-31' }
     defaultSlots: ['18:00']
     basis: organizational
-    evidence: []
+    evidence: [02482181-4309-4f7d-be03-0d8b31b2de28] # checked: 2026-11-01 production, sahih
   - key: siyam-ayyam-bid
     kind: periodic
     titleAr: صيام الأيام البيض
@@ -349,7 +349,7 @@ habits:
     defaultRule: { kind: monthlyDay, day: 28 }
     defaultSlots: ['20:00']
     basis: organizational
-    evidence: []
+    evidence: [59504dff-265c-408a-bb64-57789c33bc78] # checked: 2026-11-01 production, sahih
   - key: ziyarat-qubur
     kind: periodic
     titleAr: زيارة القبور
@@ -362,4 +362,4 @@ habits:
     defaultRule: { kind: monthlyDay, day: 1 }
     defaultSlots: ['16:00']
     basis: organizational
-    evidence: []
+    evidence: [2ec98004-51ab-4487-994f-430b7eb67a8e] # checked: 2026-11-01 production, sahih

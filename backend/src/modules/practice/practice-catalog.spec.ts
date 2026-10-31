@@ -117,15 +117,17 @@ describe('practice catalog — the real reviewer files', () => {
       ['ziyarat-qubur', null],
     ]);
     expect(practiceCatalog().habits.find((h) => h.key === 'birr-call')?.kind).toBeUndefined();
-    // The templates added on 2026-10-31 reuse only ids already used (and verified) elsewhere in the file, or none yet.
+    // The templates added on 2026-10-31 reuse ids already used (and verified) elsewhere in the file,
     const before = new Set(['sadaqah-weekly', 'silat-ar-rahim']);
     const known = new Set(
       [...practiceCatalog().occasions, ...practiceCatalog().habits.filter((h) => h.kind !== 'periodic' || before.has(h.key))].flatMap(
         (x) => x.evidence,
       ),
     );
+    // …or ids checked against production and marked so on their line (`# checked: <date> …`).
+    const checked = new Set([...schedulesText.matchAll(/\[([0-9a-f-]{36})\] # checked: /g)].map((m) => m[1]));
     for (const h of periodic.filter((x) => !before.has(x.key))) {
-      for (const id of h.evidence) expect(known.has(id), `${h.key} ${id}`).toBe(true);
+      for (const id of h.evidence) expect(known.has(id) || checked.has(id), `${h.key} ${id}`).toBe(true);
     }
   });
 
