@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { FeaturedDeed } from '@/components/home/FeaturedDeed';
 import { FeaturedReminder } from '@/components/home/FeaturedReminder';
+import { HomeHero } from '@/components/home/HomeHero';
 import { Moments } from '@/components/home/Moments';
 import { OrnamentalDivider } from '@/components/home/OrnamentalDivider';
 import { Pathways } from '@/components/home/Pathways';
@@ -9,6 +10,7 @@ import { Reflection } from '@/components/home/Reflection';
 import { SourceStrip } from '@/components/home/SourceStrip';
 import { getGoodDeeds } from '@/lib/api/good-deeds';
 import { getQuotes, getReminderOfTheDay } from '@/lib/api/quotes';
+import { getAyah } from '@/lib/api/quran';
 import { reportFailure } from '@/lib/errors';
 import { getSourceStripNames } from '@/lib/api/source-strip';
 import { utcDayNumber } from '@/lib/day';
@@ -76,11 +78,13 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
   const t = await getTranslations('home');
   const day = utcDayNumber();
 
-  const [reminderResult, deedsResult, scholarsResult, sourceNames] = await Promise.all([
+  const [reminderResult, deedsResult, scholarsResult, sourceNames, verseResult] = await Promise.all([
     getReminderOfTheDay(lang).then((result) => result.data).then(ok, failed('home reminder')),
     getGoodDeeds({ limit: 100, sort: 'quoteCount', lang }).then((result) => result.data).then(ok, failed('home deeds')),
     getQuotes({ type: [QuoteType.SCHOLAR_QUOTE], limit: 12, lang }).then((result) => result.data).then(ok, failed('home reflections')),
     getSourceStripNames(lang),
+    // Qaf 50:37, the verse the app is named after: stored text only (content rule §3.1); the hero reads fine without it.
+    getAyah(50, 37, { lang }).then((result) => result.data).then(ok, failed('home verse')),
   ]);
   // Each block is optional, but with all three down the API is unreachable: show the retry
   // (error.tsx) instead of caching a bare page for everyone.
@@ -90,12 +94,14 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
   const reminder = reminderResult.ok ? reminderResult.value : null;
   const deeds = deedsResult.ok ? deedsResult.value : [];
   const scholars = scholarsResult.ok ? scholarsResult.value : [];
+  const verse = verseResult.ok ? verseResult.value : null;
 
   const deed = pickDeed(deeds, lang, day);
   const reflection = pickReflection(scholars, day);
 
   return (
     <div className="page-width flex flex-1 flex-col pb-10">
+      <HomeHero verse={verse} locale={lang} />
       <Pathways />
       <OrnamentalDivider />
       <Moments />

@@ -40,7 +40,10 @@
     "todayHeading": "A chosen reminder",
     "sourcesHeading": "Reminders you can source",
     "sourcesLead": "From the Book of Allah, authentic Sunnah, and the words of the scholars.",
-    "sourcesAria": "Text sources"
+    "sourcesAria": "Text sources",
+    "seasonsTitle": "Seasons of good",
+    "seasonsBody": "The coming sunnah occasions, and a calendar to subscribe to.",
+    "seasonsCta": "Open the seasons"
   },
   "sinPicker": {
     "title": "Sins",
@@ -596,7 +599,7 @@
     }
   },
   "calendar": {
-    "title": "Calendar",
+    "title": "Seasons of good",
     "todayHijri": "Today: {{date}}",
     "offset": "Hijri date adjustment",
     "offsetHint": "If the month starts earlier or later in your country than in the Umm al-Qura calendar.",
@@ -872,9 +875,7 @@
     "periodicCount_one": "1 act",
     "periodicCount_other": "{{count}} acts",
     "programHint": "A private program on your device",
-    "gardenHint": "How your habits grow",
     "circlesHint": "Keep up with people you love",
-    "savedHint": "Texts you saved",
-    "occasionsCalendar": "Occasions calendar"
+    "savedHint": "Texts you saved"
   }
 }

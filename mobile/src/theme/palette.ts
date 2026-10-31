@@ -32,7 +32,7 @@ export interface Palette {
   intentImanBranch: string;
   intentImanBranchForeground: string;
   /**
-   * Warm gold of the streak flame in «ورد اليوم» and «سجلّي» (app only; the website has no streak yet). Never red:
+   * Warm gold of the streak flame in «ورد اليوم» and «سجلّي» (the website uses the same values: `--gold` in globals.css). Never red:
    * the streak is a quiet count, not an alarm. Readable as text on the background (≥ 4.5:1).
    */
   gold: string;

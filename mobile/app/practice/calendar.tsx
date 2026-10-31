@@ -1,5 +1,5 @@
 /**
- * Calendar (roadmap §2.2), after the website's calendar page: today in Hijri in a next-step note, a month grid with the
+ * «مواسم الخير» (the occasions calendar, roadmap §2.2), after the website's calendar page: today in Hijri in a next-step note, a month grid with the
  * sunnah occasions marked (the hub's MonthGrid; the month's occasions from `GET /v1/calendar/occasions`) and the
  * selected day's occasions under it, the user's ±2 day Hijri offset, «اشترك في التقويم» (the public feed: no personal
  * data, no account; `webcal://` on iOS, Google Calendar's add-by-URL page on Android) and «نزّل ملف التقويم» (the same

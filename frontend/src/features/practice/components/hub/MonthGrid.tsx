@@ -34,13 +34,16 @@ interface MonthGridOccasion {
 interface MonthGridProps {
   month: YearMonth;
   today: string;
-  selected: string;
+  /** The picked day, or null when none is («سجلّي» before a tap). */
+  selected: string | null;
   hijriOffset: number;
+  /** The Hijri month and dates: always on «مواسم الخير»; on «سجلّي» only with «إظهار التاريخ الهجري». */
+  showHijri?: boolean;
   /** Sunnah occasions per date: a mark on the day, and their names in its label. */
   occasions: ReadonlyMap<string, readonly MonthGridOccasion[]>;
-  /** «عاداتي»: the day's presence mark. Absent on «التقويم». */
+  /** «سجلّي»: the day's presence mark. Absent on «مواسم الخير». */
   presence?: ReadonlyMap<string, DayPresence>;
-  /** «التقويم»: the Hijri day under each Gregorian day. */
+  /** «مواسم الخير»: the Hijri day under each Gregorian day. */
   showHijriDay?: boolean;
   minMonth?: YearMonth;
   maxMonth?: YearMonth;
@@ -94,6 +97,7 @@ export function MonthGrid({
   occasions,
   presence,
   showHijriDay = false,
+  showHijri = true,
   minMonth,
   maxMonth,
   onSelect,
@@ -110,8 +114,8 @@ export function MonthGrid({
   const [focusDate, setFocusDate] = useState<string | null>(null);
   const weekStart = weekStartFor(locale);
   const weeks = monthWeeks(month, weekStart);
-  const hijriOk = isHijriSupported();
-  const hijriMonth = hijriMonthLabel(hijriMonthSpan(month, hijriOffset));
+  const hijriOk = showHijri && isHijriSupported();
+  const hijriMonth = showHijri ? hijriMonthLabel(hijriMonthSpan(month, hijriOffset)) : null;
   const canGoBack = !minMonth || compareMonths(month, minMonth) > 0;
   const canGoForward = !maxMonth || compareMonths(month, maxMonth) < 0;
   const tabbable = [focusDate, selected, today].find((d) => d !== null && isInMonth(d, month)) ?? firstOfMonth(month);

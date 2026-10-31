@@ -17,12 +17,14 @@ import { isUuid, newUuid } from './ids';
 
 export const STORE_KEY = 'thekra.practice.v1';
 export const PREFS_KEY = 'thekra.practice.prefs.v1';
-/** A sin slug handed from a sin page to «ترك المعصية» without putting it in the URL. Read once, then removed. */
+/** A sin slug handed from a sin page to «تخفَّف» without putting it in the URL. Read once, then removed. */
 export const PENDING_PROGRAM_KEY = 'thekra.practice.pending-program';
 
 export interface PracticePrefs {
   /** Kinship calendar export shows nicknames instead of the generic title. Off by default. Not synced. */
   kinshipNamesInCalendar?: boolean;
+  /** «إظهار التاريخ الهجري»: the Hijri date beside the Gregorian one on «ورد اليوم» and «سجلّي». Off by default. Not synced. */
+  showHijri?: boolean;
   /** The account this device's copy was last synced with; another account must confirm before merging. */
   syncedUserId?: string;
 }
@@ -75,6 +77,7 @@ export function parsePrefs(raw: string | null | undefined): { prefs: PracticePre
     const record = value as Record<string, unknown>;
     const prefs: PracticePrefs = {};
     if (record.kinshipNamesInCalendar === true) prefs.kinshipNamesInCalendar = true;
+    if (record.showHijri === true) prefs.showHijri = true;
     if (typeof record.syncedUserId === 'string' && record.syncedUserId.length > 0) prefs.syncedUserId = record.syncedUserId;
     const minutes = record.freeMinutesPerDay;
     const legacyFreeMinutes =

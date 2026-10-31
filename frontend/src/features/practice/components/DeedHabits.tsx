@@ -19,14 +19,13 @@ interface DeedHabitsProps {
  */
 export function DeedHabits({ habits }: DeedHabitsProps) {
   const t = useTranslations('goodDeedDetail.habit');
-  const tHome = useTranslations('home');
-  const tStart = useTranslations('practice.hub.start');
+  const tWird = useTranslations('practice.wird');
   const snapshot = usePracticeStore();
 
   if (habits.length === 0) {
     return (
       <Link href={{ pathname: '/practice/habits', query: { add: '1' } }} className="text-link self-start">
-        {tHome('deedEntryLabel')} <DirectionalArrow />
+        {tWird('addHabit')} <DirectionalArrow />
       </Link>
     );
   }
@@ -38,7 +37,7 @@ export function DeedHabits({ habits }: DeedHabitsProps) {
       <h2 id="deed-habits-title">
         <strong>{t('title')}</strong>
       </h2>
-      <p>{tStart('habitsLine')}</p>
+      <p>{t('startLine')}</p>
       <ul className="mt-3 flex flex-col">
         {habits.map((habit) => (
           <DeedHabitItem key={habit.key} habit={habit} planId={planByHabit.get(habit.key)} />

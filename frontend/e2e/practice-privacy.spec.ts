@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 /**
- * «ترك المعصية» never names the sin outside the page body: generic tab title, no indexing, kept out of
+ * «تخفَّف» never names the sin outside the page body: generic tab title, no indexing, kept out of
  * robots. Server-rendered head only, so this runs without the API (the client data loads after).
  */
 for (const [path, title] of [

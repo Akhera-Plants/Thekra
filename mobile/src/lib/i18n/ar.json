@@ -40,7 +40,10 @@
     "todayHeading": "تذكرة مختارة",
     "sourcesHeading": "تذكير تعرف مصدره",
     "sourcesLead": "من كتاب الله، وصحيح السنّة، وكلام أهل العلم.",
-    "sourcesAria": "مصادر النصوص"
+    "sourcesAria": "مصادر النصوص",
+    "seasonsTitle": "مواسم الخير",
+    "seasonsBody": "المناسبات المسنونة القادمة، وتقويم تشترك فيه.",
+    "seasonsCta": "افتح المواسم"
   },
   "sinPicker": {
     "title": "المعاصي",
@@ -637,7 +640,7 @@
     }
   },
   "calendar": {
-    "title": "التقويم",
+    "title": "مواسم الخير",
     "todayHijri": "اليوم: {{date}}",
     "offset": "تعديل التاريخ الهجري",
     "offsetHint": "إن بدأ الشهر في بلدك قبل تقويم أم القرى أو بعده.",
@@ -931,9 +934,7 @@
     "periodicCount_many": "{{count}} عملًا",
     "periodicCount_other": "{{count}} عمل",
     "programHint": "برنامج خاص على جهازك",
-    "gardenHint": "نموّ عاداتك",
     "circlesHint": "المداومة مع من تحب",
-    "savedHint": "النصوص التي حفظتها",
-    "occasionsCalendar": "تقويم المناسبات"
+    "savedHint": "النصوص التي حفظتها"
   }
 }

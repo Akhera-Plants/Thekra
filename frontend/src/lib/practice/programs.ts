@@ -1,5 +1,5 @@
 /**
- * «ترك المعصية» view helpers. LOCAL ONLY: nothing here builds a request that names the user's sin.
+ * «تخفَّف» view helpers. LOCAL ONLY: nothing here builds a request that names the user's sin.
  */
 import {
   addDays,

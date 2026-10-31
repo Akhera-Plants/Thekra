@@ -13,3 +13,8 @@ export async function getSurahAyahs(
     params: query,
   });
 }
+
+/** One verse as stored (Quran text comes only from the database, content rule §3.1). */
+export async function getAyah(surahNumber: number, ayahNumber: number, query: { lang?: SurahAyahsQuery['lang'] } = {}) {
+  return apiGet<QuoteDto>(`/quran/ayahs/${surahNumber}/${ayahNumber}`, { params: query });
+}

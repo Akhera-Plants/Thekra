@@ -25,9 +25,8 @@ import {
   removeContact,
   minDate,
   monthSummary,
-  plansNotAskedOn,
+  offDayItems,
   presence,
-  requiredOn,
   updatePlan,
   updateRelative,
   type AdherenceBand,
@@ -140,16 +139,7 @@ export function useDayAgenda(date: LocalDate): AgendaItem[] {
 export function useOffDayHabits(date: LocalDate): HabitItem[] {
   const store = usePracticeStore((s) => s.store);
   const planDays = usePlanDays();
-  return useMemo(
-    () =>
-      plansNotAskedOn(store, date, planDays).map((plan) => {
-        const required = requiredOn(plan, date);
-        const done = plan.log[date] ?? 0;
-        const remaining = Math.max(0, required - done);
-        return { kind: 'habit' as const, planId: plan.id, required, done, remaining, complete: remaining === 0 };
-      }),
-    [store, date, planDays],
-  );
+  return useMemo(() => offDayItems(store, date, planDays), [store, date, planDays]);
 }
 
 /**

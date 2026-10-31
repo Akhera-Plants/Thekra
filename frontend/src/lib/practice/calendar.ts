@@ -1,5 +1,5 @@
 /**
- * View-model for «التقويم»: dated occurrences (from the API, or computed on the device from the catalog)
+ * View-model for «مواسم الخير»: dated occurrences (from the API, or computed on the device from the catalog)
  * grouped into one row per occasion with its next date and, for a window, the end of that run.
  */
 import { addDays, buildIcs, diffDays, isHijriSupported, occurrences, toHijri, type LocalDate } from '@thekra/practice-core';

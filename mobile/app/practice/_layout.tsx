@@ -1,6 +1,6 @@
 /**
  * Stack for the practice screens: «عاداتي», add habit, plan, «فروضي وأدواري», «أعمال دورية», صلة الرحم, «تخفَّف»,
- * التقويم.
+ * «مواسم الخير» (the occasions calendar).
  * The native header shows only Back; each screen shows its own title. The `title` options below name the
  * screens for accessibility and the Android task switcher; they stay generic on purpose (the sin-program screen
  * never names the sin in a title).

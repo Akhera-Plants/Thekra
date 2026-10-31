@@ -2,15 +2,14 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { CalendarPlus, Feather } from 'lucide-react';
+import { CalendarPlus } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { loadWarning } from '@thekra/practice-core';
 import { Link, useRouter } from '@/i18n/navigation';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { QueryErrorState } from '@/components/shared/feedback/QueryErrorState';
 import { downloadTextFile, ICS_MIME } from '@/lib/practice/download';
-import { updateStore } from '@/lib/practice/local-store';
-import { habitOf, isEbbDay, planReminderEvents, planRemindersIcs, planToday, ramadanEnd, setEbbForAll } from '@/lib/practice/plans';
+import { habitOf, planReminderEvents, planRemindersIcs, planToday, ramadanEnd } from '@/lib/practice/plans';
 import type { PracticeHabit } from '@/lib/types/practice';
 import { usePracticeCatalog } from '../hooks/usePracticeCatalog';
 import { usePracticeStore } from '../hooks/usePracticeStore';
@@ -25,7 +24,7 @@ import { ProgressPanel } from './ProgressPanel';
 import { PushRemindersCard } from './PushRemindersCard';
 
 /**
- * «طاعاتي»: setup, today's habits, in-app reminders, «وين وصلت», calendar file. `?add=1` (from «أضف» on the hub)
+ * «عاداتي» (habit management, reached from «سجلّي»): setup, today's habits, in-app reminders, «وين وصلت», calendar file. `?add=1` (from «أضف» on the hub)
  * opens the setup at once, with `&habit=<key>` (a good-deed page's «ابدأ بها») already chosen; a `#plan-<id>` hash (a habit row on the hub) scrolls to that plan.
  */
 export function PracticeView() {
@@ -95,15 +94,9 @@ export function PracticeView() {
   });
   const dueToday = entries.filter((entry) => entry.view.isDueToday);
   const notDueToday = entries.filter((entry) => !entry.view.isDueToday);
-  // «يومي ثقيل» is one day (practice-core isEbbOn): an ebb from an earlier day is already over.
-  const isEbb = isEbbDay(plans, today);
   const ramadanUntil = ramadanEnd(today, hijriOffset);
   const freeMinutes = snapshot.store.settings.freeMinutesPerDay;
   const overLoaded = freeMinutes !== undefined && loadWarning(plans, freeMinutes, today) === 'over';
-
-  function toggleEbb() {
-    updateStore((store) => setEbbForAll(store, !isEbb, today as string));
-  }
 
   function handleReminders() {
     const events = planReminderEvents(plans as NonNullable<typeof plans>, habits, today as string, locale, hijriOffset);
@@ -113,14 +106,6 @@ export function PracticeView() {
   return (
     <div className="flex flex-col gap-10">
       <SyncStatus persistent={snapshot.persistent} />
-
-      <div className="flex flex-col items-start gap-2">
-        <button type="button" className="outline-button button-wrap" aria-pressed={isEbb} onClick={toggleEbb}>
-          <Feather aria-hidden />
-          {isEbb ? t('ebbOff') : t('ebbOn')}
-        </button>
-        <p className="text-sm leading-7 text-muted-foreground">{isEbb ? t('ebbActive') : t('ebbHint')}</p>
-      </div>
 
       {overLoaded ? <p className="next-step !mt-0">{t('loadOver')}</p> : null}
       {catalog.isError ? (
@@ -179,6 +164,9 @@ export function PracticePaths() {
     <nav className="about-paths" aria-label={t('label')}>
       <Link className="outline-button button-wrap" href="/practice">
         {t('hub')} <DirectionalArrow />
+      </Link>
+      <Link className="outline-button button-wrap" href="/practice/record">
+        {t('record')} <DirectionalArrow />
       </Link>
       <Link className="outline-button button-wrap" href="/practice/kinship">
         {t('kinship')} <DirectionalArrow />

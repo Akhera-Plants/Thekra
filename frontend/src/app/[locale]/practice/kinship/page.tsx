@@ -20,10 +20,10 @@ export default async function KinshipPage({ params }: PageProps<'/[locale]/pract
     <div className="page-width inner-page">
       <Breadcrumbs
         ariaLabel={tNav('breadcrumbs')}
-        items={[{ label: tCrumbs('home'), href: '/' }, { label: tNav('practice'), href: '/practice' }, { label: t('title') }]}
+        items={[{ label: tCrumbs('home'), href: '/' }, { label: tNav('record'), href: '/practice/record' }, { label: t('title') }]}
       />
       <header className="page-heading">
-        <p className="eyebrow">{tNav('practice')}</p>
+        <p className="eyebrow">{tNav('record')}</p>
         <h1 id="page-title" tabIndex={-1}>
           {t('title')}
         </h1>

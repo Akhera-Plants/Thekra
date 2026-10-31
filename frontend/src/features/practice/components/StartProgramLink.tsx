@@ -12,7 +12,7 @@ interface StartProgramLinkProps {
 }
 
 /**
- * Quiet link from a sin page to «ترك المعصية»: «ابدأ برنامج الترك», or «تابع برنامجك» when this sin's program is
+ * Quiet link from a sin page to «تخفَّف»: «ابدأ برنامج الترك», or «تابع برنامجك» when this sin's program is
  * already active on the device. The slug goes through device storage, never the URL, so the browser history
  * records only `/practice/leave-sin`, not which sin (roadmap §0.2).
  */

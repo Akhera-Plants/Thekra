@@ -14,7 +14,7 @@ export interface DaySelection {
 }
 
 /**
- * One selected day shared by the week strip, the day list and the month grid. Following today is the default, so a
+ * One selected day shared by the month grid and the selected day's panel («مواسم الخير»). Following today is the default, so a
  * page left open past midnight moves to the new day by itself. Null until the device clock is read.
  */
 export function useDaySelection(today: string | null): DaySelection | null {

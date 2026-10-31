@@ -26,11 +26,13 @@ Tabs: Home (الرئيسية) · Today's wird (ورد اليوم, centre) · My 
 Today's wird: `(tabs)/habits` (ورد اليوم): the title, one date line (Gregorian; Hijri too with «إظهار التاريخ الهجري»),
 the streak chip (gold flame, practice-core `currentStreak`) and «أضف»; «اليوم» from practice-core `dayAgenda` (done rows
 sink to the bottom; habits not asked today behind one collapsed row; «يومي ثقيل» chip); «أعمال دورية» (next three, «الكل»)
-(pieces in `src/components/practice/hub/`, pure helpers in `src/lib/practice/wird.ts` and `hub.ts`, hooks in
+(pieces in `src/components/practice/hub/`, pure helpers in `src/lib/practice/wird.ts` and `hub.ts`; the
+periodic-act rules and the today grouping live in `@thekra/practice-core` `wird.ts`, shared with the website, hooks in
 `src/lib/practice/use-habits-hub.ts`)  
 My record: `(tabs)/record` (سجلّي): the streak and «أطول مداومة», the one month calendar (a tapped day opens its list),
-then «عاداتي», «أعمال دورية», «تخفَّف», «بستاني», «رفقة», «المحفوظات»  
-Garden: `garden` (بستاني, pushed from سجلّي): one plant per habit plan (+ صلة الرحم), grown by days tended, never
+then «عاداتي», «أعمال دورية», «تخفَّف», «رفقة», «المحفوظات»  
+Seasons of good: `practice/calendar` (مواسم الخير, a door on the home screen): occasions month and the ICS feed  
+Garden: `garden` (بستاني): no entry point since the redesign (§1; screen and data kept): one plant per habit plan (+ صلة الرحم), grown by days tended, never
 shrinking, resting on «يومي ثقيل»; never a plant for the sin program (`src/lib/practice/garden.ts`, drawings in
 `src/components/garden/`)  
 Saved: `favorites` (المحفوظات, pushed from سجلّي)  

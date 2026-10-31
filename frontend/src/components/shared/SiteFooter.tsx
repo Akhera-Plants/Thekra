@@ -23,13 +23,13 @@ export async function SiteFooter() {
         </div>
         <nav className="footer-links" aria-labelledby="footer-paths">
           <h2 id="footer-paths">{tFooter('pathsHeading')}</h2>
-          <Link href="/sins">{tNav('sinsShort')}</Link>
-          <Link href="/good-deeds">{tNav('goodDeedsShort')}</Link>
+          <Link href="/sins">{tNav('sins')}</Link>
+          <Link href="/good-deeds">{tNav('goodDeeds')}</Link>
           <Link href="/branches">{tNav('branches')}</Link>
-          <Link href="/practice">{tNav('practice')}</Link>
-          <Link href="/practice/habits">{tNav('practiceLong')}</Link>
-          <Link href="/practice/kinship">{tNav('kinship')}</Link>
           <Link href="/calendar">{tNav('calendar')}</Link>
+          <Link href="/practice">{tNav('practice')}</Link>
+          <Link href="/practice/record">{tNav('record')}</Link>
+          <Link href="/practice/habits">{tNav('practiceLong')}</Link>
         </nav>
         <nav className="footer-links" aria-labelledby="footer-about">
           <h2 id="footer-about">{tFooter('aboutHeading')}</h2>

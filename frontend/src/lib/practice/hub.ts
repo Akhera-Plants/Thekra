@@ -1,26 +1,19 @@
 /**
- * View-model for «عاداتي» (the hub) and the month grids it shares with «التقويم»: weeks, months, which days can be
- * logged, presence marks and the track summaries. Every rule comes from @thekra/practice-core (`dayAgenda`,
- * `presence`, `monthSummary`, `dueList`); this file only shapes dates and counts for the page.
+ * View-model of the month grids («سجلّي» and «مواسم الخير»): weeks, months, which days can be logged and presence
+ * marks. Every rule comes from @thekra/practice-core (`dayAgenda`, `presence`); this file only shapes dates for the page.
  */
 import {
-  activePrograms,
   addDays,
   actionable,
   diffDays,
-  dueList,
   isHijriSupported,
   isItemDone,
-  monthSummary,
   parseDate,
   toHijri,
   weekday,
-  type AdherenceBand,
   type AgendaItem,
   type DayPresence,
   type LocalDate,
-  type PlanDayOptions,
-  type Store,
 } from '@thekra/practice-core';
 
 /** How far back a forgotten day can be logged or fixed (today and the 6 days before it): «صحّح السجل». */
@@ -116,36 +109,6 @@ export function presenceLevel(day: DayPresence | undefined, today: LocalDate): P
 export function isDayComplete(items: readonly AgendaItem[]): boolean {
   const tasks = actionable(items);
   return tasks.length > 0 && tasks.every(isItemDone);
-}
-
-/** Nothing set up in any track yet: the hub shows the three start choices instead of the tracks. */
-export function isFirstRun(store: Store): boolean {
-  return store.plans.length === 0 && store.relatives.length === 0 && activePrograms(store.programs).length === 0;
-}
-
-export interface TrackSummary {
-  habits: number;
-  /** The kind band of the last 30 days, or null without plans. */
-  band: AdherenceBand | null;
-  /** Days in the last 30 with anything done. */
-  presentDays: number;
-  relatives: number;
-  /** Relatives due today or overdue. */
-  relativesDue: number;
-  hasProgram: boolean;
-}
-
-export function trackSummary(store: Store, today: LocalDate, planDays: PlanDayOptions = {}): TrackSummary {
-  const month = monthSummary(store, today, undefined, planDays);
-  const due = dueList(store.relatives, today);
-  return {
-    habits: store.plans.length,
-    band: month.band,
-    presentDays: month.presentDays,
-    relatives: store.relatives.length,
-    relativesDue: [...due.overdue, ...due.thisWeek].filter((entry) => entry.daysUntilDue <= 0).length,
-    hasProgram: activePrograms(store.programs).length > 0,
-  };
 }
 
 export interface HijriMonthSpan {

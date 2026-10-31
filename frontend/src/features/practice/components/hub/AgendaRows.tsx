@@ -112,13 +112,13 @@ function InlineUndo({ kind, onUndo }: { kind: UndoKind; onUndo: () => void }) {
   );
 }
 
-function IconLead({ children, tone }: { children: ReactNode; tone: 'occasion' | 'program' }) {
+function IconLead({ children }: { children: ReactNode }) {
   return (
     <span
       aria-hidden
       className={cn(
         'flex size-11 shrink-0 items-center justify-center rounded-full [&_svg]:size-[1.125rem]',
-        tone === 'occasion' ? 'bg-intent-good-deed/12 text-intent-good-deed' : 'bg-muted text-muted-foreground',
+        'bg-muted text-muted-foreground',
       )}
     >
       {children}
@@ -230,21 +230,19 @@ interface OccasionRowProps {
   basis: ScheduleBasis | undefined;
 }
 
-export function OccasionRow({ item, basis }: OccasionRowProps) {
+/** Today's sunnah occasion as one compact line above the list: its name, leading to its good deed. */
+export function OccasionLine({ item, basis }: OccasionRowProps) {
   const t = useTranslations('practice.hub.day');
   const tCalendar = useTranslations('calendarPage');
   const locale = useLocale();
   return (
-    <RowShell
-      lead={
-        <IconLead tone="occasion">
-          <Sparkles />
-        </IconLead>
-      }
-      href={`/good-deeds/${item.deed}`}
-      title={locale === 'en' ? item.titleEn : item.titleAr}
-      detail={basis === 'organizational' ? tCalendar('organizational') : t('occasion')}
-    />
+    <li className="flex items-center gap-2 text-sm leading-7">
+      <Sparkles aria-hidden className="size-4 shrink-0 text-intent-good-deed" />
+      <Link href={`/good-deeds/${item.deed}`} className="text-link font-medium">
+        {locale === 'en' ? item.titleEn : item.titleAr}
+      </Link>
+      <span className="text-muted-foreground">· {basis === 'organizational' ? tCalendar('organizational') : t('occasion')}</span>
+    </li>
   );
 }
 
@@ -260,7 +258,7 @@ export function ProgramRow({ item, isToday }: ProgramRowProps) {
   return (
     <RowShell
       lead={
-        <IconLead tone="program">
+        <IconLead>
           <NotebookPen />
         </IconLead>
       }

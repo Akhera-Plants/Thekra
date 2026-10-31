@@ -68,7 +68,7 @@ test('Arabic pages contain no Latin letters except the language switch', async (
   const body = (await today.json()) as { data?: { id?: string } | null };
   if (body.data?.id) await expectArabic(page, `/quotes/${body.data.id}`);
 
-  // Current header has no separate «القائمة» drawer — chrome is inline (handoff).
+  // Phones: the three header links fold into «القائمة» (a disclosure button); the closed menu adds no copy.
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
   await page.waitForLoadState('networkidle');

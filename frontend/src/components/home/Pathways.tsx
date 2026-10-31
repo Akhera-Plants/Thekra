@@ -1,13 +1,17 @@
-import { BookOpen, DoorOpen, Leaf, Sprout } from 'lucide-react';
+import { BookOpen, CalendarDays, DoorOpen, Leaf, Sprout } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 
+/**
+ * «أبواب الخير» (the header's «الأبواب» lands here, `#paths`): «المعاصي», «الطاعات», «شُعب الإيمان», and a fourth,
+ * smaller door «مواسم الخير» (the occasions page, `/calendar`).
+ */
 export async function Pathways() {
   const t = await getTranslations('home');
 
   return (
-    <section className="entry-section" aria-labelledby="entry-title">
+    <section className="entry-section scroll-mt-6" id="paths" aria-labelledby="entry-title">
       <div className="intro-row">
         <div>
           <p className="eyebrow">
@@ -16,11 +20,13 @@ export async function Pathways() {
             </span>{' '}
             {t('eyebrow')}
           </p>
-          <h1 id="entry-title">{t('entryTitle')}</h1>
+          <h2 id="entry-title" className="entry-title">
+            {t('entryTitle')}
+          </h2>
         </div>
       </div>
 
-      <div className="pathways" id="paths">
+      <div className="pathways">
         <Link className="pathway pathway-return" href="/sins">
           <span className="pathway-top">
             <span className="pathway-icon">
@@ -79,6 +85,18 @@ export async function Pathways() {
           </span>
         </Link>
       </div>
+
+      <Link
+        href="/calendar"
+        className="group mt-4 flex min-h-14 items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-colors duration-150 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      >
+        <CalendarDays aria-hidden className="size-6 shrink-0 text-intent-good-deed" />
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span className="text-lg font-medium">{t('seasonsTitle')}</span>
+          <span className="text-sm leading-6 text-muted-foreground">{t('seasonsDescription')}</span>
+        </span>
+        <DirectionalArrow className="size-4 text-muted-foreground" />
+      </Link>
     </section>
   );
 }

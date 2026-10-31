@@ -24,13 +24,12 @@
     "settings": "Settings",
     "back": "Back",
     "main": "Main navigation",
-    "sinsShort": "Leaving a sin",
-    "goodDeedsShort": "Doing good",
     "breadcrumbs": "Breadcrumb",
-    "practice": "My habits",
-    "practiceLong": "My good deeds",
-    "kinship": "Ties of kinship",
-    "calendar": "Calendar"
+    "practice": "Today's wird",
+    "practiceLong": "My habits",
+    "calendar": "Seasons of good",
+    "record": "My record",
+    "gateways": "Gateways"
   },
   "about": {
     "pageTitle": "About Thekra",
@@ -42,7 +41,27 @@
     "openitiBody": "Digital texts imported from OpenITI are used under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 licence. Attribution: OpenITI. Thekra does not sell this text and does not run ads on it. If the dataset is shared, it stays under the same licence.",
     "texts": "texts",
     "imported": "imported",
-    "published": "published"
+    "published": "published",
+    "philosophyTitle": "Thekra's philosophy",
+    "philosophyLead": "Thekra takes its name from this verse, and everything in it serves one of its four conditions:",
+    "conditions": {
+      "remembrance": {
+        "title": "A reminder",
+        "line": "Authentic texts only, each with its source shown."
+      },
+      "heart": {
+        "title": "For one who has a heart",
+        "line": "Habits that revive the heart, a program that lightens it, and the branches of faith."
+      },
+      "listening": {
+        "title": "Or gives ear",
+        "line": "One text at a time, one task per page, and few notifications."
+      },
+      "presence": {
+        "title": "While present",
+        "line": "A present heart and honest self-review, with no points, ranks or comparisons."
+      }
+    }
   },
   "branches": {
     "pageTitle": "The Branches of Faith",
@@ -117,7 +136,7 @@
     "data": {
       "title": "My data",
       "export": "Export my data",
-      "exportNote": "A file with everything stored in your account. The program to leave a sin stays encrypted in it.",
+      "exportNote": "A file with everything stored in your account. The “Lighten” program stays encrypted in it.",
       "delete": "Delete my account",
       "deleteNote": "The copy of your data on this device is kept.",
       "deleteTitle": "Delete your account for good?",
@@ -132,9 +151,9 @@
   },
   "home": {
     "title": "Thekra",
-    "sinEntryLabel": "Help me leave a sin",
+    "sinEntryLabel": "Sins",
     "sinEntryDescription": "A reminder that restrains you, and hope that helps you.",
-    "deedEntryLabel": "Help me do a good deed",
+    "deedEntryLabel": "Good deeds",
     "deedEntryDescription": "Know its virtue, and take the first step.",
     "branchEntryLabel": "The Branches of Faith",
     "branchEntryDescription": "Meanings that build the heart and the deed.",
@@ -174,7 +193,7 @@
     "sourcesNote": "The books whose texts you read here, and how many of each are published.",
     "sourcesAll": "About the sources",
     "eyebrow": "A reminder for every step",
-    "entryTitle": "Which door of good will you choose?",
+    "entryTitle": "Gateways of good",
     "sinOverline": "A door of return",
     "sinCta": "Choose a topic",
     "deedOverline": "A step toward good",
@@ -200,7 +219,13 @@
     "readingPairLabel": "A reminder and a door to good",
     "showWholeText": "Show the whole text",
     "hideWholeText": "Fold the text",
-    "wholeTextLabel": "The whole text"
+    "wholeTextLabel": "The whole text",
+    "aim": "Authentic reminders that revive the heart and help you act.",
+    "startCta": "Start with a small sapling",
+    "wirdLeft": "Left today: {n}",
+    "wirdDone": "Today's wird is done",
+    "seasonsTitle": "Seasons of good",
+    "seasonsDescription": "The coming sunnah occasions, and a calendar to subscribe to."
   },
   "sinRank": {
     "KABIRA": "Major sin",
@@ -285,7 +310,8 @@
     "habit": {
       "title": "Make it a habit",
       "start": "Start it",
-      "added": "In your habits"
+      "added": "In your habits",
+      "startLine": "Start very small, keep at it, and increase only once it is steady."
     }
   },
   "browse": {
@@ -866,7 +892,7 @@
   "footer": {
     "blurbLine1": "From the Quran and Sunnah,",
     "blurbLine2": "to a step that helps you do good.",
-    "pathsHeading": "Paths of Thekra",
+    "pathsHeading": "Gateways of good",
     "aboutHeading": "About the project",
     "methodology": "Content methodology",
     "copyright": "© 2026 Thekra",
@@ -881,8 +907,8 @@
   },
   "breadcrumbs": {
     "home": "Home",
-    "sins": "Leaving a sin",
-    "goodDeeds": "Doing good",
+    "sins": "Sins",
+    "goodDeeds": "Good deeds",
     "branches": "Branches of Faith",
     "favorites": "Favorites",
     "about": "About Thekra"
@@ -925,7 +951,7 @@
     "home": "Home"
   },
   "practice": {
-    "title": "My good deeds",
+    "title": "My habits",
     "lead": "Start very small, keep at it, and increase only once it is steady. Everything here is saved on your device first.",
     "storage": {
       "local": "Your data is saved on this device only and is never sent to a server.",
@@ -1054,9 +1080,10 @@
     "paths": {
       "label": "More pages",
       "kinship": "Ties of kinship",
-      "leaveSin": "A program to leave a sin",
-      "calendar": "Calendar",
-      "hub": "My habits"
+      "leaveSin": "Lighten",
+      "calendar": "Seasons of good",
+      "hub": "Today's wird",
+      "record": "My record"
     },
     "weekdays": {
       "d0": "Sunday",
@@ -1137,12 +1164,12 @@
       "pending": "Changes waiting to sync",
       "synced": "Synced",
       "lastSynced": "last synced {time}",
-      "signedInNote": "Saved on this device and synced with your account, except the program to leave a sin, which syncs only encrypted, if you choose.",
+      "signedInNote": "Saved on this device and synced with your account, except the “Lighten” program, which syncs only encrypted, if you choose.",
       "accountLink": "Your account and data"
     },
     "push": {
       "title": "Browser notifications",
-      "note": "Reminders come at the times you chose for your habits, and the kinship reminder at 18:00. The program to leave a sin never appears in notifications.",
+      "note": "Reminders come at the times you chose for your habits, and the kinship reminder at 18:00. The “Lighten” program never appears in notifications.",
       "unsupported": "This browser does not support notifications. Try another up-to-date browser.",
       "iosInstall": "On iPhone: add the site to your Home Screen, then open it from the icon to receive notifications.",
       "signedOut": "Notifications belong to your account, so sign in first to turn them on.",
@@ -1159,33 +1186,17 @@
     },
     "leadLocal": "Start very small, keep at it, and increase only once it is steady. Everything here is saved on your device.",
     "hub": {
-      "title": "My habits",
-      "lead": "Your whole day in one place: your habits, your ties of kinship and the year’s occasions. Any amount you do counts.",
-      "dateLine": "{weekday} {hijri}",
-      "calendar": "Calendar",
       "add": {
         "button": "Add",
-        "label": "Add a good habit, a relative or a program",
+        "label": "Add a habit, a relative or a private program",
         "habit": "A good habit",
         "habitHint": "Start very small, at two times a day",
         "relative": "A relative",
         "relativeHint": "A name or nickname, and a rhythm",
-        "program": "A program to leave a sin",
+        "program": "Lighten",
         "programHint": "Private, on this device only"
       },
-      "week": {
-        "label": "Days of the week",
-        "range": "{from} to {to}",
-        "previous": "Previous week",
-        "next": "Next week",
-        "today": "Today"
-      },
       "day": {
-        "today": "Today",
-        "yesterday": "Yesterday",
-        "tomorrow": "Tomorrow",
-        "dayTitle": "{weekday} {date}",
-        "listLabel": "What this day holds",
         "empty": "Nothing is asked of this day.",
         "future": "A day to come: you can see it here and log it when it arrives.",
         "tooOld": "From here you can log today and the six days before it. This day stays as it was saved.",
@@ -1202,36 +1213,14 @@
         "logged": "Logged.",
         "unlogged": "Unmarked."
       },
-      "tracks": {
-        "title": "Your paths",
-        "habits": "My good deeds",
-        "habitsCount": "{count, plural, =0 {Start with one small habit} one {One habit} other {{n} habits}}",
-        "kinship": "Ties of kinship",
-        "kinshipEmpty": "Add your relatives",
-        "kinshipDue": "{count, plural, =0 {Nobody is due now} one {One relative due now} other {{n} relatives due now}}",
-        "program": "Leaving a sin",
-        "programActive": "Your private program",
-        "programStart": "Start",
+      "month": {
+        "title": "This month",
+        "presentDays": "{count, plural, =0 {Start today with any amount; every amount counts} one {Present on one day of the last {total}} other {Present on {n} days of the last {total}}}",
         "band": {
           "excellent": "Excellent",
           "good": "Good",
           "gentle": "Gently"
         }
-      },
-      "start": {
-        "title": "Where to begin?",
-        "lead": "Choose one door to start with. Everything is saved on your device first.",
-        "leadLocal": "Choose one door to start with. Everything is saved on your device.",
-        "habits": "A good habit",
-        "habitsLine": "Start very small, keep at it, and increase only once it is steady.",
-        "kinship": "Ties of kinship",
-        "kinshipLine": "Your relatives and a rhythm for keeping in touch, with no phone numbers.",
-        "program": "Leaving a sin",
-        "programLine": "A gradual program on this device only; its name appears nowhere."
-      },
-      "month": {
-        "title": "How far you have come this month",
-        "presentDays": "{count, plural, =0 {Start today with any amount; every amount counts} one {Present on one day of the last {total}} other {Present on {n} days of the last {total}}}"
       }
     },
     "monthGrid": {
@@ -1242,10 +1231,54 @@
       "presenceFull": "All of it done",
       "presencePartial": "Some of it done",
       "occasion": "A sunnah occasion"
+    },
+    "wird": {
+      "title": "Today's wird",
+      "lead": "What today asks of your habits and ties of kinship, in one list.",
+      "today": "Today",
+      "streakLabel": "{count, plural, =0 {Streak: not started yet} one {Streak: 1 day} other {Streak: {n} days}}",
+      "empty": "Nothing is asked of you today.",
+      "addHabit": "Add a habit",
+      "notDueToday": "Not asked for today ({n})",
+      "notDueDay": "Not asked for that day ({n})",
+      "heavyDay": "Heavy day",
+      "heavyDayHint": "Only the smallest amount today; your plan returns by itself tomorrow."
+    },
+    "periodic": {
+      "title": "Periodic acts",
+      "lead": "Every act that does not repeat daily, the nearest first.",
+      "all": "All",
+      "add": "Add a periodic act",
+      "addRelative": "Add a relative",
+      "addHabit": "Add a habit on set days",
+      "empty": "No periodic acts yet: a relative to keep in touch with, or a habit on set days.",
+      "kinship": "Ties of kinship",
+      "habitsTitle": "Habits on set days",
+      "habitNote": "A habit on set days",
+      "none": "No date soon",
+      "overdue": "Past due",
+      "today": "Today",
+      "tomorrow": "Tomorrow"
+    },
+    "record": {
+      "title": "My record",
+      "lead": "Your streak, your month, your habits and periodic acts.",
+      "current": "Current streak",
+      "longest": "{count, plural, =0 {Longest streak: none yet} one {Longest streak: 1 day} other {Longest streak: {n} days}}",
+      "showHijri": "Show the Hijri date",
+      "linksLabel": "In my record",
+      "habits": "My habits",
+      "habitsCount": "{count, plural, =0 {Start with one small habit} one {One habit} other {{n} habits}}",
+      "periodic": "Periodic acts",
+      "periodicCount": "{count, plural, =0 {None yet} one {One act} other {{n} acts}}",
+      "lighten": "Lighten",
+      "lightenHint": "A private program on your device",
+      "saved": "Saved texts",
+      "savedHint": "Texts you saved"
     }
   },
   "calendarPage": {
-    "title": "Calendar",
+    "title": "Seasons of good",
     "lead": "The coming sunnah occasions in Hijri and Gregorian dates, each leading to its good deed.",
     "today": "Today",
     "hijriUnsupported": "This browser does not support the Hijri calendar.",
@@ -1289,7 +1322,7 @@
     }
   },
   "leaveSin": {
-    "title": "A program to leave a sin",
+    "title": "Lighten",
     "genericTitle": "A reminder from Thekra",
     "lead": "A staged program on your device: know the harm, build the alternative, change your surroundings, set limits, stay firm.",
     "privacy": "This program lives on your device: it is never sent to a server in readable form, never used in any statistics, and the sin is never named in the page title or its link. If you choose to save it to your account, it is sent encrypted with a code only you know.",
@@ -1319,7 +1352,7 @@
       "stagesLabel": "Program stages",
       "actionsTitle": "Practical steps",
       "alternativesTitle": "Good habits to put in its place",
-      "alternativesLead": "Start one of them in “My good deeds”, with a small amount.",
+      "alternativesLead": "Start one of them in “My habits”, with a small amount.",
       "alternativesLink": "Add a good deed instead",
       "summaryTitle": "The last {days} days",
       "summaryItem": "{label}: {n}",

@@ -21,7 +21,7 @@ interface CalendarMonthProps {
   to: string;
 }
 
-/** «التقويم» as a month: Hijri and Gregorian days, occasions marked, and the selected day's occasions beside it. */
+/** «مواسم الخير» as a month: Hijri and Gregorian days, occasions marked, and the selected day's occasions beside it. */
 export function CalendarMonth({ entries, today, hijriOffset, to }: CalendarMonthProps) {
   const t = useTranslations('calendarPage.month');
   const tGrid = useTranslations('practice.monthGrid');

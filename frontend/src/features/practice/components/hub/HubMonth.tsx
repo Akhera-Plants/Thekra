@@ -2,10 +2,10 @@
 
 import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
-import { presence, type DayPresence, type PlanDayOptions, type Store } from '@thekra/practice-core';
+import { monthSummary, presence, type DayPresence, type PlanDayOptions, type Store } from '@thekra/practice-core';
 import { formatDigits } from '@/lib/format/digits';
 import { computeOccasionDates, occasionsByDate } from '@/lib/practice/calendar';
-import { firstOfMonth, lastOfMonth, type TrackSummary, type YearMonth } from '@/lib/practice/hub';
+import { firstOfMonth, lastOfMonth, type YearMonth } from '@/lib/practice/hub';
 import { MONTH_DAYS } from '@/lib/practice/plans';
 import type { PracticeOccasion } from '@/lib/types/practice';
 import { MonthGrid } from './MonthGrid';
@@ -14,24 +14,24 @@ import { PresenceMark } from './PresenceMark';
 interface HubMonthProps {
   store: Store;
   today: string;
-  selected: string;
+  selected: string | null;
   month: YearMonth;
   occasions: readonly PracticeOccasion[] | undefined;
   /** Which days each plan asks for (its rule, else the catalog's): presence counts only what was asked. */
   planDays: PlanDayOptions;
-  summary: TrackSummary;
+  /** «إظهار التاريخ الهجري»: the Hijri month beside the Gregorian one. */
+  showHijri: boolean;
   onSelect: (date: string) => void;
   onMonthChange: (month: YearMonth) => void;
 }
 
 /**
- * «وين وصلت هذا الشهر»: days present in the last 30 and the plans' kind band, then the month with a presence mark per
- * day. Open on any day; never a run length, never a missed-day mark.
+ * The one month calendar of «سجلّي»: days present in the last 30 and the plans' kind band, then the month with a
+ * presence mark per day and the occasions marked. A tapped day opens its list under the grid.
  */
-export function HubMonth({ store, today, selected, month, occasions, planDays, summary, onSelect, onMonthChange }: HubMonthProps) {
+export function HubMonth({ store, today, selected, month, occasions, planDays, showHijri, onSelect, onMonthChange }: HubMonthProps) {
   const t = useTranslations('practice.hub.month');
   const tGrid = useTranslations('practice.monthGrid');
-  const tTracks = useTranslations('practice.hub.tracks');
   const hijriOffset = store.settings.hijriOffset;
   const first = firstOfMonth(month);
   const last = lastOfMonth(month);
@@ -47,9 +47,10 @@ export function HubMonth({ store, today, selected, month, occasions, planDays, s
     [occasions, first, last, hijriOffset],
   );
 
+  const summary = useMemo(() => monthSummary(store, today, MONTH_DAYS, planDays), [store, today, planDays]);
   const line = [
     t('presentDays', { count: summary.presentDays, n: formatDigits(summary.presentDays), total: formatDigits(MONTH_DAYS) }),
-    summary.band ? tTracks(`band.${summary.band}`) : null,
+    summary.band ? t(`band.${summary.band}`) : null,
   ]
     .filter(Boolean)
     .join(' · ');
@@ -67,6 +68,7 @@ export function HubMonth({ store, today, selected, month, occasions, planDays, s
         today={today}
         selected={selected}
         hijriOffset={hijriOffset}
+        showHijri={showHijri}
         occasions={marks}
         presence={days}
         onSelect={onSelect}

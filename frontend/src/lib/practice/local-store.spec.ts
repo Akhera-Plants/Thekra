@@ -84,6 +84,8 @@ describe('practice local store', () => {
   it('drops unknown or invalid preference fields and hands over the old free-minutes value', () => {
     expect(parsePrefs('{"freeMinutesPerDay":-5,"kinshipNamesInCalendar":"yes","x":1}')).toEqual({ prefs: {} });
     expect(parsePrefs('not json')).toEqual({ prefs: {} });
+    expect(parsePrefs('{"showHijri":true}')).toEqual({ prefs: { showHijri: true } });
+    expect(parsePrefs('{"showHijri":"yes"}')).toEqual({ prefs: {} });
     expect(parsePrefs('{"freeMinutesPerDay":180,"kinshipNamesInCalendar":true,"syncedUserId":"u1"}')).toEqual({
       prefs: { kinshipNamesInCalendar: true, syncedUserId: 'u1' },
       legacyFreeMinutes: 180,

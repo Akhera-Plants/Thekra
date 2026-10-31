@@ -1,15 +1,16 @@
 /**
  * «سجلّي», in this order: the streak (the number with the gold flame, and «أطول مداومة»; practice-core
  * `currentStreak` / `longestStreak`), the one month calendar (presence marks and occasion dots; a tapped day opens its
- * list under the grid, loggable for the last 7 days; a quiet link to the occasions calendar with its feed), then simple rows: «عاداتي» (habit management), «أعمال دورية»,
- * «تخفَّف» (the private program, behind its own lock), «بستاني», «رفقة» and «المحفوظات».
+ * list under the grid, loggable for the last 7 days), then simple rows: «عاداتي» (habit management), «أعمال دورية»,
+ * «تخفَّف» (the private program, behind its own lock), «رفقة» and «المحفوظات». «مواسم الخير» (the occasions
+ * calendar) is a door on the home screen; «بستاني» has no entry point (redesign §1; its screen and data stay).
  */
 
 import React, { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { router, type Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Bookmark, Flower2, Lock, Repeat, Sprout, Users, type LucideIcon } from 'lucide-react-native';
+import { Bookmark, Lock, Repeat, Sprout, Users, type LucideIcon } from 'lucide-react-native';
 import type { LocalDate } from '@thekra/practice-core';
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { monthEnd, shortDayTitle } from '@/lib/practice/calendar-grid';
@@ -32,7 +33,7 @@ import { PresenceMonth } from '@/components/practice/hub/PresenceMonth';
 import { StreakFlame } from '@/components/practice/hub/StreakFlame';
 import { TodayList } from '@/components/practice/hub/TodayList';
 import { space, useStyles, type Theme } from '@/theme';
-import { ListRow, PageHeader, Screen, Skeleton, Text, TextLink } from '@/ui';
+import { ListRow, PageHeader, Screen, Skeleton, Text } from '@/ui';
 
 const makeStyles = (t: Theme) => ({
   streak: { gap: space.xs },
@@ -48,8 +49,6 @@ interface LinkRow {
   hint: string;
   href: Href;
 }
-
-const openCalendar = () => router.push('/practice/calendar');
 
 export default function RecordScreen() {
   const { t } = useTranslation();
@@ -88,7 +87,6 @@ function Record() {
     { key: 'habits', icon: Sprout, title: t('practice.hub.habitsTrack'), hint: t('practice.hub.habitsCount', { count: plans.length }), href: '/practice/habits' },
     { key: 'periodic', icon: Repeat, title: t('practice.periodic.title'), hint: t('record.periodicCount', { count: periodic.length }), href: '/practice/periodic' },
     { key: 'program', icon: Lock, title: t('sinProgram.title'), hint: t('record.programHint'), href: '/practice/sin-program' },
-    { key: 'garden', icon: Flower2, title: t('garden.title'), hint: t('record.gardenHint'), href: '/garden' },
     { key: 'circles', icon: Users, title: t('circles.title'), hint: t('record.circlesHint'), href: '/circles' },
     { key: 'saved', icon: Bookmark, title: t('favorites.title'), hint: t('record.savedHint'), href: '/favorites' },
   ];
@@ -120,7 +118,6 @@ function Record() {
         onSelect={handleSelect}
         onShiftMonth={shiftMonth}
       />
-      <TextLink label={t('record.occasionsCalendar')} onPress={openCalendar} muted />
 
       {picked ? <PickedDay date={picked} today={today} title={picked === today ? t('practice.today') : shortDayTitle(picked, names)} /> : null}
 

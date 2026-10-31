@@ -34,11 +34,14 @@ function AddItem({ href, icon, title, hint }: AddItemProps) {
   );
 }
 
-/** «أضف»: a good habit (the setup wizard), a relative, or a private program (generic wording only). */
-export function AddMenu() {
+/**
+ * «أضف»: a good habit (the setup wizard), a relative, or a private program (generic wording only). `defaultOpen`
+ * opens it on arrival (`/practice?add=1`, the home page's «ابدأ بغرسٍ صغير»).
+ */
+export function AddMenu({ defaultOpen = false }: { defaultOpen?: boolean }) {
   const t = useTranslations('practice.hub.add');
   return (
-    <DropdownMenu>
+    <DropdownMenu defaultOpen={defaultOpen}>
       <DropdownMenuTrigger asChild>
         <button type="button" className="solid-button button-wrap !mt-0 !min-h-11" aria-label={t('label')}>
           <Plus aria-hidden className="!block" />

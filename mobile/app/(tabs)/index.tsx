@@ -2,7 +2,7 @@
  * Home, after the website's home (frontend/src/app/[locale]/page.tsx), in its order: the brand bar with the tagline
  * («لِمَن كَانَ لَهُۥ قَلْبٌ», the site header's `.brand-message`), the entry question, the doors (Pathways: «أعنّي على ترك
  * معصية» filled, «أعنّي على فعل طاعة» quiet, «شُعَب الإيمان» compact like the site's `.pathway-faith` at phone width),
- * the compact «استكشف النصوص» door to the texts (app/browse.tsx), the ornament, the moments list, «تذكرة مختارة»
+ * «مواسم الخير» (the occasions calendar, practice/calendar), the compact «استكشف النصوص» door to the texts (app/browse.tsx), the ornament, the moments list, «تذكرة مختارة»
  * (the API's text of the day, with share and save) and «تذكير تعرف مصدره» (the source strip).
  * Guest-first: nothing here needs an account. Copy is the site's own (`home.*`).
  */
@@ -11,7 +11,7 @@ import React, { useCallback } from 'react';
 import { View } from 'react-native';
 import { router, type Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { BookOpen, DoorOpen, Heart, MessageCircle, Pause, Search, Sprout, Sun, type LucideIcon } from 'lucide-react-native';
+import { BookOpen, CalendarDays, DoorOpen, Heart, MessageCircle, Pause, Search, Sprout, Sun, type LucideIcon } from 'lucide-react-native';
 import { useReminderOfTheDay } from '@/lib/api/quotes';
 import { useSourceStripNames } from '@/lib/api/sources';
 import { FeaturedReminder } from '@/components/home/FeaturedReminder';
@@ -37,6 +37,7 @@ const openSins = () => router.push('/sins');
 const openGoodDeeds = () => router.push('/good-deeds');
 const openBranches = () => router.push('/branches');
 const openBrowse = () => router.push('/browse');
+const openSeasons = () => router.push('/practice/calendar');
 
 const makeStyles = (t: Theme) => ({
   doors: { gap: space.md },
@@ -106,6 +107,14 @@ export default function HomeScreen() {
           body={t('home.branchEntryDescription')}
           action={t('home.branchCta')}
           onPress={openBranches}
+        />
+        <PathwayCard
+          size="row"
+          icon={CalendarDays}
+          title={t('home.seasonsTitle')}
+          body={t('home.seasonsBody')}
+          action={t('home.seasonsCta')}
+          onPress={openSeasons}
         />
         <PathwayCard
           size="row"

@@ -1,13 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
-  checkIn,
   createPlan,
   createRelative,
   dayAgenda,
   emptyStore,
   logContact,
   logDone,
-  startProgram,
   upsertPlan,
   upsertRelative,
   weekday,
@@ -21,13 +19,11 @@ import {
   compareMonths,
   hijriMonthSpan,
   isDayComplete,
-  isFirstRun,
   isInMonth,
   lastOfMonth,
   monthWeeks,
   presenceLevel,
   shiftMonth,
-  trackSummary,
   weekOf,
   weekStartFor,
 } from './hub';
@@ -115,41 +111,6 @@ describe('logging window and presence marks', () => {
     expect(isDayComplete(dayAgenda(s, '2026-10-28'))).toBe(true);
     expect(isDayComplete([])).toBe(false);
     expect(isDayComplete([{ kind: 'occasion', key: 'k', titleAr: 'ع', titleEn: 'e', deed: 'siyam' }])).toBe(false);
-  });
-});
-
-describe('tracks', () => {
-  it('sees a first visit only when no track has anything', () => {
-    expect(isFirstRun(emptyStore())).toBe(true);
-    expect(isFirstRun(store())).toBe(false);
-    const withProgram = {
-      ...emptyStore(),
-      programs: [startProgram({ sinSlug: 'ghibah', category: 'haqq_ibad', hardToLeaveAtOnce: false, startedOn: '2026-10-20' }, T)],
-    };
-    expect(isFirstRun(withProgram)).toBe(false);
-  });
-
-  it('counts habits, relatives due now and a program, without naming the program', () => {
-    let s = store();
-    s = {
-      ...s,
-      programs: [
-        checkIn(
-          startProgram({ sinSlug: 'ghibah', category: 'haqq_ibad', hardToLeaveAtOnce: false, startedOn: '2026-10-20' }, T),
-          '2026-10-28',
-          'held',
-          undefined,
-          T,
-        ),
-      ],
-    };
-    const summary = trackSummary(s, '2026-10-28');
-    expect(summary).toMatchObject({ habits: 1, relatives: 1, relativesDue: 1, hasProgram: true });
-    expect(summary.band).not.toBeNull();
-    expect(JSON.stringify(summary)).not.toContain('ghibah');
-    const contacted = { ...s, relatives: s.relatives.map((r) => logContact(r, '2026-10-28')) };
-    expect(trackSummary(contacted, '2026-10-28').relativesDue).toBe(0);
-    expect(trackSummary(emptyStore(), '2026-10-28')).toMatchObject({ habits: 0, band: null, relativesDue: 0, hasProgram: false });
   });
 });
 

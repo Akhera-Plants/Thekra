@@ -178,7 +178,7 @@ export interface SinDto {
   createdAt: string;
   updatedAt: string;
   branches?: { number: number; titleAr: string; title?: string | null }[];
-  /** «ترك المعصية» program for this sin (sin-programs.yaml). Optional until every API deploy sends it. */
+  /** «تخفَّف» program for this sin (sin-programs.yaml). Optional until every API deploy sends it. */
   program?: { available: boolean; category: 'haqq_allah' | 'haqq_ibad' | null } | null;
 }
 

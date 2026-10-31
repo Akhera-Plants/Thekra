@@ -6,6 +6,8 @@ import { FormattedNumber } from '@/components/shared/FormattedNumber';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { reportFailure } from '@/lib/errors';
 import { getCatalogSources } from '@/lib/api/sources';
+import { getAyah } from '@/lib/api/quran';
+import { formatDigits } from '@/lib/format/digits';
 import type { LocaleCode } from '@/lib/types/enums';
 import { localeAlternates } from '@/lib/seo';
 
@@ -25,6 +27,7 @@ export default async function AboutPage({
   const t = await getTranslations('about');
   const tNav = await getTranslations('nav');
   const tCrumbs = await getTranslations('breadcrumbs');
+  const tHome = await getTranslations('home');
   const sources = await getCatalogSources({ limit: 100, lang: locale as LocaleCode })
     .then((result) => result.data)
     .catch((error: unknown) => {
@@ -32,6 +35,16 @@ export default async function AboutPage({
       reportFailure('about sources', error);
       return [];
     });
+  // Qaf 50:37 as stored (content rule §3.1); the philosophy reads fine without it.
+  const verse = await getAyah(50, 37, { lang: locale as LocaleCode })
+    .then((result) => result.data)
+    .catch((error: unknown) => {
+      reportFailure('about verse', error);
+      return null;
+    });
+  const surah = verse?.quran ? (locale === 'ar' ? verse.quran.surahNameAr : verse.quran.surahName) : null;
+  const verseEnglish = locale === 'en' ? (verse?.translation?.text?.trim() ?? null) : null;
+  const conditions = ['remembrance', 'heart', 'listening', 'presence'] as const;
   const books = sources.filter((source) => (locale === 'ar' ? source.nameAr : source.name));
 
   return (
@@ -48,6 +61,35 @@ export default async function AboutPage({
         <h1 id="page-title" tabIndex={-1}>{t('pageTitle')}</h1>
         <p className="page-lead">{t('lead')}</p>
       </header>
+
+      <section id="philosophy" className="about-copy" aria-labelledby="philosophy-title">
+        <h2 id="philosophy-title">{t('philosophyTitle')}</h2>
+        {verse ? (
+          <figure>
+            <blockquote lang="ar" dir="rtl" className="font-quran text-2xl leading-[2.1]">
+              ﴿{verse.textAr}﴾
+            </blockquote>
+            {verseEnglish ? <p>{verseEnglish}</p> : null}
+            {surah && verse.quran?.ayahNumber != null ? (
+              <figcaption className="text-sm text-muted-foreground">
+                {tHome('verseCitation', {
+                  surah,
+                  chapter: formatDigits(verse.quran.surahNumber ?? 50),
+                  ayah: formatDigits(verse.quran.ayahNumber),
+                })}
+              </figcaption>
+            ) : null}
+          </figure>
+        ) : null}
+        <p>{t('philosophyLead')}</p>
+        <ol className="list-decimal ps-6">
+          {conditions.map((key) => (
+            <li key={key}>
+              <strong>{t(`conditions.${key}.title`)}</strong> — {t(`conditions.${key}.line`)}
+            </li>
+          ))}
+        </ol>
+      </section>
 
       <div className="about-copy">
         <p>{t('intro')}</p>

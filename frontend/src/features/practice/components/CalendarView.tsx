@@ -30,7 +30,7 @@ import { HijriOffsetSelect } from './HijriOffsetSelect';
 import { PracticeLoading } from './PracticeLoading';
 import { SyncStatus } from './SyncStatus';
 
-/** «التقويم»: today in Hijri, the month with its sunnah occasions, the coming year's list, subscribe or download. */
+/** «مواسم الخير» (`/calendar`): today in Hijri, the month with its sunnah occasions, the coming year's list, subscribe or download. */
 export function CalendarView() {
   const t = useTranslations('calendarPage');
   const tFeedback = useTranslations('feedback');

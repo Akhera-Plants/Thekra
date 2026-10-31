@@ -1,15 +1,33 @@
 'use client';
 
+import { useEffect, useId, useState } from 'react';
+import { Menu, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Link, usePathname } from '@/i18n/navigation';
-import { SavedNavLink } from '@/features/favorites/components/SavedNavLink';
 import { LocaleSwitcher } from './LocaleSwitcher';
 import { ThemeToggle } from './ThemeToggle';
 import { AuthNavItems } from './AuthNavItems';
 
+/** The three places of the site: «ورد اليوم» · «الأبواب» (the home doors) · «سجلّي». */
+function usePrimaryLinks() {
+  const pathname = usePathname();
+  const tNav = useTranslations('nav');
+  const recordCurrent = pathname === '/practice/record';
+  return [
+    {
+      key: 'wird',
+      href: '/practice',
+      label: tNav('practice'),
+      current: !recordCurrent && (pathname === '/practice' || pathname.startsWith('/practice/')),
+    },
+    { key: 'gateways', href: '/#paths', label: tNav('gateways'), current: false },
+    { key: 'record', href: '/practice/record', label: tNav('record'), current: recordCurrent },
+  ];
+}
+
 /**
- * Public site header (thekra-source chrome).
- * Favorites count is owned by features/SavedNavLink (shared must not fetch).
+ * Public site header (thekra-source chrome): «ورد اليوم» · «الأبواب» · «سجلّي», then language, theme and the account
+ * menu. At phone width the three links fold into «القائمة», a disclosure button with the same links.
  */
 export function SiteHeader() {
   const pathname = usePathname();
@@ -17,10 +35,25 @@ export function SiteHeader() {
   const tNav = useTranslations('nav');
   const tTheme = useTranslations('theme');
   const tLocale = useTranslations('localeSwitcher');
+  const links = usePrimaryLinks();
+  const menuId = useId();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPath, setMenuPath] = useState(pathname);
 
-  const aboutCurrent = pathname === '/about' || pathname.startsWith('/about/');
-  const practiceCurrent = pathname === '/practice' || pathname.startsWith('/practice/');
-  const calendarCurrent = pathname === '/calendar';
+  // A new page closes the menu (adjusting state while rendering, not in an effect).
+  if (menuPath !== pathname) {
+    setMenuPath(pathname);
+    setMenuOpen(false);
+  }
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMenuOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [menuOpen]);
 
   return (
     <header className="site-header page-width">
@@ -38,29 +71,16 @@ export function SiteHeader() {
       </Link>
 
       <nav className="main-nav" aria-label={tNav('main')}>
-        <Link
-          href="/practice"
-          className="nav-link"
-          aria-current={practiceCurrent ? 'page' : undefined}
-        >
-          {tNav('practice')}
-        </Link>
-        {/* Phones: the calendar stays in the footer and on the practice pages, so the header fits one line. */}
-        <Link
-          href="/calendar"
-          className="nav-link nav-link-wide"
-          aria-current={calendarCurrent ? 'page' : undefined}
-        >
-          {tNav('calendar')}
-        </Link>
-        <Link
-          href="/about"
-          className="nav-link"
-          aria-current={aboutCurrent ? 'page' : undefined}
-        >
-          {tNav('about')}
-        </Link>
-        <SavedNavLink />
+        {links.map((link) => (
+          <Link
+            key={link.key}
+            href={link.href}
+            className="nav-link nav-link-primary"
+            aria-current={link.current ? 'page' : undefined}
+          >
+            {link.label}
+          </Link>
+        ))}
         <span className="nav-divider" aria-hidden />
         <LocaleSwitcher label={tLocale('label')} className="nav-link" />
         <ThemeToggle
@@ -73,7 +93,39 @@ export function SiteHeader() {
         <div className="header-auth ms-1 flex items-center gap-1">
           <AuthNavItems />
         </div>
+        <button
+          type="button"
+          className="nav-link menu-toggle"
+          aria-expanded={menuOpen}
+          aria-controls={menuId}
+          onClick={() => setMenuOpen((open) => !open)}
+        >
+          {menuOpen ? <X className="size-5" aria-hidden /> : <Menu className="size-5" aria-hidden />}
+          <span>{tNav('menu')}</span>
+        </button>
       </nav>
+
+      <div id={menuId} className="mobile-menu" hidden={!menuOpen}>
+        <nav aria-label={tNav('menu')}>
+          <ul>
+            {links.map((link) => (
+              <li key={link.key}>
+                <Link
+                  href={link.href}
+                  className="mobile-menu-link"
+                  aria-current={link.current ? 'page' : undefined}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        <div className="mobile-menu-auth">
+          <AuthNavItems />
+        </div>
+      </div>
     </header>
   );
 }

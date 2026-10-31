@@ -43,7 +43,7 @@ const noSubscribe = () => () => {};
 const serverPending = () => null;
 
 /**
- * «ترك المعصية». LOCAL ONLY: the chosen program, check-ins and notes stay in this browser. Every request
+ * «تخفَّف». LOCAL ONLY: the chosen program, check-ins and notes stay in this browser. Every request
  * this page makes (catalog, the whole sin list, all programs' evidence) is the same for every visitor.
  */
 export function LeaveSinView() {

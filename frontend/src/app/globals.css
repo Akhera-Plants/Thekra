@@ -68,6 +68,8 @@
   --color-intent-good-deed-foreground: var(--intent-good-deed-foreground);
   --color-intent-iman-branch: var(--intent-iman-branch);
   --color-intent-iman-branch-foreground: var(--intent-iman-branch-foreground);
+  /* Streak flame («ورد اليوم», «سجلّي»): warm gold, never red. ≥ 4.5:1 on background, card and muted in both themes. */
+  --color-gold: var(--gold);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -161,6 +163,7 @@
   --intent-good-deed-foreground: #ffffff;
   --intent-iman-branch: #3d4a5c;
   --intent-iman-branch-foreground: #ffffff;
+  --gold: #8f6514;
   --grade-sahih: var(--intent-sin);
   --grade-sahih-foreground: var(--intent-sin-foreground);
   --grade-hasan: var(--intent-good-deed);
@@ -231,6 +234,7 @@
   --intent-good-deed-foreground: #101010;
   --intent-iman-branch: #9aa3b2;
   --intent-iman-branch-foreground: #101010;
+  --gold: #e0b555;
   --grade-sahih: var(--intent-sin);
   --grade-sahih-foreground: var(--intent-sin-foreground);
   --grade-hasan: var(--intent-good-deed);
