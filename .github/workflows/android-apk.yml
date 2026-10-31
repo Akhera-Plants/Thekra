@@ -43,12 +43,19 @@ jobs:
       - name: Generate the native Android project
         working-directory: mobile
         run: pnpm exec expo prebuild --platform android --no-install --clean
-      # The template's 2 GB heap / 512 MB metaspace runs out during release lint on this app.
-      - name: Give Gradle more memory
+      # The template's 512 MB metaspace runs out during release lint, and a private-repo runner has ~7 GB in all:
+      # one Gradle JVM with room for metaspace, Kotlin compiled in that JVM (no second daemon), two workers.
+      - name: Fit Gradle in the runner's memory
         working-directory: mobile/android
         run: |
-          sed -i '/^org.gradle.jvmargs=/d' gradle.properties
-          echo 'org.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=2g -XX:+HeapDumpOnOutOfMemoryError' >> gradle.properties
+          sed -i '/^org.gradle.jvmargs=/d;/^org.gradle.parallel=/d;/^org.gradle.workers.max=/d;/^kotlin.compiler.execution.strategy=/d' gradle.properties
+          {
+            echo 'org.gradle.jvmargs=-Xmx3584m -XX:MaxMetaspaceSize=1536m -XX:+UseParallelGC'
+            echo 'org.gradle.parallel=false'
+            echo 'org.gradle.workers.max=2'
+            echo 'kotlin.compiler.execution.strategy=in-process'
+          } >> gradle.properties
+          free -m
       - name: Build the release APK (arm64 phones)
         working-directory: mobile/android
         run: ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a
