@@ -193,9 +193,14 @@ export function StoryLine({ moment }: { moment: StoryMoment }) {
 
 // ── «شعبة الأسبوع» / «اسم الأسبوع» ──────────────────────────────────────────────────────────────────────────
 
-/** «ورد اليوم»'s weekly card (redesign §4.7): even ISO weeks «شعبة الأسبوع», odd weeks «اسم الأسبوع» (practice-core). */
+/**
+ * «ورد اليوم»'s weekly card (redesign §4.7): «شعبة الأسبوع». «اسم الأسبوع» (odd weeks, practice-core `weekCardKind`)
+ * waits while «الأسماء الحسنى» is hidden (owner, 2026-11-01): set {@link SHOW_NAME_WEEKS} back to true to bring it back.
+ */
+const SHOW_NAME_WEEKS = false;
+
 export function WeekCard({ today }: { today: string }) {
-  return weekCardKind(today) === 'branch' ? <WeekBranchCard today={today} /> : <WeekNameCard today={today} />;
+  return !SHOW_NAME_WEEKS || weekCardKind(today) === 'branch' ? <WeekBranchCard today={today} /> : <WeekNameCard today={today} />;
 }
 
 /** «اسم الأسبوع»: the same Name of Allah for everyone this name week, walking the API list in turn; links to its page. */

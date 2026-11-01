@@ -1,174 +1,131 @@
-"use client";
+'use client';
 
-import { useEffect, useSyncExternalStore, type ReactNode } from "react";
-import { Sprout } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { Link } from "@/i18n/navigation";
-import { DirectionalArrow } from "@/components/shared/DirectionalArrow";
-import { useSession } from "@/features/auth/hooks/useSession";
-import { HomeWirdCard } from "@/features/practice/components/hub/HomeWirdCard";
-import { usePracticeStore } from "@/features/practice/hooks/usePracticeStore";
-import { accountsEnabled } from "@/lib/accounts";
+import { useEffect, useSyncExternalStore, type ReactNode } from 'react';
+import { CalendarCheck, NotebookText } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
+import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
+import { useSession } from '@/features/auth/hooks/useSession';
+import { useWirdContext } from '@/features/practice/hooks/useWirdContext';
+import { StreakFlame } from '@/features/practice/components/hub/StreakFlame';
+import { accountsEnabled } from '@/lib/accounts';
+import { formatDigits } from '@/lib/format/digits';
+import { wirdSummary } from '@/lib/practice/wird';
 
-/** Remembers the last answer, so a returning user does not see the guest order flash first. Per-device convenience only. */
-const PERSONAL_HINT = "thekra.home.personal";
+/** Remembers the last answer, so a signed-in user does not see the guest page flash first. Per-device convenience only. */
+const SIGNED_IN_HINT = 'thekra.home.signed-in';
 
 function readHint(): boolean {
   try {
-    return window.localStorage.getItem(PERSONAL_HINT) === "1";
+    return window.localStorage.getItem(SIGNED_IN_HINT) === '1';
   } catch {
     return false;
   }
 }
 
-function writeHint(personal: boolean) {
+function writeHint(signedIn: boolean) {
   try {
-    if (personal) window.localStorage.setItem(PERSONAL_HINT, "1");
-    else window.localStorage.removeItem(PERSONAL_HINT);
+    if (signedIn) window.localStorage.setItem(SIGNED_IN_HINT, '1');
+    else window.localStorage.removeItem(SIGNED_IN_HINT);
   } catch {
-    // Storage blocked (private window): the page still works, it may only reorder once after loading.
+    // Storage blocked (private window): the page still works, the two cards may only appear after loading.
   }
 }
 
 const noSubscribe = () => () => {};
 
-/**
- * A visitor who practises here: signed in, or this device already holds habit plans (they live on the device). Everyone
- * else is a guest. False during the server render (the home is cached and the same for everyone).
- */
-function useIsPersonal(): boolean {
+/** Signed in (accounts on and a session). False during the server render: the home is cached and the same for everyone. */
+function useSignedIn(): boolean {
   const session = useSession();
-  const snapshot = usePracticeStore();
+  const enabled = accountsEnabled();
   const hint = useSyncExternalStore(noSubscribe, readHint, () => false);
-  const signedIn = accountsEnabled() && session.isAuthenticated;
-  const hasPlans = (snapshot?.store.plans.length ?? 0) > 0;
-  const known = snapshot !== null && (!accountsEnabled() || !session.isLoading);
-  const personal = signedIn || hasPlans;
+  const known = !enabled || !session.isLoading;
+  const signedIn = enabled && session.isAuthenticated;
   useEffect(() => {
-    if (known) writeHint(personal);
-  }, [known, personal]);
-  return known ? personal : hint;
+    if (known) writeHint(signedIn);
+  }, [known, signedIn]);
+  return known ? signedIn : enabled && hint;
 }
 
 interface HomeLayoutProps {
+  /** «أبواب الخير»: «أعنّي على ترك معصية» · «أعنّي على فعل طاعة» · «شُعَب الإيمان» and «مواسم الخير». */
   pathways: ReactNode;
-  divider: ReactNode;
-  moments: ReactNode;
-  /** «تذكرة مختارة» (null when the API did not answer). */
-  reminder: ReactNode;
-  /** «باب من الخير» (null when the API did not answer). */
-  deed: ReactNode;
-  reflection: ReactNode;
-  sources: ReactNode;
+  /** Everything under the doors, in the order it always had (moments, «تذكرة مختارة», reflection, sources). */
+  children: ReactNode;
 }
 
 /**
- * The home's order depends on who is reading (owner decision, 2026-11-01):
- *
- * - Guest: «أبواب الخير» first (the site's main content), then the moments, today's reminder and door, and a quiet
- *   invitation to start a habit.
- * - Signed in, or a device with habits: today's reminder and door first with the user's own buttons under them
- *   («بقي عليك اليوم» · «ورد اليوم» · «سجلّي»), then «أبواب الخير».
+ * The home (owner decision, 2026-11-01): «أبواب الخير» is the top of the page for everyone who is not signed in. A
+ * signed-in user sees two large cards first, the size of the doors: «ورد اليوم» (what is left today and the streak) and
+ * «سجلّي»; the doors and the rest follow unchanged.
  */
-export function HomeLayout({
-  pathways,
-  divider,
-  moments,
-  reminder,
-  deed,
-  reflection,
-  sources,
-}: HomeLayoutProps) {
-  const t = useTranslations("home");
-  const personal = useIsPersonal();
-
-  if (personal) {
-    return (
-      <>
-        <section
-          className="reading-pair home-today"
-          aria-label={t("readingPairLabel")}
-        >
-          <div className="home-today-main">
-            {reminder}
-            <PersonalActions />
-          </div>
-          {deed}
-        </section>
-        {pathways}
-        {divider}
-        {moments}
-        {reflection}
-        {sources}
-      </>
-    );
-  }
-
+export function HomeLayout({ pathways, children }: HomeLayoutProps) {
+  const signedIn = useSignedIn();
   return (
     <>
+      {signedIn ? <SignedInActions /> : null}
       {pathways}
-      {divider}
-      {moments}
-      {reminder || deed ? (
-        <section className="reading-pair" aria-label={t("readingPairLabel")}>
-          {reminder}
-          {deed}
-        </section>
-      ) : null}
-      <StartInvitation />
-      {reflection}
-      {sources}
+      {children}
     </>
   );
 }
 
-/** Under today's reminder: «ورد اليوم» · «سجلّي» · «بقي عليك اليوم n · المداومة», or «ابدأ بغرسٍ صغير» without habits. */
-function PersonalActions() {
-  const t = useTranslations("home");
-  const tNav = useTranslations("nav");
-  const snapshot = usePracticeStore();
-  const hasPlans = (snapshot?.store.plans.length ?? 0) > 0;
+function SignedInActions() {
+  const t = useTranslations('home');
+  const tNav = useTranslations('nav');
+  const tWird = useTranslations('practice.wird');
+  const context = useWirdContext({ catalogOnlyWithPlans: true });
+  const summary = context ? wirdSummary(context.snapshot.store, context.today, context.planDays) : null;
+  const hasPlans = summary?.hasPlans ?? false;
 
   return (
-    <div className="home-today-actions">
-      {hasPlans ? (
-        <>
-          <Link className="solid-button" href="/practice">
-            {tNav("practice")} <DirectionalArrow className="size-[18px]" />
-          </Link>
-          <Link className="outline-button" href="/practice/record">
-            {tNav("record")}
-          </Link>
-          <HomeWirdCard />
-        </>
-      ) : (
-        <Link
-          className="solid-button"
-          href={{ pathname: "/practice", query: { add: "1" } }}
-        >
-          <Sprout aria-hidden />
-          {t("startCta")} <DirectionalArrow className="size-[18px]" />
-        </Link>
-      )}
-    </div>
-  );
-}
-
-function StartInvitation() {
-  const t = useTranslations("home");
-  return (
-    <section className="home-start" aria-labelledby="home-start-title">
-      <div className="home-start-text">
-        <h2 id="home-start-title">{t("startTitle")}</h2>
-        <p>{t("startLead")}</p>
-      </div>
-      <Link
-        className="solid-button"
-        href={{ pathname: "/practice", query: { add: "1" } }}
-      >
-        <Sprout aria-hidden />
-        {t("startCta")} <DirectionalArrow className="size-[18px]" />
+    <nav className="home-actions" aria-label={t('actionsLabel')}>
+      <Link className="pathway pathway-return" href={hasPlans ? '/practice' : { pathname: '/practice', query: { add: '1' } }}>
+        <span className="pathway-top">
+          <span className="pathway-icon">
+            <CalendarCheck className="size-7" aria-hidden />
+          </span>
+          {summary && hasPlans ? (
+            <span
+              className="pathway-overline home-actions-streak"
+              aria-label={tWird('streakLabel', { count: summary.streak, n: formatDigits(summary.streak) })}
+            >
+              <StreakFlame className="size-4" />
+              <span aria-hidden>{formatDigits(summary.streak)}</span>
+            </span>
+          ) : null}
+        </span>
+        <span className="pathway-title">{tNav('practice')}</span>
+        <span className="pathway-description">
+          {!summary || !hasPlans
+            ? t('wirdEmpty')
+            : summary.remaining > 0
+              ? t('wirdLeft', { count: summary.remaining, n: formatDigits(summary.remaining) })
+              : t('wirdDone')}
+        </span>
+        <span className="pathway-cta">
+          {hasPlans ? t('wirdCta') : t('startCta')}{' '}
+          <span className="pathway-arrow">
+            <DirectionalArrow className="size-[19px]" />
+          </span>
+        </span>
       </Link>
-    </section>
+
+      <Link className="pathway pathway-good" href="/practice/record">
+        <span className="pathway-top">
+          <span className="pathway-icon">
+            <NotebookText className="size-7" aria-hidden />
+          </span>
+        </span>
+        <span className="pathway-title">{tNav('record')}</span>
+        <span className="pathway-description">{t('recordDescription')}</span>
+        <span className="pathway-cta">
+          {t('recordCta')}{' '}
+          <span className="pathway-arrow">
+            <DirectionalArrow className="size-[19px]" />
+          </span>
+        </span>
+      </Link>
+    </nav>
   );
 }

@@ -105,7 +105,7 @@ export function SiteHeader() {
           onClick={() => setMenuOpen((open) => !open)}
         >
           {menuOpen ? <X className="size-5" aria-hidden /> : <Menu className="size-5" aria-hidden />}
-          <span>{tNav('menu')}</span>
+          <span className="menu-toggle-label">{tNav('menu')}</span>
         </button>
       </nav>
 

@@ -47,11 +47,12 @@ No person's name (lecturer, author) inside the product. «بستاني» is remo
 
 - Mobile tabs: الرئيسية · ورد اليوم · سجلّي · الإعدادات (done in be74a0f).
 - Web header: ورد اليوم · الأبواب · سجلّي (+ account menu; a real mobile menu). «التقويم» leaves the header.
-- Web home (revised 2026-11-01 by the owner): no verse hero; «لِمَن كَانَ لَهُۥ قَلْبٌ» stays the header tagline. The order
-  depends on the visitor. Guest: «أبواب الخير» first (المعاصي · الطاعات · شُعب الإيمان, then الأسماء الحسنى and مواسم الخير as
-  compact rows), moments, «تذكرة مختارة» and «باب من الخير», a quiet «ورد اليوم — ابدأ بغرسٍ صغير» band, reflection, sources.
-  Signed in or a device with habits: «تذكرة مختارة» first with «ورد اليوم» · «سجلّي» · «بقي عليك اليوم n · 🔥 N» under it
-  (or «ابدأ بغرسٍ صغير» without habits), «باب من الخير» beside it, then «أبواب الخير». Brand greens only on the doors.
+- Web home (revised twice on 2026-11-01 by the owner): no verse hero; «لِمَن كَانَ لَهُۥ قَلْبٌ» stays the header tagline.
+  «أبواب الخير» is the top of the page for everyone not signed in, with the original door names «أعنّي على ترك معصية» ·
+  «أعنّي على فعل طاعة» · «شُعَب الإيمان» and «مواسم الخير»; then moments, «تذكرة مختارة» with «باب من الخير», reflection,
+  sources (the order it always had). «تسجيل الدخول» stays visible in the header bar on phones. Signed in: two large cards
+  the size of the doors above them, «ورد اليوم» (left today, streak) and «سجلّي». «الأسماء الحسنى» is hidden everywhere
+  (home, footer, sitemap, «اسم الأسبوع», the app's home); its pages still answer, marked noindex.
 - مواسم الخير: one page inside أبواب الخير (occasions list/month + ICS subscribe); today's occasion shows in ورد اليوم.
 - Gregorian dates by default; Hijri shown only when the setting is on (both clients).
 

@@ -74,6 +74,7 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
   const { locale } = await params;
   setRequestLocale(locale);
   const lang = locale === 'en' ? 'en' : 'ar';
+  const t = await getTranslations('home');
   const day = utcDayNumber();
 
   const [reminderResult, deedsResult, scholarsResult, sourceNames] = await Promise.all([
@@ -94,19 +95,22 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
   const deed = pickDeed(deeds, lang, day);
   const reflection = pickReflection(scholars, day);
 
-  // The order depends on the visitor (guest: «أبواب الخير» first; signed in or with habits: today's reading first), so
-  // the cached server parts are handed to a client layout. «لِمَن كَانَ لَهُۥ قَلْبٌ» stays the header's tagline.
+  // «أبواب الخير» first for everyone not signed in; a signed-in user gets «ورد اليوم» and «سجلّي» above it (HomeLayout).
+  // «لِمَن كَانَ لَهُۥ قَلْبٌ» stays the header's tagline.
   return (
     <div className="page-width flex flex-1 flex-col pb-10">
-      <HomeLayout
-        pathways={<Pathways />}
-        divider={<OrnamentalDivider />}
-        moments={<Moments />}
-        reminder={reminder ? <FeaturedReminder quote={reminder} /> : null}
-        deed={deed ? <FeaturedDeed deed={deed} /> : null}
-        reflection={reflection ? <Reflection quote={reflection} locale={lang} /> : null}
-        sources={<SourceStrip locale={lang} names={sourceNames} />}
-      />
+      <HomeLayout pathways={<Pathways />}>
+        <OrnamentalDivider />
+        <Moments />
+        {reminder || deed ? (
+          <section className="reading-pair" aria-label={t('readingPairLabel')}>
+            {reminder ? <FeaturedReminder quote={reminder} /> : null}
+            {deed ? <FeaturedDeed deed={deed} /> : null}
+          </section>
+        ) : null}
+        {reflection ? <Reflection quote={reflection} locale={lang} /> : null}
+        <SourceStrip locale={lang} names={sourceNames} />
+      </HomeLayout>
     </div>
   );
 }

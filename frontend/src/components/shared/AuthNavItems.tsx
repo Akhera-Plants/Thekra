@@ -47,7 +47,7 @@ function GuestAuthLinks({
         variant="ghost"
         tone="neutral"
         size="sm"
-        className="h-10 min-h-10 px-3 text-[15px] md:h-10 md:min-h-10"
+        className="auth-sign-in h-10 min-h-10 px-3 text-[15px] md:h-10 md:min-h-10"
       >
         <Link href="/login">{signIn}</Link>
       </Button>
@@ -56,7 +56,7 @@ function GuestAuthLinks({
         variant="solid"
         tone="primary"
         size="sm"
-        className="h-10 min-h-10 px-3.5 text-[15px] md:h-10 md:min-h-10"
+        className="auth-register h-10 min-h-10 px-3.5 text-[15px] md:h-10 md:min-h-10"
       >
         <Link href="/register">{register}</Link>
       </Button>

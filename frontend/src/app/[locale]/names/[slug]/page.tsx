@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: PageProps<'/[locale]/names/[s
   const { slug, locale } = await params;
   try {
     const { data } = await getNameOfAllah(slug, locale);
-    return { title: data.nameAr, alternates: localeAlternates(locale, `/names/${data.slug}`) };
+    return { title: data.nameAr, alternates: localeAlternates(locale, `/names/${data.slug}`), robots: { index: false } };
   } catch {
     return {};
   }

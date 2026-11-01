@@ -11,10 +11,11 @@ export const revalidate = 300;
 export async function generateMetadata({ params }: PageProps<'/[locale]/names'>): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'names' });
-  return { title: t('pageTitle'), alternates: localeAlternates(locale, '/names') };
+  // Hidden for now (owner, 2026-11-01): nothing links here and search engines skip it.
+  return { title: t('pageTitle'), alternates: localeAlternates(locale, '/names'), robots: { index: false } };
 }
 
-/** «الأسماء الحسنى» (redesign §4.7), the fourth door of «أبواب الخير». */
+/** «الأسماء الحسنى» (redesign §4.7). Hidden from every link for now (owner, 2026-11-01). */
 export default async function NamesPage({ params }: PageProps<'/[locale]/names'>) {
   const { locale } = await params;
   setRequestLocale(locale);
