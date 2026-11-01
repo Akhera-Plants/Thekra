@@ -17,6 +17,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { useRequireSignIn } from '@/lib/auth/require-sign-in';
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { dateLine } from '@/lib/practice/calendar-grid';
 import { usePracticeStore } from '@/lib/practice/practice-store';
@@ -73,6 +74,9 @@ const openAddHabit = () => router.push('/practice/add');
 
 export default function WirdScreen() {
   const hydrated = usePracticeStore((s) => s.hydrated);
+  // Members only: the tab bar already asks a guest to sign in; this covers a link or a notification.
+  const signedIn = useRequireSignIn('/(tabs)/habits');
+  if (!signedIn) return <WirdSkeleton />;
   return hydrated ? <Wird /> : <WirdSkeleton />;
 }
 

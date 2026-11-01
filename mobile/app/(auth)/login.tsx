@@ -7,7 +7,8 @@
 
 import React, { useState } from 'react';
 import { View } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
+import { leaveAuth } from '@/lib/auth/require-sign-in';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { ApiError } from '@/lib/types/api';
@@ -27,6 +28,7 @@ export default function LoginScreen() {
   const isLoading = useAuthStore((s) => s.isLoading);
   const clearError = useAuthStore((s) => s.clearError);
 
+  const { next } = useLocalSearchParams<{ next?: string }>();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [failure, setFailure] = useState<string | null>(null);
@@ -38,7 +40,7 @@ export default function LoginScreen() {
     setFailure(null);
     try {
       await login({ email, password });
-      router.back();
+      leaveAuth(next);
     } catch (e) {
       const offline = e instanceof ApiError && (e.status === 0 || e.code === 'NETWORK_ERROR');
       setFailure(offline ? t('errors.network') : t('auth.loginError'));
@@ -93,7 +95,7 @@ export default function LoginScreen() {
           <Text variant="small" tone="muted">
             {t('auth.noAccount')}
           </Text>
-          <TextLink label={t('auth.register')} onPress={() => router.replace('/(auth)/register')} />
+          <TextLink label={t('auth.register')} onPress={() => router.replace({ pathname: '/(auth)/register', params: next ? { next } : {} })} />
         </View>
       </Screen>
   );

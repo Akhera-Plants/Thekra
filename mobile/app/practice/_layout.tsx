@@ -7,14 +7,21 @@
  */
 
 import React from 'react';
-import { Stack } from 'expo-router';
+import { Stack, useSegments } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { useRequireSignIn } from '@/lib/auth/require-sign-in';
 import { useStackScreenOptions } from '@/ui';
 
 export default function PracticeLayout() {
   const { t } = useTranslation();
+  const options = useStackScreenOptions();
+  // Members only (owner, 2026-11-01): a guest who reaches a practice screen by a link or a notification signs in first.
+  // «مواسم الخير» (calendar) stays public, as on the website.
+  const segments = useSegments();
+  const signedIn = useRequireSignIn('/(tabs)/habits', segments.at(-1) !== 'calendar');
+  if (!signedIn) return null;
   return (
-    <Stack screenOptions={useStackScreenOptions()}>
+    <Stack screenOptions={options}>
       <Stack.Screen name="habits" options={{ title: t('practice.hub.habitsTrack') }} />
       <Stack.Screen name="add" options={{ title: t('practice.add.title') }} />
       <Stack.Screen name="plan/[id]" options={{ title: t('practice.title') }} />

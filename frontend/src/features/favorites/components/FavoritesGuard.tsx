@@ -4,7 +4,7 @@
  */
 'use client';
 
-import type { ReactNode } from 'react';
+import { useSyncExternalStore, type ReactNode } from 'react';
 import { useSession } from '@/features/auth/hooks/useSession';
 import { SignInPrompt } from './SignInPrompt';
 
@@ -12,11 +12,15 @@ interface FavoritesGuardProps {
   children: ReactNode;
 }
 
+const noSubscribe = () => () => {};
+
 export function FavoritesGuard({ children }: FavoritesGuardProps) {
   const { isAuthenticated, isLoading } = useSession();
+  // Same as the server render until mounted: the session can resolve before this part hydrates (React #418).
+  const mounted = useSyncExternalStore(noSubscribe, () => true, () => false);
 
   // While restoring session from the httpOnly cookie, show nothing (prevents flicker)
-  if (isLoading) return null;
+  if (!mounted || isLoading) return null;
 
   if (!isAuthenticated) {
     return <SignInPrompt variant="page" />;

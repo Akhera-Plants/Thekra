@@ -1,6 +1,8 @@
 'use client';
 
+import { useSyncExternalStore } from 'react';
 import { useTranslations } from 'next-intl';
+import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { Separator } from '@/components/ui/separator';
 import { NotificationsLink } from '@/features/practice/components/NotificationsLink';
 import { ScreenSettingsLinks } from '@/features/practice/components/screen/ScreenSettingsLinks';
@@ -10,20 +12,31 @@ import { useSession } from '@/features/auth/hooks/useSession';
 import { AccountDataPanel } from './AccountDataPanel';
 import { AccountSection } from './AccountSection';
 
+const noSubscribe = () => () => {};
+
 export function SettingsView() {
   const t = useTranslations('settings');
   const tLocale = useTranslations('localeSwitcher');
   const tTheme = useTranslations('theme');
+  const tNav = useTranslations('nav');
+  const tCrumbs = useTranslations('breadcrumbs');
 
   const { user, isAuthenticated } = useSession();
+  // Same as the server render until mounted: the session can resolve before this page hydrates (React #418).
+  const mounted = useSyncExternalStore(noSubscribe, () => true, () => false);
 
   return (
-    <div className="mx-auto w-full max-w-lg px-4 py-8">
-      <h1 className="mb-6 text-2xl font-semibold">{t('pageTitle')}</h1>
+    <div className="page-width inner-page">
+      <Breadcrumbs ariaLabel={tNav('breadcrumbs')} items={[{ label: tCrumbs('home'), href: '/' }, { label: t('pageTitle') }]} />
+      <header className="page-heading">
+        <h1 id="page-title" tabIndex={-1}>
+          {t('pageTitle')}
+        </h1>
+      </header>
 
-      <div className="flex flex-col gap-6">
+      <div className="flex max-w-xl flex-col gap-6">
         {/* Account section — only shown when signed in */}
-        {isAuthenticated && user && (
+        {mounted && isAuthenticated && user && (
           <>
             <AccountSection user={user} />
             <Separator />
@@ -32,13 +45,16 @@ export function SettingsView() {
           </>
         )}
 
-        {/* «التنبيهات»: every reminder switch lives on its own page */}
-        <section className="flex flex-col gap-3">
-          <NotificationsLink />
-          <ScreenSettingsLinks />
-        </section>
-
-        <Separator />
+        {/* «التنبيهات», «تذكيراتي», «أوقات الصلاة»: practice settings, for members only (owner, 2026-11-01). */}
+        {mounted && isAuthenticated ? (
+          <>
+            <section className="flex flex-col gap-3">
+              <NotificationsLink />
+              <ScreenSettingsLinks />
+            </section>
+            <Separator />
+          </>
+        ) : null}
 
         {/* Language */}
         <section className="flex items-center justify-between gap-4">

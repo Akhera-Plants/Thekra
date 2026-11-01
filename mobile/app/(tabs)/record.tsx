@@ -11,6 +11,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { router, type Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { useRequireSignIn } from '@/lib/auth/require-sign-in';
 import { Bookmark, Lightbulb, Lock, NotebookPen, Repeat, Sprout, Users, type LucideIcon } from 'lucide-react-native';
 import { establishPlan, graduationReady, updatePlan, type LocalDate } from '@thekra/practice-core';
 import { pick } from '@/lib/practice/catalog-types';
@@ -57,7 +58,8 @@ interface LinkRow {
 
 export default function RecordScreen() {
   const { t } = useTranslation();
-  const hydrated = usePracticeStore((s) => s.hydrated);
+  const signedIn = useRequireSignIn('/(tabs)/record');
+  const hydrated = usePracticeStore((s) => s.hydrated) && signedIn;
   return (
     <Screen decor>
       <PageHeader title={t('record.title')} />

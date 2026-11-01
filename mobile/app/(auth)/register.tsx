@@ -6,7 +6,8 @@
 
 import React, { useState } from 'react';
 import { Linking, View } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
+import { leaveAuth } from '@/lib/auth/require-sign-in';
 import { useTranslation } from 'react-i18next';
 import { SITE_PRIVACY_PATH, sitePageUrl } from '@/lib/site';
 import { useAuthStore } from '@/lib/stores/auth-store';
@@ -28,6 +29,7 @@ export default function RegisterScreen() {
   const clearError = useAuthStore((s) => s.clearError);
 
   const [name, setName] = useState('');
+  const { next } = useLocalSearchParams<{ next?: string }>();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [failure, setFailure] = useState<string | null>(null);
@@ -39,7 +41,7 @@ export default function RegisterScreen() {
     setFailure(null);
     try {
       await register({ email, password, displayName: name.trim() });
-      router.back();
+      leaveAuth(next);
     } catch (e) {
       const offline = e instanceof ApiError && (e.status === 0 || e.code === 'NETWORK_ERROR');
       const taken = e instanceof ApiError && e.code === 'EMAIL_ALREADY_REGISTERED';
@@ -111,7 +113,7 @@ export default function RegisterScreen() {
           <Text variant="small" tone="muted">
             {t('auth.haveAccount')}
           </Text>
-          <TextLink label={t('auth.login')} onPress={() => router.replace('/(auth)/login')} />
+          <TextLink label={t('auth.login')} onPress={() => router.replace({ pathname: '/(auth)/login', params: next ? { next } : {} })} />
         </View>
       </Screen>
   );

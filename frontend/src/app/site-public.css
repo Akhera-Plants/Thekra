@@ -177,7 +177,10 @@
 @media(max-width:650px){.site-public .header-auth{display:flex}.site-public .header-auth .auth-register{display:none}}
 /* With «تسجيل الدخول» in the bar, «القائمة» keeps its icon and its name for screen readers only on narrow phones. */
 @media(max-width:480px){.site-public .menu-toggle .menu-toggle-label{position:absolute;inline-size:1px;block-size:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}.site-public .main-nav{gap:12px}}
-@media(max-width:360px){.site-public .main-nav{gap:8px}.site-public .header-auth .auth-sign-in{padding-inline:8px;font-size:14px}.site-header{gap:4px}}
+@media(max-width:360px){.site-public .main-nav{gap:8px}.site-header{gap:4px}}
 /* «شُعَب الإيمان»: a branching tree in the corner, like the leaves on the primary door; green on the light card. */
 .pathway-faith .pathway-tree{color:var(--brand);opacity:.22;bottom:-58px;inset-inline-end:-14px}
 @media(max-width:650px){.pathway-faith .pathway-tree{display:none}}
+/* Header «إنشاء حساب» / «تسجيل الدخول»: the site's outline and solid buttons, one height, one padding. */
+.site-public .header-auth .auth-button{min-height:40px;padding:6px 16px;font-size:15px;line-height:1.4;border-radius:8px}
+@media(max-width:360px){.site-public .header-auth .auth-button{padding-inline:12px;font-size:14px}}

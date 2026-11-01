@@ -37,7 +37,9 @@ const noSubscribe = () => () => {};
 function useSignedIn(): boolean {
   const session = useSession();
   const hint = useSyncExternalStore(noSubscribe, readHint, () => false);
-  const known = !session.isLoading;
+  // Same as the server render until mounted: the session can resolve before the home hydrates (React #418).
+  const mounted = useSyncExternalStore(noSubscribe, () => true, () => false);
+  const known = mounted && !session.isLoading;
   useEffect(() => {
     if (known) writeHint(session.isAuthenticated);
   }, [known, session.isAuthenticated]);

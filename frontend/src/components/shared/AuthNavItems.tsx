@@ -9,7 +9,6 @@ import { useSyncExternalStore } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Button } from '@/components/shared/kit/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,25 +40,13 @@ function GuestAuthLinks({
 }) {
   return (
     <div className="flex items-center gap-2.5">
-      {/* «تسجيل الدخول» is the primary action (owner, 2026-11-01); «إنشاء حساب» is the quiet one. */}
-      <Button
-        asChild
-        variant="ghost"
-        tone="neutral"
-        size="sm"
-        className="auth-register h-10 min-h-10 px-3 text-[15px] md:h-10 md:min-h-10"
-      >
-        <Link href="/register">{register}</Link>
-      </Button>
-      <Button
-        asChild
-        variant="solid"
-        tone="primary"
-        size="sm"
-        className="auth-sign-in h-10 min-h-10 px-3.5 text-[15px] md:h-10 md:min-h-10"
-      >
-        <Link href="/login">{signIn}</Link>
-      </Button>
+      {/* «تسجيل الدخول» is the primary action (owner, 2026-11-01); «إنشاء حساب» the outlined one, same height and padding. */}
+      <Link href="/register" className="outline-button auth-button auth-register">
+        {register}
+      </Link>
+      <Link href="/login" className="solid-button auth-button auth-sign-in">
+        {signIn}
+      </Link>
     </div>
   );
 }

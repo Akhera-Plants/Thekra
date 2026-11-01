@@ -335,7 +335,8 @@
     "filterCollection": "Filter by collection",
     "allGrades": "All grades",
     "allSurahs": "All surahs",
-    "allCollections": "All collections"
+    "allCollections": "All collections",
+    "listLabel": "Texts"
   },
   "surah": {
     "pageTitle": "Surah {name}",

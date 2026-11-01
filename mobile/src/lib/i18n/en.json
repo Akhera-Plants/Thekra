@@ -205,7 +205,7 @@
     "haveAccount": "Already have an account?",
     "register": "Register",
     "login": "Sign in",
-    "guestNote": "You can use the app without an account. Sign in and your favorites are saved, your habits stay in step with your account on all your devices, and you can save the \"Lighten\" program encrypted to open it on another device.",
+    "guestNote": "\"Today's wird\" and \"Record\" need an account: it keeps your habits and syncs them across your devices.",
     "loginError": "Login failed. Check your credentials.",
     "registerError": "Registration failed. Please try again.",
     "name": "Name",

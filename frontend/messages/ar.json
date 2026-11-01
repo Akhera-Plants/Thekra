@@ -335,7 +335,8 @@
     "filterCollection": "تصفية حسب المجموعة",
     "allGrades": "كل الدرجات",
     "allSurahs": "كل السور",
-    "allCollections": "كل المجموعات"
+    "allCollections": "كل المجموعات",
+    "listLabel": "النصوص"
   },
   "surah": {
     "pageTitle": "سورة {name}",

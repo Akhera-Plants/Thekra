@@ -1,5 +1,5 @@
 /**
- * Bottom tab bar, four tabs: «الرئيسية» · «ورد اليوم» · «سجلّي» · «الإعدادات», in reading order (Home at the start:
+ * Bottom tab bar, four tabs: «الرئيسية» · «ورد اليوم» · «السجل» · «الإعدادات» (the middle two for members only), in reading order (Home at the start:
  * the right in Arabic, the left in English), in the website's look (background fill, hairline on top, thin lucide
  * icons, Plex labels, the primary colour for the current tab). «ورد اليوم» is the centre of the app, so its icon sits
  * in a soft pill, stronger when it is the current tab. «بستاني» and «المحفوظات» are pushed screens opened from
@@ -15,6 +15,7 @@ import { Tabs } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChartNoAxesColumn, House, Settings2, Sprout, type LucideIcon } from 'lucide-react-native';
+import { isSignedIn, openSignIn } from '@/lib/auth/require-sign-in';
 import { radius, useTheme } from '@/theme';
 
 /** Tab bar height above the safe-area inset. */
@@ -45,6 +46,15 @@ function CenterTabIcon({ color, focused }: ITabIconProps) {
     </View>
   );
 }
+
+/** «ورد اليوم» and «السجل» are for members: a guest's tap opens «تسجيل الدخول», then the tab (owner, 2026-11-01). */
+const membersOnly = (next: string) => ({
+  tabPress: (event: { preventDefault: () => void }) => {
+    if (isSignedIn()) return;
+    event.preventDefault();
+    openSignIn(next);
+  },
+});
 
 export default function TabLayout() {
   const { t } = useTranslation();
@@ -79,8 +89,13 @@ export default function TabLayout() {
       <Tabs.Screen
         name="habits"
         options={{ title: t('tabs.wird'), tabBarIcon: CenterTabIcon, tabBarIconStyle: CENTER_PILL }}
+        listeners={membersOnly('/(tabs)/habits')}
       />
-      <Tabs.Screen name="record" options={{ title: t('tabs.record'), tabBarIcon: icon(ChartNoAxesColumn) }} />
+      <Tabs.Screen
+        name="record"
+        options={{ title: t('tabs.record'), tabBarIcon: icon(ChartNoAxesColumn) }}
+        listeners={membersOnly('/(tabs)/record')}
+      />
       <Tabs.Screen name="settings" options={{ title: t('tabs.settings'), tabBarIcon: icon(Settings2) }} />
     </Tabs>
   );
