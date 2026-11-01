@@ -8,11 +8,17 @@ import { HadithGrade, Prisma } from '@prisma/client';
 import { buildPageMeta, paginated } from '../../common/dto/paginated-result.js';
 import { findIdsByNormalizedArabic } from '../../common/text/arabic-search.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import {
+  compareReading,
+  countsByTypeFromRanked,
+  firstReadingQuoteId,
+  READING_ORDER,
+  READING_SELECT,
+} from '../classification/reading.js';
 import { GradePolicy } from '../hadith/grade-policy.js';
 import { mizanIdsFor } from '../practice/heart-texts.js';
 import { SinQuotesQueryDto } from '../sins/dto/sin-quotes-query.dto.js';
 import {
-  LINK_ORDERING_LABEL,
   PUBLISHED_LINK_REVIEW_STATUS,
   QuotesService,
 } from '../quotes/quotes.service.js';
@@ -140,16 +146,16 @@ export class ImanBranchesService {
         orderBy: { number: 'asc' },
         select: { number: true, titleAr: true, title: true },
       }),
+      // The first text of the branch's list, in the list's reading order.
       this.quotes.mizan(
         mizanIdsFor(number),
         async (quote) =>
-          (
-            await this.prisma.imanBranchQuote.findFirst({
+          firstReadingQuoteId(
+            await this.prisma.imanBranchQuote.findMany({
               where: { imanBranchId: row.id, reviewStatus: PUBLISHED_LINK_REVIEW_STATUS, quote },
-              orderBy: this.quotes.linkOrderBy(),
-              select: { quoteId: true },
-            })
-          )?.quoteId ?? null,
+              select: READING_SELECT,
+            }),
+          ),
         lang === 'en' ? 'en' : 'ar',
       ),
     ]);
@@ -254,28 +260,18 @@ export class ImanBranchesService {
       });
     }
 
-    const [[links, total, typeGroups], countsByKind] = await Promise.all([
-      Promise.all([
-        this.prisma.imanBranchQuote.findMany({
-          where,
-          orderBy: this.quotes.linkOrderBy(),
-          skip: (page - 1) * limit,
-          take: limit,
-        }),
-        this.prisma.imanBranchQuote.count({ where }),
-        this.prisma.quote.groupBy({
-          by: ['type'],
-          where: { imanBranchLinks: { some: where } },
-          _count: { _all: true },
-        }),
-      ]),
+    // The same reading order as the topic pages, so «الميزان» is the first text here too. The ranked rows also give
+    // the total and the per-type breakdown (one link per branch and text).
+    const [ranked, countsByKind] = await Promise.all([
+      this.prisma.imanBranchQuote.findMany({ where, select: READING_SELECT }),
       countsByKindQ,
     ]);
-    const rows = await this.quotes.hydrateLinks(links, locale);
+    const pageRows = [...ranked].sort(compareReading).slice((page - 1) * limit, page * limit);
+    const rows = await this.quotes.hydrateLinks(pageRows, locale);
 
-    return this.quotesPage(branch, rows, page, limit, total, locale, allowedGrades, {
-      ordering: LINK_ORDERING_LABEL,
-      countsByType: this.quotes.countsByTypeFromGroups(typeGroups),
+    return this.quotesPage(branch, rows, page, limit, ranked.length, locale, allowedGrades, {
+      ordering: READING_ORDER,
+      countsByType: countsByTypeFromRanked(ranked),
       countsByKind,
     });
   }

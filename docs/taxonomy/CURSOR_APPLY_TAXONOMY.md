@@ -169,7 +169,9 @@ Keep `Sin` (AVOID topics) and `GoodDeed` (DO topics) as the public tables — UR
   «ما جاء في التحذير منها» (its own texts) and «أجر من تركها لله» (texts of its `opposite` DO topic + the
   `tark-lillah` pool). Reader mode alternates: warning, reward, warning, reward …
 - DO topic page: «فضلها وثوابها» first (its own texts), then «ما جاء في التحذير من تركها» (its `opposite` AVOID texts).
-- Within a part: CHAPTER_AYAH first, then Sahihayn hadith (TAKHRIJ or direct), then other public hadith; every text
+- (Superseded 2026-11-01, `backend/src/modules/classification/reading.ts`: a Targhib CHAPTER_AYAH verse — one that only
+  appears inside a hadith of the chapter — goes after every other text and is never «الميزان»; the opening verses the
+  other authors chose stay with the verses.) Originally: within a part: CHAPTER_AYAH first, then Sahihayn hadith (TAKHRIJ or direct), then other public hadith; every text
   shows «من باب: … — <book>» or the Munajjid attribution.
 - Contemporary pages: their own texts (none yet) + derived topics' texts grouped under each derived topic's name,
   with «موضوع معاصر: نصوصه مستمدة من الأبواب التالية». «كبيرة» badge with reference stays. Iman branches listed.

@@ -43,9 +43,6 @@ describe('SinsService', () => {
   const quotes = {
     buildQuoteInclude: vi.fn().mockReturnValue({ source: true }),
     toQuoteDto: vi.fn().mockImplementation((row) => ({ id: row?.id, type: row?.type })),
-    linkOrderBy: vi.fn().mockReturnValue([
-      { relevanceScore: { sort: 'desc', nulls: 'last' } },
-    ]),
     shuffleLinksPage: vi.fn(),
     // hydrateLinks loads the quote relations; here it only attaches a stub quote to each link row.
     hydrateLinks: vi.fn().mockImplementation((links: Array<{ quoteId?: string; quote?: unknown }>) =>
@@ -235,7 +232,6 @@ describe('SinsService', () => {
       // Restore default mocks that beforeEach clears
       quotes.buildQuoteInclude.mockReturnValue({ source: true });
       quotes.toQuoteDto.mockImplementation((row) => ({ id: row?.id, type: row?.type }));
-      quotes.linkOrderBy.mockReturnValue([{ relevanceScore: { sort: 'desc', nulls: 'last' } }]);
       quotes.getVarietyScoreFloor.mockReturnValue(70);
       quotes.buildLinkQuoteFilter.mockImplementation((query: { type?: QuoteType[]; grades?: string[]; includeWeak?: boolean }) => {
         const allowedGrades = GradePolicy.resolveAllowedGrades({ grades: query.grades as never, includeWeak: query.includeWeak });

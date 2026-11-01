@@ -4,6 +4,7 @@ import { GradePolicy } from '../hadith/grade-policy.js';
 import {
   dedupeReading,
   deedHasPublicText,
+  firstReadingQuoteId,
   pageReadingIds,
   compareReading,
   countsByTypeFromRanked,
@@ -226,16 +227,16 @@ export class GoodDeedsService {
         message: 'Good deed not found',
       });
     }
+    // The first text of the deed's own list, in the list's reading order.
     const mizan = await this.quotes.mizan(
       mizanIdsFor(row.slug),
       async (quote) =>
-        (
-          await this.prisma.goodDeedQuote.findFirst({
+        firstReadingQuoteId(
+          await this.prisma.goodDeedQuote.findMany({
             where: { goodDeedId: row.id, reviewStatus: PUBLISHED_LINK_REVIEW_STATUS, ...autoLinkExclusion(), quote },
-            orderBy: this.quotes.linkOrderBy(),
-            select: { quoteId: true },
-          })
-        )?.quoteId ?? null,
+            select: READING_SELECT,
+          }),
+        ),
       lang === 'en' ? 'en' : 'ar',
     );
     return {
@@ -585,7 +586,7 @@ export class GoodDeedsService {
   ) {
     const classifiedBy = row.classifiedBy ?? 'BOOK';
     const band = row.basis
-      ? readingTier({ basis: row.basis, quote: { type: row.quote.type, sourceId: row.quote.sourceId ?? null } })
+      ? readingTier({ basis: row.basis, note: row.note ?? null, quote: { type: row.quote.type, sourceId: row.quote.sourceId ?? null } })
       : null;
     return {
       link: {

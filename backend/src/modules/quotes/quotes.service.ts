@@ -42,29 +42,19 @@ import type { UpdateQuoteDto } from './dto/update-quote.dto.js';
 import { checkQuoteShape } from './dto/valid-quote-shape.decorator.js';
 
 /**
- * Human-readable ordering label echoed in `meta.ordering` for normal (non-shuffle) link pages.
- * Exported so sins/good-deeds services can reuse the same string.
+ * «الميزان» of a topic page: curated ids, or the first published text of the topic's list in reading order
+ * (`compareReading`, classification/reading.ts).
  */
-/** «الميزان» of a topic page: curated ids, or the topic's top-ranked published text. */
 export interface MizanDto {
   source: 'curated' | 'top';
   items: QuoteDto[];
 }
-
-export const LINK_ORDERING_LABEL = 'relevanceScore:desc,grade:asc,createdAt:desc';
 
 /**
  * Reminder feeds and public quote↔intent filters.
  * Suggested links (any other review status) stay hidden until a human accepts them.
  */
 export const PUBLISHED_LINK_REVIEW_STATUS = LinkReviewStatus.ACCEPTED;
-
-const LINK_ORDER_BY = [
-  { relevanceScore: { sort: 'desc' as const, nulls: 'last' as const } },
-  { quote: { grade: 'asc' as const } },
-  { quote: { createdAt: 'desc' as const } },
-  { id: 'asc' as const },
-];
 
 function translationsInclude(
   locale: 'ar' | 'en',
@@ -262,8 +252,9 @@ export class QuotesService {
 
   /**
    * «الميزان» (redesign §4.5): the 1–2 texts that open a topic page. The curated ids of heart-texts.yaml when any of
-   * them is published (`source: 'curated'`), else the topic's top-ranked published text — the first text of its own
-   * list (`source: 'top'`, read with `topQuoteId`). Null when the topic has no published text.
+   * them is published (`source: 'curated'`), else the first published text of the topic's own list in reading order
+   * (`source: 'top'`, read with `topQuoteId`, which uses `firstReadingQuoteId`). A CHAPTER_AYAH verse is that text only
+   * when the topic has nothing else. Null when the topic has no published text.
    */
   async mizan(
     curatedIds: readonly string[],
@@ -278,10 +269,6 @@ export class QuotesService {
     if (!id) return null;
     const items = await this.findPublishedByIds([id], locale);
     return items.length > 0 ? { source: 'top', items } : null;
-  }
-
-  linkOrderBy() {
-    return LINK_ORDER_BY;
   }
 
   /**
@@ -407,8 +394,9 @@ export class QuotesService {
    * page, ordered so that:
    *   • Links with `relevanceScore >= floor` come first, sorted by
    *     `md5(link.id || seed)` — deterministic pseudo-random per seed.
-   *   • Remaining links follow in normal LINK_ORDER (score DESC, grade ASC,
-   *     createdAt DESC, id ASC).
+   *   • Remaining links follow in score order (score DESC, grade ASC,
+   *     createdAt DESC, id ASC). Variety mode is not the reading order
+   *     (`compareReading`); no client requests it (owner rule: no shuffle).
    *
    * The caller must pass pre-validated, closed-union values for `table` and
    * `parentKey` (never raw user input) — they are embedded with Prisma.raw.
@@ -476,7 +464,7 @@ export class QuotesService {
     //   Column 1 — band: high-band (score >= floor) = 0, low-band = 1.
     //   Column 2 — shuffle within high-band via md5(id || seed); NULLs last
     //              (low-band rows have NULL here, but band column already separates them).
-    //   Columns 3-5 — normal LINK_ORDER within low-band (NULL in high-band rows
+    //   Columns 3-5 — score order within low-band (NULL in high-band rows
     //              is irrelevant because band column puts them first).
     const rows = await this.prisma.$queryRaw<{ id: string }[]>(Prisma.sql`
       SELECT   sq.id

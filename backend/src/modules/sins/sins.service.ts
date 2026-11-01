@@ -9,6 +9,7 @@ import { Prisma, type SinRank } from '@prisma/client';
 import { GradePolicy } from '../hadith/grade-policy.js';
 import {
   dedupeReading,
+  firstReadingQuoteId,
   pageReadingIds,
   compareReading,
   countsByTypeFromRanked,
@@ -235,16 +236,16 @@ export class SinsService {
     const locale = lang === 'en' ? 'en' : 'ar';
     const [relatedGoodDeeds, mizan] = await Promise.all([
       this.goodDeeds.findByOppositeSinId(row.id),
+      // The first text of the sin's own list, in the list's reading order.
       this.quotes.mizan(
         mizanIdsFor(row.slug),
         async (quote) =>
-          (
-            await this.prisma.sinQuote.findFirst({
+          firstReadingQuoteId(
+            await this.prisma.sinQuote.findMany({
               where: { sinId: row.id, reviewStatus: PUBLISHED_LINK_REVIEW_STATUS, ...autoLinkExclusion(), quote },
-              orderBy: this.quotes.linkOrderBy(),
-              select: { quoteId: true },
-            })
-          )?.quoteId ?? null,
+              select: READING_SELECT,
+            }),
+          ),
         locale,
       ),
     ]);
@@ -552,7 +553,7 @@ export class SinsService {
   ) {
     const classifiedBy = row.classifiedBy ?? 'BOOK';
     const band = row.basis
-      ? readingTier({ basis: row.basis, quote: { type: row.quote.type, sourceId: row.quote.sourceId ?? null } })
+      ? readingTier({ basis: row.basis, note: row.note ?? null, quote: { type: row.quote.type, sourceId: row.quote.sourceId ?? null } })
       : null;
     return {
       link: {

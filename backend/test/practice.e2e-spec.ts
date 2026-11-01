@@ -169,7 +169,8 @@ describe('Practice, calendar and account endpoints (e2e)', () => {
     const ghibah = await request(server()).get('/v1/sins/ghibah').expect(200);
     expect(ghibah.body.data.program).toEqual({ available: true, category: 'haqq_ibad' });
     const namimah = await request(server()).get('/v1/sins/namimah').expect(200);
-    expect(namimah.body.data.program).toEqual({ available: false, category: null });
+    // Every sin can start the common program (owner, 2026-11-01); without a written one the visitor picks the category.
+    expect(namimah.body.data.program).toEqual({ available: true, category: null });
   });
 
   // ── Account: practice sync, sin vault, export, delete ──────────────────────

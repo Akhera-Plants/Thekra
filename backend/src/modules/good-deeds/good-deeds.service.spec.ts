@@ -26,9 +26,6 @@ describe('GoodDeedsService', () => {
   const quotes = {
     buildQuoteInclude: vi.fn().mockReturnValue({ source: true }),
     toQuoteDto: vi.fn().mockImplementation((row) => row),
-    linkOrderBy: vi.fn().mockReturnValue([
-      { relevanceScore: { sort: 'desc', nulls: 'last' } },
-    ]),
     shuffleLinksPage: vi.fn(),
     // hydrateLinks loads the quote relations; here it only attaches a stub quote to each link row.
     hydrateLinks: vi.fn().mockImplementation((links: Array<{ quoteId?: string; quote?: unknown }>) =>
@@ -158,7 +155,6 @@ describe('GoodDeedsService', () => {
       vi.clearAllMocks();
       quotes.buildQuoteInclude.mockReturnValue({ source: true });
       quotes.toQuoteDto.mockImplementation((row) => row);
-      quotes.linkOrderBy.mockReturnValue([{ relevanceScore: { sort: 'desc', nulls: 'last' } }]);
       quotes.getVarietyScoreFloor.mockReturnValue(70);
       quotes.buildLinkQuoteFilter.mockImplementation((query: { type?: QuoteType[]; grades?: string[]; includeWeak?: boolean }) => {
         const allowedGrades = GradePolicy.resolveAllowedGrades({ grades: query.grades as never, includeWeak: query.includeWeak });
@@ -205,7 +201,6 @@ describe('GoodDeedsService', () => {
     it('does NOT call shuffleLinksPage when shuffle=false', async () => {
       prisma.goodDeed.findUnique.mockResolvedValue(DEED);
       quotes.buildQuoteInclude.mockReturnValue({ source: true });
-      quotes.linkOrderBy.mockReturnValue([{ relevanceScore: { sort: 'desc', nulls: 'last' } }]);
       prisma.goodDeedQuote.findMany.mockResolvedValue([]);
       prisma.goodDeedQuote.count.mockResolvedValue(0);
       prisma.quote.groupBy.mockResolvedValue([]);

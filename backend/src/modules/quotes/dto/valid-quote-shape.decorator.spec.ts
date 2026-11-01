@@ -2,8 +2,8 @@
  * Unit tests for P2-4: ValidQuoteShape class-level decorator and the
  * pure `checkQuoteShape` function it exposes.
  *
- * Also covers P2-1 shared helpers (buildLinkQuoteFilter, countsByTypeFromGroups)
- * and the exported LINK_ORDERING_LABEL constant.
+ * Also covers P2-1 shared helpers (buildLinkQuoteFilter, countsByTypeFromGroups).
+ * Topic pages now share one reading order (`READING_ORDER`, classification/reading.ts).
  */
 import { HadithGrade, QuoteType } from '@prisma/client';
 import { validate } from 'class-validator';
@@ -11,7 +11,7 @@ import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import { describe, expect, it, beforeEach } from 'vitest';
 import { PrismaService } from '../../../prisma/prisma.service.js';
-import { LINK_ORDERING_LABEL, QuotesService } from '../quotes.service.js';
+import { QuotesService } from '../quotes.service.js';
 import { ValidQuoteShape, checkQuoteShape } from './valid-quote-shape.decorator.js';
 
 // ─── Pure function tests ─────────────────────────────────────────────────────
@@ -196,11 +196,5 @@ describe('QuotesService.countsByTypeFromGroups (P2-1)', () => {
     expect(result.QURAN_VERSE).toBe(7);
     expect(result.HADITH).toBe(3);
     expect(result.SCHOLAR_QUOTE).toBe(0);
-  });
-});
-
-describe('LINK_ORDERING_LABEL constant (P2-1)', () => {
-  it('is exported and matches the legacy ORDERING string', () => {
-    expect(LINK_ORDERING_LABEL).toBe('relevanceScore:desc,grade:asc,createdAt:desc');
   });
 });
