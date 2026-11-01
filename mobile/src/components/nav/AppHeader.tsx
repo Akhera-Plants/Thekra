@@ -1,6 +1,7 @@
 /**
- * The app header on every tab: the menu button on the inline-start side (opens `SideMenu`), the wordmark «ذكرى», and
- * the tagline («لِمَن كَانَ لَهُۥ قَلْبٌ», the site header's `.brand-message`) right next to it.
+ * The app header on every tab: the wordmark «ذكرى» with the tagline («لِمَن كَانَ لَهُۥ قَلْبٌ», the site header's
+ * `.brand-message`) right next to it, and the menu button on the opposite, inline-end side (owner, 2026-11-01), framed
+ * like every other control; it opens `SideMenu` from that same side.
  */
 
 import React, { useCallback, useState } from 'react';
@@ -39,7 +40,7 @@ export function AppHeader() {
   const handleClose = useCallback(() => setOpen(false), []);
   return (
     <>
-      <BrandBar leading={<IconButton icon={Menu} label={t('menu.open')} tone="default" onPress={handleOpen} />} trailing={<Tagline />} />
+      <BrandBar tagline={<Tagline />} end={<IconButton icon={Menu} label={t('menu.open')} tone="default" bordered onPress={handleOpen} />} />
       <SideMenu visible={open} onClose={handleClose} />
     </>
   );

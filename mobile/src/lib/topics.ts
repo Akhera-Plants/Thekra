@@ -27,9 +27,12 @@ export interface TopicMetaEntry {
 
 type Translate = (key: string, options?: { count?: number }) => string;
 
-export function topicMeta(entry: TopicMetaEntry, t: Translate): string | undefined {
+/** `omitDomain`: the row already sits under its domain's heading (the grouped list). */
+export function topicMeta(entry: TopicMetaEntry, t: Translate, omitDomain = false): string | undefined {
   const parts: string[] = [];
-  if ((TOPIC_DOMAIN_KEYS as readonly string[]).includes(entry.domainKey ?? '')) parts.push(t(`topicMeta.domains.${entry.domainKey}`));
+  if (!omitDomain && (TOPIC_DOMAIN_KEYS as readonly string[]).includes(entry.domainKey ?? '')) {
+    parts.push(t(`topicMeta.domains.${entry.domainKey}`));
+  }
   if (entry.rank === SinRank.KABIRA) parts.push(t('topicMeta.kabira'));
   if (entry.isContemporary) parts.push(t('topicMeta.contemporary'));
   if (parts.length > 0) return parts.join(' · ');

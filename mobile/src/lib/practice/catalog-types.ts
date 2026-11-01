@@ -4,7 +4,7 @@
  * sin-programs.yaml (reviewed content; the app never writes religious text of its own).
  */
 
-import type { PeopleCircle, PlanUnit, RakahCount, Rule, SinCategory, Stage, VaultPayload } from '@thekra/practice-core';
+import type { DeedWindow, PeopleCircle, PlanUnit, RakahCount, Rule, SinCategory, Stage, VaultPayload } from '@thekra/practice-core';
 
 export type Basis = 'text' | 'organizational';
 
@@ -38,6 +38,11 @@ export interface CatalogHabit {
   timeHintAr?: string;
   timeHintEn?: string;
   defaultSlots: string[];
+  /**
+   * When the deed may be done (owner, 2026-11-01): only its anchors and fixed times inside it are offered
+   * (`src/lib/practice/deed-window.ts`). Absent: any time and any anchor.
+   */
+  window?: DeedWindow;
   basis: Basis;
   evidence: string[];
 }

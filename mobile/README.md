@@ -22,13 +22,17 @@ Use a device/simulator with the API reachable (localhost works on iOS simulator;
 
 ## Screens
 
-Tabs: Home (الرئيسية) · Today's wird (ورد اليوم, centre) · My habits (عاداتي) · Settings (الإعدادات); the middle two for members  
-App header (every tab, `src/components/nav/AppHeader.tsx`): the menu button, «ذكرى» and the tagline right beside it. The menu
-opens the side menu (`SideMenu.tsx`, a core Modal + Animated drawer, no drawer package) from the inline-start side (right in
-Arabic, left in English) with the screens that are not tabs, in groups (`src/lib/nav/side-menu.ts`): «أعمالي» (أعمال دورية،
-تخفَّف، المحاسبة، استراتيجيات العادات), «مع الناس» (رفقة), «للقراءة» (المحفوظات، مواسم الخير). Members-only items open sign-in first.  
-Home: «أبواب الخير»: «أعنّي على فعل طاعة» (filled), «تخفَّف من معصية» (the sins list), «شُعَب الإيمان», then «مواسم الخير» and
-«استكشف النصوص»; door sizes per screen width in `src/lib/home/door-layout.ts` (two main doors side by side on tablets)  
+Tabs: Home (الرئيسية) · Today's wird (ورد اليوم) · My habits (عاداتي) · Settings (الإعدادات); the middle two for members.
+The soft green pill sits behind the current tab's icon only (`src/lib/nav/tab-bar.ts`, the same rule for every tab)  
+App header (every tab, `src/components/nav/AppHeader.tsx`): «ذكرى» with the tagline right beside it on the inline-start
+side, the framed menu button alone on the inline-end side (the left in Arabic, the right in English). The menu opens the
+side menu (`SideMenu.tsx`, a core Modal + Animated drawer, no drawer package) from that same inline-end side, with the
+screens that are not tabs, in groups (`src/lib/nav/side-menu.ts`): «أعمالي» (أعمال دورية، المحاسبة، استراتيجيات العادات),
+«مع الناس» (رفقة), «للقراءة» (استكشف النصوص، المحفوظات، مواسم الخير). «تخفَّف» is not in it: it is the home door «تخفَّف من
+معصية» and a section of «عاداتي». Members-only items open sign-in first.  
+Home: «أبواب الخير»: «أعنّي على فعل طاعة» (filled), «تخفَّف من معصية» (the sins list), «شُعَب الإيمان» (compact). Each main
+door keeps its plant whole in its own square at the bottom inline-end corner, never under the words; sizes per screen
+width in `src/lib/home/door-layout.ts` (two main doors side by side on tablets)  
 Today's wird: `(tabs)/habits` (ورد اليوم): the title, one date line (Gregorian; Hijri too with «إظهار التاريخ الهجري»),
 the streak chip (gold flame, practice-core `currentStreak`) and «أضف»; «اليوم» from practice-core `dayAgenda` (done rows
 sink to the bottom; habits not asked today behind one collapsed row; «يومي ثقيل» chip); «أعمال دورية» (next three, «الكل»)
@@ -36,22 +40,31 @@ sink to the bottom; habits not asked today behind one collapsed row; «يومي 
 periodic-act rules and the today grouping live in `@thekra/practice-core` `wird.ts`, shared with the website, hooks in
 `src/lib/practice/use-habits-hub.ts`)  
 My habits: `(tabs)/record` (عاداتي; the route name kept for older links; `practice/habits` redirects here), two parts:
-«العادات» (each habit with its days this month, a tap opens `practice/plan/[id]` to edit or pause; راسخة، موقوفة مؤقتًا with
-«استأنف»; «أضف عادة»; Ramadan; «فروضي وأدواري») and «الإحصاء» (the streak and «أطول مداومة», the one month calendar, a tapped
-day's list, «حصيلتي»)  
+«العادات» and «الإحصاء». «العادات» covers doing good and leaving sins: «طاعات أداوم عليها» (each habit row opens its plan and
+ends in the action that fits today, `DayAction`: «سجّل» when asked and not logged, «تمّ» when done (a tap takes it back,
+with «تراجع»), a quiet «سجّل» on a day it is not asked, «استأنف» when paused; راسخة، موقوفة مؤقتًا; «أضف عادة»), then
+«معاصٍ أتخفّف منها» (each running «تخفَّف» program with its stage and days held, generic words only, opening the locked
+program screen; `src/lib/practice/my-habits.ts`), «وضع رمضان» (shown only in Ramadan, Umm al-Qura + the user's offset;
+outside it only to end a season still running) and «فروضي وأدواري». «الإحصاء»: the streak and «أطول مداومة», the one month
+calendar, a tapped day's list, «حصيلتي»  
 Settings: `(tabs)/settings` is a short list of groups (`src/lib/settings/groups.ts`), each its own screen in `app/settings/`:
 «الحساب» (sync, sign out, delete account), «التنبيهات والتذكير», «أوقات الصلاة» (`practice/prayer-times`), «الخصوصية والتشفير»
 (the «تخفَّف» lock and the encrypted saving of every «تخفَّف» program), «اللغة والمظهر» (theme, language, Hijri date, «نص اليوم»),
 «عن التطبيق». There is no «delete all data» action in Settings; «تخفَّف» keeps its own one-tap wipe  
 Page art: `Screen`'s `decor` picks the background per page (`arabesque` home, `sprig` ورد اليوم, `olive` عاداتي, none in Settings)  
-Seasons of good: `practice/calendar` (مواسم الخير, a door on the home screen and in the side menu): occasions month and the ICS feed  
+Seasons of good: `practice/calendar` (مواسم الخير, in the side menu): occasions month and the ICS feed  
 Garden: `garden` (بستاني): no entry point since the redesign (§1; screen and data kept): one plant per habit plan (+ صلة الرحم), grown by days tended, never
 shrinking, resting on «يومي ثقيل»; never a plant for the sin program (`src/lib/practice/garden.ts`, drawings in
 `src/components/garden/`)  
 Saved: `favorites` (المحفوظات, from the side menu) in two parts: «النصوص» and «تذكيراتي» (`?part=mine`; `practice/my-reminders`
 redirects there)  
-Browse: `browse` (استكشف النصوص), a pushed screen opened from Home  
-Core: `sins/[slug]` (every sin offers «ابدأ «تخفَّف»»), `good-deeds/[slug]`, `quotes/[id]`, `feelings/[tagSlug]`  
+Browse: `browse` (استكشف النصوص), opened from the side menu  
+Lists: `sins` and `good-deeds` (`src/components/TopicCatalog.tsx`, logic in `src/lib/topic-catalog.ts`): search (folded
+Arabic, names and a pair's shared title), one row of chips with counts (the quick filter «الكبائر» / «عادات مقترحة», then the
+website's topic domains), and the list in domain groups under their headings when no chip and no search is on  
+Core: `sins/[slug]` (every sin offers «ابدأ «تخفَّف»»), `good-deeds/[slug]`, `branches/[number]`: the title (with short
+meta lines such as «كبيرة»), the type tabs right under it, and every text inside the tab: the page's one action, «الميزان»
+of the tab's type, the reading sections (`TopicQuoteList`, `TopicTemplate`). Also `quotes/[id]`, `feelings/[tagSlug]`  
 Practice (`app/practice/`): `add` (أعِنّي على طاعة), `plan/[id]`, `periodic` (أعمال دورية: relatives and non-daily habits),
 `duties` (فروضي وأدواري), `kinship` (صلة الرحم; `?add=1` opens the form), `sin-program` (تخفَّف: any sin of the public list;
 a sin without a written program asks «هل فيها حقٌّ لأحد من الناس؟» and runs the common five stages, practice-core
@@ -98,8 +111,14 @@ Auth: `(auth)/login`, `(auth)/register`
 - **«تذكيراتي»**: the user's own lines (≤ 120 characters, at most 20), on this device only (prefs), in «المحفوظات».
 - **Prayer-time anchors**: «متى؟» offers «بعد الفجر»… first, then «وقت أختاره». «أوقات الصلاة» (city, country code,
   method by country, manual minutes) fetches 30 days from AlAdhan (`calendarByCity`) into the prefs on foreground when
-  fewer than 7 days are left; offline or without a city the anchors use default times. Local reminders resolve anchors
-  per day (practice-core `notificationPlan` with `prayerTimesOn`).
+  fewer than 7 days are left, each day with its sunrise (`src/lib/practice/prayer-day.ts`); offline or without a city the
+  anchors use default times. Local reminders resolve anchors per day (practice-core `notificationPlan` with `prayerTimesOn`).
+- **Suitable times only** (owner, 2026-11-01): a catalog habit's `window` (practice-core `DeedWindow`) limits the add flow
+  and the plan screen to its anchors (`anchorsFor`) and to fixed times inside it on the day's prayer times (Duha: sunrise +
+  15 → dhuhr − 10, no anchors); the window shows in one line, a time outside it is refused, and a plan with an unsuitable
+  slot shows a short notice with «صحّح الأوقات» (`src/lib/practice/deed-window.ts`).
+- **Every action is framed**: solid, outlined, or the quiet outline (`Button` `ghost`); `TextLink` is a small outlined
+  link; no action is bare text.
 
 ## Tests
 

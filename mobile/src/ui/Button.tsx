@@ -1,7 +1,9 @@
 /**
  * Buttons after site-public.css: `.solid-button` (primary fill), `.outline-button` (card fill, hairline, primary
- * label), `.text-link` (primary label with a forward arrow), plus a quiet ghost and a destructive one.
+ * label), `.text-link` (primary label with a forward arrow, framed), plus a quiet one and a destructive one.
  * 7 radius, 43 minimum height, 8×17 padding, 14 medium label, 13 gap to the icon.
+ * Every action has a visible frame (owner, 2026-11-01: «لا تترك زرًّا بلا إطار»): the quiet `ghost` is an outline
+ * with no fill and an ink label, a step below `outline`; `TextLink` is a small outlined link.
  */
 
 import React from 'react';
@@ -27,6 +29,8 @@ export interface ButtonProps {
   block?: boolean;
   /** Larger primary action (17 label, 47 high: the site's form «التالي»). */
   large?: boolean;
+  /** A small inline action (36 high, 48 with the hit slop): «تراجع» beside a line. */
+  compact?: boolean;
   accessibilityLabel?: string;
   style?: StyleProp<ViewStyle>;
 }
@@ -45,15 +49,29 @@ const makeStyles = (t: Theme) => ({
     alignSelf: 'flex-start' as const,
   },
   large: { minHeight: 47 },
+  compact: { minHeight: 36, paddingVertical: 4, paddingHorizontal: space.md, gap: space.sm },
   block: { alignSelf: 'stretch' as const },
   solid: { backgroundColor: t.colors.primary, borderColor: t.colors.primary },
   outline: { backgroundColor: t.colors.card, borderColor: t.colors.border },
   outlinePressed: { backgroundColor: t.colors.muted, borderColor: t.colors.ring },
-  ghost: { backgroundColor: 'transparent', borderColor: 'transparent', paddingHorizontal: space.sm },
-  ghostPressed: { backgroundColor: t.colors.accent },
+  ghost: { backgroundColor: 'transparent', borderColor: t.colors.border },
+  ghostPressed: { backgroundColor: t.colors.accent, borderColor: t.colors.ring },
   destructive: { backgroundColor: t.colors.card, borderColor: t.colors.destructive },
   disabled: { opacity: 0.45 },
-  textLink: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 10, minHeight: 36, alignSelf: 'flex-start' as const },
+  textLink: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: space.sm,
+    minHeight: 40,
+    paddingVertical: 6,
+    paddingHorizontal: space.md,
+    borderRadius: radius.control,
+    borderWidth: 1,
+    borderColor: t.colors.border,
+    backgroundColor: t.colors.card,
+    alignSelf: 'flex-start' as const,
+  },
+  textLinkPressed: { backgroundColor: t.colors.muted, borderColor: t.colors.ring },
   iconButton: {
     width: 48,
     height: 48,
@@ -73,18 +91,19 @@ export function Button({
   loading,
   block,
   large,
+  compact,
   accessibilityLabel,
   style,
 }: ButtonProps) {
   const styles = useStyles(makeStyles);
   const { colors } = useTheme();
-  const tone = variant === 'solid' ? 'inverse' : variant === 'destructive' ? 'destructive' : variant === 'ghost' ? 'muted' : 'link';
+  const tone = variant === 'solid' ? 'inverse' : variant === 'destructive' ? 'destructive' : variant === 'ghost' ? 'default' : 'link';
   const off = disabled || loading;
   return (
     <Pressable
       onPress={onPress}
       disabled={off}
-      hitSlop={{ top: 3, bottom: 3 }}
+      hitSlop={compact ? { top: 6, bottom: 6 } : { top: 3, bottom: 3 }}
       android_ripple={{ color: variant === 'solid' ? colors.ring : colors.accent }}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}
@@ -93,6 +112,7 @@ export function Button({
         styles.base,
         styles[variant],
         large && styles.large,
+        compact && styles.compact,
         block && styles.block,
         pressed && variant === 'solid' && { opacity: 0.88 },
         pressed && variant === 'outline' && styles.outlinePressed,
@@ -115,15 +135,15 @@ export function Button({
   );
 }
 
-/** `.text-link`: a primary label with a forward arrow, no frame. */
+/** `.text-link`: a primary label with a forward arrow, in a hairline frame so it reads as a control. */
 export function TextLink({ label, onPress, muted }: { label: string; onPress: () => void; muted?: boolean }) {
   const styles = useStyles(makeStyles);
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="link"
-      style={({ pressed }) => [styles.textLink, pressed && { opacity: 0.65 }]}
-      hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+      style={({ pressed }) => [styles.textLink, pressed && styles.textLinkPressed]}
+      hitSlop={{ top: 4, bottom: 4 }}
     >
       <Text variant="small" weight="medium" tone={muted ? 'muted' : 'link'}>
         {label}

@@ -1,13 +1,15 @@
 /**
- * «عاداتي» (owner, 2026-11-01; the tab once called «السجل»): every habit the member keeps and what it needs, in two
- * parts so the page stays short:
- * - «العادات»: graduation offers, the habits being built (each with its days this month; a tap opens the plan, where it
- *   is edited or paused), «عادات راسخة», «موقوفة مؤقتًا» (with «استأنف»), «أضف عادة», the Ramadan season and
- *   «فروضي وأدواري»;
+ * «عاداتي» (owner, 2026-11-01; the tab once called «السجل»): doing good and leaving sins, in two parts so the page
+ * stays short:
+ * - «العادات»: «طاعات أداوم عليها» (graduation offers, the habits being built, «عادات راسخة», «موقوفة مؤقتًا», «أضف
+ *   عادة»; each row opens its plan and ends in the action that fits today: «سجّل» when asked and not logged, «تمّ» when
+ *   done, a quiet «سجّل» on a day it is not asked, «استأنف» when paused), then «معاصٍ أتخفّف منها» (each running «تخفَّف»
+ *   program with its stage and days held, generic words only, opening the locked program screen), «وضع رمضان» (in
+ *   Ramadan only) and «فروضي وأدواري»;
  * - «الإحصاء»: the streak and «أطول مداومة» (practice-core `currentStreak` / `longestStreak`), the one month calendar
  *   (a tapped day opens its list, loggable for the last 7 days) and «حصيلتي» per habit.
- * Ticking today's habits is «ورد اليوم»'s; the other screens (أعمال دورية، تخفَّف، المحاسبة، رفقة، المحفوظات…) are in the
- * side menu. The old «عاداتي» route (practice/habits) redirects here.
+ * The other screens (أعمال دورية، المحاسبة، رفقة، المحفوظات…) are in the side menu. The old «عاداتي» route
+ * (practice/habits) redirects here.
  */
 
 import React, { useCallback, useMemo, useState } from 'react';
@@ -15,14 +17,28 @@ import { View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useRequireSignIn } from '@/lib/auth/require-sign-in';
-import { Hourglass, Pause, Sprout, TreeDeciduous } from 'lucide-react-native';
-import { establishPlan, graduationReady, isEstablished, isPaused, resumePlan, updatePlan, type LocalDate, type Plan } from '@thekra/practice-core';
+import { DoorOpen, Hourglass, Pause, Plus, Sprout, TreeDeciduous } from 'lucide-react-native';
+import {
+  activePrograms,
+  establishPlan,
+  graduationReady,
+  isEstablished,
+  isPaused,
+  resumePlan,
+  updatePlan,
+  type HabitItem,
+  type LocalDate,
+  type Plan,
+} from '@thekra/practice-core';
+import { habitDayAction, programRows } from '@/lib/practice/my-habits';
+import { HabitActionRow, ProgramActionRow } from '@/components/practice/MyHabitsRows';
 import { pick } from '@/lib/practice/catalog-types';
 import { habitFor } from '@/lib/practice/reminders';
 import { planView } from '@/lib/practice/plan-view';
 import { ExcuseChip } from '@/components/practice/hub/ExcuseChip';
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { monthEnd, shortDayTitle } from '@/lib/practice/calendar-grid';
+import { shortDate } from '@/lib/practice/format';
 import { canLogOn, occasionDates } from '@/lib/practice/hub';
 import { usePracticeStore } from '@/lib/practice/practice-store';
 import {
@@ -46,11 +62,9 @@ import { TallySection } from '@/components/practice/hub/KnowledgeCards';
 import { space, useStyles, type Theme } from '@/theme';
 import {
   Button,
-  EmptyState,
   ListRow,
   Notice,
   PageHeader,
-  Rule,
   Screen,
   Section,
   SegmentTabs,
@@ -67,10 +81,13 @@ const makeStyles = (t: Theme) => ({
   streakNumber: { fontSize: 44, lineHeight: 56 },
   list: { borderTopWidth: 1, borderTopColor: t.colors.border },
   tight: { gap: space.xs },
+  empty: { gap: space.md, alignItems: 'flex-start' as const },
+  subTitle: { paddingTop: space.sm, paddingBottom: space.xs },
 });
 
 const openAdd = () => router.push('/practice/add');
 const openDuties = () => router.push('/practice/duties');
+const openProgram = () => router.push('/practice/sin-program');
 
 export default function MyHabitsScreen() {
   const { t } = useTranslation();
@@ -91,22 +108,42 @@ export default function MyHabitsScreen() {
   );
 }
 
-/** «العادات»: each habit with its days this month and what it needs (open to edit or pause, resume, add). */
+/** «العادات»: «طاعات أداوم عليها», «معاصٍ أتخفّف منها», «وضع رمضان» (in Ramadan) and «فروضي وأدواري». */
 function HabitsPart() {
+  const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
+  const catalog = usePracticeCatalog(useUiLocale());
+  return (
+    <>
+      {catalog.isError ? (
+        <View style={styles.tight}>
+          <Notice tone="destructive">{t('practice.catalogError')}</Notice>
+          <Button label={t('common.retry')} onPress={() => void catalog.refetch()} variant="ghost" />
+        </View>
+      ) : null}
+      <DeedsSection />
+      <ProgramsSection />
+      <RamadanBlock />
+      <ListRow icon={Hourglass} title={t('practice.duties.title')} chevron onPress={openDuties} />
+    </>
+  );
+}
+
+/** «طاعات أداوم عليها»: the habits, each with today's action; «أضف عادة». */
+function DeedsSection() {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const locale = useUiLocale();
   const plans = usePracticeStore((s) => s.store.plans);
   const setStore = usePracticeStore((s) => s.setStore);
-  const catalog = usePracticeCatalog(locale);
+  const habits = usePracticeCatalog(locale).data?.habits ?? [];
   const { today } = useHubDays();
-  const habits = catalog.data?.habits ?? [];
-
-  if (plans.length === 0) {
-    return (
-      <EmptyState icon={Sprout} message={t('practice.noPlans')} hint={t('practice.noPlansHint')} actionLabel={t('practice.addHabit')} onAction={openAdd} />
-    );
-  }
+  // Today's items, the same as «ورد اليوم»: asked for today, and the habits not asked today (still loggable).
+  const agenda = useDayAgenda(today);
+  const offDay = useOffDayHabits(today);
+  const actions = useAgendaActions(today);
+  const dueById = useMemo(() => byPlan(agenda.filter((i): i is HabitItem => i.kind === 'habit')), [agenda]);
+  const offById = useMemo(() => byPlan(offDay), [offDay]);
 
   const titleOf = (plan: Plan) => {
     const habit = habitFor(plan, habits);
@@ -117,69 +154,116 @@ function HabitsPart() {
     return t('practice.monthDays', { done: String(view.daysDone), count: view.targetDays });
   };
   const open = (plan: Plan) => router.push(`/practice/plan/${plan.id}`);
+  const row = (plan: Plan, icon: typeof Sprout, hint: string) => {
+    const paused = isPaused(plan);
+    const due = dueById.get(plan.id);
+    const off = offById.get(plan.id);
+    const action = habitDayAction({ paused, due, offDay: off });
+    const item = due ?? off;
+    return (
+      <HabitActionRow
+        key={plan.id}
+        icon={icon}
+        title={titleOf(plan)}
+        hint={hint}
+        action={action}
+        onOpen={() => open(plan)}
+        undo={
+          actions.lastLog?.kind === 'habit' && actions.lastLog.planId === plan.id
+            ? { cleared: actions.lastLog.cleared, onUndo: actions.undo }
+            : null
+        }
+        onAction={() => {
+          if (action === 'resume') setStore((s) => updatePlan(s, plan.id, (p) => resumePlan(p, today)));
+          else if (item) actions.toggleHabit(item);
+        }}
+      />
+    );
+  };
   const building = plans.filter((p) => !isPaused(p) && !isEstablished(p));
   const established = plans.filter((p) => !isPaused(p) && isEstablished(p));
   const paused = plans.filter(isPaused);
 
   return (
-    <>
-      {catalog.isError ? (
-        <View style={styles.tight}>
-          <Notice tone="destructive">{t('practice.catalogError')}</Notice>
-          <Button label={t('common.retry')} onPress={() => void catalog.refetch()} variant="ghost" />
-        </View>
-      ) : null}
-
+    <Section title={t('myHabits.deedsTitle')}>
       <GraduationOffers today={today} />
-
-      {building.length > 0 ? (
-        <View style={styles.list}>
-          {building.map((plan) => (
-            <ListRow key={plan.id} icon={Sprout} title={titleOf(plan)} hint={monthHint(plan)} chevron onPress={() => open(plan)} />
-          ))}
+      {plans.length === 0 ? (
+        <View style={styles.empty}>
+          <Text variant="body" tone="muted">
+            {t('practice.noPlans')}
+          </Text>
+          <Button label={t('practice.addHabit')} icon={Plus} onPress={openAdd} />
         </View>
-      ) : null}
+      ) : (
+        <>
+          {building.length > 0 ? <View style={styles.list}>{building.map((plan) => row(plan, Sprout, monthHint(plan)))}</View> : null}
+          {established.length > 0 ? (
+            <View>
+              <Text variant="heading" accessibilityRole="header" style={styles.subTitle}>
+                {t('practice.established.title')}
+              </Text>
+              <View style={styles.list}>{established.map((plan) => row(plan, TreeDeciduous, monthHint(plan)))}</View>
+            </View>
+          ) : null}
+          {paused.length > 0 ? (
+            <View>
+              <Text variant="heading" accessibilityRole="header" style={styles.subTitle}>
+                {t('practice.paused.title')}
+              </Text>
+              <View style={styles.list}>
+                {paused.map((plan) => row(plan, Pause, t('practice.paused.since', { date: plan.pausedOn ? shortDate(plan.pausedOn) : '' })))}
+              </View>
+            </View>
+          ) : null}
+          <Button label={t('practice.addHabit')} icon={Plus} onPress={openAdd} variant="outline" />
+        </>
+      )}
+    </Section>
+  );
+}
 
-      {established.length > 0 ? (
-        <Section title={t('practice.established.title')}>
-          <View style={styles.list}>
-            {established.map((plan) => (
-              <ListRow key={plan.id} icon={TreeDeciduous} title={titleOf(plan)} hint={monthHint(plan)} chevron onPress={() => open(plan)} />
-            ))}
-          </View>
-        </Section>
-      ) : null}
+/** Today's habit items by plan id. */
+function byPlan(items: readonly HabitItem[]): Map<string, HabitItem> {
+  return new Map(items.map((item) => [item.planId, item]));
+}
 
-      {paused.length > 0 ? (
-        <Section title={t('practice.paused.title')}>
-          <View style={styles.list}>
-            {paused.map((plan) => (
-              <ListRow
-                key={plan.id}
-                icon={Pause}
-                title={titleOf(plan)}
-                hint={t('practice.paused.since', { date: plan.pausedOn })}
-                trailing={
-                  <Button
-                    label={t('practice.paused.resume')}
-                    variant="ghost"
-                    onPress={() => setStore((s) => updatePlan(s, plan.id, (p) => resumePlan(p, today)))}
-                  />
-                }
-                onPress={() => open(plan)}
+/** «معاصٍ أتخفّف منها»: each running «تخفَّف» program, generic words only; «ابدأ «تخفَّف»» when none runs. */
+function ProgramsSection() {
+  const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
+  const locale = useUiLocale();
+  const programs = usePracticeStore((s) => s.store.programs);
+  const stages = usePracticeCatalog(locale).data?.sinPrograms.common.stages;
+  const { today } = useHubDays();
+  const rows = useMemo(() => programRows(activePrograms(programs), today), [programs, today]);
+
+  return (
+    <Section title={t('myHabits.programsTitle')}>
+      {rows.length === 0 ? (
+        <View style={styles.empty}>
+          <Text variant="body" tone="muted">
+            {t('myHabits.noProgram')}
+          </Text>
+          <Button label={t('reminders.startProgram')} icon={Plus} onPress={openProgram} variant="outline" />
+        </View>
+      ) : (
+        <View style={styles.list}>
+          {rows.map((model, index) => {
+            const content = stages?.[model.stageKey];
+            return (
+              <ProgramActionRow
+                key={model.key}
+                icon={DoorOpen}
+                model={model}
+                title={rows.length > 1 ? t('myHabits.programN', { n: String(index + 1) }) : t('myHabits.program')}
+                stageTitle={content ? pick(content, 'title', locale) : undefined}
+                onOpen={openProgram}
               />
-            ))}
-          </View>
-        </Section>
-      ) : null}
-
-      <Button label={t('practice.addHabit')} onPress={openAdd} arrow />
-      <Rule />
-      <RamadanBlock />
-      <View style={styles.list}>
-        <ListRow icon={Hourglass} title={t('practice.duties.title')} chevron onPress={openDuties} />
-      </View>
-    </>
+            );
+          })}
+        </View>
+      )}
+    </Section>
   );
 }
 

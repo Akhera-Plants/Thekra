@@ -195,6 +195,8 @@ export interface SinDto {
   rankReference: string | null;
   rankSource: { id: string; name: string; nameAr: string | null } | null;
   domainKey?: string | null;
+  /** Order inside the domain (the website's catalogue order). */
+  taxonomyOrder?: number | null;
   isContemporary?: boolean;
   pair?: TopicPairDto | null;
   quoteCount: number;
@@ -240,6 +242,8 @@ export interface GoodDeedDto {
     nameAr: string;
   } | null;
   domainKey?: string | null;
+  /** Order inside the domain (the website's catalogue order). */
+  taxonomyOrder?: number | null;
   isContemporary?: boolean;
   pair?: TopicPairDto | null;
   quoteCount: number;

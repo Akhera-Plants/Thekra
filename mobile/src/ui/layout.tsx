@@ -64,6 +64,7 @@ const makeStyles = (t: Theme) => ({
     borderBottomWidth: 1,
     borderBottomColor: t.colors.border,
   },
+  brandStart: { flex: 1, flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.md, minWidth: 0 },
   brandTrailing: { flexShrink: 1 },
 });
 
@@ -209,22 +210,24 @@ export function useStackScreenOptions() {
 }
 
 /**
- * The site header's wordmark: «ذكرى» with the sprout. `leading` (the menu button) comes first on the inline-start
- * side; `trailing` (the tagline) sits right after the wordmark, not pushed to the far side.
+ * The site header's wordmark: «ذكرى» with the sprout, `tagline` right after it, and `end` (the menu button) alone on
+ * the inline-end side (owner, 2026-11-01: the menu opposite the logo: the left in Arabic, the right in English).
  */
-export function BrandBar({ leading, trailing }: { leading?: React.ReactNode; trailing?: React.ReactNode }) {
+export function BrandBar({ tagline, end }: { tagline?: React.ReactNode; end?: React.ReactNode }) {
   const styles = useStyles(makeStyles);
   const { t } = useTranslation();
   return (
     <View style={styles.brandRow}>
-      {leading}
-      <View style={styles.brand}>
-        <Icon icon={Sprout} size={22} tone="link" strokeWidth={1.3} />
-        <Text variant="display" style={{ fontSize: 26, lineHeight: 40 }} accessibilityRole="header">
-          {t('app.name')}
-        </Text>
+      <View style={styles.brandStart}>
+        <View style={styles.brand}>
+          <Icon icon={Sprout} size={22} tone="link" strokeWidth={1.3} />
+          <Text variant="display" style={{ fontSize: 26, lineHeight: 40 }} accessibilityRole="header">
+            {t('app.name')}
+          </Text>
+        </View>
+        {tagline ? <View style={styles.brandTrailing}>{tagline}</View> : null}
       </View>
-      {trailing ? <View style={styles.brandTrailing}>{trailing}</View> : null}
+      {end}
     </View>
   );
 }

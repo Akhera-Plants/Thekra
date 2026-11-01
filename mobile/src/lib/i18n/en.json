@@ -29,9 +29,6 @@
     "momentPrayer": "When prayer feels heavy",
     "momentBackbiting": "Before you spread talk about someone",
     "momentKindness": "When you want to lift someone’s spirit",
-    "browseTitle": "Explore the texts",
-    "browseBody": "Verses and hadith, searchable by a word.",
-    "browseCta": "Browse",
     "branchOverline": "Reading at ease",
     "branchEntryLabel": "The Branches of Faith",
     "branchEntryDescription": "Meanings that build the heart and the deed.",
@@ -40,9 +37,6 @@
     "sourcesHeading": "Reminders you can source",
     "sourcesLead": "From the Book of Allah, authentic Sunnah, and the words of the scholars.",
     "sourcesAria": "Text sources",
-    "seasonsTitle": "Seasons of good",
-    "seasonsBody": "The coming sunnah occasions, and a calendar to subscribe to.",
-    "seasonsCta": "Open the seasons",
     "namesEntryLabel": "The Beautiful Names",
     "namesEntryDescription": "A name, its meaning, and a verse that mentions it.",
     "namesCta": "Explore the names"
@@ -97,7 +91,7 @@
     "contemporaryNote": "A contemporary topic: its texts come from the chapters below"
   },
   "browse": {
-    "title": "Browse",
+    "title": "Explore the texts",
     "searchPlaceholder": "Search verses and hadiths...",
     "filterType": "Type",
     "filterGrade": "Grade",
@@ -261,7 +255,6 @@
     "heavyDay": "My day is heavy",
     "ramadan": "Ramadan mode",
     "ramadanHint": "Each habit goes up one step until {{date}}, then returns to what it was on its own. Returning is not falling short.",
-    "ramadanHintNotRamadan": "It is not Ramadan now. You can start a 30-day season until {{date}}; your habits then return to what they were on their own.",
     "ramadanStart": "Start the season",
     "ramadanEnd": "End the season now",
     "ramadanActive": "Season on until {{date}}",
@@ -834,6 +827,13 @@
     },
     "weekName": {
       "title": "Name of the week"
+    },
+    "window": {
+      "line": "Its time: {{from}} to {{to}}",
+      "outside": "Choose a time between {{from}} and {{to}}.",
+      "unsuitable": "Some reminder times do not suit this deed.",
+      "fix": "Fix the times",
+      "unsuitableSlot": "Outside its time"
     }
   },
   "kinship": {
@@ -1338,12 +1338,9 @@
   },
   "topic": {
     "mizanTitle": "The scale",
-    "mizanLead": "Texts that show the weight of this deed with Allah.",
-    "mizanTop": "The first text of this topic.",
     "branchesTitle": "From the branches of faith",
     "branchRelatedTitle": "Linked to this branch",
     "makeHabit": "Make it my habit",
-    "makeHabitHint": "Start very small, and keep at it.",
     "habitAdded": "In your habits",
     "pairTitle": "Opposite virtue",
     "oppositeTitle": "Opposite sin"
@@ -1438,5 +1435,21 @@
       "together": "With others",
       "reading": "To read"
     }
+  },
+  "myHabits": {
+    "deedsTitle": "Good deeds I keep",
+    "programsTitle": "Sins I am leaving",
+    "noProgram": "You have not started a program yet.",
+    "program": "Your program",
+    "programN": "Program {{n}}",
+    "log": "Log",
+    "done": "Done",
+    "doneHint": "Takes today’s log back"
+  },
+  "catalog": {
+    "all": "All",
+    "kabira": "Major sins",
+    "habits": "Suggested habits",
+    "filters": "Categories"
   }
 }

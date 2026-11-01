@@ -30,10 +30,14 @@ const makeStyles = (t: Theme) => ({
     paddingTop: space['2xl'],
     paddingHorizontal: 22,
     paddingBottom: 22,
-    gap: space.md,
     overflow: 'hidden' as const,
   },
-  pathwayHalf: { flex: 1, paddingTop: 19, paddingHorizontal: space.lg, paddingBottom: 17, gap: space.sm },
+  pathwayHalf: { flex: 1, paddingTop: 19, paddingHorizontal: space.lg, paddingBottom: 17 },
+  /** Words on the inline-start side, the plant whole in its own square at the bottom inline-end corner. */
+  pathwayInner: { flexGrow: 1, flexDirection: 'row' as const, alignItems: 'stretch' as const, gap: space.md },
+  pathwayText: { flex: 1, minWidth: 0, gap: space.md },
+  pathwayTextHalf: { gap: space.sm },
+  pathwayArt: { justifyContent: 'flex-end' as const, alignItems: 'flex-end' as const },
   pathwayRow: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
@@ -66,12 +70,16 @@ const makeStyles = (t: Theme) => ({
   },
   pathwayCtaRow: { alignSelf: 'center' as const, marginTop: 0, gap: space.sm, maxWidth: undefined },
   pathwayCtaPrimary: { borderColor: t.colors.pathwayFlourish },
-  pathwayCtaQuiet: { borderColor: t.colors.ring },
-  /** `.pathway-flourish` and `.olive-drawing` placements, desktop and phone (site-public.css). */
-  sprig: { bottom: -74, end: -24 },
-  sprigHalf: { bottom: -16, end: -18 },
-  olive: { bottom: -16, end: -7 },
-  oliveHalf: { bottom: -14, end: -6 },
+  pathwayCtaQuiet: { borderColor: t.colors.ring, backgroundColor: t.colors.card },
+  /** The compact door's action on phones: a framed arrow, so it still reads as a button. */
+  pathwayArrow: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  },
   nextStep: {
     backgroundColor: t.colors.muted,
     borderStartWidth: 2,
@@ -145,19 +153,24 @@ export interface PathwayCardProps {
    */
   size?: PathwaySize;
   /**
-   * Screen-fitted sizes for a `full` door (home's `doorLayout`): title size, padding and plant width. Without it the
-   * site's phone sizes apply.
+   * Screen-fitted sizes for a `full` door (home's `doorLayout`): title size, padding and the plant's square. Without
+   * it the site's phone sizes apply.
    */
-  layout?: { titleSize: number; titleLine: number; padding: number; flourish: number };
+  layout?: { titleSize: number; titleLine: number; padding: number; art: number };
   /** `row` only: the action as a bare arrow (small phones, so the words keep their room). */
   arrowOnly?: boolean;
   style?: StyleProp<ViewStyle>;
 }
 
+/** The plant's square without a fitted layout (the site's phone size), and on a half door. */
+const ART_DEFAULT = 76;
+const ART_HALF = 56;
+
 /**
- * The home doors («أعنّي على ترك معصية» / «… فعل طاعة»): a label with an icon, a title, a line and the site's small
- * outlined action, with a line plant in the end corner (`Flourish`: the sprig on the filled door, the olive on the
- * sage one) drawn behind the words.
+ * The home doors («أعنّي على فعل طاعة» / «تخفَّف من معصية»): a label with an icon, a title, a line and the site's
+ * small outlined action on the inline-start side, and a line plant in its own square at the bottom inline-end corner
+ * (`Flourish`, contained: the sprig on the filled door, the olive on the sage one). The plant is drawn whole and never
+ * under the words, at the same place on every door and every screen size (owner, 2026-11-01).
  */
 export function PathwayCard({ icon, label, title, body, action, onPress, primary, size = 'full', layout, arrowOnly, style }: PathwayCardProps) {
   const styles = useStyles(makeStyles);
@@ -165,9 +178,13 @@ export function PathwayCard({ icon, label, title, body, action, onPress, primary
   const ink = primary ? 'inverse' : 'default';
   const soft = primary ? 'inverse' : 'muted';
   const row = size === 'row';
+  const half = size === 'half';
   const fitted = size === 'full' && layout ? { padding: layout.padding, paddingTop: layout.padding + space.xs } : null;
+  const art = half ? ART_HALF : (layout?.art ?? ART_DEFAULT);
   const cta = row && arrowOnly ? (
-    <ForwardArrow size={18} tone={primary ? 'inverse' : 'link'} />
+    <View style={[styles.pathwayArrow, { borderColor: primary ? colors.pathwayFlourish : colors.ring }]}>
+      <ForwardArrow size={18} tone={primary ? 'inverse' : 'link'} />
+    </View>
   ) : (
     <View style={[styles.pathwayCta, primary ? styles.pathwayCtaPrimary : styles.pathwayCtaQuiet, row && styles.pathwayCtaRow]}>
       <Text variant="caption" weight="medium" tone={primary ? 'inverse' : 'link'} numberOfLines={1}>
@@ -184,7 +201,7 @@ export function PathwayCard({ icon, label, title, body, action, onPress, primary
       accessibilityLabel={`${title}. ${body}. ${action}`}
       style={({ pressed }) => [
         styles.pathway,
-        size === 'half' && styles.pathwayHalf,
+        half && styles.pathwayHalf,
         row && styles.pathwayRow,
         primary ? styles.pathwayPrimary : styles.pathwayQuiet,
         fitted,
@@ -192,23 +209,6 @@ export function PathwayCard({ icon, label, title, body, action, onPress, primary
         style,
       ]}
     >
-      {row ? null : primary ? (
-        <Flourish
-          kind="sprig"
-          width={size === 'half' ? 76 : (layout?.flourish ?? 145)}
-          color={colors.pathwayFlourish}
-          opacity={0.1}
-          style={size === 'half' ? styles.sprigHalf : layout ? { bottom: -Math.round(layout.flourish * 0.45), end: -18 } : styles.sprig}
-        />
-      ) : (
-        <Flourish
-          kind="olive"
-          width={size === 'half' ? 76 : 90}
-          color={colors.ring}
-          opacity={0.25}
-          style={size === 'half' ? styles.oliveHalf : styles.olive}
-        />
-      )}
       {row ? (
         <>
           <Icon icon={icon} size={28} tone={primary ? 'inverse' : 'link'} strokeWidth={1.35} />
@@ -223,33 +223,38 @@ export function PathwayCard({ icon, label, title, body, action, onPress, primary
           {cta}
         </>
       ) : (
-        <>
-          <View style={styles.pathwayLabel}>
-            <Icon icon={icon} size={size === 'half' ? 25 : 27} tone={primary ? 'inverse' : 'link'} strokeWidth={1.35} />
-            {label ? (
-              <Text variant="caption" tone={soft} style={primary && styles.softInk} numberOfLines={1}>
-                {label}
-              </Text>
-            ) : null}
+        <View style={styles.pathwayInner}>
+          <View style={[styles.pathwayText, half && styles.pathwayTextHalf]}>
+            <View style={styles.pathwayLabel}>
+              <Icon icon={icon} size={half ? 25 : 27} tone={primary ? 'inverse' : 'link'} strokeWidth={1.35} />
+              {label ? (
+                <Text variant="caption" tone={soft} style={primary && styles.softInk} numberOfLines={1}>
+                  {label}
+                </Text>
+              ) : null}
+            </View>
+            <Text
+              variant="title"
+              tone={ink}
+              style={half ? styles.pathwayTitleHalf : layout ? { fontSize: layout.titleSize, lineHeight: layout.titleLine } : styles.pathwayTitle}
+            >
+              {title}
+            </Text>
+            <Text variant={half ? 'caption' : 'small'} tone={soft} style={[styles.pathwayBody, primary && styles.softInk]}>
+              {body}
+            </Text>
+            {cta}
           </View>
-          <Text
-            variant="title"
-            tone={ink}
-            style={
-              size === 'half'
-                ? styles.pathwayTitleHalf
-                : layout
-                  ? { fontSize: layout.titleSize, lineHeight: layout.titleLine }
-                  : styles.pathwayTitle
-            }
-          >
-            {title}
-          </Text>
-          <Text variant={size === 'half' ? 'caption' : 'small'} tone={soft} style={[styles.pathwayBody, primary && styles.softInk]}>
-            {body}
-          </Text>
-          {cta}
-        </>
+          <View style={[styles.pathwayArt, { width: art }]}>
+            <Flourish
+              contained
+              kind={primary ? 'sprig' : 'olive'}
+              width={art}
+              color={primary ? colors.pathwayFlourish : colors.ring}
+              opacity={primary ? 0.6 : 0.55}
+            />
+          </View>
+        </View>
       )}
     </Pressable>
   );

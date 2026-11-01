@@ -1,9 +1,9 @@
 /**
- * Home, after the website's home (frontend/src/app/[locale]/page.tsx), in its order: the app header (menu, «ذكرى» and
- * the tagline beside it), «أبواب الخير» with the doors (owner, 2026-11-01: «أعنّي على فعل طاعة» first and filled,
- * «تخفَّف من معصية» quiet, then «شُعَب الإيمان» compact), «مواسم الخير», the compact «استكشف النصوص» door, the
- * ornament, the moments list, «تذكرة مختارة» and «تذكير تعرف مصدره». The doors size themselves to the screen
- * (`doorLayout`: tighter on small phones, the two main doors side by side on tablets).
+ * Home, after the website's home (frontend/src/app/[locale]/page.tsx), in its order: the app header («ذكرى» and the
+ * tagline beside it, the menu opposite), «أبواب الخير» with the doors (owner, 2026-11-01: «أعنّي على فعل طاعة» first
+ * and filled, «تخفَّف من معصية» quiet, then «شُعَب الإيمان» compact), the ornament, the moments list, «تذكرة مختارة» and
+ * «تذكير تعرف مصدره». «مواسم الخير» and «استكشف النصوص» live in the side menu (owner, 2026-11-01: «ضمن القائمة»). The
+ * doors size themselves to the screen (`doorLayout`: tighter on small phones, the two main doors side by side on tablets).
  * Guest-first: nothing here needs an account. Copy is the site's own (`home.*`).
  */
 
@@ -11,7 +11,7 @@ import React, { useCallback } from 'react';
 import { View, useWindowDimensions } from 'react-native';
 import { router, type Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { BookOpen, CalendarDays, DoorOpen, Heart, MessageCircle, Pause, Search, Sprout, Sun, type LucideIcon } from 'lucide-react-native';
+import { BookOpen, DoorOpen, Heart, MessageCircle, Pause, Sprout, Sun, type LucideIcon } from 'lucide-react-native';
 import { useReminderOfTheDay } from '@/lib/api/quotes';
 import { useSourceStripNames } from '@/lib/api/sources';
 import { FeaturedReminder } from '@/components/home/FeaturedReminder';
@@ -38,8 +38,6 @@ const MOMENTS: Moment[] = [
 const openSins = () => router.push('/sins');
 const openGoodDeeds = () => router.push('/good-deeds');
 const openBranches = () => router.push('/branches');
-const openBrowse = () => router.push('/browse');
-const openSeasons = () => router.push('/practice/calendar');
 
 const makeStyles = (_t: Theme) => ({
   doors: { gap: space.md, width: '100%' as const, alignSelf: 'center' as const },
@@ -104,24 +102,6 @@ export default function HomeScreen() {
           body={t('home.branchEntryDescription')}
           action={t('home.branchCta')}
           onPress={openBranches}
-          arrowOnly={arrowOnly}
-        />
-        <PathwayCard
-          size="row"
-          icon={CalendarDays}
-          title={t('home.seasonsTitle')}
-          body={t('home.seasonsBody')}
-          action={t('home.seasonsCta')}
-          onPress={openSeasons}
-          arrowOnly={arrowOnly}
-        />
-        <PathwayCard
-          size="row"
-          icon={Search}
-          title={t('home.browseTitle')}
-          body={t('home.browseBody')}
-          action={t('home.browseCta')}
-          onPress={openBrowse}
           arrowOnly={arrowOnly}
         />
       </View>

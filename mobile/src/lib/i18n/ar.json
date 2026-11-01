@@ -29,9 +29,6 @@
     "momentPrayer": "حين تتثاقل عن الصلاة",
     "momentBackbiting": "قبل أن تنشر كلامًا عن شخص",
     "momentKindness": "حين تريد جبر خاطر أحد",
-    "browseTitle": "استكشف النصوص",
-    "browseBody": "آيات وأحاديث، تبحث فيها بكلمة.",
-    "browseCta": "تصفّح",
     "branchOverline": "قراءةٌ على مهل",
     "branchEntryLabel": "شُعَب الإيمان",
     "branchEntryDescription": "معانٍ تبني القلب والعمل.",
@@ -40,9 +37,6 @@
     "sourcesHeading": "تذكير تعرف مصدره",
     "sourcesLead": "من كتاب الله، وصحيح السنّة، وكلام أهل العلم.",
     "sourcesAria": "مصادر النصوص",
-    "seasonsTitle": "مواسم الخير",
-    "seasonsBody": "المناسبات المسنونة القادمة، وتقويم تشترك فيه.",
-    "seasonsCta": "افتح المواسم",
     "namesEntryLabel": "الأسماء الحسنى",
     "namesEntryDescription": "اسمٌ ومعناه، وآيةٌ ورد فيها.",
     "namesCta": "تعرّف على الأسماء"
@@ -97,7 +91,7 @@
     "contemporaryNote": "موضوع معاصر: نصوصه مستمدة من الأبواب التالية"
   },
   "browse": {
-    "title": "استكشف",
+    "title": "استكشف النصوص",
     "searchPlaceholder": "ابحث في الآيات والأحاديث...",
     "filterType": "النوع",
     "filterGrade": "الدرجة",
@@ -265,7 +259,6 @@
     "heavyDay": "يومي ثقيل",
     "ramadan": "وضع رمضان",
     "ramadanHint": "نرفع كل عادة خطوة واحدة حتى {{date}}، ثم ترجع تلقائيًا إلى ما كانت عليه. وليس الرجوع تقصيرًا.",
-    "ramadanHintNotRamadan": "لسنا في رمضان الآن. يمكنك تفعيل موسم مدته 30 يومًا حتى {{date}}، ثم ترجع عاداتك تلقائيًا إلى ما كانت عليه.",
     "ramadanStart": "فعّل الموسم",
     "ramadanEnd": "أنهِ الموسم الآن",
     "ramadanActive": "الموسم مفعّل حتى {{date}}",
@@ -884,6 +877,13 @@
     },
     "weekName": {
       "title": "اسم الأسبوع"
+    },
+    "window": {
+      "line": "وقتها: من {{from}} إلى {{to}}",
+      "outside": "اختر وقتًا بين {{from}} و{{to}}.",
+      "unsuitable": "بعض أوقات التذكير لا تناسب هذه العبادة.",
+      "fix": "صحّح الأوقات",
+      "unsuitableSlot": "خارج وقتها"
     }
   },
   "kinship": {
@@ -1420,12 +1420,9 @@
   },
   "topic": {
     "mizanTitle": "الميزان",
-    "mizanLead": "نصوص تبيّن وزن هذا العمل عند الله.",
-    "mizanTop": "أول نصوص هذا الباب.",
     "branchesTitle": "من شعب الإيمان",
     "branchRelatedTitle": "ما يتصل بهذه الشعبة",
     "makeHabit": "اجعلها عادتي",
-    "makeHabitHint": "ابدأ بقدر صغير جدًا، وداوم عليه.",
     "habitAdded": "في عاداتك",
     "pairTitle": "الفضيلة المقابلة",
     "oppositeTitle": "المعصية المقابلة"
@@ -1520,5 +1517,21 @@
       "together": "مع الناس",
       "reading": "للقراءة"
     }
+  },
+  "myHabits": {
+    "deedsTitle": "طاعات أداوم عليها",
+    "programsTitle": "معاصٍ أتخفّف منها",
+    "noProgram": "لم تبدأ برنامجًا بعد.",
+    "program": "برنامجك",
+    "programN": "البرنامج {{n}}",
+    "log": "سجّل",
+    "done": "تمّ",
+    "doneHint": "يلغي تسجيل اليوم"
+  },
+  "catalog": {
+    "all": "الكل",
+    "kabira": "الكبائر",
+    "habits": "عادات مقترحة",
+    "filters": "التصنيفات"
   }
 }

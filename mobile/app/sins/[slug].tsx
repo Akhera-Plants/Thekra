@@ -1,9 +1,9 @@
 /**
  * Reminders for one sin, after the website's sin page (sins/[slug]): the sin's name and description, «كبيرة» with
- * its reference, the contemporary note, «الميزان», «ابدأ «تخفَّف»» when the catalog has a program for it, the type filter,
- * then the reading sections: what warns against it, the paired deed's virtue (or the reward of leaving it for
- * Allah), a contemporary topic's derived groups; then «من شعب الإيمان», the paired virtue, and the alternative good
- * deeds last, only on an unpaired sin.
+ * its reference and the contemporary note, then the type tabs right under them (owner, 2026-11-01), then inside the
+ * tab: «ابدأ «تخفَّف»» (every sin), «الميزان» of the tab's type, the reading sections: what warns against it, the paired
+ * deed's virtue (or the reward of leaving it for Allah), a contemporary topic's derived groups; then «من شعب الإيمان»,
+ * the paired virtue, and the alternative good deeds last, only on an unpaired sin.
  * Core screen: sin → reminders (mobile-plan §3).
  */
 
@@ -62,24 +62,30 @@ export default function RemindersScreen() {
       eyebrow={t('reminders.eyebrow')}
       title={sin ? (english ? sin.name || sin.nameAr : sin.nameAr) : null}
       lead={sin ? (english ? sin.description : sin.descriptionAr) : null}
-      emptyMessage={t('reminders.empty')}
-      intro={
+      meta={
         sin ? (
           <>
             {isKabira && detail.data ? (
-              <Text variant="lead" tone="muted">
+              <Text variant="small" tone="muted">
                 {/* The reference is stored in Arabic: the English view shows the rank alone. */}
                 {english ? t('reminders.kabira') : `${t('reminders.kabira')} · ${detail.data.rankReference}`}
               </Text>
             ) : null}
             {isContemporary ? (
-              <Text variant="lead" tone="muted">
+              <Text variant="small" tone="muted">
                 {t('reminders.contemporaryNote')}
               </Text>
             ) : null}
-            {/* The topic template (redesign §4.5): الميزان → one action → texts → شعب الإيمان → the opposite. */}
-            <MizanBlock mizan={detail.data?.mizan} />
+          </>
+        ) : null
+      }
+      emptyMessage={t('reminders.empty')}
+      intro={
+        sin ? (
+          <>
+            {/* Under the tabs (owner, 2026-11-01): one action → الميزان → texts → شعب الإيمان → the opposite. */}
             <SinProgramLink sin={sin.slug} />
+            <MizanBlock mizan={detail.data?.mizan} filter={filter} />
           </>
         ) : null
       }

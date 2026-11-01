@@ -1,7 +1,8 @@
 /**
  * One branch of faith, after the website's branch page (branches/[number]/page.tsx): «الشعبة N» over the branch's
- * title and summary (each language its own or none: no Arabic prose in English), the book's words on it
- * («من الكتاب», BRANCH_SHARH), the type filter and the texts (TopicQuoteList), then «السابقة · الكل · التالية».
+ * title and summary (each language its own or none: no Arabic prose in English), the type tabs right under them
+ * (owner, 2026-11-01: every text under the tabs), then «الميزان» of the tab's type, the book's words on it («من الكتاب»,
+ * BRANCH_SHARH, under «الكل») and the texts (TopicQuoteList), then «السابقة · الكل · التالية».
  * Prev and next replace this page, so Back still leads to the list; «الكل» returns to the list (or opens it).
  */
 
@@ -151,9 +152,9 @@ export default function BranchScreen() {
       intro={
         detail.data ? (
           <>
-            {/* The topic template (redesign §4.5): الميزان → texts → this branch's sins and deeds. No action here. */}
-            <MizanBlock mizan={detail.data.mizan} />
-            <BranchExplanations items={detail.data.explanations} />
+            {/* Under the tabs: الميزان → the book's words → texts → this branch's sins and deeds. No action here. */}
+            <MizanBlock mizan={detail.data.mizan} filter={filter} />
+            {filter === 'ALL' ? <BranchExplanations items={detail.data.explanations} /> : null}
           </>
         ) : null
       }

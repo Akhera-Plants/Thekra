@@ -1,9 +1,10 @@
 /**
  * Motivations for one good deed, after the website's good-deed page (good-deeds/[slug]): the deed's name (a paired
- * page's shared title) and description, its reward as a next-step note (unpaired only), «الميزان», ONE action
- * («اجعلها عادتي», when a catalog habit maps to the deed), the contemporary note, the type filter, the reading sections
- * (its merit and reward, the opposite sin's warning, a contemporary topic's derived groups), «من شعب الإيمان», and the
- * opposite sin on an unpaired page.
+ * page's shared title), description and the contemporary note, then the type tabs right under them (owner,
+ * 2026-11-01), then inside the tab: ONE action («اجعلها عادتي», when a catalog habit maps to the deed), its reward as a
+ * next-step note (unpaired only, under «الكل»), «الميزان» of the tab's type, the reading sections (its merit and reward,
+ * the opposite sin's warning, a contemporary topic's derived groups), «من شعب الإيمان», and the opposite sin on an
+ * unpaired page.
  * Core screen: good deed → motivations (mobile-plan §3).
  */
 
@@ -62,23 +63,27 @@ export default function MotivationsScreen() {
       eyebrow={t('motivations.eyebrow')}
       title={deed ? title : null}
       lead={deed ? (english ? deed.description : deed.descriptionAr) : null}
+      meta={
+        isContemporary ? (
+          <Text variant="small" tone="muted">
+            {t('motivations.contemporaryNote')}
+          </Text>
+        ) : null
+      }
       emptyMessage={t('motivations.empty')}
       intro={
-        <>
-          {reward ? (
-            <NextStep title={t('motivations.reward')}>
-              <Text variant={english ? 'body' : 'reading'}>{reward}</Text>
-            </NextStep>
-          ) : null}
-          {/* The topic template (redesign §4.5): الميزان → one action → texts → شعب الإيمان → the opposite. */}
-          <MizanBlock mizan={detail.data?.mizan} />
-          {deed ? <DeedHabitAction deed={deed.slug} /> : null}
-          {isContemporary ? (
-            <Text variant="lead" tone="muted">
-              {t('motivations.contemporaryNote')}
-            </Text>
-          ) : null}
-        </>
+        deed ? (
+          <>
+            {/* Under the tabs (owner, 2026-11-01): one action → the reward → الميزان → texts → شعب الإيمان → the opposite. */}
+            <DeedHabitAction deed={deed.slug} />
+            {reward && filter === 'ALL' ? (
+              <NextStep title={t('motivations.reward')}>
+                <Text variant={english ? 'body' : 'reading'}>{reward}</Text>
+              </NextStep>
+            ) : null}
+            <MizanBlock mizan={detail.data?.mizan} filter={filter} />
+          </>
+        ) : null
       }
       footer={
         <>

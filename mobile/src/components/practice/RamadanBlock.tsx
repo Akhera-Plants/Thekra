@@ -1,6 +1,7 @@
 /**
- * «وضع رمضان» on «طاعاتي» (moved from the old «عاداتي» tab): one step up for every habit until the season ends, then
- * back on its own (practice-core `startSeason` / `normalize`).
+ * «وضع رمضان» in «عاداتي»: one step up for every habit until the last day of Ramadan, then back on its own
+ * (practice-core `startSeason` / `normalize`). Shown only in Ramadan (Umm al-Qura + the user's offset), and outside it
+ * only to end a season that is still running (`showRamadanBlock`).
  */
 
 import React from 'react';
@@ -9,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { Moon } from 'lucide-react-native';
 import { addDays, normalize, startSeason } from '@thekra/practice-core';
 import { shortDate } from '@/lib/practice/format';
-import { eachPlan, ramadanSeasonUntil, seasonAmount } from '@/lib/practice/plan-view';
+import { eachPlan, ramadanSeasonUntil, seasonAmount, showRamadanBlock } from '@/lib/practice/plan-view';
 import { today, usePracticeStore } from '@/lib/practice/practice-store';
 import { space, useStyles } from '@/theme';
 import { Button, Text } from '@/ui';
@@ -26,13 +27,14 @@ export function RamadanBlock() {
   const setStore = usePracticeStore((s) => s.setStore);
   const d = today();
   const seasonPlans = store.plans.filter((p) => p.season && d <= p.season.until);
-  const season = ramadanSeasonUntil(d, store.settings.hijriOffset);
+  const until = ramadanSeasonUntil(d, store.settings.hijriOffset);
 
   function handleStart() {
+    if (!until) return;
     setStore((s) =>
       eachPlan(s, (p) => {
         const amount = seasonAmount(p);
-        return amount > p.amount ? startSeason(p, amount, season.until) : null;
+        return amount > p.amount ? startSeason(p, amount, until) : null;
       }),
     );
   }
@@ -43,6 +45,7 @@ export function RamadanBlock() {
   }
 
   const active = seasonPlans.length > 0;
+  if (!showRamadanBlock(until, active) || store.plans.length === 0) return null;
   return (
     <View style={styles.group}>
       <View style={styles.tight}>
@@ -52,9 +55,7 @@ export function RamadanBlock() {
         <Text variant="small" tone="muted">
           {active
             ? t('practice.ramadanActive', { date: shortDate(seasonPlans[0]!.season!.until) })
-            : season.inRamadan
-              ? t('practice.ramadanHint', { date: shortDate(season.until) })
-              : t('practice.ramadanHintNotRamadan', { date: shortDate(season.until) })}
+            : t('practice.ramadanHint', { date: shortDate(until ?? d) })}
         </Text>
       </View>
       <Button

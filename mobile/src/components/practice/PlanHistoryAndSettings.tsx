@@ -7,7 +7,7 @@ import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Check } from 'lucide-react-native';
-import { addDays, orderedSlots, slotChoices, validatePlan, type Plan } from '@thekra/practice-core';
+import { addDays, orderedSlots, slotChoices, validatePlan, type DeedWindow, type Plan } from '@thekra/practice-core';
 import { sortSlots, weekdaysToRule } from '@/lib/practice/format';
 import { MONTH_DAYS, type PlanView } from '@/lib/practice/plan-view';
 import { ActiveDaysPicker, SlotsEditor, WeekdayPicker, type SlotChoice } from '@/components/practice/editors';
@@ -64,12 +64,14 @@ export function MonthPanel({ plan, view, today: d }: MonthPanelProps) {
 
 interface SettingsPanelProps {
   plan: Plan;
+  /** The deed's time window (catalog): the slots editor offers only what suits it. */
+  window?: DeedWindow;
   /** The plan's reminder rule as weekdays, or null when it is not a weekday rule. */
   ruleWeekdays: number[] | null;
   onSave: (next: Plan) => void;
 }
 
-export function SettingsPanel({ plan, ruleWeekdays, onSave }: SettingsPanelProps) {
+export function SettingsPanel({ plan, window, ruleWeekdays, onSave }: SettingsPanelProps) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const [slots, setSlots] = useState<SlotChoice[]>(slotChoices(plan));
@@ -85,7 +87,7 @@ export function SettingsPanel({ plan, ruleWeekdays, onSave }: SettingsPanelProps
     setWeekdays(ruleWeekdays);
     // Reset the editors when the stored plan's settings change, not on every log.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [plan.id, plan.slots.join(','), plan.activeDaysPerWeek, ruleKey]);
+  }, [plan.id, plan.slots.join(','), (plan.slotAnchors ?? []).join(','), plan.activeDaysPerWeek, ruleKey]);
 
   useEffect(() => {
     if (!saved) return;
@@ -118,7 +120,7 @@ export function SettingsPanel({ plan, ruleWeekdays, onSave }: SettingsPanelProps
         <Text variant="heading" accessibilityRole="header">
           {t('practice.add.slots')}
         </Text>
-        <SlotsEditor slots={slots} onChange={setSlots} />
+        <SlotsEditor slots={slots} onChange={setSlots} window={window} />
       </View>
       <View style={styles.group}>
         <Text variant="heading" accessibilityRole="header">

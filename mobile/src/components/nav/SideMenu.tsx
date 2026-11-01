@@ -1,6 +1,6 @@
 /**
- * The side menu (owner, 2026-11-01): opened by the menu button in the app header, it slides in from the inline-start
- * side (the right in Arabic, the left in English; `drawerOffset`) over a dimmed page, and lists the screens that are
+ * The side menu (owner, 2026-11-01): opened by the menu button in the app header, it slides in from the inline-end
+ * side, where that button is (the left in Arabic, the right in English; `drawerOffset`) over a dimmed page, and lists the screens that are
  * not a tab under short group headings (`SIDE_MENU`). Members-only items ask a guest to sign in first, then open.
  * Built on the core Modal and Animated (no drawer package); still when the system asks to reduce motion. The
  * backdrop, «إغلاق» and Android back close it.
@@ -11,7 +11,7 @@ import { AccessibilityInfo, Animated, Easing, Modal, Pressable, ScrollView, View
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { Bookmark, CalendarDays, Lightbulb, NotebookPen, Repeat, ShieldCheck, Sprout, Users, X, type LucideIcon } from 'lucide-react-native';
+import { Bookmark, CalendarDays, Lightbulb, NotebookPen, Repeat, Search, Sprout, Users, X, type LucideIcon } from 'lucide-react-native';
 import { isSignedIn, openSignIn } from '@/lib/auth/require-sign-in';
 import { SIDE_MENU, drawerOffset, drawerWidth, sideMenuAction, type SideMenuItem, type SideMenuKey } from '@/lib/nav/side-menu';
 import { GUTTER, space, useStyles, useTheme, type Theme } from '@/theme';
@@ -21,22 +21,23 @@ const SLIDE_MS = 220;
 
 const ICONS: Record<SideMenuKey, LucideIcon> = {
   periodic: Repeat,
-  program: ShieldCheck,
   reviews: NotebookPen,
   strategies: Lightbulb,
   circles: Users,
+  browse: Search,
   saved: Bookmark,
   seasons: CalendarDays,
 };
 
 const makeStyles = (t: Theme) => ({
-  root: { flex: 1, flexDirection: 'row' as const },
+  /** The panel sits at the row's end: the inline-end side in either direction. */
+  root: { flex: 1, flexDirection: 'row' as const, justifyContent: 'flex-end' as const },
   backdrop: { position: 'absolute' as const, top: 0, bottom: 0, left: 0, right: 0, backgroundColor: t.colors.overlay },
   panel: {
     height: '100%' as const,
     backgroundColor: t.colors.background,
-    borderEndWidth: 1,
-    borderEndColor: t.colors.border,
+    borderStartWidth: 1,
+    borderStartColor: t.colors.border,
   },
   head: {
     flexDirection: 'row' as const,
@@ -104,7 +105,7 @@ export function SideMenu({ visible, onClose }: SideMenuProps) {
     <Modal visible={visible} transparent animationType="fade" statusBarTranslucent navigationBarTranslucent onRequestClose={onClose}>
       <View style={styles.root}>
         <Pressable style={styles.backdrop} onPress={onClose} accessibilityRole="button" accessibilityLabel={t('common.close')} />
-        {/* First in the row: the inline-start side in either direction. */}
+        {/* At the row's end (`root`): the inline-end side, where the menu button is. */}
         <Animated.View
           style={[styles.panel, { width, paddingTop: insets.top + space.sm, transform: [{ translateX: x }] }]}
           accessibilityViewIsModal
@@ -116,7 +117,7 @@ export function SideMenu({ visible, onClose }: SideMenuProps) {
                 {t('app.name')}
               </Text>
             </View>
-            <IconButton icon={X} label={t('common.close')} onPress={onClose} />
+            <IconButton icon={X} label={t('common.close')} bordered onPress={onClose} />
           </View>
           <ScrollView contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + space.xl }]}>
             {SIDE_MENU.map((group) => (

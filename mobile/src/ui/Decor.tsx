@@ -122,37 +122,56 @@ export function PageDecor({ kind = 'arabesque' }: { kind?: DecorKind }) {
 
 export type FlourishKind = 'sprig' | 'olive';
 
-const FLOURISH: Record<FlourishKind, { d: string; w: number; h: number; tilt: string }> = {
-  sprig: { d: SPRIG, w: 150, h: 160, tilt: '0deg' },
-  olive: { d: OLIVE, w: 112, h: 170, tilt: '-9deg' },
+/**
+ * `box`: the drawing's own bounds (control points included, plus the stroke), so a contained plant is drawn whole:
+ * the sprig's stem starts left of its file's viewBox, which cut it at the card's edge.
+ */
+const FLOURISH: Record<FlourishKind, { d: string; w: number; h: number; tilt: string; box: [number, number, number, number] }> = {
+  sprig: { d: SPRIG, w: 150, h: 160, tilt: '0deg', box: [-12, 9, 139, 142] },
+  olive: { d: OLIVE, w: 112, h: 170, tilt: '-9deg', box: [11, 4, 91, 157] },
 };
 
 export interface FlourishProps {
   /** `sprig`: the filled door's plant; `olive`: the olive branch of the sage card. */
   kind?: FlourishKind;
-  /** Drawn width; the height follows the drawing. */
+  /** Drawn width; the height follows the drawing. With `contained`, the side of the square it fits in, whole. */
   width: number;
   color: string;
   opacity: number;
   /** Placement, usually absolute in the card's end corner. */
   style?: StyleProp<ViewStyle>;
+  /** Drawn in its own box in the layout (not absolute) and not tilted, so it stays whole inside that box. */
+  contained?: boolean;
+  /** Stroke width in dp (default 1.2). */
+  strokeWidth?: number;
 }
 
-/** A line plant for a card's end corner, behind the card's text. */
-export function Flourish({ kind = 'sprig', width, color, opacity, style }: FlourishProps) {
+/** A line plant for a card's end corner, behind the card's text, or whole in a box of its own (`contained`). */
+export function Flourish({ kind = 'sprig', width, color, opacity, style, contained, strokeWidth = 1.2 }: FlourishProps) {
   const { rtl } = useTheme();
   const art = FLOURISH[kind];
+  const mirror = { scaleX: rtl ? 1 : -1 };
+  if (contained) {
+    // Fit the drawing's own bounds into a `width` square, whole (contain).
+    const [x, y, w, h] = art.box;
+    const scale = Math.min(width / w, width / h);
+    const fit = { width: Math.round(w * scale), height: Math.round(h * scale) };
+    return (
+      <View {...hidden} style={[{ pointerEvents: 'none', ...fit, transform: [mirror] }, style]}>
+        <Svg width={fit.width} height={fit.height} viewBox={`${x} ${y} ${w} ${h}`} fill="none">
+          <Path d={art.d} stroke={color} strokeOpacity={opacity} strokeWidth={strokeWidth / scale} strokeLinecap="round" strokeLinejoin="round" />
+        </Svg>
+      </View>
+    );
+  }
   const height = Math.round((width * art.h) / art.w);
   return (
     <View
       {...hidden}
-      style={[
-        { position: 'absolute', pointerEvents: 'none', width, height, transform: [{ scaleX: rtl ? 1 : -1 }, { rotate: art.tilt }] },
-        style,
-      ]}
+      style={[{ position: 'absolute', pointerEvents: 'none', width, height, transform: [mirror, { rotate: art.tilt }] }, style]}
     >
       <Svg width={width} height={height} viewBox={`0 0 ${art.w} ${art.h}`} fill="none">
-        <Path d={art.d} stroke={color} strokeOpacity={opacity} strokeWidth={1.2} />
+        <Path d={art.d} stroke={color} strokeOpacity={opacity} strokeWidth={strokeWidth} />
       </Svg>
     </View>
   );

@@ -12,6 +12,9 @@ import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 import { SearchX, Trash2 } from 'lucide-react-native';
+import { useDisplayTime } from '@/components/practice/editors';
+import { fixedChoices, unsuitableChoices, windowRange } from '@/lib/practice/deed-window';
+import { currentPrayerDay } from '@/lib/practice/prayer';
 import {
   correctLog,
   decreaseTo,
@@ -24,13 +27,15 @@ import {
   increase,
   logDone,
   normalize,
+  orderedSlots,
+  slotChoices,
   updatePlan,
   type Plan,
 } from '@thekra/practice-core';
 import { useEvidence, usePracticeCatalog } from '@/lib/api/practice';
 import { useCirclePresence } from '@/lib/circles/use-circle-presence';
 import { pick } from '@/lib/practice/catalog-types';
-import { ruleToWeekdays } from '@/lib/practice/format';
+import { ruleToWeekdays, shortDate } from '@/lib/practice/format';
 import { planView } from '@/lib/practice/plan-view';
 import { today, usePracticeStore } from '@/lib/practice/practice-store';
 import { formatAmount, habitFor, planRule } from '@/lib/practice/reminders';
@@ -72,6 +77,7 @@ export default function PlanScreen() {
   const habit = plan ? habitFor(plan, habits) : undefined;
   const evidence = useEvidence(habit?.evidence ?? [], locale);
   const signedIn = useAuthStore((s) => Boolean(s.user));
+  const show = useDisplayTime();
 
   const [relapseDismissed, setRelapseDismissed] = useState(false);
   /** The last log in this visit, so it can be undone in one tap. */
@@ -98,6 +104,21 @@ export default function PlanScreen() {
   const amountLabel = (n: number) => formatAmount(n, plan.unit, habit, locale, unitFallback);
   const title = habit ? pick(habit, 'title', locale) : plan.title;
   const timeHint = habit ? pick(habit, 'timeHint', locale) : '';
+  // A slot chosen before the deed had a time window (e.g. «بعد الظهر» on Duha): a short notice and one fix.
+  const prayerDay = currentPrayerDay(d);
+  const offSlots = habit?.window ? unsuitableChoices(slotChoices(plan), habit.window, prayerDay) : [];
+  const range = windowRange(habit?.window, prayerDay);
+
+  function handleFixSlots() {
+    if (!habit) return;
+    const ordered = orderedSlots(fixedChoices(slotChoices(plan!), habit.defaultSlots, habit.window, prayerDay));
+    update((p) => {
+      const next: Plan = { ...p, slots: ordered.slots };
+      if (ordered.slotAnchors) next.slotAnchors = ordered.slotAnchors;
+      else delete next.slotAnchors;
+      return next;
+    });
+  }
 
   // practice-core `updatePlan` keeps `updatedAt` right for sync (a log alone does not bump it).
   function update(fn: (p: Plan) => Plan) {
@@ -152,8 +173,17 @@ export default function PlanScreen() {
         {habit ? <TextLink label={t('practice.plan.readAbout')} onPress={() => router.push(`/good-deeds/${habit.deed}`)} muted /> : null}
       </PageHeader>
 
+      {offSlots.length > 0 ? (
+        <NextStep title={t('practice.window.unsuitable')}>
+          {range ? <Text variant="small">{t('practice.window.line', { from: show(range.from), to: show(range.to) })}</Text> : null}
+          <Wrap style={styles.offerActions}>
+            <Button label={t('practice.window.fix')} onPress={handleFixSlots} variant="outline" />
+          </Wrap>
+        </NextStep>
+      ) : null}
+
       {isPaused(plan) ? (
-        <NextStep title={t('practice.paused.since', { date: plan.pausedOn })}>
+        <NextStep title={t('practice.paused.since', { date: plan.pausedOn ? shortDate(plan.pausedOn) : '' })}>
           <Wrap style={styles.offerActions}>
             <Button label={t('practice.paused.resume')} onPress={() => update((p) => resumePlan(p, d))} />
           </Wrap>
@@ -216,7 +246,7 @@ export default function PlanScreen() {
         <Button label={t('practice.paused.pause')} variant="ghost" onPress={() => update((p) => pausePlan(p, d))} />
       )}
 
-      <SettingsPanel plan={plan} ruleWeekdays={ruleToWeekdays(planRule(plan, habits))} onSave={(next) => update(() => next)} />
+      <SettingsPanel plan={plan} window={habit?.window} ruleWeekdays={ruleToWeekdays(planRule(plan, habits))} onSave={(next) => update(() => next)} />
 
       <EvidenceList
         ids={habit?.evidence}

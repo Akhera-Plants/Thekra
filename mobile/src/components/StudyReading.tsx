@@ -1,12 +1,14 @@
 /**
  * The reading of one «التفسير» / «الشرح» tab, after the website's StudyReading: each row at reading size, quoted
- * verses in the Quran face, long texts folded at LONG_PREVIEW_CHARS with «اقرأ المزيد», then the source and
- * reference line. Arabic rows read right to left in either UI language.
+ * verses in the Quran face, long texts folded at LONG_PREVIEW_CHARS with «اقرأ المزيد» (an outlined button, owner
+ * 2026-11-01: no action as bare text), then the source and reference line. Arabic rows read right to left in either
+ * UI language.
  */
 
 import React, { useCallback, useState } from 'react';
 import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { ChevronDown, ChevronUp } from 'lucide-react-native';
 import { space, useStyles } from '@/theme';
 import { Button, Skeleton, Text } from '@/ui';
 import {
@@ -26,7 +28,6 @@ const makeStyles = () => ({
   ltr: { writingDirection: 'ltr' as const },
   /** A quoted verse inside the reading: the Quran face, a step larger, on the reading's own line height. */
   verse: { fontSize: 21, lineHeight: 36 },
-  toggle: { marginStart: -space.sm },
   skeleton: { gap: space.md },
 });
 
@@ -67,10 +68,11 @@ function StudyReadingRow({ row }: { row: ExplanationRow }) {
       </Text>
       {long ? (
         <Button
-          variant="ghost"
+          variant="outline"
+          icon={expanded ? ChevronUp : ChevronDown}
           label={expanded ? t('study.readLess') : t('study.readMore')}
           onPress={handleToggle}
-          style={styles.toggle}
+          compact
         />
       ) : null}
       {caption ? (

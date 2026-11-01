@@ -17,7 +17,7 @@ import { Check, NotebookPen, Sparkles, type LucideIcon } from 'lucide-react-nati
 import type { HabitItem, RelativeItem } from '@thekra/practice-core';
 import { setMomentSource } from '@/lib/practice/practice-store';
 import { radius, space, useStyles, useTheme, type Theme } from '@/theme';
-import { ForwardArrow, Icon, Text } from '@/ui';
+import { Button, ForwardArrow, Icon, Text } from '@/ui';
 
 const TARGET = 48;
 const CHECK = 28;
@@ -70,7 +70,6 @@ const makeStyles = (t: Theme) => ({
   disc: { width: DISC, height: DISC, borderRadius: radius.full, alignItems: 'center' as const, justifyContent: 'center' as const, overflow: 'hidden' as const },
   discQuiet: { backgroundColor: t.colors.muted },
   undo: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.sm, paddingStart: UNDO_INDENT + space.sm },
-  undoButton: { minHeight: 36, justifyContent: 'center' as const, paddingHorizontal: space.sm, borderRadius: radius.control },
   meta: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 6 },
 });
 
@@ -207,16 +206,7 @@ function UndoLine({ kind, onUndo }: { kind: UndoKind; onUndo: () => void }) {
       <Text variant="caption" tone="muted">
         {kind === 'cleared' ? t('practice.hub.unlogged') : t('practice.plan.logged')}
       </Text>
-      <Pressable
-        onPress={onUndo}
-        accessibilityRole="button"
-        hitSlop={{ top: 6, bottom: 6 }}
-        style={({ pressed }) => [styles.undoButton, pressed && styles.bodyPressed]}
-      >
-        <Text variant="caption" weight="medium" tone="link">
-          {t('practice.plan.undo')}
-        </Text>
-      </Pressable>
+      <Button label={t('practice.plan.undo')} onPress={onUndo} variant="ghost" compact />
     </View>
   );
 }
@@ -249,16 +239,7 @@ export const HabitRow = memo(function HabitRow({ item, title, meta, canLog, undo
         <UndoLine kind={undo} onUndo={onUndo} />
       ) : onMinimum ? (
         <View style={styles.undo}>
-          <Pressable
-            onPress={handleMinimum}
-            accessibilityRole="button"
-            hitSlop={{ top: 6, bottom: 6 }}
-            style={({ pressed }) => [styles.undoButton, pressed && styles.bodyPressed]}
-          >
-            <Text variant="caption" weight="medium" tone="link">
-              {t('practice.heart.minimum')}
-            </Text>
-          </Pressable>
+          <Button label={t('practice.heart.minimum')} onPress={handleMinimum} variant="outline" compact />
         </View>
       ) : null}
     </View>
@@ -343,16 +324,7 @@ export const ProgramRow = memo(function ProgramRow({ done, meta, showMoment = fa
       </View>
       {showMoment ? (
         <View style={styles.undo}>
-          <Pressable
-            onPress={openMoment}
-            accessibilityRole="link"
-            hitSlop={6}
-            style={({ pressed }) => [styles.undoButton, pressed && styles.bodyPressed]}
-          >
-            <Text variant="small" tone="muted">
-              {t('sinProgram.moment.open')}
-            </Text>
-          </Pressable>
+          <Button label={t('sinProgram.moment.open')} onPress={openMoment} variant="ghost" compact />
         </View>
       ) : null}
     </View>

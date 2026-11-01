@@ -29,6 +29,7 @@ import {
   startSuggestion,
   upsertPlan,
   validatePlan,
+  type DeedWindow,
   type LocalDate,
   type LocalTime,
   type OnboardingStep,
@@ -38,7 +39,9 @@ import { ConsistencyCard, HabitLoopCard, StoryLine } from '@/components/practice
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { pick, type CatalogHabit, type UiLocale } from '@/lib/practice/catalog-types';
 import { ruleToWeekdays, sortSlots, weekdaysToRule } from '@/lib/practice/format';
+import { suitableDefaults } from '@/lib/practice/deed-window';
 import { ensurePermission } from '@/lib/practice/notifications';
+import { currentPrayerDay } from '@/lib/practice/prayer';
 import { heavyDayOn, planFromHabit, startAmount, type Distance } from '@/lib/practice/plan-view';
 import { shouldAskOnFirstHabit } from '@/lib/practice/prefs';
 import { newPracticeId, today, usePracticeStore } from '@/lib/practice/practice-store';
@@ -67,6 +70,11 @@ import {
 type Step = OnboardingStep | 'finish';
 
 const STEPS: readonly OnboardingStep[] = ONBOARDING_STEPS;
+
+/** The habit's suggested times that suit it today (its window on today's prayer times), in order. */
+function defaultSlotsFor(habit: CatalogHabit): LocalTime[] {
+  return sortSlots(suitableDefaults(habit.defaultSlots, habit.window, currentPrayerDay(today())));
+}
 const DISTANCES: Distance[] = ['far', 'near'];
 const SKELETON_OPTIONS = ['a', 'b', 'c', 'd'];
 /** Navigation actions that mean «back» (hardware button, swipe, header): inside the wizard they go one step back. */
@@ -135,7 +143,7 @@ export default function AddHabitScreen() {
   useEffect(() => {
     if (habit && initialized !== habit.key) {
       setInitialized(habit.key);
-      setSlots(sortSlots(habit.defaultSlots));
+      setSlots(defaultSlotsFor(habit));
       setWeekdays(ruleToWeekdays(habit.defaultRule));
     }
   }, [habit, initialized]);
@@ -276,18 +284,21 @@ export default function AddHabitScreen() {
   const title = pick(habit, 'title', locale);
 
   if (step === 'when') {
+    // The habit's own time (reviewed catalog words); the generic example («بعد الفجر…») only where any time suits.
+    const timeHint = pick(habit, 'timeHint', locale);
+    const whenExample = timeHint ? t('practice.add.timeHint', { hint: timeHint }) : habit.window ? undefined : t('practice.onboarding.when.example');
     return (
       <StepFrame
         step={step}
         eyebrow={title}
         title={t('practice.onboarding.when.title')}
         lead={t('practice.onboarding.when.hint')}
-        example={t('practice.onboarding.when.example')}
+        example={whenExample}
         nextLabel={t('practice.add.next')}
         onNext={() => setStep('howMuch')}
         nextDisabled={slots.length === 0 || (weekdays !== null && weekdays.length === 0)}
         onSkip={() => {
-          setSlots(sortSlots(habit.defaultSlots));
+          setSlots(defaultSlotsFor(habit));
           setWeekdays(ruleToWeekdays(habit.defaultRule));
           setActiveDays(3);
           setStep('howMuch');
@@ -295,6 +306,7 @@ export default function AddHabitScreen() {
         onBack={entryStep === 'when' ? undefined : () => setStep('what')}
       >
         <ScheduleFields
+          window={habit.window}
           slots={slots}
           onSlots={setSlots}
           activeDays={activeDays}
@@ -322,7 +334,7 @@ export default function AddHabitScreen() {
       nextLabel={t('practice.add.create')}
       onNext={() => create({ distance, slots, weekdays })}
       onSkip={() =>
-        create({ distance: 'far', slots: slots.length > 0 ? slots : sortSlots(habit.defaultSlots), weekdays: weekdays ?? ruleToWeekdays(habit.defaultRule) })
+        create({ distance: 'far', slots: slots.length > 0 ? slots : defaultSlotsFor(habit), weekdays: weekdays ?? ruleToWeekdays(habit.defaultRule) })
       }
       onBack={() => setStep('when')}
     >
@@ -481,6 +493,8 @@ function ChooseStep({ habits, locale, selectedKey, planByHabit, showStory, error
 }
 
 interface ScheduleFieldsProps {
+  /** The deed's time window: only suitable anchors and times are offered. */
+  window?: DeedWindow;
   slots: LocalTime[];
   onSlots: (slots: LocalTime[]) => void;
   activeDays: number;
@@ -489,12 +503,12 @@ interface ScheduleFieldsProps {
   onWeekdays: (days: number[]) => void;
 }
 
-function ScheduleFields({ slots, onSlots, activeDays, onActiveDays, weekdays, onWeekdays }: ScheduleFieldsProps) {
+function ScheduleFields({ window, slots, onSlots, activeDays, onActiveDays, weekdays, onWeekdays }: ScheduleFieldsProps) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   return (
     <>
-      <SlotsEditor slots={slots} onChange={onSlots} />
+      <SlotsEditor slots={slots} onChange={onSlots} window={window} />
       <Rule />
       <View style={styles.group}>
         <Text variant="heading" accessibilityRole="header">

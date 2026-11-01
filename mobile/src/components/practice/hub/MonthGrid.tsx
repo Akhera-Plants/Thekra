@@ -53,8 +53,17 @@ const makeStyles = (t: Theme) => ({
     backgroundColor: t.colors.intentGoodDeed,
   },
   occasionOnSelected: { backgroundColor: t.colors.primaryForeground },
-  step: { width: 48, height: 48, borderRadius: radius.full, alignItems: 'center' as const, justifyContent: 'center' as const },
-  stepPressed: { backgroundColor: t.colors.accent },
+  step: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: t.colors.border,
+    backgroundColor: t.colors.card,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  },
+  stepPressed: { backgroundColor: t.colors.accent, borderColor: t.colors.ring },
 });
 
 export interface StepButtonProps {
@@ -63,7 +72,7 @@ export interface StepButtonProps {
   onPress: () => void;
 }
 
-/** A 48 round previous/next control whose chevron points the reading way. */
+/** A framed round previous/next control (44, 48 with the slop) whose chevron points the reading way. */
 export function StepButton({ direction, label, onPress }: StepButtonProps) {
   const styles = useStyles(makeStyles);
   const { colors } = useTheme();
@@ -72,7 +81,8 @@ export function StepButton({ direction, label, onPress }: StepButtonProps) {
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={label}
-      android_ripple={{ color: colors.accent, borderless: true, radius: 24 }}
+      hitSlop={2}
+      android_ripple={{ color: colors.accent, borderless: true, radius: 22 }}
       style={({ pressed }) => [styles.step, pressed && styles.stepPressed]}
     >
       {direction === 'back' ? <BackChevron size={20} tone="muted" /> : <ForwardChevron size={20} tone="muted" />}

@@ -1,8 +1,9 @@
 /**
- * The quote list of one topic (a sin's reminders, a good deed's motivations), after the website's topic pages:
- * the page header, the type filter (SegmentTabs with the counts read under «الكل»), the reading sections with
- * their headings (see `buildTopicSections`), and whatever the page adds above the list (`intro`) or after it
- * (`footer`). The API's reading order is kept: no shuffle (owner rule, PROJECT_GUIDE §6).
+ * The quote list of one topic (a sin's reminders, a good deed's motivations, a branch), after the website's topic
+ * pages: the page header (with short `meta` lines such as «كبيرة»), then the type filter right under it (SegmentTabs
+ * with the counts read under «الكل»), then everything of the tab: the page's own top part (`intro`: its one action,
+ * «الميزان»…), the reading sections with their headings (see `buildTopicSections`) and `footer`. Owner, 2026-11-01:
+ * no text above the tabs. The API's reading order is kept: no shuffle (owner rule, PROJECT_GUIDE §6).
  * The screen owns the query; this renders its states (skeletons, error, empty, refresh, next page).
  */
 
@@ -71,7 +72,10 @@ interface TopicQuoteListProps {
   /** Null while the topic itself is loading. */
   title: string | null;
   lead?: string | null;
+  /** Short lines about the topic in the title block («كبيرة · …», «موضوع معاصر»), never a text. */
+  meta?: React.ReactNode;
   emptyMessage: string;
+  /** The top of the tab's content, under the tabs (the page's action, «الميزان»…). */
   intro?: React.ReactNode;
   footer?: React.ReactNode;
 }
@@ -79,7 +83,8 @@ interface TopicQuoteListProps {
 const makeStyles = () => ({
   frame: { paddingHorizontal: 0, paddingTop: 0 },
   list: { paddingHorizontal: GUTTER, paddingTop: space.lg, paddingBottom: space['4xl'] },
-  header: { gap: space['2xl'], paddingBottom: space.lg },
+  header: { gap: space.xl, paddingBottom: space.lg },
+  intro: { gap: space['2xl'], paddingTop: space.xs },
   headerSkeleton: { gap: space.md },
   gap: { height: space.lg },
   sectionTitle: { paddingTop: space.lg, paddingBottom: space.lg },
@@ -123,6 +128,7 @@ export function TopicQuoteList({
   eyebrow,
   title,
   lead,
+  meta,
   emptyMessage,
   intro,
   footer,
@@ -150,9 +156,11 @@ export function TopicQuoteList({
 
   const header = title ? (
     <View style={styles.header}>
-      <PageHeader eyebrow={eyebrow} title={title} lead={lead ?? undefined} />
-      {intro}
+      <PageHeader eyebrow={eyebrow} title={title} lead={lead ?? undefined}>
+        {meta}
+      </PageHeader>
       {showTabs ? <SegmentTabs items={tabs} value={filter} onChange={onFilterChange} /> : null}
+      {intro ? <View style={styles.intro}>{intro}</View> : null}
     </View>
   ) : isLoading ? (
     <View style={[styles.header, styles.headerSkeleton]}>

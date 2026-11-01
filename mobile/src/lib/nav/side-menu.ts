@@ -1,12 +1,14 @@
 /**
  * The side menu (owner, 2026-11-01): the screens that are not a tab, under short group headings, in this order. Each
- * item is a route; `members` items open «تسجيل الدخول» for a guest first (practice is for members; «مواسم الخير» stays
- * public, as on the website). Icons are chosen in the component; this list stays pure so a test can check it.
+ * item is a route; `members` items open «تسجيل الدخول» for a guest first (practice is for members; «استكشف النصوص» and
+ * «مواسم الخير» stay public, as on the website). «تخفَّف» is not here: it is the home door «تخفَّف من معصية» and a section
+ * of «عاداتي», so it has one way in. «مواسم الخير» and «استكشف النصوص» moved here from the home page. Icons are chosen
+ * in the component; this list stays pure so a test can check it.
  */
 
 import type { Href } from 'expo-router';
 
-export type SideMenuKey = 'periodic' | 'program' | 'reviews' | 'strategies' | 'circles' | 'saved' | 'seasons';
+export type SideMenuKey = 'periodic' | 'reviews' | 'strategies' | 'circles' | 'browse' | 'saved' | 'seasons';
 
 export interface SideMenuItem {
   key: SideMenuKey;
@@ -38,7 +40,6 @@ export const SIDE_MENU: readonly SideMenuGroup[] = [
     titleKey: 'menu.groups.deeds',
     items: [
       item('periodic', 'practice.periodic.title', '/practice/periodic'),
-      item('program', 'sinProgram.title', '/practice/sin-program'),
       item('reviews', 'record.reviews', '/practice/reviews'),
       item('strategies', 'record.strategies', '/practice/strategies'),
     ],
@@ -47,7 +48,11 @@ export const SIDE_MENU: readonly SideMenuGroup[] = [
   {
     key: 'reading',
     titleKey: 'menu.groups.reading',
-    items: [item('saved', 'favorites.title', '/favorites'), item('seasons', 'calendar.title', '/practice/calendar', false)],
+    items: [
+      item('browse', 'browse.title', '/browse', false),
+      item('saved', 'favorites.title', '/favorites'),
+      item('seasons', 'calendar.title', '/practice/calendar', false),
+    ],
   },
 ];
 
@@ -57,11 +62,12 @@ export function sideMenuAction(entry: SideMenuItem, signedIn: boolean): { kind: 
 }
 
 /**
- * Where the panel sits and from where it slides: the inline-start side (the right in Arabic, the left in English).
- * `hiddenX` is the translateX that puts it just off that edge (transforms do not flip with the layout direction).
+ * Where the panel sits and from where it slides: the inline-end side, where the menu button is (the left in Arabic,
+ * the right in English), so the panel comes out of the button that opened it. `hiddenX` is the translateX that puts it
+ * just off that edge (transforms do not flip with the layout direction).
  */
 export function drawerOffset(rtl: boolean, width: number): { side: 'left' | 'right'; hiddenX: number } {
-  return rtl ? { side: 'right', hiddenX: width } : { side: 'left', hiddenX: -width };
+  return rtl ? { side: 'left', hiddenX: -width } : { side: 'right', hiddenX: width };
 }
 
 /** Panel width: most of a phone, capped on tablets. */

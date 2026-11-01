@@ -165,23 +165,25 @@ export function planFromHabit(args: {
 }
 
 /**
- * Last day of the season for «وضع رمضان»: the last day of the current Ramadan when today is in Ramadan
- * (Umm al-Qura + the user's offset), else 30 days from today. `hijri` is false when the runtime lacks
- * Umm al-Qura, in which case the 30-day season is used.
+ * Last day of the current Ramadan for «وضع رمضان», or null when today is not in Ramadan (owner, 2026-11-01: turning
+ * Ramadan on outside Ramadan makes no sense; as on the website). Umm al-Qura with the user's offset; null too when the
+ * runtime lacks Umm al-Qura.
  */
-export function ramadanSeasonUntil(today: LocalDate, hijriOffset: number): { until: LocalDate; inRamadan: boolean } {
-  if (isHijriSupported()) {
-    try {
-      if (toHijri(today, hijriOffset).month === 9) {
-        let d = today;
-        while (toHijri(addDays(d, 1), hijriOffset).month === 9) d = addDays(d, 1);
-        return { until: d, inRamadan: true };
-      }
-    } catch {
-      // fall through to the plain 30-day season
-    }
+export function ramadanSeasonUntil(today: LocalDate, hijriOffset: number): LocalDate | null {
+  if (!isHijriSupported()) return null;
+  try {
+    if (toHijri(today, hijriOffset).month !== 9) return null;
+    let d = today;
+    while (toHijri(addDays(d, 1), hijriOffset).month === 9) d = addDays(d, 1);
+    return d;
+  } catch {
+    return null;
   }
-  return { until: addDays(today, 29), inRamadan: false };
+}
+
+/** «وضع رمضان» shows in Ramadan, and outside it only while a season is still running (so it can be ended). */
+export function showRamadanBlock(ramadanUntil: LocalDate | null, seasonActive: boolean): boolean {
+  return ramadanUntil !== null || seasonActive;
 }
 
 /** One ladder step up for the season, capped at the plan's ceiling. */

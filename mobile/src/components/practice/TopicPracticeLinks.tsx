@@ -8,17 +8,16 @@
  */
 
 import React from 'react';
-import { View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { isActiveProgram } from '@thekra/practice-core';
 import { isSignedIn, openSignIn } from '@/lib/auth/require-sign-in';
 import { setMomentSource, setPendingProgram, usePracticeStore } from '@/lib/practice/practice-store';
 import { space, useStyles, type Theme } from '@/theme';
-import { Button } from '@/ui';
+import { Button, Wrap } from '@/ui';
 
 const makeStyles = (_t: Theme) => ({
-  program: { gap: space.xs },
+  program: { gap: space.sm },
 });
 
 /**
@@ -45,14 +44,9 @@ export function SinProgramLink({ sin }: { sin: string }) {
   }
 
   return (
-    <View style={styles.program}>
-      <Button
-        label={isActive ? t('reminders.continueProgram') : t('reminders.startProgram')}
-        variant="outline"
-        arrow
-        onPress={handleOpen}
-      />
-      <Button label={t('sinProgram.moment.openFromSin')} variant="ghost" arrow onPress={handleMoment} />
-    </View>
+    <Wrap style={styles.program}>
+      <Button label={isActive ? t('reminders.continueProgram') : t('reminders.startProgram')} arrow onPress={handleOpen} />
+      <Button label={t('sinProgram.moment.openFromSin')} variant="ghost" onPress={handleMoment} />
+    </Wrap>
   );
 }

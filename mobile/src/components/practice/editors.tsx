@@ -2,23 +2,27 @@
  * Editors shared by «أعِنّي على طاعة» and the plan screen (reminder slots, active days per week, reminder weekdays)
  * and the time field of the kinship and sin-program screens. Times are chosen with the system time picker
  * (TimePicker), stored as HH:MM and shown in the device's 12/24-hour style with Western digits.
+ * Slots follow the deed's time window (owner, 2026-11-01): only its anchors, only fixed times inside it, the window in
+ * one line; a slot chosen before that does not suit is marked so it can be removed (`deed-window.ts`).
  */
 
 import React from 'react';
 import { Pressable, View } from 'react-native';
 import { useCalendars } from 'expo-localization';
 import { useTranslation } from 'react-i18next';
-import { Clock, Plus, X } from 'lucide-react-native';
+import { Clock, Plus, TriangleAlert, X } from 'lucide-react-native';
 import {
   ANCHOR_LABELS,
   isPrayerAnchor,
+  isTimeInWindow,
   orderedSlots,
-  PRAYER_ANCHORS,
   resolveAnchor,
+  type DeedWindow,
   type LocalTime,
   type PrayerAnchor,
 } from '@thekra/practice-core';
-import { currentPrayerLookup } from '@/lib/practice/prayer';
+import { isChoiceSuitable, offeredAnchors, pickerStart, windowRange, type SlotChoice } from '@/lib/practice/deed-window';
+import { currentPrayerDay } from '@/lib/practice/prayer';
 import { today } from '@/lib/practice/practice-store';
 import { displayTime, nowTime, sortSlots } from '@/lib/practice/format';
 import { radius, space, useStyles, useTheme, type Theme } from '@/theme';
@@ -58,6 +62,9 @@ const makeStyles = (t: Theme) => ({
     borderColor: t.colors.muted,
   },
   slotPressed: { borderColor: t.colors.ring },
+  /** A slot chosen before the deed's window was known that does not suit it. */
+  slotOff: { backgroundColor: t.colors.card, borderColor: t.colors.destructive },
+  windowLine: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.sm },
 });
 
 /** HH:MM as this device shows times: «21:00», or «9:00 م» / «9:00 PM» where the clock is 12-hour. */
@@ -67,8 +74,7 @@ export function useDisplayTime(): (time: LocalTime) => string {
   return (time) => displayTime(time, uses24hourClock, { am: t('practice.time.am'), pm: t('practice.time.pm') });
 }
 
-/** A reminder slot as picked: a fixed `HH:MM` or a prayer anchor («after-fajr»…). */
-export type SlotChoice = LocalTime | PrayerAnchor;
+export type { SlotChoice } from '@/lib/practice/deed-window';
 
 /** Choices ordered by the time they ring by default, without duplicates. */
 export function sortChoices(choices: readonly SlotChoice[]): SlotChoice[] {
@@ -79,52 +85,86 @@ export function sortChoices(choices: readonly SlotChoice[]): SlotChoice[] {
 export interface SlotsEditorProps {
   slots: SlotChoice[];
   onChange: (slots: SlotChoice[]) => void;
+  /** The deed's time window: only its anchors and the times inside it are offered. */
+  window?: DeedWindow;
 }
 
 /**
- * Reminder slots: the prayer anchors first («بعد الفجر»…, resolved from «أوقات الصلاة», default times otherwise), then
- * «وقت أختاره» to add a fixed time. Tapping a chosen time removes it.
+ * Reminder slots: the prayer anchors that suit the deed first («بعد الفجر»…, resolved from «أوقات الصلاة», default
+ * times otherwise), then «وقت أختاره» to add a fixed time inside the deed's window. Tapping a chosen time removes it.
  */
-export function SlotsEditor({ slots, onChange }: SlotsEditorProps) {
+export function SlotsEditor({ slots, onChange, window }: SlotsEditorProps) {
   const { t, i18n } = useTranslation();
   const styles = useStyles(makeStyles);
   const show = useDisplayTime();
+  const [outside, setOutside] = React.useState(false);
   const lang = i18n.language === 'en' ? 'en' : 'ar';
-  const prayer = currentPrayerLookup()(today());
+  const prayer = currentPrayerDay(today());
+  const anchors = offeredAnchors(window);
+  const range = windowRange(window, prayer);
   const times = slots.filter((s) => !isPrayerAnchor(s));
-  // A new time opens on the last one chosen, else on the current hour.
-  const start = times[times.length - 1] ?? `${nowTime().slice(0, 2)}:00`;
+  // Anchors chosen before the window was known (e.g. «بعد الظهر» on Duha): shown, marked, removable.
+  const strayAnchors = slots.filter((s): s is PrayerAnchor => isPrayerAnchor(s) && !anchors.includes(s));
+  // A new time opens on the last one chosen when it suits, else inside the window, else on the current hour.
+  const start = pickerStart(times, window, prayer, `${nowTime().slice(0, 2)}:00`);
   const toggle = (anchor: PrayerAnchor) =>
     onChange(slots.includes(anchor) ? slots.filter((x) => x !== anchor) : sortChoices([...slots, anchor]));
+  const handlePick = (time: LocalTime) => {
+    if (window && !isTimeInWindow(time, window, prayer)) {
+      setOutside(true);
+      return;
+    }
+    setOutside(false);
+    onChange(sortChoices([...slots, time]));
+  };
 
   return (
     <View style={styles.group}>
+      {range ? (
+        <View style={styles.windowLine}>
+          <Icon icon={Clock} size={17} tone="link" />
+          <Text variant="small" style={{ flex: 1 }}>
+            {t('practice.window.line', { from: show(range.from), to: show(range.to) })}
+          </Text>
+        </View>
+      ) : null}
       <Text variant="small" tone="muted">
         {t('practice.add.slotsHint')}
       </Text>
-      <Wrap>
-        {PRAYER_ANCHORS.map((anchor) => (
-          <Chip
-            key={anchor}
-            label={`${ANCHOR_LABELS[lang][anchor]}${prayer ? ` · ${show(resolveAnchor(anchor, prayer))}` : ''}`}
-            selected={slots.includes(anchor)}
-            onPress={() => toggle(anchor)}
-          />
-        ))}
-      </Wrap>
-      {times.length > 0 ? (
+      {anchors.length > 0 ? (
         <Wrap>
+          {anchors.map((anchor) => (
+            <Chip
+              key={anchor}
+              label={`${ANCHOR_LABELS[lang][anchor]}${prayer ? ` · ${show(resolveAnchor(anchor, prayer))}` : ''}`}
+              selected={slots.includes(anchor)}
+              onPress={() => toggle(anchor)}
+            />
+          ))}
+        </Wrap>
+      ) : null}
+      {times.length > 0 || strayAnchors.length > 0 ? (
+        <Wrap>
+          {strayAnchors.map((anchor) => (
+            <SlotChip key={anchor} label={ANCHOR_LABELS[lang][anchor]} off onRemove={() => onChange(slots.filter((x) => x !== anchor))} />
+          ))}
           {times.map((slot) => (
-            <SlotChip key={slot} label={show(slot)} onRemove={() => onChange(slots.filter((x) => x !== slot))} />
+            <SlotChip
+              key={slot}
+              label={show(slot)}
+              off={!isChoiceSuitable(slot, window, prayer)}
+              onRemove={() => onChange(slots.filter((x) => x !== slot))}
+            />
           ))}
         </Wrap>
       ) : null}
       <TimePicker
         value={start}
         title={t('practice.add.slots')}
-        onPick={(time) => onChange(sortChoices([...slots, time]))}
+        onPick={handlePick}
         renderTrigger={(open) => <Button label={t('practice.add.customTime')} icon={Plus} onPress={open} variant="outline" />}
       />
+      {outside && range ? <ErrorText>{t('practice.window.outside', { from: show(range.from), to: show(range.to) })}</ErrorText> : null}
       {slots.length === 0 ? <ErrorText>{t('practice.add.noSlots')}</ErrorText> : null}
       {slots.length === 1 ? (
         <Text variant="small" tone="muted">
@@ -138,22 +178,28 @@ export function SlotsEditor({ slots, onChange }: SlotsEditorProps) {
 interface SlotChipProps {
   label: string;
   onRemove: () => void;
+  /** Does not suit the deed's window: marked, so it is removed. */
+  off?: boolean;
 }
 
 /** One reminder time; tapping it removes it. */
-function SlotChip({ label, onRemove }: SlotChipProps) {
+function SlotChip({ label, onRemove, off }: SlotChipProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = useStyles(makeStyles);
+  const remove = t('practice.add.removeSlot', { time: label });
   return (
     <Pressable
       onPress={onRemove}
       android_ripple={{ color: colors.accent }}
       accessibilityRole="button"
-      accessibilityLabel={t('practice.add.removeSlot', { time: label })}
-      style={({ pressed }) => [styles.slot, pressed && styles.slotPressed]}
+      accessibilityLabel={off ? `${remove}. ${t('practice.window.unsuitableSlot')}` : remove}
+      style={({ pressed }) => [styles.slot, off && styles.slotOff, pressed && styles.slotPressed]}
     >
-      <Text variant="body">{label}</Text>
+      {off ? <Icon icon={TriangleAlert} size={16} tone="destructive" /> : null}
+      <Text variant="body" tone={off ? 'destructive' : undefined}>
+        {label}
+      </Text>
       <Icon icon={X} size={16} tone="muted" />
     </Pressable>
   );
