@@ -1,9 +1,12 @@
 import {
+  type DeedWindow,
+  isSlotSuitable,
   isValidTime,
   PEOPLE_CIRCLES,
   type PeopleCircle,
   STAGE_MIN_DAYS,
   stagesFor,
+  validateDeedWindow,
   validateRule,
   type PlanUnit,
   type RakahCount,
@@ -61,6 +64,11 @@ export interface Habit {
   timeHintAr?: string;
   timeHintEn?: string;
   defaultSlots: string[];
+  /**
+   * When the deed may be done (owner, 2026-11-01): the setup offers only the anchors and times inside it
+   * (practice-core `isSlotSuitable`). Absent: any time and any anchor.
+   */
+  window?: DeedWindow;
   basis: Basis;
   evidence: string[];
 }
@@ -271,7 +279,7 @@ function readOccasion(value: YamlValue, where: string): Occasion {
 
 const HABIT_FIELDS = [
   'key', 'kind', 'people', 'titleAr', 'titleEn', 'deed', 'unit', 'unitLabelAr', 'unitLabelEn', 'rakah', 'start', 'ceiling', 'defaultRule',
-  'timeHintAr', 'timeHintEn', 'defaultSlots', 'basis', 'evidence',
+  'timeHintAr', 'timeHintEn', 'defaultSlots', 'window', 'basis', 'evidence',
 ];
 
 function readHabit(value: YamlValue, where: string): Habit {
@@ -285,6 +293,13 @@ function readHabit(value: YamlValue, where: string): Habit {
   const kind = f.optionalString('kind') !== undefined ? f.oneOf('kind', ['periodic'] as const) : undefined;
   const people = f.optionalString('people') !== undefined ? f.oneOf('people', PEOPLE_CIRCLES) : undefined;
   if (people !== undefined && kind !== 'periodic') f.fail('people needs kind: periodic');
+  const rawWindow = (asMap(value, where) as Record<string, YamlValue>)['window'];
+  let window: DeedWindow | undefined;
+  if (rawWindow !== undefined && rawWindow !== null) {
+    const error = validateDeedWindow(rawWindow);
+    if (error) f.fail(error);
+    window = rawWindow as unknown as DeedWindow;
+  }
   // Built in the file's field order; optional fields only when present.
   const habit: Habit = {
     key: f.string('key'),
@@ -302,6 +317,7 @@ function readHabit(value: YamlValue, where: string): Habit {
     defaultRule: f.rule('defaultRule'),
     ...(timeHintAr !== undefined && timeHintEn !== undefined ? { timeHintAr, timeHintEn } : {}),
     defaultSlots: f.strings('defaultSlots'),
+    ...(window !== undefined ? { window } : {}),
     basis: f.oneOf('basis', BASES),
     // A periodic template may wait for a verified Quote id (`evidence: []`); a habit always has evidence.
     evidence: kind === 'periodic' ? f.stringsOrEmpty('evidence', UUID) : f.strings('evidence', UUID),
@@ -315,6 +331,9 @@ function readHabit(value: YamlValue, where: string): Habit {
   if (ceiling !== undefined && ceiling < habit.start.near) f.fail('ceiling must be ≥ start.near');
   const badSlot = habit.defaultSlots.findIndex((slot) => !isValidTime(slot));
   if (badSlot >= 0) f.fail(`defaultSlots[${badSlot}] must be HH:MM`);
+  // The suggested times themselves must fit the deed (checked with the default prayer times).
+  const outside = habit.defaultSlots.find((slot) => !isSlotSuitable({ time: slot }, habit.window));
+  if (outside !== undefined) f.fail(`defaultSlots: ${outside} is outside the deed's window`);
   assertTopic(f, habit.deed, 'DO');
   return habit;
 }

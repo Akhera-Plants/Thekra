@@ -142,6 +142,13 @@ describe('practice catalog — the real reviewer files', () => {
     expect(Object.keys(stories).sort()).toEqual(['fasila', 'ghusn-shawk', 'marad-safar', 'qatil-al-mia']);
   });
 
+  it('every prayer habit has a time window; Duha is never after Dhuhr and offers no prayer anchor (owner, 2026-11-01)', () => {
+    const byKey = new Map(practiceCatalog().habits.map((h) => [h.key, h]));
+    expect(byKey.get('duha')?.window).toEqual({ from: 'sunrise', fromMinutes: 15, to: 'dhuhr', toMinutes: -10, anchors: [] });
+    expect(byKey.get('witr')?.window?.anchors).toEqual(['after-isha', 'before-sleep']);
+    expect(byKey.get('qiyam-last-third')?.window?.from).toBe('lastThird');
+  });
+
   it('programForSin: written programs keep their category, every other sin is available with none', () => {
     expect(programForSin('ghibah')).toEqual({ available: true, category: 'haqq_ibad' });
     expect(programForSin('waqt-tawasul')).toEqual({ available: true, category: 'haqq_allah' });
@@ -193,6 +200,13 @@ describe('practice catalog — validation failures', () => {
     expect(build(schedulesText.replace('    basis: text\n', '    basis: text\n    note: x\n'))).toThrow('unknown field "note"');
     const split = programsText.replace("'When angry, fall silent and change your position'", 'When angry, fall silent and change your position');
     expect(build(schedulesText, split)).toThrow('actionsAr has 3 items but actionsEn has 4');
+  });
+
+  it('rejects a suggested time outside the deed window, and a bad window', () => {
+    expect(build(schedulesText.replace("defaultSlots: ['09:30', '11:00']", "defaultSlots: ['09:30', '13:00']"))).toThrow(
+      "13:00 is outside the deed's window",
+    );
+    expect(build(schedulesText.replace('      from: sunrise\n      fromMinutes: 15', '      from: noon\n      fromMinutes: 15'))).toThrow('window.from');
   });
 
   it('rejects an alternative that is not a habit key', () => {

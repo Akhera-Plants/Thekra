@@ -356,3 +356,95 @@ export const ANCHOR_LABELS: Record<'ar' | 'en', Record<PrayerAnchor, string>> = 
     'before-sleep': 'Before sleep',
   },
 };
+
+// ── Deed time windows (owner, 2026-11-01: «لا تطرح أوقاتًا غير مناسبة») ─────────────────────────────────────────────
+
+/**
+ * A point of the day a deed's time starts or ends at. `sunrise` uses the day's sunrise when the client knows it
+ * ({@link PrayerTimesWithSunrise}), else fajr + {@link SUNRISE_AFTER_FAJR_MINUTES}. `lastThird` is the start of the
+ * last third of the night (maghrib → next fajr).
+ */
+export const WINDOW_EDGES = ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha', 'lastThird'] as const;
+export type WindowEdge = (typeof WINDOW_EDGES)[number];
+
+/**
+ * When a deed may be done, by the day's prayer times, with minute offsets (Duha: from sunrise + 15 to dhuhr − 10).
+ * A window may cross midnight (witr: isha → fajr). `anchors` lists the «بعد الفجر»-style slots that suit the deed; an
+ * empty list offers fixed times only. Written per habit in deed-schedules.yaml (pending the sheikh's review).
+ */
+export interface DeedWindow {
+  from: WindowEdge;
+  to: WindowEdge;
+  fromMinutes?: number;
+  toMinutes?: number;
+  anchors: PrayerAnchor[];
+}
+
+/** One day's prayer times, optionally with sunrise (AlAdhan sends it). */
+export type PrayerTimesWithSunrise = PrayerTimes & { sunrise?: LocalTime };
+
+/** Sunrise when only the five prayers are known: a safe late estimate, so a Duha slot never falls before it. */
+export const SUNRISE_AFTER_FAJR_MINUTES = 100;
+
+function edgeMinutes(edge: WindowEdge, t: PrayerTimesWithSunrise): number {
+  switch (edge) {
+    case 'sunrise':
+      return t.sunrise && isValidTime(t.sunrise) ? timeToMinutes(t.sunrise) : timeToMinutes(t.fajr) + SUNRISE_AFTER_FAJR_MINUTES;
+    case 'lastThird': {
+      const maghrib = timeToMinutes(t.maghrib);
+      const night = timeToMinutes(t.fajr) + 1440 - maghrib;
+      return (maghrib + Math.round((night * 2) / 3)) % 1440;
+    }
+    default:
+      return timeToMinutes(t[edge]);
+  }
+}
+
+/** The window's start and end as `HH:MM` on a day with these times (or the defaults). */
+export function windowBounds(window: DeedWindow, times: PrayerTimesWithSunrise | undefined = undefined): { from: LocalTime; to: LocalTime } {
+  const t = times ?? DEFAULT_PRAYER_TIMES;
+  return {
+    from: minutesToTime(edgeMinutes(window.from, t) + (window.fromMinutes ?? 0)),
+    to: minutesToTime(edgeMinutes(window.to, t) + (window.toMinutes ?? 0)),
+  };
+}
+
+/** Whether `time` falls inside the window (ends included; a window may cross midnight). */
+export function isTimeInWindow(time: LocalTime, window: DeedWindow, times: PrayerTimesWithSunrise | undefined = undefined): boolean {
+  const { from, to } = windowBounds(window, times);
+  const m = timeToMinutes(time);
+  const a = timeToMinutes(from);
+  const b = timeToMinutes(to);
+  return a <= b ? m >= a && m <= b : m >= a || m <= b;
+}
+
+/** The anchors to offer for a habit: its own list, or all of them when it has no window. */
+export function anchorsFor(window: DeedWindow | undefined): readonly PrayerAnchor[] {
+  return window ? window.anchors : PRAYER_ANCHORS;
+}
+
+/** A slot is suitable: an anchor the deed allows, or a fixed time inside its window (any time without a window). */
+export function isSlotSuitable(
+  slot: { time: LocalTime; anchor?: PrayerAnchor | null },
+  window: DeedWindow | undefined,
+  times: PrayerTimesWithSunrise | undefined = undefined,
+): boolean {
+  if (!window) return true;
+  if (slot.anchor) return window.anchors.includes(slot.anchor);
+  return isTimeInWindow(slot.time, window, times);
+}
+
+/** Checks a window read from the catalog; returns the first problem or null. */
+export function validateDeedWindow(value: unknown): string | null {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return 'window must be a map';
+  const w = value as Record<string, unknown>;
+  for (const key of Object.keys(w)) if (!['from', 'to', 'fromMinutes', 'toMinutes', 'anchors'].includes(key)) return `window: unknown field "${key}"`;
+  if (!(WINDOW_EDGES as readonly string[]).includes(String(w['from']))) return `window.from must be one of ${WINDOW_EDGES.join(', ')}`;
+  if (!(WINDOW_EDGES as readonly string[]).includes(String(w['to']))) return `window.to must be one of ${WINDOW_EDGES.join(', ')}`;
+  for (const k of ['fromMinutes', 'toMinutes']) {
+    const v = w[k];
+    if (v !== undefined && (!Number.isInteger(v) || Math.abs(v as number) > 180)) return `window.${k} must be an integer within ±180`;
+  }
+  if (!Array.isArray(w['anchors']) || !w['anchors'].every(isPrayerAnchor)) return 'window.anchors must list prayer anchors';
+  return null;
+}
