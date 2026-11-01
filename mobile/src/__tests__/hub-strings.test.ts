@@ -1,5 +1,5 @@
 /**
- * The counted strings of «ورد اليوم» and «سجلّي» resolve through i18next plural rules in both languages (Arabic has
+ * The counted strings of «ورد اليوم» and «عاداتي» resolve through i18next plural rules in both languages (Arabic has
  * zero/one/two/few/many forms), the screens carry the owner's names, every key exists in both files, and no visible
  * string carries an em or en dash.
  */
@@ -76,7 +76,11 @@ describe('practice strings', () => {
     const ar = i18n.getFixedT('ar');
     expect(ar('tabs.wird')).toBe('ورد اليوم');
     expect(ar('practice.wird.title')).toBe('ورد اليوم');
-    expect(ar('tabs.record')).toBe('السجل');
+    expect(ar('tabs.record')).toBe('عاداتي');
+    expect(ar('record.title')).toBe('عاداتي');
+    expect(ar('home.entryTitle')).toBe('أبواب الخير');
+    expect(ar('home.sinEntryLabel')).toBe('تخفَّف من معصية');
+    expect(ar('sinProgram.categoryQuestion')).toBe('هل فيها حقٌّ لأحد من الناس؟');
     expect(ar('practice.periodic.title')).toBe('أعمال دورية');
     expect(ar('practice.hub.habitsTrack')).toBe('عاداتي');
     expect(ar('sinProgram.title')).toBe('تخفَّف');

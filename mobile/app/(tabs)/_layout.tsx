@@ -1,9 +1,10 @@
 /**
- * Bottom tab bar, four tabs: «الرئيسية» · «ورد اليوم» · «السجل» · «الإعدادات» (the middle two for members only), in reading order (Home at the start:
+ * Bottom tab bar, four tabs: «الرئيسية» · «ورد اليوم» · «عاداتي» · «الإعدادات» (the middle two for members only), in reading order (Home at the start:
  * the right in Arabic, the left in English), in the website's look (background fill, hairline on top, thin lucide
  * icons, Plex labels, the primary colour for the current tab). «ورد اليوم» is the centre of the app, so its icon sits
- * in a soft pill, stronger when it is the current tab. «بستاني» and «المحفوظات» are pushed screens opened from
- * «سجلّي»; texts browsing lives on the home page («استكشف النصوص»).
+ * in a soft pill, stronger when it is the current tab. «عاداتي» is the `record` route (the name kept so older links
+ * work). The other screens (أعمال دورية، تخفَّف، المحفوظات…) open from the side menu in the app header; texts browsing
+ * lives on the home page («استكشف النصوص»).
  *
  * Height and bottom padding add the safe-area inset (home indicator, Android's edge-to-edge navigation bar): the tab
  * bar uses a custom height as is, so the inset has to be in it.
@@ -14,7 +15,7 @@ import { View, type ColorValue } from 'react-native';
 import { Tabs } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChartNoAxesColumn, House, Settings2, Sprout, type LucideIcon } from 'lucide-react-native';
+import { House, ListChecks, Settings2, Sprout, type LucideIcon } from 'lucide-react-native';
 import { isSignedIn, openSignIn } from '@/lib/auth/require-sign-in';
 import { radius, useTheme } from '@/theme';
 
@@ -47,7 +48,7 @@ function CenterTabIcon({ color, focused }: ITabIconProps) {
   );
 }
 
-/** «ورد اليوم» and «السجل» are for members: a guest's tap opens «تسجيل الدخول», then the tab (owner, 2026-11-01). */
+/** «ورد اليوم» and «عاداتي» are for members: a guest's tap opens «تسجيل الدخول», then the tab (owner, 2026-11-01). */
 const membersOnly = (next: string) => ({
   tabPress: (event: { preventDefault: () => void }) => {
     if (isSignedIn()) return;
@@ -93,7 +94,7 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="record"
-        options={{ title: t('tabs.record'), tabBarIcon: icon(ChartNoAxesColumn) }}
+        options={{ title: t('tabs.record'), tabBarIcon: icon(ListChecks) }}
         listeners={membersOnly('/(tabs)/record')}
       />
       <Tabs.Screen name="settings" options={{ title: t('tabs.settings'), tabBarIcon: icon(Settings2) }} />

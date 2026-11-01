@@ -22,7 +22,7 @@ import { useTranslation } from 'react-i18next';
 import { Sprout, X } from 'lucide-react-native';
 import { GUTTER, radius, space, useStyles, useTheme, type Theme } from '@/theme';
 import { IconButton } from './Button';
-import { PageDecor } from './Decor';
+import { PageDecor, type DecorKind } from './Decor';
 import { Icon } from './Icon';
 import { Text } from './Text';
 
@@ -59,11 +59,12 @@ const makeStyles = (t: Theme) => ({
   brandRow: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
-    justifyContent: 'space-between' as const,
-    paddingBottom: space.lg,
+    gap: space.md,
+    paddingBottom: space.md,
     borderBottomWidth: 1,
     borderBottomColor: t.colors.border,
   },
+  brandTrailing: { flexShrink: 1 },
 });
 
 export interface ScreenProps {
@@ -80,8 +81,8 @@ export interface ScreenProps {
   contentStyle?: StyleProp<ViewStyle>;
   /** A page with inputs: lifted above the keyboard so the field and the action under it stay visible. */
   keyboard?: boolean;
-  /** The website's page-edge arabesque, faint, behind the content (`PageDecor`). */
-  decor?: boolean;
+  /** The page's background art, faint, behind the content (`PageDecor`): `true` is the website's arabesque. */
+  decor?: boolean | DecorKind;
 }
 
 export function Screen({ keyboard, ...props }: ScreenProps) {
@@ -108,7 +109,7 @@ function ScreenFrame({ children, edges = ['top'], scroll = true, refreshing, onR
   const { colors } = useTheme();
   return (
     <SafeAreaView style={styles.safe} edges={edges}>
-      {decor ? <PageDecor /> : null}
+      {decor ? <PageDecor kind={decor === true ? 'arabesque' : decor} /> : null}
       {scroll ? (
         <ScrollView
           contentContainerStyle={[styles.scroll, contentStyle]}
@@ -207,19 +208,23 @@ export function useStackScreenOptions() {
   );
 }
 
-/** The site header's wordmark: «ذكرى» with the sprout. */
-export function BrandBar({ trailing }: { trailing?: React.ReactNode }) {
+/**
+ * The site header's wordmark: «ذكرى» with the sprout. `leading` (the menu button) comes first on the inline-start
+ * side; `trailing` (the tagline) sits right after the wordmark, not pushed to the far side.
+ */
+export function BrandBar({ leading, trailing }: { leading?: React.ReactNode; trailing?: React.ReactNode }) {
   const styles = useStyles(makeStyles);
   const { t } = useTranslation();
   return (
     <View style={styles.brandRow}>
+      {leading}
       <View style={styles.brand}>
-        <Icon icon={Sprout} size={24} tone="link" strokeWidth={1.3} />
-        <Text variant="display" style={{ fontSize: 30, lineHeight: 44 }} accessibilityRole="header">
+        <Icon icon={Sprout} size={22} tone="link" strokeWidth={1.3} />
+        <Text variant="display" style={{ fontSize: 26, lineHeight: 40 }} accessibilityRole="header">
           {t('app.name')}
         </Text>
       </View>
-      {trailing}
+      {trailing ? <View style={styles.brandTrailing}>{trailing}</View> : null}
     </View>
   );
 }

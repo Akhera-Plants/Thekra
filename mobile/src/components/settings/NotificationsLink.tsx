@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Bell } from 'lucide-react-native';
 import { ListRow } from '@/ui';
 
-const openSettings = () => router.push('/settings');
+const openSettings = () => router.push('/settings/notifications');
 
 export function NotificationsLink() {
   const { t } = useTranslation();

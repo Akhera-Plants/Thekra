@@ -61,7 +61,7 @@ export default function DailyTextScreen() {
         ))}
       </Section>
       <Section>
-        <ListRow title={t('myReminders.title')} chevron onPress={() => router.push('/practice/my-reminders')} />
+        <ListRow title={t('myReminders.title')} chevron onPress={() => router.push({ pathname: '/favorites', params: { part: 'mine' } })} />
       </Section>
     </Screen>
   );

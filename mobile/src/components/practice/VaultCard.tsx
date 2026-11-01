@@ -1,5 +1,7 @@
 /**
- * «احفظ البرنامج مشفّرًا في حسابك» (sync contract §1, §4), after the website's VaultPanel: one bordered box with a
+ * «الحفظ المشفّر» in Settings ← «الخصوصية والتشفير» (owner, 2026-11-01: one option for every «تخفَّف» program; the
+ * program screen only links here). «احفظ البرنامج مشفّرًا في حسابك» (sync contract §1, §4), after the website's
+ * VaultPanel: one bordered box with a
  * lock icon and a title. Set a «رمز الخصوصية» (long and hard to guess per practice-core `privacyCodeProblem`, typed twice, with the warning that it cannot be
  * recovered and nobody can read the program without it), unlock on another device, and the optional «تذكّر على
  * هذا الجهاز» (off by default; the key goes to expo-secure-store). Shown only when signed in; a guest sees
@@ -211,6 +213,16 @@ export function VaultCard({ userId, hasProgram }: VaultCardProps) {
         ) : (
           <Button label={t('vault.save')} onPress={() => setOpen(true)} variant="outline" />
         )}
+      </VaultBox>
+    );
+  }
+
+  if (status === 'none') {
+    return (
+      <VaultBox icon={KeyRound} title={t('vault.title')}>
+        <Text variant="small" tone="muted">
+          {t('vault.noProgram')}
+        </Text>
       </VaultBox>
     );
   }

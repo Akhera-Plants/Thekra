@@ -3,7 +3,15 @@
  */
 
 import { checkIn, isActiveProgram, startProgram, type SinProgram } from '@thekra/practice-core';
-import { notebookEntries, withProgramEnded, withProgramStarted } from '../lib/practice/sin-program-view';
+import {
+  categoryFromAnswer,
+  foldSearch,
+  notebookEntries,
+  programEntry,
+  sinChoices,
+  withProgramEnded,
+  withProgramStarted,
+} from '../lib/practice/sin-program-view';
 
 const NOW = '2026-10-29T10:00:00.000Z';
 const program = (sinSlug: string): SinProgram =>
@@ -45,5 +53,42 @@ describe('notebookEntries', () => {
       ['2026-10-26', 'held', 'first'],
     ]);
     expect(notebookEntries(p, '2026-10-28', 1).map((c) => c.date)).toEqual(['2026-10-28']);
+  });
+});
+
+describe('every sin can start «تخفَّف»', () => {
+  const written = { sin: 'ghibah', category: 'haqq_ibad' as const, gradualAllowed: false, help: true, actionsAr: ['أ'], evidence: ['q1'] };
+
+  it('uses the written program when there is one, whatever the answer', () => {
+    expect(programEntry([written], 'ghibah', null)).toMatchObject({ sin: 'ghibah', category: 'haqq_ibad', actionsAr: ['أ'], actionsEn: [] });
+  });
+
+  it('needs the category for a sin without a written program, then gives the common one', () => {
+    expect(programEntry([written], 'kadhib', null)).toBeNull();
+    expect(programEntry([written], 'kadhib', categoryFromAnswer(true))).toEqual({
+      sin: 'kadhib',
+      category: 'haqq_ibad',
+      gradualAllowed: false,
+      help: false,
+      actionsAr: [],
+      actionsEn: [],
+      alternatives: [],
+      evidence: [],
+    });
+    expect(categoryFromAnswer(false)).toBe('haqq_allah');
+  });
+
+  it('lists all sins not followed, written programs first, searchable without diacritics', () => {
+    const sins = [
+      { slug: 'kadhib', name: 'الكَذِب' },
+      { slug: 'ghibah', name: 'الغيبة' },
+      { slug: 'hasad', name: 'الحسد' },
+    ];
+    expect(sinChoices(sins, [written], new Set(['hasad'])).map((c) => [c.slug, Boolean(c.written)])).toEqual([
+      ['ghibah', true],
+      ['kadhib', false],
+    ]);
+    expect(sinChoices(sins, [written], new Set(), 'كذب').map((c) => c.slug)).toEqual(['kadhib']);
+    expect(foldSearch('الغِيبةُ')).toBe('الغيبه');
   });
 });

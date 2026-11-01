@@ -1,8 +1,9 @@
 /**
- * The sections of Settings after its account and appearance parts: a titled group of hairline rows
- * (`SettingsGroup`), «الخصوصية» (the sin-program lock, the encrypted backup, export, the sin-program wipe, the
- * offline copy), «التنبيهات» (every reminder switch and time, the only place for them), «نية اليوم والمحاسبة» and
- * «عن التطبيق».
+ * The contents of the Settings group screens (app/settings/*): a titled group of hairline rows (`SettingsGroup`),
+ * «الخصوصية والتشفير» (the sin-program lock, the encrypted saving of every «تخفَّف» program, export, the offline copy),
+ * «التنبيهات» (every reminder switch and time, the only place for them), «نية اليوم والمحاسبة», «اللغة والمظهر» and
+ * «عن التطبيق». No «delete all data» here (owner, 2026-11-01): «تخفَّف» keeps its own one-tap wipe, and the account
+ * deletion stays under «الحساب».
  */
 
 import React, { useCallback, useState } from 'react';
@@ -14,17 +15,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import Constants from 'expo-constants';
 import {
   BookOpen,
-  Check,
-  Clock,
   Database,
   Download,
   ExternalLink,
   FileText,
   HandHeart,
   Info,
-  KeyRound,
-  NotebookPen,
-  Trash2,
 } from 'lucide-react-native';
 import { setHeartPrefs, type HeartPrefs } from '@thekra/practice-core';
 import { TimeField } from '@/components/practice/editors';
@@ -32,35 +28,45 @@ import { exportAccountData } from '@/lib/api/practice';
 import { ensurePermission, scheduledReminderCount } from '@/lib/practice/notifications';
 import { usePracticeStore } from '@/lib/practice/practice-store';
 import { unlockWithDevice, useDeviceLockAvailable } from '@/lib/practice/use-sin-privacy';
-import { wipeSinProgramEverywhere } from '@/lib/practice/vault-runner';
 import { SITE_ABOUT_PATH, SITE_PRIVACY_PATH, sitePageUrl } from '@/lib/site';
 import { useAuthStore } from '@/lib/stores/auth-store';
-import { space, useStyles, useTheme, type Theme } from '@/theme';
-import { ErrorText, Icon, ListRow, Notice, SwitchRow, Text } from '@/ui';
+import { switchDirectionIfNeeded, type SupportedLocale } from '@/lib/i18n';
+import { setApiLocale } from '@/lib/api-client';
+import { space, useStyles, useTheme, useThemePreference, type Theme, type ThemePreference } from '@/theme';
+import { VaultCard, VaultSignInNote } from '@/components/practice/VaultCard';
+import { ErrorText, Icon, ListRow, Notice, SegmentTabs, SwitchRow, Text, type SegmentItem } from '@/ui';
 
 const QUERY_CACHE_KEY = 'thekra_query_cache';
+const LOCALE_STORAGE_KEY = 'thekra_locale';
+const THEME_OPTIONS: ThemePreference[] = ['system', 'light', 'dark'];
 
 const makeStyles = (t: Theme) => ({
   group: { gap: space.sm },
   head: { gap: 2 },
   list: { borderTopWidth: 1, borderTopColor: t.colors.border },
   switchRow: { paddingVertical: space.sm, borderBottomWidth: 1, borderBottomColor: t.colors.border },
+  choice: { gap: space.sm, paddingVertical: space.lg, borderBottomWidth: 1, borderBottomColor: t.colors.border },
 });
 
-export function SettingsGroup({ title, lead, children }: { title: string; lead?: string; children: React.ReactNode }) {
+/** A group of hairline rows; on a group's own screen the page title names it, so `title` is left out there. */
+export function SettingsGroup({ title, lead, children }: { title?: string; lead?: string; children: React.ReactNode }) {
   const styles = useStyles(makeStyles);
   return (
     <View style={styles.group}>
-      <View style={styles.head}>
-        <Text variant="eyebrow" accessibilityRole="header">
-          {title}
-        </Text>
-        {lead ? (
-          <Text variant="caption" tone="muted">
-            {lead}
-          </Text>
-        ) : null}
-      </View>
+      {title || lead ? (
+        <View style={styles.head}>
+          {title ? (
+            <Text variant="eyebrow" accessibilityRole="header">
+              {title}
+            </Text>
+          ) : null}
+          {lead ? (
+            <Text variant="caption" tone="muted">
+              {lead}
+            </Text>
+          ) : null}
+        </View>
+      ) : null}
       <View style={styles.list}>{children}</View>
     </View>
   );
@@ -74,11 +80,10 @@ export function PrivacySection() {
   const userId = useAuthStore((s) => s.user?.id ?? null);
   const lockOn = usePracticeStore((s) => s.prefs.sinLock);
   const setPrefs = usePracticeStore((s) => s.setPrefs);
-  const hasProgramData = usePracticeStore((s) => s.store.programs.length > 0);
+  const hasProgram = usePracticeStore((s) => s.store.programs.length > 0);
   const lockAvailable = useDeviceLockAvailable();
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState(false);
-  const [wiped, setWiped] = useState(false);
 
   // Switching the lock either way asks the device first, so no one else can turn it off.
   async function handleLockChange(on: boolean) {
@@ -99,20 +104,6 @@ export function PrivacySection() {
     }
   }
 
-  function handleWipe() {
-    Alert.alert(t('settings.wipeSin'), t('sinProgram.wipeHint'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('settings.wipeSinConfirm'),
-        style: 'destructive',
-        onPress: () => {
-          setWiped(true);
-          void wipeSinProgramEverywhere(userId);
-        },
-      },
-    ]);
-  }
-
   function handleClearCache() {
     Alert.alert(t('settings.clearCache'), t('settings.clearCacheConfirm'), [
       { text: t('common.cancel'), style: 'cancel' },
@@ -128,39 +119,36 @@ export function PrivacySection() {
   }
 
   return (
-    <SettingsGroup title={t('settings.privacy')}>
+    <>
       {lockAvailable || lockOn ? (
-        <View style={styles.switchRow}>
-          <SwitchRow
-            label={t('sinLock.switch')}
-            hint={t('sinLock.switchHint')}
-            value={lockOn}
-            onValueChange={(on) => void handleLockChange(on)}
+        <SettingsGroup title={t('sinProgram.title')}>
+          <View style={styles.switchRow}>
+            <SwitchRow
+              label={t('sinLock.switch')}
+              hint={t('sinLock.switchHint')}
+              value={lockOn}
+              onValueChange={(on) => void handleLockChange(on)}
+            />
+          </View>
+        </SettingsGroup>
+      ) : null}
+      {/* One encrypted saving for every «تخفَّف» program, managed here only. */}
+      {userId ? <VaultCard userId={userId} hasProgram={hasProgram} /> : <VaultSignInNote />}
+      <SettingsGroup>
+        {userId ? (
+          <ListRow
+            icon={Download}
+            title={t('settings.exportData')}
+            hint={t('settings.exportHint')}
+            chevron
+            onPress={exporting ? undefined : () => void handleExport()}
+            trailing={exporting ? <ActivityIndicator size="small" color={colors.primary} /> : undefined}
           />
-        </View>
-      ) : null}
-      <ListRow
-        icon={KeyRound}
-        title={t('vault.title')}
-        hint={t('settings.vaultHint')}
-        chevron
-        onPress={() => router.push('/practice/sin-program')}
-      />
-      {userId ? (
-        <ListRow
-          icon={Download}
-          title={t('settings.exportData')}
-          hint={t('settings.exportHint')}
-          chevron
-          onPress={exporting ? undefined : () => void handleExport()}
-          trailing={exporting ? <ActivityIndicator size="small" color={colors.primary} /> : undefined}
-        />
-      ) : null}
-      {exportError ? <ErrorText>{t('settings.exportFailed')}</ErrorText> : null}
-      {hasProgramData ? <ListRow icon={Trash2} title={t('settings.wipeSin')} destructive onPress={handleWipe} /> : null}
-      {wiped && !hasProgramData ? <Notice icon={Check}>{t('sinProgram.wiped')}</Notice> : null}
-      <ListRow icon={Database} title={t('settings.clearCache')} hint={t('settings.clearCacheHint')} chevron onPress={handleClearCache} />
-    </SettingsGroup>
+        ) : null}
+        {exportError ? <ErrorText>{t('settings.exportFailed')}</ErrorText> : null}
+        <ListRow icon={Database} title={t('settings.clearCache')} hint={t('settings.clearCacheHint')} chevron onPress={handleClearCache} />
+      </SettingsGroup>
+    </>
   );
 }
 
@@ -209,8 +197,7 @@ export function NotificationsSection() {
 
   return (
     <SettingsGroup
-      title={t('practice.notifyPrefs.title')}
-      lead={count === null ? t('practice.notifyPrefs.lead') : `${t('practice.notifyPrefs.lead')} ${t('settings.remindersCount', { count })}`}
+      lead={count === null ? undefined : t('settings.remindersCount', { count })}
     >
       {row(t('practice.notifyPrefs.habits'), 'habitReminders')}
       {row(
@@ -285,27 +272,52 @@ export function HeartSection() {
           onPress={() => router.push('/practice/pledges')}
         />
       ) : null}
-      <ListRow icon={NotebookPen} title={t('record.reviews')} hint={t('record.reviewsHint')} chevron onPress={() => router.push('/practice/reviews')} />
     </SettingsGroup>
   );
 }
 
-/** Phase 6: «نص اليوم» (the widget's source), «تذكيراتي» and «أوقات الصلاة» (prayer anchors). */
-export function ScreenSection() {
-  const { t } = useTranslation();
-  const mine = usePracticeStore((s) => s.prefs.myReminders.length);
-  const prayer = usePracticeStore((s) => s.prefs.prayer);
+/** Theme (device, light, dark) and language, each a segmented choice like the site's; «إظهار التاريخ الهجري»; «نص اليوم». */
+export function AppearanceSection() {
+  const { t, i18n } = useTranslation();
+  const styles = useStyles(makeStyles);
+  const themePref = useThemePreference((s) => s.pref);
+  const setThemePref = useThemePreference((s) => s.setPref);
+  const currentLocale: SupportedLocale = i18n.language === 'en' ? 'en' : 'ar';
+  const showHijri = usePracticeStore((s) => s.prefs.showHijri);
+  const setPrefs = usePracticeStore((s) => s.setPrefs);
+
+  const themeItems: SegmentItem<ThemePreference>[] = THEME_OPTIONS.map((key) => ({ key, label: t(`theme.${key}`) }));
+  const localeItems: SegmentItem<SupportedLocale>[] = [
+    { key: 'ar', label: t('settings.languageAr') },
+    { key: 'en', label: t('settings.languageEn') },
+  ];
+
+  async function changeLocale(locale: SupportedLocale) {
+    if (locale === currentLocale) return;
+    await AsyncStorage.setItem(LOCALE_STORAGE_KEY, locale);
+    // A direction change reloads the app now; the start-up reads the saved locale.
+    if (await switchDirectionIfNeeded(locale)) return;
+    await i18n.changeLanguage(locale);
+    setApiLocale(locale);
+  }
+
   return (
-    <SettingsGroup title={t('dailyText.group')} lead={t('dailyText.groupLead')}>
-      <ListRow icon={BookOpen} title={t('dailyText.title')} chevron onPress={() => router.push('/practice/daily-text')} />
-      <ListRow icon={NotebookPen} title={t('myReminders.title')} value={String(mine)} chevron onPress={() => router.push('/practice/my-reminders')} />
-      <ListRow
-        icon={Clock}
-        title={t('prayerTimes.title')}
-        value={prayer ? prayer.city : t('prayerTimes.notSet')}
-        chevron
-        onPress={() => router.push('/practice/prayer-times')}
+    <SettingsGroup>
+      <View style={styles.choice}>
+        <Text variant="label">{t('theme.title')}</Text>
+        <SegmentTabs items={themeItems} value={themePref} onChange={setThemePref} />
+      </View>
+      <View style={styles.choice}>
+        <Text variant="label">{t('settings.language')}</Text>
+        <SegmentTabs items={localeItems} value={currentLocale} onChange={(locale) => void changeLocale(locale)} />
+      </View>
+      <SwitchRow
+        label={t('settings.showHijri')}
+        value={showHijri}
+        onValueChange={(on) => setPrefs((p) => ({ ...p, showHijri: on }))}
       />
+      {/* The widget's «نص اليوم» source: part of how the app shows itself on the device. */}
+      <ListRow icon={BookOpen} title={t('dailyText.title')} chevron onPress={() => router.push('/practice/daily-text')} />
     </SettingsGroup>
   );
 }
@@ -318,7 +330,7 @@ export function AboutSection() {
   const external = <Icon icon={ExternalLink} size={18} tone="muted" />;
 
   return (
-    <SettingsGroup title={t('settings.about')}>
+    <SettingsGroup>
       <ListRow icon={BookOpen} title={t('settings.aboutThekra')} onPress={openSite(SITE_ABOUT_PATH)} trailing={external} />
       <ListRow icon={FileText} title={t('settings.privacyPolicy')} onPress={openSite(SITE_PRIVACY_PATH)} trailing={external} />
       <ListRow icon={Info} title={t('settings.version')} value={version} />

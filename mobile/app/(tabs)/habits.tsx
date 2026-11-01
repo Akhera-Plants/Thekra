@@ -10,7 +10,8 @@
  * 3. «أعمال دورية»: the next three periodic acts with their dates and «الكل»;
  * 4. «شعبة الأسبوع» (one branch of faith per ISO week). A tick shows «تقبّل الله منك» with a light haptic; a complete
  *    day shows «تمّ وردك اليوم» with one reward text; stories appear at their moments (by id only).
- * The month calendar, the habit management, «تخفَّف», «بستاني», «رفقة» and the saved texts live in «سجلّي».
+ * The month calendar and the habit management live in «عاداتي»; «تخفَّف», «رفقة» and the saved texts in the side menu.
+ * The app header (menu, wordmark, tagline) is first; the page's art is the growing stem (`decor="sprig"`).
  */
 
 import React, { useCallback, useMemo, useState } from 'react';
@@ -35,6 +36,7 @@ import {
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { upcomingPeriodic } from '@/lib/practice/wird';
 import { addDays, minimumMet } from '@thekra/practice-core';
+import { AppHeader } from '@/components/nav/AppHeader';
 import { AddSheet } from '@/components/practice/hub/AddSheet';
 import { ExcuseChip } from '@/components/practice/hub/ExcuseChip';
 import { HeartTop, MuraqabaLine, SelfMessageCard } from '@/components/practice/hub/HeartCards';
@@ -108,8 +110,9 @@ function Wird() {
   const usedMinimum = plans.some((plan) => minimumMet(plan, today));
 
   return (
-    <Screen scroll={false} contentStyle={styles.frame} decor>
+    <Screen scroll={false} contentStyle={styles.frame} decor="sprig">
       <ScrollView contentContainerStyle={styles.content}>
+        <AppHeader />
         <SelfMessageCard today={today} />
         <WirdHeader
           dateLabel={dateLine(today, names, hijriOffset, showHijri)}
@@ -185,7 +188,8 @@ function WirdSkeleton() {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   return (
-    <Screen decor>
+    <Screen decor="sprig">
+      <AppHeader />
       <View style={styles.skeletonHeader} accessibilityLabel={t('common.loading')}>
         <View style={styles.skeletonTop}>
           <Skeleton width="40%" height={30} />

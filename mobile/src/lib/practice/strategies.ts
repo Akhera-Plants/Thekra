@@ -16,7 +16,7 @@ export function strategyTarget(action: StrategyAction): StrategyTarget {
     case 'add':
       return { href: '/practice/add' };
     case 'habits':
-      return { href: '/practice/habits' };
+      return { href: '/record' };
     case 'wird':
       return { href: '/habits' };
     case 'record':
@@ -32,6 +32,6 @@ export function strategyTarget(action: StrategyAction): StrategyTarget {
     case 'pledges':
       return { href: '/practice/pledges', heart: { pledges: true } };
     case 'evening':
-      return { href: '/settings', heart: { eveningReview: true } };
+      return { href: '/settings/notifications', heart: { eveningReview: true } };
   }
 }

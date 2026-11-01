@@ -34,6 +34,7 @@ import { usePracticeCatalog, useSinProgramEvidence } from '@/lib/api/practice';
 import { useAyah } from '@/lib/api/quran';
 import { pick } from '@/lib/practice/catalog-types';
 import { momentSource, today, usePracticeStore } from '@/lib/practice/practice-store';
+import { programEntry } from '@/lib/practice/sin-program-view';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { space, useStyles } from '@/theme';
 import { Button, Chip, Notice, PageHeader, Screen, Section, Text } from '@/ui';
@@ -83,7 +84,8 @@ function WeakMomentContent() {
   const d = today();
   const program = useMemo(() => momentProgram(programs, source, d), [programs, source, d]);
   const sinPrograms = catalog.data?.sinPrograms;
-  const entry = program && sinPrograms ? sinPrograms.programs.find((e) => e.sin === program.sinSlug) : undefined;
+  // Every sin can run «تخفَّف»: a sin without a written program has the common entry (programEntry).
+  const entry = program && sinPrograms ? (programEntry(sinPrograms.programs, program.sinSlug, program.category) ?? undefined) : undefined;
   const common = sinPrograms?.common;
   const commonIds = common ? [...(common.afterFall.evidence ?? []), ...(common.stages.harms?.evidence ?? [])] : [];
   const texts = urgeTextIds(entry?.evidence, commonIds).flatMap((id) => evidence.data?.get(id) ?? []);

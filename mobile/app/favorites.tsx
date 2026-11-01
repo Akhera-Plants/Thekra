@@ -1,12 +1,13 @@
 /**
- * «المحفوظات» (favorites), a pushed screen opened from «سجلّي», after the website's favorites page: the title and lead, then the saved quote cards. A guest sees why
- * to sign in and the way to do it; an empty list points to where texts are found. Offline-capable: the list is
- * served from the cache when there is no connection (see `useFavorites`).
+ * «المحفوظات», opened from the side menu, in two parts (owner, 2026-11-01): «النصوص» (the saved quote cards, after the
+ * website's favorites page; offline-capable, served from the cache without a connection, see `useFavorites`) and
+ * «تذكيراتي» (the user's own lines, `MyRemindersPanel`; `?part=mine` opens it, as the old practice/my-reminders route
+ * does). A guest sees why to sign in and the way to do it; an empty list points to where texts are found.
  */
 
 import React, { memo, useCallback, useState } from 'react';
 import { FlatList, RefreshControl, View, type ListRenderItem } from 'react-native';
-import { router, Stack } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Bookmark, BookmarkPlus, WifiOff } from 'lucide-react-native';
 import { useFavorites, useToggleFavorite } from '@/lib/api/favorites';
@@ -14,7 +15,8 @@ import { useAuthStore } from '@/lib/stores/auth-store';
 import { QuoteCard } from '@/components/QuoteCard';
 import { GUTTER, space, useStyles, useTheme, type Theme } from '@/theme';
 import { useIsOffline } from '@/lib/query-client';
-import { EmptyState, ErrorState, Notice, PageHeader, QuoteCardSkeleton, Screen } from '@/ui';
+import { MyRemindersPanel } from '@/components/practice/MyRemindersPanel';
+import { EmptyState, ErrorState, Notice, PageHeader, QuoteCardSkeleton, Screen, SegmentTabs, type SegmentItem } from '@/ui';
 import type { QuoteDto } from '@/lib/types/api';
 
 const SKELETON_COUNT = 3;
@@ -40,14 +42,21 @@ function Gap() {
   return <View style={styles.gap} />;
 }
 
-function FavoritesHeader() {
+type Part = 'texts' | 'mine';
+
+function FavoritesHeader({ part, onPart }: { part: Part; onPart?: (part: Part) => void }) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const isOffline = useIsOffline();
+  const parts: SegmentItem<Part>[] = [
+    { key: 'texts', label: t('favorites.tabTexts') },
+    { key: 'mine', label: t('myReminders.title') },
+  ];
   return (
     <View style={styles.header}>
-      <PageHeader title={t('favorites.title')} lead={t('favorites.lead')} />
-      {isOffline ? <Notice icon={WifiOff}>{t('common.offlineBanner')}</Notice> : null}
+      <PageHeader title={t('favorites.title')} />
+      {onPart ? <SegmentTabs items={parts} value={part} onChange={onPart} /> : null}
+      {isOffline && part === 'texts' ? <Notice icon={WifiOff}>{t('common.offlineBanner')}</Notice> : null}
     </View>
   );
 }
@@ -57,6 +66,8 @@ export default function FavoritesScreen() {
   const styles = useStyles(makeStyles);
   const { colors } = useTheme();
   const user = useAuthStore((s) => s.user);
+  const params = useLocalSearchParams<{ part?: string }>();
+  const [part, setPart] = useState<Part>(params.part === 'mine' ? 'mine' : 'texts');
   const { data: favorites, isLoading, isError, refetch } = useFavorites();
   const [isPulling, setIsPulling] = useState(false);
 
@@ -73,7 +84,7 @@ export default function FavoritesScreen() {
     return (
       <Screen edges={['bottom']}>
         <Stack.Screen options={{ title: t('favorites.title') }} />
-        <FavoritesHeader />
+        <FavoritesHeader part="texts" />
         <EmptyState
           icon={BookmarkPlus}
           message={t('favorites.signInPrompt')}
@@ -81,6 +92,16 @@ export default function FavoritesScreen() {
           actionLabel={t('auth.loginButton')}
           onAction={() => router.push('/(auth)/login')}
         />
+      </Screen>
+    );
+  }
+
+  if (part === 'mine') {
+    return (
+      <Screen edges={['bottom']} keyboard>
+        <Stack.Screen options={{ title: t('favorites.title') }} />
+        <FavoritesHeader part={part} onPart={setPart} />
+        <MyRemindersPanel />
       </Screen>
     );
   }
@@ -110,7 +131,7 @@ export default function FavoritesScreen() {
         data={isError ? [] : (favorites ?? [])}
         keyExtractor={keyOf}
         renderItem={renderFavorite}
-        ListHeaderComponent={FavoritesHeader}
+        ListHeaderComponent={<FavoritesHeader part={part} onPart={setPart} />}
         ListEmptyComponent={empty}
         ItemSeparatorComponent={Gap}
         style={styles.fill}

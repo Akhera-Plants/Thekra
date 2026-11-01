@@ -6,8 +6,13 @@
  * The sin's name is never a title: the native header and the page title stay generic («ترك المعصية», see
  * practice/_layout.tsx), and the name shows only as plain text inside the page, never as a header element.
  *
- * Flow: choose a catalog program → the willpower question (only when the program's `gradualAllowed` is true
- * and it is a sin against the right of Allah: owner decision D1) → practice-core `startProgram`. Then (redesign phase 3):
+ * Flow (owner, 2026-11-01: every sin can start «تخفَّف»): choose any sin of the public list (searchable; those with a
+ * written program first) → for a sin without a written program, the one question «هل فيها حقٌّ لأحد من الناس؟» (yes →
+ * haqq_ibad, no → haqq_allah; the common five stages, path «cut»: practice-core `genericProgramEntry`) → for a written
+ * program, the willpower question (only when its `gradualAllowed` is true and it is a sin against the right of Allah:
+ * owner decision D1) → practice-core `startProgram`. The entry of a running program comes from `programEntry`
+ * (practice-core `programEntryFor`); parts it does not have (steps, alternatives, texts) are hidden, and «ما ورد فيها»
+ * leads to the sin's own page. Then (redesign phase 3):
  * «لحظة ضعف» (practice/moment), yesterday's «حدّ صغير لغد», the no-reset counters («ثبتّ X من 30», «منذ آخر توبة»), the
  * stages as a compact line with only the current one open and its one task for the week, practical steps, alternatives,
  * the daily check-in (held / weak / fell_repented, optional trigger chips after a weak day or a fall, private note),
@@ -23,8 +28,9 @@
  * Privacy: SinProgramGuard holds the page behind the optional device lock («قفل برنامج الترك بالبصمة», Settings),
  * covers it whenever the app leaves the foreground and blocks screenshots while it is open.
  *
- * Layout after the website's leave-sin page: the title, the privacy line (ShieldCheck), the vault box, then the
- * chooser or the program (stage, steps, check-in, texts), the reminders, and the wipe section last.
+ * Layout after the website's leave-sin page: the title, the privacy line (ShieldCheck), then the chooser or the
+ * program (stage, steps, check-in, texts), the reminders, a one-line link to the encrypted saving (Settings ←
+ * «الخصوصية والتشفير», which covers every program). No wipe button (owner, 2026-11-01): ending a program erases it.
  */
 
 import { NotificationsLink } from '@/components/settings/NotificationsLink';
@@ -34,7 +40,7 @@ import { LimitSheet } from '@/components/practice/LimitSheet';
 import { useLimits } from '@/lib/practice/use-habits-hub';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Check, Plus, ShieldCheck, Waves } from 'lucide-react-native';
+import { BookOpen, Check, KeyRound, Plus, ShieldCheck, Waves } from 'lucide-react-native';
 import {
   activePrograms,
   afterFall,
@@ -64,16 +70,22 @@ import { useSins } from '@/lib/api/sins';
 import { pick, pickList, type CatalogSinProgram, type StageContent } from '@/lib/practice/catalog-types';
 import { shortDate } from '@/lib/practice/format';
 import { pendingProgram, setMomentSource, setPendingProgram, today, usePracticeStore } from '@/lib/practice/practice-store';
-import { notebookEntries, withProgramEnded, withProgramStarted } from '@/lib/practice/sin-program-view';
+import {
+  categoryFromAnswer,
+  notebookEntries,
+  programEntry,
+  sinChoices,
+  withProgramEnded,
+  withProgramStarted,
+} from '@/lib/practice/sin-program-view';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
-import { useVaultState, wipeSinProgramEverywhere } from '@/lib/practice/vault-runner';
+import { useVaultState } from '@/lib/practice/vault-runner';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import type { QuoteDto } from '@/lib/types/api';
 import { EvidenceList } from '@/components/practice/EvidenceList';
 import { SinProgramGuard } from '@/components/practice/SinProgramGuard';
 import { FixItSheet, useLimitLabel } from '@/components/practice/sin/FixItSheet';
 import { TriggerChips } from '@/components/practice/sin/TriggerChips';
-import { VaultCard, VaultSignInNote } from '@/components/practice/VaultCard';
 import { radius, space, useStyles, type Theme } from '@/theme';
 import {
   Button,
@@ -81,6 +93,7 @@ import {
   ErrorState,
   Field,
   Icon,
+  ListRow,
   NextStep,
   Notice,
   PageHeader,
@@ -89,6 +102,7 @@ import {
   Section,
   Skeleton,
   Text,
+  TextLink,
 } from '@/ui';
 
 const CHECK_IN_KEYS: Record<CheckInValue, string> = {
@@ -137,7 +151,6 @@ const makeStyles = (t: Theme) => ({
   added: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 6 },
   noteRow: { gap: space.xs, paddingVertical: space.md, borderBottomWidth: 1, borderBottomColor: t.colors.border },
   end: { gap: space.md, paddingTop: space.lg, borderTopWidth: 1, borderTopColor: t.colors.border },
-  wipe: { gap: space.md, paddingTop: space['2xl'], borderTopWidth: 1, borderTopColor: t.colors.border },
 });
 
 /** The optional device lock and the app-switcher cover come first (SinProgramGuard). */
@@ -159,12 +172,10 @@ function SinProgramContent() {
   const catalog = usePracticeCatalog(locale);
   const evidence = useSinProgramEvidence(catalog.data, locale);
   const sins = useSins({ limit: 100 });
-  const hasProgramData = allPrograms.length > 0;
   const userId = useAuthStore((s) => s.user?.id ?? null);
   const vaultStatus = useVaultState((s) => s.status);
   // An end marker is kept only while an encrypted copy may exist (also while that is not known yet).
   const keepMarker = userId !== null && vaultStatus !== 'none';
-  const [wiped, setWiped] = useState(false);
   const [ended, setEnded] = useState(false);
   // «ابدأ برنامج الترك» on a sin page hands its choice over in memory (never the route); read once, then cleared.
   const [pendingSin] = useState(pendingProgram);
@@ -178,7 +189,7 @@ function SinProgramContent() {
   if (catalog.isError || !catalog.data) {
     return (
       <Screen edges={['bottom']}>
-        <PageHeader eyebrow={t('record.title')} title={t('sinProgram.title')} lead={t('sinProgram.lead')} />
+        <PageHeader title={t('sinProgram.title')} lead={t('sinProgram.lead')} />
         <ErrorState message={t('practice.catalogError')} onRetry={() => void catalog.refetch()} />
       </Screen>
     );
@@ -193,15 +204,15 @@ function SinProgramContent() {
 
   const entries = catalog.data.sinPrograms.programs;
   const following = new Set(programs.map((p) => p.sinSlug));
-  const preselected = pendingSin && !following.has(pendingSin) && entries.some((p) => p.sin === pendingSin) ? pendingSin : null;
+  const allSins = (sins.data ?? []).map((x) => ({ slug: x.slug, name: sinName(x.slug) }));
+  const preselected = pendingSin && !following.has(pendingSin) ? pendingSin : null;
   const canStart = programs.length === 0 || planLimits.canAdd('program');
   const showChooser = programs.length === 0 || (canStart && (choosing ?? preselected !== null));
-  const canAddAnother = entries.some((p) => !following.has(p.sin));
+  const canAddAnother = allSins.some((x) => !following.has(x.slug));
 
   function handleStarted() {
     setChoosing(false);
     setEnded(false);
-    setWiped(false);
   }
 
   function handleEnded() {
@@ -212,15 +223,14 @@ function SinProgramContent() {
   return (
     <KeyboardAvoidingView style={styles.flex} behavior="padding">
       <Screen edges={['bottom']} decor>
-        <PageHeader eyebrow={t('record.title')} title={t('sinProgram.title')} lead={t('sinProgram.lead')} />
+        <PageHeader title={t('sinProgram.title')} lead={t('sinProgram.lead')} />
         <Notice icon={ShieldCheck}>{t('sinProgram.privacy')}</Notice>
-        {wiped && programs.length === 0 ? <Notice icon={Check}>{t('sinProgram.wiped')}</Notice> : null}
         {ended ? <Notice icon={Check}>{t('sinProgram.end.done')}</Notice> : null}
-        {userId ? <VaultCard userId={userId} hasProgram={programs.length > 0} /> : <VaultSignInNote />}
         {showChooser ? (
           <ChooseProgram
-            programs={entries.filter((p) => !following.has(p.sin))}
-            sinName={sinName}
+            sins={allSins}
+            entries={entries}
+            following={following}
             preselected={preselected}
             onStarted={handleStarted}
             onCancel={programs.length > 0 ? () => setChoosing(false) : undefined}
@@ -242,7 +252,7 @@ function SinProgramContent() {
                 {index > 0 ? <Rule /> : null}
                 <ProgramView
                   program={program}
-                  entry={entries.find((p) => p.sin === program.sinSlug)}
+                  entry={programEntry(entries, program.sinSlug, program.category)}
                   sinName={sinName(program.sinSlug)}
                   evidenceById={evidence.data}
                   evidenceLoading={evidence.isLoading}
@@ -257,6 +267,9 @@ function SinProgramContent() {
             <NotificationsLink />
           </>
         ) : null}
+        {programs.length > 0 ? (
+          <ListRow icon={KeyRound} title={t('sinProgram.vaultLink')} chevron onPress={() => router.push('/settings/privacy')} />
+        ) : null}
         <LimitSheet
           kind="program"
           visible={choosing === true && !canStart}
@@ -264,7 +277,6 @@ function SinProgramContent() {
           onClose={() => setChoosing(false)}
           onFreed={() => setChoosing(false)}
         />
-        {hasProgramData ? <WipeSection userId={userId} onWiped={() => setWiped(true)} /> : null}
       </Screen>
     </KeyboardAvoidingView>
   );
@@ -276,7 +288,7 @@ function ProgramSkeleton() {
   const styles = useStyles(makeStyles);
   return (
     <Screen edges={['bottom']}>
-      <PageHeader eyebrow={t('record.title')} title={t('sinProgram.title')} lead={t('sinProgram.lead')} />
+      <PageHeader title={t('sinProgram.title')} lead={t('sinProgram.lead')} />
       <View style={styles.block} accessibilityLabel={t('common.loading')}>
         <Skeleton height={16} />
         <Skeleton width="80%" height={16} />
@@ -291,8 +303,10 @@ function ProgramSkeleton() {
 }
 
 interface ChooseProgramProps {
-  programs: CatalogSinProgram[];
-  sinName: (slug: string) => string;
+  /** Every public sin, with its shown name. */
+  sins: { slug: string; name: string }[];
+  entries: CatalogSinProgram[];
+  following: ReadonlySet<string>;
   /** The sin a sin page handed over, if any. */
   preselected: string | null;
   onStarted: () => void;
@@ -300,25 +314,49 @@ interface ChooseProgramProps {
   onCancel?: () => void;
 }
 
-/** The catalog programs not already followed; starting one runs it beside the others. */
-function ChooseProgram({ programs, sinName, preselected, onStarted, onCancel }: ChooseProgramProps) {
+/** How many sins the chooser shows before «المزيد» (the search finds the rest). */
+const CHOICES_SHOWN = 8;
+
+/**
+ * Any sin not already followed (search, written programs first); a sin without a written program asks the one
+ * category question; starting one runs it beside the others.
+ */
+function ChooseProgram({ sins, entries, following, preselected, onStarted, onCancel }: ChooseProgramProps) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const locale = useUiLocale();
   const catalog = usePracticeCatalog(locale);
   const setStore = usePracticeStore((s) => s.setStore);
-  const [selected, setSelected] = useState<CatalogSinProgram | null>(() => programs.find((p) => p.sin === preselected) ?? null);
+  const [query, setQuery] = useState('');
+  const [showAll, setShowAll] = useState(false);
+  const [selected, setSelected] = useState<string | null>(preselected);
+  const [othersRight, setOthersRight] = useState<boolean | null>(null);
   const [hard, setHard] = useState<boolean | null>(null);
 
+  const choices = useMemo(() => sinChoices(sins, entries, following, query), [sins, entries, following, query]);
+  const shown = showAll || query.trim() !== '' ? choices : choices.slice(0, CHOICES_SHOWN);
+  // The picked sin stays visible (and first) even when the search or the cap would hide it.
+  const pickedChoice = selected ? sinChoices(sins, entries, following).find((c) => c.slug === selected) ?? null : null;
+  const list = pickedChoice && !shown.some((c) => c.slug === selected) ? [pickedChoice, ...shown] : shown;
+
+  const written = pickedChoice?.written ?? null;
+  const category = written ? written.category : othersRight === null ? null : categoryFromAnswer(othersRight);
+  const entry = selected ? programEntry(entries, selected, category) : null;
   const common = catalog.data?.sinPrograms.common;
   // Owner decision D1: the gradual path is offered only where the catalog allows it (haqq_allah programs).
-  const asksWill = Boolean(selected?.gradualAllowed && selected.category === 'haqq_allah');
+  const asksWill = Boolean(entry?.gradualAllowed && entry.category === 'haqq_allah');
+
+  function choose(slug: string) {
+    setSelected(slug);
+    setOthersRight(null);
+    setHard(null);
+  }
 
   function handleStart() {
-    if (!selected) return;
+    if (!selected || !entry) return;
     const program = startProgram({
-      sinSlug: selected.sin,
-      category: selected.category,
+      sinSlug: selected,
+      category: entry.category,
       hardToLeaveAtOnce: asksWill && hard === true,
       startedOn: today(),
     });
@@ -328,29 +366,51 @@ function ChooseProgram({ programs, sinName, preselected, onStarted, onCancel }: 
 
   return (
     <Section title={t('sinProgram.choose')}>
+      <Field
+        label={t('sinProgram.searchSins')}
+        value={query}
+        onChangeText={setQuery}
+        autoCorrect={false}
+        autoCapitalize="none"
+        autoComplete="off"
+        importantForAutofill="no"
+        returnKeyType="search"
+      />
       <View style={styles.options} accessibilityRole="radiogroup">
-        {programs.map((p) => (
+        {list.map((c) => (
           <CheckRow
-            key={p.sin}
+            key={c.slug}
             radio
-            title={sinName(p.sin)}
-            hint={p.category === 'haqq_ibad' ? t('sinProgram.categoryIbad') : t('sinProgram.categoryAllah')}
-            checked={selected?.sin === p.sin}
-            onPress={() => {
-              setSelected(p);
-              setHard(null);
-            }}
+            title={c.name}
+            hint={c.written ? (c.written.category === 'haqq_ibad' ? t('sinProgram.categoryIbad') : t('sinProgram.categoryAllah')) : undefined}
+            checked={selected === c.slug}
+            onPress={() => choose(c.slug)}
           />
         ))}
+        {list.length === 0 ? (
+          <Text variant="small" tone="muted">
+            {t('sinProgram.noMatch')}
+          </Text>
+        ) : null}
       </View>
-      {selected && asksWill && common ? (
+      {!showAll && query.trim() === '' && choices.length > CHOICES_SHOWN ? (
+        <TextLink label={t('common.more')} onPress={() => setShowAll(true)} />
+      ) : null}
+      {selected && !written ? (
+        <View style={styles.options} accessibilityRole="radiogroup">
+          <Text variant="heading">{t('sinProgram.categoryQuestion')}</Text>
+          <CheckRow radio title={t('sinProgram.yes')} checked={othersRight === true} onPress={() => setOthersRight(true)} />
+          <CheckRow radio title={t('sinProgram.no')} checked={othersRight === false} onPress={() => setOthersRight(false)} />
+        </View>
+      ) : null}
+      {entry && asksWill && common ? (
         <View style={styles.options} accessibilityRole="radiogroup">
           <Text variant="heading">{pick(common, 'willQuestion', locale)}</Text>
           <CheckRow radio title={t('sinProgram.yesHard')} checked={hard === true} onPress={() => setHard(true)} />
           <CheckRow radio title={t('sinProgram.noCanLeave')} checked={hard === false} onPress={() => setHard(false)} />
         </View>
       ) : null}
-      {selected ? <Button label={t('sinProgram.start')} onPress={handleStart} disabled={asksWill && hard === null} arrow large /> : null}
+      {entry ? <Button label={t('sinProgram.start')} onPress={handleStart} disabled={asksWill && hard === null} arrow large /> : null}
       {onCancel ? <Button label={t('common.cancel')} onPress={onCancel} variant="outline" /> : null}
     </Section>
   );
@@ -398,7 +458,8 @@ function BulletList({ items }: { items: string[] }) {
 
 interface ProgramViewProps {
   program: SinProgram;
-  entry: CatalogSinProgram | undefined;
+  /** The written program, or the common one (never null: a running program knows its category). */
+  entry: CatalogSinProgram | null;
   sinName: string;
   evidenceById: Map<string, QuoteDto> | undefined;
   evidenceLoading: boolean;
@@ -557,7 +618,12 @@ function ProgramView({ program, entry, sinName, evidenceById, evidenceLoading, e
 
       <Notebook program={program} />
 
-      <EvidenceList ids={textIds} {...evidenceProps} title={t('sinProgram.textsTitle')} />
+      {/* «ما ورد فيها»: the program's texts (three at most here) and the rest on the sin's own page. */}
+      {textIds.length > 0 ? (
+        <EvidenceList ids={textIds} {...evidenceProps} title={t('sinProgram.textsTitle')} limit={3} moreHref={`/sins/${program.sinSlug}`} />
+      ) : (
+        <ListRow icon={BookOpen} title={t('sinProgram.textsTitle')} onPress={() => router.push(`/sins/${program.sinSlug}`)} />
+      )}
     </>
   );
 }
@@ -754,32 +820,3 @@ function EndProgram({ sinSlug, keepMarker, onEnded }: EndProgramProps) {
 
 
 
-interface WipeSectionProps {
-  userId: string | null;
-  onWiped: () => void;
-}
-
-/** «خروج آمن»: one tap erases everything at once (roadmap §4.2), no confirmation step in between. */
-function WipeSection({ userId, onWiped }: WipeSectionProps) {
-  const { t } = useTranslation();
-  const styles = useStyles(makeStyles);
-
-  function wipe() {
-    // The local store empties at once (this section unmounts with the program); the parent says it is done.
-    onWiped();
-    // Local programs and notes, the vault key (memory + keystore) and, signed in, the vault on the server.
-    void wipeSinProgramEverywhere(userId);
-  }
-
-  return (
-    <View style={styles.wipe}>
-      <Text variant="heading" accessibilityRole="header">
-        {t('sinProgram.wipe')}
-      </Text>
-      <Text variant="small" tone="muted">
-        {t('sinProgram.wipeHint')}
-      </Text>
-      <Button label={t('sinProgram.wipe')} onPress={wipe} variant="destructive" />
-    </View>
-  );
-}

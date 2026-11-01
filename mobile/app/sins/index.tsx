@@ -96,7 +96,7 @@ export default function SinPickerScreen() {
 
   const header = (
     <View style={styles.header}>
-      <PageHeader eyebrow={t('sinPicker.eyebrow')} title={t('sinPicker.title')} lead={t('sinPicker.lead')} />
+      <PageHeader eyebrow={t('sinPicker.eyebrow')} title={t('home.sinEntryLabel')} />
       {isOffline ? <Notice icon={WifiOff}>{t('common.offlineBanner')}</Notice> : null}
       <Field
         value={search}

@@ -144,6 +144,13 @@ export interface PathwayCardProps {
    * type); `row`: the compact door (`.pathway-faith` at phone width: icon, words, action in one line).
    */
   size?: PathwaySize;
+  /**
+   * Screen-fitted sizes for a `full` door (home's `doorLayout`): title size, padding and plant width. Without it the
+   * site's phone sizes apply.
+   */
+  layout?: { titleSize: number; titleLine: number; padding: number; flourish: number };
+  /** `row` only: the action as a bare arrow (small phones, so the words keep their room). */
+  arrowOnly?: boolean;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -152,13 +159,16 @@ export interface PathwayCardProps {
  * outlined action, with a line plant in the end corner (`Flourish`: the sprig on the filled door, the olive on the
  * sage one) drawn behind the words.
  */
-export function PathwayCard({ icon, label, title, body, action, onPress, primary, size = 'full', style }: PathwayCardProps) {
+export function PathwayCard({ icon, label, title, body, action, onPress, primary, size = 'full', layout, arrowOnly, style }: PathwayCardProps) {
   const styles = useStyles(makeStyles);
   const { colors } = useTheme();
   const ink = primary ? 'inverse' : 'default';
   const soft = primary ? 'inverse' : 'muted';
   const row = size === 'row';
-  const cta = (
+  const fitted = size === 'full' && layout ? { padding: layout.padding, paddingTop: layout.padding + space.xs } : null;
+  const cta = row && arrowOnly ? (
+    <ForwardArrow size={18} tone={primary ? 'inverse' : 'link'} />
+  ) : (
     <View style={[styles.pathwayCta, primary ? styles.pathwayCtaPrimary : styles.pathwayCtaQuiet, row && styles.pathwayCtaRow]}>
       <Text variant="caption" weight="medium" tone={primary ? 'inverse' : 'link'} numberOfLines={1}>
         {action}
@@ -177,6 +187,7 @@ export function PathwayCard({ icon, label, title, body, action, onPress, primary
         size === 'half' && styles.pathwayHalf,
         row && styles.pathwayRow,
         primary ? styles.pathwayPrimary : styles.pathwayQuiet,
+        fitted,
         pressed && styles.pathwayPressed,
         style,
       ]}
@@ -184,10 +195,10 @@ export function PathwayCard({ icon, label, title, body, action, onPress, primary
       {row ? null : primary ? (
         <Flourish
           kind="sprig"
-          width={size === 'half' ? 76 : 145}
+          width={size === 'half' ? 76 : (layout?.flourish ?? 145)}
           color={colors.pathwayFlourish}
           opacity={0.1}
-          style={size === 'half' ? styles.sprigHalf : styles.sprig}
+          style={size === 'half' ? styles.sprigHalf : layout ? { bottom: -Math.round(layout.flourish * 0.45), end: -18 } : styles.sprig}
         />
       ) : (
         <Flourish
@@ -221,7 +232,17 @@ export function PathwayCard({ icon, label, title, body, action, onPress, primary
               </Text>
             ) : null}
           </View>
-          <Text variant="title" tone={ink} style={size === 'half' ? styles.pathwayTitleHalf : styles.pathwayTitle}>
+          <Text
+            variant="title"
+            tone={ink}
+            style={
+              size === 'half'
+                ? styles.pathwayTitleHalf
+                : layout
+                  ? { fontSize: layout.titleSize, lineHeight: layout.titleLine }
+                  : styles.pathwayTitle
+            }
+          >
             {title}
           </Text>
           <Text variant={size === 'half' ? 'caption' : 'small'} tone={soft} style={[styles.pathwayBody, primary && styles.softInk]}>

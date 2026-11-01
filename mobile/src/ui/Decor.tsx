@@ -72,15 +72,50 @@ function EdgeArt({ style }: { style: StyleProp<ViewStyle> }) {
 }
 
 /**
- * The page-edge arabesque: half of the motif shows on the start edge near the top and, turned over, on the end edge
- * at the bottom. It fills its parent absolutely; render it first so the content draws over it.
+ * Which background a page gets (owner, 2026-11-01: «the art fits the page»), all in the same hand (one fine line in
+ * the decor colour at `decorOpacity`):
+ * - `arabesque`: the website's page-edge arabesque (home and the reading pages);
+ * - `sprig`: one large growing stem in the bottom end corner («ورد اليوم»: the day's growth);
+ * - `olive`: the olive branch on the start edge near the top («عاداتي»: what is kept up and lasts).
+ * Settings and forms take none.
  */
-export function PageDecor() {
+export type DecorKind = 'arabesque' | 'sprig' | 'olive';
+
+/** Large single-plant placements (drawn for Arabic, mirrored for English like `Flourish`). */
+const PLANT_ART: Record<'sprig' | 'olive', { d: string; w: number; h: number; width: number; place: ViewStyle }> = {
+  sprig: { d: SPRIG, w: 150, h: 160, width: 250, place: { bottom: -36, end: -54 } },
+  olive: { d: OLIVE, w: 112, h: 170, width: 170, place: { top: EDGE_TOP, start: -46 } },
+};
+
+function PlantArt({ kind }: { kind: 'sprig' | 'olive' }) {
+  const { colors, decorOpacity, rtl } = useTheme();
+  const art = PLANT_ART[kind];
+  const height = Math.round((art.width * art.h) / art.w);
+  return (
+    <View style={[{ position: 'absolute', width: art.width, height, transform: [{ scaleX: rtl ? 1 : -1 }] }, art.place]}>
+      <Svg width={art.width} height={height} viewBox={`0 0 ${art.w} ${art.h}`} fill="none">
+        <Path d={art.d} stroke={colors.decor} strokeOpacity={decorOpacity * 1.6} strokeWidth={0.9} strokeLinecap="round" strokeLinejoin="round" />
+      </Svg>
+    </View>
+  );
+}
+
+/**
+ * The page background art. `arabesque`: half of the motif shows on the start edge near the top and, turned over, on
+ * the end edge at the bottom. It fills its parent absolutely; render it first so the content draws over it.
+ */
+export function PageDecor({ kind = 'arabesque' }: { kind?: DecorKind }) {
   const styles = useStyles(makeStyles);
   return (
     <View style={[StyleSheet.absoluteFill, { overflow: 'hidden', pointerEvents: 'none' }]} {...hidden}>
-      <EdgeArt style={styles.edgeTop} />
-      <EdgeArt style={styles.edgeBottom} />
+      {kind === 'arabesque' ? (
+        <>
+          <EdgeArt style={styles.edgeTop} />
+          <EdgeArt style={styles.edgeBottom} />
+        </>
+      ) : (
+        <PlantArt kind={kind} />
+      )}
     </View>
   );
 }

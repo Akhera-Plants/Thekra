@@ -1,5 +1,5 @@
 /**
- * Stack for the practice screens: «عاداتي», add habit, plan, «فروضي وأدواري», «أعمال دورية», صلة الرحم, «تخفَّف», «لحظة ضعف»,
+ * Stack for the practice screens: «عاداتي» (now only a redirect to the «عاداتي» tab), add habit, plan, «فروضي وأدواري», «أعمال دورية», صلة الرحم, «تخفَّف», «لحظة ضعف»,
  * «مواسم الخير» (the occasions calendar), «التزام شخصي», «المحاسبة» (weekly reviews) and «استراتيجيات العادات».
  * The native header shows only Back; each screen shows its own title. The `title` options below name the
  * screens for accessibility and the Android task switcher; they stay generic on purpose (the sin-program screen
@@ -34,6 +34,7 @@ export default function PracticeLayout() {
       <Stack.Screen name="pledges" options={{ title: t('practice.notifyPrefs.pledges') }} />
       <Stack.Screen name="reviews" options={{ title: t('record.reviews') }} />
       <Stack.Screen name="strategies" options={{ title: t('practice.strategies.title') }} />
+      {/* A redirect to «المحفوظات» ← «تذكيراتي», kept for older links. */}
       <Stack.Screen name="my-reminders" options={{ title: t('myReminders.title') }} />
       <Stack.Screen name="prayer-times" options={{ title: t('prayerTimes.title') }} />
       <Stack.Screen name="daily-text" options={{ title: t('dailyText.title') }} />

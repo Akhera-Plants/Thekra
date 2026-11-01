@@ -22,25 +22,40 @@ Use a device/simulator with the API reachable (localhost works on iOS simulator;
 
 ## Screens
 
-Tabs: Home (الرئيسية) · Today's wird (ورد اليوم, centre) · My record (سجلّي) · Settings  
+Tabs: Home (الرئيسية) · Today's wird (ورد اليوم, centre) · My habits (عاداتي) · Settings (الإعدادات); the middle two for members  
+App header (every tab, `src/components/nav/AppHeader.tsx`): the menu button, «ذكرى» and the tagline right beside it. The menu
+opens the side menu (`SideMenu.tsx`, a core Modal + Animated drawer, no drawer package) from the inline-start side (right in
+Arabic, left in English) with the screens that are not tabs, in groups (`src/lib/nav/side-menu.ts`): «أعمالي» (أعمال دورية،
+تخفَّف، المحاسبة، استراتيجيات العادات), «مع الناس» (رفقة), «للقراءة» (المحفوظات، مواسم الخير). Members-only items open sign-in first.  
+Home: «أبواب الخير»: «أعنّي على فعل طاعة» (filled), «تخفَّف من معصية» (the sins list), «شُعَب الإيمان», then «مواسم الخير» and
+«استكشف النصوص»; door sizes per screen width in `src/lib/home/door-layout.ts` (two main doors side by side on tablets)  
 Today's wird: `(tabs)/habits` (ورد اليوم): the title, one date line (Gregorian; Hijri too with «إظهار التاريخ الهجري»),
 the streak chip (gold flame, practice-core `currentStreak`) and «أضف»; «اليوم» from practice-core `dayAgenda` (done rows
 sink to the bottom; habits not asked today behind one collapsed row; «يومي ثقيل» chip); «أعمال دورية» (next three, «الكل»)
 (pieces in `src/components/practice/hub/`, pure helpers in `src/lib/practice/wird.ts` and `hub.ts`; the
 periodic-act rules and the today grouping live in `@thekra/practice-core` `wird.ts`, shared with the website, hooks in
 `src/lib/practice/use-habits-hub.ts`)  
-My record: `(tabs)/record` (سجلّي): the streak and «أطول مداومة», the one month calendar (a tapped day opens its list),
-then «عاداتي», «أعمال دورية», «تخفَّف», «رفقة», «المحفوظات»  
-Seasons of good: `practice/calendar` (مواسم الخير, a door on the home screen): occasions month and the ICS feed  
+My habits: `(tabs)/record` (عاداتي; the route name kept for older links; `practice/habits` redirects here), two parts:
+«العادات» (each habit with its days this month, a tap opens `practice/plan/[id]` to edit or pause; راسخة، موقوفة مؤقتًا with
+«استأنف»; «أضف عادة»; Ramadan; «فروضي وأدواري») and «الإحصاء» (the streak and «أطول مداومة», the one month calendar, a tapped
+day's list, «حصيلتي»)  
+Settings: `(tabs)/settings` is a short list of groups (`src/lib/settings/groups.ts`), each its own screen in `app/settings/`:
+«الحساب» (sync, sign out, delete account), «التنبيهات والتذكير», «أوقات الصلاة» (`practice/prayer-times`), «الخصوصية والتشفير»
+(the «تخفَّف» lock and the encrypted saving of every «تخفَّف» program), «اللغة والمظهر» (theme, language, Hijri date, «نص اليوم»),
+«عن التطبيق». There is no «delete all data» action in Settings; «تخفَّف» keeps its own one-tap wipe  
+Page art: `Screen`'s `decor` picks the background per page (`arabesque` home, `sprig` ورد اليوم, `olive` عاداتي, none in Settings)  
+Seasons of good: `practice/calendar` (مواسم الخير, a door on the home screen and in the side menu): occasions month and the ICS feed  
 Garden: `garden` (بستاني): no entry point since the redesign (§1; screen and data kept): one plant per habit plan (+ صلة الرحم), grown by days tended, never
 shrinking, resting on «يومي ثقيل»; never a plant for the sin program (`src/lib/practice/garden.ts`, drawings in
 `src/components/garden/`)  
-Saved: `favorites` (المحفوظات, pushed from سجلّي)  
+Saved: `favorites` (المحفوظات, from the side menu) in two parts: «النصوص» and «تذكيراتي» (`?part=mine`; `practice/my-reminders`
+redirects there)  
 Browse: `browse` (استكشف النصوص), a pushed screen opened from Home  
-Core: `sins/[slug]`, `good-deeds/[slug]`, `quotes/[id]`, `feelings/[tagSlug]`  
-Practice (`app/practice/`): `habits` (عاداتي: plans, يومي ثقيل, Ramadan, reminders), `add` (أعِنّي على طاعة), `plan/[id]`,
-`periodic` (أعمال دورية: relatives and non-daily habits), `duties` (فروضي وأدواري), `kinship` (صلة الرحم; `?add=1` opens
-the form), `sin-program` (تخفَّف), `calendar` (occasions month grid and feed)  
+Core: `sins/[slug]` (every sin offers «ابدأ «تخفَّف»»), `good-deeds/[slug]`, `quotes/[id]`, `feelings/[tagSlug]`  
+Practice (`app/practice/`): `add` (أعِنّي على طاعة), `plan/[id]`, `periodic` (أعمال دورية: relatives and non-daily habits),
+`duties` (فروضي وأدواري), `kinship` (صلة الرحم; `?add=1` opens the form), `sin-program` (تخفَّف: any sin of the public list;
+a sin without a written program asks «هل فيها حقٌّ لأحد من الناس؟» and runs the common five stages, practice-core
+`programEntryFor` via `programEntry` in `src/lib/practice/sin-program-view.ts`), `calendar` (occasions month grid and feed)  
 Auth: `(auth)/login`, `(auth)/register`
 
 ## Practice features (roadmap docs/plan/2026-10-features-roadmap.md §2–§4, §6, §8; sync contract docs/plan/2026-10-practice-sync-contract.md)
@@ -56,7 +71,8 @@ Auth: `(auth)/login`, `(auth)/register`
 - Sin program («تخفَّف»): in clear only on the device; never in a sync body or a notification (title always
   «تذكرة من ذكرى»). Optional encrypted vault (`GET/PUT/DELETE /v1/me/sin-vault`): sealed on the device with a key
   derived from the user's «رمز الخصوصية» (PBKDF2-SHA256 210,000, AES-256-GCM); the key stays in memory, or in
-  expo-secure-store when «تذكّر على هذا الجهاز» is on. The wipe button deletes local data, the key and the vault.
+  expo-secure-store when «تذكّر على هذا الجهاز» is on. Managed in Settings ← «الخصوصية والتشفير» (one option for all
+  programs; the program screen links there). The program's own wipe button deletes local data, the key and the vault.
   `src/lib/crypto/install.ts` installs expo-crypto's `getRandomValues` on `globalThis.crypto` (Hermes has none).
 - Evidence for the sin programs is requested for **all** catalog programs at once, so the request reveals no choice.
 - Local notifications (`expo-notifications`, no push): permission asked when a reminder switch is turned on, or
@@ -79,7 +95,7 @@ Auth: `(auth)/login`, `(auth)/register`
 - **iOS widget: next step, not built.** It needs a WidgetKit extension target (Swift/SwiftUI), an App Group shared with
   the app for the snapshot, and a config plugin that adds the target at prebuild (e.g. Apple targets via a vetted
   first-party-documented plugin), then the same snapshot written to the App Group instead of AsyncStorage.
-- **«تذكيراتي»**: the user's own lines (≤ 120 characters, at most 20), on this device only (prefs).
+- **«تذكيراتي»**: the user's own lines (≤ 120 characters, at most 20), on this device only (prefs), in «المحفوظات».
 - **Prayer-time anchors**: «متى؟» offers «بعد الفجر»… first, then «وقت أختاره». «أوقات الصلاة» (city, country code,
   method by country, manual minutes) fetches 30 days from AlAdhan (`calendarByCity`) into the prefs on foreground when
   fewer than 7 days are left; offline or without a city the anchors use default times. Local reminders resolve anchors

@@ -2,7 +2,7 @@
   "tabs": {
     "home": "Home",
     "wird": "Today's wird",
-    "record": "Record",
+    "record": "My habits",
     "settings": "Settings",
     "browse": "Browse"
   },
@@ -15,9 +15,9 @@
     "goodDeedSubtitle": "Read what motivates and rewards",
     "continueReading": "Continue reading",
     "eyebrow": "A reminder for every step",
-    "entryTitle": "Which door of good will you choose?",
+    "entryTitle": "Gateways of good",
     "sinOverline": "A door of return",
-    "sinEntryLabel": "Help me leave a sin",
+    "sinEntryLabel": "Lighten: leave a sin",
     "sinEntryDescription": "A reminder that restrains you, and hope that helps you.",
     "sinCta": "Choose a topic",
     "deedOverline": "A step toward good",
@@ -25,7 +25,6 @@
     "deedEntryDescription": "Know its virtue, and take the first step.",
     "deedCta": "Choose a deed",
     "momentsHeading": "In moments like these",
-    "momentsLead": "From your day, to what helps you.",
     "momentAnger": "Before you reply in anger",
     "momentPrayer": "When prayer feels heavy",
     "momentBackbiting": "Before you spread talk about someone",
@@ -49,13 +48,11 @@
     "namesCta": "Explore the names"
   },
   "sinPicker": {
-    "title": "Sins",
     "searchPlaceholder": "What is weighing on you?",
     "recentLabel": "Recently used",
     "allLabel": "All sins",
     "empty": "No results",
-    "eyebrow": "A door of return",
-    "lead": "A reminder that restrains you, and hope that helps you."
+    "eyebrow": "A door of return"
   },
   "reminders": {
     "title": "Reminders",
@@ -147,7 +144,7 @@
     "empty": "No saved quotes yet",
     "emptyHint": "Tap the save icon on any quote to add it here",
     "signInPrompt": "Sign in to sync favorites across your devices",
-    "lead": "Texts you return to when you need them."
+    "tabTexts": "Texts"
   },
   "settings": {
     "title": "Settings",
@@ -163,7 +160,7 @@
     "syncOk": "Synced",
     "syncOffline": "No connection; we will try later",
     "syncError": "Sync failed",
-    "syncNote": "Your habits, kinship list and settings sync with your account. The \"Lighten\" program syncs only encrypted with your privacy code, if you choose so.",
+    "syncNote": "Your habits sync with your account; “Lighten” syncs only encrypted, if you choose.",
     "exportData": "Export my data",
     "exportFailed": "Could not export the data.",
     "deleteAccount": "Delete account",
@@ -174,16 +171,10 @@
     "deleteFailed": "Could not delete the account.",
     "wrongPassword": "Wrong password.",
     "syncLast": "last sync {{time}}",
-    "accountSync": "Account and sync",
     "signedIn": "Signed in on this device",
-    "appearance": "Appearance and language",
-    "privacy": "Privacy",
-    "vaultHint": "An encrypted copy of the program in your account, managed on the program page.",
+    "vaultHint": "An encrypted copy of your “Lighten” programs in your account.",
     "exportHint": "A copy of your account data as JSON.",
-    "wipeSin": "Delete the program data",
-    "wipeSinConfirm": "Delete",
     "clearCacheHint": "Texts saved for reading offline.",
-    "reminders": "Reminders",
     "remindersCount_one": "1 reminder scheduled on this device.",
     "remindersCount_other": "{{count}} reminders scheduled on this device.",
     "on": "On",
@@ -192,7 +183,13 @@
     "aboutThekra": "About Thekra and its method",
     "privacyPolicy": "Privacy policy",
     "signOutGroup": "Sign out",
-    "showHijri": "Show the Hijri date"
+    "showHijri": "Show the Hijri date",
+    "groups": {
+      "account": "Account",
+      "notifications": "Notifications and reminders",
+      "privacy": "Privacy and encryption",
+      "appearance": "Language and appearance"
+    }
   },
   "auth": {
     "loginTitle": "Sign in",
@@ -205,7 +202,7 @@
     "haveAccount": "Already have an account?",
     "register": "Register",
     "login": "Sign in",
-    "guestNote": "\"Today's wird\" and \"Record\" need an account: it keeps your habits and syncs them across your devices.",
+    "guestNote": "\"Today's wird\" and \"My habits\" need an account: it keeps your habits and syncs them across your devices.",
     "loginError": "Login failed. Check your credentials.",
     "registerError": "Registration failed. Please try again.",
     "name": "Name",
@@ -255,18 +252,13 @@
     "today": "Today",
     "noPlans": "No habits yet",
     "noPlansHint": "Start with one very small habit.",
-    "nothingDueToday": "No habit is asked for today.",
-    "notDueTitle": "Not asked for today",
-    "notDueHint": "Whatever you do still counts.",
     "addHabit": "Add a habit",
     "doneToday": "Done today",
     "logPlusOne": "+1",
     "logRest": "Done",
     "logAmountPlaceholder": "e.g. 3",
     "logAmountInvalid": "Enter a whole number above zero.",
-    "partialHint": "Any amount counts, even part of it. Make up what you missed the same day; it is never doubled tomorrow.",
     "heavyDay": "My day is heavy",
-    "heavyDayHint": "Today only: your habits drop to the minimum instead of stopping, and they are back tomorrow. Obligations come first.",
     "ramadan": "Ramadan mode",
     "ramadanHint": "Each habit goes up one step until {{date}}, then returns to what it was on its own. Returning is not falling short.",
     "ramadanHintNotRamadan": "It is not Ramadan now. You can start a 30-day season until {{date}}; your habits then return to what they were on their own.",
@@ -275,7 +267,6 @@
     "ramadanActive": "Season on until {{date}}",
     "ebbActive": "Heavy day: the minimum is asked",
     "seasonActive": "Season until {{date}}",
-    "tools": "Tools",
     "reminders": "Reminders",
     "remindersSwitch": "Remind me of my habits",
     "remindersHint": "Notifications on this device only, for the next 14 days.",
@@ -420,7 +411,6 @@
       "ok": "Your habits fit your time.",
       "notSet": "You have not set your free time yet."
     },
-    "lead": "Start very small, keep at it, and increase only once it is steady.",
     "dueNow": "Due now",
     "hub": {
       "add": "Add",
@@ -664,7 +654,6 @@
     },
     "notifyPrefs": {
       "title": "Notifications",
-      "lead": "All your notifications in one place: at most four a day, and nothing between 23:00 and 5:00 except the night prayer and times you set yourself.",
       "habits": "Habit reminders at their times (the second skips once done)",
       "periodic": "Periodic acts and ties of kinship",
       "evening": "Evening nudge while a habit is not done",
@@ -897,7 +886,7 @@
   },
   "sinProgram": {
     "title": "Lighten",
-    "privacy": "Everything on this page stays on your device and never appears in a notification. It leaves the device only encrypted with your code, if you choose to save it in your account.",
+    "privacy": "Stays on your device and never appears in a notification.",
     "choose": "Choose what you want to leave",
     "categoryAllah": "Against the right of Allah",
     "categoryIbad": "Against people's rights",
@@ -925,10 +914,7 @@
     "reminders": "Daily reminder",
     "remindersHint": "The notification title is always «تذكرة من ذكرى» and nothing from the program appears in it.",
     "time": "Reminder time",
-    "wipe": "Delete all program data",
-    "wipeHint": "Erases the program, your logs and your notes from this device, and from your account if it is saved there, at once. They cannot be recovered.",
-    "wiped": "Program data deleted from your device.",
-    "lead": "A staged program on your device: know the harm, build the alternative, change your surroundings, set limits, stay firm.",
+    "lead": "Five stages on your device, one step a week.",
     "unnamed": "Your program",
     "notebook": "My private notebook",
     "peopleRights": "This wrongs other people: there is no gradual path. It is left, or lightened with real effort, together with restoring rights, and the program helps you with that.",
@@ -1060,7 +1046,13 @@
       "note": "No counter goes back to zero: every day you held stays yours.",
       "hope": "A text of hope"
     },
-    "textsTitle": "What the texts say"
+    "textsTitle": "What the texts say",
+    "vaultLink": "Encrypted saving in Settings",
+    "categoryQuestion": "Does it involve a right of another person?",
+    "yes": "Yes",
+    "no": "No",
+    "searchSins": "Search for a sin",
+    "noMatch": "No results."
   },
   "calendar": {
     "title": "Seasons of good",
@@ -1122,7 +1114,8 @@
       "offline": "No connection.",
       "failed": "That did not work, try again."
     },
-    "warningTitle": "Important"
+    "warningTitle": "Important",
+    "noProgram": "Available once you start a “Lighten” program."
   },
   "app": {
     "name": "Thekra",
@@ -1331,20 +1324,17 @@
     "unlock": "Open"
   },
   "record": {
-    "title": "Record",
+    "title": "My habits",
     "current": "Current streak",
     "longest_one": "Longest streak: 1 day",
     "longest_other": "Longest streak: {{count}} days",
     "periodicCount_zero": "None yet",
     "periodicCount_one": "1 act",
     "periodicCount_other": "{{count}} acts",
-    "programHint": "A private program on your device",
-    "circlesHint": "Keep up with people you love",
-    "savedHint": "Texts you saved",
     "reviews": "Self-review",
-    "reviewsHint": "Your weekly reviews",
     "strategies": "Habit strategies",
-    "strategiesHint": "Ways that help you stay steady"
+    "tabHabits": "Habits",
+    "tabStats": "Statistics"
   },
   "topic": {
     "mizanTitle": "The scale",
@@ -1360,8 +1350,7 @@
   },
   "myReminders": {
     "title": "My reminders",
-    "lead": "Short lines you write for yourself; they can be the widget's daily text.",
-    "deviceOnly": "On my device only: they stay on this device and are sent nowhere.",
+    "lead": "Lines you write for yourself, on your device only.",
     "newLabel": "New line",
     "add": "Add",
     "remove": "Remove",
@@ -1399,8 +1388,6 @@
     "notSet": "Not set"
   },
   "dailyText": {
-    "group": "Screen and widget",
-    "groupLead": "What the home-screen widget shows.",
     "title": "Daily text",
     "lead": "One text a day on the home-screen widget, from the source you choose.",
     "seasons": "Seasons of good: today's date and the next occasion",
@@ -1443,5 +1430,13 @@
     "number": "Name {{number}}",
     "prev": "Previous",
     "next": "Next"
+  },
+  "menu": {
+    "open": "Menu",
+    "groups": {
+      "deeds": "My deeds",
+      "together": "With others",
+      "reading": "To read"
+    }
   }
 }
