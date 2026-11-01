@@ -167,3 +167,21 @@
 @media(min-width:651px){.mobile-menu{display:none}}
 /* «الأسماء الحسنى»: the fourth door, a full-width row under the three (redesign §4.7). */
 .pathways>.pathway-names{grid-column:1/-1;min-height:0}
+
+/* Home order (2026-11-01). Signed in or a device with habits: today's reminder and door on top, the user's buttons under
+   them. Guest: «أبواب الخير» first, then a quiet invitation to start a habit after the reading pair. Brand greens only. */
+.home-today{padding-top:36px;align-items:start}
+.home-today-main{display:flex;flex-direction:column;gap:16px;min-width:0}
+.home-today-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.home-start{display:flex;align-items:center;justify-content:space-between;gap:20px 32px;margin-top:26px;padding:22px 25px;border:1px solid var(--line);border-radius:12px;background:var(--sage)}
+.home-start-text h2{font-size:21px;font-weight:500;letter-spacing:-.3px;color:var(--green)}
+.home-start-text p{color:var(--muted-proto);font-size:14px;margin-top:4px;line-height:1.8}
+@media(max-width:650px){.home-today{padding-top:24px}.home-start{flex-direction:column;align-items:flex-start;padding:19px 17px;margin-top:19px}}
+/* «الأسماء الحسنى» spans the row under the three doors: one compact line (icon · title and line · action) like «مواسم الخير», not a tall empty card. */
+@media(min-width:651px){.pathways>.pathway-names{display:grid;grid-template-columns:40px 1fr auto;grid-template-rows:auto auto;gap:2px 16px;align-items:center;padding:18px 25px}
+.pathways>.pathway-names .pathway-top{display:contents}
+.pathways>.pathway-names .pathway-icon{grid-column:1;grid-row:1/3}
+.pathways>.pathway-names .pathway-overline{display:none}
+.pathways>.pathway-names .pathway-title{grid-column:2;grid-row:1;margin:0}
+.pathways>.pathway-names .pathway-description{grid-column:2;grid-row:2;margin:0}
+.pathways>.pathway-names .pathway-cta{grid-column:3;grid-row:1/3;margin:0;align-self:center}}

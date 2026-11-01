@@ -47,9 +47,11 @@ No person's name (lecturer, author) inside the product. «بستاني» is remo
 
 - Mobile tabs: الرئيسية · ورد اليوم · سجلّي · الإعدادات (done in be74a0f).
 - Web header: ورد اليوم · الأبواب · سجلّي (+ account menu; a real mobile menu). «التقويم» leaves the header.
-- Web home: verse hero (ق ٣٧) + one line; the three doors titled «المعاصي» «الطاعات» «شُعب الإيمان» under «أبواب الخير»;
-  a primary «ابدأ بغرسٍ صغير»; signed-in users with habits see a small «بقي عليك اليوم n · 🔥 N» card. Moments, featured
-  text, featured deed, reflection and sources strip stay.
+- Web home (revised 2026-11-01 by the owner): no verse hero; «لِمَن كَانَ لَهُۥ قَلْبٌ» stays the header tagline. The order
+  depends on the visitor. Guest: «أبواب الخير» first (المعاصي · الطاعات · شُعب الإيمان, then الأسماء الحسنى and مواسم الخير as
+  compact rows), moments, «تذكرة مختارة» and «باب من الخير», a quiet «ورد اليوم — ابدأ بغرسٍ صغير» band, reflection, sources.
+  Signed in or a device with habits: «تذكرة مختارة» first with «ورد اليوم» · «سجلّي» · «بقي عليك اليوم n · 🔥 N» under it
+  (or «ابدأ بغرسٍ صغير» without habits), «باب من الخير» beside it, then «أبواب الخير». Brand greens only on the doors.
 - مواسم الخير: one page inside أبواب الخير (occasions list/month + ICS subscribe); today's occasion shows in ورد اليوم.
 - Gregorian dates by default; Hijri shown only when the setting is on (both clients).
 

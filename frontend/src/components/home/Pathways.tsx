@@ -4,7 +4,7 @@ import { Link } from '@/i18n/navigation';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 
 /**
- * «أبواب الخير» (the header's «الأبواب» lands here, `#paths`): «المعاصي», «الطاعات», «شُعب الإيمان», the fourth door
+ * «أبواب الخير», the page's h1 (the header's «الأبواب» lands here, `#paths`): «المعاصي», «الطاعات», «شُعب الإيمان», the fourth door
  * «الأسماء الحسنى» (`/names`, redesign §4.7, a full-width row under the three), and the smaller «مواسم الخير» link.
  */
 export async function Pathways() {
@@ -20,9 +20,9 @@ export async function Pathways() {
             </span>{' '}
             {t('eyebrow')}
           </p>
-          <h2 id="entry-title" className="entry-title">
+          <h1 id="entry-title" className="entry-title">
             {t('entryTitle')}
-          </h2>
+          </h1>
         </div>
       </div>
 
@@ -106,7 +106,7 @@ export async function Pathways() {
         href="/calendar"
         className="group mt-4 flex min-h-14 items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-colors duration-150 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       >
-        <CalendarDays aria-hidden className="size-6 shrink-0 text-intent-good-deed" />
+        <CalendarDays aria-hidden className="size-6 shrink-0 text-primary" />
         <span className="flex min-w-0 flex-1 flex-col">
           <span className="text-lg font-medium">{t('seasonsTitle')}</span>
           <span className="text-sm leading-6 text-muted-foreground">{t('seasonsDescription')}</span>
