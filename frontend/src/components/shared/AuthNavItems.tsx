@@ -41,23 +41,24 @@ function GuestAuthLinks({
 }) {
   return (
     <div className="flex items-center gap-2.5">
+      {/* «تسجيل الدخول» is the primary action (owner, 2026-11-01); «إنشاء حساب» is the quiet one. */}
       <Button
         asChild
         variant="ghost"
         tone="neutral"
         size="sm"
-        className="auth-sign-in h-10 min-h-10 px-3 text-[15px] md:h-10 md:min-h-10"
+        className="auth-register h-10 min-h-10 px-3 text-[15px] md:h-10 md:min-h-10"
       >
-        <Link href="/login">{signIn}</Link>
+        <Link href="/register">{register}</Link>
       </Button>
       <Button
         asChild
         variant="solid"
         tone="primary"
         size="sm"
-        className="auth-register h-10 min-h-10 px-3.5 text-[15px] md:h-10 md:min-h-10"
+        className="auth-sign-in h-10 min-h-10 px-3.5 text-[15px] md:h-10 md:min-h-10"
       >
-        <Link href="/register">{register}</Link>
+        <Link href="/login">{signIn}</Link>
       </Button>
     </div>
   );

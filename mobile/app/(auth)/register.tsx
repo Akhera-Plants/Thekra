@@ -1,6 +1,6 @@
 /**
  * Register: optional account creation (mobile-plan §3), reached from the login screen. Same block as login:
- * the title, one quiet line, email and a new password (autofill offers a strong password and saves the pair),
+ * the title, one quiet line, the name (required, owner 2026-11-01), email and a new password (autofill offers a strong password and saves the pair),
  * one full-width action with the privacy policy (the site) under it, then the way back to sign in. Failures show inline, never the raw API text.
  */
 
@@ -27,21 +27,23 @@ export default function RegisterScreen() {
   const isLoading = useAuthStore((s) => s.isLoading);
   const clearError = useAuthStore((s) => s.clearError);
 
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [failure, setFailure] = useState<string | null>(null);
-  const canSubmit = email.trim().length > 0 && password.length > 0;
+  const canSubmit = name.trim().length > 0 && email.trim().length > 0 && password.length > 0;
 
   async function handleRegister() {
-    if (!email || !password) return;
+    if (!canSubmit) return;
     clearError();
     setFailure(null);
     try {
-      await register({ email, password });
+      await register({ email, password, displayName: name.trim() });
       router.back();
     } catch (e) {
       const offline = e instanceof ApiError && (e.status === 0 || e.code === 'NETWORK_ERROR');
-      setFailure(offline ? t('errors.network') : t('auth.registerError'));
+      const taken = e instanceof ApiError && e.code === 'EMAIL_ALREADY_REGISTERED';
+      setFailure(offline ? t('errors.network') : taken ? t('auth.emailTaken') : t('auth.registerError'));
     }
   }
 
@@ -49,6 +51,17 @@ export default function RegisterScreen() {
       <Screen edges={['bottom']} keyboard>
         <PageHeader title={t('auth.registerTitle')} lead={t('auth.guestNote')} />
         <View style={styles.form}>
+          <Field
+            label={t('auth.name')}
+            value={name}
+            onChangeText={(v) => {
+              setName(v);
+              setFailure(null);
+            }}
+            textContentType="name"
+            autoComplete="name"
+            maxLength={80}
+          />
           <Field
             label={t('auth.email')}
             value={email}

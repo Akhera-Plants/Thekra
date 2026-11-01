@@ -105,7 +105,7 @@ describe('practice-core client ↔ server compatibility (e2e)', () => {
 
   async function signUp(): Promise<Record<string, string>> {
     const email = `compat-${randomUUID()}@thekra.test`;
-    const res = await request(server()).post('/v1/auth/register').send({ email, password: 'password123456' }).expect(201);
+    const res = await request(server()).post('/v1/auth/register').send({ email, password: 'password123456', displayName: 'Test User' }).expect(201);
     return { Authorization: `Bearer ${res.body.data.accessToken}` };
   }
 

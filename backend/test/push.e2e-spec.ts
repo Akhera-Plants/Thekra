@@ -131,7 +131,7 @@ describe('Web push (e2e)', () => {
   async function register(): Promise<{ userId: string; auth: Record<string, string>; password: string }> {
     const email = `push-${Date.now()}-${Math.random().toString(36).slice(2)}@thekra.test`;
     const password = 'password123456';
-    const res = await request(server()).post('/v1/auth/register').send({ email, password }).expect(201);
+    const res = await request(server()).post('/v1/auth/register').send({ email, password, displayName: 'Test User' }).expect(201);
     return { userId: res.body.data.user.id, auth: { Authorization: `Bearer ${res.body.data.accessToken}` }, password };
   }
 

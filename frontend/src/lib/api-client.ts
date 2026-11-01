@@ -230,6 +230,19 @@ const SERVER_TIMEOUT_MS = 8000;
 const isBuildPhase = () => process.env.NEXT_PHASE === 'phase-production-build';
 const BUILD_TIMEOUT_MS = 30_000;
 const BUILD_ATTEMPTS = 3;
+/**
+ * The API allows 120 requests a minute per address (app.module.ts), and the build prerenders hundreds of pages from
+ * one address. A 429 during the build waits for the window (`Retry-After`) and tries again, so a page is never cached
+ * without its parts (2026-11-01: the home was built without «تذكرة مختارة» this way).
+ */
+const BUILD_THROTTLE_ATTEMPTS = 6;
+const BUILD_THROTTLE_MAX_WAIT_MS = 65_000;
+
+function retryAfterMs(response: Response, attempt: number): number {
+  const seconds = Number(response.headers.get('retry-after'));
+  const wait = Number.isFinite(seconds) && seconds > 0 ? seconds * 1000 : 15_000 * attempt;
+  return Math.min(wait + Math.random() * 1000, BUILD_THROTTLE_MAX_WAIT_MS);
+}
 /** Whole-catalogue reads that change on a publish, not per visitor or per hour. */
 const CATALOGUE_PATHS = new Set(['/sins', '/good-deeds', '/branches', '/names-of-allah', '/sources', '/topic-themes']);
 
@@ -259,7 +272,8 @@ async function serverGet<T>(
   const endpoint = `GET ${path}`;
   const url = buildServerUrl(path, config?.params as Record<string, unknown> | undefined);
   const root = path.split('/')[1] ?? '';
-  const attempts = isBuildPhase() ? BUILD_ATTEMPTS : 1;
+  const building = isBuildPhase();
+  const attempts = building ? BUILD_ATTEMPTS : 1;
   let response: Response | null = null;
   for (let attempt = 1; response === null; attempt += 1) {
     try {
@@ -269,8 +283,12 @@ async function serverGet<T>(
           revalidate: config?.revalidate ?? serverRevalidateFor(path),
           tags: ['api', `api:${root}`, ...(config?.tags ?? [])],
         },
-        signal: AbortSignal.timeout(isBuildPhase() ? BUILD_TIMEOUT_MS : SERVER_TIMEOUT_MS),
+        signal: AbortSignal.timeout(building ? BUILD_TIMEOUT_MS : SERVER_TIMEOUT_MS),
       });
+      if (attempted.status === 429 && building && attempt < BUILD_THROTTLE_ATTEMPTS) {
+        await new Promise((resolve) => setTimeout(resolve, retryAfterMs(attempted, attempt)));
+        continue;
+      }
       if (attempted.status >= 500 && attempt < attempts) {
         await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
         continue;

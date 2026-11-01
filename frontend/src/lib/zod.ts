@@ -11,3 +11,11 @@ import { z } from 'zod';
 z.config({ jitless: true });
 
 export { z };
+
+/**
+ * Form messages in the page's language (owner, 2026-11-01: no English error on an Arabic page). zod v4 ships both
+ * locales; forms that need a precise sentence pass their own message (the sign-in and sign-up forms do).
+ */
+export function setZodLocale(locale: 'ar' | 'en') {
+  z.config(locale === 'ar' ? z.locales.ar() : z.locales.en());
+}

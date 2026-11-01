@@ -187,7 +187,7 @@ describe('Practice, calendar and account endpoints (e2e)', () => {
   async function register(): Promise<{ email: string; password: string; userId: string; auth: Record<string, string>; refreshToken: string }> {
     const email = `practice-${Date.now()}-${Math.random().toString(36).slice(2)}@thekra.test`;
     const password = 'password123456';
-    const res = await request(server()).post('/v1/auth/register').send({ email, password }).expect(201);
+    const res = await request(server()).post('/v1/auth/register').send({ email, password, displayName: 'Test User' }).expect(201);
     return {
       email,
       password,
@@ -455,7 +455,7 @@ describe('Practice, calendar and account endpoints (e2e)', () => {
     const exported = await request(server()).get('/v1/auth/me/export').set(auth).expect(200);
     expect(exported.body.data).toMatchObject({
       exportedAt: expect.any(String),
-      user: { id: userId, email, displayName: null, createdAt: expect.any(String) },
+      user: { id: userId, email, displayName: 'Test User', createdAt: expect.any(String) },
       favorites: [{ quoteId: SEED_VERSE, createdAt: expect.any(String) }],
       practice: {
         settings: { hijriOffset: 0, reminderTimes: [] },

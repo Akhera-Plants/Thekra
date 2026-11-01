@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
+import { ZodLocale } from '@/components/shared/ZodLocale';
 import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server';
 import { Geist_Mono } from 'next/font/google';
 import { notFound } from 'next/navigation';
@@ -86,6 +87,7 @@ export default async function LocaleLayout({
         <NextIntlClientProvider messages={messages}>
           <AppProviders>
             <LocaleSync />
+            <ZodLocale locale={locale === 'en' ? 'en' : 'ar'} />
             <ServiceWorkerRegister />
             <NavigationProgress />
             <AppShell>{children}</AppShell>

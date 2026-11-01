@@ -77,7 +77,7 @@ function SignedInActions() {
 
   return (
     <nav className="home-actions" aria-label={t('actionsLabel')}>
-      <Link className="pathway pathway-return" href={hasPlans ? '/practice' : { pathname: '/practice', query: { add: '1' } }}>
+      <Link className="pathway pathway-primary" href={hasPlans ? '/practice' : { pathname: '/practice', query: { add: '1' } }}>
         <span className="pathway-top">
           <span className="pathway-icon">
             <CalendarCheck className="size-7" aria-hidden />
@@ -108,7 +108,7 @@ function SignedInActions() {
         </span>
       </Link>
 
-      <Link className="pathway pathway-good" href="/practice/record">
+      <Link className="pathway pathway-soft" href="/practice/record">
         <span className="pathway-top">
           <span className="pathway-icon">
             <NotebookText className="size-7" aria-hidden />

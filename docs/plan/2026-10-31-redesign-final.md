@@ -48,16 +48,20 @@ No person's name (lecturer, author) inside the product. «بستاني» is remo
 - Mobile tabs: الرئيسية · ورد اليوم · سجلّي · الإعدادات (done in be74a0f).
 - Web header: ورد اليوم · الأبواب · سجلّي (+ account menu; a real mobile menu). «التقويم» leaves the header.
 - Web home and flow (owner, 2026-11-01): no verse hero; «لِمَن كَانَ لَهُۥ قَلْبٌ» stays the header tagline. «أبواب الخير» is the
-  top of the page for guests, with the original names «أعنّي على ترك معصية» · «أعنّي على فعل طاعة» · «شُعَب الإيمان»; then
-  moments, «تذكرة مختارة» with «باب من الخير», reflection, sources. «مواسم الخير» and «الأسماء الحسنى» are not on the home
-  (the Names are hidden everywhere; pages answer with noindex).
+  top of the page for guests, in the owner's order «أعنّي على فعل طاعة» (the primary, dark card) · «أعنّي على ترك
+  معصية» · «شُعَب الإيمان» (with a branching-tree drawing); then moments, «تذكرة مختارة» with «باب من الخير», reflection,
+  sources. «مواسم الخير» and «الأسماء الحسنى» are not on the home (the Names are hidden everywhere and no longer
+  prerendered; pages answer with noindex).
 - Practice is for members: every `/practice/*` page sends a guest to «تسجيل الدخول» and back (`?next=`); the
-  `NEXT_PUBLIC_ACCOUNTS_ENABLED` switch is removed, accounts are always on. Header: guest «الأبواب» + «تسجيل الدخول» ·
-  «إنشاء حساب»; member «ورد اليوم» · «الأبواب» · «السجل» + account menu (sign-out). On the home a member sees «ورد اليوم»
+  `NEXT_PUBLIC_ACCOUNTS_ENABLED` switch is removed, accounts are always on. Header: a guest sees no links (the home is the
+  doors), «تسجيل الدخول» as the primary button and «إنشاء حساب» beside it; a member sees «ورد اليوم» · «السجل» + account
+  menu (sign-out). The name is required to sign up (web, app and API). Form messages follow the page's language. On the home a member sees «ورد اليوم»
   and «السجل» as two door-sized cards above the doors. «سجلّي» is renamed «السجل» (web and app).
 - Less text (owner rule): no date line on «ورد اليوم» or «مواسم الخير» (the calendar holds the date). «مواسم الخير»: one
   action «أضف مواسم الخير إلى تقويمك» (no subscribe link), one lead line on tying a season to a habit, and «اجعلها عادة»
   on each occasion that has a habit. English face: Source Sans 3.
+- Build: the API allows 120 requests a minute per address; a 429 during `next build` now waits for `Retry-After` and
+  retries (api-client.ts), so no page is cached without its parts (the home had lost «تذكرة مختارة» this way).
 - مواسم الخير: one page inside أبواب الخير (occasions list/month + ICS subscribe); today's occasion shows in ورد اليوم.
 - Gregorian dates by default; Hijri shown only when the setting is on (both clients).
 

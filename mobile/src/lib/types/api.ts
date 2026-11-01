@@ -465,6 +465,8 @@ export interface LoginDto {
 export interface RegisterDto {
   email: string;
   password: string;
+  /** Required (owner, 2026-11-01): every account has a name. */
+  displayName: string;
 }
 
 /**

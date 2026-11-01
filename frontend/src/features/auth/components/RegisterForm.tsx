@@ -18,16 +18,20 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { failureKey } from '@/lib/errors';
+import { ApiError } from '@/lib/types/api';
 import { useRegister } from '../hooks/useRegister';
 import { nextPathFromLocation } from '../next-path';
 
-const registerSchema = z.object({
-  name: z.string().min(1).max(100).optional().or(z.literal('')),
-  email: z.string().email(),
-  password: z.string().min(10, { message: 'كلمة المرور 10 أحرف على الأقل' }),
-});
+/** The name is required (owner, 2026-11-01). Every message comes from the page's language. */
+function registerSchema(t: (key: string) => string) {
+  return z.object({
+    name: z.string().trim().min(1, { error: t('nameRequired') }).max(80, { error: t('nameTooLong') }),
+    email: z.email({ error: t('emailInvalid') }),
+    password: z.string().min(10, { error: t('passwordMin') }).max(128, { error: t('passwordMax') }),
+  });
+}
 
-type RegisterFormValues = z.infer<typeof registerSchema>;
+type RegisterFormValues = z.infer<ReturnType<typeof registerSchema>>;
 
 export function RegisterForm() {
   const t = useTranslations('auth');
@@ -36,7 +40,7 @@ export function RegisterForm() {
   const { mutateAsync: register, isPending } = useRegister();
 
   const form = useForm<RegisterFormValues>({
-    resolver: zodResolver(registerSchema),
+    resolver: zodResolver(registerSchema(t)),
     defaultValues: { name: '', email: '', password: '' },
   });
 
@@ -45,17 +49,19 @@ export function RegisterForm() {
       await register({
         email: values.email,
         password: values.password,
-        name: values.name || undefined,
+        name: values.name,
       });
       toast.success(t('registerSuccess'));
       router.push(nextPathFromLocation());
     } catch (err) {
-      // Never the raw API text: connection-type failures get the shared localised message.
+      // Never the raw API text: a taken email says so; connection-type failures get the shared localised message.
       const kind = failureKey(err);
       toast.error(
-        kind === 'network' || kind === 'timeout' || kind === 'server' || kind === 'rateLimited'
-          ? tFeedback(`error.${kind}`)
-          : t('registerError'),
+        err instanceof ApiError && err.code === 'EMAIL_ALREADY_REGISTERED'
+          ? t('emailTaken')
+          : kind === 'network' || kind === 'timeout' || kind === 'server' || kind === 'rateLimited'
+            ? tFeedback(`error.${kind}`)
+            : t('registerError'),
       );
     }
   }
@@ -72,16 +78,12 @@ export function RegisterForm() {
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>
-                {t('name')}{' '}
-                <span className="text-muted-foreground text-xs">
-                  ({t('optional')})
-                </span>
-              </FormLabel>
+              <FormLabel>{t('name')}</FormLabel>
               <FormControl>
                 <Input
                   type="text"
                   autoComplete="name"
+                  required
                   placeholder={t('namePlaceholder')}
                   {...field}
                 />

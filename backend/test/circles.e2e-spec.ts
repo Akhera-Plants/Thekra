@@ -135,7 +135,7 @@ describe('Circles endpoints (e2e)', () => {
 
   it('deleting the account removes the memberships; a circle left empty is gone, its code no longer works', async () => {
     const email = 'e2e-circle-leaver@thekra.test';
-    await http().post('/v1/auth/register').send({ email, password: TEST_PASSWORD }).expect(201);
+    await http().post('/v1/auth/register').send({ email, password: TEST_PASSWORD, displayName: 'Test User' }).expect(201);
     const leaver = await authHeaders(app, email, TEST_PASSWORD);
     const created = await http().post('/v1/circles').set(leaver).send({ name: 'وحدي', displayName: 'م' }).expect(201);
     await http().patch(`/v1/circles/${created.body.data.id}/membership`).set(leaver).send({ sharesPresence: true }).expect(200);

@@ -207,7 +207,9 @@
     "login": "Sign in",
     "guestNote": "You can use the app without an account. Sign in and your favorites are saved, your habits stay in step with your account on all your devices, and you can save the \"Lighten\" program encrypted to open it on another device.",
     "loginError": "Login failed. Check your credentials.",
-    "registerError": "Registration failed. Please try again."
+    "registerError": "Registration failed. Please try again.",
+    "name": "Name",
+    "emailTaken": "This email already has an account. Sign in with it."
   },
   "grade": {
     "SAHIH": "Sahih",

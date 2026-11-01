@@ -5,21 +5,18 @@ import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { FormattedNumber } from '@/components/shared/FormattedNumber';
 import { QuoteCard } from '@/components/shared/quote';
 import { MizanBlock, NameWorshipLinks } from '@/features/topic/components/TopicTemplate';
-import { getNameOfAllah, getNamesOfAllah } from '@/lib/api/names';
+import { getNameOfAllah } from '@/lib/api/names';
 import { rethrowUnlessNotFound } from '@/lib/api/server-guard';
-import { reportFailure } from '@/lib/errors';
 import { localeAlternates } from '@/lib/seo';
 
 export const revalidate = 300;
 
-export async function generateStaticParams() {
-  try {
-    return (await getNamesOfAllah()).data.map((name) => ({ slug: name.slug }));
-  } catch (error) {
-    // A failing API at build time prerenders nothing rather than failing the build; pages render on first visit.
-    reportFailure('names generateStaticParams', error);
-    return [];
-  }
+/**
+ * Not prerendered while «الأسماء الحسنى» is hidden (owner, 2026-11-01): 77 names × 2 languages were most of the build's
+ * API calls. A page renders on its first visit; to prerender again, list the slugs from `getNamesOfAllah()`.
+ */
+export function generateStaticParams() {
+  return [];
 }
 
 export async function generateMetadata({ params }: PageProps<'/[locale]/names/[slug]'>): Promise<Metadata> {

@@ -21,12 +21,14 @@ import { failureKey } from '@/lib/errors';
 import { useLogin } from '../hooks/useLogin';
 import { nextPathFromLocation } from '../next-path';
 
-const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(1),
-});
+function loginSchema(t: (key: string) => string) {
+  return z.object({
+    email: z.email({ error: t('emailInvalid') }),
+    password: z.string().min(1, { error: t('passwordRequired') }),
+  });
+}
 
-type LoginFormValues = z.infer<typeof loginSchema>;
+type LoginFormValues = z.infer<ReturnType<typeof loginSchema>>;
 
 interface LoginFormProps {
   /** Where to go after a successful sign-in. Defaults to home. */
@@ -40,7 +42,7 @@ export function LoginForm({ redirectTo = '/' }: LoginFormProps) {
   const { mutateAsync: login, isPending } = useLogin();
 
   const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
+    resolver: zodResolver(loginSchema(t)),
     defaultValues: { email: '', password: '' },
   });
 

@@ -63,7 +63,7 @@ describe('Auth endpoints (e2e)', () => {
     it('normalises email to lowercase', async () => {
       const res = await request(app.getHttpServer())
         .post('/v1/auth/register')
-        .send({ email: 'UPPERCASE@EXAMPLE.COM', password: 'securepassword123' })
+        .send({ email: 'UPPERCASE@EXAMPLE.COM', password: 'securepassword123', displayName: 'Test User' })
         .expect(201);
       expect(res.body.data.user.email).toBe('uppercase@example.com');
     });
@@ -72,13 +72,13 @@ describe('Auth endpoints (e2e)', () => {
       // Register once
       await request(app.getHttpServer())
         .post('/v1/auth/register')
-        .send({ email: 'duplicate@example.com', password: 'securepassword123' })
+        .send({ email: 'duplicate@example.com', password: 'securepassword123', displayName: 'Test User' })
         .expect(201);
 
       // Register again
       const res = await request(app.getHttpServer())
         .post('/v1/auth/register')
-        .send({ email: 'duplicate@example.com', password: 'securepassword123' })
+        .send({ email: 'duplicate@example.com', password: 'securepassword123', displayName: 'Test User' })
         .expect(409);
 
       expect(res.body.error.code).toBe('EMAIL_ALREADY_REGISTERED');
@@ -87,9 +87,19 @@ describe('Auth endpoints (e2e)', () => {
     it('400 VALIDATION_FAILED when password too short', async () => {
       const res = await request(app.getHttpServer())
         .post('/v1/auth/register')
-        .send({ email: 'short@example.com', password: 'short' })
+        .send({ email: 'short@example.com', password: 'short', displayName: 'Test User' })
         .expect(400);
       expect(res.body.error.code).toBe('VALIDATION_FAILED');
+    });
+
+    it('400 VALIDATION_FAILED when the name is missing or blank (the name is required)', async () => {
+      for (const body of [
+        { email: 'noname@example.com', password: 'securepassword123' },
+        { email: 'noname@example.com', password: 'securepassword123', displayName: '   ' },
+      ]) {
+        const res = await request(app.getHttpServer()).post('/v1/auth/register').send(body).expect(400);
+        expect(res.body.error.code).toBe('VALIDATION_FAILED');
+      }
     });
 
     it('400 VALIDATION_FAILED when email missing', async () => {

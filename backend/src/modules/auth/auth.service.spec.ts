@@ -75,6 +75,7 @@ describe('AuthService', () => {
       const result = await svc.register({
         email: 'new@example.com',
         password: 'password123456',
+        displayName: 'Test User',
       });
 
       expect(result.accessToken).toBe('signed-token');
@@ -89,7 +90,7 @@ describe('AuthService', () => {
       vi.mocked(users.findByEmail).mockResolvedValue(null);
       vi.mocked(users.create).mockResolvedValue({ ...mockUser, email: 'lower@example.com' });
 
-      await svc.register({ email: 'UPPER@EXAMPLE.COM', password: 'password123456' });
+      await svc.register({ email: 'UPPER@EXAMPLE.COM', password: 'password123456', displayName: 'Test User' });
 
       expect(users.findByEmail).toHaveBeenCalledWith('upper@example.com');
     });
@@ -98,7 +99,7 @@ describe('AuthService', () => {
       vi.mocked(users.findByEmail).mockResolvedValue(mockUser);
 
       await expect(
-        svc.register({ email: 'test@example.com', password: 'password123456' }),
+        svc.register({ email: 'test@example.com', password: 'password123456', displayName: 'Test User' }),
       ).rejects.toBeInstanceOf(ConflictException);
     });
   });

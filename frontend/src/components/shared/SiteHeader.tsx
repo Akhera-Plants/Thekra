@@ -9,25 +9,19 @@ import { ThemeToggle } from './ThemeToggle';
 import { AuthNavItems } from './AuthNavItems';
 import { useSession } from '@/features/auth/hooks/useSession';
 
-/** The doors of «أبواب الخير»: «الأبواب» is the current place on their pages. */
-const GATEWAY_PATHS = ['/sins', '/good-deeds', '/branches', '/names', '/calendar'] as const;
-
 const noSubscribe = () => () => {};
 
 /**
- * The places of the site. A guest sees «الأبواب» (and «تسجيل الدخول» beside it); a signed-in member sees «ورد اليوم» ·
- * «الأبواب» · «السجل» (practice is for members, owner 2026-11-01). Guest links until the session is known.
+ * The member's places: «ورد اليوم» · «السجل» (practice is for members, owner 2026-11-01). A guest has none: the home is
+ * «أبواب الخير» itself (the logo), and «تسجيل الدخول» is the header's action. Empty until the session is known.
  */
-function usePrimaryLinks() {
+function useMemberLinks() {
   const pathname = usePathname();
   const tNav = useTranslations('nav');
   const { isAuthenticated, isLoading } = useSession();
   const mounted = useSyncExternalStore(noSubscribe, () => true, () => false);
-  const member = mounted && !isLoading && isAuthenticated;
+  if (!mounted || isLoading || !isAuthenticated) return [];
   const recordCurrent = pathname === '/practice/record';
-  const gatewayCurrent = GATEWAY_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
-  const gateways = { key: 'gateways', href: '/#paths', label: tNav('gateways'), current: gatewayCurrent };
-  if (!member) return [gateways];
   return [
     {
       key: 'wird',
@@ -35,13 +29,12 @@ function usePrimaryLinks() {
       label: tNav('practice'),
       current: !recordCurrent && (pathname === '/practice' || pathname.startsWith('/practice/')),
     },
-    gateways,
     { key: 'record', href: '/practice/record', label: tNav('record'), current: recordCurrent },
   ];
 }
 
 /**
- * Public site header (thekra-source chrome): the places (see {@link usePrimaryLinks}), then language, theme and the account
+ * Public site header (thekra-source chrome): the member's places (see {@link useMemberLinks}), then language, theme and the account
  * menu. At phone width the links fold into «القائمة», a disclosure button with the same links.
  */
 export function SiteHeader() {
@@ -50,7 +43,7 @@ export function SiteHeader() {
   const tNav = useTranslations('nav');
   const tTheme = useTranslations('theme');
   const tLocale = useTranslations('localeSwitcher');
-  const links = usePrimaryLinks();
+  const links = useMemberLinks();
   const menuId = useId();
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPath, setMenuPath] = useState(pathname);
@@ -96,7 +89,7 @@ export function SiteHeader() {
             {link.label}
           </Link>
         ))}
-        <span className="nav-divider" aria-hidden />
+        {links.length > 0 ? <span className="nav-divider" aria-hidden /> : null}
         <LocaleSwitcher label={tLocale('label')} className="nav-link" />
         <ThemeToggle
           labels={{
@@ -108,16 +101,18 @@ export function SiteHeader() {
         <div className="header-auth ms-1 flex items-center gap-1">
           <AuthNavItems />
         </div>
-        <button
-          type="button"
-          className="nav-link menu-toggle"
-          aria-expanded={menuOpen}
-          aria-controls={menuId}
-          onClick={() => setMenuOpen((open) => !open)}
-        >
-          {menuOpen ? <X className="size-5" aria-hidden /> : <Menu className="size-5" aria-hidden />}
-          <span className="menu-toggle-label">{tNav('menu')}</span>
-        </button>
+        {links.length > 0 ? (
+          <button
+            type="button"
+            className="nav-link menu-toggle"
+            aria-expanded={menuOpen}
+            aria-controls={menuId}
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            {menuOpen ? <X className="size-5" aria-hidden /> : <Menu className="size-5" aria-hidden />}
+            <span className="menu-toggle-label">{tNav('menu')}</span>
+          </button>
+        ) : null}
       </nav>
 
       <div id={menuId} className="mobile-menu" hidden={!menuOpen}>
