@@ -142,10 +142,11 @@ describe('practice catalog — the real reviewer files', () => {
     expect(Object.keys(stories).sort()).toEqual(['fasila', 'ghusn-shawk', 'marad-safar', 'qatil-al-mia']);
   });
 
-  it('programForSin exposes only availability and category', () => {
+  it('programForSin: written programs keep their category, every other sin is available with none', () => {
     expect(programForSin('ghibah')).toEqual({ available: true, category: 'haqq_ibad' });
     expect(programForSin('waqt-tawasul')).toEqual({ available: true, category: 'haqq_allah' });
-    expect(programForSin('shirk')).toEqual({ available: false, category: null });
+    // Every sin can start the common program (owner, 2026-11-01); without a written one the visitor picks the category.
+    expect(programForSin('shirk')).toEqual({ available: true, category: null });
   });
 });
 

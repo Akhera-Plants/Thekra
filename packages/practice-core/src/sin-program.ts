@@ -398,3 +398,36 @@ export function afterFall(_program: SinProgram): 'fixit' {
   return 'fixit';
 }
 
+
+/** A program entry as the catalog sends it (backend sin-programs.yaml, one per sin with a written program). */
+export interface SinProgramEntryShape {
+  sin: string;
+  category: SinCategory;
+  gradualAllowed: boolean;
+  help: boolean;
+  gradualStepsAr?: string[];
+  gradualStepsEn?: string[];
+  actionsAr: string[];
+  actionsEn: string[];
+  alternatives: string[];
+  evidence: string[];
+}
+
+/**
+ * «تخفَّف من معصية» for a sin without a written program (owner, 2026-11-01): the common five stages only. The category
+ * comes from the visitor («هل فيها حقٌّ لأحد من الناس؟»); the path is always «cut» (no gradual steps were written, and a
+ * right of others is never gradual). The stage texts are the common ones; «ما ورد فيها» is the sin's own page.
+ * Pending the sheikh's review, like the written programs.
+ */
+export function genericProgramEntry(sin: string, category: SinCategory): SinProgramEntryShape {
+  return { sin, category, gradualAllowed: false, help: false, actionsAr: [], actionsEn: [], alternatives: [], evidence: [] };
+}
+
+/** The written program for `sin`, else the common one when the category is known, else null (ask for it first). */
+export function programEntryFor<E extends SinProgramEntryShape>(
+  entries: readonly E[],
+  sin: string,
+  category: SinCategory | null,
+): E | SinProgramEntryShape | null {
+  return entries.find((entry) => entry.sin === sin) ?? (category ? genericProgramEntry(sin, category) : null);
+}

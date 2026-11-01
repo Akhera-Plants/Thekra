@@ -455,7 +455,12 @@ export function scheduleForDeed(slug: string): { habits: Habit[]; occasions: Occ
 }
 
 /** Whether a sin has a leaving program, and its category. Nothing else about the program is exposed here. */
+/**
+ * «تخفَّف من معصية» (owner, 2026-11-01): every sin can start a program. A sin with a written program keeps its category
+ * and details; any other sin starts the common five stages, and `category: null` means the visitor answers «هل فيها حقٌّ
+ * لأحد من الناس؟» when choosing (practice-core `genericProgramEntry`). Callers pass AVOID topics only.
+ */
 export function programForSin(slug: string): { available: boolean; category: SinCategory | null } {
   const program = practiceCatalog().sinPrograms.programs.find((entry) => entry.sin === slug);
-  return program ? { available: true, category: program.category } : { available: false, category: null };
+  return { available: true, category: program ? program.category : null };
 }
