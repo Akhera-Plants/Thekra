@@ -47,7 +47,7 @@ export function VaultPanel({ programs }: VaultPanelProps) {
   const t = useTranslations('leaveSin.vault');
   const hrefs = useSignInHrefs();
   const queryClient = useQueryClient();
-  const { accounts, userId, sessionLoading, vault, session } = useSinVault();
+  const { userId, sessionLoading, vault, session } = useSinVault();
   const [offering, setOffering] = useState(false);
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'error' | 'reopen'>('idle');
   const fingerprint = programsFingerprint(programs);
@@ -84,7 +84,7 @@ export function VaultPanel({ programs }: VaultPanelProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fingerprint, session, userId]);
 
-  if (!accounts || sessionLoading) return null;
+  if (sessionLoading) return null;
 
   if (!userId) {
     return (

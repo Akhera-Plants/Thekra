@@ -1,22 +1,33 @@
 'use client';
 
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useState, useSyncExternalStore } from 'react';
 import { Menu, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Link, usePathname } from '@/i18n/navigation';
 import { LocaleSwitcher } from './LocaleSwitcher';
 import { ThemeToggle } from './ThemeToggle';
 import { AuthNavItems } from './AuthNavItems';
+import { useSession } from '@/features/auth/hooks/useSession';
 
 /** The doors of «أبواب الخير»: «الأبواب» is the current place on their pages. */
 const GATEWAY_PATHS = ['/sins', '/good-deeds', '/branches', '/names', '/calendar'] as const;
 
-/** The three places of the site: «ورد اليوم» · «الأبواب» (the home doors) · «سجلّي». */
+const noSubscribe = () => () => {};
+
+/**
+ * The places of the site. A guest sees «الأبواب» (and «تسجيل الدخول» beside it); a signed-in member sees «ورد اليوم» ·
+ * «الأبواب» · «السجل» (practice is for members, owner 2026-11-01). Guest links until the session is known.
+ */
 function usePrimaryLinks() {
   const pathname = usePathname();
   const tNav = useTranslations('nav');
+  const { isAuthenticated, isLoading } = useSession();
+  const mounted = useSyncExternalStore(noSubscribe, () => true, () => false);
+  const member = mounted && !isLoading && isAuthenticated;
   const recordCurrent = pathname === '/practice/record';
   const gatewayCurrent = GATEWAY_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+  const gateways = { key: 'gateways', href: '/#paths', label: tNav('gateways'), current: gatewayCurrent };
+  if (!member) return [gateways];
   return [
     {
       key: 'wird',
@@ -24,14 +35,14 @@ function usePrimaryLinks() {
       label: tNav('practice'),
       current: !recordCurrent && (pathname === '/practice' || pathname.startsWith('/practice/')),
     },
-    { key: 'gateways', href: '/#paths', label: tNav('gateways'), current: gatewayCurrent },
+    gateways,
     { key: 'record', href: '/practice/record', label: tNav('record'), current: recordCurrent },
   ];
 }
 
 /**
- * Public site header (thekra-source chrome): «ورد اليوم» · «الأبواب» · «سجلّي», then language, theme and the account
- * menu. At phone width the three links fold into «القائمة», a disclosure button with the same links.
+ * Public site header (thekra-source chrome): the places (see {@link usePrimaryLinks}), then language, theme and the account
+ * menu. At phone width the links fold into «القائمة», a disclosure button with the same links.
  */
 export function SiteHeader() {
   const pathname = usePathname();

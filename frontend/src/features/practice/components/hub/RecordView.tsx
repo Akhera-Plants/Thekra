@@ -11,7 +11,6 @@ import { usePlanWords } from '../PlanCard';
 import { ExcuseToggle } from './ExcuseToggle';
 import { Link } from '@/i18n/navigation';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
-import { accountsEnabled } from '@/lib/accounts';
 import { formatDigits } from '@/lib/format/digits';
 import { formatGregorian } from '@/lib/practice/format';
 import { monthOf, type YearMonth } from '@/lib/practice/hub';
@@ -72,9 +71,7 @@ function Record({ context }: { context: WirdContext }) {
     { key: 'notifications', href: '/practice/notifications', icon: <Bell />, title: t('notifications'), hint: t('notificationsHint') },
     { key: 'strategies', href: '/practice/strategies', icon: <Lightbulb />, title: t('strategies'), hint: t('strategiesHint') },
   ];
-  if (accountsEnabled()) {
-    links.push({ key: 'saved', href: '/favorites', icon: <Bookmark />, title: t('saved'), hint: t('savedHint') });
-  }
+  links.push({ key: 'saved', href: '/favorites', icon: <Bookmark />, title: t('saved'), hint: t('savedHint') });
 
   return (
     <div className="flex max-w-3xl flex-col gap-10">

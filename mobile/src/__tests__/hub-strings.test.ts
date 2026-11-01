@@ -76,7 +76,7 @@ describe('practice strings', () => {
     const ar = i18n.getFixedT('ar');
     expect(ar('tabs.wird')).toBe('ورد اليوم');
     expect(ar('practice.wird.title')).toBe('ورد اليوم');
-    expect(ar('tabs.record')).toBe('سجلّي');
+    expect(ar('tabs.record')).toBe('السجل');
     expect(ar('practice.periodic.title')).toBe('أعمال دورية');
     expect(ar('practice.hub.habitsTrack')).toBe('عاداتي');
     expect(ar('sinProgram.title')).toBe('تخفَّف');

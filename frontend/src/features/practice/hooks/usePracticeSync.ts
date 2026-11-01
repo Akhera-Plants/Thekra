@@ -1,7 +1,6 @@
 import { useEffect, useSyncExternalStore } from 'react';
 import { useLocale } from 'next-intl';
 import { useSession } from '@/features/auth/hooks/useSession';
-import { accountsEnabled } from '@/lib/accounts';
 import { refreshPushSubscription } from '@/lib/push/web-push';
 import {
   getServerSyncStatus,
@@ -13,8 +12,6 @@ import {
 
 export interface PracticeSyncState {
   status: SyncStatus;
-  /** Accounts are turned on for this deployment. */
-  accounts: boolean;
   signedIn: boolean;
   /** The session is still being restored (do not show sign-in prompts yet). */
   sessionLoading: boolean;
@@ -26,9 +23,8 @@ export interface PracticeSyncState {
  * it has one (once per account and language per page load).
  */
 export function usePracticeSync(): PracticeSyncState {
-  const accounts = accountsEnabled();
   const { user, isAuthenticated, isLoading } = useSession();
-  const account = accounts && isAuthenticated && user ? user.id : null;
+  const account = isAuthenticated && user ? user.id : null;
   const locale = useLocale() === 'en' ? 'en' : 'ar';
   useEffect(() => {
     setSyncAccount(account);
@@ -38,5 +34,5 @@ export function usePracticeSync(): PracticeSyncState {
     if (account) void refreshPushSubscription(account, locale);
   }, [account, locale]);
   const status = useSyncExternalStore(subscribeSyncStatus, getSyncStatus, getServerSyncStatus);
-  return { status, accounts, signedIn: account !== null, sessionLoading: accounts && isLoading };
+  return { status, signedIn: account !== null, sessionLoading: isLoading };
 }

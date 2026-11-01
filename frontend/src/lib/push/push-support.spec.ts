@@ -64,7 +64,6 @@ describe('iPhone/iPad detection', () => {
 
 describe('pushCardState', () => {
   const ready: PushCardInput = {
-    accounts: true,
     device: 'push',
     serverEnabled: true,
     sessionLoading: false,
@@ -74,7 +73,6 @@ describe('pushCardState', () => {
   const state = (change: Partial<PushCardInput>) => pushCardState({ ...ready, ...change });
 
   it('hides the card when push cannot work here or is still unknown', () => {
-    expect(state({ accounts: false })).toBe('hidden');
     expect(state({ serverEnabled: false })).toBe('hidden');
     expect(state({ serverEnabled: undefined })).toBe('hidden');
     expect(state({ device: 'unknown' })).toBe('hidden');

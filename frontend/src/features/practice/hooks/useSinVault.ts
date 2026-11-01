@@ -1,7 +1,6 @@
 import { useEffect, useSyncExternalStore } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSession } from '@/features/auth/hooks/useSession';
-import { accountsEnabled } from '@/lib/accounts';
 import { deleteSinVault, getSinVault, putSinVault } from '@/lib/api/practice-me';
 import {
   getServerVaultSession,
@@ -20,9 +19,8 @@ export const vaultApi: VaultApi = { get: getSinVault, put: putSinVault, remove: 
  * visitor signs out or another account signs in.
  */
 export function useSinVault() {
-  const accounts = accountsEnabled();
   const { user, isAuthenticated, isLoading } = useSession();
-  const userId = accounts && isAuthenticated && user ? user.id : null;
+  const userId = isAuthenticated && user ? user.id : null;
   const vault = useQuery({
     queryKey: queryKeys.practice.vault(userId ?? ''),
     queryFn: getSinVault,
@@ -33,5 +31,5 @@ export function useSinVault() {
   useEffect(() => {
     if (!isLoading && getVaultSession() && vaultSessionOwner() !== userId) setVaultSession(null);
   }, [userId, isLoading]);
-  return { accounts, userId, sessionLoading: accounts && isLoading, vault, session };
+  return { userId, sessionLoading: isLoading, vault, session };
 }

@@ -1,9 +1,7 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import type { Metadata } from 'next';
-import { redirect } from '@/i18n/navigation';
-import { Link } from '@/i18n/navigation';
+import { AuthSwitchLink } from '@/features/auth/components/AuthSwitchLink';
 import { LoginForm } from '@/features/auth/components/LoginForm';
-import { accountsEnabled } from '@/lib/accounts';
 
 interface LoginPageProps {
   params: Promise<{ locale: string }>;
@@ -19,9 +17,6 @@ export default async function LoginPage({ params }: LoginPageProps) {
   const { locale } = await params;
   setRequestLocale(locale);
 
-  if (!accountsEnabled()) {
-    redirect({ href: '/', locale });
-  }
 
   const t = await getTranslations({ locale, namespace: 'auth' });
 
@@ -36,12 +31,12 @@ export default async function LoginPage({ params }: LoginPageProps) {
 
       <p className="text-center text-sm text-muted-foreground">
         {t('noAccount')}{' '}
-        <Link
-          href="/register"
+        <AuthSwitchLink
+          to="/register"
           className="font-medium underline underline-offset-2 hover:opacity-80"
         >
           {t('register')}
-        </Link>
+        </AuthSwitchLink>
       </p>
     </div>
   );

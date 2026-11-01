@@ -26,7 +26,7 @@ export function SyncStatus({ persistent, quiet = false }: SyncStatusProps) {
   const tStorage = useTranslations('practice.storage');
   const tFeedback = useTranslations('feedback');
   const locale = useLocale() === 'en' ? 'en' : 'ar';
-  const { status, accounts, signedIn, sessionLoading } = usePracticeSync();
+  const { status, signedIn, sessionLoading } = usePracticeSync();
   const hrefs = useSignInHrefs();
 
   const storageLine = !persistent ? (
@@ -35,14 +35,14 @@ export function SyncStatus({ persistent, quiet = false }: SyncStatusProps) {
     </Line>
   ) : null;
 
-  if (!accounts || sessionLoading || !signedIn) {
+  if (sessionLoading || !signedIn) {
     if (quiet) return storageLine;
     return (
       <div className="flex flex-col gap-2">
         {storageLine ?? (
-          <Line icon={<HardDrive className="text-primary" />}>{accounts ? t('localGuest') : tStorage('local')}</Line>
+          <Line icon={<HardDrive className="text-primary" />}>{t('localGuest')}</Line>
         )}
-        {accounts && !sessionLoading ? (
+        {!sessionLoading ? (
           <p className="flex flex-wrap gap-x-4 gap-y-1 ps-6 text-sm">
             <Link href={hrefs.login} className="text-link">
               {t('signIn')}

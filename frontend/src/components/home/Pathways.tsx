@@ -1,11 +1,11 @@
-import { BookOpen, CalendarDays, DoorOpen, Leaf, Sprout } from 'lucide-react';
+import { BookOpen, DoorOpen, Leaf, Sprout } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 
 /**
  * «أبواب الخير», the page's h1 (the header's «الأبواب» lands here, `#paths`): «أعنّي على ترك معصية», «أعنّي على فعل
- * طاعة», «شُعَب الإيمان», and the smaller «مواسم الخير» link. «الأسماء الحسنى» is hidden for now (owner, 2026-11-01;
+ * طاعة», «شُعَب الإيمان». «مواسم الخير» is not on the home (owner, 2026-11-01): it is reached from the footer and «ورد اليوم». «الأسماء الحسنى» is hidden for now (owner, 2026-11-01;
  * `/names` still answers but nothing links to it).
  */
 export async function Pathways() {
@@ -86,18 +86,6 @@ export async function Pathways() {
           </span>
         </Link>
       </div>
-
-      <Link
-        href="/calendar"
-        className="group mt-4 flex min-h-14 items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-colors duration-150 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-      >
-        <CalendarDays aria-hidden className="size-6 shrink-0 text-primary" />
-        <span className="flex min-w-0 flex-1 flex-col">
-          <span className="text-lg font-medium">{t('seasonsTitle')}</span>
-          <span className="text-sm leading-6 text-muted-foreground">{t('seasonsDescription')}</span>
-        </span>
-        <DirectionalArrow className="size-4 text-muted-foreground" />
-      </Link>
     </section>
   );
 }

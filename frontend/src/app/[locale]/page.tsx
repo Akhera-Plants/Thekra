@@ -95,7 +95,7 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
   const deed = pickDeed(deeds, lang, day);
   const reflection = pickReflection(scholars, day);
 
-  // «أبواب الخير» first for everyone not signed in; a signed-in user gets «ورد اليوم» and «سجلّي» above it (HomeLayout).
+  // «أبواب الخير» first for everyone not signed in; a signed-in user gets «ورد اليوم» and «السجل» above it (HomeLayout).
   // «لِمَن كَانَ لَهُۥ قَلْبٌ» stays the header's tagline.
   return (
     <div className="page-width flex flex-1 flex-col pb-10">

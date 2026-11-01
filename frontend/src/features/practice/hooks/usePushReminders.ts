@@ -2,7 +2,6 @@ import { useSyncExternalStore } from 'react';
 import { useLocale } from 'next-intl';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '@/features/auth/hooks/useSession';
-import { accountsEnabled } from '@/lib/accounts';
 import { pushCardState } from '@/lib/push/push-support';
 import {
   disablePush,
@@ -22,7 +21,6 @@ const noSubscription = () => () => {};
 /** The reminders card: which state to show, and its three actions (on, off, test). */
 export function usePushReminders() {
   const locale = useLocale() === 'en' ? 'en' : 'ar';
-  const accounts = accountsEnabled();
   const queryClient = useQueryClient();
   const { isAuthenticated, isLoading } = useSession();
   const device = useSyncExternalStore(noSubscription, pushDeviceSupport, () => 'unknown' as const);
@@ -30,13 +28,12 @@ export function usePushReminders() {
   const config = useQuery({
     queryKey: queryKeys.push.config,
     queryFn: loadPushConfig,
-    enabled: accounts,
     staleTime: Infinity,
   });
   const browser = useQuery({
     queryKey: queryKeys.push.browser,
     queryFn: readBrowserPush,
-    enabled: accounts && device === 'push' && isAuthenticated,
+    enabled: device === 'push' && isAuthenticated,
     staleTime: 0,
   });
 
@@ -56,7 +53,6 @@ export function usePushReminders() {
   const test = useMutation({ mutationFn: () => sendTestPush(locale), onSettled: (_data, error) => onSettled(error) });
 
   const state = pushCardState({
-    accounts,
     device,
     serverEnabled: config.data?.enabled,
     sessionLoading: isLoading,

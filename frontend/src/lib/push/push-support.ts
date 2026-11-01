@@ -46,8 +46,6 @@ export type PushDeviceSupport = 'unknown' | 'push' | 'iosInstall' | 'none';
 export type PushCardState = 'hidden' | 'unsupported' | 'iosInstall' | 'signedOut' | 'denied' | 'off' | 'on';
 
 export interface PushCardInput {
-  /** Accounts are on for this deployment (reminders are per account). */
-  accounts: boolean;
   device: PushDeviceSupport;
   /** `undefined` while `/push/config` loads or when it failed. */
   serverEnabled: boolean | undefined;
@@ -59,10 +57,10 @@ export interface PushCardInput {
 
 /**
  * The one state the card shows. Hidden while anything is unknown and whenever push cannot work for anyone here
- * (no accounts, server push off), so the page never flashes a card that then disappears.
+ * (server push off), so the page never flashes a card that then disappears.
  */
 export function pushCardState(input: PushCardInput): PushCardState {
-  if (!input.accounts || input.device === 'unknown' || input.serverEnabled !== true) return 'hidden';
+  if (input.device === 'unknown' || input.serverEnabled !== true) return 'hidden';
   if (input.device === 'iosInstall') return 'iosInstall';
   if (input.device === 'none') return 'unsupported';
   if (input.sessionLoading) return 'hidden';

@@ -1,5 +1,4 @@
 import { useSession } from '@/features/auth/hooks/useSession';
-import { accountsEnabled } from '@/lib/accounts';
 
 /**
  * True when a deletion here also leaves the account (and so every synced device): accounts are on and the visitor
@@ -7,5 +6,5 @@ import { accountsEnabled } from '@/lib/accounts';
  */
 export function useDeletesEverywhere(): boolean {
   const { isAuthenticated } = useSession();
-  return accountsEnabled() && isAuthenticated;
+  return isAuthenticated;
 }

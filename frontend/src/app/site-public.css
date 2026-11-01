@@ -133,12 +133,12 @@
 .featured-full>.featured-verse.is-whole{display:block;-webkit-line-clamp:unset;overflow:visible}
 .featured-full:focus-visible{outline:2px solid var(--green);outline-offset:2px}
 @media(max-width:650px){.featured-full{inset-inline:-10px;max-height:min(26rem,62vh)}}
-/* English typography (Source Serif 4): every English surface uses the English face, even where
+/* English typography (Source Sans 3, 2026-11-01): every English surface uses the English face, even where
    the Arabic design names Amiri (Quran class, wordmarks, tagline) — those stay Amiri in Arabic.
    Body 18px/1.75 desktop, 17px phone; display text a step smaller than the Arabic sizes because
    the Latin x-height reads larger at the same pixel size. */
 @media(max-width:650px){html[lang=en] .site-public{font-size:17px}}
-.site-public :is(.quran,.featured-verse,.source-mark-title,.brand-message):lang(en){font-family:var(--font-english),Georgia,serif}
+.site-public :is(.quran,.featured-verse,.source-mark-title,.brand-message):lang(en){font-family:var(--font-english),Arial,sans-serif}
 .site-public .quran:lang(en){line-height:1.7}
 .featured-verse:lang(en){font-size:28px;line-height:1.55}
 .featured-verse.is-medium:lang(en){font-size:22px;line-height:1.65}

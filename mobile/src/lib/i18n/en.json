@@ -2,7 +2,7 @@
   "tabs": {
     "home": "Home",
     "wird": "Today's wird",
-    "record": "My record",
+    "record": "Record",
     "settings": "Settings",
     "browse": "Browse"
   },
@@ -1329,7 +1329,7 @@
     "unlock": "Open"
   },
   "record": {
-    "title": "My record",
+    "title": "Record",
     "current": "Current streak",
     "longest_one": "Longest streak: 1 day",
     "longest_other": "Longest streak: {{count}} days",

@@ -7,7 +7,7 @@ import { AppShell } from '@/components/shared/AppShell';
 import { NavigationProgress } from '@/components/shared/feedback/NavigationProgress';
 import { LocaleSync } from '@/components/shared/LocaleSync';
 import { ServiceWorkerRegister } from '@/components/shared/ServiceWorkerRegister';
-import { amiri, amiriQuran, plexArabic, sourceSerif, thmanyahDisplay, thmanyahSans, thmanyahText } from '@/lib/fonts';
+import { amiri, amiriQuran, plexArabic, sourceSans, thmanyahDisplay, thmanyahSans, thmanyahText } from '@/lib/fonts';
 import { env } from '@/lib/env';
 import { AppProviders } from '@/lib/providers';
 import { routing } from '@/i18n/routing';
@@ -77,7 +77,7 @@ export default async function LocaleLayout({
       lang={locale}
       dir={dir}
       suppressHydrationWarning
-      className={`${thmanyahDisplay.variable} ${thmanyahText.variable} ${thmanyahSans.variable} ${plexArabic.variable} ${amiri.variable} ${amiriQuran.variable} ${sourceSerif.variable} ${monoFont.variable} h-full antialiased`}
+      className={`${thmanyahDisplay.variable} ${thmanyahText.variable} ${thmanyahSans.variable} ${plexArabic.variable} ${amiri.variable} ${amiriQuran.variable} ${sourceSans.variable} ${monoFont.variable} h-full antialiased`}
     >
       <body
         suppressHydrationWarning

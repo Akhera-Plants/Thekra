@@ -28,7 +28,7 @@
     "practice": "Today's wird",
     "practiceLong": "My habits",
     "calendar": "Seasons of good",
-    "record": "My record",
+    "record": "Record",
     "gateways": "Gateways",
     "names": "The Beautiful Names"
   },
@@ -228,9 +228,7 @@
     "wirdEmpty": "You have not started a habit yet.",
     "wirdCta": "Open your wird",
     "recordDescription": "Your streak, the month, and what you did.",
-    "recordCta": "Open your record",
-    "seasonsTitle": "Seasons of good",
-    "seasonsDescription": "The coming sunnah occasions, and a calendar to subscribe to."
+    "recordCta": "Open your record"
   },
   "sinRank": {
     "KABIRA": "Major sin",
@@ -1120,7 +1118,7 @@
       "leaveSin": "Lighten",
       "calendar": "Seasons of good",
       "hub": "Today's wird",
-      "record": "My record"
+      "record": "Record"
     },
     "weekdays": {
       "d0": "Sunday",
@@ -1221,7 +1219,6 @@
       "testNotFound": "We can no longer reach this browser. Turn notifications off, then on again.",
       "failed": "That did not work just now. Please try again shortly."
     },
-    "leadLocal": "Start very small, keep at it, and increase only once it is steady. Everything here is saved on your device.",
     "hub": {
       "add": {
         "button": "Add",
@@ -1305,12 +1302,12 @@
       "addOne": "Add"
     },
     "record": {
-      "title": "My record",
+      "title": "Record",
       "lead": "Your streak, your month, your habits and periodic acts.",
       "current": "Current streak",
       "longest": "{count, plural, =0 {Longest streak: none yet} one {Longest streak: 1 day} other {Longest streak: {n} days}}",
       "showHijri": "Show the Hijri date",
-      "linksLabel": "In my record",
+      "linksLabel": "In the record",
       "habits": "My habits",
       "habitsCount": "{count, plural, =0 {Start with one small habit} one {One habit} other {{n} habits}}",
       "periodic": "Periodic acts",
@@ -1680,12 +1677,7 @@
   },
   "calendarPage": {
     "title": "Seasons of good",
-    "lead": "The coming sunnah occasions in Hijri and Gregorian dates, each leading to its good deed.",
-    "today": "Today",
-    "hijriUnsupported": "This browser does not support the Hijri calendar.",
-    "subscribe": "Subscribe to the calendar",
-    "download": "Download the calendar file",
-    "subscribeHint": "Subscribing keeps your calendar up to date by itself; it is a public file with no data about you. The downloaded file is built on your device with your Hijri adjustment.",
+    "lead": "Tie each season to a good habit, or plan around it.",
     "upcoming": "Coming occasions",
     "empty": "No occasions in the coming year.",
     "range": "{from} to {to}",
@@ -1720,7 +1712,10 @@
     "month": {
       "title": "The month",
       "none": "No sunnah occasion on this day."
-    }
+    },
+    "addToCalendar": "Add the seasons of good to your calendar",
+    "addToCalendarHint": "The seasons show in your device calendar before they come, so you can prepare.",
+    "makeHabit": "Make it a habit"
   },
   "leaveSin": {
     "title": "Lighten",
@@ -1829,7 +1824,6 @@
         "reopen": "The privacy code was changed on another device; open the program again."
       }
     },
-    "privacyLocal": "This program stays on your device alone: it is never sent to a server or used in any statistics, and the sin is never named in the page title or its link.",
     "continueFromSin": "Continue your program",
     "moment": {
       "title": "A weak moment",

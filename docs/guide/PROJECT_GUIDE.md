@@ -178,7 +178,8 @@ Thekra/                       pnpm workspace (Node 24 target; local machine has 
   public pages are SSG/ISR (no `force-dynamic`); favorites/auth stay dynamic. A dead API at build time fails the
   deploy by design. Function region `fra1` (next to Neon).
 - **Env**: `NEXT_PUBLIC_API_URL` (baked at build → rebuild after changing; part of the CSP),
-  `NEXT_PUBLIC_ACCOUNTS_ENABLED=false`, optional `NEXT_PUBLIC_SITE_URL`.
+  optional `NEXT_PUBLIC_SITE_URL`. Accounts are always on (2026-11-01: «ورد اليوم» and «السجل» are for signed-in
+  members); the old `NEXT_PUBLIC_ACCOUNTS_ENABLED` switch is gone and can be deleted from Vercel.
 - Components: Tailwind v4 tokens in `globals.css`; public look in `site-public.css` (very long lines — edit in
   small targeted edits). Do not add hard-coded colours (the CI `design-tokens` job fails on literals; the
   brand `icon.svg` is the one exception).

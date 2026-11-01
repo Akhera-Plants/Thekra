@@ -1,3 +1,15 @@
+# English face: Source Sans 3 (2026-11-01)
+
+**Decision (owner, 2026-11-01):** the owner did not like the serif English. The English UI and English reading text
+now use **Source Sans 3** (Adobe, SIL OFL 1.1, upstream 3.052 variable woff2, `frontend/src/fonts/source-sans/`). It
+meets every requirement below (transliteration marks, real small caps, licence) and sits closer to IBM Plex Sans
+Arabic. IBM Plex Sans was the first choice for the pairing, but it does not draw `ʿ ʾ ḥ ṣ ḍ ṭ ẓ`, which the English
+text uses (wuduʾ, rakʿah). Arabic rendering is unchanged.
+
+The history below explains the earlier move from Amiri to Source Serif 4.
+
+---
+
 # English face: Source Serif 4 (replaces Amiri for English)
 
 **Decision (owner override):** the English UI and English reading text use **Source Serif 4**

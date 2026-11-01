@@ -8,7 +8,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  /* English UI/reading uses Source Serif 4 (owner decision, docs/design/after/direction/english-font.md).
+  /* English UI/reading uses Source Sans 3 (owner decision 2026-11-01, docs/design/after/direction/english-font.md).
      Amiri stays for Arabic Quran text and source-book wordmarks only. */
   --font-sans: var(--font-english);
   --font-mono: var(--font-geist-mono);

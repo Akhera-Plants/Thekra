@@ -1,13 +1,12 @@
 'use client';
 
 import { useMemo } from 'react';
-import { CalendarDays, CalendarPlus, Download } from 'lucide-react';
+import { CalendarDays, CalendarPlus, Repeat } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { BrandLoader } from '@/components/shared/feedback/BrandLoader';
 import { QueryErrorState } from '@/components/shared/feedback/QueryErrorState';
-import { occasionsIcsUrl } from '@/lib/api/practice';
 import {
   calendarRange,
   computeOccasionDates,
@@ -28,9 +27,12 @@ import { useToday } from '../hooks/useToday';
 import { CalendarMonth } from './CalendarMonth';
 import { HijriOffsetSelect } from './HijriOffsetSelect';
 import { PracticeLoading } from './PracticeLoading';
-import { SyncStatus } from './SyncStatus';
 
-/** «مواسم الخير» (`/calendar`): today in Hijri, the month with its sunnah occasions, the coming year's list, subscribe or download. */
+/**
+ * «مواسم الخير» (`/calendar`, owner 2026-11-01: as little text as possible): one action, «أضف مواسم الخير إلى تقويمك»
+ * (the file is built here, with this device's Hijri adjustment), the month, and the coming occasions; each leads to its
+ * deed and, when the catalog has a habit for that deed, «اجعلها عادة». The Hijri adjustment sits at the end.
+ */
 export function CalendarView() {
   const t = useTranslations('calendarPage');
   const tFeedback = useTranslations('feedback');
@@ -42,8 +44,13 @@ export function CalendarView() {
   const today = clock?.today ?? null;
   const range = useMemo(() => (today ? calendarRange(today) : null), [today]);
   const occasions = useCalendarOccasions(range && snapshot ? { ...range, hijriOffset: offset } : null);
-  // The catalog is the fallback: the same occasions computed on the device with practice-core.
-  const catalog = usePracticeCatalog(occasions.isError);
+  // The catalog: the habit each deed can become, and the fallback (the same occasions computed on the device).
+  const catalog = usePracticeCatalog();
+  const habitOfDeed = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const habit of catalog.data?.habits ?? []) if (!map.has(habit.deed)) map.set(habit.deed, habit.key);
+    return map;
+  }, [catalog.data]);
 
   const entries = useMemo<OccasionDate[] | null>(() => {
     if (!range) return null;
@@ -58,7 +65,6 @@ export function CalendarView() {
 
   if (!clock || !snapshot) return <PracticeLoading />;
 
-  const todayHijri = hijriLabel(clock.today, offset);
   const failed = occasions.isError && catalog.isError;
 
   function handleDownload() {
@@ -72,33 +78,18 @@ export function CalendarView() {
 
   return (
     <div className="flex flex-col gap-10">
-      <section className="next-step flex flex-col gap-1" aria-labelledby="calendar-today">
-        <strong id="calendar-today">{t('today')}</strong>
-        <p>{formatGregorian(clock.today, locale, true)}</p>
-        {todayHijri ? <p className="text-lg font-medium text-primary">{todayHijri}</p> : <p>{t('hijriUnsupported')}</p>}
-      </section>
-
-      <div className="flex flex-col gap-3">
-        <HijriOffsetSelect value={offset} />
-        <SyncStatus persistent={snapshot.persistent} quiet />
-      </div>
-
-      <div className="flex flex-wrap gap-3">
-        <a className="solid-button button-wrap" href={occasionsIcsUrl(locale, 'webcal')}>
-          <CalendarPlus aria-hidden />
-          {t('subscribe')}
-        </a>
+      <div className="flex flex-col gap-2">
         <button
           type="button"
-          className="outline-button button-wrap"
+          className="solid-button button-wrap self-start"
           onClick={handleDownload}
           disabled={!rows || rows.length === 0}
         >
-          <Download aria-hidden />
-          {t('download')}
+          <CalendarPlus aria-hidden />
+          {t('addToCalendar')}
         </button>
+        <p className="text-sm leading-7 text-muted-foreground">{t('addToCalendarHint')}</p>
       </div>
-      <p className="-mt-6 text-sm leading-7 text-muted-foreground">{t('subscribeHint')}</p>
 
       {entries && range ? <CalendarMonth entries={entries} today={clock.today} hijriOffset={offset} to={range.to} /> : null}
 
@@ -121,16 +112,23 @@ export function CalendarView() {
         ) : (
           <ul className="flex flex-col divide-y divide-border border-y border-border" aria-busy={occasions.isFetching}>
             {rows.map((row) => (
-              <OccasionRow key={row.key} row={row} hijri={hijriLabel(row.hijri ?? row.date, row.hijri ? 0 : offset)} />
+              <OccasionRow
+                key={row.key}
+                row={row}
+                hijri={hijriLabel(row.hijri ?? row.date, row.hijri ? 0 : offset)}
+                habitKey={habitOfDeed.get(row.deed)}
+              />
             ))}
           </ul>
         )}
       </section>
+
+      <HijriOffsetSelect value={offset} />
     </div>
   );
 }
 
-function OccasionRow({ row, hijri }: { row: UpcomingOccasion; hijri: string | null }) {
+function OccasionRow({ row, hijri, habitKey }: { row: UpcomingOccasion; hijri: string | null; habitKey: string | undefined }) {
   const t = useTranslations('calendarPage');
   const locale = useLocale() === 'en' ? 'en' : 'ar';
   const title = locale === 'en' ? row.titleEn : row.titleAr;
@@ -154,6 +152,12 @@ function OccasionRow({ row, hijri }: { row: UpcomingOccasion; hijri: string | nu
         </strong>
       </p>
       {row.basis === 'organizational' ? <p className="text-sm text-muted-foreground">{t('organizational')}</p> : null}
+      {habitKey ? (
+        <Link href={{ pathname: '/practice/habits', query: { add: '1', habit: habitKey } }} className="text-link self-start text-sm">
+          <Repeat aria-hidden />
+          {t('makeHabit')}
+        </Link>
+      ) : null}
     </li>
   );
 }

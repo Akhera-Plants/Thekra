@@ -8,7 +8,6 @@ import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { useSession } from '@/features/auth/hooks/useSession';
 import { useWirdContext } from '@/features/practice/hooks/useWirdContext';
 import { StreakFlame } from '@/features/practice/components/hub/StreakFlame';
-import { accountsEnabled } from '@/lib/accounts';
 import { formatDigits } from '@/lib/format/digits';
 import { wirdSummary } from '@/lib/practice/wird';
 
@@ -34,17 +33,15 @@ function writeHint(signedIn: boolean) {
 
 const noSubscribe = () => () => {};
 
-/** Signed in (accounts on and a session). False during the server render: the home is cached and the same for everyone. */
+/** Signed in. False during the server render: the home is cached and the same for everyone. */
 function useSignedIn(): boolean {
   const session = useSession();
-  const enabled = accountsEnabled();
   const hint = useSyncExternalStore(noSubscribe, readHint, () => false);
-  const known = !enabled || !session.isLoading;
-  const signedIn = enabled && session.isAuthenticated;
+  const known = !session.isLoading;
   useEffect(() => {
-    if (known) writeHint(signedIn);
-  }, [known, signedIn]);
-  return known ? signedIn : enabled && hint;
+    if (known) writeHint(session.isAuthenticated);
+  }, [known, session.isAuthenticated]);
+  return known ? session.isAuthenticated : hint;
 }
 
 interface HomeLayoutProps {

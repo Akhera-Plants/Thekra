@@ -46,7 +46,6 @@ export function WirdView() {
     });
   }, [locale]);
   const addOpen = useSearchParams().get('add') === '1';
-  const snapshot = context?.snapshot;
   const heart = useHeart();
   const summary = useMemo(
     () => (context ? wirdSummary(context.snapshot.store, context.today, context.planDays) : null),
@@ -61,9 +60,6 @@ export function WirdView() {
         </div>
       ) : null}
       <WirdHeader
-        date={context?.today ?? null}
-        hijriOffset={snapshot?.store.settings.hijriOffset ?? 0}
-        showHijri={snapshot?.prefs.showHijri === true}
         streak={summary?.hasPlans ? summary.streak : null}
         longest={summary?.longest ?? 0}
         addOpen={addOpen}
