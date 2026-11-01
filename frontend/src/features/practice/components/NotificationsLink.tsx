@@ -8,8 +8,8 @@ import { Link } from '@/i18n/navigation';
 export function NotificationsLink() {
   const t = useTranslations('practice.record');
   return (
-    <Link href="/practice/notifications" className="text-link inline-flex items-center gap-2 self-start">
-      <Bell aria-hidden className="size-4" />
+    <Link href="/practice/notifications" className="outline-button self-start">
+      <Bell aria-hidden />
       {t('notifications')}
     </Link>
   );

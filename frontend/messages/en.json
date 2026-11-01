@@ -33,7 +33,6 @@
     "more": "More",
     "close": "Close the menu",
     "periodic": "Periodic acts",
-    "leaveSin": "Lighten",
     "reviews": "Self-review",
     "strategies": "Habit strategies",
     "groups": {
@@ -267,7 +266,8 @@
     "categoryAll": "All",
     "openPicker": "Choose a sin",
     "showAll": "Show all",
-    "showPublished": "Published only"
+    "showPublished": "Published only",
+    "kabiraOnly": "Major sins"
   },
   "sinDetail": {
     "showAll": "Show all",
@@ -305,7 +305,8 @@
     "contemporary": "Contemporary",
     "openPicker": "Choose a good deed",
     "showAll": "Show all",
-    "showPublished": "Published only"
+    "showPublished": "Published only",
+    "habitOnly": "Can become a habit"
   },
   "goodDeedDetail": {
     "showAll": "Show all",
@@ -951,7 +952,11 @@
     "results": "Topics: {count}",
     "footnote": "Choose a topic to read its texts with their sources.",
     "empty": "No matching topics.",
-    "themeIn": "Within: {title}"
+    "themeIn": "Within: {title}",
+    "domainsLabel": "Areas",
+    "allDomains": "All",
+    "otherDomain": "Other",
+    "themesGroup": "Themes inside a topic"
   },
   "breadcrumbs": {
     "home": "Home",
@@ -1045,7 +1050,8 @@
       "errors": {
         "time": "Enter a valid time.",
         "minutes": "Enter a number of minutes from 0 to 1440.",
-        "chooseOne": "Choose at least one habit."
+        "chooseOne": "Choose at least one habit.",
+        "outside": "This deed’s time: {range}. Choose a time inside it."
       }
     },
     "today": {
@@ -1060,7 +1066,7 @@
       "markDone": "Done it",
       "partialLabel": "Amount done ({unit})",
       "partialError": "Enter a whole number above zero.",
-      "logPartial": "Log",
+      "logPartial": "Add",
       "increaseOffer": "You have held this amount for a month. If you wish, go one small step up to {amount}, or stay as you are.",
       "increase": "One step up",
       "relapse": "You have been away for some days, and that is fine. Come back with a smaller amount, {amount}, then build again calmly.",
@@ -1092,7 +1098,7 @@
       "editTitle": "Edit the habit",
       "editAmount": "Amount a day",
       "editAmountHint": "You can lighten it at any time; the settling period starts again. Going up is one step, after a steady month.",
-      "editSlotsHint": "Leave a time empty to remove it; at least one time stays.",
+      "editSlotsHint": "Choose “None” to remove a time; at least one time stays.",
       "editSlotsRequired": "Enter at least one time.",
       "editSave": "Save changes",
       "editCancel": "Cancel",
@@ -1117,7 +1123,15 @@
       "graduateOffer": "This habit has taken root, by the grace of Allah. Move it to the established habits?",
       "graduate": "Move to established habits",
       "establishedTitle": "Established habits",
-      "pausedTitle": "Paused"
+      "pausedTitle": "Paused",
+      "deedsTitle": "Doing good",
+      "noHabits": "No habit yet. Begin with a small one.",
+      "logAction": "Log",
+      "doneToday": "Done",
+      "doneUndoHint": "Tap to take back today’s log",
+      "options": "Options",
+      "slotsUnsuitable": "A reminder time does not suit this deed’s time.",
+      "slotsFix": "Fix the times"
     },
     "progress": {
       "title": "Where you are",
@@ -1676,6 +1690,26 @@
     },
     "weekName": {
       "title": "Name of the week"
+    },
+    "programs": {
+      "title": "Leaving sins",
+      "empty": "No program for leaving a sin yet.",
+      "start": "Start a program",
+      "checkIn": "Check in today",
+      "open": "Open the program"
+    },
+    "window": {
+      "range": "From {from} to {to}",
+      "point": "{side, select, after {after {edge}} before {before {edge}} other {{edge}}}",
+      "edges": {
+        "fajr": "Fajr",
+        "sunrise": "sunrise",
+        "dhuhr": "Dhuhr",
+        "asr": "Asr",
+        "maghrib": "Maghrib",
+        "isha": "Isha",
+        "lastThird": "the last third of the night"
+      }
     }
   },
   "calendarPage": {

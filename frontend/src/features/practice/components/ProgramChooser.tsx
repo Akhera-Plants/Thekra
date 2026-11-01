@@ -102,7 +102,7 @@ export function ProgramChooser({ entries, common, sins, names, preselected, toda
                 {!browsing && field.value ? (
                   <div className="flex flex-wrap items-center gap-3 rounded-xl border border-primary bg-card p-4">
                     <span className="flex-1 text-lg font-medium">{names.get(field.value) ?? t('unnamed')}</span>
-                    <button type="button" className="text-link" onClick={() => setBrowsing(true)}>
+                    <button type="button" className="outline-button" onClick={() => setBrowsing(true)}>
                       {t('change')}
                     </button>
                   </div>

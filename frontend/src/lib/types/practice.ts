@@ -2,7 +2,7 @@
  * Practice API shapes: `GET /v1/practice/catalog`, `GET /v1/calendar/occasions`.
  * The catalog objects mirror backend/prisma/taxonomy/deed-schedules.yaml and sin-programs.yaml field for field.
  */
-import type { HijriDate, PeopleCircle, PlanUnit, RakahCount, Rule, SinCategory, Stage } from '@thekra/practice-core';
+import type { DeedWindow, HijriDate, PeopleCircle, PlanUnit, RakahCount, Rule, SinCategory, Stage } from '@thekra/practice-core';
 
 export type ScheduleBasis = 'text' | 'organizational';
 
@@ -37,6 +37,8 @@ export interface PracticeHabit {
   timeHintAr?: string;
   timeHintEn?: string;
   defaultSlots: string[];
+  /** When the deed may be done (prayer times + minutes) and the anchors that suit it; absent = any time. */
+  window?: DeedWindow;
   basis: ScheduleBasis;
   evidence: string[];
 }

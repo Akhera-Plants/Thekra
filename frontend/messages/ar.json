@@ -33,7 +33,6 @@
     "more": "المزيد",
     "close": "أغلق القائمة",
     "periodic": "أعمال دورية",
-    "leaveSin": "تخفَّف",
     "reviews": "المحاسبة",
     "strategies": "استراتيجيات العادات",
     "groups": {
@@ -267,7 +266,8 @@
     "categoryAll": "الكل",
     "openPicker": "اختر معصية",
     "showAll": "إظهار الكل",
-    "showPublished": "المنشور فقط"
+    "showPublished": "المنشور فقط",
+    "kabiraOnly": "الكبائر"
   },
   "sinDetail": {
     "showAll": "عرض الكل",
@@ -305,7 +305,8 @@
     "contemporary": "معاصر",
     "openPicker": "اختر عملًا صالحًا",
     "showAll": "إظهار الكل",
-    "showPublished": "المنشور فقط"
+    "showPublished": "المنشور فقط",
+    "habitOnly": "يمكنك جعلها عادة"
   },
   "goodDeedDetail": {
     "showAll": "عرض الكل",
@@ -951,7 +952,11 @@
     "results": "المواضيع: {count}",
     "footnote": "اختر موضوعًا لتقرأ نصوصه مع مصادرها.",
     "empty": "لا مواضيع مطابقة.",
-    "themeIn": "ضمن باب: {title}"
+    "themeIn": "ضمن باب: {title}",
+    "domainsLabel": "المجالات",
+    "allDomains": "الكل",
+    "otherDomain": "أخرى",
+    "themesGroup": "مواضيع داخل الأبواب"
   },
   "breadcrumbs": {
     "home": "الرئيسية",
@@ -1045,7 +1050,8 @@
       "errors": {
         "time": "اكتب وقتًا صحيحًا.",
         "minutes": "اكتب عدد دقائق من 0 إلى 1440.",
-        "chooseOne": "اختر عادة واحدة على الأقل."
+        "chooseOne": "اختر عادة واحدة على الأقل.",
+        "outside": "وقت هذه الطاعة: {range}. اختر وقتًا داخله."
       }
     },
     "today": {
@@ -1060,7 +1066,7 @@
       "markDone": "أتممتها",
       "partialLabel": "قدر عملته ({unit})",
       "partialError": "اكتب عددًا صحيحًا أكبر من صفر.",
-      "logPartial": "سجّل",
+      "logPartial": "أضِف",
       "increaseOffer": "ثبتّ على هذا القدر شهرًا. إن أردت، زِد خطوة صغيرة إلى {amount}، أو ابقَ كما أنت.",
       "increase": "زِد خطوة واحدة",
       "relapse": "غبت عنها أيامًا، ولا بأس. ارجع بقدر أصغر: {amount}، ثم ابنِ من جديد بهدوء.",
@@ -1092,7 +1098,7 @@
       "editTitle": "عدّل العادة",
       "editAmount": "القدر في اليوم",
       "editAmountHint": "يمكنك أن تخفّف متى شئت، وتبدأ مدة التثبيت من جديد. أما الزيادة فخطوة واحدة بعد ثبات شهر.",
-      "editSlotsHint": "اترك الوقت فارغًا لتحذفه، ويبقى وقت واحد على الأقل.",
+      "editSlotsHint": "اختر «بدون» لتحذف وقتًا، ويبقى وقت واحد على الأقل.",
       "editSlotsRequired": "اكتب وقتًا واحدًا على الأقل.",
       "editSave": "احفظ التعديل",
       "editCancel": "إلغاء",
@@ -1117,7 +1123,15 @@
       "graduateOffer": "رسخت هذه العادة بفضل الله. انقلها إلى الراسخة؟",
       "graduate": "انقلها إلى الراسخة",
       "establishedTitle": "عادات راسخة",
-      "pausedTitle": "موقوفة مؤقتًا"
+      "pausedTitle": "موقوفة مؤقتًا",
+      "deedsTitle": "فعل الطاعات",
+      "noHabits": "لا عادة بعد. ابدأ بعادة صغيرة.",
+      "logAction": "سجّل",
+      "doneToday": "تمّ",
+      "doneUndoHint": "اضغط لتلغي تسجيل اليوم",
+      "options": "خيارات",
+      "slotsUnsuitable": "أحد أوقات التذكير لا يناسب وقت هذه الطاعة.",
+      "slotsFix": "صحّح الأوقات"
     },
     "progress": {
       "title": "وين وصلت",
@@ -1676,6 +1690,26 @@
     },
     "weekName": {
       "title": "اسم الأسبوع"
+    },
+    "programs": {
+      "title": "ترك المعاصي",
+      "empty": "لا برنامج لترك معصية الآن.",
+      "start": "ابدأ برنامجًا",
+      "checkIn": "سجّل يومك",
+      "open": "افتح البرنامج"
+    },
+    "window": {
+      "range": "من {from} إلى {to}",
+      "point": "{side, select, after {بعد {edge}} before {قبل {edge}} other {{edge}}}",
+      "edges": {
+        "fajr": "الفجر",
+        "sunrise": "الشروق",
+        "dhuhr": "الظهر",
+        "asr": "العصر",
+        "maghrib": "المغرب",
+        "isha": "العشاء",
+        "lastThird": "الثلث الأخير من الليل"
+      }
     }
   },
   "calendarPage": {

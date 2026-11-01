@@ -4,10 +4,28 @@ import { CatalogName } from '@/components/shared/CatalogName';
 import { FormattedNumber } from '@/components/shared/FormattedNumber';
 import { QuoteCard, type QuoteCardIntent } from '@/components/shared/quote';
 import { nameLinkHref } from '@/lib/api/names';
+import type { ReaderHighlight } from '@/components/shared/editorial/ReminderReader';
 import type { MizanDto } from '@/lib/types/api';
 
 /** At most this many texts in «الميزان». */
 const MIZAN_MAX = 2;
+
+/**
+ * «الميزان» for a topic reader: the same 1–2 texts, handed to the tabs (owner, 2026-11-01: every text sits under
+ * «الكل · الآيات · الأحاديث»). Null when the API sends none.
+ */
+export function mizanHighlight(
+  mizan: MizanDto | null | undefined,
+  labels: { title: string; lead: string; top: string },
+): ReaderHighlight | null {
+  const items = mizan?.items.slice(0, MIZAN_MAX) ?? [];
+  if (!mizan || items.length === 0) return null;
+  return {
+    title: labels.title,
+    lead: mizan.source === 'top' ? labels.top : labels.lead,
+    items: items.map((quote) => ({ id: quote.id, quote })),
+  };
+}
 
 interface MizanBlockProps {
   mizan: MizanDto | null | undefined;
@@ -17,7 +35,8 @@ interface MizanBlockProps {
 }
 
 /**
- * «الميزان» (redesign §4.5), the first block of a topic page: 1–2 texts that state the weight — curated ids
+ * «الميزان» as a block of its own (a name page, or a topic page without a reader): see {@link mizanHighlight} for the
+ * topic pages' tabs. «الميزان» (redesign §4.5): 1–2 texts that state the weight — curated ids
  * (heart-texts.yaml), or the topic's top-ranked published text, said plainly as the first text of the page.
  * Hidden when the API sends none (older API, or no published text).
  */

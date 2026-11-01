@@ -179,3 +179,9 @@
 /* Header «إنشاء حساب» / «تسجيل الدخول»: the site's outline and solid buttons, one height, one padding. */
 .site-public .header-auth .auth-button{min-height:40px;padding:6px 16px;font-size:15px;line-height:1.4;border-radius:8px}
 @media(max-width:360px){.site-public .header-auth .auth-button{padding-inline:12px;font-size:14px}}
+/* «عاداتي»: a habit logged today keeps a bordered «تمّ ✓» (pressed) in the brand green; it takes the log back on tap. */
+.site-public .outline-button.plan-done{border-color:var(--brand);background:var(--sage)}
+/* Catalogues grouped by domain (owner, 2026-11-01): a quiet heading with its count above each group. */
+.site-public .catalog-group-title{display:flex;align-items:baseline;gap:10px;font-size:19px;font-weight:500;padding-bottom:8px;border-bottom:1px solid var(--line);color:var(--green)}
+.site-public .catalog-group-count{font-size:13px;font-weight:400;color:var(--muted-proto)}
+@media(max-width:650px){.site-public .catalog-group-title{font-size:17px}}

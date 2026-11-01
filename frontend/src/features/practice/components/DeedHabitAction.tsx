@@ -19,13 +19,13 @@ export function DeedHabitAction({ habits }: { habits: readonly PracticeHabit[] |
   if (!habit) return null;
   const plan = snapshot?.store.plans.find((p) => (p.habitKey ?? p.id) === habit.key);
   return (
-    <div className="flex flex-col items-start gap-1">
+    <div className="mt-5 flex flex-col items-start gap-2">
       {habit.people ? (
         <Link href={{ pathname: '/practice/kinship', query: { circle: habit.people } }} className="solid-button button-wrap">
           {t('makeHabit')} <DirectionalArrow />
         </Link>
       ) : plan ? (
-        <Link href={`/practice/habits#plan-${plan.id}`} className="text-link">
+        <Link href={`/practice/habits#plan-${plan.id}`} className="outline-button">
           <Check aria-hidden />
           {t('habitAdded')}
         </Link>

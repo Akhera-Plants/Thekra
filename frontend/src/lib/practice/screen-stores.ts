@@ -24,8 +24,11 @@ import {
   type PrayerSettings,
   type PrayerTimesLookup,
   type PrayerTimes,
+  type PrayerTimesWithSunrise,
+  prayerTimesOn,
 } from '@thekra/practice-core';
 import { createDeviceStore } from './device-store';
+import { sunrisesFromAlAdhan } from './windows';
 
 export const MY_REMINDERS_KEY = 'thekra.practice.my-reminders.v1';
 export const PRAYER_SETTINGS_KEY = 'thekra.practice.prayer-settings.v1';
@@ -55,10 +58,27 @@ export function currentPrayerLookup(): PrayerTimesLookup {
   return prayerLookup(prayerCacheStore.get(), prayerSettingsStore.get());
 }
 
-export function usePrayerTimesToday(): PrayerTimes | undefined {
+/**
+ * The day's times with the user's offsets plus the sunrise AlAdhan sent (kept beside the five prayers in the cache;
+ * no offset applies to it). Undefined when the day is unknown.
+ */
+export function prayerTimesWithSunrise(cache: PrayerCache | null, settings: PrayerSettings | null, date: string): PrayerTimesWithSunrise | undefined {
+  const times = prayerTimesOn(cache, settings, date);
+  if (!times) return undefined;
+  const sunrise = (cache?.days[date] as PrayerTimesWithSunrise | undefined)?.sunrise;
+  return sunrise ? { ...times, sunrise } : times;
+}
+
+/** A day's prayer times with sunrise, read once (outside React); undefined without a city or for an unknown day. */
+export function currentPrayerTimes(date: string): PrayerTimesWithSunrise | undefined {
+  return prayerTimesWithSunrise(prayerCacheStore.get(), prayerSettingsStore.get(), date);
+}
+
+/** Today's prayer times (and sunrise when known) for the slot pickers and the deed windows; undefined without a city. */
+export function usePrayerTimesToday(): PrayerTimesWithSunrise | undefined {
   const cache = useSyncExternalStore(prayerCacheStore.subscribe, prayerCacheStore.get, prayerCacheStore.getServer);
   const settings = useSyncExternalStore(prayerSettingsStore.subscribe, prayerSettingsStore.get, prayerSettingsStore.getServer);
-  return prayerLookup(cache, settings)(todayFrom(new Date()));
+  return prayerTimesWithSunrise(cache, settings, todayFrom(new Date()));
 }
 
 const FETCH_TIMEOUT_MS = 10_000;
@@ -83,7 +103,12 @@ export async function refreshPrayerTimes(force = false, fetchImpl: typeof fetch 
       try {
         const res = await fetchImpl(alAdhanCalendarUrl(settings, year, month), { signal: controller.signal, credentials: 'omit' });
         if (!res.ok) return 'failed';
-        Object.assign(fetched, parseAlAdhan(await res.json()));
+        const json: unknown = await res.json();
+        const sunrises = sunrisesFromAlAdhan(json);
+        // Sunrise rides along with the five prayers (Duha's window starts after it).
+        for (const [date, times] of Object.entries(parseAlAdhan(json))) {
+          fetched[date] = sunrises[date] ? ({ ...times, sunrise: sunrises[date] } as PrayerTimesWithSunrise) : times;
+        }
       } finally {
         clearTimeout(timer);
       }

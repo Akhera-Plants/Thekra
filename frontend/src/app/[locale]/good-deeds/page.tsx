@@ -4,6 +4,7 @@ import { TopicCatalog, type TopicEntry } from '@/components/shared/editorial/Top
 import { reportFailure } from '@/lib/errors';
 import { getGoodDeeds } from '@/lib/api/good-deeds';
 import { getTopicThemes } from '@/lib/api/topic-themes';
+import { getPracticeCatalog } from '@/lib/api/practice';
 import type { LocaleCode } from '@/lib/types/enums';
 import { localeAlternates } from '@/lib/seo';
 
@@ -49,6 +50,14 @@ export default async function GoodDeedsPage({ params }: PageProps<'/[locale]/goo
       return [];
     });
 
+  // «يمكنك جعلها عادة»: the deeds a catalog habit belongs to. Optional: without the catalog the switch is hidden.
+  const habitDeeds = await getPracticeCatalog()
+    .then((res) => new Set(res.data.habits.map((habit) => habit.deed)))
+    .catch((error: unknown) => {
+      reportFailure('practice catalog', error);
+      return new Set<string>();
+    });
+
   const entries: TopicEntry[] = deeds.map((deed) => ({
     href: `/good-deeds/${deed.slug}`,
     nameAr: deed.pair?.titleAr ?? deed.nameAr,
@@ -58,6 +67,7 @@ export default async function GoodDeedsPage({ params }: PageProps<'/[locale]/goo
     taxonomyOrder: deed.taxonomyOrder ?? null,
     kabira: false,
     contemporary: deed.isContemporary === true,
+    hasHabit: habitDeeds.has(deed.slug),
   }));
 
   return (
@@ -74,6 +84,7 @@ export default async function GoodDeedsPage({ params }: PageProps<'/[locale]/goo
       noResults={t('noResults')}
       contemporaryLabel={t('contemporary')}
       themes={themes}
+      flag={{ kind: 'habit', label: t('habitOnly') }}
     />
   );
 }

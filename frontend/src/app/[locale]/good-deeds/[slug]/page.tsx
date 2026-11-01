@@ -6,7 +6,7 @@ import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import type { ReaderItem, ReaderSection } from '@/components/shared/editorial/ReminderReader';
 import { GoodDeedReader } from '@/features/good-deed-motivation/components/GoodDeedReader';
 import { DeedHabitAction } from '@/features/practice/components/DeedHabitAction';
-import { MizanBlock, TopicBranchLinks } from '@/features/topic/components/TopicTemplate';
+import { MizanBlock, mizanHighlight, TopicBranchLinks } from '@/features/topic/components/TopicTemplate';
 import { TOPIC_PAGE_SIZE, interleaveReading } from '@/lib/reading';
 import { getGoodDeed, getGoodDeedQuotes, getGoodDeeds } from '@/lib/api/good-deeds';
 import { rethrowUnlessNotFound, topSlugs } from '@/lib/api/server-guard';
@@ -50,6 +50,7 @@ export default async function GoodDeedDetailPage({
   const t = await getTranslations('goodDeedDetail');
   const tNav = await getTranslations('nav');
   const tCrumbs = await getTranslations('breadcrumbs');
+  const tTopic = await getTranslations('topic');
 
   let deed: Awaited<ReturnType<typeof getGoodDeed>>['data'];
   try {
@@ -99,6 +100,7 @@ export default async function GoodDeedDetailPage({
   // English shows the English description and reward or nothing: never Arabic prose on /en.
   const description = locale === 'en' ? deed.description : deed.descriptionAr;
   const reward = paired ? null : (locale === 'en' ? deed.reward : deed.rewardAr);
+  const highlight = mizanHighlight(deed.mizan, { title: tTopic('mizanTitle'), lead: tTopic('mizanLead'), top: tTopic('mizanTop') });
   const opposite = !paired && deed.oppositeSin
     ? (locale === 'en' ? (deed.oppositeSin.name || deed.oppositeSin.nameAr) : deed.oppositeSin.nameAr)
     : null;
@@ -135,30 +137,34 @@ export default async function GoodDeedDetailPage({
           {deed.isContemporary ? (
             <p className="page-lead">{t('contemporaryNote')}</p>
           ) : null}
+          {/* The one action, under the title (owner, 2026-11-01). */}
+          <DeedHabitAction habits={deed.schedule?.habits} />
         </header>
 
-        {/* The topic template (redesign §4.5): الميزان → one action → texts → شعب الإيمان → the opposite. */}
-        <MizanBlock mizan={deed.mizan} intent="good-deed" />
-        <DeedHabitAction habits={deed.schedule?.habits} />
-
+        {/* The topic template (owner, 2026-11-01): the tabs right under the title; «الميزان» and every text inside them,
+            then شعب الإيمان and the opposite. */}
         {items.length === 0 ? (
-          <div className="next-step">
-            <p>{t('noMotivations')}</p>
-            <Link
-              href={deed.oppositeSin ? `/sins/${deed.oppositeSin.slug}` : '/good-deeds'}
-              className="text-link"
-            >
-              {opposite ? (
-                <span lang={/[\u0600-\u06FF]/.test(opposite) ? 'ar' : undefined} dir={/[\u0600-\u06FF]/.test(opposite) ? 'rtl' : undefined}>
-                  {opposite}
-                </span>
-              ) : (
-                tCrumbs('goodDeeds')
-              )}
-            </Link>
+          <div className="flex flex-col gap-6">
+            <MizanBlock mizan={deed.mizan} intent="good-deed" />
+            <div className="next-step">
+              <p>{t('noMotivations')}</p>
+              <Link
+                href={deed.oppositeSin ? `/sins/${deed.oppositeSin.slug}` : '/good-deeds'}
+                className="outline-button mt-3"
+              >
+                {opposite ? (
+                  <span lang={/[\u0600-\u06FF]/.test(opposite) ? 'ar' : undefined} dir={/[\u0600-\u06FF]/.test(opposite) ? 'rtl' : undefined}>
+                    {opposite}
+                  </span>
+                ) : (
+                  tCrumbs('goodDeeds')
+                )}
+              </Link>
+            </div>
           </div>
         ) : (
           <GoodDeedReader
+            highlight={highlight}
             slug={slug}
             lang={locale}
             items={items}
@@ -178,7 +184,7 @@ export default async function GoodDeedDetailPage({
             <h2 id="opposite-title" className="text-xl font-medium">
               {t('oppositeSin')}
             </h2>
-            <Link href={`/sins/${deed.oppositeSin.slug}`} className="text-link self-start">
+            <Link href={`/sins/${deed.oppositeSin.slug}`} className="outline-button self-start">
               <span lang={/[\u0600-\u06FF]/.test(opposite) ? 'ar' : undefined} dir={/[\u0600-\u06FF]/.test(opposite) ? 'rtl' : undefined}>
                 {opposite}
               </span>

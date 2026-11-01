@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, type ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query';
-import { ReminderReader, type ReaderItem, type TypeFilter } from '@/components/shared/editorial/ReminderReader';
+import { ReminderReader, type ReaderHighlight, type ReaderItem, type TypeFilter } from '@/components/shared/editorial/ReminderReader';
 import { ReaderStatus } from '@/components/shared/feedback/ReaderStatus';
 import { getBranchQuotes } from '@/lib/api/branches';
 import { TOPIC_PAGE_SIZE } from '@/lib/reading';
@@ -19,9 +19,13 @@ interface BranchReaderProps {
   countsByKind?: CountsByKind;
   /** meta.hasNext of the server page: «show more» on «الكل» continues from page 2. */
   initialHasNext?: boolean;
+  /** «الميزان», first inside the tabs. */
+  highlight?: ReaderHighlight | null;
+  /** «الكل» only, before the list. */
+  intro?: ReactNode;
 }
 
-export function BranchReader({ number, lang, items: initialItems, total, countsByKind, initialHasNext = false }: BranchReaderProps) {
+export function BranchReader({ number, lang, items: initialItems, total, countsByKind, initialHasNext = false, highlight = null, intro }: BranchReaderProps) {
   const t = useTranslations('sinDetail');
   const [activeKind, setActiveKind] = useState<TypeFilter>('all');
 
@@ -111,6 +115,8 @@ export function BranchReader({ number, lang, items: initialItems, total, countsB
   return (
     <>
     <ReminderReader
+      highlight={highlight}
+      intro={intro}
       items={displayItems}
       total={total}
       intent="iman-branch"

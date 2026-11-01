@@ -8,7 +8,6 @@ export type MemberNavKey =
   | 'habits'
   | 'periodic'
   | 'reviews'
-  | 'leaveSin'
   | 'strategies'
   | 'favorites'
   | 'calendar';
@@ -38,10 +37,7 @@ export const MEMBER_MORE: readonly MemberNavGroup[] = [
   },
   {
     key: 'help',
-    items: [
-      { key: 'leaveSin', href: '/practice/leave-sin' },
-      { key: 'strategies', href: '/practice/strategies' },
-    ],
+    items: [{ key: 'strategies', href: '/practice/strategies' }],
   },
   {
     key: 'reading',
@@ -53,12 +49,21 @@ export const MEMBER_MORE: readonly MemberNavGroup[] = [
 ];
 
 /**
- * The item that marks the current page, or null. A page under an item counts (`/practice/leave-sin/moment` is
- * «تخفَّف»); «ورد اليوم» owns `/practice` and the practice pages that have no item of their own (kinship, notifications…).
+ * «تخفَّف» has no item of its own (owner, 2026-11-01: it is the «تخفَّف من معصية» door, and its programs are listed in
+ * «عاداتي»), so its pages mark «عاداتي».
+ */
+const LEAVE_SIN_HREF = '/practice/leave-sin';
+
+/**
+ * The item that marks the current page, or null. A page under an item counts (`/practice/habits/…` is «عاداتي»);
+ * «تخفَّف» pages count as «عاداتي»; «ورد اليوم» owns `/practice` and the practice pages that have no item of their own
+ * (kinship, notifications…).
  */
 export function currentMemberItem(pathname: string): MemberNavKey | null {
+  const under = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  if (under(LEAVE_SIN_HREF)) return 'habits';
   const all = [...MEMBER_PRIMARY, ...MEMBER_MORE.flatMap((group) => group.items)].filter((item) => item.key !== 'wird');
-  const hit = all.find((item) => pathname === item.href || pathname.startsWith(`${item.href}/`));
+  const hit = all.find((item) => under(item.href));
   if (hit) return hit.key;
   return pathname === '/practice' || pathname.startsWith('/practice/') ? 'wird' : null;
 }

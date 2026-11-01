@@ -3,12 +3,9 @@
 import { useId, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
-  ANCHOR_LABELS,
   defaultHabitKey,
   isPrayerAnchor,
   isValidTime,
-  PRAYER_ANCHORS,
-  resolveAnchor,
   loadWarning,
   ONBOARDING_STEPS,
   setHeartPrefs,
@@ -16,14 +13,15 @@ import {
   upsertPlan,
   type OnboardingStep,
   type Plan,
+  type PrayerTimesWithSunrise,
 } from '@thekra/practice-core';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
-import { Input } from '@/components/ui/input';
 import { formatDigits } from '@/lib/format/digits';
 import { updateHeart } from '@/lib/practice/heart-store';
 import { updateStore } from '@/lib/practice/local-store';
 import { usePrayerTimesToday } from '@/lib/practice/screen-stores';
 import { DEFAULT_ACTIVE_DAYS, isEbbDay, planFromHabit, type Distance } from '@/lib/practice/plans';
+import { slotProblem, suitableAnchors } from '@/lib/practice/windows';
 import type { PracticeHabit } from '@/lib/types/practice';
 import { cn } from '@/lib/utils';
 import { useFocusOnChange } from '../hooks/useFocusOnChange';
@@ -31,6 +29,7 @@ import { useHeart } from '../hooks/useHeart';
 import { amountLabel } from './amount-label';
 import { ConsistencyCard, HabitLoopCard } from './hub/HabitCards';
 import { StoryLine } from './hub/KnowledgeCards';
+import { SlotPicker, useWindowRange, WindowLine } from './SlotPicker';
 
 const ACTIVE_DAYS = [2, 3, 4, 5, 6, 7];
 const DISTANCES: Distance[] = ['far', 'near'];
@@ -74,6 +73,10 @@ export function PlanSetup({ habits, existing, preselected, freeMinutes, today, o
   const [activeDays, setActiveDays] = useState(DEFAULT_ACTIVE_DAYS);
   const [distance, setDistance] = useState<Distance>('far');
   const [error, setError] = useState<string | null>(null);
+  /** «متى؟»: a slot outside the deed's window, per field (0, 1). */
+  const [slotErrors, setSlotErrors] = useState<[string | null, string | null]>([null, null]);
+  const prayer = usePrayerTimesToday();
+  const range = useWindowRange();
   const stepRef = useFocusOnChange<HTMLHeadingElement>(step);
   const habit = available.find((h) => h.key === habitKey);
   const index = step === 'finish' ? ONBOARDING_STEPS.length : ONBOARDING_STEPS.indexOf(step);
@@ -171,8 +174,15 @@ export function PlanSetup({ habits, existing, preselected, freeMinutes, today, o
           eyebrow={english ? habit.titleEn : habit.titleAr}
           title={t('when.title')}
           hint={t('when.hint')}
-          example={t('when.example')}
+          // The generic «بعد الفجر… المغرب» example only fits a habit without a time window (it contradicts Duha's).
+          example={habit.window ? ((english ? habit.timeHintEn : habit.timeHintAr) ?? range(habit.window)) : t('when.example')}
           onNext={() => {
+            const problems = slots.map((slot) => slotProblem(slot, habit.window, prayer));
+            const messages = problems.map((problem) =>
+              problem && habit.window ? tSetup('errors.outside', { range: range(habit.window) }) : null,
+            ) as [string | null, string | null];
+            setSlotErrors(messages);
+            if (messages.some(Boolean)) return;
             if (validSlots().length === 0) {
               setError(tSetup('errors.time'));
               return;
@@ -184,12 +194,25 @@ export function PlanSetup({ habits, existing, preselected, freeMinutes, today, o
             setSlots([habit.defaultSlots[0] ?? '08:00', habit.defaultSlots[1] ?? '']);
             setActiveDays(DEFAULT_ACTIVE_DAYS);
             setError(null);
+            setSlotErrors([null, null]);
             setStep('howMuch');
           }}
           onBack={() => setStep('what')}
           backLabel={tSetup('back')}
         >
-          <WhenFields slots={slots} onSlots={setSlots} activeDays={activeDays} onActiveDays={setActiveDays} />
+          <WindowLine window={habit.window} prayer={prayer} />
+          <WhenFields
+            slots={slots}
+            onSlots={(next) => {
+              setSlots(next);
+              setSlotErrors([null, null]);
+            }}
+            activeDays={activeDays}
+            onActiveDays={setActiveDays}
+            habit={habit}
+            prayer={prayer}
+            errors={slotErrors}
+          />
           {error ? (
             <p className="text-sm text-destructive" role="alert">
               {error}
@@ -325,7 +348,7 @@ function StepFrame({ headingRef, eyebrow, title, hint, example, children, nextLa
           {t('skip')}
         </button>
         {onBack ? (
-          <button type="button" className="text-link min-h-11 px-2" onClick={onBack}>
+          <button type="button" className="outline-button button-wrap" onClick={onBack}>
             {backLabel}
           </button>
         ) : null}
@@ -339,11 +362,17 @@ function WhenFields({
   onSlots,
   activeDays,
   onActiveDays,
+  habit,
+  prayer,
+  errors,
 }: {
   slots: [string, string];
   onSlots: (slots: [string, string]) => void;
   activeDays: number;
   onActiveDays: (n: number) => void;
+  habit: PracticeHabit;
+  prayer: PrayerTimesWithSunrise | undefined;
+  errors: [string | null, string | null];
 }) {
   const tSetup = useTranslations('practice.setup');
   const t = useTranslations('practice.onboarding');
@@ -358,6 +387,9 @@ function WhenFields({
             label={tSetup('slot', { n: String(i + 1) })}
             value={slots[i]}
             optional={i === 1}
+            anchors={suitableAnchors(habit)}
+            prayer={prayer}
+            error={errors[i]}
             onChange={(value) => onSlots(i === 0 ? [value, slots[1]] : [slots[0], value])}
           />
         ))}
@@ -377,55 +409,6 @@ function WhenFields({
           ))}
         </select>
       </div>
-    </div>
-  );
-}
-
-const CUSTOM = 'custom';
-const NONE = 'none';
-
-/**
- * One reminder slot of «متى؟»: the prayer anchors first («بعد الفجر»…, resolved from the city chosen in «أوقات الصلاة»,
- * default times otherwise), then «وقت أختاره» with a time field; the second slot may be «بدون».
- */
-function SlotPicker({ label, value, optional, onChange }: { label: string; value: string; optional: boolean; onChange: (value: string) => void }) {
-  const t = useTranslations('practice.onboarding');
-  const english = useLocale() === 'en';
-  const prayer = usePrayerTimesToday();
-  const selectId = useId();
-  const timeId = useId();
-  const mode = isPrayerAnchor(value) ? value : isValidTime(value) ? CUSTOM : value === '' && optional ? NONE : CUSTOM;
-  return (
-    <div className="flex flex-col gap-2 text-sm">
-      <label htmlFor={selectId}>{label}</label>
-      <select
-        id={selectId}
-        className="h-11 rounded-md border border-input bg-background px-3"
-        value={mode}
-        onChange={(e) => {
-          const next = e.target.value;
-          if (next === NONE) onChange('');
-          else if (next === CUSTOM) onChange(isValidTime(value) ? value : '08:00');
-          else onChange(next);
-        }}
-      >
-        {PRAYER_ANCHORS.map((anchor) => (
-          <option key={anchor} value={anchor}>
-            {ANCHOR_LABELS[english ? 'en' : 'ar'][anchor]}
-            {prayer ? ` (${formatDigits(resolveAnchor(anchor, prayer))})` : ''}
-          </option>
-        ))}
-        <option value={CUSTOM}>{t('customTime')}</option>
-        {optional ? <option value={NONE}>{t('noSecondSlot')}</option> : null}
-      </select>
-      {mode === CUSTOM ? (
-        <>
-          <label htmlFor={timeId} className="sr-only">
-            {t('customTime')}
-          </label>
-          <Input id={timeId} type="time" value={value} onChange={(e) => onChange(e.target.value)} />
-        </>
-      ) : null}
     </div>
   );
 }

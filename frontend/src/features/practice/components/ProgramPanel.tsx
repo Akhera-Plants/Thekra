@@ -205,7 +205,7 @@ export function ProgramPanel({ program, entry, common, name, habits, quotes, tod
                 : [];
             })}
           </ul>
-          <Link href={{ pathname: '/practice/habits', query: { add: '1' } }} className="text-link self-start">
+          <Link href={{ pathname: '/practice/habits', query: { add: '1' } }} className="outline-button self-start">
             {t('alternativesLink')} <DirectionalArrow />
           </Link>
         </section>
@@ -252,7 +252,7 @@ export function ProgramPanel({ program, entry, common, name, habits, quotes, tod
         </h3>
         <EvidenceQuotes ids={programTextIds(entry, common, view.stage)} quotes={quotes} />
         {/* The sin's own page holds all its texts; a sin without a written program has only the stage texts here. */}
-        <Link href={`/sins/${program.sinSlug}`} className="text-link self-start">
+        <Link href={`/sins/${program.sinSlug}`} className="outline-button self-start">
           {t('textsAll')} <DirectionalArrow />
         </Link>
       </section>

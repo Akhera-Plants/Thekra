@@ -7,7 +7,7 @@ import { AlternativeDeedsBlock } from '@/features/sin-reminder/components/Altern
 import type { ReaderItem, ReaderSection } from '@/components/shared/editorial/ReminderReader';
 import { SinReader } from '@/features/sin-reminder/components/SinReader';
 import { StartProgramLink } from '@/features/practice/components/StartProgramLink';
-import { MizanBlock, TopicBranchLinks } from '@/features/topic/components/TopicTemplate';
+import { MizanBlock, mizanHighlight, TopicBranchLinks } from '@/features/topic/components/TopicTemplate';
 import { TOPIC_PAGE_SIZE, interleaveReading } from '@/lib/reading';
 import { getSin, getSinQuotes, getSins } from '@/lib/api/sins';
 import { rethrowUnlessNotFound, topSlugs } from '@/lib/api/server-guard';
@@ -52,6 +52,7 @@ export default async function SinDetailPage({
   const tRank = await getTranslations('sinRank');
   const tNav = await getTranslations('nav');
   const tCrumbs = await getTranslations('breadcrumbs');
+  const tTopic = await getTranslations('topic');
 
   let sin: Awaited<ReturnType<typeof getSin>>['data'];
   try {
@@ -105,6 +106,7 @@ export default async function SinDetailPage({
   // English shows the English description or nothing: never Arabic prose on /en.
   const description = locale === 'en' ? sin.description : sin.descriptionAr;
   const rankReference = locale === 'en' ? englishOnlyProvenance(sin.rankReference) : sin.rankReference;
+  const highlight = mizanHighlight(sin.mizan, { title: tTopic('mizanTitle'), lead: tTopic('mizanLead'), top: tTopic('mizanTop') });
   const onwardName = onward
     ? (locale === 'en' ? (onward.name || onward.nameAr) : onward.nameAr)
     : null;
@@ -146,38 +148,41 @@ export default async function SinDetailPage({
           {sin.isContemporary ? (
             <p className="page-lead">{t('contemporaryNote')}</p>
           ) : null}
+          {/* The one action, under the title (owner, 2026-11-01): «تخفَّف من معصية» is open for every sin. */}
+          <StartProgramLink slug={slug} />
         </header>
 
-        {/* The topic template (redesign §4.5): الميزان → one action → texts → شعب الإيمان → the opposite. */}
-        <MizanBlock mizan={sin.mizan} intent="sin" />
-        {/* «تخفَّف من معصية» is open for every sin (owner, 2026-11-01): without a written program it runs the common one. */}
-        <StartProgramLink slug={slug} />
-
+        {/* The topic template (owner, 2026-11-01): the tabs right under the title; «الميزان» and every text inside them,
+            then شعب الإيمان and the opposite. */}
         {items.length === 0 ? (
-          <div className="next-step">
-            <p>{t('noReminders')}</p>
-            <Link href={onward ? `/good-deeds/${onward.slug}` : '/sins'} className="text-link">
-              {onwardName ? (
-                <span lang={/[\u0600-\u06FF]/.test(onwardName) ? 'ar' : undefined} dir={/[\u0600-\u06FF]/.test(onwardName) ? 'rtl' : undefined}>
-                  {onwardName}
-                </span>
-              ) : (
-                tCrumbs('sins')
-              )}
-            </Link>
+          <div className="flex flex-col gap-6">
+            <MizanBlock mizan={sin.mizan} intent="sin" />
+            <div className="next-step">
+              <p>{t('noReminders')}</p>
+              <Link href={onward ? `/good-deeds/${onward.slug}` : '/sins'} className="outline-button mt-3">
+                {onwardName ? (
+                  <span lang={/[\u0600-\u06FF]/.test(onwardName) ? 'ar' : undefined} dir={/[\u0600-\u06FF]/.test(onwardName) ? 'rtl' : undefined}>
+                    {onwardName}
+                  </span>
+                ) : (
+                  tCrumbs('sins')
+                )}
+              </Link>
+            </div>
           </div>
         ) : (
           <SinReader
-          slug={slug}
-          lang={locale}
-          items={items}
-          sections={sections}
-          total={items.length}
-          countsByKind={quotesMeta?.countsByKind}
-          themes={quotesMeta?.themes}
-          initialTheme={activeTheme}
-          initialHasNext={quotesMeta?.hasNext ?? false}
-        />
+            highlight={highlight}
+            slug={slug}
+            lang={locale}
+            items={items}
+            sections={sections}
+            total={items.length}
+            countsByKind={quotesMeta?.countsByKind}
+            themes={quotesMeta?.themes}
+            initialTheme={activeTheme}
+            initialHasNext={quotesMeta?.hasNext ?? false}
+          />
         )}
 
         <TopicBranchLinks branches={sin.branches} />
@@ -187,7 +192,7 @@ export default async function SinDetailPage({
             <h2 id="pair-title" className="text-xl font-medium">
               {t('pairCounterpart')}
             </h2>
-            <Link href={`/good-deeds/${sin.pair.do}`} className="text-link self-start">
+            <Link href={`/good-deeds/${sin.pair.do}`} className="outline-button self-start">
               {counterpart}
             </Link>
           </section>

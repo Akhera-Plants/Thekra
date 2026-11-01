@@ -44,11 +44,11 @@ export function SyncStatus({ persistent, quiet = false }: SyncStatusProps) {
           <Line icon={<HardDrive className="text-primary" />}>{t('localGuest')}</Line>
         )}
         {!sessionLoading ? (
-          <p className="flex flex-wrap gap-x-4 gap-y-1 ps-6 text-sm">
-            <Link href={hrefs.login} className="text-link">
+          <p className="flex flex-wrap gap-2 ps-6 text-sm">
+            <Link href={hrefs.login} className="outline-button">
               {t('signIn')}
             </Link>
-            <Link href={hrefs.register} className="text-link">
+            <Link href={hrefs.register} className="outline-button">
               {t('register')}
             </Link>
           </p>
@@ -96,7 +96,7 @@ export function SyncStatus({ persistent, quiet = false }: SyncStatusProps) {
       )}
       {quiet ? null : (
         <p className="flex items-center gap-1 ps-6 text-sm">
-          <Link href="/settings" className="text-link">
+          <Link href="/settings" className="outline-button">
             {t('accountLink')}
           </Link>
           <InfoTip>{t('signedInNote')}</InfoTip>

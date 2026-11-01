@@ -7,6 +7,7 @@ import {
   MY_REMINDERS_KEY,
   prayerCacheStore,
   prayerSettingsStore,
+  currentPrayerTimes,
   refreshPrayerTimes,
 } from './screen-stores';
 
@@ -66,6 +67,21 @@ describe('screen stores', () => {
     expect(await refreshPrayerTimes(false, fetchImpl as never)).toBe('fresh');
     const times = anchorTimesForPush();
     expect(times[todayFrom(new Date())]?.['after-fajr']).toBe('05:00');
+  });
+
+  it('keeps the sunrise AlAdhan sends beside the five prayers (Duha starts after it)', async () => {
+    install();
+    prayerSettingsStore.update(() => ({ city: 'Riyadh', country: 'SA', offsets: { fajr: 5 } }) as never);
+    const fetchImpl = vi.fn(async (url: string) => {
+      const m = /calendarByCity\/(\d+)\/(\d+)/.exec(url)!;
+      const body = month(Number(m[1]), Number(m[2]));
+      for (const day of body.data) (day.timings as Record<string, string>).Sunrise = '06:02 (+03)';
+      return new Response(JSON.stringify(body));
+    });
+    expect(await refreshPrayerTimes(false, fetchImpl as never)).toBe('updated');
+    const today = currentPrayerTimes(todayFrom(new Date()));
+    expect(today?.sunrise).toBe('06:02');
+    expect(today?.fajr).toBe('04:45');
   });
 
   it('reports a failed fetch and keeps the default times', async () => {

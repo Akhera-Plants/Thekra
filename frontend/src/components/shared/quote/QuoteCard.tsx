@@ -19,7 +19,6 @@ import { HadithGrade, QuoteType } from '@/lib/types/enums';
 import { publicLinkNote } from '@/lib/format/link-note';
 import { englishProvenance } from '@/lib/format/provenance';
 import { formatGradeCitation } from '@/lib/format/grade-citation';
-import { Button } from '@/components/shared/kit/button';
 import { GradeBadge } from './GradeBadge';
 import { QuoteBody } from './QuoteBody';
 import { FavoriteButton } from './FavoriteButton';
@@ -93,6 +92,10 @@ function visibleArabic(value: string | null | undefined, arabic: boolean): strin
   return value;
 }
 
+/** «التفسير» / «الشرح» and «عرض كامل»: one small bordered shape (owner, 2026-11-01: every action looks like a button). */
+const STUDY_BUTTON =
+  'inline-flex min-h-11 w-fit items-center gap-1.5 self-start rounded-lg border border-border px-3 text-sm font-medium text-muted-foreground transition-colors duration-150 hover:border-primary hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring md:min-h-9';
+
 function ContextLink({
   href,
   label,
@@ -107,13 +110,14 @@ function ContextLink({
   return (
     <Link
       href={href}
+      // A bordered button, not bare text (owner, 2026-11-01: every action looks like a button).
       className={cn(
-        'inline-flex min-h-11 w-fit items-center gap-1.5 self-start',
-        'text-sm font-medium underline-offset-4 hover:underline',
-        'focus-visible:outline-none focus-visible:border-b focus-visible:border-current',
+        'inline-flex min-h-11 w-fit items-center gap-1.5 self-start rounded-lg border px-3 md:min-h-9',
+        'text-sm font-medium transition-colors duration-150',
+        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
         muted
-          ? 'text-muted-foreground hover:text-foreground'
-          : 'text-primary',
+          ? 'border-border text-muted-foreground hover:border-primary hover:text-foreground'
+          : 'border-primary/40 text-primary hover:border-primary',
         arabic && 'font-arabic-ui',
       )}
     >
@@ -434,20 +438,14 @@ export function QuoteCard({
         </div>
 
         {onOpenStudy && (isQuran || isHadith) ? (
-          <Button
+          <button
             type="button"
-            variant="ghost"
-            tone="neutral"
-            size="sm"
-            icon={<BookMarked aria-hidden />}
-            className={cn(
-              'self-start text-muted-foreground hover:text-foreground',
-              arabic && 'font-arabic-ui',
-            )}
+            className={cn(STUDY_BUTTON, arabic && 'font-arabic-ui')}
             onClick={() => onOpenStudy(quote)}
           >
+            <BookMarked className="size-4" aria-hidden />
             {isQuran ? t('openTafsir') : t('openSharh')}
-          </Button>
+          </button>
         ) : null}
 
         {hasDisclosure ? (

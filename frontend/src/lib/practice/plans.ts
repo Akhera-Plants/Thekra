@@ -6,6 +6,7 @@
 import {
   orderedSlots,
   planSlotTimes,
+  slotChoices,
   type PrayerAnchor,
   type PrayerTimes,
   addDays,
@@ -177,6 +178,19 @@ export function planToday(plan: Plan, today: LocalDate, nowMinutes: number, sche
   };
 }
 
+/**
+ * The one action at the end of a habit's row in «عاداتي» (owner, 2026-11-01): «استأنف» while paused, «تمّ ✓» once the
+ * day's amount is logged (a second tap takes it back), «سجّل» when the habit is asked for today, and a quiet «سجّل» on
+ * other days (anything done still counts).
+ */
+export type PlanAction = 'resume' | 'done' | 'log' | 'logQuiet';
+
+export function planAction(view: Pick<PlanToday, 'isDueToday' | 'isComplete' | 'done'>, isPaused: boolean): PlanAction {
+  if (isPaused) return 'resume';
+  if (view.isComplete && view.done > 0) return 'done';
+  return view.isDueToday ? 'log' : 'logQuiet';
+}
+
 function maxOf(a: LocalDate, b: LocalDate): LocalDate {
   return a > b ? a : b;
 }
@@ -200,6 +214,21 @@ export function ramadanEnd(today: LocalDate, hijriOffset: number): LocalDate | n
     end = day;
   }
   return end;
+}
+
+/**
+ * «وضع رمضان» for a plan: the higher step and the last day of Ramadan, offered only while today is in Ramadan (Umm
+ * al-Qura + the user's offset), never before or after it, never twice (a plan already in a season), and only when a
+ * higher step exists. The same check runs again when the button is pressed.
+ */
+export function ramadanSeasonOffer(plan: Plan, today: LocalDate, hijriOffset: number): { amount: number; until: LocalDate } | null {
+  if (plan.season) return null;
+  const until = ramadanEnd(today, hijriOffset);
+  if (!until) return null;
+  const step = nextStep(baseAmount(plan));
+  if (step === null) return null;
+  const amount = plan.ceiling !== undefined ? Math.min(step, plan.ceiling) : step;
+  return amount > baseAmount(plan) ? { amount, until } : null;
 }
 
 const DAILY: Rule = { kind: 'daily' };
@@ -253,33 +282,36 @@ export function planRemindersIcs(events: IcsEvent[], calendarName: string, now?:
 
 /** The fields «تعديل» changes on a habit. Increasing stays with the step rule ({@link canIncrease} / `increase`). */
 export interface PlanEdit {
-  slots: readonly string[];
+  /** `HH:MM` times and/or prayer anchors («after-fajr»…), as the slot pickers give them. */
+  slots: readonly (string | PrayerAnchor)[];
   activeDaysPerWeek: number;
   /** The everyday amount: the current one, or lower (practice-core `decreaseTo`, which restarts the hold). */
   amount: number;
 }
 
 /**
- * Applies an edit through practice-core: a lower amount goes through `decreaseTo`; times and active days are set
- * and `updatedAt` becomes `now` so the edit syncs. Throws on a higher amount or an invalid result.
+ * Applies an edit through practice-core: a lower amount goes through `decreaseTo`; times (and prayer anchors) and
+ * active days are set and `updatedAt` becomes `now` so the edit syncs. Throws on a higher amount or an invalid result.
  */
 export function editPlan(plan: Plan, edit: PlanEdit, today: LocalDate, now: IsoTime = nowIso()): Plan {
   const base = baseAmount(plan);
   if (edit.amount > base) throw new RangeError('Increase through the step rule');
   const lowered = edit.amount < base;
-  const slots = [...new Set(edit.slots)].sort();
-  const changed =
-    lowered || slots.join() !== [...plan.slots].sort().join() || edit.activeDaysPerWeek !== plan.activeDaysPerWeek;
+  const chosen = sortedSlots(edit.slots);
+  const key = (choices: readonly string[]) => [...new Set(choices)].sort().join();
+  const sameSlots = key(edit.slots) === key(slotChoices(plan));
+  const changed = lowered || !sameSlots || edit.activeDaysPerWeek !== plan.activeDaysPerWeek;
   if (!changed) return plan;
-  const sameSlots = slots.join() === [...plan.slots].sort().join();
   const next: Plan = {
     ...(lowered ? decreaseTo(plan, edit.amount, today, now) : plan),
-    // Unchanged times keep their prayer anchors; new times are the user's own fixed times.
-    slots: sameSlots ? plan.slots : slots,
     activeDaysPerWeek: edit.activeDaysPerWeek,
     updatedAt: now,
   };
-  if (!sameSlots) delete next.slotAnchors;
+  if (!sameSlots) {
+    next.slots = chosen.slots;
+    if (chosen.slotAnchors) next.slotAnchors = chosen.slotAnchors;
+    else delete next.slotAnchors;
+  }
   const err = validatePlan(next);
   if (err) throw new RangeError(`Invalid plan: ${err}`);
   return next;

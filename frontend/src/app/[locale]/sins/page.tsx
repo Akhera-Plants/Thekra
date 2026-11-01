@@ -75,6 +75,7 @@ export default async function SinsPage({ params }: PageProps<'/[locale]/sins'>) 
       kabiraLabel={tRank('KABIRA')}
       contemporaryLabel={t('contemporary')}
       themes={themes}
+      flag={{ kind: 'kabira', label: t('kabiraOnly') }}
     />
   );
 }

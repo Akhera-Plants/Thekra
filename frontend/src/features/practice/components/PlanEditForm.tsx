@@ -4,13 +4,16 @@ import { useMemo } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { useTranslations } from 'next-intl';
-import { updatePlan, type Plan } from '@thekra/practice-core';
+import { isPrayerAnchor, slotChoices, updatePlan, type Plan } from '@thekra/practice-core';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { updateStore } from '@/lib/practice/local-store';
 import { editPlan, lowerAmounts } from '@/lib/practice/plans';
+import { usePrayerTimesToday } from '@/lib/practice/screen-stores';
+import { slotProblem, suitableAnchors } from '@/lib/practice/windows';
+import type { PracticeHabit } from '@/lib/types/practice';
 import { z } from '@/lib/zod';
+import { SlotPicker, useWindowRange, WindowLine } from './SlotPicker';
 
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 const ACTIVE_DAYS = [2, 3, 4, 5, 6, 7];
@@ -19,6 +22,8 @@ const MAX_SLOTS = 4;
 
 interface PlanEditFormProps {
   plan: Plan;
+  /** The catalog habit: its window decides which anchors and times are offered. */
+  habit: PracticeHabit | undefined;
   today: string;
   /** The amount in the page language, e.g. «5 دقيقة». */
   amountLabel: (n: number) => string;
@@ -26,30 +31,40 @@ interface PlanEditFormProps {
 }
 
 /**
- * «تعديل»: reminder times, active days a week, and a lower everyday amount (practice-core `decreaseTo` through
+ * «تعديل»: reminder times (only the prayer anchors and fixed times that suit the deed's window), active days a week, and a lower everyday amount (practice-core `decreaseTo` through
  * `editPlan`). Going up stays with the one-step rule on the card. Saved through `updatePlan`, so the edit syncs.
  */
-export function PlanEditForm({ plan, today, amountLabel, onDone }: PlanEditFormProps) {
+export function PlanEditForm({ plan, habit, today, amountLabel, onDone }: PlanEditFormProps) {
   const t = useTranslations('practice.today');
   const tSetup = useTranslations('practice.setup');
+  const prayer = usePrayerTimesToday();
+  const range = useWindowRange();
+  const window = habit?.window;
   const fieldCount = Math.min(MAX_SLOTS, Math.max(2, plan.slots.length + 1));
   const amounts = useMemo(() => lowerAmounts(plan), [plan]);
+  const choices = useMemo(() => slotChoices(plan), [plan]);
   const schema = useMemo(
     () =>
       z.object({
         slots: z
-          .array(z.string().regex(TIME, tSetup('errors.time')).or(z.literal('')))
+          .array(
+            z
+              .string()
+              .refine((value) => value === '' || TIME.test(value) || isPrayerAnchor(value), tSetup('errors.time'))
+              .refine((value) => slotProblem(value, window, prayer) === null, window ? tSetup('errors.outside', { range: range(window) }) : ''),
+          )
           .refine((slots) => slots.some(Boolean), t('editSlotsRequired')),
         activeDays: z.string(),
         amount: z.string(),
       }),
-    [t, tSetup],
+    [t, tSetup, window, prayer, range],
   );
   type Values = z.infer<typeof schema>;
   const form = useForm<Values>({
     resolver: zodResolver(schema),
     defaultValues: {
-      slots: Array.from({ length: fieldCount }, (_, i) => plan.slots[i] ?? ''),
+      // The picker choices: anchors where the plan has them, else its times. An unsuitable one is flagged on save.
+      slots: Array.from({ length: fieldCount }, (_, i) => choices[i] ?? ''),
       activeDays: String(plan.activeDaysPerWeek),
       amount: String(amounts[0]),
     },
@@ -73,20 +88,23 @@ export function PlanEditForm({ plan, today, amountLabel, onDone }: PlanEditFormP
         noValidate
         aria-label={t('editTitle')}
       >
+        <WindowLine window={window} prayer={prayer} />
         <div className="grid gap-4 sm:grid-cols-2">
           {Array.from({ length: fieldCount }, (_, index) => (
             <FormField
               key={index}
               control={form.control}
               name={`slots.${index}`}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{tSetup('slot', { n: String(index + 1) })}</FormLabel>
-                  <FormControl>
-                    <Input type="time" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+              render={({ field, fieldState }) => (
+                <SlotPicker
+                  label={tSetup('slot', { n: String(index + 1) })}
+                  value={field.value}
+                  optional
+                  anchors={suitableAnchors(habit)}
+                  prayer={prayer}
+                  error={fieldState.error?.message ?? null}
+                  onChange={field.onChange}
+                />
               )}
             />
           ))}

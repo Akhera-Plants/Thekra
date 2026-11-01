@@ -1,7 +1,8 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
-import { ReminderReader, type ReaderItem, type ReaderSection } from '@/components/shared/editorial/ReminderReader';
+import { ReminderReader, type ReaderHighlight, type ReaderItem, type ReaderSection } from '@/components/shared/editorial/ReminderReader';
 import { ReaderStatus } from '@/components/shared/feedback/ReaderStatus';
 import { useTopicReader } from '@/components/shared/editorial/useTopicReader';
 import { getSinQuotes } from '@/lib/api/sins';
@@ -21,9 +22,13 @@ interface SinReaderProps {
   initialTheme?: string | null;
   /** meta.hasNext of the server page: «show more» continues from page 2. */
   initialHasNext?: boolean;
+  /** «الميزان», first inside the tabs. */
+  highlight?: ReaderHighlight | null;
+  /** «الكل» only, before the list. */
+  intro?: ReactNode;
 }
 
-export function SinReader({ slug, lang, items, total, sections, countsByKind, themes, initialTheme = null, initialHasNext = false }: SinReaderProps) {
+export function SinReader({ slug, lang, items, total, sections, countsByKind, themes, initialTheme = null, initialHasNext = false, highlight = null, intro }: SinReaderProps) {
   const t = useTranslations('sinDetail');
   const reader = useTopicReader({
     queryRoot: 'sins',
@@ -41,6 +46,8 @@ export function SinReader({ slug, lang, items, total, sections, countsByKind, th
   return (
     <>
     <ReminderReader
+      highlight={highlight}
+      intro={intro}
       items={reader.items}
       total={total}
       sections={reader.sections}

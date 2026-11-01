@@ -22,7 +22,7 @@ export function ReportMistake({ quoteId }: { quoteId: string }) {
     return (
       <button
         type="button"
-        className="min-h-11 text-sm text-muted-foreground underline-offset-2 hover:underline"
+        className="min-h-11 w-fit self-start rounded-lg border border-border px-3 text-sm text-muted-foreground transition-colors duration-150 hover:border-primary hover:text-foreground md:min-h-9"
         onClick={() => setOpen(true)}
       >
         {t('report')}

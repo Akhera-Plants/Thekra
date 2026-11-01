@@ -8,7 +8,7 @@ import { ArabicText } from '@/components/shared/ArabicText';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { FormattedNumber } from '@/components/shared/FormattedNumber';
 import { BranchReader } from '@/features/iman-branches/components/BranchReader';
-import { BranchRelatedLinks, MizanBlock } from '@/features/topic/components/TopicTemplate';
+import { BranchRelatedLinks, MizanBlock, mizanHighlight } from '@/features/topic/components/TopicTemplate';
 import type { BranchQuotesMeta } from '@/lib/api/branches';
 import { TOPIC_PAGE_SIZE } from '@/lib/reading';
 import { localeAlternates } from '@/lib/seo';
@@ -47,6 +47,7 @@ export default async function BranchDetailPage({
   const t = await getTranslations('branches');
   const tNav = await getTranslations('nav');
   const tCrumbs = await getTranslations('breadcrumbs');
+  const tTopic = await getTranslations('topic');
 
   let detail: Awaited<ReturnType<typeof getBranch>>['data'];
   try {
@@ -70,6 +71,21 @@ export default async function BranchDetailPage({
   const heading = locale === 'en'
     ? (detail.title || t('branchFallback', { number: detail.number }))
     : detail.titleAr;
+
+  const highlight = mizanHighlight(detail.mizan, { title: tTopic('mizanTitle'), lead: tTopic('mizanLead'), top: tTopic('mizanTop') });
+  const explanations =
+    detail.explanations.length > 0 ? (
+      <section className="flex flex-col gap-3">
+        <h2 className="font-arabic-display text-[22px] font-semibold md:text-[26px]">{t('explanations')}</h2>
+        <ul className="flex flex-col gap-4">
+          {detail.explanations.map((item) => (
+            <li key={item.id}>
+              <ArabicText size="base">{item.text}</ArabicText>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ) : null;
 
   return (
     <div className="page-width inner-page topic-page">
@@ -101,32 +117,24 @@ export default async function BranchDetailPage({
           ) : null}
         </header>
 
-        {/* The topic template (redesign §4.5): الميزان → texts → the sins and deeds of this branch. No action here. */}
-        <MizanBlock mizan={detail.mizan} intent="iman-branch" />
-
-        {detail.explanations.length > 0 && (
-          <section className="flex flex-col gap-3">
-            <h2>{t('explanations')}</h2>
-            <ul className="flex flex-col gap-4">
-              {detail.explanations.map((item) => (
-                <li key={item.id}>
-                  <ArabicText size="base">{item.text}</ArabicText>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
+        {/* The topic template (owner, 2026-11-01): the tabs right under the title; «الميزان», the branch's explanation
+            («الكل» only) and every text inside them, then the sins and deeds of this branch. No action here. */}
         {readerItems.length === 0 ? (
-          <div className="next-step">
-            <p>{t('noQuotes')}</p>
-            <p>{t('pending')}</p>
-            <Link href="/branches" className="text-link">
-              {tCrumbs('branches')}
-            </Link>
+          <div className="flex flex-col gap-6">
+            <MizanBlock mizan={detail.mizan} intent="iman-branch" />
+            {explanations}
+            <div className="next-step">
+              <p>{t('noQuotes')}</p>
+              <p>{t('pending')}</p>
+              <Link href="/branches" className="outline-button mt-3">
+                {tCrumbs('branches')}
+              </Link>
+            </div>
           </div>
         ) : (
           <BranchReader
+            highlight={highlight}
+            intro={explanations}
             number={branchNumber}
             lang={locale}
             items={readerItems}

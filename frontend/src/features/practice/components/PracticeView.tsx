@@ -2,15 +2,14 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { CalendarPlus } from 'lucide-react';
+import { CalendarPlus, Plus } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
-import { isEstablished, isPaused, limits, loadWarning, type LimitKind } from '@thekra/practice-core';
+import { activePrograms, isEstablished, isPaused, limits, loadWarning, type LimitKind } from '@thekra/practice-core';
 import { useRouter } from '@/i18n/navigation';
-import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { QueryErrorState } from '@/components/shared/feedback/QueryErrorState';
 import { downloadTextFile, ICS_MIME } from '@/lib/practice/download';
 import { isPeriodicTemplate, limitOptions } from '@/lib/practice/limits';
-import { habitOf, planReminderEvents, planRemindersIcs, planToday, ramadanEnd } from '@/lib/practice/plans';
+import { habitOf, planReminderEvents, planRemindersIcs, planToday } from '@/lib/practice/plans';
 import type { PracticeHabit } from '@/lib/types/practice';
 import { usePracticeCatalog } from '../hooks/usePracticeCatalog';
 import { usePracticeStore } from '../hooks/usePracticeStore';
@@ -24,20 +23,22 @@ import { PlanSetup } from './PlanSetup';
 import { PracticeLoading } from './PracticeLoading';
 import { ProgressPanel } from './ProgressPanel';
 import { NotificationsLink } from './NotificationsLink';
-import { currentPrayerLookup } from '@/lib/practice/screen-stores';
+import { currentPrayerLookup, currentPrayerTimes } from '@/lib/practice/screen-stores';
 import { InfoTip } from '@/components/shared/InfoTip';
 import { SegmentTabs, SegmentTabsContent } from '@/components/shared/kit/segment-tabs';
 import { useWirdContext } from '../hooks/useWirdContext';
 import { GraduationOffers, MonthPanel, StreakLine } from './hub/HabitStats';
 import { TallySection } from './hub/KnowledgeCards';
+import { HabitPrograms } from './HabitPrograms';
 
 const HABITS_TABS = ['habits', 'month', 'progress'] as const;
 type HabitsTab = (typeof HABITS_TABS)[number];
 const isHabitsTab = (value: string | null): value is HabitsTab => (HABITS_TABS as readonly (string | null)[]).includes(value);
 
 /**
- * «عاداتي» (owner, 2026-11-01: one page with what was «السجل»): the streak, then three tabs — «العادات» (today's habits,
- * add, pause, edit, calendar file), «الشهر» (the month calendar) and «التقدّم» (totals and «وين وصلت»). Setup replaces them. `?add=1` (from «أضف» on the hub)
+ * «عاداتي» (owner, 2026-11-01: one page with what was «السجل», and it holds leaving sins too): the streak, then three
+ * tabs — «العادات» («فعل الطاعات»: today's habits, add, calendar file; «ترك المعاصي»: the «تخفَّف» programs), «الشهر»
+ * (the month calendar) and «التقدّم» (totals and «وين وصلت»). Setup replaces them while there is neither a habit nor a program. `?add=1` (from «أضف» on the hub)
  * opens the setup at once, with `&habit=<key>` (a good-deed page's «ابدأ بها») already chosen; a `#plan-<id>` hash (a habit row on the hub) scrolls to that plan.
  */
 export function PracticeView() {
@@ -58,7 +59,9 @@ export function PracticeView() {
   // The first habit's setup stays open after the plan is saved, for its last screen (the two switches).
   const [finishingFirst, setFinishingFirst] = useState(false);
   const today = clock?.today ?? null;
-  const viewKey = !snapshot ? 'loading' : snapshot.store.plans.length === 0 || adding || finishingFirst ? 'setup' : 'today';
+  // Nothing yet (no habit, no program): the setup is the page. A program alone shows the page with an empty habits part.
+  const isEmpty = snapshot ? snapshot.store.plans.length === 0 && activePrograms(snapshot.store.programs).length === 0 : false;
+  const viewKey = !snapshot ? 'loading' : isEmpty || adding || finishingFirst ? 'setup' : 'today';
   const todayRef = useFocusOnChange<HTMLHeadingElement>(viewKey);
   const plans = snapshot?.store.plans;
   useEndedSeasons(plans, today);
@@ -88,7 +91,7 @@ export function PracticeView() {
   const preselectedHabit = requestedHabit ? habits.get(requestedHabit) : undefined;
   const addKind: LimitKind = isPeriodicTemplate(preselectedHabit) ? 'periodic' : 'sapling';
   const limitReached = adding && plans.length > 0 && catalog.isSuccess && !planLimits.canAdd(addKind);
-  const settingUp = plans.length === 0 || finishingFirst || (adding && !limitReached);
+  const settingUp = isEmpty || finishingFirst || (adding && !limitReached);
 
   function finishAdding() {
     setAdding(false);
@@ -110,24 +113,27 @@ export function PracticeView() {
           freeMinutes={snapshot.store.settings.freeMinutesPerDay}
           today={today}
           onDone={finishAdding}
-          onCancel={plans.length > 0 ? finishAdding : undefined}
+          onCancel={isEmpty ? undefined : finishAdding}
           onFirstPlan={() => setFinishingFirst(true)}
         />
       </div>
     );
   }
 
+  const prayer = currentPrayerTimes(today);
   const entries = plans.map((plan) => {
     const habit = habitOf(plan, habits);
     return { plan, habit, view: planToday(plan, today, clock.minutes, { fallback: habit?.defaultRule, hijriOffset, prayer: currentPrayerLookup()(today) }) };
   });
+  const card = ({ plan, habit, view }: (typeof entries)[number]) => (
+    <PlanCard key={plan.id} plan={plan} habit={habit} view={view} today={today} hijriOffset={hijriOffset} prayer={prayer} />
+  );
   // «عاداتي»: the saplings and periodic acts by today, then «عادات راسخة» and «موقوفة مؤقتًا» apart.
   const active = entries.filter((entry) => !isPaused(entry.plan) && !isEstablished(entry.plan));
   const established = entries.filter((entry) => !isPaused(entry.plan) && isEstablished(entry.plan));
   const paused = entries.filter((entry) => isPaused(entry.plan));
   const dueToday = active.filter((entry) => entry.view.isDueToday);
   const notDueToday = active.filter((entry) => !entry.view.isDueToday);
-  const ramadanUntil = ramadanEnd(today, hijriOffset);
   const freeMinutes = snapshot.store.settings.freeMinutesPerDay;
   const overLoaded = freeMinutes !== undefined && loadWarning(plans, freeMinutes, today) === 'over';
 
@@ -140,7 +146,6 @@ export function PracticeView() {
 
   return (
     <div className="flex flex-col gap-8">
-      <SyncStatus persistent={snapshot.persistent} />
       <LimitSheet
         kind={addKind}
         open={limitReached}
@@ -171,54 +176,44 @@ export function PracticeView() {
             />
           ) : null}
 
-          <section aria-labelledby="today-title" className="flex flex-col gap-4">
-            <h2 id="today-title" ref={todayRef} tabIndex={-1} className="text-2xl font-medium focus:outline-none">
-              {t('title')}
-            </h2>
-            {dueToday.length === 0 ? <p className="text-muted-foreground">{t('noneDueToday')}</p> : null}
-            {dueToday.map(({ plan, habit, view }) => (
-              <PlanCard key={plan.id} plan={plan} habit={habit} view={view} today={today} ramadanUntil={ramadanUntil} />
-            ))}
+          <section aria-labelledby="deeds-title" className="flex flex-col gap-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 id="deeds-title" ref={todayRef} tabIndex={-1} className="text-2xl font-medium focus:outline-none">
+                {t('deedsTitle')}
+              </h2>
+              <button type="button" className="outline-button" onClick={() => setAdding(true)}>
+                <Plus aria-hidden />
+                {t('add')}
+              </button>
+            </div>
+
+            {plans.length === 0 ? (
+              <p className="rounded-2xl border border-dashed border-border p-4 text-muted-foreground md:p-5">{t('noHabits')}</p>
+            ) : (
+              <HabitGroup id="today-title" title={t('title')} empty={dueToday.length === 0 ? t('noneDueToday') : null}>
+                {dueToday.map(card)}
+              </HabitGroup>
+            )}
+            {notDueToday.length > 0 ? (
+              <HabitGroup id="not-due-title" title={t('notDueTitle')} note={t('notDueNote')}>
+                {notDueToday.map(card)}
+              </HabitGroup>
+            ) : null}
+            {established.length > 0 ? (
+              <HabitGroup id="established-title" title={t('establishedTitle')}>
+                {established.map(card)}
+              </HabitGroup>
+            ) : null}
+            {paused.length > 0 ? (
+              <HabitGroup id="paused-title" title={t('pausedTitle')}>
+                {paused.map(card)}
+              </HabitGroup>
+            ) : null}
           </section>
 
-          {notDueToday.length > 0 ? (
-            <section aria-labelledby="not-due-title" className="flex flex-col gap-3">
-              <h2 id="not-due-title" className="text-xl font-medium">
-                {t('notDueTitle')}
-              </h2>
-              <p className="-mt-1 text-sm leading-7 text-muted-foreground">{t('notDueNote')}</p>
-              {notDueToday.map(({ plan, habit, view }) => (
-                <PlanCard key={plan.id} plan={plan} habit={habit} view={view} today={today} ramadanUntil={ramadanUntil} />
-              ))}
-            </section>
-          ) : null}
+          <HabitPrograms store={snapshot.store} today={today} catalog={catalog.data} />
 
-          {established.length > 0 ? (
-            <section aria-labelledby="established-title" className="flex flex-col gap-3">
-              <h2 id="established-title" className="text-xl font-medium">
-                {t('establishedTitle')}
-              </h2>
-              {established.map(({ plan, habit, view }) => (
-                <PlanCard key={plan.id} plan={plan} habit={habit} view={view} today={today} ramadanUntil={ramadanUntil} />
-              ))}
-            </section>
-          ) : null}
-
-          {paused.length > 0 ? (
-            <section aria-labelledby="paused-title" className="flex flex-col gap-3">
-              <h2 id="paused-title" className="text-xl font-medium">
-                {t('pausedTitle')}
-              </h2>
-              {paused.map(({ plan, habit, view }) => (
-                <PlanCard key={plan.id} plan={plan} habit={habit} view={view} today={today} ramadanUntil={ramadanUntil} />
-              ))}
-            </section>
-          ) : null}
-
-          <div className="flex flex-wrap items-center gap-3">
-            <button type="button" className="solid-button button-wrap" onClick={() => setAdding(true)}>
-              {t('add')} <DirectionalArrow />
-            </button>
+          <div className="flex flex-wrap items-center gap-3 border-t border-border pt-6">
             <span className="inline-flex items-center gap-1">
               <button type="button" className="outline-button button-wrap" onClick={handleReminders}>
                 <CalendarPlus aria-hidden />
@@ -226,8 +221,8 @@ export function PracticeView() {
               </button>
               <InfoTip label={t('downloadReminders')}>{t('remindersHint')}</InfoTip>
             </span>
+            <NotificationsLink />
           </div>
-          <NotificationsLink />
         </SegmentTabsContent>
 
         <SegmentTabsContent value="month">{wird ? <MonthPanel context={wird} /> : <PracticeLoading />}</SegmentTabsContent>
@@ -237,6 +232,30 @@ export function PracticeView() {
           <ProgressPanel entries={entries} today={today} />
         </SegmentTabsContent>
       </SegmentTabs>
+      {/* Where the data lives: one quiet line under the page (the account link is in «الإعدادات»). */}
+      <SyncStatus persistent={snapshot.persistent} quiet />
     </div>
+  );
+}
+
+interface HabitGroupProps {
+  id: string;
+  title: string;
+  note?: string;
+  empty?: string | null;
+  children: React.ReactNode;
+}
+
+/** One group of «فعل الطاعات» («اليوم», «ليست مطلوبة اليوم», «عادات راسخة», «موقوفة مؤقتًا»). */
+function HabitGroup({ id, title, note, empty, children }: HabitGroupProps) {
+  return (
+    <section aria-labelledby={id} className="flex flex-col gap-3">
+      <h3 id={id} className="text-lg font-medium text-muted-foreground">
+        {title}
+      </h3>
+      {note ? <p className="-mt-2 text-sm leading-7 text-muted-foreground">{note}</p> : null}
+      {empty ? <p className="text-muted-foreground">{empty}</p> : null}
+      {children}
+    </section>
   );
 }

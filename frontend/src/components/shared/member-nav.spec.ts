@@ -5,7 +5,8 @@ describe('member navigation', () => {
   it('marks the page that owns the path', () => {
     expect(currentMemberItem('/practice')).toBe('wird');
     expect(currentMemberItem('/practice/habits')).toBe('habits');
-    expect(currentMemberItem('/practice/leave-sin/moment')).toBe('leaveSin');
+    expect(currentMemberItem('/practice/leave-sin')).toBe('habits');
+    expect(currentMemberItem('/practice/leave-sin/moment')).toBe('habits');
     expect(currentMemberItem('/favorites')).toBe('favorites');
     expect(currentMemberItem('/calendar')).toBe('calendar');
   });
@@ -27,5 +28,8 @@ describe('member navigation', () => {
     const keys = [...MEMBER_PRIMARY, ...MEMBER_MORE.flatMap((g) => g.items)].map((i) => i.key);
     expect(new Set(keys).size).toBe(keys.length);
     expect(keys).not.toContain('record');
+    // «تخفَّف» is the «تخفَّف من معصية» door and lives in «عاداتي»: no second entry (owner, 2026-11-01).
+    expect(keys).not.toContain('leaveSin');
+    expect([...MEMBER_PRIMARY, ...MEMBER_MORE.flatMap((g) => g.items)].map((i) => i.href)).not.toContain('/practice/leave-sin');
   });
 });

@@ -16,14 +16,14 @@ export function VaultLink({ programs }: { programs: readonly SinProgram[] }) {
   const href = { pathname: '/settings', hash: 'vault' };
   if (saveState === 'error' || saveState === 'reopen') {
     return (
-      <Link href={href} className="text-link text-destructive" role="alert">
+      <Link href={href} className="outline-button text-destructive" role="alert">
         {saveState === 'reopen' ? t('errors.reopen') : t('errors.save')}
       </Link>
     );
   }
   if (session) return <span>· {t('linkOn')}</span>;
   return (
-    <Link href={href} className="text-link">
+    <Link href={href} className="outline-button">
       {vault.data ? t('linkLocked') : t('linkOff')}
     </Link>
   );

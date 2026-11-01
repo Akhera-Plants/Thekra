@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useId } from 'react';
+import { useMemo, useState, useId, type ReactNode } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { QuoteCard } from '@/components/shared/quote/QuoteCard';
 import { Button } from '@/components/shared/kit/button';
@@ -28,6 +28,16 @@ export interface ReaderSection {
 
 export type TypeFilter = 'all' | 'verse' | 'hadith' | 'athar';
 
+/**
+ * «الميزان» inside the tabs (owner, 2026-11-01: every text of a topic page sits under «الكل · الآيات · الأحاديث»):
+ * shown first in the tab its texts belong to, never under a theme chip; the same text is not repeated in the list.
+ */
+export interface ReaderHighlight {
+  title: string;
+  lead?: string;
+  items: ReaderItem[];
+}
+
 const PAGE_SIZE = 10;
 
 interface ReminderReaderProps {
@@ -53,6 +63,10 @@ interface ReminderReaderProps {
   themeLang?: 'ar' | 'en';
   /** True while the parent fetches a new filter; the current list stays, dimmed. */
   busy?: boolean;
+  /** «الميزان»: first in the tab content (see {@link ReaderHighlight}). */
+  highlight?: ReaderHighlight | null;
+  /** More text for «الكل» only, after the highlight and before the list (a branch's explanation). */
+  intro?: ReactNode;
   labels: {
     showMore: string;
     tabAll: string;
@@ -120,6 +134,8 @@ export function ReminderReader({
   onThemeChange,
   themeLang = 'ar',
   busy = false,
+  highlight = null,
+  intro,
   labels,
 }: ReminderReaderProps) {
   void _total;
@@ -206,6 +222,20 @@ export function ReminderReader({
     return result;
   }, [filteredSections, visibleCount, isControlled]);
 
+  // «الميزان» heads the tab its texts belong to, and only without a theme chip (a theme narrows the list).
+  const highlightItems = useMemo(
+    () => (highlight && !activeTheme ? highlight.items.filter((item) => matchesFilter(item, activeFilter)) : []),
+    [highlight, activeTheme, activeFilter],
+  );
+  const listSections = useMemo(() => {
+    if (highlightItems.length === 0) return shownSections;
+    const ids = new Set(highlightItems.map((item) => item.id));
+    return shownSections
+      .map((section) => ({ ...section, items: section.items.filter((item) => !ids.has(item.id)) }))
+      .filter((section) => section.items.length > 0);
+  }, [shownSections, highlightItems]);
+  const showIntro = Boolean(intro) && activeFilter === 'all' && !activeTheme;
+
   // «Show more» is available when:
   // - network mode: parent says there's a next page
   // - legacy mode: more items loaded than currently shown
@@ -266,7 +296,7 @@ export function ReminderReader({
   );
   const studyQuote =
     studyQuoteId
-      ? (allItems.find((item) => item.quote.id === studyQuoteId)?.quote ?? null)
+      ? ([...allItems, ...(highlight?.items ?? [])].find((item) => item.quote.id === studyQuoteId)?.quote ?? null)
       : null;
 
   return (
@@ -309,7 +339,29 @@ export function ReminderReader({
         aria-busy={busy || undefined}
         className="flex flex-col gap-8 transition-opacity duration-150 md:gap-9 aria-busy:opacity-60"
       >
-        {shownSections.map((section) => (
+        {highlight && highlightItems.length > 0 ? (
+          <section aria-labelledby={`${listId}-mizan`} className="flex flex-col gap-3">
+            <h2 id={`${listId}-mizan`} className="font-arabic-display text-[22px] font-semibold md:text-[26px]">
+              {highlight.title}
+            </h2>
+            {highlight.lead ? <p className="-mt-1 text-sm leading-7 text-muted-foreground">{highlight.lead}</p> : null}
+            <ul className="flex flex-col gap-8 md:gap-9">
+              {highlightItems.map((item) => (
+                <li key={`mizan-${item.id}`}>
+                  <QuoteCard
+                    quote={item.quote}
+                    detailHref={`/quotes/${item.quote.id}`}
+                    intent={intent}
+                    onOpenStudy={(quote) => setStudyQuoteId(quote.id)}
+                    {...favoriteProps(item.quote)}
+                  />
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+        {showIntro ? intro : null}
+        {listSections.map((section) => (
           <section key={section.heading || 'texts'} className="flex flex-col gap-8 md:gap-9">
             {section.heading ? (
               <h2 className="font-arabic-display text-[22px] font-semibold md:text-[26px]">

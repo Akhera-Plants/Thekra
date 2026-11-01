@@ -1,7 +1,8 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
-import { ReminderReader, type ReaderItem, type ReaderSection } from '@/components/shared/editorial/ReminderReader';
+import { ReminderReader, type ReaderHighlight, type ReaderItem, type ReaderSection } from '@/components/shared/editorial/ReminderReader';
 import { ReaderStatus } from '@/components/shared/feedback/ReaderStatus';
 import { useTopicReader } from '@/components/shared/editorial/useTopicReader';
 import { getGoodDeedQuotes } from '@/lib/api/good-deeds';
@@ -21,9 +22,13 @@ interface GoodDeedReaderProps {
   initialTheme?: string | null;
   /** meta.hasNext of the server page: «show more» continues from page 2. */
   initialHasNext?: boolean;
+  /** «الميزان», first inside the tabs. */
+  highlight?: ReaderHighlight | null;
+  /** «الكل» only, before the list. */
+  intro?: ReactNode;
 }
 
-export function GoodDeedReader({ slug, lang, items, total, sections, countsByKind, themes, initialTheme = null, initialHasNext = false }: GoodDeedReaderProps) {
+export function GoodDeedReader({ slug, lang, items, total, sections, countsByKind, themes, initialTheme = null, initialHasNext = false, highlight = null, intro }: GoodDeedReaderProps) {
   const t = useTranslations('goodDeedDetail');
   const reader = useTopicReader({
     queryRoot: 'good-deeds',
@@ -41,6 +46,8 @@ export function GoodDeedReader({ slug, lang, items, total, sections, countsByKin
   return (
     <>
     <ReminderReader
+      highlight={highlight}
+      intro={intro}
       items={reader.items}
       total={total}
       sections={reader.sections}
