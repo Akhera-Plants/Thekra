@@ -1,29 +1,13 @@
 'use client';
 
 import { useMemo, useState, useSyncExternalStore } from 'react';
-import { RefreshCw, ShieldCheck, Waves } from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query';
+import { ShieldCheck, Waves } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
-import { activePrograms, limits } from '@thekra/practice-core';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+import { activePrograms, limits, programEntryFor } from '@thekra/practice-core';
 import { QueryErrorState } from '@/components/shared/feedback/QueryErrorState';
-import { Button } from '@/components/shared/kit/button';
-import { deleteSinVault } from '@/lib/api/practice-me';
-import { reportFailure } from '@/lib/errors';
-import { pendingProgramForSession, setMomentSource, wipeSinPrograms } from '@/lib/practice/local-store';
+import { InfoTip } from '@/components/shared/InfoTip';
+import { pendingProgramForSession, setMomentSource } from '@/lib/practice/local-store';
 import { Link } from '@/i18n/navigation';
-import { setVaultSession } from '@/lib/practice/vault-flow';
-import { queryKeys } from '@/lib/query-keys';
 import { allProgramEvidenceIds } from '@/lib/practice/programs';
 import type { PracticeHabit } from '@/lib/types/practice';
 import { usePracticeCatalog } from '../hooks/usePracticeCatalog';
@@ -31,10 +15,9 @@ import { usePracticeEvidence } from '../hooks/usePracticeEvidence';
 import { usePracticeStore } from '../hooks/usePracticeStore';
 import { useSinNames } from '../hooks/useSinNames';
 import { useFocusOnChange } from '../hooks/useFocusOnChange';
-import { useSinVault } from '../hooks/useSinVault';
 import { useToday } from '../hooks/useToday';
 import { LocalOnlyNote } from './LocalOnlyNote';
-import { VaultPanel } from './VaultPanel';
+import { VaultLink } from './VaultLink';
 import { PracticeLoading } from './PracticeLoading';
 import { LimitSheet } from './LimitSheet';
 import { ProgramChooser } from './ProgramChooser';
@@ -44,7 +27,7 @@ const noSubscribe = () => () => {};
 const serverPending = () => null;
 
 /**
- * «تخفَّف». LOCAL ONLY: the chosen program, check-ins and notes stay in this browser. Every request
+ * «تخفَّف» (owner, 2026-11-01: any sin can start it; the encrypted copy is a setting now, linked in one line). LOCAL ONLY: the chosen program, check-ins and notes stay in this browser. Every request
  * this page makes (catalog, the whole sin list, all programs' evidence) is the same for every visitor.
  */
 export function LeaveSinView() {
@@ -85,14 +68,13 @@ export function LeaveSinView() {
   }
 
   const { common, programs: entries } = catalog.data.sinPrograms;
+  // A sin without a written program runs the common one, with the category the visitor gave when starting it.
   const active = activePrograms(snapshot.store.programs).flatMap((program) => {
-    const entry = entries.find((e) => e.sin === program.sinSlug);
+    const entry = programEntryFor(entries, program.sinSlug, program.category);
     return entry ? [{ program, entry }] : [];
   });
   const preselectNew =
-    preselected && entries.some((e) => e.sin === preselected) && !active.some((a) => a.program.sinSlug === preselected)
-      ? preselected
-      : null;
+    preselected && names.has(preselected) && !active.some((a) => a.program.sinSlug === preselected) ? preselected : null;
   // One «تخفَّف» program until it reaches its last stage (practice-core `limits`).
   const programLimits = limits(snapshot.store, clock.today);
   const canStart = active.length === 0 || programLimits.canAdd('program');
@@ -101,9 +83,11 @@ export function LeaveSinView() {
   return (
     <div className="flex flex-col gap-10">
       <div className="flex flex-col gap-2">
-        <p className="flex items-start gap-2 leading-8">
-          <ShieldCheck className="mt-1.5 size-5 shrink-0 text-primary" aria-hidden />
-          <span>{t('privacy')}</span>
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm leading-7 text-muted-foreground">
+          <ShieldCheck className="size-4 shrink-0 text-primary" aria-hidden />
+          <span>{t('privacyShort')}</span>
+          <InfoTip>{t('privacy')}</InfoTip>
+          <VaultLink programs={snapshot.store.programs} />
         </p>
         {snapshot.persistent ? null : <LocalOnlyNote persistent={false} />}
       </div>
@@ -119,13 +103,12 @@ export function LeaveSinView() {
         </Link>
       ) : null}
 
-      <VaultPanel programs={snapshot.store.programs} />
-
       <div ref={contentRef} tabIndex={-1} className="flex flex-col gap-10 focus:outline-none">
         {showChooser ? (
           <ProgramChooser
             entries={entries}
             common={common}
+            sins={sins.data}
             names={names}
             preselected={preselectNew}
             today={clock.today}
@@ -154,7 +137,7 @@ export function LeaveSinView() {
           : null}
       </div>
 
-      {!showChooser && active.length < entries.length ? (
+      {!showChooser && active.length < names.size ? (
         <button type="button" className="outline-button button-wrap self-start" onClick={() => setChoosing(true)}>
           {t('another')}
         </button>
@@ -167,80 +150,6 @@ export function LeaveSinView() {
         habits={new Map()}
         today={clock.today}
       />
-
-      {/* Any program data counts, end markers included, so «احذف كل بيانات البرنامج» can always clear them. */}
-      <WipeAll hasPrograms={snapshot.store.programs.length > 0} />
     </div>
-  );
-}
-
-interface WipeAllProps {
-  hasPrograms: boolean;
-}
-
-/** «احذف كل بيانات البرنامج»: this device at once, and the encrypted copy in the account when there is one. */
-function WipeAll({ hasPrograms }: WipeAllProps) {
-  const t = useTranslations('leaveSin.wipe');
-  const queryClient = useQueryClient();
-  const { userId, vault } = useSinVault();
-  const [remoteFailed, setRemoteFailed] = useState(false);
-  const hasVault = Boolean(vault.data);
-  if (!hasPrograms && !hasVault && !remoteFailed) return null;
-
-  async function removeRemote() {
-    if (!userId) return;
-    try {
-      await deleteSinVault();
-      setRemoteFailed(false);
-    } catch (error) {
-      reportFailure('sin vault delete', error);
-      setRemoteFailed(true);
-    } finally {
-      void queryClient.invalidateQueries({ queryKey: queryKeys.practice.vault(userId) });
-    }
-  }
-
-  function handleConfirm() {
-    wipeSinPrograms();
-    setVaultSession(null);
-    // Signed in: also delete the vault, even when it was never opened here (it may hold this program).
-    if (userId) void removeRemote();
-  }
-
-  return (
-    <section className="flex flex-col items-start gap-2 border-t border-border pt-6" aria-labelledby="wipe-title">
-      <h2 id="wipe-title" className="text-xl font-medium">
-        {t('title')}
-      </h2>
-      <p className="text-sm leading-7 text-muted-foreground">{userId ? t('leadAccount') : t('lead')}</p>
-      {remoteFailed ? (
-        <div className="flex flex-col items-start gap-2" role="alert">
-          <p className="text-sm text-destructive">{t('remoteFailed')}</p>
-          <Button variant="outline" tone="primary" size="sm" onClick={() => void removeRemote()}>
-            <RefreshCw aria-hidden />
-            {t('retry')}
-          </Button>
-        </div>
-      ) : null}
-      {hasPrograms || hasVault ? (
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <button type="button" className="outline-button button-wrap">
-              {t('button')}
-            </button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{t('confirmTitle')}</AlertDialogTitle>
-              <AlertDialogDescription>{userId ? t('confirmBodyAccount') : t('confirmBody')}</AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
-              <AlertDialogAction onClick={handleConfirm}>{t('confirm')}</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      ) : null}
-    </section>
   );
 }

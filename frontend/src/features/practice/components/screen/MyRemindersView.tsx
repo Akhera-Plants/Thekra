@@ -17,7 +17,7 @@ import { myRemindersStore, useMyReminders } from '@/lib/practice/screen-stores';
 import { PracticeLoading } from '../PracticeLoading';
 
 /**
- * «تذكيراتي» (redesign §4.6): the user's own short lines, kept on this browser only («على جهازي فقط», the only mode
+ * «تذكيراتي» (redesign §4.6; a tab of «المحفوظات» since 2026-11-01): the user's own short lines, kept on this browser only («على جهازي فقط», the only mode
  * for now). At most {@link MY_REMINDERS_MAX} lines of {@link MY_REMINDER_MAX_LENGTH} characters.
  */
 export function MyRemindersView() {
@@ -42,8 +42,10 @@ export function MyRemindersView() {
   }
 
   return (
-    <div className="flex max-w-3xl flex-col gap-8">
-      <p className="text-sm text-muted-foreground">{t('deviceOnly')}</p>
+    <div className="flex max-w-3xl flex-col gap-6">
+      <p className="text-sm leading-7 text-muted-foreground">
+        {t('lead')} {t('deviceOnly')}
+      </p>
       <form
         className="flex flex-col gap-2"
         onSubmit={(e) => {

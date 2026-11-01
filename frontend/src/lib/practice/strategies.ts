@@ -16,7 +16,7 @@ export function strategyTarget(action: StrategyAction): StrategyTarget {
     case 'wird':
       return { href: '/practice' };
     case 'record':
-      return { href: '/practice/record' };
+      return { href: '/practice/habits' };
     case 'seasons':
       return { href: '/calendar' };
     case 'moment':

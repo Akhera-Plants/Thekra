@@ -47,7 +47,7 @@ function useSignedIn(): boolean {
 }
 
 interface HomeLayoutProps {
-  /** «أبواب الخير»: «أعنّي على ترك معصية» · «أعنّي على فعل طاعة» · «شُعَب الإيمان» and «مواسم الخير». */
+  /** «أبواب الخير»: «تخفَّف من معصية» · «أعنّي على فعل طاعة» · «شُعَب الإيمان» and «مواسم الخير». */
   pathways: ReactNode;
   /** Everything under the doors, in the order it always had (moments, «تذكرة مختارة», reflection, sources). */
   children: ReactNode;
@@ -56,7 +56,7 @@ interface HomeLayoutProps {
 /**
  * The home (owner decision, 2026-11-01): «أبواب الخير» is the top of the page for everyone who is not signed in. A
  * signed-in user sees two large cards first, the size of the doors: «ورد اليوم» (what is left today and the streak) and
- * «سجلّي»; the doors and the rest follow unchanged.
+ * «عاداتي»; the doors and the rest follow unchanged.
  */
 export function HomeLayout({ pathways, children }: HomeLayoutProps) {
   const signedIn = useSignedIn();
@@ -110,16 +110,16 @@ function SignedInActions() {
         </span>
       </Link>
 
-      <Link className="pathway pathway-soft" href="/practice/record">
+      <Link className="pathway pathway-soft" href="/practice/habits">
         <span className="pathway-top">
           <span className="pathway-icon">
             <NotebookText className="size-7" aria-hidden />
           </span>
         </span>
-        <span className="pathway-title">{tNav('record')}</span>
-        <span className="pathway-description">{t('recordDescription')}</span>
+        <span className="pathway-title">{tNav('habits')}</span>
+        <span className="pathway-description">{t('habitsDescription')}</span>
         <span className="pathway-cta">
-          {t('recordCta')}{' '}
+          {t('habitsCta')}{' '}
           <span className="pathway-arrow">
             <DirectionalArrow className="size-[19px]" />
           </span>

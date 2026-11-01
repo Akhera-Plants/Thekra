@@ -11,6 +11,8 @@ import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { useSession } from '@/features/auth/hooks/useSession';
 import { AccountDataPanel } from './AccountDataPanel';
 import { AccountSection } from './AccountSection';
+import { VaultPanel } from '@/features/practice/components/VaultPanel';
+import { usePracticeStore } from '@/features/practice/hooks/usePracticeStore';
 
 const noSubscribe = () => () => {};
 
@@ -53,6 +55,8 @@ export function SettingsView() {
               <ScreenSettingsLinks />
             </section>
             <Separator />
+            <SettingsVault />
+            <Separator />
           </>
         ) : null}
 
@@ -83,4 +87,11 @@ export function SettingsView() {
       </div>
     </div>
   );
+}
+
+/** «الحفظ المشفّر»: one setting for every «تخفَّف» program on this device (owner, 2026-11-01). */
+function SettingsVault() {
+  const snapshot = usePracticeStore();
+  if (!snapshot) return null;
+  return <VaultPanel programs={snapshot.store.programs} />;
 }

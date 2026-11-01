@@ -150,7 +150,8 @@ export default async function SinDetailPage({
 
         {/* The topic template (redesign §4.5): الميزان → one action → texts → شعب الإيمان → the opposite. */}
         <MizanBlock mizan={sin.mizan} intent="sin" />
-        {sin.program?.available ? <StartProgramLink slug={slug} /> : null}
+        {/* «تخفَّف من معصية» is open for every sin (owner, 2026-11-01): without a written program it runs the common one. */}
+        <StartProgramLink slug={slug} />
 
         {items.length === 0 ? (
           <div className="next-step">

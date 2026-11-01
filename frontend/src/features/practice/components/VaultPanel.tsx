@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { useQueryClient } from '@tanstack/react-query';
@@ -18,19 +18,16 @@ import { updateStore } from '@/lib/practice/local-store';
 import {
   VaultExistsError,
   createVault,
-  lastSealedFingerprint,
   mergePrograms,
   openVault,
   programsFingerprint,
-  saveVault,
   setVaultSession,
 } from '@/lib/practice/vault-flow';
 import { queryKeys } from '@/lib/query-keys';
 import { z } from '@/lib/zod';
 import { useSignInHrefs } from '../hooks/useSignInHref';
-import { useSinVault, vaultApi } from '../hooks/useSinVault';
-
-const AUTOSAVE_DELAY_MS = 800;
+import { vaultApi } from '../hooks/useSinVault';
+import { useVaultAutosave } from '../hooks/useVaultAutosave';
 
 /** Lets the busy label paint before the deliberately slow key derivation runs on this thread. */
 const nextFrame = () => new Promise<void>((resolve) => setTimeout(resolve, 30));
@@ -40,49 +37,15 @@ interface VaultPanelProps {
 }
 
 /**
- * «احفظ البرنامج مشفّرًا في حسابك» / «افتح البرنامج». Device-only by default; with an account the programs can be
- * sealed under a privacy code and re-sealed after every change while unlocked in this tab.
+ * «الحفظ المشفّر» in Settings (owner, 2026-11-01: one option for every «تخفَّف» program, moved from the «تخفَّف» page).
+ * Device-only by default; with an account the programs can be sealed under a privacy code and re-sealed after every
+ * change while unlocked in this tab ({@link useVaultAutosave}).
  */
 export function VaultPanel({ programs }: VaultPanelProps) {
   const t = useTranslations('leaveSin.vault');
   const hrefs = useSignInHrefs();
-  const queryClient = useQueryClient();
-  const { userId, sessionLoading, vault, session } = useSinVault();
+  const { userId, sessionLoading, vault, session, saveState, setSaveState, saveNow } = useVaultAutosave(programs);
   const [offering, setOffering] = useState(false);
-  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'error' | 'reopen'>('idle');
-  const fingerprint = programsFingerprint(programs);
-
-  async function saveNow() {
-    const current = session;
-    if (!current || !userId) return;
-    setSaveState('saving');
-    try {
-      const result = await saveVault(vaultApi, current, programs);
-      const sealed = programsFingerprint(result.programs);
-      if (sealed !== programsFingerprint(programs)) updateStore((store) => ({ ...store, programs: result.programs }));
-      setVaultSession(result.session, userId, sealed);
-      setSaveState('idle');
-      void queryClient.invalidateQueries({ queryKey: queryKeys.practice.vault(userId) });
-    } catch (error) {
-      if (error instanceof VaultLockedError) {
-        setVaultSession(null);
-        setSaveState('reopen');
-        void queryClient.invalidateQueries({ queryKey: queryKeys.practice.vault(userId) });
-        return;
-      }
-      reportFailure('sin vault save', error);
-      setSaveState('error');
-    }
-  }
-
-  // Re-seal after each check-in or edit while the vault is unlocked in this tab.
-  useEffect(() => {
-    if (!session || !userId || fingerprint === lastSealedFingerprint()) return;
-    const timer = setTimeout(() => void saveNow(), AUTOSAVE_DELAY_MS);
-    return () => clearTimeout(timer);
-    // saveNow reads the latest props; the fingerprint and session are what decide a new seal.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fingerprint, session, userId]);
 
   if (sessionLoading) return null;
 
@@ -141,7 +104,13 @@ export function VaultPanel({ programs }: VaultPanelProps) {
     );
   }
 
-  if (activePrograms(programs).length === 0) return null;
+  if (activePrograms(programs).length === 0) {
+    return (
+      <Box icon={<KeyRound />} title={t('title')}>
+        <p className="text-muted-foreground">{t('empty')}</p>
+      </Box>
+    );
+  }
 
   return (
     <Box icon={<KeyRound />} title={t('title')}>
@@ -169,7 +138,7 @@ export function VaultPanel({ programs }: VaultPanelProps) {
 
 function Box({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
   return (
-    <section className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5 leading-8" aria-label={title}>
+    <section id="vault" className="flex scroll-mt-24 flex-col gap-3 rounded-2xl border border-border bg-card p-5 leading-8" aria-label={title}>
       <h2 className="flex items-center gap-2 text-lg font-medium">
         <span className="text-primary [&_svg]:size-5" aria-hidden>
           {icon}

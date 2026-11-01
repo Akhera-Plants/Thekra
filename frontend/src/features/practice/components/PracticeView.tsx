@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { CalendarPlus } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { isEstablished, isPaused, limits, loadWarning, type LimitKind } from '@thekra/practice-core';
-import { Link, useRouter } from '@/i18n/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { QueryErrorState } from '@/components/shared/feedback/QueryErrorState';
 import { downloadTextFile, ICS_MIME } from '@/lib/practice/download';
@@ -25,13 +25,24 @@ import { PracticeLoading } from './PracticeLoading';
 import { ProgressPanel } from './ProgressPanel';
 import { NotificationsLink } from './NotificationsLink';
 import { currentPrayerLookup } from '@/lib/practice/screen-stores';
+import { InfoTip } from '@/components/shared/InfoTip';
+import { SegmentTabs, SegmentTabsContent } from '@/components/shared/kit/segment-tabs';
+import { useWirdContext } from '../hooks/useWirdContext';
+import { GraduationOffers, MonthPanel, StreakLine } from './hub/HabitStats';
+import { TallySection } from './hub/KnowledgeCards';
+
+const HABITS_TABS = ['habits', 'month', 'progress'] as const;
+type HabitsTab = (typeof HABITS_TABS)[number];
+const isHabitsTab = (value: string | null): value is HabitsTab => (HABITS_TABS as readonly (string | null)[]).includes(value);
 
 /**
- * «عاداتي» (habit management, reached from «سجلّي»): setup, today's habits, in-app reminders, «وين وصلت», calendar file. `?add=1` (from «أضف» on the hub)
+ * «عاداتي» (owner, 2026-11-01: one page with what was «السجل»): the streak, then three tabs — «العادات» (today's habits,
+ * add, pause, edit, calendar file), «الشهر» (the month calendar) and «التقدّم» (totals and «وين وصلت»). Setup replaces them. `?add=1` (from «أضف» on the hub)
  * opens the setup at once, with `&habit=<key>` (a good-deed page's «ابدأ بها») already chosen; a `#plan-<id>` hash (a habit row on the hub) scrolls to that plan.
  */
 export function PracticeView() {
   const t = useTranslations('practice.today');
+  const tRecord = useTranslations('practice.record');
   const locale = useLocale() === 'en' ? 'en' : 'ar';
   const snapshot = usePracticeStore();
   const clock = useToday();
@@ -41,6 +52,9 @@ export function PracticeView() {
   const isAddRequested = searchParams.get('add') === '1';
   const requestedHabit = isAddRequested ? searchParams.get('habit') : null;
   const [adding, setAdding] = useState(isAddRequested);
+  // «العادات» · «الشهر» · «التقدّم»; `?tab=month` (or progress) opens another one first.
+  const [tab, setTab] = useState<string | null>(() => searchParams.get('tab'));
+  const wird = useWirdContext();
   // The first habit's setup stays open after the plan is saved, for its last screen (the two switches).
   const [finishingFirst, setFinishingFirst] = useState(false);
   const today = clock?.today ?? null;
@@ -99,7 +113,6 @@ export function PracticeView() {
           onCancel={plans.length > 0 ? finishAdding : undefined}
           onFirstPlan={() => setFinishingFirst(true)}
         />
-        {plans.length === 0 && !finishingFirst ? <PracticePaths /> : null}
       </div>
     );
   }
@@ -123,8 +136,10 @@ export function PracticeView() {
     downloadTextFile('thekra-reminders.ics', planRemindersIcs(events, t('icsName')), ICS_MIME);
   }
 
+  const visibleTab: HabitsTab = isHabitsTab(tab) ? tab : 'habits';
+
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-8">
       <SyncStatus persistent={snapshot.persistent} />
       <LimitSheet
         kind={addKind}
@@ -135,99 +150,93 @@ export function PracticeView() {
         today={today}
         onFreed={() => undefined}
       />
+      {wird ? <StreakLine context={wird} /> : null}
 
-      {overLoaded ? <p className="next-step !mt-0">{t('loadOver')}</p> : null}
-      {catalog.isError ? (
-        <QueryErrorState
-          error={catalog.error}
-          onRetry={() => void catalog.refetch()}
-          message={t('catalogError')}
-          className="py-4"
-        />
-      ) : null}
+      <SegmentTabs
+        aria-label={tRecord('tabsLabel')}
+        items={HABITS_TABS.map((value) => ({ value, label: tRecord(`tabs.${value}`) }))}
+        value={visibleTab}
+        onValueChange={(value) => setTab(isHabitsTab(value) ? value : 'habits')}
+        className="gap-8"
+      >
+        <SegmentTabsContent value="habits" className="flex flex-col gap-10">
+          {wird ? <GraduationOffers context={wird} /> : null}
+          {overLoaded ? <p className="next-step !mt-0">{t('loadOver')}</p> : null}
+          {catalog.isError ? (
+            <QueryErrorState
+              error={catalog.error}
+              onRetry={() => void catalog.refetch()}
+              message={t('catalogError')}
+              className="py-4"
+            />
+          ) : null}
 
-      <section aria-labelledby="today-title" className="flex flex-col gap-4">
-        <h2 id="today-title" ref={todayRef} tabIndex={-1} className="text-2xl font-medium focus:outline-none">
-          {t('title')}
-        </h2>
-        {dueToday.length === 0 ? <p className="text-muted-foreground">{t('noneDueToday')}</p> : null}
-        {dueToday.map(({ plan, habit, view }) => (
-          <PlanCard key={plan.id} plan={plan} habit={habit} view={view} today={today} ramadanUntil={ramadanUntil} />
-        ))}
-      </section>
+          <section aria-labelledby="today-title" className="flex flex-col gap-4">
+            <h2 id="today-title" ref={todayRef} tabIndex={-1} className="text-2xl font-medium focus:outline-none">
+              {t('title')}
+            </h2>
+            {dueToday.length === 0 ? <p className="text-muted-foreground">{t('noneDueToday')}</p> : null}
+            {dueToday.map(({ plan, habit, view }) => (
+              <PlanCard key={plan.id} plan={plan} habit={habit} view={view} today={today} ramadanUntil={ramadanUntil} />
+            ))}
+          </section>
 
-      {notDueToday.length > 0 ? (
-        <section aria-labelledby="not-due-title" className="flex flex-col gap-3">
-          <h2 id="not-due-title" className="text-xl font-medium">
-            {t('notDueTitle')}
-          </h2>
-          <p className="-mt-1 text-sm leading-7 text-muted-foreground">{t('notDueNote')}</p>
-          {notDueToday.map(({ plan, habit, view }) => (
-            <PlanCard key={plan.id} plan={plan} habit={habit} view={view} today={today} ramadanUntil={ramadanUntil} />
-          ))}
-        </section>
-      ) : null}
+          {notDueToday.length > 0 ? (
+            <section aria-labelledby="not-due-title" className="flex flex-col gap-3">
+              <h2 id="not-due-title" className="text-xl font-medium">
+                {t('notDueTitle')}
+              </h2>
+              <p className="-mt-1 text-sm leading-7 text-muted-foreground">{t('notDueNote')}</p>
+              {notDueToday.map(({ plan, habit, view }) => (
+                <PlanCard key={plan.id} plan={plan} habit={habit} view={view} today={today} ramadanUntil={ramadanUntil} />
+              ))}
+            </section>
+          ) : null}
 
-      {established.length > 0 ? (
-        <section aria-labelledby="established-title" className="flex flex-col gap-3">
-          <h2 id="established-title" className="text-xl font-medium">
-            {t('establishedTitle')}
-          </h2>
-          {established.map(({ plan, habit, view }) => (
-            <PlanCard key={plan.id} plan={plan} habit={habit} view={view} today={today} ramadanUntil={ramadanUntil} />
-          ))}
-        </section>
-      ) : null}
+          {established.length > 0 ? (
+            <section aria-labelledby="established-title" className="flex flex-col gap-3">
+              <h2 id="established-title" className="text-xl font-medium">
+                {t('establishedTitle')}
+              </h2>
+              {established.map(({ plan, habit, view }) => (
+                <PlanCard key={plan.id} plan={plan} habit={habit} view={view} today={today} ramadanUntil={ramadanUntil} />
+              ))}
+            </section>
+          ) : null}
 
-      {paused.length > 0 ? (
-        <section aria-labelledby="paused-title" className="flex flex-col gap-3">
-          <h2 id="paused-title" className="text-xl font-medium">
-            {t('pausedTitle')}
-          </h2>
-          {paused.map(({ plan, habit, view }) => (
-            <PlanCard key={plan.id} plan={plan} habit={habit} view={view} today={today} ramadanUntil={ramadanUntil} />
-          ))}
-        </section>
-      ) : null}
+          {paused.length > 0 ? (
+            <section aria-labelledby="paused-title" className="flex flex-col gap-3">
+              <h2 id="paused-title" className="text-xl font-medium">
+                {t('pausedTitle')}
+              </h2>
+              {paused.map(({ plan, habit, view }) => (
+                <PlanCard key={plan.id} plan={plan} habit={habit} view={view} today={today} ramadanUntil={ramadanUntil} />
+              ))}
+            </section>
+          ) : null}
 
-      <div className="flex flex-wrap gap-3">
-        <button type="button" className="solid-button button-wrap" onClick={() => setAdding(true)}>
-          {t('add')} <DirectionalArrow />
-        </button>
-        <button type="button" className="outline-button button-wrap" onClick={handleReminders}>
-          <CalendarPlus aria-hidden />
-          {t('downloadReminders')}
-        </button>
-      </div>
-      <p className="-mt-6 text-sm leading-7 text-muted-foreground">{t('remindersHint')}</p>
-      <NotificationsLink />
+          <div className="flex flex-wrap items-center gap-3">
+            <button type="button" className="solid-button button-wrap" onClick={() => setAdding(true)}>
+              {t('add')} <DirectionalArrow />
+            </button>
+            <span className="inline-flex items-center gap-1">
+              <button type="button" className="outline-button button-wrap" onClick={handleReminders}>
+                <CalendarPlus aria-hidden />
+                {t('downloadReminders')}
+              </button>
+              <InfoTip label={t('downloadReminders')}>{t('remindersHint')}</InfoTip>
+            </span>
+          </div>
+          <NotificationsLink />
+        </SegmentTabsContent>
 
-      <ProgressPanel entries={entries} today={today} />
-      <PracticePaths />
+        <SegmentTabsContent value="month">{wird ? <MonthPanel context={wird} /> : <PracticeLoading />}</SegmentTabsContent>
+
+        <SegmentTabsContent value="progress" className="flex flex-col gap-10">
+          {wird ? <TallySection store={wird.snapshot.store} today={today} habits={habits} /> : null}
+          <ProgressPanel entries={entries} today={today} />
+        </SegmentTabsContent>
+      </SegmentTabs>
     </div>
-  );
-}
-
-/** The other practice pages, in the public «about-paths» style. */
-export function PracticePaths() {
-  const t = useTranslations('practice.paths');
-  return (
-    <nav className="about-paths" aria-label={t('label')}>
-      <Link className="outline-button button-wrap" href="/practice">
-        {t('hub')} <DirectionalArrow />
-      </Link>
-      <Link className="outline-button button-wrap" href="/practice/record">
-        {t('record')} <DirectionalArrow />
-      </Link>
-      <Link className="outline-button button-wrap" href="/practice/kinship">
-        {t('kinship')} <DirectionalArrow />
-      </Link>
-      <Link className="outline-button button-wrap" href="/practice/leave-sin">
-        {t('leaveSin')} <DirectionalArrow />
-      </Link>
-      <Link className="outline-button button-wrap" href="/calendar">
-        {t('calendar')} <DirectionalArrow />
-      </Link>
-    </nav>
   );
 }

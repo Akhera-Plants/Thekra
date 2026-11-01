@@ -68,7 +68,10 @@ interface ProgramPanelProps {
   today: string;
 }
 
-/** One program: stage, steps, alternatives, texts, the day's private check-in, after-fall help, counts. */
+/**
+ * One program: stage, steps, alternatives, texts, the day's private check-in, after-fall help, counts. Works with the
+ * common program too (no steps, alternatives or texts of its own: those parts are hidden, «كل ما ورد فيها» remains).
+ */
 export function ProgramPanel({ program, entry, common, name, habits, quotes, today }: ProgramPanelProps) {
   const t = useTranslations('leaveSin.program');
   const english = useLocale() === 'en';
@@ -248,6 +251,10 @@ export function ProgramPanel({ program, entry, common, name, habits, quotes, tod
           {t('textsTitle')}
         </h3>
         <EvidenceQuotes ids={programTextIds(entry, common, view.stage)} quotes={quotes} />
+        {/* The sin's own page holds all its texts; a sin without a written program has only the stage texts here. */}
+        <Link href={`/sins/${program.sinSlug}`} className="text-link self-start">
+          {t('textsAll')} <DirectionalArrow />
+        </Link>
       </section>
 
       <EndProgram program={program} />
@@ -299,7 +306,6 @@ function EndProgram({ program }: { program: SinProgram }) {
   }
   return (
     <div className="flex flex-col items-start gap-2 border-t border-border pt-4">
-      <p className="text-sm leading-7 text-muted-foreground">{t('lead')}</p>
       <AlertDialog>
         <AlertDialogTrigger asChild>
           <button type="button" className="outline-button button-wrap">

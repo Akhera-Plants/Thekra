@@ -1,25 +1,22 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import type { Metadata } from 'next';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
-import { FavoritesList } from '@/features/favorites/components/FavoritesList';
 import { FavoritesGuard } from '@/features/favorites/components/FavoritesGuard';
+import { SavedTabs } from '@/features/favorites/components/SavedTabs';
 
 export const dynamic = 'force-dynamic';
 
-interface FavoritesPageProps {
-  params: Promise<{ locale: string }>;
-}
-
-export async function generateMetadata({ params }: FavoritesPageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: PageProps<'/[locale]/favorites'>): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'favorites' });
   return { title: t('pageTitle') };
 }
 
-export default async function FavoritesPage({ params }: FavoritesPageProps) {
+/** «المحفوظات»: «النصوص المحفوظة» and «تذكيراتي» (owner, 2026-11-01), for signed-in members. */
+export default async function FavoritesPage({ params, searchParams }: PageProps<'/[locale]/favorites'>) {
   const { locale } = await params;
   setRequestLocale(locale);
-
+  const { tab } = await searchParams;
 
   const t = await getTranslations({ locale, namespace: 'favorites' });
   const tNav = await getTranslations({ locale, namespace: 'nav' });
@@ -37,11 +34,10 @@ export default async function FavoritesPage({ params }: FavoritesPageProps) {
 
       <header className="page-heading">
         <h1 id="page-title" tabIndex={-1}>{t('pageTitle')}</h1>
-        <p className="page-lead">{t('lead')}</p>
       </header>
 
       <FavoritesGuard>
-        <FavoritesList />
+        <SavedTabs initial={tab === 'reminders' ? 'reminders' : 'texts'} />
       </FavoritesGuard>
     </div>
   );

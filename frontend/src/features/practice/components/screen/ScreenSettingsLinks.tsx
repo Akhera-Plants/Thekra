@@ -10,7 +10,7 @@ export function ScreenSettingsLinks() {
   const tPrayer = useTranslations('practice.prayer');
   return (
     <>
-      <Link href="/practice/my-reminders" className="text-link inline-flex items-center gap-2 self-start">
+      <Link href={{ pathname: '/favorites', query: { tab: 'reminders' } }} className="text-link inline-flex items-center gap-2 self-start">
         <NotebookPen aria-hidden className="size-4" />
         {tMine('title')}
       </Link>

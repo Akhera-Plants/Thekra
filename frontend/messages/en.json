@@ -14,23 +14,33 @@
   "nav": {
     "skipToContent": "Skip to main content",
     "home": "Home",
-    "sins": "Sins",
+    "sins": "Lighten a sin",
     "goodDeeds": "Good deeds",
     "menu": "Menu",
     "browse": "Browse",
     "branches": "The Branches of Faith",
     "about": "About Thekra",
-    "favorites": "Favorites",
+    "favorites": "Saved",
     "settings": "Settings",
     "back": "Back",
     "main": "Main navigation",
     "breadcrumbs": "Breadcrumb",
     "practice": "Today's wird",
-    "practiceLong": "My habits",
     "calendar": "Seasons of good",
-    "record": "Record",
     "gateways": "Gateways",
-    "names": "The Beautiful Names"
+    "names": "The Beautiful Names",
+    "habits": "My habits",
+    "more": "More",
+    "close": "Close the menu",
+    "periodic": "Periodic acts",
+    "leaveSin": "Lighten",
+    "reviews": "Self-review",
+    "strategies": "Habit strategies",
+    "groups": {
+      "track": "Keep track",
+      "help": "Help",
+      "reading": "Reading"
+    }
   },
   "about": {
     "pageTitle": "About Thekra",
@@ -87,7 +97,7 @@
     "loginTitle": "Sign in",
     "loginSubtitle": "Enter your email and password to continue",
     "registerTitle": "Create an account",
-    "registerSubtitle": "Your account keeps your wird and record on every device.",
+    "registerSubtitle": "Your account keeps your wird and habits on every device.",
     "email": "Email",
     "emailPlaceholder": "example@email.com",
     "password": "Password",
@@ -117,14 +127,13 @@
     "emailTaken": "This email already has an account. Sign in with it."
   },
   "favorites": {
-    "pageTitle": "Favorites",
-    "lead": "Texts you return to when you need them.",
-    "add": "Add to favorites",
-    "remove": "Remove from favorites",
-    "added": "Added to favorites",
-    "removed": "Removed from favorites",
+    "pageTitle": "Saved",
+    "add": "Save this text",
+    "remove": "Remove from saved",
+    "added": "Text saved",
+    "removed": "Removed from saved",
     "error": "Something went wrong. Try again.",
-    "authRequired": "Sign in to save favorites",
+    "authRequired": "Sign in to save texts",
     "empty": "No saved quotes yet",
     "emptyHint": "Save a text beside any reminder to find it here.",
     "choosePath": "Choose a path",
@@ -133,7 +142,12 @@
     "favoritesSignInTitle": "Save what inspires you",
     "favoritesSignInDescription": "Create an account to save quotes that move you and find them later.",
     "emptyTitle": "Nothing saved yet",
-    "emptyBody": "Save a reminder to find it again whenever you need it."
+    "emptyBody": "Save a reminder to find it again whenever you need it.",
+    "tabsLabel": "Saved sections",
+    "tabs": {
+      "texts": "Saved texts",
+      "reminders": "My reminders"
+    }
   },
   "settings": {
     "pageTitle": "Settings",
@@ -158,7 +172,7 @@
   },
   "home": {
     "title": "Thekra",
-    "sinEntryLabel": "Help me leave a sin",
+    "sinEntryLabel": "Lighten a sin",
     "sinEntryDescription": "A reminder that restrains you, and hope that helps you.",
     "deedEntryLabel": "Help me do a good deed",
     "deedEntryDescription": "Know its virtue, and take the first step.",
@@ -230,18 +244,18 @@
     "startCta": "Start with a small sapling",
     "wirdLeft": "Left today: {n}",
     "wirdDone": "Today's wird is done",
-    "actionsLabel": "Your wird and record",
+    "actionsLabel": "Your wird and habits",
     "wirdEmpty": "You have not started a habit yet.",
     "wirdCta": "Open your wird",
-    "recordDescription": "Your streak, the month, and what you did.",
-    "recordCta": "Open your record"
+    "habitsDescription": "Your habits, your streak and your month.",
+    "habitsCta": "Open your habits"
   },
   "sinRank": {
     "KABIRA": "Major sin",
     "SAGHIRA": "Minor sin"
   },
   "sins": {
-    "pageTitle": "Sins",
+    "pageTitle": "Lighten a sin",
     "searchPlaceholder": "What is weighing on you?",
     "commonHeading": "Often opened",
     "kabairHeading": "Major sins — from al-Dhahabi's al-Kabair",
@@ -941,10 +955,10 @@
   },
   "breadcrumbs": {
     "home": "Home",
-    "sins": "Sins",
+    "sins": "Lighten a sin",
     "goodDeeds": "Good deeds",
     "branches": "Branches of Faith",
-    "favorites": "Favorites",
+    "favorites": "Saved",
     "about": "About Thekra",
     "names": "The Beautiful Names"
   },
@@ -987,7 +1001,7 @@
   },
   "practice": {
     "title": "My habits",
-    "lead": "Start very small, keep at it, and increase only once it is steady. Everything here is saved on your device first.",
+    "lead": "Start small, keep at it, and add only once it is steady.",
     "storage": {
       "local": "Your data is saved on this device only and is never sent to a server.",
       "memoryOnly": "This browser does not allow saving (perhaps a private window), so your data will be lost when you close the page."
@@ -1118,14 +1132,6 @@
       "holdDone": "Settling period done",
       "holdUntil": "Settling until {date}",
       "daysLabel": "Done on {n} of the last {total} days"
-    },
-    "paths": {
-      "label": "More pages",
-      "kinship": "Ties of kinship",
-      "leaveSin": "Lighten",
-      "calendar": "Seasons of good",
-      "hub": "Today's wird",
-      "record": "Record"
     },
     "weekdays": {
       "d0": "Sunday",
@@ -1309,26 +1315,16 @@
       "addOne": "Add"
     },
     "record": {
-      "title": "Record",
-      "lead": "Your streak, your month, your habits and periodic acts.",
       "current": "Current streak",
       "longest": "{count, plural, =0 {Longest streak: none yet} one {Longest streak: 1 day} other {Longest streak: {n} days}}",
       "showHijri": "Show the Hijri date",
-      "linksLabel": "In the record",
-      "habits": "My habits",
-      "habitsCount": "{count, plural, =0 {Start with one small habit} one {One habit} other {{n} habits}}",
-      "periodic": "Periodic acts",
-      "periodicCount": "{count, plural, =0 {None yet} one {One act} other {{n} acts}}",
-      "lighten": "Lighten",
-      "lightenHint": "A private program on your device",
-      "saved": "Saved texts",
-      "savedHint": "Texts you saved",
-      "reviews": "Self-review",
-      "reviewsHint": "Your weekly reviews",
       "notifications": "Notifications",
-      "notificationsHint": "Notifications, today's intention and self-review",
-      "strategies": "Habit strategies",
-      "strategiesHint": "Ways that help you stay steady"
+      "tabsLabel": "My habits sections",
+      "tabs": {
+        "habits": "Habits",
+        "month": "Month",
+        "progress": "Progress"
+      }
     },
     "limits": {
       "keepGoing": "Keep up what I have",
@@ -1641,7 +1637,7 @@
     "myReminders": {
       "title": "My reminders",
       "lead": "Short lines you write for yourself, shown as the daily text if you choose them.",
-      "deviceOnly": "On my device only: they stay in this browser and are sent nowhere.",
+      "deviceOnly": "On this device only.",
       "newLabel": "New line",
       "add": "Add",
       "remove": "Remove",
@@ -1727,12 +1723,12 @@
   "leaveSin": {
     "title": "Lighten",
     "genericTitle": "A reminder from Thekra",
-    "lead": "A staged program on your device: know the harm, build the alternative, change your surroundings, set limits, stay firm.",
+    "lead": "Stages that help you leave a sin, step by step.",
     "privacy": "This program lives on your device: it is never sent to a server in readable form, never used in any statistics, and the sin is never named in the page title or its link. If you choose to save it to your account, it is sent encrypted with a code only you know.",
     "startFromSin": "Start \"Lighten\"",
     "another": "Start another program",
     "choose": {
-      "title": "Choose the program",
+      "title": "Choose the sin",
       "unnamed": "Program",
       "veryHardYes": "Yes, very hard",
       "veryHardNo": "No, I can leave it now",
@@ -1741,8 +1737,16 @@
       "start": "Start",
       "cancel": "Cancel",
       "errors": {
-        "choose": "Choose a program."
-      }
+        "choose": "Choose a sin.",
+        "category": "Answer the question."
+      },
+      "search": "Search for a sin",
+      "noMatch": "No sin by that name.",
+      "otherGroup": "Other",
+      "categoryQuestion": "Does it involve a right of another person?",
+      "categoryYes": "Yes",
+      "categoryNo": "No",
+      "change": "Change"
     },
     "program": {
       "unnamed": "Your program",
@@ -1764,13 +1768,13 @@
         "fell_repented": "I slipped, then repented"
       },
       "end": {
-        "lead": "Want to close this program alone? Its check-ins and notes are removed, and your other programs stay as they are.",
         "button": "End this program",
         "confirmTitle": "End this program?",
         "confirmBody": "Its check-ins and notes are removed from this device now, and from the encrypted copy in your account on its next save if you use one. You can start it again whenever you wish.",
         "cancel": "Cancel",
         "confirm": "End it now"
-      }
+      },
+      "textsAll": "All the texts on it"
     },
     "checkIn": {
       "title": "How was your day?",
@@ -1782,27 +1786,14 @@
         "noteLong": "The note is longer than 500 characters."
       }
     },
-    "wipe": {
-      "title": "Delete all program data",
-      "lead": "Removes the programs, check-ins and notes from this device at once; they cannot be recovered.",
-      "button": "Delete all program data",
-      "confirmTitle": "Delete all program data?",
-      "confirmBody": "Everything will be removed from this device now.",
-      "cancel": "Cancel",
-      "confirm": "Delete now",
-      "leadAccount": "Removes the programs, check-ins and notes from this device at once, and deletes the encrypted copy from your account. They cannot be recovered.",
-      "confirmBodyAccount": "Everything will be removed from this device now, and the encrypted copy deleted from your account.",
-      "remoteFailed": "This device is cleared, but the encrypted copy could not be deleted from your account.",
-      "retry": "Try deleting it again"
-    },
     "vault": {
-      "title": "Saving to your account",
+      "title": "Encrypted saving",
       "guest": "The program is on this device only. Sign in to save it encrypted in your account and open it on another device.",
       "signIn": "Sign in",
       "register": "Create an account",
       "checking": "Checking your account",
-      "offer": "Save the program encrypted in your account",
-      "offerLead": "It is encrypted on your device, with a code you choose, before it is sent. Nobody can read it, not even us, and we cannot tell which sin it is about.",
+      "offer": "Save your “Lighten” programs encrypted in your account",
+      "offerLead": "They are encrypted on your device with a code you choose before they are sent, so nobody can read them, not even us.",
       "warningTitle": "Important",
       "warning": "If you forget the privacy code, the saved program can never be recovered, and nobody can open or read it, not even us.",
       "code": "Privacy code",
@@ -1813,11 +1804,11 @@
       "cancel": "Cancel",
       "working": "Encrypting…",
       "saving": "Updating the encrypted copy",
-      "saved": "Saved encrypted in your account, and updated after every check-in while it is open on this page.",
+      "saved": "Your programs are saved encrypted in your account and updated after every check-in while they are open.",
       "lock": "Lock",
-      "lockedTitle": "You have a program saved encrypted in your account",
-      "lockedLead": "Open it with the privacy code to merge it with this device and keep it up to date. The code stays in this page only until you close it.",
-      "open": "Open the program",
+      "lockedTitle": "You have programs saved encrypted",
+      "lockedLead": "Open them with the privacy code to merge them with this device.",
+      "open": "Open the programs",
       "retry": "Try again",
       "errors": {
         "short": "The code must be at least 8 characters.",
@@ -1828,8 +1819,12 @@
         "load": "The encrypted copy could not be opened. Try again.",
         "create": "The encrypted copy could not be saved. What is on your device is unchanged.",
         "save": "The encrypted copy could not be updated. What is on your device is saved.",
-        "reopen": "The privacy code was changed on another device; open the program again."
-      }
+        "reopen": "The privacy code was changed on another device; open the programs again."
+      },
+      "empty": "No program yet. Start one in “Lighten”, then save it here.",
+      "linkOff": "Save your programs encrypted in your account",
+      "linkLocked": "Open your encrypted programs",
+      "linkOn": "Saved encrypted in your account"
     },
     "continueFromSin": "Continue your program",
     "moment": {
@@ -1943,7 +1938,8 @@
         "restore_one_right": "Return one right or ask to be pardoned",
         "keep_alternative_habits": "Keep your alternative habits"
       }
-    }
+    },
+    "privacyShort": "Private to you, never sent in readable form."
   },
   "topic": {
     "mizanTitle": "The scale",
@@ -1971,5 +1967,8 @@
     "kindAction": "Program",
     "otherVersesTitle": "Other verses with this word",
     "number": "Name {number}"
+  },
+  "infoTip": {
+    "label": "More information"
   }
 }

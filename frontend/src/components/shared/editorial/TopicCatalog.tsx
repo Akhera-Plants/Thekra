@@ -10,6 +10,7 @@ import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { FormattedNumber } from '@/components/shared/FormattedNumber';
 import { foldArabic, namesMatch, searchTopicThemes } from '@/lib/search/topic-themes';
+import { TOPIC_DOMAINS } from '@/lib/topic-domains';
 import type { TopicThemeIndexEntry } from '@/lib/types/api';
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -20,20 +21,7 @@ const INTENT_ICON: Record<'sin' | 'good-deed' | 'branch', ComponentType<{ classN
   branch: BookOpen,
 };
 
-export const TOPIC_DOMAINS = [
-  { key: 'iman', ar: 'الإيمان والعقيدة', en: 'Faith and creed' },
-  { key: 'qalb', ar: 'أعمال القلوب', en: 'Deeds of the heart' },
-  { key: 'ibadat', ar: 'العبادات', en: 'Acts of worship' },
-  { key: 'lisan', ar: 'اللسان والكلام', en: 'Speech and the tongue' },
-  { key: 'usra', ar: 'الأسرة والأرحام', en: 'Family and kinship' },
-  { key: 'mujtama', ar: 'الناس والمجتمع', en: 'People and society' },
-  { key: 'mal', ar: 'المال والمعاملات', en: 'Wealth and dealings' },
-  { key: 'shahawat', ar: 'الشهوات والجسد', en: 'Desires and the body' },
-  { key: 'dima', ar: 'الدماء والولايات', en: 'Bloodshed and authority' },
-  { key: 'ilm', ar: 'العلم والدعوة', en: 'Knowledge and daʿwah' },
-  { key: 'raqami', ar: 'الوقت والحياة الرقمية', en: 'Time and digital life' },
-  { key: 'adab', ar: 'الآداب والسنن اليومية', en: 'Daily manners and sunan' },
-] as const;
+export { TOPIC_DOMAINS };
 
 export interface TopicEntry {
   href: string;

@@ -1,21 +1,30 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useId, useMemo, useState } from 'react';
+import { Search } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useWatch } from 'react-hook-form';
 import { useLocale, useTranslations } from 'next-intl';
-import { startProgram } from '@thekra/practice-core';
+import { programEntryFor, startProgram } from '@thekra/practice-core';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
+import { TOPIC_DOMAINS } from '@/lib/topic-domains';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import { updateStore } from '@/lib/practice/local-store';
 import { chosenPath } from '@/lib/practice/programs';
+import { groupSinsForChooser, type SinOption } from '@/lib/practice/sin-choice';
 import type { SinProgramCommon, SinProgramEntry } from '@/lib/types/practice';
 import { z } from '@/lib/zod';
 
+const DOMAIN_ORDER = TOPIC_DOMAINS.map((domain) => domain.key);
+
 interface ProgramChooserProps {
+  /** The written programs (sin-programs.yaml). Any other sin starts the common one ({@link programEntryFor}). */
   entries: readonly SinProgramEntry[];
   common: SinProgramCommon;
-  /** Display name per sin slug, from the public sin list. */
+  /** Every sin of the public list (the same request for every visitor). */
+  sins: readonly SinOption[];
+  /** Display name per sin slug, in the page's language. */
   names: ReadonlyMap<string, string>;
   /** Slug handed over from a sin page (never via the URL). */
   preselected: string | null;
@@ -25,22 +34,49 @@ interface ProgramChooserProps {
   onCancel?: () => void;
 }
 
-/** Choose a program, answer the willpower question, start. Saved on this device only. */
-export function ProgramChooser({ entries, common, names, preselected, today, onDone, onCancel }: ProgramChooserProps) {
+/**
+ * «تخفَّف من معصية» for any sin (owner, 2026-11-01): choose the sin (grouped and searchable), answer one question, start.
+ * A sin with a written program may ask the willpower question; any other sin asks «هل فيها حقٌّ لأحد من الناس؟» and
+ * starts the common five stages. Saved on this device only.
+ */
+export function ProgramChooser({ entries, common, sins, names, preselected, today, onDone, onCancel }: ProgramChooserProps) {
   const t = useTranslations('leaveSin.choose');
   const locale = useLocale();
+  const english = locale === 'en';
+  const searchId = useId();
   const schema = useMemo(
-    () => z.object({ sin: z.string().min(1, t('errors.choose')), veryHard: z.enum(['yes', 'no', '']) }),
-    [t],
+    () =>
+      z
+        .object({ sin: z.string().min(1, t('errors.choose')), veryHard: z.enum(['yes', 'no', '']), people: z.enum(['yes', 'no', '']) })
+        .refine((v) => !v.sin || entries.some((e) => e.sin === v.sin) || v.people !== '', {
+          message: t('errors.category'),
+          path: ['people'],
+        }),
+    [t, entries],
   );
   type Values = z.infer<typeof schema>;
-  const initial = preselected && entries.some((entry) => entry.sin === preselected) ? preselected : '';
-  const form = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { sin: initial, veryHard: '' } });
+  const initial = preselected && names.has(preselected) ? preselected : '';
+  const form = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { sin: initial, veryHard: '', people: '' } });
   const sin = useWatch({ control: form.control, name: 'sin' });
-  const entry = entries.find((e) => e.sin === sin);
+  const people = useWatch({ control: form.control, name: 'people' });
+  const [browsing, setBrowsing] = useState(initial === '');
+  const [query, setQuery] = useState('');
+  const groups = useMemo(() => groupSinsForChooser(sins, query, DOMAIN_ORDER), [sins, query]);
+  const written = entries.find((e) => e.sin === sin);
+  const category = people === 'yes' ? 'haqq_ibad' : people === 'no' ? 'haqq_allah' : null;
+  const entry = sin ? programEntryFor(entries, sin, category) : null;
+
+  function domainLabel(key: string | null): string {
+    const domain = TOPIC_DOMAINS.find((item) => item.key === key);
+    return domain ? (english ? domain.en : domain.ar) : t('otherGroup');
+  }
 
   function handleSubmit(values: Values) {
-    const chosen = entries.find((e) => e.sin === values.sin);
+    const chosen = programEntryFor(
+      entries,
+      values.sin,
+      values.people === 'yes' ? 'haqq_ibad' : values.people === 'no' ? 'haqq_allah' : null,
+    );
     if (!chosen) return;
     const path = chosenPath(chosen, values.veryHard === 'yes');
     const program = startProgram({
@@ -63,41 +99,104 @@ export function ProgramChooser({ entries, common, names, preselected, today, onD
             <FormItem>
               <fieldset className="flex flex-col gap-3">
                 <legend className="mb-2 text-2xl font-medium">{t('title')}</legend>
-                <ul className="grid gap-3 sm:grid-cols-2">
-                  {entries.map((e) => (
-                    <li key={e.sin}>
-                      <label className="flex h-full cursor-pointer items-center gap-3 rounded-xl border border-border bg-card p-4 has-[:checked]:border-primary has-[:focus-visible]:border-primary">
-                        <input
-                          type="radio"
-                          className="size-4 shrink-0 accent-primary"
-                          name={field.name}
-                          value={e.sin}
-                          checked={field.value === e.sin}
-                          onChange={() => field.onChange(e.sin)}
-                        />
-                        <span className="text-lg font-medium">{names.get(e.sin) ?? t('unnamed')}</span>
-                      </label>
-                    </li>
-                  ))}
-                </ul>
+                {!browsing && field.value ? (
+                  <div className="flex flex-wrap items-center gap-3 rounded-xl border border-primary bg-card p-4">
+                    <span className="flex-1 text-lg font-medium">{names.get(field.value) ?? t('unnamed')}</span>
+                    <button type="button" className="text-link" onClick={() => setBrowsing(true)}>
+                      {t('change')}
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="relative">
+                      <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+                      <Input
+                        id={searchId}
+                        type="search"
+                        aria-label={t('search')}
+                        placeholder={t('search')}
+                        className="h-11 ps-9"
+                        value={query}
+                        onChange={(event) => setQuery(event.target.value)}
+                      />
+                    </div>
+                    <div className="max-h-[28rem] overflow-y-auto rounded-xl border border-border p-3">
+                      {groups.length === 0 ? <p className="p-2 text-muted-foreground">{t('noMatch')}</p> : null}
+                      {groups.map((group) => (
+                        <div key={group.domain ?? 'other'} className="flex flex-col gap-2 pb-4 last:pb-0">
+                          {groups.length > 1 || group.domain ? (
+                            <p className="px-1 text-sm font-medium text-muted-foreground">{domainLabel(group.domain)}</p>
+                          ) : null}
+                          <ul className="grid gap-2 sm:grid-cols-2">
+                            {group.sins.map((option) => (
+                              <li key={option.slug}>
+                                <label className="flex h-full min-h-12 cursor-pointer items-center gap-3 rounded-lg border border-border bg-card px-3 py-2 has-[:checked]:border-primary has-[:focus-visible]:border-primary">
+                                  <input
+                                    type="radio"
+                                    className="size-4 shrink-0 accent-primary"
+                                    name={field.name}
+                                    value={option.slug}
+                                    checked={field.value === option.slug}
+                                    onChange={() => {
+                                      field.onChange(option.slug);
+                                      form.setValue('people', '');
+                                      form.setValue('veryHard', '');
+                                    }}
+                                  />
+                                  <span className="text-base">{names.get(option.slug) ?? option.nameAr}</span>
+                                </label>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
               </fieldset>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        {entry?.gradualAllowed ? (
+        {sin && !written ? (
+          <FormField
+            control={form.control}
+            name="people"
+            render={({ field }) => (
+              <FormItem>
+                <fieldset className="flex flex-col gap-2">
+                  <legend className="mb-2 text-lg font-medium">{t('categoryQuestion')}</legend>
+                  {(['yes', 'no'] as const).map((answer) => (
+                    <label key={answer} className="flex min-h-10 cursor-pointer items-center gap-3">
+                      <input
+                        type="radio"
+                        className="size-4 accent-primary"
+                        name={field.name}
+                        value={answer}
+                        checked={field.value === answer}
+                        onChange={() => field.onChange(answer)}
+                      />
+                      <span>{t(answer === 'yes' ? 'categoryYes' : 'categoryNo')}</span>
+                    </label>
+                  ))}
+                </fieldset>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        ) : null}
+
+        {written?.gradualAllowed ? (
           <FormField
             control={form.control}
             name="veryHard"
             render={({ field }) => (
               <FormItem>
                 <fieldset className="flex flex-col gap-2">
-                  <legend className="mb-2 text-lg font-medium">
-                    {locale === 'en' ? common.willQuestionEn : common.willQuestionAr}
-                  </legend>
+                  <legend className="mb-2 text-lg font-medium">{english ? common.willQuestionEn : common.willQuestionAr}</legend>
                   {(['yes', 'no'] as const).map((answer) => (
-                    <label key={answer} className="flex cursor-pointer items-center gap-3">
+                    <label key={answer} className="flex min-h-10 cursor-pointer items-center gap-3">
                       <input
                         type="radio"
                         className="size-4 accent-primary"

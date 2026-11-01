@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import {
   formatCountdown,
   momentProgram,
+  programEntryFor,
   recordWavePassed,
   URGE_ACTIONS,
   urgeProgress,
@@ -86,7 +87,7 @@ export function WeakMomentView({ verse }: WeakMomentViewProps) {
   const progress = urgeProgress(startedAt, now);
   const program = momentProgram(snapshot.store.programs, source, today);
   const sinPrograms = catalog.data?.sinPrograms;
-  const entry = program && sinPrograms ? (sinPrograms.programs.find((e) => e.sin === program.sinSlug) ?? null) : null;
+  const entry = program && sinPrograms ? programEntryFor(sinPrograms.programs, program.sinSlug, program.category) : null;
   const common = sinPrograms?.common ?? null;
   const commonIds = common ? [...(common.afterFall.evidence ?? []), ...(common.stages.harms.evidence ?? [])] : [];
   const fetched = new Map((evidence.data ?? []).map((q) => [q.id, q]));

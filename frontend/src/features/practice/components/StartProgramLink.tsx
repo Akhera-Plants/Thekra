@@ -31,7 +31,7 @@ export function StartProgramLink({ slug }: StartProgramLinkProps) {
         {isActive ? t('continueFromSin') : t('startFromSin')} <DirectionalArrow />
       </Link>
       <p className="text-sm leading-7 text-muted-foreground">{tHub('programHint')}</p>
-      {/* Shown on every program sin page whatever the device holds, so it tells nothing; the screen uses this sin's
+      {/* Shown on every sin page whatever the device holds, so it tells nothing; the screen uses this sin's
           program only if the visitor follows it (in-memory hand-off, never the URL). */}
       <Link href="/practice/leave-sin/moment" className="text-link mt-2" onClick={() => setMomentSource(slug)}>
         {t('moment.openFromSin')} <DirectionalArrow />

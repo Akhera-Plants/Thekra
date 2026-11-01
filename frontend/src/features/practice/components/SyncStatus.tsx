@@ -4,6 +4,7 @@ import { CloudCheck, CloudOff, HardDrive, LoaderCircle, RefreshCw, TriangleAlert
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { Button } from '@/components/shared/kit/button';
+import { InfoTip } from '@/components/shared/InfoTip';
 import { failureKey } from '@/lib/errors';
 import { formatDateTime } from '@/lib/practice/format';
 import { mergeIntoAccount, syncNow } from '@/lib/practice/sync-controller';
@@ -94,11 +95,11 @@ export function SyncStatus({ persistent, quiet = false }: SyncStatusProps) {
         </Line>
       )}
       {quiet ? null : (
-        <p className="ps-6 text-sm leading-7 text-muted-foreground">
-          {t('signedInNote')}{' '}
+        <p className="flex items-center gap-1 ps-6 text-sm">
           <Link href="/settings" className="text-link">
             {t('accountLink')}
           </Link>
+          <InfoTip>{t('signedInNote')}</InfoTip>
         </p>
       )}
     </div>

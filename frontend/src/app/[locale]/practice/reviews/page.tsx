@@ -21,7 +21,7 @@ export default async function ReviewsPage({ params }: PageProps<'/[locale]/pract
     <div className="page-width inner-page">
       <Breadcrumbs
         ariaLabel={tNav('breadcrumbs')}
-        items={[{ label: tCrumbs('home'), href: '/' }, { label: tNav('record'), href: '/practice/record' }, { label: t('title') }]}
+        items={[{ label: tCrumbs('home'), href: '/' }, { label: tNav('practice'), href: '/practice' }, { label: t('title') }]}
       />
       <header className="page-heading">
         <h1 id="page-title" tabIndex={-1}>

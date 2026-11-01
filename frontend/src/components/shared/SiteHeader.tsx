@@ -1,41 +1,39 @@
 'use client';
 
-import { useEffect, useId, useState, useSyncExternalStore } from 'react';
-import { Menu, X } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useState, useSyncExternalStore } from 'react';
+import { ChevronDown, Menu, X } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
 import { Link, usePathname } from '@/i18n/navigation';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { cn } from '@/lib/utils';
 import { LocaleSwitcher } from './LocaleSwitcher';
 import { ThemeToggle } from './ThemeToggle';
 import { AuthNavItems } from './AuthNavItems';
 import { useSession } from '@/features/auth/hooks/useSession';
+import { currentMemberItem, isInMore, MEMBER_MORE, MEMBER_PRIMARY, type MemberNavKey } from './member-nav';
 
 const noSubscribe = () => () => {};
 
-/**
- * The member's places: «ورد اليوم» · «السجل» (practice is for members, owner 2026-11-01). A guest has none: the home is
- * «أبواب الخير» itself (the logo), and «تسجيل الدخول» is the header's action. Empty until the session is known.
- */
-function useMemberLinks() {
-  const pathname = usePathname();
-  const tNav = useTranslations('nav');
+/** Signed in, and known to be: false during the server render and while the session is restored. */
+function useIsMember(): boolean {
   const { isAuthenticated, isLoading } = useSession();
   const mounted = useSyncExternalStore(noSubscribe, () => true, () => false);
-  if (!mounted || isLoading || !isAuthenticated) return [];
-  const recordCurrent = pathname === '/practice/record';
-  return [
-    {
-      key: 'wird',
-      href: '/practice',
-      label: tNav('practice'),
-      current: !recordCurrent && (pathname === '/practice' || pathname.startsWith('/practice/')),
-    },
-    { key: 'record', href: '/practice/record', label: tNav('record'), current: recordCurrent },
-  ];
+  return mounted && !isLoading && isAuthenticated;
 }
 
 /**
- * Public site header (thekra-source chrome): the member's places (see {@link useMemberLinks}), then language, theme and the account
- * menu. At phone width the links fold into «القائمة», a disclosure button with the same links.
+ * Public site header (thekra-source chrome). A guest sees no links: the home is «أبواب الخير» itself (the logo), and
+ * «تسجيل الدخول» is the header's action. A member sees «ورد اليوم» · «عاداتي» · «المزيد» (see `member-nav.ts`); at phone
+ * width these fold into a side drawer that opens from the inline-start side.
  */
 export function SiteHeader() {
   const pathname = usePathname();
@@ -43,25 +41,8 @@ export function SiteHeader() {
   const tNav = useTranslations('nav');
   const tTheme = useTranslations('theme');
   const tLocale = useTranslations('localeSwitcher');
-  const links = useMemberLinks();
-  const menuId = useId();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [menuPath, setMenuPath] = useState(pathname);
-
-  // A new page closes the menu (adjusting state while rendering, not in an effect).
-  if (menuPath !== pathname) {
-    setMenuPath(pathname);
-    setMenuOpen(false);
-  }
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setMenuOpen(false);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [menuOpen]);
+  const isMember = useIsMember();
+  const current = currentMemberItem(pathname);
 
   return (
     <header className="site-header page-width">
@@ -79,17 +60,22 @@ export function SiteHeader() {
       </Link>
 
       <nav className="main-nav" aria-label={tNav('main')}>
-        {links.map((link) => (
-          <Link
-            key={link.key}
-            href={link.href}
-            className="nav-link nav-link-primary"
-            aria-current={link.current ? 'page' : undefined}
-          >
-            {link.label}
-          </Link>
-        ))}
-        {links.length > 0 ? <span className="nav-divider" aria-hidden /> : null}
+        {isMember ? (
+          <>
+            {MEMBER_PRIMARY.map((item) => (
+              <Link
+                key={item.key}
+                href={item.href}
+                className="nav-link nav-link-primary"
+                aria-current={current === item.key ? 'page' : undefined}
+              >
+                {tNav(item.key === 'wird' ? 'practice' : item.key)}
+              </Link>
+            ))}
+            <MoreMenu current={current} />
+            <span className="nav-divider" aria-hidden />
+          </>
+        ) : null}
         <LocaleSwitcher label={tLocale('label')} className="nav-link" />
         <ThemeToggle
           labels={{
@@ -101,41 +87,115 @@ export function SiteHeader() {
         <div className="header-auth ms-1 flex items-center gap-1">
           <AuthNavItems />
         </div>
-        {links.length > 0 ? (
-          <button
-            type="button"
-            className="nav-link menu-toggle"
-            aria-expanded={menuOpen}
-            aria-controls={menuId}
-            onClick={() => setMenuOpen((open) => !open)}
-          >
-            {menuOpen ? <X className="size-5" aria-hidden /> : <Menu className="size-5" aria-hidden />}
-            <span className="menu-toggle-label">{tNav('menu')}</span>
-          </button>
-        ) : null}
+        {isMember ? <MemberDrawer key={pathname} current={current} /> : null}
       </nav>
+    </header>
+  );
+}
 
-      <div id={menuId} className="mobile-menu" hidden={!menuOpen}>
-        <nav aria-label={tNav('menu')}>
-          <ul>
-            {links.map((link) => (
-              <li key={link.key}>
+function useItemLabel() {
+  const tNav = useTranslations('nav');
+  return (key: MemberNavKey) => tNav(key === 'wird' ? 'practice' : key);
+}
+
+/** «المزيد» on desktop: the grouped list in a dropdown menu (Radix: arrow keys, Escape, focus returns to the trigger). */
+function MoreMenu({ current }: { current: MemberNavKey | null }) {
+  const tNav = useTranslations('nav');
+  const label = useItemLabel();
+  return (
+    <DropdownMenu modal={false}>
+      <DropdownMenuTrigger asChild>
+        <button type="button" className="nav-link nav-link-primary nav-more" data-current={isInMore(current) || undefined}>
+          {tNav('more')}
+          <ChevronDown className="size-4" aria-hidden />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" sideOffset={8} className="w-60 p-1.5">
+        {MEMBER_MORE.map((group, index) => (
+          <DropdownMenuGroup key={group.key}>
+            {index > 0 ? <DropdownMenuSeparator /> : null}
+            <DropdownMenuLabel className="px-2 pt-1.5 pb-1 text-xs font-medium text-muted-foreground">
+              {tNav(`groups.${group.key}`)}
+            </DropdownMenuLabel>
+            {group.items.map((item) => (
+              <DropdownMenuItem key={item.key} asChild className="min-h-10 px-2 text-[15px]">
                 <Link
-                  href={link.href}
-                  className="mobile-menu-link"
-                  aria-current={link.current ? 'page' : undefined}
-                  onClick={() => setMenuOpen(false)}
+                  href={item.href}
+                  aria-current={current === item.key ? 'page' : undefined}
+                  className={cn(current === item.key && 'text-primary')}
                 >
-                  {link.label}
+                  {label(item.key)}
+                </Link>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuGroup>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+/**
+ * Phones: «القائمة» opens a drawer from the inline-start side (right in Arabic, left in English). Radix Dialog traps
+ * focus, closes on Escape and on the overlay, and returns focus to the button. A new page closes it (keyed by path).
+ */
+function MemberDrawer({ current }: { current: MemberNavKey | null }) {
+  const tNav = useTranslations('nav');
+  const label = useItemLabel();
+  const side = useLocale() === 'en' ? 'left' : 'right';
+  const [open, setOpen] = useState(false);
+  const linkClass =
+    'flex min-h-12 items-center rounded-lg px-3 text-base transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring aria-[current=page]:font-medium aria-[current=page]:text-primary';
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <button type="button" className="nav-link menu-toggle">
+          <Menu className="size-5" aria-hidden />
+          <span className="menu-toggle-label">{tNav('menu')}</span>
+        </button>
+      </SheetTrigger>
+      <SheetContent side={side} showCloseButton={false} aria-describedby={undefined} className="gap-0 overflow-y-auto p-0">
+        <div className="flex items-center justify-between border-b border-border px-4 py-3">
+          <SheetTitle className="text-lg">{tNav('menu')}</SheetTitle>
+          <SheetClose asChild>
+            <button
+              type="button"
+              aria-label={tNav('close')}
+              className="inline-flex size-10 items-center justify-center rounded-full hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring"
+            >
+              <X className="size-5" aria-hidden />
+            </button>
+          </SheetClose>
+        </div>
+        <nav aria-label={tNav('menu')} className="flex flex-col gap-5 px-3 py-4">
+          <ul className="flex flex-col gap-0.5">
+            {MEMBER_PRIMARY.map((item) => (
+              <li key={item.key}>
+                <Link href={item.href} className={cn(linkClass, 'text-lg')} aria-current={current === item.key ? 'page' : undefined} onClick={() => setOpen(false)}>
+                  {label(item.key)}
                 </Link>
               </li>
             ))}
           </ul>
+          {MEMBER_MORE.map((group) => (
+            <section key={group.key} aria-labelledby={`drawer-${group.key}`} className="flex flex-col gap-1 border-t border-border pt-4">
+              <h2 id={`drawer-${group.key}`} className="px-3 text-xs font-medium text-muted-foreground">
+                {tNav(`groups.${group.key}`)}
+              </h2>
+              <ul className="flex flex-col gap-0.5">
+                {group.items.map((item) => (
+                  <li key={item.key}>
+                    <Link href={item.href} className={linkClass} aria-current={current === item.key ? 'page' : undefined} onClick={() => setOpen(false)}>
+                      {label(item.key)}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
         </nav>
-        <div className="mobile-menu-auth">
-          <AuthNavItems />
-        </div>
-      </div>
-    </header>
+      </SheetContent>
+    </Sheet>
   );
 }

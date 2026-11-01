@@ -97,9 +97,6 @@ export function AuthNavItems() {
         )}
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href="/favorites">{tNav('favorites')}</Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
           <Link href="/settings">{tNav('settings')}</Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
