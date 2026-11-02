@@ -51,10 +51,15 @@ export interface PracticePrefs {
   fridayTime: LocalTime;
   /** «فروضي وأدواري» roles (the free minutes are in the Store settings). */
   roles: RoleKey[];
-  /** Remember the vault key in the device keystore («تذكّر على هذا الجهاز»). Off by default. */
+  /**
+   * Unused since 2026-11-01 (the vault key is always kept behind biometrics, vault-runner.ts); parsed so older prefs
+   * stay readable.
+   */
   rememberVaultKey: boolean;
-  /** «قفل برنامج الترك بالبصمة»: the sin-program page opens only after the device's biometrics or passcode. Off by default. */
+  /** Unused since 2026-11-01 («تخفَّف» always opens with the fingerprint / face); parsed for older prefs. */
   sinLock: boolean;
+  /** «شعبة الأسبوع» on «ورد اليوم»: only for a member who chose to study the branches of faith. Off by default. */
+  weekBranch: boolean;
   /** «إظهار التاريخ الهجري»: the Hijri date next to the Gregorian one on «ورد اليوم» and «سجلّي». Off by default. */
   showHijri: boolean;
   /** «ذكّرني بها» on «استراتيجيات العادات»: chosen strategy keys (opt-in, empty by default); one reminder a week at most. */
@@ -85,6 +90,7 @@ export const DEFAULT_PREFS: PracticePrefs = {
   roles: [],
   rememberVaultKey: false,
   sinLock: false,
+  weekBranch: false,
   showHijri: false,
   strategies: [],
   strategyTime: '10:00',
@@ -124,6 +130,7 @@ export function parsePrefs(json: unknown): PracticePrefs {
     fridayTime: time('fridayTime'),
     rememberVaultKey: bool('rememberVaultKey'),
     sinLock: bool('sinLock'),
+    weekBranch: bool('weekBranch'),
     showHijri: bool('showHijri'),
     strategies: cleanStrategyKeys(raw.strategies),
     strategyTime: time('strategyTime'),

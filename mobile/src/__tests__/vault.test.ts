@@ -29,9 +29,19 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 }));
 jest.mock('expo-secure-store', () => ({
   WHEN_UNLOCKED_THIS_DEVICE_ONLY: 'WHEN_UNLOCKED_THIS_DEVICE_ONLY',
+  canUseBiometricAuthentication: jest.fn(() => true),
   setItemAsync: jest.fn(async () => undefined),
   getItemAsync: jest.fn(async () => null),
   deleteItemAsync: jest.fn(async () => undefined),
+}));
+jest.mock('react-native', () => ({
+  Platform: { OS: 'android' },
+  AppState: { currentState: 'active', addEventListener: jest.fn(() => ({ remove: jest.fn() })) },
+}));
+jest.mock('expo-local-authentication', () => ({
+  SecurityLevel: { NONE: 0, SECRET: 1, BIOMETRIC_WEAK: 2, BIOMETRIC_STRONG: 3 },
+  getEnrolledLevelAsync: jest.fn(async () => 3),
+  authenticateAsync: jest.fn(async () => ({ success: true })),
 }));
 jest.mock('../lib/api/practice', () => ({
   deleteSinVault: jest.fn(async () => undefined),
@@ -40,11 +50,18 @@ jest.mock('../lib/api/practice', () => ({
 }));
 
 import * as SecureStore from 'expo-secure-store';
-import { deleteSinVault } from '../lib/api/practice';
+import { deleteSinVault, getSinVault, putSinVault } from '../lib/api/practice';
 import { hasSecureRandom, installGetRandomValues } from '../lib/crypto/random';
 import { usePracticeStore } from '../lib/practice/practice-store';
 import { mergePrograms } from '../lib/practice/vault-merge';
-import { VAULT_KEY_STORE, wipeSinProgramEverywhere } from '../lib/practice/vault-runner';
+import {
+  VAULT_KEY_STORE,
+  createVaultWithCode,
+  lockVault,
+  openWithDevice,
+  useVaultState,
+  wipeSinProgramEverywhere,
+} from '../lib/practice/vault-runner';
 
 const LOW = 1000; // tests only; the app and the server use ≥ 210,000
 
@@ -139,5 +156,43 @@ describe('«احذف كل بيانات البرنامج»', () => {
     (deleteSinVault as jest.Mock).mockClear();
     await wipeSinProgramEverywhere(null);
     expect(deleteSinVault).not.toHaveBeenCalled();
+  });
+});
+
+describe('«تخفَّف» always encrypted in the account (owner, 2026-11-01)', () => {
+  const labels = { promptMessage: 'p', cancelLabel: 'c' };
+
+  it('the first program creates the vault with the code: only ciphertext is sent, the key is kept behind biometrics', async () => {
+    (putSinVault as jest.Mock).mockClear();
+    (SecureStore.setItemAsync as jest.Mock).mockClear();
+    usePracticeStore.getState().setStore((s) => ({ ...s, programs: [] }));
+    const err = await createVaultWithCode('user-1', 'عبارة طويلة للخصوصية', [program()]);
+    expect(err).toBeNull();
+    const body = (putSinVault as jest.Mock).mock.calls[0]![0];
+    expect(body.version).toBe(0);
+    expect(JSON.stringify(body)).not.toContain('nazar');
+    expect(JSON.stringify(body)).not.toContain('ملاحظة');
+    const [key, record, opts] = (SecureStore.setItemAsync as jest.Mock).mock.calls[0]!;
+    expect(key).toBe(VAULT_KEY_STORE);
+    expect(record).not.toContain('عبارة'); // the key record, never the code
+    expect(opts).toMatchObject({ requireAuthentication: true });
+    expect(useVaultState.getState().status).toBe('unlocked');
+    expect(usePracticeStore.getState().store.programs.map((p) => p.sinSlug)).toEqual(['nazar-shashat']);
+  });
+
+  it('opening with no vault in the account says so (the first program will ask for a code)', async () => {
+    await lockVault();
+    (getSinVault as jest.Mock).mockResolvedValueOnce(null);
+    expect(await openWithDevice('user-1', labels)).toBe('none');
+  });
+
+  it('sign-out clears the device copy, unless a change still waits to be saved', async () => {
+    usePracticeStore.getState().setStore((s) => ({ ...s, programs: [program()] }));
+    useVaultState.setState({ pending: true });
+    await lockVault();
+    expect(usePracticeStore.getState().store.programs).toHaveLength(1);
+    useVaultState.setState({ pending: false });
+    await lockVault();
+    expect(usePracticeStore.getState().store.programs).toHaveLength(0);
   });
 });

@@ -66,7 +66,9 @@ describe('practice strings', () => {
     expect(ar('record.longest', { count: 1 })).toBe('أطول مداومة: يوم واحد');
     expect(ar('record.longest', { count: 14 })).toBe('أطول مداومة: 14 يومًا');
     expect(ar('record.periodicCount', { count: 3 })).toBe('3 أعمال');
-    expect(ar('practice.wird.notDueToday', { count: 2 })).toBe('ليست مطلوبة اليوم (2)');
+    // Owner round 3, item 5: a kinder label than «ليست مطلوبة اليوم».
+    expect(ar('practice.wird.notDueToday', { count: 1 })).toBe('اليوم استراحة من هذه العادة');
+    expect(ar('practice.wird.notDueToday', { count: 3 })).toBe('اليوم استراحة من هذه العادات (3)');
     const en = i18n.getFixedT('en');
     expect(en('practice.wird.streakLabel', { count: 1 })).toBe('1-day streak');
     expect(en('record.longest', { count: 7 })).toBe('Longest streak: 7 days');
@@ -101,9 +103,26 @@ describe('practice strings', () => {
     expect(en('sinProgram.counters.sinceRepentance', { count: 3 })).toBe('Since the last repentance: 3 days');
   });
 
-  it('keeps the «لحظة ضعف» title generic', () => {
-    expect(i18n.getFixedT('ar')('sinProgram.moment.title')).toBe('لحظة ضعف');
-    expect(i18n.getFixedT('en')('sinProgram.moment.title')).toBe('A weak moment');
+  it('names «لحظة مجاهدة» (owner round 3) and keeps it generic', () => {
+    expect(i18n.getFixedT('ar')('sinProgram.moment.title')).toBe('لحظة مجاهدة');
+    expect(i18n.getFixedT('en')('sinProgram.moment.title')).toBe('A moment of striving');
+    const all = JSON.stringify(ar);
+    expect(all).not.toContain('لحظة ضعف');
+    expect(all).not.toContain('وقعت');
+    expect(all).not.toContain('على جهازك فقط');
+    expect(all).not.toContain('عذر أمس');
+    expect(all).not.toContain('الميزان');
+  });
+
+  it('every interpolation uses i18next braces (no raw «{n} من {max}»), outside the widget templates', () => {
+    const { widget: _arWidget, ...arRest } = ar as Record<string, unknown>;
+    const { widget: _enWidget, ...enRest } = en as Record<string, unknown>;
+    const single = /(?<!\{)\{[a-zA-Z]+\}(?!\})/;
+    for (const [lang, file] of [['ar', arRest], ['en', enRest]] as const) {
+      const bad = keys(file).filter((k) => single.test(String(k.split('.').reduce<unknown>((o, p) => (o as Record<string, unknown>)[p], file))));
+      expect(`${lang}: ${bad.join(', ')}`).toBe(`${lang}: `);
+    }
+    expect(i18n.getFixedT('ar')('myReminders.count', { n: 2, max: 20 })).toBe('2 من 20');
   });
 
   it('has every key in both languages', () => {

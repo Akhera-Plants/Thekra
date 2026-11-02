@@ -94,6 +94,22 @@ export interface PracticeCatalog {
   deedBranches?: Record<string, number[]>;
   /** Story key → Quote id, or null while not found (the UI hides it). Optional until every API deploy sends it. */
   stories?: Record<string, string | null>;
+  /** «لحظة مجاهدة» ids (owner round 3). Optional until every API deploy sends it; the screen hides what is missing. */
+  mujahada?: MujahadaCatalog;
+}
+
+/** «لحظة مجاهدة» ids in the practice catalog (backend heart-texts.yaml); every text is read by id. */
+export interface MujahadaCatalog {
+  /** Verse passages on patience and striving: each passage is 1–3 verse ids read together. */
+  verses: string[][];
+  /** Scholars' sayings (empty while none is published). */
+  sayings: string[];
+  /** A good deed is written ten times up to seven hundred times (al-Bukhari 6491). */
+  multiplierHadith: string | null;
+  /** The voluntary prayer sitting has half the reward (al-Bukhari 1115). */
+  sittingPrayerHadith: string | null;
+  /** Good-deed topic slugs for «أتبِع السيئةَ الحسنة». */
+  easyHighReward: string[];
 }
 
 export interface CalendarOccasionDto {

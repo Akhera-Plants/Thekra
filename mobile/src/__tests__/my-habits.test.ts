@@ -4,7 +4,7 @@
  */
 
 import { addDays, startProgram, checkIn, toHijri, type HabitItem } from '@thekra/practice-core';
-import { habitDayAction, programRows } from '../lib/practice/my-habits';
+import { habitDayAction, habitNeedsFix, programRows } from '../lib/practice/my-habits';
 import { ramadanSeasonUntil, showRamadanBlock } from '../lib/practice/plan-view';
 
 const item = (over: Partial<HabitItem> = {}): HabitItem => ({
@@ -42,6 +42,17 @@ describe('«تخفَّف» rows in «عاداتي»', () => {
     expect(rows[1]!.held).toBe(1);
     expect(rows[1]!.checkedIn).toBe(true);
     expect(rows[0]!.checkedIn).toBe(false);
+  });
+
+  it('offers «صلّحها» after a weak day or a slip, until today is held (owner round 3)', () => {
+    const weak = checkIn(older, '2026-10-31', 'weak');
+    expect(programRows([weak], today)[0]!.needsFix).toBe(true);
+    expect(programRows([checkIn(weak, today, 'held')], today)[0]!.needsFix).toBe(false);
+    expect(programRows([newer], today)[0]!.needsFix).toBe(false);
+    expect(habitNeedsFix({ paused: false, missedYesterday: true, doneToday: 0 })).toBe(true);
+    expect(habitNeedsFix({ paused: false, missedYesterday: true, doneToday: 2 })).toBe(false);
+    expect(habitNeedsFix({ paused: true, missedYesterday: true, doneToday: 0 })).toBe(false);
+    expect(habitNeedsFix({ paused: false, missedYesterday: false, doneToday: 0 })).toBe(false);
   });
 
   it('never carries the sin in anything the row could show or read aloud', () => {

@@ -5,12 +5,36 @@ import type { QuoteDto } from '../types/api';
 
 // ── Fetchers ──────────────────────────────────────────────────────────────────
 
-export async function fetchFavorites(params: { page?: number; limit?: number } = {}) {
-  return apiGet<QuoteDto[]>('/favorites', { params });
+/** One saved text as `GET /v1/favorites` returns it: the favorite row with its quote inside. */
+export interface FavoriteRowDto {
+  id: string;
+  createdAt: string;
+  quote: QuoteDto;
 }
 
+/**
+ * The saved quotes, newest first. The API wraps each in its favorite row (`{ id, createdAt, quote }`); a list cached by
+ * an older build may already hold bare quotes, so both shapes are read. Anything else is dropped, never rendered.
+ */
+export function favoriteQuotes(rows: readonly unknown[] | null | undefined): QuoteDto[] {
+  const out: QuoteDto[] = [];
+  for (const row of rows ?? []) {
+    if (!row || typeof row !== 'object') continue;
+    const r = row as Partial<FavoriteRowDto> & Partial<QuoteDto>;
+    const quote = r.quote && typeof r.quote === 'object' ? r.quote : typeof r.textAr === 'string' ? (r as QuoteDto) : null;
+    if (quote && typeof quote.id === 'string') out.push({ ...quote, isFavorite: true });
+  }
+  return out;
+}
+
+export async function fetchFavorites(params: { page?: number; limit?: number } = {}) {
+  const res = await apiGet<FavoriteRowDto[]>('/favorites', { params });
+  return { ...res, data: favoriteQuotes(res.data) };
+}
+
+/** `GET /v1/favorites/quote-ids`: the ids of every saved quote. */
 export async function fetchFavoriteIds() {
-  return apiGet<string[]>('/favorites/ids');
+  return apiGet<string[]>('/favorites/quote-ids');
 }
 
 export async function addFavorite(quoteId: string) {
@@ -27,7 +51,7 @@ export function useFavorites() {
   return useQuery({
     queryKey: queryKeys.favorites.all,
     queryFn: () => fetchFavorites(),
-    select: (r) => r.data,
+    select: (r) => favoriteQuotes(r.data),
     networkMode: 'offlineFirst',  // serve from cache when offline
     staleTime: Infinity,           // never refetch automatically in the session
   });

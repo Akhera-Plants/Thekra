@@ -1,5 +1,5 @@
 /**
- * One Name of Allah on the topic template (redesign §4.7), after the website's /names/[slug]: «الميزان» = the verse
+ * One Name of Allah on the topic template (redesign §4.7), after the website's /names/[slug]: the verse
  * that contains the name (from the API by id; never typed text), one line of meaning with «قيد المراجعة», «التعبّد
  * بهذا الاسم» = links to related topics, then the other verses with the word, and «السابق · التالي».
  */
@@ -12,7 +12,7 @@ import { SearchX } from 'lucide-react-native';
 import { useNameOfAllah } from '@/lib/api/names';
 import type { NameOfAllahDto } from '@/lib/types/api';
 import { QuoteCard } from '@/components/QuoteCard';
-import { MizanBlock, NameWorshipLinks } from '@/components/TopicTemplate';
+import { NameVerse, NameWorshipLinks } from '@/components/TopicTemplate';
 import { space, useStyles, useTheme } from '@/theme';
 import { BackChevron, Card, EmptyState, ErrorState, ForwardChevron, Loading, PageHeader, Row, Screen, Section, Text } from '@/ui';
 
@@ -87,7 +87,7 @@ export default function NameScreen() {
         <PageHeader eyebrow={t('names.number', { number: String(detail.number) })} title={detail.nameAr} />
 
         {detail.verse ? (
-          <MizanBlock mizan={{ source: 'curated', items: [detail.verse] }} lead={t('names.verseLead')} />
+          <NameVerse quote={detail.verse} lead={t('names.verseLead')} />
         ) : (
           <Text variant="small" tone="muted">
             {t('names.verseMissing')}

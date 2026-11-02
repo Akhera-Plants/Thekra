@@ -2,7 +2,7 @@
  * The quote list of one topic (a sin's reminders, a good deed's motivations, a branch), after the website's topic
  * pages: the page header (with short `meta` lines such as «كبيرة»), then the type filter right under it (SegmentTabs
  * with the counts read under «الكل»), then everything of the tab: the page's own top part (`intro`: its one action,
- * «الميزان»…), the reading sections with their headings (see `buildTopicSections`) and `footer`. Owner, 2026-11-01:
+ * the reward…), the reading sections with their headings (see `buildTopicSections`) and `footer`. Owner, 2026-11-01:
  * no text above the tabs. The API's reading order is kept: no shuffle (owner rule, PROJECT_GUIDE §6).
  * The screen owns the query; this renders its states (skeletons, error, empty, refresh, next page).
  */
@@ -75,7 +75,7 @@ interface TopicQuoteListProps {
   /** Short lines about the topic in the title block («كبيرة · …», «موضوع معاصر»), never a text. */
   meta?: React.ReactNode;
   emptyMessage: string;
-  /** The top of the tab's content, under the tabs (the page's action, «الميزان»…). */
+  /** The top of the tab's content, under the tabs (the page's action, the reward…). */
   intro?: React.ReactNode;
   footer?: React.ReactNode;
 }
@@ -140,13 +140,17 @@ export function TopicQuoteList({
 
   const tabs = useMemo<SegmentItem<TopicFilter>[]>(() => {
     const total = counts ? Object.values(counts).reduce<number>((sum, n) => sum + (n ?? 0), 0) : undefined;
-    return FILTERS.filter((f) => f.key === 'ALL' || f.key === filter || !counts || (counts[f.key] ?? 0) > 0).map((f) => ({
+    // Counts that cover nothing (a contemporary topic whose texts come from derived topics) prove nothing: every tab
+    // stays, without numbers.
+    const known = counts !== undefined && (total ?? 0) > 0;
+    return FILTERS.filter((f) => f.key === 'ALL' || f.key === filter || !known || (counts?.[f.key] ?? 0) > 0).map((f) => ({
       key: f.key,
       label: t(f.labelKey),
-      count: f.key === 'ALL' ? total : counts?.[f.key],
+      count: known ? (f.key === 'ALL' ? total : counts?.[f.key]) : undefined,
     }));
   }, [counts, filter, t]);
-  const showTabs = tabs.length > 2 || filter !== 'ALL';
+  // The type tabs are on every topic page (owner round 3, item 2), contemporary topics included.
+  const showTabs = tabs.length > 1;
 
   const handleRefresh = useCallback(() => void refetch(), [refetch]);
   const handleRetryMore = useCallback(() => void fetchNextPage(), [fetchNextPage]);

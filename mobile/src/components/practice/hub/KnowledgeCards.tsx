@@ -17,7 +17,6 @@ import {
   gratitudeAyah,
   HABIT_LOOP_STEPS,
   nameOfWeekIndex,
-  rewardQuoteId,
   SIN_STEPS,
   storyQuoteId,
   tallies,
@@ -32,10 +31,12 @@ import { useAyah } from '@/lib/api/quran';
 import { usePracticeStore } from '@/lib/practice/practice-store';
 import { formatAmount, habitFor } from '@/lib/practice/reminders';
 import { usePlanDays } from '@/lib/practice/use-habits-hub';
+import { dayDoneLineKey } from '@/lib/practice/day-done';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { QuoteCard } from '@/components/QuoteCard';
 import { radius, space, useStyles, type Theme } from '@/theme';
-import { Text, TextLink } from '@/ui';
+import { ListRow, Text, TextLink } from '@/ui';
+import { Sparkles } from 'lucide-react-native';
 import { planTitleOf } from './HeartCards';
 
 /** How long «تقبّل الله منك» stays after a tick. */
@@ -167,23 +168,23 @@ export function Cheer({ at }: { at: number | null }) {
   );
 }
 
-/** «تمّ وردك اليوم»: once every habit asked today has something logged, with one reward text from their evidence ids. */
+/**
+ * «تمّ وردك اليوم» (owner round 3, item 4): once every habit asked today has something logged, one short achievement
+ * line from a rotating list (a new one each day), plain UI words: no attributed text here.
+ */
 export function DayDoneCard({ today }: { today: LocalDate }) {
   const { t } = useTranslation();
-  const locale = useUiLocale();
   const styles = useStyles(makeStyles);
   const store = usePracticeStore((s) => s.store);
   const planDays = usePlanDays();
-  const habits = usePracticeCatalog(locale).data?.habits ?? [];
-  const { asked, complete } = useMemo(() => dayCompletion(store, today, planDays), [store, today, planDays]);
-  const id = complete ? rewardQuoteId(asked.flatMap((plan) => habitFor(plan, habits)?.evidence ?? []), today) : null;
-  const evidence = useEvidence(id ? [id] : [], locale);
-  const quote = id ? evidence.data?.get(id) : undefined;
+  const { complete } = useMemo(() => dayCompletion(store, today, planDays), [store, today, planDays]);
   if (!complete) return null;
   return (
     <View style={styles.done} accessibilityLiveRegion="polite">
       <Text variant="heading">{t('practice.celebrate.dayDone')}</Text>
-      {quote ? <QuoteCard quote={quote} shareable={false} /> : null}
+      <Text variant="body" tone="link">
+        {t(dayDoneLineKey(today))}
+      </Text>
     </View>
   );
 }
@@ -216,6 +217,9 @@ export function StoryLine({ moment }: { moment: StoryMoment }) {
 const SHOW_NAME_WEEKS = false;
 
 export function WeekCard({ today }: { today: LocalDate }) {
+  // Only for a member who chose to study the branches of faith (owner round 3, item 7: Settings ← «اللغة والمظهر»).
+  const optedIn = usePracticeStore((s) => s.prefs.weekBranch);
+  if (!optedIn) return null;
   // «اسم الأسبوع» waits while «الأسماء الحسنى» is hidden (owner, 2026-11-01); set SHOW_NAME_WEEKS to true to bring it back.
   return !SHOW_NAME_WEEKS || weekCardKind(today) === 'branch' ? <WeekBranchCard today={today} /> : <WeekNameCard today={today} />;
 }
@@ -238,7 +242,7 @@ export function WeekNameCard({ today }: { today: LocalDate }) {
   );
 }
 
-/** «شعبة الأسبوع» on «ورد اليوم»: one branch for everyone this ISO week, opening its page. */
+/** «شعبة الأسبوع» on «ورد اليوم»: one branch for everyone this ISO week, opening its page; a long title wraps in the card. */
 export function WeekBranchCard({ today }: { today: LocalDate }) {
   const { t } = useTranslation();
   const locale = useUiLocale();
@@ -252,7 +256,7 @@ export function WeekBranchCard({ today }: { today: LocalDate }) {
       <Text variant="small" weight="medium" tone="muted" accessibilityRole="header">
         {`${t('practice.weekBranch.title')} · ${number}`}
       </Text>
-      <TextLink label={title} onPress={() => router.push(`/branches/${number}`)} />
+      <ListRow icon={Sparkles} title={title} chevron onPress={() => router.push(`/branches/${number}`)} />
     </View>
   );
 }

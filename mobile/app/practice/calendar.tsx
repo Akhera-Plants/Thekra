@@ -1,9 +1,10 @@
 /**
- * «مواسم الخير» (the occasions calendar, roadmap §2.2), after the website's calendar page: today in Hijri in a next-step note, a month grid with the
- * sunnah occasions marked (the hub's MonthGrid; the month's occasions from `GET /v1/calendar/occasions`) and the
- * selected day's occasions under it, the user's ±2 day Hijri offset, «اشترك في التقويم» (the public feed: no personal
- * data, no account; `webcal://` on iOS, Google Calendar's add-by-URL page on Android) and «نزّل ملف التقويم» (the same
- * `.ics` over https), then the upcoming occasions as a hairline list, each opening its good deed.
+ * «مواسم الخير» (the occasions calendar, roadmap §2.2; owner round 3, decision 4), after the website's calendar page:
+ * today in Hijri in a next-step note with an icon that opens the ±2 day Hijri adjustment in a sheet, then two tabs:
+ * «المناسبات القادمة» («أضفها إلى تقويمك»: «اشترك في التقويم», the public feed, no personal data, no account; `webcal://`
+ * on iOS, Google Calendar's add-by-URL page on Android; and «نزّل ملف التقويم», the same `.ics` over https; then the
+ * upcoming occasions as a hairline list, each opening its good deed) and «الشهر» (the month grid with the sunnah
+ * occasions marked, the selected day's occasions under it).
  * The Hijri date is hidden when the runtime lacks Umm al-Qura (`isHijriSupported()` is false on a Hermes build with
  * reduced ICU).
  */
@@ -12,7 +13,8 @@ import React, { useMemo, useState } from 'react';
 import { Linking, Platform, Pressable, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { CalendarDays, CalendarPlus, Download } from 'lucide-react-native';
+import { CalendarCog, CalendarDays, CalendarPlus, Download } from 'lucide-react-native';
+import { BottomSheet } from '@/components/practice/mujahada/Sheet';
 import { addDays, formatHijriAr, isHijriSupported, toHijri, updateSettings, weekday } from '@thekra/practice-core';
 import { calendarFeedUrl, useCalendarOccasions } from '@/lib/api/practice';
 import { pick, type CalendarOccasionDto } from '@/lib/practice/catalog-types';
@@ -31,7 +33,10 @@ import {
   ErrorText,
   ForwardArrow,
   Icon,
+  IconButton,
   NextStep,
+  SegmentTabs,
+  Ornament,
   PageHeader,
   Screen,
   Section,
@@ -48,6 +53,7 @@ type HijriParts = CalendarOccasionDto['hijri'];
 
 const makeStyles = (t: Theme) => ({
   group: { gap: space.sm },
+  today: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.sm },
   month: { gap: space.lg },
   list: { borderTopWidth: 1, borderTopColor: t.colors.border },
   row: {
@@ -78,6 +84,8 @@ export default function CalendarScreen() {
   const hijriOffset = usePracticeStore((s) => s.store.settings.hijriOffset);
   const setStore = usePracticeStore((s) => s.setStore);
   const [openFailed, setOpenFailed] = useState(false);
+  const [tab, setTab] = useState<'upcoming' | 'month'>('upcoming');
+  const [adjusting, setAdjusting] = useState(false);
   const d = today();
   const occasions = useCalendarOccasions(d, addDays(d, HORIZON_DAYS), hijriOffset, locale);
   const hijri = isHijriSupported();
@@ -112,66 +120,86 @@ export default function CalendarScreen() {
     <Screen edges={['bottom']} refreshing={occasions.isRefetching} onRefresh={() => void occasions.refetch()}>
       <PageHeader title={t('calendar.title')} />
 
-      <NextStep title={`${t(`practice.weekdays.${weekday(d)}`)} ${shortDate(d)}`}>
+      <View style={styles.today}>
+        <View style={{ flex: 1 }}>
+          <NextStep title={`${t(`practice.weekdays.${weekday(d)}`)} ${shortDate(d)}`}>
+            {todayHijri ? (
+              <Text variant="heading" tone="link">
+                {t('calendar.todayHijri', { date: todayHijri })}
+              </Text>
+            ) : null}
+          </NextStep>
+        </View>
+        {hijri ? <IconButton icon={CalendarCog} label={t('calendar.offset')} onPress={() => setAdjusting(true)} bordered /> : null}
+      </View>
+
+      <SegmentTabs
+        items={[
+          { key: 'upcoming', label: t('calendar.tabUpcoming') },
+          { key: 'month', label: t('calendar.tabMonth') },
+        ]}
+        value={tab}
+        onChange={setTab}
+      />
+
+      {tab === 'month' ? (
+        <MonthOccasions
+          month={month}
+          today={todayDate}
+          selected={selected}
+          hijriLabel={hijri ? hijriLabel : null}
+          onSelect={select}
+          onShiftMonth={shiftMonth}
+        />
+      ) : (
+        <>
+          <Section title={t('calendar.addToCalendar')}>
+            <View style={styles.group}>
+              <Button label={t('calendar.subscribe')} icon={CalendarPlus} onPress={handleSubscribe} block />
+              <Button label={t('calendar.download')} icon={Download} variant="outline" onPress={handleDownload} block />
+              {openFailed ? <ErrorText>{t('calendar.openFailed')}</ErrorText> : null}
+              <Text variant="small" tone="muted">
+                {t('calendar.subscribeHint')}
+              </Text>
+            </View>
+          </Section>
+
+          <Ornament />
+
+          <Section title={t('calendar.upcoming')}>
+            {occasions.isLoading ? (
+              <OccasionsSkeleton />
+            ) : occasions.isError ? (
+              <ErrorState onRetry={() => void occasions.refetch()} />
+            ) : rows.length === 0 ? (
+              <EmptyState icon={CalendarDays} message={t('calendar.empty')} />
+            ) : (
+              <View style={styles.list}>
+                {rows.map((o) => (
+                  <OccasionRow key={`${o.key}-${o.date}`} occasion={o} hijriLabel={hijri ? hijriLabel : null} />
+                ))}
+              </View>
+            )}
+          </Section>
+        </>
+      )}
+
+      <BottomSheet visible={adjusting} title={t('calendar.offset')} onClose={() => setAdjusting(false)}>
+        <Wrap>
+          {OFFSETS.map((v) => (
+            <Chip key={v} label={signed(v)} selected={hijriOffset === v} onPress={() => setStore((s) => updateSettings(s, { hijriOffset: v }))} />
+          ))}
+        </Wrap>
+        <Text variant="small" tone="muted">
+          {t('calendar.offsetHint')}
+        </Text>
         {todayHijri ? (
-          <Text variant="heading" tone="link">
+          <Text variant="body" tone="link">
             {t('calendar.todayHijri', { date: todayHijri })}
           </Text>
         ) : null}
-      </NextStep>
-
-      <MonthOccasions
-        month={month}
-        today={todayDate}
-        selected={selected}
-        hijriLabel={hijri ? hijriLabel : null}
-        onSelect={select}
-        onShiftMonth={shiftMonth}
-      />
-
-      {hijri ? (
-        <View style={styles.group}>
-          <Text variant="label">{t('calendar.offset')}</Text>
-          <Wrap>
-            {OFFSETS.map((v) => (
-              <Chip
-                key={v}
-                label={signed(v)}
-                selected={hijriOffset === v}
-                onPress={() => setStore((s) => updateSettings(s, { hijriOffset: v }))}
-              />
-            ))}
-          </Wrap>
-          <Text variant="small" tone="muted">
-            {t('calendar.offsetHint')}
-          </Text>
-        </View>
-      ) : null}
-
-      <View style={styles.group}>
-        <Button label={t('calendar.subscribe')} icon={CalendarPlus} onPress={handleSubscribe} />
-        <Button label={t('calendar.download')} icon={Download} variant="outline" onPress={handleDownload} />
-        {openFailed ? <ErrorText>{t('calendar.openFailed')}</ErrorText> : null}
-        <Text variant="small" tone="muted">
-          {t('calendar.subscribeHint')}
-        </Text>
-      </View>
-
-      <Section title={t('calendar.upcoming')}>
-        {occasions.isLoading ? (
-          <OccasionsSkeleton />
-        ) : occasions.isError ? (
-          <ErrorState onRetry={() => void occasions.refetch()} />
-        ) : rows.length === 0 ? (
-          <EmptyState icon={CalendarDays} message={t('calendar.empty')} />
-        ) : (
-          <View style={styles.list}>
-            {rows.map((o) => (
-              <OccasionRow key={`${o.key}-${o.date}`} occasion={o} hijriLabel={hijri ? hijriLabel : null} />
-            ))}
-          </View>
-        )}
-      </Section>
+        <Button label={t('common.done')} onPress={() => setAdjusting(false)} block />
+      </BottomSheet>
     </Screen>
   );
 }

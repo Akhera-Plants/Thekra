@@ -34,37 +34,42 @@ Home: «أبواب الخير»: «أعنّي على فعل طاعة» (filled),
 door keeps its plant whole in its own square at the bottom inline-end corner, never under the words; sizes per screen
 width in `src/lib/home/door-layout.ts` (two main doors side by side on tablets)  
 Today's wird: `(tabs)/habits` (ورد اليوم): the title, one date line (Gregorian; Hijri too with «إظهار التاريخ الهجري»),
-the streak chip (gold flame, practice-core `currentStreak`) and «أضف»; «اليوم» from practice-core `dayAgenda` (done rows
-sink to the bottom; habits not asked today behind one collapsed row; «يومي ثقيل» chip); «أعمال دورية» (next three, «الكل»)
+the streak chip (gold flame, practice-core `currentStreak`) and «أضف» (عادة · عمل دوري: every periodic template, reminders
+only · تخفَّف); «اليوم» from practice-core `dayAgenda` (done rows sink to the bottom; habits not asked today behind one
+collapsed row «اليوم استراحة…»; «يومي ثقيل» chip; «تمّ وردك اليوم» with one rotating achievement line; «عملك المعتاد يُكتب
+لك» only the day after an excused day with a commitment above 60%); «أعمال دورية» after every habit section (periodic
+templates and people lists only, never a habit; next three, «الكل»); «شعبة الأسبوع» only with its opt-in
 (pieces in `src/components/practice/hub/`, pure helpers in `src/lib/practice/wird.ts` and `hub.ts`; the
 periodic-act rules and the today grouping live in `@thekra/practice-core` `wird.ts`, shared with the website, hooks in
 `src/lib/practice/use-habits-hub.ts`)  
 My habits: `(tabs)/record` (عاداتي; the route name kept for older links; `practice/habits` redirects here), two parts:
 «العادات» and «الإحصاء». «العادات» covers doing good and leaving sins: «طاعات أداوم عليها» (each habit row opens its plan and
 ends in the action that fits today, `DayAction`: «سجّل» when asked and not logged, «تمّ» when done (a tap takes it back,
-with «تراجع»), a quiet «سجّل» on a day it is not asked, «استأنف» when paused; راسخة، موقوفة مؤقتًا; «أضف عادة»), then
+with «تراجع»), a quiet «سجّل» on a day it is not asked, «استأنف» when paused; after a missed day «صلّحها» opens the
+«خربانة؟ صلّحها» steps; راسخة، موقوفة مؤقتًا; «أضف عادة»; «ابنِ حلقة عادتك الخاصة»), then
 «معاصٍ أتخفّف منها» (each running «تخفَّف» program with its stage and days held, generic words only, opening the locked
 program screen; `src/lib/practice/my-habits.ts`), «وضع رمضان» (shown only in Ramadan, Umm al-Qura + the user's offset;
-outside it only to end a season still running) and «فروضي وأدواري». «الإحصاء»: the streak and «أطول مداومة», the one month
+outside it only to end a season still running) and «فروضي وأدواري». «الإحصاء»: the streak and «أطول مداومة», «نسبة الالتزام» per habit (bars, last 30 full days), the one month
 calendar, a tapped day's list, «حصيلتي»  
 Settings: `(tabs)/settings` is a short list of groups (`src/lib/settings/groups.ts`), each its own screen in `app/settings/`:
 «الحساب» (sync, sign out, delete account), «التنبيهات والتذكير», «أوقات الصلاة» (`practice/prayer-times`), «الخصوصية والتشفير»
-(the «تخفَّف» lock and the encrypted saving of every «تخفَّف» program), «اللغة والمظهر» (theme, language, Hijri date, «نص اليوم»),
+(one status line: «تخفَّف» is always kept encrypted in the account), «اللغة والمظهر» (theme, language, Hijri date, «نص اليوم»),
 «عن التطبيق». There is no «delete all data» action in Settings; «تخفَّف» keeps its own one-tap wipe  
 Page art: `Screen`'s `decor` picks the background per page (`arabesque` home, `sprig` ورد اليوم, `olive` عاداتي, none in Settings)  
-Seasons of good: `practice/calendar` (مواسم الخير, in the side menu): occasions month and the ICS feed  
+Seasons of good: `practice/calendar` (مواسم الخير, in the side menu): two tabs, «المناسبات القادمة» (subscribe / download
+the ICS feed, the upcoming list) and «الشهر» (the month grid); the Hijri adjustment opens from an icon in a sheet  
 Garden: `garden` (بستاني): no entry point since the redesign (§1; screen and data kept): one plant per habit plan (+ صلة الرحم), grown by days tended, never
 shrinking, resting on «يومي ثقيل»; never a plant for the sin program (`src/lib/practice/garden.ts`, drawings in
 `src/components/garden/`)  
-Saved: `favorites` (المحفوظات, from the side menu) in two parts: «النصوص» and «تذكيراتي» (`?part=mine`; `practice/my-reminders`
+Saved: `favorites` (المحفوظات, from the side menu; the API's `{ id, createdAt, quote }` rows, ids from `/favorites/quote-ids`) in two parts: «النصوص» and «تذكيراتي» (`?part=mine`; `practice/my-reminders`
 redirects there)  
 Browse: `browse` (استكشف النصوص), opened from the side menu  
 Lists: `sins` and `good-deeds` (`src/components/TopicCatalog.tsx`, logic in `src/lib/topic-catalog.ts`): search (folded
 Arabic, names and a pair's shared title), one row of chips with counts (the quick filter «الكبائر» / «عادات مقترحة», then the
 website's topic domains), and the list in domain groups under their headings when no chip and no search is on  
 Core: `sins/[slug]` (every sin offers «ابدأ «تخفَّف»»), `good-deeds/[slug]`, `branches/[number]`: the title (with short
-meta lines such as «كبيرة»), the type tabs right under it, and every text inside the tab: the page's one action, «الميزان»
-of the tab's type, the reading sections (`TopicQuoteList`, `TopicTemplate`). Also `quotes/[id]`, `feelings/[tagSlug]`  
+meta lines such as «كبيرة»), the type tabs right under it on every topic page (contemporary ones too), and every text
+inside the tab: the page's one action, the reading sections (`TopicQuoteList`, `TopicTemplate`). Also `quotes/[id]`, `feelings/[tagSlug]`  
 Practice (`app/practice/`): `add` (أعِنّي على طاعة), `plan/[id]`, `periodic` (أعمال دورية: relatives and non-daily habits),
 `duties` (فروضي وأدواري), `kinship` (صلة الرحم; `?add=1` opens the form), `sin-program` (تخفَّف: any sin of the public list;
 a sin without a written program asks «هل فيها حقٌّ لأحد من الناس؟» and runs the common five stages, practice-core
@@ -77,15 +82,25 @@ Auth: `(auth)/login`, `(auth)/register`
   every edit goes through its store helpers (`updatePlan`, `upsertRelative`, `undoContact`, `updateSettings`…).
 - Storage: practice-core `Store` v2 in AsyncStorage `thekra.practice.v1` (`parseStore` upgrades v1; the first
   app version's habit-key ids get UUIDs once, see `migrateLegacy`); app-only prefs (reminder switches/times, roles,
-  «تذكّر على هذا الجهاز») in `thekra.practice.prefs.v1`.
+  «شعبة الأسبوع» opt-in) in `thekra.practice.prefs.v1`.
 - Sync (signed in): `POST /v1/me/practice/sync` with `buildSyncRequest` in batches until nothing is pending, else
   `GET /v1/me/practice?since=`; merged with `applyServerChanges`. Runs on sign-in, foreground, 3 s after an edit
   and every 15 minutes while active. Status in Settings.
-- Sin program («تخفَّف»): in clear only on the device; never in a sync body or a notification (title always
-  «تذكرة من ذكرى»). Optional encrypted vault (`GET/PUT/DELETE /v1/me/sin-vault`): sealed on the device with a key
-  derived from the user's «رمز الخصوصية» (PBKDF2-SHA256 210,000, AES-256-GCM); the key stays in memory, or in
-  expo-secure-store when «تذكّر على هذا الجهاز» is on. Managed in Settings ← «الخصوصية والتشفير» (one option for all
-  programs; the program screen links there). The program's own wipe button deletes local data, the key and the vault.
+- Sin program («تخفَّف»; owner decision 2026-11-01, docs/plan/2026-11-01-sin-vault-always-on.md): always kept in the
+  account **encrypted** (`GET/PUT/DELETE /v1/me/sin-vault`, PBKDF2-SHA256 210,000 + AES-256-GCM, practice-core
+  `createVault` / `sealVault`); never in a sync body or a notification (title always «تذكرة من ذكرى»). The first program
+  asks for a «رمز الخصوصية» once; the derived key is then kept in expo-secure-store behind biometrics
+  (`requireAuthentication`, practice-core `serializeVaultKey`), so the fingerprint / face opens «تخفَّف»
+  (`SinProgramGuard`); without biometrics or on a new device the code is asked. Every change autosaves (debounced; 409 →
+  merge and save again; offline → pending, retried on refresh). Sign-out clears the kept key and the device copy.
+  «نسيت الرمز؟ ابدأ من جديد» deletes the vault. Screenshots are never blocked (expo-screen-capture is no longer used).
+- «تخفَّف» screen: tabs «اليوم · المراحل · حلقة المعصية · دفتري»; «لحظة مجاهدة» (route `practice/moment`): the timer,
+  «افعل واحدة الآن» first («سبّح الآن»: the tasbih counter with the ×10…×700 arithmetic and its hadith by id; «وردٌ
+  أقصر»: «سجّل القليل» per habit and the sitting nafl prayer), rotating verses on patience (catalog `mujahada`).
+- Habit loops: «ابنِ حلقة عادتك الخاصة» (`practice/loops`, from «عاداتي» and the strategies page): a six-question
+  stepper saved on the plan (`loops`, synced); «حلقة المعصية» the same inside the encrypted program.
+- Limits (practice-core `limitBlock`): 3 habits younger than three months, 3 programs each two months old before the
+  next; the limit sheet says why and the unlock day (`src/lib/practice/limit-message.ts`).
   `src/lib/crypto/install.ts` installs expo-crypto's `getRandomValues` on `globalThis.crypto` (Hermes has none).
 - Evidence for the sin programs is requested for **all** catalog programs at once, so the request reveals no choice.
 - Local notifications (`expo-notifications`, no push): permission asked when a reminder switch is turned on, or

@@ -1,6 +1,6 @@
 /**
  * The contents of the Settings group screens (app/settings/*): a titled group of hairline rows (`SettingsGroup`),
- * «الخصوصية والتشفير» (the sin-program lock, the encrypted saving of every «تخفَّف» program, export, the offline copy),
+ * «الخصوصية والتشفير» (where «تخفَّف» is kept: always encrypted in the account; export, the offline copy),
  * «التنبيهات» (every reminder switch and time, the only place for them), «نية اليوم والمحاسبة», «اللغة والمظهر» and
  * «عن التطبيق». No «delete all data» here (owner, 2026-11-01): «تخفَّف» keeps its own one-tap wipe, and the account
  * deletion stays under «الحساب».
@@ -27,13 +27,12 @@ import { TimeField } from '@/components/practice/editors';
 import { exportAccountData } from '@/lib/api/practice';
 import { ensurePermission, scheduledReminderCount } from '@/lib/practice/notifications';
 import { usePracticeStore } from '@/lib/practice/practice-store';
-import { unlockWithDevice, useDeviceLockAvailable } from '@/lib/practice/use-sin-privacy';
 import { SITE_ABOUT_PATH, SITE_PRIVACY_PATH, sitePageUrl } from '@/lib/site';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { switchDirectionIfNeeded, type SupportedLocale } from '@/lib/i18n';
 import { setApiLocale } from '@/lib/api-client';
 import { space, useStyles, useTheme, useThemePreference, type Theme, type ThemePreference } from '@/theme';
-import { VaultCard, VaultSignInNote } from '@/components/practice/VaultCard';
+import { VaultSignInNote, VaultStatusCard } from '@/components/practice/VaultCard';
 import { ErrorText, Icon, ListRow, Notice, SegmentTabs, SwitchRow, Text, type SegmentItem } from '@/ui';
 
 const QUERY_CACHE_KEY = 'thekra_query_cache';
@@ -74,22 +73,11 @@ export function SettingsGroup({ title, lead, children }: { title?: string; lead?
 
 export function PrivacySection() {
   const { t } = useTranslation();
-  const styles = useStyles(makeStyles);
   const { colors } = useTheme();
   const qc = useQueryClient();
   const userId = useAuthStore((s) => s.user?.id ?? null);
-  const lockOn = usePracticeStore((s) => s.prefs.sinLock);
-  const setPrefs = usePracticeStore((s) => s.setPrefs);
-  const hasProgram = usePracticeStore((s) => s.store.programs.length > 0);
-  const lockAvailable = useDeviceLockAvailable();
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState(false);
-
-  // Switching the lock either way asks the device first, so no one else can turn it off.
-  async function handleLockChange(on: boolean) {
-    const confirmed = await unlockWithDevice({ promptMessage: t('sinLock.confirmPrompt'), cancelLabel: t('common.cancel') });
-    if (confirmed) setPrefs((p) => ({ ...p, sinLock: on }));
-  }
 
   async function handleExport() {
     setExporting(true);
@@ -120,20 +108,8 @@ export function PrivacySection() {
 
   return (
     <>
-      {lockAvailable || lockOn ? (
-        <SettingsGroup title={t('sinProgram.title')}>
-          <View style={styles.switchRow}>
-            <SwitchRow
-              label={t('sinLock.switch')}
-              hint={t('sinLock.switchHint')}
-              value={lockOn}
-              onValueChange={(on) => void handleLockChange(on)}
-            />
-          </View>
-        </SettingsGroup>
-      ) : null}
-      {/* One encrypted saving for every «تخفَّف» program, managed here only. */}
-      {userId ? <VaultCard userId={userId} hasProgram={hasProgram} /> : <VaultSignInNote />}
+      {/* «تخفَّف» is always kept encrypted in the account and opened with the fingerprint: one status line here. */}
+      {userId ? <VaultStatusCard /> : <VaultSignInNote />}
       <SettingsGroup>
         {userId ? (
           <ListRow
@@ -276,7 +252,7 @@ export function HeartSection() {
   );
 }
 
-/** Theme (device, light, dark) and language, each a segmented choice like the site's; «إظهار التاريخ الهجري»; «نص اليوم». */
+/** Theme (device, light, dark) and language, each a segmented choice like the site's; «إظهار التاريخ الهجري»; «شعبة الأسبوع»; «نص اليوم». */
 export function AppearanceSection() {
   const { t, i18n } = useTranslation();
   const styles = useStyles(makeStyles);
@@ -284,6 +260,7 @@ export function AppearanceSection() {
   const setThemePref = useThemePreference((s) => s.setPref);
   const currentLocale: SupportedLocale = i18n.language === 'en' ? 'en' : 'ar';
   const showHijri = usePracticeStore((s) => s.prefs.showHijri);
+  const weekBranch = usePracticeStore((s) => s.prefs.weekBranch);
   const setPrefs = usePracticeStore((s) => s.setPrefs);
 
   const themeItems: SegmentItem<ThemePreference>[] = THEME_OPTIONS.map((key) => ({ key, label: t(`theme.${key}`) }));
@@ -315,6 +292,13 @@ export function AppearanceSection() {
         label={t('settings.showHijri')}
         value={showHijri}
         onValueChange={(on) => setPrefs((p) => ({ ...p, showHijri: on }))}
+      />
+      {/* «شعبة الأسبوع» on «ورد اليوم» only for a member who chose to study the branches of faith (owner round 3). */}
+      <SwitchRow
+        label={t('settings.weekBranch')}
+        hint={t('settings.weekBranchHint')}
+        value={weekBranch}
+        onValueChange={(on) => setPrefs((p) => ({ ...p, weekBranch: on }))}
       />
       {/* The widget's «نص اليوم» source: part of how the app shows itself on the device. */}
       <ListRow icon={BookOpen} title={t('dailyText.title')} chevron onPress={() => router.push('/practice/daily-text')} />

@@ -1,7 +1,7 @@
 /**
  * One branch of faith, after the website's branch page (branches/[number]/page.tsx): «الشعبة N» over the branch's
  * title and summary (each language its own or none: no Arabic prose in English), the type tabs right under them
- * (owner, 2026-11-01: every text under the tabs), then «الميزان» of the tab's type, the book's words on it («من الكتاب»,
+ * (owner, 2026-11-01: every text under the tabs), then the book's words on it («من الكتاب»,
  * BRANCH_SHARH, under «الكل») and the texts (TopicQuoteList), then «السابقة · الكل · التالية».
  * Prev and next replace this page, so Back still leads to the list; «الكل» returns to the list (or opens it).
  */
@@ -15,7 +15,7 @@ import { useBranch, useBranchQuotesInfinite } from '@/lib/api/branches';
 import { buildTopicSections } from '@/lib/topics';
 import type { BranchQuotesMeta, ImanBranchDetailDto, ImanBranchNeighbourDto } from '@/lib/types/api';
 import { TopicQuoteList, useLastDefined, useTopicQuoteParams } from '@/components/TopicQuoteList';
-import { BranchRelatedLinks, MizanBlock } from '@/components/TopicTemplate';
+import { BranchRelatedLinks } from '@/components/TopicTemplate';
 import { space, useStyles, useTheme } from '@/theme';
 import { BackChevron, Card, EmptyState, ForwardChevron, Icon, Row, Screen, Section, Text } from '@/ui';
 
@@ -152,8 +152,7 @@ export default function BranchScreen() {
       intro={
         detail.data ? (
           <>
-            {/* Under the tabs: الميزان → the book's words → texts → this branch's sins and deeds. No action here. */}
-            <MizanBlock mizan={detail.data.mizan} filter={filter} />
+            {/* Under the tabs: the book's words → texts → this branch's sins and deeds. No action here. */}
             {filter === 'ALL' ? <BranchExplanations items={detail.data.explanations} /> : null}
           </>
         ) : null

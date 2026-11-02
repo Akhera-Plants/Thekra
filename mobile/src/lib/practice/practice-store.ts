@@ -121,7 +121,7 @@ export function pendingProgram(): string | null {
 }
 
 /**
- * Where «لحظة ضعف» was opened from, in memory only (never persisted, never a route param): a sin page passes its slug
+ * Where «لحظة مجاهدة» was opened from, in memory only (never persisted, never a route param): a sin page passes its slug
  * (the screen then uses that sin's program only if the user follows it, and nothing personal otherwise); «ورد اليوم»
  * and «تخفَّف» pass `null` (the program in focus, practice-core `momentProgram`). `undefined` when nothing was handed.
  */

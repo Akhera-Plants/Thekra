@@ -93,11 +93,14 @@ export interface HabitActionRowProps {
   onAction: () => void;
   /** Right after a log or its undo from this row: «سُجِّل · تراجع» / «أُلغي التسجيل · تراجع». */
   undo?: { cleared: boolean; onUndo: () => void } | null;
+  /** Missed yesterday («لا تفوّتها مرتين»): the row offers «صلّحها» (owner round 3). */
+  onFix?: () => void;
 }
 
 /** A habit: the row opens the plan; the button logs today, takes it back, or resumes a paused habit. */
-export function HabitActionRow({ icon, title, hint, action, onOpen, onAction, undo }: HabitActionRowProps) {
+export function HabitActionRow({ icon, title, hint, action, onOpen, onAction, undo, onFix }: HabitActionRowProps) {
   const { t } = useTranslation();
+  const fixLine = onFix ? <FixLine note={t('practice.hub.missedYesterday')} subject={title} onFix={onFix} /> : undefined;
   return (
     <RowFrame
       icon={icon}
@@ -113,7 +116,9 @@ export function HabitActionRow({ icon, title, hint, action, onOpen, onAction, un
             </Text>
             <Button label={t('practice.plan.undo')} onPress={undo.onUndo} variant="ghost" compact />
           </>
-        ) : undefined
+        ) : (
+          fixLine
+        )
       }
       action={action ? <DayAction action={action} subject={title} onPress={onAction} doneHint={t('myHabits.doneHint')} /> : undefined}
     />
@@ -128,6 +133,19 @@ export interface ProgramActionRowProps {
   /** The current stage's title from the catalog (common to every sin), when known. */
   stageTitle?: string;
   onOpen: () => void;
+}
+
+/** «خربانة؟ صلّحها» under a row: one gentle line and the framed «صلّحها». */
+function FixLine({ note, subject, onFix }: { note: string; subject: string; onFix: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <>
+      <Text variant="caption" tone="muted" style={{ flex: 1 }}>
+        {note}
+      </Text>
+      <Button label={t('myHabits.fix')} onPress={onFix} variant="outline" compact accessibilityLabel={`${t('myHabits.fix')}: ${subject}`} />
+    </>
+  );
 }
 
 /** A «تخفَّف» program: the stage and the days held; the row and its button open the locked program screen. */
@@ -146,6 +164,7 @@ export function ProgramActionRow({ icon, model, title, stageTitle, onOpen }: Pro
       action={
         <DayAction action={model.checkedIn ? 'done' : 'log'} subject={title} onPress={onOpen} />
       }
+      below={model.needsFix ? <FixLine note={t('myHabits.programFixNote')} subject={title} onFix={onOpen} /> : undefined}
     />
   );
 }

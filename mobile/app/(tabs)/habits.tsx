@@ -7,9 +7,12 @@
  *    (habits asked for today, relatives due as periodic acts, the generic private check-in), done rows at the bottom;
  *    habits not asked for today behind ONE collapsed row; «يومي ثقيل» as a compact chip at the end (today only,
  *    practice-core `isEbbOn`);
- * 3. «أعمال دورية»: the next three periodic acts with their dates and «الكل»;
- * 4. «شعبة الأسبوع» (one branch of faith per ISO week). A tick shows «تقبّل الله منك» with a light haptic; a complete
- *    day shows «تمّ وردك اليوم» with one reward text; stories appear at their moments (by id only).
+ * 3. «أعمال دورية» after every habit section (owner round 3, item 6): the next three periodic acts (reminders, never a
+ *    habit) with their dates and «الكل»;
+ * 4. «شعبة الأسبوع» (one branch of faith per ISO week), only for a member who opted in (item 7). A tick shows «تقبّل
+ *    الله منك» with a light haptic; a complete day shows «تمّ وردك اليوم» with one rotating achievement line (item 4);
+ *    «عملك المعتاد يُكتب لك» only the day after an excused day, with a commitment above 60% (item 8); stories appear
+ *    at their moments (by id only). An ornament divides the sections (item 18).
  * The month calendar and the habit management live in «عاداتي»; «تخفَّف», «رفقة» and the saved texts in the side menu.
  * The app header (menu, wordmark, tagline) is first; the page's art is the growing stem (`decor="sprig"`).
  */
@@ -35,7 +38,9 @@ import {
 } from '@/lib/practice/use-habits-hub';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { upcomingPeriodic } from '@/lib/practice/wird';
-import { addDays, minimumMet } from '@thekra/practice-core';
+import { minimumMet } from '@thekra/practice-core';
+import { showUsualDeed } from '@/lib/practice/commitment';
+import { habitFor } from '@/lib/practice/reminders';
 import { AppHeader } from '@/components/nav/AppHeader';
 import { AddSheet } from '@/components/practice/hub/AddSheet';
 import { ExcuseChip } from '@/components/practice/hub/ExcuseChip';
@@ -45,7 +50,7 @@ import { PeriodicRows } from '@/components/practice/hub/PeriodicRows';
 import { TodayList } from '@/components/practice/hub/TodayList';
 import { WirdHeader } from '@/components/practice/hub/WirdHeader';
 import { GUTTER, space, useStyles, type Theme } from '@/theme';
-import { Button, Chip, Notice, Screen, Skeleton, Text, TextLink } from '@/ui';
+import { Button, Chip, Notice, Ornament, Screen, Skeleton, Text, TextLink } from '@/ui';
 
 const SKELETON_ROWS = ['r1', 'r2', 'r3'];
 /** How many periodic acts the daily screen shows; the rest is behind «الكل». */
@@ -106,8 +111,14 @@ function Wird() {
   const handleAddOpen = useCallback(() => setAdding(true), []);
   const handleAddClose = useCallback(() => setAdding(false), []);
   const toggleHeavy = useCallback(() => heavyDay.setHeavy(!heavyDay.heavy), [heavyDay]);
-  const plans = usePracticeStore((s) => s.store.plans);
+  const store = usePracticeStore((s) => s.store);
+  const plans = store.plans;
   const usedMinimum = plans.some((plan) => minimumMet(plan, today));
+  const habits = catalog.data?.habits;
+  const usualDeed = useMemo(
+    () => showUsualDeed(store, today, { isPeriodicAct: (plan) => habitFor(plan, habits ?? [])?.kind === 'periodic' }),
+    [store, today, habits],
+  );
 
   return (
     <Screen scroll={false} contentStyle={styles.frame} decor="sprig">
@@ -153,13 +164,15 @@ function Wird() {
                 <View style={styles.heavy}>
                   <Chip label={t('practice.heavyDay')} selected={heavyDay.heavy} onPress={toggleHeavy} />
                   <ExcuseChip date={today} today={today} label={t('practice.excuse.today')} />
-                  <ExcuseChip date={addDays(today, -1)} today={today} label={t('practice.excuse.yesterday')} />
                 </View>
-                {heavyDay.heavy ? <StoryLine moment="heavyDay" /> : null}
+                {/* Never right after «يومي ثقيل» / «عذر»: the day after, when the commitment before it is above 60%. */}
+                {usualDeed ? <StoryLine moment="heavyDay" /> : null}
               </View>
             ) : null
           }
         />
+
+        <Ornament />
 
         <View style={styles.section}>
           <View style={styles.sectionHead}>

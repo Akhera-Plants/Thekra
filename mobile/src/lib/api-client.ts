@@ -191,11 +191,18 @@ function attachInterceptors(client: AxiosInstance): void {
 
 // ── Client factory ────────────────────────────────────────────────────────────
 
+/**
+ * Arrays as repeated keys (`type=A&type=B`), never axios's default `type[]=A`: the API reads `type` / `tag` with
+ * `TransformToArray`, which takes repeated keys or a comma list and rejects the bracketed name.
+ */
+export const PARAMS_SERIALIZER = { indexes: null } as const;
+
 function createClient(): AxiosInstance {
   const client = axios.create({
     baseURL: `${API_URL}/v1`,
     timeout: 10_000,
     headers: { 'Content-Type': 'application/json' },
+    paramsSerializer: PARAMS_SERIALIZER,
   });
   attachInterceptors(client);
   return client;

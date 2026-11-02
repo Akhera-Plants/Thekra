@@ -9,6 +9,7 @@
  */
 
 import {
+  addDays,
   currentStage,
   programCounters,
   stagesFor,
@@ -50,6 +51,8 @@ export interface ProgramRowModel {
   /** Today's check-in is saved. */
   checkedIn: boolean;
   startedOn: LocalDate;
+  /** A weak day or a slip lately: the row offers «صلّحها» (generic words only). */
+  needsFix: boolean;
 }
 
 /** The running programs, oldest first, as rows (practice-core `currentStage` / `programCounters`). */
@@ -68,6 +71,27 @@ export function programRows(programs: readonly SinProgram[], today: LocalDate): 
         window: counters.window,
         checkedIn: program.checkIns.some((c) => c.date === today),
         startedOn: program.startedOn,
+        needsFix: programNeedsFix(program, today, addDays(today, -1)),
       };
     });
+}
+
+/**
+ * «خربانة؟ صلّحها» inside each row of «عاداتي» (owner round 3, decision 1): a habit offers «صلّحها» when the day before
+ * asked for it and nothing was logged (practice-core `missedDayBefore`), until something is logged today: the same day
+ * «لا تفوّتها مرتين» shows on its row (never on the first missed day's list of strategies).
+ */
+export function habitNeedsFix(args: { paused: boolean; missedYesterday: boolean; doneToday: number }): boolean {
+  return !args.paused && args.missedYesterday && args.doneToday <= 0;
+}
+
+/**
+ * A «تخفَّف» program offers «صلّحها» after a weak day or a slip (today's or yesterday's check-in), until today is
+ * checked in as held.
+ */
+export function programNeedsFix(program: SinProgram, today: LocalDate, yesterday: LocalDate): boolean {
+  const todayCheckIn = program.checkIns.find((c) => c.date === today);
+  if (todayCheckIn?.value === 'held') return false;
+  const recent = todayCheckIn ?? program.checkIns.find((c) => c.date === yesterday);
+  return recent !== undefined && recent.value !== 'held';
 }

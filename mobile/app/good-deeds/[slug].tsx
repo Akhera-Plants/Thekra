@@ -2,7 +2,7 @@
  * Motivations for one good deed, after the website's good-deed page (good-deeds/[slug]): the deed's name (a paired
  * page's shared title), description and the contemporary note, then the type tabs right under them (owner,
  * 2026-11-01), then inside the tab: ONE action («اجعلها عادتي», when a catalog habit maps to the deed), its reward as a
- * next-step note (unpaired only, under «الكل»), «الميزان» of the tab's type, the reading sections (its merit and reward,
+ * next-step note (unpaired only, under «الكل»), the reading sections (its merit and reward,
  * the opposite sin's warning, a contemporary topic's derived groups), «من شعب الإيمان», and the opposite sin on an
  * unpaired page.
  * Core screen: good deed → motivations (mobile-plan §3).
@@ -17,7 +17,7 @@ import { useGoodDeed, useGoodDeedQuotesInfinite } from '@/lib/api/good-deeds';
 import { buildTopicSections } from '@/lib/topics';
 import type { GoodDeedQuotesMeta, TopicGroup } from '@/lib/types/api';
 import { TopicQuoteList, useLastDefined, useTopicQuoteParams } from '@/components/TopicQuoteList';
-import { DeedHabitAction, MizanBlock, TopicBranchLinks } from '@/components/TopicTemplate';
+import { DeedHabitAction, TopicBranchLinks } from '@/components/TopicTemplate';
 import { useTheme } from '@/theme';
 import { ListRow, NextStep, Section, Text } from '@/ui';
 
@@ -74,14 +74,13 @@ export default function MotivationsScreen() {
       intro={
         deed ? (
           <>
-            {/* Under the tabs (owner, 2026-11-01): one action → the reward → الميزان → texts → شعب الإيمان → the opposite. */}
+            {/* Under the tabs (owner, 2026-11-01): one action → the reward → texts → شعب الإيمان → the opposite. */}
             <DeedHabitAction deed={deed.slug} />
             {reward && filter === 'ALL' ? (
               <NextStep title={t('motivations.reward')}>
                 <Text variant={english ? 'body' : 'reading'}>{reward}</Text>
               </NextStep>
             ) : null}
-            <MizanBlock mizan={detail.data?.mizan} filter={filter} />
           </>
         ) : null
       }

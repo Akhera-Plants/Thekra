@@ -1,64 +1,97 @@
 /**
- * «لحظة ضعف» (redesign phase 3). LOCAL ONLY: which program it is about comes from the device (practice-core
- * `momentProgram`: the program in focus, or a sin page's in-memory hand-off, never a route param). The requests are the
- * same for every user: the stored verse Al-A'raf 7:201 (content rule §3.1), the catalog and the evidence of ALL
- * programs at once. The native title stays generic (practice/_layout.tsx).
+ * «لحظة مجاهدة» (was «لحظة ضعف»; owner round 3, item 15; the route keeps its name `moment`). Which program it is about
+ * comes from the device (practice-core `momentProgram`: the program in focus, or a sin page's in-memory hand-off, never
+ * a route param). The requests are the same for every user: the practice catalog and the texts by id.
  *
- * A ten-minute ring, one rotating text, one-tap ticks (on this screen only; «اتصل بأحد» also opens the phone dialer
- * with no number), then «عبرت الموجة؟»: yes marks «ثبتّ» for today when the day has no check-in yet; no opens
- * «خربانة؟ صلّحها». Without a program nothing is stored and nothing personal is shown.
+ * Top to bottom: the ten-minute ring; «افعل واحدة الآن» first: two tools that open a sheet each («سبّح الآن»: the tasbih
+ * counter with the timer and the reward arithmetic; «وردٌ أقصر»: a smaller amount of today's habits, logged now, and the
+ * nafl prayer sitting), then «أو علّم ما فعلت» (ticks that only mark, nothing else); one verse passage on patience
+ * and striving, rotating (catalog `mujahada.verses`; never «قل يا عبادي الذين أسرفوا» here), and a scholar's saying when
+ * the catalog has one; then «كيف كانت مجاهدتك؟»: «ثبتُّ بفضل الله» marks «ثبتّ» for today when the day has no check-in
+ * yet, «زلّت قدمي» offers «صلّحها الآن». Healthy words only: a slip is a slip, never «وقعت».
  *
- * Privacy: SinProgramGuard (device lock if chosen, cover in the app switcher, screenshots blocked).
+ * Privacy: SinProgramGuard (the vault opened on the device, the cover in the app switcher). Screenshots are allowed.
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { Linking, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Check } from 'lucide-react-native';
-import {
-  formatCountdown,
-  momentProgram,
-  recordWavePassed,
-  URGE_ACTIONS,
-  urgeProgress,
-  urgeTextIds,
-  urgeTextIndex,
-  type UrgeAction,
-} from '@thekra/practice-core';
+import { Check, HandHeart, ListChecks, type LucideIcon } from 'lucide-react-native';
+import { formatCountdown, momentProgram, recordWavePassed, urgeProgress, urgeTextIndex } from '@thekra/practice-core';
 import { QuoteCard } from '@/components/QuoteCard';
 import { SinProgramGuard } from '@/components/practice/SinProgramGuard';
 import { FixItSheet } from '@/components/practice/sin/FixItSheet';
 import { ProgressRing } from '@/components/practice/sin/ProgressRing';
-import { usePracticeCatalog, useSinProgramEvidence } from '@/lib/api/practice';
-import { useAyah } from '@/lib/api/quran';
-import { pick } from '@/lib/practice/catalog-types';
+import { MinimumWirdSheet } from '@/components/practice/mujahada/MinimumWirdSheet';
+import { TasbihSheet } from '@/components/practice/mujahada/TasbihSheet';
+import { useEvidence, usePracticeCatalog, useSinProgramEvidence } from '@/lib/api/practice';
+import { mujahadaPassage } from '@/lib/practice/mujahada';
 import { momentSource, today, usePracticeStore } from '@/lib/practice/practice-store';
 import { programEntry } from '@/lib/practice/sin-program-view';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
-import { space, useStyles } from '@/theme';
-import { Button, Chip, Notice, PageHeader, Screen, Section, Text } from '@/ui';
+import { radius, space, useStyles, useTheme, type Theme } from '@/theme';
+import { Button, Chip, ForwardChevron, Icon, NextStep, Ornament, PageHeader, Screen, Section, Text, Wrap } from '@/ui';
 
 const TICK_MS = 1000;
+/** «أو علّم ما فعلت»: ticks only (owner: no option that opens the phone with no number or goal). */
+const MARKS = ['wudu', 'move', 'call'] as const;
+type Mark = (typeof MARKS)[number];
 
-const makeStyles = () => ({
-  verse: { gap: space.xs, alignItems: 'center' as const },
+const makeStyles = (t: Theme) => ({
   center: { alignItems: 'center' as const, gap: space.xs },
-  chips: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: space.sm },
+  tools: { gap: space.sm },
+  tool: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: space.md,
+    minHeight: 72,
+    padding: space.lg,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    borderColor: t.colors.ring,
+    backgroundColor: t.colors.card,
+  },
+  toolPressed: { backgroundColor: t.colors.accent },
+  toolTexts: { flex: 1, gap: 2 },
+  verse: { gap: space.sm, alignItems: 'center' as const },
   answers: { gap: space.sm },
 });
 
 type Outcome = { kind: 'held'; result: 'saved' | 'kept' | 'none' } | { kind: 'slipped' } | null;
 
-export default function WeakMomentScreen() {
+export default function MujahadaMomentScreen() {
   return (
     <SinProgramGuard>
-      <WeakMomentContent />
+      <MujahadaContent />
     </SinProgramGuard>
   );
 }
 
-function WeakMomentContent() {
+function ToolCard({ icon, title, hint, onPress }: { icon: LucideIcon; title: string; hint: string; onPress: () => void }) {
+  const styles = useStyles(makeStyles);
+  const { colors } = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${title}. ${hint}`}
+      android_ripple={{ color: colors.accent }}
+      style={({ pressed }) => [styles.tool, pressed && styles.toolPressed]}
+    >
+      <Icon icon={icon} size={26} tone="link" strokeWidth={1.4} />
+      <View style={styles.toolTexts}>
+        <Text variant="heading">{title}</Text>
+        <Text variant="small" tone="muted">
+          {hint}
+        </Text>
+      </View>
+      <ForwardChevron size={18} tone="link" />
+    </Pressable>
+  );
+}
+
+function MujahadaContent() {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const locale = useUiLocale();
@@ -66,15 +99,16 @@ function WeakMomentContent() {
   const setStore = usePracticeStore((s) => s.setStore);
   const catalog = usePracticeCatalog(locale);
   const evidence = useSinProgramEvidence(catalog.data, locale);
-  const verse = useAyah(7, 201, locale);
+  const mujahada = catalog.data?.mujahada;
   // Read once: the hand-off of the screen that opened this one.
   const [source] = useState(momentSource);
   const [startedAt] = useState(() => Date.now());
   const [now, setNow] = useState(startedAt);
-  const [ticks, setTicks] = useState<ReadonlySet<UrgeAction>>(() => new Set());
+  const [marks, setMarks] = useState<ReadonlySet<Mark>>(() => new Set());
   const [early, setEarly] = useState(false);
   const [outcome, setOutcome] = useState<Outcome>(null);
   const [fixOpen, setFixOpen] = useState(false);
+  const [tool, setTool] = useState<'tasbih' | 'wird' | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), TICK_MS);
@@ -82,32 +116,32 @@ function WeakMomentContent() {
   }, []);
 
   const d = today();
+  const elapsed = (now - startedAt) / 1000;
   const program = useMemo(() => momentProgram(programs, source, d), [programs, source, d]);
   const sinPrograms = catalog.data?.sinPrograms;
   // Every sin can run «تخفَّف»: a sin without a written program has the common entry (programEntry).
   const entry = program && sinPrograms ? (programEntry(sinPrograms.programs, program.sinSlug, program.category) ?? undefined) : undefined;
   const common = sinPrograms?.common;
-  const commonIds = common ? [...(common.afterFall.evidence ?? []), ...(common.stages.harms?.evidence ?? [])] : [];
-  const texts = urgeTextIds(entry?.evidence, commonIds).flatMap((id) => evidence.data?.get(id) ?? []);
-  const textIndex = urgeTextIndex(texts.length, d, (now - startedAt) / 1000);
-  const text = textIndex >= 0 ? texts[textIndex] : undefined;
+  const passage = mujahadaPassage(mujahada?.verses, d, elapsed);
+  const sayings = mujahada?.sayings ?? [];
+  const sayingId = sayings.length > 0 ? sayings[urgeTextIndex(sayings.length, d, elapsed)] : undefined;
+  const texts = useEvidence([...(passage ?? []), ...(sayingId ? [sayingId] : [])], locale);
+  const verses = (passage ?? []).flatMap((id) => texts.data?.get(id) ?? []);
+  const saying = sayingId ? texts.data?.get(sayingId) : undefined;
   const progress = urgeProgress(startedAt, now);
   const asking = progress.done || early;
   const canFix = Boolean(program && entry && common);
 
-  function toggle(action: UrgeAction) {
-    const on = ticks.has(action);
-    setTicks((current) => {
+  function toggle(mark: Mark) {
+    setMarks((current) => {
       const next = new Set(current);
-      if (on) next.delete(action);
-      else next.add(action);
+      if (next.has(mark)) next.delete(mark);
+      else next.add(mark);
       return next;
     });
-    // The dialer opens with no number: the user picks whom to call.
-    if (action === 'call' && !on) void Linking.openURL('tel:').catch(() => undefined);
   }
 
-  function answerYes() {
+  function answerHeld() {
     if (!program) {
       setOutcome({ kind: 'held', result: 'none' });
       return;
@@ -117,34 +151,19 @@ function WeakMomentContent() {
     setOutcome({ kind: 'held', result: hadDay ? 'kept' : 'saved' });
   }
 
-  function answerNo() {
+  function answerSlipped() {
     setOutcome({ kind: 'slipped' });
     if (canFix) setFixOpen(true);
   }
 
-  const v = verse.data;
-  const surah = v?.quran ? (locale === 'en' ? v.quran.surahName : v.quran.surahNameAr) : null;
-  const verseEnglish = locale === 'en' ? v?.translation?.text?.trim() : undefined;
+  const first = verses[0];
+  const surah = first?.quran ? (locale === 'en' ? first.quran.surahName || first.quran.surahNameAr : first.quran.surahNameAr) : null;
+  const ayahs = verses.map((v) => v.quran?.ayahNumber).filter((n): n is number => typeof n === 'number');
+  const ayahLabel = ayahs.length > 1 ? `${ayahs[0]}-${ayahs[ayahs.length - 1]}` : ayahs[0] !== undefined ? String(ayahs[0]) : null;
 
   return (
     <Screen edges={['bottom']} decor>
       <PageHeader title={t('sinProgram.moment.title')} lead={t('sinProgram.moment.lead')} />
-
-      {v ? (
-        <View style={styles.verse}>
-          <Text variant="quran" align="center">{`﴿${v.textAr}﴾`}</Text>
-          {verseEnglish ? (
-            <Text variant="small" tone="muted" align="center">
-              {verseEnglish}
-            </Text>
-          ) : null}
-          {surah && v.quran?.ayahNumber != null ? (
-            <Text variant="caption" tone="muted">
-              {t('sinProgram.moment.verseCitation', { surah, chapter: String(v.quran.surahNumber ?? 7), ayah: String(v.quran.ayahNumber) })}
-            </Text>
-          ) : null}
-        </View>
-      ) : null}
 
       <ProgressRing fraction={progress.fraction} label={t('sinProgram.moment.remaining', { time: formatCountdown(progress.remaining) })}>
         <View style={styles.center} importantForAccessibility="no-hide-descendants">
@@ -155,47 +174,85 @@ function WeakMomentContent() {
         </View>
       </ProgressRing>
 
-      {text ? <QuoteCard quote={text} shareable={false} /> : null}
-
       <Section title={t('sinProgram.moment.actionsTitle')}>
-        <View style={styles.chips}>
-          {URGE_ACTIONS.map((action) => (
-            <Chip key={action} label={t(`sinProgram.moment.actions.${action}`)} selected={ticks.has(action)} onPress={() => toggle(action)} />
-          ))}
+        <View style={styles.tools}>
+          <ToolCard icon={HandHeart} title={t('mujahada.tools.tasbih')} hint={t('mujahada.tools.tasbihHint')} onPress={() => setTool('tasbih')} />
+          <ToolCard icon={ListChecks} title={t('mujahada.tools.wird')} hint={t('mujahada.tools.wirdHint')} onPress={() => setTool('wird')} />
         </View>
-        <Text variant="caption" tone="muted">
-          {t('sinProgram.moment.callHint')}
+        <Text variant="small" weight="medium" tone="muted">
+          {t('mujahada.marksLabel')}
         </Text>
+        <Wrap>
+          {MARKS.map((mark) => (
+            <Chip key={mark} label={t(`mujahada.marks.${mark}`)} selected={marks.has(mark)} onPress={() => toggle(mark)} />
+          ))}
+        </Wrap>
       </Section>
 
+      {verses.length > 0 ? (
+        <>
+          <Ornament />
+          <View style={styles.verse} accessible accessibilityLabel={verses.map((v) => v.textAr).join(' ')}>
+            <Text variant="quran" align="center">{`﴿${verses.map((v) => v.textAr).join(' ۝ ')}﴾`}</Text>
+            {locale === 'en'
+              ? verses.map((v) =>
+                  v.translation?.text ? (
+                    <Text key={v.id} variant="small" tone="muted" align="center">
+                      {v.translation.text}
+                    </Text>
+                  ) : null,
+                )
+              : null}
+            {surah && ayahLabel ? (
+              <Text variant="caption" tone="muted">
+                {t('sinProgram.moment.verseCitation', { surah, chapter: String(first?.quran?.surahNumber ?? ''), ayah: ayahLabel })}
+              </Text>
+            ) : null}
+          </View>
+        </>
+      ) : null}
+      {saying ? <QuoteCard quote={saying} shareable={false} /> : null}
+
+      <Ornament />
+
       {outcome?.kind === 'held' ? (
-        <Notice icon={Check}>
-          {outcome.result === 'saved'
-            ? t('sinProgram.moment.heldSaved')
-            : outcome.result === 'kept'
-              ? t('sinProgram.moment.heldKept')
-              : t('sinProgram.moment.heldNoProgram')}
-        </Notice>
-      ) : outcome?.kind === 'slipped' && !canFix && common ? (
-        <Section title={pick(common.afterFall, 'title', locale)}>
-          <Text variant={locale === 'ar' ? 'reading' : 'body'}>{pick(common.afterFall, 'body', locale)}</Text>
+        <NextStep title={t('sinProgram.moment.heldTitle')}>
+          <View style={{ flexDirection: 'row', gap: space.sm, alignItems: 'center' }}>
+            <Icon icon={Check} size={16} tone="link" />
+            <Text variant="small">
+              {outcome.result === 'saved'
+                ? t('sinProgram.moment.heldSaved')
+                : outcome.result === 'kept'
+                  ? t('sinProgram.moment.heldKept')
+                  : t('sinProgram.moment.heldNoProgram')}
+            </Text>
+          </View>
+        </NextStep>
+      ) : outcome?.kind === 'slipped' ? (
+        <Section title={t('sinProgram.moment.slipTitle')}>
+          <Text variant="body">{t('sinProgram.moment.slipBody')}</Text>
+          {canFix ? <Button label={t('sinProgram.moment.fix')} onPress={() => setFixOpen(true)} /> : null}
         </Section>
       ) : asking ? (
         <Section title={t('sinProgram.moment.question')}>
           <View style={styles.answers}>
-            <Button label={t('sinProgram.moment.yes')} onPress={answerYes} large block />
-            <Button label={t('sinProgram.moment.no')} onPress={answerNo} variant="outline" block />
+            <Button label={t('sinProgram.moment.yes')} onPress={answerHeld} large block />
+            <Button label={t('sinProgram.moment.no')} onPress={answerSlipped} variant="outline" block />
           </View>
         </Section>
       ) : (
         <Button label={t('sinProgram.moment.answerEarly')} onPress={() => setEarly(true)} variant="ghost" />
       )}
 
-      {outcome?.kind === 'slipped' && canFix && common ? (
-        <Button label={pick(common.afterFall, 'title', locale)} onPress={() => setFixOpen(true)} variant="outline" />
-      ) : null}
       {program ? <Button label={t('sinProgram.moment.back')} onPress={() => router.replace('/practice/sin-program')} variant="ghost" arrow /> : null}
 
+      <TasbihSheet
+        visible={tool === 'tasbih'}
+        onClose={() => setTool(null)}
+        remaining={progress.remaining}
+        multiplierHadith={mujahada?.multiplierHadith}
+      />
+      <MinimumWirdSheet visible={tool === 'wird'} onClose={() => setTool(null)} sittingPrayerHadith={mujahada?.sittingPrayerHadith} />
       {program && entry && common ? (
         <FixItSheet
           visible={fixOpen}

@@ -1,5 +1,5 @@
 /**
- * A calm ring that fills over the ten minutes of «لحظة ضعف». It never animates: it steps once a second, and with
+ * A calm ring that fills over the ten minutes of «لحظة مجاهدة». It never animates: it steps once a second, and with
  * «تقليل الحركة» on it steps only every 15 seconds. Colours are theme tokens.
  */
 

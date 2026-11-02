@@ -1,7 +1,6 @@
 /**
  * The topic template on the app (redesign §4.5): the title, the type tabs right under it (owner, 2026-11-01: every
- * text goes under the tabs), then inside the tab: ONE action, «الميزان» (1–2 texts that state the weight, curated or
- * the topic's top-ranked text, of the tab's type), the texts (TopicQuoteList), «من شعب الإيمان» as links, then the
+ * text goes under the tabs), then inside the tab: ONE action, the texts (TopicQuoteList; «الميزان» is no longer shown, owner round 3), «من شعب الإيمان» as links, then the
  * opposite. Data comes from the topic detail endpoints; nothing here is typed text.
  */
 
@@ -14,41 +13,31 @@ import { nameLinkRoute } from '@/lib/api/names';
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { usePracticeStore } from '@/lib/practice/practice-store';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
-import type { MizanDto, NameLinkDto, TopicBranchDto } from '@/lib/types/api';
-import type { TopicFilter } from '@/components/TopicQuoteList';
+import type { NameLinkDto, QuoteDto, TopicBranchDto } from '@/lib/types/api';
 import { QuoteCard } from '@/components/QuoteCard';
 import { space, useStyles, type Theme } from '@/theme';
 import { Button, ListRow, Section, Text } from '@/ui';
 
-/** At most this many texts in «الميزان». */
-const MIZAN_MAX = 2;
 
 const makeStyles = (_t: Theme) => ({
   stack: { gap: space.md },
 });
 
 /**
- * «الميزان»: under a type tab, only its texts of that type. `lead` adds one helper line (a name page says «آيةٌ ورد
- * فيها هذا الاسم»); topic pages show none (less text).
+ * A name page's verse: the stored verse in which the name occurs, with one helper line. (Topic pages no longer show
+ * «الميزان», owner round 3, item 3; the API field stays for older builds.)
  */
-export function MizanBlock({ mizan, lead, filter = 'ALL' }: { mizan: MizanDto | null | undefined; lead?: string; filter?: TopicFilter }) {
-  const { t } = useTranslation();
+export function NameVerse({ quote, lead }: { quote: QuoteDto; lead?: string }) {
   const styles = useStyles(makeStyles);
-  const items = mizan?.items.filter((q) => filter === 'ALL' || q.type === filter).slice(0, MIZAN_MAX) ?? [];
-  if (!mizan || items.length === 0) return null;
   return (
-    <Section title={t('topic.mizanTitle')}>
-      <View style={styles.stack}>
-        {lead ? (
-          <Text variant="small" tone="muted">
-            {lead}
-          </Text>
-        ) : null}
-        {items.map((quote) => (
-          <QuoteCard key={quote.id} quote={quote} />
-        ))}
-      </View>
-    </Section>
+    <View style={styles.stack}>
+      {lead ? (
+        <Text variant="small" tone="muted">
+          {lead}
+        </Text>
+      ) : null}
+      <QuoteCard quote={quote} />
+    </View>
   );
 }
 

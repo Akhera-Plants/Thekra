@@ -8,6 +8,9 @@
  *   Ramadan only) and «فروضي وأدواري»;
  * - «الإحصاء»: the streak and «أطول مداومة» (practice-core `currentStreak` / `longestStreak`), the one month calendar
  *   (a tapped day opens its list, loggable for the last 7 days) and «حصيلتي» per habit.
+ * Owner round 3: a missed habit's row offers «صلّحها» (the «خربانة؟ صلّحها» steps, HabitFixSheet), a program row after a
+ * weak day too; «ابنِ حلقة عادتك الخاصة» opens the loop builder; periodic acts stay in «أعمال دورية» (reminders, not
+ * habits); «الإحصاء» adds «نسبة الالتزام» per habit (CommitmentChart); an ornament divides the sections.
  * The other screens (أعمال دورية، المحاسبة، رفقة، المحفوظات…) are in the side menu. The old «عاداتي» route
  * (practice/habits) redirects here.
  */
@@ -17,20 +20,23 @@ import { View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useRequireSignIn } from '@/lib/auth/require-sign-in';
-import { DoorOpen, Hourglass, Pause, Plus, Sprout, TreeDeciduous } from 'lucide-react-native';
+import { DoorOpen, Hourglass, Pause, Plus, Repeat, Sprout, TreeDeciduous } from 'lucide-react-native';
 import {
   activePrograms,
   establishPlan,
   graduationReady,
   isEstablished,
   isPaused,
+  missedDayBefore,
   resumePlan,
   updatePlan,
   type HabitItem,
   type LocalDate,
   type Plan,
 } from '@thekra/practice-core';
-import { habitDayAction, programRows } from '@/lib/practice/my-habits';
+import { habitDayAction, habitNeedsFix, programRows } from '@/lib/practice/my-habits';
+import { HabitFixSheet } from '@/components/practice/HabitFixSheet';
+import { CommitmentChart } from '@/components/practice/hub/CommitmentChart';
 import { HabitActionRow, ProgramActionRow } from '@/components/practice/MyHabitsRows';
 import { pick } from '@/lib/practice/catalog-types';
 import { habitFor } from '@/lib/practice/reminders';
@@ -49,6 +55,7 @@ import {
   useHubDays,
   useMonthPresence,
   useOffDayHabits,
+  usePlanDays,
   usePresenceMarks,
   useStreak,
 } from '@/lib/practice/use-habits-hub';
@@ -64,6 +71,7 @@ import {
   Button,
   ListRow,
   Notice,
+  Ornament,
   PageHeader,
   Screen,
   Section,
@@ -88,6 +96,7 @@ const makeStyles = (t: Theme) => ({
 const openAdd = () => router.push('/practice/add');
 const openDuties = () => router.push('/practice/duties');
 const openProgram = () => router.push('/practice/sin-program');
+const openLoops = () => router.push('/practice/loops');
 
 export default function MyHabitsScreen() {
   const { t } = useTranslation();
@@ -122,8 +131,11 @@ function HabitsPart() {
         </View>
       ) : null}
       <DeedsSection />
+      <ListRow icon={Repeat} title={t('loops.habit.pageTitle')} hint={t('loops.habit.rowHint')} chevron onPress={openLoops} />
+      <Ornament />
       <ProgramsSection />
       <RamadanBlock />
+      <Ornament />
       <ListRow icon={Hourglass} title={t('practice.duties.title')} chevron onPress={openDuties} />
     </>
   );
@@ -134,10 +146,15 @@ function DeedsSection() {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const locale = useUiLocale();
-  const plans = usePracticeStore((s) => s.store.plans);
+  const store = usePracticeStore((s) => s.store);
   const setStore = usePracticeStore((s) => s.setStore);
   const habits = usePracticeCatalog(locale).data?.habits ?? [];
+  // Periodic acts are reminders with their own screen («أعمال دورية»), never listed as habits (owner round 3).
+  const plans = store.plans.filter((p) => habitFor(p, habits)?.kind !== 'periodic');
+  const planDays = usePlanDays();
   const { today } = useHubDays();
+  const [fixing, setFixing] = useState<string | null>(null);
+  const fixPlan = plans.find((p) => p.id === fixing);
   // Today's items, the same as «ورد اليوم»: asked for today, and the habits not asked today (still loggable).
   const agenda = useDayAgenda(today);
   const offDay = useOffDayHabits(today);
@@ -160,6 +177,7 @@ function DeedsSection() {
     const off = offById.get(plan.id);
     const action = habitDayAction({ paused, due, offDay: off });
     const item = due ?? off;
+    const needsFix = habitNeedsFix({ paused, missedYesterday: missedDayBefore(store, plan, today, planDays), doneToday: plan.log[today] ?? 0 });
     return (
       <HabitActionRow
         key={plan.id}
@@ -173,6 +191,7 @@ function DeedsSection() {
             ? { cleared: actions.lastLog.cleared, onUndo: actions.undo }
             : null
         }
+        onFix={needsFix ? () => setFixing(plan.id) : undefined}
         onAction={() => {
           if (action === 'resume') setStore((s) => updatePlan(s, plan.id, (p) => resumePlan(p, today)));
           else if (item) actions.toggleHabit(item);
@@ -218,6 +237,14 @@ function DeedsSection() {
           <Button label={t('practice.addHabit')} icon={Plus} onPress={openAdd} variant="outline" />
         </>
       )}
+      <HabitFixSheet
+        visible={fixPlan !== undefined}
+        onClose={() => setFixing(null)}
+        plan={fixPlan}
+        habit={fixPlan ? habitFor(fixPlan, habits) : undefined}
+        title={fixPlan ? titleOf(fixPlan) : ''}
+        today={today}
+      />
     </Section>
   );
 }
@@ -329,6 +356,9 @@ function StatsPart() {
 
       {picked ? <PickedDay date={picked} today={today} title={picked === today ? t('practice.today') : shortDayTitle(picked, names)} /> : null}
 
+      <Ornament />
+      <CommitmentChart today={today} />
+      <Ornament />
       <TallySection today={today} />
     </>
   );

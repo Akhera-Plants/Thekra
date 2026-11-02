@@ -311,7 +311,7 @@ const openMoment = () => {
 
 /**
  * The private program, generic on purpose: no name, a neutral notebook, «تذكرة من ذكرى». On today a quiet
- * «لحظة ضعف» link sits under it (generic too: it opens the program in focus on this device).
+ * «لحظة مجاهدة» link sits under it (generic too: it opens the program in focus on this device).
  */
 export const ProgramRow = memo(function ProgramRow({ done, meta, showMoment = false }: { done: boolean; meta: string; showMoment?: boolean }) {
   const { t } = useTranslation();

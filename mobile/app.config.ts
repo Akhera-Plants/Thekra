@@ -47,8 +47,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         monochromeImage: './assets/android-icon-monochrome.png',
       },
       predictiveBackGestureEnabled: false,
-      // expo-screen-capture's manifest asks for photo access to detect screenshots; the app only blocks them
-      // (FLAG_SECURE on the sin-program page), so the photo permissions are removed from the build.
+      // expo-screen-capture (still a dependency, no longer used: screenshots are never blocked, owner round 3) brings
+      // photo-access permissions in its manifest; the app needs none, so they stay removed from the build.
       blockedPermissions: ['android.permission.READ_EXTERNAL_STORAGE', 'android.permission.READ_MEDIA_IMAGES'],
     },
     web: {

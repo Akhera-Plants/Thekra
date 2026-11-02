@@ -6,7 +6,7 @@
  *
  * A habit is asked for only on its own days (practice-core `planAsksOn` / `isPlanDueOn`: its rule, else the catalog
  * habit's default rule, else daily), the same answer the reminders use; on other days it stays loggable in the
- * collapsed «ليست مطلوبة اليوم» row and is never counted as missed.
+ * collapsed «اليوم استراحة» row and is never counted as missed.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -144,7 +144,7 @@ export function useDayAgenda(date: LocalDate): AgendaItem[] {
 
 /**
  * Habits the day does not ask for (not their days), as habit items with their usual amount: still loggable from the
- * collapsed «ليست مطلوبة اليوم» row, never counted as missed.
+ * collapsed «اليوم استراحة» row, never counted as missed.
  */
 export function useOffDayHabits(date: LocalDate): HabitItem[] {
   const store = usePracticeStore((s) => s.store);
@@ -384,7 +384,7 @@ export function useExcuse(date: LocalDate, todayDate: LocalDate) {
   return { excused: isExcused(store, date), allowed: canExcuse(date, todayDate) && store.plans.length > 0, toggle };
 }
 
-/** The limits (3 saplings, 7 periodic acts, 1 «تخفَّف» program); periodic acts come from the catalog's templates. */
+/** The limits (3 young habits, 7 periodic acts, 3 «تخفَّف» programs); periodic acts come from the catalog's templates. */
 export function useLimits(todayDate: LocalDate = today()): Limits {
   const locale = useUiLocale();
   const store = usePracticeStore((s) => s.store);
@@ -406,7 +406,10 @@ export interface PeriodicRowModel {
   when: string;
 }
 
-/** Every periodic act, soonest first (relatives and the habits whose rule is not daily; see `periodicActs`). */
+/**
+ * Every periodic act, soonest first: relatives (people lists) and the plans made from a periodic template. A habit
+ * whose rule is not daily stays a habit (owner round 3, item 6): it shows in the day lists only.
+ */
 export function usePeriodicRows(todayDate: LocalDate): PeriodicRowModel[] {
   const { t } = useTranslation();
   const locale = useUiLocale();
@@ -433,6 +436,8 @@ export function usePeriodicRows(todayDate: LocalDate): PeriodicRowModel[] {
         const plan = store.plans.find((p) => p.id === act.id);
         if (!plan) continue;
         const habit = habitFor(plan, habits ?? []);
+        // A habit is never a periodic act (owner round 3, item 6): only the catalog's periodic templates are listed here.
+        if (habit?.kind !== 'periodic') continue;
         rows.push({ key: `h-${act.id}`, act, title: habit ? pick(habit, 'title', locale) : plan.title, note: '', when: when(act) });
       }
     }

@@ -67,7 +67,7 @@ describe('settings strings', () => {
   });
 
   it('has every lock and settings key in both languages', () => {
-    for (const key of ['switch', 'switchHint', 'prompt', 'confirmPrompt', 'lockedTitle', 'lockedHint', 'unlock']) {
+    for (const key of ['prompt', 'lockedTitle', 'lockedHint', 'unlock']) {
       expect(i18n.getFixedT('ar')(`sinLock.${key}`)).not.toBe(`sinLock.${key}`);
       expect(i18n.getFixedT('en')(`sinLock.${key}`)).not.toBe(`sinLock.${key}`);
     }

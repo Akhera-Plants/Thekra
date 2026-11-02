@@ -1,7 +1,7 @@
 /**
  * Reminders for one sin, after the website's sin page (sins/[slug]): the sin's name and description, «كبيرة» with
  * its reference and the contemporary note, then the type tabs right under them (owner, 2026-11-01), then inside the
- * tab: «ابدأ «تخفَّف»» (every sin), «الميزان» of the tab's type, the reading sections: what warns against it, the paired
+ * tab: «ابدأ «تخفَّف»» (every sin), the reading sections: what warns against it, the paired
  * deed's virtue (or the reward of leaving it for Allah), a contemporary topic's derived groups; then «من شعب الإيمان»,
  * the paired virtue, and the alternative good deeds last, only on an unpaired sin.
  * Core screen: sin → reminders (mobile-plan §3).
@@ -18,7 +18,7 @@ import type { SinQuotesMeta, TopicGroup } from '@/lib/types/api';
 import { SinRank } from '@/lib/types/enums';
 import { TopicQuoteList, useLastDefined, useTopicQuoteParams } from '@/components/TopicQuoteList';
 import { SinProgramLink } from '@/components/practice/TopicPracticeLinks';
-import { MizanBlock, TopicBranchLinks } from '@/components/TopicTemplate';
+import { TopicBranchLinks } from '@/components/TopicTemplate';
 import { useTheme } from '@/theme';
 import { ListRow, Section, Text } from '@/ui';
 
@@ -83,9 +83,8 @@ export default function RemindersScreen() {
       intro={
         sin ? (
           <>
-            {/* Under the tabs (owner, 2026-11-01): one action → الميزان → texts → شعب الإيمان → the opposite. */}
+            {/* Under the tabs (owner, 2026-11-01): one action → texts → شعب الإيمان → the opposite. */}
             <SinProgramLink sin={sin.slug} />
-            <MizanBlock mizan={detail.data?.mizan} filter={filter} />
           </>
         ) : null
       }

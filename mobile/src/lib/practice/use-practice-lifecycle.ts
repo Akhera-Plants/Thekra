@@ -22,7 +22,7 @@ import { applyReminders, configureNotificationHandler, onReminderTapped } from '
 import { usePracticeStore, today } from './practice-store';
 import { planReminders, type ReminderTexts } from './reminders';
 import { pendingCount, syncPractice } from './sync-runner';
-import { isVaultUnlocked, pushVault, refreshVault } from './vault-runner';
+import { pushVault, refreshVault } from './vault-runner';
 import { refreshPrayerTimes } from './prayer';
 
 const SYNC_INTERVAL_MS = 15 * 60 * 1000;
@@ -100,7 +100,7 @@ export function usePracticeLifecycle(): void {
   }, [hydrate]);
 
   // Store or prefs changed → re-plan reminders (debounced 0.8 s); pending sync items → sync (debounced 3 s);
-  // programs changed while the vault is unlocked → seal and PUT the vault (debounced 1.5 s).
+  // programs changed (signed in) → seal and PUT the vault (debounced 1.5 s; pending while it is locked).
   useEffect(() => {
     if (!hydrated) return;
     let remindTimer: ReturnType<typeof setTimeout> | null = null;
@@ -116,7 +116,8 @@ export function usePracticeLifecycle(): void {
         if (syncTimer) clearTimeout(syncTimer);
         syncTimer = setTimeout(() => void syncPractice(userId), 3000);
       }
-      if (state.store.programs !== prev.store.programs && isVaultUnlocked()) {
+      // «تخفَّف» is always saved to the account: while the key is not in memory the change is marked pending.
+      if (state.store.programs !== prev.store.programs && userId) {
         if (vaultTimer) clearTimeout(vaultTimer);
         vaultTimer = setTimeout(() => void pushVault(), 1500);
       }

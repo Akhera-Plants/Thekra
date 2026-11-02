@@ -1,22 +1,25 @@
 /**
- * The limit sheet (redesign §3), shown instead of adding past a limit (3 saplings, 7 periodic acts, 1 «تخفَّف»
- * program): «أكمل ما عندي» (primary, closes), «أوقِف … مؤقتًا» (pick one; its history stays), «احذف …» (pick one, then
- * confirm), and «ثبّت … وابدأ الجديدة» for a graduation-ready sapling. The program limit has only the first action.
- * Every change goes through practice-core store helpers.
+ * The limit sheet (redesign §3; owner round 3, item 16), shown instead of adding past a limit: why (practice-core
+ * `limitBlock`: 3 habits younger than three months; 7 periodic acts; 3 «تخفَّف» programs, or one not yet two months old)
+ * and the day it unlocks by itself, then «أكمل ما عندي» (primary, closes), «أوقِف … مؤقتًا» (pick one; its history stays)
+ * and «احذف …» (pick one, then confirm). The program limit has only the first action. Every change goes through
+ * practice-core store helpers.
  */
 
 import React, { useState } from 'react';
 import { Modal, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { deletePlan, establishPlan, pausePlan, updatePlan, type LimitKind, type Limits, type Plan } from '@thekra/practice-core';
+import { deletePlan, limitBlock, pausePlan, updatePlan, type LimitKind, type Limits, type Plan } from '@thekra/practice-core';
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { pick } from '@/lib/practice/catalog-types';
+import { shortDate } from '@/lib/practice/format';
+import { limitMessage } from '@/lib/practice/limit-message';
 import { today, usePracticeStore } from '@/lib/practice/practice-store';
 import { habitFor } from '@/lib/practice/reminders';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { GUTTER, radius, space, useStyles, type Theme } from '@/theme';
-import { Button, Chip, Text } from '@/ui';
+import { Button, Chip, NextStep, Text } from '@/ui';
 
 const makeStyles = (t: Theme) => ({
   root: { flex: 1, justifyContent: 'flex-end' as const },
@@ -43,7 +46,7 @@ export interface LimitSheetProps {
   limits: Limits;
   /** «أكمل ما عندي», the backdrop or Android back. */
   onClose: () => void;
-  /** A place was freed (paused, deleted, moved to «راسخة»): the caller goes on with the addition. */
+  /** A place was freed (paused or deleted): the caller goes on with the addition. */
   onFreed: () => void;
 }
 
@@ -56,8 +59,10 @@ export function LimitSheet({ kind, visible, limits, onClose, onFreed }: LimitShe
   const setStore = usePracticeStore((s) => s.setStore);
   const [step, setStep] = useState<Step>('menu');
   const [picked, setPicked] = useState<string | null>(null);
+  const store = usePracticeStore((s) => s.store);
   const candidates = kind === 'sapling' ? limits.saplings : kind === 'periodic' ? limits.periodicPlans : [];
-  const ready = kind === 'sapling' ? limits.graduationReady : [];
+  const block = limitBlock(store, today(), kind, { isPeriodicAct: (plan) => habitFor(plan, habits)?.kind === 'periodic' });
+  const why = block ? limitMessage(block, shortDate) : null;
   const titleOf = (plan: Plan) => {
     const habit = habitFor(plan, habits);
     return habit ? pick(habit, 'title', locale) : plan.title;
@@ -92,16 +97,12 @@ export function LimitSheet({ kind, visible, limits, onClose, onFreed }: LimitShe
           </Text>
           {step === 'menu' ? (
             <>
+              {why ? (
+                <NextStep>
+                  <Text variant="body">{t(why.key, why.params)}</Text>
+                </NextStep>
+              ) : null}
               <Button label={t('practice.limits.keepGoing')} onPress={close} block />
-              {ready.map((plan) => (
-                <Button
-                  key={plan.id}
-                  label={t('practice.limits.establishAndStart', { title: titleOf(plan) })}
-                  variant="outline"
-                  block
-                  onPress={() => freed(plan.id, (p) => establishPlan(p, today()))}
-                />
-              ))}
               {candidates.length > 0 ? (
                 <>
                   <Button label={t(`practice.limits.${kind}.pause`)} variant="outline" block onPress={() => setStep('pause')} />

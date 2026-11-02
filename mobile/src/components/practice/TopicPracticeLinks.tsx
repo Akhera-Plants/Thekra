@@ -35,7 +35,7 @@ export function SinProgramLink({ sin }: { sin: string }) {
     else openSignIn('/practice/sin-program');
   }
 
-  // «أنا في لحظة ضعف»: shown on every program sin page whatever the device holds, so it tells nothing; the screen
+  // «أنا في لحظة مجاهدة»: shown on every program sin page whatever the device holds, so it tells nothing; the screen
   // uses this sin's program only if the user follows it (in-memory hand-off, never a route param).
   function handleMoment() {
     setMomentSource(sin);
