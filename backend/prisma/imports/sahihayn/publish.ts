@@ -2,6 +2,8 @@
  * Publishes the numbered Sahihayn corpus as public Quotes.
  * The matn is the quote text. The isnad stays in rawPayload, and a match
  * points at the ReferenceHadith row so the two are one narration.
+ * matnAr is the reader's text with its narrator lead («عن جابر أن رسول الله ﷺ رأى امرأة …», displayMatn);
+ * it stays null when it would equal the matn (or for a long story kept at the old cut).
  */
 import {
   GradeSource,
@@ -17,6 +19,8 @@ import type { ImportOptions } from '../lib/cli.js';
 import { applyLimit } from '../lib/cli.js';
 import { inTransactionBatches } from '../lib/batch.js';
 import { formatSummary, withRunLog } from '../lib/run-log.js';
+import { displayMatn, joinNarration } from '../../../src/common/text/matn.js';
+import { stripPageMarkers } from '../../../src/common/text/strip-page-markers.js';
 import { BUKHARI_CORPUS, MUSLIM_CORPUS } from './files.js';
 
 const PROVIDER = 'sahihayn';
@@ -46,6 +50,7 @@ interface Stored {
   id: string;
   externalId: string | null;
   textAr: string;
+  matnAr: string | null;
   referenceNumber: number | null;
   bookTitle: string | null;
   pageOrChapter: string | null;
@@ -66,6 +71,12 @@ function payloadOf(row: { id: string; isnadText: string; kitab: string | null; b
   };
 }
 
+/** The reader's text, or null when it is the stored matn itself. */
+export function contextMatnAr(row: { isnadText: string; matnText: string }): string | null {
+  const display = stripPageMarkers(displayMatn(joinNarration(row.isnadText, row.matnText))).trim();
+  return display && display !== row.matnText.trim() ? display : null;
+}
+
 function unchanged(existing: Stored, row: {
   matnText: string;
   number: number;
@@ -79,6 +90,7 @@ function unchanged(existing: Stored, row: {
     ? payload as Record<string, unknown>
     : {};
   return existing.textAr === row.matnText
+    && existing.matnAr === contextMatnAr(row)
     && existing.referenceNumber === row.number
     && existing.bookTitle === row.kitab
     && existing.pageOrChapter === row.bab
@@ -152,6 +164,7 @@ export async function publishSahihayn(options: ImportOptions): Promise<void> {
             type: QuoteType.HADITH,
             origin: QuoteOrigin.LOCAL,
             textAr: row.matnText,
+            matnAr: contextMatnAr(row),
             sourceId: book.sourceId,
             referenceNumber: row.number,
             bookTitle: row.kitab,

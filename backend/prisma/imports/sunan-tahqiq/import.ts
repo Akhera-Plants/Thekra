@@ -19,7 +19,7 @@ import {
   type PrismaClient,
 } from '@prisma/client';
 import { STRONG_MATCH_SCORE, combinedScore, wordOverlap } from '../../../src/common/text/match-score.js';
-import { splitMatn } from '../../../src/common/text/matn.js';
+import { matnForMatching, splitMatn } from '../../../src/common/text/matn.js';
 import { normalizeMatn } from '../../../src/common/text/normalize-matn.js';
 import { clearUnapprovedOcrVerification } from '../lib/ocr-gate.js';
 import {
@@ -238,9 +238,7 @@ export async function runSunanTahqiq(options: ImportOptions): Promise<void> {
   const quotes: QuoteRow[] = applyLimit(stored, options.limit).map((row) => ({
     ...row,
     sourceNameAr: row.source.nameAr,
-    matn: normalizeMatn(
-      (row.matnAr && row.matnAr.trim()) || splitMatn(row.textAr).matnText || row.textAr,
-    ),
+    matn: normalizeMatn(matnForMatching(row)),
   }));
   console.log(`linked quotes ${quotes.length}`);
   const sahihaynQuoteIds = new Set((quotes.length === 0

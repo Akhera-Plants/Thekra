@@ -1,6 +1,8 @@
 import { GradeSource, Prisma, type HadithGrade, type QuoteOrigin, type QuoteType, type SourceType, type TagCategory, type TextSource } from '@prisma/client';
 import { isArnautGradeSource } from '../../modules/hadith/grade-policy.js';
 import { STRONG_MATCH_SCORE } from '../text/match-score.js';
+import { startsWithNarratorLead } from '../text/matn.js';
+import { normalizeMatn } from '../text/normalize-matn.js';
 import { formatPrintedReference } from '../text/printed-reference.js';
 
 export const sahihaynMatchInclude = {
@@ -116,12 +118,38 @@ export interface QuoteDto {
   updatedAt: Date;
 }
 
+/** Words compared at the end of a text: enough to tell two wordings of a narration apart. */
+const TAIL_WORDS = 8;
+
+/**
+ * True when `text` is the matched Sahihayn narration with its narrator lead («عن جابر أن رسول الله ﷺ …», as
+ * the context fix writes it into matnAr): it opens with a narrator lead, is longer than the reference matn,
+ * and ends with the same words. The book's own wording (a Shu'ab or Adhkar matnAr) is not.
+ */
+export function carriesReferenceMatn(text: string, referenceMatn: string): boolean {
+  const words = normalizeMatn(text).split(' ').filter(Boolean);
+  const reference = normalizeMatn(referenceMatn).split(' ').filter(Boolean);
+  const tail = reference.slice(-TAIL_WORDS).join(' ');
+  // A reference matn an old split left as chain («ا حدثنا يحيى …») is longer than its context text.
+  const chainLed = reference.slice(0, 3).some((word) => /^و?(?:حدثنا|حدثني|اخبرنا|اخبرني)$/.test(word));
+  return tail.length > 0
+    && (words.length >= reference.length + 2 || chainLed)
+    && words.join(' ').endsWith(tail)
+    && startsWithNarratorLead(text);
+}
+
 function publicTextAr(row: QuoteRowForDto): string {
   if (row.isAthar && row.atharTextAr && row.atharTextAr.trim().length > 0) {
     return row.atharTextAr.trim();
   }
   if (row.gradeSource === GradeSource.AUTO_SAHIHAYN) {
-    return row.matches[0]?.referenceHadith.matnText.trim() || row.matnAr || row.textAr;
+    // The grade is Bukhari's or Muslim's, so is the wording. A stored matnAr that is the matched narration with
+    // its narrator lead wins over the bare (cut) reference matn; the book's own wording (a Shu'ab or Adhkar
+    // matnAr) does not replace the Sahihayn text.
+    const reference = row.matches[0]?.referenceHadith.matnText.trim() ?? '';
+    const own = row.matnAr?.trim() ?? '';
+    if (own && (!reference || carriesReferenceMatn(own, reference))) return own;
+    return reference || own || row.textAr;
   }
   // Shu'ab (and any row with a stored matn): never show the chain publicly.
   if (row.matnAr && row.matnAr.trim().length > 0) return row.matnAr.trim();

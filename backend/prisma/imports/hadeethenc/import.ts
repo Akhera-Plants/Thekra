@@ -17,7 +17,7 @@ import {
   type PrismaClient,
 } from '@prisma/client';
 import { STRONG_MATCH_SCORE, combinedScore, wordOverlap } from '../../../src/common/text/match-score.js';
-import { splitMatn } from '../../../src/common/text/matn.js';
+import { matnForMatching, splitMatn } from '../../../src/common/text/matn.js';
 import { normalizeMatn } from '../../../src/common/text/normalize-matn.js';
 import type { ImportOptions } from '../lib/cli.js';
 import { approvedWork, ensureSource } from '../lib/source.js';
@@ -343,9 +343,7 @@ export async function runHadeethencImport(options: ImportOptions): Promise<void>
     });
     const quotes: QuoteRow[] = stored.map((row) => ({
       ...row,
-      matn: normalizeMatn(
-        (row.matnAr && row.matnAr.trim()) || splitMatn(row.textAr).matnText || row.textAr,
-      ),
+      matn: normalizeMatn(matnForMatching(row)),
     }));
     console.log(`hadeethenc: matching against ${quotes.length} HADITH quotes`);
 

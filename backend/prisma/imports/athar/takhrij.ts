@@ -7,7 +7,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Prisma, type PrismaClient } from '@prisma/client';
 import { STRONG_MATCH_SCORE, combinedScore, wordOverlap } from '../../../src/common/text/match-score.js';
-import { splitMatn } from '../../../src/common/text/matn.js';
+import { matnForMatching, splitMatn } from '../../../src/common/text/matn.js';
 import { normalizeMatn } from '../../../src/common/text/normalize-matn.js';
 import { SUNAN_EDITIONS } from '../sunan-tahqiq/files.js';
 
@@ -88,7 +88,7 @@ async function loadCorpus(prisma: PrismaClient): Promise<CorpusMatn[]> {
     });
   }
   for (const row of hadeethenc) {
-    const matn = normalizeMatn((row.matnAr && row.matnAr.trim()) || splitMatn(row.textAr).matnText || row.textAr);
+    const matn = normalizeMatn(matnForMatching(row));
     if (matn.length < 25) continue;
     corpus.push({
       label: `HADEETHENC ${row.referenceNumber ?? row.externalId ?? ''}`,

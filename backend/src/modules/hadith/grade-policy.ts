@@ -15,6 +15,7 @@ import {
   type ValidationArguments,
   type ValidationOptions,
 } from 'class-validator';
+import { hiddenQuoteIds, isHiddenQuote } from './hidden-quotes.js';
 
 export const DEFAULT_ALLOWED_GRADES: HadithGrade[] = [
   HadithGrade.SAHIH,
@@ -132,6 +133,7 @@ export class GradePolicy {
    * An athar answers to the athar rule alone (section flag, listed speaker, KEEP),
    * whatever its grade source or type: a sahihayn or HadeethEnc grade does not publish it.
    * An open high-severity flag hides every quote type. OUTSIDE_SAHIHAYN is low and does not hide.
+   * A row on prisma/taxonomy/hidden-quotes.yaml (text not rebuilt, not reviewed SHOW) is hidden too.
    */
   static publishableClause(athar = ATHAR_PUBLIC_ENABLED): Prisma.QuoteWhereInput {
     const publishableOr: Prisma.QuoteWhereInput[] = [
@@ -151,10 +153,12 @@ export class GradePolicy {
         atharReviewDecision: 'KEEP',
       });
     }
+    const hidden = hiddenQuoteIds();
     return {
       AND: [
         { OR: publishableOr },
         { flags: { none: { status: FlagStatus.OPEN, severity: FlagSeverity.HIGH } } },
+        ...(hidden.length > 0 ? [{ id: { notIn: [...hidden] } }] : []),
       ],
     };
   }
@@ -170,9 +174,13 @@ export class GradePolicy {
     };
   }
 
-  /** Row form of publishableClause (without the flag check). Callers must select the athar fields. */
+  /**
+   * Row form of publishableClause (without the flag check). Callers must select the athar fields, and pass
+   * the id so the hidden-quotes list applies.
+   */
   static isPublishable(
     row: {
+      id?: string;
       type: QuoteType;
       gradeSource: GradeSource;
       isAthar: boolean;
@@ -181,6 +189,7 @@ export class GradePolicy {
     },
     athar = ATHAR_PUBLIC_ENABLED,
   ): boolean {
+    if (row.id !== undefined && isHiddenQuote(row.id)) return false;
     if (row.isAthar) return atharMayPublish(row, athar);
     if (row.type !== QuoteType.HADITH) return true;
     return PUBLISHABLE_GRADE_SOURCES.includes(row.gradeSource);

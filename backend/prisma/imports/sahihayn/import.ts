@@ -19,7 +19,7 @@ import {
   type PrismaClient,
 } from '@prisma/client';
 import { duplicateDifferentGrade, isWeakMatch, ocrSuspect, quranMismatch, referenceMismatch } from '../../../src/common/flags/checks.js';
-import { splitMatn } from '../../../src/common/text/matn.js';
+import { matnForMatching, splitMatn } from '../../../src/common/text/matn.js';
 import { CANDIDATE_FLOOR, MATCH_METHOD, STRONG_MATCH_SCORE, WEAK_MATCH_SCORE, combinedScore, wordOverlap } from '../../../src/common/text/match-score.js';
 import { normalizeMatn } from '../../../src/common/text/normalize-matn.js';
 import { stripPageMarkers } from '../../../src/common/text/strip-page-markers.js';
@@ -585,9 +585,7 @@ export async function runTakhrij(options: ImportOptions): Promise<void> {
     rawPayload: row.rawPayload,
     sourceName: row.source.name,
     sourceNameAr: row.source.nameAr,
-    matn: normalizeMatn(
-      (row.matnAr && row.matnAr.trim()) || splitMatn(row.textAr).matnText || row.textAr,
-    ),
+    matn: normalizeMatn(matnForMatching(row)),
   }));
 
   const references = await options.prisma.referenceHadith.findMany({

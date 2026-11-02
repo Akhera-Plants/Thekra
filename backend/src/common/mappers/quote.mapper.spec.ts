@@ -78,3 +78,40 @@ describe('mapQuoteToDto: texts taken from a lecture', () => {
     expect(dto.source.nameAr).toBe('صحيح البخاري');
   });
 });
+
+describe('mapQuoteToDto: AUTO_SAHIHAYN text', () => {
+  // Riyad al-Salihin 650 shows Bukhari 3475 (audit example 15).
+  const reference =
+    'أتشفع في حد من حدود الله، ثم قام فاختطب، ثم قال: «إنما أهلك الذين قبلكم، أنهم كانوا إذا سرق فيهم الشريف تركوه»';
+  const context =
+    'عن عائشة رضي الله عنها، أن قريشا أهمهم شأن المرأة المخزومية التي سرقت، فقالوا: ومن يكلم فيها رسول الله صلى الله عليه وسلم؟ فكلمه أسامة، فقال رسول الله صلى الله عليه وسلم ' +
+    reference;
+  const auto = (matnAr: string | null, matn = reference) =>
+    row({
+      apiProvider: 'book:riyad',
+      gradeSource: 'AUTO_SAHIHAYN',
+      textAr: 'وعن عائشة رضي الله عنها أن قريشا أهمهم شأن المرأة المخزومية',
+      matnAr,
+      matches: [{ referenceHadith: { matnText: matn } }],
+    });
+
+  it('shows the matched narration with its narrator lead when matnAr carries it', () => {
+    expect(mapQuoteToDto(auto(context), 'ar').textAr).toBe(context);
+  });
+
+  it('shows the Sahihayn matn, not the book\'s own wording, when matnAr is that wording', () => {
+    expect(mapQuoteToDto(auto('(صلى الله عليه وسلم) قال: «إنما أهلك الذين قبلكم»'), 'ar').textAr).toBe(reference);
+    expect(mapQuoteToDto(auto(null), 'ar').textAr).toBe(reference);
+  });
+
+  it('shows the context text when the stored reference matn is still chain', () => {
+    const chain = 'ا حدثنا يحيى بن سعيد حدثنا قرة بن خالد حدثني أبو بردة قال قال أبو موسى أقبلت إلى النبي صلى الله عليه وسلم ومعي رجلان';
+    const lead = 'أبو بردة قال قال أبو موسى أقبلت إلى النبي صلى الله عليه وسلم ومعي رجلان';
+    expect(mapQuoteToDto(auto(lead, chain), 'ar').textAr).toBe(lead);
+  });
+
+  it('falls back to matnAr, then textAr, without a reference', () => {
+    const bare = row({ gradeSource: 'AUTO_SAHIHAYN', matnAr: 'متن', matches: [] });
+    expect(mapQuoteToDto(bare, 'ar').textAr).toBe('متن');
+  });
+});

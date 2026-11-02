@@ -4,7 +4,7 @@
  * placed it under (owner rule: the book's own structure is the classification).
  */
 import { ClassifiedBy, HadithGrade, LinkBasis, LinkReviewStatus, type Prisma } from '@prisma/client';
-import { splitMatn } from '../../../src/common/text/matn.js';
+import { displayMatn } from '../../../src/common/text/matn.js';
 import { inTransactionBatches } from '../lib/batch.js';
 import { applyLimit, pickRandom, preview, type ImportOptions } from '../lib/cli.js';
 import { loadCorpus, provenanceOf, type CorpusSpec } from '../lib/corpus.js';
@@ -110,8 +110,8 @@ function toQuoteRow(
   apiProvider: string,
   provenance: ReturnType<typeof provenanceOf>,
 ): BookQuoteRow {
-  const { matnText } = splitMatn(narration.textAr);
-  const matnAr = matnText.trim() || narration.textAr;
+  // The reader's text keeps its narrator lead («عن أبي هريرة قال …»); matching uses matnForMatching.
+  const matnAr = displayMatn(narration.textAr).trim() || narration.textAr;
   const rawPayload: Prisma.InputJsonObject = {
     ...provenance,
     fullTextAr: narration.textAr,

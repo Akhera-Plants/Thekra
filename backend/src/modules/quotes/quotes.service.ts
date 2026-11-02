@@ -32,6 +32,7 @@ import { parsePrintedReference, utcDayNumber } from '../../common/text/printed-r
 import { unfeaturableTextIds } from './text-review.js';
 import { autoLinkExclusion } from '../classification/public-taxonomy.js';
 import { ATHAR_PUBLIC_ENABLED, GradePolicy, PUBLISHABLE_GRADE_SOURCES } from '../hadith/grade-policy.js';
+import { hiddenQuoteIds } from '../hadith/hidden-quotes.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type { EnvironmentVariables } from '../../config/env.validation.js';
 import type { AdminQuotesQueryDto } from './dto/admin-quotes-query.dto.js';
@@ -445,6 +446,11 @@ export class QuotesService {
     const atharClause = ATHAR_PUBLIC_ENABLED
       ? Prisma.sql`OR (q."isAthar" AND q."atharSpeakerKey" IS NOT NULL AND q."atharReviewDecision"::text = 'KEEP')`
       : Prisma.sql``;
+    // Mirrors the hidden-quotes clause of GradePolicy.publishableClause (prisma/taxonomy/hidden-quotes.yaml).
+    const hidden = hiddenQuoteIds();
+    const hiddenFilter = hidden.length > 0
+      ? Prisma.sql`AND q.id NOT IN (${Prisma.join([...hidden])})`
+      : Prisma.sql``;
     const textFilter = Prisma.sql`AND (q."textSource"::text <> 'OCR' OR q."textVerifiedAt" IS NOT NULL)
       AND (
         (NOT q."isAthar" AND (
@@ -480,6 +486,7 @@ export class QuotesService {
       ${typeFilter}
       ${gradeFilter}
       ${textFilter}
+      ${hiddenFilter}
       ORDER BY
         CASE WHEN COALESCE(sq."relevanceScore", -1) >= ${floor} THEN 0 ELSE 1 END ASC,
         CASE WHEN COALESCE(sq."relevanceScore", -1) >= ${floor}
@@ -690,6 +697,7 @@ export class QuotesService {
 
   /** The synchronous half of assertPublicQuote, for callers that fetch the open-flag count in parallel. */
   private assertPublicRow(row: {
+    id: string;
     type: QuoteType;
     grade: HadithGrade | null;
     gradeSource: GradeSource;

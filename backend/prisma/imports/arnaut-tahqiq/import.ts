@@ -15,7 +15,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { GradeSource, HadithGrade } from '@prisma/client';
 import { STRONG_MATCH_SCORE, combinedScore, wordOverlap } from '../../../src/common/text/match-score.js';
-import { splitMatn } from '../../../src/common/text/matn.js';
+import { matnForMatching, splitMatn } from '../../../src/common/text/matn.js';
 import { normalizeMatn } from '../../../src/common/text/normalize-matn.js';
 import { arnautArabicGrade, firstClause } from '../../../src/modules/hadith/arnaut-grade.js';
 import { ARNAUT_NAME, citesSahihayn } from '../../../src/modules/hadith/sunan-tahqiq.js';
@@ -151,7 +151,7 @@ export async function runArnautTahqiq(options: ImportOptions): Promise<void> {
   });
   const quotes = applyLimit(stored, options.limit).map((row) => ({
     ...row,
-    matn: normalizeMatn((row.matnAr && row.matnAr.trim()) || splitMatn(row.textAr).matnText || row.textAr),
+    matn: normalizeMatn(matnForMatching(row)),
   }));
   console.log(`candidate quotes ${quotes.length}`);
 

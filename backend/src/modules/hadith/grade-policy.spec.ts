@@ -6,6 +6,7 @@ import {
   PUBLISHABLE_GRADE_SOURCES,
   atharMayPublish,
 } from './grade-policy.js';
+import { hiddenQuoteIds } from './hidden-quotes.js';
 
 describe('GradePolicy', () => {
   it('rejects MAWDU', () => {
@@ -110,8 +111,25 @@ describe('GradePolicy', () => {
         ],
       };
       const kept = { isAthar: true, atharSpeakerKey: { not: null }, atharReviewDecision: 'KEEP' };
-      expect(GradePolicy.publishableClause(true)).toEqual({ AND: [{ OR: [nonAthar, kept] }, flagged] });
-      expect(GradePolicy.publishableClause(false)).toEqual({ AND: [{ OR: [nonAthar] }, flagged] });
+      const hidden = { id: { notIn: [...hiddenQuoteIds()] } };
+      expect(GradePolicy.publishableClause(true)).toEqual({ AND: [{ OR: [nonAthar, kept] }, flagged, hidden] });
+      expect(GradePolicy.publishableClause(false)).toEqual({ AND: [{ OR: [nonAthar] }, flagged, hidden] });
+    });
+
+    it('hides the quotes on hidden-quotes.yaml from every reader filter', () => {
+      const id = hiddenQuoteIds()[0] as string;
+      expect(id).toMatch(/^[0-9a-f-]{36}$/);
+      // readerClause carries publishableClause, so every public list and count leaves the row out.
+      expect(JSON.stringify(GradePolicy.readerClause())).toContain(id);
+      const row = {
+        type: QuoteType.HADITH,
+        gradeSource: GradeSource.SAHIHAYN,
+        isAthar: false,
+        atharSpeakerKey: null,
+        atharReviewDecision: null,
+      };
+      expect(GradePolicy.isPublishable({ ...row, id })).toBe(false);
+      expect(GradePolicy.isPublishable({ ...row, id: '00000000-0000-4000-8000-000000000000' })).toBe(true);
     });
 
     it('publishes a listed athar only when the reviewer kept it and the flag is on', () => {

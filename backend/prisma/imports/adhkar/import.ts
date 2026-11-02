@@ -4,7 +4,7 @@
  * al-Arna'ut).
  *
  * Creates one Source, the BookSection / SectionItem tree, and Quote rows for
- * numbered narrations (HADITH, with matnAr from splitMatn so the shared
+ * numbered narrations (HADITH, with matnAr from displayMatn so the shared
  * matn-only takhrij runs apply) and author paragraphs (BOOK_EXCERPT). AYAH
  * items link to the canonical Quran source. Does NOT create topic / sin /
  * deed / iman-branch links of any kind — the reviewer maps chapters later.
@@ -28,7 +28,7 @@ import {
   type PrismaClient,
   type SectionItemKind,
 } from '@prisma/client';
-import { splitMatn } from '../../../src/common/text/matn.js';
+import { displayMatn } from '../../../src/common/text/matn.js';
 import { stripPageMarkers } from '../../../src/common/text/strip-page-markers.js';
 import { inTransactionBatches } from '../lib/batch.js';
 import type { ImportOptions } from '../lib/cli.js';
@@ -249,7 +249,8 @@ function plan(
           externalId = `openiti:${sectionIndex + 1}:${itemIndex + 1}`;
         }
         const textAr = stripPageMarkers((item.text ?? '—').trim() || '—');
-        const matn = splitMatn(textAr).matnText?.trim() || null;
+        // The reader's text keeps its narrator lead; matching uses matnForMatching.
+        const matn = displayMatn(textAr).trim() || null;
         fresh.push({
           externalId,
           textAr,

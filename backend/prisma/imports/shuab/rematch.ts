@@ -1,6 +1,7 @@
 /**
  * Phase 1 — Shu'ab matn split + rematch helpers.
- * 1) Backfill matnAr / rawPayload.fullTextAr for every book:shuab-iman quote.
+ * 1) Backfill matnAr (the reader's text, with its narrator lead: displayMatn) / rawPayload.fullTextAr for every
+ *    book:shuab-iman quote.
  * 2) After takhrij / sunan / hadeethenc, link matched clean quotes onto the
  *    same iman branches (and reviewed branch→topic maps) with basis TAKHRIJ.
  */
@@ -12,7 +13,7 @@ import {
   type Prisma,
   type PrismaClient,
 } from '@prisma/client';
-import { splitMatn } from '../../../src/common/text/matn.js';
+import { displayMatn, splitMatn } from '../../../src/common/text/matn.js';
 
 const SHUAB_PROVIDER = 'book:shuab-iman';
 const SAHIHAYN_PROVIDER = 'sahihayn';
@@ -45,8 +46,8 @@ export async function backfillShuabMatn(
       typeof payload.fullTextAr === 'string' && payload.fullTextAr.length > 0
         ? payload.fullTextAr
         : row.textAr;
-    const { matnText, isnadText } = splitMatn(fullText);
-    const matn = matnText.trim() || fullText;
+    const { isnadText } = splitMatn(fullText);
+    const matn = displayMatn(fullText).trim() || fullText;
     if (!isnadText) splitFailed += 1;
 
     if (row.matnAr === matn && payload.fullTextAr === fullText) {
@@ -206,8 +207,5 @@ export async function runShuabRematchPropagate(prisma: PrismaClient): Promise<vo
   );
 }
 
-/** Prefer stored matnAr for matching; fall back to splitMatn(textAr). */
-export function matnForMatching(row: { textAr: string; matnAr?: string | null }): string {
-  if (row.matnAr && row.matnAr.trim().length > 0) return row.matnAr.trim();
-  return splitMatn(row.textAr).matnText || row.textAr;
-}
+/** Matching reads splitMatn's cut of the stored matnAr, never its narrator lead (src/common/text/matn.ts). */
+export { matnForMatching } from '../../../src/common/text/matn.js';
