@@ -13,6 +13,7 @@ import { AccountDataPanel } from './AccountDataPanel';
 import { AccountSection } from './AccountSection';
 import { VaultPanel } from '@/features/practice/components/VaultPanel';
 import { usePracticeStore } from '@/features/practice/hooks/usePracticeStore';
+import { updatePrefs } from '@/lib/practice/local-store';
 
 const noSubscribe = () => () => {};
 
@@ -55,6 +56,8 @@ export function SettingsView() {
               <ScreenSettingsLinks />
             </section>
             <Separator />
+            <WeekBranchSetting />
+            <Separator />
             <SettingsVault />
             <Separator />
           </>
@@ -89,7 +92,30 @@ export function SettingsView() {
   );
 }
 
-/** «الحفظ المشفّر»: one setting for every «تخفَّف» program on this device (owner, 2026-11-01). */
+/** «شعبة الأسبوع» opt-in (owner round 3, item 7): «ورد اليوم» shows it only for a member who chose it. */
+function WeekBranchSetting() {
+  const t = useTranslations('settings.weekBranch');
+  const snapshot = usePracticeStore();
+  if (!snapshot) return null;
+  return (
+    <section className="flex items-start justify-between gap-4">
+      <label htmlFor="week-branch" className="flex min-w-0 flex-col gap-1">
+        <span className="text-sm font-medium">{t('label')}</span>
+        <span className="text-sm leading-6 text-muted-foreground">{t('hint')}</span>
+      </label>
+      <input
+        id="week-branch"
+        type="checkbox"
+        role="switch"
+        className="mt-1 size-5 shrink-0 accent-primary"
+        checked={snapshot.prefs.weekBranch === true}
+        onChange={(event) => updatePrefs((p) => ({ ...p, weekBranch: event.target.checked || undefined }))}
+      />
+    </section>
+  );
+}
+
+/** «تخفَّف» المشفّر: lock / unlock and change the privacy code (owner, 2026-11-01: always encrypted in the account). */
 function SettingsVault() {
   const snapshot = usePracticeStore();
   if (!snapshot) return null;

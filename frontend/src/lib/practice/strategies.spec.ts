@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { STRATEGIES } from '@thekra/practice-core';
-import { strategyTarget } from './strategies';
+import { listedStrategies, strategyTarget } from './strategies';
 
 describe('strategyTarget', () => {
   it('maps every strategy to a page of the site', () => {
@@ -16,5 +16,13 @@ describe('strategyTarget', () => {
     expect(strategyTarget('pledges').heart).toEqual({ pledges: true });
     expect(strategyTarget('add')).toEqual({ href: { pathname: '/practice/habits', query: { add: '1' } } });
     expect(strategyTarget('moment').heart).toBeUndefined();
+  });
+});
+
+describe('listedStrategies', () => {
+  it('leaves «لا تفوّتها مرتين» out of the list (it shows on the habit row instead)', () => {
+    const keys = listedStrategies(STRATEGIES).map((s) => s.key);
+    expect(keys).not.toContain('never-twice');
+    expect(keys).toHaveLength(STRATEGIES.length - 1);
   });
 });

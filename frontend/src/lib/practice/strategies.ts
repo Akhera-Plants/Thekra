@@ -1,4 +1,4 @@
-import type { HeartPrefs, StrategyAction } from '@thekra/practice-core';
+import type { HeartPrefs, Strategy, StrategyAction } from '@thekra/practice-core';
 
 /** Where «جرّبها» leads on the web, and the device switch it turns on first (if any). */
 export interface StrategyTarget {
@@ -30,4 +30,14 @@ export function strategyTarget(action: StrategyAction): StrategyTarget {
     case 'evening':
       return { href: '/practice/notifications', heart: { eveningReview: true } };
   }
+}
+
+/**
+ * Strategies shown in the list (owner round 3, item 14): «لا تفوّتها مرتين» is not listed; it appears in context, on
+ * a habit's row the day after it was missed.
+ */
+export const IN_CONTEXT_STRATEGIES: readonly string[] = ['never-twice'];
+
+export function listedStrategies<T extends Pick<Strategy, 'key'>>(strategies: readonly T[]): T[] {
+  return strategies.filter((s) => !IN_CONTEXT_STRATEGIES.includes(s.key));
 }

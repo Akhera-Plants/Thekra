@@ -1,14 +1,14 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
-import { WeakMomentView } from '@/features/practice/components/WeakMomentView';
+import { MujahadaView } from '@/features/practice/components/MujahadaView';
 import { getAyah } from '@/lib/api/quran';
 import { reportFailure } from '@/lib/errors';
 import type { LocaleCode } from '@/lib/types/enums';
 
 /**
- * «لحظة ضعف»: a generic title (never a sin name), no index, under the private `practice/leave-sin` path (robots).
- * The only server request is the stored verse Al-A'raf 7:201, the same for every visitor (content rule §3.1).
+ * «لحظة مجاهدة» (was «لحظة ضعف»): a generic title (never a sin name), no index, under the private `practice/leave-sin` path (robots).
+ * The only server request is the stored verse Al-A'raf 7:201 (shown only until the catalog's patience verses arrive), the same for every visitor (content rule §3.1).
  */
 export async function generateMetadata({ params }: PageProps<'/[locale]/practice/leave-sin/moment'>): Promise<Metadata> {
   const { locale } = await params;
@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: PageProps<'/[locale]/practice
   return { title: { absolute: t('genericTitle') }, robots: { index: false, follow: false } };
 }
 
-export default async function WeakMomentPage({ params }: PageProps<'/[locale]/practice/leave-sin/moment'>) {
+export default async function MujahadaPage({ params }: PageProps<'/[locale]/practice/leave-sin/moment'>) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations('leaveSin');
@@ -25,7 +25,7 @@ export default async function WeakMomentPage({ params }: PageProps<'/[locale]/pr
   const verse = await getAyah(7, 201, { lang: locale as LocaleCode })
     .then((result) => result.data)
     .catch((error: unknown) => {
-      reportFailure('weak moment verse', error);
+      reportFailure('mujahada verse', error);
       return null;
     });
   return (
@@ -40,7 +40,7 @@ export default async function WeakMomentPage({ params }: PageProps<'/[locale]/pr
         </h1>
         <p className="page-lead mx-auto">{t('moment.lead')}</p>
       </header>
-      <WeakMomentView verse={verse} />
+      <MujahadaView verse={verse} />
     </div>
   );
 }

@@ -2,12 +2,13 @@ import type { Metadata } from 'next';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
+import { SectionDivider } from '@/components/shared/SectionDivider';
 import { FormattedNumber } from '@/components/shared/FormattedNumber';
 import { AlternativeDeedsBlock } from '@/features/sin-reminder/components/AlternativeDeedsBlock';
 import type { ReaderItem, ReaderSection } from '@/components/shared/editorial/ReminderReader';
 import { SinReader } from '@/features/sin-reminder/components/SinReader';
 import { StartProgramLink } from '@/features/practice/components/StartProgramLink';
-import { MizanBlock, mizanHighlight, TopicBranchLinks } from '@/features/topic/components/TopicTemplate';
+import { TopicBranchLinks } from '@/features/topic/components/TopicTemplate';
 import { TOPIC_PAGE_SIZE, interleaveReading } from '@/lib/reading';
 import { getSin, getSinQuotes, getSins } from '@/lib/api/sins';
 import { rethrowUnlessNotFound, topSlugs } from '@/lib/api/server-guard';
@@ -52,7 +53,6 @@ export default async function SinDetailPage({
   const tRank = await getTranslations('sinRank');
   const tNav = await getTranslations('nav');
   const tCrumbs = await getTranslations('breadcrumbs');
-  const tTopic = await getTranslations('topic');
 
   let sin: Awaited<ReturnType<typeof getSin>>['data'];
   try {
@@ -106,7 +106,6 @@ export default async function SinDetailPage({
   // English shows the English description or nothing: never Arabic prose on /en.
   const description = locale === 'en' ? sin.description : sin.descriptionAr;
   const rankReference = locale === 'en' ? englishOnlyProvenance(sin.rankReference) : sin.rankReference;
-  const highlight = mizanHighlight(sin.mizan, { title: tTopic('mizanTitle'), lead: tTopic('mizanLead'), top: tTopic('mizanTop') });
   const onwardName = onward
     ? (locale === 'en' ? (onward.name || onward.nameAr) : onward.nameAr)
     : null;
@@ -156,7 +155,6 @@ export default async function SinDetailPage({
             then شعب الإيمان and the opposite. */}
         {items.length === 0 ? (
           <div className="flex flex-col gap-6">
-            <MizanBlock mizan={sin.mizan} intent="sin" />
             <div className="next-step">
               <p>{t('noReminders')}</p>
               <Link href={onward ? `/good-deeds/${onward.slug}` : '/sins'} className="outline-button mt-3">
@@ -172,7 +170,6 @@ export default async function SinDetailPage({
           </div>
         ) : (
           <SinReader
-            highlight={highlight}
             slug={slug}
             lang={locale}
             items={items}
@@ -182,9 +179,11 @@ export default async function SinDetailPage({
             themes={quotesMeta?.themes}
             initialTheme={activeTheme}
             initialHasNext={quotesMeta?.hasNext ?? false}
+            complete={derived.some((group) => group.items.length > 0) && !(quotesMeta?.hasNext ?? false)}
           />
         )}
 
+        {(sin.branches && sin.branches.length > 0) || (counterpart && sin.pair) || alternatives.length > 0 ? <SectionDivider /> : null}
         <TopicBranchLinks branches={sin.branches} />
 
         {counterpart && sin.pair ? (

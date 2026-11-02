@@ -3,12 +3,15 @@
 import { useMemo, useState } from 'react';
 import { Plus, Users } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
-import { limits, periodicActs, upsertPlan, type LimitKind } from '@thekra/practice-core';
+import { limits, upsertPlan, type LimitKind } from '@thekra/practice-core';
 import { Link } from '@/i18n/navigation';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
+import { SectionDivider } from '@/components/shared/SectionDivider';
 import { QueryErrorState } from '@/components/shared/feedback/QueryErrorState';
 import { limitOptions, periodicTemplates, planFromTemplate } from '@/lib/practice/limits';
 import { updateStore } from '@/lib/practice/local-store';
+import { periodicActsOnly } from '@/lib/practice/wird';
+import { formatDigits } from '@/lib/format/digits';
 import type { PracticeHabit } from '@/lib/types/practice';
 import { useWirdContext } from '../../hooks/useWirdContext';
 import { LimitSheet } from '../LimitSheet';
@@ -26,7 +29,7 @@ export function PeriodicView() {
   const context = useWirdContext();
   const [limitOpen, setLimitOpen] = useState<LimitKind | null>(null);
   const acts = useMemo(
-    () => (context ? periodicActs(context.snapshot.store, context.today, context.planDays) : []),
+    () => (context ? periodicActsOnly(context.snapshot.store, context.today, context.planDays, context.habits) : []),
     [context],
   );
   const planLimits = useMemo(
@@ -70,12 +73,15 @@ export function PeriodicView() {
         </section>
       ) : null}
 
+      {acts.length > 0 ? <SectionDivider /> : null}
+
       <section aria-labelledby="periodic-add" className="flex flex-col gap-3">
         <h2 id="periodic-add" className="text-xl font-medium">
           {t('add')}
         </h2>
+        <p className="rounded-xl border border-border bg-muted/40 px-4 py-3 text-sm leading-7">{t('remindersOnly')}</p>
         <p className="text-sm text-muted-foreground">
-          {t('count', { n: planLimits.periodic.count, max: planLimits.periodic.max })}
+          {t('count', { n: formatDigits(planLimits.periodic.count), max: formatDigits(planLimits.periodic.max) })}
         </p>
         {catalog.isError ? <QueryErrorState error={catalog.error} onRetry={() => void catalog.refetch()} className="py-4" /> : null}
         <ul className="flex flex-col divide-y divide-border border-y border-border">
@@ -88,7 +94,7 @@ export function PeriodicView() {
                 </span>
                 <span className="flex-1 text-base leading-7 font-medium">{title}</span>
                 {habit.people ? (
-                  <Link href={{ pathname: '/practice/kinship', query: { circle: habit.people } }} className="text-link">
+                  <Link href={{ pathname: '/practice/kinship', query: { circle: habit.people } }} className="outline-button !mt-0">
                     {t('openList')} <DirectionalArrow />
                   </Link>
                 ) : added.has(habit.key) ? (
@@ -109,6 +115,7 @@ export function PeriodicView() {
         open={limitOpen !== null}
         onOpenChange={(open) => (open ? undefined : setLimitOpen(null))}
         limits={planLimits}
+        store={snapshot.store}
         habits={habits}
         today={today}
       />

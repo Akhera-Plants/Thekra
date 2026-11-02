@@ -9,7 +9,7 @@ const program = (slug: string, startedOn: string) =>
   startProgram({ sinSlug: slug, category: 'haqq_allah', hardToLeaveAtOnce: false, startedOn }, NOW);
 const quote = (id: string, textAr: string) => ({ id, textAr }) as QuoteDto;
 
-describe('«لحظة ضعف» program', () => {
+describe('«لحظة مجاهدة» program', () => {
   const a = program('a', '2026-10-01');
   const b = program('b', '2026-10-20');
   it('uses the program in focus without a hand-off', () => {

@@ -98,6 +98,7 @@ export function KinshipView() {
         open={limitOpen}
         onOpenChange={setLimitOpen}
         limits={planLimits}
+        store={snapshot.store}
         habits={habits}
         today={today}
       />

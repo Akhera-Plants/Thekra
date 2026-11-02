@@ -87,6 +87,25 @@ export interface PracticeCatalog {
   deedBranches?: Record<string, number[]>;
   /** Story key → Quote id, or null while not found (the UI hides it). Optional until every API deploy sends it. */
   stories?: Record<string, string | null>;
+  /** «لحظة مجاهدة» texts by Quote id (heart-texts.yaml). Optional until every API deploy sends it. */
+  mujahada?: MujahadaTexts;
+}
+
+/**
+ * «لحظة مجاهدة» (was «لحظة ضعف»): every id is a public Quote id, read by id; an empty list or null hides that part.
+ * Mirrors backend `MujahadaTexts` (backend/src/modules/practice/heart-texts.ts).
+ */
+export interface MujahadaTexts {
+  /** Quran passages on patience and striving: each passage is 1–3 consecutive verse ids shown together. */
+  verses: string[][];
+  /** Scholars' sayings on patience (empty while none qualifies). */
+  sayings: string[];
+  /** A good deed is written ten times up to seven hundred times. */
+  multiplierHadith: string | null;
+  /** The voluntary prayer sitting has half the reward of standing. */
+  sittingPrayerHadith: string | null;
+  /** Good-deed topic slugs (`/good-deeds/<slug>`): easy deeds with a great reward («أتبِع السيئةَ الحسنة»). */
+  easyHighReward: string[];
 }
 
 /** One dated occurrence, as `GET /v1/calendar/occasions` returns it (or as computed on the device). */

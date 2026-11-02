@@ -25,6 +25,7 @@ import { ProgressPanel } from './ProgressPanel';
 import { NotificationsLink } from './NotificationsLink';
 import { currentPrayerLookup, currentPrayerTimes } from '@/lib/practice/screen-stores';
 import { InfoTip } from '@/components/shared/InfoTip';
+import { SectionDivider } from '@/components/shared/SectionDivider';
 import { SegmentTabs, SegmentTabsContent } from '@/components/shared/kit/segment-tabs';
 import { useWirdContext } from '../hooks/useWirdContext';
 import { GraduationOffers, MonthPanel, StreakLine } from './hub/HabitStats';
@@ -44,6 +45,7 @@ const isHabitsTab = (value: string | null): value is HabitsTab => (HABITS_TABS a
 export function PracticeView() {
   const t = useTranslations('practice.today');
   const tRecord = useTranslations('practice.record');
+  const tPeriodic = useTranslations('practice.periodic');
   const locale = useLocale() === 'en' ? 'en' : 'ar';
   const snapshot = usePracticeStore();
   const clock = useToday();
@@ -129,9 +131,12 @@ export function PracticeView() {
     <PlanCard key={plan.id} plan={plan} habit={habit} view={view} today={today} hijriOffset={hijriOffset} prayer={prayer} />
   );
   // «عاداتي»: the saplings and periodic acts by today, then «عادات راسخة» and «موقوفة مؤقتًا» apart.
-  const active = entries.filter((entry) => !isPaused(entry.plan) && !isEstablished(entry.plan));
-  const established = entries.filter((entry) => !isPaused(entry.plan) && isEstablished(entry.plan));
-  const paused = entries.filter((entry) => isPaused(entry.plan));
+  // Periodic acts are reminders, never habits (owner round 3, item 6): their own group, after every habit group.
+  const periodicEntries = entries.filter((entry) => isPeriodicTemplate(entry.habit) && !isPaused(entry.plan));
+  const habitEntries = entries.filter((entry) => !periodicEntries.includes(entry));
+  const active = habitEntries.filter((entry) => !isPaused(entry.plan) && !isEstablished(entry.plan));
+  const established = habitEntries.filter((entry) => !isPaused(entry.plan) && isEstablished(entry.plan));
+  const paused = habitEntries.filter((entry) => isPaused(entry.plan));
   const dueToday = active.filter((entry) => entry.view.isDueToday);
   const notDueToday = active.filter((entry) => !entry.view.isDueToday);
   const freeMinutes = snapshot.store.settings.freeMinutesPerDay;
@@ -151,6 +156,7 @@ export function PracticeView() {
         open={limitReached}
         onOpenChange={(open) => (open ? undefined : finishAdding())}
         limits={planLimits}
+        store={snapshot.store}
         habits={habits}
         today={today}
         onFreed={() => undefined}
@@ -209,11 +215,20 @@ export function PracticeView() {
                 {paused.map(card)}
               </HabitGroup>
             ) : null}
+            {periodicEntries.length > 0 ? (
+              <HabitGroup id="periodic-title" title={tPeriodic('title')} note={tPeriodic('remindersOnly')}>
+                {periodicEntries.map(card)}
+              </HabitGroup>
+            ) : null}
           </section>
+
+          <SectionDivider />
 
           <HabitPrograms store={snapshot.store} today={today} catalog={catalog.data} />
 
-          <div className="flex flex-wrap items-center gap-3 border-t border-border pt-6">
+          <SectionDivider />
+
+          <div className="flex flex-wrap items-center gap-3">
             <span className="inline-flex items-center gap-1">
               <button type="button" className="outline-button button-wrap" onClick={handleReminders}>
                 <CalendarPlus aria-hidden />
@@ -229,7 +244,8 @@ export function PracticeView() {
 
         <SegmentTabsContent value="progress" className="flex flex-col gap-10">
           {wird ? <TallySection store={wird.snapshot.store} today={today} habits={habits} /> : null}
-          <ProgressPanel entries={entries} today={today} />
+          <SectionDivider />
+          <ProgressPanel entries={habitEntries} today={today} />
         </SegmentTabsContent>
       </SegmentTabs>
       {/* Where the data lives: one quiet line under the page (the account link is in «الإعدادات»). */}

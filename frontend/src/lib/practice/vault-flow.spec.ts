@@ -4,7 +4,9 @@ import { ApiError } from '@/lib/types/api';
 import { safeNextPath } from '@/features/auth/next-path';
 import {
   VaultExistsError,
+  changeVaultCode,
   createVault,
+  forgetVault,
   mergePrograms,
   openVault,
   saveVault,
@@ -117,4 +119,18 @@ describe('safeNextPath', () => {
     expect(safeNextPath('/\\evil.example')).toBe('/');
     expect(safeNextPath(null, '/practice')).toBe('/practice');
   });
+
+  it('changes the code: the new code opens the vault, the old one no longer does; forgetting deletes it', async () => {
+    const server = fakeVaultServer();
+    const programs = [ghibah()];
+    const first = await createVault(server.api, programs, 'old-code-123');
+    const next = await changeVaultCode(server.api, first, programs, 'new-code-456');
+    expect(next.version).toBe(2);
+    expect(next.salt).not.toBe(first.salt);
+    expect((await openVault(server.api, 'new-code-456'))?.programs).toEqual(programs);
+    await expect(openVault(server.api, 'old-code-123')).rejects.toBeInstanceOf(VaultLockedError);
+    await expect(changeVaultCode(server.api, first, programs, '1234')).rejects.toBeInstanceOf(RangeError);
+    await forgetVault(server.api);
+    expect(server.current()).toBeNull();
+  }, 60_000);
 });

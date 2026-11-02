@@ -128,6 +128,56 @@ export async function saveVault(
   }
 }
 
+/**
+ * «غيّر رمز الخصوصية» (docs/plan/2026-11-01-sin-vault-always-on.md §5): a new salt and key from the new code, the
+ * programs sealed with it and saved over the current version. Returns the new session (the old key no longer opens
+ * the vault). A stale version rejects with ApiError 409: the caller reopens and tries again.
+ */
+export async function changeVaultCode(
+  api: VaultApi,
+  session: VaultSession,
+  programs: readonly SinProgram[],
+  newCode: string,
+): Promise<VaultSession> {
+  if (privacyCodeProblem(newCode) !== null) throw new RangeError('The privacy code is too easy to guess');
+  const salt = newSalt();
+  const key = deriveKey(newCode, salt, VAULT_ITERATIONS);
+  const body = vaultPayload(sealPrograms(programs, key), { salt, iterations: VAULT_ITERATIONS, version: session.version });
+  const version = await api.put(body);
+  return { key, salt, iterations: VAULT_ITERATIONS, version };
+}
+
+/** «نسيت الرمز؟ ابدأ من جديد»: the vault cannot be opened, so it is deleted (the caller clears the local programs). */
+export async function forgetVault(api: VaultApi): Promise<void> {
+  await api.remove();
+}
+
+// ── The autosave state (one autosave runs per page; the screens read its state) ──────────────────────────────────
+
+export type VaultSaveState = 'idle' | 'saving' | 'error' | 'reopen';
+
+let saveState: VaultSaveState = 'idle';
+const saveListeners = new Set<() => void>();
+
+export function getVaultSaveState(): VaultSaveState {
+  return saveState;
+}
+
+export function getServerVaultSaveState(): VaultSaveState {
+  return 'idle';
+}
+
+export function setVaultSaveState(next: VaultSaveState): void {
+  if (next === saveState) return;
+  saveState = next;
+  for (const listener of saveListeners) listener();
+}
+
+export function subscribeVaultSaveState(listener: () => void): () => void {
+  saveListeners.add(listener);
+  return () => saveListeners.delete(listener);
+}
+
 // ── The tab-session key (memory only) ───────────────────────────────────────────────────────────────────────────
 
 let session: VaultSession | null = null;

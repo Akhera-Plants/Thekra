@@ -167,6 +167,10 @@
       "cancel": "Cancel",
       "deleteConfirm": "Delete the account",
       "deleted": "Your account is deleted. Your data stays on this device."
+    },
+    "weekBranch": {
+      "label": "«Branch of the week» in «Today's wird»",
+      "hint": "One branch of faith each week, for those who want to learn them."
     }
   },
   "home": {
@@ -1008,7 +1012,6 @@
     "title": "My habits",
     "lead": "Start small, keep at it, and add only once it is steady.",
     "storage": {
-      "local": "Your data is saved on this device only and is never sent to a server.",
       "memoryOnly": "This browser does not allow saving (perhaps a private window), so your data will be lost when you close the page."
     },
     "evidence": {
@@ -1087,12 +1090,12 @@
       "catalogError": "The habit details could not be loaded; your plan is saved as it is.",
       "add": "Add a habit",
       "downloadReminders": "Download my reminders as a calendar file",
-      "remindersHint": "A file for the next 30 days, built on your device. Open it in your calendar app to be reminded at your times.",
+      "remindersHint": "A file for the next 30 days. Open it in your calendar app to be reminded at your times.",
       "icsName": "Thekra reminders",
-      "notDueTitle": "Not asked for today",
+      "notDueTitle": "Today is a rest from this habit",
       "notDueNote": "Anything you do still counts.",
       "noneDueToday": "No habit is asked for today.",
-      "removeNoteDevice": "This habit is removed from this device.",
+      "removeNoteDevice": "This habit is deleted with its record.",
       "removeNoteAccount": "This habit is removed from your account and all your devices.",
       "edit": "Edit",
       "editTitle": "Edit the habit",
@@ -1145,7 +1148,17 @@
       "amountNow": "Now: {amount}",
       "holdDone": "Settling period done",
       "holdUntil": "Settling until {date}",
-      "daysLabel": "Done on {n} of the last {total} days"
+      "daysLabel": "Done on {n} of the last {total} days",
+      "chart": {
+        "title": "Weekly commitment",
+        "label": "Commitment to «{title}» over the last eight weeks",
+        "thisWeek": "This week {n}%",
+        "week": "Week ending {date}",
+        "percent": "{n}%",
+        "before": "Before you began",
+        "weeksAgo": "{n} weeks ago",
+        "now": "Now"
+      }
     },
     "weekdays": {
       "d0": "Sunday",
@@ -1158,7 +1171,7 @@
     },
     "kinship": {
       "title": "Ties of kinship",
-      "lead": "A list on your device of your relatives and how often to reach each one. A name or nickname only, no phone numbers.",
+      "lead": "Your relatives and how often to reach each one. A name or nickname only, no phone numbers.",
       "form": {
         "title": "Add a relative",
         "name": "Name or nickname",
@@ -1209,7 +1222,7 @@
       "icsTitleNamed": "Ties of kinship: {name}",
       "icsName": "Ties of kinship",
       "edit": "Edit",
-      "removeNoteDevice": "This relative is removed from this device.",
+      "removeNoteDevice": "This relative is removed from your list.",
       "removeNoteAccount": "This relative is removed from your account and all your devices."
     },
     "sync": {
@@ -1226,7 +1239,7 @@
       "pending": "Changes waiting to sync",
       "synced": "Synced",
       "lastSynced": "last synced {time}",
-      "signedInNote": "Saved on this device and synced with your account, except the “Lighten” program, which syncs only encrypted, if you choose.",
+      "signedInNote": "Saved in your account and in step on your devices; «Lighten» is always encrypted and nobody else can read it.",
       "accountLink": "Your account and data"
     },
     "push": {
@@ -1249,13 +1262,13 @@
     "hub": {
       "add": {
         "button": "Add",
-        "label": "Add a habit, a relative or a private program",
-        "habit": "A good habit",
-        "habitHint": "Start very small, at two times a day",
-        "relative": "A relative",
-        "relativeHint": "A name or nickname, and a rhythm",
+        "label": "Add a habit, a periodic act or a «Lighten» program",
+        "habit": "Habit",
+        "habitHint": "A good deed to keep up, starting very small",
         "program": "Lighten",
-        "programHint": "Private, on this device only"
+        "programHint": "Private and encrypted; nobody else can read it",
+        "periodic": "Periodic act",
+        "periodicHint": "A reminder on its day only, no commitment tracking"
       },
       "day": {
         "empty": "Nothing is asked of this day.",
@@ -1273,7 +1286,7 @@
         "completePast": "That day was done. May Allah accept it from you.",
         "logged": "Logged.",
         "unlogged": "Unmarked.",
-        "missedYesterday": "Yesterday was missed; today, even a little",
+        "missedYesterday": "Never miss it twice: today, even a little",
         "afterMakeUp": "What you log here is saved but does not count for the streak; a make-up is open until noon the next day."
       },
       "month": {
@@ -1284,6 +1297,13 @@
           "good": "Good",
           "gentle": "Gently"
         }
+      },
+      "fix": {
+        "open": "Mend it",
+        "title": "Never miss it twice",
+        "lead": "One missed day does not undo what you built. A little today keeps your habit.",
+        "minimum": "Log the least amount today",
+        "makeUp": "Make up yesterday now"
       }
     },
     "monthGrid": {
@@ -1302,8 +1322,8 @@
       "streakLabel": "{count, plural, =0 {Streak: not started yet} one {Streak: 1 day} other {Streak: {n} days}}",
       "empty": "Nothing is asked of you today.",
       "addHabit": "Add a habit",
-      "notDueToday": "Not asked for today ({n})",
-      "notDueDay": "Not asked for that day ({n})",
+      "notDueToday": "Today is a rest from these habits ({n})",
+      "notDueDay": "A rest on this day ({n})",
       "heavyDay": "Heavy day",
       "heavyDayHint": "Only the smallest amount today; your plan returns by itself tomorrow.",
       "streakFresh": "Start a new streak today · Longest streak: {n}"
@@ -1317,8 +1337,8 @@
       "addHabit": "Add a habit on set days",
       "empty": "No periodic acts yet: a relative to keep in touch with, or a habit on set days.",
       "kinship": "People lists",
-      "habitsTitle": "Habits on set days",
-      "habitNote": "A habit on set days",
+      "habitsTitle": "Dated acts",
+      "habitNote": "Periodic act · reminder",
       "none": "No date soon",
       "overdue": "Past due",
       "today": "Today",
@@ -1326,7 +1346,8 @@
       "count": "{n} of {max}",
       "openList": "Open the list",
       "added": "Added",
-      "addOne": "Add"
+      "addOne": "Add",
+      "remindersOnly": "Periodic acts are reminders only: they reach you on their day, and are not tracked for streaks or commitment like habits."
     },
     "record": {
       "current": "Current streak",
@@ -1351,27 +1372,33 @@
       "back": "Back",
       "establishAndStart": "Establish “{title}” and start the new one",
       "sapling": {
-        "title": "You have three saplings. A little that lasts is better than much that stops.",
-        "hint": "Keep up what you have, or pause a sapling to start another.",
-        "pause": "Pause a sapling",
-        "delete": "Delete a sapling"
+        "title": "A little kept up beats a lot left off",
+        "hint": "Keep going, or pause a habit for now to start another.",
+        "pause": "Pause a habit for now",
+        "delete": "Delete a habit"
       },
       "periodic": {
-        "title": "You have seven periodic acts. A little that lasts is better than much that stops.",
+        "title": "A little kept up beats a lot left off",
         "hint": "Keep up what you have, or pause an act to start another.",
         "pause": "Pause an act",
         "delete": "Delete an act"
       },
       "program": {
-        "title": "One “Lighten” program until it reaches its last stage. A little that lasts is better than much that stops.",
-        "hint": "Complete your program, then start another.",
+        "title": "One program that holds beats many that crowd",
+        "hint": "Keep going with your program, then start another.",
         "pause": "Pause",
         "delete": "Delete"
+      },
+      "unlocksOn": "You can add one on {date} if you keep going.",
+      "why": {
+        "habits_young": "You have {count} habits that have not reached three months yet. When one reaches three months you can add another, or pause one for now.",
+        "periodic_full": "You have {count} periodic acts, which is the limit. Delete one to add another.",
+        "programs_full": "You are working on {count} programs, which is the limit. End one to start another.",
+        "programs_young": "Start a new program once every program you are working on has lasted two months."
       }
     },
     "excuse": {
       "today": "Excused today (sick or travelling)",
-      "yesterday": "Excused yesterday (sick or travelling)",
       "day": "Excused (sick or travelling)",
       "hint": "An excused day neither breaks nor adds to the streak."
     },
@@ -1430,7 +1457,7 @@
         "lead": "Two minutes with yourself, without blame.",
         "steady": "What you kept",
         "steadyNone": "Nothing was complete this week; next week is a new chance.",
-        "weak": "Where you weakened",
+        "weak": "What was hard",
         "weakNone": "You missed nothing, praise be to Allah.",
         "missed": "{count, plural, one {Missed 1 day} other {Missed {n} days}}",
         "step": "One step for next week",
@@ -1463,7 +1490,7 @@
       "minimumMet": "The least logged",
       "reviews": {
         "title": "Self-review",
-        "lead": "Your weekly reviews, kept on this device only.",
+        "lead": "Your weekly reviews, for you alone.",
         "empty": "No review yet. Each Friday's review appears here.",
         "weekOf": "Week of {date}",
         "heart": "Heart: {value}",
@@ -1479,7 +1506,7 @@
       "evening": "Evening nudge while a habit is not done",
       "friday": "Friday review reminder",
       "time": "Time",
-      "heartTitle": "Today's intention and self-review (this device only)",
+      "heartTitle": "Today's intention and self-review",
       "intention": "Today's intention in the morning",
       "eveningReview": "Evening review after 19:00",
       "fridayReview": "Friday review",
@@ -1510,8 +1537,16 @@
       "heldTotal": "{count, plural, =0 {No days marked yet} one {You held firm 1 day since the start} other {You held firm {n} days since the start}}"
     },
     "celebrate": {
+      "dayDone": "Your wird is complete today",
       "accepted": "May Allah accept it from you",
-      "dayDone": "Your wird is complete today"
+      "lines": {
+        "l1": "You completed another day of deeds Allah loves.",
+        "l2": "You drew closer to Allah today.",
+        "l3": "A steady step; a little kept up grows.",
+        "l4": "You kept your wird today; praise Allah for the help.",
+        "l5": "Another day written in your record, by Allah's will.",
+        "l6": "You kept at it today; the deeds Allah loves most are the lasting ones."
+      }
     },
     "story": {
       "afterFall": "Do not despair: the door of repentance is open",
@@ -1554,7 +1589,7 @@
     },
     "strategies": {
       "title": "Habit strategies",
-      "lead": "Fourteen ways that help you build good and leave bad.",
+      "lead": "Practical ways that help you build good and leave harm.",
       "try": "Try it",
       "remind": "Remind me",
       "remindHint": "At most one reminder a week, on Saturday; turn it off any time.",
@@ -1578,7 +1613,7 @@
           "example": "Example: the mushaf on the desk, the prayer mat laid out."
         },
         "block-sin": {
-          "idea": "Keep the means of the sin out of reach, and make the way to it long.",
+          "idea": "Make the way to what you want to leave harder: put its means out of reach and lengthen the path to it.",
           "example": "Example: delete the app, and leave the phone outside the room at night."
         },
         "never-twice": {
@@ -1598,16 +1633,16 @@
           "example": "Example: begin fasting Mondays and Thursdays in Shaban."
         },
         "know-weak": {
-          "idea": "Notice the time, place and state in which you weaken.",
+          "idea": "Notice the time, place and state in which resisting is hardest.",
           "example": "Example: after midnight, when you are alone."
         },
         "ride-wave": {
-          "idea": "An urge rises and then falls; hold on for a few minutes.",
+          "idea": "An urge rises and then falls: hold on for a few minutes and busy yourself with good.",
           "example": "Example: make wudu, or change your place for ten minutes."
         },
         "follow-good": {
-          "idea": "If you slip, repent, and follow it with a good deed at once.",
-          "example": "Example: a small charity or two rakahs after the slip."
+          "idea": "If you slip, repent, and follow it with a good deed straight away.",
+          "example": "Example: a small charity, kindness to your parents, or two rak'ahs."
         },
         "company": {
           "idea": "Keep company that helps you to good, and look in on your friends.",
@@ -1617,6 +1652,14 @@
           "idea": "Take a minute each evening: what did you keep, and what did you miss?",
           "example": "Example: a short review before sleep."
         }
+      },
+      "example": "Example",
+      "remindOff": "Stop reminding",
+      "goodDeeds": {
+        "title": "Follow a wrong with a good deed",
+        "lead": "Easy deeds with a great reward. Pick one and do it now.",
+        "loading": "Loading…",
+        "none": "The list cannot be shown right now."
       }
     },
     "onboarding": {
@@ -1651,7 +1694,6 @@
     "myReminders": {
       "title": "My reminders",
       "lead": "Short lines you write for yourself, shown as the daily text if you choose them.",
-      "deviceOnly": "On this device only.",
       "newLabel": "New line",
       "add": "Add",
       "remove": "Remove",
@@ -1682,9 +1724,9 @@
       "save": "Save and load the times",
       "saving": "Loading…",
       "clear": "Clear the city",
-      "saved": "30 days of times are saved on this device.",
-      "failed": "The times could not be loaded; default times are used until the device is online.",
-      "helper": "The times come from the AlAdhan service and are kept on your device for 30 days.",
+      "saved": "30 days of times are saved.",
+      "failed": "The times could not be loaded; default times are used until you are back online.",
+      "helper": "The times come from the AlAdhan service, 30 days at a time.",
       "anchorsTitle": "Today's times",
       "defaults": "Default times, until you choose your city."
     },
@@ -1710,6 +1752,106 @@
         "isha": "Isha",
         "lastThird": "the last third of the night"
       }
+    },
+    "loops": {
+      "stepOf": "Step {step} of {total}",
+      "optional": "(optional)",
+      "next": "Next",
+      "back": "Back",
+      "save": "Save the loop",
+      "cancel": "Cancel",
+      "edit": "Edit",
+      "delete": "Delete",
+      "deleteTitle": "Delete this loop?",
+      "deleteBody": "Its answers are deleted and cannot be brought back.",
+      "loopN": "Loop {n}",
+      "max": "You reached the limit: {n} loops.",
+      "errors": {
+        "required": "Write the routine itself first.",
+        "any": "Answer at least one question."
+      },
+      "habit": {
+        "title": "Your habit loop",
+        "sectionTitle": "Build your own habit loop",
+        "lead": "Six short answers that make the habit easier: when it starts, why, and what to do if something gets in the way.",
+        "pick": "Pick the habit",
+        "noHabits": "Add a habit first to build its loop.",
+        "addHabit": "Add a habit",
+        "build": "Build a loop",
+        "another": "Add another loop",
+        "toggle": "Habit loop",
+        "toggleCount": "Habit loop ({n})",
+        "steps": {
+          "cue": {
+            "label": "Cue",
+            "question": "When and where does it start?",
+            "example": "Example: after the dawn prayer, where I pray."
+          },
+          "craving": {
+            "label": "Intention",
+            "question": "What do you want from it? What is your intention?",
+            "example": "Example: to start my day with the words of Allah."
+          },
+          "routine": {
+            "label": "Routine",
+            "question": "What is the routine itself?",
+            "example": "Example: I read two pages of the Quran."
+          },
+          "reward": {
+            "label": "Reward",
+            "question": "What makes it worth repeating?",
+            "example": "Example: calm, and I log it in «Today's wird»."
+          },
+          "obstacle": {
+            "label": "Obstacle",
+            "question": "What might get in the way?",
+            "example": "Example: staying up late, so I sleep after dawn."
+          },
+          "ifThen": {
+            "label": "If-then plan",
+            "question": "If that happens, what will you do?",
+            "example": "Example: if I miss it after dawn, I read a page before noon."
+          }
+        }
+      },
+      "sin": {
+        "title": "The sin's loop",
+        "lead": "Know its path to cut it: what sets it off, what you feel, and the alternative. It stays encrypted; nobody else can read it.",
+        "build": "Build the sin's loop",
+        "another": "Add another loop",
+        "steps": {
+          "trigger": {
+            "label": "Trigger",
+            "question": "What sets it off? In what situation?",
+            "example": "Example: the phone in my hand, alone, late at night."
+          },
+          "feeling": {
+            "label": "Feeling",
+            "question": "What do you feel then?",
+            "example": "Example: boredom and tiredness."
+          },
+          "craving": {
+            "label": "Craving",
+            "question": "What does the soul ask for?",
+            "example": "Example: to rest and escape the strain."
+          },
+          "act": {
+            "label": "Act",
+            "question": "What do you usually do?",
+            "example": "Write it in your own words; nobody else reads it."
+          },
+          "after": {
+            "label": "After",
+            "question": "What happens after it?",
+            "example": "Example: heaviness and regret, and sleeping late."
+          },
+          "alternative": {
+            "label": "Alternative",
+            "question": "What alternative will you choose next time?",
+            "example": "Example: I leave the phone outside the room, make wudu and sleep."
+          }
+        }
+      }
     }
   },
   "calendarPage": {
@@ -1726,7 +1868,7 @@
       "none": "No adjustment (Umm al-Qura)",
       "plus": "+{n} day",
       "minus": "−{n} day",
-      "hint": "If the Hijri month in your country starts before or after Umm al-Qura, adjust it here. Saved on your device."
+      "hint": "If the Hijri month in your country starts before or after Umm al-Qura, adjust it here."
     },
     "hijri": {
       "date": "{day} {month} {year} AH",
@@ -1750,15 +1892,18 @@
       "title": "The month",
       "none": "No sunnah occasion on this day."
     },
-    "addToCalendar": "Add the seasons of good to your calendar",
-    "addToCalendarHint": "The seasons show in your device calendar before they come, so you can prepare.",
-    "makeHabit": "Make it a habit"
+    "addToCalendar": "Add them to your calendar",
+    "addToCalendarHint": "The seasons show in your calendar before they come, so you can prepare.",
+    "makeHabit": "Make it a habit",
+    "subscribe": "Subscribe to the calendar",
+    "download": "Download the calendar file",
+    "tabsLabel": "Seasons of good sections"
   },
   "leaveSin": {
     "title": "Lighten",
     "genericTitle": "A reminder from Thekra",
     "lead": "Stages that help you leave a sin, step by step.",
-    "privacy": "This program lives on your device: it is never sent to a server in readable form, never used in any statistics, and the sin is never named in the page title or its link. If you choose to save it to your account, it is sent encrypted with a code only you know.",
+    "privacy": "«Lighten» is encrypted in your browser with your privacy code before it is saved to your account, so nobody can read it, not even the Thekra team. It never enters statistics or notifications, and the sin's name never appears in the page title or link. The code opens it once per session.",
     "startFromSin": "Start \"Lighten\"",
     "another": "Start another program",
     "choose": {
@@ -1792,23 +1937,32 @@
       "stageRule": "Each stage lasts at least {days} days; you move on when you check in on most days of the week.",
       "actionsTitle": "Practical steps",
       "alternativesTitle": "Good habits to put in its place",
-      "alternativesLead": "Start one of them in “My habits”, with a small amount.",
+      "alternativesLead": "Pick one to start with, in a small amount.",
       "alternativesLink": "Add a good deed instead",
       "notesTitle": "My private notebook",
       "textsTitle": "What the texts say",
       "values": {
         "held": "I held firm",
-        "weak": "I was weak",
+        "weak": "It was hard",
         "fell_repented": "I slipped, then repented"
       },
       "end": {
         "button": "End this program",
         "confirmTitle": "End this program?",
-        "confirmBody": "Its check-ins and notes are removed from this device now, and from the encrypted copy in your account on its next save if you use one. You can start it again whenever you wish.",
+        "confirmBody": "Its check-ins, notes and loops are removed from this browser and from your account at the next save. You can start it again whenever you like.",
         "cancel": "Cancel",
         "confirm": "End it now"
       },
-      "textsAll": "All the texts on it"
+      "textsAll": "All the texts on it",
+      "tabsLabel": "Program sections",
+      "tabs": {
+        "today": "Today",
+        "stages": "Stages",
+        "tools": "Means",
+        "loops": "The sin's loop",
+        "texts": "Texts"
+      },
+      "toolsEmpty": "No written means for this sin yet. «The sin's loop» helps you see its path."
     },
     "checkIn": {
       "title": "How was your day?",
@@ -1821,71 +1975,113 @@
       }
     },
     "vault": {
-      "title": "Encrypted saving",
-      "guest": "The program is on this device only. Sign in to save it encrypted in your account and open it on another device.",
-      "signIn": "Sign in",
-      "register": "Create an account",
+      "title": "Encrypted «Lighten»",
       "checking": "Checking your account",
-      "offer": "Save your “Lighten” programs encrypted in your account",
-      "offerLead": "They are encrypted on your device with a code you choose before they are sent, so nobody can read them, not even us.",
-      "warningTitle": "Important",
-      "warning": "If you forget the privacy code, the saved program can never be recovered, and nobody can open or read it, not even us.",
+      "warning": "If you forget the code it cannot be recovered and the data cannot be opened; you can start again.",
       "code": "Privacy code",
       "codeConfirm": "Type the code again",
       "codeHint": "At least 8 characters; a phrase of words you will remember is best. Do not use your account password or a run of digits.",
       "acknowledge": "I understand the code cannot be recovered",
-      "save": "Encrypt and save",
+      "save": "Save and start",
       "cancel": "Cancel",
       "working": "Encrypting…",
       "saving": "Updating the encrypted copy",
-      "saved": "Your programs are saved encrypted in your account and updated after every check-in while they are open.",
       "lock": "Lock",
-      "lockedTitle": "You have programs saved encrypted",
-      "lockedLead": "Open them with the privacy code to merge them with this device.",
-      "open": "Open the programs",
+      "lockedTitle": "Open «Lighten»",
+      "lockedLead": "Enter your privacy code. It stays open until you close the page.",
+      "open": "Open",
       "retry": "Try again",
       "errors": {
         "short": "The code must be at least 8 characters.",
         "weak": "This code is easy to guess. Choose a phrase of two or more words, or a code without repeats or runs.",
         "mismatch": "The two codes do not match.",
         "ack": "Confirm that you understand the warning.",
-        "wrongCode": "The privacy code is not correct.",
-        "load": "The encrypted copy could not be opened. Try again.",
-        "create": "The encrypted copy could not be saved. What is on your device is unchanged.",
-        "save": "The encrypted copy could not be updated. What is on your device is saved.",
-        "reopen": "The privacy code was changed on another device; open the programs again."
+        "wrongCode": "The code is not correct.",
+        "load": "«Lighten» could not be opened. Try again.",
+        "create": "It could not be saved to your account. Try again.",
+        "save": "The last change is not saved yet; we will try again.",
+        "reopen": "The privacy code was changed on another device; open it with the new code.",
+        "required": "Enter your privacy code.",
+        "changeConflict": "«Lighten» just changed on another device. Try again."
       },
-      "empty": "No program yet. Start one in “Lighten”, then save it here.",
-      "linkOff": "Save your programs encrypted in your account",
-      "linkLocked": "Open your encrypted programs",
-      "linkOn": "Saved encrypted in your account"
+      "none": "The privacy code is created when you start your first «Lighten» program.",
+      "openNow": "Open in this session; every change is saved to your account, encrypted.",
+      "savedShort": "Saved",
+      "change": "Change the privacy code",
+      "changeSave": "Save the new code",
+      "protectTitle": "Protect your program with a privacy code",
+      "createTitle": "Your privacy code",
+      "createLead": "One step before your program starts.",
+      "createWhy": "The code locks «Lighten» so nobody can read it, not even the Thekra team. It is saved to your account, encrypted, and opens on any device.",
+      "forgot": {
+        "button": "Forgot the code?",
+        "title": "Start again?",
+        "body": "The data cannot be opened without the code. Starting again deletes the «Lighten» programs and their check-ins from your account and this browser; then you choose a new code.",
+        "cancel": "Cancel",
+        "confirm": "Start again",
+        "failed": "That did not work right now. Try again."
+      }
     },
     "continueFromSin": "Continue your program",
     "moment": {
-      "title": "A weak moment",
-      "lead": "It is a wave, and it passes. Stay here for ten minutes and pick what helps.",
-      "open": "A weak moment",
-      "openFromSin": "I am in a weak moment",
+      "title": "A moment of striving",
+      "lead": "A wave that passes. Strive through it for ten minutes; Allah sees your effort.",
+      "open": "A moment of striving",
+      "openFromSin": "I am in a moment of striving",
       "timer": "Time left of ten minutes",
       "remaining": "{time} left",
       "actionsTitle": "Do one now",
-      "actions": {
-        "wudu": "Make wudu",
-        "move": "Change your place",
-        "pray": "Pray two rak'ahs",
-        "call": "Call someone",
-        "dhikr": "A short dhikr"
-      },
       "textLabel": "A reminder",
-      "question": "Did the wave pass?",
-      "yes": "Yes, it passed",
-      "no": "No, I slipped",
+      "question": "How did your striving go?",
+      "yes": "I held firm, by Allah's grace",
+      "no": "I slipped",
       "answerEarly": "Answer now",
-      "heldSaved": "Praise be to Allah. Today is marked «held».",
-      "heldKept": "Praise be to Allah. Today's check-in stays as you wrote it.",
-      "heldNoProgram": "Praise be to Allah for holding firm.",
       "back": "Back to «Lighten»",
-      "verseCitation": "{surah} {chapter}:{ayah}"
+      "verseCitation": "{surah} {chapter}:{ayah}",
+      "tools": {
+        "tasbih": "Make dhikr now",
+        "tasbihHint": "A counter with the time and the reward",
+        "wird": "A shorter wird",
+        "wirdHint": "Less of your usual wird, logged now"
+      },
+      "stepsLabel": "Or tick what you did",
+      "steps": {
+        "wudu": "I made wudu",
+        "move": "I changed my place",
+        "call": "I called someone"
+      },
+      "heldTitle": "You strove against yourself, and Allah sees your effort.",
+      "heldSaved": "Today is marked «held».",
+      "heldKept": "Today's check-in stays as you wrote it.",
+      "heldNoProgram": "Praise be to Allah for holding firm.",
+      "slipTitle": "The door of repentance is open",
+      "slipBody": "A slip does not erase your effort. Repent now, follow it with a good deed, and begin again.",
+      "fix": "Mend it now",
+      "tasbih": {
+        "title": "Make dhikr now",
+        "remaining": "{time} left of ten minutes",
+        "phrasesLabel": "The dhikr",
+        "phrases": {
+          "subhan": "Subhan Allah",
+          "hamd": "Al-hamdu lillah",
+          "tahlil": "La ilaha illa Allah",
+          "takbir": "Allahu akbar",
+          "istighfar": "Astaghfirullah"
+        },
+        "tap": "{phrase}, count {n}. Tap to count",
+        "rewardStart": "Each dhikr is a good deed: × {min} … up to × {max}, if Allah accepts it",
+        "reward": "{min} good deeds … up to {max}, if Allah accepts them",
+        "reset": "Start the count again"
+      },
+      "wird": {
+        "title": "A shorter wird",
+        "lead": "A little today is better than none. Log the least of your habits.",
+        "none": "No habit is asked today.",
+        "log": "Log {amount}",
+        "logged": "Logged",
+        "sittingTitle": "Pray two rak'ahs, even sitting",
+        "sittingBody": "A voluntary prayer sitting has half the reward of standing, and it is better than leaving it."
+      }
     },
     "triggers": {
       "title": "What came before it? (optional)",
@@ -1915,7 +2111,7 @@
     },
     "pattern": {
       "title": "When do you weaken?",
-      "lead": "From your check-ins on this device only; it is sent nowhere.",
+      "lead": "From your check-ins; nobody else sees it.",
       "when": "Most often: {value}",
       "where": "Most often: {value}",
       "feeling": "Most often: {value}",
@@ -1943,7 +2139,7 @@
       "logHabit": "Log the minimum of «{habit}»",
       "habitLogged": "Logged in «{habit}».",
       "goodDeed": "I did a good deed now",
-      "goodDeedHint": "Charity, dhikr, two rak'ahs or kindness.",
+      "goodDeedHint": "Charity, dhikr, two rak'ahs, or kindness.",
       "goodDeedDone": "The good deed is marked.",
       "step3": "What came before it?",
       "step4": "A small limit for tomorrow",
@@ -1973,12 +2169,10 @@
         "keep_alternative_habits": "Keep your alternative habits"
       }
     },
-    "privacyShort": "Private to you, never sent in readable form."
+    "privacyShort": "Kept in your account, encrypted; nobody else can read it.",
+    "programsLabel": "Your programs"
   },
   "topic": {
-    "mizanTitle": "The scale",
-    "mizanLead": "Texts that show the weight of this deed with Allah.",
-    "mizanTop": "The first text of this topic.",
     "branchesTitle": "From the branches of faith",
     "branchRelatedTitle": "Linked to this branch",
     "makeHabit": "Make it my habit",
@@ -1991,7 +2185,7 @@
     "lead": "The names of Allah found in the Quran, each with a verse that mentions it and a brief meaning.",
     "searchPlaceholder": "Search for a name…",
     "empty": "No name matches your search.",
-    "verseLead": "A verse in which this name occurs.",
+    "verseLead": "A verse with this name",
     "verseMissing": "The verse cannot be shown right now.",
     "meaningTitle": "Meaning",
     "pendingReview": "Under review",

@@ -3,10 +3,11 @@ import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { ArabicText } from '@/components/shared/ArabicText';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
+import { SectionDivider } from '@/components/shared/SectionDivider';
 import type { ReaderItem, ReaderSection } from '@/components/shared/editorial/ReminderReader';
 import { GoodDeedReader } from '@/features/good-deed-motivation/components/GoodDeedReader';
 import { DeedHabitAction } from '@/features/practice/components/DeedHabitAction';
-import { MizanBlock, mizanHighlight, TopicBranchLinks } from '@/features/topic/components/TopicTemplate';
+import { TopicBranchLinks } from '@/features/topic/components/TopicTemplate';
 import { TOPIC_PAGE_SIZE, interleaveReading } from '@/lib/reading';
 import { getGoodDeed, getGoodDeedQuotes, getGoodDeeds } from '@/lib/api/good-deeds';
 import { rethrowUnlessNotFound, topSlugs } from '@/lib/api/server-guard';
@@ -50,7 +51,6 @@ export default async function GoodDeedDetailPage({
   const t = await getTranslations('goodDeedDetail');
   const tNav = await getTranslations('nav');
   const tCrumbs = await getTranslations('breadcrumbs');
-  const tTopic = await getTranslations('topic');
 
   let deed: Awaited<ReturnType<typeof getGoodDeed>>['data'];
   try {
@@ -100,7 +100,6 @@ export default async function GoodDeedDetailPage({
   // English shows the English description and reward or nothing: never Arabic prose on /en.
   const description = locale === 'en' ? deed.description : deed.descriptionAr;
   const reward = paired ? null : (locale === 'en' ? deed.reward : deed.rewardAr);
-  const highlight = mizanHighlight(deed.mizan, { title: tTopic('mizanTitle'), lead: tTopic('mizanLead'), top: tTopic('mizanTop') });
   const opposite = !paired && deed.oppositeSin
     ? (locale === 'en' ? (deed.oppositeSin.name || deed.oppositeSin.nameAr) : deed.oppositeSin.nameAr)
     : null;
@@ -145,7 +144,6 @@ export default async function GoodDeedDetailPage({
             then شعب الإيمان and the opposite. */}
         {items.length === 0 ? (
           <div className="flex flex-col gap-6">
-            <MizanBlock mizan={deed.mizan} intent="good-deed" />
             <div className="next-step">
               <p>{t('noMotivations')}</p>
               <Link
@@ -164,7 +162,6 @@ export default async function GoodDeedDetailPage({
           </div>
         ) : (
           <GoodDeedReader
-            highlight={highlight}
             slug={slug}
             lang={locale}
             items={items}
@@ -174,9 +171,11 @@ export default async function GoodDeedDetailPage({
             themes={quotesMeta?.themes}
             initialTheme={activeTheme}
           initialHasNext={quotesMeta?.hasNext ?? false}
+          complete={derived.some((group) => group.items.length > 0) && !(quotesMeta?.hasNext ?? false)}
           />
         )}
 
+        {deed.branches && deed.branches.length > 0 ? <SectionDivider /> : null}
         <TopicBranchLinks branches={deed.branches} />
 
         {deed.oppositeSin && opposite ? (

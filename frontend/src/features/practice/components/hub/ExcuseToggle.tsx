@@ -3,16 +3,13 @@
 import { useId } from 'react';
 import { ShieldCheck } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { addDays, canExcuse, isExcused, toggleExcusedDay, type Store } from '@thekra/practice-core';
+import { canExcuse, isExcused, toggleExcusedDay, type Store } from '@thekra/practice-core';
 import { updateStore } from '@/lib/practice/local-store';
 
 interface ExcuseToggleProps {
   store: Store;
   today: string;
-  /**
-   * The day to mark («سجلّي»: the picked calendar day). Without it, «ورد اليوم» offers today and, once today is
-   * marked or yesterday already is, yesterday too.
-   */
+  /** The day to mark («عاداتي» › «الشهر»: the picked calendar day). Without it, today («عذر أمس» is gone, round 3). */
   date?: string;
 }
 
@@ -22,12 +19,11 @@ interface ExcuseToggleProps {
  */
 export function ExcuseToggle({ store, today, date }: ExcuseToggleProps) {
   const t = useTranslations('practice.excuse');
-  const yesterday = addDays(today, -1);
-  const days = date ? [date] : [today, yesterday];
+  const days = date ? [date] : [today];
   return (
     <>
       {days.filter((d) => canExcuse(d, today)).map((d) => (
-        <DayToggle key={d} store={store} today={today} date={d} label={d === today ? t('today') : d === yesterday ? t('yesterday') : t('day')} />
+        <DayToggle key={d} store={store} today={today} date={d} label={d === today ? t('today') : t('day')} />
       ))}
     </>
   );

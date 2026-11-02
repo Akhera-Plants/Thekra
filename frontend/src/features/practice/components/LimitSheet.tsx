@@ -1,10 +1,23 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
-import { deletePlan, establishPlan, pausePlan, updatePlan, type LimitKind, type Limits, type Plan } from '@thekra/practice-core';
+import { useLocale, useTranslations } from 'next-intl';
+import {
+  deletePlan,
+  establishPlan,
+  limitBlock,
+  pausePlan,
+  updatePlan,
+  type LimitKind,
+  type Limits,
+  type Plan,
+  type Store,
+} from '@thekra/practice-core';
 import { Button } from '@/components/shared/kit/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { formatDigits } from '@/lib/format/digits';
+import { formatGregorian } from '@/lib/practice/format';
+import { limitOptions } from '@/lib/practice/limits';
 import { updateStore } from '@/lib/practice/local-store';
 import { habitOf } from '@/lib/practice/plans';
 import type { PracticeHabit } from '@/lib/types/practice';
@@ -15,6 +28,8 @@ interface LimitSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   limits: Limits;
+  /** The store: practice-core `limitBlock` says why adding is refused and the day it opens by itself. */
+  store: Store;
   habits: ReadonlyMap<string, PracticeHabit>;
   today: string;
   /** After a place was freed (paused, deleted or moved to «راسخة»): the caller goes on with the addition. */
@@ -28,8 +43,13 @@ type Step = { kind: 'menu' } | { kind: 'pause' } | { kind: 'delete'; confirm: st
  * closes; «أوقِف … مؤقتًا» pauses one (its history stays), «احذف …» removes one after a confirmation, and «ثبّت … وابدأ
  * الجديدة» moves a graduation-ready sapling to «راسخة». The «تخفَّف» limit has only the first action.
  */
-export function LimitSheet({ kind, open, onOpenChange, limits, habits, today, onFreed }: LimitSheetProps) {
+export function LimitSheet({ kind, open, onOpenChange, limits, store, habits, today, onFreed }: LimitSheetProps) {
   const t = useTranslations('practice.limits');
+  const locale = useLocale() === 'en' ? 'en' : 'ar';
+  const block = open ? limitBlock(store, today, kind, limitOptions(habits)) : null;
+  const why = block
+    ? t(`why.${block.reason}`, { count: formatDigits(block.count), max: formatDigits(block.max) })
+    : t(`${kind}.hint`);
   const [step, setStep] = useState<Step>({ kind: 'menu' });
   const [picked, setPicked] = useState<string | null>(null);
   const candidates = kind === 'sapling' ? limits.saplings : kind === 'periodic' ? limits.periodicPlans : [];
@@ -62,8 +82,13 @@ export function LimitSheet({ kind, open, onOpenChange, limits, habits, today, on
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="leading-8">{t(`${kind}.title`)}</DialogTitle>
-          <DialogDescription>{t(`${kind}.hint`)}</DialogDescription>
+          <DialogDescription className="leading-7">{why}</DialogDescription>
         </DialogHeader>
+        {block?.unlocksOn ? (
+          <p className="rounded-xl border border-primary/40 bg-primary/5 px-4 py-3 text-sm leading-7">
+            {t('unlocksOn', { date: formatGregorian(block.unlocksOn, locale, true) })}
+          </p>
+        ) : null}
 
         {step.kind === 'menu' ? (
           <div className="flex flex-col gap-2">
@@ -71,7 +96,7 @@ export function LimitSheet({ kind, open, onOpenChange, limits, habits, today, on
               {t('keepGoing')}
             </Button>
             {ready.map((plan) => (
-              <Button key={plan.id} variant="outline" tone="primary" className="h-auto whitespace-normal py-2" onClick={() => establish(plan.id)}>
+              <Button key={plan.id} variant="outline" tone="primary" className="h-auto py-2 whitespace-normal" onClick={() => establish(plan.id)}>
                 <EstablishLabel plan={plan} habits={habits} />
               </Button>
             ))}
@@ -80,7 +105,7 @@ export function LimitSheet({ kind, open, onOpenChange, limits, habits, today, on
                 <Button variant="outline" tone="neutral" onClick={() => setStep({ kind: 'pause' })}>
                   {t(`${kind}.pause`)}
                 </Button>
-                <Button variant="ghost" tone="destructive" onClick={() => setStep({ kind: 'delete', confirm: null })}>
+                <Button variant="outline" tone="destructive" onClick={() => setStep({ kind: 'delete', confirm: null })}>
                   {t(`${kind}.delete`)}
                 </Button>
               </>
@@ -120,7 +145,7 @@ export function LimitSheet({ kind, open, onOpenChange, limits, habits, today, on
                   {t('deleteAction')}
                 </Button>
               )}
-              <Button variant="ghost" tone="neutral" onClick={() => setStep({ kind: 'menu' })}>
+              <Button variant="outline" tone="neutral" onClick={() => setStep({ kind: 'menu' })}>
                 {t('back')}
               </Button>
             </DialogFooter>

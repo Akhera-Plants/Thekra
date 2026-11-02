@@ -26,9 +26,14 @@ interface SinReaderProps {
   highlight?: ReaderHighlight | null;
   /** «الكل» only, before the list. */
   intro?: ReactNode;
+  /**
+   * Every text is already here (a contemporary topic whose texts come from its derived topics, owner round 3 item 2):
+   * the type tabs count and filter on the page instead of asking the API, which knows only the topic's own texts.
+   */
+  complete?: boolean;
 }
 
-export function SinReader({ slug, lang, items, total, sections, countsByKind, themes, initialTheme = null, initialHasNext = false, highlight = null, intro }: SinReaderProps) {
+export function SinReader({ slug, lang, items, total, sections, countsByKind, themes, initialTheme = null, initialHasNext = false, highlight = null, intro, complete = false }: SinReaderProps) {
   const t = useTranslations('sinDetail');
   const reader = useTopicReader({
     queryRoot: 'sins',
@@ -48,16 +53,16 @@ export function SinReader({ slug, lang, items, total, sections, countsByKind, th
     <ReminderReader
       highlight={highlight}
       intro={intro}
-      items={reader.items}
+      items={complete ? items : reader.items}
       total={total}
-      sections={reader.sections}
+      sections={complete ? sections : reader.sections}
       intent="sin"
-      countsByKind={reader.countsByKind}
-      onKindChange={reader.setKind}
+      countsByKind={complete ? undefined : reader.countsByKind}
+      onKindChange={complete ? undefined : reader.setKind}
       loadingNextPage={reader.isFetchingNextPage}
-      hasNextPage={reader.hasNextPage}
+      hasNextPage={complete ? false : reader.hasNextPage}
       onShowMore={reader.fetchNextPage}
-      themes={reader.chips}
+      themes={complete ? undefined : reader.chips}
       activeTheme={reader.activeTheme}
       onThemeChange={reader.setTheme}
       themeLang={lang === 'en' ? 'en' : 'ar'}

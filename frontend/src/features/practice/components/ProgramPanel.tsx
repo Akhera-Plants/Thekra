@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Check } from 'lucide-react';
+import { Check, Plus } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useWatch } from 'react-hook-form';
 import { useLocale, useTranslations } from 'next-intl';
@@ -26,6 +26,8 @@ import {
   type Triggers,
 } from '@thekra/practice-core';
 import { Link } from '@/i18n/navigation';
+import { SegmentTabs, SegmentTabsContent } from '@/components/shared/kit/segment-tabs';
+import { SectionDivider } from '@/components/shared/SectionDivider';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import {
   AlertDialog,
@@ -52,6 +54,7 @@ import { useLimitLabel } from '../hooks/useLimitLabel';
 import { useSinVault } from '../hooks/useSinVault';
 import { EvidenceQuotes } from './EvidenceQuotes';
 import { FixItSheet } from './FixItSheet';
+import { SinLoops } from './LoopBuilder';
 import { StoryLine } from './hub/KnowledgeCards';
 import { TriggerChips } from './TriggerChips';
 
@@ -69,8 +72,9 @@ interface ProgramPanelProps {
 }
 
 /**
- * One program: stage, steps, alternatives, texts, the day's private check-in, after-fall help, counts. Works with the
- * common program too (no steps, alternatives or texts of its own: those parts are hidden, «كل ما ورد فيها» remains).
+ * One program, in tabs (owner round 3, item 12): «اليوم» (counts, the day's private check-in, help after a slip),
+ * «المراحل», «الوسائل» (steps and alternative good habits, each opening the habit stepper), «حلقة المعصية» and
+ * «النصوص». Works with the common program too (no steps, alternatives or texts of its own: those parts are hidden).
  */
 export function ProgramPanel({ program, entry, common, name, habits, quotes, today }: ProgramPanelProps) {
   const t = useTranslations('leaveSin.program');
@@ -87,6 +91,7 @@ export function ProgramPanel({ program, entry, common, name, habits, quotes, tod
   const tFix = useTranslations('leaveSin.fixit');
   const limitLabel = useLimitLabel(actions);
   const [fixOpen, setFixOpen] = useState(false);
+  const [tab, setTab] = useState<string>('today');
   const counters = programCounters(program, today);
   const todayLimit = limitForToday(program, today);
   const todayLimitText = todayLimit ? limitLabel(todayLimit) : null;
@@ -94,8 +99,11 @@ export function ProgramPanel({ program, entry, common, name, habits, quotes, tod
   const afterFallIds = common.afterFall.evidence ?? [];
   const hopeId = fell ? hopeTextFor(afterFallIds, quotes, today, shortestTextId(afterFallIds, quotes)) : null;
 
+  const tabs = ['today', 'stages', 'tools', 'loops', 'texts'] as const;
+  const visibleTab = (tabs as readonly string[]).includes(tab) ? tab : 'today';
+
   return (
-    <article className="flex flex-col gap-8" aria-labelledby={`program-${program.sinSlug}`}>
+    <article className="flex flex-col gap-6" aria-labelledby={`program-${program.sinSlug}`}>
       <header className="flex flex-col gap-2">
         <h2 id={`program-${program.sinSlug}`} className="text-2xl font-medium">
           {name ?? t('unnamed')}
@@ -105,132 +113,166 @@ export function ProgramPanel({ program, entry, common, name, habits, quotes, tod
         </p>
       </header>
 
-      {todayLimitText ? <p className="next-step !mt-0">{tLimits('today', { limit: todayLimitText })}</p> : null}
+      <SegmentTabs
+        aria-label={t('tabsLabel')}
+        items={tabs.map((value) => ({ value, label: t(`tabs.${value}`) }))}
+        value={visibleTab}
+        onValueChange={setTab}
+        className="gap-6 [&_[data-slot=tabs-list]]:max-w-full [&_[data-slot=tabs-list]]:justify-start [&_[data-slot=tabs-list]]:overflow-x-auto [&_[data-slot=tabs-list]]:[scrollbar-width:none] [&_[data-slot=tabs-trigger]]:min-w-fit"
+      >
+        <SegmentTabsContent value="today" className="flex flex-col gap-6">
+          {todayLimitText ? <p className="next-step !mt-0">{tLimits('today', { limit: todayLimitText })}</p> : null}
 
-      <div className="flex flex-col gap-1">
-        <p className="flex flex-wrap gap-x-4 gap-y-1 text-lg font-medium">
-          <span>{tCounters('held', { n: formatDigits(counters.held), total: formatDigits(counters.window) })}</span>
-          <span className="text-muted-foreground">
-            {tCounters(counters.fromStart ? 'sinceStart' : 'sinceRepentance', {
-              count: counters.daysSinceRepentance,
-              n: formatDigits(counters.daysSinceRepentance),
-            })}
-          </span>
-        </p>
-        <p className="text-sm text-muted-foreground">{tCounters('note')}</p>
-        {/* «حصيلتي» of this program: only here, inside its locked page. */}
-        <p className="text-sm text-muted-foreground">
-          {tTally('heldTotal', { count: heldDaysTotal(program, today), n: formatDigits(heldDaysTotal(program, today)) })}
-        </p>
-      </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Stat value={tCounters('held', { n: formatDigits(counters.held), total: formatDigits(counters.window) })} />
+            <Stat
+              value={tCounters(counters.fromStart ? 'sinceStart' : 'sinceRepentance', {
+                count: counters.daysSinceRepentance,
+                n: formatDigits(counters.daysSinceRepentance),
+              })}
+            />
+            {/* «حصيلتي» of this program: only here, inside its locked page. */}
+            <Stat value={tTally('heldTotal', { count: heldDaysTotal(program, today), n: formatDigits(heldDaysTotal(program, today)) })} />
+          </div>
+          <p className="-mt-3 text-sm text-muted-foreground">{tCounters('note')}</p>
 
-      {/* After a fall: the story of the man who killed a hundred, by id only (hidden until the id is filled). */}
-      {fell ? <StoryLine moment="afterFall" /> : null}
+          {/* After a slip: the story of the man who killed a hundred, by id only (hidden until the id is filled). */}
+          {fell ? <StoryLine moment="afterFall" /> : null}
 
-      {program.path === 'gradual' && steps && steps.length > 0 ? (
-        <section className="next-step !mt-0 flex flex-col gap-2" aria-label={t('gradualTitle')}>
-          <strong>{t('gradualTitle')}</strong>
-          <ol className="list-decimal ps-5 leading-8">
-            {steps.map((step) => (
-              <li key={step}>{step}</li>
-            ))}
-          </ol>
-        </section>
-      ) : null}
+          <CheckInForm program={program} today={today} onFell={() => setFixOpen(true)} />
 
-      <section aria-labelledby={`stage-${program.sinSlug}`} className="flex flex-col gap-3">
-        <ol className="flex items-center gap-1 overflow-x-auto pb-1" aria-label={tStages('track')}>
-          {track.map(({ stage: key, state }, index) => (
-            <li
-              key={key}
-              aria-current={state === 'current' ? 'step' : undefined}
-              className="flex min-w-0 shrink-0 items-center gap-1"
-            >
-              {index > 0 ? <span className={cn('h-px w-4', state === 'next' ? 'bg-border' : 'bg-primary')} aria-hidden /> : null}
-              <span
-                className={cn(
-                  'flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs whitespace-nowrap',
-                  state === 'current' && 'border-primary bg-primary text-primary-foreground',
-                  state === 'done' && 'border-primary text-primary',
-                  state === 'next' && 'border-border text-muted-foreground',
-                )}
-              >
-                {state === 'done' ? <Check className="size-3" aria-hidden /> : null}
-                <span className="sr-only">{tStages(state)}: </span>
-                {english ? common.stages[key].titleEn : common.stages[key].titleAr}
-              </span>
-            </li>
-          ))}
-        </ol>
-        <p className="eyebrow">{t('stageOf', { n: formatDigits(view.stageIndex + 1), total: formatDigits(view.stageCount) })}</p>
-        <h3 id={`stage-${program.sinSlug}`} className="text-xl font-medium">
-          {english ? stage.titleEn : stage.titleAr}
-        </h3>
-        <p className="max-w-3xl text-lg leading-9">{english ? stage.bodyEn : stage.bodyAr}</p>
-        <div className="next-step !mt-0 flex flex-col gap-1">
-          <strong>{tStages('taskTitle')}</strong>
-          <span>{tStages(`tasks.${STAGE_TASKS[view.stage]}`)}</span>
-        </div>
-        <p className="text-sm leading-7 text-muted-foreground">{t('stageRule', { days: formatDigits(common.stageMinDays) })}</p>
-      </section>
-
-      {actions.length > 0 ? (
-        <section className="flex flex-col gap-2" aria-labelledby={`actions-${program.sinSlug}`}>
-          <h3 id={`actions-${program.sinSlug}`} className="text-xl font-medium">
-            {t('actionsTitle')}
-          </h3>
-          <ul className="list-disc ps-5 leading-8">
-            {actions.map((action) => (
-              <li key={action}>{action}</li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
-
-      {entry.alternatives.length > 0 ? (
-        <section className="flex flex-col gap-2" aria-labelledby={`alt-${program.sinSlug}`}>
-          <h3 id={`alt-${program.sinSlug}`} className="text-xl font-medium">
-            {t('alternativesTitle')}
-          </h3>
-          <p className="text-muted-foreground">{t('alternativesLead')}</p>
-          <ul className="flex flex-wrap gap-2">
-            {entry.alternatives.flatMap((key) => {
-              const habit = habits.get(key);
-              return habit
-                ? [
-                    <li key={key} className="rounded-full border border-border px-3 py-1">
-                      {english ? habit.titleEn : habit.titleAr}
-                    </li>,
-                  ]
-                : [];
-            })}
-          </ul>
-          <Link href={{ pathname: '/practice/habits', query: { add: '1' } }} className="outline-button self-start">
-            {t('alternativesLink')} <DirectionalArrow />
-          </Link>
-        </section>
-      ) : null}
-
-      {entry.help ? <p className="next-step !mt-0">{english ? common.helpEn : common.helpAr}</p> : null}
-
-      <CheckInForm program={program} today={today} onFell={() => setFixOpen(true)} />
-
-      {fell ? (
-        <section className="flex flex-col gap-3" aria-labelledby={`fall-${program.sinSlug}`}>
-          <h3 id={`fall-${program.sinSlug}`} className="text-xl font-medium text-primary">
-            {english ? common.afterFall.titleEn : common.afterFall.titleAr}
-          </h3>
-          <p className="max-w-3xl text-lg leading-9">{english ? common.afterFall.bodyEn : common.afterFall.bodyAr}</p>
-          {hopeId ? (
-            <div aria-label={tCounters('hope')} role="group">
-              <EvidenceQuotes ids={[hopeId]} quotes={quotes} />
-            </div>
+          {fell ? (
+            <section className="flex flex-col gap-3" aria-labelledby={`fall-${program.sinSlug}`}>
+              <h3 id={`fall-${program.sinSlug}`} className="text-xl font-medium text-primary">
+                {english ? common.afterFall.titleEn : common.afterFall.titleAr}
+              </h3>
+              <p className="max-w-3xl text-lg leading-9">{english ? common.afterFall.bodyEn : common.afterFall.bodyAr}</p>
+              {hopeId ? (
+                <div aria-label={tCounters('hope')} role="group">
+                  <EvidenceQuotes ids={[hopeId]} quotes={quotes} />
+                </div>
+              ) : null}
+              <button type="button" className="solid-button button-wrap self-start" onClick={() => setFixOpen(true)}>
+                {tFix('open')}
+              </button>
+            </section>
           ) : null}
-          <button type="button" className="solid-button button-wrap self-start" onClick={() => setFixOpen(true)}>
-            {tFix('open')}
-          </button>
-        </section>
-      ) : null}
+
+          <WeakPatternCard program={program} actions={actions} />
+          {view.recent.length > 0 ? <RecentCheckIns recent={view.recent} /> : null}
+        </SegmentTabsContent>
+
+        <SegmentTabsContent value="stages" className="flex flex-col gap-6">
+          <section aria-labelledby={`stage-${program.sinSlug}`} className="flex flex-col gap-3">
+            <ol className="flex items-center gap-1 overflow-x-auto pb-1" aria-label={tStages('track')}>
+              {track.map(({ stage: key, state }, index) => (
+                <li
+                  key={key}
+                  aria-current={state === 'current' ? 'step' : undefined}
+                  className="flex min-w-0 shrink-0 items-center gap-1"
+                >
+                  {index > 0 ? <span className={cn('h-px w-4', state === 'next' ? 'bg-border' : 'bg-primary')} aria-hidden /> : null}
+                  <span
+                    className={cn(
+                      'flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs whitespace-nowrap',
+                      state === 'current' && 'border-primary bg-primary text-primary-foreground',
+                      state === 'done' && 'border-primary text-primary',
+                      state === 'next' && 'border-border text-muted-foreground',
+                    )}
+                  >
+                    {state === 'done' ? <Check className="size-3" aria-hidden /> : null}
+                    <span className="sr-only">{tStages(state)}: </span>
+                    {english ? common.stages[key].titleEn : common.stages[key].titleAr}
+                  </span>
+                </li>
+              ))}
+            </ol>
+            <p className="eyebrow">{t('stageOf', { n: formatDigits(view.stageIndex + 1), total: formatDigits(view.stageCount) })}</p>
+            <h3 id={`stage-${program.sinSlug}`} className="text-xl font-medium">
+              {english ? stage.titleEn : stage.titleAr}
+            </h3>
+            <p className="max-w-3xl text-lg leading-9">{english ? stage.bodyEn : stage.bodyAr}</p>
+            <div className="next-step !mt-0 flex flex-col gap-1">
+              <strong>{tStages('taskTitle')}</strong>
+              <span>{tStages(`tasks.${STAGE_TASKS[view.stage]}`)}</span>
+            </div>
+            <p className="text-sm leading-7 text-muted-foreground">{t('stageRule', { days: formatDigits(common.stageMinDays) })}</p>
+          </section>
+          {program.path === 'gradual' && steps && steps.length > 0 ? (
+            <>
+              <SectionDivider />
+              <section className="flex flex-col gap-2" aria-label={t('gradualTitle')}>
+                <h3 className="text-xl font-medium">{t('gradualTitle')}</h3>
+                <ol className="list-decimal ps-5 leading-8">
+                  {steps.map((step) => (
+                    <li key={step}>{step}</li>
+                  ))}
+                </ol>
+              </section>
+            </>
+          ) : null}
+        </SegmentTabsContent>
+
+        <SegmentTabsContent value="tools" className="flex flex-col gap-6">
+          {actions.length > 0 ? (
+            <section className="flex flex-col gap-2" aria-labelledby={`actions-${program.sinSlug}`}>
+              <h3 id={`actions-${program.sinSlug}`} className="text-xl font-medium">
+                {t('actionsTitle')}
+              </h3>
+              <ul className="list-disc ps-5 leading-8">
+                {actions.map((action) => (
+                  <li key={action}>{action}</li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+          {actions.length > 0 && entry.alternatives.length > 0 ? <SectionDivider /> : null}
+          {entry.alternatives.length > 0 ? (
+            <section className="flex flex-col gap-3" aria-labelledby={`alt-${program.sinSlug}`}>
+              <h3 id={`alt-${program.sinSlug}`} className="text-xl font-medium">
+                {t('alternativesTitle')}
+              </h3>
+              <p className="text-muted-foreground">{t('alternativesLead')}</p>
+              {/* Each one opens the same stepper as «أضف عادة», with the habit already chosen. */}
+              <ul className="flex flex-wrap gap-2">
+                {entry.alternatives.flatMap((key) => {
+                  const habit = habits.get(key);
+                  return habit
+                    ? [
+                        <li key={key}>
+                          <Link
+                            href={{ pathname: '/practice/habits', query: { add: '1', habit: key } }}
+                            className="outline-button button-wrap"
+                          >
+                            <Plus aria-hidden />
+                            {english ? habit.titleEn : habit.titleAr}
+                          </Link>
+                        </li>,
+                      ]
+                    : [];
+                })}
+              </ul>
+            </section>
+          ) : null}
+          {entry.help ? <p className="next-step !mt-0">{english ? common.helpEn : common.helpAr}</p> : null}
+          {actions.length === 0 && entry.alternatives.length === 0 && !entry.help ? (
+            <p className="text-muted-foreground">{t('toolsEmpty')}</p>
+          ) : null}
+        </SegmentTabsContent>
+
+        <SegmentTabsContent value="loops">
+          <SinLoops program={program} />
+        </SegmentTabsContent>
+
+        <SegmentTabsContent value="texts" className="flex flex-col gap-3">
+          <EvidenceQuotes ids={programTextIds(entry, common, view.stage)} quotes={quotes} />
+          {/* The sin's own page holds all its texts; a sin without a written program has only the stage texts here. */}
+          <Link href={`/sins/${program.sinSlug}`} className="outline-button self-start">
+            {t('textsAll')} <DirectionalArrow />
+          </Link>
+        </SegmentTabsContent>
+      </SegmentTabs>
+
       <FixItSheet
         open={fixOpen}
         onOpenChange={setFixOpen}
@@ -242,24 +284,13 @@ export function ProgramPanel({ program, entry, common, name, habits, quotes, tod
         today={today}
       />
 
-      <WeakPatternCard program={program} actions={actions} />
-
-      {view.recent.length > 0 ? <RecentCheckIns recent={view.recent} /> : null}
-
-      <section className="flex flex-col gap-3" aria-labelledby={`texts-${program.sinSlug}`}>
-        <h3 id={`texts-${program.sinSlug}`} className="text-xl font-medium">
-          {t('textsTitle')}
-        </h3>
-        <EvidenceQuotes ids={programTextIds(entry, common, view.stage)} quotes={quotes} />
-        {/* The sin's own page holds all its texts; a sin without a written program has only the stage texts here. */}
-        <Link href={`/sins/${program.sinSlug}`} className="outline-button self-start">
-          {t('textsAll')} <DirectionalArrow />
-        </Link>
-      </section>
-
       <EndProgram program={program} />
     </article>
   );
+}
+
+function Stat({ value }: { value: string }) {
+  return <p className="rounded-xl border border-border bg-card px-4 py-3 text-base leading-7 font-medium">{value}</p>;
 }
 
 /** «متى تضعف؟»: derived on this device from the trigger chips; shown after 14 tagged check-ins, never sent. */

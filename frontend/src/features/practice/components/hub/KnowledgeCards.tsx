@@ -9,7 +9,6 @@ import {
   dayCompletion,
   gratitudeAyah,
   nameOfWeekIndex,
-  rewardQuoteId,
   storyQuoteId,
   tallies,
   weekCardKind,
@@ -26,6 +25,7 @@ import { getBranch } from '@/lib/api/branches';
 import { getNamesOfAllah } from '@/lib/api/names';
 import { getAyah } from '@/lib/api/quran';
 import { formatDigits } from '@/lib/format/digits';
+import { dayDoneLine } from '@/lib/practice/commitment';
 import { habitOf } from '@/lib/practice/plans';
 import { queryKeys } from '@/lib/query-keys';
 import type { PracticeHabit } from '@/lib/types/practice';
@@ -142,30 +142,17 @@ export function Cheer({ at }: { at: number | null }) {
 }
 
 /**
- * «تمّ وردك اليوم»: one line once every habit asked today has something logged, with one reward text chosen for the day
- * from the evidence ids of those habits (catalog); the line stays without a text.
+ * «تمّ وردك اليوم» (owner round 3, item 4): one line once every habit asked today has something logged, and one short
+ * achievement line that changes each day. Plain words, no attributed text.
  */
-export function DayDoneCard({
-  store,
-  today,
-  habits,
-  planDays,
-}: {
-  store: Store;
-  today: string;
-  habits: ReadonlyMap<string, PracticeHabit>;
-  planDays: PlanDayOptions;
-}) {
+export function DayDoneCard({ store, today, planDays }: { store: Store; today: string; planDays: PlanDayOptions }) {
   const t = useTranslations('practice.celebrate');
-  const { asked, complete } = useMemo(() => dayCompletion(store, today, planDays), [store, today, planDays]);
-  const id = complete ? rewardQuoteId(asked.flatMap((plan) => habitOf(plan, habits)?.evidence ?? []), today) : null;
-  const evidence = usePracticeEvidence(id ? [id] : [], complete);
-  const quote = evidence.data?.find((q) => q.id === id);
+  const { complete } = useMemo(() => dayCompletion(store, today, planDays), [store, today, planDays]);
   if (!complete) return null;
   return (
-    <div className="next-step !mt-0 flex flex-col gap-3" role="status">
+    <div className="next-step !mt-0 flex flex-col gap-1" role="status">
       <p className="text-lg font-medium">{t('dayDone')}</p>
-      {quote ? <QuoteCard quote={quote} density="compact" intent="good-deed" detailHref={`/quotes/${quote.id}`} /> : null}
+      <p className="text-base leading-8 text-primary">{t(`lines.l${dayDoneLine(today)}`)}</p>
     </div>
   );
 }
@@ -229,7 +216,7 @@ export function WeekNameCard({ today }: { today: string }) {
   );
 }
 
-/** «شعبة الأسبوع» on «ورد اليوم»: the same branch for everyone this ISO week, linking to its page. */
+/** «شعبة الأسبوع» on «ورد اليوم» (only when chosen in Settings): the same branch for everyone this ISO week; a long title wraps. */
 export function WeekBranchCard({ today }: { today: string }) {
   const t = useTranslations('practice.weekBranch');
   const locale = useLocale() === 'en' ? 'en' : 'ar';
@@ -247,8 +234,8 @@ export function WeekBranchCard({ today }: { today: string }) {
       <h2 id="week-branch-title" className="text-sm font-medium text-muted-foreground">
         {t('title')} · {formatDigits(number)}
       </h2>
-      <Link href={`/branches/${number}`} className="text-link self-start text-lg">
-        {title} <DirectionalArrow />
+      <Link href={`/branches/${number}`} className="outline-button button-wrap min-w-0 self-start text-base break-words">
+        <span className="min-w-0">{title}</span> <DirectionalArrow className="shrink-0" />
       </Link>
     </section>
   );

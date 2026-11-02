@@ -14,7 +14,7 @@ interface StartProgramLinkProps {
 
 /**
  * The one action of a sin page, under its title: «ابدأ «تخفَّف»» (solid), or «تابع برنامجك» (outlined) when this
- * sin's program is already active on the device, beside «أنا في لحظة ضعف». The slug goes through device storage, never
+ * sin's program is already active on the device, beside «أنا في لحظة مجاهدة». The slug goes through device storage, never
  * the URL, so the browser history records only `/practice/leave-sin`, not which sin (roadmap §0.2).
  */
 export function StartProgramLink({ slug }: StartProgramLinkProps) {

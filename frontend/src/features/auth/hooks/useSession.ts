@@ -23,6 +23,14 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { setAccessToken } from '@/lib/api-client';
 import { removePushOnSignOut } from '@/lib/push/web-push';
+import { getPracticeSnapshot, updateStore } from '@/lib/practice/local-store';
+import {
+  getVaultSaveState,
+  getVaultSession,
+  lastSealedFingerprint,
+  programsFingerprint,
+  setVaultSession,
+} from '@/lib/practice/vault-flow';
 import type { UserDto } from '@/lib/api/auth';
 import { queryKeys } from '@/lib/query-keys';
 
@@ -81,6 +89,14 @@ export function useSession(): UseSessionReturn {
   const clearSession = useCallback(async () => {
     // Reminders belong to the account: stop them on this browser. Never throws, waits at most a few seconds.
     await removePushOnSignOut();
+
+    // «تخفَّف» stays in the account, encrypted: forget the unlocked key, and the programs once they are saved there
+    // (docs/plan/2026-11-01-sin-vault-always-on.md §5). An unsaved change keeps this browser's copy.
+    const vaultOpen = getVaultSession() !== null && getVaultSaveState() === 'idle';
+    if (vaultOpen && lastSealedFingerprint() === programsFingerprint(getPracticeSnapshot().store.programs)) {
+      updateStore((store) => ({ ...store, programs: [] }));
+    }
+    setVaultSession(null);
 
     // Clear in-memory token
     setAccessToken(null);

@@ -38,6 +38,7 @@ import { FetchedEvidence } from './EvidenceQuotes';
 import { LogEditor } from './LogEditor';
 import { PlanActionButton, PlanOptions } from './PlanCardParts';
 import { PlanEditForm } from './PlanEditForm';
+import { HabitLoops, HabitLoopsToggle } from './LoopBuilder';
 import { WindowLine } from './SlotPicker';
 
 /** Whole amounts only: the account stores logs as integers (sync contract §2). */
@@ -81,6 +82,7 @@ export function PlanCard({ plan, habit, view, today, hijriOffset, prayer }: Plan
   const locale = useLocale() === 'en' ? 'en' : 'ar';
   const words = usePlanWords(plan, habit);
   const [showEvidence, setShowEvidence] = useState(false);
+  const [showLoops, setShowLoops] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [editing, setEditing] = useState(false);
   const everywhere = useDeletesEverywhere();
@@ -244,6 +246,12 @@ export function PlanCard({ plan, habit, view, today, hijriOffset, prayer }: Plan
             {showEvidence ? t('hideEvidence') : t('showEvidence')}
           </button>
         ) : null}
+        <HabitLoopsToggle
+          plan={plan}
+          open={showLoops}
+          onToggle={() => setShowLoops((open) => !open)}
+          controls={`${baseId}-loops`}
+        />
         <PlanOptions
           isPaused={paused}
           deedHref={habit ? `/good-deeds/${habit.deed}` : null}
@@ -270,6 +278,11 @@ export function PlanCard({ plan, habit, view, today, hijriOffset, prayer }: Plan
       ) : null}
       {editing ? (
         <PlanEditForm plan={plan} habit={habit} today={today} amountLabel={words.amount} onDone={() => setEditing(false)} />
+      ) : null}
+      {showLoops ? (
+        <div id={`${baseId}-loops`}>
+          <HabitLoops plan={plan} />
+        </div>
       ) : null}
       {showEvidence && habit ? (
         <div id={`${baseId}-evidence`}>

@@ -4,7 +4,7 @@ import { Link } from '@/i18n/navigation';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { FormattedNumber } from '@/components/shared/FormattedNumber';
 import { QuoteCard } from '@/components/shared/quote';
-import { MizanBlock, NameWorshipLinks } from '@/features/topic/components/TopicTemplate';
+import { VerseBlock, NameWorshipLinks } from '@/features/topic/components/TopicTemplate';
 import { getNameOfAllah } from '@/lib/api/names';
 import { rethrowUnlessNotFound } from '@/lib/api/server-guard';
 import { localeAlternates } from '@/lib/seo';
@@ -69,7 +69,7 @@ export default async function NamePage({ params }: PageProps<'/[locale]/names/[s
         </header>
 
         {detail.verse ? (
-          <MizanBlock mizan={{ source: 'curated', items: [detail.verse] }} intent="good-deed" lead={t('verseLead')} />
+          <VerseBlock quote={detail.verse} intent="good-deed" title={t('verseLead')} />
         ) : (
           <p className="text-sm leading-7 text-muted-foreground">{t('verseMissing')}</p>
         )}

@@ -3,17 +3,20 @@
 import { useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
-import { periodicActs, upcomingPeriodic } from '@thekra/practice-core';
+import { upcomingPeriodic } from '@thekra/practice-core';
 import { Link } from '@/i18n/navigation';
 import { QueryErrorState } from '@/components/shared/feedback/QueryErrorState';
 import { Skeleton } from '@/components/ui/skeleton';
-import { wirdDay, wirdSummary } from '@/lib/practice/wird';
+import { periodicActsOnly, wirdDay, wirdSummary } from '@/lib/practice/wird';
+import { showUsualDeedStory } from '@/lib/practice/commitment';
+import { limitOptions } from '@/lib/practice/limits';
+import { SectionDivider } from '@/components/shared/SectionDivider';
 import { refreshPrayerTimes } from '@/lib/practice/screen-stores';
 import { resendPushPrefs } from '@/lib/push/web-push';
 import { useHeart } from '../../hooks/useHeart';
 import { useWirdContext, type WirdContext } from '../../hooks/useWirdContext';
 import { HeartTop, MuraqabaLine, SelfMessageCard } from './HeartCards';
-import { DayDoneCard, WeekCard } from './KnowledgeCards';
+import { DayDoneCard, StoryLine, WeekCard } from './KnowledgeCards';
 import { SyncStatus } from '../SyncStatus';
 import { ExcuseToggle } from './ExcuseToggle';
 import { HeavyDayToggle } from './HeavyDayToggle';
@@ -31,9 +34,10 @@ const UPCOMING_LIMIT = 3;
  *    then one rotating text (المراقبة) and the cards of «نية اليوم», a due «التزام شخصي» and «المحاسبة»;
  * 2. «اليوم»: today's occasion as one compact line, one row per task, done rows at the bottom, off-day habits behind
  *    one collapsed row, and «يومي ثقيل» as a one-line toggle;
- * 3. «أعمال دورية»: the next three periodic acts and «الكل»;
- * 4. «شعبة الأسبوع»: one branch of faith for the ISO week, linking to its page.
- * A tick shows «تقبّل الله منك» for a moment; a complete day shows «تمّ وردك اليوم» with one reward text.
+ * 3. «أعمال دورية» (people lists and periodic templates, never a habit): the next three and «الكل»;
+ * 4. «شعبة الأسبوع»: one branch of faith for the ISO week, only for a member who chose it in Settings.
+ * The sections are parted by the home page's ornamental divider. A tick shows «تقبّل الله منك» for a moment; a
+ * complete day shows «تمّ وردك اليوم» with one short achievement line (no attributed text).
  * The month calendar, habit management, «تخفَّف» and the saved texts live in «سجلّي». `?add=1` opens «أضف».
  */
 export function WirdView() {
@@ -78,7 +82,9 @@ function WirdBody({ context }: { context: WirdContext }) {
   const { store } = snapshot;
   const heart = useHeart();
   const day = useMemo(() => wirdDay(store, today, { occasions, ...planDays }), [store, today, occasions, planDays]);
-  const acts = useMemo(() => periodicActs(store, today, planDays), [store, today, planDays]);
+  const acts = useMemo(() => periodicActsOnly(store, today, planDays, habits), [store, today, planDays, habits]);
+  // «عملك المعتاد يُكتب لك»: only after a heavy or excused day has passed, with commitment above 60%.
+  const usualDeed = useMemo(() => showUsualDeedStory(store, today, limitOptions(habits)), [store, today, habits]);
   const upcoming = upcomingPeriodic(acts.map((act) => ({ act })), today, UPCOMING_LIMIT).map((row) => row.act);
 
   return (
@@ -97,16 +103,21 @@ function WirdBody({ context }: { context: WirdContext }) {
         habits={habits}
         occasionBasis={occasionBasis}
         canAdd
-        completeCard={<DayDoneCard store={store} today={today} habits={habits} planDays={planDays} />}
+        completeCard={<DayDoneCard store={store} today={today} planDays={planDays} />}
         footer={
           store.plans.length > 0 ? (
-            <div className="flex flex-wrap gap-3">
-              <HeavyDayToggle store={store} today={today} />
-              <ExcuseToggle store={store} today={today} />
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-wrap gap-3">
+                <HeavyDayToggle store={store} today={today} />
+                <ExcuseToggle store={store} today={today} />
+              </div>
+              {usualDeed ? <StoryLine moment="heavyDay" /> : null}
             </div>
           ) : null
         }
       />
+
+      <SectionDivider />
 
       <section aria-labelledby="wird-periodic-title" className="flex flex-col gap-3">
         <div className="flex items-baseline justify-between gap-4">
@@ -114,13 +125,13 @@ function WirdBody({ context }: { context: WirdContext }) {
             {tPeriodic('title')}
           </h2>
           {acts.length > 0 ? (
-            <Link href="/practice/periodic" className="text-link text-sm">
+            <Link href="/practice/periodic" className="outline-button !min-h-9 px-3 text-sm">
               {tPeriodic('all')}
             </Link>
           ) : null}
         </div>
         {acts.length === 0 ? (
-          <Link href="/practice/periodic" className="text-link self-start">
+          <Link href="/practice/periodic" className="outline-button button-wrap self-start">
             {tPeriodic('add')}
           </Link>
         ) : upcoming.length > 0 ? (
@@ -128,7 +139,12 @@ function WirdBody({ context }: { context: WirdContext }) {
         ) : null}
       </section>
 
-      <WeekCard today={today} />
+      {snapshot.prefs.weekBranch === true ? (
+        <>
+          <SectionDivider />
+          <WeekCard today={today} />
+        </>
+      ) : null}
 
       <SyncStatus persistent={snapshot.persistent} quiet />
     </div>

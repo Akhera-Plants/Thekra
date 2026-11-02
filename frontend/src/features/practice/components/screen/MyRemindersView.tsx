@@ -44,7 +44,7 @@ export function MyRemindersView() {
   return (
     <div className="flex max-w-3xl flex-col gap-6">
       <p className="text-sm leading-7 text-muted-foreground">
-        {t('lead')} {t('deviceOnly')}
+        {t('lead')}
       </p>
       <form
         className="flex flex-col gap-2"

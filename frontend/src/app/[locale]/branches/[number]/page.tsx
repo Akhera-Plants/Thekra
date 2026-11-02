@@ -6,9 +6,10 @@ import { getBranch, getBranchQuotes, getBranches } from '@/lib/api/branches';
 import { rethrowUnlessNotFound, topSlugs } from '@/lib/api/server-guard';
 import { ArabicText } from '@/components/shared/ArabicText';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
+import { SectionDivider } from '@/components/shared/SectionDivider';
 import { FormattedNumber } from '@/components/shared/FormattedNumber';
 import { BranchReader } from '@/features/iman-branches/components/BranchReader';
-import { BranchRelatedLinks, MizanBlock, mizanHighlight } from '@/features/topic/components/TopicTemplate';
+import { BranchRelatedLinks } from '@/features/topic/components/TopicTemplate';
 import type { BranchQuotesMeta } from '@/lib/api/branches';
 import { TOPIC_PAGE_SIZE } from '@/lib/reading';
 import { localeAlternates } from '@/lib/seo';
@@ -47,7 +48,6 @@ export default async function BranchDetailPage({
   const t = await getTranslations('branches');
   const tNav = await getTranslations('nav');
   const tCrumbs = await getTranslations('breadcrumbs');
-  const tTopic = await getTranslations('topic');
 
   let detail: Awaited<ReturnType<typeof getBranch>>['data'];
   try {
@@ -72,7 +72,6 @@ export default async function BranchDetailPage({
     ? (detail.title || t('branchFallback', { number: detail.number }))
     : detail.titleAr;
 
-  const highlight = mizanHighlight(detail.mizan, { title: tTopic('mizanTitle'), lead: tTopic('mizanLead'), top: tTopic('mizanTop') });
   const explanations =
     detail.explanations.length > 0 ? (
       <section className="flex flex-col gap-3">
@@ -121,7 +120,6 @@ export default async function BranchDetailPage({
             («الكل» only) and every text inside them, then the sins and deeds of this branch. No action here. */}
         {readerItems.length === 0 ? (
           <div className="flex flex-col gap-6">
-            <MizanBlock mizan={detail.mizan} intent="iman-branch" />
             {explanations}
             <div className="next-step">
               <p>{t('noQuotes')}</p>
@@ -133,7 +131,6 @@ export default async function BranchDetailPage({
           </div>
         ) : (
           <BranchReader
-            highlight={highlight}
             intro={explanations}
             number={branchNumber}
             lang={locale}
@@ -144,6 +141,7 @@ export default async function BranchDetailPage({
           />
         )}
 
+        {detail.goodDeeds.length > 0 || detail.sins.length > 0 ? <SectionDivider /> : null}
         <BranchRelatedLinks goodDeeds={detail.goodDeeds} sins={detail.sins} />
 
         <nav className="reader-end" aria-label={tCrumbs('branches')}>

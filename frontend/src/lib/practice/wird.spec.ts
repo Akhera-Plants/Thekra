@@ -16,7 +16,8 @@ import {
 } from '@thekra/practice-core';
 import type { PracticeHabit } from '@/lib/types/practice';
 import { limitOptions, periodicTemplates, planFromTemplate } from './limits';
-import { periodicHref, wirdDay, wirdSummary } from './wird';
+import { planDayOptions } from './plans';
+import { periodicActsOnly, periodicHref, wirdDay, wirdSummary } from './wird';
 
 const HABIT: PracticeHabit = {
   key: 'duha',
@@ -110,5 +111,20 @@ describe('periodicHref', () => {
   it('opens a relative on the kinship page and a habit on its plan', () => {
     expect(periodicHref({ kind: 'relative', id: 'r1', next: TODAY })).toBe('/practice/kinship');
     expect(periodicHref({ kind: 'habit', id: 'p1', next: null })).toBe('/practice/habits#plan-p1');
+  });
+});
+
+describe('periodicActsOnly', () => {
+  it('lists periodic-template plans and never a habit on a weekly rule', () => {
+    const habits = new Map<string, PracticeHabit>([
+      ['sadaqah-weekly', { ...HABIT, key: 'sadaqah-weekly', kind: 'periodic', defaultRule: friday }],
+      ['duha', HABIT],
+    ]);
+    const weekly = planFromTemplate(habits.get('sadaqah-weekly') as PracticeHabit, TODAY, 'p1');
+    const duhaFridays = plan('d', { habitKey: 'duha', rule: friday });
+    const s = storeOf(weekly, duhaFridays);
+    const opts = planDayOptions(habits, 0);
+    const ids = periodicActsOnly(s, TODAY, opts, habits).map((a) => a.id);
+    expect(ids).toEqual(['p1']);
   });
 });

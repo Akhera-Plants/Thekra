@@ -35,6 +35,8 @@ export interface PracticePrefs {
   kinshipNamesInCalendar?: boolean;
   /** «إظهار التاريخ الهجري»: the Hijri date beside the Gregorian one on «ورد اليوم» and «سجلّي». Off by default. Not synced. */
   showHijri?: boolean;
+  /** «شعبة الأسبوع» on «ورد اليوم»: shown only when the member chose to study the branches of faith (Settings). Not synced. */
+  weekBranch?: boolean;
   /** The account this device's copy was last synced with; another account must confirm before merging. */
   syncedUserId?: string;
   /** «التنبيهات» on this browser (practice-core `NotificationPrefs`); absent = the defaults. Sent with the push subscription. */
@@ -95,6 +97,7 @@ export function parsePrefs(raw: string | null | undefined): { prefs: PracticePre
     const prefs: PracticePrefs = {};
     if (record.kinshipNamesInCalendar === true) prefs.kinshipNamesInCalendar = true;
     if (record.showHijri === true) prefs.showHijri = true;
+    if (record.weekBranch === true) prefs.weekBranch = true;
     if (typeof record.syncedUserId === 'string' && record.syncedUserId.length > 0) prefs.syncedUserId = record.syncedUserId;
     if (typeof record.notify === 'object' && record.notify !== null) prefs.notify = parseNotificationPrefs(record.notify);
     const minutes = record.freeMinutesPerDay;
@@ -131,7 +134,7 @@ export function migrateStore(store: Store, legacyFreeMinutes: number | undefined
 
 let snapshot: PracticeSnapshot | null = null;
 let pendingForSession: string | null | undefined;
-/** «لحظة ضعف» hand-off, in memory only (never storage, never the URL): see {@link setMomentSource}. */
+/** «لحظة مجاهدة» hand-off, in memory only (never storage, never the URL): see {@link setMomentSource}. */
 let momentSource: string | null | undefined;
 const listeners = new Set<() => void>();
 
@@ -245,7 +248,7 @@ export function pendingProgramForSession(): string | null {
 }
 
 /**
- * Where «لحظة ضعف» was opened from, kept in memory for the client-side navigation only: a sin page passes its slug
+ * Where «لحظة مجاهدة» was opened from, kept in memory for the client-side navigation only: a sin page passes its slug
  * (the screen then uses that sin's program if the visitor follows it, and nothing personal otherwise); «ورد اليوم» and
  * «تخفَّف» pass `null` (the program in focus, practice-core `focusProgram`). A reload forgets it.
  */

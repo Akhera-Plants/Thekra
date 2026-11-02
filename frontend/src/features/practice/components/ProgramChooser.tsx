@@ -5,7 +5,7 @@ import { Search } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useWatch } from 'react-hook-form';
 import { useLocale, useTranslations } from 'next-intl';
-import { programEntryFor, startProgram } from '@thekra/practice-core';
+import { programEntryFor, startProgram, type SinProgram } from '@thekra/practice-core';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { TOPIC_DOMAINS } from '@/lib/topic-domains';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -31,15 +31,20 @@ interface ProgramChooserProps {
   today: string;
   /** Called after the program is saved. */
   onDone: () => void;
+  /**
+   * Takes the new program instead of saving it here: the «تخفَّف» page first asks for the privacy code when the
+   * account has no vault yet, then saves it.
+   */
+  onStart?: (program: SinProgram) => void;
   onCancel?: () => void;
 }
 
 /**
  * «تخفَّف من معصية» for any sin (owner, 2026-11-01): choose the sin (grouped and searchable), answer one question, start.
  * A sin with a written program may ask the willpower question; any other sin asks «هل فيها حقٌّ لأحد من الناس؟» and
- * starts the common five stages. Saved on this device only.
+ * starts the common five stages. Saved in the account, encrypted (the page seals it).
  */
-export function ProgramChooser({ entries, common, sins, names, preselected, today, onDone, onCancel }: ProgramChooserProps) {
+export function ProgramChooser({ entries, common, sins, names, preselected, today, onDone, onCancel, onStart }: ProgramChooserProps) {
   const t = useTranslations('leaveSin.choose');
   const locale = useLocale();
   const english = locale === 'en';
@@ -85,6 +90,10 @@ export function ProgramChooser({ entries, common, sins, names, preselected, toda
       hardToLeaveAtOnce: path === 'gradual',
       startedOn: today,
     });
+    if (onStart) {
+      onStart(program);
+      return;
+    }
     updateStore((store) => ({ ...store, programs: [...store.programs.filter((p) => p.sinSlug !== chosen.sin), program] }));
     onDone();
   }

@@ -8,6 +8,7 @@ import { MONTH_DAYS, PROGRESS_DAYS, progressDays, type PlanToday } from '@/lib/p
 import type { PracticeHabit } from '@/lib/types/practice';
 import { cn } from '@/lib/utils';
 import { usePlanWords } from './PlanCard';
+import { CommitmentChart } from './CommitmentChart';
 
 interface ProgressPanelProps {
   entries: { plan: Plan; habit: PracticeHabit | undefined; view: PlanToday }[];
@@ -84,6 +85,7 @@ function ProgressRow({
           />
         ))}
       </div>
+      <CommitmentChart plan={plan} today={today} label={t('chart.label', { title: words.title })} />
     </li>
   );
 }

@@ -74,6 +74,7 @@ export function TodayList({ title, store, date, today, day, habits, occasionBasi
         }}
         onUndo={undoLast}
         minimumMet={minimumMet(plan, date)}
+        today={isToday ? today : undefined}
         onMinimum={
           !item.complete && minimumToLog(plan, date) !== null
             ? () => {

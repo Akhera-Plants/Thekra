@@ -14,6 +14,7 @@ import {
 import { Button } from '@/components/shared/kit/button';
 import { Input } from '@/components/ui/input';
 import { Link } from '@/i18n/navigation';
+import { SectionDivider } from '@/components/shared/SectionDivider';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { formatDigits } from '@/lib/format/digits';
 import { updateHeart } from '@/lib/practice/heart-store';
@@ -113,6 +114,7 @@ export function NotificationsView() {
         </ul>
       </section>
 
+      <SectionDivider />
       <section aria-labelledby="notify-heart" className="flex flex-col gap-2">
         <h2 id="notify-heart" className="text-xl font-medium">
           {t('heartTitle')}

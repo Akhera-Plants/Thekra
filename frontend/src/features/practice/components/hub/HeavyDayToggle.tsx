@@ -5,17 +5,16 @@ import { useTranslations } from 'next-intl';
 import type { Store } from '@thekra/practice-core';
 import { updateStore } from '@/lib/practice/local-store';
 import { isEbbDay, setEbbForAll } from '@/lib/practice/plans';
-import { StoryLine } from './KnowledgeCards';
 
 /**
  * «يومي ثقيل» as one line: a pressed toggle. On, every plan asks only its smallest amount today (practice-core
- * `isEbbOn`); tomorrow the plans are back by themselves.
+ * `isEbbOn`); tomorrow the plans are back by themselves. The hadith «إذا مرض العبد أو سافر…» is not shown here
+ * (owner round 3, item 8): «ورد اليوم» shows it after such a day has passed, when the commitment is above 60%.
  */
 export function HeavyDayToggle({ store, today }: { store: Store; today: string }) {
   const t = useTranslations('practice.wird');
   const isHeavy = isEbbDay(store.plans, today);
   return (
-    <>
     <button
       type="button"
       className="outline-button button-wrap !mt-0 !min-h-11 self-start"
@@ -26,8 +25,5 @@ export function HeavyDayToggle({ store, today }: { store: Store; today: string }
       <Feather aria-hidden />
       {t('heavyDay')}
     </button>
-    {/* On a heavy day: «إذا مرض العبد أو سافر…», by id only (hidden until the id is filled). */}
-    {isHeavy ? <div className="basis-full"><StoryLine moment="heavyDay" /></div> : null}
-    </>
   );
 }

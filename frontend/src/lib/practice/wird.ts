@@ -10,6 +10,7 @@ import {
   groupAgenda,
   longestStreak,
   offDayItems,
+  periodicActs,
   remainingCount,
   streakDisplay,
   type AgendaItem,
@@ -22,6 +23,8 @@ import {
   type Store,
   type StreakDisplay,
 } from '@thekra/practice-core';
+import type { PracticeHabit } from '@/lib/types/practice';
+import { limitOptions } from './limits';
 
 /** A task row of the day (an occasion is information, not a task). */
 export type TaskItem = Exclude<AgendaItem, OccasionItem>;
@@ -75,4 +78,23 @@ export function wirdSummary(store: Store, today: LocalDate, opts: PlanDayOptions
 /** Where a periodic act opens: a relative on the kinship page (add and edit live there), a habit on its plan card. */
 export function periodicHref(act: PeriodicAct): string {
   return act.kind === 'relative' ? '/practice/kinship' : `/practice/habits#plan-${act.id}`;
+}
+
+/**
+ * «أعمال دورية» (owner round 3, item 6): the people lists and the plans made from a periodic template only. A habit
+ * is never listed here, even on a weekly rule (it stays in the habits' own sections); nearest first.
+ */
+export function periodicActsOnly(
+  store: Store,
+  today: LocalDate,
+  opts: PlanDayOptions,
+  habits: ReadonlyMap<string, PracticeHabit>,
+): PeriodicAct[] {
+  const { isPeriodicAct } = limitOptions(habits);
+  const plans = new Map(store.plans.map((p) => [p.id, p]));
+  return periodicActs(store, today, opts).filter((act) => {
+    if (act.kind === 'relative') return true;
+    const plan = plans.get(act.id);
+    return plan !== undefined && (isPeriodicAct?.(plan) ?? false);
+  });
 }

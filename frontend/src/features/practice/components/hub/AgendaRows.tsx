@@ -1,9 +1,23 @@
 'use client';
 
 import { useId, type ReactNode } from 'react';
-import { Check, NotebookPen, Sparkles, Undo2 } from 'lucide-react';
+import { Check, NotebookPen, Sparkles, Undo2, Wrench } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
-import type { HabitItem, OccasionItem, Plan, ProgramItem, Relative, RelativeItem } from '@thekra/practice-core';
+import {
+  addDays,
+  canMakeUp,
+  logForDay,
+  requiredOn,
+  updatePlan,
+  type HabitItem,
+  type OccasionItem,
+  type Plan,
+  type ProgramItem,
+  type Relative,
+  type RelativeItem,
+} from '@thekra/practice-core';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { updateStore } from '@/lib/practice/local-store';
 import { Link } from '@/i18n/navigation';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { Button } from '@/components/shared/kit/button';
@@ -140,9 +154,11 @@ interface HabitRowProps {
   onMinimum?: () => void;
   /** The day holds the minimum but not the whole amount. */
   minimumMet?: boolean;
+  /** Today, when the row is today's: «صلّحها» shows on a habit missed yesterday. */
+  today?: string;
 }
 
-export function HabitRow({ item, plan, habit, isEnabled, disabledNoteId, undo, onToggle, onUndo, onMinimum, minimumMet = false }: HabitRowProps) {
+export function HabitRow({ item, plan, habit, isEnabled, disabledNoteId, undo, onToggle, onUndo, onMinimum, minimumMet = false, today }: HabitRowProps) {
   const t = useTranslations('practice.hub.day');
   const tToday = useTranslations('practice.today');
   const tHeart = useTranslations('practice.heart');
@@ -162,9 +178,13 @@ export function HabitRow({ item, plan, habit, isEnabled, disabledNoteId, undo, o
   );
   const secondary = undo ? (
     <InlineUndo kind={undo} onUndo={onUndo} />
+  ) : item.missedYesterday && !item.complete && isEnabled && today ? (
+    <p className="ps-[3.25rem]">
+      <FixHabit plan={plan} today={today} onMinimum={onMinimum} />
+    </p>
   ) : onMinimum && isEnabled ? (
     <p className="ps-[3.25rem]">
-      <Button variant="ghost" tone="primary" size="sm" onClick={onMinimum}>
+      <Button variant="outline" tone="primary" size="sm" onClick={onMinimum}>
         {tHeart('minimum')}
       </Button>
     </p>
@@ -192,6 +212,47 @@ export function HabitRow({ item, plan, habit, isEnabled, disabledNoteId, undo, o
       isMuted={item.complete}
       undo={secondary}
     />
+  );
+}
+
+/**
+ * «صلّحها» on a habit missed yesterday (owner round 3: «خربانة؟ صلّحها» lives in each habit's own row): «لا تفوّتها
+ * مرتين», log the least amount today, and make up yesterday while its window is open (until noon today).
+ */
+function FixHabit({ plan, today, onMinimum }: { plan: Plan; today: string; onMinimum?: () => void }) {
+  const t = useTranslations('practice.hub.fix');
+  const yesterday = addDays(today, -1);
+  const canMakeUpYesterday = canMakeUp(yesterday, today) && (plan.log[yesterday] ?? 0) === 0;
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" tone="primary" size="sm">
+          <Wrench aria-hidden />
+          {t('open')}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="flex w-72 flex-col gap-3">
+        <p className="font-medium">{t('title')}</p>
+        <p className="text-sm leading-7 text-muted-foreground">{t('lead')}</p>
+        {onMinimum ? (
+          <Button tone="primary" size="sm" onClick={onMinimum}>
+            {t('minimum')}
+          </Button>
+        ) : null}
+        {canMakeUpYesterday ? (
+          <Button
+            variant="outline"
+            tone="primary"
+            size="sm"
+            onClick={() =>
+              updateStore((s) => updatePlan(s, plan.id, (p) => logForDay(p, yesterday, Math.max(1, requiredOn(p, yesterday)), today)))
+            }
+          >
+            {t('makeUp')}
+          </Button>
+        ) : null}
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -289,10 +350,10 @@ export function ProgramRow({ item, isToday }: ProgramRowProps) {
       isMuted={item.done}
       undo={
         isToday ? (
-          // «لحظة ضعف», quiet and generic: it names nothing, and opens the program in focus on this device.
+          // «لحظة مجاهدة», quiet and generic: it names nothing, and opens the program in focus on this device.
           <Link
             href="/practice/leave-sin/moment"
-            className="ms-12 self-start text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            className="outline-button ms-[3.25rem] !min-h-9 self-start px-3 text-sm"
             onClick={() => setMomentSource(null)}
           >
             {tLeave('moment.open')}
