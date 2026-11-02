@@ -8,6 +8,11 @@
  * Built on `@noble/hashes` and `@noble/ciphers` (audited, pure JS: the same code on web, extension and Hermes).
  * Random bytes come from `globalThis.crypto.getRandomValues` (React Native: install `expo-crypto`).
  *
+ * Owner decision 2026-11-01: «تخفَّف» is always kept this way. The first program creates the vault with a privacy
+ * code ({@link createVault}); the device then keeps the key unlocked (app: biometrics + secure storage, see
+ * {@link serializeVaultKey}) and re-seals and uploads on every change. Client steps:
+ * docs/plan/2026-11-01-sin-vault-always-on.md.
+ *
  * The plaintext is padded with spaces to a multiple of {@link PAD_BLOCK} bytes before encryption, so the
  * ciphertext length does not hint at which sin (slug length) or how many notes it holds.
  */
@@ -211,4 +216,69 @@ export function unlockVault(
   assertIterations(vault.iterations);
   const key = deriveKey(code, vault.salt, vault.iterations);
   return { programs: openPrograms(vault, key), key };
+}
+
+/**
+ * What a device keeps to re-seal without asking for the code again: the derived key and the vault's KDF parameters
+ * (re-sealing reuses the salt, so the same code keeps opening the vault). Store it only in the platform keystore
+ * behind biometrics (app: `expo-secure-store` with `requireAuthentication`); never in plain storage, never sent.
+ */
+export interface VaultKeyRecord {
+  /** base64, 32 bytes */
+  key: string;
+  /** base64, 16 bytes */
+  salt: string;
+  iterations: number;
+}
+
+/** The record for secure storage (JSON text). */
+export function serializeVaultKey(key: Uint8Array, opts: { salt: string; iterations: number }): string {
+  assertKey(key);
+  assertIterations(opts.iterations);
+  decodeField(opts.salt, 'salt', VAULT_SALT_BYTES);
+  const record: VaultKeyRecord = { key: bytesToBase64(key), salt: opts.salt, iterations: opts.iterations };
+  return JSON.stringify(record);
+}
+
+/** Reads a record written by {@link serializeVaultKey}. Throws a VaultError when it is damaged. */
+export function parseVaultKey(text: string): { key: Uint8Array; salt: string; iterations: number } {
+  let raw: unknown;
+  try {
+    raw = JSON.parse(text);
+  } catch {
+    throw new VaultError('The stored vault key is not readable');
+  }
+  if (typeof raw !== 'object' || raw === null) throw new VaultError('The stored vault key is not readable');
+  const r = raw as Record<string, unknown>;
+  const key = decodeField(r.key, 'key', VAULT_KEY_BYTES);
+  decodeField(r.salt, 'salt', VAULT_SALT_BYTES);
+  if (typeof r.iterations !== 'number') throw new VaultError('iterations must be a number');
+  assertIterations(r.iterations);
+  return { key, salt: r.salt as string, iterations: r.iterations };
+}
+
+/**
+ * The first vault of an account (the first «تخفَّف» program): a fresh salt, the key derived from the new privacy code
+ * with {@link VAULT_ITERATIONS}, and the PUT body with `version: 0`. Check the code with {@link privacyCodeProblem}
+ * first. Returns the key and parameters to keep for the session (and in secure storage when the member allows it).
+ */
+export function createVault(
+  code: string,
+  programs: readonly SinProgram[],
+  iterations: number = VAULT_ITERATIONS,
+): { payload: VaultPayload; key: Uint8Array; salt: string; iterations: number } {
+  assertIterations(iterations);
+  const salt = newSalt();
+  const key = deriveKey(code, salt, iterations);
+  const payload = vaultPayload(sealPrograms(programs, key), { salt, iterations, version: 0 });
+  return { payload, key, salt, iterations };
+}
+
+/** Seals the programs with a kept key into the PUT body (autosave after every change). */
+export function sealVault(
+  programs: readonly SinProgram[],
+  kept: { key: Uint8Array; salt: string; iterations: number },
+  version: number,
+): VaultPayload {
+  return vaultPayload(sealPrograms(programs, kept.key), { salt: kept.salt, iterations: kept.iterations, version });
 }

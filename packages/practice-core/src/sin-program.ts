@@ -1,9 +1,11 @@
 /**
  * «ترك المعصية»: a staged program for leaving a sin.
  *
- * LOCAL ONLY. Everything in a `SinProgram` (the sin slug, check-ins, free-text notes) stays on the device:
- * never send it to a server, never sync it, never back it up to our cloud, never put it in analytics or in a
- * notification/calendar title (roadmap §0.1–0.2). `exportForSync` in `storage.ts` drops programs for this reason.
+ * NEVER IN CLEAR OFF THE DEVICE. Everything in a `SinProgram` (the sin slug, check-ins, free-text notes, «حلقة المعصية»
+ * loops) leaves the device only sealed in the encrypted sin vault (`vault.ts`; owner decision 2026-11-01: always
+ * encrypted and kept in the account, docs/plan/2026-11-01-sin-vault-always-on.md). Never send it in clear, never put it
+ * in the practice sync body, analytics, logs or a notification/calendar title (roadmap §0.1–0.2). `exportForSync` in
+ * `storage.ts` drops programs for this reason.
  *
  * Owner decision (2026-10-28, roadmap §4.1): a gradual path is allowed only for a sin against the right of Allah
  * when leaving at once is very hard for the user. A sin against people's rights is always 'cut' (leave it, or
@@ -91,10 +93,177 @@ export interface SinProgram {
   /** When the program was started or ended. */
   updatedAt?: IsoTime;
   /**
+   * «حلقة المعصية» (2026-11-01): the member's own loops for this sin. Removed loops stay as markers
+   * ({@link SinLoop.removedAt}) so a merge does not bring them back. Absent when none. Only inside the vault.
+   */
+  loops?: SinLoop[];
+  /**
    * Set by {@link endProgram}: the program is over and its check-ins and notes are gone. It stays in the list as a
    * marker, so the copy in the vault or on another device does not bring it back ({@link mergePrograms}).
    */
   endedAt?: IsoTime;
+}
+
+/**
+ * «حلقة المعصية»: the member's answers to the sin-loop template. Free text, private: it travels only inside the
+ * encrypted vault with the program.
+ */
+export interface SinLoop {
+  /** Client id, unique within the program: 1–64 characters of `A–Z a–z 0–9 _ -`. */
+  id: string;
+  /** «المثير / الموقف»: what sets it off, the situation. */
+  trigger: string;
+  /** «الشعور»: what the member feels then. */
+  feeling: string;
+  /** «الرغبة»: what the soul asks for. */
+  craving: string;
+  /** «الفعل»: what the member then does. */
+  act: string;
+  /** «ما يحصل بعده»: what follows (the regret, the cost). */
+  after: string;
+  /** «البديل»: the alternative chosen for next time. */
+  alternative: string;
+  /** When this loop was last edited (ISO time). The later edit wins in {@link mergePrograms}. */
+  updatedAt: IsoTime;
+  /** Set when the loop was removed: its texts are empty and it is not shown ({@link activeSinLoops}). */
+  removedAt?: IsoTime;
+}
+
+/** At most this many loops shown per program. */
+export const MAX_SIN_LOOPS = 5;
+/** Loops kept per program, removal markers included (the oldest markers are dropped first). */
+export const MAX_SIN_LOOP_ENTRIES = 20;
+/** Characters per answer. */
+export const MAX_SIN_LOOP_TEXT = 300;
+const SIN_LOOP_ID = /^[A-Za-z0-9_-]{1,64}$/;
+export const SIN_LOOP_FIELDS = ['trigger', 'feeling', 'craving', 'act', 'after', 'alternative'] as const;
+export type SinLoopInput = Pick<SinLoop, (typeof SIN_LOOP_FIELDS)[number]>;
+
+/** Returns an English error message for one loop, or `null`. A removed loop must have empty texts. */
+export function validateSinLoop(loop: unknown): string | null {
+  if (typeof loop !== 'object' || loop === null || Array.isArray(loop)) return 'loop must be an object';
+  const l = loop as Record<string, unknown>;
+  if (typeof l.id !== 'string' || !SIN_LOOP_ID.test(l.id)) return 'loop id must be 1–64 characters of A–Z a–z 0–9 _ -';
+  for (const k of SIN_LOOP_FIELDS) {
+    if (typeof l[k] !== 'string' || (l[k] as string).length > MAX_SIN_LOOP_TEXT) return `loop ${k} must be a string of at most ${MAX_SIN_LOOP_TEXT} characters`;
+  }
+  if (!isIsoTime(l.updatedAt)) return 'loop updatedAt must be an ISO time';
+  if (l.removedAt !== undefined) {
+    if (!isIsoTime(l.removedAt)) return 'loop removedAt must be an ISO time';
+    if (SIN_LOOP_FIELDS.some((k) => l[k] !== '')) return 'a removed loop keeps no text';
+  } else if (SIN_LOOP_FIELDS.every((k) => (l[k] as string).trim() === '')) {
+    return 'a loop needs at least one answer';
+  }
+  return null;
+}
+
+/** Returns an English error message for a program's `loops`, or `null`. */
+export function validateSinLoops(loops: unknown): string | null {
+  if (!Array.isArray(loops)) return 'loops must be an array';
+  if (loops.length > MAX_SIN_LOOP_ENTRIES) return `loops must hold at most ${MAX_SIN_LOOP_ENTRIES} entries`;
+  const ids = new Set<string>();
+  let live = 0;
+  for (const loop of loops) {
+    const e = validateSinLoop(loop);
+    if (e) return e;
+    const l = loop as SinLoop;
+    if (ids.has(l.id)) return 'loop ids must be unique';
+    ids.add(l.id);
+    if (l.removedAt === undefined) live++;
+  }
+  if (live > MAX_SIN_LOOPS) return `at most ${MAX_SIN_LOOPS} loops`;
+  return null;
+}
+
+/** A copy with known fields only, in a fixed order. */
+export function cloneSinLoop(loop: SinLoop): SinLoop {
+  const out: SinLoop = {
+    id: loop.id,
+    trigger: loop.trigger,
+    feeling: loop.feeling,
+    craving: loop.craving,
+    act: loop.act,
+    after: loop.after,
+    alternative: loop.alternative,
+    updatedAt: loop.updatedAt,
+  };
+  if (loop.removedAt !== undefined) out.removedAt = loop.removedAt;
+  return out;
+}
+
+/** The loops to show (not removed), in their order. */
+export function activeSinLoops(program: SinProgram): SinLoop[] {
+  return (program.loops ?? []).filter((l) => l.removedAt === undefined);
+}
+
+/** Keeps the live loops and the newest removal markers, within {@link MAX_SIN_LOOP_ENTRIES}. */
+function boundLoops(loops: SinLoop[]): SinLoop[] {
+  const markers = loops.filter((l) => l.removedAt !== undefined);
+  const room = MAX_SIN_LOOP_ENTRIES - (loops.length - markers.length);
+  if (markers.length <= room) return loops;
+  const keep = new Set(
+    [...markers].sort((a, b) => isoMillis(b.removedAt) - isoMillis(a.removedAt)).slice(0, Math.max(0, room)).map((l) => l.id),
+  );
+  return loops.filter((l) => l.removedAt === undefined || keep.has(l.id));
+}
+
+function withSinLoops(program: SinProgram, loops: SinLoop[]): SinProgram {
+  const bounded = boundLoops(loops);
+  const err = validateSinLoops(bounded);
+  if (err) throw new RangeError(err);
+  const copy: SinProgram = { ...program };
+  if (bounded.length > 0) copy.loops = bounded;
+  else delete copy.loops;
+  return copy;
+}
+
+const sinLoopText = (input: Partial<SinLoopInput>, base?: SinLoop): SinLoopInput => ({
+  trigger: input.trigger ?? base?.trigger ?? '',
+  feeling: input.feeling ?? base?.feeling ?? '',
+  craving: input.craving ?? base?.craving ?? '',
+  act: input.act ?? base?.act ?? '',
+  after: input.after ?? base?.after ?? '',
+  alternative: input.alternative ?? base?.alternative ?? '',
+});
+
+/** Adds a «حلقة المعصية». Throws on an ended program, a used id, more than {@link MAX_SIN_LOOPS} or an invalid loop. */
+export function addSinLoop(program: SinProgram, id: string, input: Partial<SinLoopInput>, now: IsoTime = nowIso()): SinProgram {
+  if (program.endedAt !== undefined) throw new RangeError('The program has ended');
+  if ((program.loops ?? []).some((l) => l.id === id)) throw new RangeError('A loop with this id exists');
+  return withSinLoops(program, [...(program.loops ?? []), { id, ...sinLoopText(input), updatedAt: now }]);
+}
+
+/** Changes the given answers of one live loop. */
+export function updateSinLoop(program: SinProgram, id: string, patch: Partial<SinLoopInput>, now: IsoTime = nowIso()): SinProgram {
+  if (program.endedAt !== undefined) throw new RangeError('The program has ended');
+  const base = (program.loops ?? []).find((l) => l.id === id && l.removedAt === undefined);
+  if (!base) throw new RangeError('No loop with this id');
+  return withSinLoops(program, (program.loops ?? []).map((l) => (l.id === id ? { id, ...sinLoopText(patch, base), updatedAt: now } : l)));
+}
+
+/** Removes one loop: its texts are dropped and a marker stays, so another device's copy does not bring it back. */
+export function removeSinLoop(program: SinProgram, id: string, now: IsoTime = nowIso()): SinProgram {
+  const loops = program.loops ?? [];
+  if (!loops.some((l) => l.id === id && l.removedAt === undefined)) return program;
+  const blank = { trigger: '', feeling: '', craving: '', act: '', after: '', alternative: '' };
+  return withSinLoops(program, loops.map((l) => (l.id === id ? { id, ...blank, updatedAt: now, removedAt: now } : l)));
+}
+
+/** Loops of two copies united by id; the later `updatedAt` wins (a tie keeps `mine`). Order: mine, then theirs only. */
+function mergeSinLoops(mine: readonly SinLoop[], theirs: readonly SinLoop[]): SinLoop[] {
+  const byId = new Map(mine.map((l) => [l.id, l]));
+  for (const l of theirs) {
+    const kept = byId.get(l.id);
+    if (!kept || isoMillis(l.updatedAt) > isoMillis(kept.updatedAt)) byId.set(l.id, l);
+  }
+  const merged = [...byId.values()];
+  // Two devices may each have added loops: keep the newest live ones within the limit.
+  const live = merged.filter((l) => l.removedAt === undefined);
+  if (live.length > MAX_SIN_LOOPS) {
+    const keep = new Set([...live].sort((a, b) => isoMillis(b.updatedAt) - isoMillis(a.updatedAt)).slice(0, MAX_SIN_LOOPS).map((l) => l.id));
+    return boundLoops(merged.filter((l) => l.removedAt !== undefined || keep.has(l.id)));
+  }
+  return boundLoops(merged);
 }
 
 const STAGES_ALLAH: readonly Stage[] = ['harms', 'alternatives', 'environment', 'limits', 'leave'];
@@ -159,7 +328,8 @@ const byDate = (a: CheckIn, b: CheckIn) => (a.date < b.date ? -1 : a.date > b.da
  * - an end wins over a copy last started before it, so an ended program does not come back; a program started
  *   again after the end wins over the end;
  * - otherwise check-ins are united by date, and on the same date the later written one wins (`updatedAt`, absent
- *   counts as the oldest; a tie keeps this device's), with its note. The program's own fields come from the copy
+ *   counts as the oldest; a tie keeps this device's), with its note. «حلقة المعصية» loops are united by id the same
+ *   way (a removal is a marker with its own `updatedAt`, so it wins over an older edit). The program's own fields come from the copy
  *   started later (a tie keeps this device's).
  * The order is this device's, then programs only in the other copy.
  */
@@ -186,7 +356,11 @@ function mergeProgram(mine: SinProgram, theirs: SinProgram): SinProgram {
     if (!kept || isoMillis(c.updatedAt) > isoMillis(kept.updatedAt)) dates.set(c.date, c);
   }
   const fields = started(theirs) > started(mine) ? theirs : mine;
-  return { ...fields, checkIns: [...dates.values()].sort(byDate) };
+  const out: SinProgram = { ...fields, checkIns: [...dates.values()].sort(byDate) };
+  const loops = mergeSinLoops(mine.loops ?? [], theirs.loops ?? []);
+  if (loops.length > 0) out.loops = loops;
+  else delete out.loops;
+  return out;
 }
 
 /** Returns an English error message, or `null` when well-formed (including the haqq_ibad ⇒ cut rule). */
@@ -201,6 +375,10 @@ export function validateProgram(program: unknown): string | null {
   if (!Array.isArray(p.checkIns)) return 'checkIns must be an array';
   if (p.updatedAt !== undefined && !isIsoTime(p.updatedAt)) return 'updatedAt must be an ISO time';
   if (p.endedAt !== undefined && !isIsoTime(p.endedAt)) return 'endedAt must be an ISO time';
+  if (p.loops !== undefined) {
+    const e = validateSinLoops(p.loops);
+    if (e) return e;
+  }
   for (const c of p.checkIns as unknown[]) {
     const e = validateCheckIn(c);
     if (e) return e;

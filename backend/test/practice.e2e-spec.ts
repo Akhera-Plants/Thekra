@@ -46,7 +46,7 @@ const RELATIVE = {
   deletedAt: null,
 };
 /** What the server returns for a plan / relative an older client sent (missing phase-2/6 fields = defaults). */
-const PHASE2_PLAN_DEFAULTS = { pausedOn: null, resumedOn: null, establishedOn: null, slotAnchors: null };
+const PHASE2_PLAN_DEFAULTS = { pausedOn: null, resumedOn: null, establishedOn: null, slotAnchors: null, loops: null };
 const planOut = <T extends object>(plan: T) => ({ ...PHASE2_PLAN_DEFAULTS, ...plan });
 const relativeOut = <T extends object>(relative: T) => ({ circle: 'kin', ...relative });
 const b64 = (bytes: number) => Buffer.alloc(bytes, 9).toString('base64');
@@ -71,7 +71,7 @@ describe('Practice, calendar and account endpoints (e2e)', () => {
 
   it('GET /v1/practice/catalog → 200 { data: { occasions, habits, sinPrograms } }, CDN-cached', async () => {
     const res = await request(server()).get('/v1/practice/catalog').expect(200);
-    expect(Object.keys(res.body.data)).toEqual(['occasions', 'habits', 'sinPrograms', 'deedBranches', 'stories']);
+    expect(Object.keys(res.body.data)).toEqual(['occasions', 'habits', 'sinPrograms', 'deedBranches', 'stories', 'mujahada']);
     expect(Object.keys(res.body.data.sinPrograms)).toEqual(['review', 'common', 'programs']);
     expect(res.body.data.occasions.find((o: { key: string }) => o.key === 'arafah')).toMatchObject({
       deed: 'siyam',
@@ -436,6 +436,23 @@ describe('Practice, calendar and account endpoints (e2e)', () => {
     expect(withAnchors.body.data.plans.find((p: { id: string }) => p.id === id)).toMatchObject({ slotAnchors: ['after-fajr', null] });
     expect((await prisma.habitPlan.findUniqueOrThrow({ where: { id } })).slotAnchors).toEqual(['after-fajr', null]);
     await sync(auth, { since: null, changes: { plans: [{ ...anchored, slotAnchors: ['at-noon', null], clientUpdatedAt: T(35) }] } }).expect(400);
+
+    // «حلقة العادة» (2026-11-01): loops round-trip exactly as written (jsonb key order is restored), stay on the plan's
+    // last-writer-wins version, and an invalid loop is refused with nothing applied.
+    const loop = { id: 'loop-1', cue: 'بعد الفجر', craving: 'السكينة', routine: 'أذكار الصباح', reward: 'طمأنينة', ifThen: 'إن نسيت فبعد الإفطار', updatedAt: '2026-10-28T10:00:00Z' };
+    const looped = { ...anchored, loops: [loop], clientUpdatedAt: T(36) };
+    const withLoops = await sync(auth, { since: null, changes: { plans: [looped] } }).expect(200);
+    const loopedOut = withLoops.body.data.plans.find((p: { id: string }) => p.id === id);
+    expect(JSON.stringify(loopedOut.loops)).toBe(JSON.stringify([loop]));
+    expect((await prisma.habitPlan.findUniqueOrThrow({ where: { id } })).loops).toEqual([loop]);
+    // An older edit does not overwrite them; a newer one from an older client (no loops) clears them.
+    await sync(auth, { since: null, changes: { plans: [{ ...anchored, title: 'stale', clientUpdatedAt: T(35) }] } }).expect(200);
+    expect((await prisma.habitPlan.findUniqueOrThrow({ where: { id } })).loops).toEqual([loop]);
+    await sync(auth, { since: null, changes: { plans: [{ ...looped, loops: [{ ...loop, routine: '' }], clientUpdatedAt: T(37) }] } }).expect(400);
+    await sync(auth, { since: null, changes: { plans: [{ ...looped, loops: [loop, loop], clientUpdatedAt: T(37) }] } }).expect(400);
+    const { loops: _loops, ...olderClient } = looped;
+    await sync(auth, { since: null, changes: { plans: [{ ...olderClient, clientUpdatedAt: T(38) }] } }).expect(200);
+    expect((await prisma.habitPlan.findUniqueOrThrow({ where: { id } })).loops).toBeNull();
   });
 
   it('export carries practice data and the vault ciphertext; DELETE /auth/me cascades all of it', async () => {

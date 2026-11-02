@@ -116,7 +116,7 @@ describe('graduation', () => {
 describe('limits', () => {
   const isPeriodicAct = (p: Plan) => p.habitKey === 'sadaqah-weekly';
 
-  it('counts saplings without established, paused or periodic plans', () => {
+  it('counts young habits (established or not) without paused or periodic plans', () => {
     const s = storeOf(
       plan('a'),
       plan('b'),
@@ -125,12 +125,13 @@ describe('limits', () => {
       { ...plan('e'), habitKey: 'sadaqah-weekly' },
     );
     const l = limits(s, '2026-10-28', { isPeriodicAct });
-    expect(l.sapling).toEqual({ count: 2, max: 3, full: false });
-    expect(l.canAdd('sapling')).toBe(true);
-    const full = limits(upsertPlan(s, plan('f'), T), '2026-10-28', { isPeriodicAct });
-    expect(full.sapling.full).toBe(true);
-    expect(full.canAdd('sapling')).toBe(false);
-    expect(full.saplings.map((p) => p.id)).toEqual(['a', 'b', 'f']);
+    // Marking «راسخة» no longer frees a place before 90 days (owner, 2026-11-01).
+    expect(l.sapling).toEqual({ count: 3, max: 3, full: true });
+    expect(l.canAdd('sapling')).toBe(false);
+    expect(l.graduationReady).toEqual([]);
+    const fewer = limits(storeOf(plan('a'), plan('b'), pausePlan(plan('d'), '2026-10-28', T)), '2026-10-28', { isPeriodicAct });
+    expect(fewer.sapling).toEqual({ count: 2, max: 3, full: false });
+    expect(fewer.canAdd('sapling')).toBe(true);
   });
 
   it('a people list is one periodic act, however many people; adding to a list in use is always allowed', () => {
@@ -149,14 +150,12 @@ describe('limits', () => {
     expect(seven.canAdd('periodic', { circle: 'kin' })).toBe(true);
   });
 
-  it('one «تخفَّف» program until it reaches its last stage', () => {
+  it('«تخفَّف»: a new program only when every running one has lasted 60 days', () => {
     let s = emptyStore();
     s = { ...s, programs: [startProgram({ sinSlug: 'ghibah', category: 'haqq_allah', hardToLeaveAtOnce: false, startedOn: '2026-10-01' }, T)] };
     expect(limits(s, '2026-10-02').canAdd('program')).toBe(false);
-    // Daily check-ins for long enough reach the last stage ('leave').
-    const checkIns = Array.from({ length: 60 }, (_, i) => ({ date: addDays('2026-10-01', i), value: 'held' as const }));
-    s = { ...s, programs: [{ ...s.programs[0]!, checkIns }] };
-    expect(limits(s, '2026-11-29').canAdd('program')).toBe(true);
+    expect(limits(s, '2026-11-29').canAdd('program')).toBe(false); // 59 days
+    expect(limits(s, '2026-11-30').canAdd('program')).toBe(true); // 60 days
   });
 });
 

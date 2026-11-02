@@ -36,11 +36,13 @@ const PLAN = {
   resumedOn: null,
   establishedOn: null,
   slotAnchors: null,
+  loops: null,
   clientUpdatedAt: '2026-10-28T10:00:00.000Z',
   deletedAt: null,
 };
-/** A plan as a client from before 2026-10-31 sends it: no pausedOn / resumedOn / establishedOn / slotAnchors. */
-const { pausedOn: _p, resumedOn: _r, establishedOn: _e, slotAnchors: _a, ...OLD_PLAN } = PLAN;
+/** A plan as a client from before 2026-10-31 sends it: no pausedOn / resumedOn / establishedOn / slotAnchors / loops. */
+const { pausedOn: _p, resumedOn: _r, establishedOn: _e, slotAnchors: _a, loops: _l, ...OLD_PLAN } = PLAN;
+const LOOP = { id: 'loop-1', cue: 'بعد الفجر', craving: 'السكينة', routine: 'أذكار الصباح', reward: 'طمأنينة', updatedAt: '2026-10-28T10:00:00Z' };
 const RELATIVE = {
   id: REL_ID,
   name: 'خالتي',
@@ -203,6 +205,11 @@ describe('parseSyncRequest', () => {
       deletedAt: null,
     });
     expect(wire).toEqual(PLAN);
+    // jsonb reorders keys: the wire copy is back in the canonical order; bad stored loops read as none.
+    const reordered = { updatedAt: LOOP.updatedAt, reward: LOOP.reward, routine: LOOP.routine, craving: LOOP.craving, cue: LOOP.cue, id: LOOP.id };
+    const looped = planToWire({ ...PLAN, userId: 'u', createdOn: new Date('2026-10-28'), amountChangedOn: new Date('2026-10-28'), ebbSince: null, pausedOn: null, resumedOn: null, establishedOn: null, clientUpdatedAt: NOW, updatedAt: NOW, deletedAt: null, loops: [reordered] });
+    expect(JSON.stringify(looped.loops)).toBe(JSON.stringify([LOOP]));
+    expect(planToWire({ ...PLAN, userId: 'u', createdOn: new Date('2026-10-28'), amountChangedOn: new Date('2026-10-28'), ebbSince: null, pausedOn: null, resumedOn: null, establishedOn: null, clientUpdatedAt: NOW, updatedAt: NOW, deletedAt: null, loops: [{ id: 'x' }] }).loops).toBeNull();
     const paused = planToWire({
       ...PLAN,
       userId: 'u',
@@ -273,6 +280,20 @@ describe('versions (must match practice-core compareVersions on every replica)',
     expect(live({ slotAnchors: [null, null] })).toEqual({ kind: 'live', plan: PLAN });
     expect(() => parse({ plans: [{ ...PLAN, slotAnchors: ['after-noon', null] }] })).toThrow();
     expect(() => parse({ plans: [{ ...PLAN, slotAnchors: ['after-fajr'] }] })).toThrow();
+    const looped = live({ loops: [{ ...LOOP, extra: 'dropped' }] });
+    expect(looped.kind === 'live' && looped.plan.loops).toEqual([LOOP]);
+    // Kept exactly as written (no timestamp normalisation), in the practice-core field order.
+    expect(JSON.parse(planVersion(looped).content).loops).toEqual([LOOP]);
+    const coreLooped: Plan = {
+      id: PLAN_ID, habitKey: 'duha', deedSlug: 'nawafil', title: 'Duha', unit: 'times', amount: 1, activeDaysPerWeek: 3,
+      slots: ['09:30', '11:00'], rule: { kind: 'daily' }, createdOn: '2026-10-28', amountChangedOn: '2026-10-28', log: {}, loops: [LOOP],
+    };
+    expect(planVersion(looped).content).toBe(JSON.stringify(planFields(coreLooped)));
+    expect(live({ loops: [] })).toEqual({ kind: 'live', plan: PLAN });
+    expect(() => parse({ plans: [{ ...PLAN, loops: [{ ...LOOP, routine: '' }] }] })).toThrow();
+    expect(() => parse({ plans: [{ ...PLAN, loops: [LOOP, LOOP] }] })).toThrow();
+    expect(() => parse({ plans: [{ ...PLAN, loops: [{ ...LOOP, cue: 'x'.repeat(301) }] }] })).toThrow();
+    expect(() => parse({ plans: [{ ...PLAN, loops: {} }] })).toThrow();
     const { circle: _c, ...oldRelative } = RELATIVE;
     expect(parse({ relatives: [oldRelative] }).relatives[0]).toMatchObject({ relative: { circle: 'kin' } });
     const [neighbor] = parse({ relatives: [{ ...RELATIVE, circle: 'neighbors' }] }).relatives;

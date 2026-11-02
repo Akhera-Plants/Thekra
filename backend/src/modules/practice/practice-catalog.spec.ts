@@ -142,6 +142,19 @@ describe('practice catalog — the real reviewer files', () => {
     expect(Object.keys(stories).sort()).toEqual(['fasila', 'ghusn-shawk', 'marad-safar', 'qatil-al-mia']);
   });
 
+  it('carries the «لحظة مجاهدة» lists (heart-texts.yaml)', () => {
+    const { mujahada } = practiceCatalog();
+    expect(Object.keys(mujahada)).toEqual(['verses', 'sayings', 'multiplierHadith', 'sittingPrayerHadith', 'easyHighReward']);
+    expect(mujahada.verses.length).toBeGreaterThanOrEqual(8);
+    expect(mujahada.verses.length).toBeLessThanOrEqual(15);
+    expect(mujahada.verses.every((passage) => passage.length >= 1 && passage.length <= 3)).toBe(true);
+    expect(mujahada.sayings).toEqual([]);
+    expect(mujahada.multiplierHadith).toBe('f8ee2864-b801-432d-9644-b05b99db34b0');
+    expect(mujahada.sittingPrayerHadith).toBe('e9026ac0-00d6-4c6d-bb03-9fbed245a740');
+    expect(mujahada.easyHighReward).toContain('birr-al-walidayn');
+    expect(mujahada.easyHighReward.length).toBeGreaterThanOrEqual(6);
+  });
+
   it('every prayer habit has a time window; Duha is never after Dhuhr and offers no prayer anchor (owner, 2026-11-01)', () => {
     const byKey = new Map(practiceCatalog().habits.map((h) => [h.key, h]));
     expect(byKey.get('duha')?.window).toEqual({ from: 'sunrise', fromMinutes: 15, to: 'dhuhr', toMinutes: -10, anchors: [] });

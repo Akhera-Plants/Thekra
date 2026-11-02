@@ -19,9 +19,9 @@ function codeOf(fn: () => unknown): string | undefined {
 
 describe('PracticeService', () => {
   describe('catalog', () => {
-    it('returns occasions, habits, sinPrograms { review, common, programs }, deedBranches and stories', () => {
+    it('returns occasions, habits, sinPrograms { review, common, programs }, deedBranches, stories and mujahada', () => {
       const catalog = makeService().service.catalog();
-      expect(Object.keys(catalog)).toEqual(['occasions', 'habits', 'sinPrograms', 'deedBranches', 'stories']);
+      expect(Object.keys(catalog)).toEqual(['occasions', 'habits', 'sinPrograms', 'deedBranches', 'stories', 'mujahada']);
       expect(Object.keys(catalog.sinPrograms)).toEqual(['review', 'common', 'programs']);
     });
   });

@@ -6,7 +6,7 @@
  *
  * | Kind | Rule |
  * | --- | --- |
- * | plan, relative, settings | last writer wins by `clientUpdatedAt`; a tombstone carries one too and wins only when newer. Equal times: a tombstone beats a live record, then the larger canonical JSON wins (so every replica picks the same) |
+ * | plan, relative, settings | last writer wins by `clientUpdatedAt` (a plan's «حلقة العادة» `loops` are part of the plan); a tombstone carries one too and wins only when newer. Equal times: a tombstone beats a live record, then the larger canonical JSON wins (so every replica picks the same) |
  * | log (plan, date) | the later correction wins (`correctedAt`, absent = oldest); at the same correction the larger amount: plain logging never goes down (`mergeLogEntry`) |
  * | contact (relative, date) | union; `deleted: true` removes it; a later non-deleted write restores it. A local change not yet pushed is kept (it is the later write) |
  *
@@ -19,7 +19,7 @@
 import { isIsoTime, isValidDate, isValidTime, isoMillis, type IsoTime, type LocalDate, type LocalTime } from './dates.js';
 import { HIJRI_OFFSET_MAX, HIJRI_OFFSET_MIN } from './hijri.js';
 import { latestDate, validateRelative, type KinshipRule, type Relative } from './kinship.js';
-import { logEntry, mergeLogEntry, validatePlan, type LogEntry, type Plan, type PlanUnit } from './plan.js';
+import { cloneHabitLoop, logEntry, mergeLogEntry, validateHabitLoops, validatePlan, type HabitLoop, type LogEntry, type Plan, type PlanUnit } from './plan.js';
 import type { Rule } from './rules.js';
 import {
   cleanExcusedDays,
@@ -344,6 +344,11 @@ function planFromWire(w: Record<string, unknown>, log: Record<string, number>, u
   }
   // Phase-6 prayer anchors: null or absent means none.
   if (Array.isArray(w.slotAnchors) && w.slotAnchors.some((a) => a !== null)) plan.slotAnchors = [...w.slotAnchors];
+  // «حلقة العادة» (2026-11-01): null, absent (an older server) or empty means none. Kept in canonical field order.
+  if (Array.isArray(w.loops) && w.loops.length > 0) {
+    if (validateHabitLoops(w.loops) !== null) return null;
+    plan.loops = (w.loops as HabitLoop[]).map(cloneHabitLoop);
+  }
   try {
     return validatePlan(plan) === null ? (plan as unknown as Plan) : null;
   } catch {

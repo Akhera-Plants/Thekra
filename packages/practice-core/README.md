@@ -30,12 +30,13 @@ pnpm --filter @thekra/practice-core typecheck  # tsc --noEmit
 | `hijri` | `toHijri(date, offsetDays = 0)`, `hijriMonthNameAr(month)`, `formatHijriAr(date, offset)` → «17 جمادى الأولى 1448 هـ», `isHijriSupported()` |
 | `rules` | `Rule` union (`daily`, `weekdays`, `everyNDays`, `everyNWeeks`, `monthlyDay`, `hijriMonthDays`, `hijriYearly`, `hijriWindow`), `occurrences(rule, from, to, {hijriOffset})`, `nextOccurrences(rule, from, count, opts)`, `isDue`, `validateRule` |
 | `ics` | `buildIcs({calendarName, events, prodId?, now?})`, `occurrencesToEvents(rule, from, to, base, opts)`, `escapeText`, `foldLine` |
-| `plan` | `createPlan`, `LADDER`, `startSuggestion`, `nextStep`, `canIncrease`, `increase`, `decreaseTo`, `requiredOn`, `logDone`, `targetDaysIn`, `adherence`, `adherenceBand`, `status`, `relapseSuggestion`, `startEbb`/`endEbb`, `startSeason`, `normalize`, `dailyLoad`, `loadWarning`, `validatePlan` |
-| `sin-program` | `startProgram`, `pathFor`, `stagesFor`, `checkIn`, `currentStage`, `summary`, `afterFall`, `validateProgram` |
+| `plan` | `createPlan`, `LADDER`, `startSuggestion`, `nextStep`, `canIncrease`, `increase`, `decreaseTo`, `requiredOn`, `logDone`, `targetDaysIn`, `adherence`, `adherenceBand`, `status`, `relapseSuggestion`, `startEbb`/`endEbb`, `startSeason`, `normalize`, `dailyLoad`, `loadWarning`, `validatePlan`; «حلقة العادة»: `HabitLoop`, `addHabitLoop`/`updateHabitLoop`/`removeHabitLoop`, `validateHabitLoops`, `MAX_HABIT_LOOPS` |
+| `sin-program` | `startProgram`, `pathFor`, `stagesFor`, `checkIn`, `currentStage`, `summary`, `afterFall`, `validateProgram`, `mergePrograms`; «حلقة المعصية»: `SinLoop`, `addSinLoop`/`updateSinLoop`/`removeSinLoop`, `activeSinLoops`, `validateSinLoops` |
+| `limits` | `LIMITS` (3 young habits, 7 periodic acts, 3 programs), `HABIT_SETTLE_DAYS` (90), `PROGRAM_SETTLE_DAYS` (60), `limits(store, today, {isPeriodicAct})`, `limitBlock` (why adding is refused and `unlocksOn`), `keptDays`, `countsTowardHabitLimit` |
 | `kinship` | `createRelative`, `nextDue`, `dueList`, `logContact`, `undoLastContact`, `looksLikeContactDetails`, `validateRelative` |
 | `storage` | `Store` (`v: 2`), `emptyStore`, `parseStore(json, now?)` (never throws, drops invalid entries, upgrades v1), `serializeStore`, `exportForSync` (no `programs`), `upsertPlan`/`updatePlan`/`deletePlan`, `upsertRelative`/`updateRelative`/`deleteRelative`, `undoContact`, `updateSettings`, `contactId` |
 | `sync` | `localChanges(store, {maxItems?, includeAcked?})`, `buildSyncRequest`, `applyServerChanges(store, response)`, `countChanges`, `compareVersions`, `mergeLogAmount`, wire types (`SyncChanges`, `SyncResponse`, `WirePlan`…) |
-| `vault` | `deriveKey(code, salt, iterations = 210000)`, `newSalt`, `sealPrograms`, `openPrograms`, `unlockVault`, `vaultPayload`, `VaultError`, `VaultLockedError` |
+| `vault` | `deriveKey(code, salt, iterations = 210000)`, `newSalt`, `sealPrograms`, `openPrograms`, `unlockVault`, `vaultPayload`, `createVault`, `sealVault`, `serializeVaultKey`/`parseVaultKey`, `VaultError`, `VaultLockedError` |
 | `base64` | `bytesToBase64`, `base64ToBytes` (strict) |
 
 ### Hijri
@@ -101,6 +102,8 @@ The sin program (slug, check-ins and notes) leaves the device only inside the va
 - The plaintext is padded to a multiple of 1 KB, so the ciphertext length does not hint at which sin it holds.
 - `vaultPayload` builds the `PUT /v1/me/sin-vault` body and refuses fewer than 210,000 iterations.
 - `unlockVault(vault, code)` returns the programs and the key, to keep in memory for the session.
+- Always on (owner, 2026-11-01): `createVault` for the first program, the key kept behind biometrics on the app
+  (`serializeVaultKey`), `sealVault` on every change. Client steps: docs/plan/2026-11-01-sin-vault-always-on.md.
 - A wrong code or changed data throws `VaultLockedError`. Malformed input throws `VaultError`. A forgotten code
   cannot be recovered.
 - The output is standard AES-GCM (ciphertext followed by the 16-byte tag). The tests decrypt it with WebCrypto.

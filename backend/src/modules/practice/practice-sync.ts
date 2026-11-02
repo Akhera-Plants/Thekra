@@ -5,6 +5,7 @@ import {
   MAX_EXCUSED_DAYS,
   PEOPLE_CIRCLES,
   settingsContent,
+  cloneHabitLoop,
   isPrayerAnchor,
   isValidDate,
   isValidTime,
@@ -13,7 +14,9 @@ import {
   relativeFields,
   validatePlan,
   validateRelative,
+  validateHabitLoops,
   validateRule,
+  type HabitLoop,
   type LogEntry,
   type PeopleCircle,
   type PrayerAnchor,
@@ -93,6 +96,8 @@ export interface PlanWire {
   establishedOn: string | null;
   /** Phase 6 prayer anchors, one per slot (`null` = fixed time); null when none. An older client omits it. */
   slotAnchors: (PrayerAnchor | null)[] | null;
+  /** «حلقة العادة» (2026-11-01): practice-core HabitLoop[], null when none. An older client omits it. */
+  loops: HabitLoop[] | null;
   clientUpdatedAt: string;
   deletedAt: string | null;
 }
@@ -284,6 +289,10 @@ function parsePlan(raw: unknown): PlanChange {
   const rawAnchors = raw['slotAnchors'] ?? null;
   const slotAnchors = Array.isArray(rawAnchors) && rawAnchors.some((a) => a !== null) ? (rawAnchors as (PrayerAnchor | null)[]) : null;
   if (rawAnchors !== null && !Array.isArray(rawAnchors)) throw new ItemError('slotAnchors must be null or an array');
+  const rawLoops = raw['loops'] ?? null;
+  if (rawLoops !== null) check(validateHabitLoops(rawLoops));
+  // Known fields only, in the canonical order (unknown loop fields are dropped like any unknown field).
+  const loops = Array.isArray(rawLoops) && rawLoops.length > 0 ? (rawLoops as HabitLoop[]).map(cloneHabitLoop) : null;
   // The practice-core shape: `log` travels separately, `ebb`/`season`/`ceiling` are optional.
   check(
     validatePlan({
@@ -304,6 +313,7 @@ function parsePlan(raw: unknown): PlanChange {
       ...(resumedOn ? { resumedOn } : {}),
       ...(establishedOn ? { establishedOn } : {}),
       ...(slotAnchors ? { slotAnchors } : {}),
+      ...(loops ? { loops } : {}),
     }),
   );
   const plan = raw as Record<string, unknown> & {
@@ -348,6 +358,7 @@ function parsePlan(raw: unknown): PlanChange {
       resumedOn,
       establishedOn,
       slotAnchors: slotAnchors ? [...slotAnchors] : null,
+      loops,
       clientUpdatedAt,
       deletedAt: null,
     },
@@ -471,6 +482,7 @@ function corePlan(plan: PlanWire): Plan {
     ...(plan.resumedOn ? { resumedOn: plan.resumedOn } : {}),
     ...(plan.establishedOn ? { establishedOn: plan.establishedOn } : {}),
     ...(plan.slotAnchors ? { slotAnchors: plan.slotAnchors } : {}),
+    ...(plan.loops ? { loops: plan.loops } : {}),
   };
 }
 
@@ -615,6 +627,7 @@ export function planToWire(row: PlanRow): PlanWire {
     resumedOn: optionalDay(row.resumedOn),
     establishedOn: optionalDay(row.establishedOn),
     slotAnchors: anchorsOf(row.slotAnchors),
+    loops: loopsOf(row.loops),
     clientUpdatedAt: row.clientUpdatedAt.toISOString(),
     deletedAt: iso(row.deletedAt),
   };
@@ -704,4 +717,13 @@ export async function readPracticeChanges(
 function anchorsOf(value: unknown): (PrayerAnchor | null)[] | null {
   if (!Array.isArray(value) || !value.every((a) => a === null || isPrayerAnchor(a)) || !value.some((a) => a !== null)) return null;
   return value as (PrayerAnchor | null)[];
+}
+
+/**
+ * A stored `loops` value: valid habit loops in the canonical field order (jsonb reorders object keys), else null
+ * (old rows, none, bad data).
+ */
+function loopsOf(value: unknown): HabitLoop[] | null {
+  if (!Array.isArray(value) || value.length === 0 || validateHabitLoops(value) !== null) return null;
+  return (value as HabitLoop[]).map(cloneHabitLoop);
 }

@@ -94,8 +94,138 @@ export interface Plan {
    * Still tracked and asked; it does not count toward the three saplings and reminds in one slot only.
    */
   establishedOn?: LocalDate;
+  /**
+   * «حلقة العادة» (2026-11-01): one or more loops the member built for this habit with the habit-loop builder. Absent
+   * when none. Synced with the plan (part of its last-writer-wins content); see {@link HabitLoop}.
+   */
+  loops?: HabitLoop[];
   /** ISO time of the last local edit of the plan's own fields (not its log). Set by the helpers; v1 data gets it on upgrade. */
   updatedAt?: IsoTime;
+}
+
+/**
+ * «حلقة العادة»: the member's own answers to the template questions of the habit-loop builder. Free text written by
+ * the member (shown back only to them); never a religious text.
+ */
+export interface HabitLoop {
+  /** Client id, unique within the plan (a UUID is fine): 1–64 characters of `A–Z a–z 0–9 _ -`. */
+  id: string;
+  /** «الإشارة»: when / where the habit starts (after which prayer, in which place). */
+  cue: string;
+  /** «الرغبة / النية»: what the member wants from it, the intention. */
+  craving: string;
+  /** «الفعل»: the routine itself. Not empty. */
+  routine: string;
+  /** «المكافأة»: what follows and makes it worth repeating. */
+  reward: string;
+  /** «ما الذي يعيقك؟» (optional). */
+  obstacle?: string;
+  /** «خطة إن عاق»: if … then … (optional). */
+  ifThen?: string;
+  /** When this loop was last edited (ISO time, kept exactly as written). */
+  updatedAt: IsoTime;
+}
+
+/** At most this many loops per habit. */
+export const MAX_HABIT_LOOPS = 5;
+/** Characters per loop answer. */
+export const MAX_LOOP_TEXT = 300;
+const LOOP_ID = /^[A-Za-z0-9_-]{1,64}$/;
+const LOOP_TEXT_FIELDS = ['cue', 'craving', 'routine', 'reward'] as const;
+const LOOP_OPTIONAL_FIELDS = ['obstacle', 'ifThen'] as const;
+
+/** Returns an English error message for one habit loop, or `null`. Unknown fields are ignored ({@link cloneHabitLoop} drops them). */
+export function validateHabitLoop(loop: unknown): string | null {
+  if (typeof loop !== 'object' || loop === null || Array.isArray(loop)) return 'loop must be an object';
+  const l = loop as Record<string, unknown>;
+  if (typeof l.id !== 'string' || !LOOP_ID.test(l.id)) return 'loop id must be 1–64 characters of A–Z a–z 0–9 _ -';
+  for (const k of LOOP_TEXT_FIELDS) {
+    if (typeof l[k] !== 'string' || (l[k] as string).length > MAX_LOOP_TEXT) return `loop ${k} must be a string of at most ${MAX_LOOP_TEXT} characters`;
+  }
+  if ((l.routine as string).trim().length === 0) return 'loop routine must not be empty';
+  for (const k of LOOP_OPTIONAL_FIELDS) {
+    if (l[k] !== undefined && (typeof l[k] !== 'string' || (l[k] as string).length > MAX_LOOP_TEXT)) {
+      return `loop ${k} must be a string of at most ${MAX_LOOP_TEXT} characters`;
+    }
+  }
+  if (!isIsoTime(l.updatedAt)) return 'loop updatedAt must be an ISO time';
+  return null;
+}
+
+/** Returns an English error message for a plan's `loops`, or `null` (at most {@link MAX_HABIT_LOOPS}, unique ids). */
+export function validateHabitLoops(loops: unknown): string | null {
+  if (!Array.isArray(loops)) return 'loops must be an array';
+  if (loops.length > MAX_HABIT_LOOPS) return `loops must hold at most ${MAX_HABIT_LOOPS} loops`;
+  const ids = new Set<string>();
+  for (const loop of loops) {
+    const e = validateHabitLoop(loop);
+    if (e) return e;
+    const id = (loop as HabitLoop).id;
+    if (ids.has(id)) return 'loop ids must be unique';
+    ids.add(id);
+  }
+  return null;
+}
+
+/** A copy with the fields in their canonical order (the order the sync content uses). */
+export function cloneHabitLoop(loop: HabitLoop): HabitLoop {
+  return {
+    id: loop.id,
+    cue: loop.cue,
+    craving: loop.craving,
+    routine: loop.routine,
+    reward: loop.reward,
+    ...(loop.obstacle !== undefined ? { obstacle: loop.obstacle } : {}),
+    ...(loop.ifThen !== undefined ? { ifThen: loop.ifThen } : {}),
+    updatedAt: loop.updatedAt,
+  };
+}
+
+/** The answers of a loop, without its id and time. */
+export type HabitLoopInput = Omit<HabitLoop, 'id' | 'updatedAt'>;
+
+function withLoops(plan: Plan, loops: HabitLoop[], now: IsoTime): Plan {
+  const copy: Plan = { ...plan, updatedAt: now };
+  if (loops.length > 0) copy.loops = loops;
+  else delete copy.loops;
+  const err = validatePlan(copy);
+  if (err) throw new RangeError(`Invalid plan: ${err}`);
+  return copy;
+}
+
+const loopText = (input: Partial<HabitLoopInput>, base?: HabitLoop): HabitLoopInput => {
+  const out: HabitLoopInput = {
+    cue: input.cue ?? base?.cue ?? '',
+    craving: input.craving ?? base?.craving ?? '',
+    routine: input.routine ?? base?.routine ?? '',
+    reward: input.reward ?? base?.reward ?? '',
+  };
+  const obstacle = 'obstacle' in input ? input.obstacle : base?.obstacle;
+  const ifThen = 'ifThen' in input ? input.ifThen : base?.ifThen;
+  if (obstacle !== undefined && obstacle !== '') out.obstacle = obstacle;
+  if (ifThen !== undefined && ifThen !== '') out.ifThen = ifThen;
+  return out;
+};
+
+/** Adds a loop to the habit (the plan's `updatedAt` too). Throws on an invalid loop, a used id or more than 5 loops. */
+export function addHabitLoop(plan: Plan, id: string, input: HabitLoopInput, now: IsoTime = nowIso()): Plan {
+  if ((plan.loops ?? []).some((l) => l.id === id)) throw new RangeError('A loop with this id exists');
+  return withLoops(plan, [...(plan.loops ?? []), cloneHabitLoop({ id, ...loopText(input), updatedAt: now })], now);
+}
+
+/** Changes the given answers of one loop (an empty `obstacle` / `ifThen` clears it). Throws when the loop is unknown. */
+export function updateHabitLoop(plan: Plan, id: string, patch: Partial<HabitLoopInput>, now: IsoTime = nowIso()): Plan {
+  const loops = plan.loops ?? [];
+  const base = loops.find((l) => l.id === id);
+  if (!base) throw new RangeError('No loop with this id');
+  return withLoops(plan, loops.map((l) => (l.id === id ? cloneHabitLoop({ id, ...loopText(patch, base), updatedAt: now }) : l)), now);
+}
+
+/** Removes one loop. No-op data (same plan) when the loop is unknown. */
+export function removeHabitLoop(plan: Plan, id: string, now: IsoTime = nowIso()): Plan {
+  const loops = plan.loops ?? [];
+  if (!loops.some((l) => l.id === id)) return plan;
+  return withLoops(plan, loops.filter((l) => l.id !== id), now);
 }
 
 /** The only amounts a plan climbs through. Used for minutes and for count/times units alike. */
@@ -256,6 +386,10 @@ export function validatePlan(plan: unknown): string | null {
   }
   if (p.resumedOn !== undefined && (p.pausedOn === undefined || (p.resumedOn as string) < (p.pausedOn as string))) {
     return 'resumedOn needs pausedOn and must not be before it';
+  }
+  if (p.loops !== undefined) {
+    const e = validateHabitLoops(p.loops);
+    if (e) return e;
   }
   return null;
 }

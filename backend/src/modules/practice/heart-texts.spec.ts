@@ -24,7 +24,15 @@ describe('heart-texts.yaml — the real reviewer file', () => {
 
   it('never invents an id: every id is already in a reviewed file or carries a `# checked:` note', () => {
     const file = heartTexts();
-    const ids = [...Object.values(file.mizan).flat(), ...Object.values(file.stories).filter((id): id is string => id !== null)];
+    const m = file.mujahada;
+    const ids = [
+      ...Object.values(file.mizan).flat(),
+      ...Object.values(file.stories).filter((id): id is string => id !== null),
+      ...m.verses.flat(),
+      ...m.sayings,
+      ...[m.multiplierHadith, m.sittingPrayerHadith].filter((id): id is string => id !== null),
+    ];
+    expect(ids.length).toBeGreaterThan(4);
     for (const id of ids) {
       const line = text.split('\n').find((l) => l.includes(id)) ?? '';
       expect(reviewedIds.has(id) || MURAQABA_QUOTE_IDS.includes(id) || /# checked:/.test(line), id).toBe(true);
@@ -34,6 +42,47 @@ describe('heart-texts.yaml — the real reviewer file', () => {
   it('a topic without curated ids has none (the API falls back to its top text)', () => {
     expect(mizanIdsFor('no-such-topic')).toEqual([]);
     expect(mizanIdsFor(999)).toEqual([]);
+  });
+});
+
+describe('heart-texts.yaml — «لحظة مجاهدة»', () => {
+  const stories = 'stories:\n  qatil-al-mia:\n  marad-safar:\n  fasila:\n  ghusn-shawk:\n';
+  const a = '0d77e977-f40b-473b-8b14-42b5fb82951a';
+  const b = '93f7d1ab-b6f7-4521-bae8-f37cc1ff06a2';
+  const c = 'a32fdd52-2bf3-4cce-9d3e-fb8cde0f8bd0';
+
+  it('the real file: 8–15 verse passages, the two hadith and easy good-deed topics; a verse for after a fall is not here', () => {
+    const { mujahada } = heartTexts();
+    expect(mujahada.verses.length).toBeGreaterThanOrEqual(8);
+    expect(mujahada.verses.length).toBeLessThanOrEqual(15);
+    expect(mujahada.multiplierHadith).not.toBeNull();
+    expect(mujahada.sittingPrayerHadith).not.toBeNull();
+    expect(mujahada.easyHighReward.length).toBeGreaterThanOrEqual(6);
+    // الزمر 53 («قل يا عبادي الذين أسرفوا») is for after a fall, never here: no id is its production id.
+    expect(mujahada.verses.flat()).not.toContain('fb625acf-4317-45bc-b154-7dacb7179f44');
+  });
+
+  it('reads passages (one id or a list of up to 3), optional hadith and DO topics; absent parts are empty', () => {
+    const file = buildHeartTexts(
+      `review: x\n${stories}mujahadaVerses:\n  - ${a}\n  - [${b}, ${c}]\nmultiplierHadith: 93F7D1AB-B6F7-4521-BAE8-F37CC1FF06A3\neasyHighReward: [dhikr, birr-al-walidayn]\n`,
+    );
+    expect(file.mujahada).toEqual({
+      verses: [[a], [b, c]],
+      sayings: [],
+      multiplierHadith: '93f7d1ab-b6f7-4521-bae8-f37cc1ff06a3',
+      sittingPrayerHadith: null,
+      easyHighReward: ['dhikr', 'birr-al-walidayn'],
+    });
+    expect(buildHeartTexts(`review: x\n${stories}`).mujahada).toEqual({ verses: [], sayings: [], multiplierHadith: null, sittingPrayerHadith: null, easyHighReward: [] });
+  });
+
+  it('rejects bad ids, long passages, an id used twice and topics that are not good deeds', () => {
+    expect(() => buildHeartTexts(`review: x\n${stories}mujahadaVerses: [x]\n`)).toThrow('is not a UUID');
+    expect(() => buildHeartTexts(`review: x\n${stories}mujahadaVerses:\n  - [${a}, ${b}, ${c}, ${a}]\n`)).toThrow('1 to 3');
+    expect(() => buildHeartTexts(`review: x\n${stories}mujahadaVerses: [${a}]\nmultiplierHadith: ${a}\n`)).toThrow('twice');
+    expect(() => buildHeartTexts(`review: x\n${stories}easyHighReward: [ghibah]\n`)).toThrow('not a taxonomy.yaml good deed');
+    expect(() => buildHeartTexts(`review: x\n${stories}easyHighReward: [dhikr, dhikr]\n`)).toThrow('twice');
+    expect(() => buildHeartTexts(`review: x\n${stories}mujahadaSayings: ${a}\n`)).toThrow('must be a list');
   });
 });
 

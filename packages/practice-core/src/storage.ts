@@ -21,10 +21,10 @@
 import { addDays, isIsoTime, isValidDate, isValidTime, isoMillis, nowIso, type IsoTime, type LocalDate, type LocalTime } from './dates.js';
 import { HIJRI_OFFSET_MAX, HIJRI_OFFSET_MIN } from './hijri.js';
 import { latestDate, undoLastContact, validateRelative, type PeopleCircle, type Relative } from './kinship.js';
-import { mergeLogs, validatePlan, type Plan, type PlanLog } from './plan.js';
+import { cloneHabitLoop, mergeLogs, validatePlan, type HabitLoop, type Plan, type PlanLog } from './plan.js';
 import type { Rule } from './rules.js';
 import type { PrayerAnchor } from './prayer.js';
-import { sanitizeCheckIn, validateCheckIn, validateProgram, type CheckIn, type SinProgram } from './sin-program.js';
+import { cloneSinLoop, sanitizeCheckIn, validateCheckIn, validateProgram, validateSinLoop, type CheckIn, type SinProgram } from './sin-program.js';
 
 export const STORE_VERSION = 2;
 /** Most excused days kept (the newest win). */
@@ -150,6 +150,7 @@ export function clonePlan(p: Plan): Plan {
   if (p.resumedOn !== undefined) out.resumedOn = p.resumedOn;
   if (p.establishedOn !== undefined) out.establishedOn = p.establishedOn;
   if (p.slotAnchors !== undefined) out.slotAnchors = [...p.slotAnchors];
+  if (p.loops !== undefined && p.loops.length > 0) out.loops = p.loops.map(cloneHabitLoop);
   if (p.updatedAt !== undefined) out.updatedAt = p.updatedAt;
   if (p.logCorrectedAt !== undefined) out.logCorrectedAt = { ...p.logCorrectedAt };
   return out;
@@ -187,6 +188,7 @@ function cloneProgram(p: SinProgram): SinProgram {
     startedOn: p.startedOn,
     checkIns: p.endedAt !== undefined ? [] : p.checkIns.map(cloneCheckIn),
   };
+  if (p.endedAt === undefined && p.loops !== undefined && p.loops.length > 0) out.loops = p.loops.map(cloneSinLoop);
   if (p.updatedAt !== undefined) out.updatedAt = p.updatedAt;
   if (p.endedAt !== undefined) out.endedAt = p.endedAt;
   return out;
@@ -199,6 +201,8 @@ export interface PlanStateFields {
   establishedOn?: LocalDate;
   /** Phase 6 (prayer anchors), only when the plan has one. */
   slotAnchors?: (PrayerAnchor | null)[];
+  /** «حلقة العادة» (2026-11-01), only when the plan has at least one loop. */
+  loops?: HabitLoop[];
 }
 
 /**
@@ -213,6 +217,7 @@ export function planFields(p: Plan) {
   if (p.resumedOn !== undefined) state.resumedOn = p.resumedOn;
   if (p.establishedOn !== undefined) state.establishedOn = p.establishedOn;
   if (p.slotAnchors !== undefined && p.slotAnchors.some((a) => a !== null)) state.slotAnchors = [...p.slotAnchors];
+  if (p.loops !== undefined && p.loops.length > 0) state.loops = p.loops.map(cloneHabitLoop);
   return {
     habitKey: p.habitKey ?? null,
     deedSlug: p.deedSlug,
@@ -302,7 +307,12 @@ export function parsePrograms(raw: unknown): SinProgram[] {
   if (!Array.isArray(raw)) return [];
   const cleaned = raw.map((p) =>
     isRecord(p) && Array.isArray(p.checkIns)
-      ? { ...p, checkIns: p.checkIns.map(sanitizeCheckIn).filter((c) => validateCheckIn(c) === null) }
+      ? {
+          ...p,
+          checkIns: p.checkIns.map(sanitizeCheckIn).filter((c) => validateCheckIn(c) === null),
+          // A damaged loop is dropped, never the program.
+          ...(Array.isArray(p.loops) ? { loops: p.loops.filter((l) => validateSinLoop(l) === null) } : {}),
+        }
       : p,
   );
   return keepValid<SinProgram>(cleaned, validateProgram, cloneProgram, (p) => p.sinSlug);

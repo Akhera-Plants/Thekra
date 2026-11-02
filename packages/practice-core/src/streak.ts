@@ -15,7 +15,9 @@
  *   `correctLog` (see {@link logForDay}).
  * - Today counts only once complete; until then the current streak is the run that ended yesterday.
  *
- * Only habit plans count. Relatives and the private program never enter a streak (the program stays generic).
+ * Only habit plans count. Relatives and the private program never enter a streak (the program stays generic), and
+ * neither do periodic acts (owner, 2026-11-01: they are reminders, not habits): pass the same
+ * {@link StreakOptions.isPeriodicAct} as to `limits`.
  * Pure; the store is not changed.
  */
 import { addDays, isoMillis, parseDate, type IsoTime, type LocalDate } from './dates.js';
@@ -30,6 +32,8 @@ export const MAKE_UP_HOUR = 12;
 export type StreakDay = 'complete' | 'incomplete' | 'skipped';
 
 export interface StreakOptions extends PlanDayOptions {
+  /** True for a plan from a periodic template (catalog `kind: periodic`): it never enters the streak. */
+  isPeriodicAct?: (plan: Plan) => boolean;
   /** The current time in milliseconds (default `Date.now()`): decides whether yesterday can still be made up. */
   now?: number;
   /**
@@ -77,19 +81,26 @@ export function countsOn(plan: Plan, date: LocalDate, deadlineOf: (date: LocalDa
 /** Whether `date` is complete, incomplete, or asks for nothing (skipped; also an excused day). */
 export function streakDay(store: Store, date: LocalDate, opts: StreakOptions = {}): StreakDay {
   if (isExcused(store, date)) return 'skipped';
-  const asked = store.plans.filter((p) => planAsksOn(p, date, opts));
+  const habits = streakPlans(store, opts);
+  const asked = habits.filter((p) => planAsksOn(p, date, opts));
   if (asked.length === 0) return 'skipped';
   const deadlineOf = opts.deadlineOf ?? makeUpDeadline;
   if (asked.some((p) => isEbbOn(p, date))) {
-    return store.plans.some((p) => countsOn(p, date, deadlineOf)) ? 'complete' : 'incomplete';
+    return habits.some((p) => countsOn(p, date, deadlineOf)) ? 'complete' : 'incomplete';
   }
   return asked.every((p) => countsOn(p, date, deadlineOf)) ? 'complete' : 'incomplete';
 }
 
-/** The first day any plan exists, or null without plans: nothing before it can be asked. */
-function firstPlanDay(store: Store): LocalDate | null {
+/** The plans that may enter the streak: every plan but the periodic acts. */
+function streakPlans(store: Store, opts: StreakOptions): Plan[] {
+  const periodic = opts.isPeriodicAct;
+  return periodic ? store.plans.filter((p) => !periodic(p)) : store.plans;
+}
+
+/** The first day any habit plan exists, or null without one: nothing before it can be asked. */
+function firstPlanDay(store: Store, opts: StreakOptions): LocalDate | null {
   let first: LocalDate | null = null;
-  for (const p of store.plans) if (first === null || p.createdOn < first) first = p.createdOn;
+  for (const p of streakPlans(store, opts)) if (first === null || p.createdOn < first) first = p.createdOn;
   return first;
 }
 
@@ -100,7 +111,7 @@ function isOpenDay(date: LocalDate, today: LocalDate, opts: StreakOptions): bool
 
 /** Complete days in a row up to `today` (an open day does not break it; skipped and excused days pass through). */
 export function currentStreak(store: Store, today: LocalDate, opts: StreakOptions = {}): number {
-  const first = firstPlanDay(store);
+  const first = firstPlanDay(store, opts);
   if (first === null) return 0;
   let count = 0;
   for (let d = today; d >= first; d = addDays(d, -1)) {
@@ -113,7 +124,7 @@ export function currentStreak(store: Store, today: LocalDate, opts: StreakOption
 
 /** The longest run of complete days from the first plan up to `today` (an open day does not end a run). */
 export function longestStreak(store: Store, today: LocalDate, opts: StreakOptions = {}): number {
-  const first = firstPlanDay(store);
+  const first = firstPlanDay(store, opts);
   if (first === null || first > today) return 0;
   let best = 0;
   let run = 0;

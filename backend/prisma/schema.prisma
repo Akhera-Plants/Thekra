@@ -860,6 +860,8 @@ model HabitPlan {
   establishedOn     DateTime?   @db.Date
   /// Phase 6 prayer anchors: one per slot («after-fajr»… or null for a fixed time); null when the plan has none.
   slotAnchors       Json?
+  /// «حلقة العادة» (2026-11-01): the member's habit loops (practice-core HabitLoop[]); null when none.
+  loops             Json?
   clientUpdatedAt   DateTime
   updatedAt         DateTime    @updatedAt
   deletedAt         DateTime?

@@ -29,3 +29,47 @@ stories:
   fasila: 5fbf67d4-c118-4029-87af-4f6381ce86e6 # checked: 2026-11-01 production Quote, grade SAHIH, provider hadeethenc.com
   # A small-deed nudge: the man who removed a thorny branch from the road (al-Bukhari 652, Muslim 1914).
   ghusn-shawk: dc1006ed-41d7-48f0-ba1a-f39a1067d56c # checked: 2026-11-01 production Quote, grade SAHIH, provider sahihayn
+
+# «لحظة مجاهدة» (formerly «لحظة ضعف», owner 2026-11-01): served in the practice catalog as `mujahada`. The client reads
+# every text by id. No verse for after a fall here («قل يا عبادي الذين أسرفوا» belongs to «خربانة؟ صلّحها»): these are for
+# the moment of the struggle itself.
+
+# Quran passages on patience, steadfastness and striving. Each entry is one passage: one verse id, or [ids] of
+# consecutive verses shown together. Checked: production Quote, type QURAN_VERSE (quran.com), surah/ayah and stored text.
+mujahadaVerses:
+  - 0511f593-cef7-46d5-ac12-4d39cb8e7c11 # checked: 2026-11-01 production QURAN_VERSE آل عمران 200 «اصبروا وصابروا ورابطوا»
+  - dd95c857-a96d-4d4c-8da0-1af4c40dff07 # checked: 2026-11-01 production QURAN_VERSE آل عمران 142 «ولما يعلم الله الذين جاهدوا منكم»
+  - f685a673-4d44-4673-ac6a-ec3336dbbb09 # checked: 2026-11-01 production QURAN_VERSE البقرة 214 «أم حسبتم أن تدخلوا الجنة… ألا إن نصر الله قريب»
+  - 2348401a-382b-4b28-80cb-85f2cf1684a9 # checked: 2026-11-01 production QURAN_VERSE العنكبوت 69 «والذين جاهدوا فينا لنهدينهم سبلنا»
+  - [0145e102-b772-4776-9bd6-adf36252bb15, 6d84f3d6-04da-45bf-bef3-138194290b68] # checked: 2026-11-01 production QURAN_VERSE النازعات 40–41 «ونهى النفس عن الهوى فإن الجنة هي المأوى»
+  - b77bb6f5-98d3-4edd-8158-de0dc60a6e90 # checked: 2026-11-01 production QURAN_VERSE النحل 96 «ولنجزين الذين صبروا أجرهم»
+  - 78075e3f-dc74-4d4b-8063-037b0f6b7800 # checked: 2026-11-01 production QURAN_VERSE الزمر 10 «إنما يوفى الصابرون أجرهم بغير حساب»
+  - ac694d63-d5f1-403f-b990-065a34eeb476 # checked: 2026-11-01 production QURAN_VERSE البقرة 153 «استعينوا بالصبر والصلاة»
+  - 00000000-0000-4000-8000-000000000004 # checked: 2026-11-01 production QURAN_VERSE الأنفال 46 «واصبروا إن الله مع الصابرين»
+  - 8c55a737-0383-4b27-8766-969648630bd5 # checked: 2026-11-01 production QURAN_VERSE هود 115 «واصبر فإن الله لا يضيع أجر المحسنين»
+  - 5247e231-4c12-4a43-900b-75f6aebf5dd0 # checked: 2026-11-01 production QURAN_VERSE النحل 127 «واصبر وما صبرك إلا بالله»
+  - 0c74e365-212d-4175-a999-8f3bca245242 # checked: 2026-11-01 production QURAN_VERSE محمد 31 «حتى نعلم المجاهدين منكم والصابرين»
+  - 7943ef90-d599-45f0-b0fb-5f51990b4333 # checked: 2026-11-01 production QURAN_VERSE الرعد 24 «سلام عليكم بما صبرتم»
+
+# Sayings of the scholars on patience, desire and the soul's struggle. Empty: on 2026-11-01 the production database holds
+# no published quote by Ibn al-Qayyim (no SCHOLAR_QUOTE rows at all; no source by him; his name appears only inside
+# editors' footnotes of hadith books). Add ids here only once such quotes are imported and published.
+mujahadaSayings: []
+
+# A good deed is written ten times up to seven hundred times (al-Bukhari 6491, hadith qudsi «إن الله كتب الحسنات والسيئات»).
+multiplierHadith: f8ee2864-b801-432d-9644-b05b99db34b0 # checked: 2026-11-01 production Quote, صحيح البخاري 6491, grade SAHIH, provider sahihayn
+
+# The voluntary prayer sitting has half the reward of standing (al-Bukhari 1115 «ومن صلى قاعدا فله نصف أجر القائم»).
+sittingPrayerHadith: e9026ac0-00d6-4c6d-bb03-9fbed245a740 # checked: 2026-11-01 production Quote, صحيح البخاري 1115, grade SAHIH, provider sahihayn
+
+# «أتبِع السيئةَ الحسنة»: easy deeds with a great reward (taxonomy.yaml DO topics). Checked 2026-11-01 in production: each has
+# accepted sahih/hasan texts (count in brackets).
+easyHighReward:
+  - dhikr # ذكر الله (286)
+  - tawba # التوبة والاستغفار (66)
+  - sadaqah # الصدقة، وفيها صدقة السر (164)
+  - birr-al-walidayn # بر الوالدين (40)
+  - salat-ala-nabi # الصلاة على النبي ﷺ (12)
+  - islah-bayn-nas # الإصلاح بين الناس (13)
+  - kalam-tayyib # الكلمة الطيبة وطلاقة الوجه (35)
+  - imatat-adha # إماطة الأذى عن الطريق (11)

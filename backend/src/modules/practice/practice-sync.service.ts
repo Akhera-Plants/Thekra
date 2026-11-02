@@ -60,6 +60,7 @@ function tombstonePlan(id: string, clientUpdatedAt: string, deletedAt: string): 
     resumedOn: null,
     establishedOn: null,
     slotAnchors: null,
+    loops: null,
     clientUpdatedAt,
     deletedAt,
   };
@@ -239,20 +240,21 @@ export class PracticeSyncService {
     await tx.$executeRaw`
       INSERT INTO "HabitPlan" ("id", "userId", "habitKey", "deedSlug", "title", "unit", "amount", "ceiling",
         "activeDaysPerWeek", "slots", "rule", "createdOn", "amountChangedOn", "ebbSince", "season",
-        "pausedOn", "resumedOn", "establishedOn", "slotAnchors", "clientUpdatedAt", "updatedAt", "deletedAt")
+        "pausedOn", "resumedOn", "establishedOn", "slotAnchors", "loops", "clientUpdatedAt", "updatedAt", "deletedAt")
       SELECT t.id, ${userId}, t.habit_key, t.deed_slug, t.title, t.unit, t.amount, t.ceiling, t.active_days,
         ARRAY(SELECT jsonb_array_elements_text(t.slots::jsonb)), t.rule::jsonb, t.created_on::date,
         t.amount_changed_on::date, t.ebb_since::date, t.season::jsonb, t.paused_on::date, t.resumed_on::date,
-        t.established_on::date, t.slot_anchors::jsonb, t.client_updated_at::timestamp(3), now() AT TIME ZONE 'UTC', t.deleted_at::timestamp(3)
+        t.established_on::date, t.slot_anchors::jsonb, t.loops::jsonb, t.client_updated_at::timestamp(3), now() AT TIME ZONE 'UTC', t.deleted_at::timestamp(3)
       FROM unnest(
         ${column('id')}::text[], ${column('habitKey')}::text[], ${column('deedSlug')}::text[], ${column('title')}::text[],
         ${column('unit')}::text[], ${column('amount')}::float8[], ${column('ceiling')}::float8[], ${column('activeDaysPerWeek')}::int[],
         ${plans.map((plan) => JSON.stringify(plan.slots))}::text[], ${plans.map((plan) => json(plan.rule))}::text[],
         ${column('createdOn')}::text[], ${column('amountChangedOn')}::text[], ${column('ebbSince')}::text[],
         ${plans.map((plan) => json(plan.season))}::text[], ${column('pausedOn')}::text[], ${column('resumedOn')}::text[],
-        ${column('establishedOn')}::text[], ${plans.map((plan) => json(plan.slotAnchors))}::text[], ${column('clientUpdatedAt')}::text[], ${column('deletedAt')}::text[]
+        ${column('establishedOn')}::text[], ${plans.map((plan) => json(plan.slotAnchors))}::text[],
+        ${plans.map((plan) => json(plan.loops))}::text[], ${column('clientUpdatedAt')}::text[], ${column('deletedAt')}::text[]
       ) AS t(id, habit_key, deed_slug, title, unit, amount, ceiling, active_days, slots, rule, created_on,
-             amount_changed_on, ebb_since, season, paused_on, resumed_on, established_on, slot_anchors, client_updated_at, deleted_at)
+             amount_changed_on, ebb_since, season, paused_on, resumed_on, established_on, slot_anchors, loops, client_updated_at, deleted_at)
       ON CONFLICT ("id") DO UPDATE SET
         "habitKey" = EXCLUDED."habitKey", "deedSlug" = EXCLUDED."deedSlug", "title" = EXCLUDED."title",
         "unit" = EXCLUDED."unit", "amount" = EXCLUDED."amount", "ceiling" = EXCLUDED."ceiling",
@@ -260,7 +262,7 @@ export class PracticeSyncService {
         "createdOn" = EXCLUDED."createdOn", "amountChangedOn" = EXCLUDED."amountChangedOn",
         "ebbSince" = EXCLUDED."ebbSince", "season" = EXCLUDED."season",
         "pausedOn" = EXCLUDED."pausedOn", "resumedOn" = EXCLUDED."resumedOn", "establishedOn" = EXCLUDED."establishedOn",
-        "slotAnchors" = EXCLUDED."slotAnchors",
+        "slotAnchors" = EXCLUDED."slotAnchors", "loops" = EXCLUDED."loops",
         "clientUpdatedAt" = EXCLUDED."clientUpdatedAt", "updatedAt" = EXCLUDED."updatedAt",
         "deletedAt" = EXCLUDED."deletedAt"
       WHERE "HabitPlan"."userId" = EXCLUDED."userId"

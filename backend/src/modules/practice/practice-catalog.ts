@@ -16,7 +16,7 @@ import {
 } from '@thekra/practice-core';
 import { readTaxonomyFile } from '../taxonomy/taxonomy-files.js';
 import { topicBranches, topicSide } from '../taxonomy/topic-pairs.js';
-import { heartTexts } from './heart-texts.js';
+import { heartTexts, type MujahadaTexts } from './heart-texts.js';
 import { parseYaml, type YamlMap, type YamlValue } from './practice-yaml.js';
 
 /**
@@ -121,6 +121,8 @@ export interface PracticeCatalog {
   deedBranches: Record<string, number[]>;
   /** Story key → Quote id, or null while not found (heart-texts.yaml `stories:`; the UI hides a null story). */
   stories: Record<string, string | null>;
+  /** «لحظة مجاهدة» ids (heart-texts.yaml): verse passages, sayings, two hadith and «أتبِع السيئةَ الحسنة» topics. */
+  mujahada: MujahadaTexts;
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -453,6 +455,17 @@ export function buildPracticeCatalog(schedulesText: string, programsText: string
     },
     deedBranches,
     stories: { ...heartTexts().stories },
+    mujahada: mujahadaCopy(heartTexts().mujahada),
+  };
+}
+
+function mujahadaCopy(m: MujahadaTexts): MujahadaTexts {
+  return {
+    verses: m.verses.map((passage) => [...passage]),
+    sayings: [...m.sayings],
+    multiplierHadith: m.multiplierHadith,
+    sittingPrayerHadith: m.sittingPrayerHadith,
+    easyHighReward: [...m.easyHighReward],
   };
 }
 

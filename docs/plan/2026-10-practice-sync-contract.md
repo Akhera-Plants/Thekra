@@ -44,6 +44,30 @@ On the wire `slotAnchors` is in the canonical content only when at least one slo
 acked versions); a client that omits it sends none (last writer wins on the whole plan, as for the phase-2 fields).
 Each client resolves anchors from its own 30-day AlAdhan cache (practice-core `prayer.ts`); the server never does.
 
+**«حلقة العادة» (2026-11-01, migration `20261103090000_habit_loops`, additive):** `HabitPlan.loops Json?`: the habit
+loops a member built for the habit (practice-core `HabitLoop[]`), `null` when none. Each loop is
+`{ id, cue, craving, routine, reward, obstacle?, ifThen?, updatedAt }`:
+
+| Field | Template question | Rule |
+| --- | --- | --- |
+| `id` | — | 1–64 characters of `A–Z a–z 0–9 _ -`, unique within the plan |
+| `cue` | «الإشارة» (when / where) | string, ≤ 300 characters (may be empty while drafting) |
+| `craving` | «الرغبة / النية» | string, ≤ 300 |
+| `routine` | «الفعل» | string, ≤ 300, **not empty** |
+| `reward` | «المكافأة» | string, ≤ 300 |
+| `obstacle` | «ما الذي يعيقك؟» (optional) | string, ≤ 300; absent when not answered |
+| `ifThen` | «خطة إن عاق» (optional) | string, ≤ 300; absent when not answered |
+| `updatedAt` | — | ISO time of the loop's last edit, **stored exactly as sent** (no normalisation) |
+
+At most 5 loops per plan (`MAX_HABIT_LOOPS`). Validation is practice-core `validateHabitLoops` (called from
+`validatePlan`); unknown loop fields are dropped (`cloneHabitLoop`). Merge: the loops are part of the plan's canonical
+content, so the plan's last-writer-wins applies to the whole list (no per-loop merge on the server; each loop's
+`updatedAt` is for display). In the canonical content (`planFields`) `loops` comes after `slotAnchors` and only when
+there is at least one loop, each loop in the fixed order above, so older plans keep their acked versions. Postgres
+`jsonb` reorders object keys, so the server returns loops through `cloneHabitLoop` (canonical order). Compatibility:
+a client that does not know loops omits them, and its newer edit of the plan clears them (as for `slotAnchors`);
+the clients ship the field together.
+
 ## 3. Sync API (all JWT, `private, no-store`, throttled like other user routes)
 
 ### `GET /v1/me/practice?since=<ISO>` → changes after `since` (everything when absent)
@@ -56,7 +80,7 @@ Each client resolves anchors from its own 30-day AlAdhan cache (practice-core `p
   "plans": [ { "id": "…", "habitKey": "duha", "deedSlug": "nawafil", "title": "…", "unit": "times", "amount": 1,
                "ceiling": null, "activeDaysPerWeek": 3, "slots": ["09:30","11:00"], "rule": {…}|null,
                "createdOn": "2026-10-28", "amountChangedOn": "2026-10-28", "ebbSince": null, "season": null,
-               "pausedOn": null, "resumedOn": null, "establishedOn": null,
+               "pausedOn": null, "resumedOn": null, "establishedOn": null, "slotAnchors": null, "loops": [ {…} ]|null,
                "clientUpdatedAt": "…", "deletedAt": null } ],
   "logs": [ { "planId": "…", "date": "2026-10-28", "amount": 1 }, { "planId": "…", "date": "2026-10-27", "amount": 0, "correctedAt": "<ISO>" } ],
   "relatives": [ { "id": "…", "name": "…", "relation": "…", "rule": {…}, "circle": "kin", "lastContactedOn": null,
@@ -106,6 +130,15 @@ a failure there is logged and never fails the sync.
   only inside the encrypted vault with the check-in and merge with it by date. Stored programs without them read as
   none; an unknown or invalid part is dropped (`sanitizeCheckIn`), never the day. «متى تضعف؟», the counters and the
   weekly task are derived on the device and stored nowhere. The server is unchanged (it never sees the plaintext).
+- **«حلقة المعصية» (2026-11-01), inside the plaintext only:** a program may carry `loops`, practice-core `SinLoop[]`:
+  `{ id, trigger (المثير/الموقف), feeling (الشعور), craving (الرغبة), act (الفعل), after (ما يحصل بعده), alternative
+  (البديل), updatedAt, removedAt? }`, each answer ≤ 300 characters, at least one answer not empty, at most 5 live loops
+  and 20 entries with removal markers. A removed loop keeps only `id`, empty answers, `updatedAt` and `removedAt`, so a
+  merge does not bring it back. `mergePrograms` unites loops by id, the later `updatedAt` wins (a tie keeps this
+  device's). Ending a program drops its loops with its notes. A damaged loop is dropped on read, never the program.
+  The server is unchanged.
+- **Always on (owner, 2026-11-01):** «تخفَّف» data is always kept in the account as this vault; there is no
+  device-only mode. Client steps: [2026-11-01-sin-vault-always-on.md](2026-11-01-sin-vault-always-on.md).
 
 After a sync the web push planner follows practice-core: a paused plan reminds of nothing (and no day inside a pause),
 an established plan in its first slot only (`reminderSlots`); a visited sick person is no longer due, an unvisited one
@@ -124,9 +157,11 @@ Export (`GET /v1/auth/me/export`) includes settings, plans, logs, relatives, con
   → `{ciphertext, iv}` with AES-256-GCM and a fresh 12-byte IV, `openPrograms(vault, key)`; built on
   `@noble/hashes` and `@noble/ciphers` (audited, pure JS, the same code on web, extension and Hermes). Random bytes
   come from `globalThis.crypto.getRandomValues` (mobile installs it with `expo-crypto`).
-- The unlocked key is kept in memory for the session; the user may choose «تذكّر على هذا الجهاز» (web: IndexedDB
-  non-extractable `CryptoKey` is not available for noble, so the raw key is stored only in the device keystore on
-  mobile — `expo-secure-store` — and is not offered on the web).
+- The unlocked key is kept in memory for the session. On the app it is also kept in the device keystore behind
+  biometrics (`serializeVaultKey` / `parseVaultKey`, `expo-secure-store`); on the web it lives for the session only
+  (IndexedDB non-extractable `CryptoKey` is not available for noble). `createVault(code, programs)` makes the first
+  vault; `sealVault(programs, kept, version)` re-seals with the kept key and salt (autosave). See
+  [2026-11-01-sin-vault-always-on.md](2026-11-01-sin-vault-always-on.md).
 
 ## 5. Clients
 
