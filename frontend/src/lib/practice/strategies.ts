@@ -26,7 +26,7 @@ export function strategyTarget(action: StrategyAction): StrategyTarget {
     case 'friends':
       return { href: { pathname: '/practice/kinship', query: { circle: 'friends' } } };
     case 'pledges':
-      return { href: '/practice/notifications', heart: { pledges: true } };
+      return { href: '/practice/pledges', heart: { pledges: true } };
     case 'evening':
       return { href: '/practice/notifications', heart: { eveningReview: true } };
   }

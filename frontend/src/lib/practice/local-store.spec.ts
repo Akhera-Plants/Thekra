@@ -5,6 +5,7 @@ import {
   STORE_KEY,
   getPracticeSnapshot,
   parsePrefs,
+  plannedNotificationPrefs,
   resetPracticeSnapshotForTests,
   setPendingProgram,
   takePendingProgram,
@@ -90,6 +91,20 @@ describe('practice local store', () => {
       prefs: { kinshipNamesInCalendar: true, syncedUserId: 'u1' },
       legacyFreeMinutes: 180,
     });
+  });
+
+  it('keeps the chosen strategies when the strategy reminder is off, and plans none', () => {
+    const raw = JSON.stringify({ strategyReminders: false, notify: { strategies: ['start-tiny'], strategyTime: '10:00' } });
+    const { prefs } = parsePrefs(raw);
+    expect(prefs.strategyReminders).toBe(false);
+    expect(prefs.notify?.strategies).toEqual(['start-tiny']);
+    expect(plannedNotificationPrefs(prefs).strategies).toEqual([]);
+    // Absent or anything but `false` = on: the chosen strategies are planned.
+    for (const value of [undefined, true, 'no', 0]) {
+      const on = parsePrefs(JSON.stringify({ strategyReminders: value, notify: { strategies: ['start-tiny'] } })).prefs;
+      expect(on.strategyReminders).toBeUndefined();
+      expect(plannedNotificationPrefs(on).strategies).toEqual(['start-tiny']);
+    }
   });
 
   it('upgrades a v1 device copy: v2 store, UUID plan ids with the habit key kept, free minutes in settings', () => {

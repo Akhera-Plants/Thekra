@@ -32,6 +32,8 @@ export interface PushPrefsBody {
   eveningTime: string;
   fridayReview: boolean;
   fridayTime: string;
+  /** The weekly review's day, 0 = Sunday … 6 = Saturday (practice-core `NotificationPrefs.reviewDay`). */
+  reviewDay: number;
   /** «ذكّرني بها»: chosen strategy keys (at most one reminder a week). */
   strategies: string[];
   strategyTime: string;

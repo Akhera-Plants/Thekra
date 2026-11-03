@@ -1134,7 +1134,8 @@
       "doneUndoHint": "Tap to take back today’s log",
       "options": "Options",
       "slotsUnsuitable": "A reminder time does not suit this deed’s time.",
-      "slotsFix": "Fix the times"
+      "slotsFix": "Fix the times",
+      "plusOne": "Add one"
     },
     "progress": {
       "title": "Where you are",
@@ -1223,7 +1224,9 @@
       "icsName": "Ties of kinship",
       "edit": "Edit",
       "removeNoteDevice": "This relative is removed from your list.",
-      "removeNoteAccount": "This relative is removed from your account and all your devices."
+      "removeNoteAccount": "This relative is removed from your account and all your devices.",
+      "optionsOf": "Options: {name}",
+      "removeTitle": "Remove “{name}” from your kin?"
     },
     "sync": {
       "localGuest": "Your habits are always saved on this device. Sign in and they also stay in step with your account on all your devices.",
@@ -1480,11 +1483,10 @@
       },
       "pledge": {
         "title": "Your pledge: {text}",
-        "hint": "This is what you pledged to yourself when “{habit}” is missed two days in a row.",
+        "hint": "You missed {habit} two days in a row.",
         "kept": "I kept it",
         "sadaqah": "I give {text} in charity",
-        "sadaqahPlain": "I give in charity",
-        "rakatain": "I pray two rak'ahs"
+        "sadaqahPlain": "I give in charity"
       },
       "minimum": "The least I can",
       "minimumMet": "The least logged",
@@ -1501,30 +1503,19 @@
     "notify": {
       "title": "Notifications",
       "lead": "All your notifications in one place: at most four a day, and nothing between 23:00 and 5:00 except the night prayer and times you set yourself.",
+      "groupHabits": "Habit reminders",
       "habits": "Habit reminders at their times (the second skips once done)",
       "periodic": "Periodic acts and ties of kinship",
-      "evening": "Evening nudge while a habit is not done",
-      "friday": "Friday review reminder",
       "time": "Time",
-      "heartTitle": "Today's intention and self-review",
-      "intention": "Today's intention in the morning",
-      "eveningReview": "Evening review after 19:00",
-      "fridayReview": "Friday review",
+      "day": "Day",
+      "groupReview": "Self-review",
+      "intention": "Today's intention",
+      "eveningReview": "Evening review",
+      "weeklyReview": "Weekly review",
       "pledges": "Personal pledge",
-      "pledgesHint": "A pledge you write for yourself, kept when a habit is missed two days in a row.",
-      "pledgeHabit": "Habit",
-      "pledgeIf": "If I miss it two days in a row:",
-      "pledgeSadaqah": "I give in charity…",
-      "pledgeRakatain": "I pray two rak'ahs",
-      "pledgeCustom": "My own words",
-      "pledgeText": "Text",
-      "pledgeAdd": "Add a pledge",
-      "pledgeRemove": "Remove",
-      "pledgeNone": "No pledge yet.",
-      "noHabits": "Add a habit first to tie a pledge to it.",
-      "linkHint": "Notifications, today's intention and self-review",
-      "strategies": "{count, plural, =0 {No strategy chosen for reminders yet} one {A weekly reminder of 1 strategy} other {A weekly reminder of {n} strategies, in turn}}",
-      "strategiesLink": "Choose from habit strategies"
+      "pledgesLink": "My pledges",
+      "pledgesCount": "{n} of {total}",
+      "strategyToggle": "Remind me of a strategy each week"
     },
     "tally": {
       "title": "My tally",
@@ -1552,7 +1543,9 @@
       "afterFall": "Do not despair: the door of repentance is open",
       "heavyDay": "Your usual deed is written for you",
       "lateStart": "It is not too late",
-      "smallDeed": "A small deed, a great reward"
+      "smallDeed": "A small deed, a great reward",
+      "readSharh": "Read the explanation",
+      "more": "About “{title}”"
     },
     "weekBranch": {
       "title": "Branch of the week",
@@ -1704,7 +1697,11 @@
         "tooLong": "The line is longer than {max} characters.",
         "full": "You reached the limit of {n} lines.",
         "duplicate": "This line is already there."
-      }
+      },
+      "optionsOf": "Options: {text}",
+      "removeTitle": "Remove this line?",
+      "removeConfirm": "Yes, remove it",
+      "keep": "Keep it"
     },
     "prayer": {
       "title": "Prayer times",
@@ -1852,6 +1849,44 @@
           }
         }
       }
+    },
+    "pledges": {
+      "title": "Personal pledge",
+      "lead": "For each habit, a good deed you do if you miss it two days in a row.",
+      "switch": "Personal pledge",
+      "row": "If I miss it two days: {deed}",
+      "choose": "Choose a deed",
+      "edit": "Change",
+      "mine": "My pledge",
+      "dialogTitle": "My pledge for {habit}",
+      "dialogIf": "If I miss it two days in a row:",
+      "sadaqah": "I give in charity…",
+      "amount": "Amount",
+      "custom": "My own words",
+      "text": "Text",
+      "evidence": "Evidence",
+      "evidenceOf": "Evidence: {deed}",
+      "save": "Save",
+      "saved": "Pledge for {habit} saved",
+      "remove": "Remove the pledge",
+      "removeTitle": "Remove the pledge for {habit}?",
+      "removeConfirm": "Yes, remove it",
+      "keep": "Keep it",
+      "removed": "Pledge for {habit} removed",
+      "noHabits": "Add a habit first to tie a pledge to it."
+    },
+    "weekdaysShort": {
+      "d0": "Sun",
+      "d1": "Mon",
+      "d2": "Tue",
+      "d3": "Wed",
+      "d4": "Thu",
+      "d5": "Fri",
+      "d6": "Sat"
+    },
+    "timeField": {
+      "hour": "Hour",
+      "minute": "Minute"
     }
   },
   "calendarPage": {

@@ -41,11 +41,22 @@ export interface PracticePrefs {
   syncedUserId?: string;
   /** «التنبيهات» on this browser (practice-core `NotificationPrefs`); absent = the defaults. Sent with the push subscription. */
   notify?: NotificationPrefs;
+  /**
+   * «ذكّرني باستراتيجية كل أسبوع»: absent = on. Off keeps the strategies chosen on «استراتيجيات العادات» and only leaves
+   * them out of the reminders (as the app does). Not synced.
+   */
+  strategyReminders?: boolean;
 }
 
 /** This browser's notification switches, with the practice-core defaults for anything never set. */
 export function notificationPrefsOf(prefs: PracticePrefs): NotificationPrefs {
   return prefs.notify ?? { ...DEFAULT_NOTIFICATION_PREFS };
+}
+
+/** What the reminders are planned with (the push payload): no strategy while «ذكّرني باستراتيجية» is off. */
+export function plannedNotificationPrefs(prefs: PracticePrefs): NotificationPrefs {
+  const notify = notificationPrefsOf(prefs);
+  return prefs.strategyReminders === false ? { ...notify, strategies: [] } : notify;
 }
 
 export interface PracticeSnapshot {
@@ -98,6 +109,7 @@ export function parsePrefs(raw: string | null | undefined): { prefs: PracticePre
     if (record.kinshipNamesInCalendar === true) prefs.kinshipNamesInCalendar = true;
     if (record.showHijri === true) prefs.showHijri = true;
     if (record.weekBranch === true) prefs.weekBranch = true;
+    if (record.strategyReminders === false) prefs.strategyReminders = false;
     if (typeof record.syncedUserId === 'string' && record.syncedUserId.length > 0) prefs.syncedUserId = record.syncedUserId;
     if (typeof record.notify === 'object' && record.notify !== null) prefs.notify = parseNotificationPrefs(record.notify);
     const minutes = record.freeMinutesPerDay;

@@ -1,52 +1,36 @@
 'use client';
 
-import { useId, useState, type ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import {
-  addPledge,
-  isValidTime,
-  removePledge,
-  setHeartPrefs,
-  type HeartPrefs,
-  type NotificationPrefs,
-  type PledgeAction,
-} from '@thekra/practice-core';
-import { Button } from '@/components/shared/kit/button';
-import { Input } from '@/components/ui/input';
+import { setHeartPrefs, type HeartPrefs, type NotificationPrefs } from '@thekra/practice-core';
 import { Link } from '@/i18n/navigation';
+import { Switch } from '@/components/shared/kit/switch';
 import { SectionDivider } from '@/components/shared/SectionDivider';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { formatDigits } from '@/lib/format/digits';
 import { updateHeart } from '@/lib/practice/heart-store';
-import { newUuid } from '@/lib/practice/ids';
 import { notificationPrefsOf, updatePrefs } from '@/lib/practice/local-store';
 import { resendPushPrefs } from '@/lib/push/web-push';
+import { cn } from '@/lib/utils';
 import { useHeart } from '../../hooks/useHeart';
 import { useWirdContext } from '../../hooks/useWirdContext';
 import { PracticeLoading } from '../PracticeLoading';
+import { pledgeablePlans } from '../Pledges';
 import { PushRemindersCard } from '../PushRemindersCard';
-import { pledgeText, planTitle } from './HeartCards';
+import { TimeField } from '../TimeField';
 
-function Toggle({ label, hint, checked, onChange, children }: { label: string; hint?: string; checked: boolean; onChange: (on: boolean) => void; children?: ReactNode }) {
-  const hintId = useId();
+/** One setting: its label and switch on one line; what it opens (a time, a day) under it while on. */
+function SwitchRow({ label, checked, onChange, children }: { label: string; checked: boolean; onChange: (on: boolean) => void; children?: ReactNode }) {
+  const labelId = useId();
   return (
-    <li className="flex flex-col gap-2 py-3">
-      <label className="flex min-h-11 items-center gap-3">
-        <input
-          type="checkbox"
-          className="size-4 accent-primary"
-          checked={checked}
-          aria-describedby={hint ? hintId : undefined}
-          onChange={(e) => onChange(e.target.checked)}
-        />
-        <span className="text-base">{label}</span>
-      </label>
-      {hint ? (
-        <p id={hintId} className="ps-7 text-sm leading-7 text-muted-foreground">
-          {hint}
-        </p>
-      ) : null}
-      {checked && children ? <div className="ps-7">{children}</div> : null}
+    <li className="flex flex-col gap-2 py-2">
+      <div className="flex min-h-11 items-center justify-between gap-4">
+        <span id={labelId} className="text-base">
+          {label}
+        </span>
+        <Switch aria-labelledby={labelId} checked={checked} onCheckedChange={onChange} />
+      </div>
+      {checked && children ? <div className="flex flex-col gap-3 pb-2">{children}</div> : null}
     </li>
   );
 }
@@ -55,18 +39,65 @@ function TimeInput({ label, value, onChange }: { label: string; value: string; o
   const id = useId();
   return (
     <div className="flex items-center gap-3">
-      <label htmlFor={id} className="text-sm text-muted-foreground">
+      <label htmlFor={id} className="min-w-12 text-sm text-muted-foreground">
         {label}
       </label>
-      <Input id={id} type="time" className="h-11 w-36" value={value} onChange={(e) => isValidTime(e.target.value) && onChange(e.target.value)} />
+      <TimeField id={id} label={label} value={value} onChange={onChange} />
     </div>
   );
 }
 
+const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6] as const;
+
+/** The weekly review's day: seven compact options in one row (full names for screen readers). */
+function DayPicker({ value, onChange }: { value: number; onChange: (day: number) => void }) {
+  const t = useTranslations('practice.notify');
+  const tDays = useTranslations('practice.weekdays');
+  const tShort = useTranslations('practice.weekdaysShort');
+  const labelId = useId();
+  return (
+    <div className="flex flex-col gap-2">
+      <span id={labelId} className="text-sm text-muted-foreground">
+        {t('day')}
+      </span>
+      <div role="radiogroup" aria-labelledby={labelId} className="grid grid-cols-7 gap-1">
+        {WEEKDAYS.map((d) => (
+          <button
+            key={d}
+            type="button"
+            role="radio"
+            aria-checked={value === d}
+            aria-label={tDays(`d${d}`)}
+            onClick={() => onChange(d)}
+            className={cn(
+              'min-h-11 min-w-0 rounded-xl border px-0.5 !text-xs transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transition-none sm:!text-sm',
+              value === d ? 'border-primary bg-primary text-primary-foreground' : 'border-border hover:bg-muted',
+            )}
+          >
+            {tShort(`d${d}`)}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Group({ id, title, children }: { id: string; title: string; children: ReactNode }) {
+  return (
+    <section aria-labelledby={id} className="flex flex-col gap-2">
+      <h2 id={id} className="text-xl font-medium">
+        {title}
+      </h2>
+      <ul className="flex flex-col divide-y divide-border border-y border-border">{children}</ul>
+    </section>
+  );
+}
+
 /**
- * «التنبيهات» (redesign §4.4), the one place for every switch: this browser's push reminders (habits, periodic acts,
- * the evening nudge, the Friday review reminder, with their times; the server plans them with practice-core
- * `notificationPlan`), then «نية اليوم والمحاسبة» (device-local) and «التزام شخصي» with its pledges.
+ * «التنبيهات», the one place for every switch: this browser's push reminders, then «تذكيرات العادات» (habits, periodic
+ * acts), «المحاسبة» («نية اليوم», «محاسبة المساء» = the evening card and its reminder at one time, «المحاسبة الأسبوعية» =
+ * the weekly card and its reminder on one day and time, «التزام شخصي» with a link to the pledges), and the strategy
+ * reminder once strategies were chosen on «استراتيجيات العادات».
  */
 export function NotificationsView() {
   const t = useTranslations('practice.notify');
@@ -75,6 +106,8 @@ export function NotificationsView() {
   const heart = useHeart();
   if (!context || !heart) return <PracticeLoading />;
   const notify = notificationPrefsOf(context.snapshot.prefs);
+  const plans = pledgeablePlans(context.snapshot.store.plans, context.habits);
+  const pledged = plans.filter((p) => heart.pledges.some((x) => x.planId === p.id)).length;
 
   function setNotify(patch: Partial<NotificationPrefs>) {
     updatePrefs((p) => ({ ...p, notify: { ...notificationPrefsOf(p), ...patch } }));
@@ -86,143 +119,71 @@ export function NotificationsView() {
     <div className="flex max-w-3xl flex-col gap-10">
       <PushRemindersCard />
 
-      <section aria-labelledby="notify-switches" className="flex flex-col gap-2">
-        <h2 id="notify-switches" className="sr-only">
-          {t('title')}
-        </h2>
-        <ul className="flex flex-col divide-y divide-border border-y border-border">
-          <Toggle label={t('habits')} checked={notify.habits} onChange={(on) => setNotify({ habits: on })} />
-          <Toggle label={t('periodic')} checked={notify.periodic} onChange={(on) => setNotify({ periodic: on })}>
-            <TimeInput label={t('time')} value={notify.periodicTime} onChange={(time) => setNotify({ periodicTime: time })} />
-          </Toggle>
-          <Toggle label={t('evening')} checked={notify.eveningNudge} onChange={(on) => setNotify({ eveningNudge: on })}>
-            <TimeInput label={t('time')} value={notify.eveningTime} onChange={(time) => setNotify({ eveningTime: time })} />
-          </Toggle>
-          <Toggle label={t('friday')} checked={notify.fridayReview} onChange={(on) => setNotify({ fridayReview: on })}>
-            <TimeInput label={t('time')} value={notify.fridayTime} onChange={(time) => setNotify({ fridayTime: time })} />
-          </Toggle>
-          {/* «ذكّرني بها»: chosen on «استراتيجيات العادات»; one a week at most, on Saturday at this time. */}
-          <li className="flex flex-col gap-2 py-3">
-            <p className="text-base">{t('strategies', { count: notify.strategies.length, n: formatDigits(notify.strategies.length) })}</p>
-            {notify.strategies.length > 0 ? (
-              <TimeInput label={t('time')} value={notify.strategyTime} onChange={(time) => setNotify({ strategyTime: time })} />
-            ) : null}
-            <Link href="/practice/strategies" className="text-link self-start text-sm">
-              {t('strategiesLink')} <DirectionalArrow />
-            </Link>
-          </li>
-        </ul>
-      </section>
+      <Group id="notify-habits" title={t('groupHabits')}>
+        <SwitchRow label={t('habits')} checked={notify.habits} onChange={(on) => setNotify({ habits: on })} />
+        <SwitchRow label={t('periodic')} checked={notify.periodic} onChange={(on) => setNotify({ periodic: on })}>
+          <TimeInput label={t('time')} value={notify.periodicTime} onChange={(time) => setNotify({ periodicTime: time })} />
+        </SwitchRow>
+        {notify.strategies.length > 0 ? (
+          <SwitchRow
+            label={t('strategyToggle')}
+            checked={context.snapshot.prefs.strategyReminders !== false}
+            onChange={(on) => {
+              updatePrefs((p) => ({ ...p, strategyReminders: on ? undefined : false }));
+              void resendPushPrefs(locale);
+            }}
+          >
+            <TimeInput label={t('time')} value={notify.strategyTime} onChange={(time) => setNotify({ strategyTime: time })} />
+          </SwitchRow>
+        ) : null}
+      </Group>
 
       <SectionDivider />
-      <section aria-labelledby="notify-heart" className="flex flex-col gap-2">
-        <h2 id="notify-heart" className="text-xl font-medium">
-          {t('heartTitle')}
-        </h2>
-        <ul className="flex flex-col divide-y divide-border border-y border-border">
-          <Toggle label={t('intention')} checked={heart.prefs.intention} onChange={(on) => setHeart({ intention: on })} />
-          <Toggle label={t('eveningReview')} checked={heart.prefs.eveningReview} onChange={(on) => setHeart({ eveningReview: on })} />
-          <Toggle label={t('fridayReview')} checked={heart.prefs.fridayReview} onChange={(on) => setHeart({ fridayReview: on })} />
-          <Toggle label={t('pledges')} hint={t('pledgesHint')} checked={heart.prefs.pledges} onChange={(on) => setHeart({ pledges: on })}>
-            <PledgeEditor />
-          </Toggle>
-        </ul>
-      </section>
-    </div>
-  );
-}
 
-/** The pledges, one per habit: «إن فاتتني يومين متتاليين: [أتصدق بـ… / أصلي ركعتين / نص أكتبه]». */
-function PledgeEditor() {
-  const t = useTranslations('practice.notify');
-  const tPledge = useTranslations('practice.heart.pledge');
-  const english = useLocale() === 'en';
-  const context = useWirdContext();
-  const heart = useHeart();
-  const [planId, setPlanId] = useState('');
-  const [action, setAction] = useState<PledgeAction>('rakatain');
-  const [text, setText] = useState('');
-  const habitId = useId();
-  const textId = useId();
-  if (!context || !heart) return null;
-  const { store } = context.snapshot;
-  const plans = store.plans;
-  const chosen = planId || plans[0]?.id || '';
-  const needsText = action === 'custom';
-
-  function add() {
-    if (!chosen || (needsText && text.trim() === '') || !context) return;
-    updateHeart((h) => addPledge(h, { id: newUuid(), planId: chosen, action, text, createdOn: context.today }));
-    setText('');
-  }
-
-  return (
-    <div className="flex flex-col gap-4">
-      {heart.pledges.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t('pledgeNone')}</p>
-      ) : (
-        <ul className="flex flex-col gap-2">
-          {heart.pledges.map((pledge) => {
-            const plan = plans.find((p) => p.id === pledge.planId);
-            return (
-              <li key={pledge.id} className="flex flex-wrap items-center gap-2 text-sm leading-7">
-                <span className="font-medium">{plan ? planTitle(plan, context.habits, english) : ''}</span>
-                <span className="text-muted-foreground">· {pledgeText(pledge, tPledge)}</span>
-                <Button size="sm" variant="ghost" tone="neutral" onClick={() => updateHeart((h) => removePledge(h, pledge.id))}>
-                  {t('pledgeRemove')}
-                </Button>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-      {plans.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t('noHabits')}</p>
-      ) : (
-        <div className="flex flex-col gap-3">
-          <label htmlFor={habitId} className="text-sm font-medium">
-            {t('pledgeHabit')}
-          </label>
-          <select
-            id={habitId}
-            className="h-11 rounded-lg border border-input bg-transparent px-2 text-base"
-            value={chosen}
-            onChange={(e) => setPlanId(e.target.value)}
-          >
-            {plans.map((p) => (
-              <option key={p.id} value={p.id}>
-                {planTitle(p, context.habits, english)}
-              </option>
-            ))}
-          </select>
-          <fieldset className="flex flex-col gap-1">
-            <legend className="mb-1 text-sm font-medium">{t('pledgeIf')}</legend>
-            {(
-              [
-                ['sadaqah', t('pledgeSadaqah')],
-                ['rakatain', t('pledgeRakatain')],
-                ['custom', t('pledgeCustom')],
-              ] as const
-            ).map(([key, label]) => (
-              <label key={key} className="flex min-h-11 items-center gap-3 text-sm">
-                <input type="radio" name="pledge-action" className="size-4 accent-primary" checked={action === key} onChange={() => setAction(key)} />
-                {label}
-              </label>
-            ))}
-          </fieldset>
-          {action !== 'rakatain' ? (
-            <>
-              <label htmlFor={textId} className="text-sm font-medium">
-                {t('pledgeText')}
-              </label>
-              <Input id={textId} className="h-11" maxLength={140} value={text} onChange={(e) => setText(e.target.value)} />
-            </>
-          ) : null}
-          <Button size="sm" className="self-start" disabled={needsText && text.trim() === ''} onClick={add}>
-            {t('pledgeAdd')}
-          </Button>
-        </div>
-      )}
+      <Group id="notify-review" title={t('groupReview')}>
+        <SwitchRow label={t('intention')} checked={heart.prefs.intention} onChange={(on) => setHeart({ intention: on })} />
+        <SwitchRow
+          label={t('eveningReview')}
+          checked={heart.prefs.eveningReview}
+          onChange={(on) => {
+            setHeart({ eveningReview: on });
+            setNotify({ eveningNudge: on });
+          }}
+        >
+          <TimeInput
+            label={t('time')}
+            value={heart.prefs.eveningFrom}
+            onChange={(time) => {
+              setHeart({ eveningFrom: time });
+              setNotify({ eveningTime: time });
+            }}
+          />
+        </SwitchRow>
+        <SwitchRow
+          label={t('weeklyReview')}
+          checked={heart.prefs.fridayReview}
+          onChange={(on) => {
+            setHeart({ fridayReview: on });
+            setNotify({ fridayReview: on });
+          }}
+        >
+          <DayPicker
+            value={heart.prefs.reviewDay}
+            onChange={(day) => {
+              setHeart({ reviewDay: day });
+              setNotify({ reviewDay: day });
+            }}
+          />
+          <TimeInput label={t('time')} value={notify.fridayTime} onChange={(time) => setNotify({ fridayTime: time })} />
+        </SwitchRow>
+        <SwitchRow label={t('pledges')} checked={heart.prefs.pledges} onChange={(on) => setHeart({ pledges: on })}>
+          <Link href="/practice/pledges" className="outline-button self-start">
+            {t('pledgesLink')}
+            <span className="text-sm text-muted-foreground">{t('pledgesCount', { n: formatDigits(pledged), total: formatDigits(plans.length) })}</span>
+            <DirectionalArrow />
+          </Link>
+        </SwitchRow>
+      </Group>
     </div>
   );
 }

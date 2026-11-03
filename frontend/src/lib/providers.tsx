@@ -5,6 +5,7 @@ import { useLocale } from 'next-intl';
 import { Direction } from 'radix-ui';
 import { useState, type ReactNode } from 'react';
 import { ThemeProvider } from '@/components/shared/theme-provider';
+import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { createQueryClient } from '@/lib/query-client';
 
@@ -23,7 +24,11 @@ export function AppProviders({ children }: AppProvidersProps) {
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         <Direction.Provider dir={dir}>
-          <TooltipProvider>{children}</TooltipProvider>
+          <TooltipProvider>
+            {children}
+            {/* Save feedback («حُفظ …»): one toaster for the whole site, in the page's direction. */}
+            <Toaster position="bottom-center" dir={dir} />
+          </TooltipProvider>
         </Direction.Provider>
       </QueryClientProvider>
     </ThemeProvider>

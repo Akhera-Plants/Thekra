@@ -2,7 +2,7 @@
 
 import { useId, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { CalendarPlus, Check, Pencil, Undo2 } from 'lucide-react';
+import { CalendarPlus, Check, Undo2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
   buildIcs,
@@ -32,6 +32,7 @@ import { SyncStatus } from './SyncStatus';
 import { PracticeLoading } from './PracticeLoading';
 import { NotificationsLink } from './NotificationsLink';
 import { RelativeForm } from './RelativeForm';
+import { RowMenu } from './RowMenu';
 import { LimitSheet } from './LimitSheet';
 import { usePracticeCatalog } from '../hooks/usePracticeCatalog';
 import { limitOptions } from '@/lib/practice/limits';
@@ -131,9 +132,16 @@ export function KinshipView() {
             {visited.map((relative) => (
               <li key={relative.id} className="flex min-h-11 items-center justify-between gap-3 py-2">
                 <bdi lang={langOf(relative.name)}>{relative.name}</bdi>
-                <Button variant="ghost" tone="neutral" size="sm" onClick={() => updateStore((s) => deleteRelative(s, relative.id))}>
-                  {t('remove')}
-                </Button>
+                <RowMenu
+                  label={t('optionsOf', { name: relative.name })}
+                  remove={{
+                    label: t('remove'),
+                    confirmTitle: t('removeTitle', { name: relative.name }),
+                    confirm: t('removeConfirm'),
+                    keep: t('keep'),
+                    onConfirm: () => updateStore((s) => deleteRelative(s, relative.id)),
+                  }}
+                />
               </li>
             ))}
           </ul>
@@ -175,7 +183,6 @@ function RelativeRow({ entry, today }: { entry: DueEntry; today: string }) {
   const t = useTranslations('practice.kinship');
   const tDays = useTranslations('practice.weekdays');
   const locale = useLocale() === 'en' ? 'en' : 'ar';
-  const [confirmRemove, setConfirmRemove] = useState(false);
   const [editing, setEditing] = useState(false);
   const everywhere = useDeletesEverywhere();
   const editId = useId();
@@ -225,48 +232,25 @@ function RelativeRow({ entry, today }: { entry: DueEntry; today: string }) {
             {contactedToday ? t('contactedToday') : t('contacted')}
           </Button>
           {relative.history.length > 0 ? (
-            <Button variant="ghost" tone="neutral" size="sm" onClick={() => updateStore((s) => undoContact(s, relative.id))}>
+            <Button variant="outline" tone="neutral" size="sm" onClick={() => updateStore((s) => undoContact(s, relative.id))}>
               <Undo2 aria-hidden />
               {t('undo')}
             </Button>
           ) : null}
-          <Button
-            variant="ghost"
-            tone="neutral"
-            size="sm"
-            aria-expanded={editing}
-            aria-controls={editId}
-            onClick={() => setEditing((open) => !open)}
-          >
-            <Pencil aria-hidden />
-            {t('edit')}
-          </Button>
-          {confirmRemove ? (
-            <>
-              <Button
-                variant="outline"
-                tone="destructive"
-                size="sm"
-                onClick={() => updateStore((s) => deleteRelative(s, relative.id))}
-              >
-                {t('removeConfirm')}
-              </Button>
-              <Button variant="ghost" tone="neutral" size="sm" onClick={() => setConfirmRemove(false)}>
-                {t('keep')}
-              </Button>
-            </>
-          ) : (
-            <Button variant="ghost" tone="neutral" size="sm" onClick={() => setConfirmRemove(true)}>
-              {t('remove')}
-            </Button>
-          )}
+          <RowMenu
+            label={t('optionsOf', { name: relative.name })}
+            edit={{ label: t('edit'), onSelect: () => setEditing(true) }}
+            remove={{
+              label: t('remove'),
+              confirmTitle: t('removeTitle', { name: relative.name }),
+              note: everywhere ? t('removeNoteAccount') : t('removeNoteDevice'),
+              confirm: t('removeConfirm'),
+              keep: t('keep'),
+              onConfirm: () => updateStore((s) => deleteRelative(s, relative.id)),
+            }}
+          />
         </div>
       </div>
-      {confirmRemove ? (
-        <p className="text-sm leading-7 text-muted-foreground" role="status">
-          {everywhere ? t('removeNoteAccount') : t('removeNoteDevice')}
-        </p>
-      ) : null}
       {editing ? (
         <div id={editId}>
           <RelativeForm today={today} relative={relative} onDone={() => setEditing(false)} />

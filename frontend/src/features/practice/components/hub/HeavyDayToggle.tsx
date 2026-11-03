@@ -17,7 +17,7 @@ export function HeavyDayToggle({ store, today }: { store: Store; today: string }
   return (
     <button
       type="button"
-      className="outline-button button-wrap !mt-0 !min-h-11 self-start"
+      className="inline-flex min-h-9 items-center gap-1.5 self-start rounded-full border border-border px-3 !text-sm text-muted-foreground transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring aria-pressed:border-primary aria-pressed:bg-secondary aria-pressed:text-primary motion-reduce:transition-none [&_svg]:size-4"
       aria-pressed={isHeavy}
       title={t('heavyDayHint')}
       onClick={() => updateStore((s) => setEbbForAll(s, !isHeavy, today))}

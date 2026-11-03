@@ -106,12 +106,12 @@ function WirdBody({ context }: { context: WirdContext }) {
         completeCard={<DayDoneCard store={store} today={today} planDays={planDays} />}
         footer={
           store.plans.length > 0 ? (
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-wrap gap-3">
+            <div className="flex flex-col gap-2 pt-1">
+              {usualDeed ? <StoryLine moment="heavyDay" compact /> : null}
+              <div className="flex flex-wrap gap-2">
                 <HeavyDayToggle store={store} today={today} />
                 <ExcuseToggle store={store} today={today} />
               </div>
-              {usualDeed ? <StoryLine moment="heavyDay" /> : null}
             </div>
           ) : null
         }
@@ -140,10 +140,7 @@ function WirdBody({ context }: { context: WirdContext }) {
       </section>
 
       {snapshot.prefs.weekBranch === true ? (
-        <>
-          <SectionDivider />
-          <WeekCard today={today} />
-        </>
+        <WeekCard today={today} before={<SectionDivider />} />
       ) : null}
 
       <SyncStatus persistent={snapshot.persistent} quiet />

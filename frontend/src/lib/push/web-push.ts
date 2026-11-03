@@ -12,7 +12,7 @@ import {
   type PushPrefsBody,
 } from '@/lib/api/push';
 import { reportFailure } from '@/lib/errors';
-import { getPracticeSnapshot, notificationPrefsOf } from '@/lib/practice/local-store';
+import { getPracticeSnapshot, plannedNotificationPrefs } from '@/lib/practice/local-store';
 import { anchorTimesForPush } from '@/lib/practice/screen-stores';
 import type { LocaleCode } from '@/lib/types/enums';
 import { base64UrlToUint8Array, isSameServerKey, needsHomeScreenInstall, type PushDeviceSupport } from './push-support';
@@ -118,7 +118,7 @@ async function sendSubscription(subscription: PushSubscription, locale: LocaleCo
 
 /** The switches the server plans with (the private moment never leaves the device). */
 function pushPrefsBody(): PushPrefsBody {
-  const n = notificationPrefsOf(getPracticeSnapshot().prefs);
+  const n = plannedNotificationPrefs(getPracticeSnapshot().prefs);
   return {
     habits: n.habits,
     periodic: n.periodic,
@@ -127,6 +127,7 @@ function pushPrefsBody(): PushPrefsBody {
     eveningTime: n.eveningTime,
     fridayReview: n.fridayReview,
     fridayTime: n.fridayTime,
+    reviewDay: n.reviewDay,
     strategies: n.strategies,
     strategyTime: n.strategyTime,
     // Prayer anchors («بعد الفجر»…) resolved on this device; the server never calls AlAdhan.

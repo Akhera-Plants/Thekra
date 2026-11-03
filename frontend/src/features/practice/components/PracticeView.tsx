@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { CalendarPlus, Plus } from 'lucide-react';
+import { CalendarPlus, Lightbulb, Plus } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { activePrograms, isEstablished, isPaused, limits, loadWarning, type LimitKind } from '@thekra/practice-core';
-import { useRouter } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
+import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { QueryErrorState } from '@/components/shared/feedback/QueryErrorState';
 import { downloadTextFile, ICS_MIME } from '@/lib/practice/download';
 import { isPeriodicTemplate, limitOptions } from '@/lib/practice/limits';
@@ -162,6 +163,7 @@ export function PracticeView() {
         onFreed={() => undefined}
       />
       {wird ? <StreakLine context={wird} /> : null}
+      <StrategiesEntry />
 
       <SegmentTabs
         aria-label={tRecord('tabsLabel')}
@@ -251,6 +253,26 @@ export function PracticeView() {
       {/* Where the data lives: one quiet line under the page (the account link is in «الإعدادات»). */}
       <SyncStatus persistent={snapshot.persistent} quiet />
     </div>
+  );
+}
+
+/** «استراتيجيات العادات» near the top of «عاداتي» (owner round 4: easy to find; it stays in the menu too). */
+function StrategiesEntry() {
+  const t = useTranslations('practice.strategies');
+  return (
+    <Link
+      href="/practice/strategies"
+      className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transition-none"
+    >
+      <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-secondary text-primary">
+        <Lightbulb aria-hidden className="size-5" />
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="text-base font-medium">{t('title')}</span>
+        <span className="text-sm leading-6 text-muted-foreground">{t('lead')}</span>
+      </span>
+      <DirectionalArrow className="size-5 text-primary" />
+    </Link>
   );
 }
 

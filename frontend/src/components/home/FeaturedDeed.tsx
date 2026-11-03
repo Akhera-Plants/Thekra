@@ -31,13 +31,6 @@ export async function FeaturedDeed({ deed }: FeaturedDeedProps) {
           {t('deedCardCta')} <DirectionalArrow className="size-[18px]" />
         </span>
       </div>
-      <svg className="olive-drawing" viewBox="0 0 112 170" fill="none" aria-hidden>
-        <path
-          d="M23 159c15-30 35-76 51-143M47 103c-25-1-34-17-30-36 19 2 32 19 30 36Zm11-30c-18-7-25-25-20-43 17 5 27 21 20 43Zm12-32c-9-8-10-23-3-35 11 10 12 24 3 35ZM38 124c25 9 48-2 57-20-22-7-43 0-57 20Zm17-37c22 4 40-8 45-28-21 0-37 8-45 28Zm12-37c19-1 30-13 31-31-18 4-28 15-31 31Z"
-          stroke="currentColor"
-          strokeWidth="1.2"
-        />
-      </svg>
     </Link>
   );
 }

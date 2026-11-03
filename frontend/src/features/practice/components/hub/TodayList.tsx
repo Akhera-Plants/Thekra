@@ -179,7 +179,7 @@ export function TodayList({ title, store, date, today, day, habits, occasionBasi
       )}
       {isToday && !isComplete ? <Cheer at={cheerAt} /> : null}
       {/* A small-deed nudge once «أقل ما يمكن» kept a habit today. */}
-      {isToday && store.plans.some((plan) => minimumMet(plan, date)) ? <StoryLine moment="smallDeed" /> : null}
+      {isToday && store.plans.some((plan) => minimumMet(plan, date)) ? <StoryLine moment="smallDeed" compact /> : null}
       <p role="status" className="sr-only">
         {lastKey ? (lastCleared ? tDay('unlogged') : tDay('logged')) : null}
       </p>

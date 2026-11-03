@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useLocale, useTranslations } from 'next-intl';
 import {
@@ -18,7 +18,11 @@ import {
   type Store,
   type StoryMoment,
 } from '@thekra/practice-core';
+import { Info } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
+import { Button } from '@/components/shared/kit/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import type { QuoteDto } from '@/lib/types/api';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { QuoteCard } from '@/components/shared/quote';
 import { getBranch } from '@/lib/api/branches';
@@ -163,18 +167,57 @@ export function DayDoneCard({ store, today, planDays }: { store: Store; today: s
  * A story by Quote id at its moment (heart-texts.yaml `stories:` through the catalog). Shows nothing while the id is
  * not filled, or while the text cannot be read: never typed text.
  */
-export function StoryLine({ moment }: { moment: StoryMoment }) {
+export function StoryLine({ moment, compact = false }: { moment: StoryMoment; compact?: boolean }) {
   const t = useTranslations('practice.story');
   const catalog = usePracticeCatalog();
   const id = storyQuoteId(moment, catalog.data?.stories);
   const evidence = usePracticeEvidence(id ? [id] : []);
   const quote = evidence.data?.find((q) => q.id === id);
   if (!quote) return null;
+  if (compact) return <StoryNote label={t(moment)} quote={quote} />;
   return (
     <aside aria-label={t(moment)} className="flex flex-col gap-2">
       <p className="text-sm font-medium text-muted-foreground">{t(moment)}</p>
       <QuoteCard quote={quote} density="compact" intent="good-deed" detailHref={`/quotes/${quote.id}`} />
     </aside>
+  );
+}
+
+/** The text's source in one short line: the surah and verse, or the book and number. */
+function shortSource(quote: QuoteDto, english: boolean): string {
+  if (quote.quran?.ayahNumber) {
+    const surah = english ? (quote.quran.surahName ?? quote.quran.surahNameAr) : quote.quran.surahNameAr;
+    return `${surah ?? ''} ${formatDigits(quote.quran.ayahNumber)}`.trim();
+  }
+  const book = english ? quote.source.name || quote.source.nameAr : quote.source.nameAr;
+  return [book, quote.hadith?.reference ? formatDigits(quote.hadith.reference) : null].filter(Boolean).join(' ');
+}
+
+/**
+ * A moment in the flow (owner round 4: never a full text card there): one quiet line with an info button; the text, its
+ * source and «اقرأ الشرح» open in a popover.
+ */
+function StoryNote({ label, quote }: { label: string; quote: QuoteDto }) {
+  const t = useTranslations('practice.story');
+  const english = useLocale() === 'en';
+  return (
+    <div className="flex items-center gap-2 text-sm leading-7 text-muted-foreground">
+      <span>{label}</span>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="outline" tone="neutral" size="sm" iconOnly icon={<Info aria-hidden />} aria-label={t('more', { title: label })} />
+        </PopoverTrigger>
+        <PopoverContent align="start" className="w-80 max-w-[calc(100vw-2rem)] gap-3 p-4">
+          <p lang="ar" dir="rtl" className="font-quran text-lg leading-9 text-foreground">
+            {quote.textAr}
+          </p>
+          <p className="text-xs leading-6 text-muted-foreground">{shortSource(quote, english)}</p>
+          <Link href={`/quotes/${quote.id}`} className="outline-button self-start !min-h-10 text-sm">
+            {t('readSharh')} <DirectionalArrow />
+          </Link>
+        </PopoverContent>
+      </Popover>
+    </div>
   );
 }
 
@@ -186,12 +229,13 @@ export function StoryLine({ moment }: { moment: StoryMoment }) {
  */
 const SHOW_NAME_WEEKS = false;
 
-export function WeekCard({ today }: { today: string }) {
-  return !SHOW_NAME_WEEKS || weekCardKind(today) === 'branch' ? <WeekBranchCard today={today} /> : <WeekNameCard today={today} />;
+/** `before` (the divider above it) renders only with the card, so an empty section leaves no lone divider. */
+export function WeekCard({ today, before }: { today: string; before?: ReactNode }) {
+  return !SHOW_NAME_WEEKS || weekCardKind(today) === 'branch' ? <WeekBranchCard today={today} before={before} /> : <WeekNameCard today={today} before={before} />;
 }
 
 /** «اسم الأسبوع»: the same Name of Allah for everyone this name week, walking the API list in turn; links to its page. */
-export function WeekNameCard({ today }: { today: string }) {
+export function WeekNameCard({ today, before }: { today: string; before?: ReactNode }) {
   const t = useTranslations('practice.weekName');
   const names = useQuery({
     queryKey: queryKeys.namesOfAllah.all,
@@ -202,22 +246,25 @@ export function WeekNameCard({ today }: { today: string }) {
   const name = names.data[nameOfWeekIndex(today, names.data.length)];
   if (!name) return null;
   return (
-    <section aria-labelledby="week-name-title" className="flex flex-col gap-1">
-      <h2 id="week-name-title" className="text-sm font-medium text-muted-foreground">
-        {t('title')}
-      </h2>
-      <Link href={`/names/${name.slug}`} className="text-link self-start text-lg">
-        <span lang="ar" dir="rtl" className="font-arabic-display">
-          {name.nameAr}
-        </span>{' '}
-        <DirectionalArrow />
-      </Link>
-    </section>
+    <>
+      {before}
+      <section aria-labelledby="week-name-title" className="flex flex-col gap-1">
+        <h2 id="week-name-title" className="text-sm font-medium text-muted-foreground">
+          {t('title')}
+        </h2>
+        <Link href={`/names/${name.slug}`} className="text-link self-start text-lg">
+          <span lang="ar" dir="rtl" className="font-arabic-display">
+            {name.nameAr}
+          </span>{' '}
+          <DirectionalArrow />
+        </Link>
+      </section>
+    </>
   );
 }
 
 /** «شعبة الأسبوع» on «ورد اليوم» (only when chosen in Settings): the same branch for everyone this ISO week; a long title wraps. */
-export function WeekBranchCard({ today }: { today: string }) {
+export function WeekBranchCard({ today, before }: { today: string; before?: ReactNode }) {
   const t = useTranslations('practice.weekBranch');
   const locale = useLocale() === 'en' ? 'en' : 'ar';
   const number = branchOfWeek(today);
@@ -230,13 +277,16 @@ export function WeekBranchCard({ today }: { today: string }) {
   const title = locale === 'en' ? branch.data.title : branch.data.titleAr;
   if (!title) return null;
   return (
-    <section aria-labelledby="week-branch-title" className="flex flex-col gap-1">
-      <h2 id="week-branch-title" className="text-sm font-medium text-muted-foreground">
-        {t('title')} · {formatDigits(number)}
-      </h2>
-      <Link href={`/branches/${number}`} className="outline-button button-wrap min-w-0 self-start text-base break-words">
-        <span className="min-w-0">{title}</span> <DirectionalArrow className="shrink-0" />
-      </Link>
-    </section>
+    <>
+      {before}
+      <section aria-labelledby="week-branch-title" className="flex flex-col gap-3">
+        <h2 id="week-branch-title" className="text-xl font-medium">
+          {t('title')} · {formatDigits(number)}
+        </h2>
+        <Link href={`/branches/${number}`} className="outline-button button-wrap min-w-0 self-start text-base break-words">
+          <span className="min-w-0">{title}</span> <DirectionalArrow className="shrink-0" />
+        </Link>
+      </section>
+    </>
   );
 }

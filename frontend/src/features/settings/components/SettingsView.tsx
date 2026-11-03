@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { NotificationsLink } from '@/features/practice/components/NotificationsLink';
 import { ScreenSettingsLinks } from '@/features/practice/components/screen/ScreenSettingsLinks';
 import { LocaleSwitcher } from '@/components/shared/LocaleSwitcher';
+import { Switch } from '@/components/shared/kit/switch';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { useSession } from '@/features/auth/hooks/useSession';
 import { AccountDataPanel } from './AccountDataPanel';
@@ -99,17 +100,20 @@ function WeekBranchSetting() {
   if (!snapshot) return null;
   return (
     <section className="flex items-start justify-between gap-4">
-      <label htmlFor="week-branch" className="flex min-w-0 flex-col gap-1">
-        <span className="text-sm font-medium">{t('label')}</span>
-        <span className="text-sm leading-6 text-muted-foreground">{t('hint')}</span>
-      </label>
-      <input
-        id="week-branch"
-        type="checkbox"
-        role="switch"
-        className="mt-1 size-5 shrink-0 accent-primary"
+      <div className="flex min-w-0 flex-col gap-1">
+        <span id="week-branch-label" className="text-sm font-medium">
+          {t('label')}
+        </span>
+        <span id="week-branch-hint" className="text-sm leading-6 text-muted-foreground">
+          {t('hint')}
+        </span>
+      </div>
+      <Switch
+        aria-labelledby="week-branch-label"
+        aria-describedby="week-branch-hint"
+        className="-mt-2"
         checked={snapshot.prefs.weekBranch === true}
-        onChange={(event) => updatePrefs((p) => ({ ...p, weekBranch: event.target.checked || undefined }))}
+        onCheckedChange={(on) => updatePrefs((p) => ({ ...p, weekBranch: on || undefined }))}
       />
     </section>
   );

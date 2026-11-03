@@ -37,7 +37,7 @@ function DayToggle({ store, today, date, label }: { store: Store; today: string;
     <button
       type="button"
       id={id}
-      className="outline-button button-wrap !mt-0 !min-h-11 self-start"
+      className="inline-flex min-h-9 items-center gap-1.5 self-start rounded-full border border-border px-3 !text-sm text-muted-foreground transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring aria-pressed:border-primary aria-pressed:bg-secondary aria-pressed:text-primary motion-reduce:transition-none [&_svg]:size-4"
       aria-pressed={on}
       title={t('hint')}
       onClick={() => updateStore((s) => toggleExcusedDay(s, date, today))}

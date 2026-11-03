@@ -13,7 +13,7 @@ import {
   type PrayerAnchor,
   type PrayerTimesWithSunrise,
 } from '@thekra/practice-core';
-import { Input } from '@/components/ui/input';
+import { TimeField } from './TimeField';
 import { formatDigits } from '@/lib/format/digits';
 import { windowParts, type WindowPoint } from '@/lib/practice/windows';
 
@@ -109,14 +109,7 @@ export function SlotPicker({ label, value, optional, anchors, prayer, onChange, 
           <label htmlFor={timeId} className={hasChoice ? 'sr-only' : undefined}>
             {hasChoice ? t('customTime') : label}
           </label>
-          <Input
-            id={timeId}
-            type="time"
-            value={isValidTime(value) ? value : ''}
-            aria-invalid={error ? true : undefined}
-            aria-describedby={describedBy}
-            onChange={(e) => onChange(e.target.value)}
-          />
+          <TimeField id={timeId} label={hasChoice ? t('customTime') : label} value={value} invalid={Boolean(error)} describedBy={describedBy} onChange={onChange} />
         </>
       ) : null}
       {error ? (

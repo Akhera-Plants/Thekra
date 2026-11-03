@@ -3,7 +3,7 @@
 import { useId, useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { BookOpen, Undo2 } from 'lucide-react';
+import { BookOpen, Check, Plus, Undo2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
   correctLog,
@@ -33,6 +33,8 @@ import { fixPlanSlots, hasUnsuitableSlot, suitableChoices } from '@/lib/practice
 import type { PracticeHabit } from '@/lib/types/practice';
 import { z } from '@/lib/zod';
 import { useDeletesEverywhere } from '../hooks/useDeletesEverywhere';
+import { useHeart } from '../hooks/useHeart';
+import { HabitPledgeRow } from './Pledges';
 import { amountLabel } from './amount-label';
 import { FetchedEvidence } from './EvidenceQuotes';
 import { LogEditor } from './LogEditor';
@@ -97,6 +99,10 @@ export function PlanCard({ plan, habit, view, today, hijriOffset, prayer }: Plan
   const season = compact ? null : ramadanSeasonOffer(plan, today, hijriOffset);
   const unsuitable = hasUnsuitableSlot(plan, habit?.window, prayer);
   const action = planAction(view, paused);
+  // Asked today and not complete: the actions sit in the card's «اليوم» row, not in the header.
+  const logsInRow = !compact && !view.isComplete;
+  const heart = useHeart();
+  const habitMap = useMemo(() => new Map<string, PracticeHabit>(habit ? [[habit.key, habit]] : []), [habit]);
 
   function log(amount: number) {
     setLastLog({ date: today, before: plan.log[today] ?? 0, cleared: false });
@@ -150,13 +156,15 @@ export function PlanCard({ plan, habit, view, today, hijriOffset, prayer }: Plan
           </h4>
           {status ? <p className="text-sm leading-7 text-muted-foreground">{status}</p> : null}
         </div>
-        <PlanActionButton
-          action={action}
-          describedBy={titleId}
-          onLog={() => log(Math.max(1, view.remaining))}
-          onUnlog={unlog}
+        {logsInRow ? null : (
+          <PlanActionButton
+            action={action}
+            describedBy={titleId}
+            onLog={() => log(Math.max(1, view.remaining))}
+            onUnlog={unlog}
           onResume={() => changePlan(plan.id, (p) => resumePlan(p, today))}
-        />
+          />
+        )}
       </header>
 
       <div role="status" aria-live="polite" className="empty:hidden">
@@ -187,7 +195,15 @@ export function PlanCard({ plan, habit, view, today, hijriOffset, prayer }: Plan
           {t('fixItBody')}
         </p>
       ) : null}
-      {!compact && !view.isComplete ? <PartialLog unit={words.unit} onLog={log} /> : null}
+      {logsInRow ? (
+        <TodayActions
+          describedBy={titleId}
+          remaining={view.remaining}
+          unit={words.unit}
+          onDone={() => log(Math.max(1, view.remaining))}
+          onLog={log}
+        />
+      ) : null}
 
       {canGraduate ? (
         <Offer text={t('graduateOffer')} action={t('graduate')} onAction={() => changePlan(plan.id, (p) => establishPlan(p, today))} />
@@ -231,6 +247,12 @@ export function PlanCard({ plan, habit, view, today, hijriOffset, prayer }: Plan
             setLastLog(null);
           }}
         />
+      ) : null}
+
+      {heart?.prefs.pledges && !compact ? (
+        <div className="border-t border-border pt-3">
+          <HabitPledgeRow plan={plan} heart={heart} habits={habitMap} today={today} />
+        </div>
       ) : null}
 
       <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
@@ -305,7 +327,23 @@ function Offer({ text, action, onAction }: { text: string; action: string; onAct
   );
 }
 
-function PartialLog({ unit, onLog }: { unit: string; onLog: (amount: number) => void }) {
+/**
+ * The «اليوم» row of a habit asked today (owner round 4): solid «أتممتها», a bordered «+1» when more than one unit is
+ * left, and the amount field with its own «سجّل», aligned on one line (wrapping on a phone).
+ */
+function TodayActions({
+  describedBy,
+  remaining,
+  unit,
+  onDone,
+  onLog,
+}: {
+  describedBy: string;
+  remaining: number;
+  unit: string;
+  onDone: () => void;
+  onLog: (amount: number) => void;
+}) {
   const t = useTranslations('practice.today');
   const schema = useMemo(
     () =>
@@ -325,25 +363,37 @@ function PartialLog({ unit, onLog }: { unit: string; onLog: (amount: number) => 
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-wrap items-end gap-2" noValidate>
-        <FormField
-          control={form.control}
-          name="amount"
-          render={({ field }) => (
-            <FormItem className="w-52">
-              <FormLabel>{t('partialLabel', { unit })}</FormLabel>
-              <FormControl>
-                <Input type="number" inputMode="numeric" min={1} step={1} {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <button type="submit" className="outline-button button-wrap">
-          {t('logPartial')}
-        </button>
-      </form>
-    </Form>
+    <div className="flex flex-wrap items-end gap-2">
+      <Button aria-describedby={describedBy} icon={<Check aria-hidden />} onClick={onDone}>
+        {t('markDone')}
+      </Button>
+      {remaining > 1 ? (
+        <Button variant="outline" tone="primary" aria-describedby={describedBy} aria-label={t('plusOne')} icon={<Plus aria-hidden />} onClick={() => onLog(1)}>
+          {formatDigits(1)}
+        </Button>
+      ) : null}
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="flex items-end gap-2" noValidate>
+          <FormField
+            control={form.control}
+            name="amount"
+            render={({ field }) => (
+              <FormItem className="relative w-32">
+                <FormLabel className="text-xs text-muted-foreground">
+                  {t('partialLabel', { unit })}
+                </FormLabel>
+                <FormControl>
+                  <Input type="number" inputMode="numeric" min={1} step={1} className="h-11" {...field} />
+                </FormControl>
+                <FormMessage className="absolute" />
+              </FormItem>
+            )}
+          />
+          <Button type="submit" variant="outline" tone="primary" aria-describedby={describedBy}>
+            {t('logAction')}
+          </Button>
+        </form>
+      </Form>
+    </div>
   );
 }

@@ -15,6 +15,7 @@ import {
   type Plan,
   type PrayerTimesWithSunrise,
 } from '@thekra/practice-core';
+import { Switch as KitSwitch } from '@/components/shared/kit/switch';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { formatDigits } from '@/lib/format/digits';
 import { updateHeart } from '@/lib/practice/heart-store';
@@ -415,23 +416,18 @@ function WhenFields({
 
 function Switch({ label, hint, checked, onChange }: { label: string; hint: string; checked: boolean; onChange: (on: boolean) => void }) {
   const hintId = useId();
+  const labelId = useId();
   return (
-    <li className="flex flex-col gap-1 py-3">
-      <label className="flex min-h-11 items-center gap-3">
-        <input
-          type="checkbox"
-          role="switch"
-          aria-checked={checked}
-          aria-describedby={hintId}
-          className="size-4 accent-primary"
-          checked={checked}
-          onChange={(e) => onChange(e.target.checked)}
-        />
-        <span className="text-base">{label}</span>
-      </label>
-      <p id={hintId} className="ps-7 text-sm leading-7 text-muted-foreground">
-        {hint}
-      </p>
+    <li className="flex items-start justify-between gap-4 py-3">
+      <div className="flex min-w-0 flex-col gap-1">
+        <span id={labelId} className="text-base">
+          {label}
+        </span>
+        <p id={hintId} className="text-sm leading-7 text-muted-foreground">
+          {hint}
+        </p>
+      </div>
+      <KitSwitch aria-labelledby={labelId} aria-describedby={hintId} checked={checked} onCheckedChange={onChange} className="-mt-1.5" />
     </li>
   );
 }

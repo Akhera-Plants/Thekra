@@ -9,6 +9,7 @@ import {
   myReminderError,
   removeMyReminder,
 } from '@thekra/practice-core';
+import { RowMenu } from '../RowMenu';
 import { Button } from '@/components/shared/kit/button';
 import { Input } from '@/components/ui/input';
 import { formatDigits } from '@/lib/format/digits';
@@ -87,9 +88,16 @@ export function MyRemindersView() {
           {list.map((item) => (
             <li key={item.id} className="flex items-start justify-between gap-3 py-3">
               <p className="text-base leading-8">{item.text}</p>
-              <Button size="sm" variant="ghost" tone="neutral" onClick={() => myRemindersStore.update((value) => removeMyReminder(value, item.id))}>
-                {t('remove')}
-              </Button>
+              <RowMenu
+                label={t('optionsOf', { text: item.text })}
+                remove={{
+                  label: t('remove'),
+                  confirmTitle: t('removeTitle'),
+                  confirm: t('removeConfirm'),
+                  keep: t('keep'),
+                  onConfirm: () => myRemindersStore.update((value) => removeMyReminder(value, item.id)),
+                }}
+              />
             </li>
           ))}
         </ul>

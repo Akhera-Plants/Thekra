@@ -15,6 +15,7 @@ import {
   makeIntention,
   markMessageSeen,
   muraqabaQuoteId,
+  pledgeEvidence,
   pledgesDue,
   saveEvening,
   saveWeeklyReview,
@@ -26,7 +27,6 @@ import {
   weekSummary,
   type HeartData,
   type HeartFeeling,
-  type Pledge,
   type PledgeKept,
   type Plan,
   type PlanDayOptions,
@@ -40,6 +40,8 @@ import { formatDigits } from '@/lib/format/digits';
 import { formatGregorian } from '@/lib/practice/format';
 import { updateHeart } from '@/lib/practice/heart-store';
 import { updateStore } from '@/lib/practice/local-store';
+import { pledgeText, quotedTitle } from '@/lib/practice/pledges';
+import { EvidenceButton } from '../Pledges';
 import { habitOf } from '@/lib/practice/plans';
 import type { PracticeHabit } from '@/lib/types/practice';
 import { cn } from '@/lib/utils';
@@ -112,7 +114,7 @@ export function MuraqabaLine({ today }: { today: string }) {
   );
 }
 
-/** المعاتبة: last Friday's «رسالة إلى نفسي», first on «ورد اليوم» this Friday until read. */
+/** المعاتبة: last week's «رسالة إلى نفسي», first on «ورد اليوم» on the review day until read. */
 export function SelfMessageCard({ heart, today }: { heart: HeartData; today: string }) {
   const t = useTranslations('practice.heart.selfMessage');
   const locale = useLocale() === 'en' ? 'en' : 'ar';
@@ -228,24 +230,19 @@ export function PledgeCards({ ctx }: { ctx: HeartContext }) {
       {due.map(({ pledge, on }) => {
         const plan = ctx.store.plans.find((p) => p.id === pledge.planId);
         return (
-          <Card key={pledge.id} title={t('title', { text: pledgeText(pledge, t) })}>
-            {plan ? <p className="text-sm leading-7 text-muted-foreground">{t('hint', { habit: planTitle(plan, ctx.habits, english) })}</p> : null}
-            <Button size="sm" variant="outline" className="self-start" onClick={() => updateHeart((h) => keepPledge(h, pledge.id, on))}>
-              {t('kept')}
-            </Button>
+          <Card key={pledge.id} title={t('title', { text: pledgeText(pledge, english, t) })}>
+            {plan ? <p className="text-sm leading-7 text-muted-foreground">{t('hint', { habit: quotedTitle(planTitle(plan, ctx.habits, english), english) })}</p> : null}
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={() => updateHeart((h) => keepPledge(h, pledge.id, on))}>
+                {t('kept')}
+              </Button>
+              <EvidenceButton ids={pledgeEvidence(pledge.action)} deed={pledgeText(pledge, english, t)} />
+            </div>
           </Card>
         );
       })}
     </>
   );
-}
-
-type PledgeT = (key: 'sadaqah' | 'sadaqahPlain' | 'rakatain', values?: Record<string, string>) => string;
-
-export function pledgeText(pledge: Pledge, t: PledgeT): string {
-  if (pledge.action === 'custom') return pledge.text ?? '';
-  if (pledge.action === 'rakatain') return t('rakatain');
-  return pledge.text ? t('sadaqah', { text: pledge.text }) : t('sadaqahPlain');
 }
 
 /** المحاسبة (evening, opt-in): what was completed, the day's pledge kept or not, and the private check-in link. */
@@ -287,7 +284,7 @@ export function EveningCard({ ctx }: { ctx: HeartContext }) {
   );
 }
 
-/** المحاسبة (Friday; Saturday morning if skipped): kept, weakened, one step, the heart, a line to oneself. */
+/** «المحاسبة الأسبوعية» (the chosen day; the next morning if skipped): kept, weakened, one step, the heart, a line to oneself. */
 export function WeeklyCard({ ctx }: { ctx: HeartContext }) {
   const t = useTranslations('practice.heart.weekly');
   const english = useLocale() === 'en';
