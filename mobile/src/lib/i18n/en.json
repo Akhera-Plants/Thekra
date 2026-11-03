@@ -185,7 +185,8 @@
       "appearance": "Language and appearance"
     },
     "weekBranch": "Branch of the week",
-    "weekBranchHint": "One branch of faith each week in «Today's wird», for those who want to study them."
+    "weekBranchHint": "One branch of faith each week",
+    "dangerZone": "Danger zone"
   },
   "auth": {
     "loginTitle": "Sign in",
@@ -408,7 +409,9 @@
       "load": "Your habits in minutes today: {{load}} of {{free}} free minutes",
       "over": "Your habits take more than half of your free time. Obligations come before voluntary deeds, so lighten them until you can keep them up.",
       "ok": "Your habits fit your time.",
-      "notSet": "You have not set your free time yet."
+      "notSet": "You have not set your free time yet.",
+      "saved": "Saved",
+      "other": "Other"
     },
     "dueNow": "Due now",
     "hub": {
@@ -523,30 +526,30 @@
       "deleteNote": "It is deleted with its record and cannot be restored.",
       "back": "Back",
       "sapling": {
-        "title": "Three new habits at a time. A little that lasts is better than a lot that stops.",
+        "title": "Three new habits at once",
         "hint": "Keep up what you have, or pause a sapling to start another.",
         "pause": "Pause a habit",
         "delete": "Delete a habit"
       },
       "periodic": {
-        "title": "You have seven periodic acts. A little that lasts is better than much that stops.",
+        "title": "You have seven periodic acts",
         "hint": "Keep up what you have, or pause an act to start another.",
         "pause": "Pause an act",
         "delete": "Delete an act"
       },
       "program": {
-        "title": "Step by step. A little that lasts is better than a lot that stops.",
+        "title": "Step by step",
         "hint": "Complete your program, then start another.",
         "pause": "Pause",
         "delete": "Delete"
       },
       "why": {
-        "habits_young": "You have {{count}} habits younger than three months. You can add a new one on {{date}}, when one of them reaches three months, or pause one.",
-        "habits_youngNoDate": "You have {{count}} habits younger than three months. Keep going, or pause one.",
-        "programs_young": "Start a new program when every program you run has lasted two months, on {{date}}.",
-        "programs_youngNoDate": "Start a new program when every program you run has lasted two months.",
-        "programs_fullNoDate": "You run {{count}} programs, the limit. End one to start another.",
-        "periodic_fullNoDate": "You have {{count}} periodic acts, the limit. Delete one to add another."
+        "habits_young": "A new one fits on {{date}}.",
+        "habits_youngNoDate": "Keep up what you have until it holds.",
+        "programs_young": "You can start a new program on {{date}}.",
+        "programs_youngNoDate": "Start another once yours has lasted two months.",
+        "programs_fullNoDate": "{{count}} programs is the limit, so end one first.",
+        "periodic_fullNoDate": "Delete an act to add another."
       }
     },
     "excuse": {
@@ -657,11 +660,14 @@
       "reviews": {
         "title": "Self-review",
         "lead": "Your weekly reviews, private to you.",
-        "empty": "No review yet. Your weekly reviews appear here.",
+        "empty": "No review yet",
         "weekOf": "Week of {{date}}",
         "heart": "Heart: {{value}}",
         "step": "Step: {{habit}} · {{choice}}",
-        "message": "Message to myself: {{text}}"
+        "message": "Message to myself: {{text}}",
+        "emptyHint": "Your weekly reviews appear here.",
+        "start": "Start this week's review",
+        "settings": "Review settings"
       }
     },
     "notifyPrefs": {
@@ -1390,7 +1396,8 @@
       "lead": "For each habit: the days you logged something, of its days in the last {{days}} days.",
       "empty": "The rate shows after your habits' first full day.",
       "mean": "Average: {{percent}}%"
-    }
+    },
+    "longestShort": "Longest: {{count}}"
   },
   "topic": {
     "branchesTitle": "From the branches of faith",
@@ -1520,7 +1527,8 @@
         "body": "If the amount is heavy, lighten it; a little that lasts is better.",
         "action": "Open the habit"
       }
-    }
+    },
+    "toolsTitle": "Habit tools"
   },
   "catalog": {
     "all": "All",

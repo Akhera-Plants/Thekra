@@ -1,7 +1,7 @@
 /**
  * «مواسم الخير» (the occasions calendar, roadmap §2.2; owner round 3, decision 4), after the website's calendar page:
  * today in Hijri in a next-step note with an icon that opens the ±2 day Hijri adjustment in a sheet, then two tabs:
- * «المناسبات القادمة» (the upcoming occasions as a hairline list, each opening its good deed; «أضفها إلى تقويمك» on the
+ * «المناسبات القادمة» (the upcoming occasions as hairline lists grouped by month under a month header, each opening its good deed; «أضفها إلى تقويمك» on the
  * list's title line opens a sheet with «اشترك في التقويم», the public feed, no personal data, no account: `webcal://`
  * on iOS, Google Calendar's add-by-URL page on Android; and «نزّل ملف التقويم», the same `.ics` over https) and «الشهر» (the month grid with the sunnah
  * occasions marked, the selected day's occasions under it).
@@ -18,7 +18,7 @@ import { BottomSheet } from '@/components/practice/mujahada/Sheet';
 import { addDays, formatHijriAr, isHijriSupported, toHijri, updateSettings, weekday } from '@thekra/practice-core';
 import { calendarFeedUrl, useCalendarOccasions } from '@/lib/api/practice';
 import { pick, type CalendarOccasionDto } from '@/lib/practice/catalog-types';
-import { calendarSubscribeLink, firstWeekday, monthEnd, monthStart, shortDayTitle } from '@/lib/practice/calendar-grid';
+import { calendarSubscribeLink, firstWeekday, monthEnd, monthStart, monthTitle, shortDayTitle } from '@/lib/practice/calendar-grid';
 import { shortDate } from '@/lib/practice/format';
 import { today, usePracticeStore } from '@/lib/practice/practice-store';
 import { useDateNames, useHubDays } from '@/lib/practice/use-habits-hub';
@@ -54,6 +54,8 @@ const makeStyles = (t: Theme) => ({
   group: { gap: space.sm },
   today: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.sm },
   month: { gap: space.lg },
+  months: { gap: space['2xl'] },
+  monthGroup: { gap: space.sm },
   list: { borderTopWidth: 1, borderTopColor: t.colors.border },
   row: {
     flexDirection: 'row' as const,
@@ -172,11 +174,7 @@ export default function CalendarScreen() {
             ) : rows.length === 0 ? (
               <EmptyState icon={CalendarDays} message={t('calendar.empty')} />
             ) : (
-              <View style={styles.list}>
-                {rows.map((o) => (
-                  <OccasionRow key={`${o.key}-${o.date}`} occasion={o} hijriLabel={hijri ? hijriLabel : null} />
-                ))}
-              </View>
+              <UpcomingByMonth rows={rows} hijriLabel={hijri ? hijriLabel : null} />
             )}
           </Section>
         </>
@@ -265,6 +263,38 @@ function MonthOccasions({ month, today: todayDate, selected, hijriLabel, onSelec
           )}
         </Section>
       ) : null}
+    </View>
+  );
+}
+
+/** The upcoming occasions grouped by Gregorian month: a month header, then that month's hairline list. */
+function UpcomingByMonth({ rows, hijriLabel }: { rows: readonly CalendarOccasionDto[]; hijriLabel: ((h: HijriParts) => string) | null }) {
+  const styles = useStyles(makeStyles);
+  const names = useDateNames();
+  const groups = useMemo(() => {
+    const out: { month: string; rows: CalendarOccasionDto[] }[] = [];
+    for (const o of rows) {
+      const month = o.date.slice(0, 7);
+      const last = out[out.length - 1];
+      if (last && last.month === month) last.rows.push(o);
+      else out.push({ month, rows: [o] });
+    }
+    return out;
+  }, [rows]);
+  return (
+    <View style={styles.months}>
+      {groups.map((g) => (
+        <View key={g.month} style={styles.monthGroup}>
+          <Text variant="eyebrow" accessibilityRole="header">
+            {monthTitle(`${g.month}-01`, names)}
+          </Text>
+          <View style={styles.list}>
+            {g.rows.map((o) => (
+              <OccasionRow key={`${o.key}-${o.date}`} occasion={o} hijriLabel={hijriLabel} />
+            ))}
+          </View>
+        </View>
+      ))}
     </View>
   );
 }

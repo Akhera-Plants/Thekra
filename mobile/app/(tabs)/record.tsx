@@ -6,13 +6,14 @@
  *   done, a quiet «سجّل» on a day it is not asked, «استأنف» when paused), then «معاصٍ أتخفّف منها» (each running «تخفَّف»
  *   program with its stage and days held, generic words only, opening the locked program screen), «وضع رمضان» (in
  *   Ramadan only) and «فروضي وأدواري»;
- * - «الإحصاء»: the streak and «أطول مداومة» (practice-core `currentStreak` / `longestStreak`), the one month calendar
+ * - «الإحصاء»: the streak and «أطول مداومة» in one compact row (practice-core `currentStreak` / `longestStreak`), the one month calendar
  *   (a tapped day opens its list, loggable for the last 7 days) and «حصيلتي» per habit.
  * Owner round 3: a missed habit's row offers «صلّحها» (the «خربانة؟ صلّحها» steps, HabitFixSheet), a program row after a
  * weak day too; «ابنِ حلقة عادتك الخاصة» opens the loop builder; periodic acts stay in «أعمال دورية» (reminders, not
  * habits); «الإحصاء» adds «نسبة الالتزام» per habit (CommitmentChart); a hairline rule divides the sections.
- * «استراتيجيات العادات» opens from a card of its own at the top of «العادات» (owner, 2026-11-03: it is central to the
- * app, so it gets a prominent home, as habit apps put their tips above the list); it stays in the side menu too.
+ * «استراتيجيات العادات» opens from the top of «العادات» (owner, 2026-11-03: it is central to the app, so it gets a
+ * prominent home, as habit apps put their tips above the list), first row of a small «أدوات العادة» group with
+ * «ابنِ حلقة عادتك الخاصة» (two hairline rows); it stays in the side menu too.
  * The other screens (أعمال دورية، المحاسبة، رفقة، المحفوظات…) are in the side menu. The old «عاداتي» route
  * (practice/habits) redirects here.
  */
@@ -69,12 +70,9 @@ import { PresenceMonth } from '@/components/practice/hub/PresenceMonth';
 import { StreakFlame } from '@/components/practice/hub/StreakFlame';
 import { TodayList } from '@/components/practice/hub/TodayList';
 import { TallySection } from '@/components/practice/hub/KnowledgeCards';
-import { radius, space, useStyles, type Theme } from '@/theme';
+import { space, useStyles, type Theme } from '@/theme';
 import {
   Button,
-  Card,
-  ForwardChevron,
-  Icon,
   ListRow,
   Notice,
   PageHeader,
@@ -90,23 +88,15 @@ import {
 type Part = 'habits' | 'stats';
 
 const makeStyles = (t: Theme) => ({
-  streak: { gap: space.xs },
   streakTop: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.sm },
-  streakNumber: { fontSize: 44, lineHeight: 56 },
+  /** The streak in one row (flame, number, label, «أطول: n») so the month shows without scrolling. */
+  streakRow: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.sm },
+  streakNumber: { fontVariant: ['tabular-nums' as const] },
+  streakLabel: { flex: 1 },
   list: { borderTopWidth: 1, borderTopColor: t.colors.border },
   tight: { gap: space.xs },
   empty: { gap: space.md, alignItems: 'flex-start' as const },
   subTitle: { paddingTop: space.sm, paddingBottom: space.xs },
-  strategies: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.md },
-  strategiesBadge: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.full,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    backgroundColor: t.colors.primarySoft,
-  },
-  strategiesText: { flex: 1, minWidth: 0, gap: 2 },
 });
 
 const openAdd = () => router.push('/practice/add');
@@ -147,9 +137,9 @@ function HabitsPart() {
           <Button label={t('common.retry')} onPress={() => void catalog.refetch()} variant="ghost" />
         </View>
       ) : null}
-      <StrategiesCard />
+      <ToolsSection />
+      <Rule />
       <DeedsSection />
-      <ListRow icon={Repeat} title={t('loops.habit.pageTitle')} hint={t('loops.habit.rowHint')} chevron onPress={openLoops} />
       <Rule />
       <ProgramsSection />
       <RamadanBlock />
@@ -159,30 +149,24 @@ function HabitsPart() {
   );
 }
 
-/** «استراتيجيات العادات»: a card of its own above the habits, with how many strategies it holds. */
-function StrategiesCard() {
+/** «أدوات العادة»: «استراتيجيات العادات» (with how many strategies it holds) and «ابنِ حلقة عادتك الخاصة», two hairline rows. */
+function ToolsSection() {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const count = listedStrategies().length;
   return (
-    <Card
-      tone="muted"
-      onPress={openStrategies}
-      accessibilityLabel={`${t('practice.strategies.title')}, ${t('practice.strategies.entryHint', { count })}`}
-    >
-      <View style={styles.strategies}>
-        <View style={styles.strategiesBadge}>
-          <Icon icon={Lightbulb} size={22} tone="link" />
-        </View>
-        <View style={styles.strategiesText}>
-          <Text variant="heading">{t('practice.strategies.title')}</Text>
-          <Text variant="small" tone="muted">
-            {t('practice.strategies.entryHint', { count })}
-          </Text>
-        </View>
-        <ForwardChevron size={20} tone="link" />
+    <Section title={t('myHabits.toolsTitle')}>
+      <View style={styles.list}>
+        <ListRow
+          icon={Lightbulb}
+          title={t('practice.strategies.title')}
+          hint={t('practice.strategies.entryHint', { count })}
+          chevron
+          onPress={openStrategies}
+        />
+        <ListRow icon={Repeat} title={t('loops.habit.pageTitle')} hint={t('loops.habit.rowHint')} chevron onPress={openLoops} />
       </View>
-    </Card>
+    </Section>
   );
 }
 
@@ -369,19 +353,19 @@ function StatsPart() {
         </View>
       ) : (
         <View
-          style={styles.streak}
+          style={styles.streakRow}
           accessible
           accessibilityLabel={`${t('practice.wird.streakLabel', { count: streak.current })}. ${t('record.longest', { count: streak.longest })}`}
         >
-          <View style={styles.streakTop}>
-            <StreakFlame size={34} />
-            <Text variant="display" style={styles.streakNumber}>
-              {String(streak.current)}
-            </Text>
-          </View>
-          <Text variant="body">{t('record.current')}</Text>
+          <StreakFlame size={24} />
+          <Text variant="title" style={styles.streakNumber}>
+            {String(streak.current)}
+          </Text>
+          <Text variant="body" style={styles.streakLabel} numberOfLines={1}>
+            {t('record.current')}
+          </Text>
           <Text variant="small" tone="muted">
-            {t('record.longest', { count: streak.longest })}
+            {t('record.longestShort', { count: streak.longest })}
           </Text>
         </View>
       )}

@@ -1,17 +1,24 @@
-/** «المحاسبة» (redesign §4.4): every weekly review on this device, newest first, read-only. Device-local, never synced. */
+/**
+ * «المحاسبة» (redesign §4.4): every weekly review on this device, newest first, read-only. Device-local, never synced.
+ * Empty: an icon-led state with one bordered way forward: this week's review on «ورد اليوم» when it is due, otherwise
+ * the review's settings (its day and time) in «التنبيهات».
+ */
 
 import React from 'react';
 import { View } from 'react-native';
+import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { reviewHistory } from '@thekra/practice-core';
+import { ClipboardCheck } from 'lucide-react-native';
+import { reviewHistory, weeklyReviewDue } from '@thekra/practice-core';
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { shortDayTitle } from '@/lib/practice/calendar-grid';
-import { usePracticeStore } from '@/lib/practice/practice-store';
+import { nowTime } from '@/lib/practice/format';
+import { today, usePracticeStore } from '@/lib/practice/practice-store';
 import { useDateNames } from '@/lib/practice/use-habits-hub';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { planTitleOf } from '@/components/practice/hub/HeartCards';
 import { space, useStyles, type Theme } from '@/theme';
-import { PageHeader, Screen, Section, Text } from '@/ui';
+import { EmptyState, PageHeader, Screen, Section, Text } from '@/ui';
 
 const makeStyles = (t: Theme) => ({
   item: { paddingVertical: space.md, gap: space.xs, borderBottomWidth: 1, borderBottomColor: t.colors.border },
@@ -26,6 +33,7 @@ export default function ReviewsScreen() {
   const plans = usePracticeStore((s) => s.store.plans);
   const habits = usePracticeCatalog(locale).data?.habits ?? [];
   const reviews = reviewHistory(heart);
+  const dueNow = reviews.length === 0 && weeklyReviewDue(heart, today(), nowTime()) !== null;
   const sep = locale === 'ar' ? '، ' : ', ';
   const titleOf = (planId: string, stored: string) => {
     const plan = plans.find((p) => p.id === planId);
@@ -37,9 +45,13 @@ export default function ReviewsScreen() {
       <PageHeader title={t('practice.heart.reviews.title')} lead={t('practice.heart.reviews.lead')} />
       <Section>
         {reviews.length === 0 ? (
-          <Text variant="body" tone="muted">
-            {t('practice.heart.reviews.empty')}
-          </Text>
+          <EmptyState
+            icon={ClipboardCheck}
+            message={t('practice.heart.reviews.empty')}
+            hint={t('practice.heart.reviews.emptyHint')}
+            actionLabel={t(dueNow ? 'practice.heart.reviews.start' : 'practice.heart.reviews.settings')}
+            onAction={dueNow ? () => router.navigate('/(tabs)/habits') : () => router.push('/settings/notifications')}
+          />
         ) : (
           reviews.map((review) => {
             const stepPlan = review.step ? [...review.steady, ...review.weak].find((r) => r.planId === review.step?.planId) : undefined;

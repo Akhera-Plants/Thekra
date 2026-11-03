@@ -37,6 +37,8 @@ interface QuoteCardProps {
   detail?: boolean;
   /** The topic link's note (`TopicText.link.note`): shown under «لماذا…؟» when it is a public attribution. */
   linkNote?: string | null;
+  /** «اقرأ الشرح»: bordered on lists (default), solid only on the quote's own page where it is the main action. */
+  primaryExplain?: boolean;
 }
 
 const TYPE: Record<QuoteType, { key: string; icon: LucideIcon }> = {
@@ -86,7 +88,7 @@ const makeStyles = (t: Theme) => ({
   bodyPressed: { opacity: 0.7 },
 });
 
-export function QuoteCard({ quote, isFavorite = false, onToggleFavorite, shareable = true, detail, linkNote }: QuoteCardProps) {
+export function QuoteCard({ quote, isFavorite = false, onToggleFavorite, shareable = true, detail, linkNote, primaryExplain = false }: QuoteCardProps) {
   const { t, i18n } = useTranslation();
   const styles = useStyles(makeStyles);
   const arabicUI = i18n.language !== 'en';
@@ -268,6 +270,7 @@ export function QuoteCard({ quote, isFavorite = false, onToggleFavorite, shareab
           icon={BookMarked}
           label={isQuran ? t('study.openTafsir') : t('study.openSharh')}
           onPress={handleOpenStudy}
+          variant={primaryExplain ? 'solid' : 'outline'}
           block
         />
       ) : null}

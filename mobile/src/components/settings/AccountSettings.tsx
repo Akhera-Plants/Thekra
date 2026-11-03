@@ -1,6 +1,7 @@
 /**
  * Settings ← «الحساب»: who is signed in and the practice sync (or the guest note with the way in), then signing out
- * and «حذف الحساب» (password → DELETE /v1/auth/me → local sign-out; the practice data on this device is kept; store
+ * (a plain row), and at the bottom, apart under its own «منطقة الحذف» header, «حذف الحساب» as a bordered destructive
+ * button (password → DELETE /v1/auth/me → local sign-out; the practice data on this device is kept; store
  * policy requires it in the app).
  */
 
@@ -17,11 +18,12 @@ import { nowTime } from '@/lib/practice/format';
 import { queryKeys } from '@/lib/query-keys';
 import { ApiError } from '@/lib/types/api';
 import { radius, space, useStyles, useTheme, type Theme } from '@/theme';
-import { Button, Field, ListRow, Notice, Text } from '@/ui';
+import { Button, Field, ListRow, Notice, Rule, Text } from '@/ui';
 import { SettingsGroup } from './SettingsSections';
 
 const makeStyles = (t: Theme) => ({
   guest: { gap: space.md, paddingVertical: space.lg },
+  danger: { gap: space.md, marginTop: space['2xl'] },
   backdrop: { flex: 1, backgroundColor: t.colors.overlay, justifyContent: 'center' as const, padding: space.xl },
   dialog: {
     backgroundColor: t.colors.card,
@@ -36,6 +38,7 @@ const makeStyles = (t: Theme) => ({
 
 export function AccountSettings() {
   const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const clearSession = useAuthStore((s) => s.clearSession);
@@ -91,9 +94,18 @@ export function AccountSettings() {
 
       {user ? (
         <SettingsGroup title={t('settings.signOutGroup')}>
-          <ListRow icon={LogOut} title={t('settings.signOut')} destructive onPress={handleLogout} />
-          <ListRow icon={Trash2} title={t('settings.deleteAccount')} destructive onPress={openDelete} />
+          <ListRow icon={LogOut} title={t('settings.signOut')} onPress={handleLogout} />
         </SettingsGroup>
+      ) : null}
+
+      {user ? (
+        <View style={styles.danger}>
+          <Rule />
+          <Text variant="eyebrow" tone="destructive" accessibilityRole="header">
+            {t('settings.dangerZone')}
+          </Text>
+          <Button label={t('settings.deleteAccount')} icon={Trash2} variant="destructive" onPress={openDelete} />
+        </View>
       ) : null}
 
       <DeleteAccountDialog

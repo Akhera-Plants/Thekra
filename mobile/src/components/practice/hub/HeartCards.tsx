@@ -130,7 +130,20 @@ export function SelfMessageCard({ today }: { today: string }) {
 /** The cards under the header, in order; each hides itself when it has nothing to say. */
 export function HeartTop({ today }: { today: string }) {
   const styles = useStyles(makeStyles);
+  const store = usePracticeStore((s) => s.store);
+  const heart = usePracticeStore((s) => s.heart);
+  const planDays = usePlanDays();
   const time = nowTime();
+  // Nothing to say → no node at all, so the page's gap does not leave an empty band under the header.
+  const state = intentionState(heart, today, time);
+  const any =
+    state === 'offer' ||
+    state === 'made' ||
+    state === 'card' ||
+    pledgesDue(store, heart, today, planDays).length > 0 ||
+    Boolean(weeklyReviewDue(heart, today, time)) ||
+    eveningCardVisible(heart, today, time);
+  if (!any) return null;
   return (
     <View style={styles.stack}>
       <IntentionCard today={today} time={time} />

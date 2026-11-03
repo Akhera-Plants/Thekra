@@ -1,5 +1,5 @@
 /**
- * A bottom sheet in the kit's look (card fill, hairline, panel radius on top), with its title and «إغلاق» in one row and
+ * A bottom sheet in the kit's look (card fill, hairline, panel radius on top, the 32×4 grabber), with its title and «إغلاق» in one row and
  * scrolling content (and an optional footer of actions that stays in view): the tools of «لحظة مجاهدة», the limit explanation and the strategy example. The backdrop, the
  * close button and Android back close it.
  */
@@ -24,6 +24,8 @@ const makeStyles = (t: Theme) => ({
     borderBottomWidth: 0,
     borderColor: t.colors.border,
   },
+  /** The 32×4 grabber, as SheetScreen draws it on Android: the sheet reads as one that slides away. */
+  grabber: { alignSelf: 'center' as const, width: 32, height: 4, marginTop: space.md, borderRadius: radius.full, backgroundColor: t.colors.mutedForeground, opacity: 0.4 },
   bar: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.sm, paddingStart: GUTTER, paddingEnd: space.sm, paddingTop: space.sm },
   title: { flex: 1 },
   content: { paddingHorizontal: GUTTER, paddingTop: space.sm, gap: space.lg },
@@ -52,6 +54,7 @@ export function BottomSheet({
       <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <Pressable style={styles.backdrop} onPress={onClose} accessibilityRole="button" accessibilityLabel={t('common.close')} />
         <View style={styles.sheet} accessibilityViewIsModal>
+          <View style={styles.grabber} />
           <View style={styles.bar}>
             <Text variant="heading" accessibilityRole="header" style={styles.title}>
               {title}

@@ -1,8 +1,9 @@
 /**
  * The limit sheet (redesign §3; owner round 3, item 16), shown instead of adding past a limit: why (practice-core
  * `limitBlock`: 3 habits younger than three months; 7 periodic acts; 3 «تخفَّف» programs, or one not yet two months old)
- * and the day it unlocks by itself, then «أكمل ما عندي» (primary, closes), «أوقِف … مؤقتًا» (pick one; its history stays)
- * and «احذف …» (pick one, then confirm). The program limit has only the first action. Every change goes through
+ * and the day it unlocks by itself in one short line, then «أكمل ما عندي» (the one primary, closes) and, side by side as
+ * two compact bordered buttons, «أوقِف … مؤقتًا» (pick one; its history stays) and «احذف …» (destructive; pick one,
+ * then confirm). The program limit has only the first action. Every change goes through
  * practice-core store helpers.
  */
 
@@ -19,7 +20,7 @@ import { today, usePracticeStore } from '@/lib/practice/practice-store';
 import { habitFor } from '@/lib/practice/reminders';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { GUTTER, radius, space, useStyles, type Theme } from '@/theme';
-import { Button, Chip, NextStep, Text } from '@/ui';
+import { Button, Chip, Text } from '@/ui';
 
 const makeStyles = (t: Theme) => ({
   root: { flex: 1, justifyContent: 'flex-end' as const },
@@ -36,6 +37,8 @@ const makeStyles = (t: Theme) => ({
     gap: space.md,
   },
   picks: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: space.sm },
+  pair: { flexDirection: 'row' as const, gap: space.sm },
+  half: { flex: 1 },
 });
 
 type Step = 'menu' | 'pause' | 'delete' | 'confirm';
@@ -98,16 +101,16 @@ export function LimitSheet({ kind, visible, limits, onClose, onFreed }: LimitShe
           {step === 'menu' ? (
             <>
               {why ? (
-                <NextStep>
-                  <Text variant="body">{t(why.key, why.params)}</Text>
-                </NextStep>
+                <Text variant="small" tone="muted">
+                  {t(why.key, why.params)}
+                </Text>
               ) : null}
               <Button label={t('practice.limits.keepGoing')} onPress={close} block />
               {candidates.length > 0 ? (
-                <>
-                  <Button label={t(`practice.limits.${kind}.pause`)} variant="outline" block onPress={() => setStep('pause')} />
-                  <Button label={t(`practice.limits.${kind}.delete`)} variant="destructive" block onPress={() => setStep('delete')} />
-                </>
+                <View style={styles.pair}>
+                  <Button label={t(`practice.limits.${kind}.pause`)} variant="outline" compact style={styles.half} onPress={() => setStep('pause')} />
+                  <Button label={t(`practice.limits.${kind}.delete`)} variant="destructive" compact style={styles.half} onPress={() => setStep('delete')} />
+                </View>
               ) : null}
             </>
           ) : (

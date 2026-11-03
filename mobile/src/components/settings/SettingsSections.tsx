@@ -15,6 +15,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import Constants from 'expo-constants';
 import {
   BookOpen,
+  CalendarDays,
   Database,
   Download,
   ExternalLink,
@@ -24,6 +25,7 @@ import {
 } from 'lucide-react-native';
 import { setHeartPrefs, type HeartPrefs } from '@thekra/practice-core';
 import { TimeField, WeekdayPicker } from '@/components/practice/editors';
+import { BottomSheet } from '@/components/practice/mujahada/Sheet';
 import { exportAccountData } from '@/lib/api/practice';
 import { ensurePermission, scheduledReminderCount } from '@/lib/practice/notifications';
 import { usePracticeStore } from '@/lib/practice/practice-store';
@@ -46,7 +48,6 @@ const makeStyles = (t: Theme) => ({
   switchRow: { paddingVertical: space.sm, borderBottomWidth: 1, borderBottomColor: t.colors.border },
   /** What a switch opens (its time, its day): under it, before the row's hairline. */
   sub: { gap: space.md, paddingTop: space.xs, paddingBottom: space.sm },
-  field: { gap: 6 },
   choice: { gap: space.sm, paddingVertical: space.lg, borderBottomWidth: 1, borderBottomColor: t.colors.border },
 });
 
@@ -148,6 +149,7 @@ export function NotificationsSection() {
   const hasProgram = usePracticeStore((s) => s.store.programs.length > 0);
   const [count, setCount] = useState<number | null>(null);
   const [denied, setDenied] = useState(false);
+  const [pickingDay, setPickingDay] = useState(false);
   const setHeartPref = (patch: Partial<HeartPrefs>) => setHeart((h) => setHeartPrefs(h, patch));
 
   useFocusEffect(
@@ -249,10 +251,14 @@ export function NotificationsSection() {
           <SwitchRow label={t('practice.notifyPrefs.fridayReview')} value={weeklyOn} onValueChange={(v) => void toggleWeekly(v)} />
           {weeklyOn ? (
             <View style={styles.sub}>
-              <View style={styles.field}>
-                <Text variant="label">{t('practice.notifyPrefs.reviewDay')}</Text>
-                <WeekdayPicker single value={[heart.prefs.reviewDay]} onChange={(days) => setHeartPref({ reviewDay: days[0] ?? heart.prefs.reviewDay })} />
-              </View>
+              {/* One row with the chosen day; the seven days open in a small sheet that closes on a choice. */}
+              <ListRow
+                icon={CalendarDays}
+                title={t('practice.notifyPrefs.reviewDay')}
+                value={t(`practice.weekdays.${heart.prefs.reviewDay}`)}
+                chevron
+                onPress={() => setPickingDay(true)}
+              />
               <TimeField label={timeLabel} value={prefs.fridayTime} onChange={(time) => setPrefs((p) => ({ ...p, fridayTime: time }))} />
             </View>
           ) : null}
@@ -315,6 +321,17 @@ export function NotificationsSection() {
           </SettingsGroup>
         </>
       ) : null}
+
+      <BottomSheet visible={pickingDay} title={t('practice.notifyPrefs.reviewDay')} onClose={() => setPickingDay(false)}>
+        <WeekdayPicker
+          single
+          value={[heart.prefs.reviewDay]}
+          onChange={(days) => {
+            setHeartPref({ reviewDay: days[0] ?? heart.prefs.reviewDay });
+            setPickingDay(false);
+          }}
+        />
+      </BottomSheet>
     </>
   );
 }
@@ -355,18 +372,22 @@ export function AppearanceSection() {
         <Text variant="label">{t('settings.language')}</Text>
         <SegmentTabs items={localeItems} value={currentLocale} onChange={(locale) => void changeLocale(locale)} />
       </View>
-      <SwitchRow
-        label={t('settings.showHijri')}
-        value={showHijri}
-        onValueChange={(on) => setPrefs((p) => ({ ...p, showHijri: on }))}
-      />
+      <View style={styles.switchRow}>
+        <SwitchRow
+          label={t('settings.showHijri')}
+          value={showHijri}
+          onValueChange={(on) => setPrefs((p) => ({ ...p, showHijri: on }))}
+        />
+      </View>
       {/* «شعبة الأسبوع» on «ورد اليوم» only for a member who chose to study the branches of faith (owner round 3). */}
-      <SwitchRow
-        label={t('settings.weekBranch')}
-        hint={t('settings.weekBranchHint')}
-        value={weekBranch}
-        onValueChange={(on) => setPrefs((p) => ({ ...p, weekBranch: on }))}
-      />
+      <View style={styles.switchRow}>
+        <SwitchRow
+          label={t('settings.weekBranch')}
+          hint={t('settings.weekBranchHint')}
+          value={weekBranch}
+          onValueChange={(on) => setPrefs((p) => ({ ...p, weekBranch: on }))}
+        />
+      </View>
       {/* The widget's «نص اليوم» source: part of how the app shows itself on the device. */}
       <ListRow icon={BookOpen} title={t('dailyText.title')} chevron onPress={() => router.push('/practice/daily-text')} />
     </SettingsGroup>

@@ -11,7 +11,7 @@ import { useReminderSets } from '@/lib/api/reminder-sets';
 import { usePracticeStore } from '@/lib/practice/practice-store';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { useAuthStore } from '@/lib/stores/auth-store';
-import { CheckRow, ListRow, PageHeader, Screen, Section, Text } from '@/ui';
+import { CheckRow, ListRow, PageHeader, Rule, Screen, Section, Text } from '@/ui';
 
 export default function DailyTextScreen() {
   const { t } = useTranslation();
@@ -44,6 +44,7 @@ export default function DailyTextScreen() {
           onPress={() => choose({ kind: 'saved' })}
         />
       </Section>
+      <Rule />
       <Section title={t('dailyText.sets')}>
         {sets.isError ? (
           <Text variant="small" tone="muted">

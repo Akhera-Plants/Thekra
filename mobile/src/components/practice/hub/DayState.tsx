@@ -4,30 +4,39 @@
  * each with its one-line effect:
  * - «يومي ثقيل»: every habit asks for its smallest amount today (practice-core `setHeavyDay`, today only);
  * - «عذر (مرض أو سفر)»: the day neither breaks nor adds to the streak (practice-core `toggleExcusedDay`).
- * Hidden without a habit.
+ * When a state is on, the control takes the selected look (the chip's primary tint and ring) and a check in place of the
+ * cloud, so «on» does not rest on the label alone. Hidden without a habit.
  */
 
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CloudSun } from 'lucide-react-native';
+import { CircleCheck, CloudSun } from 'lucide-react-native';
 import type { LocalDate } from '@thekra/practice-core';
 import { useExcuse, useHeavyDay } from '@/lib/practice/use-habits-hub';
+import { useStyles, type Theme } from '@/theme';
 import { Button, Rule, SwitchRow } from '@/ui';
 import { BottomSheet } from '../mujahada/Sheet';
 
+const makeStyles = (t: Theme) => ({
+  on: { backgroundColor: t.colors.primarySoft, borderColor: t.colors.link },
+});
+
 export function DayState({ today }: { today: LocalDate }) {
   const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
   const [open, setOpen] = useState(false);
   const heavyDay = useHeavyDay(today);
   const excuse = useExcuse(today, today);
   if (!heavyDay.hasPlans) return null;
+  const on = heavyDay.heavy || excuse.excused;
   const label = heavyDay.heavy ? t('practice.heavyDay') : excuse.excused ? t('practice.excuse.day') : t('practice.dayState.button');
   return (
     <>
       <Button
         label={label}
-        icon={CloudSun}
-        variant={heavyDay.heavy || excuse.excused ? 'outline' : 'ghost'}
+        icon={on ? CircleCheck : CloudSun}
+        variant={on ? 'outline' : 'ghost'}
+        style={on ? styles.on : undefined}
         compact
         onPress={() => setOpen(true)}
         accessibilityLabel={`${t('practice.dayState.button')}: ${label}`}

@@ -62,7 +62,7 @@ export default function QuoteDetailScreen() {
   return (
     <Screen edges={['bottom']} refreshing={isRefetching} onRefresh={handleRefresh}>
       {isOffline ? <Notice icon={WifiOff}>{t('common.offlineBanner')}</Notice> : null}
-      <QuoteCard quote={quote} isFavorite={isFavorite} onToggleFavorite={toggle} detail />
+      <QuoteCard quote={quote} isFavorite={isFavorite} onToggleFavorite={toggle} detail primaryExplain />
 
       {translations.length > 0 ? (
         <View style={styles.group}>

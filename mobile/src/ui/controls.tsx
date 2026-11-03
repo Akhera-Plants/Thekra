@@ -45,12 +45,16 @@ const makeStyles = (t: Theme) => ({
     alignItems: 'center' as const,
     gap: 6,
     minHeight: 40,
+    maxWidth: '100%' as const,
+    flexShrink: 1,
     paddingHorizontal: space.lg,
+    paddingVertical: 6,
     borderRadius: radius.full,
     borderWidth: 1,
     borderColor: t.colors.border,
     backgroundColor: t.colors.card,
   },
+  chipLabel: { flexShrink: 1 },
   /** The site's chosen option: primary border and ink (`link`: primary in light, the readable ring in dark) on a primary tint. */
   chipSelected: { backgroundColor: t.colors.primarySoft, borderColor: t.colors.link },
   checkRow: {
@@ -171,7 +175,8 @@ export function Chip({ label, selected, onPress, count }: { label: string; selec
       accessibilityState={{ selected: Boolean(selected) }}
       style={({ pressed }) => [styles.chip, selected && styles.chipSelected, pressed && { opacity: 0.75 }]}
     >
-      <Text variant="small" weight={selected ? 'medium' : 'regular'} tone={selected ? 'link' : 'default'}>
+      {selected ? <Icon icon={Check} size={14} tone="link" strokeWidth={2.2} /> : null}
+      <Text variant="small" weight={selected ? 'medium' : 'regular'} tone={selected ? 'link' : 'default'} numberOfLines={2} style={styles.chipLabel}>
         {label}
       </Text>
       {count !== undefined ? (

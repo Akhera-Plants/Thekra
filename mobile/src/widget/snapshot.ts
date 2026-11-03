@@ -3,7 +3,7 @@
  * every change and saves it; the widget task (task-handler.tsx) only reads it, so a widget never touches the practice
  * store. Pure: no React Native imports here, so the jest tests run in Node.
  *
- * - «المداومة» (small): the streak with the gold flame and «بقي n».
+ * - «المداومة» (small): the streak with the brand-green flame and «بقي n».
  * - «ورد اليوم» (medium): today's habits with done marks (habits only: no names of people, never the sin program).
  * - «نص اليوم»: one text a day from the source chosen in settings (a reminder set, the saved texts, «تذكيراتي», or
  *   «مواسم الخير»: today's date and the next occasion). The candidates are saved, and the widget picks the day's one
