@@ -5,11 +5,14 @@ import {
   IsArray,
   IsBoolean,
   IsIn,
+  IsInt,
   IsOptional,
   IsString,
   IsUrl,
   Matches,
+  Max,
   MaxLength,
+  Min,
   ValidateBy,
   ValidateNested,
   type ValidationOptions,
@@ -51,6 +54,8 @@ export class PushPrefsDto {
   @IsOptional() @IsString() @Matches(HH_MM) eveningTime?: string;
   @IsOptional() @IsBoolean() fridayReview?: boolean;
   @IsOptional() @IsString() @Matches(HH_MM) fridayTime?: string;
+  /** The weekly review's day, 0 = Sunday … 6 = Saturday (Friday by default). */
+  @IsOptional() @IsInt() @Min(0) @Max(6) reviewDay?: number;
   /** «ذكّرني بها»: chosen strategy keys (practice-core `STRATEGY_KEYS`); one reminder a week at most. */
   @IsOptional() @IsArray() @ArrayMaxSize(STRATEGY_KEYS.length) @IsIn(STRATEGY_KEYS, { each: true }) strategies?: string[];
   @IsOptional() @IsString() @Matches(HH_MM) strategyTime?: string;

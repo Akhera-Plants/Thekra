@@ -99,6 +99,13 @@ describe('notificationPlan: the policy’s own reminders', () => {
     expect(run(emptyStore(), { prefs, days: 7 })).toEqual([]);
   });
 
+  it('weekly review reminder on the chosen day', () => {
+    const prefs = { ...DEFAULT_NOTIFICATION_PREFS, habits: false, reviewDay: 0, fridayTime: '20:00' };
+    expect(run(storeOf(plan('a')), { prefs, days: 7 }).map((n) => [n.date, n.time])).toEqual([['2026-11-01', '20:00']]);
+    expect(parseNotificationPrefs({ reviewDay: 3 }).reviewDay).toBe(3);
+    expect(parseNotificationPrefs({ reviewDay: 7 }).reviewDay).toBe(5);
+  });
+
   it('people lists: one generic reminder per due day; the private moment only when asked for', () => {
     const rel: Relative = { id: 'r1', name: 'خالتي', relation: 'خالة', rule: { kind: 'everyNDays', n: 7, anchor: '2026-10-01' }, history: [] };
     const store: Store = { ...emptyStore(), relatives: [rel, { ...rel, id: 'r2' }] };

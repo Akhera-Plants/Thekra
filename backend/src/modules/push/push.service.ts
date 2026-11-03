@@ -50,6 +50,7 @@ function storedPrefs(raw: object): Prisma.InputJsonObject {
     eveningTime: all.eveningTime,
     fridayReview: all.fridayReview,
     fridayTime: all.fridayTime,
+    reviewDay: all.reviewDay,
     strategies: all.strategies,
     strategyTime: all.strategyTime,
   };

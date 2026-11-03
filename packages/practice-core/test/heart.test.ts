@@ -94,6 +94,27 @@ describe('المحاسبة', () => {
     expect(weeklyReviewDue(setHeartPrefs(data, { fridayReview: false }), FRIDAY, '08:00')).toBeNull();
   });
 
+  it('the user chooses the evening time and the weekly review day', () => {
+    let data = setHeartPrefs(emptyHeart(), { eveningReview: true, eveningFrom: '21:30' });
+    expect(eveningCardVisible(data, '2026-10-28', '21:00')).toBe(false);
+    expect(eveningCardVisible(data, '2026-10-28', '21:30')).toBe(true);
+    // Thursday (4): due on Thursday, and Friday morning when skipped; not on Friday itself any more.
+    data = setHeartPrefs(data, { reviewDay: 4 });
+    expect(weeklyReviewDue(data, '2026-10-29', '08:00')).toBe('2026-10-29');
+    expect(weeklyReviewDue(data, FRIDAY, '09:00')).toBe('2026-10-29');
+    expect(weeklyReviewDue(data, FRIDAY, '13:00')).toBeNull();
+    // Saturday (6) wraps to Sunday morning.
+    data = setHeartPrefs(data, { reviewDay: 6 });
+    expect(weeklyReviewDue(data, '2026-11-01', '09:00')).toBe('2026-10-31');
+  });
+
+  it('keeps a valid chosen time and day, drops invalid ones', () => {
+    const json = JSON.stringify({ ...emptyHeart(), prefs: { eveningFrom: '20:15', reviewDay: 2 } });
+    expect(parseHeart(json).prefs).toMatchObject({ eveningFrom: '20:15', reviewDay: 2 });
+    const bad = JSON.stringify({ ...emptyHeart(), prefs: { eveningFrom: '25:00', reviewDay: 9 } });
+    expect(parseHeart(bad).prefs).toMatchObject({ eveningFrom: '19:00', reviewDay: 5 });
+  });
+
   it('week summary: steady habits and where one weakened, excused days left out', () => {
     const log: Record<string, number> = {};
     for (let d = 24; d <= 30; d++) log[`2026-10-${d}`] = 5;
@@ -202,5 +223,18 @@ describe('storage and المراقبة', () => {
     const ids = new Set([0, 1, 2].map((i) => muraqabaQuoteId(`2026-10-${28 + i}`)));
     expect(ids.size).toBe(MURAQABA_QUOTE_IDS.length);
     expect(muraqabaQuoteId('2026-10-28', [])).toBeNull();
+  });
+});
+
+describe('«التزام شخصي»: deeds that wipe out sins', () => {
+  it('lists at least ten deeds plus sadaqah and a custom line, each deed titled with its evidence', async () => {
+    const { PLEDGE_DEED_INFO, PLEDGE_DEEDS, PLEDGE_ACTIONS } = await import('../src/index.js');
+    expect(PLEDGE_DEED_INFO.map((d) => d.key)).toEqual([...PLEDGE_DEEDS]);
+    expect(PLEDGE_DEEDS.length).toBeGreaterThanOrEqual(10);
+    expect(PLEDGE_ACTIONS).toContain('sadaqah');
+    expect(PLEDGE_ACTIONS).toContain('custom');
+    for (const d of PLEDGE_DEED_INFO) {
+      expect(d.titleAr && d.titleEn && d.evidence.textAr && d.evidence.textEn && d.evidence.sourceAr && d.evidence.sourceEn).toBeTruthy();
+    }
   });
 });

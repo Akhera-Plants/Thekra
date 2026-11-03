@@ -9,7 +9,7 @@
  * Wording rules for the clients: calm, no guilt, no points or comparisons; a pledge is the user's own word to himself,
  * never «عقوبة». Pure; inputs are never mutated.
  */
-import { addDays, diffDays, isIsoTime, isValidDate, nowIso, toDayNumber, weekday, type IsoTime, type LocalDate, type LocalTime } from './dates.js';
+import { addDays, diffDays, isIsoTime, isValidDate, isValidTime, nowIso, toDayNumber, weekday, type IsoTime, type LocalDate, type LocalTime } from './dates.js';
 import { planAsksOn, type PlanDayOptions } from './agenda.js';
 import { baseAmount, canIncrease, decreaseTo, increase, isPaused, LADDER, minimumOf, requiredOn, type Plan } from './plan.js';
 import { canMakeUp, logForDay, makeUpDeadline } from './streak.js';
@@ -25,10 +25,14 @@ export const WEEKLY_KEPT = 104;
 export const MAX_PLEDGES = 20;
 /** «نية اليوم» is offered until this time. */
 export const INTENTION_UNTIL: LocalTime = '12:00';
-/** The evening review appears from this time. */
+/** The evening review appears from this time unless the user chose another ({@link HeartPrefs}.eveningFrom). */
 export const EVENING_FROM: LocalTime = '19:00';
-/** A Friday review skipped on Friday is still offered on Saturday until this time. */
-export const SATURDAY_UNTIL: LocalTime = '12:00';
+/** The weekly review's default day (0 = Sunday … 6 = Saturday): Friday. */
+export const DEFAULT_REVIEW_DAY = 5;
+/** A weekly review skipped on its day is still offered the next day until this time. */
+export const NEXT_DAY_UNTIL: LocalTime = '12:00';
+/** @deprecated The weekly review's day is the user's choice now; use {@link NEXT_DAY_UNTIL}. */
+export const SATURDAY_UNTIL: LocalTime = NEXT_DAY_UNTIL;
 /** How far back a pledge looks for two missed days in a row. */
 export const PLEDGE_LOOKBACK_DAYS = 14;
 
@@ -38,10 +42,14 @@ export interface HeartPrefs {
   intention: boolean;
   /** The one-time card that offers «نية اليوم» was dismissed. */
   intentionOfferDismissed: boolean;
-  /** The evening review card after 19:00: opt-in. */
+  /** The evening review card from {@link HeartPrefs.eveningFrom}: opt-in. */
   eveningReview: boolean;
-  /** The Friday review card: on by default. */
+  /** When the evening review appears (and its reminder rings, on the clients): the user's choice. */
+  eveningFrom: LocalTime;
+  /** The weekly review card (the key keeps its first name, Friday's): on by default. */
   fridayReview: boolean;
+  /** The weekly review's day, 0 = Sunday … 6 = Saturday; Friday by default. */
+  reviewDay: number;
   /** «التزام شخصي»: opt-in. */
   pledges: boolean;
   /** «حلقة العادة» and «الاستمرار: ثلاث حقائق» were shown once (after the first habit). */
@@ -52,7 +60,9 @@ export const DEFAULT_HEART_PREFS: HeartPrefs = {
   intention: false,
   intentionOfferDismissed: false,
   eveningReview: false,
+  eveningFrom: EVENING_FROM,
   fridayReview: true,
+  reviewDay: DEFAULT_REVIEW_DAY,
   pledges: false,
   cardsSeen: false,
 };
@@ -99,8 +109,28 @@ export interface WeeklyReview {
   savedAt: IsoTime;
 }
 
-export type PledgeAction = 'sadaqah' | 'rakatain' | 'custom';
-export const PLEDGE_ACTIONS: readonly PledgeAction[] = ['sadaqah', 'rakatain', 'custom'];
+/**
+ * What the user does when a habit is missed two days in a row: a good deed that wipes out sins (each with its evidence
+ * on the clients), `sadaqah` with the user's own amount, or a `custom` line. One per habit, chosen per habit.
+ */
+export const PLEDGE_DEEDS = [
+  'birr',
+  'istighfar',
+  'salawat',
+  'tasbih',
+  'tahlil',
+  'sawm',
+  'qiyam',
+  'rakatain',
+  'masjid',
+  'adhkar',
+  'quran',
+  'saqy',
+  'istighfarKabir',
+] as const;
+export type PledgeDeed = (typeof PLEDGE_DEEDS)[number];
+export type PledgeAction = PledgeDeed | 'sadaqah' | 'custom';
+export const PLEDGE_ACTIONS: readonly PledgeAction[] = [...PLEDGE_DEEDS, 'sadaqah', 'custom'];
 
 /** «إن فاتتني يومين متتاليين: …». */
 export interface Pledge {
@@ -125,6 +155,11 @@ export interface HeartData {
 
 export function emptyHeart(): HeartData {
   return { v: HEART_VERSION, prefs: { ...DEFAULT_HEART_PREFS }, intentions: [], evenings: [], weekly: [], pledges: [] };
+}
+
+/** 0 (Sunday) … 6 (Saturday). */
+export function isWeekday(v: unknown): v is number {
+  return typeof v === 'number' && Number.isInteger(v) && v >= 0 && v <= 6;
 }
 
 function isRecord(v: unknown): v is Record<string, unknown> {
@@ -173,7 +208,14 @@ export function parseHeart(json: unknown): HeartData {
   const out = emptyHeart();
   if (isRecord(raw.prefs)) {
     for (const k of Object.keys(DEFAULT_HEART_PREFS) as (keyof HeartPrefs)[]) {
-      if (typeof raw.prefs[k] === 'boolean') out.prefs[k] = raw.prefs[k] as boolean;
+      const v = raw.prefs[k];
+      if (k === 'eveningFrom') {
+        if (isValidTime(v)) out.prefs.eveningFrom = v as LocalTime;
+      } else if (k === 'reviewDay') {
+        if (isWeekday(v)) out.prefs.reviewDay = v;
+      } else if (typeof v === 'boolean') {
+        out.prefs[k] = v;
+      }
     }
   }
   const intentions: DayIntention[] = [];
@@ -255,9 +297,9 @@ export function eveningOf(data: HeartData, date: LocalDate): EveningReview | und
   return data.evenings.find((e) => e.date === date);
 }
 
-/** The evening card shows after {@link EVENING_FROM} when the setting is on and today's review is not saved. */
+/** The evening card shows from the user's time ({@link HeartPrefs.eveningFrom}) when on and today's review is not saved. */
 export function eveningCardVisible(data: HeartData, date: LocalDate, time: LocalTime): boolean {
-  return data.prefs.eveningReview && time >= EVENING_FROM && !eveningOf(data, date);
+  return data.prefs.eveningReview && time >= data.prefs.eveningFrom && !eveningOf(data, date);
 }
 
 export function saveEvening(data: HeartData, review: EveningReview): HeartData {
@@ -266,22 +308,23 @@ export function saveEvening(data: HeartData, review: EveningReview): HeartData {
   return { ...data, evenings: byDate([...data.evenings.filter((e) => e.date !== review.date), clean]) };
 }
 
-// ── المحاسبة: Friday ─────────────────────────────────────────────────────────────────────────────────────────
+// ── المحاسبة: the week ───────────────────────────────────────────────────────────────────────────────────────
 
 export function weeklyOf(data: HeartData, weekOf: LocalDate): WeeklyReview | undefined {
   return data.weekly.find((w) => w.weekOf === weekOf);
 }
 
 /**
- * The Friday whose review is due now, or null: on a Friday (all day), and on Saturday before {@link SATURDAY_UNTIL}
- * when Friday's was skipped. Off when the setting is off or the review is saved.
+ * The review day whose weekly review is due now, or null: on the user's review day (all day), and the next day before
+ * {@link NEXT_DAY_UNTIL} when it was skipped. Off when the setting is off or the review is saved.
  */
 export function weeklyReviewDue(data: HeartData, date: LocalDate, time: LocalTime): LocalDate | null {
   if (!data.prefs.fridayReview) return null;
   const day = weekday(date);
-  const friday = day === 5 ? date : day === 6 && time < SATURDAY_UNTIL ? addDays(date, -1) : null;
-  if (!friday || weeklyOf(data, friday)) return null;
-  return friday;
+  const reviewDay = data.prefs.reviewDay;
+  const due = day === reviewDay ? date : day === (reviewDay + 1) % 7 && time < NEXT_DAY_UNTIL ? addDays(date, -1) : null;
+  if (!due || weeklyOf(data, due)) return null;
+  return due;
 }
 
 export interface WeekPlanSummary {
@@ -367,11 +410,11 @@ export function reviewHistory(data: HeartData): WeeklyReview[] {
 // ── المعاتبة: «رسالة إلى نفسي» ──────────────────────────────────────────────────────────────────────────────
 
 /**
- * On a Friday, the message the user wrote in an earlier review (within the last two weeks) and has not read yet:
+ * On the review day, the message the user wrote in an earlier review (within the last two weeks) and has not read yet:
  * the first thing on «ورد اليوم» that day.
  */
 export function selfMessageDue(data: HeartData, date: LocalDate): WeeklyReview | null {
-  if (weekday(date) !== 5) return null;
+  if (weekday(date) !== data.prefs.reviewDay) return null;
   const candidates = data.weekly.filter(
     (w) => w.message && !w.messageSeen && w.weekOf < date && diffDays(w.weekOf, date) <= 13,
   );

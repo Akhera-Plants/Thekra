@@ -9,7 +9,8 @@
  * - Periodic people lists (صلة الرحم…): one generic reminder per due day at the user's time; an overdue person reminds at
  *   the next time from now, then weekly (a sick person every {@link SICK_VISIT_EVERY_DAYS} days) while still due.
  * - Evening nudge (opt-in, off by default): at most once a day, only while a habit asked that day is not done.
- * - Friday review reminder (on by default): Friday at {@link DEFAULT_NOTIFICATION_PREFS}.fridayTime, unless saved.
+ * - Weekly review reminder (on by default): on the user's review day (`reviewDay`, Friday by default) at `fridayTime`,
+ *   unless saved.
  * - The private moment reminder (the sin program's generic check-in): unchanged, generic, never a name.
  * - «ذكّرني بها» (opt-in): at most one strategy a week, on Saturday at the user's time (strategies.ts).
  * - Quiet hours {@link QUIET_START}–{@link QUIET_END}: nothing the policy chose rings inside them. A habit slot inside
@@ -53,9 +54,11 @@ export interface NotificationPrefs {
   /** «بقي من يومك قليل…»: opt-in, off by default. */
   eveningNudge: boolean;
   eveningTime: LocalTime;
-  /** The Friday review reminder: on by default. */
+  /** The weekly review reminder (the keys keep their first name, Friday's): on by default. */
   fridayReview: boolean;
   fridayTime: LocalTime;
+  /** The weekly review's day, 0 = Sunday … 6 = Saturday (practice-core `HeartPrefs.reviewDay`). */
+  reviewDay: number;
   /** The private moment (generic check-in) reminder. Off by default; never on the server. */
   privateMoment: boolean;
   privateTime: LocalTime;
@@ -72,6 +75,7 @@ export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
   eveningTime: '21:00',
   fridayReview: true,
   fridayTime: '17:00',
+  reviewDay: 5,
   privateMoment: false,
   privateTime: '21:00',
   strategies: [],
@@ -88,6 +92,7 @@ export function parseNotificationPrefs(raw: unknown, defaults: NotificationPrefs
   const r = raw as Record<string, unknown>;
   for (const k of PREF_BOOLS) if (typeof r[k] === 'boolean') out[k] = r[k] as boolean;
   for (const k of PREF_TIMES) if (isValidTime(r[k])) out[k] = r[k] as LocalTime;
+  if (typeof r.reviewDay === 'number' && Number.isInteger(r.reviewDay) && r.reviewDay >= 0 && r.reviewDay <= 6) out.reviewDay = r.reviewDay;
   if (Array.isArray(r.strategies)) out.strategies = cleanStrategyKeys(r.strategies);
   return out;
 }
@@ -218,7 +223,7 @@ function fridayEntries(input: NotificationPlanInput, dates: readonly LocalDate[]
   if (!store.plans.some((p) => !isPaused(p))) return [];
   const time = prefs.fridayTime;
   return dates
-    .filter((date) => weekday(date) === 5 && !(date === today && time <= now) && !input.reviewDoneOn?.(date))
+    .filter((date) => weekday(date) === prefs.reviewDay && !(date === today && time <= now) && !input.reviewDoneOn?.(date))
     .map((date) => ({ kind: 'friday' as const, key: `friday:${date}`, date, time }));
 }
 
