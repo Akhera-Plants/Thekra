@@ -1,7 +1,7 @@
 /**
- * «المقامات» on «ورد اليوم» (redesign §4.4), mirroring the website's HeartCards: the rotating text (المراقبة), last
- * Friday's «رسالة إلى نفسي» (first, before anything else), «نية اليوم» until noon, a due «التزام شخصي», the Friday review
- * and the evening review. Every rule is practice-core; the data is device-local (practice-store `heart`), never synced.
+ * «المقامات» on «ورد اليوم» (redesign §4.4), mirroring the website's HeartCards: the rotating text (المراقبة), the last
+ * weekly review's «رسالة إلى نفسي» (first, before anything else), «نية اليوم» until noon, a due «التزام شخصي», the
+ * weekly review (on the user's review day) and the evening review (from the user's time). Every rule is practice-core; the data is device-local (practice-store `heart`), never synced.
  * Calm words only: no guilt, no penalty, no comparison.
  */
 
@@ -39,6 +39,7 @@ import {
 import { useEvidence, usePracticeCatalog } from '@/lib/api/practice';
 import { pick, type CatalogHabit } from '@/lib/practice/catalog-types';
 import { usePracticeStore } from '@/lib/practice/practice-store';
+import { pledgeDeedWords } from '@/lib/practice/pledges';
 import { habitFor } from '@/lib/practice/reminders';
 import { usePlanDays } from '@/lib/practice/use-habits-hub';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
@@ -59,10 +60,12 @@ export function planTitleOf(plan: Plan, habits: readonly CatalogHabit[], locale:
   return habit ? pick(habit, 'title', locale) : plan.title;
 }
 
-export function pledgeWords(pledge: Pledge, t: T): string {
-  if (pledge.action === 'custom') return pledge.text ?? '';
-  if (pledge.action === 'rakatain') return t('practice.heart.pledge.rakatain');
-  return pledge.text ? t('practice.heart.pledge.sadaqah', { text: pledge.text }) : t('practice.heart.pledge.sadaqahPlain');
+/** The pledge's deed in the UI locale: practice-core's deed titles, «أتصدق بـ…», or the user's own line. */
+export function pledgeWords(pledge: Pick<Pledge, 'action' | 'text'>, t: T, locale: 'ar' | 'en'): string {
+  return pledgeDeedWords(pledge, locale, {
+    sadaqah: (text) => t('practice.heart.pledge.sadaqah', { text }),
+    sadaqahPlain: t('practice.heart.pledge.sadaqahPlain'),
+  });
 }
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
@@ -109,7 +112,7 @@ export function MuraqabaLine({ today }: { today: string }) {
   );
 }
 
-/** «رسالة إلى نفسي» from last week, on Friday, until read. */
+/** «رسالة إلى نفسي» from last week, on the review day, until read. */
 export function SelfMessageCard({ today }: { today: string }) {
   const { t } = useTranslation();
   const heart = usePracticeStore((s) => s.heart);
@@ -231,7 +234,7 @@ function PledgeCards({ today }: { today: string }) {
       {due.map(({ pledge, on }) => {
         const plan = store.plans.find((p) => p.id === pledge.planId);
         return (
-          <Card key={pledge.id} title={t('practice.heart.pledge.title', { text: pledgeWords(pledge, t as unknown as T) })}>
+          <Card key={pledge.id} title={t('practice.heart.pledge.title', { text: pledgeWords(pledge, t as unknown as T, locale) })}>
             {plan ? (
               <Text variant="small" tone="muted">
                 {t('practice.heart.pledge.hint', { habit: planTitleOf(plan, habits, locale) })}
@@ -375,7 +378,7 @@ function WeeklyCard({ today, time }: { today: string; time: string }) {
       />
       <Field
         label={t('practice.heart.weekly.message')}
-        placeholder={t('practice.heart.weekly.messagePlaceholder')}
+        placeholder={t('practice.heart.weekly.messagePlaceholder', { day: t(`practice.weekdays.${heart.prefs.reviewDay}`) })}
         value={message}
         maxLength={140}
         onChangeText={setMessage}

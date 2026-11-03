@@ -9,14 +9,14 @@ import React, { useCallback } from 'react';
 import { useWindowDimensions, View } from 'react-native';
 import { router, Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Lock, Moon } from 'lucide-react-native';
+import { Lock, Moon, Plus } from 'lucide-react-native';
 import { GardenPlantTile } from '@/components/garden/GardenPlantTile';
 import { SeedBed } from '@/components/garden/PlantArt';
 import { usePracticeStore } from '@/lib/practice/practice-store';
 import { useGardenPlants } from '@/lib/practice/use-garden';
 import { useHeavyDay } from '@/lib/practice/use-habits-hub';
 import { GUTTER, space, useStyles, type Theme } from '@/theme';
-import { Button, Notice, PageHeader, Screen, Skeleton, Text, TextLink } from '@/ui';
+import { Button, Notice, PageHeader, Screen, Skeleton, Text } from '@/ui';
 
 /** Widest the garden is laid out (tablets, web): two plants a row stay a garden, not a strip. */
 const MAX_CONTENT_WIDTH = 560;
@@ -42,7 +42,7 @@ export default function GardenScreen() {
   const hydrated = usePracticeStore((s) => s.hydrated);
   const { t } = useTranslation();
   return (
-    <Screen edges={['bottom']} decor>
+    <Screen edges={['bottom']}>
       <Stack.Screen options={{ title: t('garden.title') }} />
       <PageHeader title={t('garden.title')} lead={t('garden.lead')} />
       {hydrated ? <Garden /> : <GardenSkeleton />}
@@ -84,7 +84,7 @@ function Garden() {
         ))}
       </View>
       <View style={styles.quiet}>
-        <TextLink label={t('garden.plantAnother')} onPress={handlePlant} />
+        <Button label={t('garden.plantAnother')} icon={Plus} variant="outline" onPress={handlePlant} />
         <Notice icon={Lock}>{t('garden.privacy')}</Notice>
       </View>
     </>

@@ -18,7 +18,7 @@ import { PresenceDot } from './PresenceDot';
 const makeStyles = (t: Theme) => ({
   legend: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, columnGap: space.lg, rowGap: space.xs },
   legendItem: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.sm },
-  occasion: { width: 6, height: 6, borderRadius: radius.full, backgroundColor: t.colors.intentGoodDeed },
+  occasion: { width: 6, height: 6, borderRadius: radius.full, backgroundColor: t.colors.link },
 });
 
 export interface PresenceMonthProps {

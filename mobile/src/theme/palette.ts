@@ -31,11 +31,6 @@ export interface Palette {
   intentGoodDeedForeground: string;
   intentImanBranch: string;
   intentImanBranchForeground: string;
-  /**
-   * Warm gold of the streak flame in «ورد اليوم» and «سجلّي» (the website uses the same values: `--gold` in globals.css). Never red:
-   * the streak is a quiet count, not an alarm. Readable as text on the background (≥ 4.5:1).
-   */
-  gold: string;
   gradeSahih: string;
   gradeSahihForeground: string;
   gradeHasan: string;
@@ -48,10 +43,7 @@ export interface Palette {
   primarySoft: string;
   /** Pathway-card flourish and quiet decoration. */
   flourish: string;
-  /**
-   * Stroke of the line ornaments (frontend/public/ornaments/*.svg draw in #41816D in both themes; the page sets how
-   * faint they are: `decorOpacity`).
-   */
+  /** Stroke of the line drawings (the garden's plants): #41816D in both themes, as the site's ornaments. */
   decor: string;
   /** The plant drawn on the filled pathway card (`--pathway-flourish`, the same in both themes). */
   pathwayFlourish: string;
@@ -79,7 +71,6 @@ export const light: Palette = {
   intentGoodDeedForeground: '#ffffff',
   intentImanBranch: '#3d4a5c',
   intentImanBranchForeground: '#ffffff',
-  gold: '#8f6514',
   gradeSahih: '#326c59',
   gradeSahihForeground: '#ffffff',
   gradeHasan: '#8a6a2f',
@@ -116,7 +107,6 @@ export const dark: Palette = {
   intentGoodDeedForeground: '#101010',
   intentImanBranch: '#9aa3b2',
   intentImanBranchForeground: '#101010',
-  gold: '#e0b555',
   gradeSahih: '#8bc2aa',
   gradeSahihForeground: '#101010',
   gradeHasan: '#c4a35a',

@@ -31,7 +31,7 @@ import { momentSource, today, usePracticeStore } from '@/lib/practice/practice-s
 import { programEntry } from '@/lib/practice/sin-program-view';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { radius, space, useStyles, useTheme, type Theme } from '@/theme';
-import { Button, Chip, ForwardChevron, Icon, NextStep, Ornament, PageHeader, Screen, Section, Text, Wrap } from '@/ui';
+import { Button, Chip, ForwardChevron, Icon, NextStep, PageHeader, Rule, Screen, Section, Text, Wrap } from '@/ui';
 
 const TICK_MS = 1000;
 /** «أو علّم ما فعلت»: ticks only (owner: no option that opens the phone with no number or goal). */
@@ -162,7 +162,7 @@ function MujahadaContent() {
   const ayahLabel = ayahs.length > 1 ? `${ayahs[0]}-${ayahs[ayahs.length - 1]}` : ayahs[0] !== undefined ? String(ayahs[0]) : null;
 
   return (
-    <Screen edges={['bottom']} decor>
+    <Screen edges={['bottom']}>
       <PageHeader title={t('sinProgram.moment.title')} lead={t('sinProgram.moment.lead')} />
 
       <ProgressRing fraction={progress.fraction} label={t('sinProgram.moment.remaining', { time: formatCountdown(progress.remaining) })}>
@@ -191,7 +191,7 @@ function MujahadaContent() {
 
       {verses.length > 0 ? (
         <>
-          <Ornament />
+          <Rule />
           <View style={styles.verse} accessible accessibilityLabel={verses.map((v) => v.textAr).join(' ')}>
             <Text variant="quran" align="center">{`﴿${verses.map((v) => v.textAr).join(' ۝ ')}﴾`}</Text>
             {locale === 'en'
@@ -213,7 +213,7 @@ function MujahadaContent() {
       ) : null}
       {saying ? <QuoteCard quote={saying} shareable={false} /> : null}
 
-      <Ornament />
+      <Rule />
 
       {outcome?.kind === 'held' ? (
         <NextStep title={t('sinProgram.moment.heldTitle')}>
@@ -241,7 +241,10 @@ function MujahadaContent() {
           </View>
         </Section>
       ) : (
-        <Button label={t('sinProgram.moment.answerEarly')} onPress={() => setEarly(true)} variant="ghost" />
+        // Before the ten minutes end: the same question, its answers one tap away (never a lone, unexplained button).
+        <Section title={t('sinProgram.moment.question')}>
+          <Button label={t('sinProgram.moment.answerEarly')} onPress={() => setEarly(true)} variant="outline" block />
+        </Section>
       )}
 
       {program ? <Button label={t('sinProgram.moment.back')} onPress={() => router.replace('/practice/sin-program')} variant="ghost" arrow /> : null}

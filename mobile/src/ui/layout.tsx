@@ -1,6 +1,6 @@
 /**
  * Page frame, header and spacing helpers, after the website's page layout (20 gutter, page-lead, eyebrow,
- * hairline rules), with the website's faint arabesque on the page edges where a page asks for it (`decor`).
+ * hairline rules). No background art: the page is plain (owner, 2026-11-03).
  * `SheetScreen` frames a route presented as a native form sheet.
  */
 
@@ -22,7 +22,6 @@ import { useTranslation } from 'react-i18next';
 import { Sprout, X } from 'lucide-react-native';
 import { GUTTER, radius, space, useStyles, useTheme, type Theme } from '@/theme';
 import { IconButton } from './Button';
-import { PageDecor, type DecorKind } from './Decor';
 import { Icon } from './Icon';
 import { Text } from './Text';
 
@@ -35,6 +34,8 @@ const makeStyles = (t: Theme) => ({
   row: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.sm },
   wrap: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: space.sm },
   section: { gap: space.md },
+  sectionHead: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.md },
+  sectionTitle: { flex: 1, minWidth: 0 },
   rule: { height: 1, backgroundColor: t.colors.border },
   sheetHandle: {
     alignSelf: 'center' as const,
@@ -82,8 +83,6 @@ export interface ScreenProps {
   contentStyle?: StyleProp<ViewStyle>;
   /** A page with inputs: lifted above the keyboard so the field and the action under it stay visible. */
   keyboard?: boolean;
-  /** The page's background art, faint, behind the content (`PageDecor`): `true` is the website's arabesque. */
-  decor?: boolean | DecorKind;
 }
 
 export function Screen({ keyboard, ...props }: ScreenProps) {
@@ -105,12 +104,11 @@ function KeyboardFrame({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ScreenFrame({ children, edges = ['top'], scroll = true, refreshing, onRefresh, contentStyle, decor }: Omit<ScreenProps, 'keyboard'>) {
+function ScreenFrame({ children, edges = ['top'], scroll = true, refreshing, onRefresh, contentStyle }: Omit<ScreenProps, 'keyboard'>) {
   const styles = useStyles(makeStyles);
   const { colors } = useTheme();
   return (
     <SafeAreaView style={styles.safe} edges={edges}>
-      {decor ? <PageDecor kind={decor === true ? 'arabesque' : decor} /> : null}
       {scroll ? (
         <ScrollView
           contentContainerStyle={[styles.scroll, contentStyle]}
@@ -232,20 +230,39 @@ export function BrandBar({ tagline, end }: { tagline?: React.ReactNode; end?: Re
   );
 }
 
-export function Section({ title, lead, children, style }: { title?: string; lead?: string; children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
+/**
+ * A titled block of a page. `action` sits on the title's line at the inline end (a small outlined «الكل» or «أضف»),
+ * centred on the title, so a section's secondary action never floats on its own row.
+ */
+export function Section({
+  title,
+  lead,
+  action,
+  children,
+  style,
+}: {
+  title?: string;
+  lead?: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+  style?: StyleProp<ViewStyle>;
+}) {
   const styles = useStyles(makeStyles);
   return (
     <View style={[styles.section, style]}>
       {title ? (
-        <View>
-          <Text variant="title" accessibilityRole="header">
-            {title}
-          </Text>
-          {lead ? (
-            <Text variant="small" tone="muted">
-              {lead}
+        <View style={styles.sectionHead}>
+          <View style={styles.sectionTitle}>
+            <Text variant="title" accessibilityRole="header">
+              {title}
             </Text>
-          ) : null}
+            {lead ? (
+              <Text variant="small" tone="muted">
+                {lead}
+              </Text>
+            ) : null}
+          </View>
+          {action}
         </View>
       ) : null}
       {children}

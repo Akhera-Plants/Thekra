@@ -33,10 +33,13 @@ import { formatAmount, habitFor } from '@/lib/practice/reminders';
 import { usePlanDays } from '@/lib/practice/use-habits-hub';
 import { dayDoneLineKey } from '@/lib/practice/day-done';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
-import { QuoteCard } from '@/components/QuoteCard';
+import { GradeBadge } from '@/components/GradeBadge';
+import { BottomSheet } from '@/components/practice/mujahada/Sheet';
+import { HadithGrade, QuoteType } from '@/lib/types/enums';
+import type { QuoteDto } from '@/lib/types/api';
 import { radius, space, useStyles, type Theme } from '@/theme';
-import { ListRow, Text, TextLink } from '@/ui';
-import { Sparkles } from 'lucide-react-native';
+import { Button, ForwardChevron, Icon, Text, TextLink } from '@/ui';
+import { BookMarked, HeartHandshake, Info, Sparkles } from 'lucide-react-native';
 import { planTitleOf } from './HeartCards';
 
 /** How long «تقبّل الله منك» stays after a tick. */
@@ -49,6 +52,30 @@ const makeStyles = (t: Theme) => ({
   card: { gap: space.sm, padding: space.lg, borderRadius: radius.card, borderWidth: 1, borderColor: t.colors.border, backgroundColor: t.colors.card },
   steps: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, alignItems: 'center' as const, gap: space.xs },
   done: { gap: space.md, padding: space.lg, borderRadius: radius.card, backgroundColor: t.colors.accent },
+  note: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: space.sm,
+    minHeight: 44,
+    paddingHorizontal: space.md,
+    borderRadius: radius.control,
+    borderWidth: 1,
+    borderColor: t.colors.border,
+    backgroundColor: t.colors.card,
+  },
+  notePressed: { backgroundColor: t.colors.muted },
+  noteText: { flex: 1, minWidth: 0 },
+  source: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, alignItems: 'center' as const, gap: space.sm },
+  sourceText: { flexShrink: 1 },
+  weekRow: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: space.md,
+    minHeight: 64,
+    paddingVertical: space.md,
+    borderRadius: radius.control,
+  },
+  weekText: { flex: 1, minWidth: 0, gap: 2 },
 });
 
 // ── «حصيلتي» ────────────────────────────────────────────────────────────────────────────────────────────────
@@ -191,24 +218,84 @@ export function DayDoneCard({ today }: { today: LocalDate }) {
 
 // ── Stories at moments ──────────────────────────────────────────────────────────────────────────────────────
 
-/** A story by Quote id at its moment (heart-texts.yaml through the catalog); nothing while the id is not filled. */
+/**
+ * A story by Quote id at its moment (heart-texts.yaml through the catalog), as one quiet line: an icon and the moment's
+ * words («عملك المعتاد يُكتب لك»), framed so it reads as tappable. The text itself, its source and «اقرأ الشرح» open in
+ * a small sheet (owner, 2026-11-03: never a full card in the page's flow). Nothing while the id is not filled.
+ */
 export function StoryLine({ moment }: { moment: StoryMoment }) {
   const { t } = useTranslation();
   const locale = useUiLocale();
   const styles = useStyles(makeStyles);
+  const [open, setOpen] = useState(false);
   const catalog = usePracticeCatalog(locale);
   const id = storyQuoteId(moment, catalog.data?.stories);
   const evidence = useEvidence(id ? [id] : [], locale);
   const quote = id ? evidence.data?.get(id) : undefined;
   if (!quote) return null;
+  const label = t(`practice.story.${moment}`);
+  const isQuran = quote.type === QuoteType.QURAN_VERSE;
+  const source = quoteSourceLine(quote, locale);
+  const grade = quote.type === QuoteType.HADITH && !quote.isAthar ? quote.hadith?.grade : null;
+  const openStudy = () => {
+    setOpen(false);
+    router.push(`/quotes/study/${quote.id}`);
+  };
   return (
-    <View style={styles.section}>
-      <Text variant="small" weight="medium" tone="muted">
-        {t(`practice.story.${moment}`)}
-      </Text>
-      <QuoteCard quote={quote} shareable={false} />
-    </View>
+    <>
+      <Pressable
+        onPress={() => setOpen(true)}
+        accessibilityRole="button"
+        accessibilityHint={t('practice.story.openHint')}
+        style={({ pressed }) => [styles.note, pressed && styles.notePressed]}
+      >
+        <Icon icon={HeartHandshake} size={18} tone="link" />
+        <Text variant="small" weight="medium" style={styles.noteText}>
+          {label}
+        </Text>
+        <Icon icon={Info} size={17} tone="muted" />
+      </Pressable>
+      <BottomSheet
+        visible={open}
+        title={label}
+        onClose={() => setOpen(false)}
+        footer={
+          <Button
+            icon={BookMarked}
+            label={isQuran ? t('study.openTafsir') : t('study.openSharh')}
+            variant="outline"
+            onPress={openStudy}
+            block
+          />
+        }
+      >
+        <Text variant={isQuran ? 'quran' : 'reading'}>{quote.textAr}</Text>
+        {locale === 'en' && quote.translation?.text ? <Text variant="body">{quote.translation.text}</Text> : null}
+        {source || (grade && grade !== HadithGrade.UNGRADED) ? (
+          <View style={styles.source}>
+            {grade && grade !== HadithGrade.UNGRADED ? <GradeBadge grade={grade} /> : null}
+            {source ? (
+              <Text variant="caption" tone="muted" style={styles.sourceText}>
+                {source}
+              </Text>
+            ) : null}
+          </View>
+        ) : null}
+      </BottomSheet>
+    </>
   );
+}
+
+/** «صحيح البخاري 2996» / «البقرة 2:255»: the source and its reference on one line, in the UI language. */
+function quoteSourceLine(quote: QuoteDto, locale: 'ar' | 'en'): string {
+  if (quote.quran) {
+    const surah = locale === 'en' ? quote.quran.surahName || quote.quran.surahNameAr : quote.quran.surahNameAr;
+    return [surah, `${quote.quran.surahNumber}:${quote.quran.ayahNumber}`].filter(Boolean).join(' ');
+  }
+  const name = locale === 'en' ? quote.source.name || quote.source.nameAr : (quote.source.nameAr ?? quote.source.name);
+  const ref = quote.hadith?.reference?.trim();
+  if (ref && name && ref.includes(name)) return ref;
+  return [name, ref].filter(Boolean).join(' · ');
 }
 
 // ── «شعبة الأسبوع» / «اسم الأسبوع» ──────────────────────────────────────────────────────────────────────────
@@ -216,16 +303,21 @@ export function StoryLine({ moment }: { moment: StoryMoment }) {
 /** «ورد اليوم»'s weekly card (redesign §4.7): even ISO weeks «شعبة الأسبوع», odd weeks «اسم الأسبوع» (practice-core). */
 const SHOW_NAME_WEEKS = false;
 
-export function WeekCard({ today }: { today: LocalDate }) {
+/** `before`: drawn above the card only when it shows (the page's separator rule). */
+export function WeekCard({ today, before }: { today: LocalDate; before?: React.ReactNode }) {
   // Only for a member who chose to study the branches of faith (owner round 3, item 7: Settings ← «اللغة والمظهر»).
   const optedIn = usePracticeStore((s) => s.prefs.weekBranch);
   if (!optedIn) return null;
   // «اسم الأسبوع» waits while «الأسماء الحسنى» is hidden (owner, 2026-11-01); set SHOW_NAME_WEEKS to true to bring it back.
-  return !SHOW_NAME_WEEKS || weekCardKind(today) === 'branch' ? <WeekBranchCard today={today} /> : <WeekNameCard today={today} />;
+  return !SHOW_NAME_WEEKS || weekCardKind(today) === 'branch' ? (
+    <WeekBranchCard today={today} before={before} />
+  ) : (
+    <WeekNameCard today={today} before={before} />
+  );
 }
 
 /** «اسم الأسبوع»: one Name of Allah for everyone this name week, walking the API list in turn; opens its page. */
-export function WeekNameCard({ today }: { today: LocalDate }) {
+export function WeekNameCard({ today, before }: { today: LocalDate; before?: React.ReactNode }) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const names = useNamesOfAllah();
@@ -233,17 +325,23 @@ export function WeekNameCard({ today }: { today: LocalDate }) {
   const name = list.length > 0 ? list[nameOfWeekIndex(today, list.length)] : undefined;
   if (!name) return null;
   return (
-    <View style={styles.section}>
-      <Text variant="small" weight="medium" tone="muted" accessibilityRole="header">
-        {t('practice.weekName.title')}
-      </Text>
-      <TextLink label={name.nameAr} onPress={() => router.push(`/names/${name.slug}`)} />
-    </View>
+    <>
+      {before}
+      <View style={styles.section}>
+        <Text variant="small" weight="medium" tone="muted" accessibilityRole="header">
+          {t('practice.weekName.title')}
+        </Text>
+        <TextLink label={name.nameAr} onPress={() => router.push(`/names/${name.slug}`)} />
+      </View>
+    </>
   );
 }
 
-/** «شعبة الأسبوع» on «ورد اليوم»: one branch for everyone this ISO week, opening its page; a long title wraps in the card. */
-export function WeekBranchCard({ today }: { today: LocalDate }) {
+/**
+ * «شعبة الأسبوع» on «ورد اليوم»: one compact row (owner, 2026-11-03): the label and number on top, the branch's title
+ * under it (wrapping inside the row, never past the screen edge), opening its page.
+ */
+export function WeekBranchCard({ today, before }: { today: LocalDate; before?: React.ReactNode }) {
   const { t } = useTranslation();
   const locale = useUiLocale();
   const styles = useStyles(makeStyles);
@@ -251,13 +349,28 @@ export function WeekBranchCard({ today }: { today: LocalDate }) {
   const branch = useBranch(number);
   const title = branch.data ? (locale === 'en' ? branch.data.title : branch.data.titleAr) : null;
   if (!title) return null;
+  const label = `${t('practice.weekBranch.title')} · ${number}`;
   return (
-    <View style={styles.section}>
-      <Text variant="small" weight="medium" tone="muted" accessibilityRole="header">
-        {`${t('practice.weekBranch.title')} · ${number}`}
-      </Text>
-      <ListRow icon={Sparkles} title={title} chevron onPress={() => router.push(`/branches/${number}`)} />
-    </View>
+    <>
+      {before}
+      <Pressable
+        onPress={() => router.push(`/branches/${number}`)}
+        accessibilityRole="link"
+        accessibilityLabel={`${label}: ${title}`}
+        style={({ pressed }) => [styles.weekRow, pressed && styles.notePressed]}
+      >
+        <Icon icon={Sparkles} size={22} tone="link" strokeWidth={1.3} />
+        <View style={styles.weekText}>
+          <Text variant="caption" weight="medium" tone="link">
+            {label}
+          </Text>
+          <Text variant="body" numberOfLines={2}>
+            {title}
+          </Text>
+        </View>
+        <ForwardChevron size={18} tone="muted" />
+      </Pressable>
+    </>
   );
 }
 

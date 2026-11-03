@@ -1,7 +1,7 @@
 /**
  * The contents of the Settings group screens (app/settings/*): a titled group of hairline rows (`SettingsGroup`),
  * «الخصوصية والتشفير» (where «تخفَّف» is kept: always encrypted in the account; export, the offline copy),
- * «التنبيهات» (every reminder switch and time, the only place for them), «نية اليوم والمحاسبة», «اللغة والمظهر» and
+ * «التنبيهات» (every reminder switch and time in titled groups, the only place for them), «اللغة والمظهر» and
  * «عن التطبيق». No «delete all data» here (owner, 2026-11-01): «تخفَّف» keeps its own one-tap wipe, and the account
  * deletion stays under «الحساب».
  */
@@ -23,7 +23,7 @@ import {
   Info,
 } from 'lucide-react-native';
 import { setHeartPrefs, type HeartPrefs } from '@thekra/practice-core';
-import { TimeField } from '@/components/practice/editors';
+import { TimeField, WeekdayPicker } from '@/components/practice/editors';
 import { exportAccountData } from '@/lib/api/practice';
 import { ensurePermission, scheduledReminderCount } from '@/lib/practice/notifications';
 import { usePracticeStore } from '@/lib/practice/practice-store';
@@ -44,6 +44,9 @@ const makeStyles = (t: Theme) => ({
   head: { gap: 2 },
   list: { borderTopWidth: 1, borderTopColor: t.colors.border },
   switchRow: { paddingVertical: space.sm, borderBottomWidth: 1, borderBottomColor: t.colors.border },
+  /** What a switch opens (its time, its day): under it, before the row's hairline. */
+  sub: { gap: space.md, paddingTop: space.xs, paddingBottom: space.sm },
+  field: { gap: 6 },
   choice: { gap: space.sm, paddingVertical: space.lg, borderBottomWidth: 1, borderBottomColor: t.colors.border },
 });
 
@@ -129,18 +132,23 @@ export function PrivacySection() {
 }
 
 /**
- * «التنبيهات» (redesign §4.4): the one place for every reminder switch and time on this device (practice-core
- * `notificationPlan`: at most 4 a day then a digest, quiet 23:00–05:00), with the scheduled count; then «نية اليوم
- * والمحاسبة» (device-local) and «التزام شخصي». The permission is asked when a switch is turned on.
+ * «التنبيهات والتذكير» (redesign §4.4; owner round 4): the one place for every reminder on this device (practice-core
+ * `notificationPlan`: at most 4 a day then a digest, quiet 23:00–05:00), in titled groups from the daily to the private:
+ * «تذكيرات العادات»; «المحاسبة» (one switch per review = its card and its reminder, with the review's own time and, for
+ * the weekly one, its day; «التزام شخصي»); «تخفَّف»; «الاستراتيجيات» (only once some are chosen, on their page).
+ * Turning a reminder on asks for the permission; refused, a combined switch still turns its card on and says so.
  */
 export function NotificationsSection() {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const prefs = usePracticeStore((s) => s.prefs);
   const setPrefs = usePracticeStore((s) => s.setPrefs);
+  const heart = usePracticeStore((s) => s.heart);
+  const setHeart = usePracticeStore((s) => s.setHeart);
   const hasProgram = usePracticeStore((s) => s.store.programs.length > 0);
   const [count, setCount] = useState<number | null>(null);
   const [denied, setDenied] = useState(false);
+  const setHeartPref = (patch: Partial<HeartPrefs>) => setHeart((h) => setHeartPrefs(h, patch));
 
   useFocusEffect(
     useCallback(() => {
@@ -154,101 +162,160 @@ export function NotificationsSection() {
     }, []),
   );
 
-  /** Turning a switch on asks for the permission first; a refusal leaves it off. */
-  async function toggle(key: 'habitReminders' | 'kinshipReminders' | 'eveningNudge' | 'fridayReminder' | 'sinReminders', on: boolean) {
+  /** Turning a reminder on asks for the permission first; false when it was refused. */
+  async function allowed(on: boolean): Promise<boolean> {
     setDenied(false);
-    if (on && !(await ensurePermission(t('practice.notify.channelName')))) {
-      setDenied(true);
-      return;
-    }
-    setPrefs((p) => ({ ...p, [key]: on }));
+    if (!on || (await ensurePermission(t('practice.notify.channelName')))) return true;
+    setDenied(true);
+    return false;
   }
 
-  const row = (label: string, key: Parameters<typeof toggle>[0], extra?: React.ReactNode) => (
-    <View style={styles.switchRow}>
-      <SwitchRow label={label} value={prefs[key]} onValueChange={(v) => void toggle(key, v)} />
-      {prefs[key] ? extra : null}
-    </View>
-  );
+  async function toggle(key: 'habitReminders' | 'kinshipReminders' | 'sinReminders' | 'strategyReminders', on: boolean) {
+    if (await allowed(on)) setPrefs((p) => ({ ...p, [key]: on }));
+  }
+
+  /** «محاسبة المساء»: the card from the chosen time and its reminder at the same time. */
+  async function toggleEvening(on: boolean) {
+    setHeartPref({ eveningReview: on });
+    const ok = await allowed(on);
+    setPrefs((p) => ({ ...p, eveningNudge: on && ok, eveningTime: heart.prefs.eveningFrom }));
+  }
+
+  /** «المحاسبة الأسبوعية»: the card on the chosen day and its reminder. */
+  async function toggleWeekly(on: boolean) {
+    setHeartPref({ fridayReview: on });
+    const ok = await allowed(on);
+    setPrefs((p) => ({ ...p, fridayReminder: on && ok }));
+  }
+
+  const eveningOn = heart.prefs.eveningReview || prefs.eveningNudge;
+  const weeklyOn = heart.prefs.fridayReview || prefs.fridayReminder;
+  const timeLabel = t('practice.notifyPrefs.time');
 
   return (
-    <SettingsGroup
-      lead={count === null ? undefined : t('settings.remindersCount', { count })}
-    >
-      {row(t('practice.notifyPrefs.habits'), 'habitReminders')}
-      {row(
-        t('practice.notifyPrefs.periodic'),
-        'kinshipReminders',
-        <>
-          <SwitchRow
-            label={t('kinship.showNames')}
-            hint={t('kinship.showNamesHint')}
-            value={prefs.kinshipShowNames}
-            onValueChange={(v) => setPrefs((p) => ({ ...p, kinshipShowNames: v }))}
-          />
-          <TimeField label={t('practice.notifyPrefs.time')} value={prefs.kinshipTime} onChange={(time) => setPrefs((p) => ({ ...p, kinshipTime: time }))} />
-        </>,
-      )}
-      {row(
-        t('practice.notifyPrefs.evening'),
-        'eveningNudge',
-        <TimeField label={t('practice.notifyPrefs.time')} value={prefs.eveningTime} onChange={(time) => setPrefs((p) => ({ ...p, eveningTime: time }))} />,
-      )}
-      {row(
-        t('practice.notifyPrefs.friday'),
-        'fridayReminder',
-        <TimeField label={t('practice.notifyPrefs.time')} value={prefs.fridayTime} onChange={(time) => setPrefs((p) => ({ ...p, fridayTime: time }))} />,
-      )}
-      {hasProgram || prefs.sinReminders
-        ? row(
-            t('practice.notifyPrefs.private'),
-            'sinReminders',
-            <TimeField label={t('practice.notifyPrefs.time')} value={prefs.sinReminderTime} onChange={(time) => setPrefs((p) => ({ ...p, sinReminderTime: time }))} />,
-          )
-        : null}
-      {/* «ذكّرني بها»: chosen on «استراتيجيات العادات»; one a week at most, on Saturday at this time. */}
-      <ListRow
-        title={t('practice.notifyPrefs.strategiesLink')}
-        hint={t('practice.notifyPrefs.strategies', { count: prefs.strategies.length })}
-        chevron
-        onPress={() => router.push('/practice/strategies')}
-      />
-      {prefs.strategies.length > 0 ? (
-        <TimeField label={t('practice.notifyPrefs.time')} value={prefs.strategyTime} onChange={(time) => setPrefs((p) => ({ ...p, strategyTime: time }))} />
+    <>
+      {count !== null ? (
+        <Text variant="small" tone="muted">
+          {t('settings.remindersCount', { count })}
+        </Text>
       ) : null}
       {denied ? <Notice tone="destructive">{t('practice.permissionDenied')}</Notice> : null}
-    </SettingsGroup>
-  );
-}
 
-/** «نية اليوم والمحاسبة»: device-local switches (practice-core `HeartPrefs`), and «التزام شخصي» with its pledges. */
-export function HeartSection() {
-  const { t } = useTranslation();
-  const styles = useStyles(makeStyles);
-  const heart = usePracticeStore((s) => s.heart);
-  const setHeart = usePracticeStore((s) => s.setHeart);
-  const set = (patch: Partial<HeartPrefs>) => setHeart((h) => setHeartPrefs(h, patch));
-  const sw = (label: string, key: keyof HeartPrefs, hint?: string) => (
-    <View style={styles.switchRow}>
-      <SwitchRow label={label} hint={hint} value={heart.prefs[key]} onValueChange={(v) => set({ [key]: v })} />
-    </View>
-  );
-  return (
-    <SettingsGroup title={t('practice.notifyPrefs.heartTitle')}>
-      {sw(t('practice.notifyPrefs.intention'), 'intention')}
-      {sw(t('practice.notifyPrefs.eveningReview'), 'eveningReview')}
-      {sw(t('practice.notifyPrefs.fridayReview'), 'fridayReview')}
-      {sw(t('practice.notifyPrefs.pledges'), 'pledges', t('practice.notifyPrefs.pledgesHint'))}
-      {heart.prefs.pledges ? (
-        <ListRow
-          icon={HandHeart}
-          title={t('practice.notifyPrefs.pledges')}
-          value={String(heart.pledges.length)}
-          chevron
-          onPress={() => router.push('/practice/pledges')}
-        />
+      <SettingsGroup title={t('practice.notifyPrefs.groupHabits')}>
+        <View style={styles.switchRow}>
+          <SwitchRow
+            label={t('practice.notifyPrefs.habits')}
+            hint={t('practice.notifyPrefs.habitsHint')}
+            value={prefs.habitReminders}
+            onValueChange={(v) => void toggle('habitReminders', v)}
+          />
+        </View>
+        <View style={styles.switchRow}>
+          <SwitchRow label={t('practice.notifyPrefs.periodic')} value={prefs.kinshipReminders} onValueChange={(v) => void toggle('kinshipReminders', v)} />
+          {prefs.kinshipReminders ? (
+            <View style={styles.sub}>
+              <SwitchRow
+                label={t('kinship.showNames')}
+                hint={t('kinship.showNamesHint')}
+                value={prefs.kinshipShowNames}
+                onValueChange={(v) => setPrefs((p) => ({ ...p, kinshipShowNames: v }))}
+              />
+              <TimeField label={timeLabel} value={prefs.kinshipTime} onChange={(time) => setPrefs((p) => ({ ...p, kinshipTime: time }))} />
+            </View>
+          ) : null}
+        </View>
+      </SettingsGroup>
+
+      <SettingsGroup title={t('practice.notifyPrefs.groupReview')}>
+        <View style={styles.switchRow}>
+          <SwitchRow label={t('practice.notifyPrefs.intention')} value={heart.prefs.intention} onValueChange={(v) => setHeartPref({ intention: v })} />
+        </View>
+        <View style={styles.switchRow}>
+          <SwitchRow label={t('practice.notifyPrefs.eveningReview')} value={eveningOn} onValueChange={(v) => void toggleEvening(v)} />
+          {eveningOn ? (
+            <View style={styles.sub}>
+              <TimeField
+                label={timeLabel}
+                value={heart.prefs.eveningFrom}
+                onChange={(time) => {
+                  setHeartPref({ eveningFrom: time });
+                  setPrefs((p) => ({ ...p, eveningTime: time }));
+                }}
+              />
+            </View>
+          ) : null}
+        </View>
+        <View style={styles.switchRow}>
+          <SwitchRow label={t('practice.notifyPrefs.fridayReview')} value={weeklyOn} onValueChange={(v) => void toggleWeekly(v)} />
+          {weeklyOn ? (
+            <View style={styles.sub}>
+              <View style={styles.field}>
+                <Text variant="label">{t('practice.notifyPrefs.reviewDay')}</Text>
+                <WeekdayPicker single value={[heart.prefs.reviewDay]} onChange={(days) => setHeartPref({ reviewDay: days[0] ?? heart.prefs.reviewDay })} />
+              </View>
+              <TimeField label={timeLabel} value={prefs.fridayTime} onChange={(time) => setPrefs((p) => ({ ...p, fridayTime: time }))} />
+            </View>
+          ) : null}
+        </View>
+        <View style={styles.switchRow}>
+          <SwitchRow
+            label={t('practice.notifyPrefs.pledges')}
+            hint={t('practice.notifyPrefs.pledgesHint')}
+            value={heart.prefs.pledges}
+            onValueChange={(v) => setHeartPref({ pledges: v })}
+          />
+        </View>
+        {heart.prefs.pledges ? (
+          <ListRow
+            icon={HandHeart}
+            title={t('practice.notifyPrefs.pledgesList')}
+            value={String(heart.pledges.length)}
+            chevron
+            onPress={() => router.push('/practice/pledges')}
+          />
+        ) : null}
+      </SettingsGroup>
+
+      {hasProgram || prefs.sinReminders ? (
+        <>
+          <SettingsGroup title={t('practice.notifyPrefs.groupVault')}>
+            <View style={styles.switchRow}>
+              <SwitchRow
+                label={t('practice.notifyPrefs.private')}
+                hint={t('practice.notifyPrefs.privateHint')}
+                value={prefs.sinReminders}
+                onValueChange={(v) => void toggle('sinReminders', v)}
+              />
+              {prefs.sinReminders ? (
+                <View style={styles.sub}>
+                  <TimeField label={timeLabel} value={prefs.sinReminderTime} onChange={(time) => setPrefs((p) => ({ ...p, sinReminderTime: time }))} />
+                </View>
+              ) : null}
+            </View>
+          </SettingsGroup>
+        </>
       ) : null}
-    </SettingsGroup>
+
+      {/* The strategies are chosen on their own page («عاداتي»); only their weekly reminder lives here. */}
+      {prefs.strategies.length > 0 ? (
+        <>
+          <SettingsGroup title={t('practice.notifyPrefs.groupStrategies')}>
+            <View style={styles.switchRow}>
+              <SwitchRow
+                label={t('practice.notifyPrefs.strategyWeekly')}
+                value={prefs.strategyReminders}
+                onValueChange={(v) => void toggle('strategyReminders', v)}
+              />
+              {prefs.strategyReminders ? (
+                <View style={styles.sub}>
+                  <TimeField label={timeLabel} value={prefs.strategyTime} onChange={(time) => setPrefs((p) => ({ ...p, strategyTime: time }))} />
+                </View>
+              ) : null}
+            </View>
+          </SettingsGroup>
+        </>
+      ) : null}
+    </>
   );
 }
 

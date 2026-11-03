@@ -1,7 +1,7 @@
 /**
  * Home, after the website's home (frontend/src/app/[locale]/page.tsx), in its order: the app header («ذكرى» and the
  * tagline beside it, the menu opposite), «أبواب الخير» with the doors (owner, 2026-11-01: «أعنّي على فعل طاعة» first
- * and filled, «تخفَّف من معصية» quiet, then «شُعَب الإيمان» compact), the ornament, the moments list, «تذكرة مختارة» and
+ * and filled, «تخفَّف من معصية» quiet, then «شُعَب الإيمان» compact), a hairline rule, the moments list, «تذكرة مختارة» and
  * «تذكير تعرف مصدره». «مواسم الخير» and «استكشف النصوص» live in the side menu (owner, 2026-11-01: «ضمن القائمة»). The
  * doors size themselves to the screen (`doorLayout`: tighter on small phones, the two main doors side by side on tablets).
  * Guest-first: nothing here needs an account. Copy is the site's own (`home.*`).
@@ -19,7 +19,7 @@ import { SourceStrip } from '@/components/home/SourceStrip';
 import { AppHeader } from '@/components/nav/AppHeader';
 import { doorLayout } from '@/lib/home/door-layout';
 import { space, useStyles, type Theme } from '@/theme';
-import { ListRow, Ornament, PageHeader, PathwayCard, Screen, Section } from '@/ui';
+import { ListRow, PageHeader, PathwayCard, Rule, Screen, Section } from '@/ui';
 
 interface Moment {
   href: Href;
@@ -66,7 +66,7 @@ export default function HomeScreen() {
   }, [refetchReminder, refetchSources]);
 
   return (
-    <Screen decor="arabesque" refreshing={reminder.isRefetching} onRefresh={handleRefresh}>
+    <Screen refreshing={reminder.isRefetching} onRefresh={handleRefresh}>
       <AppHeader />
 
       <PageHeader eyebrow={t('home.eyebrow')} title={t('home.entryTitle')} />
@@ -106,7 +106,7 @@ export default function HomeScreen() {
         />
       </View>
 
-      <Ornament />
+      <Rule />
       <Section title={t('home.momentsHeading')}>
         <View>
           {MOMENTS.map((moment) => (

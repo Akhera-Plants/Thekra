@@ -2,19 +2,19 @@
  * A day's list: «اليوم» on «ورد اليوم», or a day picked in «سجلّي». Today's sunnah occasion as one compact line, then
  * one row per task (habits, relatives as periodic acts, the generic private check-in), open ones first and done ones
  * sunk to the bottom, dimmed (`groupTodayRows`). Habits the day does not ask for sit in ONE collapsed row
- * «ليست مطلوبة اليوم (n)» that opens to loggable rows, never counted as missed. With no task: one line and «أضف عادة».
+ * «ليست مطلوبة اليوم (n)» that opens to loggable rows, never counted as missed. With no task: one line and an outlined «أضف عادة».
  * Logging works for today and the 6 days before; another day shows a quiet note and its state only.
  */
 
 import React, { useCallback, useMemo, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { CalendarClock, ChevronDown, ChevronUp, Eye } from 'lucide-react-native';
+import { CalendarClock, ChevronDown, ChevronUp, Eye, Plus } from 'lucide-react-native';
 import type { HabitItem, LocalDate, RelativeItem } from '@thekra/practice-core';
 import type { HubLastLog } from '@/lib/practice/use-habits-hub';
 import { groupTodayRows, type AgendaRowModel } from '@/lib/practice/wird';
 import { radius, space, useStyles, type Theme } from '@/theme';
-import { Icon, Notice, Text, TextLink } from '@/ui';
+import { Button, Icon, Notice, Text } from '@/ui';
 import { HabitRow, OccasionRow, ProgramRow, RelativeRow, type UndoKind } from './AgendaRows';
 
 const makeStyles = (t: Theme) => ({
@@ -148,7 +148,7 @@ export function TodayList({
           <Text variant="body" tone="muted">
             {t(isToday ? 'practice.wird.empty' : 'practice.hub.dayEmpty')}
           </Text>
-          {onAddHabit ? <TextLink label={t('practice.addHabit')} onPress={onAddHabit} /> : null}
+          {onAddHabit ? <Button label={t('practice.addHabit')} icon={Plus} variant="outline" onPress={onAddHabit} /> : null}
         </View>
       )}
 

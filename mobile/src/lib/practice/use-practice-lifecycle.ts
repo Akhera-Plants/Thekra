@@ -74,8 +74,9 @@ export function useRescheduleReminders(): () => Promise<void> {
       now: nowTime(),
       locale,
       texts: reminderTexts(t as unknown as T, locale),
-      // No Friday reminder once that review is saved, or when the Friday review itself is off.
-      reviewDoneOn: (friday) => !heart.prefs.fridayReview || heart.weekly.some((w) => w.weekOf === friday),
+      // The weekly review's day is the heart's; no reminder once that day's review is saved, or while the review is off.
+      reviewDay: heart.prefs.reviewDay,
+      reviewDoneOn: (day) => !heart.prefs.fridayReview || heart.weekly.some((w) => w.weekOf === day),
     });
     await applyReminders(planned, t('practice.notify.channelName'));
   }, [qc, locale, t]);

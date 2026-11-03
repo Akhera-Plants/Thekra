@@ -1,9 +1,9 @@
 /**
  * «مواسم الخير» (the occasions calendar, roadmap §2.2; owner round 3, decision 4), after the website's calendar page:
  * today in Hijri in a next-step note with an icon that opens the ±2 day Hijri adjustment in a sheet, then two tabs:
- * «المناسبات القادمة» («أضفها إلى تقويمك»: «اشترك في التقويم», the public feed, no personal data, no account; `webcal://`
- * on iOS, Google Calendar's add-by-URL page on Android; and «نزّل ملف التقويم», the same `.ics` over https; then the
- * upcoming occasions as a hairline list, each opening its good deed) and «الشهر» (the month grid with the sunnah
+ * «المناسبات القادمة» (the upcoming occasions as a hairline list, each opening its good deed; «أضفها إلى تقويمك» on the
+ * list's title line opens a sheet with «اشترك في التقويم», the public feed, no personal data, no account: `webcal://`
+ * on iOS, Google Calendar's add-by-URL page on Android; and «نزّل ملف التقويم», the same `.ics` over https) and «الشهر» (the month grid with the sunnah
  * occasions marked, the selected day's occasions under it).
  * The Hijri date is hidden when the runtime lacks Umm al-Qura (`isHijriSupported()` is false on a Hermes build with
  * reduced ICU).
@@ -35,11 +35,10 @@ import {
   Icon,
   IconButton,
   NextStep,
-  SegmentTabs,
-  Ornament,
   PageHeader,
   Screen,
   Section,
+  SegmentTabs,
   Skeleton,
   Text,
   Wrap,
@@ -86,6 +85,7 @@ export default function CalendarScreen() {
   const [openFailed, setOpenFailed] = useState(false);
   const [tab, setTab] = useState<'upcoming' | 'month'>('upcoming');
   const [adjusting, setAdjusting] = useState(false);
+  const [subscribing, setSubscribing] = useState(false);
   const d = today();
   const occasions = useCalendarOccasions(d, addDays(d, HORIZON_DAYS), hijriOffset, locale);
   const hijri = isHijriSupported();
@@ -153,20 +153,18 @@ export default function CalendarScreen() {
         />
       ) : (
         <>
-          <Section title={t('calendar.addToCalendar')}>
-            <View style={styles.group}>
-              <Button label={t('calendar.subscribe')} icon={CalendarPlus} onPress={handleSubscribe} block />
-              <Button label={t('calendar.download')} icon={Download} variant="outline" onPress={handleDownload} block />
-              {openFailed ? <ErrorText>{t('calendar.openFailed')}</ErrorText> : null}
-              <Text variant="small" tone="muted">
-                {t('calendar.subscribeHint')}
-              </Text>
-            </View>
-          </Section>
-
-          <Ornament />
-
-          <Section title={t('calendar.upcoming')}>
+          <Section
+            title={t('calendar.upcoming')}
+            action={
+              <Button
+                label={t('calendar.addToCalendar')}
+                icon={CalendarPlus}
+                variant="outline"
+                compact
+                onPress={() => setSubscribing(true)}
+              />
+            }
+          >
             {occasions.isLoading ? (
               <OccasionsSkeleton />
             ) : occasions.isError ? (
@@ -183,6 +181,17 @@ export default function CalendarScreen() {
           </Section>
         </>
       )}
+
+      <BottomSheet visible={subscribing} title={t('calendar.addToCalendar')} onClose={() => setSubscribing(false)}>
+        <View style={styles.group}>
+          <Button label={t('calendar.subscribe')} icon={CalendarPlus} onPress={handleSubscribe} block />
+          <Button label={t('calendar.download')} icon={Download} variant="outline" onPress={handleDownload} block />
+          {openFailed ? <ErrorText>{t('calendar.openFailed')}</ErrorText> : null}
+          <Text variant="small" tone="muted">
+            {t('calendar.subscribeHint')}
+          </Text>
+        </View>
+      </BottomSheet>
 
       <BottomSheet visible={adjusting} title={t('calendar.offset')} onClose={() => setAdjusting(false)}>
         <Wrap>

@@ -1,12 +1,13 @@
 /**
  * The plan screen's history and settings: «آخر 30 يومًا» (a kind band and one dot per day, no streaks and no failure
- * words, after the website's ProgressPanel) and the slots / active days / weekdays editor.
+ * words, after the website's ProgressPanel) and the slots / active days / weekdays editor, with «احفظ» and, under a
+ * hairline, the quieter «أوقف مؤقتًا».
  */
 
 import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Check } from 'lucide-react-native';
+import { Check, Pause } from 'lucide-react-native';
 import { addDays, orderedSlots, slotChoices, validatePlan, type DeedWindow, type Plan } from '@thekra/practice-core';
 import { sortSlots, weekdaysToRule } from '@/lib/practice/format';
 import { MONTH_DAYS, type PlanView } from '@/lib/practice/plan-view';
@@ -23,6 +24,7 @@ const makeStyles = (t: Theme) => ({
   dot: { width: 12, height: 12, borderRadius: radius.full, borderWidth: 1, borderColor: t.colors.border },
   dotDone: { backgroundColor: t.colors.primary, borderColor: t.colors.primary },
   dotBefore: { opacity: 0.3 },
+  pause: { borderTopWidth: 1, borderTopColor: t.colors.border, paddingTop: space.md },
 });
 
 interface MonthPanelProps {
@@ -69,9 +71,11 @@ interface SettingsPanelProps {
   /** The plan's reminder rule as weekdays, or null when it is not a weekday rule. */
   ruleWeekdays: number[] | null;
   onSave: (next: Plan) => void;
+  /** «أوقف مؤقتًا» at the end of the settings (absent while paused: the page offers «استأنف» instead). */
+  onPause?: () => void;
 }
 
-export function SettingsPanel({ plan, window, ruleWeekdays, onSave }: SettingsPanelProps) {
+export function SettingsPanel({ plan, window, ruleWeekdays, onSave, onPause }: SettingsPanelProps) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const [slots, setSlots] = useState<SlotChoice[]>(slotChoices(plan));
@@ -137,7 +141,12 @@ export function SettingsPanel({ plan, window, ruleWeekdays, onSave }: SettingsPa
         </View>
       ) : null}
       {error ? <ErrorText>{error}</ErrorText> : null}
-      <Button label={saved ? t('practice.plan.saved') : t('practice.plan.save')} icon={saved ? Check : undefined} onPress={handleSave} />
+      <Button label={saved ? t('practice.plan.saved') : t('practice.plan.save')} icon={saved ? Check : undefined} onPress={handleSave} block />
+      {onPause ? (
+        <View style={styles.pause}>
+          <Button label={t('practice.paused.pause')} icon={Pause} onPress={onPause} variant="outline" block />
+        </View>
+      ) : null}
     </Section>
   );
 }

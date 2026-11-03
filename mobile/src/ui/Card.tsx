@@ -8,7 +8,7 @@ import React from 'react';
 import { Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import { radius, space, useStyles, useTheme, type Theme } from '@/theme';
-import { Flourish } from './Decor';
+import { Flourish } from './Flourish';
 import { ForwardArrow, ForwardChevron, Icon } from './Icon';
 import { Text } from './Text';
 
@@ -99,8 +99,10 @@ const makeStyles = (t: Theme) => ({
     borderBottomColor: t.colors.border,
     minHeight: 64,
   },
-  listText: { flex: 1, gap: 2 },
-  listValue: { maxWidth: '45%' as const },
+  /** `minWidth: 0` lets a long title wrap inside the row instead of pushing the arrow off the screen edge. */
+  listText: { flex: 1, minWidth: 0, gap: 2 },
+  listValue: { maxWidth: '40%' as const, flexShrink: 0 },
+  listEnd: { flexShrink: 0 },
 });
 
 export function Card({
@@ -301,6 +303,7 @@ export function ListRow({
   const styles = useStyles(makeStyles);
   const { colors } = useTheme();
   const forward = onPress ? chevron ? <ForwardChevron size={18} tone="muted" /> : <ForwardArrow size={18} tone="muted" /> : null;
+  const end = trailing ?? forward;
   const content = (
     <>
       {icon ? <Icon icon={icon} size={24} tone={destructive ? 'destructive' : 'link'} strokeWidth={1.3} /> : null}
@@ -319,7 +322,7 @@ export function ListRow({
           {value}
         </Text>
       ) : null}
-      {trailing ?? forward}
+      {end ? <View style={styles.listEnd}>{end}</View> : null}
     </>
   );
   if (!onPress) return <View style={styles.listRow}>{content}</View>;

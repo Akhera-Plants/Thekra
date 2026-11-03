@@ -14,6 +14,7 @@
  */
 
 import {
+  DEFAULT_REVIEW_DAY,
   isPlanDueOn,
   formatPlanAmount,
   notificationPlan,
@@ -82,8 +83,10 @@ export interface ReminderInput {
   texts: ReminderTexts;
   days?: number;
   limit?: number;
-  /** True when that Friday's review is saved (no reminder). */
-  reviewDoneOn?: (friday: LocalDate) => boolean;
+  /** The weekly review's day, 0 = Sunday … 6 = Saturday: practice-core `HeartPrefs.reviewDay` (stored there only). */
+  reviewDay?: number;
+  /** True when that review day's review is saved, or the weekly review is off (no reminder). */
+  reviewDoneOn?: (day: LocalDate) => boolean;
 }
 
 /** The catalog habit of a plan (`habitKey`; plans from tests or old data may carry the key as their id). */
@@ -122,8 +125,11 @@ export function formatAmount(
   return formatPlanAmount(amount, unit, label, locale, habit?.rakah);
 }
 
-/** The policy's switches from the app prefs (practice-core `NotificationPrefs`). */
-export function notificationPrefsOf(prefs: PracticePrefs): NotificationPrefs {
+/**
+ * The policy's switches from the app prefs (practice-core `NotificationPrefs`); the weekly review's day is the heart's
+ * (`HeartPrefs.reviewDay`, the one place it is kept).
+ */
+export function notificationPrefsOf(prefs: PracticePrefs, reviewDay: number = DEFAULT_REVIEW_DAY): NotificationPrefs {
   return {
     habits: prefs.habitReminders,
     periodic: prefs.kinshipReminders,
@@ -132,9 +138,10 @@ export function notificationPrefsOf(prefs: PracticePrefs): NotificationPrefs {
     eveningTime: prefs.eveningTime,
     fridayReview: prefs.fridayReminder,
     fridayTime: prefs.fridayTime,
+    reviewDay,
     privateMoment: prefs.sinReminders,
     privateTime: prefs.sinReminderTime,
-    strategies: prefs.strategies,
+    strategies: prefs.strategyReminders ? prefs.strategies : [],
     strategyTime: prefs.strategyTime,
   };
 }
@@ -147,7 +154,7 @@ export function planReminders(input: ReminderInput): PlannedReminder[] {
   if (days <= 0) return [];
   const entries = notificationPlan({
     store,
-    prefs: notificationPrefsOf(prefs),
+    prefs: notificationPrefsOf(prefs, input.reviewDay),
     today,
     now,
     days,

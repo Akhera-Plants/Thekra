@@ -1,11 +1,9 @@
-/** The streak's flame (lucide `Flame`) in the theme's warm gold: a quiet count, never red. */
+/** The streak's flame (lucide `Flame`) in the brand green: a quiet count, never red or gold (owner: brand greens only). */
 
 import React from 'react';
 import { Flame } from 'lucide-react-native';
-import { useTheme } from '@/theme';
 import { Icon } from '@/ui';
 
 export function StreakFlame({ size = 18 }: { size?: number }) {
-  const { colors } = useTheme();
-  return <Icon icon={Flame} size={size} color={colors.gold} strokeWidth={1.8} />;
+  return <Icon icon={Flame} size={size} tone="link" strokeWidth={1.8} />;
 }

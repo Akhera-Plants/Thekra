@@ -4,15 +4,23 @@
  *   background-coloured pill, counts in muted digits;
  * - Chip: rounded outline chip, selected = primary border and ink on a primary tint;
  * - CheckRow: the habit picker's option card (14 radius, 16 padding, a square check at the start);
- * - SwitchRow, Field (input: hairline, 7 radius, 44 high, card fill), ErrorText.
+ * - SwitchRow (a native-sized toggle: 52×32 track, brand green when on), Field (input: hairline, 7 radius, 44 high,
+ *   card fill), ErrorText.
  */
 
-import React from 'react';
-import { Pressable, ScrollView, Switch, TextInput, View, type StyleProp, type TextInputProps, type ViewStyle } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { AccessibilityInfo, Animated, Easing, Pressable, ScrollView, TextInput, View, type StyleProp, type TextInputProps, type ViewStyle } from 'react-native';
 import { Check } from 'lucide-react-native';
 import { radius, space, useStyles, useTheme, type Theme } from '@/theme';
 import { Icon } from './Icon';
 import { Text, textStyle } from './Text';
+
+/** The toggle: an iOS-sized track (52×32) on every platform, the thumb 28 inside a 2 inset. */
+const TOGGLE_W = 52;
+const TOGGLE_H = 32;
+const TOGGLE_PAD = 2;
+const THUMB = TOGGLE_H - TOGGLE_PAD * 2;
+const TRAVEL = TOGGLE_W - TOGGLE_PAD * 2 - THUMB;
 
 const makeStyles = (t: Theme) => ({
   track: {
@@ -69,7 +77,26 @@ const makeStyles = (t: Theme) => ({
   boxOn: { backgroundColor: t.colors.primary, borderColor: t.colors.primary },
   radio: { borderRadius: radius.full },
   flex: { flex: 1, gap: 2 },
-  switchRow: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.md, minHeight: 48 },
+  switchRow: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.md, minHeight: 52 },
+  toggle: {
+    width: TOGGLE_W,
+    height: TOGGLE_H,
+    borderRadius: radius.full,
+    padding: TOGGLE_PAD,
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+  },
+  thumb: {
+    width: THUMB,
+    height: THUMB,
+    borderRadius: radius.full,
+    backgroundColor: t.colors.primaryForeground,
+    shadowColor: t.colors.foreground,
+    shadowOpacity: 0.18,
+    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 2,
+  },
   field: { gap: 6 },
   input: {
     minHeight: 44,
@@ -212,7 +239,6 @@ export function SwitchRow({
   disabled?: boolean;
 }) {
   const styles = useStyles(makeStyles);
-  const { colors } = useTheme();
   return (
     <View style={styles.switchRow}>
       <View style={styles.flex}>
@@ -223,16 +249,59 @@ export function SwitchRow({
           </Text>
         ) : null}
       </View>
-      <Switch
-        value={value}
-        onValueChange={onValueChange}
-        disabled={disabled}
-        accessibilityLabel={label}
-        trackColor={{ false: colors.border, true: colors.primary }}
-        thumbColor={colors.card}
-        ios_backgroundColor={colors.border}
-      />
+      <Toggle value={value} onValueChange={onValueChange} disabled={disabled} label={label} />
     </View>
+  );
+}
+
+/**
+ * The switch itself, drawn the same on iOS, Android and the web (the platform Switch is small on Android and the web):
+ * brand green track when on, a hairline grey when off, a white thumb that slides to the reading end; still when the
+ * system asks to reduce motion.
+ */
+export function Toggle({
+  value,
+  onValueChange,
+  disabled,
+  label,
+}: {
+  value: boolean;
+  onValueChange: (v: boolean) => void;
+  disabled?: boolean;
+  label: string;
+}) {
+  const styles = useStyles(makeStyles);
+  const { colors } = useTheme();
+  const pos = useRef(new Animated.Value(value ? 1 : 0)).current;
+  useEffect(() => {
+    let cancelled = false;
+    void AccessibilityInfo.isReduceMotionEnabled()
+      .catch(() => false)
+      .then((reduced) => {
+        if (cancelled) return;
+        Animated.timing(pos, { toValue: value ? 1 : 0, duration: reduced ? 0 : 180, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [value, pos]);
+  // A margin on the reading start (not a transform), so the thumb follows the layout direction wherever it is set.
+  const marginStart = pos.interpolate({ inputRange: [0, 1], outputRange: [0, TRAVEL] });
+  const backgroundColor = pos.interpolate({ inputRange: [0, 1], outputRange: [colors.border, colors.primary] });
+  return (
+    <Pressable
+      onPress={() => onValueChange(!value)}
+      disabled={disabled}
+      hitSlop={8}
+      accessibilityRole="switch"
+      accessibilityLabel={label}
+      accessibilityState={{ checked: value, disabled: Boolean(disabled) }}
+      style={disabled ? { opacity: 0.45 } : undefined}
+    >
+      <Animated.View style={[styles.toggle, { backgroundColor }]}>
+        <Animated.View style={[styles.thumb, { marginStart }]} />
+      </Animated.View>
+    </Pressable>
   );
 }
 

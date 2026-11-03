@@ -1,6 +1,6 @@
 /**
  * The title block of «ورد اليوم»: the title and one date line (Gregorian; the Hijri date too when «إظهار التاريخ
- * الهجري» is on), and on the other side the streak chip (a gold flame and the number, never red) and «أضف», the
+ * الهجري» is on), and on the other side the streak chip (a green flame and the number, never red) and «أضف», the
  * page's one solid control.
  */
 
@@ -15,7 +15,8 @@ import { StreakFlame } from './StreakFlame';
 const makeStyles = (t: Theme) => ({
   root: { gap: 2 },
   top: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.sm },
-  title: { flex: 1 },
+  /** Wraps rather than cut («Today's wi…» in English beside the streak and «أضف»). */
+  title: { flex: 1, minWidth: 0 },
   chip: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
@@ -42,7 +43,7 @@ export function WirdHeader({ dateLabel, streak, freshLine, onAdd }: WirdHeaderPr
   return (
     <View style={styles.root}>
       <View style={styles.top}>
-        <Text variant="display" accessibilityRole="header" style={styles.title} numberOfLines={1}>
+        <Text variant="display" accessibilityRole="header" style={styles.title}>
           {t('practice.wird.title')}
         </Text>
         {streak !== null && !freshLine ? (

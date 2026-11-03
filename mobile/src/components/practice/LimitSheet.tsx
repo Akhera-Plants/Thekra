@@ -106,7 +106,7 @@ export function LimitSheet({ kind, visible, limits, onClose, onFreed }: LimitShe
               {candidates.length > 0 ? (
                 <>
                   <Button label={t(`practice.limits.${kind}.pause`)} variant="outline" block onPress={() => setStep('pause')} />
-                  <Button label={t(`practice.limits.${kind}.delete`)} variant="ghost" block onPress={() => setStep('delete')} />
+                  <Button label={t(`practice.limits.${kind}.delete`)} variant="destructive" block onPress={() => setStep('delete')} />
                 </>
               ) : null}
             </>

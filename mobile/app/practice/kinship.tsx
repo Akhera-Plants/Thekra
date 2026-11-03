@@ -140,7 +140,7 @@ export default function KinshipScreen() {
   const pageLead = circle === 'kin' ? t('kinship.lead') : t(`practice.circles.${circle}.hint`);
 
   return (
-    <Screen edges={['bottom']} keyboard decor>
+    <Screen edges={['bottom']} keyboard>
       <PageHeader eyebrow={t('practice.periodic.title')} title={pageTitle} lead={pageLead} />
 
       {relatives.length === 0 && !adding ? (

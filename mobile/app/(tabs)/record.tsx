@@ -10,7 +10,9 @@
  *   (a tapped day opens its list, loggable for the last 7 days) and «حصيلتي» per habit.
  * Owner round 3: a missed habit's row offers «صلّحها» (the «خربانة؟ صلّحها» steps, HabitFixSheet), a program row after a
  * weak day too; «ابنِ حلقة عادتك الخاصة» opens the loop builder; periodic acts stay in «أعمال دورية» (reminders, not
- * habits); «الإحصاء» adds «نسبة الالتزام» per habit (CommitmentChart); an ornament divides the sections.
+ * habits); «الإحصاء» adds «نسبة الالتزام» per habit (CommitmentChart); a hairline rule divides the sections.
+ * «استراتيجيات العادات» opens from a card of its own at the top of «العادات» (owner, 2026-11-03: it is central to the
+ * app, so it gets a prominent home, as habit apps put their tips above the list); it stays in the side menu too.
  * The other screens (أعمال دورية، المحاسبة، رفقة، المحفوظات…) are in the side menu. The old «عاداتي» route
  * (practice/habits) redirects here.
  */
@@ -20,7 +22,7 @@ import { View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useRequireSignIn } from '@/lib/auth/require-sign-in';
-import { DoorOpen, Hourglass, Pause, Plus, Repeat, Sprout, TreeDeciduous } from 'lucide-react-native';
+import { DoorOpen, Hourglass, Lightbulb, Pause, Plus, Repeat, Sprout, TreeDeciduous } from 'lucide-react-native';
 import {
   activePrograms,
   establishPlan,
@@ -35,6 +37,7 @@ import {
   type Plan,
 } from '@thekra/practice-core';
 import { habitDayAction, habitNeedsFix, programRows } from '@/lib/practice/my-habits';
+import { listedStrategies } from '@/lib/practice/strategies';
 import { HabitFixSheet } from '@/components/practice/HabitFixSheet';
 import { CommitmentChart } from '@/components/practice/hub/CommitmentChart';
 import { HabitActionRow, ProgramActionRow } from '@/components/practice/MyHabitsRows';
@@ -66,13 +69,16 @@ import { PresenceMonth } from '@/components/practice/hub/PresenceMonth';
 import { StreakFlame } from '@/components/practice/hub/StreakFlame';
 import { TodayList } from '@/components/practice/hub/TodayList';
 import { TallySection } from '@/components/practice/hub/KnowledgeCards';
-import { space, useStyles, type Theme } from '@/theme';
+import { radius, space, useStyles, type Theme } from '@/theme';
 import {
   Button,
+  Card,
+  ForwardChevron,
+  Icon,
   ListRow,
   Notice,
-  Ornament,
   PageHeader,
+  Rule,
   Screen,
   Section,
   SegmentTabs,
@@ -91,12 +97,23 @@ const makeStyles = (t: Theme) => ({
   tight: { gap: space.xs },
   empty: { gap: space.md, alignItems: 'flex-start' as const },
   subTitle: { paddingTop: space.sm, paddingBottom: space.xs },
+  strategies: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.md },
+  strategiesBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.full,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    backgroundColor: t.colors.primarySoft,
+  },
+  strategiesText: { flex: 1, minWidth: 0, gap: 2 },
 });
 
 const openAdd = () => router.push('/practice/add');
 const openDuties = () => router.push('/practice/duties');
 const openProgram = () => router.push('/practice/sin-program');
 const openLoops = () => router.push('/practice/loops');
+const openStrategies = () => router.push('/practice/strategies');
 
 export default function MyHabitsScreen() {
   const { t } = useTranslation();
@@ -108,7 +125,7 @@ export default function MyHabitsScreen() {
     { key: 'stats', label: t('record.tabStats') },
   ];
   return (
-    <Screen decor="olive">
+    <Screen>
       <AppHeader />
       <PageHeader title={t('record.title')} />
       <SegmentTabs items={parts} value={part} onChange={setPart} />
@@ -130,14 +147,42 @@ function HabitsPart() {
           <Button label={t('common.retry')} onPress={() => void catalog.refetch()} variant="ghost" />
         </View>
       ) : null}
+      <StrategiesCard />
       <DeedsSection />
       <ListRow icon={Repeat} title={t('loops.habit.pageTitle')} hint={t('loops.habit.rowHint')} chevron onPress={openLoops} />
-      <Ornament />
+      <Rule />
       <ProgramsSection />
       <RamadanBlock />
-      <Ornament />
+      <Rule />
       <ListRow icon={Hourglass} title={t('practice.duties.title')} chevron onPress={openDuties} />
     </>
+  );
+}
+
+/** «استراتيجيات العادات»: a card of its own above the habits, with how many strategies it holds. */
+function StrategiesCard() {
+  const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
+  const count = listedStrategies().length;
+  return (
+    <Card
+      tone="muted"
+      onPress={openStrategies}
+      accessibilityLabel={`${t('practice.strategies.title')}, ${t('practice.strategies.entryHint', { count })}`}
+    >
+      <View style={styles.strategies}>
+        <View style={styles.strategiesBadge}>
+          <Icon icon={Lightbulb} size={22} tone="link" />
+        </View>
+        <View style={styles.strategiesText}>
+          <Text variant="heading">{t('practice.strategies.title')}</Text>
+          <Text variant="small" tone="muted">
+            {t('practice.strategies.entryHint', { count })}
+          </Text>
+        </View>
+        <ForwardChevron size={20} tone="link" />
+      </View>
+    </Card>
   );
 }
 
@@ -356,9 +401,9 @@ function StatsPart() {
 
       {picked ? <PickedDay date={picked} today={today} title={picked === today ? t('practice.today') : shortDayTitle(picked, names)} /> : null}
 
-      <Ornament />
+      <Rule />
       <CommitmentChart today={today} />
-      <Ornament />
+      <Rule />
       <TallySection today={today} />
     </>
   );

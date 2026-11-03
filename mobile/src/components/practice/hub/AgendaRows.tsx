@@ -5,7 +5,7 @@
  *   habit is logged, filled with a tick when done; it settles with a small spring when ticked, still when the system
  *   asks to reduce motion), the title and one short subtitle, opening the plan / the kinship page, with
  *   «سُجِّل · تراجع» under the last quick log. A done row is dimmed (the list puts it at the bottom);
- * - occasion: one compact line (a small gold sparkle and the title), opening its good deed;
+ * - occasion: one compact line (a small green sparkle and the title), opening its good deed;
  * - program: a neutral notebook on a quiet disc and generic words only, opening the private program.
  */
 
@@ -282,7 +282,6 @@ export interface OccasionRowProps {
 export const OccasionRow = memo(function OccasionRow({ title, deed }: OccasionRowProps) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
-  const { colors } = useTheme();
   const handleOpen = useCallback(() => router.push(`/good-deeds/${deed}`), [deed]);
   return (
     <Pressable
@@ -291,7 +290,7 @@ export const OccasionRow = memo(function OccasionRow({ title, deed }: OccasionRo
       accessibilityLabel={`${title}. ${t('practice.hub.occasionTag')}`}
       style={({ pressed }) => [styles.occasionLine, pressed && styles.bodyPressed]}
     >
-      <Icon icon={Sparkles} size={16} color={colors.intentGoodDeed} />
+      <Icon icon={Sparkles} size={16} tone="link" />
       <Text variant="small" weight="medium" numberOfLines={1} style={styles.occasionText}>
         {title}
         <Text variant="caption" tone="muted">

@@ -116,11 +116,11 @@ export function SinProgramGuard({ children, requireAccount = false }: { children
       {state === 'open' ? (
         children
       ) : state === 'code' && userId ? (
-        <Screen edges={['bottom']} decor keyboard contentStyle={styles.locked}>
+        <Screen edges={['bottom']} keyboard contentStyle={styles.locked}>
           <VaultCodeUnlock userId={userId} onOpened={() => setState('open')} />
         </Screen>
       ) : (
-        <Screen edges={['bottom']} decor contentStyle={styles.locked}>
+        <Screen edges={['bottom']} contentStyle={styles.locked}>
           <EmptyState icon={LockKeyhole} message={t('sinLock.lockedTitle')} hint={t('sinLock.lockedHint')} actionLabel={t('sinLock.unlock')} onAction={retry} />
         </Screen>
       )}

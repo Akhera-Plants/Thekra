@@ -43,10 +43,17 @@ export interface PracticePrefs {
   /** Sin-program reminders. Their title is always the generic «تذكرة من ذكرى». */
   sinReminders: boolean;
   sinReminderTime: LocalTime;
-  /** «تنبيه المساء» (redesign §4.4): once a day while a habit is not done. Off by default. */
+  /**
+   * The reminder of «محاسبة المساء» (redesign §4.4; owner round 4): once a day while a habit is not done. Off by
+   * default; Settings turns it on and off with the evening review card, and `eveningTime` follows the card's
+   * `HeartPrefs.eveningFrom`.
+   */
   eveningNudge: boolean;
   eveningTime: LocalTime;
-  /** «تذكير المحاسبة يوم الجمعة». On by default. */
+  /**
+   * The weekly review's reminder (the keys keep their first name, Friday's), on the review day the heart keeps
+   * (`HeartPrefs.reviewDay`). On by default; Settings switches it with the weekly review card.
+   */
   fridayReminder: boolean;
   fridayTime: LocalTime;
   /** «فروضي وأدواري» roles (the free minutes are in the Store settings). */
@@ -64,6 +71,8 @@ export interface PracticePrefs {
   showHijri: boolean;
   /** «ذكّرني بها» on «استراتيجيات العادات»: chosen strategy keys (opt-in, empty by default); one reminder a week at most. */
   strategies: string[];
+  /** «ذكّرني باستراتيجية كل أسبوع» while strategies are chosen. On by default. */
+  strategyReminders: boolean;
   strategyTime: LocalTime;
   /** «تذكيراتي» (phase 6): the user's own short lines, on this device only (≤ 120 characters, at most 20). */
   myReminders: MyReminder[];
@@ -93,6 +102,7 @@ export const DEFAULT_PREFS: PracticePrefs = {
   weekBranch: false,
   showHijri: false,
   strategies: [],
+  strategyReminders: true,
   strategyTime: '10:00',
   myReminders: [],
   prayer: null,
@@ -133,6 +143,7 @@ export function parsePrefs(json: unknown): PracticePrefs {
     weekBranch: bool('weekBranch'),
     showHijri: bool('showHijri'),
     strategies: cleanStrategyKeys(raw.strategies),
+    strategyReminders: bool('strategyReminders'),
     strategyTime: time('strategyTime'),
     myReminders: parseMyReminders(raw.myReminders),
     prayer: parsePrayerSettings(raw.prayer),

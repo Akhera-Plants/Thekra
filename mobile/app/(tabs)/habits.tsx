@@ -1,26 +1,26 @@
 /**
- * «ورد اليوم» (the centre tab), top to bottom and nothing else:
+ * «ورد اليوم» (the centre tab), top to bottom, each part under its own header and divided by a hairline rule (owner,
+ * 2026-11-03: separators, not one long column of text):
  * 0. on a Friday, last week's «رسالة إلى نفسي» first; under the header one rotating text (المراقبة) and the cards of
  *    «نية اليوم», a due «التزام شخصي» and «المحاسبة» (components/practice/hub/HeartCards.tsx);
  * 1. the title, one date line (Gregorian; Hijri too with «إظهار التاريخ الهجري»), the streak chip and «أضف»;
- * 2. «اليوم»: today's sunnah occasion as one compact line, then one row per task from practice-core `dayAgenda`
- *    (habits asked for today, relatives due as periodic acts, the generic private check-in), done rows at the bottom;
- *    habits not asked for today behind ONE collapsed row; «يومي ثقيل» as a compact chip at the end (today only,
- *    practice-core `isEbbOn`);
- * 3. «أعمال دورية» after every habit section (owner round 3, item 6): the next three periodic acts (reminders, never a
- *    habit) with their dates and «الكل»;
- * 4. «شعبة الأسبوع» (one branch of faith per ISO week), only for a member who opted in (item 7). A tick shows «تقبّل
- *    الله منك» with a light haptic; a complete day shows «تمّ وردك اليوم» with one rotating achievement line (item 4);
- *    «عملك المعتاد يُكتب لك» only the day after an excused day, with a commitment above 60% (item 8); stories appear
- *    at their moments (by id only). An ornament divides the sections (item 18).
+ * 2. «اليوم», the page's main list: today's sunnah occasion as one compact line, then one row per task from
+ *    practice-core `dayAgenda` (habits asked for today, relatives due as periodic acts, the generic private check-in),
+ *    done rows at the bottom; habits not asked for today behind ONE collapsed row. Under it, quiet and compact: a tick's
+ *    «تقبّل الله منك», «تمّ وردك اليوم» (item 4), the stories at their moments as one-line notes that open a sheet
+ *    («عملك المعتاد يُكتب لك» only the day after an excused day, with a commitment above 60%: item 8), and «حال يومي»
+ *    (one control for «يومي ثقيل» and «عذر», DayState);
+ * 3. «أعمال دورية» (owner round 3, item 6): the next three periodic acts with their dates, «الكل» on the title's line;
+ * 4. «شعبة الأسبوع» as one compact row, only for a member who opted in (item 7).
  * The month calendar and the habit management live in «عاداتي»; «تخفَّف», «رفقة» and the saved texts in the side menu.
- * The app header (menu, wordmark, tagline) is first; the page's art is the growing stem (`decor="sprig"`).
+ * The app header (menu, wordmark, tagline) is first. No background art.
  */
 
 import React, { useCallback, useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { Plus } from 'lucide-react-native';
 import { useRequireSignIn } from '@/lib/auth/require-sign-in';
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { dateLine } from '@/lib/practice/calendar-grid';
@@ -30,7 +30,6 @@ import {
   useAgendaRows,
   useDateNames,
   useDayAgenda,
-  useHeavyDay,
   useHubDays,
   useOffDayHabits,
   usePeriodicRows,
@@ -43,14 +42,14 @@ import { showUsualDeed } from '@/lib/practice/commitment';
 import { habitFor } from '@/lib/practice/reminders';
 import { AppHeader } from '@/components/nav/AppHeader';
 import { AddSheet } from '@/components/practice/hub/AddSheet';
-import { ExcuseChip } from '@/components/practice/hub/ExcuseChip';
+import { DayState } from '@/components/practice/hub/DayState';
 import { HeartTop, MuraqabaLine, SelfMessageCard } from '@/components/practice/hub/HeartCards';
 import { Cheer, DayDoneCard, StoryLine, WeekCard } from '@/components/practice/hub/KnowledgeCards';
 import { PeriodicRows } from '@/components/practice/hub/PeriodicRows';
 import { TodayList } from '@/components/practice/hub/TodayList';
 import { WirdHeader } from '@/components/practice/hub/WirdHeader';
 import { GUTTER, space, useStyles, type Theme } from '@/theme';
-import { Button, Chip, Notice, Ornament, Screen, Skeleton, Text, TextLink } from '@/ui';
+import { Button, Notice, Rule, Screen, Section, Skeleton, Text } from '@/ui';
 
 const SKELETON_ROWS = ['r1', 'r2', 'r3'];
 /** How many periodic acts the daily screen shows; the rest is behind «الكل». */
@@ -60,9 +59,7 @@ const makeStyles = (t: Theme) => ({
   frame: { paddingHorizontal: 0, paddingTop: 0 },
   content: { paddingHorizontal: GUTTER, paddingTop: space.lg, paddingBottom: space['4xl'] + space.xl, gap: space['2xl'] },
   tight: { gap: space.xs },
-  section: { gap: space.md },
-  sectionHead: { flexDirection: 'row' as const, alignItems: 'center' as const, justifyContent: 'space-between' as const },
-  heavy: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: space.sm },
+  footer: { gap: space.md, alignItems: 'stretch' as const },
   skeletonHeader: { gap: space.sm },
   skeletonTop: { flexDirection: 'row' as const, alignItems: 'center' as const, justifyContent: 'space-between' as const },
   skeletonRow: {
@@ -102,7 +99,6 @@ function Wird() {
   const offDayItems = useOffDayHabits(today);
   const offDayRows = useAgendaRows(offDayItems, today, today);
   const actions = useAgendaActions(today);
-  const heavyDay = useHeavyDay(today);
   const streak = useStreak(today);
   const periodic = usePeriodicRows(today);
   const upcoming = useMemo(() => upcomingPeriodic(periodic, today, UPCOMING_LIMIT), [periodic, today]);
@@ -110,7 +106,6 @@ function Wird() {
   const [adding, setAdding] = useState(false);
   const handleAddOpen = useCallback(() => setAdding(true), []);
   const handleAddClose = useCallback(() => setAdding(false), []);
-  const toggleHeavy = useCallback(() => heavyDay.setHeavy(!heavyDay.heavy), [heavyDay]);
   const store = usePracticeStore((s) => s.store);
   const plans = store.plans;
   const usedMinimum = plans.some((plan) => minimumMet(plan, today));
@@ -121,7 +116,7 @@ function Wird() {
   );
 
   return (
-    <Screen scroll={false} contentStyle={styles.frame} decor="sprig">
+    <Screen scroll={false} contentStyle={styles.frame}>
       <ScrollView contentContainerStyle={styles.content}>
         <AppHeader />
         <SelfMessageCard today={today} />
@@ -141,6 +136,8 @@ function Wird() {
           </View>
         ) : null}
 
+        <Rule />
+
         <TodayList
           title={t('practice.today')}
           date={today}
@@ -155,40 +152,42 @@ function Wird() {
           onMinimum={actions.logMinimum}
           onAddHabit={openAddHabit}
           footer={
-            heavyDay.hasPlans ? (
-              <View style={styles.section}>
+            plans.length > 0 ? (
+              <View style={styles.footer}>
                 <Cheer at={actions.cheerAt} />
                 <DayDoneCard today={today} />
                 {/* A small-deed nudge once «أقل ما يمكن» kept a habit today (by id only; hidden until filled). */}
                 {usedMinimum ? <StoryLine moment="smallDeed" /> : null}
-                <View style={styles.heavy}>
-                  <Chip label={t('practice.heavyDay')} selected={heavyDay.heavy} onPress={toggleHeavy} />
-                  <ExcuseChip date={today} today={today} label={t('practice.excuse.today')} />
-                </View>
                 {/* Never right after «يومي ثقيل» / «عذر»: the day after, when the commitment before it is above 60%. */}
                 {usualDeed ? <StoryLine moment="heavyDay" /> : null}
+                <DayState today={today} />
               </View>
             ) : null
           }
         />
 
-        <Ornament />
+        <Rule />
 
-        <View style={styles.section}>
-          <View style={styles.sectionHead}>
-            <Text variant="title" accessibilityRole="header">
-              {t('practice.periodic.title')}
-            </Text>
-            {periodic.length > 0 ? <TextLink label={t('practice.periodic.all')} onPress={openPeriodic} /> : null}
-          </View>
+        <Section
+          title={t('practice.periodic.title')}
+          action={
+            periodic.length > 0 ? (
+              <Button label={t('practice.periodic.all')} variant="outline" compact arrow onPress={openPeriodic} />
+            ) : null
+          }
+        >
           {periodic.length === 0 ? (
-            <TextLink label={t('practice.periodic.add')} onPress={openPeriodic} />
+            <Button label={t('practice.periodic.add')} icon={Plus} variant="outline" onPress={openPeriodic} />
           ) : upcoming.length > 0 ? (
             <PeriodicRows rows={upcoming} />
-          ) : null}
-        </View>
+          ) : (
+            <Text variant="small" tone="muted">
+              {t('practice.periodic.noNext')}
+            </Text>
+          )}
+        </Section>
 
-        <WeekCard today={today} />
+        <WeekCard today={today} before={<Rule />} />
       </ScrollView>
 
       <AddSheet visible={adding} onClose={handleAddClose} />
@@ -201,7 +200,7 @@ function WirdSkeleton() {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   return (
-    <Screen decor="sprig">
+    <Screen>
       <AppHeader />
       <View style={styles.skeletonHeader} accessibilityLabel={t('common.loading')}>
         <View style={styles.skeletonTop}>

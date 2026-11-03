@@ -17,7 +17,7 @@ import { useLimits, usePeriodicRows } from '@/lib/practice/use-habits-hub';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { LimitSheet } from '@/components/practice/LimitSheet';
 import { PeriodicRows } from '@/components/practice/hub/PeriodicRows';
-import { EmptyState, ListRow, PageHeader, Screen, Section, Text, TextLink } from '@/ui';
+import { Button, EmptyState, ListRow, PageHeader, Screen, Section, Text } from '@/ui';
 
 /** Active days a periodic act aims for (the practice-core minimum: its rule decides its days). */
 const PERIODIC_ACTIVE_DAYS = 2;
@@ -62,15 +62,17 @@ export default function PeriodicScreen() {
   }
 
   return (
-    <Screen edges={['bottom']} decor>
+    <Screen edges={['bottom']}>
       <PageHeader title={t('practice.periodic.title')} lead={t('practice.periodic.lead')} />
 
       {hydrated && rows.length === 0 ? <EmptyState icon={Repeat} message={t('practice.periodic.empty')} /> : null}
 
       {relatives.length > 0 ? (
-        <Section title={t('practice.periodic.people')}>
+        <Section
+          title={t('practice.periodic.people')}
+          action={<Button label={t('practice.periodic.manageKinship')} variant="outline" compact arrow onPress={() => router.push('/practice/kinship')} />}
+        >
           <PeriodicRows rows={relatives} />
-          <TextLink label={t('practice.periodic.manageKinship')} onPress={() => router.push('/practice/kinship')} />
         </Section>
       ) : null}
 

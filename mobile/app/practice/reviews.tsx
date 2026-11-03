@@ -33,7 +33,7 @@ export default function ReviewsScreen() {
   };
 
   return (
-    <Screen edges={['bottom']} decor>
+    <Screen edges={['bottom']}>
       <PageHeader title={t('practice.heart.reviews.title')} lead={t('practice.heart.reviews.lead')} />
       <Section>
         {reviews.length === 0 ? (

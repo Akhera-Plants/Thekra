@@ -92,15 +92,15 @@ import {
   ListRow,
   NextStep,
   Notice,
-  Ornament,
   PageHeader,
+  Rule,
   Screen,
   Section,
+  type SegmentItem,
   SegmentTabs,
   Skeleton,
   Text,
   TextLink,
-  type SegmentItem,
 } from '@/ui';
 
 const CHECK_IN_KEYS: Record<CheckInValue, string> = {
@@ -226,7 +226,7 @@ function SinProgramContent() {
 
   return (
     <KeyboardAvoidingView style={styles.flex} behavior="padding">
-      <Screen edges={['bottom']} decor>
+      <Screen edges={['bottom']}>
         <PageHeader title={t('sinProgram.title')} lead={t('sinProgram.lead')} />
         <Notice icon={ShieldCheck}>{t('sinProgram.privacy')}</Notice>
         {ended ? <Notice icon={Check}>{t('sinProgram.end.done')}</Notice> : null}
@@ -272,7 +272,7 @@ function SinProgramContent() {
                 evidenceError={evidence.isError}
               />
             </View>
-            <Ornament />
+            <Rule />
             {canAddAnother ? (
               <Button label={t('sinProgram.another')} icon={Plus} onPress={() => setChoosing(true)} variant="outline" />
             ) : null}

@@ -2,7 +2,7 @@
  * A month as a 7-column grid, shared by «سجلّي» (presence marks) and the calendar page (sunnah occasions only), after
  * the website's MonthGrid. The first day of the week sits at the reading start; each
  * day is a rounded tile and a button labelled with its full Gregorian and Hijri date; the selected day is filled,
- * today outlined, a small gold dot in the end corner marks an occasion, and on the hub a mark under the number shows
+ * today outlined, a small green dot in the end corner marks an occasion, and on the hub a mark under the number shows
  * whether some or all of the day was done (PresenceDot: empty ring, half, full). The Hijri months under the title and
  * in the day labels can be left out (`showHijri`, «إظهار التاريخ الهجري» in «سجلّي»).
  */
@@ -50,7 +50,7 @@ const makeStyles = (t: Theme) => ({
     width: OCCASION_DOT,
     height: OCCASION_DOT,
     borderRadius: radius.full,
-    backgroundColor: t.colors.intentGoodDeed,
+    backgroundColor: t.colors.link,
   },
   occasionOnSelected: { backgroundColor: t.colors.primaryForeground },
   step: {

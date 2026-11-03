@@ -25,7 +25,7 @@ export default function DailyTextScreen() {
   const is = (kind: TodayTextSource['kind'], slug?: string) => source.kind === kind && (slug === undefined || (source.kind === 'set' && source.slug === slug));
 
   return (
-    <Screen edges={['bottom']} decor>
+    <Screen edges={['bottom']}>
       <PageHeader title={t('dailyText.title')} lead={t('dailyText.lead')} />
       <Section>
         <CheckRow radio title={t('dailyText.seasons')} checked={is('seasons')} onPress={() => choose({ kind: 'seasons' })} />

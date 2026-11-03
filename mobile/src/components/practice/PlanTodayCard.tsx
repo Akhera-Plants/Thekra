@@ -1,5 +1,6 @@
 /**
- * The plan screen's today card, after the website's PlanCard: «المطلوب اليوم», «أتممتها» and «+1», a typed partial
+ * The plan screen's today card, after the website's PlanCard: «المطلوب اليوم», «أتممتها» (the wide primary) with «+1»
+ * beside it, a typed partial
  * amount (whole numbers, practice-core `logDone`; partial amounts add up), «سُجِّل · تراجع», and «صحّح السجل» (a week back, steppers for the day and the amount; practice-core `correctLog` on save).
  */
 
@@ -11,7 +12,7 @@ import { addDays, type Plan } from '@thekra/practice-core';
 import { parseLogAmount, shortDate } from '@/lib/practice/format';
 import { fixLogStep, type PlanView } from '@/lib/practice/plan-view';
 import { space, useStyles, useTheme, type Theme } from '@/theme';
-import { Button, Card, Field, Icon, IconButton, NextStep, Row, Text, Wrap } from '@/ui';
+import { Button, Card, ErrorText, Field, Icon, IconButton, NextStep, Row, Text, Wrap } from '@/ui';
 
 /** «صحّح السجل» reaches this many days back (today included). */
 const FIX_DAYS = 7;
@@ -23,9 +24,15 @@ const makeStyles = (t: Theme) => ({
   footer: { borderTopWidth: 1, borderTopColor: t.colors.border, paddingTop: space.sm, marginTop: space.xs },
   stepper: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.md },
   stepperValue: { flex: 1 },
-  partial: { flexDirection: 'row' as const, alignItems: 'flex-end' as const, gap: space.sm },
+  actions: { flexDirection: 'row' as const, gap: space.sm },
+  primary: { flex: 1 },
+  plusOne: { minWidth: 64 },
+  partialBlock: { gap: 6 },
+  partial: { flexDirection: 'row' as const, alignItems: 'stretch' as const, gap: space.sm },
   partialField: { flex: 1 },
-  partialInput: { writingDirection: 'ltr' as const, textAlign: 'center' as const },
+  partialInput: { height: 47, writingDirection: 'ltr' as const, textAlign: 'center' as const },
+  partialInvalid: { borderColor: t.colors.destructive },
+  partialButton: { minHeight: 47, minWidth: 80 },
 });
 
 export interface TodayPanelProps {
@@ -88,10 +95,13 @@ export function TodayPanel({
 
       {partial ? <NextStep title={t('practice.plan.fixItTitle')}>{t('practice.plan.fixItBody')}</NextStep> : null}
 
-      <Wrap>
-        {!view.doneToday ? <Button label={t('practice.logRest')} icon={Check} onPress={() => onLog(view.remaining)} /> : null}
-        <Button label={t('practice.logPlusOne')} onPress={() => onLog(1)} variant="outline" />
-      </Wrap>
+      {/* The day's one primary action, wide; «+1» beside it as the quick secondary. */}
+      <View style={styles.actions}>
+        {!view.doneToday ? (
+          <Button label={t('practice.logRest')} icon={Check} onPress={() => onLog(view.remaining)} large style={styles.primary} />
+        ) : null}
+        <Button label={t('practice.logPlusOne')} onPress={() => onLog(1)} variant="outline" large style={styles.plusOne} />
+      </View>
       <PartialAmount unitLabel={unitLabel} onLog={onLog} />
 
       <View accessibilityLiveRegion="polite">
@@ -135,24 +145,28 @@ function PartialAmount({ unitLabel, onLog }: { unitLabel: string; onLog: (amount
   }
 
   return (
-    <View style={styles.partial}>
-      <Field
-        label={t('practice.plan.partialLabel', { unit: unitLabel })}
-        value={draft}
-        onChangeText={(text) => {
-          setDraft(text);
-          setInvalid(false);
-        }}
-        onSubmitEditing={submit}
-        placeholder={t('practice.logAmountPlaceholder')}
-        keyboardType="number-pad"
-        returnKeyType="done"
-        maxLength={4}
-        error={invalid ? t('practice.logAmountInvalid') : null}
-        containerStyle={styles.partialField}
-        style={styles.partialInput}
-      />
-      <Button label={t('practice.plan.logPartial')} onPress={submit} variant="outline" disabled={draft.trim() === ''} />
+    <View style={styles.partialBlock}>
+      <Text variant="label">{t('practice.plan.partialLabel', { unit: unitLabel })}</Text>
+      {/* The input and its «سجّل» on one line, the same height. */}
+      <View style={styles.partial}>
+        <Field
+          value={draft}
+          onChangeText={(text) => {
+            setDraft(text);
+            setInvalid(false);
+          }}
+          onSubmitEditing={submit}
+          placeholder={t('practice.logAmountPlaceholder')}
+          keyboardType="number-pad"
+          returnKeyType="done"
+          maxLength={4}
+          accessibilityLabel={t('practice.plan.partialLabel', { unit: unitLabel })}
+          containerStyle={styles.partialField}
+          style={[styles.partialInput, invalid ? styles.partialInvalid : null]}
+        />
+        <Button label={t('practice.plan.logPartial')} onPress={submit} variant="outline" style={styles.partialButton} />
+      </View>
+      {invalid ? <ErrorText>{t('practice.logAmountInvalid')}</ErrorText> : null}
     </View>
   );
 }

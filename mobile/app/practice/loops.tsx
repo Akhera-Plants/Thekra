@@ -20,7 +20,7 @@ import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { HabitLoopCard } from '@/components/practice/hub/KnowledgeCards';
 import { LoopsPanel } from '@/components/practice/loops/LoopsPanel';
 import { space, useStyles } from '@/theme';
-import { Chip, EmptyState, Ornament, PageHeader, Screen, Section, Wrap } from '@/ui';
+import { Chip, EmptyState, PageHeader, Rule, Screen, Section, Wrap } from '@/ui';
 
 const makeStyles = () => ({
   block: { gap: space.md },
@@ -47,10 +47,10 @@ export default function HabitLoopsScreen() {
   };
 
   return (
-    <Screen edges={['bottom']} decor>
+    <Screen edges={['bottom']}>
       <PageHeader title={t('loops.habit.pageTitle')} lead={t('loops.habit.pageLead')} />
       <HabitLoopCard />
-      <Ornament />
+      <Rule />
       {live.length === 0 ? (
         <EmptyState
           icon={Repeat}
