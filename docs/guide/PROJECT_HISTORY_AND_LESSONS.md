@@ -172,5 +172,14 @@ setting), Node 24 locally, Prisma's Linux engine locally, hover/tap behaviour on
 - [ ] Logical properties only; deliberate `ltr`/`rtl` carry a one-line comment.
 - [ ] Every new fetch has loading, error + retry, and aborts/ignores stale responses.
 
+**Owner UX rules (round 4, 2026-11-03 — he does not want to repeat them)**
+- [ ] No text dumps: a hadith/explanation in a flow becomes a compact line with an info button opening a sheet/popover; organize pages with separators, accordions or tabs.
+- [ ] Every action in its proper place and variant by importance: primary solid, secondary bordered; destructive only inside an edit sheet / «⋯» menu with a confirmation, never a link under each item; no stray duplicate buttons leading to the same page.
+- [ ] After create/save: feedback (toast/confirmation) and close/return — never leave the user on the form.
+- [ ] Times and days of reminders/reviews are the user's choice (no fixed «بعد 19:00», no fixed Friday); one setting per concept (no separate «تذكير X» and «X» rows).
+- [ ] Important features (e.g. «استراتيجيات العادات») get a prominent entry, never a buried settings row.
+- [ ] No background ornament art on the site or the app.
+- [ ] Religious evidence shown anywhere (even behind a «الدليل» button) = public Quote ids read from the API; never typed text, al-Albani grades or our own English.
+
 **Briefing a worker**
 - [ ] Goal, files, constraints, what must not change, exact commands, areas owned by other workers, "do not commit/push", "do not kill the owner's servers", and the owner's content rules if content is touched.

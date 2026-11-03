@@ -95,6 +95,7 @@
 ### Direction / language pass (later session, uncommitted at writing)
 - Radix direction comes from the locale: `Direction.Provider` in `lib/providers.tsx` (tabs, menus, popovers, sheets flip with a client-side language switch). Spec: `frontend/e2e/direction.spec.ts`
 - `/en` shows English only: no `nameAr`/`titleAr` lead lines, no Arabic fallback for descriptions, rewards, summaries, rank references or grade notes (`englishOnlyProvenance`, `formatGradeCitation`). Quote-page crumb is an excerpt in the page language. Specs: `no-arabic-en` (also checks breadcrumbs + `header.page-heading` for any Arabic), `no-latin-ar` (topic pages)
+- **Owner override (2026-11-03, round 4): all background/decorative art (arabesque edges, olive, leaves, sprig) was removed from the site and the app — "not nice and overlaps the text". Do not bring it back.** The note below is historical.
 - Decorative art (`.olive-drawing`, `.pathway-flourish`) sits at the inline-end corner and mirrors via `--art-mirror` (`scaleX(-1)` under `[dir=ltr]`), clear of text
 - Featured «تذكرة مختارة» card: `components/home/FeaturedText.tsx` fits whole lines to the deed card's height (desktop) or a per-scale clamp (phone); the whole text opens in a layer on hover / keyboard focus of the top-line toggle / tap, Escape closes; «اقرأ النص كاملًا» still opens `/quotes/[id]`
 - Report and screenshots: `docs/design/after/direction/`
