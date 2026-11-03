@@ -234,7 +234,10 @@ describe('«التزام شخصي»: deeds that wipe out sins', () => {
     expect(PLEDGE_ACTIONS).toContain('sadaqah');
     expect(PLEDGE_ACTIONS).toContain('custom');
     for (const d of PLEDGE_DEED_INFO) {
-      expect(d.titleAr && d.titleEn && d.evidence.textAr && d.evidence.textEn && d.evidence.sourceAr && d.evidence.sourceEn).toBeTruthy();
+      expect(d.titleAr && d.titleEn).toBeTruthy();
+      expect(d.titleAr).not.toMatch(/[٠-٩]/); // Western digits only
+      expect(d.evidence.length).toBeGreaterThan(0);
+      for (const id of d.evidence) expect(id).toMatch(/^[0-9a-f-]{36}$/);
     }
   });
 });

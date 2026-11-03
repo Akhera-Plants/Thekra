@@ -126,7 +126,6 @@ export const PLEDGE_DEEDS = [
   'adhkar',
   'quran',
   'saqy',
-  'istighfarKabir',
 ] as const;
 export type PledgeDeed = (typeof PLEDGE_DEEDS)[number];
 export type PledgeAction = PledgeDeed | 'sadaqah' | 'custom';
