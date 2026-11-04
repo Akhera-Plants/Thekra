@@ -612,7 +612,7 @@
       "evening": {
         "title": "Evening review",
         "doneQ": "What did you complete?",
-        "doneSummary": "You completed {{{done}}} of {{{total}}}.",
+        "doneSummary": "You completed {{done}} of {{total}}.",
         "keptQ": "Did you keep today's pledge?",
         "yes": "Yes",
         "partly": "Partly",
@@ -641,7 +641,7 @@
         "messagePlaceholder": "A line to read next {{day}}",
         "save": "Save the review",
         "missed_one": "Missed 1 day",
-        "missed_other": "Missed {{{count}}} days"
+        "missed_other": "Missed {{count}} days"
       },
       "selfMessage": {
         "title": "Your message to yourself",

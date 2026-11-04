@@ -657,7 +657,7 @@
       "evening": {
         "title": "محاسبة المساء",
         "doneQ": "ما أتممت؟",
-        "doneSummary": "أتممت {{{done}}} من {{{total}}}.",
+        "doneSummary": "أتممت {{done}} من {{total}}.",
         "keptQ": "هل وفيت بعهد اليوم؟",
         "yes": "نعم",
         "partly": "بعضه",
@@ -688,9 +688,9 @@
         "missed_zero": "لم يفتك شيء",
         "missed_one": "فاتك يوم واحد",
         "missed_two": "فاتك يومان",
-        "missed_few": "فاتك {{{count}}} أيام",
-        "missed_many": "فاتك {{{count}}} يومًا",
-        "missed_other": "فاتك {{{count}}} يوم"
+        "missed_few": "فاتك {{count}} أيام",
+        "missed_many": "فاتك {{count}} يومًا",
+        "missed_other": "فاتك {{count}} يوم"
       },
       "selfMessage": {
         "title": "رسالتك إلى نفسك",
