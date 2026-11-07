@@ -16,7 +16,7 @@ const noSubscribe = () => () => {};
 
 export function FavoritesGuard({ children }: FavoritesGuardProps) {
   const { isAuthenticated, isLoading } = useSession();
-  // Same as the server render until mounted: the session can resolve before this part hydrates (React #418).
+  // Same as the server render until mounted: the session can resolve before this part hydrates (React error 418).
   const mounted = useSyncExternalStore(noSubscribe, () => true, () => false);
 
   // While restoring session from the httpOnly cookie, show nothing (prevents flicker)

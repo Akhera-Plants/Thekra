@@ -64,7 +64,7 @@ const noSubscribe = () => () => {};
 function useSignedIn(): boolean {
   const session = useSession();
   const hint = useSyncExternalStore(noSubscribe, readHint, () => false);
-  // Same as the server render until mounted: the session can resolve before the home hydrates (React #418).
+  // Same as the server render until mounted: the session can resolve before the home hydrates (React error 418).
   const mounted = useSyncExternalStore(noSubscribe, () => true, () => false);
   const known = mounted && !session.isLoading;
   useEffect(() => {

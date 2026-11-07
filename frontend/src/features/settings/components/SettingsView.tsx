@@ -43,7 +43,7 @@ export function SettingsView() {
 
   const { user, isAuthenticated } = useSession();
   const hrefs = useSignInHrefs();
-  // Same as the server render until mounted: the session can resolve before this page hydrates (React #418).
+  // Same as the server render until mounted: the session can resolve before this page hydrates (React error 418).
   const mounted = useSyncExternalStore(noSubscribe, () => true, () => false);
   const member = mounted && isAuthenticated && user;
 
