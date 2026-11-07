@@ -25,13 +25,19 @@ import { RegisterDto } from './dto/register.dto.js';
  * 5 requests per minute per IP on /auth/* (password guessing, sign-up spam).
  * Enforced by the global ThrottlerGuard (APP_GUARD in AppModule).
  */
-const AUTH_THROTTLE = { default: { limit: 5, ttl: 60_000 } };
+export const AUTH_THROTTLE = { default: { limit: 5, ttl: 60_000 } };
 
 /**
  * Refresh is looser: the Next.js /api/auth/refresh route calls it on every full
  * page load of a signed-in admin, and it already needs a valid signed token.
  */
 const REFRESH_THROTTLE = { default: { limit: 30, ttl: 60_000 } };
+
+/**
+ * Signed-in reads (`me`, `logout`) already need a valid token, and the site and the app call `me` on every page load.
+ * The 5-a-minute login limit made quick navigation fail and sent members back to the login page (owner round 5, O-07).
+ */
+export const MEMBER_THROTTLE = { default: { limit: 120, ttl: 60_000 } };
 
 @Controller('auth')
 @Throttle(AUTH_THROTTLE)
@@ -70,6 +76,7 @@ export class AuthController {
   /** #22 GET /v1/auth/me */
   @Get('me')
   @UseGuards(JwtAuthGuard)
+  @Throttle(MEMBER_THROTTLE)
   async me(@CurrentUser() user: JwtPayload) {
     const [dbUser, favoriteCount] = await Promise.all([
       this.prisma.user.findUniqueOrThrow({ where: { id: user.sub } }),
@@ -114,6 +121,7 @@ export class AuthController {
    */
   @Post('logout')
   @UseGuards(JwtAuthGuard)
+  @Throttle(MEMBER_THROTTLE)
   @HttpCode(HttpStatus.NO_CONTENT)
   logout(): void {
     // Stateless logout — client drops tokens. No body.
