@@ -168,7 +168,7 @@ describe('parseSyncRequest', () => {
   it('400 PRACTICE_INVALID with the list and index, never the value', () => {
     const cases: Array<[Record<string, unknown>, string, number]> = [
       [{ plans: [PLAN, { ...PLAN, id: 'not-a-uuid' }] }, 'plans', 1],
-      [{ plans: [{ ...PLAN, activeDaysPerWeek: 1 }] }, 'plans', 0],
+      [{ plans: [{ ...PLAN, activeDaysPerWeek: 0 }] }, 'plans', 0],
       [{ plans: [{ ...PLAN, rule: { kind: 'hijriYearly', month: 13, day: 1 } }] }, 'plans', 0],
       [{ plans: [{ ...PLAN, amount: 0 }] }, 'plans', 0],
       [{ relatives: [{ ...RELATIVE, name: '0791234567' }] }, 'relatives', 0],
