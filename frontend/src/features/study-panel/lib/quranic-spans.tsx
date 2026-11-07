@@ -13,7 +13,7 @@ export function renderExplanationText(text: string): ReactNode[] {
     ) {
       const inner = part.slice(1, -1);
       return (
-        <span key={index} className="font-quran text-primary">
+        <span key={index} className="font-quran text-primary-text">
           {inner}
         </span>
       );

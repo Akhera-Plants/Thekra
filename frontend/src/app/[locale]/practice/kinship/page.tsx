@@ -3,6 +3,8 @@ import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { KinshipView } from '@/features/practice/components/KinshipView';
+import { NotificationsLink } from '@/features/practice/components/NotificationsLink';
+import { TitleRow } from '@/components/shared/kit/title-row';
 import { PracticeLoading } from '@/features/practice/components/PracticeLoading';
 import { localeAlternates } from '@/lib/seo';
 
@@ -25,9 +27,11 @@ export default async function KinshipPage({ params }: PageProps<'/[locale]/pract
         items={[{ label: tCrumbs('home'), href: '/' }, { label: tNav('practice'), href: '/practice' }, { label: t('title') }]}
       />
       <header className="page-heading">
-        <h1 id="page-title" tabIndex={-1}>
-          {t('title')}
-        </h1>
+        <TitleRow action={<NotificationsLink />}>
+          <h1 id="page-title" tabIndex={-1}>
+            {t('title')}
+          </h1>
+        </TitleRow>
         <p className="page-lead">{t('lead')}</p>
       </header>
       {/* KinshipView reads `?circle=` (the people list of a periodic template), so it renders under Suspense. */}

@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
+import { tidyArabicNumberRuns } from '@/lib/format/ranges';
 import { addDays, parseDate, toHijri, weekday, isHijriSupported, type DayPresence } from '@thekra/practice-core';
 import { Button } from '@/components/shared/kit/button';
 import { formatDigits } from '@/lib/format/digits';
@@ -140,7 +141,7 @@ export function MonthGrid({
   }
 
   function dayLabel(date: string): string {
-    const names = (occasions.get(date) ?? []).map((o) => (locale === 'en' ? o.titleEn : o.titleAr));
+    const names = (occasions.get(date) ?? []).map((o) => (locale === 'en' ? o.titleEn : tidyArabicNumberRuns(o.titleAr)));
     const level = presence ? presenceLevel(presence.get(date), today) : 'none';
     return [
       formatGregorian(date, locale, true),

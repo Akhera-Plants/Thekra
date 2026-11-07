@@ -122,7 +122,7 @@ function MoreMenu({ current }: { current: MemberNavKey | null }) {
                 <Link
                   href={item.href}
                   aria-current={current === item.key ? 'page' : undefined}
-                  className={cn(current === item.key && 'text-primary')}
+                  className={cn(current === item.key && 'text-primary-text')}
                 >
                   {label(item.key)}
                 </Link>
@@ -145,7 +145,7 @@ function MemberDrawer({ current }: { current: MemberNavKey | null }) {
   const side = useLocale() === 'en' ? 'left' : 'right';
   const [open, setOpen] = useState(false);
   const linkClass =
-    'flex min-h-12 items-center rounded-lg px-3 text-base transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring aria-[current=page]:font-medium aria-[current=page]:text-primary';
+    'flex min-h-12 items-center rounded-lg px-3 text-base transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring aria-[current=page]:font-medium aria-[current=page]:text-primary-text';
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>

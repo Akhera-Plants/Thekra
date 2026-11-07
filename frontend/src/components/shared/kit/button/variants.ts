@@ -34,10 +34,15 @@ export const buttonVariants = cva(
         deed: '',
         branch: '',
       },
+      /**
+       * Two heights only (owner round 5, O-02/W-15): every button is 44px high on every screen. `md` is the
+       * standard action (solid = primary, outline = secondary); `sm` is the compact row variant (same 44px
+       * height, tighter padding) for actions at the end of list rows. `lg` is kept as an alias of `md`.
+       */
       size: {
-        sm: 'min-h-11 h-11 px-3 text-sm font-medium md:h-8 md:min-h-8',
-        md: 'min-h-11 h-11 px-4 text-sm font-medium md:h-10 md:min-h-10',
-        lg: 'min-h-11 h-11 px-5 text-sm font-medium',
+        sm: 'h-11 min-h-11 px-3 text-sm font-medium',
+        md: 'h-11 min-h-11 px-4 text-sm font-medium',
+        lg: 'h-11 min-h-11 px-4 text-sm font-medium',
       },
       iconOnly: {
         true: 'aspect-square px-0',
@@ -45,9 +50,7 @@ export const buttonVariants = cva(
       },
     },
     compoundVariants: [
-      { iconOnly: true, size: 'sm', className: 'size-11 md:size-8' },
-      { iconOnly: true, size: 'md', className: 'size-11 md:size-10' },
-      { iconOnly: true, size: 'lg', className: 'size-11' },
+      { iconOnly: true, className: 'size-11' },
 
       // ── Primary (verdigris seal) ──────────────────────────────────────
       {
@@ -60,18 +63,18 @@ export const buttonVariants = cva(
         variant: 'outline',
         tone: 'primary',
         className:
-          'border-primary text-primary hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground data-[selected]:bg-primary data-[selected]:text-primary-foreground',
+          'border-primary text-primary-text hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground data-[selected]:bg-primary data-[selected]:text-primary-foreground',
       },
       {
         variant: 'ghost',
         tone: 'primary',
         className:
-          'text-primary hover:bg-primary/15 active:bg-primary/25 data-[selected]:bg-primary/20',
+          'text-primary-text hover:bg-primary/15 active:bg-primary/25 data-[selected]:bg-primary/20',
       },
       {
         variant: 'link',
         tone: 'primary',
-        className: 'text-primary',
+        className: 'text-primary-text',
       },
 
       // ── Neutral (paper / ink) ─────────────────────────────────────────

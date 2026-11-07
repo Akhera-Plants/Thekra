@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import { CalendarDays } from 'lucide-react';
+import { tidyArabicNumberRuns } from '@/lib/format/ranges';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
@@ -83,7 +84,7 @@ function SelectedDay({ date, occasions, hijriOffset }: SelectedDayProps) {
             <li key={occasion.key} className="flex flex-col gap-0.5">
               <Link href={`/good-deeds/${occasion.deed}`} className="text-link self-start text-base">
                 <CalendarDays aria-hidden />
-                <span>{locale === 'en' ? occasion.titleEn : occasion.titleAr}</span>
+                <span>{locale === 'en' ? occasion.titleEn : tidyArabicNumberRuns(occasion.titleAr)}</span>
                 <DirectionalArrow />
               </Link>
               {occasion.basis === 'organizational' ? (

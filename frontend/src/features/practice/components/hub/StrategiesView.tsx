@@ -140,7 +140,7 @@ function HabitChip({ plan, context, pressed, onPick }: { plan: WirdContext['snap
       onClick={onPick}
       className={cn(
         'min-h-11 rounded-lg border px-3 text-sm transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
-        pressed ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary',
+        pressed ? 'border-primary bg-primary/10 text-primary-text' : 'border-border hover:border-primary',
       )}
     >
       <span lang={words.titleLang}>{words.title}</span>

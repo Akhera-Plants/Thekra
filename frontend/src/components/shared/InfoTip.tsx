@@ -24,7 +24,7 @@ export function InfoTip({ children, label, className }: InfoTipProps) {
           type="button"
           aria-label={label ?? t('label')}
           className={cn(
-            'inline-flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
+            'inline-flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-primary-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
             className,
           )}
         >

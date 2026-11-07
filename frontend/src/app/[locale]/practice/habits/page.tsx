@@ -4,6 +4,8 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { PracticeLoading } from '@/features/practice/components/PracticeLoading';
 import { PracticeView } from '@/features/practice/components/PracticeView';
+import { NotificationsLink } from '@/features/practice/components/NotificationsLink';
+import { TitleRow } from '@/components/shared/kit/title-row';
 import { localeAlternates } from '@/lib/seo';
 
 // «عاداتي» (owner, 2026-11-01: the habits and what was «السجل», one page). A static shell: plans live on the device and
@@ -29,9 +31,11 @@ export default async function PracticeHabitsPage({ params }: PageProps<'/[locale
         items={[{ label: tCrumbs('home'), href: '/' }, { label: t('title') }]}
       />
       <header className="page-heading">
-        <h1 id="page-title" tabIndex={-1}>
-          {t('title')}
-        </h1>
+        <TitleRow action={<NotificationsLink />}>
+          <h1 id="page-title" tabIndex={-1}>
+            {t('title')}
+          </h1>
+        </TitleRow>
         <p className="page-lead">{t('lead')}</p>
       </header>
       <Suspense fallback={<PracticeLoading />}>

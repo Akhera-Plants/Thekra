@@ -3,6 +3,7 @@
 import { useMemo, useState, useId, type ReactNode } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { QuoteCard } from '@/components/shared/quote/QuoteCard';
+import { NarrationList } from '@/components/shared/quote/NarrationList';
 import { Button } from '@/components/shared/kit/button';
 import { SegmentTabs } from '@/components/shared/kit/segment-tabs';
 import { ThemeChips, type ThemeChip } from '@/components/shared/editorial/ThemeChips';
@@ -67,6 +68,11 @@ interface ReminderReaderProps {
   highlight?: ReaderHighlight | null;
   /** More text for «الكل» only, after the highlight and before the list (a branch's explanation). */
   intro?: ReactNode;
+  /**
+   * The main heading over the tabs that says what these texts are for (O-05/F-04/W-05), e.g. «آيات وأحاديث تعينك على
+   * هذه الطاعة». With it, the section headings and «الميزان» become its sub-headings (h3).
+   */
+  heading?: string;
   labels: {
     showMore: string;
     tabAll: string;
@@ -136,6 +142,7 @@ export function ReminderReader({
   busy = false,
   highlight = null,
   intro,
+  heading,
   labels,
 }: ReminderReaderProps) {
   void _total;
@@ -299,9 +306,30 @@ export function ReminderReader({
       ? ([...allItems, ...(highlight?.items ?? [])].find((item) => item.quote.id === studyQuoteId)?.quote ?? null)
       : null;
 
+  const SectionHeading = heading ? 'h3' : 'h2';
+  const renderCard = (item: ReaderItem) => (
+    <QuoteCard
+      quote={item.quote}
+      link={item.note ? { relevanceScore: null, note: item.note } : null}
+      detailHref={`/quotes/${item.quote.id}`}
+      intent={intent}
+      onOpenStudy={(quote) => setStudyQuoteId(quote.id)}
+      clamp
+      {...favoriteProps(item.quote)}
+    />
+  );
+
   return (
-    <div className="flex w-full min-w-0 flex-col gap-8">
+    <section
+      aria-labelledby={heading ? `${listId}-heading` : undefined}
+      className="flex w-full min-w-0 flex-col gap-8"
+    >
       <div className="flex min-w-0 flex-col gap-3">
+        {heading ? (
+          <h2 id={`${listId}-heading`} className="font-arabic-display text-[24px] font-semibold leading-snug md:text-[28px]">
+            {heading}
+          </h2>
+        ) : null}
         <SegmentTabs
           aria-label={labels.tabsLabel}
           controls={listId}
@@ -341,47 +369,22 @@ export function ReminderReader({
       >
         {highlight && highlightItems.length > 0 ? (
           <section aria-labelledby={`${listId}-mizan`} className="flex flex-col gap-3">
-            <h2 id={`${listId}-mizan`} className="font-arabic-display text-[22px] font-semibold md:text-[26px]">
+            <SectionHeading id={`${listId}-mizan`} className="font-arabic-display text-[20px] font-semibold md:text-[22px]">
               {highlight.title}
-            </h2>
+            </SectionHeading>
             {highlight.lead ? <p className="-mt-1 text-sm leading-7 text-muted-foreground">{highlight.lead}</p> : null}
-            <ul className="flex flex-col gap-8 md:gap-9">
-              {highlightItems.map((item) => (
-                <li key={`mizan-${item.id}`}>
-                  <QuoteCard
-                    quote={item.quote}
-                    detailHref={`/quotes/${item.quote.id}`}
-                    intent={intent}
-                    onOpenStudy={(quote) => setStudyQuoteId(quote.id)}
-                    {...favoriteProps(item.quote)}
-                  />
-                </li>
-              ))}
-            </ul>
+            <NarrationList items={highlightItems} renderItem={(item) => renderCard({ ...item, note: null })} />
           </section>
         ) : null}
         {showIntro ? intro : null}
         {listSections.map((section) => (
           <section key={section.heading || 'texts'} className="flex flex-col gap-8 md:gap-9">
             {section.heading ? (
-              <h2 className="font-arabic-display text-[22px] font-semibold md:text-[26px]">
+              <SectionHeading className="font-arabic-display text-[20px] font-semibold md:text-[22px]">
                 {section.heading}
-              </h2>
+              </SectionHeading>
             ) : null}
-            <ul className="flex flex-col gap-8 md:gap-9">
-              {section.items.map((item) => (
-                <li key={`${section.heading}-${item.id}`}>
-                  <QuoteCard
-                    quote={item.quote}
-                    link={item.note ? { relevanceScore: null, note: item.note } : null}
-                    detailHref={`/quotes/${item.quote.id}`}
-                    intent={intent}
-                    onOpenStudy={(quote) => setStudyQuoteId(quote.id)}
-                    {...favoriteProps(item.quote)}
-                  />
-                </li>
-              ))}
-            </ul>
+            <NarrationList items={section.items} renderItem={renderCard} />
           </section>
         ))}
       </div>
@@ -412,6 +415,6 @@ export function ReminderReader({
         listIds={studyListIds}
         onNavigate={setStudyQuoteId}
       />
-    </div>
+    </section>
   );
 }

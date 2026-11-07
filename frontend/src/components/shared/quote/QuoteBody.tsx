@@ -4,6 +4,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { QuoteType } from '@/lib/types/enums';
 import { ArabicText } from '../ArabicText';
+import { stripOuterQuotes } from '@/lib/texts/quote-text';
 
 interface QuoteBodyProps {
   quote: {
@@ -46,7 +47,7 @@ export function QuoteBody({ quote, size = 'xl', className, children }: QuoteBody
           className,
         )}
       >
-        {english}
+        {stripOuterQuotes(english)}
         {children}
       </blockquote>
     );
@@ -67,7 +68,8 @@ export function QuoteBody({ quote, size = 'xl', className, children }: QuoteBody
           className,
         )}
       >
-        {quote.textAr}
+        {/* A-04: quote marks that wrap the whole stored text are not drawn (the card already frames it). */}
+        {stripOuterQuotes(quote.textAr)}
         {children}
       </ArabicText>
       {locale === 'en' && scripture ? (

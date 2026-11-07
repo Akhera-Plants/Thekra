@@ -257,16 +257,17 @@ export function PlanCard({ plan, habit, view, today, hijriOffset, prayer }: Plan
 
       <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
         {habit && habit.evidence.length > 0 ? (
-          <button
-            type="button"
-            className="outline-button"
+          <Button
+            variant="outline"
+            tone="primary"
+            size="sm"
+            icon={<BookOpen aria-hidden />}
             aria-expanded={showEvidence}
             aria-controls={`${baseId}-evidence`}
             onClick={() => setShowEvidence((open) => !open)}
           >
-            <BookOpen aria-hidden />
             {showEvidence ? t('hideEvidence') : t('showEvidence')}
-          </button>
+          </Button>
         ) : null}
         <HabitLoopsToggle
           plan={plan}
@@ -308,7 +309,7 @@ export function PlanCard({ plan, habit, view, today, hijriOffset, prayer }: Plan
       ) : null}
       {showEvidence && habit ? (
         <div id={`${baseId}-evidence`}>
-          <FetchedEvidence ids={habit.evidence} />
+          <FetchedEvidence ids={habit.evidence} heading={t('evidenceHeading')} subject={words.title} />
         </div>
       ) : null}
     </article>

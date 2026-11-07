@@ -1,12 +1,16 @@
 'use client';
 
 import { useId, useMemo, useState } from 'react';
-import { Search } from 'lucide-react';
+import { ChevronDown, Search } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useWatch } from 'react-hook-form';
 import { useLocale, useTranslations } from 'next-intl';
 import { programEntryFor, startProgram, type SinProgram } from '@thekra/practice-core';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
+import { Button } from '@/components/shared/kit/button';
+import { ActionPair } from '@/components/shared/kit/action-pair';
+import { formatDigits } from '@/lib/format/digits';
+import { cn } from '@/lib/utils';
 import { TOPIC_DOMAINS } from '@/lib/topic-domains';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -66,6 +70,15 @@ export function ProgramChooser({ entries, common, sins, names, preselected, toda
   const people = useWatch({ control: form.control, name: 'people' });
   const [browsing, setBrowsing] = useState(initial === '');
   const [query, setQuery] = useState('');
+  // W-29: the groups fold on the page itself (no box with its own scroll). The group of a chosen sin starts open.
+  const [openGroups, setOpenGroups] = useState<ReadonlySet<string>>(() => new Set());
+  const toggleGroup = (key: string) =>
+    setOpenGroups((current) => {
+      const next = new Set(current);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
   const groups = useMemo(() => groupSinsForChooser(sins, query, DOMAIN_ORDER), [sins, query]);
   const written = entries.find((e) => e.sin === sin);
   const category = people === 'yes' ? 'haqq_ibad' : people === 'no' ? 'haqq_allah' : null;
@@ -111,9 +124,9 @@ export function ProgramChooser({ entries, common, sins, names, preselected, toda
                 {!browsing && field.value ? (
                   <div className="flex flex-wrap items-center gap-3 rounded-xl border border-primary bg-card p-4">
                     <span className="flex-1 text-lg font-medium">{names.get(field.value) ?? t('unnamed')}</span>
-                    <button type="button" className="outline-button" onClick={() => setBrowsing(true)}>
+                    <Button variant="outline" tone="primary" size="sm" onClick={() => setBrowsing(true)}>
                       {t('change')}
-                    </button>
+                    </Button>
                   </div>
                 ) : (
                   <>
@@ -129,36 +142,56 @@ export function ProgramChooser({ entries, common, sins, names, preselected, toda
                         onChange={(event) => setQuery(event.target.value)}
                       />
                     </div>
-                    <div className="max-h-[28rem] overflow-y-auto rounded-xl border border-border p-3">
+                    <div className="flex flex-col divide-y divide-border border-y border-border">
                       {groups.length === 0 ? <p className="p-2 text-muted-foreground">{t('noMatch')}</p> : null}
-                      {groups.map((group) => (
-                        <div key={group.domain ?? 'other'} className="flex flex-col gap-2 pb-4 last:pb-0">
-                          {groups.length > 1 || group.domain ? (
-                            <p className="px-1 text-sm font-medium text-muted-foreground">{domainLabel(group.domain)}</p>
-                          ) : null}
-                          <ul className="grid gap-2 sm:grid-cols-2">
-                            {group.sins.map((option) => (
-                              <li key={option.slug}>
-                                <label className="flex h-full min-h-12 cursor-pointer items-center gap-3 rounded-lg border border-border bg-card px-3 py-2 has-[:checked]:border-primary has-[:focus-visible]:border-primary">
-                                  <input
-                                    type="radio"
-                                    className="size-4 shrink-0 accent-primary"
-                                    name={field.name}
-                                    value={option.slug}
-                                    checked={field.value === option.slug}
-                                    onChange={() => {
-                                      field.onChange(option.slug);
-                                      form.setValue('people', '');
-                                      form.setValue('veryHard', '');
-                                    }}
-                                  />
-                                  <span className="text-base">{names.get(option.slug) ?? option.nameAr}</span>
-                                </label>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ))}
+                      {groups.map((group) => {
+                        const key = group.domain ?? 'other';
+                        const titled = groups.length > 1 || Boolean(group.domain);
+                        // A search shows every match; a lone group has nothing to fold.
+                        const open =
+                          !titled || query.trim() !== '' || openGroups.has(key) || group.sins.some((option) => option.slug === field.value);
+                        const panelId = `${searchId}-${key}`;
+                        return (
+                          <div key={key} className="flex flex-col">
+                            {titled ? (
+                              <button
+                                type="button"
+                                aria-expanded={open}
+                                aria-controls={panelId}
+                                onClick={() => toggleGroup(key)}
+                                className="flex min-h-12 items-center justify-between gap-3 py-2 text-start text-base font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                              >
+                                <span>{domainLabel(group.domain)}</span>
+                                <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                                  {formatDigits(group.sins.length)}
+                                  <ChevronDown aria-hidden className={cn('size-4 motion-safe:transition-transform', open && 'rotate-180')} />
+                                </span>
+                              </button>
+                            ) : null}
+                            <ul id={panelId} hidden={!open} className="grid gap-2 pb-3 sm:grid-cols-2">
+                              {group.sins.map((option) => (
+                                <li key={option.slug}>
+                                  <label className="flex h-full min-h-12 cursor-pointer items-center gap-3 rounded-lg border border-border bg-card px-3 py-2 has-[:checked]:border-primary has-[:focus-visible]:border-primary">
+                                    <input
+                                      type="radio"
+                                      className="size-4 shrink-0 accent-primary"
+                                      name={field.name}
+                                      value={option.slug}
+                                      checked={field.value === option.slug}
+                                      onChange={() => {
+                                        field.onChange(option.slug);
+                                        form.setValue('people', '');
+                                        form.setValue('veryHard', '');
+                                      }}
+                                    />
+                                    <span className="text-base">{names.get(option.slug) ?? option.nameAr}</span>
+                                  </label>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        );
+                      })}
                     </div>
                   </>
                 )}
@@ -177,7 +210,7 @@ export function ProgramChooser({ entries, common, sins, names, preselected, toda
                 <fieldset className="flex flex-col gap-2">
                   <legend className="mb-2 text-lg font-medium">{t('categoryQuestion')}</legend>
                   {(['yes', 'no'] as const).map((answer) => (
-                    <label key={answer} className="flex min-h-10 cursor-pointer items-center gap-3">
+                    <label key={answer} className="flex min-h-11 cursor-pointer items-center gap-3">
                       <input
                         type="radio"
                         className="size-4 accent-primary"
@@ -205,7 +238,7 @@ export function ProgramChooser({ entries, common, sins, names, preselected, toda
                 <fieldset className="flex flex-col gap-2">
                   <legend className="mb-2 text-lg font-medium">{english ? common.willQuestionEn : common.willQuestionAr}</legend>
                   {(['yes', 'no'] as const).map((answer) => (
-                    <label key={answer} className="flex min-h-10 cursor-pointer items-center gap-3">
+                    <label key={answer} className="flex min-h-11 cursor-pointer items-center gap-3">
                       <input
                         type="radio"
                         className="size-4 accent-primary"
@@ -225,15 +258,23 @@ export function ProgramChooser({ entries, common, sins, names, preselected, toda
           <p className="next-step !mt-0">{entry.category === 'haqq_ibad' ? t('peopleRights') : t('cutOnly')}</p>
         ) : null}
 
-        <div className="flex flex-wrap gap-3">
-          <button type="submit" className="solid-button button-wrap">
-            {t('start')} <DirectionalArrow />
-          </button>
-          {onCancel ? (
-            <button type="button" className="outline-button button-wrap" onClick={onCancel}>
-              {t('cancel')}
-            </button>
-          ) : null}
+        {/* «ابدأ» stays in reach at the bottom of the screen once a sin is chosen (W-29). */}
+        <div
+          className={cn(
+            sin &&
+              'sticky bottom-0 z-10 -mx-4 border-t border-border bg-background/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur supports-[backdrop-filter]:bg-background/85',
+          )}
+        >
+          <ActionPair layout="hug">
+            <Button type="submit" variant="solid" tone="primary" size="md">
+              {t('start')} <DirectionalArrow />
+            </Button>
+            {onCancel ? (
+              <Button type="button" variant="outline" tone="neutral" size="md" onClick={onCancel}>
+                {t('cancel')}
+              </Button>
+            ) : null}
+          </ActionPair>
         </div>
       </form>
     </Form>

@@ -3,14 +3,15 @@
 import { useSyncExternalStore } from 'react';
 import { useTranslations } from 'next-intl';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
-import { Separator } from '@/components/ui/separator';
-import { NotificationsLink } from '@/features/practice/components/NotificationsLink';
-import { ScreenSettingsLinks } from '@/features/practice/components/screen/ScreenSettingsLinks';
+import { Bell, ChevronDown, Clock, NotebookPen } from 'lucide-react';
+import { Link } from '@/i18n/navigation';
+import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
+import { SectionDivider } from '@/components/shared/SectionDivider';
 import { LocaleSwitcher } from '@/components/shared/LocaleSwitcher';
 import { Switch } from '@/components/shared/kit/switch';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { useSession } from '@/features/auth/hooks/useSession';
-import { AccountDataPanel } from './AccountDataPanel';
+import { AccountDataPanel, DeleteAccount } from './AccountDataPanel';
 import { AccountSection } from './AccountSection';
 import { VaultPanel } from '@/features/practice/components/VaultPanel';
 import { usePracticeStore } from '@/features/practice/hooks/usePracticeStore';
@@ -38,29 +39,28 @@ export function SettingsView() {
         </h1>
       </header>
 
+      {/* The flower divider between sections; hairlines only inside a list (owner round 5, O-04/W-23). */}
       <div className="flex max-w-xl flex-col gap-6">
         {/* Account section — only shown when signed in */}
         {mounted && isAuthenticated && user && (
           <>
             <AccountSection user={user} />
-            <Separator />
+            <SectionDivider />
             <AccountDataPanel />
-            <Separator />
+            <SectionDivider />
           </>
         )}
 
-        {/* «التنبيهات», «تذكيراتي», «أوقات الصلاة»: practice settings, for members only (owner, 2026-11-01). */}
+        {/* «التنبيهات», «تذكيراتي», «أوقات الصلاة»: practice settings, for members only (owner, 2026-11-01). One link style
+            for the three (W-13: no lone outlined button among links). */}
         {mounted && isAuthenticated ? (
           <>
-            <section className="flex flex-col gap-3">
-              <NotificationsLink />
-              <ScreenSettingsLinks />
-            </section>
-            <Separator />
+            <SettingsLinks />
+            <SectionDivider />
             <WeekBranchSetting />
-            <Separator />
+            <SectionDivider />
             <SettingsVault />
-            <Separator />
+            <SectionDivider />
           </>
         ) : null}
 
@@ -72,7 +72,7 @@ export function SettingsView() {
           <LocaleSwitcher label={tLocale('label')} />
         </section>
 
-        <Separator />
+        <SectionDivider />
 
         {/* Theme */}
         <section className="flex items-center justify-between gap-4">
@@ -88,8 +88,62 @@ export function SettingsView() {
             }}
           />
         </section>
+
+        {/* «منطقة الحذف» last and folded (W-27): the destructive action is out of the way and still behind a confirmation. */}
+        {mounted && isAuthenticated && user ? (
+          <>
+            <SectionDivider />
+            <DangerZone />
+          </>
+        ) : null}
       </div>
     </div>
+  );
+}
+
+/** Three equal rows, each an icon, a name and an arrow; a hairline between them (a list, not sections). */
+function SettingsLinks() {
+  const tRecord = useTranslations('practice.record');
+  const tMine = useTranslations('practice.myReminders');
+  const tPrayer = useTranslations('practice.prayer');
+  const t = useTranslations('settings');
+  const rows = [
+    { href: '/practice/notifications', label: tRecord('notifications'), Icon: Bell },
+    { href: { pathname: '/favorites', query: { tab: 'reminders' } }, label: tMine('title'), Icon: NotebookPen },
+    { href: '/practice/prayer-times', label: tPrayer('title'), Icon: Clock },
+  ] as const;
+  return (
+    <nav aria-label={t('practiceLinks')}>
+      <ul className="flex flex-col divide-y divide-border">
+        {rows.map(({ href, label, Icon }) => (
+          <li key={label}>
+            <Link
+              href={href}
+              className="flex min-h-12 items-center gap-3 py-1 text-foreground transition-colors hover:text-primary-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            >
+              <Icon aria-hidden className="size-5 shrink-0 text-primary-text" />
+              <span className="min-w-0 flex-1 text-base">{label}</span>
+              <DirectionalArrow className="size-4 text-muted-foreground" />
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
+function DangerZone() {
+  const t = useTranslations('settings.data');
+  return (
+    <details className="group flex flex-col">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 text-sm font-medium text-destructive focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring [&::-webkit-details-marker]:hidden">
+        {t('dangerZone')}
+        <ChevronDown aria-hidden className="size-4 transition-transform group-open:rotate-180 motion-reduce:transition-none" />
+      </summary>
+      <div className="pt-3">
+        <DeleteAccount />
+      </div>
+    </details>
   );
 }
 

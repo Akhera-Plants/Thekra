@@ -1,5 +1,6 @@
 'use client';
 
+import { stripOuterQuotes } from '@/lib/texts/quote-text';
 import { Fragment } from 'react';
 import { Bookmark, BookMarked, BookOpen } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
@@ -54,7 +55,8 @@ export function FeaturedReminder({ quote }: FeaturedReminderProps) {
 
   const scripture = quote.type === QuoteType.HADITH || quote.type === QuoteType.QURAN_VERSE;
   const english = locale === 'en' && scripture ? (quote.translation?.text ?? null) : null;
-  const { text } = splitChain(quote.textAr);
+  // A-04: quote marks wrapping the whole text are not drawn.
+  const text = stripOuterQuotes(splitChain(quote.textAr).text);
   const isQuran = quote.type === QuoteType.QURAN_VERSE;
   const saved = ids.has(quote.id) || Boolean(quote.isFavorite);
 

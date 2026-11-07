@@ -74,11 +74,14 @@ export function SourceAttribution({
             </span>
           )}
           {quran.surahNumber && quran.ayahNumber && (
-            <bdi className="ms-1">
-              <FormattedNumber value={quran.surahNumber} />
-              :
-              <FormattedNumber value={quran.ayahNumber} />
-            </bdi>
+            <>
+              {/* «الحجرات · 49:11» (W-28): a separator, and the numbers isolated so they never stick to the name. */}
+              {surahName ? <span aria-hidden> · </span> : null}
+              {/* Deliberate dir="ltr": surah:ayah reads left to right in both locales. */}
+              <bdi dir="ltr" className="tabular-nums">
+                <FormattedNumber value={quran.surahNumber} />:<FormattedNumber value={quran.ayahNumber} />
+              </bdi>
+            </>
           )}
         </span>
       )}

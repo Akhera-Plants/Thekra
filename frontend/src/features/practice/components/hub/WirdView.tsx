@@ -125,7 +125,7 @@ function WirdBody({ context }: { context: WirdContext }) {
             {tPeriodic('title')}
           </h2>
           {acts.length > 0 ? (
-            <Link href="/practice/periodic" className="outline-button !min-h-9 px-3 text-sm">
+            <Link href="/practice/periodic" className="outline-button px-3 text-sm">
               {tPeriodic('all')}
             </Link>
           ) : null}

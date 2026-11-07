@@ -51,6 +51,7 @@ export function SinReader({ slug, lang, items, total, sections, countsByKind, th
   return (
     <>
     <ReminderReader
+      heading={t('evidenceHeading')}
       highlight={highlight}
       intro={intro}
       items={complete ? items : reader.items}

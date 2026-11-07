@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter, usePathname } from '@/i18n/navigation';
 import { useSearchParams } from 'next/navigation';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { SegmentTabs, SegmentTabsContent } from '@/components/shared/kit/segment-tabs';
 import type { HadithGrade, QuoteType } from '@/lib/types/enums';
 import { InfiniteQuoteList } from './InfiniteQuoteList';
 import { QuoteFilters } from './QuoteFilters';
@@ -56,29 +56,32 @@ export function BrowseTabs() {
   };
 
   return (
-    <Tabs value={tab} onValueChange={handleTabChange}>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <TabsList>
-          <TabsTrigger value="all">{t('tabAll')}</TabsTrigger>
-          <TabsTrigger value="quran">{t('tabQuran')}</TabsTrigger>
-          <TabsTrigger value="hadith">{t('tabHadith')}</TabsTrigger>
-        </TabsList>
-        <QuoteFilters
-          tab={tab}
-          grade={grade}
-          surah={surah}
-          sourceId={sourceId}
-          onGradeChange={(v) => updateParam('grade', v)}
-          onSurahChange={(v) => updateParam('surah', v)}
-          onSourceChange={(v) => updateParam('source', v)}
-        />
-      </div>
-
+    // The site's segmented tabs (44px to touch, W-17), then the filters, then the list.
+    <SegmentTabs
+      aria-label={t('pageTitle')}
+      items={[
+        { value: 'all', label: t('tabAll') },
+        { value: 'quran', label: t('tabQuran') },
+        { value: 'hadith', label: t('tabHadith') },
+      ]}
+      value={tab}
+      onValueChange={handleTabChange}
+      className="gap-4"
+    >
+      <QuoteFilters
+        tab={tab}
+        grade={grade}
+        surah={surah}
+        sourceId={sourceId}
+        onGradeChange={(v) => updateParam('grade', v)}
+        onSurahChange={(v) => updateParam('surah', v)}
+        onSourceChange={(v) => updateParam('source', v)}
+      />
       {(['all', 'quran', 'hadith'] as BrowseTab[]).map((tabValue) => (
-        <TabsContent key={tabValue} value={tabValue} className="mt-6">
+        <SegmentTabsContent key={tabValue} value={tabValue} className="mt-2">
           <InfiniteQuoteList params={quoteParams} />
-        </TabsContent>
+        </SegmentTabsContent>
       ))}
-    </Tabs>
+    </SegmentTabs>
   );
 }

@@ -173,7 +173,7 @@ export function TodayList({ title, store, date, today, day, habits, occasionBasi
       {isComplete && isToday && completeCard ? (
         completeCard
       ) : (
-        <p role="status" className="text-base leading-8 text-primary empty:hidden">
+        <p role="status" className="text-base leading-8 text-primary-text empty:hidden">
           {isComplete ? (isToday ? tDay('complete') : tDay('completePast')) : null}
         </p>
       )}

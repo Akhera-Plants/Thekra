@@ -42,6 +42,8 @@ export const segmentTriggerVariants = cva(
     'active:scale-[0.98] motion-reduce:active:scale-100',
     // Kill stock trigger height / line-underline pseudo.
     'h-auto! after:hidden!',
+    // The pill is 36px inside a 44px track; the hit area covers the track's padding too (W-17: ≥44px to touch).
+    "before:absolute before:inset-x-0 before:-inset-y-1 before:content-['']",
   ].join(' '),
   {
     variants: {

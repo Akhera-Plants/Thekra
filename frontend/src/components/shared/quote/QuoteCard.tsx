@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import {
   BookMarked,
@@ -22,7 +22,10 @@ import { formatGradeCitation } from '@/lib/format/grade-citation';
 import { GradeBadge } from './GradeBadge';
 import { QuoteBody } from './QuoteBody';
 import { FavoriteButton } from './FavoriteButton';
-import { ReportMistake } from './ReportMistake';
+import { QuoteMoreMenu } from './QuoteMoreMenu';
+import { RecitationButton } from './RecitationButton';
+import { Button } from '@/components/shared/kit/button';
+import { ActionPair } from '@/components/shared/kit/action-pair';
 import { ShareButton } from '../share/ShareButton';
 import { useQuoteSharePayload } from '../share/useQuoteSharePayload';
 
@@ -83,6 +86,11 @@ export interface QuoteCardProps extends VariantProps<typeof quoteCardVariants> {
   isFavoritePending?: boolean;
   /** Opens the study panel (tafsir / sharh). */
   onOpenStudy?: (quote: QuoteDto) => void;
+  /**
+   * Topic lists (W-24 b): the text is cut to 4 lines; when it is longer, the card's link reads «اقرأ كاملًا» and opens
+   * the text page (the same link as «عرض كامل», never a second button to the same page).
+   */
+  clamp?: boolean;
   className?: string;
 }
 
@@ -90,41 +98,6 @@ function visibleArabic(value: string | null | undefined, arabic: boolean): strin
   if (!value) return null;
   if (arabic && /[A-Za-z]/.test(value)) return null;
   return value;
-}
-
-/** «التفسير» / «الشرح» and «عرض كامل»: one small bordered shape (owner, 2026-11-01: every action looks like a button). */
-const STUDY_BUTTON =
-  'inline-flex min-h-11 w-fit items-center gap-1.5 self-start rounded-lg border border-border px-3 text-sm font-medium text-muted-foreground transition-colors duration-150 hover:border-primary hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring md:min-h-9';
-
-function ContextLink({
-  href,
-  label,
-  arabic,
-  muted,
-}: {
-  href: string;
-  label: string;
-  arabic: boolean;
-  muted?: boolean;
-}) {
-  return (
-    <Link
-      href={href}
-      // A bordered button, not bare text (owner, 2026-11-01: every action looks like a button).
-      className={cn(
-        'inline-flex min-h-11 w-fit items-center gap-1.5 self-start rounded-lg border px-3 md:min-h-9',
-        'text-sm font-medium transition-colors duration-150',
-        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
-        muted
-          ? 'border-border text-muted-foreground hover:border-primary hover:text-foreground'
-          : 'border-primary/40 text-primary hover:border-primary',
-        arabic && 'font-arabic-ui',
-      )}
-    >
-      {label}
-      <DirectionalArrow className="size-3.5" />
-    </Link>
-  );
 }
 
 export function QuoteCard({
@@ -138,6 +111,7 @@ export function QuoteCard({
   isFavorite,
   onToggleFavorite,
   isFavoritePending = false,
+  clamp = false,
   className,
 }: QuoteCardProps) {
   const locale = useLocale();
@@ -146,6 +120,25 @@ export function QuoteCard({
   const tFav = useTranslations('favorites');
   const panelId = useId();
   const [contextOpen, setContextOpen] = useState(false);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const [cut, setCut] = useState(false);
+
+  // Is the 4-line cut hiding text? Measured after layout and on resize (fonts, width); false until then.
+  useEffect(() => {
+    if (!clamp) return;
+    const node = bodyRef.current?.querySelector('blockquote');
+    if (!node) return;
+    // Diacritics and Quranic marks paint above and below the line box and add a few pixels of scroll height, so a
+    // text counts as cut only when at least half a line is hidden.
+    const measure = () => {
+      const line = Number.parseFloat(getComputedStyle(node).lineHeight) || 32;
+      setCut(node.scrollHeight - node.clientHeight > line / 2);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [clamp]);
 
   const isAthar = Boolean(quote.isAthar);
   const { typeKey: rawTypeKey, Icon } = QUOTE_TYPE_CONFIG[quote.type];
@@ -199,7 +192,6 @@ export function QuoteCard({
   const sharePayload = useQuoteSharePayload(quote);
 
   return (
-    <div className="flex flex-col gap-2">
       <article
         className={cn(quoteCardVariants({ density, intent }), className)}
         aria-labelledby={`quote-${quote.id}-text`}
@@ -212,7 +204,7 @@ export function QuoteCard({
                 'text-[13px] font-medium md:text-[14px]',
                 isAthar
                   ? 'bg-muted text-muted-foreground'
-                  : 'bg-primary/10 text-primary',
+                  : 'bg-primary/10 text-primary-text',
                 arabic && 'font-arabic-ui',
               )}
             >
@@ -410,7 +402,11 @@ export function QuoteCard({
           </div>
 
           {showFavorite || shareable ? (
-            <div className="flex shrink-0 items-center gap-0.5">
+            // Card actions, one 44px icon each: listen (verses), share, save, «⋯» (report, W-04).
+            <div className="-me-2 -mt-1 flex shrink-0 items-center">
+              {isQuran && quote.quran?.surahNumber && quote.quran.ayahNumber ? (
+                <RecitationButton surah={quote.quran.surahNumber} ayah={quote.quran.ayahNumber} />
+              ) : null}
               {shareable ? (
                 <ShareButton
                   payload={sharePayload}
@@ -429,23 +425,39 @@ export function QuoteCard({
                   className="size-11"
                 />
               ) : null}
+              {isHadith ? <QuoteMoreMenu quoteId={quote.id} /> : null}
             </div>
           ) : null}
         </header>
 
-        <div id={`quote-${quote.id}-text`} className="min-w-0 overflow-visible">
-          <QuoteBody quote={quote} />
+        <div ref={bodyRef} id={`quote-${quote.id}-text`} className="min-w-0 overflow-visible">
+          <QuoteBody quote={quote} className={clamp ? 'line-clamp-4' : undefined} />
         </div>
 
-        {onOpenStudy && (isQuran || isHadith) ? (
-          <button
-            type="button"
-            className={cn(STUDY_BUTTON, arabic && 'font-arabic-ui')}
-            onClick={() => onOpenStudy(quote)}
-          >
-            <BookMarked className="size-4" aria-hidden />
-            {isQuran ? t('openTafsir') : t('openSharh')}
-          </button>
+        {/* «التفسير/الشرح» and «عرض كامل» (or «اقرأ كاملًا» when the text is cut): one pair, side by side, same size
+            (O-02/W-03). */}
+        {(onOpenStudy && (isQuran || isHadith)) || showViewLink ? (
+          <ActionPair layout="hug" className={cn(arabic && 'font-arabic-ui')}>
+            {onOpenStudy && (isQuran || isHadith) ? (
+              <Button
+                variant="outline"
+                tone="neutral"
+                size="md"
+                icon={<BookMarked aria-hidden />}
+                onClick={() => onOpenStudy(quote)}
+              >
+                {isQuran ? t('openTafsir') : t('openSharh')}
+              </Button>
+            ) : null}
+            {showViewLink && detailHref ? (
+              <Button asChild variant="outline" tone="primary" size="md">
+                <Link href={detailHref}>
+                  {cut ? t('readFull') : t('viewFull')}
+                  <DirectionalArrow className="size-3.5" />
+                </Link>
+              </Button>
+            ) : null}
+          </ActionPair>
         ) : null}
 
         {hasDisclosure ? (
@@ -467,7 +479,7 @@ export function QuoteCard({
               aria-controls={panelId}
               onClick={() => setContextOpen((open) => !open)}
             >
-              <Info className="size-4 shrink-0 text-primary" aria-hidden />
+              <Info className="size-4 shrink-0 text-primary-text" aria-hidden />
               <span className="min-w-0 flex-1">{whyLabel}</span>
               <ChevronDown
                 className={cn(
@@ -527,28 +539,11 @@ export function QuoteCard({
                     </div>
                   )}
 
-                  {showViewLink && detailHref ? (
-                    <ContextLink
-                      href={detailHref}
-                      label={t('viewContext')}
-                      arabic={arabic}
-                    />
-                  ) : null}
                 </div>
               ) : null}
             </div>
           </div>
-        ) : showViewLink && detailHref ? (
-          <ContextLink
-            href={detailHref}
-            label={t('viewFull')}
-            arabic={arabic}
-            muted
-          />
         ) : null}
       </article>
-
-      {isHadith ? <ReportMistake quoteId={quote.id} /> : null}
-    </div>
   );
 }

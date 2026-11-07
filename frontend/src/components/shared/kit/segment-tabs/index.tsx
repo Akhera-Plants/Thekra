@@ -45,7 +45,7 @@ function SegmentTabs({
           >
             <span className="leading-none">{item.label}</span>
             {item.count !== undefined && item.count !== null ? (
-              <span className="leading-none text-xs tabular-nums text-current/55">
+              <span className="leading-none text-xs tabular-nums text-foreground/75">
                 {typeof item.count === 'number' ? (
                   <FormattedNumber value={item.count} />
                 ) : (

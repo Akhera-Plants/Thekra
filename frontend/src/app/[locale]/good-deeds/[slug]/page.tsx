@@ -4,6 +4,7 @@ import { Link } from '@/i18n/navigation';
 import { ArabicText } from '@/components/shared/ArabicText';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { SectionDivider } from '@/components/shared/SectionDivider';
+import { Button } from '@/components/shared/kit/button';
 import type { ReaderItem, ReaderSection } from '@/components/shared/editorial/ReminderReader';
 import { GoodDeedReader } from '@/features/good-deed-motivation/components/GoodDeedReader';
 import { DeedHabitAction } from '@/features/practice/components/DeedHabitAction';
@@ -175,20 +176,30 @@ export default async function GoodDeedDetailPage({
           />
         )}
 
-        {deed.branches && deed.branches.length > 0 ? <SectionDivider /> : null}
-        <TopicBranchLinks branches={deed.branches} />
+        {/* The flower between sections, never a line (O-04/W-23). */}
+        {deed.branches && deed.branches.length > 0 ? (
+          <>
+            <SectionDivider />
+            <TopicBranchLinks branches={deed.branches} />
+          </>
+        ) : null}
 
         {deed.oppositeSin && opposite ? (
-          <section aria-labelledby="opposite-title" className="flex flex-col gap-2">
-            <h2 id="opposite-title" className="text-xl font-medium">
-              {t('oppositeSin')}
-            </h2>
-            <Link href={`/sins/${deed.oppositeSin.slug}`} className="outline-button self-start">
-              <span lang={/[\u0600-\u06FF]/.test(opposite) ? 'ar' : undefined} dir={/[\u0600-\u06FF]/.test(opposite) ? 'rtl' : undefined}>
-                {opposite}
-              </span>
-            </Link>
-          </section>
+          <>
+            <SectionDivider />
+            <section aria-labelledby="opposite-title" className="flex flex-col gap-3">
+              <h2 id="opposite-title" className="text-xl font-medium">
+                {t('oppositeSin')}
+              </h2>
+              <Button asChild variant="outline" tone="primary" size="md" className="self-start">
+                <Link href={`/sins/${deed.oppositeSin.slug}`}>
+                  <span lang={/[\u0600-\u06FF]/.test(opposite) ? 'ar' : undefined} dir={/[\u0600-\u06FF]/.test(opposite) ? 'rtl' : undefined}>
+                    {opposite}
+                  </span>
+                </Link>
+              </Button>
+            </section>
+          </>
         ) : null}
       </article>
     </div>

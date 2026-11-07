@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 import {
   ChevronLeft,
   ChevronRight,
@@ -59,6 +59,7 @@ export function StudyPanel({
   onNavigate,
 }: StudyPanelProps) {
   const t = useTranslations('studyPanel');
+  const panelId = useId();
   const locale = useLocale();
   const router = useRouter();
   const mobile = useIsMobile();
@@ -185,11 +186,17 @@ export function StudyPanel({
                 onValueChange={(value) => setTab(value as StudyTabId)}
                 variant="underline"
                 size="hugged"
+                controls={panelId}
               />
             </div>
           ) : null}
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+          <div
+            id={panelId}
+            role={tabItems.length > 0 ? 'tabpanel' : undefined}
+            aria-label={title}
+            className="min-h-0 flex-1 overflow-y-auto px-4 py-4"
+          >
             {isLoading ? (
               <BrandLoader label={t('loading')} showLabel className="text-sm" />
             ) : isError ? (

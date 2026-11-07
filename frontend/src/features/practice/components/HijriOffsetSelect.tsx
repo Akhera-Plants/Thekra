@@ -8,6 +8,8 @@ import { HIJRI_OFFSET_MAX, HIJRI_OFFSET_MIN, updateSettings } from '@thekra/prac
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { updateStore } from '@/lib/practice/local-store';
+import { Button } from '@/components/shared/kit/button';
+import { usePracticeStore } from '../hooks/usePracticeStore';
 
 const OFFSETS = Array.from({ length: HIJRI_OFFSET_MAX - HIJRI_OFFSET_MIN + 1 }, (_, i) => HIJRI_OFFSET_MIN + i);
 
@@ -52,16 +54,20 @@ export function HijriOffsetSelect({ value, bare = false }: HijriOffsetSelectProp
   );
 }
 
-/** The Hijri adjustment behind an icon button (owner round 3: a popup, not inline under the page). */
-export function HijriOffsetDialog({ value }: HijriOffsetSelectProps) {
+/**
+ * «ضبط الهجري»: the page's action on the title line, icon + text (W-13), opening the adjustment in a dialog
+ * (owner round 3: a popup, not inline under the page). Reads the device store itself, so a server page can place it.
+ */
+export function HijriOffsetDialog() {
   const t = useTranslations('calendarPage.offset');
+  const snapshot = usePracticeStore();
+  const value = snapshot?.store.settings.hijriOffset ?? 0;
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <button type="button" className="outline-button !min-h-11 px-3" aria-label={t('label')} title={t('label')}>
-          <CalendarCog aria-hidden />
-          <span className="hidden sm:inline">{t('label')}</span>
-        </button>
+        <Button variant="outline" tone="primary" size="sm" icon={<CalendarCog aria-hidden />} disabled={!snapshot}>
+          {t('action')}
+        </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>

@@ -49,7 +49,7 @@ const nodeVariants = cva('flex min-w-0 flex-col gap-0.5 rounded-md border px-2.5
 });
 
 const STATE_ICON = {
-  ok: { icon: Check, className: 'text-primary' },
+  ok: { icon: Check, className: 'text-primary-text' },
   warn: { icon: TriangleAlert, className: 'text-intent-good-deed' },
   fail: { icon: CircleAlert, className: 'text-destructive' },
   na: { icon: Minus, className: 'text-muted-foreground' },

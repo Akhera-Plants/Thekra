@@ -7,6 +7,7 @@
 
 @theme inline {
   --color-background: var(--background);
+  --color-primary-text: var(--primary-text);
   --color-foreground: var(--foreground);
   /* English UI/reading uses Source Sans 3 (owner decision 2026-11-01, docs/design/after/direction/english-font.md).
      Amiri stays for Arabic Quran text and source-book wordmarks only. */
@@ -134,13 +135,16 @@
   --secondary: #edf4ef;
   --secondary-foreground: #263d35;
   --muted: #edf4ef;
-  --muted-foreground: #64746c;
+  /* 4.96:1 on --muted, 5.4:1 on the page (W-16: ≥4.5:1 for 12px captions). */
+  --muted-foreground: #5c6c64;
   --accent: #f0f3ee;
   --accent-foreground: #263d35;
   --border: #dce3db;
   --input: #dce3db;
   --primary: #326c59;
   --primary-foreground: #ffffff;
+  /* The primary colour as TEXT (outline/ghost/link buttons, accents). Same as --primary on the light page. */
+  --primary-text: #326c59;
   --ring: #41816d;
   --destructive: #a0443a;
   --destructive-foreground: #fffcf9;
@@ -211,8 +215,11 @@
   --input: #333532;
   --primary: #326c59;
   --primary-foreground: #ffffff;
+  /* --primary on #101010 is 3.1:1; text uses the site's dark accent (9.4:1) while solid fills keep --primary (W-16). */
+  --primary-text: #8bc2aa;
   --ring: #8bc2aa;
-  --destructive: #c45a4e;
+  /* 4.9:1 on --muted, 5.6:1 on the page (was 4.45:1). */
+  --destructive: #d46e62;
   --destructive-foreground: #101010;
   --chart-1: #333532;
   --chart-2: #aaa9a4;
@@ -406,5 +413,20 @@
   .home-spine:active {
     transition: none;
     transform: none;
+  }
+}
+
+/* W-17: a control that looks smaller than 44px (a 36px chip, a 20px menu glyph) still takes a 44×44 touch area.
+   The visual size is unchanged; an invisible ::before grows the hit box around the element's centre. */
+@utility touch-44 {
+  position: relative;
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
   }
 }

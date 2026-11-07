@@ -67,7 +67,7 @@ function Line({ act, title, note, icon, today }: LineProps) {
         href={periodicHref(act)}
         className="group flex min-h-14 items-center gap-3 rounded-xl px-2 py-2.5 transition-colors duration-150 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       >
-        <span aria-hidden className="flex size-10 shrink-0 items-center justify-center rounded-full bg-secondary text-primary [&_svg]:size-[1.125rem]">
+        <span aria-hidden className="flex size-10 shrink-0 items-center justify-center rounded-full bg-secondary text-primary-text [&_svg]:size-[1.125rem]">
           {icon}
         </span>
         <span className="flex min-w-0 flex-1 flex-col">

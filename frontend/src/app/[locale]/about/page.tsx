@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
-import { FormattedNumber } from '@/components/shared/FormattedNumber';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { reportFailure } from '@/lib/errors';
 import { getCatalogSources } from '@/lib/api/sources';
@@ -114,11 +113,10 @@ export default async function AboutPage({
                     <strong>{title}</strong>
                     {author ? <> — {author}</> : null}
                   </p>
-                  <p>
-                    <FormattedNumber value={book.quoteCount ?? 0} /> {t('imported')}
-                    {' · '}
-                    <FormattedNumber value={book.publishedQuoteCount ?? 0} /> {t('published')}
-                  </p>
+                  {/* Visitors see what they can read, with its unit; the imported/published counts are internal (W-20). */}
+                  {(book.publishedQuoteCount ?? 0) > 0 ? (
+                    <p>{t('publishedTexts', { count: book.publishedQuoteCount ?? 0, n: formatDigits(book.publishedQuoteCount ?? 0) })}</p>
+                  ) : null}
                 </li>
               );
             })}
@@ -126,7 +124,7 @@ export default async function AboutPage({
         </section>
       ) : null}
 
-      <nav className="about-paths" aria-label={tNav('main')}>
+      <nav className="about-paths" aria-label={t("pathsNav")}>
         <Link className="solid-button" href="/sins">
           {tCrumbs('sins')} <DirectionalArrow className="size-[18px]" />
         </Link>

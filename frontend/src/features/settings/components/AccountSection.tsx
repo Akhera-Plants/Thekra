@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/shared/kit/button';
 import type { UserDto } from '@/lib/api/auth';
 import { useSession } from '@/features/auth/hooks/useSession';
 
@@ -29,7 +29,7 @@ export function AccountSection({ user }: AccountSectionProps) {
         <p className="text-sm font-medium">{t('account')}</p>
         <p className="truncate text-sm text-muted-foreground">{user.email}</p>
       </div>
-      <Button variant="outline" size="sm" onClick={handleLogout}>
+      <Button variant="outline" tone="neutral" size="sm" onClick={handleLogout}>
         {tAuth('logout')}
       </Button>
     </section>

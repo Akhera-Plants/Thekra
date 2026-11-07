@@ -124,7 +124,7 @@ function FacetOption({
         active ? 'bg-muted font-medium text-foreground' : 'text-foreground/85',
       )}
     >
-      <Check aria-hidden className={cn('size-3.5 shrink-0 text-primary', !active && 'invisible')} />
+      <Check aria-hidden className={cn('size-3.5 shrink-0 text-primary-text', !active && 'invisible')} />
       <span className="min-w-0 flex-1 truncate">
         {tone ? <StatusBadge label={label} tone={tone} size="md" className="font-normal" /> : label}
       </span>

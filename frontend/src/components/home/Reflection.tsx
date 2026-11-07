@@ -1,4 +1,5 @@
 import { getTranslations } from 'next-intl/server';
+import { stripOuterQuotes } from '@/lib/texts/quote-text';
 import { Link } from '@/i18n/navigation';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import type { QuoteDto } from '@/lib/types/api';
@@ -10,7 +11,7 @@ interface ReflectionProps {
 
 export async function Reflection({ quote, locale }: ReflectionProps) {
   const t = await getTranslations('home');
-  const text = (locale === 'en' ? quote.translation?.text : null) ?? quote.textAr;
+  const text = stripOuterQuotes((locale === 'en' ? quote.translation?.text : null) ?? quote.textAr);
   const author =
     (locale === 'ar' ? quote.source?.authorAr : quote.source?.author)?.trim()
     || (locale === 'ar' ? quote.source?.nameAr : quote.source?.name)?.trim()

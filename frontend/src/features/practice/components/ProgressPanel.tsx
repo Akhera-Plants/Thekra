@@ -58,7 +58,7 @@ function ProgressRow({
         {words.title}
       </h3>
       <p className="text-sm leading-7">
-        <strong className="font-medium text-primary">{t(`band.${view.band}`)}</strong>
+        <strong className="font-medium text-primary-text">{t(`band.${view.band}`)}</strong>
         {' · '}
         {t('doneDays', { count: view.doneDaysInMonth, n: formatDigits(view.doneDaysInMonth), total: formatDigits(MONTH_DAYS) })}
       </p>

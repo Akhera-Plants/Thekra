@@ -37,7 +37,7 @@ export function WindowLine({ window, prayer, id }: { window: DeedWindow | undefi
   const bounds = prayer ? windowBounds(window, prayer) : null;
   return (
     <p id={id} className="flex items-center gap-2 text-sm leading-7 text-muted-foreground">
-      <Clock className="size-4 shrink-0 text-primary" aria-hidden />
+      <Clock className="size-4 shrink-0 text-primary-text" aria-hidden />
       <span>
         {range(window)}
         {bounds ? (

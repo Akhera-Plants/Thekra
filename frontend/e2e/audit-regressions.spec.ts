@@ -13,9 +13,19 @@ const PAGE = 20;
 const toNumber = (text: string) =>
   Number(text.replace(/[٠-٩]/g, (d) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d))).replace(/\D/g, ''));
 
-async function cards(page: Page) {
-  return page.locator('article[aria-labelledby]');
+/**
+ * Texts on the page: narrations of the same text show once with «وروي بألفاظ أخرى (n)» (W-08), so the count is the
+ * visible cards plus the n other wordings folded under them.
+ */
+async function textCount(page: Page): Promise<number> {
+  const cardsShown = await page.locator('article[aria-labelledby]:visible').count();
+  const folded = await page
+    .locator('[data-other-wordings][aria-expanded="false"]')
+    .evaluateAll((buttons) => buttons.reduce((sum, b) => sum + Number(b.getAttribute('data-other-wordings') ?? 0), 0));
+  return cardsShown + folded;
 }
+
+const expectTexts = (page: Page, count: number) => expect.poll(() => textCount(page)).toBe(count);
 
 test('B02: the sins index and a sin page carry the sin, not its virtue', async ({ page }) => {
   await page.goto(`${BASE}/sins`, { waitUntil: 'networkidle' });
@@ -30,7 +40,9 @@ test('B02: the sins index and a sin page carry the sin, not its virtue', async (
   }
   await page.goto(`${BASE}/sins/riya`, { waitUntil: 'networkidle' });
   await expect(page.locator('h1')).toHaveText('الرياء');
-  await expect(page.locator('.page-heading')).toContainText('الفضيلة المقابلة: الإخلاص');
+  // The virtue is its own section under the texts, titled without a colon (W-20).
+  await expect(page.locator('#pair-title')).toHaveText('الفضيلة المقابلة');
+  await expect(page.locator('section[aria-labelledby="pair-title"] a')).toContainText('الإخلاص');
 });
 
 test('B08: the catalogue search ignores tashkeel', async ({ page }) => {
@@ -46,18 +58,18 @@ test('B07: a shared ?theme= link opens on that theme; chips and back/forward sta
   await page.goto(`${BASE}/sins/ghibah?theme=lisan-ghibah`, { waitUntil: 'networkidle' });
   const nahy = chips.getByRole('button', { name: /النهي عن الغيبة/ });
   await expect(nahy).toHaveAttribute('aria-pressed', 'true');
-  await expect(await cards(page)).toHaveCount(Math.min(PAGE, toNumber(await nahy.locator('span').last().innerText())));
+  await expectTexts(page, Math.min(PAGE, toNumber(await nahy.locator('span').last().innerText())));
 
   const tahrim = chips.getByRole('button', { name: /تحريم الغيبة/ });
   await tahrim.click();
   await expect(page).toHaveURL(/theme=ghibah-tahrim/);
   await expect(tahrim).toHaveAttribute('aria-pressed', 'true');
-  await expect(await cards(page)).toHaveCount(Math.min(PAGE, toNumber(await tahrim.locator('span').last().innerText())));
+  await expectTexts(page, Math.min(PAGE, toNumber(await tahrim.locator('span').last().innerText())));
 
   await page.goBack();
   await expect(page).toHaveURL(/theme=lisan-ghibah/);
   await expect(nahy).toHaveAttribute('aria-pressed', 'true');
-  await expect(await cards(page)).toHaveCount(Math.min(PAGE, toNumber(await nahy.locator('span').last().innerText())));
+  await expectTexts(page, Math.min(PAGE, toNumber(await nahy.locator('span').last().innerText())));
 });
 
 test('B06: every kind tab shows exactly its count', async ({ page }) => {
@@ -70,7 +82,7 @@ test('B06: every kind tab shows exactly its count', async ({ page }) => {
     const expected = toNumber(await tab.innerText());
     await tab.click();
     await expect(tab).toHaveAttribute('aria-selected', 'true');
-    await expect(await cards(page)).toHaveCount(Math.min(PAGE, expected));
+    await expectTexts(page, Math.min(PAGE, expected));
   }
 });
 
@@ -91,9 +103,9 @@ test('B09: switching language keeps the theme and the search', async ({ page }) 
 test('Paging: a long topic shows 20 texts, then «المزيد» adds the next 20', async ({ page }) => {
   await page.goto(`${BASE}/good-deeds/dhikr`, { waitUntil: 'load' });
   const more = page.getByRole('button', { name: 'عرض المزيد' });
-  await expect(page.locator('article[aria-labelledby]')).toHaveCount(20);
+  await expectTexts(page, 20);
   await more.click();
-  await expect(page.locator('article[aria-labelledby]')).toHaveCount(40);
+  await expectTexts(page, 40);
   await expect(more).toBeVisible();
 });
 
@@ -102,9 +114,9 @@ test('Paging: a theme with 33 texts shows 20, then the remaining 13, then no but
   const chip = page.getByRole('group', { name: 'موضوعات الباب' }).getByRole('button', { name: /تحريم الغيبة/ });
   await expect(chip).toHaveAttribute('aria-pressed', 'true');
   const total = toNumber(await chip.locator('span').last().innerText());
-  await expect(page.locator('article[aria-labelledby]')).toHaveCount(Math.min(PAGE, total));
+  await expectTexts(page, Math.min(PAGE, total));
   await page.getByRole('button', { name: 'عرض المزيد' }).click();
-  await expect(page.locator('article[aria-labelledby]')).toHaveCount(total);
+  await expectTexts(page, total);
   await expect(page.getByRole('button', { name: 'عرض المزيد' })).toHaveCount(0);
 });
 

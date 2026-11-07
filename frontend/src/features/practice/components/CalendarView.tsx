@@ -15,6 +15,9 @@ import {
   type UpcomingOccasion,
 } from '@/lib/practice/calendar';
 import { downloadTextFile, ICS_MIME } from '@/lib/practice/download';
+import { Button } from '@/components/shared/kit/button';
+import { tidyArabicNumberRuns } from '@/lib/format/ranges';
+import { ActionPair } from '@/components/shared/kit/action-pair';
 import { formatGregorian } from '@/lib/practice/format';
 import { localePath } from '@/lib/seo';
 import { formatDigits } from '@/lib/format/digits';
@@ -25,7 +28,6 @@ import { usePracticeCatalog } from '../hooks/usePracticeCatalog';
 import { usePracticeStore } from '../hooks/usePracticeStore';
 import { useToday } from '../hooks/useToday';
 import { CalendarMonth } from './CalendarMonth';
-import { HijriOffsetDialog } from './HijriOffsetSelect';
 import { SegmentTabs, SegmentTabsContent } from '@/components/shared/kit/segment-tabs';
 import { occasionsIcsUrl } from '@/lib/api/practice';
 import { PracticeLoading } from './PracticeLoading';
@@ -85,9 +87,6 @@ export function CalendarView() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex justify-end">
-        <HijriOffsetDialog value={offset} />
-      </div>
       <SegmentTabs
         aria-label={t('tabsLabel')}
         items={[
@@ -104,16 +103,18 @@ export function CalendarView() {
               {t('addToCalendar')}
             </h2>
             <p className="text-sm leading-7 text-muted-foreground">{t('addToCalendarHint')}</p>
-            <div className="flex flex-wrap gap-3">
-              <a href={webcal} className="solid-button button-wrap">
-                <CalendarSync aria-hidden />
-                {t('subscribe')}
-              </a>
-              <button type="button" className="outline-button button-wrap" onClick={handleDownload} disabled={!rows || rows.length === 0}>
-                <Download aria-hidden />
+            {/* One pair, same size, side by side (O-02/W-03): subscribing is the main way, the file the other. */}
+            <ActionPair>
+              <Button asChild variant="solid" tone="primary" size="md">
+                <a href={webcal}>
+                  <CalendarSync aria-hidden />
+                  {t('subscribe')}
+                </a>
+              </Button>
+              <Button variant="outline" tone="primary" size="md" icon={<Download aria-hidden />} onClick={handleDownload} disabled={!rows || rows.length === 0}>
                 {t('download')}
-              </button>
-            </div>
+              </Button>
+            </ActionPair>
           </section>
 
           {failed ? (
@@ -157,15 +158,15 @@ export function CalendarView() {
 function OccasionRow({ row, hijri, habitKey }: { row: UpcomingOccasion; hijri: string | null; habitKey: string | undefined }) {
   const t = useTranslations('calendarPage');
   const locale = useLocale() === 'en' ? 'en' : 'ar';
-  const title = locale === 'en' ? row.titleEn : row.titleAr;
+  const title = locale === 'en' ? row.titleEn : tidyArabicNumberRuns(row.titleAr);
   const when =
     row.until === row.date
       ? formatGregorian(row.date, locale, true)
       : t('range', { from: formatGregorian(row.date, locale, true), to: formatGregorian(row.until, locale) });
   return (
     <li className="flex flex-col gap-1 py-5">
-      <Link href={`/good-deeds/${row.deed}`} className="group flex items-center gap-2 self-start text-lg font-medium hover:text-primary">
-        <CalendarDays aria-hidden className="size-5 text-primary" />
+      <Link href={`/good-deeds/${row.deed}`} className="group flex items-center gap-2 self-start text-lg font-medium hover:text-primary-text">
+        <CalendarDays aria-hidden className="size-5 text-primary-text" />
         <span>{title}</span>
         <DirectionalArrow className="size-4 text-muted-foreground" />
       </Link>
@@ -179,13 +180,12 @@ function OccasionRow({ row, hijri, habitKey }: { row: UpcomingOccasion; hijri: s
       </p>
       {row.basis === 'organizational' ? <p className="text-sm text-muted-foreground">{t('organizational')}</p> : null}
       {habitKey ? (
-        <Link
-          href={{ pathname: '/practice/habits', query: { add: '1', habit: habitKey } }}
-          className="outline-button !min-h-9 self-start px-3 text-sm"
-        >
-          <Repeat aria-hidden />
-          {t('makeHabit')}
-        </Link>
+        <Button asChild variant="outline" tone="primary" size="sm" className="self-start">
+          <Link href={{ pathname: '/practice/habits', query: { add: '1', habit: habitKey } }}>
+            <Repeat aria-hidden />
+            {t('makeHabit')}
+          </Link>
+        </Button>
       ) : null}
     </li>
   );

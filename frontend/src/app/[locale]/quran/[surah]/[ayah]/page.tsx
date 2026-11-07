@@ -30,7 +30,20 @@ export async function generateMetadata({
 }: PageProps<'/[locale]/quran/[surah]/[ayah]'>): Promise<Metadata> {
   const { surah, ayah, locale } = await params;
   const t = await getTranslations({ locale, namespace: 'studyPanel' });
-  return { title: `${t('titleTafsir')} ${surah}:${ayah}`, alternates: localeAlternates(locale, `/quran/${surah}/${ayah}`) };
+  const verse = await findVerse(Number(surah), Number(ayah), locale as LocaleCode).catch(() => null);
+  return { title: verseTitle(t, verse, surah, ayah, locale), alternates: localeAlternates(locale, `/quran/${surah}/${ayah}`) };
+}
+
+/** «تفسير البقرة 255» (W-06): the page names its verse; the surah number when the name is missing. */
+function verseTitle(
+  t: Awaited<ReturnType<typeof getTranslations<'studyPanel'>>>,
+  verse: QuoteDto | null,
+  surah: string,
+  ayah: string,
+  locale: string,
+): string {
+  const name = locale === 'en' ? verse?.quran?.surahName : verse?.quran?.surahNameAr;
+  return t('verseTitle', { surah: name || surah, ayah });
 }
 
 export default async function QuranStudyPage({
@@ -62,11 +75,11 @@ export default async function QuranStudyPage({
         ariaLabel={tNav('breadcrumbs')}
         items={[
           { label: tCrumbs('home'), href: '/' },
-          { label: t('titleTafsir') },
+          { label: verseTitle(t, quote, surah, ayah, locale) },
         ]}
       />
       <h1 className="font-arabic-display text-2xl font-semibold md:text-3xl">
-        {t('titleTafsir')}
+        {verseTitle(t, quote, surah, ayah, locale)}
       </h1>
       <Suspense fallback={<p className="text-sm text-muted-foreground">{t('loading')}</p>}>
         <StudyFullPage quote={quote} />

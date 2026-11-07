@@ -71,7 +71,9 @@
         "title": "وهو شهيد",
         "line": "حضور القلب ومحاسبة النفس، بلا نقاط ولا مراتب ولا مقارنة."
       }
-    }
+    },
+    "pathsNav": "أبواب الموقع",
+    "publishedTexts": "{count, plural, one {نص واحد منشور} two {نصّان منشوران} few {{n} نصوص منشورة} many {{n} نصًا منشورًا} other {{n} نص منشور}}"
   },
   "branches": {
     "pageTitle": "شُعب الإيمان",
@@ -85,7 +87,8 @@
     "explanations": "من الكتاب",
     "goodDeeds": "الطاعات",
     "sins": "المعاصي",
-    "branchFallback": "الشعبة {number}"
+    "branchFallback": "الشعبة {number}",
+    "evidenceHeading": "آيات وأحاديث تعينك على هذه الشعبة"
   },
   "localeSwitcher": {
     "label": "تغيير اللغة",
@@ -166,19 +169,21 @@
       "wrongPassword": "كلمة المرور غير صحيحة.",
       "cancel": "إلغاء",
       "deleteConfirm": "احذف الحساب",
-      "deleted": "حُذف حسابك. بياناتك باقية على هذا الجهاز."
+      "deleted": "حُذف حسابك. بياناتك باقية على هذا الجهاز.",
+      "dangerZone": "منطقة الحذف"
     },
     "weekBranch": {
       "label": "«شعبة الأسبوع» في «ورد اليوم»",
       "hint": "شعبة من شعب الإيمان كل أسبوع، لمن أراد أن يتعلّمها."
-    }
+    },
+    "practiceLinks": "إعدادات عاداتي"
   },
   "home": {
     "title": "ذكرى",
     "sinEntryLabel": "تخفَّف من معصية",
-    "sinEntryDescription": "تذكير يردعك، ورجاء يعينك.",
+    "sinEntryDescription": "اقرأ في المعاصي وعلاجها، ثم ابدأ «تخفَّف» من صفحتها.",
     "deedEntryLabel": "أعنّي على فعل طاعة",
-    "deedEntryDescription": "اعرف فضلها، وخذ أول خطوة.",
+    "deedEntryDescription": "اقرأ في فضل الطاعات، ثم ابدأ عادة من صفحتها.",
     "branchEntryLabel": "شُعَب الإيمان",
     "branchEntryDescription": "معانٍ تبني القلب والعمل.",
     "todayHeading": "تذكرة مختارة",
@@ -283,7 +288,7 @@
     "rewardHeading": "أجر من تركها لله",
     "pairWarningHeading": "ما جاء في التحذير",
     "pairRewardHeading": "الفضل والثواب",
-    "pairCounterpart": "الفضيلة المقابلة: ",
+    "pairCounterpart": "الفضيلة المقابلة",
     "contemporaryNote": "موضوع معاصر: نصوصه مستمدة من الأبواب التالية",
     "typeAll": "الكل",
     "typeVerses": "الآيات",
@@ -296,7 +301,8 @@
     "tabsLabel": "تصفية النصوص",
     "themesLabel": "موضوعات الباب",
     "themeAll": "الكل",
-    "severity": "الخطورة"
+    "severity": "الخطورة",
+    "evidenceHeading": "آيات وأحاديث تعينك على ترك هذه المعصية"
   },
   "goodDeeds": {
     "pageTitle": "الطاعات",
@@ -340,7 +346,8 @@
       "start": "ابدأ بها",
       "added": "في عاداتك",
       "startLine": "ابدأ صغيرًا جدًا، وداوم عليه، ولا تزد إلا بعد ثبات."
-    }
+    },
+    "evidenceHeading": "آيات وأحاديث تعينك على هذه الطاعة"
   },
   "browse": {
     "pageTitle": "تصفح",
@@ -399,8 +406,8 @@
     "report": "أبلغ عن خطأ",
     "reportReason": "سبب البلاغ",
     "reportNote": "ملاحظة",
-    "reportSend": "إرسال",
-    "reportSent": "وصلنا بلاغك",
+    "reportSend": "أرسل البلاغ",
+    "reportSent": "وصلنا بلاغك، وسنراجع النص.",
     "reportReasons": {
       "TEXT": "النص محرّف",
       "ISNAD": "الإسناد غير صحيح",
@@ -408,7 +415,19 @@
       "CLASSIFICATION": "التصنيف غير صحيح",
       "OTHER": "غير ذلك"
     },
-    "noVerifiedTranslation": "لا توجد ترجمة معتمدة"
+    "noVerifiedTranslation": "لا توجد ترجمة معتمدة",
+    "reportCancel": "إلغاء",
+    "reportLead": "ما الذي رأيته في هذا النص؟ نراجع كل بلاغ.",
+    "reportThanksTitle": "شكرًا لك",
+    "reportDone": "تم",
+    "more": "خيارات أخرى للنص",
+    "readFull": "اقرأ كاملًا",
+    "otherWordings": "وروي بألفاظ أخرى ({n})",
+    "recitation": {
+      "play": "استمع إلى الآية",
+      "pause": "أوقف التلاوة",
+      "failed": "تعذّر تشغيل التلاوة. تحقّق من اتصالك ثم أعد المحاولة."
+    }
   },
   "share": {
     "button": "مشاركة",
@@ -455,19 +474,23 @@
       "gharib": "معاني الكلمات",
       "fath": "فتح الباري",
       "nawawi": "شرح النووي"
-    }
+    },
+    "verseTitle": "تفسير {surah} {ayah}"
   },
   "feelings": {
-    "pageTitle": "اقتباسات — {tag}",
-    "noQuotes": "لا توجد اقتباسات لهذا الموضوع",
+    "noQuotes": "لا توجد نصوص لهذا الموضوع",
     "loadMore": "تحميل المزيد",
-    "back": "رجوع"
+    "back": "رجوع",
+    "fallbackTitle": "نصوص لما تجده في نفسك",
+    "intro": "آيات وأحاديث تعينك حين تجد هذا في نفسك، من القرآن والسنّة الصحيحة.",
+    "evidenceHeading": "آيات وأحاديث تعينك عند {tag}",
+    "evidenceHeadingPlain": "آيات وأحاديث تعينك"
   },
   "emptyState": {
     "default": "لا يوجد محتوى هنا",
     "noSins": "لا توجد معاصٍ مضافة بعد",
     "noGoodDeeds": "لا توجد أعمال صالحة مضافة بعد",
-    "noQuotes": "لا توجد اقتباسات بعد",
+    "noQuotes": "لا توجد نصوص بعد",
     "noResults": "لا توجد نتائج مطابقة"
   },
   "errorState": {
@@ -948,7 +971,7 @@
     "pathsHeading": "أبواب الخير",
     "aboutHeading": "عن المشروع",
     "methodology": "منهجية المحتوى",
-    "copyright": "© ٢٠٢٦ ذِكرى",
+    "copyright": "© 2026 ذِكرى",
     "sourceNote": "المصدر مبيّن مع كل نصّ."
   },
   "catalog": {
@@ -960,7 +983,8 @@
     "domainsLabel": "المجالات",
     "allDomains": "الكل",
     "otherDomain": "أخرى",
-    "themesGroup": "مواضيع داخل الأبواب"
+    "themesGroup": "مواضيع داخل الأبواب",
+    "textCount": "{count, plural, =0 {لا نصوص} one {نص واحد} two {نصّان} few {{n} نصوص} many {{n} نصًا} other {{n} نص}}"
   },
   "breadcrumbs": {
     "home": "الرئيسية",
@@ -1000,7 +1024,8 @@
       "title": "تعذّر فتح ذكرى",
       "body": "حدث خطأ في الموقع. حاول مجددًا بعد قليل.",
       "retry": "حاول مجددًا"
-    }
+    },
+    "toastsLabel": "الإشعارات"
   },
   "offline": {
     "title": "لا يوجد اتصال",
@@ -1077,7 +1102,7 @@
       "seasonOn": "وضع رمضان حتى {date}، ثم تعود خطتك كما كانت، وليس هذا تقصيرًا.",
       "seasonOffer": "في رمضان يمكنك أن تزيد مؤقتًا إلى {amount}، وتعود خطتك وحدها بعده.",
       "seasonStart": "فعّل وضع رمضان",
-      "showEvidence": "اقرأ ما ورد فيها",
+      "showEvidence": "آيات وأحاديث تعينك",
       "hideEvidence": "أخفِ النصوص",
       "remove": "احذف هذه العادة",
       "removeConfirm": "نعم، احذفها",
@@ -1135,7 +1160,8 @@
       "options": "خيارات",
       "slotsUnsuitable": "أحد أوقات التذكير لا يناسب وقت هذه الطاعة.",
       "slotsFix": "صحّح الأوقات",
-      "plusOne": "أضف واحدة"
+      "plusOne": "أضف واحدة",
+      "evidenceHeading": "آيات وأحاديث تعينك على هذه الطاعة"
     },
     "progress": {
       "title": "وين وصلت",
@@ -1243,7 +1269,10 @@
       "synced": "متزامن",
       "lastSynced": "آخر مزامنة {time}",
       "signedInNote": "محفوظة في حسابك ومتزامنة على أجهزتك، و«تخفَّف» مشفّر دائمًا لا يقرؤه غيرك.",
-      "accountLink": "حسابك وبياناتك"
+      "accountLink": "حسابك وبياناتك",
+      "notSavedYet": "لم تُحفظ آخر تغييراتك في حسابك بعد، وهي محفوظة على هذا الجهاز.",
+      "willRetry": "سنحاول تلقائيًا.",
+      "retry": "أعد المحاولة"
     },
     "push": {
       "title": "تنبيهات المتصفح",
@@ -1515,7 +1544,8 @@
       "pledges": "التزام شخصي",
       "pledgesLink": "التزاماتي",
       "pledgesCount": "{n} من {total}",
-      "strategyToggle": "ذكّرني باستراتيجية كل أسبوع"
+      "strategyToggle": "ذكّرني باستراتيجية كل أسبوع",
+      "groupFile": "ملف التقويم"
     },
     "tally": {
       "title": "حصيلتي",
@@ -1549,7 +1579,8 @@
     },
     "weekBranch": {
       "title": "شعبة الأسبوع",
-      "open": "اقرأ عنها"
+      "open": "اقرأ عنها",
+      "number": "الشعبة {n}"
     },
     "cards": {
       "loopTitle": "حلقة العادة",
@@ -1903,7 +1934,8 @@
       "none": "بلا تعديل (أم القرى)",
       "plus": "+{n} يوم",
       "minus": "−{n} يوم",
-      "hint": "إن بدأ الشهر الهجري في بلدك قبل تقويم أم القرى أو بعده، عدّل التاريخ هنا."
+      "hint": "إن بدأ الشهر الهجري في بلدك قبل تقويم أم القرى أو بعده، عدّل التاريخ هنا.",
+      "action": "ضبط الهجري"
     },
     "hijri": {
       "date": "{day} {month} {year} هـ",
@@ -1939,7 +1971,7 @@
     "genericTitle": "تذكرة من ذكرى",
     "lead": "مراحل تعينك على ترك المعصية خطوة خطوة.",
     "privacy": "يُشفَّر «تخفَّف» في متصفحك برمز الخصوصية قبل أن يُحفظ في حسابك، فلا يستطيع أحد قراءته، ولا فريق ذكرى. لا يدخل أي إحصاءات ولا تنبيهات، ولا يظهر اسم المعصية في عنوان الصفحة أو رابطها. يُفتح بالرمز مرة في كل جلسة.",
-    "startFromSin": "ابدأ «تخفَّف»",
+    "startFromSin": "ابدأ تخفَّف",
     "another": "ابدأ برنامجًا آخر",
     "choose": {
       "title": "اختر المعصية",
@@ -1975,7 +2007,7 @@
       "alternativesLead": "اختر واحدة تبدأ بها بقدر صغير.",
       "alternativesLink": "أضف طاعة بديلة",
       "notesTitle": "دفتري الخاص",
-      "textsTitle": "ما ورد فيها",
+      "textsTitle": "آيات وأحاديث تعينك على ترك هذه المعصية",
       "values": {
         "held": "ثبتُّ",
         "weak": "ضعفت",
@@ -2210,7 +2242,7 @@
   "topic": {
     "branchesTitle": "من شعب الإيمان",
     "branchRelatedTitle": "ما يتصل بهذه الشعبة",
-    "makeHabit": "اجعلها عادتي",
+    "makeHabit": "ابدأ عادة",
     "makeHabitHint": "ابدأ بقدر صغير جدًا، وداوم عليه.",
     "habitAdded": "في عاداتك"
   },

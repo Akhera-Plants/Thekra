@@ -2,15 +2,14 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { CalendarPlus, Lightbulb, Plus } from 'lucide-react';
-import { useLocale, useTranslations } from 'next-intl';
+import { Lightbulb, Plus } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { activePrograms, isEstablished, isPaused, limits, loadWarning, type LimitKind } from '@thekra/practice-core';
 import { Link, useRouter } from '@/i18n/navigation';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { QueryErrorState } from '@/components/shared/feedback/QueryErrorState';
-import { downloadTextFile, ICS_MIME } from '@/lib/practice/download';
 import { isPeriodicTemplate, limitOptions } from '@/lib/practice/limits';
-import { habitOf, planReminderEvents, planRemindersIcs, planToday } from '@/lib/practice/plans';
+import { habitOf, planToday } from '@/lib/practice/plans';
 import type { PracticeHabit } from '@/lib/types/practice';
 import { usePracticeCatalog } from '../hooks/usePracticeCatalog';
 import { usePracticeStore } from '../hooks/usePracticeStore';
@@ -23,9 +22,7 @@ import { PlanCard } from './PlanCard';
 import { PlanSetup } from './PlanSetup';
 import { PracticeLoading } from './PracticeLoading';
 import { ProgressPanel } from './ProgressPanel';
-import { NotificationsLink } from './NotificationsLink';
 import { currentPrayerLookup, currentPrayerTimes } from '@/lib/practice/screen-stores';
-import { InfoTip } from '@/components/shared/InfoTip';
 import { SectionDivider } from '@/components/shared/SectionDivider';
 import { SegmentTabs, SegmentTabsContent } from '@/components/shared/kit/segment-tabs';
 import { useWirdContext } from '../hooks/useWirdContext';
@@ -47,7 +44,6 @@ export function PracticeView() {
   const t = useTranslations('practice.today');
   const tRecord = useTranslations('practice.record');
   const tPeriodic = useTranslations('practice.periodic');
-  const locale = useLocale() === 'en' ? 'en' : 'ar';
   const snapshot = usePracticeStore();
   const clock = useToday();
   const catalog = usePracticeCatalog();
@@ -143,11 +139,6 @@ export function PracticeView() {
   const freeMinutes = snapshot.store.settings.freeMinutesPerDay;
   const overLoaded = freeMinutes !== undefined && loadWarning(plans, freeMinutes, today) === 'over';
 
-  function handleReminders() {
-    const events = planReminderEvents(plans as NonNullable<typeof plans>, habits, today as string, locale, hijriOffset);
-    downloadTextFile('thekra-reminders.ics', planRemindersIcs(events, t('icsName')), ICS_MIME);
-  }
-
   const visibleTab: HabitsTab = isHabitsTab(tab) ? tab : 'habits';
 
   return (
@@ -228,18 +219,6 @@ export function PracticeView() {
 
           <HabitPrograms store={snapshot.store} today={today} catalog={catalog.data} />
 
-          <SectionDivider />
-
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="inline-flex items-center gap-1">
-              <button type="button" className="outline-button button-wrap" onClick={handleReminders}>
-                <CalendarPlus aria-hidden />
-                {t('downloadReminders')}
-              </button>
-              <InfoTip label={t('downloadReminders')}>{t('remindersHint')}</InfoTip>
-            </span>
-            <NotificationsLink />
-          </div>
         </SegmentTabsContent>
 
         <SegmentTabsContent value="month">{wird ? <MonthPanel context={wird} /> : <PracticeLoading />}</SegmentTabsContent>
@@ -264,14 +243,14 @@ function StrategiesEntry() {
       href="/practice/strategies"
       className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transition-none"
     >
-      <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-secondary text-primary">
+      <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-secondary text-primary-text">
         <Lightbulb aria-hidden className="size-5" />
       </span>
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="text-base font-medium">{t('title')}</span>
         <span className="text-sm leading-6 text-muted-foreground">{t('lead')}</span>
       </span>
-      <DirectionalArrow className="size-5 text-primary" />
+      <DirectionalArrow className="size-5 text-primary-text" />
     </Link>
   );
 }

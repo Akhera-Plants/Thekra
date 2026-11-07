@@ -1,13 +1,17 @@
 'use client';
 
 import { useId, type ReactNode } from 'react';
+import { CalendarPlus } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { setHeartPrefs, type HeartPrefs, type NotificationPrefs } from '@thekra/practice-core';
 import { Link } from '@/i18n/navigation';
 import { Switch } from '@/components/shared/kit/switch';
 import { SectionDivider } from '@/components/shared/SectionDivider';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
+import { Button } from '@/components/shared/kit/button';
 import { formatDigits } from '@/lib/format/digits';
+import { downloadTextFile, ICS_MIME } from '@/lib/practice/download';
+import { planReminderEvents, planRemindersIcs } from '@/lib/practice/plans';
 import { updateHeart } from '@/lib/practice/heart-store';
 import { notificationPrefsOf, updatePrefs } from '@/lib/practice/local-store';
 import { resendPushPrefs } from '@/lib/push/web-push';
@@ -184,6 +188,38 @@ export function NotificationsView() {
           </Link>
         </SwitchRow>
       </Group>
+
+      <SectionDivider />
+
+      <CalendarFileSection />
     </div>
+  );
+}
+
+/**
+ * «نزّل تذكيراتي كملف تقويم» (W-13: moved here from the bottom of «عاداتي»): every habit's reminder as one .ics file,
+ * for a calendar app on any device. Its explanation is a line under the button, not a «؟» tip.
+ */
+function CalendarFileSection() {
+  const t = useTranslations('practice.today');
+  const tNotify = useTranslations('practice.notify');
+  const locale = useLocale() === 'en' ? 'en' : 'ar';
+  const context = useWirdContext();
+  if (!context) return null;
+  const { snapshot, habits, today } = context;
+  function download() {
+    const events = planReminderEvents(snapshot.store.plans, habits, today, locale, snapshot.store.settings.hijriOffset);
+    downloadTextFile('thekra-reminders.ics', planRemindersIcs(events, t('icsName')), ICS_MIME);
+  }
+  return (
+    <section aria-labelledby="notify-file" className="flex flex-col gap-3">
+      <h2 id="notify-file" className="text-xl font-medium">
+        {tNotify('groupFile')}
+      </h2>
+      <p className="text-sm leading-6 text-muted-foreground">{t('remindersHint')}</p>
+      <Button variant="outline" tone="primary" size="md" className="self-start" icon={<CalendarPlus aria-hidden />} onClick={download}>
+        {t('downloadReminders')}
+      </Button>
+    </section>
   );
 }

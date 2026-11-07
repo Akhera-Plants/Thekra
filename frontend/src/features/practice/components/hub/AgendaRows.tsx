@@ -21,6 +21,7 @@ import { updateStore } from '@/lib/practice/local-store';
 import { Link } from '@/i18n/navigation';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { Button } from '@/components/shared/kit/button';
+import { ActionPair } from '@/components/shared/kit/action-pair';
 import { formatDigits } from '@/lib/format/digits';
 import { langOf } from '@/lib/practice/kinship';
 import { setMomentSource } from '@/lib/practice/local-store';
@@ -234,23 +235,28 @@ function FixHabit({ plan, today, onMinimum }: { plan: Plan; today: string; onMin
       <PopoverContent align="start" className="flex w-72 flex-col gap-3">
         <p className="font-medium">{t('title')}</p>
         <p className="text-sm leading-7 text-muted-foreground">{t('lead')}</p>
-        {onMinimum ? (
-          <Button tone="primary" size="sm" onClick={onMinimum}>
-            {t('minimum')}
-          </Button>
-        ) : null}
-        {canMakeUpYesterday ? (
-          <Button
-            variant="outline"
-            tone="primary"
-            size="sm"
-            onClick={() =>
-              updateStore((s) => updatePlan(s, plan.id, (p) => logForDay(p, yesterday, Math.max(1, requiredOn(p, yesterday)), today)))
-            }
-          >
-            {t('makeUp')}
-          </Button>
-        ) : null}
+        {/* The two ways to fix it, one pair: same size, the main one solid (O-02/W-03). Labels can be long, so each
+            takes the full width when they cannot sit side by side. */}
+        <ActionPair>
+          {onMinimum ? (
+            <Button tone="primary" size="md" className="h-auto min-h-11 whitespace-normal py-2" onClick={onMinimum}>
+              {t('minimum')}
+            </Button>
+          ) : null}
+          {canMakeUpYesterday ? (
+            <Button
+              variant={onMinimum ? 'outline' : 'solid'}
+              tone="primary"
+              size="md"
+              className="h-auto min-h-11 whitespace-normal py-2"
+              onClick={() =>
+                updateStore((s) => updatePlan(s, plan.id, (p) => logForDay(p, yesterday, Math.max(1, requiredOn(p, yesterday)), today)))
+              }
+            >
+              {t('makeUp')}
+            </Button>
+          ) : null}
+        </ActionPair>
       </PopoverContent>
     </Popover>
   );
@@ -353,7 +359,7 @@ export function ProgramRow({ item, isToday }: ProgramRowProps) {
           // «لحظة مجاهدة», quiet and generic: it names nothing, and opens the program in focus on this device.
           <Link
             href="/practice/leave-sin/moment"
-            className="outline-button ms-[3.25rem] !min-h-9 self-start px-3 text-sm"
+            className="outline-button ms-[3.25rem] self-start px-3 text-sm"
             onClick={() => setMomentSource(null)}
           >
             {tLeave('moment.open')}

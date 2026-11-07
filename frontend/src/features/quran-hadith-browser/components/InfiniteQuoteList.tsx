@@ -1,11 +1,12 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
-import { StaggerReveal } from '@/components/shared/StaggerReveal';
 import { QuoteCard, QuoteCardSkeleton } from '@/components/shared/quote';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { QueryErrorState } from '@/components/shared/feedback/QueryErrorState';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/shared/kit/button';
+import { NarrationList } from '@/components/shared/quote/NarrationList';
 import { useQuoteSearch } from '@/features/quran-hadith-browser/hooks/useQuoteSearch';
 import { useQuoteFavoriteProps } from '@/features/favorites/hooks/useQuoteFavoriteProps';
 import type { QuotesQuery } from '@/lib/types/api';
@@ -29,10 +30,10 @@ export function InfiniteQuoteList({ params }: InfiniteQuoteListProps) {
     refetch,
   } = useQuoteSearch(params);
 
-  const pages = data?.pages ?? [];
-  const firstPage = pages[0]?.data ?? [];
-  const rest = pages.slice(1).flatMap((p) => p.data ?? []);
-  const quotes = [...firstPage, ...rest];
+  const items = useMemo(
+    () => (data?.pages ?? []).flatMap((p) => p.data ?? []).map((quote) => ({ id: quote.id, quote })),
+    [data],
+  );
 
   if (isPending) {
     return (
@@ -53,44 +54,24 @@ export function InfiniteQuoteList({ params }: InfiniteQuoteListProps) {
     );
   }
 
-  if (quotes.length === 0) {
+  if (items.length === 0) {
     return <EmptyState message={tBrowse('noResults')} />;
   }
 
   return (
     <section className="flex flex-col gap-8 md:gap-9">
-      <div className="flex flex-col gap-8 md:gap-9" role="list" aria-label={tBrowse('listLabel')}>
-        <StaggerReveal>
-          {firstPage.map((quote) => (
-            <div key={quote.id} role="listitem" className="min-w-0">
-              <QuoteCard
-                quote={quote}
-                detailHref={`/quotes/${quote.id}`}
-                {...favoriteProps(quote)}
-              />
-            </div>
-          ))}
-        </StaggerReveal>
-        {rest.map((quote) => (
-          <div key={quote.id} role="listitem" className="min-w-0">
-            <QuoteCard
-              quote={quote}
-              detailHref={`/quotes/${quote.id}`}
-              {...favoriteProps(quote)}
-            />
-          </div>
-        ))}
-      </div>
+      {/* Narrations of the same text show once, the others under «وروي بألفاظ أخرى» (W-08). */}
+      <NarrationList
+        aria-label={tBrowse('listLabel')}
+        items={items}
+        renderItem={({ quote }) => (
+          <QuoteCard quote={quote} detailHref={`/quotes/${quote.id}`} clamp {...favoriteProps(quote)} />
+        )}
+      />
       {hasNextPage && (
         <div className="flex justify-center py-4">
-          <Button
-            variant="outline"
-            onClick={() => fetchNextPage()}
-            disabled={isFetchingNextPage}
-          >
-            {isFetchingNextPage
-              ? '...'
-              : tBrowse('loadMore')}
+          <Button variant="outline" tone="neutral" size="md" loading={isFetchingNextPage} onClick={() => fetchNextPage()}>
+            {tBrowse('loadMore')}
           </Button>
         </div>
       )}

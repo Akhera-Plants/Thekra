@@ -3,13 +3,14 @@
 import { useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { FormattedNumber } from '@/components/shared/FormattedNumber';
-import { Separator } from '@/components/ui/separator';
+import { SectionDivider } from '@/components/shared/SectionDivider';
 import { Badge } from '@/components/ui/badge';
 import { Link } from '@/i18n/navigation';
 import { Button } from '@/components/shared/kit/button';
 import { GradeBadge } from '@/components/shared/quote/GradeBadge';
 import { QuoteBody } from '@/components/shared/quote/QuoteBody';
-import { ReportMistake } from '@/components/shared/quote/ReportMistake';
+import { QuoteMoreMenu } from '@/components/shared/quote/QuoteMoreMenu';
+import { RecitationButton } from '@/components/shared/quote/RecitationButton';
 import { SourceAttribution } from '@/components/shared/quote/SourceAttribution';
 import { ShareButton } from '@/components/shared/share/ShareButton';
 import { useQuoteSharePayload } from '@/components/shared/share/useQuoteSharePayload';
@@ -62,12 +63,13 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
           />
         )}
         {canStudy ? (
-          <ShareButton
-            payload={sharePayload}
-            path={`/quotes/${quote.id}`}
-            fileName={`thekra-${quote.id}`}
-            className="ms-auto"
-          />
+          <span className="ms-auto flex items-center gap-0.5">
+            {quote.type === 'QURAN_VERSE' && quote.quran?.surahNumber && quote.quran.ayahNumber ? (
+              <RecitationButton surah={quote.quran.surahNumber} ayah={quote.quran.ayahNumber} />
+            ) : null}
+            <ShareButton payload={sharePayload} path={`/quotes/${quote.id}`} fileName={`thekra-${quote.id}`} />
+            {quote.type === 'HADITH' ? <QuoteMoreMenu quoteId={quote.id} /> : null}
+          </span>
         ) : null}
       </header>
 
@@ -86,7 +88,7 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
         {(quote.citation?.volume || quote.citation?.page || quote.citation?.gradeAuthority || quote.citation?.gradeReference || quote.book?.pageOrChapter) && (
           <a
             href={`#quote-${quote.id}-source`}
-            className="ms-1 inline-block text-sm text-primary underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="ms-1 inline-block text-sm text-primary-text underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <sup>(<FormattedNumber value={1} />)</sup>
             <span className="sr-only">{t('citationMarker')}</span>
@@ -99,7 +101,7 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
           type="button"
           variant="outline"
           tone="neutral"
-          size="sm"
+          size="md"
           className="self-start"
           onClick={() => setStudyOpen(true)}
         >
@@ -114,7 +116,7 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
         listIds={[quote.id]}
       />
 
-      <Separator />
+      <SectionDivider />
 
       {/* Provenance */}
       <SourceAttribution
@@ -198,7 +200,6 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
           </ul>
         </section>
       )}
-      {quote.type === 'HADITH' && <ReportMistake quoteId={quote.id} />}
     </article>
   );
 }

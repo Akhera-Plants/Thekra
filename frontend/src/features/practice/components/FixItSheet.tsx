@@ -165,7 +165,7 @@ function Step({ n, title, muted = false, children }: { n: number; title: string;
 
 function Done({ children }: { children: React.ReactNode }) {
   return (
-    <p className="flex items-center gap-2 text-sm text-primary" role="status">
+    <p className="flex items-center gap-2 text-sm text-primary-text" role="status">
       <Check className="size-4" aria-hidden />
       <span>{children}</span>
     </p>
@@ -195,7 +195,7 @@ export function LimitPicker({ choices, selected, label, onSelect }: LimitPickerP
               onClick={() => onSelect(on ? null : ref)}
               className={cn(
                 'flex min-h-11 w-full items-center gap-2 rounded-xl border px-4 py-2 text-start leading-7 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transition-none',
-                on ? 'border-primary text-primary' : 'border-border hover:bg-muted',
+                on ? 'border-primary text-primary-text' : 'border-border hover:bg-muted',
               )}
             >
               {on ? <Check className="size-4 shrink-0" aria-hidden /> : null}

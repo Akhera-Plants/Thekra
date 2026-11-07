@@ -71,7 +71,9 @@
         "title": "While present",
         "line": "A present heart and honest self-review, with no points, ranks or comparisons."
       }
-    }
+    },
+    "pathsNav": "Site sections",
+    "publishedTexts": "{count, plural, one {1 published text} other {{n} published texts}}"
   },
   "branches": {
     "pageTitle": "The Branches of Faith",
@@ -85,7 +87,8 @@
     "explanations": "From the book",
     "goodDeeds": "Acts of obedience",
     "sins": "Sins",
-    "branchFallback": "Branch {number}"
+    "branchFallback": "Branch {number}",
+    "evidenceHeading": "Verses and hadith to help you with this branch"
   },
   "localeSwitcher": {
     "label": "Change language",
@@ -116,7 +119,7 @@
     "noAccount": "Don't have an account?",
     "hasAccount": "Already have an account?",
     "userMenu": "User menu",
-    "signInToFavorite": "Sign in to save quotes to your favorites",
+    "signInToFavorite": "Sign in to save texts to your favorites",
     "nameRequired": "Enter your name.",
     "nameTooLong": "The name is too long; keep it to 80 characters.",
     "emailInvalid": "Enter a valid email address.",
@@ -133,13 +136,13 @@
     "removed": "Removed from saved",
     "error": "Something went wrong. Try again.",
     "authRequired": "Sign in to save texts",
-    "empty": "No saved quotes yet",
+    "empty": "No saved texts yet",
     "emptyHint": "Save a text beside any reminder to find it here.",
     "choosePath": "Choose a path",
-    "signInToSave": "Sign in to save this quote.",
+    "signInToSave": "Sign in to save this text.",
     "signIn": "Sign in",
     "favoritesSignInTitle": "Save what inspires you",
-    "favoritesSignInDescription": "Create an account to save quotes that move you and find them later.",
+    "favoritesSignInDescription": "Create an account to save texts that move you and find them later.",
     "emptyTitle": "Nothing saved yet",
     "emptyBody": "Save a reminder to find it again whenever you need it.",
     "tabsLabel": "Saved sections",
@@ -166,19 +169,21 @@
       "wrongPassword": "The password is not correct.",
       "cancel": "Cancel",
       "deleteConfirm": "Delete the account",
-      "deleted": "Your account is deleted. Your data stays on this device."
+      "deleted": "Your account is deleted. Your data stays on this device.",
+      "dangerZone": "Delete zone"
     },
     "weekBranch": {
       "label": "«Branch of the week» in «Today's wird»",
       "hint": "One branch of faith each week, for those who want to learn them."
-    }
+    },
+    "practiceLinks": "Practice settings"
   },
   "home": {
     "title": "Thekra",
     "sinEntryLabel": "Lighten a sin",
-    "sinEntryDescription": "A reminder that restrains you, and hope that helps you.",
+    "sinEntryDescription": "Read about sins and their cure, then start \"Lighten\" from its page.",
     "deedEntryLabel": "Help me do a good deed",
-    "deedEntryDescription": "Know its virtue, and take the first step.",
+    "deedEntryDescription": "Read about the virtue of good deeds, then start a habit from its page.",
     "branchEntryLabel": "The Branches of Faith",
     "branchEntryDescription": "Meanings that build the heart and the deed.",
     "todayHeading": "A chosen reminder",
@@ -283,7 +288,7 @@
     "rewardHeading": "The reward of leaving it for Allah",
     "pairWarningHeading": "What warns against it",
     "pairRewardHeading": "Virtue and reward",
-    "pairCounterpart": "Opposite virtue: ",
+    "pairCounterpart": "Opposite virtue",
     "contemporaryNote": "A contemporary topic: its texts come from the chapters below",
     "typeAll": "All",
     "typeVerses": "Verses",
@@ -296,7 +301,8 @@
     "tabsLabel": "Filter texts",
     "themesLabel": "Themes on this page",
     "themeAll": "All",
-    "severity": "Severity"
+    "severity": "Severity",
+    "evidenceHeading": "Verses and hadith to help you leave this sin"
   },
   "goodDeeds": {
     "pageTitle": "Good deeds",
@@ -340,7 +346,8 @@
       "start": "Start it",
       "added": "In your habits",
       "startLine": "Start very small, keep at it, and increase only once it is steady."
-    }
+    },
+    "evidenceHeading": "Verses and hadith to help you with this good deed"
   },
   "browse": {
     "pageTitle": "Browse",
@@ -399,8 +406,8 @@
     "report": "Report a mistake",
     "reportReason": "Reason",
     "reportNote": "Note",
-    "reportSend": "Send",
-    "reportSent": "Report received",
+    "reportSend": "Send report",
+    "reportSent": "We received your report and will review the text.",
     "reportReasons": {
       "TEXT": "The text is corrupt",
       "ISNAD": "The chain is wrong",
@@ -408,7 +415,19 @@
       "CLASSIFICATION": "The classification is wrong",
       "OTHER": "Something else"
     },
-    "noVerifiedTranslation": "No verified translation available"
+    "noVerifiedTranslation": "No verified translation available",
+    "reportCancel": "Cancel",
+    "reportLead": "What did you notice in this text? We review every report.",
+    "reportThanksTitle": "Thank you",
+    "reportDone": "Done",
+    "more": "More options for this text",
+    "readFull": "Read in full",
+    "otherWordings": "Also narrated in other words ({n})",
+    "recitation": {
+      "play": "Listen to the verse",
+      "pause": "Stop the recitation",
+      "failed": "The recitation could not play. Check your connection and try again."
+    }
   },
   "share": {
     "button": "Share",
@@ -429,7 +448,7 @@
     "atharNarrated": "Narrated by {speaker}"
   },
   "quoteDetail": {
-    "pageTitle": "Quote",
+    "pageTitle": "Text",
     "relatedSins": "Related sins",
     "relatedGoodDeeds": "Related good deeds"
   },
@@ -455,19 +474,23 @@
       "gharib": "Word meanings",
       "fath": "Fath al-Bari",
       "nawawi": "Nawawi's commentary"
-    }
+    },
+    "verseTitle": "Tafsir of {surah} {ayah}"
   },
   "feelings": {
-    "pageTitle": "Quotes — {tag}",
-    "noQuotes": "No quotes for this topic",
+    "noQuotes": "No texts for this topic",
     "loadMore": "Load more",
-    "back": "Back"
+    "back": "Back",
+    "fallbackTitle": "Texts for what you feel",
+    "intro": "Verses and authentic hadith to help you when you feel this.",
+    "evidenceHeading": "Verses and hadith to help you with {tag}",
+    "evidenceHeadingPlain": "Verses and hadith to help you"
   },
   "emptyState": {
     "default": "Nothing here yet",
     "noSins": "No sins added yet",
     "noGoodDeeds": "No good deeds added yet",
-    "noQuotes": "No quotes yet",
+    "noQuotes": "No texts yet",
     "noResults": "No matching results"
   },
   "errorState": {
@@ -960,7 +983,8 @@
     "domainsLabel": "Areas",
     "allDomains": "All",
     "otherDomain": "Other",
-    "themesGroup": "Themes inside a topic"
+    "themesGroup": "Themes inside a topic",
+    "textCount": "{count, plural, =0 {No texts} one {1 text} other {{n} texts}}"
   },
   "breadcrumbs": {
     "home": "Home",
@@ -1000,7 +1024,8 @@
       "title": "Thekra could not open",
       "body": "The site hit an error. Try again in a moment.",
       "retry": "Try again"
-    }
+    },
+    "toastsLabel": "Notifications"
   },
   "offline": {
     "title": "You are offline",
@@ -1077,7 +1102,7 @@
       "seasonOn": "Ramadan mode until {date}; then your plan returns to what it was, and that is no shortcoming.",
       "seasonOffer": "In Ramadan you can raise it for now to {amount}; your plan returns by itself afterwards.",
       "seasonStart": "Turn on Ramadan mode",
-      "showEvidence": "Read the texts",
+      "showEvidence": "Verses and hadith to help you",
       "hideEvidence": "Hide the texts",
       "remove": "Remove this habit",
       "removeConfirm": "Yes, remove it",
@@ -1135,7 +1160,8 @@
       "options": "Options",
       "slotsUnsuitable": "A reminder time does not suit this deed’s time.",
       "slotsFix": "Fix the times",
-      "plusOne": "Add one"
+      "plusOne": "Add one",
+      "evidenceHeading": "Verses and hadith to help you with this good deed"
     },
     "progress": {
       "title": "Where you are",
@@ -1243,7 +1269,10 @@
       "synced": "Synced",
       "lastSynced": "last synced {time}",
       "signedInNote": "Saved in your account and in step on your devices; «Lighten» is always encrypted and nobody else can read it.",
-      "accountLink": "Your account and data"
+      "accountLink": "Your account and data",
+      "notSavedYet": "Your latest changes are not saved to your account yet; they are safe on this device.",
+      "willRetry": "We will try again automatically.",
+      "retry": "Try again"
     },
     "push": {
       "title": "Browser notifications",
@@ -1515,7 +1544,8 @@
       "pledges": "Personal pledge",
       "pledgesLink": "My pledges",
       "pledgesCount": "{n} of {total}",
-      "strategyToggle": "Remind me of a strategy each week"
+      "strategyToggle": "Remind me of a strategy each week",
+      "groupFile": "Calendar file"
     },
     "tally": {
       "title": "My tally",
@@ -1549,7 +1579,8 @@
     },
     "weekBranch": {
       "title": "Branch of the week",
-      "open": "Read about it"
+      "open": "Read about it",
+      "number": "Branch {n}"
     },
     "cards": {
       "loopTitle": "The habit loop",
@@ -1903,7 +1934,8 @@
       "none": "No adjustment (Umm al-Qura)",
       "plus": "+{n} day",
       "minus": "−{n} day",
-      "hint": "If the Hijri month in your country starts before or after Umm al-Qura, adjust it here."
+      "hint": "If the Hijri month in your country starts before or after Umm al-Qura, adjust it here.",
+      "action": "Hijri date"
     },
     "hijri": {
       "date": "{day} {month} {year} AH",
@@ -1975,7 +2007,7 @@
       "alternativesLead": "Pick one to start with, in a small amount.",
       "alternativesLink": "Add a good deed instead",
       "notesTitle": "My private notebook",
-      "textsTitle": "What the texts say",
+      "textsTitle": "Verses and hadith to help you leave this sin",
       "values": {
         "held": "I held firm",
         "weak": "It was hard",
@@ -2210,7 +2242,7 @@
   "topic": {
     "branchesTitle": "From the branches of faith",
     "branchRelatedTitle": "Linked to this branch",
-    "makeHabit": "Make it my habit",
+    "makeHabit": "Start a habit",
     "makeHabitHint": "Start very small, and keep at it.",
     "habitAdded": "In your habits"
   },

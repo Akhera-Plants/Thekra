@@ -56,7 +56,7 @@ export function TasbihDialog({ open, onOpenChange, progress, hadith }: TasbihDia
                   onClick={() => setPhrase(key)}
                   className={cn(
                     'min-h-11 rounded-lg border px-3 text-sm transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
-                    phrase === key ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary',
+                    phrase === key ? 'border-primary bg-primary/10 text-primary-text' : 'border-border hover:border-primary',
                   )}
                 >
                   {t(`phrases.${key}`)}
@@ -68,7 +68,7 @@ export function TasbihDialog({ open, onOpenChange, progress, hadith }: TasbihDia
             type="button"
             onClick={() => setCount((n) => n + 1)}
             aria-label={t('tap', { phrase: t(`phrases.${phrase}`), n: formatDigits(count) })}
-            className="flex size-40 flex-col items-center justify-center gap-1 rounded-full border-4 border-primary bg-primary/5 text-primary transition-transform duration-100 ease-out select-none active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring motion-reduce:active:scale-100"
+            className="flex size-40 flex-col items-center justify-center gap-1 rounded-full border-4 border-primary bg-primary/5 text-primary-text transition-transform duration-100 ease-out select-none active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring motion-reduce:active:scale-100"
           >
             <span className="text-5xl font-medium tabular-nums" aria-hidden>
               {formatDigits(count)}
@@ -166,7 +166,7 @@ function ShortRow({ plan, habit, today }: { plan: Plan; habit: PracticeHabit | u
           {t('log', { amount: words.amount(amount) })}
         </Button>
       ) : done ? (
-        <span className="flex items-center gap-1 text-sm text-primary">
+        <span className="flex items-center gap-1 text-sm text-primary-text">
           <Check className="size-4" aria-hidden />
           {t('logged')}
         </span>

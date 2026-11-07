@@ -29,6 +29,8 @@ const apiIsHttps = api?.startsWith('https://') ?? false;
  *   build talks to http://localhost:3001).
  * - connect-src allows https://api.aladhan.com: the browser fetches the prayer times of the city the user chose
  *   (redesign §4.6, prayer-time anchors). No credentials are sent there.
+ * - media-src allows https://everyayah.com: the verse cards' recitation button streams one ayah's file from there
+ *   (owner round 5, F-03 a). Same origin as RECITATION_BASE_URL in src/lib/quran/recitation.ts — change both together.
  */
 const csp = [
   "default-src 'self'",
@@ -36,6 +38,7 @@ const csp = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self'",
+  "media-src 'self' https://everyayah.com",
   ['connect-src', "'self'", api, 'https://api.aladhan.com', isDev ? 'ws: wss:' : null].filter(Boolean).join(' '),
   "object-src 'none'",
   "base-uri 'self'",

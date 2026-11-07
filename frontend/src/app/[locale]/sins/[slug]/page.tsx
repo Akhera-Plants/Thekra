@@ -3,6 +3,7 @@ import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { SectionDivider } from '@/components/shared/SectionDivider';
+import { Button } from '@/components/shared/kit/button';
 import { FormattedNumber } from '@/components/shared/FormattedNumber';
 import { AlternativeDeedsBlock } from '@/features/sin-reminder/components/AlternativeDeedsBlock';
 import type { ReaderItem, ReaderSection } from '@/components/shared/editorial/ReminderReader';
@@ -183,19 +184,28 @@ export default async function SinDetailPage({
           />
         )}
 
-        {(sin.branches && sin.branches.length > 0) || (counterpart && sin.pair) || alternatives.length > 0 ? <SectionDivider /> : null}
-        <TopicBranchLinks branches={sin.branches} />
+        {/* The flower between sections, never a line (O-04/W-23): texts · من شعب الإيمان · الفضيلة المقابلة · البدائل. */}
+        {sin.branches && sin.branches.length > 0 ? (
+          <>
+            <SectionDivider />
+            <TopicBranchLinks branches={sin.branches} />
+          </>
+        ) : null}
 
         {counterpart && sin.pair ? (
-          <section aria-labelledby="pair-title" className="flex flex-col gap-2">
-            <h2 id="pair-title" className="text-xl font-medium">
-              {t('pairCounterpart')}
-            </h2>
-            <Link href={`/good-deeds/${sin.pair.do}`} className="outline-button self-start">
-              {counterpart}
-            </Link>
-          </section>
+          <>
+            <SectionDivider />
+            <section aria-labelledby="pair-title" className="flex flex-col gap-3">
+              <h2 id="pair-title" className="text-xl font-medium">
+                {t('pairCounterpart')}
+              </h2>
+              <Button asChild variant="outline" tone="primary" size="md" className="self-start">
+                <Link href={`/good-deeds/${sin.pair.do}`}>{counterpart}</Link>
+              </Button>
+            </section>
+          </>
         ) : null}
+        {alternatives.length > 0 ? <SectionDivider /> : null}
         <AlternativeDeedsBlock alternatives={alternatives} heading={t('alternativesHeading')} />
       </article>
     </div>

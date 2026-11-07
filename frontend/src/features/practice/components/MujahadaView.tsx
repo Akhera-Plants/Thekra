@@ -158,7 +158,7 @@ export function MujahadaView({ verse }: MujahadaViewProps) {
                     onClick={() => toggle(key)}
                     className={cn(
                       'flex min-h-11 items-center gap-2 rounded-lg border px-4 py-2 transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transition-none',
-                      on ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary',
+                      on ? 'border-primary bg-primary/10 text-primary-text' : 'border-border hover:border-primary',
                     )}
                   >
                     {on ? <Check className="size-4" aria-hidden /> : <Icon className="size-4 text-muted-foreground" aria-hidden />}
@@ -195,7 +195,7 @@ export function MujahadaView({ verse }: MujahadaViewProps) {
       <section aria-live="polite" className="flex w-full max-w-2xl flex-col items-center gap-4">
         {outcome?.kind === 'held' ? (
           <div className="flex flex-col items-center gap-1" role="status">
-            <p className="flex items-center gap-2 text-lg font-medium text-primary">
+            <p className="flex items-center gap-2 text-lg font-medium text-primary-text">
               <Check className="size-5" aria-hidden />
               {t('heldTitle')}
             </p>
@@ -205,7 +205,7 @@ export function MujahadaView({ verse }: MujahadaViewProps) {
           </div>
         ) : outcome?.kind === 'slipped' && !(program && entry && common) && common ? (
           <div className="flex flex-col gap-2">
-            <h2 className="text-xl font-medium text-primary">{t('slipTitle')}</h2>
+            <h2 className="text-xl font-medium text-primary-text">{t('slipTitle')}</h2>
             <p className="text-lg leading-9">{t('slipBody')}</p>
           </div>
         ) : asking ? (
@@ -274,7 +274,7 @@ function ToolButton({ icon, title, hint, onClick }: { icon: React.ReactNode; tit
       aria-haspopup="dialog"
       className="flex min-h-16 items-center gap-3 rounded-xl border border-primary/40 bg-card px-4 py-3 text-start transition-colors duration-150 hover:border-primary hover:bg-primary/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
     >
-      <span aria-hidden className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary [&_svg]:size-5">
+      <span aria-hidden className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary-text [&_svg]:size-5">
         {icon}
       </span>
       <span className="flex min-w-0 flex-col">

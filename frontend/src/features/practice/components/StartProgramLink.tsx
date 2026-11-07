@@ -5,6 +5,8 @@ import { useTranslations } from 'next-intl';
 import { activePrograms } from '@thekra/practice-core';
 import { Link } from '@/i18n/navigation';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
+import { Button } from '@/components/shared/kit/button';
+import { ActionPair } from '@/components/shared/kit/action-pair';
 import { setMomentSource, setPendingProgram } from '@/lib/practice/local-store';
 import { usePracticeStore } from '../hooks/usePracticeStore';
 
@@ -24,21 +26,22 @@ export function StartProgramLink({ slug }: StartProgramLinkProps) {
   const isActive = snapshot ? activePrograms(snapshot.store.programs).some((program) => program.sinSlug === slug) : false;
   return (
     <div className="mt-5 flex flex-col items-start gap-2">
-      <div className="flex flex-wrap gap-3">
-        <Link
-          href="/practice/leave-sin"
-          className={isActive ? 'outline-button' : 'solid-button'}
-          onClick={isActive ? undefined : () => setPendingProgram(slug)}
-        >
-          {isActive ? t('continueFromSin') : t('startFromSin')} <DirectionalArrow />
-        </Link>
+      {/* One primary «ابدأ تخفَّف» (F-10 a) and its companion «أنا في لحظة مجاهدة» as one pair, same size (O-02). */}
+      <ActionPair layout="hug">
+        <Button asChild variant={isActive ? 'outline' : 'solid'} tone="primary" size="md">
+          <Link href="/practice/leave-sin" onClick={isActive ? undefined : () => setPendingProgram(slug)}>
+            {isActive ? t('continueFromSin') : t('startFromSin')} <DirectionalArrow />
+          </Link>
+        </Button>
         {/* Shown on every sin page whatever the device holds, so it tells nothing; the screen uses this sin's
             program only if the visitor follows it (in-memory hand-off, never the URL). */}
-        <Link href="/practice/leave-sin/moment" className="outline-button" onClick={() => setMomentSource(slug)}>
-          <Waves aria-hidden />
-          {t('moment.openFromSin')}
-        </Link>
-      </div>
+        <Button asChild variant="outline" tone="primary" size="md">
+          <Link href="/practice/leave-sin/moment" onClick={() => setMomentSource(slug)}>
+            <Waves aria-hidden />
+            {t('moment.openFromSin')}
+          </Link>
+        </Button>
+      </ActionPair>
       <p className="text-sm leading-7 text-muted-foreground">{tHub('programHint')}</p>
     </div>
   );

@@ -86,7 +86,7 @@ function Box({ icon, title, children }: { icon: React.ReactNode; title: string; 
   return (
     <section id="vault" className="flex scroll-mt-24 flex-col gap-3 rounded-2xl border border-border bg-card p-5 leading-8" aria-label={title}>
       <h2 className="flex items-center gap-2 text-lg font-medium">
-        <span className="text-primary [&_svg]:size-5" aria-hidden>
+        <span className="text-primary-text [&_svg]:size-5" aria-hidden>
           {icon}
         </span>
         {title}

@@ -83,7 +83,7 @@ export function LeaveSinView() {
 
   const privacyLine = (
     <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm leading-7 text-muted-foreground">
-      <ShieldCheck className="size-4 shrink-0 text-primary" aria-hidden />
+      <ShieldCheck className="size-4 shrink-0 text-primary-text" aria-hidden />
       <span>{t('privacyShort')}</span>
       <InfoTip>{t('privacy')}</InfoTip>
       {session ? <SaveStatus /> : null}
@@ -97,7 +97,7 @@ export function LeaveSinView() {
         {privacyLine}
         <section aria-labelledby="vault-locked" className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5">
           <h2 id="vault-locked" className="flex items-center gap-2 text-xl font-medium">
-            <LockKeyhole className="size-5 text-primary" aria-hidden />
+            <LockKeyhole className="size-5 text-primary-text" aria-hidden />
             {t('vault.lockedTitle')}
           </h2>
           <p className="text-muted-foreground">{t('vault.lockedLead')}</p>
@@ -273,7 +273,7 @@ function SaveStatus() {
               : t('savedShort')}
       </span>
       {state === 'saving' ? <BrandLoader label={t('saving')} /> : null}
-      <button type="button" className="outline-button !min-h-9 px-3 text-sm" onClick={() => setVaultSession(null)}>
+      <button type="button" className="outline-button px-3 text-sm" onClick={() => setVaultSession(null)}>
         <LockKeyhole aria-hidden />
         {t('lock')}
       </button>

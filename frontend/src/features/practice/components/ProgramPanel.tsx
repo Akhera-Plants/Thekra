@@ -143,7 +143,7 @@ export function ProgramPanel({ program, entry, common, name, habits, quotes, tod
 
           {fell ? (
             <section className="flex flex-col gap-3" aria-labelledby={`fall-${program.sinSlug}`}>
-              <h3 id={`fall-${program.sinSlug}`} className="text-xl font-medium text-primary">
+              <h3 id={`fall-${program.sinSlug}`} className="text-xl font-medium text-primary-text">
                 {english ? common.afterFall.titleEn : common.afterFall.titleAr}
               </h3>
               <p className="max-w-3xl text-lg leading-9">{english ? common.afterFall.bodyEn : common.afterFall.bodyAr}</p>
@@ -176,7 +176,7 @@ export function ProgramPanel({ program, entry, common, name, habits, quotes, tod
                     className={cn(
                       'flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs whitespace-nowrap',
                       state === 'current' && 'border-primary bg-primary text-primary-foreground',
-                      state === 'done' && 'border-primary text-primary',
+                      state === 'done' && 'border-primary text-primary-text',
                       state === 'next' && 'border-border text-muted-foreground',
                     )}
                   >
@@ -265,7 +265,7 @@ export function ProgramPanel({ program, entry, common, name, habits, quotes, tod
         </SegmentTabsContent>
 
         <SegmentTabsContent value="texts" className="flex flex-col gap-3">
-          <EvidenceQuotes ids={programTextIds(entry, common, view.stage)} quotes={quotes} />
+          <EvidenceQuotes ids={programTextIds(entry, common, view.stage)} quotes={quotes} heading={t('textsTitle')} />
           {/* The sin's own page holds all its texts; a sin without a written program has only the stage texts here. */}
           <Link href={`/sins/${program.sinSlug}`} className="outline-button self-start">
             {t('textsAll')} <DirectionalArrow />

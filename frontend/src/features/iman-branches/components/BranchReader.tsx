@@ -27,6 +27,7 @@ interface BranchReaderProps {
 
 export function BranchReader({ number, lang, items: initialItems, total, countsByKind, initialHasNext = false, highlight = null, intro }: BranchReaderProps) {
   const t = useTranslations('sinDetail');
+  const tBranch = useTranslations('branches');
   const [activeKind, setActiveKind] = useState<TypeFilter>('all');
 
   const isFiltered = activeKind !== 'all';
@@ -115,6 +116,7 @@ export function BranchReader({ number, lang, items: initialItems, total, countsB
   return (
     <>
     <ReminderReader
+      heading={tBranch('evidenceHeading')}
       highlight={highlight}
       intro={intro}
       items={displayItems}

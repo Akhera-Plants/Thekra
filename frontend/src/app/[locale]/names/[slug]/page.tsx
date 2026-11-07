@@ -79,10 +79,8 @@ export default async function NamePage({ params }: PageProps<'/[locale]/names/[s
             {t('meaningTitle')}
           </h2>
           <p className="text-lg leading-8" lang={locale === 'en' ? 'en' : 'ar'}>
-            {meaning}{' '}
-            {detail.review === 'pending-sheikh' ? (
-              <span className="text-xs text-muted-foreground">({t('pendingReview')})</span>
-            ) : null}
+            {/* The review state is for the team, not visitors (W-20). */}
+            {meaning}
           </p>
         </section>
 

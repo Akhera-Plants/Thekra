@@ -75,7 +75,7 @@ export default async function BranchDetailPage({
   const explanations =
     detail.explanations.length > 0 ? (
       <section className="flex flex-col gap-3">
-        <h2 className="font-arabic-display text-[22px] font-semibold md:text-[26px]">{t('explanations')}</h2>
+        <h3 className="font-arabic-display text-[20px] font-semibold md:text-[22px]">{t('explanations')}</h3>
         <ul className="flex flex-col gap-4">
           {detail.explanations.map((item) => (
             <li key={item.id}>

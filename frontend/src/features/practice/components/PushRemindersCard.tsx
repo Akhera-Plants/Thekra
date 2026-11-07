@@ -43,7 +43,7 @@ export function PushRemindersCard() {
     >
       <h2 id="push-reminders-title" className="inline-flex items-center gap-2 text-xl font-medium">
         {state === 'on' ? (
-          <BellRing className="size-5 text-primary" aria-hidden />
+          <BellRing className="size-5 text-primary-text" aria-hidden />
         ) : (
           <BellOff className="size-5 text-muted-foreground" aria-hidden />
         )}
@@ -55,7 +55,7 @@ export function PushRemindersCard() {
 
       {state === 'iosInstall' ? (
         <p className="flex items-start gap-2 text-sm leading-7">
-          <Smartphone className="mt-1.5 size-4 shrink-0 text-primary" aria-hidden />
+          <Smartphone className="mt-1.5 size-4 shrink-0 text-primary-text" aria-hidden />
           <span>{t('iosInstall')}</span>
         </p>
       ) : null}
@@ -82,7 +82,7 @@ export function PushRemindersCard() {
 
       {state === 'on' ? (
         <div className="flex flex-col items-start gap-2">
-          <p className="text-sm leading-7 text-primary">{t('on')}</p>
+          <p className="text-sm leading-7 text-primary-text">{t('on')}</p>
           <div className="flex flex-wrap gap-3">
             <Button variant="outline" size="sm" loading={test.isPending} disabled={isBusy} onClick={() => test.mutate()}>
               {t('sendTest')}

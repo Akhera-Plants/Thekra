@@ -4,8 +4,8 @@ import { CloudCheck, CloudOff, HardDrive, LoaderCircle, RefreshCw, TriangleAlert
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { Button } from '@/components/shared/kit/button';
+import { ActionPair } from '@/components/shared/kit/action-pair';
 import { InfoTip } from '@/components/shared/InfoTip';
-import { failureKey } from '@/lib/errors';
 import { formatDateTime } from '@/lib/practice/format';
 import { mergeIntoAccount, syncNow } from '@/lib/practice/sync-controller';
 import { usePracticeSync } from '../hooks/usePracticeSync';
@@ -25,7 +25,6 @@ interface SyncStatusProps {
 export function SyncStatus({ persistent, quiet = false }: SyncStatusProps) {
   const t = useTranslations('practice.sync');
   const tStorage = useTranslations('practice.storage');
-  const tFeedback = useTranslations('feedback');
   const locale = useLocale() === 'en' ? 'en' : 'ar';
   const { status, signedIn, sessionLoading } = usePracticeSync();
   const hrefs = useSignInHrefs();
@@ -41,17 +40,17 @@ export function SyncStatus({ persistent, quiet = false }: SyncStatusProps) {
     return (
       <div className="flex flex-col gap-2">
         {storageLine ?? (
-          <Line icon={<HardDrive className="text-primary" />}>{t('localGuest')}</Line>
+          <Line icon={<HardDrive className="text-primary-text" />}>{t('localGuest')}</Line>
         )}
         {!sessionLoading ? (
-          <p className="flex flex-wrap gap-2 ps-6 text-sm">
-            <Link href={hrefs.login} className="outline-button">
-              {t('signIn')}
-            </Link>
-            <Link href={hrefs.register} className="outline-button">
-              {t('register')}
-            </Link>
-          </p>
+          <ActionPair layout="hug" className="ps-6">
+            <Button asChild variant="outline" tone="primary" size="md">
+              <Link href={hrefs.login}>{t('signIn')}</Link>
+            </Button>
+            <Button asChild variant="outline" tone="primary" size="md">
+              <Link href={hrefs.register}>{t('register')}</Link>
+            </Button>
+          </ActionPair>
         ) : null}
       </div>
     );
@@ -59,49 +58,53 @@ export function SyncStatus({ persistent, quiet = false }: SyncStatusProps) {
 
   const last = status.lastSyncedAt ? t('lastSynced', { time: formatDateTime(status.lastSyncedAt, locale) }) : null;
 
+  const failed = status.phase === 'error' || status.phase === 'offline';
+  const accountLink = quiet ? null : (
+    <Button asChild variant="outline" tone="primary" size="md">
+      <Link href="/settings">{t('accountLink')}</Link>
+    </Button>
+  );
+
   return (
     <div className="flex flex-col gap-2" aria-live="polite">
       {storageLine}
       {status.phase === 'otherAccount' ? (
-        <div className="flex flex-col items-start gap-2">
-          <Line icon={<CloudOff className="text-muted-foreground" />}>{t('otherAccount')}</Line>
-          <Button
-            variant="outline"
-            tone="primary"
-            size="sm"
-            className="ms-6 h-auto whitespace-normal py-2 text-start"
-            onClick={mergeIntoAccount}
-          >
-            {t('mergeHere')}
-          </Button>
-        </div>
-      ) : status.phase === 'error' || status.phase === 'offline' ? (
-        <div className="flex flex-col items-start gap-2">
-          <Line icon={<CloudOff className="text-destructive" />} role="status">
-            {status.willRetry ? t('notSyncedRetrying') : t('notSynced')}
-            {status.phase === 'offline' ? ` ${t('offline')}` : ` ${tFeedback(`error.${failureKey(status.error)}`)}`}
-          </Line>
-          <Button variant="outline" tone="primary" size="sm" className="ms-6" onClick={syncNow}>
-            <RefreshCw aria-hidden />
-            {t('syncNow')}
-          </Button>
-        </div>
+        <Line icon={<CloudOff className="text-muted-foreground" />}>{t('otherAccount')}</Line>
+      ) : failed ? (
+        // W-21: what happened, that nothing is lost, and what happens next; never a generic «not found».
+        <Line icon={<CloudOff className="text-destructive" />} role="status">
+          {t('notSavedYet')}
+          {status.phase === 'offline' ? ` ${t('offline')}` : status.willRetry ? ` ${t('willRetry')}` : ''}
+        </Line>
       ) : status.phase === 'syncing' ? (
-        <Line icon={<LoaderCircle className="text-primary motion-safe:animate-spin" />}>{t('syncing')}</Line>
+        <Line icon={<LoaderCircle className="text-primary-text motion-safe:animate-spin" />}>{t('syncing')}</Line>
       ) : (
-        <Line icon={<CloudCheck className="text-primary" />}>
+        <Line icon={<CloudCheck className="text-primary-text" />}>
           {status.phase === 'pending' ? t('pending') : t('synced')}
           {last ? <span className="text-muted-foreground"> · {last}</span> : null}
         </Line>
       )}
-      {quiet ? null : (
+      {/* The sync action and «حسابك وبياناتك» as one pair, same size (O-02/W-03). */}
+      {status.phase === 'otherAccount' ? (
+        <ActionPair layout="hug" className="ps-6">
+          <Button variant="solid" tone="primary" size="md" className="h-auto min-h-11 whitespace-normal py-2 text-start" onClick={mergeIntoAccount}>
+            {t('mergeHere')}
+          </Button>
+          {accountLink}
+        </ActionPair>
+      ) : failed ? (
+        <ActionPair layout="hug" className="ps-6">
+          <Button variant="solid" tone="primary" size="md" icon={<RefreshCw aria-hidden />} onClick={syncNow}>
+            {t('retry')}
+          </Button>
+          {accountLink}
+        </ActionPair>
+      ) : accountLink ? (
         <p className="flex items-center gap-1 ps-6 text-sm">
-          <Link href="/settings" className="outline-button">
-            {t('accountLink')}
-          </Link>
+          {accountLink}
           <InfoTip>{t('signedInNote')}</InfoTip>
         </p>
-      )}
+      ) : null}
     </div>
   );
 }

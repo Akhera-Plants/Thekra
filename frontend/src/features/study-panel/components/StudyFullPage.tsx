@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 import { BrandLoader } from '@/components/shared/feedback/BrandLoader';
@@ -20,6 +20,7 @@ import { StudyReading } from './StudyReading';
 
 export function StudyFullPage({ quote }: { quote: QuoteDto }) {
   const t = useTranslations('studyPanel');
+  const panelId = useId();
   const locale = useLocale();
   const search = useSearchParams();
   const isVerse = quote.type === QuoteType.QURAN_VERSE;
@@ -58,16 +59,20 @@ export function StudyFullPage({ quote }: { quote: QuoteDto }) {
           onValueChange={(value) => setTab(value as StudyTabId)}
           variant="segment"
           size="filled"
+          controls={panelId}
         />
       ) : null}
 
-      {isLoading ? (
-        <BrandLoader label={t('loading')} showLabel className="text-sm" />
-      ) : isError ? (
-        <QueryErrorState error={error} message={t('error')} onRetry={() => void refetch()} className="py-8" />
-      ) : (
-        <StudyReading rows={activeRows} />
-      )}
+      {/* The one panel every tab controls (W-18: aria-controls must name an element that exists). */}
+      <div id={panelId} role={availableTabs.length > 0 ? 'tabpanel' : undefined} aria-label={isVerse ? t('titleTafsir') : t('titleSharh')}>
+        {isLoading ? (
+          <BrandLoader label={t('loading')} showLabel className="text-sm" />
+        ) : isError ? (
+          <QueryErrorState error={error} message={t('error')} onRetry={() => void refetch()} className="py-8" />
+        ) : (
+          <StudyReading rows={activeRows} />
+        )}
+      </div>
     </div>
   );
 }

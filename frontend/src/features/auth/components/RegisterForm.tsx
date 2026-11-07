@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { z } from '@/lib/zod';
 import { toast } from 'sonner';
 
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/shared/kit/button';
 import { Input } from '@/components/ui/input';
 import {
   Form,
@@ -131,7 +131,7 @@ export function RegisterForm() {
           )}
         />
 
-        <Button type="submit" className="w-full" disabled={isPending}>
+        <Button type="submit" variant="solid" tone="primary" size="md" className="w-full" disabled={isPending}>
           {isPending ? t('registering') : t('register')}
         </Button>
       </form>

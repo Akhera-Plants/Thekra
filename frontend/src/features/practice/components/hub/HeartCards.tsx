@@ -45,6 +45,8 @@ import { EvidenceButton } from '../Pledges';
 import { habitOf } from '@/lib/practice/plans';
 import type { PracticeHabit } from '@/lib/types/practice';
 import { cn } from '@/lib/utils';
+import { TextSourceLine } from '@/components/shared/quote/TextSourceLine';
+import { stripOuterQuotes } from '@/lib/texts/quote-text';
 import { usePracticeEvidence } from '../../hooks/usePracticeEvidence';
 
 export interface HeartContext {
@@ -88,7 +90,7 @@ function Chips<T extends string>({ value, options, onChange, label }: { value: T
           onClick={() => onChange(o.key)}
           className={cn(
             'min-h-11 rounded-full border px-4 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transition-none',
-            value === o.key ? 'border-primary bg-secondary text-primary' : 'border-border hover:bg-muted',
+            value === o.key ? 'border-primary bg-secondary text-primary-text' : 'border-border hover:bg-muted',
           )}
         >
           {o.text}
@@ -106,11 +108,17 @@ export function MuraqabaLine({ today }: { today: string }) {
   const quote = evidence.data?.find((q) => q.id === id);
   if (!quote) return null;
   return (
-    <p aria-label={t('muraqabaLabel')} className="line-clamp-2 max-w-3xl text-base leading-8 text-muted-foreground">
-      <Link href={`/quotes/${quote.id}`} lang="ar" dir="rtl" className="font-quran hover:text-foreground">
-        {quote.textAr}
-      </Link>
-    </p>
+    <figure aria-label={t('muraqabaLabel')} className="flex max-w-3xl flex-col gap-1">
+      <p className="line-clamp-2 text-base leading-8 text-muted-foreground">
+        <Link href={`/quotes/${quote.id}`} lang="ar" dir="rtl" className="font-quran hover:text-foreground">
+          {stripOuterQuotes(quote.textAr)}
+        </Link>
+      </p>
+      {/* Its source, always visible under the cut text (W-06). */}
+      <figcaption>
+        <TextSourceLine quote={quote} />
+      </figcaption>
+    </figure>
   );
 }
 
@@ -164,7 +172,7 @@ export function IntentionCard({ ctx }: { ctx: HeartContext }) {
     const made = intentionOf(heart, today);
     return (
       <p className="flex max-w-3xl items-start gap-2 text-sm leading-7 text-muted-foreground">
-        <Check aria-hidden className="mt-1.5 size-4 shrink-0 text-primary" />
+        <Check aria-hidden className="mt-1.5 size-4 shrink-0 text-primary-text" />
         <span>
           {t('made')}
           {made?.pledge ? <> · {t('pledgeLine', { text: made.pledge })}</> : null}
@@ -335,7 +343,7 @@ export function WeeklyCard({ ctx }: { ctx: HeartContext }) {
         <ul className="flex flex-col gap-1 text-sm leading-7">
           {summary.steady.map((r) => (
             <li key={r.planId} className="flex items-center gap-2">
-              <Check aria-hidden className="size-4 text-primary" />
+              <Check aria-hidden className="size-4 text-primary-text" />
               {title(r.planId)}
             </li>
           ))}

@@ -22,7 +22,7 @@ function AddItem({ href, icon, title, hint }: AddItemProps) {
   return (
     <DropdownMenuItem asChild className="items-start gap-3 rounded-lg px-2.5 py-2.5">
       <Link href={href}>
-        <span aria-hidden className="mt-0.5 text-primary [&_svg]:size-[1.125rem]">
+        <span aria-hidden className="mt-0.5 text-primary-text [&_svg]:size-[1.125rem]">
           {icon}
         </span>
         <span className="flex flex-col">

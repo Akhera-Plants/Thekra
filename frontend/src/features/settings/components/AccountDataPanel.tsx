@@ -8,12 +8,11 @@ import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { useRouter } from '@/i18n/navigation';
 import { Button } from '@/components/shared/kit/button';
+import { ActionPair } from '@/components/shared/kit/action-pair';
 import {
   AlertDialog,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
-  AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
@@ -29,7 +28,7 @@ import { setVaultSession } from '@/lib/practice/vault-flow';
 import { ApiError } from '@/lib/types/api';
 import { z } from '@/lib/zod';
 
-/** «تصدير بياناتي» and «حذف الحساب». The copy on this device is kept in both cases. */
+/** «تصدير بياناتي». «حذف الحساب» is the last, folded section of the settings page (W-27). The copy on this device is kept. */
 export function AccountDataPanel() {
   const t = useTranslations('settings.data');
   const tFeedback = useTranslations('feedback');
@@ -54,18 +53,17 @@ export function AccountDataPanel() {
         {t('title')}
       </h2>
       <div className="flex flex-col items-start gap-2">
-        <Button variant="outline" tone="primary" size="sm" onClick={() => void handleExport()} disabled={exporting}>
+        <Button variant="outline" tone="primary" size="md" onClick={() => void handleExport()} loading={exporting}>
           <Download aria-hidden />
           {t('export')}
         </Button>
         <p className="text-sm text-muted-foreground">{t('exportNote')}</p>
       </div>
-      <DeleteAccount />
     </section>
   );
 }
 
-function DeleteAccount() {
+export function DeleteAccount() {
   const t = useTranslations('settings.data');
   const tFeedback = useTranslations('feedback');
   const router = useRouter();
@@ -102,7 +100,7 @@ function DeleteAccount() {
     <div className="flex flex-col items-start gap-2">
       <AlertDialog open={open} onOpenChange={setOpen}>
         <AlertDialogTrigger asChild>
-          <Button variant="outline" tone="destructive" size="sm">
+          <Button variant="outline" tone="destructive" size="md" className="self-start">
             <Trash2 aria-hidden />
             {t('delete')}
           </Button>
@@ -132,12 +130,15 @@ function DeleteAccount() {
                   {failure}
                 </p>
               ) : null}
-              <AlertDialogFooter>
-                <AlertDialogCancel type="button">{t('cancel')}</AlertDialogCancel>
-                <Button type="submit" variant="solid" tone="destructive" size="sm" disabled={form.formState.isSubmitting}>
+              {/* One pair, same size (O-02/W-03): the destructive action first, «إلغاء» beside it. */}
+              <ActionPair>
+                <Button type="submit" variant="solid" tone="destructive" size="md" loading={form.formState.isSubmitting}>
                   {t('deleteConfirm')}
                 </Button>
-              </AlertDialogFooter>
+                <Button type="button" variant="outline" tone="neutral" size="md" onClick={() => setOpen(false)}>
+                  {t('cancel')}
+                </Button>
+              </ActionPair>
             </form>
           </Form>
         </AlertDialogContent>

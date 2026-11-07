@@ -52,7 +52,7 @@ export function EvidenceButton({ ids, deed }: { ids: readonly string[]; deed: st
         variant="outline"
         tone="neutral"
         size="sm"
-        className="!h-10 !min-h-10 shrink-0 rounded-xl px-3 text-xs text-muted-foreground shadow-none hover:bg-muted hover:text-foreground active:bg-muted active:text-foreground"
+        className="shrink-0 px-3 text-sm text-muted-foreground shadow-none hover:bg-muted hover:text-foreground active:bg-muted active:text-foreground"
         aria-label={t('evidenceOf', { deed })}
         onClick={() => setOpen(true)}
       >
@@ -205,7 +205,7 @@ function PledgeLine({ plan, heart, english, onOpen, label }: { plan: Plan; heart
         ) : null}
       </div>
       {pledge ? (
-        <Button variant="outline" tone="neutral" size="sm" onClick={onOpen}>
+        <Button variant="outline" tone="primary" size="sm" onClick={onOpen}>
           {t('edit')}
         </Button>
       ) : (

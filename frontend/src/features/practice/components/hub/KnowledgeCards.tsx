@@ -79,7 +79,7 @@ export function TallySection({ store, today, habits }: { store: Store; today: st
         <p className="text-base leading-8">{t('branches', { count: branches.length, n: formatDigits(branches.length) })}</p>
       ) : null}
       <GratitudeLine today={today} />
-      <p className="text-base leading-8 text-primary">{t('acceptance')}</p>
+      <p className="text-base leading-8 text-primary-text">{t('acceptance')}</p>
     </section>
   );
 }
@@ -138,7 +138,7 @@ export function Cheer({ at }: { at: number | null }) {
     <p
       role="status"
       aria-live="polite"
-      className="text-base leading-8 text-primary motion-safe:transition-opacity motion-safe:duration-300 empty:hidden"
+      className="text-base leading-8 text-primary-text motion-safe:transition-opacity motion-safe:duration-300 empty:hidden"
     >
       {shownAt !== null ? t('accepted') : null}
     </p>
@@ -156,7 +156,7 @@ export function DayDoneCard({ store, today, planDays }: { store: Store; today: s
   return (
     <div className="next-step !mt-0 flex flex-col gap-1" role="status">
       <p className="text-lg font-medium">{t('dayDone')}</p>
-      <p className="text-base leading-8 text-primary">{t(`lines.l${dayDoneLine(today)}`)}</p>
+      <p className="text-base leading-8 text-primary-text">{t(`lines.l${dayDoneLine(today)}`)}</p>
     </div>
   );
 }
@@ -212,7 +212,7 @@ function StoryNote({ label, quote }: { label: string; quote: QuoteDto }) {
             {quote.textAr}
           </p>
           <p className="text-xs leading-6 text-muted-foreground">{shortSource(quote, english)}</p>
-          <Link href={`/quotes/${quote.id}`} className="outline-button self-start !min-h-10 text-sm">
+          <Link href={`/quotes/${quote.id}`} className="outline-button self-start text-sm">
             {t('readSharh')} <DirectionalArrow />
           </Link>
         </PopoverContent>
@@ -280,9 +280,13 @@ export function WeekBranchCard({ today, before }: { today: string; before?: Reac
     <>
       {before}
       <section aria-labelledby="week-branch-title" className="flex flex-col gap-3">
-        <h2 id="week-branch-title" className="text-xl font-medium">
-          {t('title')} · {formatDigits(number)}
-        </h2>
+        <div className="flex flex-col gap-0.5">
+          <h2 id="week-branch-title" className="text-xl font-medium">
+            {t('title')}
+          </h2>
+          {/* «الشعبة 9», not a bare «· 9» (W-20). */}
+          <p className="text-sm text-muted-foreground">{t('number', { n: formatDigits(number) })}</p>
+        </div>
         <Link href={`/branches/${number}`} className="outline-button button-wrap min-w-0 self-start text-base break-words">
           <span className="min-w-0">{title}</span> <DirectionalArrow className="shrink-0" />
         </Link>

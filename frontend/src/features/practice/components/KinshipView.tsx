@@ -30,7 +30,6 @@ import { usePracticeStore } from '../hooks/usePracticeStore';
 import { useToday } from '../hooks/useToday';
 import { SyncStatus } from './SyncStatus';
 import { PracticeLoading } from './PracticeLoading';
-import { NotificationsLink } from './NotificationsLink';
 import { RelativeForm } from './RelativeForm';
 import { RowMenu } from './RowMenu';
 import { LimitSheet } from './LimitSheet';
@@ -167,14 +166,11 @@ export function KinshipView() {
           <p id={`${namesId}-warning`} className="text-sm leading-7 text-muted-foreground">
             {withNames ? t('namesWarning') : t('genericNote')}
           </p>
-          <button type="button" className="outline-button button-wrap self-start" onClick={handleExport}>
-            <CalendarPlus aria-hidden />
+          <Button variant="outline" tone="primary" size="md" className="self-start" icon={<CalendarPlus aria-hidden />} onClick={handleExport}>
             {t('export')}
-          </button>
+          </Button>
         </section>
       ) : null}
-
-      <NotificationsLink />
     </div>
   );
 }

@@ -51,6 +51,7 @@ export function GoodDeedReader({ slug, lang, items, total, sections, countsByKin
   return (
     <>
     <ReminderReader
+      heading={t('evidenceHeading')}
       highlight={highlight}
       intro={intro}
       items={complete ? items : reader.items}

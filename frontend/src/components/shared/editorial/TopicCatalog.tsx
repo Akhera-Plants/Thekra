@@ -9,6 +9,7 @@ import { Link, usePathname, useRouter } from '@/i18n/navigation';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { FormattedNumber } from '@/components/shared/FormattedNumber';
+import { formatDigits } from '@/lib/format/digits';
 import { domainChips, filterTopics, groupByDomain, OTHER_DOMAIN, type CatalogFilter } from '@/lib/catalog-filter';
 import { searchTopicThemes } from '@/lib/search/topic-themes';
 import { TOPIC_DOMAINS } from '@/lib/topic-domains';
@@ -347,9 +348,8 @@ function TopicCatalogShell({
                             </strong>
                             {meta ? <small>{meta}</small> : null}
                             {!meta && entry.quoteCount > 0 ? (
-                              <small>
-                                <FormattedNumber value={entry.quoteCount} />
-                              </small>
+                              // A number with its unit (W-20): «20 نصًا», never a bare «20».
+                              <small>{tCatalog('textCount', { count: entry.quoteCount, n: formatDigits(entry.quoteCount) })}</small>
                             ) : null}
                           </span>
                           <DirectionalArrow className="topic-arrow size-[18px]" />
@@ -406,12 +406,12 @@ function FilterChip({ pressed, count, disabled = false, check = false, onClick, 
       aria-pressed={pressed}
       disabled={disabled}
       onClick={onClick}
-      className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border border-border bg-card px-3.5 text-sm whitespace-nowrap transition-colors duration-150 hover:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:opacity-45 disabled:hover:border-border aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground"
+      className="touch-44 inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border border-border bg-card px-3.5 text-sm whitespace-nowrap transition-colors duration-150 hover:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:opacity-45 disabled:hover:border-border aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground"
     >
       {check ? <Check aria-hidden className={pressed ? 'size-4' : 'size-4 opacity-30'} /> : null}
       {children}
       {count !== undefined ? (
-        <span className="text-xs tabular-nums opacity-70">
+        <span className="text-xs tabular-nums opacity-80">
           <FormattedNumber value={count} />
         </span>
       ) : null}
