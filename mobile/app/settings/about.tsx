@@ -1,4 +1,4 @@
-/** Settings ← «عن التطبيق»: the site's about and privacy pages, and the version. */
+/** Settings ← «عن ذكرى»: the site's about and privacy pages, and the version. */
 
 import React from 'react';
 import { Stack } from 'expo-router';

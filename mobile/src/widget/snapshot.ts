@@ -4,7 +4,8 @@
  * store. Pure: no React Native imports here, so the jest tests run in Node.
  *
  * - «المداومة» (small): the streak with the brand-green flame and «بقي n».
- * - «ورد اليوم» (medium): today's habits with done marks (habits only: no names of people, never the sin program).
+ * - «ورد اليوم» (medium): today's habits with done marks (habits only: no names of people, never the sin program), and a
+ *   generic «لحظة مجاهدة» button that opens the moment screen (owner round 5, F-24 a / F-09; it names no sin).
  * - «نص اليوم»: one text a day from the source chosen in settings (a reminder set, the saved texts, «تذكيراتي», or
  *   «مواسم الخير»: today's date and the next occasion). The candidates are saved, and the widget picks the day's one
  *   (practice-core `dailyPick`), so it still turns over on days the app is not opened.
@@ -34,6 +35,10 @@ export const WIDGET_OCCASION_DAYS = 60;
 export const WIDGET_MAX_ITEMS = 5;
 /** Deep link of «ورد اليوم» (the app scheme + the tab route). */
 export const WIRD_URI = 'thekra://habits';
+/** Deep link of «لحظة مجاهدة» (generic: the screen decides on the device which program it is about). */
+export const MOMENT_URI = 'thekra://practice/moment';
+/** The moment button's words when a snapshot from an older build has none. */
+export const MOMENT_LABEL_FALLBACK = 'لحظة مجاهدة';
 
 export interface WidgetText {
   text: string;
@@ -58,8 +63,10 @@ export interface WidgetLabels {
   dailyText: string;
   /** Shown when the chosen source has no text yet. */
   noText: string;
-  /** «مواسم الخير». */
+  /** The date-and-occasion source's title («اليوم والمناسبة القريبة»). */
   seasons: string;
+  /** «لحظة مجاهدة» on the wird widget (optional: older snapshots have none). */
+  moment?: string;
   /** «اليوم: {title}». */
   todayOccasion: string;
   /** «القادم: {title}، {date}» (`{date}` = day and month name). */
@@ -146,7 +153,7 @@ const fill = (template: string, values: Record<string, string | number>) =>
 
 export interface WidgetView {
   streak: { value: number; line: string };
-  wird: { title: string; items: { title: string; done: boolean }[]; line: string };
+  wird: { title: string; items: { title: string; done: boolean }[]; line: string; moment: string };
   text: { title: string; body: string; attribution: string };
 }
 
@@ -179,7 +186,7 @@ export function widgetView(snapshot: WidgetSnapshot, today: LocalDate): WidgetVi
 
   return {
     streak: { value: snapshot.streak, line },
-    wird: { title: labels.wird, items: fresh ? snapshot.items : [], line },
+    wird: { title: labels.wird, items: fresh ? snapshot.items : [], line, moment: labels.moment || MOMENT_LABEL_FALLBACK },
     text,
   };
 }

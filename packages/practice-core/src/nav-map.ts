@@ -84,8 +84,10 @@ export const NAV_FEATURES: readonly NavFeature[] = [
   { key: 'more', ar: 'المزيد', en: 'More', web: null, app: '/more', group: 'members' },
 
   // ── الإعدادات ──
-  { key: 'settings', ar: 'الإعدادات', en: 'Settings', web: '/settings', app: '/settings', group: 'settings' },
+  // The app has no settings screen of its own: its rows are the last group of «المزيد».
+  { key: 'settings', ar: 'الإعدادات', en: 'Settings', web: '/settings', app: '/more', group: 'settings' },
   { key: 'account', ar: 'الحساب', en: 'Account', web: '/settings', app: '/settings/account', group: 'settings', parent: 'settings' },
+  { key: 'privacy', ar: 'الخصوصية والتشفير', en: 'Privacy and encryption', web: '/settings', app: '/settings/privacy', group: 'settings', parent: 'settings' },
   { key: 'notifications', ar: 'التنبيهات', en: 'Notifications', web: '/settings/notifications', app: '/settings/notifications', group: 'settings', parent: 'settings' },
   { key: 'prayer-times', ar: 'أوقات الصلاة', en: 'Prayer times', web: '/settings/prayer-times', app: '/practice/prayer-times', group: 'settings', parent: 'settings' },
   { key: 'appearance', ar: 'اللغة والمظهر', en: 'Language and appearance', web: null, app: '/settings/appearance', group: 'settings', parent: 'settings' },

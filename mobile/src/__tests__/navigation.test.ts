@@ -1,58 +1,93 @@
 /**
- * The side menu (groups, members-only items, the inline-end side in each direction), the tab bar's pill (the current
- * tab only), the Settings groups and the home doors' sizes per screen width.
+ * Round 5 (§1 IA): the three tabs and every row of «المزيد» carry the names of the shared navigation map
+ * (practice-core `NAV_FEATURES`) in Arabic and English, and their routes; the tab bar's pill (the current tab only);
+ * the home doors' sizes per screen width.
  */
 
+import { NAV_FEATURES, navFeature, navName } from '@thekra/practice-core';
 import ar from '../lib/i18n/ar.json';
 import en from '../lib/i18n/en.json';
-import { SIDE_MENU, drawerOffset, drawerWidth, sideMenuAction } from '../lib/nav/side-menu';
+import { MORE_MENU, TABS, moreAction } from '../lib/nav/more-menu';
 import { TAB_PILL, tabIconLook } from '../lib/nav/tab-bar';
+import { HABITS_TABS, parseHabitsTab } from '../lib/practice/habits-view';
 import { light } from '../theme/palette';
-import { SETTINGS_GROUPS } from '../lib/settings/groups';
 import { SMALL_PHONE, TABLET, doorLayout } from '../lib/home/door-layout';
 
 const lookup = (dict: object, key: string): unknown =>
   key.split('.').reduce<unknown>((o, part) => (o as Record<string, unknown> | undefined)?.[part], dict);
 
-describe('side menu', () => {
-  const items = SIDE_MENU.flatMap((g) => g.items);
+describe('names and places follow the navigation map', () => {
+  const items = MORE_MENU.flatMap((g) => g.items);
 
-  it('lists the owner’s screens once each, in order: «تخفَّف» out, «استكشف النصوص» and «مواسم الخير» in', () => {
-    expect(items.map((i) => lookup(ar, i.labelKey))).toEqual([
-      'أعمال دورية',
-      'المحاسبة',
-      'استراتيجيات العادات',
-      'رفقة',
-      'استكشف النصوص',
-      'المحفوظات',
-      'مواسم الخير',
-    ]);
-    expect(items.some((i) => i.path === '/practice/sin-program')).toBe(false);
-    expect(new Set(items.map((i) => i.path)).size).toBe(items.length);
+  it('names the three tabs as the map does, in both languages', () => {
+    expect(TABS.map((tab) => tab.key)).toEqual(['home', 'habits', 'more']);
+    for (const tab of TABS) {
+      expect(lookup(ar, tab.labelKey)).toBe(navName(tab.key, 'ar'));
+      expect(lookup(en, tab.labelKey)).toBe(navName(tab.key, 'en'));
+    }
+    expect(navFeature('habits')?.app).toBe('/habits');
+    expect(navFeature('more')?.app).toBe('/more');
   });
 
-  it('has a heading and labels in both languages', () => {
-    for (const dict of [ar, en]) {
-      for (const group of SIDE_MENU) expect(typeof lookup(dict, group.titleKey)).toBe('string');
-      for (const entry of items) expect(typeof lookup(dict, entry.labelKey)).toBe('string');
+  it('names every «المزيد» row as the map does and opens the map’s app route', () => {
+    for (const item of items) {
+      const f = navFeature(item.key);
+      expect(f).toBeDefined();
+      expect(lookup(ar, item.labelKey)).toBe(f!.ar);
+      expect(lookup(en, item.labelKey)).toBe(f!.en);
+      expect(item.path).toBe(f!.app);
+    }
+    // The settings group heading is the map's «الإعدادات».
+    const settings = MORE_MENU.find((g) => g.key === 'settings')!;
+    expect(lookup(ar, settings.titleKey)).toBe(navName('settings', 'ar'));
+    expect(lookup(en, settings.titleKey)).toBe(navName('settings', 'en'));
+  });
+
+  it('lists the plan’s groups in order, each screen once, the settings rows last', () => {
+    expect(items.map((i) => i.key)).toEqual([
+      'leave-sin',
+      'people',
+      'circles',
+      'saved',
+      'browse',
+      'branches',
+      'strategies',
+      'account',
+      'privacy',
+      'notifications',
+      'prayer-times',
+      'appearance',
+      'about',
+    ]);
+    expect(new Set(items.map((i) => i.path)).size).toBe(items.length);
+    // Every app feature of the map's settings group has a row (none is lost with the old settings tab).
+    for (const f of NAV_FEATURES.filter((x) => x.group === 'settings' && x.parent === 'settings' && x.app)) {
+      expect(items.some((i) => i.key === f.key)).toBe(true);
     }
   });
 
-  it('asks a guest to sign in for members-only items, never for «استكشف النصوص» or «مواسم الخير»', () => {
-    const reviews = items.find((i) => i.key === 'reviews')!;
-    const seasons = items.find((i) => i.key === 'seasons')!;
-    const browse = items.find((i) => i.key === 'browse')!;
-    expect(sideMenuAction(reviews, false)).toEqual({ kind: 'signIn', next: '/practice/reviews' });
-    expect(sideMenuAction(reviews, true)).toEqual({ kind: 'open', href: '/practice/reviews' });
-    expect(sideMenuAction(seasons, false)).toEqual({ kind: 'open', href: '/practice/calendar' });
-    expect(sideMenuAction(browse, false)).toEqual({ kind: 'open', href: '/browse' });
+  it('names the four «عاداتي» tabs as the map does; `?tab=` opens one, anything else «ورد اليوم»', () => {
+    const keys = { wird: 'wird', periodic: 'periodic', review: 'review', record: 'record' } as const;
+    for (const tab of HABITS_TABS) {
+      const f = navFeature(keys[tab])!;
+      expect(f.app).toBe(`/habits?tab=${tab}`);
+      expect(lookup(ar, `habitsTab.tabs.${tab}`)).toBe(f.ar);
+      expect(lookup(en, `habitsTab.tabs.${tab}`)).toBe(f.en);
+    }
+    expect(parseHabitsTab('review')).toBe('review');
+    expect(parseHabitsTab(['record'])).toBe('record');
+    expect(parseHabitsTab('stats')).toBe('wird');
+    expect(parseHabitsTab(undefined)).toBe('wird');
   });
 
-  it('opens on the menu button’s side: the left in Arabic, the right in English', () => {
-    expect(drawerOffset(true, 300)).toEqual({ side: 'left', hiddenX: -300 });
-    expect(drawerOffset(false, 300)).toEqual({ side: 'right', hiddenX: 300 });
-    expect(drawerWidth(360)).toBe(302);
-    expect(drawerWidth(1024)).toBe(340);
+  it('asks a guest to sign in for members-only rows, never for reading or account rows', () => {
+    const people = items.find((i) => i.key === 'people')!;
+    const browse = items.find((i) => i.key === 'browse')!;
+    const account = items.find((i) => i.key === 'account')!;
+    expect(moreAction(people, false)).toEqual({ kind: 'signIn', next: '/practice/kinship' });
+    expect(moreAction(people, true)).toEqual({ kind: 'open', href: '/practice/kinship' });
+    expect(moreAction(browse, false)).toEqual({ kind: 'open', href: '/browse' });
+    expect(moreAction(account, false)).toEqual({ kind: 'open', href: '/settings/account' });
   });
 });
 
@@ -61,26 +96,10 @@ describe('tab bar', () => {
     expect(tabIconLook(true, light)).toEqual({ pill: light.primarySoft, strokeWidth: 1.8 });
     expect(tabIconLook(false, light)).toEqual({ pill: 'transparent', strokeWidth: 1.4 });
     // One rule, so no tab (formerly «ورد اليوم») keeps a pill while another is current.
-    const tabs = ['index', 'habits', 'record', 'settings'];
-    const current = 'record';
-    expect(tabs.filter((tab) => tabIconLook(tab === current, light).pill !== 'transparent')).toEqual(['record']);
+    const tabs = TABS.map((tab) => tab.name);
+    const current = 'habits';
+    expect(tabs.filter((tab) => tabIconLook(tab === current, light).pill !== 'transparent')).toEqual(['habits']);
     expect(TAB_PILL.width).toBeGreaterThan(TAB_PILL.height);
-  });
-});
-
-describe('settings groups', () => {
-  it('is a short list of distinct groups, each named in both languages', () => {
-    expect(SETTINGS_GROUPS.length).toBeLessThanOrEqual(7);
-    expect(new Set(SETTINGS_GROUPS.map((g) => g.key)).size).toBe(SETTINGS_GROUPS.length);
-    for (const dict of [ar, en]) for (const group of SETTINGS_GROUPS) expect(typeof lookup(dict, group.titleKey)).toBe('string');
-    expect(SETTINGS_GROUPS.map((g) => lookup(ar, g.titleKey))).toEqual([
-      'الحساب',
-      'التنبيهات والتذكير',
-      'أوقات الصلاة',
-      'الخصوصية والتشفير',
-      'اللغة والمظهر',
-      'عن التطبيق',
-    ]);
   });
 });
 

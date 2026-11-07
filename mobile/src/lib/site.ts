@@ -17,3 +17,9 @@ export const SITE_PRIVACY_PATH = '/about#privacy';
 export function sitePageUrl(path: string, locale: string): string {
   return locale === 'en' ? `${SITE_URL}/en${path}` : `${SITE_URL}${path}`;
 }
+
+/**
+ * The browser extension's store page (owner round 5, F-25 b): «تذكير على حاسوبك» in «التنبيهات» links here once the owner
+ * publishes it. `null` until then, and the row stays hidden.
+ */
+export const EXTENSION_STORE_URL: string | null = null;

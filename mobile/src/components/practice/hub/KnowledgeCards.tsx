@@ -1,7 +1,7 @@
 /**
  * «المعرفة والقلب» on the app (redesign §4.5), mirroring the website's KnowledgeCards and HabitCards: «حصيلتي» with its
  * gratitude line and «والقبول من الله», the brief «تقبّل الله منك» after a tick, «تمّ وردك اليوم» with one reward text,
- * the stories at moments (by Quote id only; hidden while an id is not filled), «شعبة الأسبوع» / «اسم الأسبوع», and the educational
+ * the stories at moments (by Quote id only; hidden while an id is not filled), «شعبة الأسبوع», and the educational
  * cards («حلقة العادة», how a sin grows, «الاستمرار: ثلاث حقائق»). Rules are practice-core; texts come from the API.
  */
 
@@ -16,16 +16,13 @@ import {
   dayCompletion,
   gratitudeAyah,
   HABIT_LOOP_STEPS,
-  nameOfWeekIndex,
   SIN_STEPS,
   storyQuoteId,
   tallies,
-  weekCardKind,
   type LocalDate,
   type StoryMoment,
 } from '@thekra/practice-core';
 import { useBranch } from '@/lib/api/branches';
-import { useNamesOfAllah } from '@/lib/api/names';
 import { useEvidence, usePracticeCatalog } from '@/lib/api/practice';
 import { QuoteLine } from '@/components/QuoteLine';
 import { useAyah } from '@/lib/api/quran';
@@ -35,11 +32,11 @@ import { usePlanDays } from '@/lib/practice/use-habits-hub';
 import { dayDoneLineKey } from '@/lib/practice/day-done';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { GradeBadge } from '@/components/GradeBadge';
-import { BottomSheet } from '@/components/practice/mujahada/Sheet';
+import { BottomSheet } from '@/ui';
 import { HadithGrade, QuoteType } from '@/lib/types/enums';
 import type { QuoteDto } from '@/lib/types/api';
 import { radius, space, useStyles, type Theme } from '@/theme';
-import { Button, ForwardChevron, Icon, Text, TextLink } from '@/ui';
+import { Button, ForwardChevron, Icon, Text } from '@/ui';
 import { BookMarked, HeartHandshake, Info, Sparkles } from 'lucide-react-native';
 import { planTitleOf } from './HeartCards';
 
@@ -281,6 +278,50 @@ export function StoryLine({ moment }: { moment: StoryMoment }) {
   );
 }
 
+/**
+ * The story of a moment in full, for a sheet that already names the moment (the heart card's «عملك المعتاد يُكتب لك»):
+ * the text, its grade and source, and «اقرأ الشرح». Nothing while the id is not filled or the text cannot be read.
+ */
+export function StoryBody({ moment, onLeave }: { moment: StoryMoment; onLeave?: () => void }) {
+  const { t } = useTranslation();
+  const locale = useUiLocale();
+  const styles = useStyles(makeStyles);
+  const catalog = usePracticeCatalog(locale);
+  const id = storyQuoteId(moment, catalog.data?.stories);
+  const evidence = useEvidence(id ? [id] : [], locale);
+  const quote = id ? evidence.data?.get(id) : undefined;
+  if (!quote) return null;
+  const isQuran = quote.type === QuoteType.QURAN_VERSE;
+  const source = quoteSourceLine(quote, locale);
+  const grade = quote.type === QuoteType.HADITH && !quote.isAthar ? quote.hadith?.grade : null;
+  return (
+    <>
+      <Text variant={isQuran ? 'quran' : 'reading'}>{quote.textAr}</Text>
+      {locale === 'en' && quote.translation?.text ? <Text variant="body">{quote.translation.text}</Text> : null}
+      {source || (grade && grade !== HadithGrade.UNGRADED) ? (
+        <View style={styles.source}>
+          {grade && grade !== HadithGrade.UNGRADED ? <GradeBadge grade={grade} /> : null}
+          {source ? (
+            <Text variant="caption" tone="muted" style={styles.sourceText}>
+              {source}
+            </Text>
+          ) : null}
+        </View>
+      ) : null}
+      <Button
+        icon={BookMarked}
+        label={isQuran ? t('study.openTafsir') : t('study.openSharh')}
+        variant="outline"
+        onPress={() => {
+          onLeave?.();
+          router.push(`/quotes/study/${quote.id}`);
+        }}
+        block
+      />
+    </>
+  );
+}
+
 /** «صحيح البخاري 2996» / «البقرة 2:255»: the source and its reference on one line, in the UI language. */
 function quoteSourceLine(quote: QuoteDto, locale: 'ar' | 'en'): string {
   if (quote.quran) {
@@ -293,47 +334,10 @@ function quoteSourceLine(quote: QuoteDto, locale: 'ar' | 'en'): string {
   return [name, ref].filter(Boolean).join(' · ');
 }
 
-// ── «شعبة الأسبوع» / «اسم الأسبوع» ──────────────────────────────────────────────────────────────────────────
-
-/** «ورد اليوم»'s weekly card (redesign §4.7): even ISO weeks «شعبة الأسبوع», odd weeks «اسم الأسبوع» (practice-core). */
-const SHOW_NAME_WEEKS = false;
-
-/** `before`: drawn above the card only when it shows (the page's separator rule). */
-export function WeekCard({ today, before }: { today: LocalDate; before?: React.ReactNode }) {
-  // Only for a member who chose to study the branches of faith (owner round 3, item 7: Settings ← «اللغة والمظهر»).
-  const optedIn = usePracticeStore((s) => s.prefs.weekBranch);
-  if (!optedIn) return null;
-  // «اسم الأسبوع» waits while «الأسماء الحسنى» is hidden (owner, 2026-11-01); set SHOW_NAME_WEEKS to true to bring it back.
-  return !SHOW_NAME_WEEKS || weekCardKind(today) === 'branch' ? (
-    <WeekBranchCard today={today} before={before} />
-  ) : (
-    <WeekNameCard today={today} before={before} />
-  );
-}
-
-/** «اسم الأسبوع»: one Name of Allah for everyone this name week, walking the API list in turn; opens its page. */
-export function WeekNameCard({ today, before }: { today: LocalDate; before?: React.ReactNode }) {
-  const { t } = useTranslation();
-  const styles = useStyles(makeStyles);
-  const names = useNamesOfAllah();
-  const list = names.data ?? [];
-  const name = list.length > 0 ? list[nameOfWeekIndex(today, list.length)] : undefined;
-  if (!name) return null;
-  return (
-    <>
-      {before}
-      <View style={styles.section}>
-        <Text variant="small" weight="medium" tone="muted" accessibilityRole="header">
-          {t('practice.weekName.title')}
-        </Text>
-        <TextLink label={name.nameAr} onPress={() => router.push(`/names/${name.slug}`)} />
-      </View>
-    </>
-  );
-}
+// ── «شعبة الأسبوع» ─────────────────────────────────────────────────────────────────────────────────────────
 
 /**
- * «شعبة الأسبوع» on «ورد اليوم»: one compact row (owner, 2026-11-03): the label and number on top, the branch's title
+ * «شعبة الأسبوع» (in «المزيد لليوم» of «ورد اليوم», and the home section): one compact row (owner, 2026-11-03): the label and number on top, the branch's title
  * under it (wrapping inside the row, never past the screen edge), opening its page.
  */
 export function WeekBranchCard({ today, before }: { today: LocalDate; before?: React.ReactNode }) {

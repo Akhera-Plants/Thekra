@@ -76,9 +76,11 @@ describe('practice strings', () => {
 
   it('names the screens and the private program as the owner chose, never naming a sin', () => {
     const ar = i18n.getFixedT('ar');
-    expect(ar('tabs.wird')).toBe('ورد اليوم');
+    // Round 5 (§1 IA): one «عاداتي» tab, «ورد اليوم» its first segment, «المزيد» the third tab.
+    expect(ar('tabs.habits')).toBe('عاداتي');
+    expect(ar('habitsTab.tabs.wird')).toBe('ورد اليوم');
     expect(ar('practice.wird.title')).toBe('ورد اليوم');
-    expect(ar('tabs.record')).toBe('عاداتي');
+    expect(ar('tabs.more')).toBe('المزيد');
     expect(ar('record.title')).toBe('عاداتي');
     expect(ar('home.entryTitle')).toBe('أبواب الخير');
     expect(ar('home.sinEntryLabel')).toBe('تخفَّف من معصية');

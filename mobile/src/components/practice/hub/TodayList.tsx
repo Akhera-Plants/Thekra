@@ -36,7 +36,8 @@ const makeStyles = (t: Theme) => ({
 });
 
 export interface TodayListProps {
-  title: string;
+  /** The list's heading; absent when the page's own title row names it. */
+  title?: string;
   date: LocalDate;
   today: LocalDate;
   rows: AgendaRowModel[];
@@ -51,6 +52,9 @@ export interface TodayListProps {
   onMinimum?: (item: HabitItem) => void;
   /** «أضف عادة» under the empty line (on «ورد اليوم» only). */
   onAddHabit?: () => void;
+  /** «صلّحها» on the habit rows this returns true for (round 5, F-08 a). */
+  canFix?: (planId: string) => boolean;
+  onFix?: (item: HabitItem) => void;
   /** Under the list (the «يومي ثقيل» chip). */
   footer?: React.ReactNode;
 }
@@ -68,6 +72,8 @@ export function TodayList({
   onUndo,
   onMinimum,
   onAddHabit,
+  canFix,
+  onFix,
   footer,
 }: TodayListProps) {
   const { t } = useTranslation();
@@ -105,6 +111,7 @@ export function TodayList({
             onToggle={onToggleHabit}
             onUndo={onUndo}
             onMinimum={canLog && row.canMinimum ? onMinimum : undefined}
+            onFix={canLog && onFix && canFix?.(row.item.planId) ? onFix : undefined}
           />
         );
       case 'relative':
@@ -122,7 +129,7 @@ export function TodayList({
           />
         );
       case 'program':
-        return <ProgramRow key={row.key} done={row.done} meta={row.meta} showMoment={isToday} />;
+        return <ProgramRow key={row.key} done={row.done} meta={row.meta} />;
     }
   };
 
@@ -130,9 +137,11 @@ export function TodayList({
 
   return (
     <View style={styles.root}>
-      <Text variant="title" accessibilityRole="header">
-        {title}
-      </Text>
+      {title ? (
+        <Text variant="title" accessibilityRole="header">
+          {title}
+        </Text>
+      ) : null}
 
       {!canLog && (tasks.length > 0 || offDayRows.length > 0) ? (
         <Notice icon={date > today ? CalendarClock : Eye}>

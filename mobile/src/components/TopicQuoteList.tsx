@@ -75,7 +75,9 @@ interface TopicQuoteListProps {
   /** Short lines about the topic in the title block («كبيرة · …», «موضوع معاصر»), never a text. */
   meta?: React.ReactNode;
   emptyMessage: string;
-  /** The top of the tab's content, under the tabs (the page's action, the reward…). */
+  /** The page's ONE primary action, on the title's line (owner round 5, F-10 a / A-07): a `sm` Button. */
+  titleAction?: React.ReactNode;
+  /** The top of the tab's content, under the tabs (a secondary action, the reward…). */
   intro?: React.ReactNode;
   footer?: React.ReactNode;
 }
@@ -130,6 +132,7 @@ export function TopicQuoteList({
   lead,
   meta,
   emptyMessage,
+  titleAction,
   intro,
   footer,
 }: TopicQuoteListProps) {
@@ -160,7 +163,7 @@ export function TopicQuoteList({
 
   const header = title ? (
     <View style={styles.header}>
-      <PageHeader eyebrow={eyebrow} title={title} lead={lead ?? undefined}>
+      <PageHeader eyebrow={eyebrow} title={title} lead={lead ?? undefined} action={titleAction}>
         {meta}
       </PageHeader>
       {showTabs ? <SegmentTabs items={tabs} value={filter} onChange={onFilterChange} /> : null}

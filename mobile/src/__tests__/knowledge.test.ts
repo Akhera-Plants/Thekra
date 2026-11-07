@@ -22,7 +22,8 @@ describe('strategies', () => {
       return target.kind === 'screen' ? target.heart : undefined;
     };
     expect(heart('evening')).toEqual({ eveningReview: true });
-    expect(heart('pledges')).toEqual({ pledges: true });
+    // Round 5 (F-08 a): no pledge set-up any more; «إذا… فإني…» lives in each habit's «عدّل».
+    expect(heart('pledges')).toBeUndefined();
     expect(heart('add')).toBeUndefined();
   });
 
@@ -31,11 +32,10 @@ describe('strategies', () => {
     expect(listedStrategies()).toHaveLength(STRATEGIES.length - 1);
   });
 
-  it('keeps the chosen strategies and their time in the prefs, opt-in by default', () => {
-    expect(DEFAULT_PREFS.strategies).toEqual([]);
+  it('keeps no strategy reminder prefs any more (round 5, F-12 a)', () => {
+    expect(DEFAULT_PREFS).not.toHaveProperty('strategies');
     const prefs = parsePrefs({ v: 1, strategies: ['company', 'nope', 'start-tiny'], strategyTime: '09:30' });
-    expect(prefs.strategies).toEqual(['start-tiny', 'company']);
-    expect(notificationPrefsOf(prefs)).toMatchObject({ strategies: ['start-tiny', 'company'], strategyTime: '09:30' });
-    expect(parsePrefs({ v: 1, strategyTime: 'x' }).strategyTime).toBe(DEFAULT_NOTIFICATION_PREFS.strategyTime);
+    expect(prefs).not.toHaveProperty('strategies');
+    expect(notificationPrefsOf(prefs)).toMatchObject({ strategies: [], strategyTime: DEFAULT_NOTIFICATION_PREFS.strategyTime });
   });
 });

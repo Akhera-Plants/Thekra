@@ -77,6 +77,8 @@ export function useRescheduleReminders(): () => Promise<void> {
       // The weekly review's day is the heart's; no reminder once that day's review is saved, or while the review is off.
       reviewDay: heart.prefs.reviewDay,
       reviewDoneOn: (day) => !heart.prefs.fridayReview || heart.weekly.some((w) => w.weekOf === day),
+      // «مناسبة قريبة»: the catalog's occasions (public, the same for everyone).
+      occasions: catalog?.occasions,
     });
     await applyReminders(planned, t('practice.notify.channelName'));
   }, [qc, locale, t]);

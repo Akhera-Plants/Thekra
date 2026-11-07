@@ -1,18 +1,20 @@
 /**
- * «أوقات الصلاة» (redesign §4.6): the city whose prayer times anchor «بعد الفجر»… reminders. The app fetches 30 days
- * from AlAdhan (method by country unless chosen, manual minutes per prayer) and keeps them on the device; without a
- * city or offline the anchors use default times. The calculation method is one row opening a sheet of choices, and the
- * manual minutes sit behind one collapsed row, so the form stays short.
+ * «أوقات الصلاة» (redesign §4.6; owner round 5, F-27 note): the user types only a city. «احفظ» (full width) asks
+ * AlAdhan for that city (`timingsByAddress`), reads where it placed it and the method it chose (practice-core
+ * `alAdhanTimingsUrl` / `parseAlAdhanMeta`), saves both and fetches 30 days of times for the device; a city it cannot
+ * place and an offline device each get their own line, and nothing is saved. The resolved place and method show in one
+ * line. No country field (A-32 superseded). The method and the manual minutes stay behind one row each, so the form
+ * stays short; «امسح» is in the header's «⋯». Without a city, anchored slots use default times.
  */
 
 import React, { useState } from 'react';
 import { Pressable, View } from 'react-native';
-import { Calculator, ChevronDown, ChevronUp, SlidersHorizontal } from 'lucide-react-native';
+import { Stack, router } from 'expo-router';
+import { Calculator, ChevronDown, ChevronUp, MapPin, SlidersHorizontal, Trash2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import {
   ALADHAN_METHODS,
   ANCHOR_LABELS,
-  defaultMethodForCountry,
   emptyOffsets,
   MAX_CITY_LENGTH,
   MAX_PRAYER_OFFSET,
@@ -24,19 +26,18 @@ import {
 } from '@thekra/practice-core';
 import { useDisplayTime } from '@/components/practice/editors';
 import { today, usePracticeStore } from '@/lib/practice/practice-store';
-import { currentPrayerLookup, refreshPrayerTimes } from '@/lib/practice/prayer';
+import { currentPrayerLookup, lookupCity, refreshPrayerTimes } from '@/lib/practice/prayer';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { space, useStyles, type Theme } from '@/theme';
-import { BottomSheet } from '@/components/practice/mujahada/Sheet';
-import { Chip, Field, Icon, ListRow, Notice, PageHeader, Screen, Section, Text, SectionDivider, ButtonPair, toast } from '@/ui';
+import { ActionMenu, BottomSheet, Button, Chip, ErrorText, Field, Icon, ListRow, Notice, PageHeader, Screen, Section, SectionDivider, Text, toast } from '@/ui';
 
 const makeStyles = (t: Theme) => ({
   stack: { gap: space.md },
   chips: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: space.sm },
   offsets: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: space.sm },
   offset: { width: 96 },
-  /** No top rule: the first row sits under its section title (A-05). */
-  rows: {},
+  place: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.sm },
+  placeText: { flex: 1, minWidth: 0 },
   toggle: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
@@ -49,7 +50,7 @@ const makeStyles = (t: Theme) => ({
   toggleText: { flex: 1, minWidth: 0 },
 });
 
-type Status = 'idle' | 'saving' | 'saved' | 'failed';
+type Status = 'idle' | 'saving' | 'notFound' | 'offline' | 'failed';
 
 export default function PrayerTimesScreen() {
   const { t } = useTranslation();
@@ -59,49 +60,115 @@ export default function PrayerTimesScreen() {
   usePracticeStore((s) => s.prefs.prayerCache); // re-render when new times arrive
   const setPrefs = usePracticeStore((s) => s.setPrefs);
   const [city, setCity] = useState(saved?.city ?? '');
-  const [country, setCountry] = useState(saved?.country ?? '');
+  // A method chosen by hand; otherwise AlAdhan's choice for the city is used and stored.
   const [method, setMethod] = useState<number | null>(saved?.method ?? null);
   const [offsets, setOffsets] = useState<Record<Prayer, number>>(saved?.offsets ?? emptyOffsets());
   const [status, setStatus] = useState<Status>('idle');
+  const [zone, setZone] = useState<string | null>(null);
   const [picking, setPicking] = useState(false);
   const [tuning, setTuning] = useState(false);
-  const effective = method ?? (country.length === 2 ? defaultMethodForCountry(country) : null);
-  const chosenMethod = ALADHAN_METHODS.find((m) => m.id === effective);
-  const methodName = chosenMethod ? (locale === 'en' ? chosenMethod.en : chosenMethod.ar) : null;
+  const methodName = (id: number | null | undefined) => {
+    const m = ALADHAN_METHODS.find((x) => x.id === id);
+    return m ? (locale === 'en' ? m.en : m.ar) : null;
+  };
   const times = currentPrayerLookup()(today());
   const show = useDisplayTime();
 
   async function save() {
-    const next = parsePrayerSettings({ city, country, method: effective ?? undefined, offsets });
-    if (!next) {
-      setStatus('failed');
+    setStatus('saving');
+    const found = await lookupCity(city, today());
+    if (found.kind !== 'found') {
+      setStatus(found.kind);
       return;
     }
-    setStatus('saving');
+    const next = parsePrayerSettings({ city, method: method ?? found.meta.method ?? undefined, offsets });
+    if (!next) {
+      setStatus('notFound');
+      return;
+    }
     setPrefs((p) => ({ ...p, prayer: next }));
-    const result = (await refreshPrayerTimes(true)) === 'updated' ? 'saved' : 'failed';
-    setStatus(result);
-    if (result === 'saved') toast(t('prayerTimes.saved'));
+    setZone(found.meta.timezone);
+    if ((await refreshPrayerTimes(true)) !== 'updated') {
+      setStatus('offline');
+      return;
+    }
+    setStatus('idle');
+    setMethod(next.method ?? null);
+    toast(t('prayerTimes.saved'));
+    if (router.canGoBack()) router.back();
   }
+
+  function clear() {
+    setPrefs((p) => ({ ...p, prayer: null, prayerCache: null }));
+    setCity('');
+    setMethod(null);
+    setZone(null);
+    toast(t('habitsTab.prayer.cleared'));
+  }
+
+  const savedLine = saved
+    ? [saved.city, zone, methodName(saved.method)].filter(Boolean).join(' · ')
+    : null;
 
   return (
     <Screen edges={['bottom']} keyboard>
-      <PageHeader title={t('prayerTimes.title')} lead={t('prayerTimes.lead')} />
+      <Stack.Screen
+        options={{
+          headerRight: saved
+            ? () => (
+                <ActionMenu
+                  items={[
+                    {
+                      label: t('prayerTimes.clear'),
+                      icon: Trash2,
+                      destructive: true,
+                      onPress: clear,
+                      confirm: { title: t('prayerTimes.clear'), message: t('habitsTab.prayer.clearConfirm'), confirmLabel: t('prayerTimes.clear') },
+                    },
+                  ]}
+                />
+              )
+            : undefined,
+        }}
+      />
+      <PageHeader title={t('prayerTimes.title')} lead={t('habitsTab.prayer.lead')} />
       <Section>
         <View style={styles.stack}>
-          <Field label={t('prayerTimes.city')} value={city} maxLength={MAX_CITY_LENGTH} onChangeText={setCity} />
+          {savedLine ? (
+            <View style={styles.place}>
+              <Icon icon={MapPin} size={18} tone="link" />
+              <Text variant="small" style={styles.placeText}>
+                {savedLine}
+              </Text>
+            </View>
+          ) : null}
           <Field
-            label={t('prayerTimes.country')}
-            value={country}
-            maxLength={2}
-            autoCapitalize="characters"
-            onChangeText={(v) => setCountry(v.toUpperCase().replace(/[^A-Z]/g, ''))}
+            label={t('prayerTimes.city')}
+            placeholder={t('habitsTab.prayer.cityPlaceholder')}
+            value={city}
+            maxLength={MAX_CITY_LENGTH}
+            autoCorrect={false}
+            returnKeyType="done"
+            onSubmitEditing={() => void save()}
+            onChangeText={(v) => {
+              setCity(v);
+              if (status !== 'saving') setStatus('idle');
+            }}
           />
-          <View style={styles.rows}>
+          {status === 'notFound' ? <ErrorText>{t('habitsTab.prayer.notFound')}</ErrorText> : null}
+          {status === 'offline' ? <Notice tone="destructive">{t('habitsTab.prayer.offline')}</Notice> : null}
+          <Button
+            size="lg"
+            label={status === 'saving' ? t('prayerTimes.saving') : t('prayerTimes.save')}
+            onPress={() => void save()}
+            disabled={status === 'saving' || city.trim().length === 0}
+            loading={status === 'saving'}
+          />
+          <View>
             <ListRow
               icon={Calculator}
               title={t('prayerTimes.method')}
-              value={methodName ?? t('prayerTimes.notSet')}
+              value={methodName(method) ?? t('habitsTab.prayer.methodAuto')}
               chevron
               onPress={() => setPicking(true)}
             />
@@ -135,29 +202,12 @@ export default function PrayerTimesScreen() {
               ))}
             </View>
           ) : null}
-          {/* «احفظ» with «امسح» beside it at one size (O-02), not floating on its own. */}
-          <ButtonPair
-            primary={{
-              label: status === 'saving' ? t('prayerTimes.saving') : t('prayerTimes.save'),
-              onPress: () => void save(),
-              disabled: status === 'saving',
-              loading: status === 'saving',
-            }}
-            secondary={saved ? { label: t('prayerTimes.clear'), onPress: () => setPrefs((p) => ({ ...p, prayer: null, prayerCache: null })) } : null}
-          />
-          {status === 'saved' ? <Notice>{t('prayerTimes.saved')}</Notice> : null}
-          {status === 'failed' ? <Notice tone="destructive">{t('prayerTimes.failed')}</Notice> : null}
-          {status === 'idle' ? (
-            <Text variant="small" tone="muted">
-              {t('prayerTimes.helper')}
-            </Text>
-          ) : null}
         </View>
       </Section>
       <SectionDivider />
       <Section title={t('prayerTimes.anchorsTitle')}>
-        {PRAYER_ANCHORS.map((anchor) => (
-          <ListRow key={anchor} title={ANCHOR_LABELS[locale][anchor]} value={show(resolveAnchor(anchor, times))} />
+        {PRAYER_ANCHORS.map((anchor, i) => (
+          <ListRow key={anchor} title={ANCHOR_LABELS[locale][anchor]} value={show(resolveAnchor(anchor, times))} last={i === PRAYER_ANCHORS.length - 1} />
         ))}
         {!times ? (
           <Text variant="small" tone="muted">
@@ -168,11 +218,19 @@ export default function PrayerTimesScreen() {
 
       <BottomSheet visible={picking} title={t('prayerTimes.method')} onClose={() => setPicking(false)}>
         <View style={styles.chips}>
+          <Chip
+            label={t('habitsTab.prayer.methodAuto')}
+            selected={method === null}
+            onPress={() => {
+              setMethod(null);
+              setPicking(false);
+            }}
+          />
           {ALADHAN_METHODS.map((m) => (
             <Chip
               key={m.id}
               label={locale === 'en' ? m.en : m.ar}
-              selected={effective === m.id}
+              selected={method === m.id}
               onPress={() => {
                 setMethod(m.id);
                 setPicking(false);

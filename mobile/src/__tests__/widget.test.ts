@@ -58,7 +58,8 @@ describe('home-screen widget snapshot', () => {
     const s = snapshot({ kind: 'seasons' });
     expect(s.texts).toEqual([]);
     const view = widgetView(s, TODAY);
-    expect(view.text.title).toBe('مواسم الخير · 26 أكتوبر');
+    // Round 5 (F-17): the source is «اليوم والمناسبة القريبة», no «مواسم الخير» page any more.
+    expect(view.text.title).toBe('اليوم والمناسبة القريبة · 26 أكتوبر');
     expect(view.text.body).toBe('القادم: يوم الجمعة، 30 أكتوبر');
     expect(widgetView(s, '2026-10-30').text.body).toContain('اليوم: يوم الجمعة');
   });

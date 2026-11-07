@@ -6,6 +6,10 @@
  */
 import {
   alAdhanCalendarUrl,
+  alAdhanTimingsUrl,
+  cleanCity,
+  parseAlAdhanMeta,
+  type AlAdhanMeta,
   mergePrayerCache,
   monthsToFetch,
   parseAlAdhan,
@@ -66,4 +70,40 @@ export function currentPrayerDay(date: LocalDate): PrayerTimesWithSunrise | unde
 export function currentPrayerLookup(): PrayerTimesLookup {
   const { prefs } = usePracticeStore.getState();
   return prayerLookup(prefs.prayerCache, prefs.prayer);
+}
+
+/** What «ابحث» found for a typed city (owner round 5, F-27 note: the user types only a city). */
+export type CityLookup =
+  | { kind: 'found'; meta: AlAdhanMeta }
+  /** AlAdhan could not place the city («Unable to geocode address»). */
+  | { kind: 'notFound' }
+  /** No answer: offline, a timeout, or the service failed. */
+  | { kind: 'offline' };
+
+/**
+ * Asks AlAdhan for today's times of a typed city (`timingsByAddress`) and reads where it placed it and which method it
+ * chose (`parseAlAdhanMeta`). Never throws.
+ */
+export async function lookupCity(city: string, date: LocalDate, fetchImpl: typeof fetch = fetch): Promise<CityLookup> {
+  const clean = cleanCity(city);
+  if (!clean) return { kind: 'notFound' };
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  try {
+    const res = await fetchImpl(alAdhanTimingsUrl({ city: clean }, date), { signal: controller.signal });
+    let json: unknown = null;
+    try {
+      json = await res.json();
+    } catch {
+      json = null;
+    }
+    const meta = parseAlAdhanMeta(json);
+    if (meta) return { kind: 'found', meta };
+    // AlAdhan answers a city it cannot place with 400 and a body; a 5xx (or no body) is the service, not the city.
+    return res.status >= 500 || json === null ? { kind: 'offline' } : { kind: 'notFound' };
+  } catch {
+    return { kind: 'offline' };
+  } finally {
+    clearTimeout(timer);
+  }
 }

@@ -8,6 +8,7 @@ import React, { useState } from 'react';
 import { Linking, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { leaveAuth } from '@/lib/auth/require-sign-in';
+import { onboardingSeen } from '@/lib/practice/onboarding-flag';
 import { useTranslation } from 'react-i18next';
 import { SITE_PRIVACY_PATH, sitePageUrl } from '@/lib/site';
 import { useAuthStore } from '@/lib/stores/auth-store';
@@ -41,7 +42,9 @@ export default function RegisterScreen() {
     setFailure(null);
     try {
       await register({ email, password, displayName: name.trim() });
-      leaveAuth(next);
+      // A new account sees the first steps once (owner round 5, F-26 a); they end in «عاداتي» or on home.
+      if (await onboardingSeen()) leaveAuth(next);
+      else router.replace('/practice/onboarding');
     } catch (e) {
       const offline = e instanceof ApiError && (e.status === 0 || e.code === 'NETWORK_ERROR');
       const taken = e instanceof ApiError && e.code === 'EMAIL_ALREADY_REGISTERED';

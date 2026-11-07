@@ -1,15 +1,18 @@
 /**
  * The app header on every tab: the wordmark «ذكرى» with the tagline («لِمَن كَانَ لَهُۥ قَلْبٌ», the site header's
- * `.brand-message`) right next to it, and the menu button on the opposite, inline-end side (owner, 2026-11-01), framed
- * like every other control; it opens `SideMenu` from that same side.
+ * `.brand-message`) right next to it, and, for a member, ONE generic icon button «لحظة مجاهدة» on the opposite,
+ * inline-end side (owner round 5, F-32 a / F-09). It names nothing personal: the moment screen picks the program in
+ * focus on this device. The side menu is gone; its screens are in the «المزيد» tab.
  */
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
+import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Menu } from 'lucide-react-native';
+import { LifeBuoy } from 'lucide-react-native';
+import { setMomentSource } from '@/lib/practice/practice-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { space, useStyles, useTheme, type Theme } from '@/theme';
 import { BrandBar, IconButton, Text } from '@/ui';
-import { SideMenu } from './SideMenu';
 
 const makeStyles = (t: Theme) => ({
   /** `.brand-message`: Amiri Quran, muted, after a hairline (English: the UI face). */
@@ -35,13 +38,15 @@ function Tagline() {
 
 export function AppHeader() {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
-  const handleOpen = useCallback(() => setOpen(true), []);
-  const handleClose = useCallback(() => setOpen(false), []);
+  const signedIn = useAuthStore((s) => s.user !== null);
+  const handleMoment = useCallback(() => {
+    setMomentSource(null);
+    router.push('/practice/moment');
+  }, []);
   return (
-    <>
-      <BrandBar tagline={<Tagline />} end={<IconButton icon={Menu} label={t('menu.open')} tone="default" bordered onPress={handleOpen} />} />
-      <SideMenu visible={open} onClose={handleClose} />
-    </>
+    <BrandBar
+      tagline={<Tagline />}
+      end={signedIn ? <IconButton icon={LifeBuoy} label={t('sinProgram.moment.title')} tone="default" bordered onPress={handleMoment} /> : undefined}
+    />
   );
 }

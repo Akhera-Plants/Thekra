@@ -2,19 +2,24 @@
  * شعب الإيمان: the website's branches catalogue (branches/page.tsx through TopicCatalog, `.topic-item` rows with the
  * open book) as a full-screen searchable list, like the sin and good-deed pickers. The 77 branches in their order;
  * the search folds Arabic like the site's and also finds a branch by its number. The native header owns Back.
+ * At the top, for a member, «ادرس شعبة كل أسبوع» (owner round 5, F-18 a): it turns on the home section «شعبة الأسبوع»
+ * (practice-core home sections, synced) and becomes «أوقف شعبة الأسبوع» while it is on.
  */
 
 import React, { memo, useCallback, useMemo, useState } from 'react';
 import { FlatList, RefreshControl, View, type ListRenderItem } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { BookOpen, SearchX, WifiOff } from 'lucide-react-native';
+import { BookOpen, CalendarCheck, CalendarX, SearchX, WifiOff } from 'lucide-react-native';
+import { resolveHomeSections, setHomeSections, setHomeSectionVisible } from '@thekra/practice-core';
 import { useBranches } from '@/lib/api/branches';
 import { useIsOffline } from '@/lib/query-client';
+import { usePracticeStore } from '@/lib/practice/practice-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { foldArabic, topicMeta } from '@/lib/topics';
 import type { BranchesQuery, ImanBranchDto } from '@/lib/types/api';
 import { GUTTER, space, useStyles, useTheme, type Theme } from '@/theme';
-import { EmptyState, ErrorState, Field, ListRow, Notice, PageHeader, Screen, Skeleton } from '@/ui';
+import { Button, EmptyState, ErrorState, Field, ListRow, Notice, PageHeader, Screen, Skeleton, toast } from '@/ui';
 
 const SKELETON_ROWS = ['s1', 's2', 's3', 's4', 's5', 's6'];
 /** All 77 in one page (the API allows 100). */
@@ -49,6 +54,37 @@ const BranchRow = memo(function BranchRow({ branch, english }: { branch: ImanBra
     />
   );
 });
+
+/**
+ * «ادرس شعبة كل أسبوع» / «أوقف شعبة الأسبوع» (F-18 a): the home section `week-branch`, members only (a visitor's home
+ * has its fixed order). It also clears the round-3 device switch (`prefs.weekBranch`) so its one-time move into the
+ * home sections cannot turn the section back on.
+ */
+function WeekBranchButton() {
+  const { t } = useTranslation();
+  const member = useAuthStore((s) => Boolean(s.user));
+  const sections = usePracticeStore((s) => s.store.settings.homeSections);
+  const setStore = usePracticeStore((s) => s.setStore);
+  const setPrefs = usePracticeStore((s) => s.setPrefs);
+  if (!member) return null;
+  const on = resolveHomeSections(sections).some((s) => s.key === 'week-branch' && s.visible);
+
+  function handlePress() {
+    setStore((store) => setHomeSections(store, setHomeSectionVisible(store.settings.homeSections, 'week-branch', !on)));
+    setPrefs((p) => (p.weekBranch ? { ...p, weekBranch: false } : p));
+    toast(on ? t('branches.week.offToast') : t('branches.week.onToast'));
+  }
+
+  return (
+    <Button
+      label={on ? t('branches.week.stop') : t('branches.week.start')}
+      icon={on ? CalendarX : CalendarCheck}
+      variant={on ? 'outline' : 'solid'}
+      onPress={handlePress}
+      accessibilityHint={on ? undefined : t('branches.week.hint')}
+    />
+  );
+}
 
 function BranchRowsSkeleton() {
   const styles = useStyles(makeStyles);
@@ -91,6 +127,7 @@ export default function BranchesScreen() {
   const header = (
     <View style={styles.header}>
       <PageHeader eyebrow={t('home.branchOverline')} title={t('branches.pageTitle')} lead={t('home.branchEntryDescription')} />
+      <WeekBranchButton />
       {isOffline ? <Notice icon={WifiOff}>{t('common.offlineBanner')}</Notice> : null}
       <Field
         value={search}

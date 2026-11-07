@@ -1,10 +1,10 @@
 /**
- * Bottom tab bar, four tabs: «الرئيسية» · «ورد اليوم» · «عاداتي» · «الإعدادات» (the middle two for members only), in
- * reading order (Home at the start: the right in Arabic, the left in English), in the website's look (background
- * fill, hairline on top, thin lucide icons, Plex labels, the primary colour for the current tab). The current tab's
- * icon sits in a soft green pill; the others have none (`tabIconLook`, the same rule for every tab). «عاداتي» is the
- * `record` route (the name kept so older links work). The other screens (أعمال دورية، المحفوظات، مواسم الخير،
- * استكشف النصوص…) open from the side menu in the app header.
+ * Bottom tab bar, three tabs (owner round 5, §1 IA): «الرئيسية» · «عاداتي» · «المزيد», in reading order (Home at the
+ * start: the right in Arabic, the left in English), in the website's look (background fill, hairline on top, thin
+ * lucide icons, Plex labels, the primary colour for the current tab). The current tab's icon sits in a soft green pill;
+ * the others have none (`tabIconLook`). «عاداتي» is for members (a guest's tap opens «تسجيل الدخول» first). The tab
+ * names are the shared navigation map's (src/lib/nav/more-menu.ts `TABS`, tested). The old `record` and `settings`
+ * tabs stay as hidden redirects, so older links and notifications land on «عاداتي › سجلّي» and «المزيد».
  *
  * Height and bottom padding add the safe-area inset (home indicator, Android's edge-to-edge navigation bar): the tab
  * bar uses a custom height as is, so the inset has to be in it.
@@ -15,7 +15,7 @@ import { View, type ColorValue } from 'react-native';
 import { Tabs } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { House, ListChecks, Settings2, Sprout, type LucideIcon } from 'lucide-react-native';
+import { Ellipsis, House, Sprout, type LucideIcon } from 'lucide-react-native';
 import { isSignedIn, openSignIn } from '@/lib/auth/require-sign-in';
 import { TAB_PILL, tabIconLook } from '@/lib/nav/tab-bar';
 import { radius, useTheme } from '@/theme';
@@ -50,11 +50,10 @@ const icon = (glyph: LucideIcon) =>
   };
 
 const HomeIcon = icon(House);
-const WirdIcon = icon(Sprout);
-const RecordIcon = icon(ListChecks);
-const SettingsIcon = icon(Settings2);
+const HabitsIcon = icon(Sprout);
+const MoreIcon = icon(Ellipsis);
 
-/** «ورد اليوم» and «عاداتي» are for members: a guest's tap opens «تسجيل الدخول», then the tab (owner, 2026-11-01). */
+/** «عاداتي» is for members: a guest's tap opens «تسجيل الدخول», then the tab (owner, 2026-11-01). */
 const membersOnly = (next: string) => ({
   tabPress: (event: { preventDefault: () => void }) => {
     if (isSignedIn()) return;
@@ -90,17 +89,11 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen name="index" options={{ title: t('tabs.home'), tabBarIcon: HomeIcon }} />
-      <Tabs.Screen
-        name="habits"
-        options={{ title: t('tabs.wird'), tabBarIcon: WirdIcon }}
-        listeners={membersOnly('/(tabs)/habits')}
-      />
-      <Tabs.Screen
-        name="record"
-        options={{ title: t('tabs.record'), tabBarIcon: RecordIcon }}
-        listeners={membersOnly('/(tabs)/record')}
-      />
-      <Tabs.Screen name="settings" options={{ title: t('tabs.settings'), tabBarIcon: SettingsIcon }} />
+      <Tabs.Screen name="habits" options={{ title: t('tabs.habits'), tabBarIcon: HabitsIcon }} listeners={membersOnly('/habits')} />
+      <Tabs.Screen name="more" options={{ title: t('tabs.more'), tabBarIcon: MoreIcon }} />
+      {/* Older routes, kept as redirects and out of the bar. */}
+      <Tabs.Screen name="record" options={{ href: null }} />
+      <Tabs.Screen name="settings" options={{ href: null }} />
     </Tabs>
   );
 }

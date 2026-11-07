@@ -1,57 +1,78 @@
 /**
- * «المقامات» on «ورد اليوم» (redesign §4.4), mirroring the website's HeartCards: the rotating text (المراقبة), the last
- * weekly review's «رسالة إلى نفسي» (first, before anything else), «نية اليوم» until noon, a due «التزام شخصي», the
- * weekly review (on the user's review day) and the evening review (from the user's time). Every rule is practice-core; the data is device-local (practice-store `heart`), never synced.
- * Calm words only: no guilt, no penalty, no comparison.
+ * «المقامات» (owner round 5, F-06 a / F-35 a / A-01 a): ONE heart card at the top of «ورد اليوم», chosen by
+ * practice-core `heartSlot` (نية اليوم in the morning → the evening review from its time → the weekly review on its
+ * day → «عملك المعتاد يُكتب لك» the morning after an excused or heavy day). The card is one line with «ابدأ» that opens
+ * a sheet with the form, so the habits stay at the top of the page. The same forms open from «محاسبتي» (start now).
+ * Every rule is practice-core; the data is device-local (practice-store `heart`). Calm words only: no guilt.
  */
 
 import React, { useMemo, useState } from 'react';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { ChevronDown, ChevronUp, ClipboardCheck, HeartHandshake, Moon, Sun, type LucideIcon } from 'lucide-react-native';
 import {
   activePrograms,
   applyStep,
   dayAgenda,
   daySummary,
-  eveningCardVisible,
+  heartSlot,
   intentionOf,
-  intentionState,
-  keepPledge,
   makeIntention,
-  markMessageSeen,
-  muraqabaQuoteId,
-  pledgesDue,
   saveEvening,
   saveWeeklyReview,
-  selfMessageDue,
   setHeartPrefs,
   stepChoices,
   updatePlan,
-  weeklyReviewDue,
   weekSummary,
   type HeartFeeling,
+  type LocalDate,
   type Pledge,
   type PledgeKept,
   type Plan,
   type StepChoice,
 } from '@thekra/practice-core';
-import { useEvidence, usePracticeCatalog } from '@/lib/api/practice';
-import { QuoteLine } from '@/components/QuoteLine';
+import { usePracticeCatalog } from '@/lib/api/practice';
 import { pick, type CatalogHabit } from '@/lib/practice/catalog-types';
+import { nowTime } from '@/lib/practice/format';
+import { heartCardView, REVIEW_LINES_SHOWN, type HeartSheet } from '@/lib/practice/habits-view';
 import { usePracticeStore } from '@/lib/practice/practice-store';
 import { pledgeDeedWords } from '@/lib/practice/pledges';
 import { habitFor } from '@/lib/practice/reminders';
 import { usePlanDays } from '@/lib/practice/use-habits-hub';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { radius, space, useStyles, type Theme } from '@/theme';
-import { Button, ButtonPair, CheckRow, Chip, Field, Text, toast } from '@/ui';
+import { BottomSheet, Button, ButtonPair, CheckRow, Chip, Field, Icon, Text, toast } from '@/ui';
+import { StoryBody } from './KnowledgeCards';
 
 const makeStyles = (t: Theme) => ({
-  card: { gap: space.md, padding: space.lg, borderRadius: radius.card, borderWidth: 1, borderColor: t.colors.border, backgroundColor: t.colors.card },
+  card: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: space.md,
+    minHeight: 56,
+    paddingVertical: space.sm,
+    paddingStart: space.lg,
+    paddingEnd: space.sm,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    borderColor: t.colors.border,
+    backgroundColor: t.colors.card,
+  },
+  cardText: { flex: 1, minWidth: 0 },
   chips: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: space.sm },
-  row: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: space.sm },
   stack: { gap: space.md },
+  line: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: space.sm,
+    minHeight: 44,
+    borderBottomWidth: 1,
+    borderBottomColor: t.colors.border,
+  },
+  lineText: { flex: 1, minWidth: 0 },
+  badge: { paddingHorizontal: space.sm, paddingVertical: 2, borderRadius: radius.full, backgroundColor: t.colors.muted },
+  more: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.xs, minHeight: 44, alignSelf: 'flex-start' as const },
 });
 
 type T = (key: string, opts?: Record<string, unknown>) => string;
@@ -61,24 +82,12 @@ export function planTitleOf(plan: Plan, habits: readonly CatalogHabit[], locale:
   return habit ? pick(habit, 'title', locale) : plan.title;
 }
 
-/** The pledge's deed in the UI locale: practice-core's deed titles, «أتصدق بـ…», or the user's own line. */
+/** A deed in the UI locale: practice-core's deed titles, «أتصدق بـ…», or the user's own line. */
 export function pledgeWords(pledge: Pick<Pledge, 'action' | 'text'>, t: T, locale: 'ar' | 'en'): string {
   return pledgeDeedWords(pledge, locale, {
     sadaqah: (text) => t('practice.heart.pledge.sadaqah', { text }),
     sadaqahPlain: t('practice.heart.pledge.sadaqahPlain'),
   });
-}
-
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
-  const styles = useStyles(makeStyles);
-  return (
-    <View style={styles.card}>
-      <Text variant="heading" accessibilityRole="header">
-        {title}
-      </Text>
-      {children}
-    </View>
-  );
 }
 
 function Choices<K extends string>({ value, options, onChange }: { value: K | null; options: { key: K; label: string }[]; onChange: (k: K) => void }) {
@@ -92,66 +101,124 @@ function Choices<K extends string>({ value, options, onChange }: { value: K | nu
   );
 }
 
-function nowTime(): string {
-  const d = new Date();
-  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-}
+const SHEET_ICONS: Record<HeartSheet, LucideIcon> = {
+  'intention-offer': Sun,
+  intention: Sun,
+  evening: Moon,
+  weekly: ClipboardCheck,
+  'usual-deed': HeartHandshake,
+};
 
-/** المراقبة: one published text a day, read from the API; hidden without it. */
-export function MuraqabaLine({ today }: { today: string }) {
-  const locale = useUiLocale();
-  const id = muraqabaQuoteId(today);
-  const evidence = useEvidence(id ? [id] : [], locale);
-  const quote = id ? evidence.data?.get(id) : undefined;
-  if (!quote) return null;
-  return (
-    <QuoteLine quote={quote} />
-  );
-}
+const SHEET_TITLES: Record<HeartSheet, string> = {
+  'intention-offer': 'practice.heart.intention.offerTitle',
+  intention: 'practice.heart.intention.title',
+  evening: 'practice.heart.evening.title',
+  weekly: 'practice.heart.weekly.title',
+  'usual-deed': 'practice.story.heavyDay',
+};
 
-/** «رسالة إلى نفسي» from last week, on the review day, until read. */
-export function SelfMessageCard({ today }: { today: string }) {
+/** The one card of «ورد اليوم», or nothing. */
+export function HeartSlotCard({ today }: { today: LocalDate }) {
   const { t } = useTranslation();
-  const heart = usePracticeStore((s) => s.heart);
-  const setHeart = usePracticeStore((s) => s.setHeart);
-  const review = selfMessageDue(heart, today);
-  if (!review?.message) return null;
-  return (
-    <Card title={t('practice.heart.selfMessage.title')}>
-      <Text variant="body">{review.message}</Text>
-      <Button label={t('practice.heart.selfMessage.read')} variant="outline" onPress={() => setHeart((h) => markMessageSeen(h, review.weekOf))} />
-    </Card>
-  );
-}
-
-/** The cards under the header, in order; each hides itself when it has nothing to say. */
-export function HeartTop({ today }: { today: string }) {
   const styles = useStyles(makeStyles);
   const store = usePracticeStore((s) => s.store);
   const heart = usePracticeStore((s) => s.heart);
-  const planDays = usePlanDays();
+  const locale = useUiLocale();
+  const habits = usePracticeCatalog(locale).data?.habits;
+  const [open, setOpen] = useState(false);
   const time = nowTime();
-  // Nothing to say → no node at all, so the page's gap does not leave an empty band under the header.
-  const state = intentionState(heart, today, time);
-  const any =
-    state === 'offer' ||
-    state === 'made' ||
-    state === 'card' ||
-    pledgesDue(store, heart, today, planDays).length > 0 ||
-    Boolean(weeklyReviewDue(heart, today, time)) ||
-    eveningCardVisible(heart, today, time);
-  if (!any) return null;
+  const slot = useMemo(
+    () => heartSlot(heart, store, today, time, { isPeriodicAct: (plan) => habitFor(plan, habits ?? [])?.kind === 'periodic' }),
+    [heart, store, today, time, habits],
+  );
+  // The slot can move on while the sheet is open (a save closes it): keep the sheet of the card that opened it.
+  const [sheet, setSheet] = useState<HeartSheet | null>(null);
+  const view = heartCardView(slot);
+  if (!view) return null;
+  const weekOf = slot?.kind === 'weekly' ? slot.weekOf : null;
+  const close = () => setOpen(false);
   return (
-    <View style={styles.stack}>
-      <IntentionCard today={today} time={time} />
-      <PledgeCards today={today} />
-      <WeeklyCard today={today} time={time} />
-      <EveningCard today={today} time={time} />
-    </View>
+    <>
+      <View style={styles.card}>
+        {view.sheet ? <Icon icon={SHEET_ICONS[view.sheet]} size={20} tone="link" /> : <Icon icon={Sun} size={20} tone="muted" />}
+        <Text variant="body" weight={view.actionKey ? 'medium' : 'regular'} tone={view.actionKey ? 'default' : 'muted'} style={styles.cardText}>
+          {t(view.lineKey)}
+        </Text>
+        {view.actionKey && view.sheet ? (
+          <Button
+            label={t(view.actionKey)}
+            size="sm"
+            variant="outline"
+            onPress={() => {
+              setSheet(view.sheet);
+              setOpen(true);
+            }}
+          />
+        ) : null}
+      </View>
+      <HeartSheetView sheet={open ? sheet : null} today={today} weekOf={weekOf} onClose={close} />
+    </>
   );
 }
 
-function IntentionCard({ today, time }: { today: string; time: string }) {
+/** A heart form in a bottom sheet (`sheet` null: closed). */
+export function HeartSheetView({
+  sheet,
+  today,
+  weekOf,
+  onClose,
+}: {
+  sheet: HeartSheet | null;
+  today: LocalDate;
+  weekOf: LocalDate | null;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation();
+  const [last, setLast] = useState<HeartSheet>('intention');
+  if (sheet && sheet !== last) setLast(sheet);
+  const shown = sheet ?? last;
+  return (
+    <BottomSheet visible={sheet !== null} title={t(SHEET_TITLES[shown])} onClose={onClose}>
+      {shown === 'intention-offer' ? <IntentionOffer onDone={onClose} /> : null}
+      {shown === 'intention' ? <IntentionForm today={today} onDone={onClose} /> : null}
+      {shown === 'evening' ? <EveningForm today={today} onDone={onClose} /> : null}
+      {shown === 'weekly' && weekOf ? <WeeklyForm today={today} weekOf={weekOf} onDone={onClose} /> : null}
+      {shown === 'usual-deed' ? (
+        <StoryBody moment="heavyDay" onLeave={onClose} />
+      ) : null}
+    </BottomSheet>
+  );
+}
+
+/** The one-time offer of «نية اليوم»: turn it on, or not now. */
+function IntentionOffer({ onDone }: { onDone: () => void }) {
+  const { t } = useTranslation();
+  const setHeart = usePracticeStore((s) => s.setHeart);
+  return (
+    <>
+      <Text variant="body">{t('practice.heart.intention.offerBody')}</Text>
+      <ButtonPair
+        primary={{
+          label: t('practice.heart.intention.offerOn'),
+          onPress: () => {
+            setHeart((h) => setHeartPrefs(h, { intention: true }));
+            toast(t('habitsTab.heart.intentionOnToast'));
+            onDone();
+          },
+        }}
+        secondary={{
+          label: t('practice.heart.intention.dismiss'),
+          onPress: () => {
+            setHeart((h) => setHeartPrefs(h, { intentionOfferDismissed: true }));
+            onDone();
+          },
+        }}
+      />
+    </>
+  );
+}
+
+export function IntentionForm({ today, onDone }: { today: LocalDate; onDone: () => void }) {
   const { t } = useTranslation();
   const locale = useUiLocale();
   const store = usePracticeStore((s) => s.store);
@@ -163,35 +230,13 @@ function IntentionCard({ today, time }: { today: string; time: string }) {
     () => dayAgenda(store, today, planDays).flatMap((i) => (i.kind === 'habit' ? store.plans.filter((p) => p.id === i.planId) : [])),
     [store, today, planDays],
   );
-  const [unticked, setUnticked] = useState<ReadonlySet<string>>(new Set());
-  const [pledge, setPledge] = useState('');
-  const state = intentionState(heart, today, time);
-
-  if (state === 'offer') {
-    return (
-      <Card title={t('practice.heart.intention.offerTitle')}>
-        <Text variant="small" tone="muted">
-          {t('practice.heart.intention.offerBody')}
-        </Text>
-        <ButtonPair
-          primary={{ label: t('practice.heart.intention.offerOn'), onPress: () => setHeart((h) => setHeartPrefs(h, { intention: true })) }}
-          secondary={{ label: t('practice.heart.intention.dismiss'), onPress: () => setHeart((h) => setHeartPrefs(h, { intentionOfferDismissed: true })) }}
-        />
-      </Card>
-    );
-  }
-  if (state === 'made') {
-    const made = intentionOf(heart, today);
-    return (
-      <Text variant="small" tone="muted">
-        {t('practice.heart.intention.made')}
-        {made?.pledge ? ` · ${t('practice.heart.intention.pledgeLine', { text: made.pledge })}` : ''}
-      </Text>
-    );
-  }
-  if (state !== 'card') return null;
+  const made = intentionOf(heart, today);
+  const [unticked, setUnticked] = useState<ReadonlySet<string>>(
+    () => new Set(made ? due.filter((p) => !made.planIds.includes(p.id)).map((p) => p.id) : []),
+  );
+  const [pledge, setPledge] = useState(made?.pledge ?? '');
   return (
-    <Card title={t('practice.heart.intention.title')}>
+    <>
       <Text variant="small">{t('practice.heart.intention.lead')}</Text>
       {due.length === 0 ? (
         <Text variant="small" tone="muted">
@@ -222,63 +267,35 @@ function IntentionCard({ today, time }: { today: string; time: string }) {
         onChangeText={setPledge}
       />
       <Button
+        size="lg"
         label={t('practice.heart.intention.submit')}
         onPress={() => {
           setHeart((h) => makeIntention(h, { date: today, planIds: due.filter((p) => !unticked.has(p.id)).map((p) => p.id), pledge }));
           toast(t('practice.heart.intention.savedToast'));
+          onDone();
         }}
       />
-    </Card>
-  );
-}
-
-function PledgeCards({ today }: { today: string }) {
-  const { t } = useTranslation();
-  const locale = useUiLocale();
-  const store = usePracticeStore((s) => s.store);
-  const heart = usePracticeStore((s) => s.heart);
-  const setHeart = usePracticeStore((s) => s.setHeart);
-  const habits = usePracticeCatalog(locale).data?.habits ?? [];
-  const planDays = usePlanDays();
-  const due = useMemo(() => pledgesDue(store, heart, today, planDays), [store, heart, today, planDays]);
-  return (
-    <>
-      {due.map(({ pledge, on }) => {
-        const plan = store.plans.find((p) => p.id === pledge.planId);
-        return (
-          <Card key={pledge.id} title={t('practice.heart.pledge.title', { text: pledgeWords(pledge, t as unknown as T, locale) })}>
-            {plan ? (
-              <Text variant="small" tone="muted">
-                {t('practice.heart.pledge.hint', { habit: planTitleOf(plan, habits, locale) })}
-              </Text>
-            ) : null}
-            <Button
-              label={t('practice.heart.pledge.kept')}
-              variant="outline"
-              onPress={() => {
-                setHeart((h) => keepPledge(h, pledge.id, on));
-                toast(t('practice.heart.pledge.keptToast'));
-              }}
-            />
-          </Card>
-        );
-      })}
     </>
   );
 }
 
-function EveningCard({ today, time }: { today: string; time: string }) {
+export function EveningForm({ today, onDone }: { today: LocalDate; onDone: () => void }) {
   const { t } = useTranslation();
   const store = usePracticeStore((s) => s.store);
   const heart = usePracticeStore((s) => s.heart);
   const setHeart = usePracticeStore((s) => s.setHeart);
   const planDays = usePlanDays();
   const [kept, setKept] = useState<PledgeKept | null>(null);
-  if (!eveningCardVisible(heart, today, time)) return null;
   const summary = daySummary(store, today, planDays);
   const intention = intentionOf(heart, today);
+  const hasProgram = activePrograms(store.programs).length > 0;
+  function save() {
+    setHeart((h) => saveEvening(h, { date: today, ...(kept ? { kept } : {}) }));
+    toast(t('practice.heart.evening.savedToast'));
+    onDone();
+  }
   return (
-    <Card title={t('practice.heart.evening.title')}>
+    <>
       <Text variant="small" weight="medium">
         {t('practice.heart.evening.doneQ')}
       </Text>
@@ -304,24 +321,57 @@ function EveningCard({ today, time }: { today: string; time: string }) {
       ) : null}
       {/* «تمّت المحاسبة» and «سجّل حالك في برنامجك الخاص» are one choice: side by side, the same size (O-02). */}
       <ButtonPair
-        primary={{
-          label: t('practice.heart.evening.save'),
-          onPress: () => {
-            setHeart((h) => saveEvening(h, { date: today, ...(kept ? { kept } : {}) }));
-            toast(t('practice.heart.evening.savedToast'));
-          },
-        }}
+        size="lg"
+        primary={{ label: t('practice.heart.evening.save'), onPress: save }}
         secondary={
-          activePrograms(store.programs).length > 0
-            ? { label: t('practice.heart.evening.checkIn'), onPress: () => router.push('/practice/sin-program') }
+          hasProgram
+            ? {
+                label: t('practice.heart.evening.checkIn'),
+                onPress: () => {
+                  onDone();
+                  router.push('/practice/sin-program');
+                },
+              }
             : null
         }
       />
-    </Card>
+    </>
   );
 }
 
-function WeeklyCard({ today, time }: { today: string; time: string }) {
+/** Habit lines with «فاتك n» (A-12 a): the weakest {@link REVIEW_LINES_SHOWN} first, the rest behind «المزيد». */
+export function HabitLines({ lines }: { lines: readonly { planId: string; title: string; missed: number }[] }) {
+  const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
+  const [all, setAll] = useState(false);
+  const shown = all ? lines : lines.slice(0, REVIEW_LINES_SHOWN);
+  return (
+    <View>
+      {shown.map((line) => (
+        <View key={line.planId} style={styles.line}>
+          <Text variant="small" style={styles.lineText} numberOfLines={2}>
+            {line.title}
+          </Text>
+          <View style={styles.badge}>
+            <Text variant="caption" tone={line.missed > 0 ? 'default' : 'link'}>
+              {line.missed > 0 ? t('habitsTab.review.missed', { count: line.missed }) : t('habitsTab.review.steady')}
+            </Text>
+          </View>
+        </View>
+      ))}
+      {lines.length > REVIEW_LINES_SHOWN ? (
+        <Pressable onPress={() => setAll((v) => !v)} accessibilityRole="button" accessibilityState={{ expanded: all }} style={styles.more}>
+          <Text variant="small" weight="medium" tone="link">
+            {all ? t('habitsTab.review.less') : t('habitsTab.review.more', { count: lines.length - REVIEW_LINES_SHOWN })}
+          </Text>
+          <Icon icon={all ? ChevronUp : ChevronDown} size={16} tone="link" />
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
+
+export function WeeklyForm({ today, weekOf, onDone }: { today: LocalDate; weekOf: LocalDate; onDone: () => void }) {
   const { t } = useTranslation();
   const locale = useUiLocale();
   const store = usePracticeStore((s) => s.store);
@@ -330,14 +380,12 @@ function WeeklyCard({ today, time }: { today: string; time: string }) {
   const setHeart = usePracticeStore((s) => s.setHeart);
   const habits = usePracticeCatalog(locale).data?.habits ?? [];
   const planDays = usePlanDays();
-  const weekOf = weeklyReviewDue(heart, today, time);
-  const summary = useMemo(() => (weekOf ? weekSummary(store, weekOf, today, planDays) : null), [store, weekOf, today, planDays]);
+  const summary = useMemo(() => weekSummary(store, weekOf, today, planDays), [store, weekOf, today, planDays]);
   const candidates = store.plans.filter((p) => !p.pausedOn || p.resumedOn);
   const [planId, setPlanId] = useState<string | null>(null);
   const [choice, setChoice] = useState<StepChoice>('keep');
   const [feeling, setFeeling] = useState<HeartFeeling | null>(null);
   const [message, setMessage] = useState('');
-  if (!weekOf || !summary) return null;
 
   const selectedId = planId ?? summary.weak[0]?.planId ?? summary.steady[0]?.planId ?? candidates[0]?.id ?? null;
   const selected = store.plans.find((p) => p.id === selectedId) ?? null;
@@ -346,9 +394,12 @@ function WeeklyCard({ today, time }: { today: string; time: string }) {
     const plan = store.plans.find((p) => p.id === id);
     return plan ? planTitleOf(plan, habits, locale) : '';
   };
+  const lines = [
+    ...summary.weak.map((r) => ({ planId: r.planId, title: title(r.planId), missed: r.missed })),
+    ...summary.steady.map((r) => ({ planId: r.planId, title: title(r.planId), missed: 0 })),
+  ];
 
   function save() {
-    if (!weekOf || !summary) return;
     const step = selected && choices.includes(choice) ? { planId: selected.id, choice } : undefined;
     if (step && step.choice !== 'keep') setStore((s) => updatePlan(s, step.planId, (p) => applyStep(p, step.choice, today)));
     setHeart((h) =>
@@ -362,27 +413,15 @@ function WeeklyCard({ today, time }: { today: string; time: string }) {
       }),
     );
     toast(t('practice.heart.weekly.savedToast'));
+    onDone();
   }
 
   return (
-    <Card title={t('practice.heart.weekly.title')}>
+    <>
       <Text variant="small" tone="muted">
         {t('practice.heart.weekly.lead')}
       </Text>
-      <Text variant="small" weight="medium">
-        {t('practice.heart.weekly.steady')}
-      </Text>
-      <Text variant="small" tone={summary.steady.length ? 'default' : 'muted'}>
-        {summary.steady.length ? summary.steady.map((r) => title(r.planId)).join(locale === 'ar' ? '، ' : ', ') : t('practice.heart.weekly.steadyNone')}
-      </Text>
-      <Text variant="small" weight="medium">
-        {t('practice.heart.weekly.weak')}
-      </Text>
-      <Text variant="small" tone={summary.weak.length ? 'default' : 'muted'}>
-        {summary.weak.length
-          ? summary.weak.map((r) => `${title(r.planId)} (${t('practice.heart.weekly.missed', { count: r.missed })})`).join(locale === 'ar' ? '، ' : ', ')
-          : t('practice.heart.weekly.weakNone')}
-      </Text>
+      {lines.length > 0 ? <HabitLines lines={lines} /> : null}
       {candidates.length > 0 ? (
         <>
           <Text variant="small" weight="medium">
@@ -414,7 +453,7 @@ function WeeklyCard({ today, time }: { today: string; time: string }) {
         maxLength={140}
         onChangeText={setMessage}
       />
-      <Button label={t('practice.heart.weekly.save')} onPress={save} />
-    </Card>
+      <Button size="lg" label={t('practice.heart.weekly.save')} onPress={save} />
+    </>
   );
 }

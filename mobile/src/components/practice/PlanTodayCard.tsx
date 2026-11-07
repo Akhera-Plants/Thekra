@@ -164,7 +164,7 @@ interface FixPanelProps {
 }
 
 /** «صحّح السجل»: a forgotten or wrong day, up to a week back and never before the plan started. Zero clears it. */
-function FixPanel({ plan, today: d, amountLabel, onSave, onCancel }: FixPanelProps) {
+export function FixPanel({ plan, today: d, amountLabel, onSave, onCancel }: FixPanelProps) {
   const { t } = useTranslation();
   const { rtl } = useTheme();
   const styles = useStyles(makeStyles);

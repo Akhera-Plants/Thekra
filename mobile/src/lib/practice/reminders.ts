@@ -2,7 +2,8 @@
  * Pure reminder planner: practice-core Store + prefs → the local notifications to schedule. The policy is practice-core
  * `notificationPlan` (redesign §4.4), shared with the web push planner and the extension: habits at their slots (the
  * second only while the day is not done; one slot once «راسخة»; a periodic plan once per due day), people lists once per
- * due day, the evening nudge (opt-in), the Friday review reminder (on by default), the private moment, quiet hours
+ * due day, the evening nudge (opt-in), the Friday review reminder (on by default), the private moment, «مناسبة قريبة»
+ * (opt-in: the evening before a coming occasion; outside the daily cap), quiet hours
  * 23:00–05:00 (the night prayer and the user's own times excepted) and at most 4 a day, then one digest.
  * No React Native imports, so it runs in Jest; notifications.ts turns the list into expo-notifications calls.
  *
@@ -29,6 +30,7 @@ import {
   type PlanUnit,
   type Rule,
   type Store,
+  type AgendaOccasion,
 } from '@thekra/practice-core';
 import { pick, type CatalogHabit, type UiLocale } from './catalog-types';
 import type { PracticePrefs } from './prefs';
@@ -40,7 +42,10 @@ export const REMINDER_SOURCE = 'thekra-practice';
 export const REMINDER_DAYS = 14;
 export const MAX_PENDING = 60;
 
-export type ReminderKind = 'habit' | 'kinship' | 'sin' | 'evening' | 'friday' | 'strategy' | 'digest';
+export type ReminderKind = 'habit' | 'kinship' | 'sin' | 'evening' | 'friday' | 'occasion' | 'digest';
+
+/** Where a tapped «مناسبة قريبة» opens: the «سجلّي» calendar with its occasion marks (F-17). */
+export const OCCASION_ROUTE = '/habits?tab=record';
 
 export interface PlannedReminder {
   id: string;
@@ -88,6 +93,8 @@ export interface ReminderInput {
   reviewDay?: number;
   /** True when that review day's review is saved, or the weekly review is off (no reminder). */
   reviewDoneOn?: (day: LocalDate) => boolean;
+  /** The catalog's occasions (`GET /v1/practice/catalog` `occasions`), for «مناسبة قريبة». Absent: none. */
+  occasions?: readonly AgendaOccasion[];
 }
 
 /** The catalog habit of a plan (`habitKey`; plans from tests or old data may carry the key as their id). */
@@ -142,11 +149,11 @@ export function notificationPrefsOf(prefs: PracticePrefs, reviewDay: number = DE
     reviewDay,
     privateMoment: prefs.sinReminders,
     privateTime: prefs.sinReminderTime,
-    // «مناسبة قريبة» (round 5): off until the app has its switch.
-    occasions: DEFAULT_NOTIFICATION_PREFS.occasions,
-    occasionTime: DEFAULT_NOTIFICATION_PREFS.occasionTime,
-    strategies: prefs.strategyReminders ? prefs.strategies : [],
-    strategyTime: prefs.strategyTime,
+    occasions: prefs.occasionReminders,
+    occasionTime: prefs.occasionTime,
+    // The weekly strategy reminder is gone (round 5, F-12 a): the deprecated fields stay empty.
+    strategies: [],
+    strategyTime: DEFAULT_NOTIFICATION_PREFS.strategyTime,
   };
 }
 
@@ -167,7 +174,9 @@ export function planReminders(input: ReminderInput): PlannedReminder[] {
     // Prayer anchors («بعد الفجر»…) from the 30-day AlAdhan cache; default times when unset or not cached.
     prayerTimesOn: prayerLookup(prefs.prayerCache, prefs.prayer),
     reviewDoneOn: input.reviewDoneOn,
+    occasions: input.occasions,
   });
+  const occasionTitles = new Map((input.occasions ?? []).map((o) => [o.key, locale === 'en' ? o.titleEn || o.titleAr : o.titleAr]));
   const plans = new Map(store.plans.map((p) => [p.id, p]));
   const names = new Map(store.relatives.map((r) => [r.id, r.name]));
   const out: PlannedReminder[] = [];
@@ -203,13 +212,25 @@ export function planReminders(input: ReminderInput): PlannedReminder[] {
       out.push({ ...base, id: `${REMINDER_SOURCE}:${e.key}`, kind: 'evening', title: texts.wirdTitle, body: texts.eveningBody, route: '/habits' });
     } else if (e.kind === 'friday') {
       out.push({ ...base, id: `${REMINDER_SOURCE}:${e.key}`, kind: 'friday', title: texts.fridayTitle, body: texts.fridayBody, route: '/habits' });
-    } else if (e.kind === 'strategy' && e.strategy) {
-      // «ذكّرني بها»: the shared words of the policy (practice-core NOTIFY_TEXTS), the strategy's short title.
+    } else if (e.kind === 'occasion') {
+      // «مناسبة قريبة»: the policy's shared words (practice-core NOTIFY_TEXTS) and the occasion's public catalog title.
+      const title = occasionTitles.get(e.occasions?.[0] ?? '');
+      if (!title) continue;
       const words = NOTIFY_TEXTS[locale];
-      out.push({ ...base, id: `${REMINDER_SOURCE}:${e.key}`, kind: 'strategy', title: words.strategyTitle, body: words.strategyBody(e.strategy), route: '/practice/strategies' });
+      out.push({ ...base, id: `${REMINDER_SOURCE}:${e.key}`, kind: 'occasion', title: words.occasionTitle, body: words.occasionBody(title), route: OCCASION_ROUTE });
     } else if (e.kind === 'digest') {
       out.push({ ...base, id: `${REMINDER_SOURCE}:${e.key}`, kind: 'digest', title: texts.wirdTitle, body: texts.digestBody(e.count ?? 1), route: '/habits' });
     }
   }
   return out.slice(0, limit);
+}
+
+/** How many of `planned` ring on `day` (the honest status line of «التنبيهات», F-29 a). */
+export function remindersOn(planned: readonly Pick<PlannedReminder, 'date'>[], day: LocalDate): number {
+  return planned.filter((r) => r.date === day).length;
+}
+
+/** True when at least one reminder switch is on (otherwise the page says they are all off). */
+export function anyReminderOn(prefs: Pick<PracticePrefs, 'habitReminders' | 'kinshipReminders' | 'eveningNudge' | 'fridayReminder' | 'sinReminders' | 'occasionReminders'>): boolean {
+  return prefs.habitReminders || prefs.kinshipReminders || prefs.eveningNudge || prefs.fridayReminder || prefs.sinReminders || prefs.occasionReminders;
 }

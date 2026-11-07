@@ -1,17 +1,17 @@
 /**
- * The limit sheet (redesign §3; owner round 3, item 16), shown instead of adding past a limit: why (practice-core
- * `limitBlock`: 3 habits younger than three months; 7 periodic acts; 3 «تخفَّف» programs, or one not yet two months old)
- * and the day it unlocks by itself in one short line, then «أكمل ما عندي» (the one primary, closes) and, side by side as
- * two compact bordered buttons, «أوقِف … مؤقتًا» (pick one; its history stays) and «احذف …» (destructive; pick one,
- * then confirm). The program limit has only the first action. Every change goes through
- * practice-core store helpers.
+ * The limit sheet (redesign §3; owner round 3, item 16; round 5, F-30 a), shown instead of adding past a limit: why
+ * (practice-core `limitBlock`: 3 habits younger than three months; 7 periodic acts; 3 «تخفَّف» programs, or one not yet
+ * two months old) and the day it unlocks by itself in words («من 3 ديسمبر»), then two actions only, side by side at one
+ * size: «أكمل ما عندي» (solid, closes) and «أوقِف … مؤقتًا» (pick one; its history stays). No delete here: deleting a
+ * habit lives behind its page's «⋯» with a confirmation. The program limit has only the first action. Every change goes
+ * through practice-core store helpers.
  */
 
 import React, { useState } from 'react';
 import { Modal, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { deletePlan, limitBlock, pausePlan, updatePlan, type LimitKind, type Limits, type Plan } from '@thekra/practice-core';
+import { limitBlock, pausePlan, updatePlan, type LimitKind, type Limits, type Plan } from '@thekra/practice-core';
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { pick } from '@/lib/practice/catalog-types';
 import { dayMonth } from '@/lib/practice/calendar-grid';
@@ -21,7 +21,7 @@ import { today, usePracticeStore } from '@/lib/practice/practice-store';
 import { habitFor } from '@/lib/practice/reminders';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { GUTTER, radius, space, useStyles, type Theme } from '@/theme';
-import { Button, ButtonPair, Chip, Text } from '@/ui';
+import { ButtonPair, Chip, Text, toast } from '@/ui';
 
 const makeStyles = (t: Theme) => ({
   root: { flex: 1, justifyContent: 'flex-end' as const },
@@ -42,7 +42,7 @@ const makeStyles = (t: Theme) => ({
   half: { flex: 1 },
 });
 
-type Step = 'menu' | 'pause' | 'delete' | 'confirm';
+type Step = 'menu' | 'pause';
 
 export interface LimitSheetProps {
   kind: LimitKind;
@@ -50,7 +50,7 @@ export interface LimitSheetProps {
   limits: Limits;
   /** «أكمل ما عندي», the backdrop or Android back. */
   onClose: () => void;
-  /** A place was freed (paused or deleted): the caller goes on with the addition. */
+  /** A place was freed (paused): the caller goes on with the addition. */
   onFreed: () => void;
 }
 
@@ -82,14 +82,10 @@ export function LimitSheet({ kind, visible, limits, onClose, onFreed }: LimitShe
     reset();
     onClose();
   }
-  function freed(id: string, change: (plan: Plan) => Plan | null) {
-    setStore((s) => {
-      const next = s.plans.find((p) => p.id === id);
-      if (!next) return s;
-      const changed = change(next);
-      return changed === null ? deletePlan(s, id) : updatePlan(s, id, () => changed);
-    });
+  function pause(id: string) {
+    setStore((s) => updatePlan(s, id, (p) => pausePlan(p, today())));
     reset();
+    toast(t('practice.paused.done'));
     onFreed();
   }
 
@@ -108,18 +104,16 @@ export function LimitSheet({ kind, visible, limits, onClose, onFreed }: LimitShe
                   {t(why.key, why.params)}
                 </Text>
               ) : null}
-              <Button label={t('practice.limits.keepGoing')} onPress={close} size="lg" />
-              {candidates.length > 0 ? (
-                <ButtonPair
-                  primary={{ label: t(`practice.limits.${kind}.pause`), onPress: () => setStep('pause'), variant: 'outline' }}
-                  secondary={{ label: t(`practice.limits.${kind}.delete`), onPress: () => setStep('delete'), variant: 'destructive' }}
-                />
-              ) : null}
+              <ButtonPair
+                size="lg"
+                primary={{ label: t('practice.limits.keepGoing'), onPress: close }}
+                secondary={candidates.length > 0 ? { label: t(`practice.limits.${kind}.pause`), onPress: () => setStep('pause') } : null}
+              />
             </>
           ) : (
             <>
               <Text variant="small" tone="muted">
-                {step === 'pause' ? t('practice.limits.pickPause') : step === 'confirm' ? t('practice.limits.deleteNote') : t('practice.limits.pickDelete')}
+                {t('practice.limits.pickPause')}
               </Text>
               <View style={styles.picks}>
                 {candidates.map((plan) => (
@@ -127,14 +121,8 @@ export function LimitSheet({ kind, visible, limits, onClose, onFreed }: LimitShe
                 ))}
               </View>
               <ButtonPair
-                primary={
-                  step === 'pause'
-                    ? { label: t('practice.limits.pauseAction'), onPress: () => picked && freed(picked, (p) => pausePlan(p, today())) }
-                    : step === 'delete'
-                      ? { label: t('practice.limits.deleteAction'), variant: 'outline', onPress: () => picked && setStep('confirm') }
-                      : { label: t('practice.limits.deleteConfirm'), variant: 'destructive', onPress: () => picked && freed(picked, () => null) }
-                }
-                secondary={{ label: t('practice.limits.back'), onPress: reset, variant: step === 'delete' ? 'ghost' : 'outline' }}
+                primary={{ label: t('practice.limits.pauseAction'), disabled: picked === null, onPress: () => picked && pause(picked) }}
+                secondary={{ label: t('practice.limits.back'), onPress: reset }}
               />
             </>
           )}

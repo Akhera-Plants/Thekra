@@ -1,8 +1,9 @@
 /**
  * Motivations for one good deed, after the website's good-deed page (good-deeds/[slug]): the deed's name (a paired
  * page's shared title), description and the contemporary note, then the type tabs right under them (owner,
- * 2026-11-01), then inside the tab: ONE action («اجعلها عادتي», when a catalog habit maps to the deed), its reward as a
- * next-step note (unpaired only, under «الكل»), the reading sections (its merit and reward,
+ * 2026-11-01), «ابدأ عادة» on the title's line (the page's ONE primary, owner round 5, F-10 a / A-07; when a catalog
+ * habit maps to the deed), then inside the tab: its reward as a next-step note (unpaired only, under «الكل»), the
+ * reading sections (its merit and reward,
  * the opposite sin's warning, a contemporary topic's derived groups), «من شعب الإيمان», and the opposite sin on an
  * unpaired page.
  * Core screen: good deed → motivations (mobile-plan §3).
@@ -71,17 +72,13 @@ export default function MotivationsScreen() {
         ) : null
       }
       emptyMessage={t('motivations.empty')}
+      titleAction={deed ? <DeedHabitAction deed={deed.slug} /> : null}
+      // Under the tabs: the reward → texts → شعب الإيمان → the opposite.
       intro={
-        deed ? (
-          <>
-            {/* Under the tabs (owner, 2026-11-01): one action → the reward → texts → شعب الإيمان → the opposite. */}
-            <DeedHabitAction deed={deed.slug} />
-            {reward && filter === 'ALL' ? (
-              <NextStep title={t('motivations.reward')}>
-                <Text variant={english ? 'body' : 'reading'}>{reward}</Text>
-              </NextStep>
-            ) : null}
-          </>
+        deed && reward && filter === 'ALL' ? (
+          <NextStep title={t('motivations.reward')}>
+            <Text variant={english ? 'body' : 'reading'}>{reward}</Text>
+          </NextStep>
         ) : null
       }
       footer={

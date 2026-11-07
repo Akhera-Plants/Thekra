@@ -1,14 +1,15 @@
 /**
- * Adding a habit in three short screens (redesign §4.5), the first habit and every later one alike, after the website's
- * stepper: «ماذا؟» (the habit), «متى؟» (reminder slots, active days per week, reminder weekdays), «كم؟» (far/near → a
- * very small start, with the «فروضي وأدواري» load check). Each screen has one hint line, one example and «تخطَّ», which
- * keeps the defaults (the suggested habit, the catalog's slots, the «far» start); progress dots on top. After the
- * FIRST habit only: the two switches «نية اليوم» and «المحاسبة المسائية» (opt-in) and, once, «حلقة العادة» and
- * «الاستمرار: ثلاث حقائق». Adding the first habit asks for the notification permission when habit reminders are on
- * (the default); on a «يومي ثقيل» day the new habit is lightened too.
- * Optional param `habit` preselects a habit (e.g. a good deed's «اجعلها عادتي») and opens on «متى؟».
- * The system Back goes one step back inside the stepper, so no input is lost; from the step it opened on it leaves.
- * «التالي», «تخطَّ» and «رجوع» stay pinned under the step, above the safe area.
+ * Adding a habit in three short screens (redesign §4.5; owner round 5), the first habit and every later one alike:
+ * «ماذا؟» (the habit), «متى؟» (reminder times and the days: A-13 a, the user picks the days and the count per week
+ * follows; then two optional questions, F-13 a: «بعد ماذا ستفعلها؟», «إذا منعك شيء، فماذا تفعل؟», saved as the plan's
+ * loop and shown on its page), «كم؟» (far/near → a very small start; the first time, «كم دقيقة حرة لديك؟» with the load
+ * warning, F-28 a). Each screen has one hint line, one example, the strategy that helps in that moment (F-12 a: «اربطها
+ * بصلاة» in «متى؟», «ابدأ صغيرًا جدًا» in «كم؟») and «تخطَّ», which keeps the defaults; the footer is «التالي» beside
+ * «تخطَّ» (A-06). After the FIRST habit only: the switches «نية اليوم» and «المحاسبة المسائية» (opt-in). Past the limit
+ * the limit sheet opens instead (F-30 a; its count is already on «أضف»). Adding the first habit asks for the
+ * notification permission when habit reminders are on; on a «يومي ثقيل» day the new habit is lightened too. Optional
+ * param `habit` preselects a habit (a good deed's «اجعلها عادتي») and opens on «متى؟». The system Back goes one step
+ * back inside the stepper, so no input is lost. Saving toasts and returns to «عاداتي».
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
@@ -18,11 +19,13 @@ import { LimitSheet } from '@/components/practice/LimitSheet';
 import { useLimits } from '@/lib/practice/use-habits-hub';
 import { usePreventRemove } from 'expo-router/react-navigation';
 import { useTranslation } from 'react-i18next';
-import { CircleAlert, CircleCheck, HardDrive, Hourglass } from 'lucide-react-native';
+import { CircleAlert, CircleCheck, HardDrive, Lightbulb } from 'lucide-react-native';
 import {
   dailyLoad,
   defaultHabitKey,
   loadWarning,
+  nowIso,
+  updateSettings,
   ONBOARDING_STEPS,
   setHeartPrefs,
   startEbb,
@@ -35,7 +38,9 @@ import {
   type OnboardingStep,
   type Plan,
 } from '@thekra/practice-core';
-import { ConsistencyCard, HabitLoopCard, StoryLine } from '@/components/practice/hub/KnowledgeCards';
+import { StoryLine } from '@/components/practice/hub/KnowledgeCards';
+import { LoopQuestions } from '@/components/practice/PlanEditSheet';
+import { activeDaysFrom, loopFromAnswers, type LoopAnswers } from '@/lib/practice/habits-view';
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { pick, type CatalogHabit, type UiLocale } from '@/lib/practice/catalog-types';
 import { ruleToWeekdays, sortSlots, weekdaysToRule } from '@/lib/practice/format';
@@ -47,12 +52,12 @@ import { shouldAskOnFirstHabit } from '@/lib/practice/prefs';
 import { newPracticeId, today, usePracticeStore } from '@/lib/practice/practice-store';
 import { formatAmount } from '@/lib/practice/reminders';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
-import { ActiveDaysPicker, SlotsEditor, WeekdayPicker } from '@/components/practice/editors';
+import { SlotsEditor, WeekdayPicker } from '@/components/practice/editors';
 import { GUTTER, radius, space, useStyles, type Theme } from '@/theme';
 import {
-  Button,
   ButtonPair,
   CheckRow,
+  Chip,
   ErrorState,
   ErrorText,
   ListRow,
@@ -65,6 +70,7 @@ import {
   SwitchRow,
   Text,
   Screen,
+  Wrap,
   toast,
 } from '@/ui';
 
@@ -120,8 +126,10 @@ export default function AddHabitScreen() {
   const [step, setStep] = useState<Step>(entryStep);
   const [distance, setDistance] = useState<Distance>('far');
   const [slots, setSlots] = useState<LocalTime[]>([]);
-  const [activeDays, setActiveDays] = useState(3);
   const [weekdays, setWeekdays] = useState<number[] | null>(null);
+  const [answers, setAnswers] = useState<LoopAnswers>({ after: '', ifBlocked: '' });
+  // A-13 a: the days are the choice; the count per week follows them (3 for a rule without weekdays).
+  const activeDays = activeDaysFrom(weekdays, 3);
   const [error, setError] = useState<string | null>(null);
   // The first habit's id once saved: its last screen («نية اليوم», «المحاسبة المسائية») opens it when done.
   const [createdId, setCreatedId] = useState<string | null>(null);
@@ -180,7 +188,7 @@ export default function AddHabitScreen() {
   if (step === 'finish') {
     const done = () => {
       setHeart((h) => setHeartPrefs(h, { cardsSeen: true }));
-      router.replace(createdId ? `/practice/plan/${createdId}` : '/habits');
+      router.replace('/habits');
     };
     return (
       <StepFrame step="finish" title={t('practice.onboarding.finishTitle')} lead={t('practice.onboarding.finishLead')} nextLabel={t('practice.onboarding.done')} onNext={done}>
@@ -196,12 +204,6 @@ export default function AddHabitScreen() {
           value={heart.prefs.eveningReview}
           onValueChange={(on) => setHeart((h) => setHeartPrefs(h, { eveningReview: on }))}
         />
-        {!heart.prefs.cardsSeen ? (
-          <View style={styles.group}>
-            <HabitLoopCard />
-            <ConsistencyCard />
-          </View>
-        ) : null}
       </StepFrame>
     );
   }
@@ -234,7 +236,9 @@ export default function AddHabitScreen() {
       return;
     }
     const d = today();
-    let plan = planFromHabit({ id: newPracticeId(), habit, amount, slots: choice.slots, activeDaysPerWeek: activeDays, rule, today: d, locale });
+    let plan = planFromHabit({ id: newPracticeId(), habit, amount, slots: choice.slots, activeDaysPerWeek: activeDaysFrom(choice.weekdays, 3), rule, today: d, locale });
+    const loop = loopFromAnswers(answers, pick(habit, 'title', locale), newPracticeId(), nowIso());
+    if (loop) plan = { ...plan, loops: [loop] };
     if (validatePlan(plan) !== null) {
       setError(t('practice.add.invalidPlan'));
       return;
@@ -249,8 +253,10 @@ export default function AddHabitScreen() {
     if (firstHabit) {
       setCreatedId(plan.id);
       setStep('finish');
+    } else if (router.canGoBack()) {
+      router.back();
     } else {
-      router.replace(`/practice/plan/${plan.id}`);
+      router.replace('/habits');
     }
   }
 
@@ -294,7 +300,6 @@ export default function AddHabitScreen() {
         step={step}
         eyebrow={title}
         title={t('practice.onboarding.when.title')}
-        lead={t('practice.onboarding.when.hint')}
         example={whenExample}
         nextLabel={t('practice.add.next')}
         onNext={() => setStep('howMuch')}
@@ -302,19 +307,18 @@ export default function AddHabitScreen() {
         onSkip={() => {
           setSlots(defaultSlotsFor(habit));
           setWeekdays(ruleToWeekdays(habit.defaultRule));
-          setActiveDays(3);
           setStep('howMuch');
         }}
       >
-        <ScheduleFields
-          window={habit.window}
-          slots={slots}
-          onSlots={setSlots}
-          activeDays={activeDays}
-          onActiveDays={setActiveDays}
-          weekdays={weekdays}
-          onWeekdays={setWeekdays}
-        />
+        <StrategyLine strategy="anchor-prayer" />
+        <ScheduleFields window={habit.window} slots={slots} onSlots={setSlots} weekdays={weekdays} onWeekdays={setWeekdays} />
+        <SectionDivider />
+        <View style={styles.group}>
+          <Text variant="heading" accessibilityRole="header">
+            {t('habitsTab.loop.title')}
+          </Text>
+          <LoopQuestions value={answers} onChange={setAnswers} />
+        </View>
       </StepFrame>
     );
   }
@@ -330,7 +334,6 @@ export default function AddHabitScreen() {
       step={step}
       eyebrow={title}
       title={t('practice.onboarding.howMuch.title')}
-      lead={t('practice.onboarding.howMuch.hint')}
       example={t('practice.onboarding.howMuch.example')}
       nextLabel={t('practice.add.create')}
       onNext={() => create({ distance, slots, weekdays })}
@@ -338,6 +341,7 @@ export default function AddHabitScreen() {
         create({ distance: 'far', slots: slots.length > 0 ? slots : defaultSlotsFor(habit), weekdays: weekdays ?? ruleToWeekdays(habit.defaultRule) })
       }
     >
+      <StrategyLine strategy="start-tiny" />
       <View style={styles.group} accessibilityRole="radiogroup">
         {DISTANCES.map((value) => (
           <CheckRow
@@ -497,34 +501,33 @@ interface ScheduleFieldsProps {
   window?: DeedWindow;
   slots: LocalTime[];
   onSlots: (slots: LocalTime[]) => void;
-  activeDays: number;
-  onActiveDays: (n: number) => void;
+  /** The days (null: the habit's rule is not a weekday rule, e.g. the white days). */
   weekdays: number[] | null;
   onWeekdays: (days: number[]) => void;
 }
 
-function ScheduleFields({ window, slots, onSlots, activeDays, onActiveDays, weekdays, onWeekdays }: ScheduleFieldsProps) {
+/** The reminder times, then the days only (A-13 a): «3 أيام في الأسبوع» follows the days picked. */
+function ScheduleFields({ window, slots, onSlots, weekdays, onWeekdays }: ScheduleFieldsProps) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   return (
     <>
       <SlotsEditor slots={slots} onChange={onSlots} window={window} />
-      <SectionDivider />
-      <View style={styles.group}>
-        <Text variant="heading" accessibilityRole="header">
-          {t('practice.add.activeDays')}
-        </Text>
-        <ActiveDaysPicker value={activeDays} onChange={onActiveDays} />
-      </View>
       {weekdays ? (
         <>
           <SectionDivider />
           <View style={styles.group}>
             <Text variant="heading" accessibilityRole="header">
-              {t('practice.add.reminderDays')}
+              {t('habitsTab.plan.days')}
             </Text>
             <WeekdayPicker value={weekdays} onChange={onWeekdays} />
-            {weekdays.length === 0 ? <ErrorText>{t('practice.add.noReminderDays')}</ErrorText> : null}
+            {weekdays.length === 0 ? (
+              <ErrorText>{t('practice.add.noReminderDays')}</ErrorText>
+            ) : (
+              <Text variant="small" tone="muted">
+                {t('habitsTab.plan.daysPerWeek', { days: t('practice.add.daysCount', { count: weekdays.length }) })}
+              </Text>
+            )}
           </View>
         </>
       ) : null}
@@ -532,18 +535,50 @@ function ScheduleFields({ window, slots, onSlots, activeDays, onActiveDays, week
   );
 }
 
+/** A strategy in the moment it helps (F-12 a): its name and one line, never a link away from the flow. */
+function StrategyLine({ strategy }: { strategy: 'anchor-prayer' | 'start-tiny' }) {
+  const { t, i18n } = useTranslation();
+  const info = STRATEGY_TITLES[strategy];
+  return (
+    <Notice icon={Lightbulb}>{`${i18n.language === 'en' ? info.en : info.ar}: ${t(`practice.strategies.items.${strategy}.idea`)}`}</Notice>
+  );
+}
+
+const STRATEGY_TITLES = {
+  'anchor-prayer': { ar: 'اربطها بصلاة', en: 'Tie it to a prayer' },
+  'start-tiny': { ar: 'ابدأ صغيرًا جدًا', en: 'Start very small' },
+} as const;
+
+/** «كم دقيقة حرة لديك؟» choices (F-28 a), in minutes. */
+const FREE_CHOICES = [15, 30, 60, 90, 120, 180];
+
 /**
- * «فروضي وأدواري» before creating: free time not set yet → a way to set it; else the load and its verdict, for today
- * (practice-core `dailyLoad` / `loadWarning`, ebb and season aware), as on the duties screen.
+ * The load check before creating (F-28 a): the first time, «كم دقيقة حرة لديك؟» right here (saved to the synced
+ * settings, toast); then the habits' minutes today against it and its verdict (practice-core `dailyLoad` /
+ * `loadWarning`, ebb and season aware). «فروضي وأدواري» is gone.
  */
 function LoadCheck({ plans, free, today: d }: { plans: readonly Plan[]; free: number | null; today: LocalDate }) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
+  const setStore = usePracticeStore((s) => s.setStore);
+  const choose = (minutes: number) => {
+    setStore((s) => updateSettings(s, { freeMinutesPerDay: minutes }));
+    toast(t('habitsTab.add.freeSaved'));
+  };
   if (free === null) {
     return (
       <View style={styles.group}>
-        <Notice icon={Hourglass}>{t('practice.duties.notSet')}</Notice>
-        <Button label={t('practice.add.loadSetup')} onPress={() => router.push('/practice/duties')} variant="outline" arrow />
+        <Text variant="heading" accessibilityRole="header">
+          {t('habitsTab.add.freeQuestion')}
+        </Text>
+        <Text variant="small" tone="muted">
+          {t('habitsTab.add.freeHint')}
+        </Text>
+        <Wrap>
+          {FREE_CHOICES.map((m) => (
+            <Chip key={m} label={t('practice.duties.minutes', { count: m })} onPress={() => choose(m)} />
+          ))}
+        </Wrap>
       </View>
     );
   }

@@ -8,7 +8,7 @@
  */
 
 import {
-  cleanStrategyKeys,
+  DEFAULT_NOTIFICATION_PREFS,
   DEFAULT_TODAY_TEXT_SOURCE,
   isValidTime,
   parseMyReminders,
@@ -69,11 +69,13 @@ export interface PracticePrefs {
   weekBranch: boolean;
   /** «إظهار التاريخ الهجري»: the Hijri date next to the Gregorian one on «ورد اليوم» and «سجلّي». Off by default. */
   showHijri: boolean;
-  /** «ذكّرني بها» on «استراتيجيات العادات»: chosen strategy keys (opt-in, empty by default); one reminder a week at most. */
-  strategies: string[];
-  /** «ذكّرني باستراتيجية كل أسبوع» while strategies are chosen. On by default. */
-  strategyReminders: boolean;
-  strategyTime: LocalTime;
+  /**
+   * «مناسبة قريبة» (owner round 5, F-17): one reminder the evening before a coming occasion of the catalog (Arafah, the
+   * white days…). Opt-in, off by default. (The weekly strategy reminder and its prefs were removed in round 5, F-12 a;
+   * older stored `strategies` / `strategyReminders` / `strategyTime` values are ignored when read.)
+   */
+  occasionReminders: boolean;
+  occasionTime: LocalTime;
   /** «تذكيراتي» (phase 6): the user's own short lines, on this device only (≤ 120 characters, at most 20). */
   myReminders: MyReminder[];
   /** «أوقات الصلاة»: the city whose prayer times anchor «بعد الفجر»… slots; null = default times. */
@@ -101,9 +103,8 @@ export const DEFAULT_PREFS: PracticePrefs = {
   sinLock: false,
   weekBranch: false,
   showHijri: false,
-  strategies: [],
-  strategyReminders: true,
-  strategyTime: '10:00',
+  occasionReminders: DEFAULT_NOTIFICATION_PREFS.occasions,
+  occasionTime: DEFAULT_NOTIFICATION_PREFS.occasionTime,
   myReminders: [],
   prayer: null,
   prayerCache: null,
@@ -120,12 +121,12 @@ export function parsePrefs(json: unknown): PracticePrefs {
     try {
       raw = JSON.parse(json);
     } catch {
-      return { ...DEFAULT_PREFS, strategies: [], myReminders: [] };
+      return { ...DEFAULT_PREFS, myReminders: [] };
     }
   }
-  if (!isRecord(raw) || raw.v !== 1) return { ...DEFAULT_PREFS, strategies: [], myReminders: [] };
+  if (!isRecord(raw) || raw.v !== 1) return { ...DEFAULT_PREFS, myReminders: [] };
   const bool = (k: keyof PracticePrefs) => (typeof raw[k] === 'boolean' ? (raw[k] as boolean) : (DEFAULT_PREFS[k] as boolean));
-  const time = (k: 'kinshipTime' | 'sinReminderTime' | 'eveningTime' | 'fridayTime' | 'strategyTime') => (isValidTime(raw[k]) ? (raw[k] as string) : DEFAULT_PREFS[k]);
+  const time = (k: 'kinshipTime' | 'sinReminderTime' | 'eveningTime' | 'fridayTime' | 'occasionTime') => (isValidTime(raw[k]) ? (raw[k] as string) : DEFAULT_PREFS[k]);
   return {
     v: 1,
     habitReminders: bool('habitReminders'),
@@ -142,9 +143,8 @@ export function parsePrefs(json: unknown): PracticePrefs {
     sinLock: bool('sinLock'),
     weekBranch: bool('weekBranch'),
     showHijri: bool('showHijri'),
-    strategies: cleanStrategyKeys(raw.strategies),
-    strategyReminders: bool('strategyReminders'),
-    strategyTime: time('strategyTime'),
+    occasionReminders: bool('occasionReminders'),
+    occasionTime: time('occasionTime'),
     myReminders: parseMyReminders(raw.myReminders),
     prayer: parsePrayerSettings(raw.prayer),
     prayerCache: parsePrayerCache(raw.prayerCache),

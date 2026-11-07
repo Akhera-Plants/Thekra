@@ -1,36 +1,32 @@
 /**
- * «استراتيجيات العادات» (redesign §4.5; owner round 3, items 13, 14, 17 and 18), reached from its card at the top of
- * «عاداتي» and from the side menu. Two tabs so the page stays short (owner, 2026-11-03):
- * 1. «الاستراتيجيات» (first): one line on «ذكّرني بها» (one reminder a week, its day and time in Settings ›
- *    «الإشعارات», reached by «وقت التذكير» once one is chosen), then the strategies (practice-core `STRATEGIES` without
- *    «لا تفوّتها مرتين», which appears in context the day after a habit is missed, on its row): one idea line, «جرّبها»
- *    (the screen it maps to; «أتبِع السيئةَ الحسنة» opens a short list of easy, high-reward good deeds instead, never
- *    «تخفَّف»), its example and the «ذكّرني بها» switch, each strategy an accordion row (a bell while it is on);
- * 2. «قبل أن تبدأ»: the educational cards; «حلقة العادة» leads to «ابنِ حلقة عادتك الخاصة» (practice/loops).
+ * «استراتيجيات العادات» (redesign §4.5; owner round 3; round 5, F-12 a): a library to read, with ONE entry (in «المزيد»).
+ * The strategies themselves appear in their moment («ابدأ صغيرًا» in «أضف», «اركب الموجة» in «لحظة مجاهدة», «اقضِ ما
+ * فاتك» in «صلّحها», «حاسب نفسك» in المحاسبة), so there is no «ذكّرني بها» and no weekly reminder any more. Two tabs so the
+ * page stays short (owner, 2026-11-03):
+ * 1. «الاستراتيجيات» (first): practice-core `STRATEGIES` without «لا تفوّتها مرتين» (it appears the day after a missed
+ *    habit, on its row), each an accordion row: one idea line, its example and «جرّبها» (the screen it maps to;
+ *    «أتبِع السيئةَ الحسنة» opens a short list of easy, high-reward good deeds instead, never «تخفَّف»);
+ * 2. «قبل أن تبدأ»: the educational cards.
  */
 
 import React, { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { BellRing, ChevronDown, ChevronUp, Clock, Repeat } from 'lucide-react-native';
-import { setHeartPrefs, toggleStrategy, type Strategy } from '@thekra/practice-core';
-import { ensurePermission } from '@/lib/practice/notifications';
+import { ChevronDown, ChevronUp } from 'lucide-react-native';
+import { setHeartPrefs, type Strategy } from '@thekra/practice-core';
 import { usePracticeStore } from '@/lib/practice/practice-store';
 import { listedStrategies, strategyTarget } from '@/lib/practice/strategies';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { ConsistencyCard, HabitLoopCard, SinStepsCard } from '@/components/practice/hub/KnowledgeCards';
 import { EasyDeeds } from '@/components/practice/mujahada/EasyDeeds';
 import { space, useStyles, type Theme } from '@/theme';
-import { Button, Icon, Notice, PageHeader, Screen, Section, SegmentTabs, SwitchRow, Text, type SegmentItem } from '@/ui';
+import { Button, Icon, PageHeader, Screen, Section, SegmentTabs, Text, type SegmentItem } from '@/ui';
 
 type Tab = 'list' | 'cards';
 
-const openReminderTime = () => router.push('/settings/notifications');
-
 const makeStyles = (t: Theme) => ({
   cards: { gap: space.md },
-  remind: { gap: space.sm },
   /** No top rule: the first row sits under its section title (A-05). */
   list: {},
   item: { borderBottomWidth: 1, borderBottomColor: t.colors.border },
@@ -43,19 +39,6 @@ const makeStyles = (t: Theme) => ({
 export default function StrategiesScreen() {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
-  const chosen = usePracticeStore((s) => s.prefs.strategies);
-  const setPrefs = usePracticeStore((s) => s.setPrefs);
-  const [denied, setDenied] = useState(false);
-
-  async function handleRemind(key: string, on: boolean) {
-    setDenied(false);
-    if (on && !(await ensurePermission(t('practice.notify.channelName')))) {
-      setDenied(true);
-      return;
-    }
-    setPrefs((p) => ({ ...p, strategies: toggleStrategy(p.strategies, key) }));
-  }
-
   const [tab, setTab] = useState<Tab>('list');
   const tabs: SegmentItem<Tab>[] = [
     { key: 'list', label: t('practice.strategies.listTitle') },
@@ -68,28 +51,15 @@ export default function StrategiesScreen() {
       <SegmentTabs items={tabs} value={tab} onChange={setTab} />
       {tab === 'list' ? (
         <Section>
-          <View style={styles.remind}>
-            <Notice icon={BellRing}>{t('practice.strategies.remindHint')}</Notice>
-            {chosen.length > 0 ? (
-              <Button label={t('practice.strategies.time')} icon={Clock} variant="outline" size="sm" onPress={openReminderTime} />
-            ) : null}
-          </View>
-          {denied ? <Notice tone="destructive">{t('practice.permissionDenied')}</Notice> : null}
           <View style={styles.list}>
             {listedStrategies().map((strategy) => (
-              <StrategyItem
-                key={strategy.key}
-                strategy={strategy}
-                reminding={chosen.includes(strategy.key)}
-                onRemind={(on) => void handleRemind(strategy.key, on)}
-              />
+              <StrategyItem key={strategy.key} strategy={strategy} />
             ))}
           </View>
         </Section>
       ) : (
         <View style={styles.cards}>
           <HabitLoopCard />
-          <Button label={t('loops.habit.pageTitle')} icon={Repeat} variant="outline" arrow onPress={() => router.push('/practice/loops')} />
           <SinStepsCard withSource />
           <ConsistencyCard />
         </View>
@@ -98,11 +68,8 @@ export default function StrategiesScreen() {
   );
 }
 
-/**
- * One strategy as an accordion row (owner, 2026-11-03: organise, don't stack text): the title, a bell while
- * «ذكّرني بها» is on, and a chevron; opened, the idea, its example, «جرّبها» and the «ذكّرني بها» switch.
- */
-function StrategyItem({ strategy, reminding, onRemind }: { strategy: Strategy; reminding: boolean; onRemind: (on: boolean) => void }) {
+/** One strategy as an accordion row (owner, 2026-11-03: organise, don't stack text): opened, the idea, its example, «جرّبها». */
+function StrategyItem({ strategy }: { strategy: Strategy }) {
   const { t } = useTranslation();
   const locale = useUiLocale();
   const styles = useStyles(makeStyles);
@@ -127,13 +94,12 @@ function StrategyItem({ strategy, reminding, onRemind }: { strategy: Strategy; r
         onPress={() => setOpen((o) => !o)}
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
-        accessibilityLabel={reminding ? `${title}, ${t('practice.strategies.remind')}` : title}
+        accessibilityLabel={title}
         style={({ pressed }) => [styles.head, pressed && styles.headPressed]}
       >
         <Text variant="heading" style={styles.headTitle}>
           {title}
         </Text>
-        {reminding ? <Icon icon={BellRing} size={17} tone="link" /> : null}
         <Icon icon={open ? ChevronUp : ChevronDown} size={18} tone="muted" />
       </Pressable>
       {open ? (
@@ -158,7 +124,6 @@ function StrategyItem({ strategy, reminding, onRemind }: { strategy: Strategy; r
               <EasyDeeds />
             </View>
           ) : null}
-          <SwitchRow label={t('practice.strategies.remind')} value={reminding} onValueChange={onRemind} />
         </View>
       ) : null}
     </View>

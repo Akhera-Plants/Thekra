@@ -5,8 +5,8 @@
  * change). The first program asks for a «رمز الخصوصية» once; then the fingerprint / face opens this page
  * (SinProgramGuard). The other network calls are public and identical for every user: the catalog, the evidence of ALL
  * programs at once (useSinProgramEvidence) and the public sins list for names.
- * The sin's name is never a title: the native header and the page title stay generic (practice/_layout.tsx), and the
- * name shows only as plain text inside the page, never as a header element.
+ * The sin's name is never a header element: the native header and the page title stay generic (practice/_layout.tsx);
+ * the name shows inside the page as plain text (the program switch), never with a header role.
  *
  * Flow (every sin can start «تخفَّف»): choose any sin of the public list (searchable; those with a written program
  * first) → for a sin without a written program, «هل فيها حقٌّ لأحد من الناس؟» → for a written program, the willpower
@@ -14,23 +14,24 @@
  * the account has no vault yet → practice-core `startProgram`. Limits (owner round 3, item 16): up to 3 programs, and a
  * new one only when every running one has lasted two months (the limit sheet says why and when).
  *
- * A running program is shown in tabs (owner round 3, item 12), with a program switch above them when several run:
- * «اليوم» (the day's limit, the no-reset counters, the check-in, after a slip the gentle after-fall content and
- * «خربانة؟ صلّحها»), «المراحل» (the stage track, this week's task, practical steps, good habits in its place, help),
- * «حلقة المعصية» (the member's own loops, item 17: المثير/الموقف، الشعور، الرغبة، الفعل، ما يحصل بعده، البديل) and
- * «دفتري» («متى تضعف؟», the private notebook, a link to all the texts). «لحظة مجاهدة» is the first action on the page.
- * The texts («آيات وأحاديث تعينك على ترك هذه المعصية», O-05) sit in «المراحل» under the stage (A-03).
- * «أنهِ هذا البرنامج» lives in the header's «⋯» menu (A-15), confirmed there; it removes check-ins, notes and loops.
+ * A running program (owner round 5, F-11 a / A-21 a): the program's name is a selectable title (a sheet switches
+ * between the running programs and starts another), then ONE tab bar:
+ * - «اليوم»: the day's limit, ONE counter line, «لحظة مجاهدة», the evening check-in with its optional note (that note is
+ *   the notebook), and after a slip the gentle after-fall content and «صلّحها»;
+ * - «رحلتي»: the stages with this week's task («حلقة المعصية» is the first week's task, filled once), the «متى تضعف؟»
+ *   summary, the texts under «اعرف ضررها» («آيات وأحاديث تعينك على ترك هذه المعصية», O-05 / A-03), practical steps,
+ *   good habits in its place, help, and the notebook's past days (folded).
+ * The privacy line folds to one row once the program is saved. «أنهِ هذا البرنامج» lives in the header's «⋯» menu
+ * (A-15), confirmed there; it removes check-ins, notes and loops. Reminders are set in «التنبيهات» only (A-20).
  */
 
-import { NotificationsLink } from '@/components/settings/NotificationsLink';
 import React, { useEffect, useMemo, useState } from 'react';
-import { KeyboardAvoidingView, ScrollView, View } from 'react-native';
+import { KeyboardAvoidingView, Pressable, ScrollView, View } from 'react-native';
 import { LimitSheet } from '@/components/practice/LimitSheet';
 import { useLimits } from '@/lib/practice/use-habits-hub';
 import { Stack, router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { BookOpen, Check, Plus, ShieldCheck, Trash2, Waves } from 'lucide-react-native';
+import { Check, ChevronDown, ChevronUp, Plus, ShieldCheck, Trash2, Waves } from 'lucide-react-native';
 import {
   activePrograms,
   addSinLoop,
@@ -39,7 +40,6 @@ import {
   checkIn,
   currentStage,
   hasTriggers,
-  heldDaysTotal,
   hopeTextFor,
   limitForToday,
   programCounters,
@@ -59,7 +59,6 @@ import {
 } from '@thekra/practice-core';
 import { StoryLine } from '@/components/practice/hub/KnowledgeCards';
 import { usePracticeCatalog, useSinProgramEvidence } from '@/lib/api/practice';
-import { useSins } from '@/lib/api/sins';
 import { pick, pickList, type CatalogSinProgram, type StageContent } from '@/lib/practice/catalog-types';
 import { shortDate } from '@/lib/practice/format';
 import { pendingProgram, setMomentSource, setPendingProgram, today, usePracticeStore } from '@/lib/practice/practice-store';
@@ -83,16 +82,18 @@ import { EvidenceList } from '@/components/practice/EvidenceList';
 import { SinProgramGuard } from '@/components/practice/SinProgramGuard';
 import { FixItSheet, useLimitLabel } from '@/components/practice/sin/FixItSheet';
 import { TriggerChips } from '@/components/practice/sin/TriggerChips';
-import { radius, space, useStyles, type Theme } from '@/theme';
+import { useSinName } from '@/components/practice/sin/use-sin-name';
+import { radius, space, useStyles, useTheme, type Theme } from '@/theme';
 import {
   ActionMenu,
+  BottomSheet,
   Button,
   ButtonPair,
   CheckRow,
   ErrorState,
   Field,
   Icon,
-  ListRow,
+  MIN_TARGET,
   NextStep,
   Notice,
   PageHeader,
@@ -135,7 +136,6 @@ const makeStyles = (t: Theme) => ({
   },
   stagePillDone: { borderColor: t.colors.primary },
   stagePillCurrent: { borderColor: t.colors.primary, backgroundColor: t.colors.primary },
-  counters: { gap: 2 },
   pattern: { gap: space.sm, padding: space.lg, borderRadius: radius.panel, borderWidth: 1, borderColor: t.colors.border, backgroundColor: t.colors.card },
   bulletRow: { flexDirection: 'row' as const, alignItems: 'flex-start' as const, gap: space.md },
   bullet: { width: 5, height: 5, borderRadius: radius.full, backgroundColor: t.colors.mutedForeground, marginTop: 12 },
@@ -153,6 +153,13 @@ const makeStyles = (t: Theme) => ({
   },
   added: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 6 },
   noteRow: { gap: space.xs, paddingVertical: space.md, borderBottomWidth: 1, borderBottomColor: t.colors.border },
+  /** The program's name as the selectable title: the name, its chevron, the path line under it. */
+  switcher: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.sm, minHeight: MIN_TARGET, alignSelf: 'flex-start' as const, maxWidth: '100%' as const },
+  switcherName: { flexShrink: 1 },
+  privacy: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.sm, minHeight: MIN_TARGET, alignSelf: 'flex-start' as const },
+  fold: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.sm, minHeight: 56, paddingVertical: space.sm },
+  foldTitle: { flex: 1, minWidth: 0 },
+  taskDone: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 6 },
 });
 
 /** The vault opened on the device and the app-switcher cover come first (SinProgramGuard). */
@@ -173,19 +180,20 @@ function SinProgramContent() {
   const programs = useMemo(() => activePrograms(allPrograms), [allPrograms]);
   const catalog = usePracticeCatalog(locale);
   const evidence = useSinProgramEvidence(catalog.data, locale);
-  const sins = useSins({ limit: 100 });
+  const sins = useSinName();
   const userId = useAuthStore((s) => s.user?.id ?? null);
   const vaultStatus = useVaultState((s) => s.status);
   // An end marker is kept only while an encrypted copy may exist (also while that is not known yet).
   const keepMarker = userId !== null && vaultStatus !== 'none';
   const [ended, setEnded] = useState(false);
-  // «ابدأ برنامج الترك» on a sin page hands its choice over in memory (never the route); read once, then cleared.
+  // «ابدأ «تخفَّف»» on a sin page hands its choice over in memory (never the route); read once, then cleared.
   const [pendingSin] = useState(pendingProgram);
   useEffect(() => setPendingProgram(null), []);
   /** Null until the user opens or closes the chooser: a sin page's hand-off opens it beside the current program. */
   const [choosing, setChoosing] = useState<boolean | null>(null);
-  /** The program shown when several run (the switch above the tabs). */
+  /** The program shown when several run (chosen from the title's sheet). */
   const [focus, setFocus] = useState<string | null>(null);
+  const [switching, setSwitching] = useState(false);
   // Up to 3 programs, each running one at least two months old before another starts (practice-core `limits`).
   const planLimits = useLimits();
   const setStore = usePracticeStore((s) => s.setStore);
@@ -200,16 +208,10 @@ function SinProgramContent() {
     );
   }
 
-  const sinName = (slug: string) => {
-    const s = sins.data?.find((x) => x.slug === slug);
-    // Never the raw slug: an unknown sin reads as «برنامجك».
-    if (!s) return t('sinProgram.unnamed');
-    return locale === 'en' ? s.name || s.nameAr : s.nameAr || s.name;
-  };
-
+  const sinName = sins.name;
   const entries = catalog.data.sinPrograms.programs;
   const following = new Set(programs.map((p) => p.sinSlug));
-  const allSins = (sins.data ?? []).map((x) => ({ slug: x.slug, name: sinName(x.slug) }));
+  const allSins = sins.list;
   const preselected = pendingSin && !following.has(pendingSin) ? pendingSin : null;
   const canStart = programs.length === 0 || planLimits.canAdd('program');
   const showChooser = programs.length === 0 || (canStart && (choosing ?? preselected !== null));
@@ -217,6 +219,8 @@ function SinProgramContent() {
   const current = programs.find((p) => p.sinSlug === focus) ?? programs[0];
   // Programs kept from an older build, before «تخفَّف» was always saved: protect them with a code once.
   const needsProtect = userId !== null && vaultStatus === 'none' && programs.length > 0;
+  // Saved in the account: the privacy line folds to one row (A-21 a).
+  const saved = vaultStatus !== 'none' && programs.length > 0;
 
   function handleStarted(slug: string) {
     setChoosing(false);
@@ -229,6 +233,13 @@ function SinProgramContent() {
     setChoosing(null);
     setEnded(true);
     toast(t('sinProgram.end.toast'));
+  }
+
+  async function protect(code: string): Promise<string | null> {
+    if (!userId) return 'failed';
+    const err = await createVaultWithCode(userId, code, programs);
+    if (!err) toast(t('vault.savedToast'));
+    return err;
   }
 
   return (
@@ -259,8 +270,10 @@ function SinProgramContent() {
                 : () => null,
           }}
         />
-        <PageHeader title={t('sinProgram.title')} lead={t('sinProgram.lead')} />
-        <Notice icon={ShieldCheck}>{t('sinProgram.privacy')}</Notice>
+        <PageHeader title={t('sinProgram.title')} lead={t('sinProgram.lead')}>
+          {saved ? <PrivacyLine /> : null}
+        </PageHeader>
+        {saved ? null : <Notice icon={ShieldCheck}>{t('sinProgram.privacy')}</Notice>}
         {ended ? <Notice icon={Check}>{t('sinProgram.end.done')}</Notice> : null}
         {showChooser ? (
           <ChooseProgram
@@ -272,45 +285,47 @@ function SinProgramContent() {
             onCancel={programs.length > 0 ? () => setChoosing(false) : undefined}
           />
         ) : null}
-        {needsProtect && userId ? (
-          <PrivacyCodeForm submitLabel={t('vault.protect')} onSubmit={(code) => createVaultWithCode(userId, code, programs)} />
-        ) : null}
+        {needsProtect && userId ? <ProtectPrograms onSubmit={protect} /> : null}
         {programs.length > 0 && !showChooser && current ? (
           <>
-            {/* The first action of the page, outlined: the check-in's «سجّل» is the area's one solid (A-08). */}
-            <Button
-              label={t('sinProgram.moment.open')}
-              icon={Waves}
-              variant="outline"
-              size="lg"
-              onPress={() => {
-                setMomentSource(current.sinSlug);
-                router.push('/practice/moment');
-              }}
+            <ProgramView
+              key={current.sinSlug}
+              program={current}
+              entry={programEntry(entries, current.sinSlug, current.category)}
+              sinName={sinName(current.sinSlug)}
+              onSwitch={() => setSwitching(true)}
+              evidenceById={evidence.data}
+              evidenceLoading={evidence.isLoading}
+              evidenceError={evidence.isError}
             />
-            {programs.length > 1 ? (
-              <SegmentTabs
-                items={programs.map((p) => ({ key: p.sinSlug, label: sinName(p.sinSlug) }))}
-                value={current.sinSlug}
-                onChange={setFocus}
-              />
-            ) : null}
-            <View style={styles.block}>
-              <ProgramView
-                key={current.sinSlug}
-                program={current}
-                entry={programEntry(entries, current.sinSlug, current.category)}
-                sinName={sinName(current.sinSlug)}
-                evidenceById={evidence.data}
-                evidenceLoading={evidence.isLoading}
-                evidenceError={evidence.isError}
-              />
-            </View>
-            <SectionDivider />
-            {canAddAnother ? (
-              <Button label={t('sinProgram.another')} icon={Plus} onPress={() => setChoosing(true)} variant="outline" />
-            ) : null}
-            <NotificationsLink />
+            <BottomSheet visible={switching} title={t('sinProgram.switchTitle')} onClose={() => setSwitching(false)}>
+              <View style={styles.options} accessibilityRole="radiogroup">
+                {programs.map((p) => (
+                  <CheckRow
+                    key={p.sinSlug}
+                    radio
+                    title={sinName(p.sinSlug)}
+                    hint={p.category === 'haqq_ibad' ? t('sinProgram.categoryIbad') : t('sinProgram.categoryAllah')}
+                    checked={p.sinSlug === current.sinSlug}
+                    onPress={() => {
+                      setFocus(p.sinSlug);
+                      setSwitching(false);
+                    }}
+                  />
+                ))}
+              </View>
+              {canAddAnother ? (
+                <Button
+                  label={t('sinProgram.another')}
+                  icon={Plus}
+                  variant="outline"
+                  onPress={() => {
+                    setSwitching(false);
+                    setChoosing(true);
+                  }}
+                />
+              ) : null}
+            </BottomSheet>
           </>
         ) : null}
         <LimitSheet
@@ -322,6 +337,81 @@ function SinProgramContent() {
         />
       </Screen>
     </KeyboardAvoidingView>
+  );
+}
+
+/** «محفوظ مشفّرًا»: one quiet row once the program is saved; a tap shows the whole line (A-21 a). */
+function PrivacyLine() {
+  const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
+  const [open, setOpen] = useState(false);
+  return (
+    <View style={styles.tight}>
+      <Pressable
+        onPress={() => setOpen((o) => !o)}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: open }}
+        hitSlop={4}
+        style={({ pressed }) => [styles.privacy, pressed && { opacity: 0.7 }]}
+      >
+        <Icon icon={ShieldCheck} size={17} tone="link" />
+        <Text variant="small" tone="muted">
+          {t('sinProgram.privacyShort')}
+        </Text>
+        <Icon icon={open ? ChevronUp : ChevronDown} size={16} tone="muted" />
+      </Pressable>
+      {open ? (
+        <Text variant="small" tone="muted">
+          {t('sinProgram.privacy')}
+        </Text>
+      ) : null}
+    </View>
+  );
+}
+
+/**
+ * Programs kept from an older build, not saved in the account yet: one folded line (A-21 a: the code card no longer sits
+ * open above the program); «احفظها مشفّرة» opens the code form, which is gone once saved.
+ */
+function ProtectPrograms({ onSubmit }: { onSubmit: (code: string) => Promise<string | null> }) {
+  const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
+  const [open, setOpen] = useState(false);
+  if (open) return <PrivacyCodeForm submitLabel={t('vault.protect')} onSubmit={onSubmit} onCancel={() => setOpen(false)} />;
+  return (
+    <NextStep>
+      <View style={styles.tight}>
+        <Text variant="body">{t('sinProgram.protect.line')}</Text>
+        <Button label={t('sinProgram.protect.open')} icon={ShieldCheck} variant="outline" size="sm" onPress={() => setOpen(true)} />
+      </View>
+    </NextStep>
+  );
+}
+
+/** A folded part of «رحلتي» (the notebook's past days, the loop in later weeks): title, count, chevron. */
+function Fold({ title, count, children }: { title: string; count?: number; children: React.ReactNode }) {
+  const styles = useStyles(makeStyles);
+  const [open, setOpen] = useState(false);
+  return (
+    <View>
+      <Pressable
+        onPress={() => setOpen((o) => !o)}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: open }}
+        style={({ pressed }) => [styles.fold, pressed && { opacity: 0.7 }]}
+      >
+        <Text variant="heading" style={styles.foldTitle}>
+          {title}
+        </Text>
+        {count !== undefined ? (
+          <Text variant="small" tone="muted">
+            {String(count)}
+          </Text>
+        ) : null}
+        <Icon icon={open ? ChevronUp : ChevronDown} size={18} tone="muted" />
+      </Pressable>
+      {open ? <View style={styles.block}>{children}</View> : null}
+    </View>
   );
 }
 
@@ -424,7 +514,10 @@ function ChooseProgram({ sins, entries, following, preselected, onStarted, onCan
     const program = newProgram();
     if (!program || !userId) return 'failed';
     const err = await createVaultWithCode(userId, code, withProgramStarted(usePracticeStore.getState().store.programs, program));
-    if (!err) onStarted(program.sinSlug);
+    if (!err) {
+      toast(t('vault.savedToast'));
+      onStarted(program.sinSlug);
+    }
     return err;
   }
 
@@ -533,19 +626,21 @@ function BulletList({ items }: { items: string[] }) {
   );
 }
 
-type ProgramTab = 'today' | 'stages' | 'loops' | 'notebook';
+type ProgramTab = 'today' | 'journey';
 
 interface ProgramViewProps {
   program: SinProgram;
   /** The written program, or the common one (never null: a running program knows its category). */
   entry: CatalogSinProgram | null;
   sinName: string;
+  /** Opens the sheet that switches programs (and starts another). */
+  onSwitch: () => void;
   evidenceById: Map<string, QuoteDto> | undefined;
   evidenceLoading: boolean;
   evidenceError: boolean;
 }
 
-function ProgramView({ program, entry, sinName, evidenceById, evidenceLoading, evidenceError }: ProgramViewProps) {
+function ProgramView({ program, entry, sinName, onSwitch, evidenceById, evidenceLoading, evidenceError }: ProgramViewProps) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const locale = useUiLocale();
@@ -559,9 +654,7 @@ function ProgramView({ program, entry, sinName, evidenceById, evidenceLoading, e
     setStore((s) => ({ ...s, programs: s.programs.map((p) => (p.sinSlug === program.sinSlug && p.endedAt === undefined ? change(p) : p)) }));
   const tabs: SegmentItem<ProgramTab>[] = [
     { key: 'today', label: t('sinProgram.tabs.today') },
-    { key: 'stages', label: t('sinProgram.tabs.stages') },
-    { key: 'loops', label: t('sinProgram.tabs.loops'), count: loops.length || undefined },
-    { key: 'notebook', label: t('sinProgram.tabs.notebook') },
+    { key: 'journey', label: t('sinProgram.tabs.journey') },
   ];
   const d = today();
   const stage = currentStage(program, d);
@@ -582,12 +675,38 @@ function ProgramView({ program, entry, sinName, evidenceById, evidenceLoading, e
   const hopeId = showAfterFall ? hopeTextFor(afterFallIds, texts, d, shortestTextId(afterFallIds, texts)) : null;
   // «ما ورد فيها»: the program's texts and the current stage's, each once.
   const textIds = [...new Set([...(entry?.evidence ?? []), ...(stageContent?.evidence ?? [])])];
+  const firstWeek = stage.index === 0;
+  const notes = notebookEntries(program, d);
+
+  const loopPanel = (
+    <LoopsPanel
+      kind="sin"
+      single
+      hideEmpty
+      addLabel={t('sinProgram.loopTask.fill')}
+      loops={loops}
+      onAdd={(draft) => editProgram((p) => addSinLoop(p, newPracticeId(), sinLoopInput(draft)))}
+      onUpdate={(id, draft) => editProgram((p) => updateSinLoop(p, id, sinLoopInput(draft)))}
+      onRemove={(id) => editProgram((p) => removeSinLoop(p, id))}
+    />
+  );
 
   return (
     <>
-      {/* The name is page content only: no header role, so it never lands in a title or the headings list. */}
+      {/* The name is page content only (no header role): a tap opens the switch between programs (A-21 a). */}
       <View style={styles.tight}>
-        <Text variant="title">{sinName}</Text>
+        <Pressable
+          onPress={onSwitch}
+          accessibilityRole="button"
+          accessibilityLabel={t('sinProgram.switchLabel', { name: sinName })}
+          hitSlop={4}
+          style={({ pressed }) => [styles.switcher, pressed && { opacity: 0.7 }]}
+        >
+          <Text variant="title" style={styles.switcherName}>
+            {sinName}
+          </Text>
+          <Icon icon={ChevronDown} size={20} tone="link" />
+        </Pressable>
         <Text variant="small" tone="muted">
           {`${program.path === 'gradual' ? t('sinProgram.pathGradual') : t('sinProgram.pathCut')} · ${
             program.category === 'haqq_ibad' ? t('sinProgram.categoryIbad') : t('sinProgram.categoryAllah')
@@ -605,21 +724,25 @@ function ProgramView({ program, entry, sinName, evidenceById, evidenceLoading, e
             </NextStep>
           ) : null}
 
-          <View style={styles.counters}>
-            <Text variant="heading">
-              {`${t('sinProgram.counters.held', { n: String(counters.held), total: String(counters.window) })} · ${t(
-                counters.fromStart ? 'sinProgram.counters.sinceStart' : 'sinProgram.counters.sinceRepentance',
-                { count: counters.daysSinceRepentance },
-              )}`}
-            </Text>
-            <Text variant="small" tone="muted">
-              {t('sinProgram.counters.note')}
-            </Text>
-            {/* «حصيلتي» of this program: only here, inside its locked page. */}
-            <Text variant="small" tone="muted">
-              {t('practice.tally.heldTotal', { count: heldDaysTotal(program, d) })}
-            </Text>
-          </View>
+          {/* ONE counter line (A-21 a): held days of the window and the days since the start or the last repentance. */}
+          <Text variant="body" weight="medium">
+            {`${t('sinProgram.counters.held', { n: String(counters.held), total: String(counters.window) })} · ${t(
+              counters.fromStart ? 'sinProgram.counters.sinceStart' : 'sinProgram.counters.sinceRepentance',
+              { count: counters.daysSinceRepentance },
+            )}`}
+          </Text>
+
+          {/* Outlined: the check-in's «سجّل» is the area's one solid (A-08). */}
+          <Button
+            label={t('sinProgram.moment.open')}
+            icon={Waves}
+            variant="outline"
+            size="lg"
+            onPress={() => {
+              setMomentSource(program.sinSlug);
+              router.push('/practice/moment');
+            }}
+          />
 
           {/* After a slip: the story of the man who killed a hundred, by id only (hidden until the id is filled). */}
           {showAfterFall ? <StoryLine moment="afterFall" /> : null}
@@ -636,7 +759,7 @@ function ProgramView({ program, entry, sinName, evidenceById, evidenceLoading, e
         </>
       ) : null}
 
-      {tab === 'stages' ? (
+      {tab === 'journey' ? (
         <>
           {gradual.length > 0 ? (
             <NextStep title={t('sinProgram.gradualSteps')}>
@@ -681,14 +804,39 @@ function ProgramView({ program, entry, sinName, evidenceById, evidenceLoading, e
                 {pick(stageContent, 'title', locale)}
               </Text>
               <StageBody content={stageContent} />
+              {/* This week's task; in the first week it is «حلقة المعصية», filled once (F-11 a). */}
               <NextStep title={t('sinProgram.stages.taskTitle')}>
-                <Text variant="body">{t(`sinProgram.stages.tasks.${STAGE_TASKS[stage.stage]}`)}</Text>
+                {firstWeek ? (
+                  <View style={styles.block}>
+                    {loops.length > 0 ? (
+                      <View style={styles.taskDone}>
+                        <Icon icon={Check} size={16} tone="link" />
+                        <Text variant="body">{t('sinProgram.loopTask.done')}</Text>
+                      </View>
+                    ) : (
+                      <>
+                        <Text variant="body">{t('sinProgram.loopTask.title')}</Text>
+                        <Text variant="small" tone="muted">
+                          {t('loops.sin.lead')}
+                        </Text>
+                      </>
+                    )}
+                    {loopPanel}
+                  </View>
+                ) : (
+                  <Text variant="body">{t(`sinProgram.stages.tasks.${STAGE_TASKS[stage.stage]}`)}</Text>
+                )}
               </NextStep>
               <Text variant="small" tone="muted">
                 {t('sinProgram.stageHint')}
               </Text>
             </View>
           ) : null}
+
+          {/* After the first week the loop stays at hand, folded (filled once, edited there). */}
+          {!firstWeek ? <Fold title={t('loops.sin.title')}>{loopPanel}</Fold> : null}
+
+          <WeakPatternCard program={program} actions={actions} />
 
           {/* The texts right under the stage that asks to read them («اعرف ضررها»), titled for what they do (A-03, O-05). */}
           {textIds.length > 0 ? (
@@ -714,30 +862,12 @@ function ProgramView({ program, entry, sinName, evidenceById, evidenceLoading, e
           {entry?.alternatives && entry.alternatives.length > 0 ? <Alternatives keys={entry.alternatives} /> : null}
 
           {entry?.help && common ? <NextStep title={t('sinProgram.help')}>{pick(common, 'help', locale)}</NextStep> : null}
-        </>
-      ) : null}
 
-      {tab === 'loops' ? (
-        <SubSection title={t('loops.sin.title')}>
-          <Text variant="small" tone="muted">
-            {t('loops.sin.lead')}
-          </Text>
-          <LoopsPanel
-            kind="sin"
-            loops={loops}
-            onAdd={(draft) => editProgram((p) => addSinLoop(p, newPracticeId(), sinLoopInput(draft)))}
-            onUpdate={(id, draft) => editProgram((p) => updateSinLoop(p, id, sinLoopInput(draft)))}
-            onRemove={(id) => editProgram((p) => removeSinLoop(p, id))}
-          />
-        </SubSection>
-      ) : null}
-
-      {tab === 'notebook' ? (
-        <>
-          <WeakPatternCard program={program} actions={actions} />
-          <Notebook program={program} />
-          {/* The texts themselves are in «المراحل»; here a way to all of them on the sin's own page. */}
-          <ListRow icon={BookOpen} title={t('sinProgram.textsAll')} onPress={() => router.push(`/sins/${program.sinSlug}`)} />
+          <SectionDivider />
+          {/* The notebook: the evening check-ins and their notes, newest first, folded. */}
+          <Fold title={t('sinProgram.notebook')} count={notes.length}>
+            <Notebook program={program} />
+          </Fold>
         </>
       ) : null}
 
@@ -757,13 +887,27 @@ function ProgramView({ program, entry, sinName, evidenceById, evidenceLoading, e
   );
 }
 
-/** «متى تضعف؟»: derived on this device from the trigger chips; shown after 14 tagged check-ins, never sent. */
+/**
+ * «متى تضعف؟»: derived on this device from the trigger chips, never sent; the summary after 14 tagged check-ins, and
+ * before that one line on how it fills.
+ */
 function WeakPatternCard({ program, actions }: { program: SinProgram; actions: readonly string[] }) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const limitLabel = useLimitLabel(actions);
   const pattern = weakPattern(program);
-  if (!pattern) return null;
+  if (!pattern) {
+    return (
+      <View style={styles.pattern}>
+        <Text variant="heading" accessibilityRole="header">
+          {t('sinProgram.pattern.title')}
+        </Text>
+        <Text variant="small" tone="muted">
+          {t('sinProgram.pattern.waiting')}
+        </Text>
+      </View>
+    );
+  }
   const limit = limitLabel(suggestedLimit(pattern, actions.length));
   return (
     <View style={styles.pattern}>
@@ -894,32 +1038,28 @@ function triggerLine(c: CheckIn, t: (key: string) => string): string | null {
   return parts.join('، ');
 }
 
-/** «دفتري الخاص»: past check-ins with their notes, newest first. Shown here only; the name of the sin is not in it. */
+/** «دفتري الخاص»: past check-ins with their notes, newest first (inside its fold). The name of the sin is not in it. */
 function Notebook({ program }: { program: SinProgram }) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const entries = notebookEntries(program, today());
   if (entries.length === 0) {
     return (
-      <SubSection title={t('sinProgram.notebook')}>
-        <Text variant="small" tone="muted">
-          {t('sinProgram.notebookEmpty')}
-        </Text>
-      </SubSection>
+      <Text variant="small" tone="muted">
+        {t('sinProgram.notebookEmpty')}
+      </Text>
     );
   }
   return (
-    <SubSection title={t('sinProgram.notebook')}>
-      <View style={styles.altList}>
-        {entries.map((c) => (
-          <View key={c.date} style={styles.noteRow}>
-            <Text variant="small" tone="muted">
-              {[shortDate(c.date), t(CHECK_IN_KEYS[c.value]), triggerLine(c, t)].filter(Boolean).join(' · ')}
-            </Text>
-            {c.note ? <Text variant="body">{c.note}</Text> : null}
-          </View>
-        ))}
-      </View>
-    </SubSection>
+    <View style={styles.altList}>
+      {entries.map((c) => (
+        <View key={c.date} style={styles.noteRow}>
+          <Text variant="small" tone="muted">
+            {[shortDate(c.date), t(CHECK_IN_KEYS[c.value]), triggerLine(c, t)].filter(Boolean).join(' · ')}
+          </Text>
+          {c.note ? <Text variant="body">{c.note}</Text> : null}
+        </View>
+      ))}
+    </View>
   );
 }

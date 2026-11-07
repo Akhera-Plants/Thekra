@@ -121,11 +121,11 @@ describe('reminders: the reviews’ day and time', () => {
     expect(list).toEqual([expect.objectContaining({ kind: 'evening', time: '20:30' })]);
   });
 
-  it('the weekly strategy reminder follows its switch, keeping the chosen strategies', () => {
-    expect(DEFAULT_PREFS.strategyReminders).toBe(true);
-    const prefs = { ...DEFAULT_PREFS, strategies: ['a', 'b'] };
-    expect(notificationPrefsOf(prefs).strategies).toEqual(['a', 'b']);
-    expect(notificationPrefsOf({ ...prefs, strategyReminders: false }).strategies).toEqual([]);
-    expect(parsePrefs(JSON.stringify({ ...prefs, strategyReminders: false })).strategyReminders).toBe(false);
+  it('round 5 (F-12 a): no weekly strategy reminder; older strategy prefs are read harmlessly and dropped', () => {
+    const old = parsePrefs(JSON.stringify({ ...DEFAULT_PREFS, strategies: ['company'], strategyReminders: true, strategyTime: '10:00' }));
+    expect(old).not.toHaveProperty('strategies');
+    expect(old).not.toHaveProperty('strategyReminders');
+    expect(notificationPrefsOf(old).strategies).toEqual([]);
+    expect(planReminders(input({}, { days: 14 })).some((r) => (r.kind as string) === 'strategy')).toBe(false);
   });
 });

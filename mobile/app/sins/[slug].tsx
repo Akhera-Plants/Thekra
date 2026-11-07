@@ -1,7 +1,8 @@
 /**
  * Reminders for one sin, after the website's sin page (sins/[slug]): the sin's name and description, «كبيرة» with
- * its reference and the contemporary note, then the type tabs right under them (owner, 2026-11-01), then inside the
- * tab: «ابدأ «تخفَّف»» (every sin), the reading sections: what warns against it, the paired
+ * its reference and the contemporary note, «ابدأ تخفَّف» on the title's line (every sin; the page's one primary, owner
+ * round 5, F-10 a / A-07), then the type tabs right under them (owner, 2026-11-01), then inside the tab: «أنا في لحظة
+ * مجاهدة» (outlined), the reading sections: what warns against it, the paired
  * deed's virtue (or the reward of leaving it for Allah), a contemporary topic's derived groups; then «من شعب الإيمان»,
  * the paired virtue, and the alternative good deeds last, only on an unpaired sin.
  * Core screen: sin → reminders (mobile-plan §3).
@@ -17,7 +18,7 @@ import { buildTopicSections } from '@/lib/topics';
 import type { SinQuotesMeta, TopicGroup } from '@/lib/types/api';
 import { SinRank } from '@/lib/types/enums';
 import { TopicQuoteList, useLastDefined, useTopicQuoteParams } from '@/components/TopicQuoteList';
-import { SinProgramLink } from '@/components/practice/TopicPracticeLinks';
+import { SinMomentLink, SinProgramStart } from '@/components/practice/TopicPracticeLinks';
 import { TopicBranchLinks } from '@/components/TopicTemplate';
 import { useTheme } from '@/theme';
 import { ListRow, Section, Text } from '@/ui';
@@ -80,14 +81,9 @@ export default function RemindersScreen() {
         ) : null
       }
       emptyMessage={t('reminders.empty')}
-      intro={
-        sin ? (
-          <>
-            {/* Under the tabs (owner, 2026-11-01): one action → texts → شعب الإيمان → the opposite. */}
-            <SinProgramLink sin={sin.slug} />
-          </>
-        ) : null
-      }
+      titleAction={sin ? <SinProgramStart sin={sin.slug} /> : null}
+      // Under the tabs: the moment (outlined) → texts → شعب الإيمان → the opposite.
+      intro={sin ? <SinMomentLink sin={sin.slug} /> : null}
       footer={
         <>
         <TopicBranchLinks branches={detail.data?.branches} />

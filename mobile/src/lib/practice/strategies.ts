@@ -25,14 +25,16 @@ export function strategyTarget(action: StrategyAction, key?: string): StrategyTa
   switch (action) {
     case 'add':
       return screen('/practice/add');
+    // The round-5 places (practice-core nav-map): «عاداتي» tabs by `?tab=`.
     case 'habits':
-      return screen('/record');
+      return screen('/habits?tab=record');
     case 'wird':
-      return screen('/habits');
+      return screen('/habits?tab=wird');
     case 'record':
-      return screen('/record');
+      return screen('/habits?tab=record');
     case 'seasons':
-      return screen('/practice/calendar');
+      // No «مواسم الخير» page (F-17): the occasions are on the «سجلّي» calendar.
+      return screen('/habits?tab=record');
     case 'moment':
       return screen('/practice/moment');
     case 'leaveSin':
@@ -40,7 +42,8 @@ export function strategyTarget(action: StrategyAction, key?: string): StrategyTa
     case 'friends':
       return screen({ pathname: '/practice/kinship', params: { circle: 'friends' } });
     case 'pledges':
-      return screen('/practice/pledges', { pledges: true });
+      // No pledge page (F-08 a): «إذا… فإني…» is written in «محاسبتي».
+      return screen('/habits?tab=review');
     case 'evening':
       return screen('/settings/notifications', { eveningReview: true });
   }

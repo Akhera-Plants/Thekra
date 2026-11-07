@@ -1,4 +1,4 @@
-/** Settings ← «اللغة والمظهر»: theme, language (a direction change reloads the app at once), the Hijri date, «نص اليوم». */
+/** Settings ← «اللغة والمظهر»: theme, language (a direction change reloads the app at once) and the Hijri date. */
 
 import React from 'react';
 import { Stack } from 'expo-router';

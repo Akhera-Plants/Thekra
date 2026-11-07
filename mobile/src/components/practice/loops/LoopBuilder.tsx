@@ -7,10 +7,10 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { X } from 'lucide-react-native';
+import { Trash, X } from 'lucide-react-native';
 import { canLeaveStep, loopProblem, loopSteps, loopTextMax, type LoopDraft, type LoopKind } from '@/lib/practice/loops';
 import { GUTTER, radius, space, useStyles, type Theme } from '@/theme';
 import { Button, ErrorText, Field, IconButton, Text, ButtonPair } from '@/ui';
@@ -50,9 +50,11 @@ export interface LoopBuilderProps {
   editing?: boolean;
   onClose: () => void;
   onSave: (draft: LoopDraft) => void;
+  /** Editing a saved loop: «احذف الحلقة» at the foot of the sheet, confirmed (A-15). */
+  onDelete?: () => void;
 }
 
-export function LoopBuilder({ kind, visible, initial, subject, editing, onClose, onSave }: LoopBuilderProps) {
+export function LoopBuilder({ kind, visible, initial, subject, editing, onClose, onSave, onDelete }: LoopBuilderProps) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const insets = useSafeAreaInsets();
@@ -86,6 +88,14 @@ export function LoopBuilder({ kind, visible, initial, subject, editing, onClose,
       return;
     }
     onSave(draft);
+  }
+
+  function confirmDelete() {
+    if (!onDelete) return;
+    Alert.alert(t('loops.deleteTitle'), t('loops.deleteBody'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('loops.delete'), style: 'destructive', onPress: onDelete },
+    ]);
   }
 
   function skip() {
@@ -171,6 +181,9 @@ export function LoopBuilder({ kind, visible, initial, subject, editing, onClose,
             />
             {step.optional && index > 0 ? (
               <Button label={t('loops.back')} onPress={() => setIndex(index - 1)} variant="ghost" size="sm" />
+            ) : null}
+            {editing && onDelete ? (
+              <Button label={t('loops.deleteLoop')} icon={Trash} onPress={confirmDelete} variant="destructive" size="sm" />
             ) : null}
           </View>
         </View>

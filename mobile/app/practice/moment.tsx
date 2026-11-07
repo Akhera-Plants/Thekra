@@ -1,42 +1,70 @@
 /**
- * «لحظة مجاهدة» (was «لحظة ضعف»; owner round 3, item 15; the route keeps its name `moment`). Which program it is about
- * comes from the device (practice-core `momentProgram`: the program in focus, or a sin page's in-memory hand-off, never
- * a route param). The requests are the same for every user: the practice catalog and the texts by id.
+ * «لحظة مجاهدة» (was «لحظة ضعف»; owner round 3, item 15; round 5, F-09 / F-12; the route keeps its name `moment`).
+ * Which program it is about comes from the device only (practice-core `momentProgram`: a sin page's or «تخفَّف»'s
+ * in-memory hand-off, never a route param); opened from the app header or the widget with several programs running,
+ * a short chooser asks which one. The requests are the same for every user: the catalog, the evidence of EVERY act
+ * of every sin at once (`useMomentEvidence`) and the public sins list for the names.
  *
- * Top to bottom: the ten-minute ring; «افعل واحدة الآن» first: two tools that open a sheet each («سبّح الآن»: the tasbih
- * counter with the timer and the reward arithmetic; «وردٌ أقصر»: a smaller amount of today's habits, logged now, and the
- * nafl prayer sitting), then «أو علّم ما فعلت» (ticks that only mark, nothing else); one verse passage on patience
- * and striving, rotating (catalog `mujahada.verses`; never «قل يا عبادي الذين أسرفوا» here), and a scholar's saying when
- * the catalog has one; then «كيف كانت مجاهدتك؟»: «ثبتُّ بفضل الله» marks «ثبتّ» for today when the day has no check-in
- * yet, «زلّت قدمي» offers «صلّحها الآن». Healthy words only: a slip is a slip, never «وقعت».
+ * Top to bottom: the ten-minute ring; «افعل واحدة الآن»: the acts tied to the texts for this sin (catalog
+ * `sinPrograms.moment`, e.g. anger: seek refuge, sit down, hold back, speak good or stay silent), each with a small
+ * «الدليل» that opens its texts in a sheet; the generic acts when the sin has none of its own or no program is known;
+ * then «أدوات تعينك» (the tasbih counter, «وردٌ أقصر», «أعمال سهلة»), the «اركب الموجة» strategy in its moment (F-12);
+ * one verse passage on patience, rotating; then «كيف كانت مجاهدتك؟». Healthy words only: a slip is a slip.
  *
- * Privacy: SinProgramGuard (the vault opened on the device, the cover in the app switcher). Screenshots are allowed.
+ * Privacy: SinProgramGuard (the vault opened on the device, the cover in the app switcher). The page may name the
+ * user's own program (as plain text, never a header); a notification never does. Screenshots are allowed.
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Check, HandHeart, ListChecks, type LucideIcon } from 'lucide-react-native';
-import { formatCountdown, momentProgram, recordWavePassed, urgeProgress, urgeTextIndex } from '@thekra/practice-core';
+import { BookOpen, Check, HandHeart, ListChecks, Sprout, Waves, type LucideIcon } from 'lucide-react-native';
+import {
+  activePrograms,
+  formatCountdown,
+  momentProgram,
+  recordWavePassed,
+  strategyByKey,
+  urgeProgress,
+  urgeTextIndex,
+} from '@thekra/practice-core';
 import { QuoteCard } from '@/components/QuoteCard';
+import { EvidenceList } from '@/components/practice/EvidenceList';
 import { SinProgramGuard } from '@/components/practice/SinProgramGuard';
 import { FixItSheet } from '@/components/practice/sin/FixItSheet';
 import { ProgressRing } from '@/components/practice/sin/ProgressRing';
+import { useSinName } from '@/components/practice/sin/use-sin-name';
+import { EasyDeeds } from '@/components/practice/mujahada/EasyDeeds';
 import { MinimumWirdSheet } from '@/components/practice/mujahada/MinimumWirdSheet';
 import { TasbihSheet } from '@/components/practice/mujahada/TasbihSheet';
-import { useEvidence, usePracticeCatalog, useSinProgramEvidence } from '@/lib/api/practice';
+import { useEvidence, useMomentEvidence, usePracticeCatalog, useSinProgramEvidence } from '@/lib/api/practice';
+import { pick, type MomentTool } from '@/lib/practice/catalog-types';
+import { momentToolsFor } from '@/lib/practice/moment-tools';
 import { mujahadaPassage } from '@/lib/practice/mujahada';
 import { momentSource, today, usePracticeStore } from '@/lib/practice/practice-store';
 import { programEntry } from '@/lib/practice/sin-program-view';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { radius, space, useStyles, useTheme, type Theme } from '@/theme';
-import { Button, ButtonPair, Chip, ForwardChevron, Icon, NextStep, PageHeader, Screen, Section, SectionDivider, Text, Wrap } from '@/ui';
+import {
+  BottomSheet,
+  Button,
+  ButtonPair,
+  Chip,
+  ForwardChevron,
+  Icon,
+  MIN_TARGET,
+  NextStep,
+  PageHeader,
+  Screen,
+  Section,
+  SectionDivider,
+  SectionHeader,
+  Text,
+  Wrap,
+} from '@/ui';
 
 const TICK_MS = 1000;
-/** «أو علّم ما فعلت»: ticks only (owner: no option that opens the phone with no number or goal). */
-const MARKS = ['wudu', 'move', 'call'] as const;
-type Mark = (typeof MARKS)[number];
 
 const makeStyles = (t: Theme) => ({
   center: { alignItems: 'center' as const, gap: space.xs },
@@ -45,20 +73,35 @@ const makeStyles = (t: Theme) => ({
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
     gap: space.md,
-    minHeight: 72,
-    padding: space.lg,
+    minHeight: 64,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.md,
     borderRadius: radius.card,
     borderWidth: 1,
-    borderColor: t.colors.ring,
+    borderColor: t.colors.border,
     backgroundColor: t.colors.card,
   },
   toolPressed: { backgroundColor: t.colors.accent },
   toolTexts: { flex: 1, gap: 2 },
+  /** The acts: one hairline list; the first row draws no top rule (A-05). */
+  act: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: space.md,
+    minHeight: MIN_TARGET + 12,
+    paddingVertical: space.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: t.colors.border,
+  },
+  actLast: { borderBottomWidth: 0 },
+  actDot: { width: 6, height: 6, borderRadius: radius.full, backgroundColor: t.colors.primary },
+  actText: { flex: 1, minWidth: 0 },
   verse: { gap: space.sm, alignItems: 'center' as const },
-  answers: { gap: space.sm },
+  chooser: { gap: space.sm },
 });
 
 type Outcome = { kind: 'held'; result: 'saved' | 'kept' | 'none' } | { kind: 'slipped' } | null;
+type Tool = 'tasbih' | 'wird' | 'deeds';
 
 export default function MujahadaMomentScreen() {
   return (
@@ -79,15 +122,41 @@ function ToolCard({ icon, title, hint, onPress }: { icon: LucideIcon; title: str
       android_ripple={{ color: colors.accent }}
       style={({ pressed }) => [styles.tool, pressed && styles.toolPressed]}
     >
-      <Icon icon={icon} size={26} tone="link" strokeWidth={1.4} />
+      <Icon icon={icon} size={24} tone="link" strokeWidth={1.4} />
       <View style={styles.toolTexts}>
-        <Text variant="heading">{title}</Text>
-        <Text variant="small" tone="muted">
+        <Text variant="body" weight="medium">
+          {title}
+        </Text>
+        <Text variant="caption" tone="muted">
           {hint}
         </Text>
       </View>
-      <ForwardChevron size={18} tone="link" />
+      <ForwardChevron size={18} tone="muted" />
     </Pressable>
+  );
+}
+
+/** One act: its command, and «الدليل» on the row's end (A-07) naming the act for screen readers (A-19). */
+function ActRow({ tool, last, onEvidence }: { tool: MomentTool; last: boolean; onEvidence: () => void }) {
+  const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
+  const locale = useUiLocale();
+  const title = pick(tool, 'title', locale);
+  return (
+    <View style={[styles.act, last && styles.actLast]}>
+      <View style={styles.actDot} />
+      <Text variant="heading" style={styles.actText}>
+        {title}
+      </Text>
+      <Button
+        label={t('sinProgram.moment.evidence')}
+        icon={BookOpen}
+        variant="outline"
+        size="sm"
+        onPress={onEvidence}
+        accessibilityLabel={t('sinProgram.moment.evidenceFor', { act: title })}
+      />
+    </View>
   );
 }
 
@@ -99,16 +168,20 @@ function MujahadaContent() {
   const setStore = usePracticeStore((s) => s.setStore);
   const catalog = usePracticeCatalog(locale);
   const evidence = useSinProgramEvidence(catalog.data, locale);
+  const actEvidence = useMomentEvidence(catalog.data, locale);
+  const { name: sinName } = useSinName();
   const mujahada = catalog.data?.mujahada;
-  // Read once: the hand-off of the screen that opened this one.
+  // Read once: the hand-off of the screen that opened this one (undefined: the header, the widget, a notification).
   const [source] = useState(momentSource);
   const [startedAt] = useState(() => Date.now());
   const [now, setNow] = useState(startedAt);
-  const [marks, setMarks] = useState<ReadonlySet<Mark>>(() => new Set());
   const [early, setEarly] = useState(false);
   const [outcome, setOutcome] = useState<Outcome>(null);
   const [fixOpen, setFixOpen] = useState(false);
-  const [tool, setTool] = useState<'tasbih' | 'wird' | null>(null);
+  const [tool, setTool] = useState<Tool | null>(null);
+  const [act, setAct] = useState<MomentTool | null>(null);
+  /** The program picked in the chooser (several running, opened without a hand-off). */
+  const [picked, setPicked] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), TICK_MS);
@@ -117,7 +190,14 @@ function MujahadaContent() {
 
   const d = today();
   const elapsed = (now - startedAt) / 1000;
-  const program = useMemo(() => momentProgram(programs, source, d), [programs, source, d]);
+  const running = useMemo(() => activePrograms(programs), [programs]);
+  const fallback = useMemo(() => momentProgram(programs, source, d), [programs, source, d]);
+  // No hand-off and several programs: the user says which one (the most recent working one is the default).
+  const asksWhich = (source === undefined || source === null) && running.length > 1;
+  const program = (asksWhich && picked ? running.find((p) => p.sinSlug === picked) : null) ?? fallback;
+  // A sin page's hand-off without a program still gets that sin's acts (public content of the page it came from).
+  const sinForActs = program?.sinSlug ?? (typeof source === 'string' ? source : null);
+  const acts = momentToolsFor(catalog.data?.sinPrograms.moment, sinForActs);
   const sinPrograms = catalog.data?.sinPrograms;
   // Every sin can run «تخفَّف»: a sin without a written program has the common entry (programEntry).
   const entry = program && sinPrograms ? (programEntry(sinPrograms.programs, program.sinSlug, program.category) ?? undefined) : undefined;
@@ -131,15 +211,7 @@ function MujahadaContent() {
   const progress = urgeProgress(startedAt, now);
   const asking = progress.done || early;
   const canFix = Boolean(program && entry && common);
-
-  function toggle(mark: Mark) {
-    setMarks((current) => {
-      const next = new Set(current);
-      if (next.has(mark)) next.delete(mark);
-      else next.add(mark);
-      return next;
-    });
-  }
+  const wave = strategyByKey('ride-wave');
 
   function answerHeld() {
     if (!program) {
@@ -147,7 +219,7 @@ function MujahadaContent() {
       return;
     }
     const hadDay = program.checkIns.some((c) => c.date === d);
-    setStore((s) => ({ ...s, programs: s.programs.map((p) => (p.sinSlug === program.sinSlug ? recordWavePassed(p, d) : p)) }));
+    setStore((s) => ({ ...s, programs: s.programs.map((p) => (p.sinSlug === program.sinSlug && p.endedAt === undefined ? recordWavePassed(p, d) : p)) }));
     setOutcome({ kind: 'held', result: hadDay ? 'kept' : 'saved' });
   }
 
@@ -174,19 +246,53 @@ function MujahadaContent() {
         </View>
       </ProgressRing>
 
-      <Section title={t('sinProgram.moment.actionsTitle')}>
+      {asksWhich ? (
+        <View style={styles.chooser} accessibilityRole="radiogroup" accessibilityLabel={t('sinProgram.moment.which')}>
+          <Text variant="small" weight="medium" tone="muted">
+            {t('sinProgram.moment.which')}
+          </Text>
+          <Wrap>
+            {running.map((p) => (
+              <Chip key={p.sinSlug} label={sinName(p.sinSlug)} selected={program?.sinSlug === p.sinSlug} onPress={() => setPicked(p.sinSlug)} />
+            ))}
+          </Wrap>
+        </View>
+      ) : null}
+
+      {acts.tools.length > 0 ? (
+        <Section>
+          <SectionHeader
+            title={t('sinProgram.moment.actionsTitle')}
+            // The program's name as plain text under the title, never a header (and only the user's own program).
+            subtitle={acts.own && program && !asksWhich ? sinName(program.sinSlug) : undefined}
+          />
+          <View>
+            {acts.tools.map((tool, i) => (
+              <ActRow key={tool.key} tool={tool} last={i === acts.tools.length - 1} onEvidence={() => setAct(tool)} />
+            ))}
+          </View>
+        </Section>
+      ) : null}
+
+      <Section title={t('sinProgram.moment.toolsTitle')}>
         <View style={styles.tools}>
           <ToolCard icon={HandHeart} title={t('mujahada.tools.tasbih')} hint={t('mujahada.tools.tasbihHint')} onPress={() => setTool('tasbih')} />
           <ToolCard icon={ListChecks} title={t('mujahada.tools.wird')} hint={t('mujahada.tools.wirdHint')} onPress={() => setTool('wird')} />
+          <ToolCard icon={Sprout} title={t('mujahada.tools.deeds')} hint={t('mujahada.tools.deedsHint')} onPress={() => setTool('deeds')} />
         </View>
-        <Text variant="small" weight="medium" tone="muted">
-          {t('mujahada.marksLabel')}
-        </Text>
-        <Wrap>
-          {MARKS.map((mark) => (
-            <Chip key={mark} label={t(`mujahada.marks.${mark}`)} selected={marks.has(mark)} onPress={() => toggle(mark)} />
-          ))}
-        </Wrap>
+        {/* «اركب الموجة» in its moment (F-12 a): the strategy's idea, one line. */}
+        {wave ? (
+          <NextStep title={locale === 'en' ? wave.titleEn : wave.titleAr}>
+            <View style={{ flexDirection: 'row', gap: space.sm, alignItems: 'flex-start' }}>
+              <View style={{ marginTop: 3 }}>
+                <Icon icon={Waves} size={16} tone="link" />
+              </View>
+              <Text variant="small" style={{ flex: 1 }}>
+                {t('practice.strategies.items.ride-wave.idea')}
+              </Text>
+            </View>
+          </NextStep>
+        ) : null}
       </Section>
 
       {verses.length > 0 ? (
@@ -257,6 +363,32 @@ function MujahadaContent() {
         <Button label={t('sinProgram.moment.back')} onPress={() => router.replace('/practice/sin-program')} variant="outline" arrow />
       ) : null}
 
+      <BottomSheet visible={act !== null} title={act ? pick(act, 'title', locale) : ''} onClose={() => setAct(null)}>
+        {act ? (
+          <>
+            <EvidenceList
+              ids={act.evidence}
+              byId={actEvidence.data}
+              loading={actEvidence.isLoading}
+              error={actEvidence.isError}
+              title={t('sinProgram.moment.evidence')}
+              size="heading"
+            />
+            {/* Loaded, yet none of its texts came back (unpublished since, or offline with an old cache): say so. */}
+            {!actEvidence.isLoading && !actEvidence.isError && !act.evidence.some((id) => actEvidence.data?.has(id)) ? (
+              <Text variant="small" tone="muted">
+                {t('sinProgram.moment.evidenceMissing')}
+              </Text>
+            ) : null}
+          </>
+        ) : null}
+      </BottomSheet>
+      <BottomSheet visible={tool === 'deeds'} title={t('mujahada.tools.deeds')} onClose={() => setTool(null)}>
+        <Text variant="small" tone="muted">
+          {t('practice.strategies.deedsLead')}
+        </Text>
+        <EasyDeeds />
+      </BottomSheet>
       <TasbihSheet
         visible={tool === 'tasbih'}
         onClose={() => setTool(null)}

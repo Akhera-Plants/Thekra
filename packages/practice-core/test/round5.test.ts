@@ -136,12 +136,14 @@ describe('nav-map', () => {
     ]) {
       expect(web.has(route), route).toBe(true);
     }
-    for (const key of ['wird', 'periodic', 'review', 'record', 'more', 'circles', 'saved', 'my-reminders', 'browse', 'branches', 'strategies', 'settings', 'account', 'notifications', 'prayer-times', 'appearance', 'about', 'leave-sin', 'people']) {
+    for (const key of ['wird', 'periodic', 'review', 'record', 'more', 'circles', 'saved', 'my-reminders', 'browse', 'branches', 'strategies', 'settings', 'account', 'notifications', 'prayer-times', 'appearance', 'about', 'leave-sin', 'people', 'privacy']) {
       expect(NAV_FEATURES.some((f) => f.key === key), key).toBe(true);
     }
     expect(navName('circles', 'ar')).toBe('رفقة');
     expect(NAV_FEATURES.find((f) => f.key === 'circles')?.web).toBeNull();
     expect(featureAtRoute('web', '/practice')?.key).toBe('habits');
+    // The app has no settings screen: its rows are the last group of «المزيد».
+    expect(featureAtRoute('app', '/more')?.key).toBe('more');
     expect(() => navName('nope', 'ar')).toThrow();
   });
 

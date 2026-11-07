@@ -55,10 +55,12 @@ describe('«تخفَّف» rows in «عاداتي»', () => {
     expect(habitNeedsFix({ paused: false, missedYesterday: false, doneToday: 0 })).toBe(false);
   });
 
-  it('never carries the sin in anything the row could show or read aloud', () => {
-    const text = JSON.stringify(programRows([newer, older], today));
-    expect(text).not.toContain('ghibah');
-    expect(text).not.toContain('nazar');
+  it('carries the sin only in `sinSlug` (round 5, A-22 a: the in-app name in «سجلّي»), never in the key or the words', () => {
+    const rows = programRows([newer, older], today);
+    expect(rows.map((r) => r.sinSlug).sort()).toEqual([newer.sinSlug, older.sinSlug].sort());
+    const text = JSON.stringify(rows.map(({ sinSlug: _slug, ...rest }) => rest));
+    expect(text).not.toContain(newer.sinSlug);
+    expect(text).not.toContain(older.sinSlug);
   });
 });
 

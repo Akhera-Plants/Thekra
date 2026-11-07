@@ -221,13 +221,16 @@ export interface HabitRowProps {
   onUndo: () => void;
   /** «أقل ما يمكن»: logs the heavy-day minimum (counts for the streak). Absent when nothing is left to add. */
   onMinimum?: (item: HabitItem) => void;
+  /** «صلّحها» (round 5, F-08 a): after a missed day; absent when there is nothing to mend. */
+  onFix?: (item: HabitItem) => void;
 }
 
-export const HabitRow = memo(function HabitRow({ item, title, meta, canLog, undo, onToggle, onUndo, onMinimum }: HabitRowProps) {
+export const HabitRow = memo(function HabitRow({ item, title, meta, canLog, undo, onToggle, onUndo, onMinimum, onFix }: HabitRowProps) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const handleToggle = useCallback(() => onToggle(item), [onToggle, item]);
   const handleMinimum = useCallback(() => onMinimum?.(item), [onMinimum, item]);
+  const handleFix = useCallback(() => onFix?.(item), [onFix, item]);
   const handleOpen = useCallback(() => router.push(`/practice/plan/${item.planId}`), [item.planId]);
   return (
     <View style={styles.row}>
@@ -237,9 +240,10 @@ export const HabitRow = memo(function HabitRow({ item, title, meta, canLog, undo
       </View>
       {undo ? (
         <UndoLine kind={undo} onUndo={onUndo} />
-      ) : onMinimum ? (
+      ) : onMinimum || onFix ? (
         <View style={styles.undo}>
-          <Button label={t('practice.heart.minimum')} onPress={handleMinimum} variant="outline" size="sm" />
+          {onFix ? <Button label={t('myHabits.fix')} onPress={handleFix} variant="outline" size="sm" accessibilityLabel={`${t('myHabits.fix')}: ${title}`} /> : null}
+          {onMinimum ? <Button label={t('practice.heart.minimum')} onPress={handleMinimum} variant="outline" size="sm" /> : null}
         </View>
       ) : null}
     </View>

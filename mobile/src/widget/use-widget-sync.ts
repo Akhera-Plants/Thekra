@@ -68,6 +68,7 @@ export function useWidgetSync(): void {
       dailyText: t('widget.dailyText'),
       noText: t('widget.noText'),
       seasons: t('widget.seasons'),
+      moment: t('widget.moment'),
       todayOccasion: t('widget.todayOccasion', { title: '{title}' }),
       nextOccasion: t('widget.nextOccasion', { title: '{title}', date: '{date}' }),
       months: t('widget.months').split(','),

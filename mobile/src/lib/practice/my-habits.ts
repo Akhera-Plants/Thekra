@@ -41,6 +41,11 @@ export function habitDayAction(args: { paused: boolean; due?: HabitItem; offDay?
 export interface ProgramRowModel {
   /** List key: the place in the list, never the sin. */
   key: string;
+  /**
+   * The program's sin, for the in-app name in «سجلّي» (owner round 5, A-22 a: the name shows on screens inside the
+   * app; notifications stay generic). Never put it in a route, a title or a notification.
+   */
+  sinSlug: string;
   /** 1-based stage and the number of stages of its path. */
   stage: number;
   stages: number;
@@ -64,6 +69,7 @@ export function programRows(programs: readonly SinProgram[], today: LocalDate): 
       const counters = programCounters(program, today);
       return {
         key: `program-${index}`,
+        sinSlug: program.sinSlug,
         stage: stage.index + 1,
         stages: stagesFor(program.category).length,
         stageKey: stage.stage,

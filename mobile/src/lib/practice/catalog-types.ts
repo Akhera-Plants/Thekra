@@ -80,10 +80,27 @@ export interface CatalogSinProgram {
   lines?: number[];
 }
 
+/** One act of «لحظة مجاهدة» (owner round 5, F-09): a short command and the public texts behind it (read by id). */
+export interface MomentTool {
+  key: string;
+  titleAr: string;
+  titleEn: string;
+  evidence: string[];
+}
+
+/** sin-programs.yaml `moment`: acts per sin, the generic acts, and aliases (a sin that takes another's acts). */
+export interface MomentTools {
+  generic: MomentTool[];
+  sins: Record<string, MomentTool[]>;
+  aliases?: Record<string, string>;
+}
+
 export interface SinProgramsCatalog {
   review: string;
   common: SinProgramsCommon;
   programs: CatalogSinProgram[];
+  /** Optional until every API deploy sends it; the moment screen then shows its other tools only. */
+  moment?: MomentTools;
 }
 
 export interface PracticeCatalog {

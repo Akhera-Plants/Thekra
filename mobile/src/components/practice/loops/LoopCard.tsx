@@ -1,13 +1,14 @@
 /**
  * A saved loop as a clear visual card (owner round 3, item 17): the answered steps as stations on one line, each with
  * its short label and the member's words, and a closing station that returns to the start («وتعود الحلقة»); then
- * «عدّل» and «احذف» (confirmed). Used for «حلقة العادة» (plans) and «حلقة المعصية» (inside the locked program).
+ * «عدّل». Deleting is inside the edit sheet, confirmed (owner round 5, A-15: no visible delete on the card).
+ * Used for «حلقة العادة» (plans) and «حلقة المعصية» (inside the locked program).
  */
 
 import React from 'react';
-import { Alert, View } from 'react-native';
+import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Pencil, Repeat, Trash } from 'lucide-react-native';
+import { Pencil, Repeat } from 'lucide-react-native';
 import type { HabitLoop, SinLoop } from '@thekra/practice-core';
 import { loopLines, type LoopKind } from '@/lib/practice/loops';
 import { radius, space, useStyles, type Theme } from '@/theme';
@@ -33,22 +34,14 @@ export interface LoopCardProps {
   /** «الحلقة 1»… */
   title: string;
   onEdit: () => void;
-  onDelete: () => void;
 }
 
-export function LoopCard({ kind, loop, title, onEdit, onDelete }: LoopCardProps) {
+export function LoopCard({ kind, loop, title, onEdit }: LoopCardProps) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const lines = loopLines(kind, loop);
   // The station the loop turns on: the routine of a habit, the alternative of a sin.
   const key = kind === 'habit' ? 'routine' : 'alternative';
-
-  function confirmDelete() {
-    Alert.alert(t('loops.deleteTitle'), t('loops.deleteBody'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      { text: t('loops.delete'), style: 'destructive', onPress: onDelete },
-    ]);
-  }
 
   return (
     <View style={styles.card}>
@@ -79,7 +72,6 @@ export function LoopCard({ kind, loop, title, onEdit, onDelete }: LoopCardProps)
       </View>
       <View style={styles.actions}>
         <Button label={t('loops.edit')} icon={Pencil} onPress={onEdit} variant="outline" size="sm" />
-        <Button label={t('loops.delete')} icon={Trash} onPress={confirmDelete} variant="destructive" size="sm" />
       </View>
     </View>
   );

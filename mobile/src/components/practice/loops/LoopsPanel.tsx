@@ -1,6 +1,7 @@
 /**
- * The loops of one habit or one «تخفَّف» program: each as a `LoopCard` (edit, delete), «أضف حلقة» (several per habit,
- * up to practice-core's limit), and the builder sheet. The caller writes through practice-core.
+ * The loops of one habit or one «تخفَّف» program: each as a `LoopCard` («عدّل»; delete inside the edit sheet, A-15),
+ * «أضف حلقة» (several per habit, up to practice-core's limit; `single`: one loop, filled once — «حلقة المعصية» as the
+ * first week's task, F-11 a), and the builder sheet. The caller writes through practice-core.
  */
 
 import React, { useState } from 'react';
@@ -26,9 +27,15 @@ export interface LoopsPanelProps {
   onAdd: (draft: LoopDraft) => void;
   onUpdate: (id: string, draft: LoopDraft) => void;
   onRemove: (id: string) => void;
+  /** One loop only: «أضف» shows while there is none (and says `addLabel`), then the card alone. */
+  single?: boolean;
+  /** The add button's words (default `loops.<kind>.add`). */
+  addLabel?: string;
+  /** Hide the «لم تكتب حلقة بعد» line (the caller explains the task itself). */
+  hideEmpty?: boolean;
 }
 
-export function LoopsPanel({ kind, loops, subject, onAdd, onUpdate, onRemove }: LoopsPanelProps) {
+export function LoopsPanel({ kind, loops, subject, onAdd, onUpdate, onRemove, single, addLabel, hideEmpty }: LoopsPanelProps) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   // null: closed; 'new': a new loop; an id: editing that loop.
@@ -52,29 +59,32 @@ export function LoopsPanel({ kind, loops, subject, onAdd, onUpdate, onRemove }: 
   return (
     <View style={styles.root}>
       {loops.length === 0 ? (
-        <Text variant="body" tone="muted">
-          {t(`loops.${kind}.empty`)}
-        </Text>
+        hideEmpty ? null : (
+          <Text variant="body" tone="muted">
+            {t(`loops.${kind}.empty`)}
+          </Text>
+        )
       ) : (
         loops.map((loop, i) => (
           <LoopCard
             key={loop.id}
             kind={kind}
             loop={loop}
-            title={t('loops.loopN', { n: i + 1 })}
+            title={single && loops.length === 1 ? t('loops.yours') : t('loops.loopN', { n: i + 1 })}
             onEdit={() => start(loop.id)}
-            onDelete={() => onRemove(loop.id)}
           />
         ))
       )}
-      <Button
-        label={t(`loops.${kind}.add`)}
-        icon={Plus}
-        onPress={() => start('new')}
-        variant={loops.length === 0 ? 'solid' : 'outline'}
-        disabled={!canAdd}
-      />
-      {!canAdd ? (
+      {single && loops.length > 0 ? null : (
+        <Button
+          label={addLabel ?? t(`loops.${kind}.add`)}
+          icon={Plus}
+          onPress={() => start('new')}
+          variant={loops.length === 0 ? 'solid' : 'outline'}
+          disabled={!canAdd}
+        />
+      )}
+      {!canAdd && !single ? (
         <Text variant="caption" tone="muted">
           {t('loops.full', { max: loopsMax(kind) })}
         </Text>
@@ -87,6 +97,14 @@ export function LoopsPanel({ kind, loops, subject, onAdd, onUpdate, onRemove }: 
         editing={Boolean(editing)}
         onClose={() => setOpen(null)}
         onSave={save}
+        onDelete={
+          editing
+            ? () => {
+                onRemove(editing.id);
+                setOpen(null);
+              }
+            : undefined
+        }
       />
     </View>
   );

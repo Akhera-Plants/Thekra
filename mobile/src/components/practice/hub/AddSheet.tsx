@@ -1,10 +1,11 @@
 /**
- * «أضف» from «ورد اليوم» (owner round 3, item 10): a bottom sheet in the kit's look (card fill, hairline, panel radius on
- * top; no grab handle, as it does not drag) with three choices: «عادة» (the setup stepper), «عمل دوري» (every periodic
- * template of the catalog, with the plain note that these are reminders only, without the commitment tracking of
- * habits; a people template opens its list on the kinship page) and «تخفَّف» (generic words only). From «أعمال دورية» it
- * opens on the periodic list (`periodic`). It rises from the bottom (still when the system asks to reduce motion); the
- * backdrop, «إلغاء» and Android back close it.
+ * «أضف» from «ورد اليوم» (owner round 3, item 10; round 5, F-30 a): a bottom sheet in the kit's look with the choices
+ * «عادة» (the setup stepper; the limit shows on the row BEFORE the tap: «3 من 3 · يمكنك إضافة عادة جديدة من 3 ديسمبر»),
+ * «عمل دوري» (every periodic template of the catalog, with the plain note that these are reminders only; a people
+ * template opens its list on «أهلي وناسي»; always open: periodic acts have their own limit), «تخفَّف» (generic words
+ * only) and, while it is off, «الفرائض» (F-05 a: turns the section on). From «الدورية» it opens on the periodic list
+ * (`periodic`). It rises from the bottom (still when the system asks to reduce motion); the backdrop, «إلغاء» and
+ * Android back close it.
  */
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -12,12 +13,17 @@ import { AccessibilityInfo, Animated, Easing, Modal, Pressable, ScrollView, View
 import { router, type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { BellRing, HeartHandshake, Repeat, ShieldCheck, Sprout, type LucideIcon } from 'lucide-react-native';
+import { BellRing, HeartHandshake, Landmark, Repeat, ShieldCheck, Sprout, type LucideIcon } from 'lucide-react-native';
+import { fardEnabled, limitBlock, setFardTracking } from '@thekra/practice-core';
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { pick } from '@/lib/practice/catalog-types';
+import { dayMonth } from '@/lib/practice/calendar-grid';
+import { today, usePracticeStore } from '@/lib/practice/practice-store';
+import { habitFor } from '@/lib/practice/reminders';
+import { useDateNames, useLimits } from '@/lib/practice/use-habits-hub';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { GUTTER, radius, space, useStyles, type Theme } from '@/theme';
-import { ListRow, Notice, Text, ButtonPair } from '@/ui';
+import { ListRow, Notice, Text, ButtonPair, toast } from '@/ui';
 
 const RISE = 360;
 const RISE_MS = 240;
@@ -69,6 +75,20 @@ export function AddSheet({ visible, onClose, periodic }: AddSheetProps) {
   const templates = (usePracticeCatalog(locale).data?.habits ?? []).filter((h) => h.kind === 'periodic');
   const rise = useRef(new Animated.Value(RISE)).current;
   const [step, setStep] = useState<'menu' | 'periodic'>(periodic ? 'periodic' : 'menu');
+  const store = usePracticeStore((s) => s.store);
+  const setStore = usePracticeStore((s) => s.setStore);
+  const names = useDateNames();
+  const limits = useLimits();
+  const allHabits = usePracticeCatalog(locale).data?.habits;
+  // F-30 a: the habit limit in words before the tap, and when a new one fits by itself.
+  const block = limitBlock(store, today(), 'sapling', { isPeriodicAct: (plan) => habitFor(plan, allHabits ?? [])?.kind === 'periodic' });
+  const habitHint = block
+    ? `${t('habitsTab.add.count', { n: Math.min(limits.sapling.count, limits.sapling.max), max: limits.sapling.max })} · ${
+        block.unlocksOn ? t('practice.limits.why.habits_young', { date: dayMonth(block.unlocksOn, names) }) : t('practice.limits.why.habits_youngNoDate')
+      }`
+    : limits.sapling.count > 0
+      ? t('habitsTab.add.count', { n: limits.sapling.count, max: limits.sapling.max })
+      : t('practice.hub.addHabitHint');
 
   useEffect(() => {
     if (!visible) return;
@@ -117,11 +137,23 @@ export function AddSheet({ visible, onClose, periodic }: AddSheetProps) {
                     key={choice.key}
                     icon={choice.icon}
                     title={t(choice.titleKey)}
-                    hint={t(choice.hintKey)}
+                    hint={choice.key === 'habit' ? habitHint : t(choice.hintKey)}
                     onPress={() => handleChoose(choice.href)}
                   />
                 ),
               )}
+              {!fardEnabled(store) ? (
+                <ListRow
+                  icon={Landmark}
+                  title={t('habitsTab.add.fard')}
+                  hint={t('habitsTab.add.fardHint')}
+                  onPress={() => {
+                    setStore((s) => setFardTracking(s, true));
+                    toast(t('habitsTab.add.fardToast'));
+                    onClose();
+                  }}
+                />
+              ) : null}
             </View>
           ) : (
             <>

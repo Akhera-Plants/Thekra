@@ -15,7 +15,7 @@ import type { LocalDate } from '@thekra/practice-core';
 import { useExcuse, useHeavyDay } from '@/lib/practice/use-habits-hub';
 import { useStyles, type Theme } from '@/theme';
 import { Button, Rule, SwitchRow } from '@/ui';
-import { BottomSheet } from '../mujahada/Sheet';
+import { BottomSheet } from '@/ui';
 
 const makeStyles = (t: Theme) => ({
   on: { backgroundColor: t.colors.primarySoft, borderColor: t.colors.link },

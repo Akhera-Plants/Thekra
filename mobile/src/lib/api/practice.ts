@@ -22,6 +22,7 @@ import {
   type RemoteVault,
   type UiLocale,
 } from '../practice/catalog-types';
+import { allMomentEvidenceIds, evidenceBatches } from '../practice/moment-tools';
 
 // ── Fetchers ──────────────────────────────────────────────────────────────────
 
@@ -31,6 +32,12 @@ export async function fetchPracticeCatalog() {
 
 export async function fetchEvidence(ids: readonly string[]) {
   return apiGet<QuoteDto[]>('/practice/evidence', { params: { ids: ids.join(',') } });
+}
+
+/** Every text of `ids`, a request per batch, merged in order. */
+async function fetchEvidenceAll(ids: readonly string[]): Promise<{ data: QuoteDto[] }> {
+  const pages = await Promise.all(evidenceBatches(ids).map((batch) => fetchEvidence(batch)));
+  return { data: pages.flatMap((page) => page.data) };
 }
 
 export async function fetchCalendarOccasions(from: string, to: string, hijriOffset: number) {
@@ -103,7 +110,7 @@ export function useEvidence(ids: readonly string[], lang: string) {
   const key = sorted.join(',');
   return useQuery({
     queryKey: queryKeys.practice.evidence(key, lang),
-    queryFn: () => fetchEvidence(sorted),
+    queryFn: () => fetchEvidenceAll(sorted),
     enabled: sorted.length > 0,
     staleTime: DAY,
     select: (r) => {
@@ -120,6 +127,14 @@ export function useEvidence(ids: readonly string[], lang: string) {
  */
 export function useSinProgramEvidence(catalog: PracticeCatalog | undefined, lang: string) {
   return useEvidence(catalog ? allSinProgramEvidenceIds(catalog.sinPrograms) : [], lang);
+}
+
+/**
+ * Evidence of every «لحظة مجاهدة» act at once (generic and per sin): the same request for every user, so it never tells
+ * the server which sin the user strives against (roadmap §0.1). More than 50 ids go in fixed batches.
+ */
+export function useMomentEvidence(catalog: PracticeCatalog | undefined, lang: string) {
+  return useEvidence(allMomentEvidenceIds(catalog?.sinPrograms.moment), lang);
 }
 
 export function useCalendarOccasions(from: string, to: string, hijriOffset: number, lang: string) {

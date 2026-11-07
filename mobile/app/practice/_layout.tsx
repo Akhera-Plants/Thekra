@@ -1,13 +1,14 @@
 /**
- * Stack for the practice screens: «عاداتي» (now only a redirect to the «عاداتي» tab), add habit, plan, «فروضي وأدواري», «أعمال دورية», صلة الرحم, «تخفَّف», «لحظة مجاهدة»,
- * «مواسم الخير» (the occasions calendar), «التزام شخصي», «المحاسبة» (weekly reviews) and «استراتيجيات العادات».
- * The native header shows only Back; each screen shows its own title. The `title` options below name the
- * screens for accessibility and the Android task switcher; they stay generic on purpose (the sin-program screen
- * never names the sin in a title).
+ * Stack for the practice screens: add habit, the habit page, «أهلي وناسي» (kinship), «تخفَّف», «لحظة مجاهدة»,
+ * «استراتيجيات العادات», «أوقات الصلاة», «نص اليوم» and the onboarding. The routes of removed screens (calendar,
+ * pledges, reviews, duties, loops, habits, periodic) are plain redirects into «عاداتي» (owner round 5, §1 IA).
+ * The native header shows only Back; each screen shows its own title. The `title` options below name the screens for
+ * accessibility and the Android task switcher; they stay generic on purpose (the sin-program screen never names the
+ * sin in a title).
  */
 
 import React from 'react';
-import { Stack, useSegments } from 'expo-router';
+import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useRequireSignIn } from '@/lib/auth/require-sign-in';
 import { useStackScreenOptions } from '@/ui';
@@ -16,25 +17,17 @@ export default function PracticeLayout() {
   const { t } = useTranslation();
   const options = useStackScreenOptions();
   // Members only (owner, 2026-11-01): a guest who reaches a practice screen by a link or a notification signs in first.
-  // «مواسم الخير» (calendar) stays public, as on the website.
-  const segments = useSegments();
-  const signedIn = useRequireSignIn('/(tabs)/habits', segments.at(-1) !== 'calendar');
+  const signedIn = useRequireSignIn('/habits');
   if (!signedIn) return null;
   return (
     <Stack screenOptions={options}>
-      <Stack.Screen name="habits" options={{ title: t('practice.hub.habitsTrack') }} />
       <Stack.Screen name="add" options={{ title: t('practice.add.title') }} />
+      <Stack.Screen name="onboarding" options={{ title: t('onboarding.title'), headerBackVisible: false, gestureEnabled: false }} />
       <Stack.Screen name="plan/[id]" options={{ title: t('practice.title') }} />
-      <Stack.Screen name="duties" options={{ title: t('practice.duties.title') }} />
-      <Stack.Screen name="periodic" options={{ title: t('practice.periodic.title') }} />
-      <Stack.Screen name="kinship" options={{ title: t('kinship.title') }} />
+      <Stack.Screen name="kinship" options={{ title: t('more.items.people') }} />
       <Stack.Screen name="sin-program" options={{ title: t('sinProgram.title') }} />
       <Stack.Screen name="moment" options={{ title: t('sinProgram.moment.title') }} />
-      <Stack.Screen name="calendar" options={{ title: t('calendar.title') }} />
-      <Stack.Screen name="pledges" options={{ title: t('practice.notifyPrefs.pledges') }} />
-      <Stack.Screen name="reviews" options={{ title: t('record.reviews') }} />
       <Stack.Screen name="strategies" options={{ title: t('practice.strategies.title') }} />
-      <Stack.Screen name="loops" options={{ title: t('loops.habit.pageTitle') }} />
       {/* A redirect to «المحفوظات» ← «تذكيراتي», kept for older links. */}
       <Stack.Screen name="my-reminders" options={{ title: t('myReminders.title') }} />
       <Stack.Screen name="prayer-times" options={{ title: t('prayerTimes.title') }} />

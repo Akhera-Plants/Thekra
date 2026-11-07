@@ -1,8 +1,10 @@
 /**
- * «المحفوظات», opened from the side menu, in two parts (owner, 2026-11-01): «النصوص» (the saved quote cards, after the
- * website's favorites page; offline-capable, served from the cache without a connection, see `useFavorites`) and
- * «تذكيراتي» (the user's own lines, `MyRemindersPanel`; `?part=mine` opens it, as the old practice/my-reminders route
- * does). A guest sees why to sign in and the way to do it; an empty list points to where texts are found.
+ * «المحفوظات» (owner round 5, F-22 a: one home for both on the app and the web), opened from «المزيد», in two tabs:
+ * «النصوص» (the saved quote cards, after the website's favorites page; offline-capable, served from the cache without a
+ * connection, see `useFavorites`) and «تذكيراتي» (the user's own lines, `MyRemindersPanel`, the only place they are
+ * written). The tab is a `?tab=texts|reminders` query (practice-core nav-map); the old `?part=mine` and the old
+ * practice/my-reminders route land on «تذكيراتي». A guest sees why to sign in and the way to do it; an empty list
+ * points to where texts are found.
  */
 
 import React, { memo, useCallback, useState } from 'react';
@@ -16,6 +18,7 @@ import { QuoteCard } from '@/components/QuoteCard';
 import { GUTTER, space, useStyles, useTheme, type Theme } from '@/theme';
 import { useIsOffline } from '@/lib/query-client';
 import { MyRemindersPanel } from '@/components/practice/MyRemindersPanel';
+import { favoritesTab, type SavedTab as Part } from '@/lib/saved-tabs';
 import { EmptyState, ErrorState, Notice, PageHeader, QuoteCardSkeleton, Screen, SegmentTabs, type SegmentItem } from '@/ui';
 import type { QuoteDto } from '@/lib/types/api';
 
@@ -42,7 +45,7 @@ function Gap() {
   return <View style={styles.gap} />;
 }
 
-type Part = 'texts' | 'mine';
+
 
 function FavoritesHeader({ part, onPart }: { part: Part; onPart?: (part: Part) => void }) {
   const { t } = useTranslation();
@@ -50,7 +53,7 @@ function FavoritesHeader({ part, onPart }: { part: Part; onPart?: (part: Part) =
   const isOffline = useIsOffline();
   const parts: SegmentItem<Part>[] = [
     { key: 'texts', label: t('favorites.tabTexts') },
-    { key: 'mine', label: t('myReminders.title') },
+    { key: 'reminders', label: t('myReminders.title') },
   ];
   return (
     <View style={styles.header}>
@@ -66,8 +69,8 @@ export default function FavoritesScreen() {
   const styles = useStyles(makeStyles);
   const { colors } = useTheme();
   const user = useAuthStore((s) => s.user);
-  const params = useLocalSearchParams<{ part?: string }>();
-  const [part, setPart] = useState<Part>(params.part === 'mine' ? 'mine' : 'texts');
+  const params = useLocalSearchParams<{ tab?: string; part?: string }>();
+  const [part, setPart] = useState<Part>(() => favoritesTab(params));
   const { data: favorites, isLoading, isError, refetch } = useFavorites();
   const [isPulling, setIsPulling] = useState(false);
 
@@ -96,7 +99,7 @@ export default function FavoritesScreen() {
     );
   }
 
-  if (part === 'mine') {
+  if (part === 'reminders') {
     return (
       <Screen edges={['bottom']} keyboard>
         <Stack.Screen options={{ title: t('favorites.title') }} />
