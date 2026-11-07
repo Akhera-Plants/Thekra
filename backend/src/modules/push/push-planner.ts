@@ -187,7 +187,7 @@ export function planPushes(input: PushPlanInput): PlannedPush[] {
         fireAt,
         title: kin ? texts.kinshipTitle : texts.peopleTitle,
         body: kin ? texts.kinshipBody(count) : texts.peopleBody(count),
-        url: sitePath(locale, '/practice/kinship'),
+        url: sitePath(locale, '/practice/people'),
         tag: 'kinship',
       });
     } else if (entry.kind === 'evening') {

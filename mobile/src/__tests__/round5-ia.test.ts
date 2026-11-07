@@ -133,7 +133,7 @@ describe('«صلّحها» and the make-up deed', () => {
 
 describe('«خصّص الرئيسية»', () => {
   it('gives a visitor the fixed public order, without «ورد اليوم»', () => {
-    expect(visibleHomeSections(undefined, false)).toEqual(['daily-text', 'week-branch', 'occasion', 'doors', 'moments', 'featured', 'sources']);
+    expect(visibleHomeSections(undefined, false)).toEqual(['daily-text', 'occasion', 'doors', 'moments', 'featured', 'sources']);
     expect(visibleHomeSections([{ key: 'sources', visible: true }], false)[0]).toBe('daily-text');
   });
 

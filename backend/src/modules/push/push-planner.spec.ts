@@ -102,7 +102,7 @@ describe('planPushes', () => {
     };
     const out = run(store([], [rel, { ...rel, id: 'r2', name: 'عمي' }]));
     expect(out).toHaveLength(1);
-    expect(out[0]).toMatchObject({ key: 'kinship:2026-10-29', title: 'صلة الرحم', body: 'حان وقت التواصل مع 2 من أقاربك', url: '/practice/kinship' });
+    expect(out[0]).toMatchObject({ key: 'kinship:2026-10-29', title: 'صلة الرحم', body: 'حان وقت التواصل مع 2 من أقاربك', url: '/practice/people' });
     expect(out[0]!.fireAt.toISOString()).toBe('2026-10-29T15:00:00.000Z');
     expect(JSON.stringify(out)).not.toMatch(/سعاد|عمي/);
   });

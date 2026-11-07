@@ -132,7 +132,7 @@ export function resolveHomeSections(stored: readonly HomeSectionPref[] | null | 
 
 /** The sections to render, in order. A visitor gets the fixed public order (members-only sections left out). */
 export function visibleHomeSections(stored: readonly HomeSectionPref[] | null | undefined, member: boolean): HomeSectionKey[] {
-  if (!member) return HOME_SECTIONS.filter((s) => !s.membersOnly).map((s) => s.key);
+  if (!member) return HOME_SECTIONS.filter((s) => !s.membersOnly && s.visibleByDefault).map((s) => s.key);
   return resolveHomeSections(stored)
     .filter((s) => s.visible)
     .map((s) => s.key);

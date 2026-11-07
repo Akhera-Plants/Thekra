@@ -179,7 +179,7 @@ describe('home sections', () => {
   });
 
   it('visitor: fixed order without members-only sections; member: defaults until customised', () => {
-    expect(visibleHomeSections(null, false)).toEqual(['daily-text', 'week-branch', 'occasion', 'doors', 'moments', 'featured', 'sources']);
+    expect(visibleHomeSections(null, false)).toEqual(['daily-text', 'occasion', 'doors', 'moments', 'featured', 'sources']);
     expect(visibleHomeSections(undefined, true)).toEqual(['wird', 'daily-text', 'occasion', 'doors', 'moments', 'featured', 'sources']);
   });
 
