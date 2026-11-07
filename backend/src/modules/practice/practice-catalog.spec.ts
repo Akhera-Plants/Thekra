@@ -162,6 +162,26 @@ describe('practice catalog — the real reviewer files', () => {
     expect(byKey.get('qiyam-last-third')?.window?.from).toBe('lastThird');
   });
 
+  it('carries the «لحظة مجاهدة» acts per sin (F-09): AVOID topics, public-text ids, generic acts, no wudu for anger', () => {
+    const { moment } = sinPrograms;
+    expect(moment.generic.map((t) => t.key)).toEqual(['istiadha', 'allah-sees', 'leave-the-place', 'ask-allah']);
+    expect(Object.keys(moment.sins).length).toBeGreaterThanOrEqual(14);
+    for (const slug of [...Object.keys(moment.sins), ...Object.keys(moment.aliases)]) expect(topicSide(slug), slug).toBe('AVOID');
+    for (const target of Object.values(moment.aliases)) expect(Object.keys(moment.sins)).toContain(target);
+    // Every written program has acts of its own.
+    for (const { sin } of sinPrograms.programs) expect(moment.sins[sin]?.length, sin).toBeGreaterThan(0);
+    const tools = [...moment.generic, ...Object.values(moment.sins).flat()];
+    for (const tool of tools) {
+      expect(tool.titleAr && tool.titleEn, tool.key).toBeTruthy();
+      expect(tool.evidence.length, tool.key).toBeGreaterThan(0);
+      for (const id of tool.evidence) expect(id).toMatch(UUID);
+    }
+    expect(moment.sins['ghadab']!.map((t) => t.key)).toEqual(['istiadha', 'sit-lie-down', 'kazm', 'speak-good-or-silent']);
+    // Abu Dawud 4784 is not public: neither an act nor a program step tells the angry to make wudu.
+    expect(tools.some((t) => /وضوء|توضأ/.test(t.titleAr))).toBe(false);
+    expect(sinPrograms.programs.find((p) => p.sin === 'ghadab')!.actionsAr.some((a) => /توضأ/.test(a))).toBe(false);
+  });
+
   it('programForSin: written programs keep their category, every other sin is available with none', () => {
     expect(programForSin('ghibah')).toEqual({ available: true, category: 'haqq_ibad' });
     expect(programForSin('waqt-tawasul')).toEqual({ available: true, category: 'haqq_allah' });
@@ -220,6 +240,14 @@ describe('practice catalog — validation failures', () => {
       "13:00 is outside the deed's window",
     );
     expect(build(schedulesText.replace('      from: sunrise\n      fromMinutes: 15', '      from: noon\n      fromMinutes: 15'))).toThrow('window.from');
+  });
+
+  it('rejects a bad «لحظة مجاهدة» entry: a sin that is not an AVOID topic, a bad id, a duplicate key, a dangling alias', () => {
+    expect(build(schedulesText, programsText.replace('\n    ghadab:\n      #', '\n    siyam:\n      #'))).toThrow('expected side AVOID');
+    expect(build(schedulesText, programsText.replace('evidence: [558ee73d-0b03-4bf7-9629-8df391997463]', 'evidence: [nope]'))).toThrow('is not valid');
+    expect(build(schedulesText, programsText.replace('- key: sit-lie-down', '- key: istiadha'))).toThrow('duplicate key "istiadha"');
+    expect(build(schedulesText, programsText.replace('ghibah-raqamiya: ghibah', 'ghibah-raqamiya: hasad-x'))).toThrow('must name a sin listed under sins');
+    expect(build(schedulesText, programsText.replace('        titleAr: "اجلس، فإن لم يذهب فاضطجع"\n', '        titleAr: "اجلس، فإن لم يذهب فاضطجع"\n        note: x\n'))).toThrow('unknown field "note"');
   });
 
   it('rejects an alternative that is not a habit key', () => {

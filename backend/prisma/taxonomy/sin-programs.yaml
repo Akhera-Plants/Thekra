@@ -135,7 +135,282 @@ programs:
     category: haqq_ibad
     gradualAllowed: false
     help: false
-    actionsAr: [إذا غضبت فاسكت وغيّر هيئتك, توضأ, اعتذر لمن أخطأت في حقه]
-    actionsEn: ['When angry, fall silent and change your position', make wudu, apologise to anyone you wronged]
+    # Round 5 (F-09): «توضأ» replaced; its hadith (Abu Dawud 4784) is not public here. The list keeps its length, so a
+    # limit saved as `action:1` still points at the second item.
+    actionsAr: [إذا غضبت فاسكت وغيّر هيئتك, استعذ بالله من الشيطان الرجيم, اعتذر لمن أخطأت في حقه]
+    actionsEn: ['When angry, fall silent and change your position', seek refuge in Allah from Satan, apologise to anyone you wronged]
     alternatives: [smile, adhkar-sabah-masa]
     evidence: [2e714754-b13e-4b5c-a776-55e6940c441b, af5fe495-bec7-4880-920e-74bd40511fdb]
+
+# «لحظة مجاهدة» per sin (owner round 5, F-09): short acts tied to the texts for that sin, only where a public text
+# supports them. Every evidence id was checked on 2026-11-07 against production: published, not athar, a publishable
+# grade source, no open HIGH flag, and for hadith a SAHIH/HASAN grade. The wording of each act is ours (review:
+# pending-sheikh); the client reads the texts by id. `sins` keys are taxonomy.yaml AVOID slugs; `aliases` reuse
+# another sin's acts; every other sin takes `generic`. A notification never names any of this (roadmap §0.2).
+# Not used (no public text): wudu for anger (Abu Dawud 4784, ungraded AUTHORITY_LEGACY rows 3277882d…, a2de31eb…);
+# «وإذا غضب أحدكم فليسكت» (al-Adab al-Mufrad 245); «كفى بالمرء كذبًا أن يحدث بكل ما سمع»; «فليدعُ له بالبركة».
+moment:
+  generic:
+    # القرآن الكريم، الأعراف 7:200؛ القرآن الكريم، الأعراف 7:201
+    - key: istiadha
+      titleAr: "استعذ بالله من الشيطان"
+      titleEn: "Seek refuge in Allah from Satan"
+      evidence: [0f1d27d6-c2a4-4fe9-b463-7ccc804cf34d, 749f9828-e5f3-4a93-8d8c-1e0273ef5884]
+    # القرآن الكريم، العلق 96:14
+    - key: allah-sees
+      titleAr: "تذكّر أن الله يراك"
+      titleEn: "Remember that Allah sees you"
+      evidence: [3848c39f-60a7-4b9d-9ed4-975c5f812dd1]
+    # صحيح مسلم 2766 (صحيح، الصحيحان)
+    - key: leave-the-place
+      titleAr: "قم من مكانك الآن"
+      titleEn: "Get up and leave the place now"
+      evidence: [3c233fed-9a9a-4f8b-82bc-89bb177dab0d]
+    # صحيح مسلم 2654 (صحيح، الصحيحان)؛ الأذكار 1183 (صحيح، الموسوعة الحديثية)
+    - key: ask-allah
+      titleAr: "ادعُ: اللهم صرّف قلبي"
+      titleEn: "Pray: O Allah, turn my heart"
+      evidence: [1394d744-28ab-483c-b494-4477c02f94b8, 9e3fdc47-6c75-4e31-90e6-020a30d4d176]
+  sins:
+    ghadab:
+      # صحيح البخاري 6048 (صحيح، الصحيحان)؛ صحيح مسلم 2610 (صحيح، الصحيحان)؛ صحيح البخاري 3282 (صحيح، الصحيحان)
+      - key: istiadha
+        titleAr: "استعذ بالله من الشيطان"
+        titleEn: "Seek refuge in Allah from Satan"
+        evidence: [1281426d-b091-4b70-b396-71b27bf9d448, 67a4c7c5-08de-4112-8275-bf7dfcbdedda, d786e310-71e2-430f-9ce0-9bcd406c959a]
+      # الجامع لشعب الإيمان (ط الرشد) 7932 (صحيح، تحقيق الأرنؤوط)
+      - key: sit-lie-down
+        titleAr: "اجلس، فإن لم يذهب فاضطجع"
+        titleEn: "Sit down; if it stays, lie down"
+        evidence: [558ee73d-0b03-4bf7-9629-8df391997463]
+      # صحيح البخاري 6114 (صحيح، الصحيحان)؛ القرآن الكريم، آل عمران 3:134؛ موسوعة الأحاديث النبوية [مسند أحمد] (حسن، الموسوعة الحديثية)
+      - key: kazm
+        titleAr: "املك نفسك واكظم غيظك"
+        titleEn: "Hold yourself back and swallow your anger"
+        evidence: [af5fe495-bec7-4880-920e-74bd40511fdb, ec112cfb-dbaa-41ff-a8d2-ca4b9827fd7b, e9b60d69-ac6e-4004-a399-b83995af7f20]
+      # صحيح البخاري 6018 (صحيح، الصحيحان)
+      - key: speak-good-or-silent
+        titleAr: "قل خيرًا أو اصمت"
+        titleEn: "Say something good or stay silent"
+        evidence: [abed18e2-2f57-44e1-9508-2ea6b0c65145]
+    nazar-shashat:
+      # صحيح مسلم 2159 (صحيح، الصحيحان)؛ القرآن الكريم، النور 24:30؛ القرآن الكريم، النور 24:31
+      - key: turn-gaze-away
+        titleAr: "اصرف بصرك وأغلق الشاشة"
+        titleEn: "Turn your eyes away and close the screen"
+        evidence: [c635aba3-6fbb-496c-ab78-7a97cf604b59, bde31e23-df04-4de7-a8bb-267a0c9ce9c2, de5eb259-1818-4e99-b97b-f2c7981bd03b]
+      # الورع 69 (حسن، تحقيق الأرنؤوط)
+      - key: no-second-look
+        titleAr: "لا تُتبع النظرةَ النظرة"
+        titleEn: "Do not follow a look with a second one"
+        evidence: [fbf95394-a13a-45b0-9e7a-0d69a9afa8ff]
+      # القرآن الكريم، العلق 96:14؛ القرآن الكريم، غافر 40:19
+      - key: allah-sees
+        titleAr: "تذكّر أن الله يراك"
+        titleEn: "Remember that Allah sees you"
+        evidence: [3848c39f-60a7-4b9d-9ed4-975c5f812dd1, 8e9bca12-45f8-4295-9798-0e6124b02052]
+      # صحيح البخاري 5066 (صحيح، الصحيحان)؛ صحيح البخاري 1905 (صحيح، الصحيحان)
+      - key: fast
+        titleAr: "صُم، فالصوم وِجاء"
+        titleEn: "Fast: fasting tames desire"
+        evidence: [048c39be-3c9b-42d3-9c03-452552ddf22a, a3cac3da-2d0d-4a94-bfab-9400df9591ed]
+    ghibah:
+      # صحيح البخاري 6018 (صحيح، الصحيحان)
+      - key: speak-good-or-silent
+        titleAr: "قل خيرًا أو اصمت"
+        titleEn: "Say something good or stay silent"
+        evidence: [abed18e2-2f57-44e1-9508-2ea6b0c65145]
+      # الصمت وآداب اللسان 250 (صحيح، الموسوعة الحديثية)؛ ذم الغيبة والنميمة 114 (صحيح، الموسوعة الحديثية)
+      - key: defend-brother
+        titleAr: "ردّ عن عرض أخيك"
+        titleEn: "Defend your absent brother's honour"
+        evidence: [ca47c28d-6b43-4b1d-a211-7d8ad0e7fcf7, 156c93cf-d0cc-4e4a-8f02-2eb885a87884]
+      # القرآن الكريم، القصص 28:55؛ القرآن الكريم، الفرقان 25:72
+      - key: leave-gathering
+        titleAr: "أعرض عن اللغو وقم"
+        titleEn: "Turn away from idle talk and leave"
+        evidence: [58342dd2-9421-4f03-8e16-e44dd74f82ec, 667762ac-bbae-41cf-9c6c-1578f31d33b3]
+      # صحيح مسلم 2589 (صحيح، الصحيحان)؛ القرآن الكريم، الحجرات 49:12
+      - key: remember-what-it-is
+        titleAr: "تذكّر: ذكرك أخاك بما يكره"
+        titleEn: "Remember: it is mentioning your brother as he dislikes"
+        evidence: [e95c82ad-29c4-48ea-a75d-c583f9dc46d3, 00000000-0000-4000-8000-000000000001]
+    intiqad:
+      # صحيح البخاري 6018 (صحيح، الصحيحان)
+      - key: speak-good-or-silent
+        titleAr: "قل خيرًا أو اصمت"
+        titleEn: "Say something good or stay silent"
+        evidence: [abed18e2-2f57-44e1-9508-2ea6b0c65145]
+      # صحيح مسلم 2699 (صحيح، الصحيحان)؛ صحيح البخاري 2442 (صحيح، الصحيحان)
+      - key: cover-faults
+        titleAr: "استر عيب أخيك"
+        titleEn: "Cover your brother's fault"
+        evidence: [41b9405e-7c35-45b6-ace3-b055bdb8503f, 242944a7-2441-4948-a97a-06bf6771ac39]
+      # رياض الصالحين 634 (صحيح، الموسوعة الحديثية)؛ صحيح مسلم 55 (صحيح، الصحيحان)
+      - key: advise-gently
+        titleAr: "إن نصحت فبرفق"
+        titleEn: "If you advise, do it gently"
+        evidence: [65368982-e222-4f88-ad50-0883421cbe9f, c2cfe691-f462-4eb3-8539-d467f671b7df]
+      # القرآن الكريم، الحجرات 49:11
+      - key: no-mockery
+        titleAr: "لا تسخر ولا تلمز"
+        titleEn: "Do not mock and do not find fault"
+        evidence: [00000000-0000-4000-8000-000000000002]
+    waqt-tawasul:
+      # الصمت وآداب اللسان 107 (حسن، الموسوعة الحديثية)
+      - key: leave-what-does-not-concern
+        titleAr: "اترك ما لا يعنيك"
+        titleEn: "Leave what does not concern you"
+        evidence: [468cc804-42b1-4671-981c-11b18c4dc996]
+      # القرآن الكريم، المؤمنون 23:3
+      - key: turn-from-idle
+        titleAr: "أعرض عن اللغو"
+        titleEn: "Turn away from idle talk"
+        evidence: [6e9dd3c4-f92b-4ba6-9044-62a285731d18]
+      # صحيح مسلم 2664 (صحيح، الصحيحان)؛ صحيح البخاري 6412 (صحيح، الصحيحان)
+      - key: do-what-benefits
+        titleAr: "احرص على ما ينفعك"
+        titleEn: "Go for what benefits you"
+        evidence: [93df82cc-717b-4b31-bd5e-5bf977817dee, 7935e301-711b-446d-812d-475545d186a6]
+      # صحيح البخاري 6406 (صحيح، الصحيحان)
+      - key: light-dhikr
+        titleAr: "قل: سبحان الله وبحمده"
+        titleEn: "Say: Subhan Allah wa bihamdih"
+        evidence: [86b13dc2-829e-4ee1-83f2-c3bbaada52f9]
+    nazar-muharram:
+      # القرآن الكريم، النور 24:30؛ القرآن الكريم، النور 24:31؛ صحيح مسلم 2159 (صحيح، الصحيحان)
+      - key: turn-gaze-away
+        titleAr: "غضّ بصرك واصرفه"
+        titleEn: "Lower your gaze and turn it away"
+        evidence: [bde31e23-df04-4de7-a8bb-267a0c9ce9c2, de5eb259-1818-4e99-b97b-f2c7981bd03b, c635aba3-6fbb-496c-ab78-7a97cf604b59]
+      # الورع 69 (حسن، تحقيق الأرنؤوط)
+      - key: no-second-look
+        titleAr: "لا تُتبع النظرةَ النظرة"
+        titleEn: "Do not follow a look with a second one"
+        evidence: [fbf95394-a13a-45b0-9e7a-0d69a9afa8ff]
+      # القرآن الكريم، غافر 40:19؛ القرآن الكريم، العلق 96:14
+      - key: allah-sees
+        titleAr: "تذكّر أن الله يراك"
+        titleEn: "Remember that Allah sees you"
+        evidence: [8e9bca12-45f8-4295-9798-0e6124b02052, 3848c39f-60a7-4b9d-9ed4-975c5f812dd1]
+      # صحيح البخاري 5066 (صحيح، الصحيحان)
+      - key: fast
+        titleAr: "صُم، فالصوم وِجاء"
+        titleEn: "Fast: fasting tames desire"
+        evidence: [048c39be-3c9b-42d3-9c03-452552ddf22a]
+    zina:
+      # القرآن الكريم، يوسف 12:23
+      - key: say-maadh-allah
+        titleAr: "قل: معاذ الله"
+        titleEn: "Say: I seek refuge in Allah"
+        evidence: [16d19b11-63e5-4297-b2ed-1ce8c12edff0]
+      # القرآن الكريم، الإسراء 17:32
+      - key: do-not-approach
+        titleAr: "لا تقرب أسبابه"
+        titleEn: "Do not go near what leads to it"
+        evidence: [8b33de7c-b9c3-49ed-976b-815e20eab257]
+      # القرآن الكريم، النور 24:30؛ القرآن الكريم، النور 24:31
+      - key: turn-gaze-away
+        titleAr: "غضّ بصرك واحفظ فرجك"
+        titleEn: "Lower your gaze and guard your chastity"
+        evidence: [bde31e23-df04-4de7-a8bb-267a0c9ce9c2, de5eb259-1818-4e99-b97b-f2c7981bd03b]
+      # صحيح البخاري 5066 (صحيح، الصحيحان)؛ صحيح مسلم 1400 (صحيح، الصحيحان)
+      - key: fast
+        titleAr: "صُم، فالصوم وِجاء"
+        titleEn: "Fast: fasting tames desire"
+        evidence: [048c39be-3c9b-42d3-9c03-452552ddf22a, 69320758-e86f-4133-9033-0efdbc96fcca]
+    kadhib:
+      # موسوعة الأحاديث النبوية [سنن النسائي (8/ 327) (5711).] (صحيح، الموسوعة الحديثية)؛ صحيح مسلم 2607 (صحيح، الصحيحان)
+      - key: choose-truth
+        titleAr: "اختر الصدق، فهو طمأنينة"
+        titleEn: "Choose the truth: it brings calm"
+        evidence: [413181dc-4ff5-49cd-a5fd-26d86ad8f144, 591b7aa2-a162-4d13-831a-81b74ee4082d]
+      # الجامع لشعب الإيمان (ط الرشد) 7653 (حسن، الموسوعة الحديثية)
+      - key: not-even-joking
+        titleAr: "لا تكذب ولو مازحًا"
+        titleEn: "Do not lie, even in jest"
+        evidence: [e6775ab1-4681-4218-a74d-91e9d0dbd96b]
+      # القرآن الكريم، ق 50:18
+      - key: words-recorded
+        titleAr: "تذكّر أن كلمتك مكتوبة"
+        titleEn: "Remember every word is recorded"
+        evidence: [0aeb8860-b937-46ca-aa3c-93a0f9a2b6a5]
+    namimah:
+      # صحيح مسلم 105 (صحيح، الصحيحان)؛ صحيح البخاري 6056 (صحيح، الصحيحان)
+      - key: do-not-carry
+        titleAr: "لا تنقل الكلام"
+        titleEn: "Do not carry words between people"
+        evidence: [c7ab11b3-9318-409c-aaa0-32e62e1f6a25, 04858f36-a4b3-42d0-81e8-da96bbc732e9]
+      # القرآن الكريم، الحجرات 49:6
+      - key: verify
+        titleAr: "تبيّن قبل أن تصدّق"
+        titleEn: "Verify before you believe it"
+        evidence: [488f19aa-6d0e-485a-9bcc-4c20e59cf5a6]
+      # القرآن الكريم، القلم 68:10؛ القرآن الكريم، القلم 68:11
+      - key: do-not-heed
+        titleAr: "لا تُطع النمّام"
+        titleEn: "Do not heed the talebearer"
+        evidence: [4ef05a4e-57e3-49fb-8b0f-b51d86b7427e, c7bbc76a-28c5-4b46-af9f-0864bc7e9c87]
+    ishaat:
+      # القرآن الكريم، الحجرات 49:6
+      - key: verify-before-sharing
+        titleAr: "تبيّن قبل أن تنشر"
+        titleEn: "Verify before you share"
+        evidence: [488f19aa-6d0e-485a-9bcc-4c20e59cf5a6]
+      # القرآن الكريم، الإسراء 17:36؛ القرآن الكريم، النور 24:15؛ القرآن الكريم، النور 24:16
+      - key: do-not-repeat
+        titleAr: "لا تتكلم بما لا تعلم"
+        titleEn: "Do not speak of what you do not know"
+        evidence: [38aa4052-5d96-4840-8374-919e227aae67, 59c67678-262d-4b52-b1e9-98385559c77e, b7fdc5f2-d8e8-4362-9b8a-42f26dc45d3e]
+    hasad:
+      # صحيح البخاري 13 (صحيح، الصحيحان)
+      - key: love-for-brother
+        titleAr: "أحبّ لأخيك ما تحب لنفسك"
+        titleEn: "Wish for your brother what you wish for yourself"
+        evidence: [cfacfb9d-0f18-4573-a4ed-053a15f44109]
+      # القرآن الكريم، النساء 4:32
+      - key: ask-from-his-bounty
+        titleAr: "اسأل الله من فضله"
+        titleEn: "Ask Allah from His bounty"
+        evidence: [7193073e-bf09-404a-9cc7-af88f43137ad]
+    su-dhann:
+      # صحيح البخاري 6066 (صحيح، الصحيحان)؛ القرآن الكريم، الحجرات 49:12
+      - key: drop-suspicion
+        titleAr: "دع الظن ولا تتجسس"
+        titleEn: "Drop the suspicion; do not spy"
+        evidence: [1e5cca01-c8c5-44c7-b1d2-fd506908224b, 00000000-0000-4000-8000-000000000001]
+      # القرآن الكريم، الحجرات 49:6
+      - key: verify
+        titleAr: "تبيّن قبل أن تحكم"
+        titleEn: "Verify before you judge"
+        evidence: [488f19aa-6d0e-485a-9bcc-4c20e59cf5a6]
+    jidal:
+      # الجامع لشعب الإيمان (ط الرشد) 7653 (حسن، الموسوعة الحديثية)
+      - key: leave-dispute
+        titleAr: "اترك المراء ولو كنت محقًّا"
+        titleEn: "Drop the argument, even if you are right"
+        evidence: [e6775ab1-4681-4218-a74d-91e9d0dbd96b]
+      # القرآن الكريم، فصلت 41:34
+      - key: repel-with-better
+        titleAr: "ادفع بالتي هي أحسن"
+        titleEn: "Repel with what is better"
+        evidence: [90f35268-baf6-4593-827f-5c4669d9c383]
+    tanammur:
+      # القرآن الكريم، الحجرات 49:11
+      - key: no-mockery
+        titleAr: "لا تسخر ولا تلمز"
+        titleEn: "Do not mock and do not find fault"
+        evidence: [00000000-0000-4000-8000-000000000002]
+      # صحيح البخاري 6478 (صحيح، الصحيحان)
+      - key: weigh-word
+        titleAr: "زِن كلمتك قبل نشرها"
+        titleEn: "Weigh your word before you post it"
+        evidence: [7dadac4e-b93c-4851-b898-3876cc5897b0]
+      # صحيح البخاري 6018 (صحيح، الصحيحان)
+      - key: speak-good-or-silent
+        titleAr: "قل خيرًا أو اصمت"
+        titleEn: "Say something good or stay silent"
+        evidence: [abed18e2-2f57-44e1-9508-2ea6b0c65145]
+  aliases:
+    ghibah-raqamiya: ghibah
+

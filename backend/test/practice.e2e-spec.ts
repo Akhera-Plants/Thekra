@@ -72,7 +72,7 @@ describe('Practice, calendar and account endpoints (e2e)', () => {
   it('GET /v1/practice/catalog → 200 { data: { occasions, habits, sinPrograms } }, CDN-cached', async () => {
     const res = await request(server()).get('/v1/practice/catalog').expect(200);
     expect(Object.keys(res.body.data)).toEqual(['occasions', 'habits', 'sinPrograms', 'deedBranches', 'stories', 'mujahada']);
-    expect(Object.keys(res.body.data.sinPrograms)).toEqual(['review', 'common', 'programs']);
+    expect(Object.keys(res.body.data.sinPrograms)).toEqual(['review', 'common', 'programs', 'moment']);
     expect(res.body.data.occasions.find((o: { key: string }) => o.key === 'arafah')).toMatchObject({
       deed: 'siyam',
       rule: { kind: 'hijriYearly', month: 12, day: 9 },

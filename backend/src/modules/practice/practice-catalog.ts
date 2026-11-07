@@ -22,7 +22,7 @@ import { parseYaml, type YamlMap, type YamlValue } from './practice-yaml.js';
 /**
  * The practice catalog: sunnah occasions and habit units
  * (prisma/taxonomy/deed-schedules.yaml) and the sin-leaving programs
- * (prisma/taxonomy/sin-programs.yaml). Both are reviewer files, embedded in the
+ * (prisma/taxonomy/sin-programs.yaml, with the «لحظة مجاهدة» acts per sin under `moment`). Both are reviewer files, embedded in the
  * Vercel bundle like the other taxonomy files (taxonomy-files.ts).
  *
  * Loaded once and validated as a whole: every rule passes practice-core
@@ -107,10 +107,29 @@ export interface SinProgramEntry {
   lines?: number[];
 }
 
+/** One act of «لحظة مجاهدة» (owner round 5, F-09): a short command tied to public texts (read by id). */
+export interface MomentTool {
+  key: string;
+  titleAr: string;
+  titleEn: string;
+  evidence: string[];
+}
+
+/**
+ * «لحظة مجاهدة» per sin (sin-programs.yaml `moment`): the acts for a sin with texts of its own, the generic acts for
+ * every other sin, and aliases (a sin that takes another's acts). Served as written; the client resolves an alias.
+ */
+export interface MomentTools {
+  generic: MomentTool[];
+  sins: Record<string, MomentTool[]>;
+  aliases: Record<string, string>;
+}
+
 export interface SinProgramsCatalog {
   review: string;
   common: SinProgramsCommon;
   programs: SinProgramEntry[];
+  moment: MomentTools;
 }
 
 export interface PracticeCatalog {
@@ -415,6 +434,42 @@ function readProgram(value: YamlValue, where: string, habitKeys: ReadonlySet<str
   return program;
 }
 
+/** At most this many acts for one sin: the moment screen is a short list. */
+export const MOMENT_TOOLS_MAX = 5;
+
+function readMomentTools(value: YamlValue | undefined, where: string): MomentTool[] {
+  const tools = asList(value, where).map((item, index) => {
+    const at = `${where}[${index}]`;
+    const f = new Fields(asMap(item, at), at, ['key', 'titleAr', 'titleEn', 'evidence']);
+    const tool: MomentTool = { key: f.string('key'), titleAr: f.string('titleAr'), titleEn: f.string('titleEn'), evidence: f.strings('evidence', UUID) };
+    if (!KEY.test(tool.key)) f.fail(`key "${tool.key}" must be kebab-case`);
+    return tool;
+  });
+  if (tools.length > MOMENT_TOOLS_MAX) throw new Error(`${where}: at most ${MOMENT_TOOLS_MAX} acts`);
+  assertUniqueKeys(tools, where);
+  return tools;
+}
+
+function readMoment(value: YamlValue | undefined, where: string): MomentTools {
+  const raw = asMap(value, where);
+  const f = new Fields(raw, where, ['generic', 'sins', 'aliases']);
+  const sinsMap = f.mapping('sins');
+  const sins: Record<string, MomentTool[]> = {};
+  for (const slug of Object.keys(sinsMap)) {
+    assertTopic(f, slug, 'AVOID');
+    sins[slug] = readMomentTools(sinsMap[slug], `${where}.sins.${slug}`);
+  }
+  const aliasesMap = raw['aliases'] === undefined || raw['aliases'] === null ? {} : f.mapping('aliases');
+  const aliases: Record<string, string> = {};
+  for (const [slug, target] of Object.entries(aliasesMap)) {
+    assertTopic(f, slug, 'AVOID');
+    if (typeof target !== 'string' || !Object.hasOwn(sins, target)) return f.fail(`aliases.${slug} must name a sin listed under sins`);
+    if (Object.hasOwn(sins, slug)) f.fail(`aliases.${slug} is also listed under sins`);
+    aliases[slug] = target;
+  }
+  return { generic: readMomentTools(raw['generic'], `${where}.generic`), sins, aliases };
+}
+
 /** Parses and validates both files. Throws a message naming the file and entry on any problem. */
 export function buildPracticeCatalog(schedulesText: string, programsText: string): PracticeCatalog {
   const schedules = asMap(parseYaml(schedulesText, 'deed-schedules.yaml'), 'deed-schedules.yaml');
@@ -432,7 +487,7 @@ export function buildPracticeCatalog(schedulesText: string, programsText: string
   if (twice) throw new Error(`deed-schedules.yaml habits: two people templates for circle "${twice}"`);
 
   const programsFile = asMap(parseYaml(programsText, 'sin-programs.yaml'), 'sin-programs.yaml');
-  const top = new Fields(programsFile, 'sin-programs.yaml', ['review', 'common', 'programs']);
+  const top = new Fields(programsFile, 'sin-programs.yaml', ['review', 'common', 'programs', 'moment']);
   const habitKeys = new Set(habits.map((habit) => habit.key));
   const programs = asList(programsFile['programs'], 'sin-programs.yaml programs').map((item, index) =>
     readProgram(item, `sin-programs.yaml programs[${index}]`, habitKeys),
@@ -452,6 +507,7 @@ export function buildPracticeCatalog(schedulesText: string, programsText: string
       review: top.string('review'),
       common: readCommon(programsFile['common'], 'sin-programs.yaml common'),
       programs,
+      moment: readMoment(programsFile['moment'], 'sin-programs.yaml moment'),
     },
     deedBranches,
     stories: { ...heartTexts().stories },
