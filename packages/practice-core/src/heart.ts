@@ -3,7 +3,9 @@
  * المعاقبة («التزام شخصي», opt-in, never called a penalty), المجاهدة («أقل ما يمكن») and المعاتبة («رسالة إلى نفسي»).
  *
  * Everything here is private and device-local: {@link HeartData} is kept by each client beside its store (never in the
- * synced `Store`, never sent to the server). Only the step chosen in a Friday review touches a plan (through the usual
+ * synced `Store`, never sent to the server). Round 5 (F-08 a): the pledge set-up is gone; after two missed days
+ * «صلّحها» offers one good deed for the day ({@link makeUpOffer}), and the choice is kept in {@link HeartData.makeUps}.
+ * Old pledges still parse (so stored data never breaks), but no new code needs them. Only the step chosen in a Friday review touches a plan (through the usual
  * `increase` / `decreaseTo`), because the plan's amount is synced anyway.
  *
  * Wording rules for the clients: calm, no guilt, no points or comparisons; a pledge is the user's own word to himself,
@@ -131,7 +133,10 @@ export type PledgeDeed = (typeof PLEDGE_DEEDS)[number];
 export type PledgeAction = PledgeDeed | 'sadaqah' | 'custom';
 export const PLEDGE_ACTIONS: readonly PledgeAction[] = [...PLEDGE_DEEDS, 'sadaqah', 'custom'];
 
-/** «إن فاتتني يومين متتاليين: …». */
+/**
+ * «إن فاتتني يومين متتاليين: …».
+ * @deprecated Round 5 (F-08 a) removed the pledge set-up; use {@link makeUpOffer} / {@link chooseMakeUp}. Still parsed.
+ */
 export interface Pledge {
   id: string;
   planId: string;
@@ -143,13 +148,39 @@ export interface Pledge {
   kept: LocalDate[];
 }
 
+/**
+ * «أتبع السيئة الحسنة: اختر عملًا واحدًا اليوم» (round 5, F-08 a): the good deed a member chose after a habit was
+ * missed two asked days in a row. One per (plan, trigger day). The word «make-up» here is this deed, not «قضاء» (the
+ * same-day log of a missed day, `streak.ts` `canMakeUp`).
+ */
+export interface MakeUpDeed {
+  planId: string;
+  /** The trigger day: the later of the two missed days ({@link missedTwiceOn}). */
+  on: LocalDate;
+  /** The day the deed was chosen (to be done that day). */
+  date: LocalDate;
+  action: PledgeAction;
+  /** `sadaqah`: what (e.g. an amount); `custom`: the whole line. */
+  text?: string;
+  /** «فعلته»: the member marked it done. */
+  done?: true;
+}
+
+/** Make-up choices kept on the device (the newest win). */
+export const MAX_MAKE_UPS = 60;
+/** The offer stays open this many days after its trigger day (then the next run of misses makes a new one). */
+export const MAKE_UP_OFFER_DAYS = 3;
+
 export interface HeartData {
   v: typeof HEART_VERSION;
   prefs: HeartPrefs;
   intentions: DayIntention[];
   evenings: EveningReview[];
   weekly: WeeklyReview[];
+  /** @deprecated Round 5: parsed so old data stays readable; nothing new writes it. */
   pledges: Pledge[];
+  /** Round 5 (F-08 a): the good deeds chosen in «صلّحها». Absent or empty: none. */
+  makeUps?: MakeUpDeed[];
 }
 
 export function emptyHeart(): HeartData {
@@ -255,7 +286,28 @@ export function parseHeart(json: unknown): HeartData {
     pledges.push({ id: v.id, planId: v.planId, action: v.action as PledgeAction, ...(text ? { text } : {}), createdOn: v.createdOn, kept });
   }
   out.pledges = pledges.slice(0, MAX_PLEDGES);
+  const makeUps = parseMakeUps(raw.makeUps);
+  if (makeUps.length > 0) out.makeUps = makeUps;
   return out;
+}
+
+/** Valid make-up choices, one per (plan, trigger day) (the later in the list wins), oldest first, at most {@link MAX_MAKE_UPS}. Never throws. */
+export function parseMakeUps(raw: unknown): MakeUpDeed[] {
+  if (!Array.isArray(raw)) return [];
+  const byKey = new Map<string, MakeUpDeed>();
+  for (const v of raw) {
+    if (!isRecord(v) || typeof v.planId !== 'string' || v.planId.length === 0 || !isValidDate(v.on) || !isValidDate(v.date)) continue;
+    if (!PLEDGE_ACTIONS.includes(v.action as PledgeAction)) continue;
+    const text = cleanLine(v.text);
+    if (v.action === 'custom' && !text) continue;
+    const item: MakeUpDeed = { planId: v.planId, on: v.on, date: v.date, action: v.action as PledgeAction };
+    if (text && (v.action === 'custom' || v.action === 'sadaqah')) item.text = text;
+    if (v.done === true) item.done = true;
+    const key = `${item.planId}|${item.on}`;
+    byKey.delete(key);
+    byKey.set(key, item);
+  }
+  return [...byKey.values()].sort((a, b) => (a.on < b.on ? -1 : a.on > b.on ? 1 : 0)).slice(-MAX_MAKE_UPS);
 }
 
 export function serializeHeart(data: HeartData): string {
@@ -453,17 +505,23 @@ export interface PledgeOptions extends PlanDayOptions {
 }
 
 /**
- * The day a pledge was triggered, or null: the later of the most recent two asked days in a row (days the plan does
- * not ask are passed over) with nothing logged, both after the pledge was made, neither excused («عذر» breaks the run),
- * and yesterday only once it can no longer be made up. Today never counts (it is still open).
+ * The later of the most recent two asked days in a row with nothing logged, or null: days the plan does not ask are
+ * passed over, both days on or after `since`, neither excused («عذر» breaks the run), and yesterday only once it can no
+ * longer be logged for the streak («قضاء» until noon, `canMakeUp`). Today never counts (it is still open). Looks back
+ * {@link PLEDGE_LOOKBACK_DAYS} days. A paused plan has none.
  */
-export function pledgeTrigger(store: Store, pledge: Pledge, today: LocalDate, opts: PledgeOptions = {}): LocalDate | null {
-  const plan = store.plans.find((p) => p.id === pledge.planId);
-  if (!plan || isPaused(plan)) return null;
+export function missedTwiceOn(
+  store: Pick<Store, 'settings'>,
+  plan: Plan,
+  since: LocalDate,
+  today: LocalDate,
+  opts: PledgeOptions = {},
+): LocalDate | null {
+  if (isPaused(plan)) return null;
   const now = opts.now ?? Date.now();
   const stop = addDays(today, -PLEDGE_LOOKBACK_DAYS);
   let laterMiss: LocalDate | null = null;
-  for (let d = addDays(today, -1); d > stop && d >= pledge.createdOn; d = addDays(d, -1)) {
+  for (let d = addDays(today, -1); d > stop && d >= since; d = addDays(d, -1)) {
     if (canMakeUp(d, today, now, makeUpDeadline)) continue;
     if (isExcused(store, d)) {
       laterMiss = null;
@@ -480,7 +538,20 @@ export function pledgeTrigger(store: Store, pledge: Pledge, today: LocalDate, op
   return null;
 }
 
-/** Pledges whose trigger is open (not marked «وفيت به»), with the trigger day. Off unless the setting is on. */
+/**
+ * The day a pledge was triggered, or null ({@link missedTwiceOn} from the day the pledge was made).
+ * @deprecated Round 5: pledges are gone; use {@link makeUpOffer}.
+ */
+export function pledgeTrigger(store: Store, pledge: Pledge, today: LocalDate, opts: PledgeOptions = {}): LocalDate | null {
+  const plan = store.plans.find((p) => p.id === pledge.planId);
+  if (!plan) return null;
+  return missedTwiceOn(store, plan, pledge.createdOn, today, opts);
+}
+
+/**
+ * Pledges whose trigger is open (not marked «وفيت به»), with the trigger day. Off unless the setting is on.
+ * @deprecated Round 5: the «التزامك» card is removed; use {@link makeUpOffer}.
+ */
 export function pledgesDue(store: Store, data: HeartData, today: LocalDate, opts: PledgeOptions = {}): { pledge: Pledge; on: LocalDate }[] {
   if (!data.prefs.pledges) return [];
   const out: { pledge: Pledge; on: LocalDate }[] = [];
@@ -489,6 +560,71 @@ export function pledgesDue(store: Store, data: HeartData, today: LocalDate, opts
     if (on && !pledge.kept.includes(on)) out.push({ pledge, on });
   }
   return out;
+}
+
+// ── «صلّحها» after two missed days: one good deed (round 5, F-08 a) ─────────────────────────────────────────────
+
+/** What «صلّحها» offers: the trigger day, the actions to choose from, and the choice already made (if any). */
+export interface MakeUpOffer {
+  planId: string;
+  /** The later of the two missed days. */
+  on: LocalDate;
+  /** The deeds in the clients' order (`pledge-deeds.ts` `PLEDGE_DEED_INFO`), then `sadaqah` and `custom`. */
+  actions: readonly PledgeAction[];
+  /** The deed chosen for this trigger, or null. */
+  chosen: MakeUpDeed | null;
+}
+
+/** The make-up chosen for a plan's trigger day, if any. */
+export function makeUpOf(data: Pick<HeartData, 'makeUps'>, planId: string, on: LocalDate): MakeUpDeed | null {
+  return data.makeUps?.find((m) => m.planId === planId && m.on === on) ?? null;
+}
+
+/**
+ * «أتبع السيئة الحسنة: اختر عملًا واحدًا اليوم»: due when the habit was missed two asked days in a row
+ * ({@link missedTwiceOn} since the plan's first day) and the trigger day is at most {@link MAKE_UP_OFFER_DAYS} days ago.
+ * Null otherwise. With `heart`, `chosen` tells whether a deed was already picked for this trigger.
+ */
+export function makeUpOffer(
+  store: Pick<Store, 'settings'>,
+  plan: Plan,
+  today: LocalDate,
+  opts: PledgeOptions & { heart?: Pick<HeartData, 'makeUps'> } = {},
+): MakeUpOffer | null {
+  const on = missedTwiceOn(store, plan, plan.createdOn, today, opts);
+  if (!on || diffDays(on, today) > MAKE_UP_OFFER_DAYS) return null;
+  return { planId: plan.id, on, actions: PLEDGE_ACTIONS, chosen: opts.heart ? makeUpOf(opts.heart, plan.id, on) : null };
+}
+
+/** Records the deed chosen for a trigger (replacing an earlier choice for the same trigger). Throws on invalid input. */
+export function chooseMakeUp(
+  data: HeartData,
+  input: { planId: string; on: LocalDate; date: LocalDate; action: PledgeAction; text?: string },
+): HeartData {
+  if (!isValidDate(input.on) || !isValidDate(input.date)) throw new RangeError('Invalid date');
+  if (typeof input.planId !== 'string' || input.planId.length === 0) throw new RangeError('Invalid planId');
+  if (!PLEDGE_ACTIONS.includes(input.action)) throw new RangeError('Invalid action');
+  const text = cleanLine(input.text);
+  if (input.action === 'custom' && !text) throw new RangeError('A custom deed needs its text');
+  const item: MakeUpDeed = { planId: input.planId, on: input.on, date: input.date, action: input.action };
+  if (text && (input.action === 'custom' || input.action === 'sadaqah')) item.text = text;
+  const rest = (data.makeUps ?? []).filter((m) => !(m.planId === input.planId && m.on === input.on));
+  return { ...data, makeUps: parseMakeUps([...rest, item]) };
+}
+
+/** «فعلته» (or undo): marks the chosen deed of a trigger done. Unknown triggers change nothing. */
+export function markMakeUpDone(data: HeartData, planId: string, on: LocalDate, done = true): HeartData {
+  if (!makeUpOf(data, planId, on)) return data;
+  return {
+    ...data,
+    makeUps: (data.makeUps ?? []).map((m) => {
+      if (m.planId !== planId || m.on !== on) return m;
+      const next: MakeUpDeed = { ...m };
+      if (done) next.done = true;
+      else delete next.done;
+      return next;
+    }),
+  };
 }
 
 // ── المجاهدة: «أقل ما يمكن» ─────────────────────────────────────────────────────────────────────────────────

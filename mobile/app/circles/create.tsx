@@ -12,7 +12,7 @@ import { useCircleUserId, useCreateCircle } from '@/lib/api/circles';
 import { circleErrorKey } from '@/lib/circles/circle-view';
 import { CIRCLE_TEXT_MAX } from '@/lib/types/circles';
 import { space } from '@/theme';
-import { Button, ErrorText, Field, PageHeader, Screen } from '@/ui';
+import { Button, ErrorText, Field, PageHeader, Screen, toast } from '@/ui';
 
 export default function CreateCircleScreen() {
   const { t } = useTranslation();
@@ -27,7 +27,12 @@ export default function CreateCircleScreen() {
     if (!canSubmit) return;
     create.mutate(
       { name: name.trim(), intention: intention.trim() || undefined, displayName: displayName.trim() },
-      { onSuccess: (circle) => router.replace(`/circles/${circle.id}`) },
+      {
+        onSuccess: (circle) => {
+          router.replace(`/circles/${circle.id}`);
+          toast(t('circles.createdToast'));
+        },
+      },
     );
   }
 
@@ -68,7 +73,7 @@ export default function CreateCircleScreen() {
             onSubmitEditing={handleCreate}
           />
           {create.isError ? <ErrorText>{t(circleErrorKey(create.error))}</ErrorText> : null}
-          <Button label={t('circles.createButton')} onPress={handleCreate} disabled={!canSubmit} loading={create.isPending} block large />
+          <Button label={t('circles.createButton')} onPress={handleCreate} disabled={!canSubmit} loading={create.isPending} block size="lg" />
         </View>
       ) : (
         <CirclesSignedOut />

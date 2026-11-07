@@ -12,7 +12,7 @@ import { MAX_NAME_LENGTH, type Relative } from '@thekra/practice-core';
 import { relativeToFormValues, type RelativeFormError, type RelativeFormValues, type RhythmChoice } from '@/lib/practice/kinship-form';
 import { WeekdayPicker } from '@/components/practice/editors';
 import { space, useStyles } from '@/theme';
-import { Button, Card, Chip, ErrorText, Field, Row, Text, Wrap } from '@/ui';
+import { Button, ButtonPair, Card, Chip, ErrorText, Field, Text, Wrap } from '@/ui';
 
 const RHYTHMS: readonly RhythmChoice[] = ['weekly', 'biweekly', 'monthly', 'everyNDays'];
 const EVERY_DAYS = [3, 7, 10, 14, 21] as const;
@@ -121,11 +121,9 @@ export function RelativeForm({ title, relative, onSave, onCancel, onDelete, noRh
         </Wrap>
       ) : null}
       {error ? <ErrorText>{t(`kinship.errors.${error}`)}</ErrorText> : null}
-      <Row style={styles.actions}>
-        <Button label={t('kinship.save')} onPress={handleSave} />
-        <Button label={t('kinship.cancel')} onPress={onCancel} variant="ghost" />
-        {onDelete ? <Button label={t('kinship.delete')} icon={Trash2} onPress={onDelete} variant="destructive" /> : null}
-      </Row>
+      <ButtonPair primary={{ label: t('kinship.save'), onPress: handleSave }} secondary={{ label: t('kinship.cancel'), onPress: onCancel }} />
+      {/* Delete only inside this edit form, quiet and confirmed (round-4 rule). */}
+      {onDelete ? <Button label={t('kinship.delete')} icon={Trash2} onPress={onDelete} variant="destructive" size="sm" /> : null}
     </Card>
   );
 }

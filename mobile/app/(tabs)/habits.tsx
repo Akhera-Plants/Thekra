@@ -49,7 +49,7 @@ import { PeriodicRows } from '@/components/practice/hub/PeriodicRows';
 import { TodayList } from '@/components/practice/hub/TodayList';
 import { WirdHeader } from '@/components/practice/hub/WirdHeader';
 import { GUTTER, space, useStyles, type Theme } from '@/theme';
-import { Button, Notice, Rule, Screen, Section, Skeleton, Text } from '@/ui';
+import { Button, Notice, Screen, Section, Skeleton, Text, SectionDivider } from '@/ui';
 
 const SKELETON_ROWS = ['r1', 'r2', 'r3'];
 /** How many periodic acts the daily screen shows; the rest is behind «الكل». */
@@ -136,7 +136,7 @@ function Wird() {
           </View>
         ) : null}
 
-        <Rule />
+        <SectionDivider />
 
         <TodayList
           title={t('practice.today')}
@@ -166,13 +166,13 @@ function Wird() {
           }
         />
 
-        <Rule />
+        <SectionDivider />
 
         <Section
           title={t('practice.periodic.title')}
           action={
             periodic.length > 0 ? (
-              <Button label={t('practice.periodic.all')} variant="outline" compact arrow onPress={openPeriodic} />
+              <Button label={t('practice.periodic.all')} variant="outline" size="sm" arrow onPress={openPeriodic} />
             ) : null
           }
         >
@@ -187,7 +187,7 @@ function Wird() {
           )}
         </Section>
 
-        <WeekCard today={today} before={<Rule />} />
+        <WeekCard today={today} before={<SectionDivider />} />
       </ScrollView>
 
       <AddSheet visible={adding} onClose={handleAddClose} />

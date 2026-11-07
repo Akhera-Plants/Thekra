@@ -1,7 +1,7 @@
 {
   "tabs": {
     "home": "Home",
-    "wird": "Today's wird",
+    "wird": "Today's practice",
     "record": "My habits",
     "settings": "Settings",
     "browse": "Browse"
@@ -129,14 +129,14 @@
     }
   },
   "feelings": {
-    "title": "Quotes: {{tag}}",
-    "titleNoTag": "Quotes",
-    "empty": "No quotes for this feeling"
+    "title": "Texts: {{tag}}",
+    "titleNoTag": "Texts",
+    "empty": "No texts for this feeling"
   },
   "favorites": {
     "title": "Saved",
-    "empty": "No saved quotes yet",
-    "emptyHint": "Tap the save icon on any quote to add it here",
+    "empty": "No saved texts yet",
+    "emptyHint": "Tap the save icon on any text to add it here",
     "signInPrompt": "Sign in to sync favorites across your devices",
     "tabTexts": "Texts"
   },
@@ -199,7 +199,7 @@
     "haveAccount": "Already have an account?",
     "register": "Register",
     "login": "Sign in",
-    "guestNote": "\"Today's wird\" and \"My habits\" need an account: it keeps your habits and syncs them across your devices.",
+    "guestNote": "\"Today's practice\" and \"My habits\" need an account: it keeps your habits and syncs them across your devices.",
     "loginError": "Login failed. Check your credentials.",
     "registerError": "Registration failed. Please try again.",
     "name": "Name",
@@ -234,7 +234,9 @@
     "notFoundBody": "The link may be old or incorrect.",
     "offlineBanner": "Showing saved content: no connection",
     "done": "Done",
-    "more": "More"
+    "more": "More",
+    "moreActions": "More actions",
+    "undo": "Undo"
   },
   "errors": {
     "network": "Could not reach the server",
@@ -277,7 +279,7 @@
     "monthDays_other": "You logged {{done}} of {{count}} days",
     "band": {
       "excellent": "Excellent",
-      "good": "Good, you are on track",
+      "good": "Good, keep going",
       "gentle": "Step by step",
       "excellentHint": "You kept most of your days.",
       "goodHint": "At the beginning this is normal and good.",
@@ -300,7 +302,7 @@
       "times": "times"
     },
     "basis": {
-      "text": "A timing stated in the texts",
+      "text": "Its time is stated in the Sunnah",
       "organizational": "A suggestion to organise your time, not a religious timing"
     },
     "evidence": "From the texts",
@@ -361,7 +363,8 @@
       "loadSetup": "Set your free time first",
       "stepOf": "Step {{step}} of {{total}}",
       "invalidPlan": "This habit could not be saved. Check the times and days, then try again.",
-      "customTime": "A time I choose"
+      "customTime": "A time I choose",
+      "addedToast": "“{{habit}}” added to your habits"
     },
     "plan": {
       "required": "Today: {{amount}}",
@@ -373,7 +376,7 @@
       "deleteConfirm": "The habit and its log are deleted from this device.",
       "deleteConfirmSynced": "The habit and its log are deleted from this device and from your account.",
       "notFound": "This habit was not found.",
-      "logged": "Logged.",
+      "logged": "Logged",
       "undo": "Undo",
       "fixOpen": "Fix the log",
       "fixHint": "Log a day you forgot, or fix a wrong number. Zero clears that day.",
@@ -388,7 +391,10 @@
       "partialLabel": "Amount done ({{unit}})",
       "logPartial": "Log",
       "helpers": "What helps",
-      "today": "Today"
+      "today": "Today",
+      "fixSaved": "The log was corrected",
+      "settingsSaved": "Settings saved",
+      "deleted": "Habit deleted"
     },
     "duties": {
       "title": "My duties and roles",
@@ -427,7 +433,7 @@
       "markFull": "All of it done",
       "markPartial": "Some of it done",
       "occasionTag": "Sunnah occasion",
-      "required": "Asked: {{amount}}",
+      "required": "Asked today: {{amount}}",
       "logged": "logged {{amount}}",
       "relativeOverdue_zero": "Due today",
       "relativeOverdue_one": "Due 1 day ago",
@@ -490,15 +496,23 @@
       "pm": "PM"
     },
     "wird": {
-      "title": "Today's wird",
+      "title": "Today's practice",
       "streakLabel_one": "1-day streak",
       "streakLabel_other": "{{count}}-day streak",
       "empty": "Nothing is required of you today",
       "streakFresh": "Start a new streak today · Longest streak: {{n}}",
-      "notDueToday_one": "A rest day for this habit",
-      "notDueToday_other": "A rest day for these habits ({{count}})",
-      "notDueDay_one": "A rest day for this habit",
-      "notDueDay_other": "A rest day for these habits ({{count}})"
+      "notDueToday_one": "Not asked today",
+      "notDueToday_other": "Not asked today ({{count}})",
+      "notDueDay_one": "Not asked on this day",
+      "notDueDay_other": "Not asked on this day ({{count}})",
+      "notDueToday_zero": "Not asked today",
+      "notDueToday_two": "Not asked today ({{count}})",
+      "notDueToday_few": "Not asked today ({{count}})",
+      "notDueToday_many": "Not asked today ({{count}})",
+      "notDueDay_zero": "Not asked on this day",
+      "notDueDay_two": "Not asked on this day ({{count}})",
+      "notDueDay_few": "Not asked on this day ({{count}})",
+      "notDueDay_many": "Not asked on this day ({{count}})"
     },
     "periodic": {
       "title": "Periodic acts",
@@ -544,9 +558,9 @@
         "delete": "Delete"
       },
       "why": {
-        "habits_young": "A new one fits on {{date}}.",
+        "habits_young": "You can add a new habit from {{date}}.",
         "habits_youngNoDate": "Keep up what you have until it holds.",
-        "programs_young": "You can start a new program on {{date}}.",
+        "programs_young": "You can start a new program from {{date}}.",
         "programs_youngNoDate": "Start another once yours has lasted two months.",
         "programs_fullNoDate": "{{count}} programs is the limit, so end one first.",
         "periodic_fullNoDate": "Delete an act to add another."
@@ -587,7 +601,10 @@
       "title": "Paused",
       "since": "Paused since {{date}}",
       "resume": "Resume",
-      "pause": "Pause"
+      "pause": "Pause",
+      "done": "Habit paused",
+      "resumed": "Habit resumed",
+      "pauseHint": "Its days and log stay as they are"
     },
     "graduation": {
       "offer": "This habit has taken root, by the grace of Allah. Move it to the established habits?",
@@ -607,7 +624,8 @@
         "pledgePlaceholder": "One line for yourself",
         "submit": "I pledge",
         "made": "You made your pledge today. May Allah help you keep it.",
-        "pledgeLine": "Today's pledge: {{text}}"
+        "pledgeLine": "Today's pledge: {{text}}",
+        "savedToast": "Your intention for today is set"
       },
       "evening": {
         "title": "Evening review",
@@ -619,7 +637,8 @@
         "no": "No",
         "checkIn": "Check in on your private program",
         "save": "Review done",
-        "doneNone": "No habit was asked today."
+        "doneNone": "No habit was asked today.",
+        "savedToast": "Today's review saved"
       },
       "weekly": {
         "title": "Weekly review",
@@ -641,7 +660,8 @@
         "messagePlaceholder": "A line to read next {{day}}",
         "save": "Save the review",
         "missed_one": "Missed 1 day",
-        "missed_other": "Missed {{count}} days"
+        "missed_other": "Missed {{count}} days",
+        "savedToast": "This week's review saved"
       },
       "selfMessage": {
         "title": "Your message to yourself",
@@ -653,7 +673,8 @@
         "hint": "This is what you pledged to yourself when “{{habit}}” is missed two days in a row.",
         "kept": "I kept it",
         "sadaqah": "I give {{text}} in charity",
-        "sadaqahPlain": "I give in charity"
+        "sadaqahPlain": "I give in charity",
+        "keptToast": "Kept, may Allah bless you"
       },
       "minimum": "The least I can",
       "minimumMet": "The least logged",
@@ -885,7 +906,8 @@
       "unsuitable": "Some reminder times do not suit this deed.",
       "fix": "Fix the times",
       "unsuitableSlot": "Outside its time"
-    }
+    },
+    "evidenceDeedTitle": "Verses and hadith to help you with this deed"
   },
   "kinship": {
     "title": "Ties of kinship",
@@ -933,7 +955,11 @@
     "showNamesHint": "Notifications appear on the lock screen; without this option the text is generic.",
     "time": "Reminder time",
     "lead": "A list of your relatives and how often to reach each one. A name or nickname only, no phone numbers.",
-    "contactedToday": "Contacted today"
+    "contactedToday": "Contacted today",
+    "addShort": "Add",
+    "addedToast": "“{{name}}” added",
+    "savedToast": "Changes saved",
+    "contactedToast": "Contact with “{{name}}” logged"
   },
   "sinProgram": {
     "title": "Lighten",
@@ -978,7 +1004,8 @@
       "confirmBody": "Its check-ins, notes and loops are removed now, and from the encrypted copy in your account on its next save. You can start it again whenever you wish.",
       "cancel": "Cancel",
       "confirm": "End it now",
-      "done": "The program is closed. You can start it again or choose another whenever you wish."
+      "done": "The program is closed. You can start it again or choose another whenever you wish.",
+      "toast": "Program closed"
     },
     "moment": {
       "title": "A moment of striving",
@@ -1092,7 +1119,7 @@
       "note": "No counter goes back to zero: every day you held stays yours.",
       "hope": "A text of hope"
     },
-    "textsTitle": "What the texts say",
+    "textsTitle": "Verses and hadith to help you leave this sin",
     "categoryQuestion": "Does it involve a right of another person?",
     "yes": "Yes",
     "no": "No",
@@ -1104,7 +1131,9 @@
       "loops": "Its loop",
       "notebook": "Notebook"
     },
-    "notebookEmpty": "What you log each day shows here, with your notes."
+    "notebookEmpty": "What you log each day shows here, with your notes.",
+    "textsAll": "All the verses and hadith on its page",
+    "checkInSaved": "Your day is logged"
   },
   "calendar": {
     "title": "Seasons of good",
@@ -1333,7 +1362,7 @@
     "settings": "My circle settings",
     "settingsTitle": "My circle settings",
     "shareLabel": "Share my presence",
-    "shareHint": "One mark a day when you log anything in Today's wird. The deed and its amount never show.",
+    "shareHint": "One mark a day when you log anything in Today's practice. The deed and its amount never show.",
     "saveName": "Save name",
     "saved": "Saved",
     "membersTitle": "Members",
@@ -1357,7 +1386,9 @@
       "invalid": "Check what you entered and try again.",
       "tooManyTries": "Too many tries. Wait a minute, then try again.",
       "generic": "That did not work just now. Please try again."
-    }
+    },
+    "createdToast": "Circle created",
+    "joinedToast": "You joined “{{name}}”"
   },
   "branches": {
     "pageTitle": "The Branches of Faith",
@@ -1420,7 +1451,8 @@
       "tooLong": "The line is longer than {{max}} characters.",
       "full": "You reached the limit of {{n}} lines.",
       "duplicate": "This line is already there."
-    }
+    },
+    "addedToast": "Reminder added"
   },
   "prayerTimes": {
     "title": "Prayer times",
@@ -1455,14 +1487,15 @@
     "saved": "Saved texts",
     "savedSignIn": "Needs signing in.",
     "sets": "Reminder sets",
-    "setsOffline": "The sets could not be loaded now."
+    "setsOffline": "The sets could not be loaded now.",
+    "writeFirst": "Write your first reminder"
   },
   "widget": {
     "streak": "Streak",
     "remaining": "{n} left",
-    "allDone": "Today's wird is done",
-    "wird": "Today's wird",
-    "openApp": "Open the app to see today's wird",
+    "allDone": "Today's practice is done",
+    "wird": "Today's practice",
+    "openApp": "Open the app to see today's practice",
     "noHabits": "Open the app and start a small sapling",
     "dailyText": "Daily text",
     "noText": "Open the app and choose the daily text source",
@@ -1588,7 +1621,7 @@
           "label": "The reward",
           "question": "What do you find after it?",
           "hint": "Calm, thanks to Allah, or a mark in your wird.",
-          "example": "Calm, and I tick it in today's wird"
+          "example": "Calm, and I tick it in today's practice"
         },
         "obstacle": {
           "label": "The obstacle",
@@ -1695,5 +1728,10 @@
       "sittingTitle": "Pray two rak'ahs, even sitting",
       "sittingBody": "A voluntary prayer sitting has half the reward of standing, and it is better than leaving it."
     }
+  },
+  "audio": {
+    "play": "Listen to the verse, recited by {{reciter}}",
+    "pause": "Pause the recitation",
+    "error": "The recitation could not play now. Try again"
   }
 }

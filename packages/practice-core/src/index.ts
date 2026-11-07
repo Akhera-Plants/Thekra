@@ -26,3 +26,8 @@ export * from './strategies.js';
 export * from './knowledge.js';
 export * from './prayer.js';
 export * from './screen.js';
+export * from './nav-map.js';
+export * from './home.js';
+export * from './fard.js';
+export * from './commitment.js';
+export * from './heart-slot.js';

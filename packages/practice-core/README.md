@@ -38,6 +38,11 @@ pnpm --filter @thekra/practice-core typecheck  # tsc --noEmit
 | `sync` | `localChanges(store, {maxItems?, includeAcked?})`, `buildSyncRequest`, `applyServerChanges(store, response)`, `countChanges`, `compareVersions`, `mergeLogAmount`, wire types (`SyncChanges`, `SyncResponse`, `WirePlan`…) |
 | `vault` | `deriveKey(code, salt, iterations = 210000)`, `newSalt`, `sealPrograms`, `openPrograms`, `unlockVault`, `vaultPayload`, `createVault`, `sealVault`, `serializeVaultKey`/`parseVaultKey`, `VaultError`, `VaultLockedError` |
 | `base64` | `bytesToBase64`, `base64ToBytes` (strict) |
+| `nav-map` (round 5) | `NAV_FEATURES` (`{ key, ar, en, web, app, group, parent? }` for every page of both platforms), `NAV_GROUPS`, `WEB_REDIRECTS`, `GLOSSARY` (shared words + words to avoid, for the owner to approve), `navFeature`, `navName`, `navGroup`, `featureAtRoute`, `glossaryTerm`, `avoidedWordsIn` |
+| `home` (round 5) | `HOME_SECTION_KEYS`, `HOME_SECTIONS` (names, default visibility, members-only), `defaultHomeSections`, `parseHomeSections`, `validateHomeSections`, `resolveHomeSections`, `visibleHomeSections(stored, member)`, `moveHomeSection`, `setHomeSectionVisible`, `homeSectionsToStore`, `isDefaultHomeSections`, `serializeHomeSections`; stored in `settings.homeSections` (synced) via `setHomeSections` |
+| `fard` (round 5) | «الفرائض»: `FARD_PRAYERS`, `FARD_STATUSES` (`onTime`, `qada`), `FardMark`, `FARD_LABELS`, `FARD_EVIDENCE` (empty, TODO), `parseFardMarks`, `fardOn`, `setFard`, `canMarkFard`, `fardEnabled` / `setFardTracking`, `fardStats` (30 days), `compareFardMarks`; marks in `Store.fard` (synced per mark) |
+| `commitment` (round 5) | moved from the clients: `planCommitment`, `commitmentRates`, `meanCommitment`, `excuseOfYesterday`, `usualDeedDue` (60% rule), `COMMITMENT_DAYS`, `USUAL_DEED_THRESHOLD` |
+| `heart-slot` (round 5) | `heartSlot(heart, store, today, time, opts)` → the one card of «ورد اليوم» (`intention` / `evening` / `weekly` / `usual-deed`) or null; `USUAL_DEED_UNTIL` |
 
 ### Hijri
 
@@ -73,6 +78,28 @@ screens and in Google/Apple calendars: pass a generic title («تذكرة من �
 - `parseStore` upgrades v1: plans and relatives get `updatedAt = now`, and so do settings that differ from the
   defaults. Default settings stay unversioned so a synced choice wins over them.
 
+### Round 5 (2026-11-07)
+
+Plan: [docs/plan/2026-11-07-owner-round-5.md](../../docs/plan/2026-11-07-owner-round-5.md); wire changes in the sync
+contract («Round 5»).
+
+- **Settings** gain `homeSections` (`home.ts`, absent = defaults; a list equal to the defaults is stored as absent) and
+  `fardTracking` (`true` or absent). Both are in the canonical settings content only when set, so older acks stay valid.
+- **`Store.fard`** (optional, present only with a mark): «الفرائض» marks, one per (date, prayer), `status: null` for a
+  cleared mark. They sync item by item (`changes.fard`, last writer wins by `clientUpdatedAt`) and stay outside the
+  habit limit, the streak and the habit reminders.
+- **Heart data** gains `makeUps` (device-local): the deed chosen in «صلّحها» after two missed days
+  (`makeUpOffer(store, plan, today, { now, heart })`, `chooseMakeUp`, `markMakeUpDone`, `MAKE_UP_TEXTS`,
+  `missedTwiceOn`). Pledges still parse but are deprecated (`pledgeTrigger` and `pledgesDue` remain for old builds).
+- **Notifications**: no weekly strategy reminder (its prefs still parse, nothing is planned); new opt-in
+  `occasions` / `occasionTime` («مناسبة قريبة»: the day before a non-weekly occasion starts; pass the catalog's
+  `occasions` to `notificationPlan`; outside the daily cap). `isRemindableOccasionRule`, `occasionStarts`,
+  `NOTIFICATION_KINDS`, `NOTIFY_TEXTS.*.occasionTitle/occasionBody`.
+- **Prayer times by city**: `PrayerSettings.country` and `.method` are optional; `alAdhanCalendarUrl` uses
+  `calendarByAddress`, `alAdhanTimingsUrl` (`timingsByAddress`, for the search step), `parseAlAdhanMeta` (where AlAdhan
+  found the city and which method it chose), `cleanCity`, `nextPrayer(times, now, tomorrow?)`, `nextPrayerLine`
+  («العصر بعد 1:12»), `formatPrayerCountdown`, `PRAYER_LABELS`. Clients call AlAdhan directly (see `prayer.ts`).
+
 ### Sync
 
 `localChanges` builds the `changes` of `POST /v1/me/practice/sync`, using the contract's wire shapes.
@@ -84,6 +111,7 @@ screens and in Google/Apple calendars: pass a generic title («تذكرة من �
 | plan, relative, settings | last writer wins by `clientUpdatedAt`, tombstones included. At equal times a tombstone wins, then the larger canonical JSON, so every replica picks the same winner |
 | log (plan, date) | `max(stored, incoming)` |
 | contact (relative, date) | union. `deleted: true` removes the contact and a later live write restores it. A local change not pushed yet is kept, because it is the later write |
+| fard (date, prayer) | last writer wins by `clientUpdatedAt`; equal times: a cleared mark, then the larger status (`compareFardMarks`) |
 
 - Pending items are found by version, not by clock. `sync.acked` stores the version of each item the server
   returned; an item whose current version differs is sent. So an edit on a device with a wrong clock still goes

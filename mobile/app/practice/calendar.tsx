@@ -42,6 +42,7 @@ import {
   Skeleton,
   Text,
   Wrap,
+  ButtonPair,
 } from '@/ui';
 
 const HORIZON_DAYS = 90;
@@ -56,7 +57,8 @@ const makeStyles = (t: Theme) => ({
   month: { gap: space.lg },
   months: { gap: space['2xl'] },
   monthGroup: { gap: space.sm },
-  list: { borderTopWidth: 1, borderTopColor: t.colors.border },
+  /** No top rule: the first row sits under its section title (A-05). */
+  list: {},
   row: {
     flexDirection: 'row' as const,
     alignItems: 'flex-start' as const,
@@ -162,7 +164,7 @@ export default function CalendarScreen() {
                 label={t('calendar.addToCalendar')}
                 icon={CalendarPlus}
                 variant="outline"
-                compact
+                size="sm"
                 onPress={() => setSubscribing(true)}
               />
             }
@@ -182,8 +184,10 @@ export default function CalendarScreen() {
 
       <BottomSheet visible={subscribing} title={t('calendar.addToCalendar')} onClose={() => setSubscribing(false)}>
         <View style={styles.group}>
-          <Button label={t('calendar.subscribe')} icon={CalendarPlus} onPress={handleSubscribe} block />
-          <Button label={t('calendar.download')} icon={Download} variant="outline" onPress={handleDownload} block />
+          <ButtonPair
+            primary={{ label: t('calendar.subscribe'), icon: CalendarPlus, onPress: handleSubscribe }}
+            secondary={{ label: t('calendar.download'), icon: Download, onPress: handleDownload }}
+          />
           {openFailed ? <ErrorText>{t('calendar.openFailed')}</ErrorText> : null}
           <Text variant="small" tone="muted">
             {t('calendar.subscribeHint')}

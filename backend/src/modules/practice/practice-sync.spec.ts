@@ -2,6 +2,8 @@ import { BadRequestException, HttpException, PayloadTooLargeException } from '@n
 import { compareVersions, planFields, relativeFields, settingsContent, type Plan } from '@thekra/practice-core';
 import {
   containsProgramsKey,
+  fardWins,
+  homeSectionsOf,
   MAX_SYNC_ITEMS,
   parseSyncRequest,
   planRowToWire,
@@ -80,7 +82,15 @@ describe('parseSyncRequest', () => {
       '2026-10-27T00:00:00.000Z',
     );
     expect(request.since?.toISOString()).toBe('2026-10-27T00:00:00.000Z');
-    expect(request.settings).toEqual({ hijriOffset: 1, reminderTimes: ['07:00'], freeMinutesPerDay: 60, excusedDays: [], clientUpdatedAt: '2026-10-28T09:00:00.000Z' });
+    expect(request.settings).toEqual({
+      hijriOffset: 1,
+      reminderTimes: ['07:00'],
+      freeMinutesPerDay: 60,
+      excusedDays: [],
+      homeSections: null,
+      fardTracking: false,
+      clientUpdatedAt: '2026-10-28T09:00:00.000Z',
+    });
     expect(request.plans).toEqual([{ kind: 'live', plan: PLAN }]);
     expect(request.relatives).toEqual([{ kind: 'live', relative: RELATIVE }]);
     expect(request.logs).toEqual([{ planId: PLAN_ID, date: '2026-10-28', amount: 1 }]);
@@ -321,5 +331,96 @@ describe('versions (must match practice-core compareVersions on every replica)',
     const request = parse({ plans: [{ ...PLAN, title: 'B' }, { ...PLAN, title: 'A' }, { id: PLAN_ID, clientUpdatedAt: T0, deletedAt: T0 }] });
     expect(request.plans).toEqual([{ kind: 'tombstone', id: PLAN_ID, clientUpdatedAt: T0, deletedAt: T0 }]);
     expect(parse({ plans: [{ ...PLAN, title: 'A' }, { ...PLAN, title: 'B' }] }).plans[0]).toMatchObject({ plan: { title: 'B' } });
+  });
+});
+
+describe('round 5: home sections, «الفرائض»', () => {
+  const settings = (extra: Record<string, unknown>) => ({
+    changes: { settings: { hijriOffset: 0, reminderTimes: [], freeMinutesPerDay: null, clientUpdatedAt: T0, ...extra } },
+  });
+  const invalid = (fn: () => unknown) => {
+    try {
+      fn();
+    } catch (error) {
+      expect(error).toBeInstanceOf(BadRequestException);
+      return ((error as HttpException).getResponse() as { details: { kind: string; index: number | null } }).details;
+    }
+    throw new Error('expected a 400');
+  };
+
+  it('settings: homeSections in canonical order (unknown fields dropped), fardTracking a boolean', () => {
+    const request = parseSyncRequest(settings({ homeSections: [{ visible: false, key: 'sources', x: 1 }, { key: 'wird', visible: true }], fardTracking: true }));
+    expect(request.settings?.homeSections).toEqual([
+      { key: 'sources', visible: false },
+      { key: 'wird', visible: true },
+    ]);
+    expect(request.settings?.fardTracking).toBe(true);
+    // An older client omits both: defaults, and the canonical content is the one it always had.
+    const old = parseSyncRequest(settings({}));
+    expect(old.settings).toMatchObject({ homeSections: null, fardTracking: false });
+    expect(settingsVersion(old.settings!).content).toBe(settingsContent({ hijriOffset: 0, reminderTimes: [], freeMinutesPerDay: null }));
+    expect(settingsVersion(request.settings!).content).toBe(
+      settingsContent({ hijriOffset: 0, homeSections: request.settings!.homeSections, fardTracking: true }),
+    );
+    expect(invalid(() => parseSyncRequest(settings({ homeSections: [{ key: 'nope', visible: true }] })))).toMatchObject({ kind: 'settings' });
+    expect(invalid(() => parseSyncRequest(settings({ homeSections: [{ key: 'wird', visible: true }, { key: 'wird', visible: false }] })))).toMatchObject({
+      kind: 'settings',
+    });
+    expect(invalid(() => parseSyncRequest(settings({ fardTracking: 'yes' })))).toMatchObject({ kind: 'settings' });
+  });
+
+  it('fard: validates each mark, refuses future days, merges duplicates with the later write', () => {
+    const mark = (extra: Record<string, unknown> = {}) => ({ date: '2026-10-28', prayer: 'fajr', status: 'onTime', clientUpdatedAt: T0, ...extra });
+    const request = parseSyncRequest(
+      {
+        changes: {
+          fard: [
+            mark(),
+            mark({ status: null, clientUpdatedAt: '2026-10-28T11:00:00.000Z' }),
+            mark({ prayer: 'isha', status: 'qada', extra: 1 }),
+            mark({ date: '2026-10-29' }),
+          ],
+        },
+      },
+      NOW,
+    );
+    expect(request.fard).toEqual([
+      { date: '2026-10-28', prayer: 'fajr', status: null, clientUpdatedAt: '2026-10-28T11:00:00.000Z' },
+      { date: '2026-10-28', prayer: 'isha', status: 'qada', clientUpdatedAt: T0 },
+      { date: '2026-10-29', prayer: 'fajr', status: 'onTime', clientUpdatedAt: T0 },
+    ]);
+    expect(invalid(() => parseSyncRequest({ changes: { fard: [mark(), mark({ date: '2026-10-31' })] } }, NOW))).toEqual({
+      kind: 'fard',
+      index: 1,
+      reason: 'date must not be in the future',
+    });
+    expect(invalid(() => parseSyncRequest({ changes: { fard: [mark({ prayer: 'witr' })] } }, NOW))).toMatchObject({ kind: 'fard', index: 0 });
+    expect(invalid(() => parseSyncRequest({ changes: { fard: [mark({ status: 'late' })] } }, NOW))).toMatchObject({ kind: 'fard', index: 0 });
+    expect(invalid(() => parseSyncRequest({ changes: { fard: 'x' } }, NOW))).toMatchObject({ kind: 'fard', index: null });
+  });
+
+  it('fard marks count toward the 500-item limit', () => {
+    const fard = Array.from({ length: MAX_SYNC_ITEMS + 1 }, (_, i) => ({
+      date: '2026-10-01',
+      prayer: 'fajr',
+      status: 'onTime',
+      clientUpdatedAt: new Date(Date.parse(T0) + i).toISOString(),
+    }));
+    expect(() => parseSyncRequest({ changes: { fard } }, NOW)).toThrow(PayloadTooLargeException);
+  });
+
+  it('fardWins: the later write; at equal times a cleared mark, then the larger status', () => {
+    expect(fardWins(null, { status: 'onTime', clientUpdatedAt: T0 })).toBe(true);
+    expect(fardWins({ status: 'onTime', clientUpdatedAt: T0 }, { status: 'qada', clientUpdatedAt: '2026-10-28T09:00:00.000Z' })).toBe(false);
+    expect(fardWins({ status: 'onTime', clientUpdatedAt: T0 }, { status: null, clientUpdatedAt: T0 })).toBe(true);
+    expect(fardWins({ status: 'onTime', clientUpdatedAt: T0 }, { status: 'qada', clientUpdatedAt: T0 })).toBe(true);
+    expect(fardWins({ status: 'qada', clientUpdatedAt: T0 }, { status: 'qada', clientUpdatedAt: T0 })).toBe(false);
+  });
+
+  it('homeSectionsOf: canonical order from jsonb, null for bad data', () => {
+    expect(homeSectionsOf([{ visible: true, key: 'wird' }])).toEqual([{ key: 'wird', visible: true }]);
+    expect(homeSectionsOf(null)).toBeNull();
+    expect(homeSectionsOf([{ key: 'x', visible: true }])).toBeNull();
+    expect(homeSectionsOf({})).toBeNull();
   });
 });

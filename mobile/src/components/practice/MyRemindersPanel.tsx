@@ -10,12 +10,15 @@ import { useTranslation } from 'react-i18next';
 import { addMyReminder, MY_REMINDER_MAX_LENGTH, MY_REMINDERS_MAX, myReminderError, removeMyReminder } from '@thekra/practice-core';
 import { newPracticeId, usePracticeStore } from '@/lib/practice/practice-store';
 import { space, useStyles, type Theme } from '@/theme';
-import { Button, ErrorText, Field, Text, TextLink } from '@/ui';
+import { Button, ErrorText, Field, Text, TextLink, toast } from '@/ui';
 
 const makeStyles = (t: Theme) => ({
   row: { paddingVertical: space.sm, gap: space.xs, borderBottomWidth: 1, borderBottomColor: t.colors.border },
   stack: { gap: space.md },
-  list: { borderTopWidth: 1, borderTopColor: t.colors.border },
+  addRow: { flexDirection: 'row' as const, alignItems: 'flex-end' as const, gap: space.sm },
+  addField: { flex: 1 },
+  /** No top rule: the first row sits under its section title (A-05). */
+  list: {},
 });
 
 export function MyRemindersPanel() {
@@ -35,6 +38,7 @@ export function MyRemindersPanel() {
     setPrefs((p) => ({ ...p, myReminders: addMyReminder(p.myReminders, text, newPracticeId(), new Date().toISOString()) }));
     setText('');
     setError(null);
+    toast(t('myReminders.addedToast'));
   }
 
   return (
@@ -43,9 +47,19 @@ export function MyRemindersPanel() {
         <Text variant="small" tone="muted">
           {`${t('myReminders.lead')} ${t('myReminders.count', { n: list.length, max: MY_REMINDERS_MAX })}`}
         </Text>
-        <Field label={t('myReminders.newLabel')} value={text} maxLength={MY_REMINDER_MAX_LENGTH} onChangeText={setText} onSubmitEditing={add} />
+        {/* The field and its «أضف» on one line, the same height (A-07). */}
+        <View style={styles.addRow}>
+          <Field
+            label={t('myReminders.newLabel')}
+            value={text}
+            maxLength={MY_REMINDER_MAX_LENGTH}
+            onChangeText={setText}
+            onSubmitEditing={add}
+            containerStyle={styles.addField}
+          />
+          <Button label={t('myReminders.add')} onPress={add} disabled={list.length >= MY_REMINDERS_MAX} />
+        </View>
         {error ? <ErrorText>{error}</ErrorText> : null}
-        <Button label={t('myReminders.add')} onPress={add} disabled={list.length >= MY_REMINDERS_MAX} />
       </View>
       {list.length === 0 ? (
         <Text variant="body" tone="muted">

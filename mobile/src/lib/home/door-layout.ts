@@ -1,8 +1,8 @@
 /**
  * The home doors on every screen size (owner, 2026-11-01): small phones get tighter type and padding so a title
  * never wraps into a tall card; regular phones the site's phone sizes; tablets put the two main doors side by side
- * and cap the column so a card never stretches across a wide screen. The plant drawing has its own square at the
- * card's bottom inline-end corner (`art`), drawn whole inside it: never cut by the card's edge, never under the words.
+ * and cap the column so a card never stretches across a wide screen. The plant drawing sits in the card's
+ * bottom inline-end corner, sized from `art`, behind the words and cut by the card's edge as on the website (A-17).
  */
 
 export interface DoorLayout {

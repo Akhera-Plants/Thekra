@@ -22,7 +22,7 @@
 | `PushSubscription` | `id`, `userId`→User (cascade), `endpoint` (unique), `p256dh`, `auth`, `timeZone` (IANA), `locale` (`ar`/`en`), `prefs Json?`, timestamps | one per browser; max 10 per user (oldest dropped); `prefs` = this browser's «التنبيهات» switches (2026-11-01, migration `20261101090000_push_subscription_prefs`; null = defaults) |
 | `PushReminder` | `id`, `subscriptionId`→PushSubscription (cascade), `key`, `digest`, `fireAt`, `messageId` | `@@unique([subscriptionId, key])`; what is scheduled at QStash |
 
-`key` = `habit:<planId>:<date>:<time>`, `kinship:<date>`, `evening:<date>`, `friday:<date>`, `strategy:<date>` or `digest:<date>`; `digest` changes when the time, title, text or link
+`key` = `habit:<planId>:<date>:<time>`, `kinship:<date>`, `evening:<date>`, `friday:<date>`, `occasion:<date>` (round 5) or `digest:<date>` (`strategy:<date>` until round 5); `digest` changes when the time, title, text or link
 changes. A re-plan cancels rows that are gone or changed, publishes what is new and deletes rows already fired.
 
 ## 3. API
@@ -32,7 +32,7 @@ All `private, no-store`. Responses use the usual `{ data }` envelope.
 | Route | Auth | Body | Answer |
 | --- | --- | --- | --- |
 | `GET /v1/push/config` | none | — | `{ enabled, publicKey }` (`publicKey` = VAPID public key, base64url; `null` when off) |
-| `POST /v1/me/push/subscriptions` | JWT | `{ endpoint, keys: { p256dh, auth }, timeZone, locale, prefs? }` (the browser's `subscription.toJSON()` plus zone, language and the optional switches `{ habits, periodic, periodicTime, eveningNudge, eveningTime, fridayReview, fridayTime, strategies, strategyTime, anchorTimes? }`; an absent `prefs` keeps what is stored. `anchorTimes` (phase 6) =
+| `POST /v1/me/push/subscriptions` | JWT | `{ endpoint, keys: { p256dh, auth }, timeZone, locale, prefs? }` (the browser's `subscription.toJSON()` plus zone, language and the optional switches `{ habits, periodic, periodicTime, eveningNudge, eveningTime, fridayReview, fridayTime, reviewDay, occasions, occasionTime, anchorTimes? }` (round 5; `strategies` / `strategyTime` are still accepted from older builds and ignored); an absent `prefs` keeps what is stored. `anchorTimes` (phase 6) =
 `{ 'YYYY-MM-DD': { 'after-fajr': 'HH:MM', … every anchor } }` for at most 30 days, resolved by the browser from its own
 AlAdhan cache (practice-core `resolvedAnchorTimes`, 14 days sent): the server cannot call AlAdhan per user, so anchored
 habit slots use these times and fall back to the default anchor times on days without an entry) | `{ id, scheduled }`; 503 `PUSH_DISABLED` when off; 400 `PUSH_INVALID` for an unknown zone |
@@ -51,8 +51,10 @@ once «راسخة»; a periodic plan once per due day), people lists once per du
 `eveningTime`, only while a habit asked that day is not done), the Friday review reminder (on by default, `fridayTime`
 17:00), quiet hours 23:00–05:00 (except the night prayer `qiyam-last-third` and slots that are not the catalog's
 suggestions), at most 4 a day and the rest as one digest «عندك n أعمال اليوم». Texts: practice-core `NOTIFY_TEXTS`;
-`url` = `/<locale>/practice`, `tag` = `evening` / `friday` / `digest`. «ذكّرني بها» (phase 5, opt-in): one chosen strategy a
-week on Saturday at `strategyTime` (`strategies` = practice-core `STRATEGY_KEYS`), `tag` = `strategy`, `url` = `/<locale>/practice/strategies`. The private moment never reaches the server.
+`url` = `/<locale>/practice`, `tag` = `evening` / `friday` / `digest`. «ذكّرني بها» (phase 5) was removed in round 5
+(F-12 a): stored prefs that still hold strategies plan nothing. «مناسبة قريبة» (round 5, opt-in, `occasions` /
+`occasionTime`): the day before a non-weekly occasion of the catalog (deed-schedules.yaml) starts, `tag` = `occasion`,
+`url` = `/<locale>/good-deeds/<deed>`, outside the daily cap. The private moment never reaches the server.
 
 
 The service worker receives JSON `{ title, body, url, tag }` and shows it; a click focuses an open tab of the site or

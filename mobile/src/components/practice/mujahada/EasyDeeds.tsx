@@ -65,7 +65,7 @@ export function EasyDeeds() {
               <Button
                 label={t('mujahada.makeHabit')}
                 icon={Plus}
-                compact
+                size="sm"
                 variant="outline"
                 accessibilityLabel={`${t('mujahada.makeHabit')}: ${name}`}
                 onPress={() => router.push({ pathname: '/practice/add', params: { habit: habit.key } })}

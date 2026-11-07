@@ -70,7 +70,7 @@ export default function PeriodicScreen() {
       {relatives.length > 0 ? (
         <Section
           title={t('practice.periodic.people')}
-          action={<Button label={t('practice.periodic.manageKinship')} variant="outline" compact arrow onPress={() => router.push('/practice/kinship')} />}
+          action={<Button label={t('practice.periodic.manageKinship')} variant="outline" size="sm" arrow onPress={() => router.push('/practice/kinship')} />}
         >
           <PeriodicRows rows={relatives} />
         </Section>

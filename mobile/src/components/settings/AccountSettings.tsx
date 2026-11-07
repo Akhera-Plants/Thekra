@@ -18,7 +18,7 @@ import { nowTime } from '@/lib/practice/format';
 import { queryKeys } from '@/lib/query-keys';
 import { ApiError } from '@/lib/types/api';
 import { radius, space, useStyles, useTheme, type Theme } from '@/theme';
-import { Button, Field, ListRow, Notice, Rule, Text } from '@/ui';
+import { Button, Field, ListRow, Notice, Text, SectionDivider, ButtonPair } from '@/ui';
 import { SettingsGroup } from './SettingsSections';
 
 const makeStyles = (t: Theme) => ({
@@ -100,7 +100,7 @@ export function AccountSettings() {
 
       {user ? (
         <View style={styles.danger}>
-          <Rule />
+          <SectionDivider />
           <Text variant="eyebrow" tone="destructive" accessibilityRole="header">
             {t('settings.dangerZone')}
           </Text>
@@ -143,7 +143,7 @@ function AccountSection({ accountDeleted }: { accountDeleted: boolean }) {
       {accountDeleted && !user ? <Notice icon={CircleCheck}>{t('settings.deleted')}</Notice> : null}
       {user ? (
         <>
-          <ListRow icon={UserRound} title={user.email} hint={t('settings.signedIn')} />
+          <ListRow icon={UserRound} title={user.email} ltrTitle hint={t('settings.signedIn')} />
           <ListRow
             icon={RefreshCw}
             title={t('settings.syncNow')}
@@ -200,15 +200,10 @@ function DeleteAccountDialog({ visible, password, onPasswordChange, error, delet
             error={error}
           />
           <View style={styles.dialogActions}>
-            <Button
-              label={t('settings.deleteConfirm')}
-              variant="destructive"
-              block
-              loading={deleting}
-              disabled={!password}
-              onPress={onConfirm}
+            <ButtonPair
+              primary={{ label: t('settings.deleteConfirm'), variant: 'destructive', loading: deleting, disabled: !password, onPress: onConfirm }}
+              secondary={{ label: t('common.cancel'), onPress: onClose }}
             />
-            <Button label={t('common.cancel')} variant="ghost" block onPress={onClose} />
           </View>
         </View>
       </KeyboardAvoidingView>

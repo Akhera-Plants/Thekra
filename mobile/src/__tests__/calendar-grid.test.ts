@@ -19,6 +19,7 @@ import {
   weekDays,
   weekdayOrder,
   type DateNames,
+  weekRangeTitle,
 } from '../lib/practice/calendar-grid';
 
 const AR_WEEKDAYS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
@@ -74,6 +75,9 @@ describe('labels', () => {
   it('names the month and the day', () => {
     expect(monthTitle('2026-10-29', names)).toBe('أكتوبر 2026');
     expect(shortDayTitle('2026-10-29', names)).toBe('الخميس 29 أكتوبر');
+    // A-23: the weekly review's week as a range.
+    expect(weekRangeTitle('2026-10-28', names)).toBe('22–28 أكتوبر');
+    expect(weekRangeTitle('2026-10-03', names)).toBe('27 سبتمبر – 3 أكتوبر');
   });
 
   const hijri = isHijriSupported() ? it : it.skip;

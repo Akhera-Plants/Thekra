@@ -72,7 +72,7 @@ function StudyReadingRow({ row }: { row: ExplanationRow }) {
           icon={expanded ? ChevronUp : ChevronDown}
           label={expanded ? t('study.readLess') : t('study.readMore')}
           onPress={handleToggle}
-          compact
+          size="sm"
         />
       ) : null}
       {caption ? (

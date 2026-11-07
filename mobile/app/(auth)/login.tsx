@@ -88,7 +88,7 @@ export default function LoginScreen() {
             disabled={!canSubmit}
             loading={isLoading}
             block
-            large
+            size="lg"
           />
         </View>
         <View style={styles.switch}>

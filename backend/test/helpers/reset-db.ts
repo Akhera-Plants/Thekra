@@ -23,6 +23,7 @@ const TABLES = [
   'Circle',
   'PushReminder',
   'PushSubscription',
+  'FardMark',
   'HabitLog',
   'HabitPlan',
   'RelativeContact',

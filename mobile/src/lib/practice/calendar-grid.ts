@@ -136,6 +136,23 @@ export function shortDayTitle(date: LocalDate, names: DateNames): string {
   return `${names.weekday(weekday(date))} ${gregorian(date, names)}`;
 }
 
+/** «24 ديسمبر»: a date in words (owner round 5, F-30: never «24/12» in a sentence). */
+export function dayMonth(date: LocalDate, names: DateNames): string {
+  return gregorian(date, names);
+}
+
+/**
+ * The seven days closing on `end` as a range (owner round 5, A-23): «22–28 أكتوبر», or across two months
+ * «29 سبتمبر – 5 أكتوبر». The weekly review's «أسبوع …» line.
+ */
+export function weekRangeTitle(end: LocalDate, names: DateNames): string {
+  const start = addDays(end, -6);
+  if (start.slice(5, 7) === end.slice(5, 7)) {
+    return `${Number(start.slice(8, 10))}–${Number(end.slice(8, 10))} ${names.gregorianMonth(Number(end.slice(5, 7)))}`;
+  }
+  return `${gregorian(start, names)} – ${gregorian(end, names)}`;
+}
+
 /** «أكتوبر 2026». */
 export function monthTitle(date: LocalDate, names: DateNames): string {
   return `${names.gregorianMonth(Number(date.slice(5, 7)))} ${date.slice(0, 4)}`;

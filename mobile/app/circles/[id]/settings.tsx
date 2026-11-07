@@ -23,7 +23,7 @@ import { circleErrorKey, loggedOn } from '@/lib/circles/circle-view';
 import { today, usePracticeStore } from '@/lib/practice/practice-store';
 import { CIRCLE_TEXT_MAX, type CircleDetail, type CircleMember } from '@/lib/types/circles';
 import { space } from '@/theme';
-import { Button, ErrorState, ErrorText, Field, ListRow, PageHeader, Rule, Screen, Section, SwitchRow, Text } from '@/ui';
+import { Button, ErrorState, ErrorText, Field, ListRow, PageHeader, Screen, Section, SwitchRow, Text, SectionDivider } from '@/ui';
 
 const backToList = () => router.dismissTo('/circles');
 
@@ -171,7 +171,7 @@ function SettingsContent({ id }: { id: string }) {
       <PageHeader eyebrow={circle.data.name} title={t('circles.settingsTitle')} />
       <MyMembership circle={circle.data} />
       {circle.data.me.isOwner ? <OwnerMembers circle={circle.data} /> : null}
-      <Rule />
+      <SectionDivider />
       <LeaveAndDelete circle={circle.data} />
       <Text variant="caption" tone="muted">
         {t('circles.privacyNote')}

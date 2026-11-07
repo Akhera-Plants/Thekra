@@ -12,7 +12,14 @@ export interface Palette {
   mutedForeground: string;
   /** Pressed/hover surface (`--accent`). */
   accent: string;
+  /** Hairlines between items of one list and card edges: decorative, never the only sign of a control. */
   border: string;
+  /**
+   * Edges of interactive controls (text fields, the switch when off, chips, outline buttons): ≥3:1 on the page
+   * and on cards (WCAG 1.4.11, owner round 5 A-18). `border` stays for separators only.
+   */
+  controlBorder: string;
+  /** @deprecated The input edge is `controlBorder`; kept equal to it for older callers. */
   input: string;
   primary: string;
   primaryForeground: string;
@@ -55,10 +62,13 @@ export const light: Palette = {
   foreground: '#263d35',
   card: '#fffefd',
   muted: '#edf4ef',
-  mutedForeground: '#64746c',
+  /** 4.9:1 on `muted` (was #64746c, 4.4:1 on the segment track; A-18). */
+  mutedForeground: '#5d6c65',
   accent: '#f0f3ee',
   border: '#dce3db',
-  input: '#dce3db',
+  /** 3.4:1 on the page, 3.1:1 on `muted`. */
+  controlBorder: '#838d85',
+  input: '#838d85',
   primary: '#326c59',
   primaryForeground: '#ffffff',
   link: '#326c59',
@@ -94,7 +104,9 @@ export const dark: Palette = {
   mutedForeground: '#aaa9a4',
   accent: '#242524',
   border: '#333532',
-  input: '#333532',
+  /** 3.9:1 on the page, 3.4:1 on `muted`. */
+  controlBorder: '#70726e',
+  input: '#70726e',
   primary: '#326c59',
   primaryForeground: '#ffffff',
   link: '#8bc2aa',

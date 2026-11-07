@@ -22,6 +22,7 @@ const makeStyles = (t: Theme) => ({
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
   },
+  action: { alignSelf: 'center' as const },
   notice: {
     flexDirection: 'row' as const,
     gap: space.sm,
@@ -56,7 +57,8 @@ export function EmptyState({
           {hint}
         </Text>
       ) : null}
-      {actionLabel && onAction ? <Button label={actionLabel} onPress={onAction} variant="outline" arrow /> : null}
+      {/* Centred under the centred words (A-25): the kit button otherwise sits on the reading start. */}
+      {actionLabel && onAction ? <Button label={actionLabel} onPress={onAction} variant="outline" arrow style={styles.action} /> : null}
     </View>
   );
 }
@@ -77,7 +79,7 @@ export function ErrorState({ message, onRetry }: { message?: string; onRetry?: (
           {message}
         </Text>
       ) : null}
-      {onRetry ? <Button label={t('common.retry')} onPress={onRetry} variant="outline" /> : null}
+      {onRetry ? <Button label={t('common.retry')} onPress={onRetry} variant="outline" style={styles.action} /> : null}
     </View>
   );
 }

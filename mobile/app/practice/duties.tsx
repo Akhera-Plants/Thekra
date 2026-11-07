@@ -14,7 +14,7 @@ import { toWesternDigits } from '@/lib/practice/format';
 import { ROLE_KEYS, type RoleKey } from '@/lib/practice/prefs';
 import { today, usePracticeStore } from '@/lib/practice/practice-store';
 import { space, useStyles } from '@/theme';
-import { Chip, Field, Icon, Loading, NextStep, Notice, PageHeader, Rule, Screen, Section, Text, Wrap } from '@/ui';
+import { Chip, Field, Icon, Loading, NextStep, Notice, PageHeader, Screen, Section, Text, Wrap, SectionDivider } from '@/ui';
 
 const PRESETS = [60, 120, 180, 240, 300];
 const MAX_MINUTES = 24 * 60;
@@ -111,7 +111,7 @@ export default function DutiesScreen() {
         {saved === 'roles' ? <Saved label={t('practice.duties.saved')} /> : null}
       </Section>
 
-      <Rule />
+      <SectionDivider />
 
       <View style={styles.group}>
         <Text variant="heading" accessibilityRole="header">

@@ -101,7 +101,7 @@ export default function RegisterScreen() {
             disabled={!canSubmit}
             loading={isLoading}
             block
-            large
+            size="lg"
           />
           <TextLink
             label={t('settings.privacyPolicy')}

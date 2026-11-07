@@ -3,6 +3,8 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { PushService } from '../push/push.service.js';
 import {
+  fardWins,
+  homeSectionsOf,
   MAX_LIVE_PLANS,
   MAX_LIVE_RELATIVES,
   parseSyncRequest,
@@ -13,6 +15,7 @@ import {
   relativeVersion,
   settingsVersion,
   wins,
+  type FardWire,
   type PlanChange,
   type PlanWire,
   type PracticeChangesDto,
@@ -121,6 +124,7 @@ export class PracticeSyncService {
         await this.upsertLogs(tx, request);
         await this.upsertRelatives(tx, userId, relatives);
         await this.upsertContacts(tx, request);
+        await this.upsertFard(tx, userId, await this.resolveFard(tx, userId, request));
         await this.assertLimits(tx, userId, request);
         return readPracticeChanges(tx, userId, request.since, await this.serverTime(tx), {
           settings: request.settings !== null,
@@ -128,10 +132,12 @@ export class PracticeSyncService {
           logKeys: request.logs.map(({ planId, date }) => ({ planId, date })),
           relativeIds: request.relatives.map((change) => (change.kind === 'live' ? change.relative.id : change.id)),
           contactKeys: request.contacts.map(({ relativeId, date }) => ({ relativeId, date })),
+          fardKeys: request.fard.map(({ date, prayer }) => ({ date, prayer })),
         });
       },
       { maxWait: 5_000, timeout: 20_000 },
     );
+    // «الفرائض» marks never change a reminder, so they alone do not re-plan.
     const changed =
       request.settings !== null ||
       request.plans.length + request.logs.length + request.relatives.length + request.contacts.length > 0;
@@ -210,6 +216,8 @@ export class PracticeSyncService {
           reminderTimes: row.reminderTimes,
           freeMinutesPerDay: row.freeMinutesPerDay,
           excusedDays: row.excusedDays,
+          homeSections: homeSectionsOf(row.homeSections),
+          fardTracking: row.fardTracking,
           clientUpdatedAt: row.clientUpdatedAt.toISOString(),
         })
       : null;
@@ -220,14 +228,17 @@ export class PracticeSyncService {
   private async upsertSettings(tx: Tx, userId: string, settings: NonNullable<SyncRequest['settings']>): Promise<void> {
     await tx.$executeRaw`
       INSERT INTO "PracticeSettings" ("userId", "hijriOffset", "reminderTimes", "freeMinutesPerDay", "excusedDays",
-        "clientUpdatedAt", "updatedAt")
+        "homeSections", "fardTracking", "clientUpdatedAt", "updatedAt")
       VALUES (${userId}, ${settings.hijriOffset}, ${settings.reminderTimes}::text[], ${settings.freeMinutesPerDay}::int,
-              ${settings.excusedDays}::text[], ${settings.clientUpdatedAt}::timestamp(3), now() AT TIME ZONE 'UTC')
+              ${settings.excusedDays}::text[], ${json(settings.homeSections)}::jsonb, ${settings.fardTracking},
+              ${settings.clientUpdatedAt}::timestamp(3), now() AT TIME ZONE 'UTC')
       ON CONFLICT ("userId") DO UPDATE SET
         "hijriOffset" = EXCLUDED."hijriOffset",
         "reminderTimes" = EXCLUDED."reminderTimes",
         "freeMinutesPerDay" = EXCLUDED."freeMinutesPerDay",
         "excusedDays" = EXCLUDED."excusedDays",
+        "homeSections" = EXCLUDED."homeSections",
+        "fardTracking" = EXCLUDED."fardTracking",
         "clientUpdatedAt" = EXCLUDED."clientUpdatedAt",
         "updatedAt" = EXCLUDED."updatedAt"
       WHERE "PracticeSettings"."clientUpdatedAt" <= EXCLUDED."clientUpdatedAt"`;
@@ -322,6 +333,35 @@ export class PracticeSyncService {
       ) AS t(relative_id, date, deleted)
       ON CONFLICT ("relativeId", "date") DO UPDATE SET "deletedAt" = EXCLUDED."deletedAt", "updatedAt" = EXCLUDED."updatedAt"
       WHERE ("RelativeContact"."deletedAt" IS NULL) <> (EXCLUDED."deletedAt" IS NULL)`;
+  }
+
+  /** The incoming «الفرائض» marks that win over the stored copy (practice-core `compareFardMarks`). */
+  private async resolveFard(tx: Tx, userId: string, request: SyncRequest): Promise<FardWire[]> {
+    if (request.fard.length === 0) return [];
+    const rows = await tx.fardMark.findMany({
+      where: { userId, OR: request.fard.map((mark) => ({ date: new Date(mark.date), prayer: mark.prayer })) },
+    });
+    const stored = new Map(rows.map((row) => [`${row.date.toISOString().slice(0, 10)}|${row.prayer}`, row]));
+    return request.fard.filter((mark) => {
+      const row = stored.get(`${mark.date}|${mark.prayer}`);
+      const status = row && (row.status === 'onTime' || row.status === 'qada') ? row.status : null;
+      return fardWins(row ? { status, clientUpdatedAt: row.clientUpdatedAt.toISOString() } : null, mark);
+    });
+  }
+
+  /** Writes «الفرائض» marks that won (see resolveFard); never over a newer concurrent write. */
+  private async upsertFard(tx: Tx, userId: string, marks: FardWire[]): Promise<void> {
+    if (marks.length === 0) return;
+    await tx.$executeRaw`
+      INSERT INTO "FardMark" ("userId", "date", "prayer", "status", "clientUpdatedAt", "updatedAt")
+      SELECT ${userId}, t.date::date, t.prayer, t.status, t.client_updated_at::timestamp(3), now() AT TIME ZONE 'UTC'
+      FROM unnest(
+        ${marks.map((mark) => mark.date)}::text[], ${marks.map((mark) => mark.prayer)}::text[],
+        ${marks.map((mark) => mark.status)}::text[], ${marks.map((mark) => mark.clientUpdatedAt)}::text[]
+      ) AS t(date, prayer, status, client_updated_at)
+      ON CONFLICT ("userId", "date", "prayer") DO UPDATE SET
+        "status" = EXCLUDED."status", "clientUpdatedAt" = EXCLUDED."clientUpdatedAt", "updatedAt" = EXCLUDED."updatedAt"
+      WHERE "FardMark"."clientUpdatedAt" <= EXCLUDED."clientUpdatedAt"`;
   }
 
   private async assertLimits(tx: Tx, userId: string, request: SyncRequest): Promise<void> {

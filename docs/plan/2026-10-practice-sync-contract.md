@@ -68,6 +68,22 @@ there is at least one loop, each loop in the fixed order above, so older plans k
 a client that does not know loops omits them, and its newer edit of the plan clears them (as for `slotAnchors`);
 the clients ship the field together.
 
+**Round 5 (2026-11-07, migration `20261107120000_round5_home_sections_fard`, additive;
+[owner round 5](2026-11-07-owner-round-5.md) F-02 a, F-05 a):**
+
+| Change | Column / table | Rule |
+| --- | --- | --- |
+| «خصّص الرئيسية» | `PracticeSettings.homeSections Json?` | practice-core `HomeSectionPref[]` `[{ key, visible }]` in the member's order; keys from `HOME_SECTION_KEYS` (`wird, daily-text, week-branch, occasion, doors, moments, featured, sources`), 1–8 entries, unique (`validateHomeSections`). `null` = the defaults; a client never stores the defaults (it sends `null`). jsonb reorders object keys, so the server returns it in the canonical `{ key, visible }` order (`homeSectionsOf`) |
+| «الفرائض» switch | `PracticeSettings.fardTracking Boolean @default(false)` | opt-in |
+| «الفرائض» marks | `FardMark { userId→User (cascade), date @db.Date, prayer, status String?, clientUpdatedAt, updatedAt @updatedAt }`, `@@id([userId, date, prayer])`, `@@index([userId, updatedAt])` | `prayer` ∈ `fajr dhuhr asr maghrib isha`; `status` ∈ `onTime qada` or `null` (a cleared mark, kept so the clearing syncs); the date is never later than tomorrow (UTC) |
+
+Both settings fields are part of the settings record (last writer wins on the whole record). In the canonical content
+(`settingsContent`) `homeSections` comes after `excusedDays` and only when set, `fardTracking` last and only when
+`true`, so every older settings record keeps its content and acked versions stay valid. An older client omits both:
+its newer settings edit resets them to the defaults (as for `excusedDays`); the clients ship the fields together.
+«الفرائض» marks are not habits: they never count toward the habit limits, the streak or the push reminders (a sync
+that carries only marks does not re-plan pushes).
+
 ## 3. Sync API (all JWT, `private, no-store`, throttled like other user routes)
 
 ### `GET /v1/me/practice?since=<ISO>` → changes after `since` (everything when absent)
@@ -85,14 +101,18 @@ the clients ship the field together.
   "logs": [ { "planId": "…", "date": "2026-10-28", "amount": 1 }, { "planId": "…", "date": "2026-10-27", "amount": 0, "correctedAt": "<ISO>" } ],
   "relatives": [ { "id": "…", "name": "…", "relation": "…", "rule": {…}, "circle": "kin", "lastContactedOn": null,
                    "clientUpdatedAt": "…", "deletedAt": null } ],
-  "contacts": [ { "relativeId": "…", "date": "2026-10-20", "deleted": false } ]
+  "contacts": [ { "relativeId": "…", "date": "2026-10-20", "deleted": false } ],
+  "fard": [ { "date": "2026-10-28", "prayer": "fajr", "status": "onTime" | "qada" | null, "clientUpdatedAt": "…" } ]
 } }
 ```
+
+Round 5: `settings` also carries `"homeSections": [ { "key": "sources", "visible": true }, … ] | null` and
+`"fardTracking": false`.
 
 ### `POST /v1/me/practice/sync` → apply local changes, return everything changed since `since`
 
 Body: `{ "since": "<ISO>|null", "changes": { "settings"?: {…, "clientUpdatedAt"}, "plans": [...], "logs": [...],
-"relatives": [...], "contacts": [...] } }` with at most 500 items in total. Response: same shape as GET, computed
+"relatives": [...], "contacts": [...], "fard"?: [...] } }` with at most 500 items in total (fard marks count). Response: same shape as GET, computed
 after applying, with `since` = the request's `since`.
 
 Merge rules (server and practice-core apply the same ones):
@@ -102,6 +122,7 @@ Merge rules (server and practice-core apply the same ones):
 | plan, relative, settings | last writer wins by `clientUpdatedAt`; a tombstone (`deletedAt`) also carries `clientUpdatedAt` and wins only when newer |
 | log (plan, date) | the later `correctedAt` wins (absent/null counts as the oldest); at the same `correctedAt` the larger amount wins. So plain logging never goes down (same-day partial amounts add up on the device first), and an undo of «تمّ» or a fixed amount (practice-core `correctLog`, which sets `correctedAt`; `amount` may then be 0) is not undone by a device that still holds the old amount. Added 2026-10-29 (`HabitLog.correctedAt`); a client that never sends `correctedAt` keeps the old max rule |
 | contact (relative, date) | union; `deleted: true` sets a tombstone; a later non-deleted write clears it |
+| fard (date, prayer) | last writer wins by `clientUpdatedAt`; at equal times a cleared mark (`status: null`) wins, then the larger status (practice-core `compareFardMarks`). Round 5 |
 
 Phase-2 compatibility: a client that omits `pausedOn` / `resumedOn` / `establishedOn` sends null, `circle` → `kin`,
 `excusedDays` → `[]`. The canonical content (`planFields`, `relativeFields`, `settingsContent`) carries the new values
@@ -144,7 +165,7 @@ After a sync the web push planner follows practice-core: a paused plan reminds o
 an established plan in its first slot only (`reminderSlots`); a visited sick person is no longer due, an unvisited one
 repeats every 2 days.
 
-Export (`GET /v1/auth/me/export`) includes settings, plans, logs, relatives, contacts and the vault **ciphertext**
+Export (`GET /v1/auth/me/export`) includes settings, plans, logs, relatives, contacts, «الفرائض» marks and the vault **ciphertext**
 (still unreadable). `DELETE /v1/auth/me` cascades everything.
 
 ## 4. Client side (practice-core)
@@ -176,5 +197,6 @@ Sync runs on sign-in, on app focus, after a local edit (debounced 3 s) and every
 **Phase 4 (2026-11-01, «المقامات الستة»):** «نية اليوم», the evening and Friday reviews, «رسالة إلى نفسي» and
 «التزام شخصي» are practice-core `HeartData`, kept by each client on the device (web `thekra.practice.heart.v1`, app
 AsyncStorage `thekra.practice.heart.v1`) and never synced or sent. The sync contract is unchanged; only a step chosen in a
-Friday review edits a plan's amount (the usual `increase` / `decreaseTo`, synced like any plan edit). The notification
+Friday review edits a plan's amount (the usual `increase` / `decreaseTo`, synced like any plan edit). Round 5: the
+deed chosen in «صلّحها» after two missed days (`HeartData.makeUps`) is device-local too. The notification
 switches are device-local too; the web sends its own with the push subscription (docs/plan/2026-10-web-push.md).

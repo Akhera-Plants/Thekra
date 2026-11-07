@@ -178,8 +178,9 @@ export function useAgendaRows(items: readonly AgendaItem[], date: LocalDate, tod
         if (!plan) continue;
         const habit = habitFor(plan, habits ?? []);
         const amount = (n: number) => formatAmount(n, plan.unit, habit, locale, unitFallback);
-        // «لا تفوّتها مرتين»: missed yesterday, so the row asks for its minimum with one gentle line.
-        const missed = item.missedYesterday && item.minimum && item.done === 0;
+        // «لا تفوّتها مرتين»: missed yesterday, so the row asks for its minimum with one gentle line. The asked amount
+        // stays the same once «أقل ما يمكن» is logged (A-23: it no longer jumps to the full amount).
+        const missed = item.missedYesterday && item.minimum && (item.done === 0 || minimumMet(plan, date));
         const required = missed
           ? `${t('practice.hub.missedYesterday')} · ${t('practice.hub.required', { amount: amount(item.minimum as number) })}`
           : t('practice.hub.required', { amount: amount(item.required) });

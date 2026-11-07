@@ -17,7 +17,7 @@ import { usePracticeCatalog } from '@/lib/api/practice';
 import { pick } from '@/lib/practice/catalog-types';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { GUTTER, radius, space, useStyles, type Theme } from '@/theme';
-import { Button, ListRow, Notice, Text } from '@/ui';
+import { ListRow, Notice, Text, ButtonPair } from '@/ui';
 
 const RISE = 360;
 const RISE_MS = 240;
@@ -143,10 +143,17 @@ export function AddSheet({ visible, onClose, periodic }: AddSheetProps) {
                   />
                 ))}
               </ScrollView>
-              {!periodic ? <Button label={t('practice.limits.back')} onPress={() => setStep('menu')} variant="outline" block /> : null}
             </>
           )}
-          <Button label={t('common.cancel')} onPress={onClose} variant="ghost" block />
+          {/* One row: «رجوع» (inside the list step) beside «إلغاء», the same size (O-02). */}
+          <ButtonPair
+            primary={
+              step !== 'menu' && !periodic
+                ? { label: t('practice.limits.back'), onPress: () => setStep('menu'), variant: 'outline' }
+                : { label: t('common.cancel'), onPress: onClose, variant: 'outline' }
+            }
+            secondary={step !== 'menu' && !periodic ? { label: t('common.cancel'), onPress: onClose, variant: 'ghost' } : null}
+          />
         </Animated.View>
       </View>
     </Modal>

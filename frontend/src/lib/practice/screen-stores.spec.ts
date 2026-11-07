@@ -59,7 +59,7 @@ describe('screen stores', () => {
     expect(await refreshPrayerTimes()).toBe('unset');
     prayerSettingsStore.update(() => ({ city: 'Riyadh', country: 'SA', offsets: {} }) as never);
     const fetchImpl = vi.fn(async (url: string) => {
-      const m = /calendarByCity\/(\d+)\/(\d+)/.exec(url)!;
+      const m = /calendarByAddress\/(\d+)\/(\d+)/.exec(url)!;
       return new Response(JSON.stringify(month(Number(m[1]), Number(m[2]))));
     });
     expect(await refreshPrayerTimes(false, fetchImpl as never)).toBe('updated');
@@ -73,7 +73,7 @@ describe('screen stores', () => {
     install();
     prayerSettingsStore.update(() => ({ city: 'Riyadh', country: 'SA', offsets: { fajr: 5 } }) as never);
     const fetchImpl = vi.fn(async (url: string) => {
-      const m = /calendarByCity\/(\d+)\/(\d+)/.exec(url)!;
+      const m = /calendarByAddress\/(\d+)\/(\d+)/.exec(url)!;
       const body = month(Number(m[1]), Number(m[2]));
       for (const day of body.data) (day.timings as Record<string, string>).Sunrise = '06:02 (+03)';
       return new Response(JSON.stringify(body));

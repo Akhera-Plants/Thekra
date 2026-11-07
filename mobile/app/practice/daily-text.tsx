@@ -11,7 +11,7 @@ import { useReminderSets } from '@/lib/api/reminder-sets';
 import { usePracticeStore } from '@/lib/practice/practice-store';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { useAuthStore } from '@/lib/stores/auth-store';
-import { CheckRow, ListRow, PageHeader, Rule, Screen, Section, Text } from '@/ui';
+import { CheckRow, ListRow, PageHeader, Screen, Section, Text, SectionDivider, TextLink } from '@/ui';
 
 export default function DailyTextScreen() {
   const { t } = useTranslation();
@@ -35,7 +35,12 @@ export default function DailyTextScreen() {
           hint={mine === 0 ? t('dailyText.mineEmpty') : undefined}
           checked={is('mine')}
           onPress={() => choose({ kind: 'mine' })}
-        />
+        >
+          {/* An empty choice gets its way to fill it (A-25). */}
+          {mine === 0 ? (
+            <TextLink label={t('dailyText.writeFirst')} onPress={() => router.push({ pathname: '/favorites', params: { part: 'mine' } })} />
+          ) : null}
+        </CheckRow>
         <CheckRow
           radio
           title={t('dailyText.saved')}
@@ -44,7 +49,7 @@ export default function DailyTextScreen() {
           onPress={() => choose({ kind: 'saved' })}
         />
       </Section>
-      <Rule />
+      <SectionDivider />
       <Section title={t('dailyText.sets')}>
         {sets.isError ? (
           <Text variant="small" tone="muted">

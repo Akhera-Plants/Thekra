@@ -122,3 +122,24 @@ export function pledgeEvidence(action: string): readonly string[] {
   if (action === 'sadaqah') return SADAQAH_EVIDENCE;
   return pledgeDeedInfo(action)?.evidence ?? [];
 }
+
+/**
+ * «صلّحها» after two missed days (round 5, F-08 a): the offer's words, the same on both clients. The deeds are
+ * {@link PLEDGE_DEED_INFO} (their titles read as «what I will do today»), then sadaqah and a custom line.
+ */
+export const MAKE_UP_TEXTS = {
+  ar: {
+    title: 'أتبع السيئة الحسنة',
+    prompt: 'اختر عملًا واحدًا اليوم',
+    sadaqah: 'أتصدّق',
+    custom: 'عمل أختاره بنفسي',
+    done: 'فعلته',
+  },
+  en: {
+    title: 'Follow a misdeed with a good deed',
+    prompt: 'Choose one deed for today',
+    sadaqah: 'Give in charity',
+    custom: 'A deed of my own',
+    done: 'Done',
+  },
+} as const;

@@ -131,11 +131,15 @@ describe('prayer settings and AlAdhan', () => {
       offsets: { fajr: 60, dhuhr: 0, asr: 0, maghrib: 0, isha: -3 },
     });
     expect(parsePrayerSettings({ city: '', country: 'EG' })).toBeNull();
-    expect(parsePrayerSettings({ city: 'x', country: 'Egypt' })).toBeNull();
+    // Round 5: a city alone is enough; an invalid country is dropped (AlAdhan geocodes the city and picks the method).
+    expect(parsePrayerSettings({ city: 'x', country: 'Egypt' })).toEqual({ city: 'x', offsets: { fajr: 0, dhuhr: 0, asr: 0, maghrib: 0, isha: 0 } });
+    expect(parsePrayerSettings({ city: '  Amman  ', method: 23 })).toEqual({ city: 'Amman', method: 23, offsets: { fajr: 0, dhuhr: 0, asr: 0, maghrib: 0, isha: 0 } });
+    expect(parsePrayerSettings({ city: 'Amman', method: 999 })).toEqual({ city: 'Amman', offsets: { fajr: 0, dhuhr: 0, asr: 0, maghrib: 0, isha: 0 } });
   });
 
   it('builds the calendar URL and the months to fetch', () => {
-    expect(alAdhanCalendarUrl(SETTINGS, 2026, 11)).toBe('https://api.aladhan.com/v1/calendarByCity/2026/11?city=Riyadh&country=SA&method=4');
+    // Round 5: the address endpoint; an older setting keeps its country inside the address.
+    expect(alAdhanCalendarUrl(SETTINGS, 2026, 11)).toBe('https://api.aladhan.com/v1/calendarByAddress/2026/11?address=Riyadh%2C%20SA&method=4');
     expect(monthsToFetch('2026-10-20')).toEqual([
       { year: 2026, month: 10 },
       { year: 2026, month: 11 },

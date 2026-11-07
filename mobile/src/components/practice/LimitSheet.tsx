@@ -14,13 +14,14 @@ import { useTranslation } from 'react-i18next';
 import { deletePlan, limitBlock, pausePlan, updatePlan, type LimitKind, type Limits, type Plan } from '@thekra/practice-core';
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { pick } from '@/lib/practice/catalog-types';
-import { shortDate } from '@/lib/practice/format';
+import { dayMonth } from '@/lib/practice/calendar-grid';
+import { useDateNames } from '@/lib/practice/use-habits-hub';
 import { limitMessage } from '@/lib/practice/limit-message';
 import { today, usePracticeStore } from '@/lib/practice/practice-store';
 import { habitFor } from '@/lib/practice/reminders';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { GUTTER, radius, space, useStyles, type Theme } from '@/theme';
-import { Button, Chip, Text } from '@/ui';
+import { Button, ButtonPair, Chip, Text } from '@/ui';
 
 const makeStyles = (t: Theme) => ({
   root: { flex: 1, justifyContent: 'flex-end' as const },
@@ -55,6 +56,7 @@ export interface LimitSheetProps {
 
 export function LimitSheet({ kind, visible, limits, onClose, onFreed }: LimitSheetProps) {
   const { t } = useTranslation();
+  const names = useDateNames();
   const styles = useStyles(makeStyles);
   const insets = useSafeAreaInsets();
   const locale = useUiLocale();
@@ -65,7 +67,8 @@ export function LimitSheet({ kind, visible, limits, onClose, onFreed }: LimitShe
   const store = usePracticeStore((s) => s.store);
   const candidates = kind === 'sapling' ? limits.saplings : kind === 'periodic' ? limits.periodicPlans : [];
   const block = limitBlock(store, today(), kind, { isPeriodicAct: (plan) => habitFor(plan, habits)?.kind === 'periodic' });
-  const why = block ? limitMessage(block, shortDate) : null;
+  // The unlock date in words, «من 24 ديسمبر» (F-30), not «24/12».
+  const why = block ? limitMessage(block, (date) => dayMonth(date, names)) : null;
   const titleOf = (plan: Plan) => {
     const habit = habitFor(plan, habits);
     return habit ? pick(habit, 'title', locale) : plan.title;
@@ -105,12 +108,12 @@ export function LimitSheet({ kind, visible, limits, onClose, onFreed }: LimitShe
                   {t(why.key, why.params)}
                 </Text>
               ) : null}
-              <Button label={t('practice.limits.keepGoing')} onPress={close} block />
+              <Button label={t('practice.limits.keepGoing')} onPress={close} size="lg" />
               {candidates.length > 0 ? (
-                <View style={styles.pair}>
-                  <Button label={t(`practice.limits.${kind}.pause`)} variant="outline" compact style={styles.half} onPress={() => setStep('pause')} />
-                  <Button label={t(`practice.limits.${kind}.delete`)} variant="destructive" compact style={styles.half} onPress={() => setStep('delete')} />
-                </View>
+                <ButtonPair
+                  primary={{ label: t(`practice.limits.${kind}.pause`), onPress: () => setStep('pause'), variant: 'outline' }}
+                  secondary={{ label: t(`practice.limits.${kind}.delete`), onPress: () => setStep('delete'), variant: 'destructive' }}
+                />
               ) : null}
             </>
           ) : (
@@ -123,18 +126,16 @@ export function LimitSheet({ kind, visible, limits, onClose, onFreed }: LimitShe
                   <Chip key={plan.id} label={titleOf(plan)} selected={picked === plan.id} onPress={() => setPicked(plan.id)} />
                 ))}
               </View>
-              {step === 'pause' ? (
-                <Button
-                  label={t('practice.limits.pauseAction')}
-                  block
-                  onPress={() => picked && freed(picked, (p) => pausePlan(p, today()))}
-                />
-              ) : step === 'delete' ? (
-                <Button label={t('practice.limits.deleteAction')} variant="outline" block onPress={() => picked && setStep('confirm')} />
-              ) : (
-                <Button label={t('practice.limits.deleteConfirm')} variant="destructive" block onPress={() => picked && freed(picked, () => null)} />
-              )}
-              <Button label={t('practice.limits.back')} variant="ghost" block onPress={reset} />
+              <ButtonPair
+                primary={
+                  step === 'pause'
+                    ? { label: t('practice.limits.pauseAction'), onPress: () => picked && freed(picked, (p) => pausePlan(p, today())) }
+                    : step === 'delete'
+                      ? { label: t('practice.limits.deleteAction'), variant: 'outline', onPress: () => picked && setStep('confirm') }
+                      : { label: t('practice.limits.deleteConfirm'), variant: 'destructive', onPress: () => picked && freed(picked, () => null) }
+                }
+                secondary={{ label: t('practice.limits.back'), onPress: reset, variant: step === 'delete' ? 'ghost' : 'outline' }}
+              />
             </>
           )}
         </View>

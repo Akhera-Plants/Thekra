@@ -27,6 +27,7 @@ import {
 import { useBranch } from '@/lib/api/branches';
 import { useNamesOfAllah } from '@/lib/api/names';
 import { useEvidence, usePracticeCatalog } from '@/lib/api/practice';
+import { QuoteLine } from '@/components/QuoteLine';
 import { useAyah } from '@/lib/api/quran';
 import { usePracticeStore } from '@/lib/practice/practice-store';
 import { formatAmount, habitFor } from '@/lib/practice/reminders';
@@ -47,7 +48,8 @@ export const CHEER_MS = 2500;
 
 const makeStyles = (t: Theme) => ({
   section: { gap: space.md },
-  rows: { borderTopWidth: 1, borderTopColor: t.colors.border },
+  /** No top rule: the first row sits under its section title (A-05). */
+  rows: {},
   row: { gap: 2, paddingVertical: space.md, borderBottomWidth: 1, borderBottomColor: t.colors.border },
   card: { gap: space.sm, padding: space.lg, borderRadius: radius.card, borderWidth: 1, borderColor: t.colors.border, backgroundColor: t.colors.card },
   steps: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, alignItems: 'center' as const, gap: space.xs },
@@ -148,14 +150,7 @@ function GratitudeLine({ today }: { today: LocalDate }) {
   const { surah, ayah } = gratitudeAyah(today);
   const verse = useAyah(surah, ayah, locale);
   if (!verse.data) return null;
-  const id = verse.data.id;
-  return (
-    <Pressable onPress={() => router.push(`/quotes/${id}`)} accessibilityRole="link">
-      <Text variant="reading" tone="muted">
-        {verse.data.textAr}
-      </Text>
-    </Pressable>
-  );
+  return <QuoteLine quote={verse.data} />;
 }
 
 // ── Celebration ─────────────────────────────────────────────────────────────────────────────────────────────

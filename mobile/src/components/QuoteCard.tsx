@@ -22,6 +22,8 @@ import { Icon } from '@/ui/Icon';
 import { Text } from '@/ui/Text';
 import { Notice } from '@/ui/feedback';
 import { GradeBadge } from './GradeBadge';
+import { VerseAudioButton } from './VerseAudioButton';
+import { stripOuterQuotes } from '@/lib/quote-text';
 import { QuoteWhy } from './QuoteWhy';
 import { HadithGrade, QuoteType } from '@/lib/types/enums';
 import type { QuoteDto } from '@/lib/types/api';
@@ -121,7 +123,7 @@ export function QuoteCard({ quote, isFavorite = false, onToggleFavorite, shareab
     <>
       {/* Alignment follows the text itself (Arabic starts on the right in either app direction). */}
       <Text variant={isQuran ? 'quran' : 'reading'} textBreakStrategy="highQuality">
-        {quote.textAr}
+        {stripOuterQuotes(quote.textAr)}
       </Text>
       {translation ? <Text variant="body">{translation}</Text> : null}
     </>
@@ -229,6 +231,9 @@ export function QuoteCard({ quote, isFavorite = false, onToggleFavorite, shareab
         </View>
 
         <View style={styles.actions}>
+          {isQuran && quote.quran?.surahNumber && quote.quran.ayahNumber ? (
+            <VerseAudioButton surah={quote.quran.surahNumber} ayah={quote.quran.ayahNumber} />
+          ) : null}
           {shareable && (isQuran || isHadith) ? (
             <IconButton icon={Share2} label={t('share.action')} onPress={() => void handleShare()} />
           ) : null}

@@ -1,18 +1,17 @@
 /**
- * The plan screen's today card, after the website's PlanCard: «المطلوب اليوم», «أتممتها» (the wide primary) with «+1»
- * beside it, a typed partial
- * amount (whole numbers, practice-core `logDone`; partial amounts add up), «سُجِّل · تراجع», and «صحّح السجل» (a week back, steppers for the day and the amount; practice-core `correctLog` on save).
+ * The plan screen's today card, after the website's PlanCard: «المطلوب اليوم», «أتممتها» and «+1» as one ButtonPair,
+ * a typed partial amount (whole numbers, practice-core `logDone`; partial amounts add up), and «صحّح السجل» (a week back, steppers for the day and the amount; practice-core `correctLog` on save).
  */
 
 import React, { useState } from 'react';
 import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Check, ChevronLeft, ChevronRight, Minus, PencilLine, Plus, Undo2 } from 'lucide-react-native';
+import { Check, ChevronLeft, ChevronRight, Minus, PencilLine, Plus } from 'lucide-react-native';
 import { addDays, type Plan } from '@thekra/practice-core';
 import { parseLogAmount, shortDate } from '@/lib/practice/format';
 import { fixLogStep, type PlanView } from '@/lib/practice/plan-view';
 import { space, useStyles, useTheme, type Theme } from '@/theme';
-import { Button, Card, ErrorText, Field, Icon, IconButton, NextStep, Row, Text, Wrap } from '@/ui';
+import { Button, ButtonPair, Card, ErrorText, Field, Icon, IconButton, NextStep, Text } from '@/ui';
 
 /** «صحّح السجل» reaches this many days back (today included). */
 const FIX_DAYS = 7;
@@ -24,15 +23,12 @@ const makeStyles = (t: Theme) => ({
   footer: { borderTopWidth: 1, borderTopColor: t.colors.border, paddingTop: space.sm, marginTop: space.xs },
   stepper: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.md },
   stepperValue: { flex: 1 },
-  actions: { flexDirection: 'row' as const, gap: space.sm },
-  primary: { flex: 1 },
-  plusOne: { minWidth: 64 },
   partialBlock: { gap: 6 },
   partial: { flexDirection: 'row' as const, alignItems: 'stretch' as const, gap: space.sm },
   partialField: { flex: 1 },
-  partialInput: { height: 47, writingDirection: 'ltr' as const, textAlign: 'center' as const },
+  partialInput: { height: 44, writingDirection: 'ltr' as const, textAlign: 'center' as const },
   partialInvalid: { borderColor: t.colors.destructive },
-  partialButton: { minHeight: 47, minWidth: 80 },
+  partialButton: { minWidth: 80 },
 });
 
 export interface TodayPanelProps {
@@ -42,10 +38,8 @@ export interface TodayPanelProps {
   amountLabel: (n: number) => string;
   /** The word for one unit of the plan (the catalog's unit label), for the typed amount's label. */
   unitLabel: string;
-  logged: boolean;
   fixing: boolean;
   onLog: (amount: number) => void;
-  onUndo: () => void;
   onFixOpen: () => void;
   onFixSave: (date: string, amount: number) => void;
   onFixCancel: () => void;
@@ -58,10 +52,8 @@ export function TodayPanel({
   today: d,
   amountLabel,
   unitLabel,
-  logged,
   fixing,
   onLog,
-  onUndo,
   onFixOpen,
   onFixSave,
   onFixCancel,
@@ -95,31 +87,23 @@ export function TodayPanel({
 
       {partial ? <NextStep title={t('practice.plan.fixItTitle')}>{t('practice.plan.fixItBody')}</NextStep> : null}
 
-      {/* The day's one primary action, wide; «+1» beside it as the quick secondary. */}
-      <View style={styles.actions}>
-        {!view.doneToday ? (
-          <Button label={t('practice.logRest')} icon={Check} onPress={() => onLog(view.remaining)} large style={styles.primary} />
-        ) : null}
-        <Button label={t('practice.logPlusOne')} onPress={() => onLog(1)} variant="outline" large style={styles.plusOne} />
-      </View>
+      {/* The day's one primary action and «+1» as one pair: side by side, the same size (O-02). «سُجّلت · تراجع» is a toast. */}
+      <ButtonPair
+        size="lg"
+        primary={
+          view.doneToday
+            ? { label: t('practice.logPlusOne'), onPress: () => onLog(1), variant: 'outline' }
+            : { label: t('practice.logRest'), icon: Check, onPress: () => onLog(view.remaining) }
+        }
+        secondary={view.doneToday ? null : { label: t('practice.logPlusOne'), onPress: () => onLog(1) }}
+      />
       <PartialAmount unitLabel={unitLabel} onLog={onLog} />
-
-      <View accessibilityLiveRegion="polite">
-        {logged ? (
-          <Row>
-            <Text variant="small" tone="muted">
-              {t('practice.plan.logged')}
-            </Text>
-            <Button label={t('practice.plan.undo')} icon={Undo2} onPress={onUndo} variant="ghost" />
-          </Row>
-        ) : null}
-      </View>
 
       {fixing ? (
         <FixPanel plan={plan} today={d} amountLabel={amountLabel} onSave={onFixSave} onCancel={onFixCancel} />
       ) : (
         <View style={styles.footer}>
-          <Button label={t('practice.plan.fixOpen')} icon={PencilLine} onPress={onFixOpen} variant="ghost" />
+          <Button label={t('practice.plan.fixOpen')} icon={PencilLine} onPress={onFixOpen} variant="ghost" size="sm" />
         </View>
       )}
     </Card>
@@ -216,10 +200,10 @@ function FixPanel({ plan, today: d, amountLabel, onSave, onCancel }: FixPanelPro
         </Text>
         <IconButton icon={Plus} label={t('practice.plan.fixMore')} onPress={() => setAmount(fixLogStep(amount, plan.unit, 1, FIX_MAX))} disabled={amount >= FIX_MAX} tone="link" bordered />
       </View>
-      <Wrap>
-        <Button label={t('practice.plan.save')} onPress={() => onSave(date, amount)} />
-        <Button label={t('common.cancel')} onPress={onCancel} variant="ghost" />
-      </Wrap>
+      <ButtonPair
+        primary={{ label: t('practice.plan.save'), onPress: () => onSave(date, amount) }}
+        secondary={{ label: t('common.cancel'), onPress: onCancel }}
+      />
     </Card>
   );
 }

@@ -1,7 +1,16 @@
 /**
  * Prayer-time anchors (redesign §4.6): a habit slot may be «بعد الفجر» instead of a fixed `HH:MM`. Each client fetches
- * the prayer times of the user's chosen city from AlAdhan (`https://api.aladhan.com/v1/calendarByCity/{y}/{m}`, the
- * month view of `timingsByCity`), keeps {@link PRAYER_CACHE_DAYS} days locally and resolves the anchors here. Offline
+ * the prayer times of the user's city from AlAdhan (`https://api.aladhan.com/v1/calendarByAddress/{y}/{m}`, the month
+ * view of `timingsByAddress`), keeps {@link PRAYER_CACHE_DAYS} days locally and resolves the anchors here.
+ *
+ * Round 5 (F-27 note): the user types only a city. AlAdhan geocodes the address and, when no method is given, picks the
+ * nearest calculation authority itself; {@link parseAlAdhanMeta} reads back where it found the city and which method it
+ * used, so the client can confirm the place and keep the method. No country code is asked any more (A-32 superseded);
+ * an older setting that has one keeps it in the address («Amman, JO»), so its place does not change.
+ *
+ * The clients call AlAdhan directly (no backend proxy): the web CSP already allows `https://api.aladhan.com`, each
+ * device makes about one request a month (30-day cache), so AlAdhan's per-IP rate limit is never shared by all users
+ * behind one server address, and the server never learns a member's city. Offline
  * or before a city is set, every anchor falls back to {@link DEFAULT_ANCHOR_TIMES}; a plan keeps a fixed fallback time
  * in `slots` for each anchored slot, so older clients (and the calendar file) still have a time.
  *
@@ -138,10 +147,16 @@ export function defaultMethodForCountry(country: string): number {
 export interface PrayerSettings {
   /** City name as the user typed it (AlAdhan geocodes it). */
   city: string;
-  /** ISO 3166 alpha-2 code, e.g. `SA`. */
-  country: string;
-  /** AlAdhan method id. */
-  method: number;
+  /**
+   * ISO 3166 alpha-2 code, e.g. `SA`. Settings made before round 5 have one; new ones do not (the city alone is the
+   * address). Absent: AlAdhan geocodes the city by itself.
+   */
+  country?: string;
+  /**
+   * AlAdhan method id. Absent: AlAdhan picks the nearest authority for the address (read it back with
+   * {@link parseAlAdhanMeta} and store it, so the times stay stable and the user sees the method).
+   */
+  method?: number;
   /** Manual minutes added to each prayer time (−{@link MAX_PRAYER_OFFSET}…+{@link MAX_PRAYER_OFFSET}). */
   offsets: Record<Prayer, number>;
 }
@@ -152,37 +167,104 @@ export function emptyOffsets(): Record<Prayer, number> {
   return { fajr: 0, dhuhr: 0, asr: 0, maghrib: 0, isha: 0 };
 }
 
-/** Never throws: returns `null` when there is no usable city/country (the anchors use their default times). */
+/** A city as typed: single spaces, at most {@link MAX_CITY_LENGTH} characters; '' when unusable. */
+export function cleanCity(raw: unknown): string {
+  return typeof raw === 'string' ? raw.replace(/\s+/g, ' ').trim().slice(0, MAX_CITY_LENGTH).trim() : '';
+}
+
+/**
+ * Never throws: returns `null` when there is no usable city (the anchors use their default times). A country is kept
+ * only when it is a valid alpha-2 code (older settings); a method only when it is one of {@link ALADHAN_METHODS}, else
+ * the country's default when there is a country, else none (AlAdhan picks).
+ */
 export function parsePrayerSettings(raw: unknown): PrayerSettings | null {
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return null;
   const r = raw as Record<string, unknown>;
-  const city = typeof r.city === 'string' ? r.city.trim().slice(0, MAX_CITY_LENGTH) : '';
-  const country = typeof r.country === 'string' ? r.country.trim().toUpperCase() : '';
-  if (city.length === 0 || !/^[A-Z]{2}$/.test(country)) return null;
+  const city = cleanCity(r.city);
+  if (city.length === 0) return null;
+  const countryRaw = typeof r.country === 'string' ? r.country.trim().toUpperCase() : '';
+  const country = /^[A-Z]{2}$/.test(countryRaw) ? countryRaw : undefined;
   const method =
-    typeof r.method === 'number' && ALADHAN_METHODS.some((m) => m.id === r.method) ? r.method : defaultMethodForCountry(country);
+    typeof r.method === 'number' && ALADHAN_METHODS.some((m) => m.id === r.method)
+      ? r.method
+      : country !== undefined
+        ? defaultMethodForCountry(country)
+        : undefined;
   const offsets = emptyOffsets();
   const rawOffsets = typeof r.offsets === 'object' && r.offsets !== null ? (r.offsets as Record<string, unknown>) : {};
   for (const p of PRAYERS) {
     const v = rawOffsets[p];
     if (typeof v === 'number' && Number.isFinite(v)) offsets[p] = Math.max(-MAX_PRAYER_OFFSET, Math.min(MAX_PRAYER_OFFSET, Math.round(v)));
   }
-  return { city, country, method, offsets };
+  return { city, ...(country !== undefined ? { country } : {}), ...(method !== undefined ? { method } : {}), offsets };
 }
 
-/** The identity of the location+method a cache was fetched for (offsets apply later, they never refetch). */
+/**
+ * The identity of the location+method a cache was fetched for (offsets apply later, they never refetch). Settings with
+ * a country and a method keep the key they had before round 5.
+ */
 export function prayerCacheKey(s: Pick<PrayerSettings, 'city' | 'country' | 'method'>): string {
-  return `${s.city.toLowerCase()}|${s.country}|${s.method}`;
+  return `${s.city.toLowerCase()}|${s.country ?? ''}|${s.method ?? 'auto'}`;
 }
 
 // ── AlAdhan ─────────────────────────────────────────────────────────────────────────────────────────────────────
 
 export const ALADHAN_ORIGIN = 'https://api.aladhan.com';
 
-/** The month calendar URL (one request per month; `timingsByCity` for one day has the same parameters). */
+/** The address AlAdhan geocodes: the city, plus the country of an older setting («Amman, JO»). */
+export function alAdhanAddress(s: Pick<PrayerSettings, 'city' | 'country'>): string {
+  const city = cleanCity(s.city);
+  return s.country ? `${city}, ${s.country}` : city;
+}
+
+function alAdhanQuery(s: Pick<PrayerSettings, 'city' | 'country' | 'method'>): string {
+  const method = s.method !== undefined && ALADHAN_METHODS.some((m) => m.id === s.method) ? `&method=${s.method}` : '';
+  return `address=${encodeURIComponent(alAdhanAddress(s))}${method}`;
+}
+
+/** The month calendar URL (`calendarByAddress`, one request per month). */
 export function alAdhanCalendarUrl(s: Pick<PrayerSettings, 'city' | 'country' | 'method'>, year: number, month: number): string {
-  const q = `city=${encodeURIComponent(s.city)}&country=${encodeURIComponent(s.country)}&method=${s.method}`;
-  return `${ALADHAN_ORIGIN}/v1/calendarByCity/${year}/${month}?${q}`;
+  return `${ALADHAN_ORIGIN}/v1/calendarByAddress/${year}/${month}?${alAdhanQuery(s)}`;
+}
+
+/**
+ * One day's timings for a typed city (`timingsByAddress/DD-MM-YYYY`): the «ابحث» step of «أوقات الصلاة». Its response
+ * says where AlAdhan found the city and which method it chose ({@link parseAlAdhanMeta}).
+ */
+export function alAdhanTimingsUrl(s: Pick<PrayerSettings, 'city' | 'country' | 'method'>, date: LocalDate): string {
+  if (!isValidDate(date)) throw new RangeError('Invalid date');
+  const ddmmyyyy = `${date.slice(8, 10)}-${date.slice(5, 7)}-${date.slice(0, 4)}`;
+  return `${ALADHAN_ORIGIN}/v1/timingsByAddress/${ddmmyyyy}?${alAdhanQuery(s)}`;
+}
+
+/** What AlAdhan tells about the place it geocoded. */
+export interface AlAdhanMeta {
+  /** IANA zone of the place, e.g. `Asia/Amman`. */
+  timezone: string;
+  latitude: number;
+  longitude: number;
+  /** The method used, when it is one of {@link ALADHAN_METHODS}. */
+  method: number | null;
+}
+
+/**
+ * The `meta` of a `timingsByAddress` / `calendarByAddress` response (the first day's), or null: a failed lookup
+ * (AlAdhan answers `code` ≠ 200, e.g. «Unable to geocode address»), or a malformed body. Never throws.
+ */
+export function parseAlAdhanMeta(json: unknown): AlAdhanMeta | null {
+  if (typeof json !== 'object' || json === null) return null;
+  const body = json as { code?: unknown; data?: unknown };
+  if (body.code !== undefined && body.code !== 200) return null;
+  const day = Array.isArray(body.data) ? body.data[0] : body.data;
+  if (typeof day !== 'object' || day === null) return null;
+  const meta = (day as { meta?: unknown }).meta;
+  if (typeof meta !== 'object' || meta === null) return null;
+  const m = meta as { timezone?: unknown; latitude?: unknown; longitude?: unknown; method?: { id?: unknown } };
+  if (typeof m.timezone !== 'string' || typeof m.latitude !== 'number' || typeof m.longitude !== 'number') return null;
+  if (!Number.isFinite(m.latitude) || !Number.isFinite(m.longitude)) return null;
+  const id = m.method?.id;
+  const method = typeof id === 'number' && ALADHAN_METHODS.some((x) => x.id === id) ? id : null;
+  return { timezone: m.timezone, latitude: m.latitude, longitude: m.longitude, method };
 }
 
 /** The months (year, month) that cover `today` and the next {@link PRAYER_CACHE_DAYS} − 1 days. */
@@ -217,8 +299,8 @@ function cleanDate(v: unknown): LocalDate | null {
 }
 
 /**
- * Reads an AlAdhan `calendarByCity` (array of days) or `timingsByCity` (one day) response. Days with a missing or
- * malformed time are skipped. Never throws.
+ * Reads an AlAdhan calendar (`calendarByAddress` / `calendarByCity`, an array of days) or timings (`timingsByAddress` /
+ * `timingsByCity`, one day) response. Days with a missing or malformed time are skipped. Never throws.
  */
 export function parseAlAdhan(json: unknown): Record<LocalDate, PrayerTimes> {
   const out: Record<LocalDate, PrayerTimes> = {};
@@ -335,6 +417,50 @@ export function parseResolvedAnchorTimes(raw: unknown): Record<LocalDate, Record
     if (PRAYER_ANCHORS.every((a) => isValidTime(r[a]))) out[d] = Object.fromEntries(PRAYER_ANCHORS.map((a) => [a, r[a]])) as Record<PrayerAnchor, LocalTime>;
   }
   return out;
+}
+
+// ── The next prayer («العصر بعد 1:12», F-27 a) ─────────────────────────────────────────────────────────────────────
+
+/** Prayer names shared by both clients. */
+export const PRAYER_LABELS: Record<'ar' | 'en', Record<Prayer, string>> = {
+  ar: { fajr: 'الفجر', dhuhr: 'الظهر', asr: 'العصر', maghrib: 'المغرب', isha: 'العشاء' },
+  en: { fajr: 'Fajr', dhuhr: 'Dhuhr', asr: 'Asr', maghrib: 'Maghrib', isha: 'Isha' },
+};
+
+export interface NextPrayer {
+  prayer: Prayer;
+  time: LocalTime;
+  /** Whole minutes from `now` (1 or more). */
+  inMinutes: number;
+  /** The next prayer is tomorrow's Fajr. */
+  tomorrow: boolean;
+}
+
+/**
+ * The first prayer strictly after `now` on a day with these times. After Isha it is tomorrow's Fajr: from `tomorrow`
+ * when known, else today's Fajr time. A prayer at exactly `now` has started, so the next one is shown.
+ */
+export function nextPrayer(times: PrayerTimes, now: LocalTime, tomorrow?: PrayerTimes): NextPrayer {
+  if (!isPrayerTimes(times) || !isValidTime(now)) throw new RangeError('Invalid prayer times or time');
+  const at = timeToMinutes(now);
+  for (const p of PRAYERS) {
+    const m = timeToMinutes(times[p]);
+    if (m > at) return { prayer: p, time: times[p], inMinutes: m - at, tomorrow: false };
+  }
+  const fajr = tomorrow && isPrayerTimes(tomorrow) ? tomorrow.fajr : times.fajr;
+  return { prayer: 'fajr', time: fajr, inMinutes: timeToMinutes(fajr) + 1440 - at, tomorrow: true };
+}
+
+/** Minutes as `H:MM` (Western digits): 72 → `1:12`, 5 → `0:05`. */
+export function formatPrayerCountdown(minutes: number): string {
+  const m = Math.max(0, Math.round(minutes));
+  return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`;
+}
+
+/** «العصر بعد 1:12» / «Asr in 1:12». */
+export function nextPrayerLine(next: Pick<NextPrayer, 'prayer' | 'inMinutes'>, lang: 'ar' | 'en'): string {
+  const name = PRAYER_LABELS[lang][next.prayer];
+  return lang === 'ar' ? `${name} بعد ${formatPrayerCountdown(next.inMinutes)}` : `${name} in ${formatPrayerCountdown(next.inMinutes)}`;
 }
 
 /** «بعد الفجر» … for the clients' anchor pickers. */

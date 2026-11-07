@@ -56,8 +56,15 @@ export class PushPrefsDto {
   @IsOptional() @IsString() @Matches(HH_MM) fridayTime?: string;
   /** The weekly review's day, 0 = Sunday … 6 = Saturday (Friday by default). */
   @IsOptional() @IsInt() @Min(0) @Max(6) reviewDay?: number;
-  /** «ذكّرني بها»: chosen strategy keys (practice-core `STRATEGY_KEYS`); one reminder a week at most. */
+  /** «مناسبة قريبة» (round 5): the day before a non-weekly occasion, at `occasionTime`. Off by default. */
+  @IsOptional() @IsBoolean() occasions?: boolean;
+  @IsOptional() @IsString() @Matches(HH_MM) occasionTime?: string;
+  /**
+   * @deprecated Round 5 removed the weekly strategy reminder. Still accepted (older web builds send it, and the
+   * global pipe refuses unknown fields), never stored or planned.
+   */
   @IsOptional() @IsArray() @ArrayMaxSize(STRATEGY_KEYS.length) @IsIn(STRATEGY_KEYS, { each: true }) strategies?: string[];
+  /** @deprecated See {@link PushPrefsDto.strategies}. */
   @IsOptional() @IsString() @Matches(HH_MM) strategyTime?: string;
   /** Phase 6: anchored habit slots («بعد الفجر»…) resolve from these per day; days without an entry use the defaults. */
   @IsOptional() @IsAnchorTimes() anchorTimes?: Record<string, Record<string, string>>;

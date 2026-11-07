@@ -19,7 +19,8 @@ import { HabitRow, OccasionRow, ProgramRow, RelativeRow, type UndoKind } from '.
 
 const makeStyles = (t: Theme) => ({
   root: { gap: space.md },
-  list: { borderTopWidth: 1, borderTopColor: t.colors.border },
+  /** No top rule: the first row sits under its section title (A-05). */
+  list: {},
   empty: { gap: space.xs, alignItems: 'flex-start' as const },
   toggle: {
     flexDirection: 'row' as const,

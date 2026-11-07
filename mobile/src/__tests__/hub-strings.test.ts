@@ -66,9 +66,9 @@ describe('practice strings', () => {
     expect(ar('record.longest', { count: 1 })).toBe('أطول مداومة: يوم واحد');
     expect(ar('record.longest', { count: 14 })).toBe('أطول مداومة: 14 يومًا');
     expect(ar('record.periodicCount', { count: 3 })).toBe('3 أعمال');
-    // Owner round 3, item 5: a kinder label than «ليست مطلوبة اليوم».
-    expect(ar('practice.wird.notDueToday', { count: 1 })).toBe('اليوم استراحة من هذه العادة');
-    expect(ar('practice.wird.notDueToday', { count: 3 })).toBe('اليوم استراحة من هذه العادات (3)');
+    // Owner round 5, A-23: «ليست مطلوبة اليوم» (round 3's «اليوم استراحة…» read as a day off the deed).
+    expect(ar('practice.wird.notDueToday', { count: 1 })).toBe('ليست مطلوبة اليوم');
+    expect(ar('practice.wird.notDueToday', { count: 3 })).toBe('ليست مطلوبة اليوم (3)');
     const en = i18n.getFixedT('en');
     expect(en('practice.wird.streakLabel', { count: 1 })).toBe('1-day streak');
     expect(en('record.longest', { count: 7 })).toBe('Longest streak: 7 days');

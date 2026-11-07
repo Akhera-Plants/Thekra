@@ -18,18 +18,19 @@
  * «اليوم» (the day's limit, the no-reset counters, the check-in, after a slip the gentle after-fall content and
  * «خربانة؟ صلّحها»), «المراحل» (the stage track, this week's task, practical steps, good habits in its place, help),
  * «حلقة المعصية» (the member's own loops, item 17: المثير/الموقف، الشعور، الرغبة، الفعل، ما يحصل بعده، البديل) and
- * «دفتري» («متى تضعف؟», the private notebook, «ما ورد فيها»). «لحظة مجاهدة» is the first action on the page.
- * «أنهِ هذا البرنامج» (confirmed) removes its check-ins, notes and loops.
+ * «دفتري» («متى تضعف؟», the private notebook, a link to all the texts). «لحظة مجاهدة» is the first action on the page.
+ * The texts («آيات وأحاديث تعينك على ترك هذه المعصية», O-05) sit in «المراحل» under the stage (A-03).
+ * «أنهِ هذا البرنامج» lives in the header's «⋯» menu (A-15), confirmed there; it removes check-ins, notes and loops.
  */
 
 import { NotificationsLink } from '@/components/settings/NotificationsLink';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, KeyboardAvoidingView, ScrollView, View } from 'react-native';
+import { KeyboardAvoidingView, ScrollView, View } from 'react-native';
 import { LimitSheet } from '@/components/practice/LimitSheet';
 import { useLimits } from '@/lib/practice/use-habits-hub';
-import { router } from 'expo-router';
+import { Stack, router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { BookOpen, Check, Plus, ShieldCheck, Waves } from 'lucide-react-native';
+import { BookOpen, Check, Plus, ShieldCheck, Trash2, Waves } from 'lucide-react-native';
 import {
   activePrograms,
   addSinLoop,
@@ -84,7 +85,9 @@ import { FixItSheet, useLimitLabel } from '@/components/practice/sin/FixItSheet'
 import { TriggerChips } from '@/components/practice/sin/TriggerChips';
 import { radius, space, useStyles, type Theme } from '@/theme';
 import {
+  ActionMenu,
   Button,
+  ButtonPair,
   CheckRow,
   ErrorState,
   Field,
@@ -93,14 +96,15 @@ import {
   NextStep,
   Notice,
   PageHeader,
-  Rule,
   Screen,
   Section,
+  SectionDivider,
   type SegmentItem,
   SegmentTabs,
   Skeleton,
   Text,
   TextLink,
+  toast,
 } from '@/ui';
 
 const CHECK_IN_KEYS: Record<CheckInValue, string> = {
@@ -136,7 +140,8 @@ const makeStyles = (t: Theme) => ({
   bulletRow: { flexDirection: 'row' as const, alignItems: 'flex-start' as const, gap: space.md },
   bullet: { width: 5, height: 5, borderRadius: radius.full, backgroundColor: t.colors.mutedForeground, marginTop: 12 },
   bulletText: { flex: 1 },
-  altList: { borderTopWidth: 1, borderTopColor: t.colors.border },
+  /** No top rule: the list sits right under its title (A-05: no double lines). */
+  altList: {},
   altRow: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
@@ -148,7 +153,6 @@ const makeStyles = (t: Theme) => ({
   },
   added: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 6 },
   noteRow: { gap: space.xs, paddingVertical: space.md, borderBottomWidth: 1, borderBottomColor: t.colors.border },
-  end: { gap: space.md, paddingTop: space.lg, borderTopWidth: 1, borderTopColor: t.colors.border },
 });
 
 /** The vault opened on the device and the app-switcher cover come first (SinProgramGuard). */
@@ -184,6 +188,7 @@ function SinProgramContent() {
   const [focus, setFocus] = useState<string | null>(null);
   // Up to 3 programs, each running one at least two months old before another starts (practice-core `limits`).
   const planLimits = useLimits();
+  const setStore = usePracticeStore((s) => s.setStore);
 
   if (!hydrated || catalog.isLoading || sins.isLoading) return <ProgramSkeleton />;
   if (catalog.isError || !catalog.data) {
@@ -219,14 +224,41 @@ function SinProgramContent() {
     setFocus(slug);
   }
 
-  function handleEnded() {
+  function endProgram(slug: string) {
+    setStore((s) => ({ ...s, programs: withProgramEnded(s.programs, slug, keepMarker) }));
     setChoosing(null);
     setEnded(true);
+    toast(t('sinProgram.end.toast'));
   }
 
   return (
     <KeyboardAvoidingView style={styles.flex} behavior="padding">
       <Screen edges={['bottom']}>
+        {/* Page actions behind «⋯» (A-15): ending a program is red and confirmed there, never a button on the page. */}
+        <Stack.Screen
+          options={{
+            headerRight:
+              programs.length > 0 && !showChooser && current
+                ? () => (
+                    <ActionMenu
+                      items={[
+                        {
+                          label: t('sinProgram.end.button'),
+                          icon: Trash2,
+                          destructive: true,
+                          onPress: () => endProgram(current.sinSlug),
+                          confirm: {
+                            title: t('sinProgram.end.confirmTitle'),
+                            message: t('sinProgram.end.confirmBody'),
+                            confirmLabel: t('sinProgram.end.confirm'),
+                          },
+                        },
+                      ]}
+                    />
+                  )
+                : () => null,
+          }}
+        />
         <PageHeader title={t('sinProgram.title')} lead={t('sinProgram.lead')} />
         <Notice icon={ShieldCheck}>{t('sinProgram.privacy')}</Notice>
         {ended ? <Notice icon={Check}>{t('sinProgram.end.done')}</Notice> : null}
@@ -245,14 +277,16 @@ function SinProgramContent() {
         ) : null}
         {programs.length > 0 && !showChooser && current ? (
           <>
+            {/* The first action of the page, outlined: the check-in's «سجّل» is the area's one solid (A-08). */}
             <Button
               label={t('sinProgram.moment.open')}
               icon={Waves}
+              variant="outline"
+              size="lg"
               onPress={() => {
                 setMomentSource(current.sinSlug);
                 router.push('/practice/moment');
               }}
-              block
             />
             {programs.length > 1 ? (
               <SegmentTabs
@@ -272,12 +306,11 @@ function SinProgramContent() {
                 evidenceError={evidence.isError}
               />
             </View>
-            <Rule />
+            <SectionDivider />
             {canAddAnother ? (
               <Button label={t('sinProgram.another')} icon={Plus} onPress={() => setChoosing(true)} variant="outline" />
             ) : null}
             <NotificationsLink />
-            <EndProgram sinSlug={current.sinSlug} keepMarker={keepMarker} onEnded={handleEnded} />
           </>
         ) : null}
         <LimitSheet
@@ -445,8 +478,17 @@ function ChooseProgram({ sins, entries, following, preselected, onStarted, onCan
           <CheckRow radio title={t('sinProgram.noCanLeave')} checked={hard === false} onPress={() => setHard(false)} />
         </View>
       ) : null}
-      {entry ? <Button label={t('sinProgram.start')} onPress={handleStart} disabled={asksWill && hard === null} arrow large /> : null}
-      {onCancel ? <Button label={t('common.cancel')} onPress={onCancel} variant="outline" /> : null}
+      {entry || onCancel ? (
+        <ButtonPair
+          size="lg"
+          primary={
+            entry
+              ? { label: t('sinProgram.start'), onPress: handleStart, disabled: asksWill && hard === null, arrow: true }
+              : { label: t('common.cancel'), onPress: onCancel!, variant: 'outline' }
+          }
+          secondary={entry && onCancel ? { label: t('common.cancel'), onPress: onCancel } : null}
+        />
+      ) : null}
     </Section>
   );
 }
@@ -648,6 +690,21 @@ function ProgramView({ program, entry, sinName, evidenceById, evidenceLoading, e
             </View>
           ) : null}
 
+          {/* The texts right under the stage that asks to read them («اعرف ضررها»), titled for what they do (A-03, O-05). */}
+          {textIds.length > 0 ? (
+            <>
+              <SectionDivider />
+              <EvidenceList
+                ids={textIds}
+                {...evidenceProps}
+                title={t('sinProgram.textsTitle')}
+                subtitle={sinName}
+                limit={3}
+                moreHref={`/sins/${program.sinSlug}`}
+              />
+            </>
+          ) : null}
+
           {actions.length > 0 ? (
             <SubSection title={t('sinProgram.actions')}>
               <BulletList items={actions} />
@@ -679,12 +736,8 @@ function ProgramView({ program, entry, sinName, evidenceById, evidenceLoading, e
         <>
           <WeakPatternCard program={program} actions={actions} />
           <Notebook program={program} />
-          {/* «ما ورد فيها»: the program's texts (three at most here) and the rest on the sin's own page. */}
-          {textIds.length > 0 ? (
-            <EvidenceList ids={textIds} {...evidenceProps} title={t('sinProgram.textsTitle')} limit={3} moreHref={`/sins/${program.sinSlug}`} />
-          ) : (
-            <ListRow icon={BookOpen} title={t('sinProgram.textsTitle')} onPress={() => router.push(`/sins/${program.sinSlug}`)} />
-          )}
+          {/* The texts themselves are in «المراحل»; here a way to all of them on the sin's own page. */}
+          <ListRow icon={BookOpen} title={t('sinProgram.textsAll')} onPress={() => router.push(`/sins/${program.sinSlug}`)} />
         </>
       ) : null}
 
@@ -763,6 +816,8 @@ function Alternatives({ keys }: { keys: string[] }) {
                   icon={Plus}
                   onPress={() => router.push({ pathname: '/practice/add', params: { habit: key } })}
                   variant="outline"
+                  size="sm"
+                  accessibilityLabel={`${t('sinProgram.addAlternative')}: ${pick(h, 'title', locale)}`}
                 />
               )}
             </View>
@@ -798,6 +853,7 @@ function CheckInForm({ program, onFell }: { program: SinProgram; onFell: () => v
     }));
     setNote('');
     setTriggers(null);
+    toast(t('sinProgram.checkInSaved'));
     if (value === 'fell_repented' && todayCheckIn?.value !== 'fell_repented') onFell();
   }
 
@@ -867,40 +923,3 @@ function Notebook({ program }: { program: SinProgram }) {
     </SubSection>
   );
 }
-
-interface EndProgramProps {
-  sinSlug: string;
-  keepMarker: boolean;
-  onEnded: () => void;
-}
-
-/** «أنهِ هذا البرنامج»: closes the program after a confirmation; its check-ins and notes are removed. */
-function EndProgram({ sinSlug, keepMarker, onEnded }: EndProgramProps) {
-  const { t } = useTranslation();
-  const styles = useStyles(makeStyles);
-  const setStore = usePracticeStore((s) => s.setStore);
-
-  function commitEnd() {
-    setStore((s) => ({ ...s, programs: withProgramEnded(s.programs, sinSlug, keepMarker) }));
-    onEnded();
-  }
-
-  function handleEnd() {
-    Alert.alert(t('sinProgram.end.confirmTitle'), t('sinProgram.end.confirmBody'), [
-      { text: t('sinProgram.end.cancel'), style: 'cancel' },
-      { text: t('sinProgram.end.confirm'), style: 'destructive', onPress: commitEnd },
-    ]);
-  }
-
-  return (
-    <View style={styles.end}>
-      <Text variant="small" tone="muted">
-        {t('sinProgram.end.lead')}
-      </Text>
-      <Button label={t('sinProgram.end.button')} onPress={handleEnd} variant="outline" />
-    </View>
-  );
-}
-
-
-

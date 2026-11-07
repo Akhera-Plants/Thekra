@@ -206,7 +206,7 @@ function UndoLine({ kind, onUndo }: { kind: UndoKind; onUndo: () => void }) {
       <Text variant="caption" tone="muted">
         {kind === 'cleared' ? t('practice.hub.unlogged') : t('practice.plan.logged')}
       </Text>
-      <Button label={t('practice.plan.undo')} onPress={onUndo} variant="ghost" compact />
+      <Button label={t('practice.plan.undo')} onPress={onUndo} variant="ghost" size="sm" />
     </View>
   );
 }
@@ -239,7 +239,7 @@ export const HabitRow = memo(function HabitRow({ item, title, meta, canLog, undo
         <UndoLine kind={undo} onUndo={onUndo} />
       ) : onMinimum ? (
         <View style={styles.undo}>
-          <Button label={t('practice.heart.minimum')} onPress={handleMinimum} variant="outline" compact />
+          <Button label={t('practice.heart.minimum')} onPress={handleMinimum} variant="outline" size="sm" />
         </View>
       ) : null}
     </View>
@@ -323,7 +323,7 @@ export const ProgramRow = memo(function ProgramRow({ done, meta, showMoment = fa
       </View>
       {showMoment ? (
         <View style={styles.undo}>
-          <Button label={t('sinProgram.moment.open')} onPress={openMoment} variant="ghost" compact />
+          <Button label={t('sinProgram.moment.open')} onPress={openMoment} variant="ghost" size="sm" />
         </View>
       ) : null}
     </View>

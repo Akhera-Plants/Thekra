@@ -22,7 +22,8 @@ import { ReadText } from './ReadText';
 import { BottomSheet } from './Sheet';
 
 const makeStyles = (t: Theme) => ({
-  list: { borderTopWidth: 1, borderTopColor: t.colors.border },
+  /** No top rule: the first row sits under its section title (A-05). */
+  list: {},
   row: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
@@ -78,7 +79,7 @@ export function MinimumWirdSheet({ visible, onClose, sittingPrayerHadith }: { vi
                     {t('mujahada.wird.amount', { amount })}
                   </Text>
                 </View>
-                <Button label={t('mujahada.wird.log')} onPress={() => log(row.planId, row.amount)} compact accessibilityLabel={`${t('mujahada.wird.log')}: ${title}`} />
+                <Button label={t('mujahada.wird.log')} onPress={() => log(row.planId, row.amount)} size="sm" accessibilityLabel={`${t('mujahada.wird.log')}: ${title}`} />
               </View>
             );
           })}

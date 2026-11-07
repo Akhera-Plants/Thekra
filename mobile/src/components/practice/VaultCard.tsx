@@ -17,7 +17,7 @@ import { CloudUpload, KeyRound, LockKeyhole, LockKeyholeOpen, type LucideIcon } 
 import { privacyCodeProblem } from '@thekra/practice-core';
 import { canKeepKeyBehindBiometrics, unlockWithCode, useVaultState, wipeSinProgramEverywhere } from '@/lib/practice/vault-runner';
 import { space, useStyles, useTheme } from '@/theme';
-import { Button, Card, ErrorText, Field, Icon, NextStep, Row, Text, TextLink } from '@/ui';
+import { ButtonPair, Card, ErrorText, Field, Icon, NextStep, Row, Text, TextLink } from '@/ui';
 
 /** i18n key under `vault.errors` for a new code, or null when it can be used (practice-core `privacyCodeProblem`). */
 export function validateNewCode(code: string, confirm: string): 'tooShort' | 'weak' | 'mismatch' | null {
@@ -105,7 +105,6 @@ export interface PrivacyCodeFormProps {
 /** «رمز الخصوصية»: asked once, before the first program; then the fingerprint / face opens «تخفَّف». */
 export function PrivacyCodeForm({ onSubmit, onCancel, submitLabel }: PrivacyCodeFormProps) {
   const { t } = useTranslation();
-  const styles = useStyles(makeStyles);
   const status = useVaultState((s) => s.status);
   const [code, setCode] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -137,10 +136,11 @@ export function PrivacyCodeForm({ onSubmit, onCancel, submitLabel }: PrivacyCode
       {status === 'working' ? (
         <Working />
       ) : (
-        <View style={styles.actions}>
-          <Button label={submitLabel} onPress={() => void submit()} disabled={code.length === 0} block large />
-          {onCancel ? <Button label={t('common.cancel')} onPress={onCancel} variant="outline" block /> : null}
-        </View>
+        <ButtonPair
+          size="lg"
+          primary={{ label: submitLabel, onPress: () => void submit(), disabled: code.length === 0 }}
+          secondary={onCancel ? { label: t('common.cancel'), onPress: onCancel } : null}
+        />
       )}
     </VaultBox>
   );
@@ -149,7 +149,6 @@ export function PrivacyCodeForm({ onSubmit, onCancel, submitLabel }: PrivacyCode
 /** The code on a new device (or without biometrics); a forgotten code → «ابدأ من جديد» (confirmed: the data is lost). */
 export function VaultCodeUnlock({ userId, onOpened }: { userId: string; onOpened: () => void }) {
   const { t } = useTranslation();
-  const styles = useStyles(makeStyles);
   const status = useVaultState((s) => s.status);
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -189,10 +188,11 @@ export function VaultCodeUnlock({ userId, onOpened }: { userId: string; onOpened
       {status === 'working' ? (
         <Working />
       ) : (
-        <View style={styles.actions}>
-          <Button label={t('vault.unlock')} onPress={() => void unlock()} disabled={code.length === 0} block large />
-          <Button label={t('vault.forgot')} onPress={startOver} variant="ghost" block />
-        </View>
+        <ButtonPair
+          size="lg"
+          primary={{ label: t('vault.unlock'), onPress: () => void unlock(), disabled: code.length === 0 }}
+          secondary={{ label: t('vault.forgot'), onPress: startOver }}
+        />
       )}
     </VaultBox>
   );

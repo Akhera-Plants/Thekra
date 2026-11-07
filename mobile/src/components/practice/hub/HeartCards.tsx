@@ -6,7 +6,7 @@
  */
 
 import React, { useMemo, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import {
@@ -37,6 +37,7 @@ import {
   type StepChoice,
 } from '@thekra/practice-core';
 import { useEvidence, usePracticeCatalog } from '@/lib/api/practice';
+import { QuoteLine } from '@/components/QuoteLine';
 import { pick, type CatalogHabit } from '@/lib/practice/catalog-types';
 import { usePracticeStore } from '@/lib/practice/practice-store';
 import { pledgeDeedWords } from '@/lib/practice/pledges';
@@ -44,7 +45,7 @@ import { habitFor } from '@/lib/practice/reminders';
 import { usePlanDays } from '@/lib/practice/use-habits-hub';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { radius, space, useStyles, type Theme } from '@/theme';
-import { Button, CheckRow, Chip, Field, Text, TextLink } from '@/ui';
+import { Button, ButtonPair, CheckRow, Chip, Field, Text, toast } from '@/ui';
 
 const makeStyles = (t: Theme) => ({
   card: { gap: space.md, padding: space.lg, borderRadius: radius.card, borderWidth: 1, borderColor: t.colors.border, backgroundColor: t.colors.card },
@@ -104,11 +105,7 @@ export function MuraqabaLine({ today }: { today: string }) {
   const quote = id ? evidence.data?.get(id) : undefined;
   if (!quote) return null;
   return (
-    <Pressable onPress={() => router.push(`/quotes/${quote.id}`)} accessibilityRole="link">
-      <Text variant="small" tone="muted" numberOfLines={2}>
-        {quote.textAr}
-      </Text>
-    </Pressable>
+    <QuoteLine quote={quote} />
   );
 }
 
@@ -157,7 +154,6 @@ export function HeartTop({ today }: { today: string }) {
 function IntentionCard({ today, time }: { today: string; time: string }) {
   const { t } = useTranslation();
   const locale = useUiLocale();
-  const styles = useStyles(makeStyles);
   const store = usePracticeStore((s) => s.store);
   const heart = usePracticeStore((s) => s.heart);
   const setHeart = usePracticeStore((s) => s.setHeart);
@@ -177,10 +173,10 @@ function IntentionCard({ today, time }: { today: string; time: string }) {
         <Text variant="small" tone="muted">
           {t('practice.heart.intention.offerBody')}
         </Text>
-        <View style={styles.row}>
-          <Button label={t('practice.heart.intention.offerOn')} onPress={() => setHeart((h) => setHeartPrefs(h, { intention: true }))} />
-          <Button label={t('practice.heart.intention.dismiss')} variant="ghost" onPress={() => setHeart((h) => setHeartPrefs(h, { intentionOfferDismissed: true }))} />
-        </View>
+        <ButtonPair
+          primary={{ label: t('practice.heart.intention.offerOn'), onPress: () => setHeart((h) => setHeartPrefs(h, { intention: true })) }}
+          secondary={{ label: t('practice.heart.intention.dismiss'), onPress: () => setHeart((h) => setHeartPrefs(h, { intentionOfferDismissed: true })) }}
+        />
       </Card>
     );
   }
@@ -227,7 +223,10 @@ function IntentionCard({ today, time }: { today: string; time: string }) {
       />
       <Button
         label={t('practice.heart.intention.submit')}
-        onPress={() => setHeart((h) => makeIntention(h, { date: today, planIds: due.filter((p) => !unticked.has(p.id)).map((p) => p.id), pledge }))}
+        onPress={() => {
+          setHeart((h) => makeIntention(h, { date: today, planIds: due.filter((p) => !unticked.has(p.id)).map((p) => p.id), pledge }));
+          toast(t('practice.heart.intention.savedToast'));
+        }}
       />
     </Card>
   );
@@ -253,7 +252,14 @@ function PledgeCards({ today }: { today: string }) {
                 {t('practice.heart.pledge.hint', { habit: planTitleOf(plan, habits, locale) })}
               </Text>
             ) : null}
-            <Button label={t('practice.heart.pledge.kept')} variant="outline" onPress={() => setHeart((h) => keepPledge(h, pledge.id, on))} />
+            <Button
+              label={t('practice.heart.pledge.kept')}
+              variant="outline"
+              onPress={() => {
+                setHeart((h) => keepPledge(h, pledge.id, on));
+                toast(t('practice.heart.pledge.keptToast'));
+              }}
+            />
           </Card>
         );
       })}
@@ -296,10 +302,21 @@ function EveningCard({ today, time }: { today: string; time: string }) {
           />
         </>
       ) : null}
-      {activePrograms(store.programs).length > 0 ? (
-        <TextLink label={t('practice.heart.evening.checkIn')} onPress={() => router.push('/practice/sin-program')} />
-      ) : null}
-      <Button label={t('practice.heart.evening.save')} onPress={() => setHeart((h) => saveEvening(h, { date: today, ...(kept ? { kept } : {}) }))} />
+      {/* «تمّت المحاسبة» and «سجّل حالك في برنامجك الخاص» are one choice: side by side, the same size (O-02). */}
+      <ButtonPair
+        primary={{
+          label: t('practice.heart.evening.save'),
+          onPress: () => {
+            setHeart((h) => saveEvening(h, { date: today, ...(kept ? { kept } : {}) }));
+            toast(t('practice.heart.evening.savedToast'));
+          },
+        }}
+        secondary={
+          activePrograms(store.programs).length > 0
+            ? { label: t('practice.heart.evening.checkIn'), onPress: () => router.push('/practice/sin-program') }
+            : null
+        }
+      />
     </Card>
   );
 }
@@ -344,6 +361,7 @@ function WeeklyCard({ today, time }: { today: string; time: string }) {
         message,
       }),
     );
+    toast(t('practice.heart.weekly.savedToast'));
   }
 
   return (

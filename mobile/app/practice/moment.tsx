@@ -31,7 +31,7 @@ import { momentSource, today, usePracticeStore } from '@/lib/practice/practice-s
 import { programEntry } from '@/lib/practice/sin-program-view';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { radius, space, useStyles, useTheme, type Theme } from '@/theme';
-import { Button, Chip, ForwardChevron, Icon, NextStep, PageHeader, Rule, Screen, Section, Text, Wrap } from '@/ui';
+import { Button, ButtonPair, Chip, ForwardChevron, Icon, NextStep, PageHeader, Screen, Section, SectionDivider, Text, Wrap } from '@/ui';
 
 const TICK_MS = 1000;
 /** «أو علّم ما فعلت»: ticks only (owner: no option that opens the phone with no number or goal). */
@@ -191,7 +191,7 @@ function MujahadaContent() {
 
       {verses.length > 0 ? (
         <>
-          <Rule />
+          <SectionDivider />
           <View style={styles.verse} accessible accessibilityLabel={verses.map((v) => v.textAr).join(' ')}>
             <Text variant="quran" align="center">{`﴿${verses.map((v) => v.textAr).join(' ۝ ')}﴾`}</Text>
             {locale === 'en'
@@ -213,7 +213,7 @@ function MujahadaContent() {
       ) : null}
       {saying ? <QuoteCard quote={saying} shareable={false} /> : null}
 
-      <Rule />
+      <SectionDivider />
 
       {outcome?.kind === 'held' ? (
         <NextStep title={t('sinProgram.moment.heldTitle')}>
@@ -235,19 +235,27 @@ function MujahadaContent() {
         </Section>
       ) : asking ? (
         <Section title={t('sinProgram.moment.question')}>
-          <View style={styles.answers}>
-            <Button label={t('sinProgram.moment.yes')} onPress={answerHeld} large block />
-            <Button label={t('sinProgram.moment.no')} onPress={answerSlipped} variant="outline" block />
-          </View>
+          <ButtonPair
+            size="lg"
+            primary={{ label: t('sinProgram.moment.yes'), onPress: answerHeld }}
+            secondary={{ label: t('sinProgram.moment.no'), onPress: answerSlipped }}
+          />
         </Section>
       ) : (
-        // Before the ten minutes end: the same question, its answers one tap away (never a lone, unexplained button).
+        // Before the ten minutes end: the same question, its answers one tap away (never a lone, unexplained button),
+        // and «ارجع إلى تخفَّف» beside it at the same size (A-06).
         <Section title={t('sinProgram.moment.question')}>
-          <Button label={t('sinProgram.moment.answerEarly')} onPress={() => setEarly(true)} variant="outline" block />
+          <ButtonPair
+            size="lg"
+            primary={{ label: t('sinProgram.moment.answerEarly'), onPress: () => setEarly(true) }}
+            secondary={program ? { label: t('sinProgram.moment.back'), onPress: () => router.replace('/practice/sin-program') } : null}
+          />
         </Section>
       )}
 
-      {program ? <Button label={t('sinProgram.moment.back')} onPress={() => router.replace('/practice/sin-program')} variant="ghost" arrow /> : null}
+      {program && (asking || outcome) ? (
+        <Button label={t('sinProgram.moment.back')} onPress={() => router.replace('/practice/sin-program')} variant="outline" arrow />
+      ) : null}
 
       <TasbihSheet
         visible={tool === 'tasbih'}

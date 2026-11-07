@@ -16,11 +16,12 @@ import { newPracticeId, today, usePracticeStore } from '@/lib/practice/practice-
 import { draftReady, pledgeOfPlan, removePlanPledge, savePlanPledge, type PledgeDraft } from '@/lib/practice/pledges';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { radius, space, useStyles, useTheme, type Theme } from '@/theme';
-import { Button, Field, Text } from '@/ui';
+import { ButtonPair, Field, MIN_TARGET, Text, toast } from '@/ui';
 import { BottomSheet } from './mujahada/Sheet';
 
 const makeStyles = (t: Theme) => ({
-  list: { borderTopWidth: 1, borderTopColor: t.colors.border },
+  /** No top rule: the first row sits under its section title (A-05). */
+  list: {},
   item: { borderBottomWidth: 1, borderBottomColor: t.colors.border, paddingVertical: space.sm, gap: space.sm },
   row: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.md },
   choice: { flex: 1, flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.md, minHeight: 44 },
@@ -37,11 +38,11 @@ const makeStyles = (t: Theme) => ({
   radioDot: { width: 10, height: 10, borderRadius: radius.full, backgroundColor: t.colors.primary },
   label: { flex: 1 },
   evidenceButton: {
-    minHeight: 32,
+    minHeight: MIN_TARGET,
     paddingHorizontal: space.md,
     borderRadius: radius.full,
     borderWidth: 1,
-    borderColor: t.colors.border,
+    borderColor: t.colors.controlBorder,
     backgroundColor: t.colors.card,
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
@@ -116,6 +117,7 @@ export function PledgeSheet({ visible, planId, habitTitle, onClose, onDone }: Pl
     setHeart((h) => savePlanPledge(h, planId, draft, today(), newPracticeId));
     onClose();
     onDone(t('practice.notifyPrefs.pledgeSaved', { habit: habitTitle }));
+    toast(t('practice.notifyPrefs.pledgeSaved', { habit: habitTitle }));
   }
 
   function remove() {
@@ -140,10 +142,11 @@ export function PledgeSheet({ visible, planId, habitTitle, onClose, onDone }: Pl
       title={habitTitle}
       onClose={onClose}
       footer={
-        <>
-          <Button label={t('practice.notifyPrefs.pledgeSave')} onPress={save} disabled={!draftReady(draft)} block large />
-          {current ? <Button label={t('practice.notifyPrefs.pledgeDelete')} onPress={remove} variant="destructive" block /> : null}
-        </>
+        <ButtonPair
+          size="lg"
+          primary={{ label: t('practice.notifyPrefs.pledgeSave'), onPress: save, disabled: !draftReady(draft) }}
+          secondary={current ? { label: t('practice.notifyPrefs.pledgeDelete'), onPress: remove, variant: 'destructive' } : null}
+        />
       }
     >
       <Text variant="label">{t('practice.notifyPrefs.pledgeIf')}</Text>
@@ -192,9 +195,9 @@ function EvidenceButton({ label, title, onPress }: { label: string; title: strin
   return (
     <Pressable
       onPress={onPress}
-      hitSlop={8}
       android_ripple={{ color: colors.accent }}
       accessibilityRole="button"
+      // «الدليل: <the deed>», never fourteen bare «الدليل» (A-19).
       accessibilityLabel={`${label}: ${title}`}
       style={({ pressed }) => [styles.evidenceButton, pressed && styles.evidenceButtonPressed]}
     >

@@ -44,7 +44,8 @@ const THEME_OPTIONS: ThemePreference[] = ['system', 'light', 'dark'];
 const makeStyles = (t: Theme) => ({
   group: { gap: space.sm },
   head: { gap: 2 },
-  list: { borderTopWidth: 1, borderTopColor: t.colors.border },
+  /** No top rule: the first row sits under its section title (A-05). */
+  list: {},
   switchRow: { paddingVertical: space.sm, borderBottomWidth: 1, borderBottomColor: t.colors.border },
   /** What a switch opens (its time, its day): under it, before the row's hairline. */
   sub: { gap: space.md, paddingTop: space.xs, paddingBottom: space.sm },

@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { ClipboardCheck } from 'lucide-react-native';
 import { reviewHistory, weeklyReviewDue } from '@thekra/practice-core';
 import { usePracticeCatalog } from '@/lib/api/practice';
-import { shortDayTitle } from '@/lib/practice/calendar-grid';
+import { weekRangeTitle } from '@/lib/practice/calendar-grid';
 import { nowTime } from '@/lib/practice/format';
 import { today, usePracticeStore } from '@/lib/practice/practice-store';
 import { useDateNames } from '@/lib/practice/use-habits-hub';
@@ -57,7 +57,7 @@ export default function ReviewsScreen() {
             const stepPlan = review.step ? [...review.steady, ...review.weak].find((r) => r.planId === review.step?.planId) : undefined;
             return (
               <View key={review.weekOf} style={styles.item}>
-                <Text variant="heading">{t('practice.heart.reviews.weekOf', { date: shortDayTitle(review.weekOf, names) })}</Text>
+                <Text variant="heading">{t('practice.heart.reviews.weekOf', { date: weekRangeTitle(review.weekOf, names) })}</Text>
                 <Text variant="small">
                   {`${t('practice.heart.weekly.steady')}: ${review.steady.length ? review.steady.map((r) => titleOf(r.planId, r.title)).join(sep) : t('practice.heart.weekly.steadyNone')}`}
                 </Text>

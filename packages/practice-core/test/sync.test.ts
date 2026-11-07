@@ -151,7 +151,15 @@ describe('localChanges', () => {
     s = updateRelative(s, 'r1', (r) => logContact(r, '2026-10-20'), at(2));
     s = updateSettings(s, { hijriOffset: 1, reminderTimes: ['07:00'] }, at(3));
     const c = localChanges(s);
-    expect(c.settings).toEqual({ hijriOffset: 1, reminderTimes: ['07:00'], freeMinutesPerDay: null, excusedDays: [], clientUpdatedAt: at(3) });
+    expect(c.settings).toEqual({
+      hijriOffset: 1,
+      reminderTimes: ['07:00'],
+      freeMinutesPerDay: null,
+      excusedDays: [],
+      homeSections: null,
+      fardTracking: false,
+      clientUpdatedAt: at(3),
+    });
     expect(c.plans).toEqual([
       {
         id: 'p1',

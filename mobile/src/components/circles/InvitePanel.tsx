@@ -11,7 +11,7 @@ import { useRotateInviteCode } from '@/lib/api/circles';
 import { circleErrorKey, formatInviteCode, inviteLink } from '@/lib/circles/circle-view';
 import type { CircleDetail } from '@/lib/types/circles';
 import { space } from '@/theme';
-import { Button, ErrorText, Row, Section, Text } from '@/ui';
+import { ErrorText, Section, Text, ButtonPair } from '@/ui';
 
 export function InvitePanel({ circle }: { circle: CircleDetail }) {
   const { t } = useTranslation();
@@ -44,10 +44,10 @@ export function InvitePanel({ circle }: { circle: CircleDetail }) {
             {t('circles.full', { count: circle.memberCount, max: circle.maxMembers })}
           </Text>
         ) : null}
-        <Row style={{ flexWrap: 'wrap' }}>
-          <Button label={t('circles.shareInvite')} icon={Share2} onPress={handleShare} />
-          <Button label={t('circles.rotate')} icon={RefreshCw} variant="ghost" onPress={handleRotate} loading={rotate.isPending} />
-        </Row>
+        <ButtonPair
+          primary={{ label: t('circles.shareInvite'), icon: Share2, onPress: handleShare }}
+          secondary={{ label: t('circles.rotate'), icon: RefreshCw, onPress: handleRotate, loading: rotate.isPending }}
+        />
         {rotate.isError ? <ErrorText>{t(circleErrorKey(rotate.error))}</ErrorText> : null}
       </View>
     </Section>

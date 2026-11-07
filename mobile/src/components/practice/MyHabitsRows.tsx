@@ -114,7 +114,7 @@ export function HabitActionRow({ icon, title, hint, action, onOpen, onAction, un
             <Text variant="caption" tone="muted">
               {undo.cleared ? t('practice.hub.unlogged') : t('practice.plan.logged')}
             </Text>
-            <Button label={t('practice.plan.undo')} onPress={undo.onUndo} variant="ghost" compact />
+            <Button label={t('practice.plan.undo')} onPress={undo.onUndo} variant="ghost" size="sm" />
           </>
         ) : (
           fixLine
@@ -143,7 +143,7 @@ function FixLine({ note, subject, onFix }: { note: string; subject: string; onFi
       <Text variant="caption" tone="muted" style={{ flex: 1 }}>
         {note}
       </Text>
-      <Button label={t('myHabits.fix')} onPress={onFix} variant="outline" compact accessibilityLabel={`${t('myHabits.fix')}: ${subject}`} />
+      <Button label={t('myHabits.fix')} onPress={onFix} variant="outline" size="sm" accessibilityLabel={`${t('myHabits.fix')}: ${subject}`} />
     </>
   );
 }

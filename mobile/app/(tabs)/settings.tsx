@@ -27,8 +27,9 @@ const ICONS: Record<SettingsGroupKey, LucideIcon> = {
   about: Info,
 };
 
-const makeStyles = (t: Theme) => ({
-  list: { borderTopWidth: 1, borderTopColor: t.colors.border, marginTop: -space.sm },
+const makeStyles = (_t: Theme) => ({
+  /** No top rule: the first row sits under its section title (A-05). */
+  list: { marginTop: -space.sm },
 });
 
 export default function SettingsScreen() {

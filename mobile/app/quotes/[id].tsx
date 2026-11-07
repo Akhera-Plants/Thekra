@@ -15,7 +15,7 @@ import { useToggleFavorite } from '@/lib/api/favorites';
 import { QuoteCard } from '@/components/QuoteCard';
 import { space, useStyles, useTheme } from '@/theme';
 import { useIsOffline } from '@/lib/query-client';
-import { Chip, ErrorState, Notice, QuoteCardSkeleton, Rule, Screen, Text, Wrap } from '@/ui';
+import { Chip, ErrorState, Notice, QuoteCardSkeleton, Screen, Text, Wrap, SectionDivider } from '@/ui';
 
 /** Translation languages written right to left; every other translation reads left to right in either UI. */
 const RTL_LANGUAGES = new Set(['ar', 'fa', 'ur', 'he']);
@@ -79,7 +79,7 @@ export default function QuoteDetailScreen() {
         </View>
       ) : null}
 
-      {hasRelated ? <Rule /> : null}
+      {hasRelated ? <SectionDivider /> : null}
 
       {quote.relatedSins.length > 0 ? (
         <View style={styles.group}>

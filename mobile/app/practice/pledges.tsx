@@ -22,7 +22,8 @@ import { Button, ForwardChevron, Notice, PageHeader, Screen, Text } from '@/ui';
 type T = (key: string, opts?: Record<string, unknown>) => string;
 
 const makeStyles = (t: Theme) => ({
-  list: { borderTopWidth: 1, borderTopColor: t.colors.border },
+  /** No top rule: the first row sits under its section title (A-05). */
+  list: {},
   row: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
@@ -77,7 +78,7 @@ export default function PledgesScreen() {
                       {t('practice.notifyPrefs.pledgeIfShort', { deed: pledgeWords(pledge, t as unknown as T, locale) })}
                     </Text>
                   ) : (
-                    <Button label={t('practice.notifyPrefs.pledgeChoose')} onPress={() => setOpen(plan)} variant="outline" compact />
+                    <Button label={t('practice.notifyPrefs.pledgeChoose')} onPress={() => setOpen(plan)} variant="outline" size="sm" />
                   )}
                   {done && lastPlanId === plan.id ? (
                     <View style={styles.done} accessibilityLiveRegion="polite">

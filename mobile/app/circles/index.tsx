@@ -14,7 +14,7 @@ import { circleErrorKey } from '@/lib/circles/circle-view';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { CIRCLES_PER_USER_MAX, type CircleSummary } from '@/lib/types/circles';
 import { space } from '@/theme';
-import { Button, EmptyState, ErrorState, ListRow, Notice, PageHeader, Screen, Text } from '@/ui';
+import { ButtonPair, EmptyState, ErrorState, ListRow, Notice, PageHeader, Screen, Text } from '@/ui';
 
 const openCreate = () => router.push('/circles/create');
 const openJoin = () => router.push('/circles/join');
@@ -37,8 +37,11 @@ function Actions({ count }: { count: number }) {
   const isAtLimit = count >= CIRCLES_PER_USER_MAX;
   return (
     <View style={{ gap: space.sm }}>
-      <Button label={t('circles.create')} onPress={openCreate} disabled={isAtLimit} block />
-      <Button label={t('circles.join')} onPress={openJoin} variant="outline" disabled={isAtLimit} block />
+      <ButtonPair
+        size="lg"
+        primary={{ label: t('circles.create'), onPress: openCreate, disabled: isAtLimit }}
+        secondary={{ label: t('circles.join'), onPress: openJoin, disabled: isAtLimit }}
+      />
       {isAtLimit ? (
         <Text variant="caption" tone="muted">
           {t('circles.limitNote')}

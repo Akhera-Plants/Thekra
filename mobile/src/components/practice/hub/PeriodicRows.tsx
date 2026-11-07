@@ -11,8 +11,9 @@ import type { PeriodicRowModel } from '@/lib/practice/use-habits-hub';
 import { useStyles, type Theme } from '@/theme';
 import { ListRow } from '@/ui';
 
-const makeStyles = (t: Theme) => ({
-  list: { borderTopWidth: 1, borderTopColor: t.colors.border },
+const makeStyles = (_t: Theme) => ({
+  /** No top rule: the first row sits under its section title (A-05). */
+  list: {},
 });
 
 function open(row: PeriodicRowModel) {

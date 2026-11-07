@@ -173,19 +173,11 @@ describe('استراتيجيات العادات', () => {
     expect(new Set([strategyOfWeek(two, '2026-10-31'), strategyOfWeek(two, '2026-11-07')])).toEqual(new Set(two));
   });
 
-  it('notificationPlan: at most one strategy a week, opt-in, at the chosen time, with a title', () => {
+  it('notificationPlan: plans no strategy reminder any more (round 5, F-12 a), even with old prefs', () => {
     const store = storeOf();
-    const off = notificationPlan({ store, prefs: DEFAULT_NOTIFICATION_PREFS, today: '2026-10-28', now: '08:00', days: 14 });
-    expect(off.filter((e) => e.kind === 'strategy')).toEqual([]);
     const prefs = { ...DEFAULT_NOTIFICATION_PREFS, strategies: ['start-tiny', 'company'], strategyTime: '11:00' };
-    const on = notificationPlan({ store, prefs, today: '2026-10-28', now: '08:00', days: 14 }).filter((e) => e.kind === 'strategy');
-    expect(on.map((e) => [e.date, e.time])).toEqual([
-      ['2026-10-31', '11:00'],
-      ['2026-11-07', '11:00'],
-    ]);
-    expect(NOTIFY_TEXTS.ar.strategyBody(on[0]!.strategy!)).toBeTruthy();
-    expect(notificationPlan({ store, prefs, today: '2026-10-28', now: '08:00', days: 14, kinds: ['habit'] })).toEqual([]);
-    expect(notificationPlan({ store, prefs, today: '2026-10-31', now: '12:00', days: 1 })).toEqual([]);
+    const plan = notificationPlan({ store, prefs, today: '2026-10-28', now: '08:00', days: 14 });
+    expect(plan.filter((e) => e.kind === 'strategy')).toEqual([]);
   });
 
   it('parses the strategy prefs, dropping unknown keys and bad times', () => {

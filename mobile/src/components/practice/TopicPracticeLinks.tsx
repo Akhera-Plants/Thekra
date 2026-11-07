@@ -14,7 +14,7 @@ import { isActiveProgram } from '@thekra/practice-core';
 import { isSignedIn, openSignIn } from '@/lib/auth/require-sign-in';
 import { setMomentSource, setPendingProgram, usePracticeStore } from '@/lib/practice/practice-store';
 import { space, useStyles, type Theme } from '@/theme';
-import { Button, Wrap } from '@/ui';
+import { ButtonPair } from '@/ui';
 
 const makeStyles = (_t: Theme) => ({
   program: { gap: space.sm },
@@ -44,9 +44,10 @@ export function SinProgramLink({ sin }: { sin: string }) {
   }
 
   return (
-    <Wrap style={styles.program}>
-      <Button label={isActive ? t('reminders.continueProgram') : t('reminders.startProgram')} arrow onPress={handleOpen} />
-      <Button label={t('sinProgram.moment.openFromSin')} variant="ghost" onPress={handleMoment} />
-    </Wrap>
+    <ButtonPair
+      style={styles.program}
+      primary={{ label: isActive ? t('reminders.continueProgram') : t('reminders.startProgram'), arrow: true, onPress: handleOpen }}
+      secondary={{ label: t('sinProgram.moment.openFromSin'), onPress: handleMoment }}
+    />
   );
 }

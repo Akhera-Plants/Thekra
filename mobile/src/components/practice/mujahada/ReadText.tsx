@@ -27,7 +27,7 @@ export function ReadText({ id, label }: { id: string | null | undefined; label?:
         icon={open ? ChevronUp : BookOpen}
         onPress={() => setOpen((o) => !o)}
         variant="outline"
-        compact
+        size="sm"
         loading={open && evidence.isLoading}
       />
       {open && quote ? <QuoteCard quote={quote} shareable={false} /> : null}

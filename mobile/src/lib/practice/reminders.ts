@@ -14,6 +14,7 @@
  */
 
 import {
+  DEFAULT_NOTIFICATION_PREFS,
   DEFAULT_REVIEW_DAY,
   isPlanDueOn,
   formatPlanAmount,
@@ -141,6 +142,9 @@ export function notificationPrefsOf(prefs: PracticePrefs, reviewDay: number = DE
     reviewDay,
     privateMoment: prefs.sinReminders,
     privateTime: prefs.sinReminderTime,
+    // «مناسبة قريبة» (round 5): off until the app has its switch.
+    occasions: DEFAULT_NOTIFICATION_PREFS.occasions,
+    occasionTime: DEFAULT_NOTIFICATION_PREFS.occasionTime,
     strategies: prefs.strategyReminders ? prefs.strategies : [],
     strategyTime: prefs.strategyTime,
   };

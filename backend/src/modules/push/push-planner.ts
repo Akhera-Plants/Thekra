@@ -15,7 +15,7 @@ import {
   type PlanUnit,
   type Store,
 } from '@thekra/practice-core';
-import type { Habit } from '../practice/practice-catalog.js';
+import type { Habit, Occasion } from '../practice/practice-catalog.js';
 import { zonedParts, zonedToUtc } from './zoned-time.js';
 
 /**
@@ -29,6 +29,10 @@ import { zonedParts, zonedToUtc } from './zoned-time.js';
  *   scheduler, docs/plan/2026-10-web-push.md §4).
  * - Evening nudge (opt-in) and the Friday review reminder (on by default), with the browser's own switches
  *   (`PushSubscription.prefs`, sent by the web app with the subscription).
+ * - «مناسبة قريبة» (round 5, opt-in): the day before a non-weekly occasion of the practice catalog (the same
+ *   deed-schedules.yaml the clients read through `GET /v1/practice/catalog`), at the browser's chosen time; it opens the
+ *   occasion's good-deed page. The weekly strategy reminder was removed in round 5 (F-12 a): stored prefs that still
+ *   hold strategies plan nothing.
  * - Quiet hours 23:00–05:00 (the night prayer and the user's own times excepted), at most 4 a day and then one digest.
  * - The sin program is never here: the server cannot read it.
  * - Prayer anchors («بعد الفجر»…): the server never calls AlAdhan. The browser resolves the anchors from its own 30-day
@@ -45,8 +49,8 @@ export type PushLocale = 'ar' | 'en';
 
 export interface PlannedPush {
   /**
-   * `habit:<planId>:<date>:<time>`, `kinship:<date>`, `evening:<date>`, `friday:<date>` or `digest:<date>`: what the
-   * reminder is for, stable across re-plans.
+   * `habit:<planId>:<date>:<time>`, `kinship:<date>`, `evening:<date>`, `friday:<date>`, `occasion:<date>` or
+   * `digest:<date>`: what the reminder is for, stable across re-plans.
    */
   key: string;
   fireAt: Date;
@@ -82,6 +86,8 @@ const TEXTS = {
 export interface PushPlanInput {
   store: Store;
   habits: readonly Habit[];
+  /** The catalog's occasions, for «مناسبة قريبة» (default none). */
+  occasions?: readonly Occasion[];
   timeZone: string;
   locale: PushLocale;
   now: Date;
@@ -155,8 +161,10 @@ export function planPushes(input: PushPlanInput): PlannedPush[] {
     },
     defaultSlotsOf: (plan) => habitFor(plan, habits)?.defaultSlots,
     prayerTimesOn: (date) => anchorPrayerTimes(input.anchorTimes?.[date]),
-    kinds: ['habit', 'periodic', 'evening', 'friday', 'strategy', 'digest'],
+    occasions: (input.occasions ?? []).map((o) => ({ key: o.key, titleAr: o.titleAr, titleEn: o.titleEn, deed: o.deed, rule: o.rule })),
+    kinds: ['habit', 'periodic', 'evening', 'friday', 'occasion', 'digest'],
   });
+  const occasionsByKey = new Map((input.occasions ?? []).map((o) => [o.key, o]));
 
   const out: Omit<PlannedPush, 'digest'>[] = [];
   for (const entry of entries) {
@@ -186,14 +194,16 @@ export function planPushes(input: PushPlanInput): PlannedPush[] {
       out.push({ key: entry.key, fireAt, title: policy.wirdTitle, body: policy.eveningBody, url: practice, tag: 'evening' });
     } else if (entry.kind === 'friday') {
       out.push({ key: entry.key, fireAt, title: policy.fridayTitle, body: policy.fridayBody, url: practice, tag: 'friday' });
-    } else if (entry.kind === 'strategy' && entry.strategy) {
+    } else if (entry.kind === 'occasion') {
+      const first = occasionsByKey.get(entry.occasions?.[0] ?? '');
+      if (!first) continue;
       out.push({
         key: entry.key,
         fireAt,
-        title: policy.strategyTitle,
-        body: policy.strategyBody(entry.strategy),
-        url: sitePath(locale, '/practice/strategies'),
-        tag: 'strategy',
+        title: policy.occasionTitle,
+        body: policy.occasionBody(locale === 'ar' ? first.titleAr : first.titleEn),
+        url: sitePath(locale, `/good-deeds/${encodeURIComponent(first.deed)}`),
+        tag: 'occasion',
       });
     } else if (entry.kind === 'digest') {
       out.push({ key: entry.key, fireAt, title: policy.wirdTitle, body: policy.digestBody(entry.count ?? 1), url: practice, tag: 'digest' });

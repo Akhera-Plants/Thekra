@@ -28,6 +28,11 @@ async function makeService(userExists = true) {
     habitLog: { findMany: vi.fn().mockResolvedValue([{ planId: 'p1', date: new Date('2026-10-27T00:00:00Z'), amount: 3 }]) },
     relative: { findMany: vi.fn().mockResolvedValue([]) },
     relativeContact: { findMany: vi.fn().mockResolvedValue([]) },
+    fardMark: {
+      findMany: vi.fn().mockResolvedValue([
+        { userId: USER_ID, date: new Date('2026-10-27T00:00:00Z'), prayer: 'fajr', status: 'qada', clientUpdatedAt: new Date('2026-10-27T05:00:00Z') },
+      ]),
+    },
   };
   const push = { forgetUser: vi.fn().mockResolvedValue(undefined) };
   return {
@@ -63,7 +68,14 @@ describe('AccountService', () => {
       exportedAt: '2026-10-28T00:00:00.000Z',
       user: { id: USER_ID, email: 'a@b.test', displayName: null, createdAt },
       favorites: [{ quoteId: 'q1', createdAt }],
-      practice: { settings: null, plans: [], logs: [{ planId: 'p1', date: '2026-10-27', amount: 3 }], relatives: [], contacts: [] },
+      practice: {
+        settings: null,
+        plans: [],
+        logs: [{ planId: 'p1', date: '2026-10-27', amount: 3 }],
+        relatives: [],
+        contacts: [],
+        fard: [{ date: '2026-10-27', prayer: 'fajr', status: 'qada', clientUpdatedAt: '2026-10-27T05:00:00.000Z' }],
+      },
       sinVault: VAULT,
     });
     expect(JSON.stringify(result)).not.toContain('argon2');

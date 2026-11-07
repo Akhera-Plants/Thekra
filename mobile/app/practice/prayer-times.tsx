@@ -28,14 +28,15 @@ import { currentPrayerLookup, refreshPrayerTimes } from '@/lib/practice/prayer';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { space, useStyles, type Theme } from '@/theme';
 import { BottomSheet } from '@/components/practice/mujahada/Sheet';
-import { Button, Chip, Field, Icon, ListRow, Notice, PageHeader, Rule, Screen, Section, Text } from '@/ui';
+import { Chip, Field, Icon, ListRow, Notice, PageHeader, Screen, Section, Text, SectionDivider, ButtonPair, toast } from '@/ui';
 
 const makeStyles = (t: Theme) => ({
   stack: { gap: space.md },
   chips: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: space.sm },
   offsets: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: space.sm },
   offset: { width: 96 },
-  rows: { borderTopWidth: 1, borderTopColor: t.colors.border },
+  /** No top rule: the first row sits under its section title (A-05). */
+  rows: {},
   toggle: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
@@ -78,7 +79,9 @@ export default function PrayerTimesScreen() {
     }
     setStatus('saving');
     setPrefs((p) => ({ ...p, prayer: next }));
-    setStatus((await refreshPrayerTimes(true)) === 'updated' ? 'saved' : 'failed');
+    const result = (await refreshPrayerTimes(true)) === 'updated' ? 'saved' : 'failed';
+    setStatus(result);
+    if (result === 'saved') toast(t('prayerTimes.saved'));
   }
 
   return (
@@ -132,18 +135,16 @@ export default function PrayerTimesScreen() {
               ))}
             </View>
           ) : null}
-          <Button
-            label={status === 'saving' ? t('prayerTimes.saving') : t('prayerTimes.save')}
-            onPress={() => void save()}
-            disabled={status === 'saving'}
+          {/* «احفظ» with «امسح» beside it at one size (O-02), not floating on its own. */}
+          <ButtonPair
+            primary={{
+              label: status === 'saving' ? t('prayerTimes.saving') : t('prayerTimes.save'),
+              onPress: () => void save(),
+              disabled: status === 'saving',
+              loading: status === 'saving',
+            }}
+            secondary={saved ? { label: t('prayerTimes.clear'), onPress: () => setPrefs((p) => ({ ...p, prayer: null, prayerCache: null })) } : null}
           />
-          {saved ? (
-            <Button
-              variant="outline"
-              label={t('prayerTimes.clear')}
-              onPress={() => setPrefs((p) => ({ ...p, prayer: null, prayerCache: null }))}
-            />
-          ) : null}
           {status === 'saved' ? <Notice>{t('prayerTimes.saved')}</Notice> : null}
           {status === 'failed' ? <Notice tone="destructive">{t('prayerTimes.failed')}</Notice> : null}
           {status === 'idle' ? (
@@ -153,7 +154,7 @@ export default function PrayerTimesScreen() {
           ) : null}
         </View>
       </Section>
-      <Rule />
+      <SectionDivider />
       <Section title={t('prayerTimes.anchorsTitle')}>
         {PRAYER_ANCHORS.map((anchor) => (
           <ListRow key={anchor} title={ANCHOR_LABELS[locale][anchor]} value={show(resolveAnchor(anchor, times))} />

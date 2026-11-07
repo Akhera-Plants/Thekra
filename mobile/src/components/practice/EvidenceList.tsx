@@ -1,6 +1,7 @@
 /**
  * Evidence texts for a habit, an occasion or a program stage, after the website's EvidenceQuotes: a section
- * heading, then the quote cards. The texts come only from the API (`/v1/practice/evidence`, published quotes);
+ * header («آيات وأحاديث تعينك على هذه الطاعة» / «…على ترك هذه المعصية» with the habit or sin under it, O-05), then
+ * the quote cards. The texts come only from the API (`/v1/practice/evidence`, published quotes);
  * ids the API does not return are skipped silently. While loading it shows a card-shaped placeholder; on an error, the
  * kit's error state with «حاول مجددًا» (refetches the evidence lists on screen).
  * With `limit` only the first texts show, and `moreHref` puts «المزيد» beside the heading (the topic's own page), so a
@@ -16,7 +17,7 @@ import { queryKeys } from '@/lib/query-keys';
 import { QuoteCard } from '@/components/QuoteCard';
 import type { QuoteDto } from '@/lib/types/api';
 import { space, useStyles } from '@/theme';
-import { ErrorState, QuoteCardSkeleton, Text, TextLink } from '@/ui';
+import { ErrorState, QuoteCardSkeleton, SectionHeader, TextLink } from '@/ui';
 
 interface EvidenceListProps {
   ids: readonly string[] | undefined;
@@ -24,6 +25,10 @@ interface EvidenceListProps {
   loading?: boolean;
   error?: boolean;
   title?: string;
+  /** The habit or sin the texts are for, under the title (O-05). */
+  subtitle?: string;
+  /** Section-title size (default) or the smaller heading inside a card or a sheet. */
+  size?: 'title' | 'heading';
   /** Show only this many texts (default: all). */
   limit?: number;
   /** «المزيد» beside the heading, to the page that reads all the texts. */
@@ -32,11 +37,9 @@ interface EvidenceListProps {
 
 const makeStyles = () => ({
   list: { gap: space.md },
-  heading: { flexDirection: 'row' as const, alignItems: 'center' as const, justifyContent: 'space-between' as const, gap: space.md },
-  title: { flex: 1 },
 });
 
-export function EvidenceList({ ids, byId, loading, error, title, limit, moreHref }: EvidenceListProps) {
+export function EvidenceList({ ids, byId, loading, error, title, subtitle, size = 'title', limit, moreHref }: EvidenceListProps) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const queryClient = useQueryClient();
@@ -52,14 +55,20 @@ export function EvidenceList({ ids, byId, loading, error, title, limit, moreHref
     .map((id) => byId?.get(id))
     .filter((q): q is QuoteDto => Boolean(q))
     .slice(0, limit);
-  const heading = (
-    <View style={styles.heading}>
-      <Text variant="heading" accessibilityRole="header" style={styles.title}>
-        {title ?? t('practice.evidence')}
-      </Text>
-      {moreHref ? <TextLink label={t('common.more')} onPress={handleMore} /> : null}
-    </View>
-  );
+  const titleText = title ?? t('practice.evidence');
+  // The title at section size with «المزيد» on its line (O-05 / A-03); an empty title (a sheet that names it) draws none.
+  const heading = titleText ? (
+    <SectionHeader
+      title={titleText}
+      subtitle={subtitle}
+      size={size}
+      action={
+        moreHref ? (
+          <TextLink label={t('common.more')} onPress={handleMore} accessibilityLabel={`${t('common.more')}: ${titleText}`} />
+        ) : undefined
+      }
+    />
+  ) : null;
   if (loading) {
     return (
       <View style={styles.list}>

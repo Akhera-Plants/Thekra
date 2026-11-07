@@ -76,24 +76,25 @@ import {
   ListRow,
   Notice,
   PageHeader,
-  Rule,
   Screen,
   Section,
   SegmentTabs,
   Skeleton,
   Text,
   type SegmentItem,
+  SectionDivider,
 } from '@/ui';
 
 type Part = 'habits' | 'stats';
 
-const makeStyles = (t: Theme) => ({
+const makeStyles = (_t: Theme) => ({
   streakTop: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.sm },
   /** The streak in one row (flame, number, label, «أطول: n») so the month shows without scrolling. */
   streakRow: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.sm },
   streakNumber: { fontVariant: ['tabular-nums' as const] },
   streakLabel: { flex: 1 },
-  list: { borderTopWidth: 1, borderTopColor: t.colors.border },
+  /** No top rule: the first row sits under its section title (A-05). */
+  list: {},
   tight: { gap: space.xs },
   empty: { gap: space.md, alignItems: 'flex-start' as const },
   subTitle: { paddingTop: space.sm, paddingBottom: space.xs },
@@ -138,12 +139,12 @@ function HabitsPart() {
         </View>
       ) : null}
       <ToolsSection />
-      <Rule />
+      <SectionDivider />
       <DeedsSection />
-      <Rule />
+      <SectionDivider />
       <ProgramsSection />
       <RamadanBlock />
-      <Rule />
+      <SectionDivider />
       <ListRow icon={Hourglass} title={t('practice.duties.title')} chevron onPress={openDuties} />
     </>
   );
@@ -233,7 +234,10 @@ function DeedsSection() {
   const paused = plans.filter(isPaused);
 
   return (
-    <Section title={t('myHabits.deedsTitle')}>
+    <Section
+      title={t('myHabits.deedsTitle')}
+      action={plans.length > 0 ? <Button label={t('kinship.addShort')} icon={Plus} onPress={openAdd} variant="outline" size="sm" accessibilityLabel={t('practice.addHabit')} /> : undefined}
+    >
       <GraduationOffers today={today} />
       {plans.length === 0 ? (
         <View style={styles.empty}>
@@ -263,7 +267,6 @@ function DeedsSection() {
               </View>
             </View>
           ) : null}
-          <Button label={t('practice.addHabit')} icon={Plus} onPress={openAdd} variant="outline" />
         </>
       )}
       <HabitFixSheet
@@ -385,9 +388,9 @@ function StatsPart() {
 
       {picked ? <PickedDay date={picked} today={today} title={picked === today ? t('practice.today') : shortDayTitle(picked, names)} /> : null}
 
-      <Rule />
+      <SectionDivider />
       <CommitmentChart today={today} />
-      <Rule />
+      <SectionDivider />
       <TallySection today={today} />
     </>
   );

@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react-native';
 import { canLeaveStep, loopProblem, loopSteps, loopTextMax, type LoopDraft, type LoopKind } from '@/lib/practice/loops';
 import { GUTTER, radius, space, useStyles, type Theme } from '@/theme';
-import { Button, ErrorText, Field, IconButton, Text } from '@/ui';
+import { Button, ErrorText, Field, IconButton, Text, ButtonPair } from '@/ui';
 
 const makeStyles = (t: Theme) => ({
   root: { flex: 1, justifyContent: 'flex-end' as const },
@@ -157,13 +157,21 @@ export function LoopBuilder({ kind, visible, initial, subject, editing, onClose,
             {problem ? <ErrorText>{t(`loops.problems.${problem}`)}</ErrorText> : null}
           </ScrollView>
           <View style={styles.footer}>
-            <Button label={last ? t('loops.save') : t('loops.next')} onPress={next} disabled={!canGo} block large arrow={!last} />
-            <View style={styles.footerRow}>
-              {index > 0 ? (
-                <Button label={t('loops.back')} onPress={() => setIndex(index - 1)} variant="outline" style={styles.grow} block />
-              ) : null}
-              {step.optional ? <Button label={t('loops.skip')} onPress={skip} variant="ghost" style={styles.grow} block /> : null}
-            </View>
+            {/* «التالي» with «تخطَّ» (or «رجوع») beside it at one size (O-02); «رجوع» drops to a quiet row only when both apply. */}
+            <ButtonPair
+              size="lg"
+              primary={{ label: last ? t('loops.save') : t('loops.next'), onPress: next, disabled: !canGo, arrow: !last }}
+              secondary={
+                step.optional
+                  ? { label: t('loops.skip'), onPress: skip }
+                  : index > 0
+                    ? { label: t('loops.back'), onPress: () => setIndex(index - 1) }
+                    : null
+              }
+            />
+            {step.optional && index > 0 ? (
+              <Button label={t('loops.back')} onPress={() => setIndex(index - 1)} variant="ghost" size="sm" />
+            ) : null}
           </View>
         </View>
       </KeyboardAvoidingView>

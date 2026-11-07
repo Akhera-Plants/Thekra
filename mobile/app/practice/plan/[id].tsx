@@ -2,18 +2,18 @@
  * One habit plan, after the website's PlanCard: today's amount with «أتممتها» and a partial «+1», «سُجِّل · تراجع»,
  * a typed partial amount, «صحّح السجل» (a week back, steppers for the day and the amount), the increase and relapse offers as next-step
  * notes, the last 30 days (a kind band and a row of dots, no streaks and no failure words), slot/day settings, and
- * «التزامي» (while «التزام شخصي» is on: the habit's make-up deed, PledgeSheet) and «المُعينات»: one evidence text from
- * the API with «المزيد» to the deed's page, which reads the rest. Sections in that order, each under a hairline: اليوم /
- * آخر 30 يومًا / التزامي / الإعدادات (with «أوقف مؤقتًا») / المُعينات. Delete is the trash in the native header
- * (confirmed), reachable without scrolling.
+ * «التزامي» (while «التزام شخصي» is on: the habit's make-up deed, PledgeSheet) and «آيات وأحاديث تعينك على هذه
+ * الطاعة» (O-05): one evidence text from the API with «المزيد» on the title's line to the deed's page, which reads the
+ * rest. Sections in that order, separated by the flower divider: اليوم / آخر 30 يومًا / التزامي / الإعدادات / الآيات.
+ * Pause and delete live in the header's «⋯» menu (A-15; delete confirmed there). Logs confirm with a toast.
  */
 
 import React, { useState } from 'react';
-import { Alert, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
-import { CircleCheck, SearchX, Trash2 } from 'lucide-react-native';
+import { CircleCheck, Pause, Play, SearchX, Trash2 } from 'lucide-react-native';
 import { useDisplayTime } from '@/components/practice/editors';
 import { fixedChoices, unsuitableChoices, windowRange } from '@/lib/practice/deed-window';
 import { currentPrayerDay } from '@/lib/practice/prayer';
@@ -52,19 +52,21 @@ import { PledgeSheet, usePledgeDone } from '@/components/practice/PledgeSheet';
 import { pledgeWords } from '@/components/practice/hub/HeartCards';
 import { radius, space, useStyles, useTheme, type Theme } from '@/theme';
 import {
+  ActionMenu,
   Button,
+  ButtonPair,
   EmptyState,
   ForwardChevron,
-  IconButton,
   Loading,
   NextStep,
   Notice,
   PageHeader,
-  Rule,
   Screen,
   Section,
+  SectionDivider,
   Text,
   Wrap,
+  toast,
 } from '@/ui';
 
 const makeStyles = (t: Theme) => ({
@@ -126,8 +128,6 @@ export default function PlanScreen() {
   const show = useDisplayTime();
 
   const [relapseDismissed, setRelapseDismissed] = useState(false);
-  /** The last log in this visit, so it can be undone in one tap. */
-  const [lastLog, setLastLog] = useState<{ date: string; before: number } | null>(null);
   /** «صحّح السجل» is open. */
   const [fixing, setFixing] = useState(false);
   const pledgesOn = usePracticeStore((s) => s.heart.prefs.pledges);
@@ -176,44 +176,62 @@ export default function PlanScreen() {
   }
 
   function handleLog(amount: number) {
-    setLastLog({ date: d, before: plan!.log[d] ?? 0 });
+    const before = plan!.log[d] ?? 0;
     update((p) => logDone(p, d, amount));
     if (!view.doneToday && amount >= view.remaining) void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-  }
-
-  function handleUndo() {
-    if (!lastLog) return;
-    const { date, before } = lastLog;
-    update((p) => correctLog(p, date, before));
-    setLastLog(null);
+    // «سُجّلت» with «تراجع» in the toast (A-11, A-23): the undo restores the day as it was before this tap.
+    toast({ message: t('practice.plan.logged'), actionLabel: t('practice.plan.undo'), onAction: () => update((p) => correctLog(p, d, before)) });
   }
 
   function handleFixSave(date: string, amount: number) {
     update((p) => correctLog(p, date, amount));
     setFixing(false);
-    setLastLog(null);
+    toast(t('practice.plan.fixSaved'));
+  }
+
+  function handlePause() {
+    update((p) => pausePlan(p, d));
+    toast(t('practice.paused.done'));
+  }
+
+  function handleResume() {
+    update((p) => resumePlan(p, d));
+    toast(t('practice.paused.resumed'));
   }
 
   function handleRemove() {
-    // Signed in, the deletion syncs to the account (a tombstone), so it is not only «من هذا الجهاز».
-    Alert.alert(t('practice.plan.delete'), t(signedIn ? 'practice.plan.deleteConfirmSynced' : 'practice.plan.deleteConfirm'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('common.delete'),
-        style: 'destructive',
-        onPress: () => {
-          setStore((s) => deletePlan(s, id as string));
-          router.back();
-        },
-      },
-    ]);
+    setStore((s) => deletePlan(s, id as string));
+    router.back();
+    toast(t('practice.plan.deleted'));
   }
 
-  const renderDeleteButton = () => <IconButton icon={Trash2} label={t('practice.plan.delete')} onPress={handleRemove} />;
+  // Page actions behind «⋯» (A-15): pause or resume, and delete (red, confirmed in the menu's own sheet). Signed in,
+  // the deletion syncs to the account (a tombstone), so the confirmation does not say «من هذا الجهاز».
+  const paused = isPaused(plan);
+  const renderMenu = () => (
+    <ActionMenu
+      items={[
+        paused
+          ? { label: t('practice.paused.resume'), icon: Play, onPress: handleResume }
+          : { label: t('practice.paused.pause'), icon: Pause, onPress: handlePause, hint: t('practice.paused.pauseHint') },
+        {
+          label: t('practice.plan.delete'),
+          icon: Trash2,
+          destructive: true,
+          onPress: handleRemove,
+          confirm: {
+            title: t('practice.plan.delete'),
+            message: t(signedIn ? 'practice.plan.deleteConfirmSynced' : 'practice.plan.deleteConfirm'),
+            confirmLabel: t('common.delete'),
+          },
+        },
+      ]}
+    />
+  );
 
   return (
     <Screen edges={['bottom']} keyboard>
-      <Stack.Screen options={{ title, headerRight: renderDeleteButton }} />
+      <Stack.Screen options={{ title, headerRight: renderMenu }} />
       <PageHeader eyebrow={t('practice.title')} title={title} lead={habit ? t(`practice.basis.${habit.basis}`) : undefined}>
         {timeHint ? (
           <Text variant="small" tone="muted">
@@ -234,7 +252,7 @@ export default function PlanScreen() {
       {isPaused(plan) ? (
         <NextStep title={t('practice.paused.since', { date: plan.pausedOn ? shortDate(plan.pausedOn) : '' })}>
           <Wrap style={styles.offerActions}>
-            <Button label={t('practice.paused.resume')} onPress={() => update((p) => resumePlan(p, d))} />
+            <Button label={t('practice.paused.resume')} onPress={handleResume} />
           </Wrap>
         </NextStep>
       ) : null}
@@ -255,10 +273,8 @@ export default function PlanScreen() {
             today={d}
             amountLabel={amountLabel}
             unitLabel={habit ? pick(habit, 'unitLabel', locale) : t(`practice.units.${plan.unit}`)}
-            logged={lastLog !== null}
             fixing={fixing}
             onLog={handleLog}
-            onUndo={handleUndo}
             onFixOpen={() => setFixing(true)}
             onFixSave={handleFixSave}
             onFixCancel={() => setFixing(false)}
@@ -267,14 +283,15 @@ export default function PlanScreen() {
           {view.relapse && !relapseDismissed ? (
             <NextStep title={t('practice.relapse.title')}>
               <Text variant="small">{t('practice.relapse.body', { amount: amountLabel(view.relapseAmount) })}</Text>
-              <Wrap style={styles.offerActions}>
-                <Button
-                  label={t('practice.relapse.action', { amount: amountLabel(view.relapseAmount) })}
-                  onPress={() => update((p) => decreaseTo(normalize(p, d), view.relapseAmount, d))}
-                  variant="outline"
-                />
-                <Button label={t('practice.relapse.keep')} onPress={() => setRelapseDismissed(true)} variant="ghost" />
-              </Wrap>
+              <ButtonPair
+                style={styles.offerActions}
+                primary={{
+                  label: t('practice.relapse.action', { amount: amountLabel(view.relapseAmount) }),
+                  onPress: () => update((p) => decreaseTo(normalize(p, d), view.relapseAmount, d)),
+                  variant: 'outline',
+                }}
+                secondary={{ label: t('practice.relapse.keep'), onPress: () => setRelapseDismissed(true), variant: 'ghost' }}
+              />
             </NextStep>
           ) : null}
 
@@ -289,11 +306,11 @@ export default function PlanScreen() {
         </Section>
       )}
 
-      {isPaused(plan) ? null : <Rule />}
+      {isPaused(plan) ? null : <SectionDivider />}
 
       <MonthPanel plan={plan} view={view} today={d} />
 
-      <Rule />
+      <SectionDivider />
 
       {pledgesOn ? (
         <>
@@ -306,7 +323,7 @@ export default function PlanScreen() {
             ) : null}
           </Section>
           <PledgeSheet visible={pledgeOpen} planId={plan.id} habitTitle={title} onClose={() => setPledgeOpen(false)} onDone={showPledgeDone} />
-          <Rule />
+          <SectionDivider />
         </>
       ) : null}
 
@@ -314,18 +331,21 @@ export default function PlanScreen() {
         plan={plan}
         window={habit?.window}
         ruleWeekdays={ruleToWeekdays(planRule(plan, habits))}
-        onSave={(next) => update(() => next)}
-        onPause={isPaused(plan) ? undefined : () => update((p) => pausePlan(p, d))}
+        onSave={(next) => {
+          update(() => next);
+          toast(t('practice.plan.settingsSaved'));
+        }}
       />
 
-      {habit?.evidence?.length ? <Rule /> : null}
+      {habit?.evidence?.length ? <SectionDivider /> : null}
 
       <EvidenceList
         ids={habit?.evidence}
         byId={evidence.data}
         loading={evidence.isLoading}
         error={evidence.isError}
-        title={t('practice.plan.helpers')}
+        title={t('practice.evidenceDeedTitle')}
+        subtitle={title}
         limit={1}
         moreHref={habit ? `/good-deeds/${habit.deed}` : undefined}
       />

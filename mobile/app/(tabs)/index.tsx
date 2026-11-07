@@ -19,7 +19,7 @@ import { SourceStrip } from '@/components/home/SourceStrip';
 import { AppHeader } from '@/components/nav/AppHeader';
 import { doorLayout } from '@/lib/home/door-layout';
 import { space, useStyles, type Theme } from '@/theme';
-import { ListRow, PageHeader, PathwayCard, Rule, Screen, Section } from '@/ui';
+import { ListRow, PageHeader, PathwayCard, Screen, Section, SectionDivider } from '@/ui';
 
 interface Moment {
   href: Href;
@@ -52,8 +52,6 @@ export default function HomeScreen() {
   const { width } = useWindowDimensions();
   const layout = doorLayout(width);
   const twoUp = layout.columns === 2;
-  // The compact doors keep their words whole on phones: the action is a bare arrow there.
-  const arrowOnly = !twoUp;
   const reminder = useReminderOfTheDay();
   const sources = useSourceStripNames();
   const { refetch: refetchReminder } = reminder;
@@ -102,18 +100,25 @@ export default function HomeScreen() {
           body={t('home.branchEntryDescription')}
           action={t('home.branchCta')}
           onPress={openBranches}
-          arrowOnly={arrowOnly}
         />
       </View>
 
-      <Rule />
+      <SectionDivider />
       <Section title={t('home.momentsHeading')}>
         <View>
-          {MOMENTS.map((moment) => (
-            <ListRow key={moment.labelKey} icon={moment.icon} title={t(moment.labelKey)} onPress={() => router.push(moment.href)} />
+          {MOMENTS.map((moment, i) => (
+            <ListRow
+              key={moment.labelKey}
+              icon={moment.icon}
+              title={t(moment.labelKey)}
+              onPress={() => router.push(moment.href)}
+              last={i === MOMENTS.length - 1}
+            />
           ))}
         </View>
       </Section>
+
+      {reminder.data !== null ? <SectionDivider /> : null}
 
       <FeaturedReminder
         quote={reminder.data}
@@ -121,6 +126,8 @@ export default function HomeScreen() {
         isError={reminder.isError}
         onRetry={handleRetryReminder}
       />
+
+      <SectionDivider />
 
       <SourceStrip names={sources.data} isLoading={sources.isLoading} />
     </Screen>

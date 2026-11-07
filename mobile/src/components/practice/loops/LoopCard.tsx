@@ -78,8 +78,8 @@ export function LoopCard({ kind, loop, title, onEdit, onDelete }: LoopCardProps)
         </View>
       </View>
       <View style={styles.actions}>
-        <Button label={t('loops.edit')} icon={Pencil} onPress={onEdit} variant="outline" compact />
-        <Button label={t('loops.delete')} icon={Trash} onPress={confirmDelete} variant="destructive" compact />
+        <Button label={t('loops.edit')} icon={Pencil} onPress={onEdit} variant="outline" size="sm" />
+        <Button label={t('loops.delete')} icon={Trash} onPress={confirmDelete} variant="destructive" size="sm" />
       </View>
     </View>
   );

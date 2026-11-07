@@ -455,6 +455,65 @@ describe('Practice, calendar and account endpoints (e2e)', () => {
     expect((await prisma.habitPlan.findUniqueOrThrow({ where: { id } })).loops).toBeNull();
   });
 
+  it('round 5: home sections and «الفرائض» sync (settings LWW, marks LWW per day and prayer); old clients get defaults', async () => {
+    const { auth, userId } = await register();
+    const home = [
+      { key: 'sources', visible: true },
+      { key: 'wird', visible: false },
+    ];
+    const first = await sync(auth, {
+      since: null,
+      changes: {
+        settings: { hijriOffset: 0, reminderTimes: [], homeSections: home, fardTracking: true, clientUpdatedAt: T(10) },
+        fard: [
+          { date: '2026-10-28', prayer: 'fajr', status: 'qada', clientUpdatedAt: T(10) },
+          { date: '2026-10-28', prayer: 'dhuhr', status: 'onTime', clientUpdatedAt: T(11) },
+        ],
+      },
+    }).expect(200);
+    // jsonb reorders keys; the server returns the canonical order the device sent.
+    expect(JSON.stringify(first.body.data.settings.homeSections)).toBe(JSON.stringify(home));
+    expect(first.body.data.settings.fardTracking).toBe(true);
+    expect(first.body.data.fard).toEqual([
+      { date: '2026-10-28', prayer: 'dhuhr', status: 'onTime', clientUpdatedAt: T(11) },
+      { date: '2026-10-28', prayer: 'fajr', status: 'qada', clientUpdatedAt: T(10) },
+    ]);
+    expect(await prisma.fardMark.count({ where: { userId } })).toBe(2);
+
+    // A later clear wins; an older write loses and the winner is echoed back.
+    await sync(auth, { since: null, changes: { fard: [{ date: '2026-10-28', prayer: 'fajr', status: null, clientUpdatedAt: T(20) }] } }).expect(200);
+    const stale = await sync(auth, {
+      since: null,
+      changes: { fard: [{ date: '2026-10-28', prayer: 'fajr', status: 'onTime', clientUpdatedAt: T(15) }] },
+    }).expect(200);
+    expect(stale.body.data.fard.find((m: { prayer: string }) => m.prayer === 'fajr')).toEqual({
+      date: '2026-10-28',
+      prayer: 'fajr',
+      status: null,
+      clientUpdatedAt: T(20),
+    });
+
+    // An older client's newer settings (no homeSections / fardTracking) set the defaults: last writer wins on the record.
+    const old = await sync(auth, { since: null, changes: { settings: { hijriOffset: 1, reminderTimes: [], clientUpdatedAt: T(30) } } }).expect(200);
+    expect(old.body.data.settings).toMatchObject({ hijriOffset: 1, homeSections: null, fardTracking: false });
+
+    // Invalid values are refused with nothing applied.
+    const bad = await sync(auth, {
+      since: null,
+      changes: {
+        settings: { hijriOffset: 0, homeSections: [{ key: 'nope', visible: true }], clientUpdatedAt: T(40) },
+        fard: [{ date: '2026-10-28', prayer: 'asr', status: 'onTime', clientUpdatedAt: T(40) }],
+      },
+    }).expect(400);
+    expect(bad.body.error.code).toBe('PRACTICE_INVALID');
+    expect(await prisma.fardMark.count({ where: { userId, prayer: 'asr' } })).toBe(0);
+    await sync(auth, { since: null, changes: { fard: [{ date: '2099-01-01', prayer: 'asr', status: 'onTime', clientUpdatedAt: T(40) }] } }).expect(400);
+
+    // Export carries the marks; deleting the account cascades them (covered with the rest below).
+    const exported = await request(server()).get('/v1/auth/me/export').set(auth).expect(200);
+    expect(exported.body.data.practice.fard).toHaveLength(2);
+  });
+
   it('export carries practice data and the vault ciphertext; DELETE /auth/me cascades all of it', async () => {
     const { email, password, userId, auth, refreshToken } = await register();
     await sync(auth, {

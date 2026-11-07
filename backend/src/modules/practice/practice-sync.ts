@@ -1,7 +1,16 @@
 import { BadRequestException, PayloadTooLargeException } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import {
+  cloneHomeSections,
+  compareFardMarks,
   compareVersions,
+  isFardPrayer,
+  isFardStatus,
+  parseHomeSections,
+  validateHomeSections,
+  type FardPrayer,
+  type FardStatus,
+  type HomeSectionPref,
   MAX_EXCUSED_DAYS,
   PEOPLE_CIRCLES,
   settingsContent,
@@ -62,6 +71,10 @@ export interface SettingsWire {
   freeMinutesPerDay: number | null;
   /** «عذر» days, ascending and unique (an older client omits it: none). */
   excusedDays: string[];
+  /** «خصّص الرئيسية» (round 5): the member's home order; null = the defaults (an older client omits it). */
+  homeSections: HomeSectionPref[] | null;
+  /** «الفرائض» switch (round 5); an older client omits it: off. */
+  fardTracking: boolean;
   /** The device time of the edit (last-writer-wins key). */
   clientUpdatedAt: string;
   /** The server time of the last write. */
@@ -136,6 +149,14 @@ export interface ContactWire {
   deleted: boolean;
 }
 
+/** One «الفرائض» mark (round 5): `status` null is a cleared mark. Last writer wins by `clientUpdatedAt`. */
+export interface FardWire {
+  date: string;
+  prayer: FardPrayer;
+  status: FardStatus | null;
+  clientUpdatedAt: string;
+}
+
 export interface PracticeChangesDto {
   serverTime: string;
   settings: SettingsWire | null;
@@ -143,6 +164,7 @@ export interface PracticeChangesDto {
   logs: LogWire[];
   relatives: (RelativeWire | DeletedWire)[];
   contacts: ContactWire[];
+  fard: FardWire[];
 }
 
 /** Settings as sent by a device. */
@@ -160,9 +182,10 @@ export interface SyncRequest {
   logs: LogWire[];
   relatives: RelativeChange[];
   contacts: ContactWire[];
+  fard: FardWire[];
 }
 
-type Kind = 'settings' | 'plans' | 'logs' | 'relatives' | 'contacts' | 'request';
+type Kind = 'settings' | 'plans' | 'logs' | 'relatives' | 'contacts' | 'fard' | 'request';
 
 class ItemError extends Error {}
 
@@ -256,11 +279,18 @@ function parseSettings(raw: unknown): SettingsChange {
   ) {
     throw new ItemError(`excusedDays must be at most ${MAX_EXCUSED_DAYS} YYYY-MM-DD dates, ascending and unique`);
   }
+  const rawHome = raw['homeSections'] ?? null;
+  if (rawHome !== null) check(validateHomeSections(rawHome));
+  const fardTracking = raw['fardTracking'] ?? false;
+  if (typeof fardTracking !== 'boolean') throw new ItemError('fardTracking must be true or false');
   return {
     hijriOffset,
     reminderTimes: [...reminderTimes],
     freeMinutesPerDay,
     excusedDays: [...(excusedDays as string[])],
+    // Known fields only, in the canonical order.
+    homeSections: rawHome === null ? null : cloneHomeSections(rawHome as HomeSectionPref[]),
+    fardTracking,
     clientUpdatedAt: timestamp(raw['clientUpdatedAt'], 'clientUpdatedAt'),
   };
 }
@@ -423,6 +453,26 @@ function parseContact(raw: unknown): ContactWire {
   return { relativeId: uuid(raw['relativeId'], 'relativeId'), date: date(raw['date'], 'date'), deleted };
 }
 
+/**
+ * A «الفرائض» mark. The day may not be later than tomorrow in UTC (a device east of UTC is already a day ahead);
+ * a mark is never set for a day that has not come.
+ */
+function parseFard(raw: unknown, latestDay: string): FardWire {
+  if (!isRecord(raw)) throw new ItemError('fard must be an object');
+  const day = date(raw['date'], 'date');
+  if (day > latestDay) throw new ItemError('date must not be in the future');
+  if (!isFardPrayer(raw['prayer'])) throw new ItemError('prayer must be one of fajr, dhuhr, asr, maghrib, isha');
+  const status = raw['status'] ?? null;
+  if (status !== null && !isFardStatus(status)) throw new ItemError('status must be onTime, qada or null');
+  return { date: day, prayer: raw['prayer'], status, clientUpdatedAt: timestamp(raw['clientUpdatedAt'], 'clientUpdatedAt') };
+}
+
+/** Of two copies of one mark, the one practice-core `compareFardMarks` keeps (later time; then a cleared mark). */
+export function fardWins(stored: Pick<FardWire, 'status' | 'clientUpdatedAt'> | null, incoming: Pick<FardWire, 'status' | 'clientUpdatedAt'>): boolean {
+  if (stored === null) return true;
+  return compareFardMarks({ status: stored.status, updatedAt: stored.clientUpdatedAt }, { status: incoming.status, updatedAt: incoming.clientUpdatedAt }) < 0;
+}
+
 function list(changes: Record<string, unknown>, kind: Exclude<Kind, 'settings' | 'request'>): unknown[] {
   const value = changes[kind] ?? [];
   if (!Array.isArray(value)) throw invalid(kind, null, `${kind} must be an array`);
@@ -513,8 +563,13 @@ export function relativeVersion(change: RelativeChange): Version {
   };
 }
 
-/** Settings content as practice-core builds it (`settingsContent`: excusedDays only when not empty). */
-export function settingsVersion(settings: SettingsChange): Version {
+/**
+ * Settings content as practice-core builds it (`settingsContent`: excusedDays only when not empty, homeSections only
+ * when set, fardTracking only when on).
+ */
+export function settingsVersion(
+  settings: Omit<SettingsChange, 'homeSections' | 'fardTracking'> & Partial<Pick<SettingsChange, 'homeSections' | 'fardTracking'>>,
+): Version {
   return { time: Date.parse(settings.clientUpdatedAt), deleted: false, content: settingsContent(settings) };
 }
 
@@ -533,7 +588,7 @@ const changeId = (change: PlanChange | RelativeChange) =>
  * Unknown fields are dropped. Duplicates inside one request are merged with the
  * same rules as against the database.
  */
-export function parseSyncRequest(body: unknown): SyncRequest {
+export function parseSyncRequest(body: unknown, now: Date = new Date()): SyncRequest {
   if (containsProgramsKey(body)) {
     throw new BadRequestException({
       code: 'PRACTICE_PROGRAMS_NOT_ALLOWED',
@@ -556,9 +611,11 @@ export function parseSyncRequest(body: unknown): SyncRequest {
     logs: list(changes, 'logs'),
     relatives: list(changes, 'relatives'),
     contacts: list(changes, 'contacts'),
+    fard: list(changes, 'fard'),
   };
   const settingsRaw = changes['settings'] ?? null;
-  const total = raw.plans.length + raw.logs.length + raw.relatives.length + raw.contacts.length + (settingsRaw ? 1 : 0);
+  const total =
+    raw.plans.length + raw.logs.length + raw.relatives.length + raw.contacts.length + raw.fard.length + (settingsRaw ? 1 : 0);
   if (total > MAX_SYNC_ITEMS) {
     throw new PayloadTooLargeException({
       code: 'PRACTICE_TOO_LARGE',
@@ -581,6 +638,11 @@ export function parseSyncRequest(body: unknown): SyncRequest {
       wins(relativeVersion(kept), relativeVersion(next)) ? next : kept,
     ),
     contacts: dedupe(parseEach(raw.contacts, 'contacts', parseContact), (contact) => `${contact.relativeId}|${contact.date}`),
+    fard: dedupe(
+      parseEach(raw.fard, 'fard', (item) => parseFard(item, new Date(now.getTime() + 86_400_000).toISOString().slice(0, 10))),
+      (mark) => `${mark.date}|${mark.prayer}`,
+      (kept, next) => (fardWins(kept, next) ? next : kept),
+    ),
   };
 }
 
@@ -653,16 +715,18 @@ export interface EchoKeys {
   logKeys: { planId: string; date: string }[];
   relativeIds: string[];
   contactKeys: { relativeId: string; date: string }[];
+  /** «الفرائض» marks of the request (absent: none). */
+  fardKeys?: { date: string; prayer: string }[];
 }
 
-const NO_ECHO: EchoKeys = { settings: false, planIds: [], logKeys: [], relativeIds: [], contactKeys: [] };
+const NO_ECHO: EchoKeys = { settings: false, planIds: [], logKeys: [], relativeIds: [], contactKeys: [], fardKeys: [] };
 
 /**
  * Everything of one user changed after `since` (all of it when null), plus the
  * items named in `echo`. Takes the client or a transaction; read-only.
  */
 export async function readPracticeChanges(
-  db: Pick<PrismaService, 'practiceSettings' | 'habitPlan' | 'habitLog' | 'relative' | 'relativeContact'>,
+  db: Pick<PrismaService, 'practiceSettings' | 'habitPlan' | 'habitLog' | 'relative' | 'relativeContact' | 'fardMark'>,
   userId: string,
   since: Date | null,
   serverTime: Date,
@@ -670,7 +734,8 @@ export async function readPracticeChanges(
 ): Promise<PracticeChangesDto> {
   const changed = since ? { updatedAt: { gt: since } } : {};
   const orEcho = <T>(echoed: T[]) => (since ? { OR: [changed, ...echoed] } : {});
-  const [settings, plans, logs, relatives, contacts] = await Promise.all([
+  const fardKeys = echo.fardKeys ?? [];
+  const [settings, plans, logs, relatives, contacts, fard] = await Promise.all([
     db.practiceSettings.findFirst({ where: { userId, ...(echo.settings ? {} : changed) } }),
     db.habitPlan.findMany({ where: { userId, ...orEcho(echo.planIds.length ? [{ id: { in: echo.planIds } }] : []) }, orderBy: { id: 'asc' } }),
     db.habitLog.findMany({
@@ -688,6 +753,10 @@ export async function readPracticeChanges(
       },
       orderBy: [{ relativeId: 'asc' }, { date: 'asc' }],
     }),
+    db.fardMark.findMany({
+      where: { userId, ...orEcho(fardKeys.map((key) => ({ date: new Date(key.date), prayer: key.prayer }))) },
+      orderBy: [{ date: 'asc' }, { prayer: 'asc' }],
+    }),
   ]);
   return {
     serverTime: serverTime.toISOString(),
@@ -697,6 +766,8 @@ export async function readPracticeChanges(
           reminderTimes: settings.reminderTimes,
           freeMinutesPerDay: settings.freeMinutesPerDay,
           excusedDays: settings.excusedDays,
+          homeSections: homeSectionsOf(settings.homeSections),
+          fardTracking: settings.fardTracking,
           clientUpdatedAt: settings.clientUpdatedAt.toISOString(),
           updatedAt: settings.updatedAt.toISOString(),
         }
@@ -710,7 +781,21 @@ export async function readPracticeChanges(
     })),
     relatives: relatives.map(relativeRowToWire),
     contacts: contacts.map((contact) => ({ relativeId: contact.relativeId, date: day(contact.date), deleted: contact.deletedAt !== null })),
+    fard: fard.flatMap((mark) =>
+      isFardPrayer(mark.prayer) && (mark.status === null || isFardStatus(mark.status))
+        ? [{ date: day(mark.date), prayer: mark.prayer, status: mark.status, clientUpdatedAt: mark.clientUpdatedAt.toISOString() }]
+        : [],
+    ),
   };
+}
+
+/**
+ * A stored `homeSections` value in the canonical field order (jsonb reorders object keys), exactly as the device sent
+ * it (no sections added); null for none or bad data.
+ */
+export function homeSectionsOf(value: unknown): HomeSectionPref[] | null {
+  if (value === null || value === undefined || validateHomeSections(value) !== null) return null;
+  return parseHomeSections(value);
 }
 
 /** A stored `slotAnchors` value: an array with at least one anchor, else null (old rows, bad data). */

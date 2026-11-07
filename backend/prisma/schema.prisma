@@ -808,6 +808,8 @@ model User {
   practiceSettings PracticeSettings?
   habitPlans       HabitPlan[]
   relatives        Relative[]
+  /// «الفرائض» marks (round 5), cascade with the user.
+  fardMarks        FardMark[]
   /// The sin program, encrypted on the device; the server never sees it in clear.
   sinVault         SinVault?
   /// Web push: one row per browser that turned reminders on (docs/plan/2026-10-web-push.md).
@@ -829,8 +831,30 @@ model PracticeSettings {
   freeMinutesPerDay Int?
   /// «عذر» days (sick or travelling), YYYY-MM-DD ascending, at most 60. Neither break nor add to the streak.
   excusedDays       String[] @default([])
+  /// «خصّص الرئيسية» (round 5): practice-core HomeSectionPref[] ({key, visible} in order); null = the defaults.
+  homeSections      Json?
+  /// «الفرائض» (round 5): the five-prayer rows are on. Off by default.
+  fardTracking      Boolean  @default(false)
   clientUpdatedAt   DateTime
   updatedAt         DateTime @updatedAt
+}
+
+/// «الفرائض» (round 5, practice-core fard.ts): one obligatory prayer of one day, «في وقتها» (onTime) or «قضاء» (qada).
+/// Merge: last writer wins per (user, date, prayer) by `clientUpdatedAt`; a cleared mark keeps the row with
+/// `status` null so the clearing reaches the other devices. Not a habit: no limit, no streak.
+model FardMark {
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date            DateTime @db.Date
+  /// fajr | dhuhr | asr | maghrib | isha
+  prayer          String
+  /// onTime | qada, or null for a cleared mark.
+  status          String?
+  clientUpdatedAt DateTime
+  updatedAt       DateTime @updatedAt
+
+  @@id([userId, date, prayer])
+  @@index([userId, updatedAt])
 }
 
 model HabitPlan {

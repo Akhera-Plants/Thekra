@@ -12,7 +12,7 @@ import { useCircleUserId, useJoinCircle } from '@/lib/api/circles';
 import { circleErrorKey, cleanTypedCode } from '@/lib/circles/circle-view';
 import { CIRCLE_TEXT_MAX } from '@/lib/types/circles';
 import { space } from '@/theme';
-import { Button, ErrorText, Field, PageHeader, Screen } from '@/ui';
+import { Button, ErrorText, Field, PageHeader, Screen, toast } from '@/ui';
 
 export default function JoinCircleScreen() {
   const { t } = useTranslation();
@@ -25,7 +25,12 @@ export default function JoinCircleScreen() {
 
   function handleJoin() {
     if (!canSubmit) return;
-    join.mutate({ code, displayName: displayName.trim() }, { onSuccess: (circle) => router.replace(`/circles/${circle.id}`) });
+    join.mutate({ code, displayName: displayName.trim() }, {
+      onSuccess: (circle) => {
+        router.replace(`/circles/${circle.id}`);
+        toast(t('circles.joinedToast', { name: circle.name }));
+      },
+    });
   }
 
   return (
@@ -56,7 +61,7 @@ export default function JoinCircleScreen() {
             onSubmitEditing={handleJoin}
           />
           {join.isError ? <ErrorText>{t(circleErrorKey(join.error))}</ErrorText> : null}
-          <Button label={t('circles.joinButton')} onPress={handleJoin} disabled={!canSubmit} loading={join.isPending} block large />
+          <Button label={t('circles.joinButton')} onPress={handleJoin} disabled={!canSubmit} loading={join.isPending} block size="lg" />
         </View>
       ) : (
         <CirclesSignedOut />

@@ -1,5 +1,5 @@
 import { DEFAULT_NOTIFICATION_PREFS, emptyStore, type Plan, type Relative, type Store } from '@thekra/practice-core';
-import { practiceCatalog } from '../practice/practice-catalog.js';
+import { practiceCatalog, type Occasion } from '../practice/practice-catalog.js';
 import { MAX_PUSH_PER_WINDOW, planPushes, sitePath, type PushPlanInput } from './push-planner.js';
 
 const habits = practiceCatalog().habits;
@@ -136,14 +136,30 @@ describe('planPushes', () => {
     expect(JSON.stringify(nudges)).not.toMatch(/my own title/);
   });
 
-  it('«ذكّرني بها»: one opted-in strategy on Saturday at its time, linking to the strategies page', () => {
+  it('plans no strategy reminder any more (round 5, F-12 a), even from stored prefs that hold strategies', () => {
     const prefs = { ...QUIET_PREFS, habits: false, strategies: ['start-tiny'], strategyTime: '10:00' };
-    const out = run(store([]), { prefs, windowHours: 96 });
-    // Saturday 2026-10-31 10:00 in Amman (UTC+3) = 07:00 UTC.
-    expect(out.map((p) => [p.key, p.fireAt.toISOString(), p.title, p.body, p.url])).toEqual([
-      ['strategy:2026-10-31', '2026-10-31T07:00:00.000Z', 'استراتيجية الأسبوع', 'ابدأ صغيرًا جدًا', '/practice/strategies'],
+    expect(run(store([]), { prefs, windowHours: 96 })).toEqual([]);
+  });
+
+  it('«مناسبة قريبة»: opt-in, the day before a non-weekly occasion, at its time, linking to the deed page', () => {
+    const arafahLike: Occasion = {
+      key: 'test-day',
+      titleAr: 'يوم عرفة',
+      titleEn: 'The Day of Arafah',
+      deed: 'siyam',
+      rule: { kind: 'monthlyDay', day: 28 },
+      basis: 'text',
+      evidence: [],
+    };
+    const occasions = [...practiceCatalog().occasions, arafahLike];
+    const prefs = { ...QUIET_PREFS, habits: false, occasions: true, occasionTime: '20:00' };
+    const now = new Date('2026-10-26T18:00:00Z');
+    // 27 Oct 20:00 in Amman (UTC+3) = 17:00 UTC; Mondays/Thursdays and Friday never appear.
+    expect(run(store([]), { prefs, occasions, now }).map((p) => [p.key, p.fireAt.toISOString(), p.title, p.body, p.url])).toEqual([
+      ['occasion:2026-10-27', '2026-10-27T17:00:00.000Z', 'مناسبة قريبة', 'غدًا: يوم عرفة', '/good-deeds/siyam'],
     ]);
-    expect(run(store([]), { prefs: { ...prefs, strategies: [] }, windowHours: 96 })).toEqual([]);
+    expect(run(store([]), { prefs: { ...prefs, occasions: false }, occasions, now })).toEqual([]);
+    expect(run(store([]), { prefs, occasions, now, locale: 'en' })[0]?.body).toBe('Tomorrow: The Day of Arafah');
   });
 
   it('caps the list and gives a digest that changes only with what the user sees', () => {

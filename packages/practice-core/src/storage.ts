@@ -24,6 +24,8 @@ import { latestDate, undoLastContact, validateRelative, type PeopleCircle, type 
 import { cloneHabitLoop, mergeLogs, validatePlan, type HabitLoop, type Plan, type PlanLog } from './plan.js';
 import type { Rule } from './rules.js';
 import type { PrayerAnchor } from './prayer.js';
+import { parseFardMarks, type FardMark } from './fard.js';
+import { homeSectionsToStore, parseHomeSections, validateHomeSections, type HomeSectionPref } from './home.js';
 import { cloneSinLoop, sanitizeCheckIn, validateCheckIn, validateProgram, validateSinLoop, type CheckIn, type SinProgram } from './sin-program.js';
 
 export const STORE_VERSION = 2;
@@ -43,6 +45,13 @@ export interface Settings {
    * {@link MAX_EXCUSED_DAYS} (the newest kept). Absent or empty: none. Edit through {@link toggleExcusedDay}.
    */
   excusedDays?: LocalDate[];
+  /**
+   * «خصّص الرئيسية» (round 5, F-02 a): the member's order and visibility of the home sections (`home.ts`). Absent: the
+   * defaults. Never stored equal to the defaults ({@link updateSettings} drops it), so it follows later default changes.
+   */
+  homeSections?: HomeSectionPref[];
+  /** «الفرائض» (round 5, F-05 a): the five-prayer rows are on. Absent: off. */
+  fardTracking?: true;
   /** ISO time of the last local edit. Absent while the settings were never edited (any synced version wins). */
   updatedAt?: IsoTime;
 }
@@ -79,6 +88,11 @@ export interface Store {
   settings: Settings;
   tombstones: Tombstone[];
   sync: SyncState;
+  /**
+   * «الفرائض» marks (round 5, `fard.ts`), synced item by item. Absent or empty: none. Optional so older stores and
+   * literals stay valid; read it as `store.fard ?? []`.
+   */
+  fard?: FardMark[];
 }
 
 /** What may leave the device in clear: no `programs` (and no sync bookkeeping), by construction. */
@@ -266,6 +280,9 @@ function parseSettings(raw: unknown, upgradeTime: IsoTime | null): Settings {
   if (typeof free === 'number' && Number.isInteger(free) && free >= 0 && free <= 1440) settings.freeMinutesPerDay = free;
   const excused = cleanExcusedDays(s.excusedDays);
   if (excused.length > 0) settings.excusedDays = excused;
+  const home = parseHomeSections(s.homeSections);
+  if (home) settings.homeSections = home;
+  if (s.fardTracking === true) settings.fardTracking = true;
   if (isIsoTime(s.updatedAt)) settings.updatedAt = s.updatedAt;
   else if (upgradeTime !== null && (settings.hijriOffset !== 0 || (settings.reminderTimes?.length ?? 0) > 0)) {
     // A v1 store whose settings were changed from the defaults: give them a version so they sync.
@@ -415,7 +432,7 @@ export function parseStore(json: unknown, now: IsoTime = nowIso()): Store {
   const upgradeTime = raw.v === 1 ? now : null;
   const stamp = <T extends { updatedAt?: IsoTime }>(x: T): T => (x.updatedAt === undefined || raw.v === 1 ? { ...x, updatedAt: now } : x);
   try {
-    return resolveTombstones({
+    const store = resolveTombstones({
       v: 2,
       plans: keepValid<Plan>(raw.plans, validatePlan, clonePlan, (p) => p.id).map(stamp),
       relatives: keepValid<Relative>(raw.relatives, validateRelative, cloneRelative, (r) => r.id).map(stamp),
@@ -424,6 +441,9 @@ export function parseStore(json: unknown, now: IsoTime = nowIso()): Store {
       tombstones: raw.v === 2 ? parseTombstones(raw.tombstones) : [],
       sync: raw.v === 2 ? parseSync(raw.sync) : { lastSyncedAt: null, acked: {} },
     });
+    // Present only when there is a mark, so stores without «الفرائض» keep their exact shape.
+    const fard = parseFardMarks(raw.fard);
+    return fard.length > 0 ? { ...store, fard } : store;
   } catch {
     return emptyStore();
   }
@@ -437,7 +457,9 @@ export function serializeStore(store: Store): string {
 /** What may leave the device in clear: everything except sin programs (and sync bookkeeping). */
 export function exportForSync(store: Store): SyncPayload {
   const clean = parseStore(store as unknown);
-  return { v: clean.v, plans: clean.plans, relatives: clean.relatives, settings: clean.settings, tombstones: clean.tombstones };
+  const out: SyncPayload = { v: clean.v, plans: clean.plans, relatives: clean.relatives, settings: clean.settings, tombstones: clean.tombstones };
+  if (clean.fard) out.fard = clean.fard;
+  return out;
 }
 
 // ── Store-level edits ─────────────────────────────────────────────────────────────────────────────────────────
@@ -583,7 +605,32 @@ export function updateSettings(store: Store, patch: Partial<Omit<Settings, 'upda
     throw new RangeError('Invalid freeMinutesPerDay');
   }
   if (merged.excusedDays !== undefined && !merged.excusedDays.every(isValidDate)) throw new RangeError('Invalid excused day');
+  if ('homeSections' in patch) {
+    if (patch.homeSections !== undefined && validateHomeSections(patch.homeSections) !== null) throw new RangeError('Invalid homeSections');
+    const home = homeSectionsToStore(patch.homeSections);
+    if (home) parsed.homeSections = home;
+    else delete parsed.homeSections;
+  }
+  if ('fardTracking' in patch && patch.fardTracking !== undefined && patch.fardTracking !== true) throw new RangeError('Invalid fardTracking');
   return { ...store, settings: { ...parsed, updatedAt: now } };
+}
+
+/** «خصّص الرئيسية»: stores the member's section order (the defaults are stored as absent). Throws on an invalid list. */
+export function setHomeSections(store: Store, list: readonly HomeSectionPref[] | null, now: IsoTime = nowIso()): Store {
+  return updateSettings(store, { homeSections: list === null ? undefined : [...list] }, now);
+}
+
+/** «الفرائض» on or off. Turning it off keeps the marks (they reappear when it is turned on again). */
+export function setFardTracking(store: Store, on: boolean, now: IsoTime = nowIso()): Store {
+  if (fardOnInSettings(store.settings) === on) return store;
+  const settings: Settings = { ...store.settings };
+  if (on) settings.fardTracking = true;
+  else delete settings.fardTracking;
+  return { ...store, settings: { ...settings, updatedAt: now } };
+}
+
+function fardOnInSettings(s: Settings): boolean {
+  return s.fardTracking === true;
 }
 
 /** True when `date` is marked «عذر» (sick or travelling). */

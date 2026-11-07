@@ -51,6 +51,7 @@ import { ActiveDaysPicker, SlotsEditor, WeekdayPicker } from '@/components/pract
 import { GUTTER, radius, space, useStyles, type Theme } from '@/theme';
 import {
   Button,
+  ButtonPair,
   CheckRow,
   ErrorState,
   ErrorText,
@@ -58,13 +59,13 @@ import {
   NextStep,
   Notice,
   PageHeader,
-  Rule,
+  SectionDivider,
   Section,
   Skeleton,
   SwitchRow,
   Text,
-  Wrap,
   Screen,
+  toast,
 } from '@/ui';
 
 type Step = OnboardingStep | 'finish';
@@ -243,6 +244,7 @@ export default function AddHabitScreen() {
     if (heavyDayOn(store.plans, d)) plan = startEbb(plan, d);
     const askPermission = shouldAskOnFirstHabit(store.plans.length, prefs);
     setStore((s) => upsertPlan(s, plan));
+    toast(t('practice.add.addedToast', { habit: pick(habit, 'title', locale) }));
     if (askPermission) void askForReminders();
     if (firstHabit) {
       setCreatedId(plan.id);
@@ -303,7 +305,6 @@ export default function AddHabitScreen() {
           setActiveDays(3);
           setStep('howMuch');
         }}
-        onBack={entryStep === 'when' ? undefined : () => setStep('what')}
       >
         <ScheduleFields
           window={habit.window}
@@ -336,7 +337,6 @@ export default function AddHabitScreen() {
       onSkip={() =>
         create({ distance: 'far', slots: slots.length > 0 ? slots : defaultSlotsFor(habit), weekdays: weekdays ?? ruleToWeekdays(habit.defaultRule) })
       }
-      onBack={() => setStep('when')}
     >
       <View style={styles.group} accessibilityRole="radiogroup">
         {DISTANCES.map((value) => (
@@ -376,11 +376,10 @@ interface StepFrameProps {
   nextDisabled?: boolean;
   /** «تخطَّ»: keep the defaults of this screen and go on. */
   onSkip?: () => void;
-  onBack?: () => void;
 }
 
-/** One screen: the dots, the question with ONE hint line and one example; «التالي», «تخطَّ» and «رجوع» stay pinned. */
-function StepFrame({ step, eyebrow, title, lead, example, children, nextLabel, onNext, nextDisabled, onSkip, onBack }: StepFrameProps) {
+/** One screen: the dots, the question with ONE hint line and one example; «التالي» and «تخطَّ» stay pinned. */
+function StepFrame({ step, eyebrow, title, lead, example, children, nextLabel, onNext, nextDisabled, onSkip }: StepFrameProps) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   return (
@@ -398,11 +397,12 @@ function StepFrame({ step, eyebrow, title, lead, example, children, nextLabel, o
         {children}
       </ScrollView>
       <View style={styles.footer}>
-        <Wrap style={styles.actions}>
-          <Button label={nextLabel} onPress={onNext} disabled={nextDisabled} large arrow />
-          {onSkip ? <Button label={t('practice.onboarding.skip')} onPress={onSkip} variant="outline" large /> : null}
-          {onBack ? <Button label={t('practice.add.back')} onPress={onBack} variant="ghost" large /> : null}
-        </Wrap>
+        {/* «التالي» and «تخطَّ» only, side by side at one size (A-06); the header's Back steps back (usePreventRemove). */}
+        <ButtonPair
+          size="lg"
+          primary={{ label: nextLabel, onPress: onNext, disabled: nextDisabled, arrow: true }}
+          secondary={onSkip ? { label: t('practice.onboarding.skip'), onPress: onSkip } : null}
+        />
       </View>
     </Screen>
   );
@@ -509,7 +509,7 @@ function ScheduleFields({ window, slots, onSlots, activeDays, onActiveDays, week
   return (
     <>
       <SlotsEditor slots={slots} onChange={onSlots} window={window} />
-      <Rule />
+      <SectionDivider />
       <View style={styles.group}>
         <Text variant="heading" accessibilityRole="header">
           {t('practice.add.activeDays')}
@@ -518,7 +518,7 @@ function ScheduleFields({ window, slots, onSlots, activeDays, onActiveDays, week
       </View>
       {weekdays ? (
         <>
-          <Rule />
+          <SectionDivider />
           <View style={styles.group}>
             <Text variant="heading" accessibilityRole="header">
               {t('practice.add.reminderDays')}

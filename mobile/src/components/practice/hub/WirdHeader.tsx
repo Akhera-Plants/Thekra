@@ -1,7 +1,7 @@
 /**
  * The title block of «ورد اليوم»: the title and one date line (Gregorian; the Hijri date too when «إظهار التاريخ
- * الهجري» is on), and on the other side the streak chip (a green flame and the number, never red) and «أضف», the
- * page's one solid control.
+ * الهجري» is on), and on the other side the streak chip (a green flame and the number, never red) and «أضف»
+ * (outlined, on the title's line).
  */
 
 import React from 'react';
@@ -54,7 +54,8 @@ export function WirdHeader({ dateLabel, streak, freshLine, onAdd }: WirdHeaderPr
             </Text>
           </View>
         ) : null}
-        <Button label={t('practice.hub.add')} icon={Plus} onPress={onAdd} />
+        {/* Outlined (A-08): the page's solid is the day's own action, not «أضف». */}
+        <Button label={t('practice.hub.add')} icon={Plus} onPress={onAdd} variant="outline" size="sm" />
       </View>
       <Text variant="small" tone="muted">
         {dateLabel}

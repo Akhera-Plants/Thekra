@@ -19,7 +19,7 @@ import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useHeaderHeight } from 'expo-router/react-navigation';
 import { useTranslation } from 'react-i18next';
-import { Sprout, X } from 'lucide-react-native';
+import { ArrowLeft, ArrowRight, Sprout, X } from 'lucide-react-native';
 import { GUTTER, radius, space, useStyles, useTheme, type Theme } from '@/theme';
 import { IconButton } from './Button';
 import { Icon } from './Icon';
@@ -36,6 +36,7 @@ const makeStyles = (t: Theme) => ({
   section: { gap: space.md },
   sectionHead: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.md },
   sectionTitle: { flex: 1, minWidth: 0 },
+  sectionAction: { flexShrink: 0, maxWidth: '50%' as const },
   rule: { height: 1, backgroundColor: t.colors.border },
   sheetHandle: {
     alignSelf: 'center' as const,
@@ -164,18 +165,30 @@ export interface PageHeaderProps {
   title: string;
   /** `.page-lead`. */
   lead?: string;
+  /** The page's own action ON the title's line, opposite the title (A-07): a `sm`/`md` Button («أضف قريبًا»). */
+  action?: React.ReactNode;
   children?: React.ReactNode;
 }
 
 /** The page title block. On stack screens the native header (see `useStackScreenOptions`) owns Back. */
-export function PageHeader({ eyebrow, title, lead, children }: PageHeaderProps) {
+export function PageHeader({ eyebrow, title, lead, action, children }: PageHeaderProps) {
   const styles = useStyles(makeStyles);
+  const heading = (
+    <Text variant="display" accessibilityRole="header" style={action ? styles.sectionTitle : undefined}>
+      {title}
+    </Text>
+  );
   return (
     <View style={styles.header}>
       {eyebrow ? <Text variant="eyebrow">{eyebrow}</Text> : null}
-      <Text variant="display" accessibilityRole="header">
-        {title}
-      </Text>
+      {action ? (
+        <View style={styles.sectionHead}>
+          {heading}
+          <View style={styles.sectionAction}>{action}</View>
+        </View>
+      ) : (
+        heading
+      )}
       {lead ? (
         <Text variant="lead" tone="muted">
           {lead}
@@ -192,19 +205,33 @@ export function PageHeader({ eyebrow, title, lead, children }: PageHeaderProps) 
  */
 export function useStackScreenOptions() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
+  const back = t('common.back');
   return useMemo(
     () => ({
       headerShown: true,
       // Shown nowhere in the bar: `title` may still name the screen for accessibility and recents.
       headerTitle: '',
       headerBackButtonDisplayMode: 'minimal' as const,
+      // iOS reads the back item by this title even when only the chevron shows: «رجوع», not the system's «Back» (A-19).
+      headerBackTitle: back,
+      // The web's header button names itself «Go back» in English and is 30×30: our own 48×48 «رجوع» there.
+      ...(Platform.OS === 'web'
+        ? { headerLeft: ({ canGoBack }: { canGoBack?: boolean }) => (canGoBack ? <BackButton label={back} /> : null) }
+        : null),
       headerShadowVisible: false,
       headerTintColor: colors.foreground,
       headerStyle: { backgroundColor: colors.background },
       contentStyle: { backgroundColor: colors.background },
     }),
-    [colors],
+    [colors, back],
   );
+}
+
+/** The header's Back on the web: a 48×48 target named in the UI language (A-09, A-19). */
+function BackButton({ label }: { label: string }) {
+  const { rtl } = useTheme();
+  return <IconButton icon={rtl ? ArrowRight : ArrowLeft} label={label} tone="default" onPress={() => router.back()} />;
 }
 
 /**
@@ -230,9 +257,46 @@ export function BrandBar({ tagline, end }: { tagline?: React.ReactNode; end?: Re
   );
 }
 
+export interface SectionHeaderProps {
+  title: string;
+  /** A short line under the title (muted). */
+  lead?: string;
+  /** A second line in body ink under the title (e.g. the habit or sin the texts belong to). */
+  subtitle?: string;
+  /**
+   * The section's action, ON the title's line at the inline end, opposite the title (owner round 5, A-07): a `sm`
+   * outline Button or a TextLink («المزيد», «الكل», «أضف»). Never on a row of its own under the title.
+   */
+  action?: React.ReactNode;
+  /** `title` (23, the page's sections: default) or `heading` (19, a block inside a card or a sheet). */
+  size?: 'title' | 'heading';
+  style?: StyleProp<ViewStyle>;
+}
+
+/** A section's title row: the title (and its lead) on the reading start, the action centred on it at the end. */
+export function SectionHeader({ title, lead, subtitle, action, size = 'title', style }: SectionHeaderProps) {
+  const styles = useStyles(makeStyles);
+  return (
+    <View style={[styles.sectionHead, style]}>
+      <View style={styles.sectionTitle}>
+        <Text variant={size} accessibilityRole="header">
+          {title}
+        </Text>
+        {subtitle ? <Text variant="body">{subtitle}</Text> : null}
+        {lead ? (
+          <Text variant="small" tone="muted">
+            {lead}
+          </Text>
+        ) : null}
+      </View>
+      {action ? <View style={styles.sectionAction}>{action}</View> : null}
+    </View>
+  );
+}
+
 /**
- * A titled block of a page. `action` sits on the title's line at the inline end (a small outlined «الكل» or «أضف»),
- * centred on the title, so a section's secondary action never floats on its own row.
+ * A titled block of a page: `SectionHeader` (the action on the title's line) and the content. Sections of a page are
+ * separated by `SectionDivider`, never by a hairline; the first row after the header draws no top border.
  */
 export function Section({
   title,
@@ -250,21 +314,7 @@ export function Section({
   const styles = useStyles(makeStyles);
   return (
     <View style={[styles.section, style]}>
-      {title ? (
-        <View style={styles.sectionHead}>
-          <View style={styles.sectionTitle}>
-            <Text variant="title" accessibilityRole="header">
-              {title}
-            </Text>
-            {lead ? (
-              <Text variant="small" tone="muted">
-                {lead}
-              </Text>
-            ) : null}
-          </View>
-          {action}
-        </View>
-      ) : null}
+      {title ? <SectionHeader title={title} lead={lead} action={action} /> : null}
       {children}
     </View>
   );
@@ -280,6 +330,7 @@ export function Wrap({ children, style }: { children: React.ReactNode; style?: S
   return <View style={[styles.wrap, style]}>{children}</View>;
 }
 
+/** The plain hairline: between items of ONE list only. Between sections use `SectionDivider`. */
 export function Rule({ style }: { style?: StyleProp<ViewStyle> }) {
   const styles = useStyles(makeStyles);
   return <View style={[styles.rule, style]} />;

@@ -31,7 +31,8 @@ const openReminderTime = () => router.push('/settings/notifications');
 const makeStyles = (t: Theme) => ({
   cards: { gap: space.md },
   remind: { gap: space.sm },
-  list: { borderTopWidth: 1, borderTopColor: t.colors.border },
+  /** No top rule: the first row sits under its section title (A-05). */
+  list: {},
   item: { borderBottomWidth: 1, borderBottomColor: t.colors.border },
   head: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.sm, minHeight: 56, paddingVertical: space.md },
   headPressed: { opacity: 0.7 },
@@ -70,7 +71,7 @@ export default function StrategiesScreen() {
           <View style={styles.remind}>
             <Notice icon={BellRing}>{t('practice.strategies.remindHint')}</Notice>
             {chosen.length > 0 ? (
-              <Button label={t('practice.strategies.time')} icon={Clock} variant="outline" compact onPress={openReminderTime} />
+              <Button label={t('practice.strategies.time')} icon={Clock} variant="outline" size="sm" onPress={openReminderTime} />
             ) : null}
           </View>
           {denied ? <Notice tone="destructive">{t('practice.permissionDenied')}</Notice> : null}
@@ -147,7 +148,7 @@ function StrategyItem({ strategy, reminding, onRemind }: { strategy: Strategy; r
             arrow={!(target.kind === 'deeds' && deedsOpen)}
             onPress={handleTry}
             variant={target.kind === 'deeds' && deedsOpen ? 'outline' : 'solid'}
-            compact
+            size="sm"
           />
           {target.kind === 'deeds' && deedsOpen ? (
             <View style={{ gap: space.sm }}>

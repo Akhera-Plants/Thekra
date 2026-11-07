@@ -9,6 +9,7 @@
  * | plan, relative, settings | last writer wins by `clientUpdatedAt` (a plan's «حلقة العادة» `loops` are part of the plan); a tombstone carries one too and wins only when newer. Equal times: a tombstone beats a live record, then the larger canonical JSON wins (so every replica picks the same) |
  * | log (plan, date) | the later correction wins (`correctedAt`, absent = oldest); at the same correction the larger amount: plain logging never goes down (`mergeLogEntry`) |
  * | contact (relative, date) | union; `deleted: true` removes it; a later non-deleted write restores it. A local change not yet pushed is kept (it is the later write) |
+ * | fard (date, prayer) | last writer wins by `clientUpdatedAt`; equal times: a cleared mark (`status: null`), then the larger status (`compareFardMarks`) |
  *
  * Pending detection compares versions, not clocks: `store.sync.acked` remembers the version of each item the server
  * holds (an item is acked when the server returns exactly the local version). A device with a wrong clock still
@@ -18,6 +19,8 @@
  */
 import { isIsoTime, isValidDate, isValidTime, isoMillis, type IsoTime, type LocalDate, type LocalTime } from './dates.js';
 import { HIJRI_OFFSET_MAX, HIJRI_OFFSET_MIN } from './hijri.js';
+import { compareFardMarks, FARD_PRAYERS, fardKey, isFardPrayer, isFardStatus, type FardMark, type FardPrayer, type FardStatus } from './fard.js';
+import { cloneHomeSections, validateHomeSections, type HomeSectionPref } from './home.js';
 import { latestDate, validateRelative, type KinshipRule, type Relative } from './kinship.js';
 import { cloneHabitLoop, logEntry, mergeLogEntry, validateHabitLoops, validatePlan, type HabitLoop, type LogEntry, type Plan, type PlanUnit } from './plan.js';
 import type { Rule } from './rules.js';
@@ -78,6 +81,18 @@ export interface WireSettings {
   freeMinutesPerDay: number | null;
   /** «عذر» days (2026-10-31). An older server or client omits it: none. */
   excusedDays: LocalDate[];
+  /** «خصّص الرئيسية» (round 5): null or absent (an older client) = the defaults. */
+  homeSections?: HomeSectionPref[] | null;
+  /** «الفرائض» switch (round 5): absent (an older client) = off. */
+  fardTracking?: boolean;
+  clientUpdatedAt: IsoTime;
+}
+
+/** One «الفرائض» mark (round 5). `status: null` clears it. */
+export interface WireFard {
+  date: LocalDate;
+  prayer: FardPrayer;
+  status: FardStatus | null;
   clientUpdatedAt: IsoTime;
 }
 
@@ -88,6 +103,8 @@ export interface SyncChanges {
   logs: WireLog[];
   relatives: WireRelativeItem[];
   contacts: WireContact[];
+  /** «الفرائض» marks (round 5). Absent: none. */
+  fard?: WireFard[];
 }
 
 export interface SyncRequest {
@@ -101,6 +118,8 @@ export interface ServerSettings {
   reminderTimes: LocalTime[];
   freeMinutesPerDay: number | null;
   excusedDays?: LocalDate[];
+  homeSections?: HomeSectionPref[] | null;
+  fardTracking?: boolean;
   clientUpdatedAt?: IsoTime;
   updatedAt?: IsoTime;
 }
@@ -113,6 +132,8 @@ export interface SyncResponse {
   logs: WireLog[];
   relatives: WireRelativeItem[];
   contacts: WireContact[];
+  /** «الفرائض» marks (round 5); an older server omits it. */
+  fard?: WireFard[];
 }
 
 /** The contract's limit on items per sync request. */
@@ -173,17 +194,26 @@ const relativeVersion = (r: Relative): Version => ({
 const tombVersion = (t: Tombstone): Version => ({ time: isoMillis(t.deletedAt), deleted: true, content: '' });
 
 /**
- * The canonical settings content. `excusedDays` is added only when not empty, so settings without excused days keep
- * the content older clients and acks know.
+ * The canonical settings content. `excusedDays` is added only when not empty, `homeSections` only when set and
+ * `fardTracking` only when on, so settings without them keep the content older clients and acks know.
  */
 export function settingsContent(s: {
   hijriOffset: number;
   reminderTimes?: LocalTime[];
   freeMinutesPerDay?: number | null;
   excusedDays?: LocalDate[];
+  homeSections?: readonly HomeSectionPref[] | null;
+  fardTracking?: boolean;
 }): string {
-  const base = { hijriOffset: s.hijriOffset, reminderTimes: s.reminderTimes ?? [], freeMinutesPerDay: s.freeMinutesPerDay ?? null };
-  return JSON.stringify(s.excusedDays && s.excusedDays.length > 0 ? { ...base, excusedDays: s.excusedDays } : base);
+  const out: Record<string, unknown> = {
+    hijriOffset: s.hijriOffset,
+    reminderTimes: s.reminderTimes ?? [],
+    freeMinutesPerDay: s.freeMinutesPerDay ?? null,
+  };
+  if (s.excusedDays && s.excusedDays.length > 0) out.excusedDays = s.excusedDays;
+  if (s.homeSections && s.homeSections.length > 0) out.homeSections = cloneHomeSections(s.homeSections);
+  if (s.fardTracking === true) out.fardTracking = true;
+  return JSON.stringify(out);
 }
 const settingsVersion = (s: Settings): Version => ({ time: isoMillis(s.updatedAt), deleted: false, content: settingsContent(s) });
 
@@ -192,6 +222,9 @@ const planKey = (id: string) => `plan:${id}`;
 const relativeKey = (id: string) => `relative:${id}`;
 const logKey = (planId: string, date: string) => `log:${planId}|${date}`;
 const contactKey = (relativeId: string, date: string) => `contact:${relativeId}|${date}`;
+const fardAckKey = (date: string, prayer: string) => `fard:${fardKey(date, prayer as FardPrayer)}`;
+/** The acked version of a mark: its status and the edit time in milliseconds. */
+const fardVersion = (m: Pick<FardMark, 'status' | 'updatedAt'>) => `${m.status ?? '-'}@${isoMillis(m.updatedAt)}`;
 
 // ── Local changes ─────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -257,6 +290,8 @@ export function localChanges(store: Store, opts: LocalChangesOptions = {}): Sync
       reminderTimes: [...(s.reminderTimes ?? [])],
       freeMinutesPerDay: s.freeMinutesPerDay ?? null,
       excusedDays: [...(s.excusedDays ?? [])],
+      homeSections: s.homeSections ? cloneHomeSections(s.homeSections) : null,
+      fardTracking: s.fardTracking === true,
       clientUpdatedAt: toIso(isoMillis(s.updatedAt)),
     };
     budget--;
@@ -298,6 +333,13 @@ export function localChanges(store: Store, opts: LocalChangesOptions = {}): Sync
       }
     }
   }
+  // «الفرائض» marks have no parent: they go whenever there is room left.
+  const fard: WireFard[] = [];
+  for (const m of store.fard ?? []) {
+    if (!pending(fardAckKey(m.date, m.prayer), fardVersion(m))) continue;
+    take(fard, { date: m.date, prayer: m.prayer, status: m.status, clientUpdatedAt: toIso(isoMillis(m.updatedAt)) });
+  }
+  if (fard.length > 0) out.fard = fard;
   return out;
 }
 
@@ -308,7 +350,14 @@ export function buildSyncRequest(store: Store, opts: LocalChangesOptions = {}): 
 
 /** Total items in a changes body (settings count as one). */
 export function countChanges(changes: SyncChanges): number {
-  return (changes.settings ? 1 : 0) + changes.plans.length + changes.logs.length + changes.relatives.length + changes.contacts.length;
+  return (
+    (changes.settings ? 1 : 0) +
+    changes.plans.length +
+    changes.logs.length +
+    changes.relatives.length +
+    changes.contacts.length +
+    (changes.fard?.length ?? 0)
+  );
 }
 
 // ── Applying a server response ────────────────────────────────────────────────────────────────────────────────
@@ -412,12 +461,18 @@ export function applyServerChanges(store: Store, response: SyncResponse | { data
       (free === null || free === undefined || (typeof free === 'number' && Number.isInteger(free) && free >= 0 && free <= 1440));
     const excused = w.excusedDays;
     const excusedValid = excused === null || excused === undefined || (Array.isArray(excused) && excused.every(isValidDate));
-    if (valid && excusedValid) {
+    const home = w.homeSections;
+    const homeValid = home === null || home === undefined || validateHomeSections(home) === null;
+    const fardOn = w.fardTracking;
+    const fardValid = fardOn === undefined || fardOn === null || typeof fardOn === 'boolean';
+    if (valid && excusedValid && homeValid && fardValid) {
       const incoming: Settings = { hijriOffset: off, updatedAt: time };
       if ((w.reminderTimes as LocalTime[]).length > 0) incoming.reminderTimes = [...(w.reminderTimes as LocalTime[])];
       if (typeof free === 'number') incoming.freeMinutesPerDay = free;
       const days = cleanExcusedDays(excused);
       if (days.length > 0) incoming.excusedDays = days;
+      if (Array.isArray(home)) incoming.homeSections = cloneHomeSections(home as HomeSectionPref[]);
+      if (fardOn === true) incoming.fardTracking = true;
       const vIn = settingsVersion(incoming);
       if (compareVersions(settingsVersion(settings), vIn) < 0) settings = incoming;
       if (versionKey(settingsVersion(settings)) === versionKey(vIn)) acked.settings = versionKey(vIn);
@@ -530,6 +585,19 @@ export function applyServerChanges(store: Store, response: SyncResponse | { data
     acked[key] = incoming;
   }
 
+  // «الفرائض» marks: last writer wins per (date, prayer).
+  const fardMarks = new Map((store.fard ?? []).map((m) => [fardKey(m.date, m.prayer), m]));
+  for (const item of arr(body.fard)) {
+    if (!isRecord(item) || !isValidDate(item.date) || !isFardPrayer(item.prayer) || !isIsoTime(item.clientUpdatedAt)) continue;
+    if (item.status !== null && !isFardStatus(item.status)) continue;
+    const incoming: FardMark = { date: item.date, prayer: item.prayer, status: item.status as FardStatus | null, updatedAt: item.clientUpdatedAt };
+    const key = fardKey(incoming.date, incoming.prayer);
+    const local = fardMarks.get(key);
+    if (!local || compareFardMarks(local, incoming) < 0) fardMarks.set(key, incoming);
+    const after = fardMarks.get(key) as FardMark;
+    if (fardVersion(after) === fardVersion(incoming)) acked[fardAckKey(incoming.date, incoming.prayer)] = fardVersion(incoming);
+  }
+
   // A pushed contact removal that the server now holds needs no tombstone any more.
   for (const [k, t] of tombs) {
     if (t.kind === 'contact' && acked[`contact:${t.id}`] === 'deleted') tombs.delete(k);
@@ -552,7 +620,7 @@ export function applyServerChanges(store: Store, response: SyncResponse | { data
     if (key.startsWith('contact:') && !relatives.has(key.slice(8, key.lastIndexOf('|')))) delete acked[key];
   }
 
-  return {
+  const next: Store = {
     ...store,
     plans: [...plans.values()],
     relatives: relList,
@@ -560,4 +628,10 @@ export function applyServerChanges(store: Store, response: SyncResponse | { data
     tombstones: [...tombs.values()],
     sync: { lastSyncedAt: serverTime, acked },
   };
+  if (fardMarks.size > 0) {
+    next.fard = [...fardMarks.values()].sort((a, b) =>
+      a.date !== b.date ? (a.date < b.date ? -1 : 1) : FARD_PRAYERS.indexOf(a.prayer) - FARD_PRAYERS.indexOf(b.prayer),
+    );
+  }
+  return next;
 }

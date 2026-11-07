@@ -37,7 +37,7 @@ export function DayState({ today }: { today: LocalDate }) {
         icon={on ? CircleCheck : CloudSun}
         variant={on ? 'outline' : 'ghost'}
         style={on ? styles.on : undefined}
-        compact
+        size="sm"
         onPress={() => setOpen(true)}
         accessibilityLabel={`${t('practice.dayState.button')}: ${label}`}
       />

@@ -9,7 +9,7 @@ import React, { useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Plus, Repeat } from 'lucide-react-native';
+import { Repeat } from 'lucide-react-native';
 import { addHabitLoop, isPaused, removeHabitLoop, updateHabitLoop, updatePlan, type Plan } from '@thekra/practice-core';
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { pick } from '@/lib/practice/catalog-types';
@@ -20,7 +20,7 @@ import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { HabitLoopCard } from '@/components/practice/hub/KnowledgeCards';
 import { LoopsPanel } from '@/components/practice/loops/LoopsPanel';
 import { space, useStyles } from '@/theme';
-import { Chip, EmptyState, PageHeader, Rule, Screen, Section, Wrap } from '@/ui';
+import { Chip, EmptyState, PageHeader, Screen, Section, Wrap, SectionDivider } from '@/ui';
 
 const makeStyles = () => ({
   block: { gap: space.md },
@@ -50,7 +50,7 @@ export default function HabitLoopsScreen() {
     <Screen edges={['bottom']}>
       <PageHeader title={t('loops.habit.pageTitle')} lead={t('loops.habit.pageLead')} />
       <HabitLoopCard />
-      <Rule />
+      <SectionDivider />
       {live.length === 0 ? (
         <EmptyState
           icon={Repeat}
@@ -87,7 +87,7 @@ export default function HabitLoopsScreen() {
               </Section>
             </View>
           ) : (
-            <EmptyState icon={Plus} message={t('loops.habit.pickHint')} />
+            <EmptyState icon={Repeat} message={t('loops.habit.pickHint')} />
           )}
         </>
       )}

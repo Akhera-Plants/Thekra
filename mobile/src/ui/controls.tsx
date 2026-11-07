@@ -12,6 +12,7 @@ import React, { useEffect, useRef } from 'react';
 import { AccessibilityInfo, Animated, Easing, Pressable, ScrollView, TextInput, View, type StyleProp, type TextInputProps, type ViewStyle } from 'react-native';
 import { Check } from 'lucide-react-native';
 import { radius, space, useStyles, useTheme, type Theme } from '@/theme';
+import { MIN_TARGET } from './Button';
 import { Icon } from './Icon';
 import { Text, textStyle } from './Text';
 
@@ -34,8 +35,9 @@ const makeStyles = (t: Theme) => ({
   tab: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
+    justifyContent: 'center' as const,
     gap: 6,
-    minHeight: 36,
+    minHeight: MIN_TARGET,
     paddingHorizontal: 14,
     borderRadius: radius.full,
   },
@@ -44,14 +46,14 @@ const makeStyles = (t: Theme) => ({
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
     gap: 6,
-    minHeight: 40,
+    minHeight: MIN_TARGET,
     maxWidth: '100%' as const,
     flexShrink: 1,
     paddingHorizontal: space.lg,
     paddingVertical: 6,
     borderRadius: radius.full,
     borderWidth: 1,
-    borderColor: t.colors.border,
+    borderColor: t.colors.controlBorder,
     backgroundColor: t.colors.card,
   },
   chipLabel: { flexShrink: 1 },
@@ -105,7 +107,7 @@ const makeStyles = (t: Theme) => ({
   input: {
     minHeight: 44,
     borderWidth: 1,
-    borderColor: t.colors.input,
+    borderColor: t.colors.controlBorder,
     borderRadius: radius.control,
     paddingHorizontal: space.md,
     paddingVertical: 10,
@@ -292,7 +294,8 @@ export function Toggle({
   }, [value, pos]);
   // A margin on the reading start (not a transform), so the thumb follows the layout direction wherever it is set.
   const marginStart = pos.interpolate({ inputRange: [0, 1], outputRange: [0, TRAVEL] });
-  const backgroundColor = pos.interpolate({ inputRange: [0, 1], outputRange: [colors.border, colors.primary] });
+  // Off: the interactive edge colour (≥3:1, A-18), so an off switch does not read as disabled.
+  const backgroundColor = pos.interpolate({ inputRange: [0, 1], outputRange: [colors.controlBorder, colors.primary] });
   return (
     <Pressable
       onPress={() => onValueChange(!value)}
@@ -311,6 +314,11 @@ export function Toggle({
 }
 
 export interface FieldProps extends TextInputProps {
+  /**
+   * Writing direction of what is typed. Default: the UI language (Arabic: right-aligned, rtl; A-26). `ltr` for
+   * emails, passwords, codes and URLs (also chosen automatically for email/URL keyboards and secure entry).
+   */
+  dir?: 'ui' | 'ltr';
   label?: string;
   hint?: string;
   error?: string | null;
@@ -319,12 +327,24 @@ export interface FieldProps extends TextInputProps {
 
 /** Forwards the input ref (focus chaining with `returnKeyType="next"`). */
 export const Field = React.forwardRef<TextInput, FieldProps>(function Field(
-  { label, hint, error, style, containerStyle, onFocus, onBlur, ...rest },
+  { label, hint, error, style, containerStyle, onFocus, onBlur, dir, ...rest },
   ref,
 ) {
   const styles = useStyles(makeStyles);
   const theme = useTheme();
   const [focused, setFocused] = React.useState(false);
+  const ltr =
+    dir === 'ltr' ||
+    Boolean(rest.secureTextEntry) ||
+    rest.keyboardType === 'email-address' ||
+    rest.keyboardType === 'url' ||
+    rest.inputMode === 'email' ||
+    rest.inputMode === 'url';
+  const arabic = !theme.english && !ltr;
+  // Placeholder and text start on the reading side: Arabic on the right, emails and codes left to right.
+  const direction = arabic
+    ? ({ textAlign: 'right', writingDirection: 'rtl' } as const)
+    : ({ textAlign: 'left', writingDirection: 'ltr' } as const);
   return (
     <View style={[styles.field, containerStyle]}>
       {label ? <Text variant="label">{label}</Text> : null}
@@ -344,6 +364,7 @@ export const Field = React.forwardRef<TextInput, FieldProps>(function Field(
         }}
         style={[
           textStyle(theme, 'body'),
+          direction,
           styles.input,
           focused && styles.inputFocused,
           error ? styles.inputError : null,
