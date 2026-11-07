@@ -12,7 +12,10 @@ export async function generateMetadata({ params }: PageProps<'/[locale]/favorite
   return { title: t('pageTitle') };
 }
 
-/** «المحفوظات»: «النصوص المحفوظة» and «تذكيراتي» (owner, 2026-11-01), for signed-in members. */
+/**
+ * «المحفوظات»: «النصوص» and «تذكيراتي» (owner round 5, F-22 a), for signed-in members. `?tab=reminders` (an older link)
+ * still opens «تذكيراتي», whose own address is `/favorites/reminders`.
+ */
 export default async function FavoritesPage({ params, searchParams }: PageProps<'/[locale]/favorites'>) {
   const { locale } = await params;
   setRequestLocale(locale);

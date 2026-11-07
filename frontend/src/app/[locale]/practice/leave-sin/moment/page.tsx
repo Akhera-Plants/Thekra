@@ -34,11 +34,11 @@ export default async function MujahadaPage({ params }: PageProps<'/[locale]/prac
         ariaLabel={tNav('breadcrumbs')}
         items={[{ label: tCrumbs('home'), href: '/' }, { label: t('title'), href: '/practice/leave-sin' }, { label: t('moment.title') }]}
       />
-      <header className="page-heading text-center">
+      <header className="page-heading mx-auto w-full max-w-2xl">
         <h1 id="page-title" tabIndex={-1}>
           {t('moment.title')}
         </h1>
-        <p className="page-lead mx-auto">{t('moment.lead')}</p>
+        <p className="page-lead">{t('moment.lead')}</p>
       </header>
       <MujahadaView verse={verse} />
     </div>

@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { Check, Plus, Users } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { limits, upsertPlan, type LimitKind } from '@thekra/practice-core';
+import { toast } from 'sonner';
 import { Link } from '@/i18n/navigation';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { Button } from '@/components/shared/kit/button';
@@ -22,10 +23,12 @@ import { PeriodicRows } from './PeriodicRows';
 /**
  * «أعمال دورية» (mirrors the app's screen): every act that does not repeat each day, soonest first: people (each list
  * one act; added and edited on its people page) and the dated acts (each opens its plan). Below, «أضف عملًا دوريًا»
- * lists the catalog templates; adding past the 7 acts opens the limit sheet. Reached from «ورد اليوم» and «سجلّي».
+ * lists the catalog templates; adding past the 7 acts opens the limit sheet. The «عاداتي › الدورية» tab (round 5, F-14 a:
+ * the one home of periodic acts), with the entry to «أهلي وناسي» first (F-15 a).
  */
 export function PeriodicView() {
   const t = useTranslations('practice.periodic');
+  const tNav = useTranslations('nav.menuItems');
   const locale = useLocale() === 'en' ? 'en' : 'ar';
   const context = useWirdContext();
   const [limitOpen, setLimitOpen] = useState<LimitKind | null>(null);
@@ -50,10 +53,24 @@ export function PeriodicView() {
       return;
     }
     updateStore((store) => upsertPlan(store, planFromTemplate(habit, today)));
+    toast.success(t('addedToast', { title: locale === 'en' ? habit.titleEn : habit.titleAr }));
   }
 
   return (
     <div className="flex max-w-3xl flex-col gap-10">
+      <Link
+        href="/practice/people"
+        className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transition-none"
+      >
+        <span aria-hidden className="flex size-11 shrink-0 items-center justify-center rounded-full bg-secondary text-primary-text">
+          <Users className="size-5" />
+        </span>
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span className="text-base font-medium">{tNav('people')}</span>
+          <span className="text-sm leading-6 text-muted-foreground">{t('peopleHint')}</span>
+        </span>
+        <DirectionalArrow className="size-5 text-primary-text" />
+      </Link>
       {acts.length === 0 ? <p className="text-muted-foreground">{t('empty')}</p> : null}
 
       {relatives.length > 0 ? (
@@ -97,7 +114,7 @@ export function PeriodicView() {
                 {/* One row shape (W-15): every action is the compact 44px outline button; «مضاف» is a state, so a badge. */}
                 {habit.people ? (
                   <Button asChild variant="outline" tone="primary" size="sm">
-                    <Link href={{ pathname: '/practice/kinship', query: { circle: habit.people } }}>
+                    <Link href={{ pathname: '/practice/people', hash: `circle-${habit.people}` }}>
                       {t('openList')} <DirectionalArrow />
                     </Link>
                   </Button>

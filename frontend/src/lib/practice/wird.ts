@@ -51,6 +51,23 @@ export function wirdDay(store: Store, date: LocalDate, opts: AgendaOptions = {})
   };
 }
 
+/**
+ * «ورد اليوم» in two lists (round 5, F-06 a / F-14 a): the habits of the day (and the generic check-in), and the
+ * periodic acts due today or overdue (people due, plans of a periodic template). Off-day rows are habits only.
+ */
+export function splitWirdDay(day: WirdDay, isPeriodicPlan: (planId: string) => boolean): { habits: WirdDay; periodic: WirdDay } {
+  const periodic = (item: TaskItem) => item.kind === 'relative' || (item.kind === 'habit' && isPeriodicPlan(item.planId));
+  return {
+    habits: {
+      occasions: day.occasions,
+      open: day.open.filter((item) => !periodic(item)),
+      done: day.done.filter((item) => !periodic(item)),
+      offDay: day.offDay.filter((item) => !isPeriodicPlan(item.planId)),
+    },
+    periodic: { occasions: [], open: day.open.filter(periodic), done: day.done.filter(periodic), offDay: [] },
+  };
+}
+
 export interface WirdSummary {
   /** Tasks of today still open («بقي عليك اليوم n»). */
   remaining: number;
@@ -75,9 +92,9 @@ export function wirdSummary(store: Store, today: LocalDate, opts: PlanDayOptions
   };
 }
 
-/** Where a periodic act opens: a relative on the kinship page (add and edit live there), a habit on its plan card. */
+/** Where a periodic act opens: a relative on «أهلي وناسي» (add and edit live there), a plan on its habit page. */
 export function periodicHref(act: PeriodicAct): string {
-  return act.kind === 'relative' ? '/practice/kinship' : `/practice/habits#plan-${act.id}`;
+  return act.kind === 'relative' ? '/practice/people' : `/practice/habits/${act.id}`;
 }
 
 /**

@@ -34,9 +34,9 @@ export interface PushPrefsBody {
   fridayTime: string;
   /** The weekly review's day, 0 = Sunday … 6 = Saturday (practice-core `NotificationPrefs.reviewDay`). */
   reviewDay: number;
-  /** «ذكّرني بها»: chosen strategy keys (at most one reminder a week). */
-  strategies: string[];
-  strategyTime: string;
+  /** «مناسبة قريبة» (round 5): the day before a non-weekly occasion, at `occasionTime`. Off by default. */
+  occasions: boolean;
+  occasionTime: string;
   /** Phase 6: prayer anchors resolved by this browser for the next days (`{ date: { 'after-fajr': 'HH:MM', … } }`). */
   anchorTimes?: Record<string, Record<string, string>>;
 }

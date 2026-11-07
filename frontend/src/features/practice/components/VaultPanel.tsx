@@ -82,16 +82,14 @@ export function VaultPanel({ programs }: VaultPanelProps) {
   );
 }
 
+/** The panel's body inside the settings row «تخفَّف» المشفّر (the row's summary is its title; the icon says locked or open). */
 function Box({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
   return (
-    <section id="vault" className="flex scroll-mt-24 flex-col gap-3 rounded-2xl border border-border bg-card p-5 leading-8" aria-label={title}>
-      <h2 className="flex items-center gap-2 text-lg font-medium">
-        <span className="text-primary-text [&_svg]:size-5" aria-hidden>
-          {icon}
-        </span>
-        {title}
-      </h2>
-      {children}
+    <section id="vault" className="flex scroll-mt-24 gap-3 pb-3 leading-8" aria-label={title}>
+      <span className="mt-1.5 text-primary-text [&_svg]:size-5" aria-hidden>
+        {icon}
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-3">{children}</div>
     </section>
   );
 }

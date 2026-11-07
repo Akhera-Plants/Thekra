@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
+import { TitleRow } from '@/components/shared/kit/title-row';
 import { useTranslations } from 'next-intl';
 import { monthSummary, presence, type DayPresence, type PlanDayOptions, type Store } from '@thekra/practice-core';
 import { formatDigits } from '@/lib/format/digits';
@@ -23,13 +24,15 @@ interface HubMonthProps {
   showHijri: boolean;
   onSelect: (date: string) => void;
   onMonthChange: (month: YearMonth) => void;
+  /** The section's action on its title line («ضبط الهجري» in «سجلّي»). */
+  action?: ReactNode;
 }
 
 /**
  * The one month calendar of «سجلّي»: days present in the last 30 and the plans' kind band, then the month with a
  * presence mark per day and the occasions marked. A tapped day opens its list under the grid.
  */
-export function HubMonth({ store, today, selected, month, occasions, planDays, showHijri, onSelect, onMonthChange }: HubMonthProps) {
+export function HubMonth({ store, today, selected, month, occasions, planDays, showHijri, onSelect, onMonthChange, action }: HubMonthProps) {
   const t = useTranslations('practice.hub.month');
   const tGrid = useTranslations('practice.monthGrid');
   const hijriOffset = store.settings.hijriOffset;
@@ -57,12 +60,12 @@ export function HubMonth({ store, today, selected, month, occasions, planDays, s
 
   return (
     <section aria-labelledby="hub-month-title" className="flex flex-col gap-3">
-      <div className="flex flex-col gap-1">
+      <TitleRow action={action}>
         <h2 id="hub-month-title" className="text-xl font-medium">
           {t('title')}
         </h2>
         <p className="text-sm leading-7 text-muted-foreground">{line}</p>
-      </div>
+      </TitleRow>
       <MonthGrid
         month={month}
         today={today}

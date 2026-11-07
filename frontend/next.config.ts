@@ -1,5 +1,8 @@
 import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
+// The shared navigation map has no imports, so the config loader can read it from source.
+import { NAV_FEATURES, WEB_REDIRECTS } from '../packages/practice-core/src/nav-map';
+import { webRedirectRules } from './src/lib/nav/redirects';
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
@@ -82,6 +85,10 @@ const nextConfig: NextConfig = {
     },
   },
   poweredByHeader: false,
+  // Old paths of the round-5 information architecture (practice-core `WEB_REDIRECTS`), Arabic and English.
+  async redirects() {
+    return webRedirectRules(WEB_REDIRECTS, NAV_FEATURES.map((feature) => feature.web));
+  },
   async headers() {
     return [
       { source: '/:path*', headers: securityHeaders },

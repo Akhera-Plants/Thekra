@@ -11,12 +11,9 @@ import {
   eveningCardVisible,
   intentionOf,
   intentionState,
-  keepPledge,
   makeIntention,
   markMessageSeen,
   muraqabaQuoteId,
-  pledgeEvidence,
-  pledgesDue,
   saveEvening,
   saveWeeklyReview,
   selfMessageDue,
@@ -40,8 +37,6 @@ import { formatDigits } from '@/lib/format/digits';
 import { formatGregorian } from '@/lib/practice/format';
 import { updateHeart } from '@/lib/practice/heart-store';
 import { updateStore } from '@/lib/practice/local-store';
-import { pledgeText, quotedTitle } from '@/lib/practice/pledges';
-import { EvidenceButton } from '../Pledges';
 import { habitOf } from '@/lib/practice/plans';
 import type { PracticeHabit } from '@/lib/types/practice';
 import { cn } from '@/lib/utils';
@@ -65,8 +60,17 @@ export function planTitle(plan: Plan, habits: ReadonlyMap<string, PracticeHabit>
   return habit ? (english ? habit.titleEn : habit.titleAr) : plan.title;
 }
 
-function Card({ title, children, labelledBy }: { title: ReactNode; children: ReactNode; labelledBy?: string }) {
+/** Inside the heart slot's dialog (`bare`), the dialog gives the title and frame: the card shows its body only. */
+export interface HeartCardProps {
+  ctx: HeartContext;
+  bare?: boolean;
+  /** After its save (the dialog closes and says so), or `dismissed` («ليس الآن»: it only closes). */
+  onSaved?: (what?: 'dismissed') => void;
+}
+
+function Card({ title, children, labelledBy, bare = false }: { title: ReactNode; children: ReactNode; labelledBy?: string; bare?: boolean }) {
   const id = useId();
+  if (bare) return <div className="flex flex-col gap-3">{children}</div>;
   return (
     <section aria-labelledby={labelledBy ?? id} className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5">
       <h2 id={labelledBy ?? id} className="text-lg font-medium">
@@ -140,7 +144,7 @@ export function SelfMessageCard({ heart, today }: { heart: HeartData; today: str
 }
 
 /** المشارطة: «نية اليوم» until noon (the one-time offer, the card, or one line once made). */
-export function IntentionCard({ ctx }: { ctx: HeartContext }) {
+export function IntentionCard({ ctx, bare = false, onSaved }: HeartCardProps) {
   const t = useTranslations('practice.heart.intention');
   const english = useLocale() === 'en';
   const { store, heart, today, time, habits, planDays } = ctx;
@@ -155,13 +159,21 @@ export function IntentionCard({ ctx }: { ctx: HeartContext }) {
 
   if (state === 'offer') {
     return (
-      <Card title={t('offerTitle')}>
+      <Card title={t('offerTitle')} bare={bare}>
         <p className="text-sm leading-7 text-muted-foreground">{t('offerBody')}</p>
         <div className="flex flex-wrap gap-2">
           <Button size="sm" onClick={() => updateHeart((h) => setHeartPrefs(h, { intention: true }))}>
             {t('offerOn')}
           </Button>
-          <Button size="sm" variant="ghost" tone="neutral" onClick={() => updateHeart((h) => setHeartPrefs(h, { intentionOfferDismissed: true }))}>
+          <Button
+            size="sm"
+            variant="outline"
+            tone="neutral"
+            onClick={() => {
+              updateHeart((h) => setHeartPrefs(h, { intentionOfferDismissed: true }));
+              onSaved?.('dismissed');
+            }}
+          >
             {t('dismiss')}
           </Button>
         </div>
@@ -183,7 +195,7 @@ export function IntentionCard({ ctx }: { ctx: HeartContext }) {
   if (state !== 'card') return null;
 
   return (
-    <Card title={t('title')}>
+    <Card title={t('title')} bare={bare}>
       <p className="text-sm leading-7">{t('lead')}</p>
       {due.length === 0 ? (
         <p className="text-sm leading-7 text-muted-foreground">{t('noHabits')}</p>
@@ -217,9 +229,10 @@ export function IntentionCard({ ctx }: { ctx: HeartContext }) {
       <Input id={inputId} value={pledge} maxLength={140} placeholder={t('pledgePlaceholder')} onChange={(e) => setPledge(e.target.value)} className="h-11" />
       <Button
         className="self-start"
-        onClick={() =>
-          updateHeart((h) => makeIntention(h, { date: today, planIds: due.filter((p) => !unticked.has(p.id)).map((p) => p.id), pledge }))
-        }
+        onClick={() => {
+          updateHeart((h) => makeIntention(h, { date: today, planIds: due.filter((p) => !unticked.has(p.id)).map((p) => p.id), pledge }));
+          onSaved?.();
+        }}
       >
         {t('submit')}
       </Button>
@@ -227,43 +240,18 @@ export function IntentionCard({ ctx }: { ctx: HeartContext }) {
   );
 }
 
-/** المعاقبة: «التزامك: …» after two missed asked days, with «وفيت به». Calm, never a penalty. */
-export function PledgeCards({ ctx }: { ctx: HeartContext }) {
-  const t = useTranslations('practice.heart.pledge');
-  const english = useLocale() === 'en';
-  const due = useMemo(() => pledgesDue(ctx.store, ctx.heart, ctx.today, ctx.planDays), [ctx.store, ctx.heart, ctx.today, ctx.planDays]);
-  if (due.length === 0) return null;
-  return (
-    <>
-      {due.map(({ pledge, on }) => {
-        const plan = ctx.store.plans.find((p) => p.id === pledge.planId);
-        return (
-          <Card key={pledge.id} title={t('title', { text: pledgeText(pledge, english, t) })}>
-            {plan ? <p className="text-sm leading-7 text-muted-foreground">{t('hint', { habit: quotedTitle(planTitle(plan, ctx.habits, english), english) })}</p> : null}
-            <div className="flex items-center gap-2">
-              <Button size="sm" variant="outline" onClick={() => updateHeart((h) => keepPledge(h, pledge.id, on))}>
-                {t('kept')}
-              </Button>
-              <EvidenceButton ids={pledgeEvidence(pledge.action)} deed={pledgeText(pledge, english, t)} />
-            </div>
-          </Card>
-        );
-      })}
-    </>
-  );
-}
-
 /** المحاسبة (evening, opt-in): what was completed, the day's pledge kept or not, and the private check-in link. */
-export function EveningCard({ ctx }: { ctx: HeartContext }) {
+export function EveningCard({ ctx, bare = false, onSaved }: HeartCardProps) {
   const t = useTranslations('practice.heart.evening');
   const { store, heart, today, time, planDays } = ctx;
   const [kept, setKept] = useState<PledgeKept | null>(null);
-  if (!eveningCardVisible(heart, today, time)) return null;
+  // In the dialog the card stays until it closes (the slot is gone once saved).
+  if (!bare && !eveningCardVisible(heart, today, time)) return null;
   const summary = daySummary(store, today, planDays);
   const intention = intentionOf(heart, today);
   const hasProgram = activePrograms(store.programs).length > 0;
   return (
-    <Card title={t('title')}>
+    <Card title={t('title')} bare={bare}>
       <p className="text-sm font-medium">{t('doneQ')}</p>
       <p className="text-sm leading-7 text-muted-foreground">
         {t('doneSummary', { total: summary.asked.length, totalN: formatDigits(summary.asked.length), done: formatDigits(summary.done.length) })}
@@ -285,7 +273,14 @@ export function EveningCard({ ctx }: { ctx: HeartContext }) {
           {t('checkIn')}
         </Link>
       ) : null}
-      <Button size="sm" className="self-start" onClick={() => updateHeart((h) => saveEvening(h, { date: today, ...(kept ? { kept } : {}) }))}>
+      <Button
+        size="sm"
+        className="self-start"
+        onClick={() => {
+          updateHeart((h) => saveEvening(h, { date: today, ...(kept ? { kept } : {}) }));
+          onSaved?.();
+        }}
+      >
         {t('save')}
       </Button>
     </Card>
@@ -293,11 +288,12 @@ export function EveningCard({ ctx }: { ctx: HeartContext }) {
 }
 
 /** «المحاسبة الأسبوعية» (the chosen day; the next morning if skipped): kept, weakened, one step, the heart, a line to oneself. */
-export function WeeklyCard({ ctx }: { ctx: HeartContext }) {
+export function WeeklyCard({ ctx, bare = false, onSaved, weekOf: forced }: HeartCardProps & { weekOf?: string }) {
   const t = useTranslations('practice.heart.weekly');
   const english = useLocale() === 'en';
   const { store, heart, today, time, habits, planDays } = ctx;
-  const weekOf = weeklyReviewDue(heart, today, time);
+  // «حاسب نفسك الآن» in «محاسبتي» opens the review for the current week even on another day (`weekOf`).
+  const weekOf = forced ?? weeklyReviewDue(heart, today, time);
   const summary = useMemo(() => (weekOf ? weekSummary(store, weekOf, today, planDays) : null), [store, weekOf, today, planDays]);
   const candidates = useMemo(() => store.plans.filter((p) => !p.pausedOn || p.resumedOn), [store.plans]);
   const firstPlan = summary?.weak[0]?.planId ?? summary?.steady[0]?.planId ?? candidates[0]?.id ?? null;
@@ -333,10 +329,11 @@ export function WeeklyCard({ ctx }: { ctx: HeartContext }) {
         message,
       }),
     );
+    onSaved?.();
   }
 
   return (
-    <Card title={t('title')}>
+    <Card title={t('title')} bare={bare}>
       <p className="text-sm leading-7 text-muted-foreground">{t('lead')}</p>
       <h3 className="text-base font-medium">{t('steady')}</h3>
       {summary.steady.length > 0 ? (
@@ -388,19 +385,5 @@ export function WeeklyCard({ ctx }: { ctx: HeartContext }) {
         {t('save')}
       </Button>
     </Card>
-  );
-}
-
-/**
- * Under the header of «ورد اليوم», in order: «نية اليوم» until noon, a pledge that came due, the Friday review, then the evening review. Each hides itself when it has nothing to say.
- */
-export function HeartTop({ ctx }: { ctx: HeartContext }) {
-  return (
-    <div className="flex max-w-3xl flex-col gap-4 empty:hidden">
-      <IntentionCard ctx={ctx} />
-      <PledgeCards ctx={ctx} />
-      <WeeklyCard ctx={ctx} />
-      <EveningCard ctx={ctx} />
-    </div>
   );
 }

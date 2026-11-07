@@ -11,7 +11,7 @@ import { langOf } from '@/lib/practice/kinship';
 import { habitOf } from '@/lib/practice/plans';
 import { periodicHref } from '@/lib/practice/wird';
 import type { PracticeHabit } from '@/lib/types/practice';
-import { usePlanWords } from '../PlanCard';
+import { usePlanWords } from '../plan-words';
 
 interface PeriodicRowsProps {
   acts: readonly PeriodicAct[];

@@ -5,9 +5,8 @@ import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 
 /**
  * «أبواب الخير», the page's h1 (`#paths`), in the owner's order: «أعنّي على فعل طاعة» (the primary card) · «أعنّي على
- * ترك معصية» · «شُعَب الإيمان» (with a branching tree, its own drawing). «مواسم الخير» is not on the home (owner,
- * 2026-11-01): it is reached from the footer and «ورد اليوم». «الأسماء الحسنى» is hidden for now; `/names` still
- * answers but nothing links to it.
+ * ترك معصية» · «شُعَب الإيمان» (with a branching tree, its own drawing). «مواسم الخير» is gone (round 5, F-17: the
+ * occasions live in «سجلّي» and the «مناسبة قريبة» home section); `/names` redirects home (F-19 a).
  */
 export async function Pathways() {
   const t = await getTranslations('home');

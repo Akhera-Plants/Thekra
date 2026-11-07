@@ -1,11 +1,12 @@
 'use client';
 
 import { useId, useState } from 'react';
+import { ChevronDown, MapPin, Search } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import {
   ALADHAN_METHODS,
   ANCHOR_LABELS,
-  defaultMethodForCountry,
   emptyOffsets,
   MAX_CITY_LENGTH,
   MAX_PRAYER_OFFSET,
@@ -17,31 +18,42 @@ import {
   type PrayerSettings,
 } from '@thekra/practice-core';
 import { Button } from '@/components/shared/kit/button';
+import { SectionDivider } from '@/components/shared/SectionDivider';
 import { Input } from '@/components/ui/input';
 import { formatDigits } from '@/lib/format/digits';
 import { resendPushPrefs } from '@/lib/push/web-push';
 import {
+  lookupCity,
   prayerCacheStore,
   prayerSettingsStore,
   refreshPrayerTimes,
   useHydrated,
   usePrayerSettings,
   usePrayerTimesToday,
+  type CityLookup,
 } from '@/lib/practice/screen-stores';
+import { cn } from '@/lib/utils';
 import { PracticeLoading } from '../PracticeLoading';
 
-type Status = 'idle' | 'saving' | 'saved' | 'failed';
+type Status = { kind: 'idle' } | { kind: 'searching' } | CityLookup;
+
+/** The method's name in the page language, or null when AlAdhan used one this list does not name. */
+function methodName(id: number | undefined | null, locale: 'ar' | 'en'): string | null {
+  const method = ALADHAN_METHODS.find((m) => m.id === id);
+  return method ? (locale === 'en' ? method.en : method.ar) : null;
+}
 
 /**
- * «أوقات الصلاة» (redesign §4.6): the city whose prayer times anchor «بعد الفجر»… reminders. The browser fetches 30 days
- * from AlAdhan (method by country unless chosen, manual minutes per prayer) and keeps them here; without a city or
- * offline the anchors use default times.
+ * «الإعدادات › أوقات الصلاة» (round 5, F-27 note): the member types a city only; «ابحث» asks AlAdhan
+ * (`timingsByAddress`), which finds the place and picks the nearest calculation method. The found place and method are
+ * one line; «احفظ» keeps it and loads 30 days of times for the «بعد الفجر»… reminders. A city AlAdhan cannot find, or no
+ * connection, says so plainly. Manual minutes per prayer stay behind «تعديل يدوي».
  */
 export function PrayerTimesView() {
   const hydrated = useHydrated();
   const saved = usePrayerSettings();
   if (!hydrated) return <PracticeLoading />;
-  return <PrayerForm key={saved ? `${saved.city}|${saved.country}` : 'empty'} saved={saved} />;
+  return <PrayerForm key={saved ? `${saved.city}|${saved.method ?? ''}` : 'empty'} saved={saved} />;
 }
 
 function PrayerForm({ saved }: { saved: PrayerSettings | null }) {
@@ -49,110 +61,153 @@ function PrayerForm({ saved }: { saved: PrayerSettings | null }) {
   const locale = useLocale() === 'en' ? 'en' : 'ar';
   const today = usePrayerTimesToday();
   const [city, setCity] = useState(saved?.city ?? '');
-  const [country, setCountry] = useState(saved?.country ?? '');
-  const [method, setMethod] = useState<number | null>(saved?.method ?? null);
+  const [status, setStatus] = useState<Status>({ kind: 'idle' });
   const [offsets, setOffsets] = useState<Record<Prayer, number>>(saved?.offsets ?? emptyOffsets());
-  const [status, setStatus] = useState<Status>('idle');
+  const [saving, setSaving] = useState(false);
   const cityId = useId();
-  const countryId = useId();
-  const methodId = useId();
-  const effectiveMethod = method ?? (country.length === 2 ? defaultMethodForCountry(country) : null);
+  const statusId = useId();
+  const found = status.kind === 'found' ? status : null;
 
-  async function save() {
-    const next = parsePrayerSettings({ city, country, method: effectiveMethod ?? undefined, offsets });
-    if (!next) {
-      setStatus('failed');
-      return;
-    }
-    setStatus('saving');
+  async function search() {
+    setStatus({ kind: 'searching' });
+    setStatus(await lookupCity(city));
+  }
+
+  async function save(next: PrayerSettings | null, message: string) {
+    if (!next) return;
+    setSaving(true);
     prayerSettingsStore.update(() => next);
     const result = await refreshPrayerTimes(true);
-    setStatus(result === 'updated' ? 'saved' : 'failed');
+    setSaving(false);
     void resendPushPrefs(locale);
+    if (result === 'updated') toast.success(message);
+    else toast.error(t('failed'));
   }
 
   function clear() {
     prayerSettingsStore.update(() => null);
     prayerCacheStore.update(() => null);
     void resendPushPrefs(locale);
+    toast.success(t('cleared'));
   }
+
+  const savedLine = saved
+    ? [saved.city, methodName(saved.method, locale) ?? t('methodAuto')].join(' · ')
+    : null;
 
   return (
     <div className="flex max-w-3xl flex-col gap-8">
+      {savedLine ? (
+        <p className="flex items-center gap-2 rounded-2xl border border-border bg-card px-4 py-3 text-base">
+          <MapPin aria-hidden className="size-5 shrink-0 text-primary-text" />
+          <span className="min-w-0 flex-1">{savedLine}</span>
+          <Button variant="ghost" tone="neutral" size="sm" onClick={clear}>
+            {t('clear')}
+          </Button>
+        </p>
+      ) : null}
+
       <form
-        className="flex flex-col gap-5"
+        className="flex flex-col gap-3"
         onSubmit={(e) => {
           e.preventDefault();
-          void save();
+          void search();
         }}
         noValidate
+        aria-describedby={statusId}
       >
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="flex flex-col gap-1 text-sm">
-            <label htmlFor={cityId}>{t('city')}</label>
-            <Input id={cityId} className="h-11" maxLength={MAX_CITY_LENGTH} value={city} onChange={(e) => setCity(e.target.value)} />
-          </div>
-          <div className="flex flex-col gap-1 text-sm">
-            <label htmlFor={countryId}>{t('country')}</label>
-            <Input
-              id={countryId}
-              className="h-11 w-28 uppercase"
-              dir="ltr"
-              maxLength={2}
-              value={country}
-              onChange={(e) => setCountry(e.target.value.toUpperCase().replace(/[^A-Z]/g, ''))}
-            />
-          </div>
-        </div>
-        <div className="flex flex-col gap-1 text-sm">
-          <label htmlFor={methodId}>{t('method')}</label>
-          <select
-            id={methodId}
-            className="h-11 rounded-md border border-input bg-background px-3"
-            value={effectiveMethod ?? ''}
-            onChange={(e) => setMethod(Number(e.target.value))}
-          >
-            {effectiveMethod === null ? <option value="">{t('methodByCountry')}</option> : null}
-            {ALADHAN_METHODS.map((m) => (
-              <option key={m.id} value={m.id}>
-                {locale === 'en' ? m.en : m.ar}
-              </option>
-            ))}
-          </select>
-        </div>
-        <fieldset className="flex flex-col gap-2">
-          <legend className="mb-1 text-sm font-medium">{t('offsets')}</legend>
-          <div className="grid gap-3 sm:grid-cols-5">
-            {PRAYERS.map((p) => (
-              <label key={p} className="flex flex-col gap-1 text-sm">
-                {t(`prayers.${p}`)}
-                <Input
-                  type="number"
-                  className="h-11"
-                  min={-MAX_PRAYER_OFFSET}
-                  max={MAX_PRAYER_OFFSET}
-                  step={1}
-                  value={offsets[p]}
-                  onChange={(e) => setOffsets({ ...offsets, [p]: Number(e.target.value) || 0 })}
-                />
-              </label>
-            ))}
-          </div>
-        </fieldset>
-        <div className="flex flex-wrap gap-3">
-          <Button type="submit" disabled={status === 'saving'}>
-            {status === 'saving' ? t('saving') : t('save')}
+        <label htmlFor={cityId} className="text-base font-medium">
+          {saved ? t('changeCity') : t('city')}
+        </label>
+        <div className="flex flex-wrap gap-2">
+          <Input
+            id={cityId}
+            className="h-11 min-w-0 flex-1 basis-56"
+            maxLength={MAX_CITY_LENGTH}
+            value={city}
+            placeholder={t('cityPlaceholder')}
+            autoComplete="address-level2"
+            aria-invalid={status.kind === 'notFound' || undefined}
+            onChange={(e) => {
+              setCity(e.target.value);
+              if (status.kind !== 'idle') setStatus({ kind: 'idle' });
+            }}
+          />
+          <Button type="submit" icon={<Search aria-hidden />} loading={status.kind === 'searching'} disabled={city.trim().length === 0}>
+            {t('search')}
           </Button>
-          {saved ? (
-            <Button type="button" variant="ghost" tone="neutral" onClick={clear}>
-              {t('clear')}
-            </Button>
+        </div>
+        <div id={statusId} role="status" className="min-h-7 text-sm leading-7">
+          {status.kind === 'notFound' ? (
+            <span className="text-destructive">{t('notFound')}</span>
+          ) : status.kind === 'offline' ? (
+            <span className="text-destructive">{t('offline')}</span>
+          ) : status.kind === 'idle' && !saved ? (
+            <span className="text-muted-foreground">{t('helper')}</span>
           ) : null}
         </div>
-        <p className="text-sm text-muted-foreground" role="status">
-          {status === 'saved' ? t('saved') : status === 'failed' ? t('failed') : t('helper')}
-        </p>
+        {found ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/50 bg-secondary/50 px-4 py-3">
+            <p className="text-base leading-7">
+              {t('foundLine', {
+                city: found.city,
+                place: [found.meta.latitude, found.meta.longitude].map((n) => formatDigits(n.toFixed(2))).join(locale === 'ar' ? '، ' : ', '),
+                method: methodName(found.meta.method, locale) ?? t('methodAuto'),
+              })}
+            </p>
+            <Button
+              loading={saving}
+              onClick={() =>
+                void save(
+                  parsePrayerSettings({ city: found.city, method: found.meta.method ?? undefined, offsets }),
+                  t('saved'),
+                )
+              }
+            >
+              {t('save')}
+            </Button>
+          </div>
+        ) : null}
       </form>
+
+      {saved ? (
+        <details className="group rounded-2xl border border-border px-4 py-1">
+          <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between text-base font-medium">
+            {t('offsets')}
+            <ChevronDown aria-hidden className="size-4 text-muted-foreground transition-transform group-open:rotate-180 motion-reduce:transition-none" />
+          </summary>
+          <div className="flex flex-col gap-3 pb-4">
+            <p className="text-sm leading-7 text-muted-foreground">{t('offsetsHint')}</p>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+              {PRAYERS.map((p) => (
+                <label key={p} className="flex flex-col gap-1 text-sm">
+                  {t(`prayers.${p}`)}
+                  <Input
+                    type="number"
+                    className="h-11"
+                    min={-MAX_PRAYER_OFFSET}
+                    max={MAX_PRAYER_OFFSET}
+                    step={1}
+                    value={offsets[p]}
+                    onChange={(e) => setOffsets({ ...offsets, [p]: Number(e.target.value) || 0 })}
+                  />
+                </label>
+              ))}
+            </div>
+            <Button
+              variant="outline"
+              tone="primary"
+              className="self-start"
+              loading={saving}
+              onClick={() => void save(parsePrayerSettings({ ...saved, offsets }), t('offsetsSaved'))}
+            >
+              {t('saveOffsets')}
+            </Button>
+          </div>
+        </details>
+      ) : null}
+
+      <SectionDivider />
 
       <section aria-labelledby="prayer-today" className="flex flex-col gap-3">
         <h2 id="prayer-today" className="text-xl font-medium">
@@ -160,7 +215,7 @@ function PrayerForm({ saved }: { saved: PrayerSettings | null }) {
         </h2>
         <ul className="flex flex-col divide-y divide-border border-y border-border">
           {PRAYER_ANCHORS.map((anchor) => (
-            <li key={anchor} className="flex justify-between py-2 text-base">
+            <li key={anchor} className={cn('flex justify-between py-2.5 text-base', !today && 'text-muted-foreground')}>
               <span>{ANCHOR_LABELS[locale][anchor]}</span>
               <span className="tabular-nums">{formatDigits(resolveAnchor(anchor, today))}</span>
             </li>

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { TopicCatalog, type TopicEntry } from '@/components/shared/editorial/TopicCatalog';
+import { WeekBranchButton } from '@/features/iman-branches/components/WeekBranchButton';
 import { reportFailure } from '@/lib/errors';
 import { getBranches } from '@/lib/api/branches';
 import { localeAlternates } from '@/lib/seo';
@@ -55,6 +56,7 @@ export default async function BranchesPage({
       searchPlaceholder={t('searchPlaceholder')}
       searchLabel={t('searchPlaceholder')}
       noResults={t('empty')}
+      headerAction={<WeekBranchButton />}
     />
   );
 }

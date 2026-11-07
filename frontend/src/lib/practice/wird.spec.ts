@@ -17,7 +17,7 @@ import {
 import type { PracticeHabit } from '@/lib/types/practice';
 import { limitOptions, periodicTemplates, planFromTemplate } from './limits';
 import { planDayOptions } from './plans';
-import { periodicActsOnly, periodicHref, wirdDay, wirdSummary } from './wird';
+import { periodicActsOnly, periodicHref, splitWirdDay, wirdDay, wirdSummary, type WirdDay } from './wird';
 
 const HABIT: PracticeHabit = {
   key: 'duha',
@@ -109,8 +109,8 @@ describe('wirdSummary', () => {
 
 describe('periodicHref', () => {
   it('opens a relative on the kinship page and a habit on its plan', () => {
-    expect(periodicHref({ kind: 'relative', id: 'r1', next: TODAY })).toBe('/practice/kinship');
-    expect(periodicHref({ kind: 'habit', id: 'p1', next: null })).toBe('/practice/habits#plan-p1');
+    expect(periodicHref({ kind: 'relative', id: 'r1', next: TODAY })).toBe('/practice/people');
+    expect(periodicHref({ kind: 'habit', id: 'p1', next: null })).toBe('/practice/habits/p1');
   });
 });
 
@@ -126,5 +126,22 @@ describe('periodicActsOnly', () => {
     const opts = planDayOptions(habits, 0);
     const ids = periodicActsOnly(s, TODAY, opts, habits).map((a) => a.id);
     expect(ids).toEqual(['p1']);
+  });
+});
+
+describe('«ورد اليوم» lists (round 5)', () => {
+  it('splits the day into habits and the periodic acts due', () => {
+    const habit = (planId: string) => ({ kind: 'habit' as const, planId, required: 1, done: 0, remaining: 1, complete: false });
+    const day: WirdDay = {
+      occasions: [],
+      open: [habit('h1'), habit('p1'), { kind: 'relative', relativeId: 'r1', done: false, overdueDays: 2 }],
+      done: [{ ...habit('h2'), done: 1, remaining: 0, complete: true }],
+      offDay: [habit('h3'), habit('p2')],
+    };
+    const { habits, periodic } = splitWirdDay(day, (id) => id.startsWith('p'));
+    expect(habits.open.map((i) => (i.kind === 'habit' ? i.planId : i.kind))).toEqual(['h1']);
+    expect(habits.done).toHaveLength(1);
+    expect(habits.offDay.map((i) => i.planId)).toEqual(['h3']);
+    expect(periodic.open.map((i) => (i.kind === 'habit' ? i.planId : i.kind))).toEqual(['p1', 'relative']);
   });
 });

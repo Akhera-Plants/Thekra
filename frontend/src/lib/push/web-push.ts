@@ -128,8 +128,9 @@ function pushPrefsBody(): PushPrefsBody {
     fridayReview: n.fridayReview,
     fridayTime: n.fridayTime,
     reviewDay: n.reviewDay,
-    strategies: n.strategies,
-    strategyTime: n.strategyTime,
+    // «مناسبة قريبة» (round 5): the day before a non-weekly occasion. Strategies are no longer sent (F-12 a).
+    occasions: n.occasions,
+    occasionTime: n.occasionTime,
     // Prayer anchors («بعد الفجر»…) resolved on this device; the server never calls AlAdhan.
     anchorTimes: anchorTimesForPush(),
   };

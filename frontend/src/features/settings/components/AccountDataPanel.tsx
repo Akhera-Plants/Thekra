@@ -47,19 +47,27 @@ export function AccountDataPanel() {
     }
   }
 
+  // A settings row (round 5: one row shape on the page): the icon, «تصدير بياناتي» and its note, the action on the end.
   return (
-    <section className="flex flex-col gap-4" aria-labelledby="account-data-title">
-      <h2 id="account-data-title" className="text-sm font-medium">
-        {t('title')}
-      </h2>
-      <div className="flex flex-col items-start gap-2">
-        <Button variant="outline" tone="primary" size="md" onClick={() => void handleExport()} loading={exporting}>
-          <Download aria-hidden />
+    <div className="flex min-h-14 items-center gap-3 py-1">
+      <Download aria-hidden className="size-5 shrink-0 text-primary-text" />
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span id="account-data-title" className="text-base">
           {t('export')}
-        </Button>
-        <p className="text-sm text-muted-foreground">{t('exportNote')}</p>
-      </div>
-    </section>
+        </span>
+        <span className="text-sm leading-6 text-muted-foreground">{t('exportNote')}</span>
+      </span>
+      <Button
+        variant="outline"
+        tone="neutral"
+        size="sm"
+        onClick={() => void handleExport()}
+        loading={exporting}
+        aria-describedby="account-data-title"
+      >
+        {t('exportAction')}
+      </Button>
+    </div>
   );
 }
 

@@ -72,7 +72,7 @@ export function LogEditor({ plan, today, unit, onDone }: LogEditorProps) {
     day === today ? t('today') : day === addDays(today, -1) ? t('yesterday') : formatGregorian(day, locale, true);
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-border bg-muted/40 p-4">
+    <div className="flex flex-col gap-3">
       <p className="text-sm leading-7 text-muted-foreground">{t('hint')}</p>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-wrap items-end gap-3" noValidate>
@@ -105,10 +105,8 @@ export function LogEditor({ plan, today, unit, onDone }: LogEditorProps) {
             )}
           />
           <div className="flex flex-wrap gap-2">
-            <button type="submit" className="outline-button button-wrap">
-              {t('save')}
-            </button>
-            <Button type="button" variant="ghost" tone="neutral" size="sm" onClick={onDone}>
+            <Button type="submit">{t('save')}</Button>
+            <Button type="button" variant="outline" tone="neutral" onClick={onDone}>
               {t('cancel')}
             </Button>
           </div>

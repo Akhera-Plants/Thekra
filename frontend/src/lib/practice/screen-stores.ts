@@ -8,6 +8,10 @@
 import { useSyncExternalStore } from 'react';
 import {
   alAdhanCalendarUrl,
+  alAdhanTimingsUrl,
+  cleanCity,
+  parseAlAdhanMeta,
+  type AlAdhanMeta,
   mergePrayerCache,
   monthsToFetch,
   parseAlAdhan,
@@ -124,4 +128,30 @@ export async function refreshPrayerTimes(force = false, fetchImpl: typeof fetch 
 /** The resolved anchor times this browser sends with its push prefs (empty when no city is set). */
 export function anchorTimesForPush(): ReturnType<typeof resolvedAnchorTimes> {
   return resolvedAnchorTimes(currentPrayerLookup(), todayFrom(new Date()), PUSH_ANCHOR_DAYS);
+}
+
+/** What «ابحث» found for a typed city (round 5, F-27 note: the city only, AlAdhan geocodes it and picks the method). */
+export type CityLookup = { kind: 'found'; city: string; meta: AlAdhanMeta } | { kind: 'notFound' } | { kind: 'offline' };
+
+/**
+ * Looks a city up with AlAdhan `timingsByAddress` for today (no country, no method: AlAdhan picks the nearest
+ * authority). `notFound` when AlAdhan cannot geocode it; `offline` on a network error or timeout. Never throws.
+ */
+export async function lookupCity(raw: string, fetchImpl: typeof fetch = fetch): Promise<CityLookup> {
+  const city = cleanCity(raw);
+  if (!city) return { kind: 'notFound' };
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetchImpl(alAdhanTimingsUrl({ city }, todayFrom(new Date())), { signal: controller.signal, credentials: 'omit' });
+    // AlAdhan answers an unknown address with 400 and `code: 400`; anything 5xx is the service, not the city.
+    if (res.status >= 500) return { kind: 'offline' };
+    const json: unknown = await res.json().catch(() => null);
+    const meta = res.ok ? parseAlAdhanMeta(json) : null;
+    return meta ? { kind: 'found', city, meta } : { kind: 'notFound' };
+  } catch {
+    return { kind: 'offline' };
+  } finally {
+    clearTimeout(timer);
+  }
 }

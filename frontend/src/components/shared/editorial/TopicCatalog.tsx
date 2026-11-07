@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useRef, useState, useTransition, type ComponentType } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState, useTransition, type ComponentType, type ReactNode } from 'react';
 import { BookOpen, Check, DoorOpen, Search, Sprout } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
@@ -57,6 +57,8 @@ interface TopicCatalogProps {
   themes?: TopicThemeIndexEntry[];
   /** «الكبائر» (sins) or «لها عادة» (good deeds): one switch beside the domain chips, shown when an entry has it. */
   flag?: { kind: 'kabira' | 'habit'; label: string };
+  /** One page action under the lead (e.g. «ادرس شعبة كل أسبوع» on «شعب الإيمان»). */
+  headerAction?: ReactNode;
 }
 
 export function TopicCatalog(props: TopicCatalogProps) {
@@ -164,6 +166,7 @@ function TopicCatalogShell({
   contemporaryLabel,
   themes,
   flag,
+  headerAction,
   query,
   debounced = '',
   onQueryChange,
@@ -245,6 +248,7 @@ function TopicCatalogShell({
           {pageTitle}
         </h1>
         <p className="page-lead">{lead}</p>
+        {headerAction ? <div className="mt-4">{headerAction}</div> : null}
       </header>
 
       <section className="catalog-section" aria-label={pathLabel}>

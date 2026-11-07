@@ -3,7 +3,18 @@
 import { useId, useState, type ReactNode } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { canMakeUp, logMinimum, minimumMet, minimumToLog, updatePlan, type HabitItem, type Store } from '@thekra/practice-core';
+import {
+  canMakeUp,
+  logMinimum,
+  makeUpOffer,
+  minimumMet,
+  minimumToLog,
+  updatePlan,
+  type HabitItem,
+  type HeartData,
+  type PlanDayOptions,
+  type Store,
+} from '@thekra/practice-core';
 import { Link } from '@/i18n/navigation';
 import { formatDigits } from '@/lib/format/digits';
 import { canLogOn } from '@/lib/practice/hub';
@@ -31,6 +42,11 @@ interface TodayListProps {
   footer?: ReactNode;
   /** Replaces the «تمّ ما في يومك» line on «ورد اليوم» (the «تمّ وردك اليوم» card with its reward text). */
   completeCard?: ReactNode;
+  /** With the heart data and the plans' days, today's rows offer «صلّحها» after two missed days (F-08 a). */
+  heart?: HeartData | null;
+  planDays?: PlanDayOptions;
+  /** A second list of the same day (the periodic acts due): no «تمّ» line, cheer or story of its own. */
+  secondary?: boolean;
 }
 
 /**
@@ -39,7 +55,7 @@ interface TodayListProps {
  * inline undo; done rows sink to the bottom, dimmed. Habits the day does not ask for sit behind ONE collapsed row
  * «ليست مطلوبة اليوم (n)», still loggable and never counted as missed. Logging works for today and the 6 days before.
  */
-export function TodayList({ title, store, date, today, day, habits, occasionBasis, canAdd = false, footer, completeCard }: TodayListProps) {
+export function TodayList({ title, store, date, today, day, habits, occasionBasis, canAdd = false, footer, completeCard, heart = null, planDays, secondary = false }: TodayListProps) {
   const t = useTranslations('practice.wird');
   const tDay = useTranslations('practice.hub.day');
   const headingId = useId();
@@ -75,6 +91,7 @@ export function TodayList({ title, store, date, today, day, habits, occasionBasi
         onUndo={undoLast}
         minimumMet={minimumMet(plan, date)}
         today={isToday ? today : undefined}
+        makeUp={isToday && heart ? makeUpOffer(store, plan, today, { ...planDays, heart }) : null}
         onMinimum={
           !item.complete && minimumToLog(plan, date) !== null
             ? () => {
@@ -143,7 +160,7 @@ export function TodayList({ title, store, date, today, day, habits, occasionBasi
         <div className="flex flex-col items-start gap-1">
           <p className="text-muted-foreground">{isToday ? t('empty') : tDay('empty')}</p>
           {canAdd ? (
-            <Link href={{ pathname: '/practice/habits', query: { add: '1' } }} className="text-link">
+            <Link href={{ pathname: '/practice', query: { add: '1' } }} className="text-link">
               {t('addHabit')}
             </Link>
           ) : null}
@@ -170,16 +187,16 @@ export function TodayList({ title, store, date, today, day, habits, occasionBasi
         </div>
       ) : null}
 
-      {isComplete && isToday && completeCard ? (
+      {secondary ? null : isComplete && isToday && completeCard ? (
         completeCard
       ) : (
         <p role="status" className="text-base leading-8 text-primary-text empty:hidden">
           {isComplete ? (isToday ? tDay('complete') : tDay('completePast')) : null}
         </p>
       )}
-      {isToday && !isComplete ? <Cheer at={cheerAt} /> : null}
+      {isToday && !isComplete && !secondary ? <Cheer at={cheerAt} /> : null}
       {/* A small-deed nudge once «أقل ما يمكن» kept a habit today. */}
-      {isToday && store.plans.some((plan) => minimumMet(plan, date)) ? <StoryLine moment="smallDeed" compact /> : null}
+      {isToday && !secondary && store.plans.some((plan) => minimumMet(plan, date)) ? <StoryLine moment="smallDeed" compact /> : null}
       <p role="status" className="sr-only">
         {lastKey ? (lastCleared ? tDay('unlogged') : tDay('logged')) : null}
       </p>

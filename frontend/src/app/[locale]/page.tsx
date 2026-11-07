@@ -2,9 +2,8 @@ import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { FeaturedDeed } from '@/components/home/FeaturedDeed';
 import { FeaturedReminder } from '@/components/home/FeaturedReminder';
-import { HomeLayout } from '@/components/home/HomeLayout';
+import { HomeSections } from '@/components/home/HomeSections';
 import { Moments } from '@/components/home/Moments';
-import { OrnamentalDivider } from '@/components/home/OrnamentalDivider';
 import { Pathways } from '@/components/home/Pathways';
 import { Reflection } from '@/components/home/Reflection';
 import { SourceStrip } from '@/components/home/SourceStrip';
@@ -95,22 +94,32 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
   const deed = pickDeed(deeds, lang, day);
   const reflection = pickReflection(scholars, day);
 
-  // «أبواب الخير» first for everyone not signed in; a signed-in user gets «ورد اليوم» and «السجل» above it (HomeLayout).
-  // «لِمَن كَانَ لَهُۥ قَلْبٌ» stays the header's tagline.
+  // The sections are rendered here (cached, the same for everyone) and ordered on the client: a visitor gets the fixed
+  // public order, a member their own (round 5, F-02 a). «لِمَن كَانَ لَهُۥ قَلْبٌ» stays the header's tagline.
   return (
     <div className="page-width flex flex-1 flex-col pb-10">
-      <HomeLayout pathways={<Pathways />}>
-        <OrnamentalDivider />
-        <Moments />
-        {reminder || deed ? (
-          <section className="reading-pair" aria-label={t('readingPairLabel')}>
-            {reminder ? <FeaturedReminder quote={reminder} /> : null}
-            {deed ? <FeaturedDeed deed={deed} /> : null}
-          </section>
-        ) : null}
-        {reflection ? <Reflection quote={reflection} locale={lang} /> : null}
-        <SourceStrip locale={lang} names={sourceNames} />
-      </HomeLayout>
+      <HomeSections
+        doors={<Pathways />}
+        moments={
+          <div className="pt-2">
+            <Moments />
+          </div>
+        }
+        featured={
+          reminder || deed || reflection ? (
+            <>
+              {reminder || deed ? (
+                <section className="reading-pair" aria-label={t('readingPairLabel')}>
+                  {reminder ? <FeaturedReminder quote={reminder} /> : null}
+                  {deed ? <FeaturedDeed deed={deed} /> : null}
+                </section>
+              ) : null}
+              {reflection ? <Reflection quote={reflection} locale={lang} /> : null}
+            </>
+          ) : null
+        }
+        sources={<SourceStrip locale={lang} names={sourceNames} />}
+      />
     </div>
   );
 }

@@ -16,7 +16,7 @@ import type { QuoteDto } from '@/lib/types/api';
 import type { PracticeHabit } from '@/lib/types/practice';
 import { cn } from '@/lib/utils';
 import type { WirdContext } from '../hooks/useWirdContext';
-import { usePlanWords } from './PlanCard';
+import { usePlanWords } from './plan-words';
 
 const PHRASES = ['subhan', 'hamd', 'tahlil', 'takbir', 'istighfar'] as const;
 type Phrase = (typeof PHRASES)[number];

@@ -52,7 +52,8 @@ export function RegisterForm() {
         name: values.name,
       });
       toast.success(t('registerSuccess'));
-      router.push(nextPathFromLocation());
+      // A new member lands on «عاداتي» and its three-step start (F-26 a), unless a page sent them here.
+      router.push(nextPathFromLocation('/practice'));
     } catch (err) {
       // Never the raw API text: a taken email says so; connection-type failures get the shared localised message.
       const kind = failureKey(err);

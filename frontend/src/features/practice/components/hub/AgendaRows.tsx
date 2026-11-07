@@ -1,33 +1,27 @@
 'use client';
 
 import { useId, type ReactNode } from 'react';
-import { Check, NotebookPen, Sparkles, Undo2, Wrench } from 'lucide-react';
+import { Check, NotebookPen, Sparkles, Undo2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
-  addDays,
-  canMakeUp,
-  logForDay,
-  requiredOn,
-  updatePlan,
   type HabitItem,
+  type MakeUpOffer,
   type OccasionItem,
   type Plan,
   type ProgramItem,
   type Relative,
   type RelativeItem,
 } from '@thekra/practice-core';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { updateStore } from '@/lib/practice/local-store';
 import { Link } from '@/i18n/navigation';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { Button } from '@/components/shared/kit/button';
-import { ActionPair } from '@/components/shared/kit/action-pair';
 import { formatDigits } from '@/lib/format/digits';
 import { langOf } from '@/lib/practice/kinship';
 import { setMomentSource } from '@/lib/practice/local-store';
 import type { PracticeHabit, ScheduleBasis } from '@/lib/types/practice';
 import { cn } from '@/lib/utils';
-import { usePlanWords } from '../PlanCard';
+import { usePlanWords } from '../plan-words';
+import { ChosenMakeUp, FixButton } from '../wird/FixDialog';
 
 type Href = Parameters<typeof Link>[0]['href'];
 
@@ -155,11 +149,13 @@ interface HabitRowProps {
   onMinimum?: () => void;
   /** The day holds the minimum but not the whole amount. */
   minimumMet?: boolean;
-  /** Today, when the row is today's: «صلّحها» shows on a habit missed yesterday. */
+  /** Today, when the row is today's: «صلّحها» shows on a habit missed yesterday or twice in a row. */
   today?: string;
+  /** Two asked days missed in a row: «صلّحها» offers one good deed (F-08 a). */
+  makeUp?: MakeUpOffer | null;
 }
 
-export function HabitRow({ item, plan, habit, isEnabled, disabledNoteId, undo, onToggle, onUndo, onMinimum, minimumMet = false, today }: HabitRowProps) {
+export function HabitRow({ item, plan, habit, isEnabled, disabledNoteId, undo, onToggle, onUndo, onMinimum, minimumMet = false, today, makeUp = null }: HabitRowProps) {
   const t = useTranslations('practice.hub.day');
   const tToday = useTranslations('practice.today');
   const tHeart = useTranslations('practice.heart');
@@ -177,11 +173,21 @@ export function HabitRow({ item, plan, habit, isEnabled, disabledNoteId, undo, o
       {minimumMet ? <> · {tHeart('minimumMet')}</> : item.done > 0 ? <> · {tToday('done', { amount: words.amount(item.done) })}</> : null}
     </>
   );
+  const chosen = makeUp?.chosen && today && makeUp.chosen.date === today ? makeUp.chosen : null;
   const secondary = undo ? (
     <InlineUndo kind={undo} onUndo={onUndo} />
-  ) : item.missedYesterday && !item.complete && isEnabled && today ? (
+  ) : chosen ? (
+    <ChosenMakeUp deed={chosen} />
+  ) : (makeUp || item.missedYesterday) && !item.complete && isEnabled && today ? (
     <p className="ps-[3.25rem]">
-      <FixHabit plan={plan} today={today} onMinimum={onMinimum} />
+      <FixButton
+        plan={plan}
+        title={words.title}
+        today={today}
+        offer={makeUp}
+        missedYesterday={item.missedYesterday === true}
+        onMinimum={onMinimum}
+      />
     </p>
   ) : onMinimum && isEnabled ? (
     <p className="ps-[3.25rem]">
@@ -202,7 +208,7 @@ export function HabitRow({ item, plan, habit, isEnabled, disabledNoteId, undo, o
           onToggle={onToggle}
         />
       }
-      href={`/practice/habits#plan-${plan.id}`}
+      href={`/practice/habits/${plan.id}`}
       title={
         <span lang={words.titleLang} dir={words.titleLang ? 'rtl' : undefined}>
           {words.title}
@@ -213,52 +219,6 @@ export function HabitRow({ item, plan, habit, isEnabled, disabledNoteId, undo, o
       isMuted={item.complete}
       undo={secondary}
     />
-  );
-}
-
-/**
- * «صلّحها» on a habit missed yesterday (owner round 3: «خربانة؟ صلّحها» lives in each habit's own row): «لا تفوّتها
- * مرتين», log the least amount today, and make up yesterday while its window is open (until noon today).
- */
-function FixHabit({ plan, today, onMinimum }: { plan: Plan; today: string; onMinimum?: () => void }) {
-  const t = useTranslations('practice.hub.fix');
-  const yesterday = addDays(today, -1);
-  const canMakeUpYesterday = canMakeUp(yesterday, today) && (plan.log[yesterday] ?? 0) === 0;
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="outline" tone="primary" size="sm">
-          <Wrench aria-hidden />
-          {t('open')}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent align="start" className="flex w-72 flex-col gap-3">
-        <p className="font-medium">{t('title')}</p>
-        <p className="text-sm leading-7 text-muted-foreground">{t('lead')}</p>
-        {/* The two ways to fix it, one pair: same size, the main one solid (O-02/W-03). Labels can be long, so each
-            takes the full width when they cannot sit side by side. */}
-        <ActionPair>
-          {onMinimum ? (
-            <Button tone="primary" size="md" className="h-auto min-h-11 whitespace-normal py-2" onClick={onMinimum}>
-              {t('minimum')}
-            </Button>
-          ) : null}
-          {canMakeUpYesterday ? (
-            <Button
-              variant={onMinimum ? 'outline' : 'solid'}
-              tone="primary"
-              size="md"
-              className="h-auto min-h-11 whitespace-normal py-2"
-              onClick={() =>
-                updateStore((s) => updatePlan(s, plan.id, (p) => logForDay(p, yesterday, Math.max(1, requiredOn(p, yesterday)), today)))
-              }
-            >
-              {t('makeUp')}
-            </Button>
-          ) : null}
-        </ActionPair>
-      </PopoverContent>
-    </Popover>
   );
 }
 
@@ -293,7 +253,7 @@ export function RelativeRow({ item, relative, isEnabled, disabledNoteId, undo, o
           onToggle={onToggle}
         />
       }
-      href="/practice/kinship"
+      href="/practice/people"
       title={
         <>
           <bdi lang={langOf(relative.name)}>{relative.name}</bdi>

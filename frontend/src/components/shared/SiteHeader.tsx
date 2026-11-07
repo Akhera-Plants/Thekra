@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useSyncExternalStore } from 'react';
-import { ChevronDown, Menu, X } from 'lucide-react';
+import { useState } from 'react';
+import { ChevronDown, Menu, Smartphone, X } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link, usePathname } from '@/i18n/navigation';
 import {
@@ -13,27 +13,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { LocaleSwitcher } from './LocaleSwitcher';
 import { ThemeToggle } from './ThemeToggle';
 import { AuthNavItems } from './AuthNavItems';
-import { useSession } from '@/features/auth/hooks/useSession';
-import { currentMemberItem, isInMore, MEMBER_MORE, MEMBER_PRIMARY, type MemberNavKey } from './member-nav';
-
-const noSubscribe = () => () => {};
-
-/** Signed in, and known to be: false during the server render and while the session is restored. */
-function useIsMember(): boolean {
-  const { isAuthenticated, isLoading } = useSession();
-  const mounted = useSyncExternalStore(noSubscribe, () => true, () => false);
-  return mounted && !isLoading && isAuthenticated;
-}
+import { currentHeaderItem, HEADER_MENU, type HeaderMenuItem, type HeaderMenuKey } from './header-menu';
 
 /**
- * Public site header (thekra-source chrome). A guest sees no links: the home is «أبواب الخير» itself (the logo), and
- * «تسجيل الدخول» is the header's action. A member sees «ورد اليوم» · «عاداتي» · «المزيد» (see `member-nav.ts`); at phone
- * width these fold into a side drawer that opens from the inline-start side.
+ * Public site header (thekra-source chrome) with ONE menu for a visitor and a member (owner round 5, W-10 a):
+ * «أبواب الخير» then «للأعضاء» (`header-menu.ts`). On a wide screen «القائمة» opens a dropdown; at phone width the same
+ * list opens in a side drawer from the inline-start side. «رفقة (في التطبيق)» opens a short note (W-12 b).
  */
 export function SiteHeader() {
   const pathname = usePathname();
@@ -41,8 +32,8 @@ export function SiteHeader() {
   const tNav = useTranslations('nav');
   const tTheme = useTranslations('theme');
   const tLocale = useTranslations('localeSwitcher');
-  const isMember = useIsMember();
-  const current = currentMemberItem(pathname);
+  const current = currentHeaderItem(pathname);
+  const [appNoteOpen, setAppNoteOpen] = useState(false);
 
   return (
     <header className="site-header page-width">
@@ -60,22 +51,8 @@ export function SiteHeader() {
       </Link>
 
       <nav className="main-nav" aria-label={tNav('main')}>
-        {isMember ? (
-          <>
-            {MEMBER_PRIMARY.map((item) => (
-              <Link
-                key={item.key}
-                href={item.href}
-                className="nav-link nav-link-primary"
-                aria-current={current === item.key ? 'page' : undefined}
-              >
-                {tNav(item.key === 'wird' ? 'practice' : item.key)}
-              </Link>
-            ))}
-            <MoreMenu current={current} />
-            <span className="nav-divider" aria-hidden />
-          </>
-        ) : null}
+        <MenuDropdown current={current} onAppNote={() => setAppNoteOpen(true)} />
+        <span className="nav-divider" aria-hidden />
         <LocaleSwitcher label={tLocale('label')} className="nav-link" />
         <ThemeToggle
           labels={{
@@ -87,45 +64,64 @@ export function SiteHeader() {
         <div className="header-auth ms-1 flex items-center gap-1">
           <AuthNavItems />
         </div>
-        {isMember ? <MemberDrawer key={pathname} current={current} /> : null}
+        <MenuDrawer key={pathname} current={current} onAppNote={() => setAppNoteOpen(true)} />
       </nav>
+      <AppOnlyNote open={appNoteOpen} onOpenChange={setAppNoteOpen} />
     </header>
   );
 }
 
-function useItemLabel() {
-  const tNav = useTranslations('nav');
-  return (key: MemberNavKey) => tNav(key === 'wird' ? 'practice' : key);
+interface MenuProps {
+  current: HeaderMenuKey | null;
+  onAppNote: () => void;
 }
 
-/** «المزيد» on desktop: the grouped list in a dropdown menu (Radix: arrow keys, Escape, focus returns to the trigger). */
-function MoreMenu({ current }: { current: MemberNavKey | null }) {
+/** The item's label: «رفقة» says where it lives («رفقة (في التطبيق)»). */
+function useItemLabel() {
+  const tNav = useTranslations('nav');
+  return (key: HeaderMenuKey) => (key === 'circles' ? tNav('inApp', { name: tNav('menuItems.circles') }) : tNav(`menuItems.${key}`));
+}
+
+/** Wide screens: the grouped list in a dropdown (Radix: arrow keys, Escape, focus returns to the trigger). */
+function MenuDropdown({ current, onAppNote }: MenuProps) {
   const tNav = useTranslations('nav');
   const label = useItemLabel();
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
-        <button type="button" className="nav-link nav-link-primary nav-more" data-current={isInMore(current) || undefined}>
-          {tNav('more')}
+        <button type="button" className="nav-link nav-link-primary nav-more" data-current={current ? true : undefined}>
+          {tNav('menu')}
           <ChevronDown className="size-4" aria-hidden />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" sideOffset={8} className="w-60 p-1.5">
-        {MEMBER_MORE.map((group, index) => (
+      <DropdownMenuContent align="start" sideOffset={8} className="w-64 p-1.5">
+        {HEADER_MENU.map((group, index) => (
           <DropdownMenuGroup key={group.key}>
             {index > 0 ? <DropdownMenuSeparator /> : null}
             <DropdownMenuLabel className="px-2 pt-1.5 pb-1 text-xs font-medium text-muted-foreground">
-              {tNav(`groups.${group.key}`)}
+              {tNav(`menuGroups.${group.key}`)}
             </DropdownMenuLabel>
             {group.items.map((item) => (
-              <DropdownMenuItem key={item.key} asChild className="min-h-10 px-2 text-[15px]">
-                <Link
-                  href={item.href}
-                  aria-current={current === item.key ? 'page' : undefined}
-                  className={cn(current === item.key && 'text-primary-text')}
-                >
-                  {label(item.key)}
-                </Link>
+              <DropdownMenuItem
+                key={item.key}
+                asChild={item.href !== null}
+                className="min-h-11 px-2 text-[15px]"
+                onSelect={item.href === null ? onAppNote : undefined}
+              >
+                {item.href !== null ? (
+                  <Link
+                    href={item.href}
+                    aria-current={current === item.key ? 'page' : undefined}
+                    className={cn(current === item.key && 'text-primary-text')}
+                  >
+                    {label(item.key)}
+                  </Link>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    {label(item.key)}
+                    <Smartphone aria-hidden className="size-4 text-muted-foreground" />
+                  </span>
+                )}
               </DropdownMenuItem>
             ))}
           </DropdownMenuGroup>
@@ -139,13 +135,36 @@ function MoreMenu({ current }: { current: MemberNavKey | null }) {
  * Phones: «القائمة» opens a drawer from the inline-start side (right in Arabic, left in English). Radix Dialog traps
  * focus, closes on Escape and on the overlay, and returns focus to the button. A new page closes it (keyed by path).
  */
-function MemberDrawer({ current }: { current: MemberNavKey | null }) {
+function MenuDrawer({ current, onAppNote }: MenuProps) {
   const tNav = useTranslations('nav');
   const label = useItemLabel();
   const side = useLocale() === 'en' ? 'left' : 'right';
   const [open, setOpen] = useState(false);
-  const linkClass =
-    'flex min-h-12 items-center rounded-lg px-3 text-base transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring aria-[current=page]:font-medium aria-[current=page]:text-primary-text';
+  const rowClass =
+    'flex min-h-12 w-full items-center gap-2 rounded-lg px-3 text-start text-base transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring aria-[current=page]:font-medium aria-[current=page]:text-primary-text';
+
+  function row(item: HeaderMenuItem) {
+    if (item.href === null) {
+      return (
+        <button
+          type="button"
+          className={rowClass}
+          onClick={() => {
+            setOpen(false);
+            onAppNote();
+          }}
+        >
+          {label(item.key)}
+          <Smartphone aria-hidden className="size-4 text-muted-foreground" />
+        </button>
+      );
+    }
+    return (
+      <Link href={item.href} className={rowClass} aria-current={current === item.key ? 'page' : undefined} onClick={() => setOpen(false)}>
+        {label(item.key)}
+      </Link>
+    );
+  }
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -162,34 +181,25 @@ function MemberDrawer({ current }: { current: MemberNavKey | null }) {
             <button
               type="button"
               aria-label={tNav('close')}
-              className="inline-flex size-10 items-center justify-center rounded-full hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring"
+              className="inline-flex size-11 items-center justify-center rounded-full hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring"
             >
               <X className="size-5" aria-hidden />
             </button>
           </SheetClose>
         </div>
         <nav aria-label={tNav('menu')} className="flex flex-col gap-5 px-3 py-4">
-          <ul className="flex flex-col gap-0.5">
-            {MEMBER_PRIMARY.map((item) => (
-              <li key={item.key}>
-                <Link href={item.href} className={cn(linkClass, 'text-lg')} aria-current={current === item.key ? 'page' : undefined} onClick={() => setOpen(false)}>
-                  {label(item.key)}
-                </Link>
-              </li>
-            ))}
-          </ul>
-          {MEMBER_MORE.map((group) => (
-            <section key={group.key} aria-labelledby={`drawer-${group.key}`} className="flex flex-col gap-1 border-t border-border pt-4">
+          {HEADER_MENU.map((group, index) => (
+            <section
+              key={group.key}
+              aria-labelledby={`drawer-${group.key}`}
+              className={cn('flex flex-col gap-1', index > 0 && 'border-t border-border pt-4')}
+            >
               <h2 id={`drawer-${group.key}`} className="px-3 text-xs font-medium text-muted-foreground">
-                {tNav(`groups.${group.key}`)}
+                {tNav(`menuGroups.${group.key}`)}
               </h2>
               <ul className="flex flex-col gap-0.5">
                 {group.items.map((item) => (
-                  <li key={item.key}>
-                    <Link href={item.href} className={linkClass} aria-current={current === item.key ? 'page' : undefined} onClick={() => setOpen(false)}>
-                      {label(item.key)}
-                    </Link>
-                  </li>
+                  <li key={item.key}>{row(item)}</li>
                 ))}
               </ul>
             </section>
@@ -197,5 +207,20 @@ function MemberDrawer({ current }: { current: MemberNavKey | null }) {
         </nav>
       </SheetContent>
     </Sheet>
+  );
+}
+
+/** «رفقة» lives in the app (W-12 b): one short note, no store link until the owner publishes one. */
+function AppOnlyNote({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+  const tNav = useTranslations('nav');
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader className="pe-8">
+          <DialogTitle className="leading-8">{tNav('menuItems.circles')}</DialogTitle>
+          <DialogDescription className="leading-7">{tNav('circlesNote')}</DialogDescription>
+        </DialogHeader>
+      </DialogContent>
+    </Dialog>
   );
 }

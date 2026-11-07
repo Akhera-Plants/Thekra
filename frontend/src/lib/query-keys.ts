@@ -50,10 +50,6 @@ export const queryKeys = {
     /** One branch of faith (title) for «شعبة الأسبوع». */
     detail: (number: number, lang: string) => ['branches', 'detail', number, lang] as const,
   },
-  namesOfAllah: {
-    /** The Names of Allah list, for «اسم الأسبوع». */
-    all: ['names-of-allah'] as const,
-  },
   hadithCollections: {
     all: ['hadith-collections'] as const,
   },

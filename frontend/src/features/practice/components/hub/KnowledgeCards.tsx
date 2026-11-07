@@ -8,10 +8,8 @@ import {
   branchOfWeek,
   dayCompletion,
   gratitudeAyah,
-  nameOfWeekIndex,
   storyQuoteId,
   tallies,
-  weekCardKind,
   type HabitTally,
   type Plan,
   type PlanDayOptions,
@@ -26,7 +24,6 @@ import type { QuoteDto } from '@/lib/types/api';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { QuoteCard } from '@/components/shared/quote';
 import { getBranch } from '@/lib/api/branches';
-import { getNamesOfAllah } from '@/lib/api/names';
 import { getAyah } from '@/lib/api/quran';
 import { formatDigits } from '@/lib/format/digits';
 import { dayDoneLine } from '@/lib/practice/commitment';
@@ -35,7 +32,7 @@ import { queryKeys } from '@/lib/query-keys';
 import type { PracticeHabit } from '@/lib/types/practice';
 import { usePracticeCatalog } from '../../hooks/usePracticeCatalog';
 import { usePracticeEvidence } from '../../hooks/usePracticeEvidence';
-import { usePlanWords } from '../PlanCard';
+import { usePlanWords } from '../plan-words';
 
 const TEXT_STALE_MS = 60 * 60 * 1000;
 /** How long «تقبّل الله منك» stays after a tick. */
@@ -167,14 +164,14 @@ export function DayDoneCard({ store, today, planDays }: { store: Store; today: s
  * A story by Quote id at its moment (heart-texts.yaml `stories:` through the catalog). Shows nothing while the id is
  * not filled, or while the text cannot be read: never typed text.
  */
-export function StoryLine({ moment, compact = false }: { moment: StoryMoment; compact?: boolean }) {
+export function StoryLine({ moment, compact = false, label }: { moment: StoryMoment; compact?: boolean; label?: string }) {
   const t = useTranslations('practice.story');
   const catalog = usePracticeCatalog();
   const id = storyQuoteId(moment, catalog.data?.stories);
   const evidence = usePracticeEvidence(id ? [id] : []);
   const quote = evidence.data?.find((q) => q.id === id);
   if (!quote) return null;
-  if (compact) return <StoryNote label={t(moment)} quote={quote} />;
+  if (compact) return <StoryNote label={label ?? t(moment)} quote={quote} />;
   return (
     <aside aria-label={t(moment)} className="flex flex-col gap-2">
       <p className="text-sm font-medium text-muted-foreground">{t(moment)}</p>
@@ -223,44 +220,10 @@ function StoryNote({ label, quote }: { label: string; quote: QuoteDto }) {
 
 // ── «شعبة الأسبوع» / «اسم الأسبوع» ──────────────────────────────────────────────────────────────────────────
 
-/**
- * «ورد اليوم»'s weekly card (redesign §4.7): «شعبة الأسبوع». «اسم الأسبوع» (odd weeks, practice-core `weekCardKind`)
- * waits while «الأسماء الحسنى» is hidden (owner, 2026-11-01): set {@link SHOW_NAME_WEEKS} back to true to bring it back.
- */
-const SHOW_NAME_WEEKS = false;
-
-/** `before` (the divider above it) renders only with the card, so an empty section leaves no lone divider. */
+/** «ورد اليوم»'s weekly card (redesign §4.7): «شعبة الأسبوع». («اسم الأسبوع» left with the names pages, F-19 a.)
+ * `before` (the divider above it) renders only with the card, so an empty section leaves no lone divider. */
 export function WeekCard({ today, before }: { today: string; before?: ReactNode }) {
-  return !SHOW_NAME_WEEKS || weekCardKind(today) === 'branch' ? <WeekBranchCard today={today} before={before} /> : <WeekNameCard today={today} before={before} />;
-}
-
-/** «اسم الأسبوع»: the same Name of Allah for everyone this name week, walking the API list in turn; links to its page. */
-export function WeekNameCard({ today, before }: { today: string; before?: ReactNode }) {
-  const t = useTranslations('practice.weekName');
-  const names = useQuery({
-    queryKey: queryKeys.namesOfAllah.all,
-    queryFn: async () => (await getNamesOfAllah()).data,
-    staleTime: TEXT_STALE_MS,
-  });
-  if (!names.data || names.data.length === 0) return null;
-  const name = names.data[nameOfWeekIndex(today, names.data.length)];
-  if (!name) return null;
-  return (
-    <>
-      {before}
-      <section aria-labelledby="week-name-title" className="flex flex-col gap-1">
-        <h2 id="week-name-title" className="text-sm font-medium text-muted-foreground">
-          {t('title')}
-        </h2>
-        <Link href={`/names/${name.slug}`} className="text-link self-start text-lg">
-          <span lang="ar" dir="rtl" className="font-arabic-display">
-            {name.nameAr}
-          </span>{' '}
-          <DirectionalArrow />
-        </Link>
-      </section>
-    </>
-  );
+  return <WeekBranchCard today={today} before={before} />;
 }
 
 /** «شعبة الأسبوع» on «ورد اليوم» (only when chosen in Settings): the same branch for everyone this ISO week; a long title wraps. */

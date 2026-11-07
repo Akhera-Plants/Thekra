@@ -1,17 +1,16 @@
 'use client';
 
 import { useMemo, useState, useSyncExternalStore } from 'react';
-import { LockKeyhole, ShieldCheck, Waves } from 'lucide-react';
+import { Check, ChevronDown, LockKeyhole, Plus, ShieldCheck } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { activePrograms, limits, programEntryFor, type SinProgram } from '@thekra/practice-core';
 import { BrandLoader } from '@/components/shared/feedback/BrandLoader';
 import { QueryErrorState } from '@/components/shared/feedback/QueryErrorState';
-import { InfoTip } from '@/components/shared/InfoTip';
-import { SegmentTabs, SegmentTabsContent } from '@/components/shared/kit/segment-tabs';
+import { Button } from '@/components/shared/kit/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { pendingProgramForSession, setMomentSource, updateStore } from '@/lib/practice/local-store';
+import { pendingProgramForSession, updateStore } from '@/lib/practice/local-store';
 import { setVaultSession } from '@/lib/practice/vault-flow';
-import { Link } from '@/i18n/navigation';
+import { cn } from '@/lib/utils';
 import { allProgramEvidenceIds } from '@/lib/practice/programs';
 import type { PracticeHabit } from '@/lib/types/practice';
 import { usePracticeCatalog } from '../hooks/usePracticeCatalog';
@@ -34,8 +33,10 @@ const serverPending = () => null;
 /**
  * «تخفَّف» (owner, 2026-11-01: any sin can start it; always kept in the account, encrypted, so the server cannot read
  * the sin). The page opens with the privacy code once per tab (docs/plan/2026-11-01-sin-vault-always-on.md §2–3); the
- * first program asks for a new code before it starts (§1). Each running program is one tab, and each program's own
- * parts are tabs inside it. Every request is the same for every member (catalog, the whole sin list, all evidence).
+ * first program asks for a new code before it starts (§1). Round 5 (F-11 a / A-21 a), as in the app: ONE program is
+ * shown at a time, its name a selectable title that switches between the running programs (and starts another), then
+ * its one tab bar «اليوم · رحلتي» (ProgramPanel). Once saved in the account, the privacy line folds to one row. Every
+ * request is the same for every member (catalog, the whole sin list, all evidence).
  */
 export function LeaveSinView() {
   const t = useTranslations('leaveSin');
@@ -52,7 +53,10 @@ export function LeaveSinView() {
   const [choosing, setChoosing] = useState<boolean | null>(null);
   /** A program waiting for the first privacy code. */
   const [pending, setPending] = useState<SinProgram | null>(null);
-  const [tab, setTab] = useState<string | null>(null);
+  /** The program shown when several run (chosen from the title's dialog). */
+  const [focus, setFocus] = useState<string | null>(null);
+  const [switching, setSwitching] = useState(false);
+  const [ended, setEnded] = useState(false);
   const programCount = snapshot ? activePrograms(snapshot.store.programs).length : 0;
   const contentRef = useFocusOnChange<HTMLDivElement>(`${choosing}-${programCount}`);
 
@@ -81,12 +85,13 @@ export function LeaveSinView() {
     );
   }
 
-  const privacyLine = (
-    <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm leading-7 text-muted-foreground">
-      <ShieldCheck className="size-4 shrink-0 text-primary-text" aria-hidden />
-      <span>{t('privacyShort')}</span>
-      <InfoTip>{t('privacy')}</InfoTip>
-      {session ? <SaveStatus /> : null}
+  // Saved in the account: the privacy line folds to one row (A-21 a); before that it is said in full.
+  const privacyLine = vault.data ? (
+    <PrivacyRow unlocked={session !== null} />
+  ) : (
+    <p className="flex items-start gap-2 text-sm leading-7 text-muted-foreground">
+      <ShieldCheck className="mt-1.5 size-4 shrink-0 text-primary-text" aria-hidden />
+      <span>{t('privacy')}</span>
     </p>
   );
 
@@ -141,7 +146,8 @@ export function LeaveSinView() {
   const programLimits = limits(snapshot.store, clock.today);
   const canStart = active.length === 0 || programLimits.canAdd('program');
   const showChooser = active.length === 0 || (canStart && (choosing ?? preselectNew !== null));
-  const shownTab = active.some((a) => a.program.sinSlug === tab) ? (tab as string) : (active[0]?.program.sinSlug ?? '');
+  const current = active.find((a) => a.program.sinSlug === focus) ?? active[0];
+  const canAddAnother = active.length < names.size;
 
   function start(program: SinProgram) {
     if (!session) {
@@ -150,32 +156,20 @@ export function LeaveSinView() {
     }
     updateStore((store) => ({ ...store, programs: [...store.programs.filter((p) => p.sinSlug !== program.sinSlug), program] }));
     setChoosing(false);
-    setTab(program.sinSlug);
+    setEnded(false);
+    setFocus(program.sinSlug);
   }
 
-  const panel = ({ program, entry }: (typeof active)[number]) => (
-    <ProgramPanel
-      program={program}
-      entry={entry}
-      common={common}
-      name={names.get(program.sinSlug)}
-      habits={habits}
-      quotes={evidence.data ?? []}
-      today={clock.today}
-    />
-  );
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        {privacyLine}
-        {active.length > 0 ? (
-          <Link href="/practice/leave-sin/moment" className="outline-button button-wrap" onClick={() => setMomentSource(null)}>
-            <Waves aria-hidden />
-            {t('moment.open')}
-          </Link>
-        ) : null}
-      </div>
+    <div className="flex max-w-3xl flex-col gap-8">
+      {privacyLine}
+      {ended ? (
+        <p className="next-step !mt-0 flex items-start gap-2" role="status">
+          <Check className="mt-1.5 size-4 shrink-0 text-primary-text" aria-hidden />
+          <span>{t('endedNote')}</span>
+        </p>
+      ) : null}
 
       {evidence.isError ? <QueryErrorState error={evidence.error} onRetry={() => void evidence.refetch()} className="py-4" /> : null}
 
@@ -192,30 +186,82 @@ export function LeaveSinView() {
             onStart={start}
             onCancel={active.length > 0 ? () => setChoosing(false) : undefined}
           />
-        ) : active.length === 1 && active[0] ? (
-          panel(active[0])
-        ) : (
-          <SegmentTabs
-            aria-label={t('programsLabel')}
-            items={active.map(({ program }) => ({ value: program.sinSlug, label: names.get(program.sinSlug) ?? t('program.unnamed') }))}
-            value={shownTab}
-            onValueChange={setTab}
-            className="gap-6"
-          >
-            {active.map((item) => (
-              <SegmentTabsContent key={item.program.sinSlug} value={item.program.sinSlug}>
-                {panel(item)}
-              </SegmentTabsContent>
-            ))}
-          </SegmentTabs>
-        )}
+        ) : current ? (
+          <ProgramPanel
+            key={current.program.sinSlug}
+            program={current.program}
+            entry={current.entry}
+            common={common}
+            name={names.get(current.program.sinSlug)}
+            habits={habits}
+            quotes={evidence.data ?? []}
+            today={clock.today}
+            onSwitch={() => setSwitching(true)}
+            onEnded={() => {
+              setFocus(null);
+              setChoosing(null);
+              setEnded(true);
+            }}
+          />
+        ) : null}
       </div>
 
-      {!showChooser && active.length < names.size ? (
-        <button type="button" className="outline-button button-wrap self-start" onClick={() => setChoosing(true)}>
-          {t('another')}
-        </button>
-      ) : null}
+      {/* The program's name opens this: the running programs (one is shown), and «ابدأ برنامجًا آخر». */}
+      <Dialog open={switching} onOpenChange={setSwitching}>
+        <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('program.switchTitle')}</DialogTitle>
+          </DialogHeader>
+          <div role="radiogroup" aria-label={t('program.switchTitle')} className="flex flex-col divide-y divide-border">
+            {active.map(({ program }) => {
+              const on = program.sinSlug === current?.program.sinSlug;
+              return (
+                <button
+                  key={program.sinSlug}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  onClick={() => {
+                    setFocus(program.sinSlug);
+                    setSwitching(false);
+                  }}
+                  className="flex min-h-14 items-center gap-3 py-2 text-start transition-colors hover:text-primary-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                >
+                  <span
+                    aria-hidden
+                    className={cn(
+                      'flex size-5 shrink-0 items-center justify-center rounded-full border',
+                      on ? 'border-primary bg-primary text-primary-foreground' : 'border-border',
+                    )}
+                  >
+                    {on ? <Check className="size-3" /> : null}
+                  </span>
+                  <span className="flex min-w-0 flex-col">
+                    <span className="font-medium">{names.get(program.sinSlug) ?? t('program.unnamed')}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {program.category === 'haqq_ibad' ? t('program.categoryIbad') : t('program.categoryAllah')}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          {canAddAnother ? (
+            <Button
+              variant="outline"
+              tone="primary"
+              size="md"
+              icon={<Plus aria-hidden />}
+              onClick={() => {
+                setSwitching(false);
+                setChoosing(true);
+              }}
+            >
+              {t('another')}
+            </Button>
+          ) : null}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={pending !== null} onOpenChange={(open) => (open ? undefined : setPending(null))}>
         <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-xl">
@@ -229,7 +275,8 @@ export function LeaveSinView() {
               userId={userId}
               onCreated={(sealed) => {
                 updateStore((store) => ({ ...store, programs: [...sealed] }));
-                setTab(pending.sinSlug);
+                setFocus(pending.sinSlug);
+                setEnded(false);
                 setPending(null);
                 setChoosing(false);
               }}
@@ -256,27 +303,51 @@ export function LeaveSinView() {
   );
 }
 
-/** «محفوظ مشفّرًا» while unlocked, the save in progress or its failure, and «أقفل». */
+/**
+ * «محفوظ مشفّرًا في حسابك»: one quiet row once the program is saved; a tap shows the whole line (A-21 a). While unlocked
+ * it also says a save in progress or its failure, and offers «أقفل».
+ */
+function PrivacyRow({ unlocked }: { unlocked: boolean }) {
+  const t = useTranslations('leaveSin');
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm leading-7 text-muted-foreground">
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-controls="privacy-detail"
+          onClick={() => setOpen((o) => !o)}
+          className="flex min-h-11 items-center gap-2 rounded-md transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        >
+          <ShieldCheck className="size-4 shrink-0 text-primary-text" aria-hidden />
+          <span>{t('privacyShort')}</span>
+          <ChevronDown aria-hidden className={cn('size-4 transition-transform motion-reduce:transition-none', open && 'rotate-180')} />
+        </button>
+        {unlocked ? <SaveStatus /> : null}
+      </div>
+      {open ? (
+        <p id="privacy-detail" className="max-w-2xl text-sm leading-7 text-muted-foreground">
+          {t('privacy')}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+/** The save in progress or its failure (quiet while saved), and «أقفل». */
 function SaveStatus() {
   const t = useTranslations('leaveSin.vault');
   const state = useVaultSaveState();
   return (
     <>
       <span aria-live="polite" className={state === 'error' || state === 'reopen' ? 'text-destructive' : undefined}>
-        ·{' '}
-        {state === 'saving'
-          ? t('saving')
-          : state === 'error'
-            ? t('errors.save')
-            : state === 'reopen'
-              ? t('errors.reopen')
-              : t('savedShort')}
+        {state === 'saving' ? t('saving') : state === 'error' ? t('errors.save') : state === 'reopen' ? t('errors.reopen') : null}
       </span>
       {state === 'saving' ? <BrandLoader label={t('saving')} /> : null}
-      <button type="button" className="outline-button px-3 text-sm" onClick={() => setVaultSession(null)}>
-        <LockKeyhole aria-hidden />
+      <Button variant="outline" tone="neutral" size="sm" icon={<LockKeyhole aria-hidden />} onClick={() => setVaultSession(null)}>
         {t('lock')}
-      </button>
+      </Button>
     </>
   );
 }

@@ -9,6 +9,7 @@ import {
   prayerSettingsStore,
   currentPrayerTimes,
   refreshPrayerTimes,
+  lookupCity,
 } from './screen-stores';
 
 class MemoryStorage {
@@ -97,5 +98,33 @@ describe('screen stores', () => {
       slotAnchors: ['after-fajr', null],
     });
     expect(sortedSlots(['21:00', '07:00'])).toEqual({ slots: ['07:00', '21:00'] });
+  });
+});
+
+describe('lookupCity (round 5: the city only)', () => {
+  const meta = { timezone: 'Asia/Amman', latitude: 31.95, longitude: 35.93, method: { id: 4 } };
+  const reply = (status: number, body: unknown) => (async () => new Response(JSON.stringify(body), { status })) as unknown as typeof fetch;
+
+  it('asks timingsByAddress with the city alone and reads the place and method', async () => {
+    let url = '';
+    const fetchImpl = (async (input: RequestInfo | URL) => {
+      url = String(input);
+      return new Response(JSON.stringify({ code: 200, data: { meta } }), { status: 200 });
+    }) as typeof fetch;
+    const found = await lookupCity('  Amman ', fetchImpl);
+    expect(url).toContain('/v1/timingsByAddress/');
+    expect(url).toContain('address=Amman');
+    expect(url).not.toContain('method=');
+    expect(found).toEqual({ kind: 'found', city: 'Amman', meta: { timezone: 'Asia/Amman', latitude: 31.95, longitude: 35.93, method: 4 } });
+  });
+
+  it('says «not found» for an address AlAdhan cannot geocode, and «offline» on a network error or a 5xx', async () => {
+    expect(await lookupCity('xyzzy', reply(400, { code: 400, data: 'Unable to geocode address.' }))).toEqual({ kind: 'notFound' });
+    expect(await lookupCity('', reply(200, {}))).toEqual({ kind: 'notFound' });
+    expect(await lookupCity('Amman', reply(503, {}))).toEqual({ kind: 'offline' });
+    const down = (async () => {
+      throw new TypeError('Failed to fetch');
+    }) as unknown as typeof fetch;
+    expect(await lookupCity('Amman', down)).toEqual({ kind: 'offline' });
   });
 });

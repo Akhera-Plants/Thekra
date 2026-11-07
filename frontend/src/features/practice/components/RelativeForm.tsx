@@ -16,6 +16,7 @@ import {
 } from '@thekra/practice-core';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/shared/kit/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { newUuid } from '@/lib/practice/ids';
 import { updateStore } from '@/lib/practice/local-store';
@@ -34,13 +35,17 @@ interface RelativeFormProps {
   circle?: PeopleCircle;
   /** Asked before adding: false refuses (the caller shows the limit sheet). */
   canAdd?: () => boolean;
+  /** Inside a dialog: no frame and no title of its own (the dialog has them). */
+  bare?: boolean;
+  /** After a person was added (the dialog closes and says so). */
+  onAdded?: (name: string) => void;
 }
 
 /**
  * Nickname-only relative: contact details are refused (practice-core `looksLikeContactDetails`). Adds a relative,
  * or with `relative` edits it through `updateRelative`, which versions the change so it syncs.
  */
-export function RelativeForm({ today, relative, onDone, circle = 'kin', canAdd }: RelativeFormProps) {
+export function RelativeForm({ today, relative, onDone, circle = 'kin', canAdd, bare = false, onAdded }: RelativeFormProps) {
   const isSick = (relative?.circle ?? circle) === 'sick';
   const t = useTranslations('practice.kinship.form');
   const tDays = useTranslations('practice.weekdays');
@@ -92,6 +97,7 @@ export function RelativeForm({ today, relative, onDone, circle = 'kin', canAdd }
     });
     updateStore((store) => upsertRelative(store, created));
     form.reset({ ...values, name: '', relation: '' });
+    onAdded?.(created.name);
   }
 
   return (
@@ -99,14 +105,16 @@ export function RelativeForm({ today, relative, onDone, circle = 'kin', canAdd }
       <form
         onSubmit={form.handleSubmit(handleSubmit)}
         className={
-          relative
-            ? 'flex flex-col gap-4 rounded-xl border border-border p-4'
-            : 'flex flex-col gap-4 rounded-2xl border border-border bg-card p-5'
+          bare
+            ? 'flex flex-col gap-4'
+            : relative
+              ? 'flex flex-col gap-4 rounded-xl border border-border p-4'
+              : 'flex flex-col gap-4 rounded-2xl border border-border bg-card p-5'
         }
         noValidate
         aria-label={relative ? t('editTitle') : undefined}
       >
-        {relative ? null : <h2 className="text-xl font-medium">{t('title')}</h2>}
+        {relative || bare ? null : <h2 className="text-xl font-medium">{t('title')}</h2>}
         <div className="grid gap-4 sm:grid-cols-2">
           <FormField
             control={form.control}
@@ -187,19 +195,17 @@ export function RelativeForm({ today, relative, onDone, circle = 'kin', canAdd }
             />
           ) : null}
         </div>
-        {relative ? (
+        {relative && !bare ? (
           <div className="flex flex-wrap gap-3">
-            <button type="submit" className="solid-button button-wrap">
-              {t('save')}
-            </button>
-            <button type="button" className="outline-button button-wrap" onClick={onDone}>
+            <Button type="submit">{t('save')}</Button>
+            <Button variant="outline" tone="neutral" onClick={onDone}>
               {t('cancel')}
-            </button>
+            </Button>
           </div>
         ) : (
-          <button type="submit" className="solid-button button-wrap self-start">
-            {t('submit')}
-          </button>
+          <Button type="submit" className="self-start">
+            {relative ? t('save') : t('submit')}
+          </Button>
         )}
       </form>
     </Form>

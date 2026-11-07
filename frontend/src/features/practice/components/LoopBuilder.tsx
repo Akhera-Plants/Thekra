@@ -299,14 +299,16 @@ const emptySin = (): Record<(typeof SIN_LOOP_STEPS)[number], string> => ({ trigg
  * «حلقة المعصية» inside one «تخفَّف» program: the same stepper with the sin template. Stored in the program, so it
  * leaves this browser only inside the encrypted vault.
  */
-export function SinLoops({ program }: { program: SinProgram }) {
+export function SinLoops({ program, single = false, hideLead = false }: { program: SinProgram; single?: boolean; hideLead?: boolean }) {
   const t = useTranslations('practice.loops');
   const [editing, setEditing] = useState<Editing>(null);
   const loops = activeSinLoops(program);
   const current: SinLoop | undefined = editing?.id ? loops.find((l) => l.id === editing.id) : undefined;
+  // `single` (round 5, F-11 a: «حلقة المعصية» is the first week's task, filled once): one loop, edited in place.
+  const canAdd = single ? loops.length === 0 : canAddSinLoop(program);
   return (
     <section className="flex flex-col gap-3" aria-label={t('sin.title')}>
-      <p className="text-sm leading-7 text-muted-foreground">{t('sin.lead')}</p>
+      {hideLead ? null : <p className="text-sm leading-7 text-muted-foreground">{t('sin.lead')}</p>}
       {loops.length > 0 ? (
         <ol className="flex flex-col gap-3">
           {loops.map((loop, i) => (
@@ -322,12 +324,12 @@ export function SinLoops({ program }: { program: SinProgram }) {
           ))}
         </ol>
       ) : null}
-      {canAddSinLoop(program) ? (
+      {canAdd ? (
         <button type="button" className="outline-button button-wrap self-start" onClick={() => setEditing({ id: null })}>
           <Plus aria-hidden />
           {loops.length === 0 ? t('sin.build') : t('sin.another')}
         </button>
-      ) : (
+      ) : single ? null : (
         <p className="text-sm text-muted-foreground">{t('max', { n: formatDigits(MAX_SIN_LOOPS) })}</p>
       )}
       <LoopStepper

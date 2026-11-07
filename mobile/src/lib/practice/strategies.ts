@@ -45,6 +45,6 @@ export function strategyTarget(action: StrategyAction, key?: string): StrategyTa
       // No pledge page (F-08 a): «إذا… فإني…» is written in «محاسبتي».
       return screen('/habits?tab=review');
     case 'evening':
-      return screen('/settings/notifications', { eveningReview: true });
+      return screen('/habits?tab=review', { eveningReview: true });
   }
 }

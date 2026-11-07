@@ -9,9 +9,10 @@ import type { PracticeHabit } from '@/lib/types/practice';
 import { usePracticeStore } from '../hooks/usePracticeStore';
 
 /**
- * The ONE action of a good-deed page (redesign §4.5): «اجعلها عادتي» opens the add flow with this deed's catalog habit
- * already chosen (`?add=1&habit=<key>`); «في عاداتك» when it is already a habit on this device; a people list
- * (صلة الرحم…) opens its list. Hidden when no catalog habit maps to the deed.
+ * The ONE action of a good-deed page (redesign §4.5; round 5, F-10 a, as in the app): «ابدأ عادة» opens the add flow on
+ * «ورد اليوم» with this deed's catalog habit already chosen (`/practice?add=1&habit=<key>`); «في عاداتك» (outlined) when
+ * it is already a habit on this device, opening its habit page; a people list (صلة الرحم…) opens «أهلي وناسي».
+ * Hidden when no catalog habit maps to the deed.
  */
 export function DeedHabitAction({ habits }: { habits: readonly PracticeHabit[] | undefined }) {
   const t = useTranslations('topic');
@@ -23,20 +24,20 @@ export function DeedHabitAction({ habits }: { habits: readonly PracticeHabit[] |
     <div className="mt-5 flex flex-col items-start gap-2">
       {habit.people ? (
         <Button asChild variant="solid" tone="primary" size="md">
-          <Link href={{ pathname: '/practice/kinship', query: { circle: habit.people } }}>
+          <Link href={{ pathname: '/practice/people', hash: `circle-${habit.people}` }}>
             {t('makeHabit')} <DirectionalArrow />
           </Link>
         </Button>
       ) : plan ? (
         <Button asChild variant="outline" tone="primary" size="md">
-          <Link href={`/practice/habits#plan-${plan.id}`}>
+          <Link href={`/practice/habits/${plan.id}`}>
             <Check aria-hidden />
             {t('habitAdded')}
           </Link>
         </Button>
       ) : (
         <Button asChild variant="solid" tone="primary" size="md">
-          <Link href={{ pathname: '/practice/habits', query: { add: '1', habit: habit.key } }}>
+          <Link href={{ pathname: '/practice', query: { add: '1', habit: habit.key } }}>
             {t('makeHabit')} <DirectionalArrow />
           </Link>
         </Button>

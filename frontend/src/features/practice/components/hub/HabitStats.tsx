@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { establishPlan, graduationReady, updatePlan, type Plan } from '@thekra/practice-core';
 import { Button } from '@/components/shared/kit/button';
@@ -12,7 +12,7 @@ import { monthOf, type YearMonth } from '@/lib/practice/hub';
 import { updatePrefs, updateStore } from '@/lib/practice/local-store';
 import { wirdDay, wirdSummary } from '@/lib/practice/wird';
 import type { WirdContext } from '../../hooks/useWirdContext';
-import { usePlanWords } from '../PlanCard';
+import { usePlanWords } from '../plan-words';
 import { ExcuseToggle } from './ExcuseToggle';
 import { HubMonth } from './HubMonth';
 import { StreakFlame } from './StreakFlame';
@@ -48,7 +48,7 @@ export function StreakLine({ context }: { context: WirdContext }) {
 }
 
 /** One calendar month; a tapped day opens its list under it (loggable for the last 7 days). */
-export function MonthPanel({ context }: { context: WirdContext }) {
+export function MonthPanel({ context, action }: { context: WirdContext; action?: ReactNode }) {
   const t = useTranslations('practice.record');
   const tWird = useTranslations('practice.wird');
   const locale = useLocale() === 'en' ? 'en' : 'ar';
@@ -75,6 +75,7 @@ export function MonthPanel({ context }: { context: WirdContext }) {
           showHijri={showHijri}
           onSelect={(date) => setPicked((current) => (current === date ? null : date))}
           onMonthChange={setMonth}
+          action={action}
         />
         <label className="flex min-h-11 items-center gap-3 self-start text-sm">
           <input

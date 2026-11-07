@@ -1,26 +1,29 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { SegmentTabs, SegmentTabsContent } from '@/components/shared/kit/segment-tabs';
-import { MyRemindersView } from '@/features/practice/components/screen/MyRemindersView';
+import { SAVED_TAB_ROUTES, type SavedTab } from '@/lib/nav/saved-tabs';
+import { localePath } from '@/lib/seo';
 import { FavoritesList } from './FavoritesList';
+import { MyRemindersPanel } from './MyRemindersPanel';
 
-export type SavedTab = 'texts' | 'reminders';
+export type { SavedTab };
 
-/** «المحفوظات» in two parts (owner, 2026-11-01): «النصوص المحفوظة» and «تذكيراتي». `?tab=reminders` opens the second. */
+/**
+ * «المحفوظات» in two tabs (owner round 5, F-22 a / W-30; the app's `app/favorites.tsx`): «النصوص» and «تذكيراتي». Each
+ * tab has its address (`/favorites`, `/favorites/reminders`); a tap keeps the address in step without a navigation or a
+ * history entry, so a reload or a shared link opens the same tab.
+ */
 export function SavedTabs({ initial }: { initial: SavedTab }) {
   const t = useTranslations('favorites');
+  const locale = useLocale();
   const [tab, setTab] = useState<SavedTab>(initial);
 
   function choose(value: string) {
     const next: SavedTab = value === 'reminders' ? 'reminders' : 'texts';
     setTab(next);
-    // Keep the address in step, so a reload or a shared link opens the same part (no navigation, no history entry).
-    const url = new URL(window.location.href);
-    if (next === 'reminders') url.searchParams.set('tab', 'reminders');
-    else url.searchParams.delete('tab');
-    window.history.replaceState(null, '', url);
+    window.history.replaceState(null, '', localePath(locale, SAVED_TAB_ROUTES[next]));
   }
 
   return (
@@ -38,7 +41,7 @@ export function SavedTabs({ initial }: { initial: SavedTab }) {
         <FavoritesList />
       </SegmentTabsContent>
       <SegmentTabsContent value="reminders">
-        <MyRemindersView />
+        <MyRemindersPanel />
       </SegmentTabsContent>
     </SegmentTabs>
   );

@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
-  deletePlan,
   establishPlan,
   limitBlock,
   pausePlan,
@@ -14,6 +13,7 @@ import {
   type Store,
 } from '@thekra/practice-core';
 import { Button } from '@/components/shared/kit/button';
+import { ActionPair } from '@/components/shared/kit/action-pair';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { formatDigits } from '@/lib/format/digits';
 import { formatGregorian } from '@/lib/practice/format';
@@ -21,7 +21,7 @@ import { limitOptions } from '@/lib/practice/limits';
 import { updateStore } from '@/lib/practice/local-store';
 import { habitOf } from '@/lib/practice/plans';
 import type { PracticeHabit } from '@/lib/types/practice';
-import { usePlanWords } from './PlanCard';
+import { usePlanWords } from './plan-words';
 
 interface LimitSheetProps {
   kind: LimitKind;
@@ -36,12 +36,13 @@ interface LimitSheetProps {
   onFreed?: () => void;
 }
 
-type Step = { kind: 'menu' } | { kind: 'pause' } | { kind: 'delete'; confirm: string | null };
+type Step = { kind: 'menu' } | { kind: 'pause' };
 
 /**
- * The limit sheet (redesign §3): shown instead of adding past a limit. «أكمل ما عندي» is the primary action and only
- * closes; «أوقِف … مؤقتًا» pauses one (its history stays), «احذف …» removes one after a confirmation, and «ثبّت … وابدأ
- * الجديدة» moves a graduation-ready sapling to «راسخة». The «تخفَّف» limit has only the first action.
+ * The limit sheet (redesign §3, round 5 F-30 a): shown instead of adding past a limit. One pair: «أكمل ما عندي» (solid,
+ * only closes) and «أوقف عادة مؤقتًا» (pauses one, its history stays). No delete here (F-30 a). A graduation-ready
+ * sapling also offers «ثبّت … وابدأ الجديدة». The «تخفَّف» limit has only the first action. The day a place opens by
+ * itself is written in words.
  */
 export function LimitSheet({ kind, open, onOpenChange, limits, store, habits, today, onFreed }: LimitSheetProps) {
   const t = useTranslations('practice.limits');
@@ -74,7 +75,6 @@ export function LimitSheet({ kind, open, onOpenChange, limits, store, habits, to
   }
 
   const pause = (id: string) => freed(() => updateStore((s) => updatePlan(s, id, (p) => pausePlan(p, today))));
-  const remove = (id: string) => freed(() => updateStore((s) => deletePlan(s, id)));
   const establish = (id: string) => freed(() => updateStore((s) => updatePlan(s, id, (p) => establishPlan(p, today))));
 
   return (
@@ -92,28 +92,25 @@ export function LimitSheet({ kind, open, onOpenChange, limits, store, habits, to
 
         {step.kind === 'menu' ? (
           <div className="flex flex-col gap-2">
-            <Button tone="primary" onClick={() => close(false)}>
-              {t('keepGoing')}
-            </Button>
+            <ActionPair>
+              <Button tone="primary" onClick={() => close(false)}>
+                {t('keepGoing')}
+              </Button>
+              {candidates.length > 0 ? (
+                <Button variant="outline" tone="primary" onClick={() => setStep({ kind: 'pause' })}>
+                  {t(`${kind}.pause`)}
+                </Button>
+              ) : null}
+            </ActionPair>
             {ready.map((plan) => (
               <Button key={plan.id} variant="outline" tone="primary" className="h-auto py-2 whitespace-normal" onClick={() => establish(plan.id)}>
                 <EstablishLabel plan={plan} habits={habits} />
               </Button>
             ))}
-            {candidates.length > 0 ? (
-              <>
-                <Button variant="outline" tone="neutral" onClick={() => setStep({ kind: 'pause' })}>
-                  {t(`${kind}.pause`)}
-                </Button>
-                <Button variant="outline" tone="destructive" onClick={() => setStep({ kind: 'delete', confirm: null })}>
-                  {t(`${kind}.delete`)}
-                </Button>
-              </>
-            ) : null}
           </div>
         ) : (
           <fieldset className="flex flex-col gap-2">
-            <legend className="mb-2 text-sm text-muted-foreground">{step.kind === 'pause' ? t('pickPause') : t('pickDelete')}</legend>
+            <legend className="mb-2 text-sm text-muted-foreground">{t('pickPause')}</legend>
             {candidates.map((plan) => (
               <label key={plan.id} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-2 hover:bg-muted">
                 <input
@@ -126,25 +123,10 @@ export function LimitSheet({ kind, open, onOpenChange, limits, store, habits, to
                 <PlanTitle plan={plan} habits={habits} />
               </label>
             ))}
-            {step.kind === 'delete' && step.confirm ? (
-              <p role="status" className="text-sm leading-7 text-muted-foreground">
-                {t('deleteNote')}
-              </p>
-            ) : null}
             <DialogFooter className="mt-2 gap-2 sm:justify-start">
-              {step.kind === 'pause' ? (
-                <Button tone="primary" disabled={picked === null} onClick={() => picked && pause(picked)}>
-                  {t('pauseAction')}
-                </Button>
-              ) : step.confirm ? (
-                <Button tone="destructive" onClick={() => remove(step.confirm as string)}>
-                  {t('deleteConfirm')}
-                </Button>
-              ) : (
-                <Button tone="destructive" variant="outline" disabled={picked === null} onClick={() => picked && setStep({ kind: 'delete', confirm: picked })}>
-                  {t('deleteAction')}
-                </Button>
-              )}
+              <Button tone="primary" disabled={picked === null} onClick={() => picked && pause(picked)}>
+                {t('pauseAction')}
+              </Button>
               <Button variant="outline" tone="neutral" onClick={() => setStep({ kind: 'menu' })}>
                 {t('back')}
               </Button>

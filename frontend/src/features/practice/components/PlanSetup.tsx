@@ -3,13 +3,16 @@
 import { useId, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
+  addHabitLoop,
   defaultHabitKey,
   isPrayerAnchor,
   isValidTime,
   loadWarning,
+  MAX_LOOP_TEXT,
   ONBOARDING_STEPS,
   setHeartPrefs,
   startEbb,
+  updateSettings,
   upsertPlan,
   type OnboardingStep,
   type Plan,
@@ -21,7 +24,12 @@ import { formatDigits } from '@/lib/format/digits';
 import { updateHeart } from '@/lib/practice/heart-store';
 import { updateStore } from '@/lib/practice/local-store';
 import { usePrayerTimesToday } from '@/lib/practice/screen-stores';
-import { DEFAULT_ACTIVE_DAYS, isEbbDay, planFromHabit, type Distance } from '@/lib/practice/plans';
+import { isEbbDay, planFromHabit, type Distance } from '@/lib/practice/plans';
+import { ALL_DAYS, planWeekdays, withWeekdays } from '@/lib/practice/days';
+import { newUuid } from '@/lib/practice/ids';
+import { toast } from 'sonner';
+import { Input } from '@/components/ui/input';
+import { DayChips } from './DayChips';
 import { slotProblem, suitableAnchors } from '@/lib/practice/windows';
 import type { PracticeHabit } from '@/lib/types/practice';
 import { cn } from '@/lib/utils';
@@ -32,7 +40,6 @@ import { ConsistencyCard, HabitLoopCard } from './hub/HabitCards';
 import { StoryLine } from './hub/KnowledgeCards';
 import { SlotPicker, useWindowRange, WindowLine } from './SlotPicker';
 
-const ACTIVE_DAYS = [2, 3, 4, 5, 6, 7];
 const DISTANCES: Distance[] = ['far', 'near'];
 
 interface PlanSetupProps {
@@ -52,10 +59,12 @@ type Step = OnboardingStep | 'finish';
 
 /**
  * Adding a habit in three short screens (redesign §4.5), the first habit and every later one alike: «ماذا؟» (the habit),
- * «متى؟» (two reminder times and the active days), «كم؟» (far/near → a very small start). Each screen has one hint line,
- * one example and «تخطَّ», which keeps the defaults (the suggested habit, the catalog's times, the «far» start); progress
- * dots on top. After the FIRST habit only: the two switches «نية اليوم» and «المحاسبة المسائية» (opt-in) and, once,
- * «حلقة العادة» and «الاستمرار: ثلاث حقائق».
+ * «متى؟» (two reminder times, the days themselves — A-13 a — and two optional questions, F-13 a: «بعد ماذا ستفعلها؟» and
+ * «إذا منعك شيء، فماذا تفعل؟», saved as the habit's loop), «كم؟» (far/near → a very small start, and «كم دقيقة حرة
+ * لديك؟» until it is answered, F-28 a). The strategy of each moment is one line in its step (F-12 a: «اربطها بصلاة»,
+ * «ابدأ صغيرًا جدًا»). Each screen has one hint line, one example and «تخطَّ», which keeps the defaults; progress dots
+ * on top. After the FIRST habit only: the two switches «نية اليوم» and «المحاسبة المسائية» (opt-in) and, once, «حلقة
+ * العادة» and «الاستمرار: ثلاث حقائق». A later habit closes the flow with a toast.
  */
 export function PlanSetup({ habits, existing, preselected, freeMinutes, today, onDone, onCancel, onFirstPlan }: PlanSetupProps) {
   const t = useTranslations('practice.onboarding');
@@ -71,7 +80,13 @@ export function PlanSetup({ habits, existing, preselected, freeMinutes, today, o
     const chosen = available.find((h) => h.key === preselectedOk);
     return chosen ? [chosen.defaultSlots[0] ?? '08:00', chosen.defaultSlots[1] ?? ''] : ['', ''];
   });
-  const [activeDays, setActiveDays] = useState(DEFAULT_ACTIVE_DAYS);
+  const [days, setDays] = useState<number[]>(() => {
+    const chosen = available.find((h) => h.key === preselectedOk);
+    return (chosen && planWeekdays({}, chosen.defaultRule)) || [...ALL_DAYS];
+  });
+  const [cue, setCue] = useState('');
+  const [ifThen, setIfThen] = useState('');
+  const [minutes, setMinutes] = useState('');
   const [distance, setDistance] = useState<Distance>('far');
   const [error, setError] = useState<string | null>(null);
   /** «متى؟»: a slot outside the deed's window, per field (0, 1). */
@@ -79,6 +94,8 @@ export function PlanSetup({ habits, existing, preselected, freeMinutes, today, o
   const prayer = usePrayerTimesToday();
   const range = useWindowRange();
   const stepRef = useFocusOnChange<HTMLHeadingElement>(step);
+  const tStrategy = useTranslations('practice.strategies');
+  const minutesId = useId();
   const habit = available.find((h) => h.key === habitKey);
   const index = step === 'finish' ? ONBOARDING_STEPS.length : ONBOARDING_STEPS.indexOf(step);
 
@@ -86,7 +103,10 @@ export function PlanSetup({ habits, existing, preselected, freeMinutes, today, o
     const chosen = available.find((h) => h.key === key);
     setHabitKey(key);
     setError(null);
-    if (chosen) setSlots([chosen.defaultSlots[0] ?? '08:00', chosen.defaultSlots[1] ?? '']);
+    if (chosen) {
+      setSlots([chosen.defaultSlots[0] ?? '08:00', chosen.defaultSlots[1] ?? '']);
+      setDays(planWeekdays({}, chosen.defaultRule) ?? [...ALL_DAYS]);
+    }
   }
 
   function goWhen(key: string | null) {
@@ -98,14 +118,34 @@ export function PlanSetup({ habits, existing, preselected, freeMinutes, today, o
     setStep('when');
   }
 
-  function create(choice: { slots: string[]; activeDays: number; distance: Distance }) {
+  function create(choice: { slots: string[]; days: number[]; distance: Distance; withAnswers: boolean }) {
     if (!habit) return;
-    const plan = planFromHabit(habit, { distance: choice.distance, slots: choice.slots, activeDaysPerWeek: choice.activeDays }, today);
+    let plan = withWeekdays(
+      planFromHabit(habit, { distance: choice.distance, slots: choice.slots, activeDaysPerWeek: choice.days.length }, today),
+      choice.days,
+    );
+    // F-13 a: the two optional questions become the habit's loop (its routine is the habit itself).
+    if (choice.withAnswers && (cue.trim() || ifThen.trim())) {
+      plan = addHabitLoop(plan, newUuid(), {
+        cue: cue.trim(),
+        craving: '',
+        routine: english ? habit.titleEn : habit.titleAr,
+        reward: '',
+        ...(ifThen.trim() ? { ifThen: ifThen.trim() } : {}),
+      });
+    }
+    const free = freeMinutesValue(minutes);
     if (firstHabit) onFirstPlan?.();
     // On a «يومي ثقيل» day the new habit is lightened too, so the day stays light and the toggle stays on.
-    updateStore((store) => upsertPlan(store, isEbbDay(store.plans, today) ? startEbb(plan, today) : plan));
+    updateStore((store) => {
+      const withPlan = upsertPlan(store, isEbbDay(store.plans, today) ? startEbb(plan, today) : plan);
+      return free !== null && freeMinutes === undefined ? updateSettings(withPlan, { freeMinutesPerDay: free }) : withPlan;
+    });
     if (firstHabit) setStep('finish');
-    else onDone();
+    else {
+      toast.success(tSetup('added', { title: english ? habit.titleEn : habit.titleAr }));
+      onDone();
+    }
   }
 
   const validSlots = () => [slots[0], slots[1]].filter((s) => isValidTime(s) || isPrayerAnchor(s));
@@ -193,7 +233,9 @@ export function PlanSetup({ habits, existing, preselected, freeMinutes, today, o
           }}
           onSkip={() => {
             setSlots([habit.defaultSlots[0] ?? '08:00', habit.defaultSlots[1] ?? '']);
-            setActiveDays(DEFAULT_ACTIVE_DAYS);
+            setDays(planWeekdays({}, habit.defaultRule) ?? [...ALL_DAYS]);
+            setCue('');
+            setIfThen('');
             setError(null);
             setSlotErrors([null, null]);
             setStep('howMuch');
@@ -201,6 +243,7 @@ export function PlanSetup({ habits, existing, preselected, freeMinutes, today, o
           onBack={() => setStep('what')}
           backLabel={tSetup('back')}
         >
+          <StrategyLine idea={tStrategy('items.anchor-prayer.idea')} />
           <WindowLine window={habit.window} prayer={prayer} />
           <WhenFields
             slots={slots}
@@ -208,12 +251,17 @@ export function PlanSetup({ habits, existing, preselected, freeMinutes, today, o
               setSlots(next);
               setSlotErrors([null, null]);
             }}
-            activeDays={activeDays}
-            onActiveDays={setActiveDays}
+            days={days}
+            onDays={setDays}
             habit={habit}
             prayer={prayer}
             errors={slotErrors}
           />
+          <fieldset className="flex flex-col gap-3">
+            <legend className="mb-1 text-base font-medium">{t('loop.title')}</legend>
+            <LineField label={t('loop.cue')} hint={t('loop.cueExample')} value={cue} onChange={setCue} />
+            <LineField label={t('loop.ifThen')} hint={t('loop.ifThenExample')} value={ifThen} onChange={setIfThen} />
+          </fieldset>
           {error ? (
             <p className="text-sm text-destructive" role="alert">
               {error}
@@ -230,11 +278,14 @@ export function PlanSetup({ habits, existing, preselected, freeMinutes, today, o
           hint={t('howMuch.hint')}
           example={t('howMuch.example')}
           nextLabel={tSetup('create')}
-          onNext={() => create({ slots: validSlots(), activeDays, distance })}
-          onSkip={() => create({ slots: validSlots().length > 0 ? validSlots() : defaultsFor(habit), activeDays, distance: 'far' })}
+          onNext={() => create({ slots: validSlots(), days, distance, withAnswers: true })}
+          onSkip={() =>
+            create({ slots: validSlots().length > 0 ? validSlots() : defaultsFor(habit), days, distance: 'far', withAnswers: true })
+          }
           onBack={() => setStep('when')}
           backLabel={tSetup('back')}
         >
+          <StrategyLine idea={tStrategy('items.start-tiny.idea')} />
           <fieldset className="flex flex-col gap-2">
             <legend className="mb-2">{tSetup('distanceQuestion')}</legend>
             {DISTANCES.map((d) => (
@@ -249,18 +300,41 @@ export function PlanSetup({ habits, existing, preselected, freeMinutes, today, o
               </label>
             ))}
           </fieldset>
-          {freeMinutes !== undefined &&
+          {freeMinutes === undefined ? (
+            <div className="flex flex-col gap-1">
+              <label htmlFor={minutesId} className="text-base">
+                {tSetup('freeMinutesQuestion')}
+              </label>
+              <Input
+                id={minutesId}
+                type="number"
+                inputMode="numeric"
+                min={0}
+                max={1440}
+                step={10}
+                className="h-11 w-40"
+                value={minutes}
+                aria-describedby={`${minutesId}-hint`}
+                onChange={(e) => setMinutes(e.target.value)}
+              />
+              <p id={`${minutesId}-hint`} className="text-sm leading-7 text-muted-foreground">
+                {tSetup('freeMinutesHint')}
+              </p>
+            </div>
+          ) : null}
+          {(freeMinutes ?? freeMinutesValue(minutes)) !== null &&
+          (freeMinutes ?? freeMinutesValue(minutes)) !== undefined &&
           loadWarning(
             [
               ...existing,
               planFromHabit(
                 habit,
-                { distance, slots: validSlots().length > 0 ? validSlots() : defaultsFor(habit), activeDaysPerWeek: activeDays },
+                { distance, slots: validSlots().length > 0 ? validSlots() : defaultsFor(habit), activeDaysPerWeek: days.length },
                 today,
                 'preview',
               ),
             ],
-            freeMinutes,
+            (freeMinutes ?? freeMinutesValue(minutes)) as number,
           ) ===
             'over' ? (
             <p className="next-step" role="status">
@@ -361,25 +435,24 @@ function StepFrame({ headingRef, eyebrow, title, hint, example, children, nextLa
 function WhenFields({
   slots,
   onSlots,
-  activeDays,
-  onActiveDays,
+  days,
+  onDays,
   habit,
   prayer,
   errors,
 }: {
   slots: [string, string];
   onSlots: (slots: [string, string]) => void;
-  activeDays: number;
-  onActiveDays: (n: number) => void;
+  days: number[];
+  onDays: (days: number[]) => void;
   habit: PracticeHabit;
   prayer: PrayerTimesWithSunrise | undefined;
   errors: [string | null, string | null];
 }) {
   const tSetup = useTranslations('practice.setup');
   const t = useTranslations('practice.onboarding');
-  const daysId = useId();
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       <fieldset className="grid gap-4 sm:grid-cols-2">
         <legend className="mb-2">{t('slots')}</legend>
         {([0, 1] as const).map((i) => (
@@ -395,23 +468,40 @@ function WhenFields({
           />
         ))}
       </fieldset>
-      <div className="flex flex-col gap-1 text-sm">
-        <label htmlFor={daysId}>{tSetup('activeDays')}</label>
-        <select
-          id={daysId}
-          className="h-11 w-40 rounded-md border border-input bg-background px-3"
-          value={activeDays}
-          onChange={(e) => onActiveDays(Number(e.target.value))}
-        >
-          {ACTIVE_DAYS.map((n) => (
-            <option key={n} value={n}>
-              {tSetup('daysPerWeek', { n: String(n) })}
-            </option>
-          ))}
-        </select>
-      </div>
+      <DayChips value={days} onChange={onDays} legend={tSetup('days')} />
     </div>
   );
+}
+
+/** One strategy at its moment (F-12 a): a quiet line in the step it belongs to. */
+function StrategyLine({ idea }: { idea: string }) {
+  const t = useTranslations('practice.setup');
+  return (
+    <p className="rounded-xl border-s-2 border-primary bg-secondary/60 px-4 py-2.5 text-sm leading-7">
+      <span className="font-medium text-primary-text">{t('strategy')}: </span>
+      {idea}
+    </p>
+  );
+}
+
+/** An optional one-line answer. */
+function LineField({ label, hint, value, onChange }: { label: string; hint: string; value: string; onChange: (v: string) => void }) {
+  const id = useId();
+  return (
+    <div className="flex flex-col gap-1">
+      <label htmlFor={id} className="text-sm">
+        {label}
+      </label>
+      <Input id={id} value={value} maxLength={MAX_LOOP_TEXT} placeholder={hint} onChange={(e) => onChange(e.target.value)} className="h-11" />
+    </div>
+  );
+}
+
+/** «كم دقيقة حرة لديك؟»: a whole number 0…1440, else null. */
+function freeMinutesValue(raw: string): number | null {
+  if (!/^\d+$/.test(raw.trim())) return null;
+  const n = Number(raw);
+  return n >= 0 && n <= 1440 ? n : null;
 }
 
 function Switch({ label, hint, checked, onChange }: { label: string; hint: string; checked: boolean; onChange: (on: boolean) => void }) {

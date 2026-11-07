@@ -61,6 +61,24 @@ export interface SinProgramCommon {
   helpEn: string;
 }
 
+/** One act of «لحظة مجاهدة» (owner round 5, F-09): a short command tied to public texts (read by id). */
+export interface MomentTool {
+  key: string;
+  titleAr: string;
+  titleEn: string;
+  evidence: string[];
+}
+
+/**
+ * «لحظة مجاهدة» per sin: the acts of a sin with texts of its own, the generic acts for every other sin, and aliases (a
+ * sin that takes another's acts). Mirrors backend `MomentTools` (backend/src/modules/practice/practice-catalog.ts).
+ */
+export interface MomentTools {
+  generic: MomentTool[];
+  sins: Record<string, MomentTool[]>;
+  aliases?: Record<string, string>;
+}
+
 export interface SinProgramEntry {
   sin: string;
   category: SinCategory;
@@ -82,6 +100,8 @@ export interface PracticeCatalog {
     review: string;
     common: SinProgramCommon;
     programs: SinProgramEntry[];
+    /** «لحظة مجاهدة» acts per sin (sin-programs.yaml `moment`). Optional until every API deploy sends it. */
+    moment?: MomentTools;
   };
   /** Habit deed → its branches of faith. Optional until every API deploy sends it. */
   deedBranches?: Record<string, number[]>;

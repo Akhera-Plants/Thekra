@@ -1,5 +1,6 @@
 'use client';
 
+import { UserRound } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { toast } from 'sonner';
@@ -11,6 +12,7 @@ interface AccountSectionProps {
   user: UserDto;
 }
 
+/** «الحساب» as a settings row: the icon, the name and the e-mail, «تسجيل الخروج» on the line's end. */
 export function AccountSection({ user }: AccountSectionProps) {
   const t = useTranslations('settings');
   const tAuth = useTranslations('auth');
@@ -24,14 +26,17 @@ export function AccountSection({ user }: AccountSectionProps) {
   }
 
   return (
-    <section className="flex items-center justify-between gap-4">
-      <div className="min-w-0">
-        <p className="text-sm font-medium">{t('account')}</p>
-        <p className="truncate text-sm text-muted-foreground">{user.email}</p>
-      </div>
+    <div className="flex min-h-14 items-center gap-3 py-1">
+      <UserRound aria-hidden className="size-5 shrink-0 text-primary-text" />
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="text-base">{t('rows.account')}</span>
+        <span className="truncate text-sm text-muted-foreground" dir="ltr">
+          {user.email}
+        </span>
+      </span>
       <Button variant="outline" tone="neutral" size="sm" onClick={handleLogout}>
         {tAuth('logout')}
       </Button>
-    </section>
+    </div>
   );
 }
