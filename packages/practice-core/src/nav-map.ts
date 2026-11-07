@@ -57,7 +57,7 @@ export const NAV_FEATURES: readonly NavFeature[] = [
 
   // ── عاداتي (app tab `app/(tabs)/habits.tsx`; web `/practice/*`) ──
   { key: 'habits', ar: 'عاداتي', en: 'My habits', web: '/practice', app: '/habits', group: 'habits' },
-  { key: 'wird', ar: 'ورد اليوم', en: "Today's wird", web: '/practice', app: '/habits?tab=wird', group: 'habits', parent: 'habits' },
+  { key: 'wird', ar: 'ورد اليوم', en: "Today's practice", web: '/practice', app: '/habits?tab=wird', group: 'habits', parent: 'habits' },
   { key: 'periodic', ar: 'الدورية', en: 'Periodic acts', web: '/practice/periodic', app: '/habits?tab=periodic', group: 'habits', parent: 'habits' },
   { key: 'review', ar: 'محاسبتي', en: 'My self-review', web: '/practice/review', app: '/habits?tab=review', group: 'habits', parent: 'habits' },
   { key: 'record', ar: 'سجلّي', en: 'My record', web: '/practice/record', app: '/habits?tab=record', group: 'habits', parent: 'habits' },

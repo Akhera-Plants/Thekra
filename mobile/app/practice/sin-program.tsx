@@ -273,7 +273,8 @@ function SinProgramContent() {
         <PageHeader title={t('sinProgram.title')} lead={t('sinProgram.lead')}>
           {saved ? <PrivacyLine /> : null}
         </PageHeader>
-        {saved ? null : <Notice icon={ShieldCheck}>{t('sinProgram.privacy')}</Notice>}
+        {/* Not beside «احفظه مشفّرًا»: that line says the program is on this device only, so this promise would contradict it. */}
+        {saved || needsProtect ? null : <Notice icon={ShieldCheck}>{t('sinProgram.privacy')}</Notice>}
         {ended ? <Notice icon={Check}>{t('sinProgram.end.done')}</Notice> : null}
         {showChooser ? (
           <ChooseProgram

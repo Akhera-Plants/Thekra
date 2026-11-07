@@ -13,6 +13,8 @@ import { useTranslation } from 'react-i18next';
 import { useRequireSignIn } from '@/lib/auth/require-sign-in';
 import { useStackScreenOptions } from '@/ui';
 
+export { RouteErrorBoundary as ErrorBoundary } from '@/components/RouteErrorBoundary';
+
 export default function PracticeLayout() {
   const { t } = useTranslation();
   const options = useStackScreenOptions();

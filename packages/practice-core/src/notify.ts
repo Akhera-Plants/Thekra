@@ -407,7 +407,7 @@ export const NOTIFY_TEXTS = {
     strategyBody: (key: string) => strategyByKey(key)?.titleAr ?? '',
   },
   en: {
-    wirdTitle: "Today's wird",
+    wirdTitle: "Today's practice",
     eveningBody: 'Little is left of your day; one minute keeps your streak',
     fridayTitle: 'Self-review',
     fridayBody: 'Two minutes with yourself: what you kept this week, and one step for the next',

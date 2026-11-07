@@ -560,7 +560,7 @@
       "tomorrow": "غدًا",
       "noNext": "لا موعد قريب",
       "people": "قوائم الناس",
-      "count": "{{n}} من {{max}}",
+      "count": "أعمالك الدورية: {{n}} من {{max}}",
       "added": "مضاف"
     },
     "limits": {
@@ -1976,6 +1976,8 @@
       "weeklyLast": "آخرها: أسبوع {{date}}",
       "startWeekly": "حاسب نفسك الآن",
       "pickDay": "اختر اليوم",
+      "dayRow": "يوم المحاسبة",
+      "intentionSwitch": "اعرضها كل صباح",
       "pickDayHint": "يوم المحاسبة الأسبوعية، وتُذكَّر بها فيه.",
       "daySaved": "يوم المحاسبة: {{day}}",
       "messagesTitle": "رسائلي إلى نفسي",

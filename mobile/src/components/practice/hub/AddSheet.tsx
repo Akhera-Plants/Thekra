@@ -22,6 +22,7 @@ import { today, usePracticeStore } from '@/lib/practice/practice-store';
 import { habitFor } from '@/lib/practice/reminders';
 import { useDateNames, useLimits } from '@/lib/practice/use-habits-hub';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
+import { LimitSheet } from '@/components/practice/LimitSheet';
 import { GUTTER, radius, space, useStyles, type Theme } from '@/theme';
 import { ListRow, Notice, Text, ButtonPair, toast } from '@/ui';
 
@@ -110,84 +111,104 @@ export function AddSheet({ visible, onClose, periodic }: AddSheetProps) {
     router.push(href);
   }
 
+  // F-30 a: at the limit, «عادة» opens the limit sheet here, not the add steps with the sheet over their skeleton.
+  const [limitOpen, setLimitOpen] = useState(false);
+  function handleHabit(href: Href) {
+    if (!block) return handleChoose(href);
+    onClose();
+    setLimitOpen(true);
+  }
+
   return (
-    <Modal visible={visible} transparent animationType="fade" statusBarTranslucent navigationBarTranslucent onRequestClose={onClose}>
-      <View style={styles.root}>
-        <Pressable style={styles.backdrop} onPress={onClose} accessibilityRole="button" accessibilityLabel={t('common.close')} />
-        <Animated.View
-          style={[styles.sheet, { paddingBottom: insets.bottom + space.lg, transform: [{ translateY: rise }] }]}
-          accessibilityViewIsModal
-        >
-          <Text variant="heading" accessibilityRole="header">
-            {t(step === 'periodic' ? 'practice.hub.addPeriodicTitle' : 'practice.hub.addTitle')}
-          </Text>
-          {step === 'menu' ? (
-            <View>
-              {CHOICES.map((choice) =>
-                choice === 'periodic' ? (
+    <>
+      <Modal visible={visible} transparent animationType="fade" statusBarTranslucent navigationBarTranslucent onRequestClose={onClose}>
+        <View style={styles.root}>
+          <Pressable style={styles.backdrop} onPress={onClose} accessibilityRole="button" accessibilityLabel={t('common.close')} />
+          <Animated.View
+            style={[styles.sheet, { paddingBottom: insets.bottom + space.lg, transform: [{ translateY: rise }] }]}
+            accessibilityViewIsModal
+          >
+            <Text variant="heading" accessibilityRole="header">
+              {t(step === 'periodic' ? 'practice.hub.addPeriodicTitle' : 'practice.hub.addTitle')}
+            </Text>
+            {step === 'menu' ? (
+              <View>
+                {CHOICES.map((choice) =>
+                  choice === 'periodic' ? (
+                    <ListRow
+                      key="periodic"
+                      icon={Repeat}
+                      title={t('practice.hub.addPeriodic')}
+                      hint={t('practice.hub.addPeriodicHint')}
+                      onPress={() => setStep('periodic')}
+                    />
+                  ) : (
+                    <ListRow
+                      key={choice.key}
+                      icon={choice.icon}
+                      title={t(choice.titleKey)}
+                      hint={choice.key === 'habit' ? habitHint : t(choice.hintKey)}
+                      onPress={() => (choice.key === 'habit' ? handleHabit(choice.href) : handleChoose(choice.href))}
+                    />
+                  ),
+                )}
+                {!fardEnabled(store) ? (
                   <ListRow
-                    key="periodic"
-                    icon={Repeat}
-                    title={t('practice.hub.addPeriodic')}
-                    hint={t('practice.hub.addPeriodicHint')}
-                    onPress={() => setStep('periodic')}
+                    icon={Landmark}
+                    title={t('habitsTab.add.fard')}
+                    hint={t('habitsTab.add.fardHint')}
+                    onPress={() => {
+                      setStore((s) => setFardTracking(s, true));
+                      toast(t('habitsTab.add.fardToast'));
+                      onClose();
+                    }}
                   />
-                ) : (
-                  <ListRow
-                    key={choice.key}
-                    icon={choice.icon}
-                    title={t(choice.titleKey)}
-                    hint={choice.key === 'habit' ? habitHint : t(choice.hintKey)}
-                    onPress={() => handleChoose(choice.href)}
-                  />
-                ),
-              )}
-              {!fardEnabled(store) ? (
-                <ListRow
-                  icon={Landmark}
-                  title={t('habitsTab.add.fard')}
-                  hint={t('habitsTab.add.fardHint')}
-                  onPress={() => {
-                    setStore((s) => setFardTracking(s, true));
-                    toast(t('habitsTab.add.fardToast'));
-                    onClose();
-                  }}
-                />
-              ) : null}
-            </View>
-          ) : (
-            <>
-              <Notice icon={BellRing}>{t('practice.hub.periodicNote')}</Notice>
-              <ScrollView style={styles.scroll} nestedScrollEnabled>
-                {templates.map((habit) => (
-                  <ListRow
-                    key={habit.key}
-                    icon={habit.people ? HeartHandshake : Repeat}
-                    title={pick(habit, 'title', locale)}
-                    hint={habit.people ? t('practice.hub.periodicPeople') : undefined}
-                    onPress={() =>
-                      handleChoose(
-                        habit.people
-                          ? { pathname: '/practice/kinship', params: { circle: habit.people, add: '1' } }
-                          : { pathname: '/practice/add', params: { habit: habit.key } },
-                      )
-                    }
-                  />
-                ))}
-              </ScrollView>
-            </>
-          )}
-          {/* One row: «رجوع» (inside the list step) beside «إلغاء», the same size (O-02). */}
-          <ButtonPair
-            primary={
-              step !== 'menu' && !periodic
-                ? { label: t('practice.limits.back'), onPress: () => setStep('menu'), variant: 'outline' }
-                : { label: t('common.cancel'), onPress: onClose, variant: 'outline' }
-            }
-            secondary={step !== 'menu' && !periodic ? { label: t('common.cancel'), onPress: onClose, variant: 'ghost' } : null}
-          />
-        </Animated.View>
-      </View>
-    </Modal>
+                ) : null}
+              </View>
+            ) : (
+              <>
+                <Notice icon={BellRing}>{t('practice.hub.periodicNote')}</Notice>
+                <ScrollView style={styles.scroll} nestedScrollEnabled>
+                  {templates.map((habit) => (
+                    <ListRow
+                      key={habit.key}
+                      icon={habit.people ? HeartHandshake : Repeat}
+                      title={pick(habit, 'title', locale)}
+                      hint={habit.people ? t('practice.hub.periodicPeople') : undefined}
+                      onPress={() =>
+                        handleChoose(
+                          habit.people
+                            ? { pathname: '/practice/kinship', params: { circle: habit.people, add: '1' } }
+                            : { pathname: '/practice/add', params: { habit: habit.key } },
+                        )
+                      }
+                    />
+                  ))}
+                </ScrollView>
+              </>
+            )}
+            {/* One row: «رجوع» (inside the list step) beside «إلغاء», the same size (O-02). */}
+            <ButtonPair
+              primary={
+                step !== 'menu' && !periodic
+                  ? { label: t('practice.limits.back'), onPress: () => setStep('menu'), variant: 'outline' }
+                  : { label: t('common.cancel'), onPress: onClose, variant: 'outline' }
+              }
+              secondary={step !== 'menu' && !periodic ? { label: t('common.cancel'), onPress: onClose, variant: 'ghost' } : null}
+            />
+          </Animated.View>
+        </View>
+      </Modal>
+      <LimitSheet
+        kind="sapling"
+        visible={limitOpen}
+        limits={limits}
+        onClose={() => setLimitOpen(false)}
+        onFreed={() => {
+          setLimitOpen(false);
+          router.push('/practice/add');
+        }}
+      />
+    </>
   );
 }

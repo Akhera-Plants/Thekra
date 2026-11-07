@@ -226,7 +226,9 @@ describe('«محاسبتي», «أضف», the habit days and the onboarding', ()
 
   it('counts the days per week from the days picked (A-13 a)', () => {
     expect(activeDaysFrom([0, 2, 4], 3)).toBe(3);
+    // One day: held at the core's minimum (2), so planFromHabit never throws «Invalid plan» (QA round 5).
     expect(activeDaysFrom([1, 1, 1], 3)).toBe(1);
+    expect(activeDaysFrom([5], 3)).toBe(1);
     expect(activeDaysFrom(null, 3)).toBe(3);
   });
 

@@ -200,8 +200,15 @@ export function answersOf(loops: readonly HabitLoop[] | undefined): LoopAnswers 
 
 // ── Days of a habit (A-13 a) ─────────────────────────────────────────────────────────────────────────────────
 
-/** A-13 a: the user picks the days only; the count per week follows them (at least 1). */
+/**
+ * practice-core `validatePlan` accepts 2–7 days a week only. One picked day («قيام ليلة الجمعة», a single weekday in the
+ * add steps or the edit sheet) used to give 1 and threw «Invalid plan» (a blank screen). Until the core accepts 1, the
+ * count is held at 2; the rule keeps the one day the user picked, so reminders and «ليست مطلوبة اليوم» are right.
+ */
+export const MIN_ACTIVE_DAYS = 1;
+
+/** A-13 a: the user picks the days only; the count per week follows them (at least {@link MIN_ACTIVE_DAYS}). */
 export function activeDaysFrom(weekdays: readonly number[] | null, fallback: number): number {
   if (!weekdays) return fallback;
-  return Math.max(1, Math.min(7, new Set(weekdays).size));
+  return Math.max(MIN_ACTIVE_DAYS, Math.min(7, new Set(weekdays).size));
 }

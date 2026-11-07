@@ -50,30 +50,34 @@ export default function DailyTextScreen() {
       <PageHeader title={t('dailyText.title')} lead={t('dailyText.lead')} />
       {current ? <Notice icon={Check}>{t('dailyText.current', { name: current })}</Notice> : null}
 
-      <Section title={t('dailyText.sets')} lead={t('dailyText.setsLead')}>
-        {sets.isLoading ? (
-          <>
-            <Skeleton height={56} />
-            <Skeleton height={56} />
-          </>
-        ) : null}
-        {sets.isError ? (
-          <Text variant="small" tone="muted">
-            {t('dailyText.setsOffline')}
-          </Text>
-        ) : null}
-        {(sets.data ?? []).map((set) => (
-          <CheckRow
-            key={set.slug}
-            radio
-            title={locale === 'en' ? set.titleEn || set.titleAr : set.titleAr}
-            checked={is('set', set.slug)}
-            onPress={() => choose({ kind: 'set', slug: set.slug })}
-          />
-        ))}
-      </Section>
-
-      <SectionDivider />
+      {/* No published sets: no empty heading and no divider under it. */}
+      {sets.isLoading || sets.isError || (sets.data?.length ?? 0) > 0 ? (
+        <>
+          <Section title={t('dailyText.sets')} lead={t('dailyText.setsLead')}>
+            {sets.isLoading ? (
+              <>
+                <Skeleton height={56} />
+                <Skeleton height={56} />
+              </>
+            ) : null}
+            {sets.isError ? (
+              <Text variant="small" tone="muted">
+                {t('dailyText.setsOffline')}
+              </Text>
+            ) : null}
+            {(sets.data ?? []).map((set) => (
+              <CheckRow
+                key={set.slug}
+                radio
+                title={locale === 'en' ? set.titleEn || set.titleAr : set.titleAr}
+                checked={is('set', set.slug)}
+                onPress={() => choose({ kind: 'set', slug: set.slug })}
+              />
+            ))}
+          </Section>
+          <SectionDivider />
+        </>
+      ) : null}
 
       <Section title={t('dailyText.yours')}>
         <CheckRow

@@ -12,7 +12,7 @@
  * back inside the stepper, so no input is lost. Saving toasts and returns to «عاداتي».
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, ScrollView, View } from 'react-native';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import { LimitSheet } from '@/components/practice/LimitSheet';
@@ -140,7 +140,10 @@ export default function AddHabitScreen() {
   const planLimits = useLimits();
   const preselected = catalog.data?.habits.find((h) => h.key === params.habit);
   const limitKind = preselected?.kind === 'periodic' ? 'periodic' : 'sapling';
-  const limitReached = Boolean(catalog.data) && plans.length > 0 && createdId === null && !planLimits.canAdd(limitKind);
+  // Set once the plan is created and the screen is leaving: «رجوع» then leaves (not a step back), and the limit the new
+  // plan may have just reached does not flash its sheet over the steps (QA round 5).
+  const leaving = useRef(false);
+  const limitReached = Boolean(catalog.data) && plans.length > 0 && createdId === null && !leaving.current && !planLimits.canAdd(limitKind);
   // A people template (a good-deed page's «اجعلها عادتي») adds people on its list, not a plan.
   const peopleCircle = preselected?.people;
   useEffect(() => {
@@ -160,7 +163,7 @@ export default function AddHabitScreen() {
   const stepIndex = step === 'finish' ? STEPS.length : STEPS.indexOf(step);
   const canStepBack = step !== 'finish' && stepIndex > STEPS.indexOf(entryStep as OnboardingStep);
   usePreventRemove(canStepBack, ({ data }) => {
-    if (BACK_ACTIONS.has(data.action.type)) {
+    if (BACK_ACTIONS.has(data.action.type) && !leaving.current) {
       setStep(STEPS[stepIndex - 1] ?? 'what');
       return;
     }
@@ -247,6 +250,7 @@ export default function AddHabitScreen() {
     // «يومي ثقيل» is on for every habit today: the new one joins it, so the switch does not flip off.
     if (heavyDayOn(store.plans, d)) plan = startEbb(plan, d);
     const askPermission = shouldAskOnFirstHabit(store.plans.length, prefs);
+    if (!firstHabit) leaving.current = true;
     setStore((s) => upsertPlan(s, plan));
     toast(t('practice.add.addedToast', { habit: pick(habit, 'title', locale) }));
     if (askPermission) void askForReminders();

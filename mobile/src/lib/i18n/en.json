@@ -312,7 +312,7 @@
       "kinshipBodyNames": "Time to get in touch with: {{names}}",
       "sinBody": "A moment for yourself. Open Thekra.",
       "channelName": "Reminders",
-      "wirdTitle": "Today's wird",
+      "wirdTitle": "Today's practice",
       "eveningBody": "Little is left of your day; one minute keeps your streak",
       "fridayTitle": "Self-review",
       "fridayBody": "Two minutes with yourself: what you kept this week, and one step for the next",
@@ -523,7 +523,7 @@
       "tomorrow": "Tomorrow",
       "noNext": "No date soon",
       "people": "People lists",
-      "count": "{{n}} of {{max}}",
+      "count": "Your periodic acts: {{n}} of {{max}}",
       "added": "Added"
     },
     "limits": {
@@ -1806,7 +1806,7 @@
   },
   "habitsTab": {
     "tabs": {
-      "wird": "Today's wird",
+      "wird": "Today's practice",
       "periodic": "Periodic acts",
       "review": "My self-review",
       "record": "My record"
@@ -1887,6 +1887,8 @@
       "weeklyLast": "Last one: the week of {{date}}",
       "startWeekly": "Review yourself now",
       "pickDay": "Choose the day",
+      "dayRow": "Review day",
+      "intentionSwitch": "Show it every morning",
       "pickDayHint": "The day of the weekly review; you are reminded of it then.",
       "daySaved": "Review day: {{day}}",
       "messagesTitle": "My messages to myself",

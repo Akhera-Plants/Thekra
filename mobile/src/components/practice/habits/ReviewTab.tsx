@@ -12,7 +12,7 @@
 import React, { useState } from 'react';
 import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { ClipboardCheck, Mail, Moon, Sun } from 'lucide-react-native';
+import { CalendarDays, ClipboardCheck, Mail, Moon, Sun } from 'lucide-react-native';
 import {
   eveningOf,
   INTENTION_UNTIL,
@@ -32,7 +32,7 @@ import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { WeekdayPicker } from '@/components/practice/editors';
 import { HabitLines, HeartSheetView, planTitleOf } from '@/components/practice/hub/HeartCards';
 import { space, useStyles, type Theme } from '@/theme';
-import { BottomSheet, Button, ButtonPair, EmptyState, Icon, Section, SectionDivider, SwitchRow, Text, toast } from '@/ui';
+import { BottomSheet, Button, ButtonPair, EmptyState, Icon, ListRow, Section, SectionDivider, SwitchRow, Text, toast } from '@/ui';
 
 const makeStyles = (t: Theme) => ({
   root: { gap: space['2xl'] },
@@ -70,7 +70,7 @@ export function ReviewTab({ today }: { today: LocalDate }) {
     <View style={styles.root}>
       <Section title={t('practice.heart.intention.title')}>
         <SwitchRow
-          label={t('practice.onboarding.intention')}
+          label={t('habitsTab.review.intentionSwitch')}
           hint={t('practice.onboarding.intentionHint')}
           value={heart.prefs.intention}
           onValueChange={(on) => {
@@ -101,7 +101,7 @@ export function ReviewTab({ today }: { today: LocalDate }) {
 
       <SectionDivider />
 
-      <Section title={t('habitsTab.review.weeklyTitle')} lead={t('habitsTab.review.weeklyDay', { day: dayName })}>
+      <Section title={t('habitsTab.review.weeklyTitle')} lead={reviews.length === 0 ? t('habitsTab.review.weeklyDay', { day: dayName }) : undefined}>
         {reviews.length === 0 ? (
           <EmptyState icon={ClipboardCheck} message={t('practice.heart.reviews.empty')} hint={t('practice.heart.reviews.emptyHint')} />
         ) : (
@@ -122,7 +122,8 @@ export function ReviewTab({ today }: { today: LocalDate }) {
             secondary={{ label: t('habitsTab.review.pickDay'), onPress: () => setPickingDay(true) }}
           />
         ) : (
-          <Button label={t('habitsTab.review.pickDay')} variant="ghost" size="sm" onPress={() => setPickingDay(true)} />
+          // A-07 / A-29: the day is a value row (title, the day, chevron) like the notification times, not a lone button.
+          <ListRow icon={CalendarDays} title={t('habitsTab.review.dayRow')} value={dayName} chevron last onPress={() => setPickingDay(true)} />
         )}
       </Section>
 

@@ -62,6 +62,8 @@ const membersOnly = (next: string) => ({
   },
 });
 
+export { RouteErrorBoundary as ErrorBoundary } from '@/components/RouteErrorBoundary';
+
 export default function TabLayout() {
   const { t } = useTranslation();
   const theme = useTheme();

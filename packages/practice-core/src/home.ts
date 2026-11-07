@@ -44,7 +44,7 @@ export interface HomeSectionInfo {
 
 /** In the default order. Titles are shared so both clients name the sections the same way (nav-map rule). */
 export const HOME_SECTIONS: readonly HomeSectionInfo[] = [
-  { key: 'wird', ar: 'ورد اليوم', en: "Today's wird", visibleByDefault: true, membersOnly: true },
+  { key: 'wird', ar: 'ورد اليوم', en: "Today's practice", visibleByDefault: true, membersOnly: true },
   { key: 'daily-text', ar: 'نص اليوم', en: 'Text of the day', visibleByDefault: true, membersOnly: false },
   // Round 3 item 7: «شعبة الأسبوع» only for a member who chose to study the branches; showing the section is that choice.
   { key: 'week-branch', ar: 'شعبة الأسبوع', en: 'Branch of the week', visibleByDefault: false, membersOnly: false },

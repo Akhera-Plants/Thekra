@@ -344,8 +344,8 @@ export function validatePlan(plan: unknown): string | null {
   if (p.unit !== 'minutes' && p.unit !== 'count' && p.unit !== 'times') return 'unit must be minutes|count|times';
   if (!isPositive(p.amount)) return 'amount must be a positive number';
   if (p.ceiling !== undefined && !isPositive(p.ceiling)) return 'ceiling must be a positive number';
-  if (typeof p.activeDaysPerWeek !== 'number' || !Number.isInteger(p.activeDaysPerWeek) || p.activeDaysPerWeek < 2 || p.activeDaysPerWeek > 7) {
-    return 'activeDaysPerWeek must be an integer 2–7';
+  if (typeof p.activeDaysPerWeek !== 'number' || !Number.isInteger(p.activeDaysPerWeek) || p.activeDaysPerWeek < 1 || p.activeDaysPerWeek > 7) {
+    return 'activeDaysPerWeek must be an integer 1–7';
   }
   if (!Array.isArray(p.slots) || p.slots.length === 0 || !p.slots.every(isValidTime)) {
     return 'slots must be a non-empty array of HH:MM';

@@ -53,6 +53,7 @@ import { Cheer, DayDoneCard, TallySection, WeekBranchCard } from '@/components/p
 import { TodayList } from '@/components/practice/hub/TodayList';
 import { radius, space, useStyles, type Theme } from '@/theme';
 import { Button, ForwardArrow, Icon, Notice, SectionDivider, Text } from '@/ui';
+import { WidgetIntroLine } from '@/widget/WidgetIntro';
 import { FardSection } from './FardSection';
 import { useNow } from './use-now';
 
@@ -195,6 +196,8 @@ export function WirdTab({ today }: { today: LocalDate }) {
 
       {store.plans.length > 0 ? <MoreForToday today={today} /> : null}
       <CirclesLine today={today} />
+      {/* F-24 a: «أضف ورد اليوم إلى شاشتك», once, on Android after three days of logging (renders nothing otherwise). */}
+      <WidgetIntroLine />
 
       <HabitFixSheet
         visible={fixPlan !== undefined}

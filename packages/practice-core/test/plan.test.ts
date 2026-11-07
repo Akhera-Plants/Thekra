@@ -98,7 +98,7 @@ describe('createPlan / validatePlan', () => {
 
   it('rejects bad fields', () => {
     const base = { id: 'p', deedSlug: 'd', title: 't', unit: 'minutes' as const, amount: 5, slots: ['06:00'], createdOn: START };
-    expect(() => createPlan({ ...base, activeDaysPerWeek: 1 })).toThrow(RangeError);
+    expect(() => createPlan({ ...base, activeDaysPerWeek: 0 })).toThrow(RangeError);
     expect(() => createPlan({ ...base, activeDaysPerWeek: 8 })).toThrow(RangeError);
     expect(() => createPlan({ ...base, activeDaysPerWeek: 3, slots: [] })).toThrow(RangeError);
     expect(() => createPlan({ ...base, activeDaysPerWeek: 3, slots: ['6am'] })).toThrow(RangeError);
