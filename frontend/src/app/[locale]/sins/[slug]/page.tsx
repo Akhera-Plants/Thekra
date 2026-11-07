@@ -3,7 +3,9 @@ import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { SectionDivider } from '@/components/shared/SectionDivider';
-import { Button } from '@/components/shared/kit/button';
+// The variants module only (no 'use client'), so this server component can call it.
+import { buttonVariants } from '@/components/shared/kit/button/variants';
+import { cn } from '@/lib/utils';
 import { FormattedNumber } from '@/components/shared/FormattedNumber';
 import { AlternativeDeedsBlock } from '@/features/sin-reminder/components/AlternativeDeedsBlock';
 import type { ReaderItem, ReaderSection } from '@/components/shared/editorial/ReminderReader';
@@ -199,9 +201,14 @@ export default async function SinDetailPage({
               <h2 id="pair-title" className="text-xl font-medium">
                 {t('pairCounterpart')}
               </h2>
-              <Button asChild variant="outline" tone="primary" size="md" className="self-start">
-                <Link href={`/good-deeds/${sin.pair.do}`}>{counterpart}</Link>
-              </Button>
+              {/* A link styled as the kit button, not `<Button asChild>`: from a server component the Link can reach the
+                  client Slot as a lazy reference during SSR, which fails («Slot failed to slot onto its children»). */}
+              <Link
+                href={`/good-deeds/${sin.pair.do}`}
+                className={cn(buttonVariants({ variant: 'outline', tone: 'primary', size: 'md' }), 'self-start')}
+              >
+                {counterpart}
+              </Link>
             </section>
           </>
         ) : null}

@@ -1,5 +1,7 @@
 "use client"
 
+import { useTranslations } from "next-intl"
+
 import * as React from "react"
 import { cn } from "cn"
 import { Dialog as SheetPrimitive } from "radix-ui"
@@ -55,6 +57,8 @@ function SheetContent({
   side?: "top" | "right" | "bottom" | "left"
   showCloseButton?: boolean
 }) {
+  // The close button's name in the page language (it read «Close» on Arabic pages); its 28px icon gets a 44px hit area.
+  const t = useTranslations("app")
   return (
     <SheetPortal>
       <SheetOverlay />
@@ -72,12 +76,12 @@ function SheetContent({
           <SheetPrimitive.Close data-slot="sheet-close" asChild>
             <Button
               variant="ghost"
-              className="absolute top-3 end-3"
+              className="absolute top-3 end-3 before:absolute before:-inset-2 before:content-['']"
               size="icon-sm"
             >
               <XIcon
               />
-              <span className="sr-only">Close</span>
+              <span className="sr-only">{t("close")}</span>
             </Button>
           </SheetPrimitive.Close>
         )}

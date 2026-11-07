@@ -3,7 +3,8 @@
     "name": "Thekra",
     "tagline": "For whoever has a heart",
     "description": "Reminders from the Quran, authentic Sunnah, and the words of scholars, arranged by sins, good deeds, and the branches of faith, with each text's source named.",
-    "intentionReminder": "I want nothing from this except Allah."
+    "intentionReminder": "I want nothing from this except Allah.",
+    "close": "Close"
   },
   "theme": {
     "toggle": "Toggle theme",
@@ -17,7 +18,7 @@
     "sins": "Lighten a sin",
     "goodDeeds": "Good deeds",
     "menu": "Menu",
-    "browse": "Browse",
+    "browse": "Browse texts",
     "branches": "The Branches of Faith",
     "about": "About Thekra",
     "favorites": "Saved",
@@ -25,7 +26,7 @@
     "back": "Back",
     "main": "Main navigation",
     "breadcrumbs": "Breadcrumb",
-    "practice": "Today's wird",
+    "practice": "Today's practice",
     "gateways": "Gateways",
     "habits": "My habits",
     "close": "Close the menu",
@@ -39,7 +40,7 @@
       "saved": "Saved",
       "settings": "Settings",
       "circles": "Companions",
-      "wird": "Today's wird",
+      "wird": "Today's practice",
       "periodic": "Periodic acts",
       "review": "My self-review",
       "record": "My record",
@@ -277,10 +278,10 @@
     "wird": {
       "empty": "No habit yet. Start with a small seedling.",
       "rest": "No habit is asked for today.",
-      "done": "Today's wird is done. May Allah accept from you.",
+      "done": "Today's practice is done. May Allah accept from you.",
       "progress": "{done} of {total} done",
       "start": "Start small",
-      "open": "Open today's wird",
+      "open": "Open today's practice",
       "openList": "Still to do today",
       "log": "Log «{title}»",
       "logged": "«{title}» logged. May Allah accept from you."
@@ -300,7 +301,7 @@
       "down": "Move «{title}» down",
       "show": "Show «{title}»",
       "sections": {
-        "wird": "Today's wird",
+        "wird": "Today's practice",
         "daily-text": "Text of the day",
         "week-branch": "Branch of the week",
         "occasion": "Coming occasion",
@@ -403,7 +404,7 @@
     "evidenceHeading": "Verses and hadith to help you with this good deed"
   },
   "browse": {
-    "pageTitle": "Browse",
+    "pageTitle": "Browse texts",
     "tabAll": "All",
     "tabQuran": "Quran",
     "tabHadith": "Hadith",
@@ -1128,7 +1129,7 @@
         "chooseOne": "Choose at least one habit.",
         "outside": "This deed’s time: {range}. Choose a time inside it."
       },
-      "added": "«{title}» is on today's wird.",
+      "added": "«{title}» is on today's practice.",
       "freeMinutesQuestion": "How many free minutes do you have a day? (optional)",
       "strategy": "A strategy",
       "days": "The days",
@@ -1412,7 +1413,7 @@
       "occasion": "A sunnah occasion"
     },
     "wird": {
-      "title": "Today's wird",
+      "title": "Today's practice",
       "lead": "What today asks of your habits and ties of kinship, in one list.",
       "today": "Today",
       "streakLabel": "{count, plural, =0 {Streak: not started yet} one {Streak: 1 day} other {Streak: {n} days}}",
@@ -1893,7 +1894,7 @@
           "reward": {
             "label": "Reward",
             "question": "What makes it worth repeating?",
-            "example": "Example: calm, and I log it in «Today's wird»."
+            "example": "Example: calm, and I log it in «Today's practice»."
           },
           "obstacle": {
             "label": "Obstacle",
@@ -1974,7 +1975,7 @@
       "start": "Start",
       "intention": {
         "title": "Today's intention",
-        "line": "Today's intention: renew your pledge for today's wird."
+        "line": "Today's intention: renew your pledge for today's practice."
       },
       "offer": {
         "line": "Today's intention: a small pledge each morning, one line and you go."
@@ -1997,20 +1998,21 @@
     "fard": {
       "title": "Obligatory prayers",
       "options": "Options for the obligatory prayers",
-      "hide": "Hide them from today's wird",
+      "hide": "Hide them from today's practice",
       "hidden": "Hidden. Bring them back from «Add».",
-      "shown": "The obligatory prayers are on today's wird.",
+      "shown": "The obligatory prayers are on today's practice.",
       "addHint": "Mark your five prayers: on time or made up",
       "onTime": "On time",
       "qada": "Made up"
     },
     "evidenceButton": {
       "evidence": "The evidence",
-      "evidenceOf": "The evidence: {deed}"
+      "evidenceOf": "The evidence: {deed}",
+      "title": "Verses and hadith to help you with this good deed"
     },
     "start": {
       "skipAll": "Skip the start",
-      "ready": "Today's wird is ready. May Allah bless it for you.",
+      "ready": "Today's practice is ready. May Allah bless it for you.",
       "goal": {
         "title": "What would you like now?",
         "deed": "To keep a good deed",
@@ -2040,8 +2042,8 @@
       "intentionSwitch": "Today's intention every morning",
       "intentionOn": "Today's intention shows every morning until noon.",
       "intentionOff": "Today's intention is off.",
-      "intentionUntil": "Write it until noon; it shows on today's wird.",
-      "intentionHint": "A small pledge each morning for today's wird. Turn it on if you wish.",
+      "intentionUntil": "Write it until noon; it shows on today's practice.",
+      "intentionHint": "A small pledge each morning for today's practice. Turn it on if you wish.",
       "intentionWrite": "Write your intention",
       "eveningTitle": "Evening review",
       "eveningDone": "You reviewed this evening. May Allah accept from you.",
@@ -2049,12 +2051,12 @@
       "startNow": "Start now",
       "weeklyTitle": "Weekly review",
       "weeklyDone": "You reviewed this week.",
-      "weeklyDay": "It shows on today's wird on {day}.",
+      "weeklyDay": "It shows on today's practice on {day}.",
       "weeklyOff": "The weekly review is off. Pick its day to bring it back.",
       "emptyLead": "No review yet. Review now, or pick a day that suits you each week.",
       "reviewNow": "Review now",
       "pickDay": "Pick the day",
-      "pickDayHint": "The weekly review's day: it shows on today's wird and its reminder comes.",
+      "pickDayHint": "The weekly review's day: it shows on today's practice and its reminder comes.",
       "noWeekly": "No weekly review",
       "save": "Save",
       "daySaved": "The review is now on {day}.",
@@ -2113,7 +2115,7 @@
     "habitPage": {
       "missingTitle": "We couldn't find this habit",
       "missingLead": "It may have been removed, or it is on another device that has not synced yet.",
-      "back": "Back to today's wird",
+      "back": "Back to today's practice",
       "edit": "Edit",
       "more": "Options for «{title}»",
       "everyDay": "Every day",
@@ -2127,7 +2129,7 @@
       "loopIfThen": "If something stops me:",
       "loopRemove": "Remove this answer",
       "loopRemoved": "Answer removed.",
-      "evidence": "Verses and hadith that help you with this deed",
+      "evidence": "Verses and hadith to help you with this good deed",
       "removeTitle": "Remove «{title}»?",
       "removed": "«{title}» removed.",
       "lastDays": "The last {n} days",
@@ -2250,7 +2252,7 @@
         "confirm": "End it now",
         "toast": "Program closed"
       },
-      "textsAll": "All the texts on it",
+      "textsAll": "More",
       "tabsLabel": "Program sections",
       "tabs": {
         "today": "Today",

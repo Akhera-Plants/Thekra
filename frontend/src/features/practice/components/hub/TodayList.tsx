@@ -152,7 +152,7 @@ export function TodayList({ title, store, date, today, day, habits, occasionBasi
       ) : null}
 
       {tasks.length > 0 ? (
-        <ul className="flex flex-col divide-y divide-border border-y border-border" aria-label={title}>
+        <ul className="flex flex-col divide-y divide-border border-b border-border" aria-label={title}>
           {day.open.map(taskRow)}
           {day.done.map(taskRow)}
         </ul>
@@ -181,7 +181,7 @@ export function TodayList({ title, store, date, today, day, habits, occasionBasi
             </span>
             <ChevronDown aria-hidden className={cn('size-4 transition-transform duration-150', offDayOpen && 'rotate-180')} />
           </button>
-          <ul id={offDayId} hidden={!offDayOpen} className="flex flex-col divide-y divide-border border-y border-border">
+          <ul id={offDayId} hidden={!offDayOpen} className="flex flex-col divide-y divide-border border-b border-border">
             {day.offDay.map(habitRow)}
           </ul>
         </div>

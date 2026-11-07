@@ -67,7 +67,7 @@ export function FardSection({ store, today }: { store: Store; today: string }) {
           {labels.title}
         </h2>
       </TitleRow>
-      <ul className="flex flex-col divide-y divide-border border-y border-border">
+      <ul className="flex flex-col divide-y divide-border border-b border-border">
         {FARD_PRAYERS.map((prayer) => (
           <li key={prayer} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 py-2.5">
             <span className="text-base font-medium">{labels.prayers[prayer]}</span>

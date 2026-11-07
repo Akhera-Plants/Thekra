@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import { HeartHandshake, Repeat } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
-import { addDays, type PeriodicAct, type Store } from '@thekra/practice-core';
+import { addDays, circleOf, type PeopleCircle, type PeriodicAct, type Store } from '@thekra/practice-core';
 import { Link } from '@/i18n/navigation';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { formatGregorian } from '@/lib/practice/format';
@@ -26,12 +26,21 @@ interface PeriodicRowsProps {
  */
 export function PeriodicRows({ acts, store, today, habits }: PeriodicRowsProps) {
   return (
-    <ul className="flex flex-col divide-y divide-border border-y border-border">
+    <ul className="flex flex-col divide-y divide-border border-b border-border">
       {acts.map((act) => {
         if (act.kind === 'relative') {
           const relative = store.relatives.find((r) => r.id === act.id);
           if (!relative) return null;
-          return <RelativeLine key={`relative-${act.id}`} act={act} name={relative.name} relation={relative.relation} today={today} />;
+          return (
+            <RelativeLine
+              key={`relative-${act.id}`}
+              act={act}
+              name={relative.name}
+              relation={relative.relation}
+              circle={circleOf(relative)}
+              today={today}
+            />
+          );
         }
         const plan = store.plans.find((p) => p.id === act.id);
         if (!plan) return null;
@@ -81,15 +90,28 @@ function Line({ act, title, note, icon, today }: LineProps) {
   );
 }
 
-function RelativeLine({ act, name, relation, today }: { act: PeriodicAct; name: string; relation: string; today: string }) {
-  const t = useTranslations('practice.periodic');
+function RelativeLine({
+  act,
+  name,
+  relation,
+  circle,
+  today,
+}: {
+  act: PeriodicAct;
+  name: string;
+  relation: string;
+  circle: PeopleCircle;
+  today: string;
+}) {
+  // Without a typed relation, the person's list («الوالدان», «الجيران» …) as on «أهلي وناسي», not a generic label.
+  const tSections = useTranslations('practice.people.sections');
   return (
     <Line
       act={act}
       today={today}
       icon={<HeartHandshake />}
       title={<bdi lang={langOf(name)}>{name}</bdi>}
-      note={relation ? <bdi lang={langOf(relation)}>{relation}</bdi> : t('kinship')}
+      note={relation ? <bdi lang={langOf(relation)}>{relation}</bdi> : tSections(circle)}
     />
   );
 }

@@ -87,7 +87,8 @@ export function ThemeChips({ themes, value, onValueChange, allLabel, label, lang
           className={CHIP}
         >
           <span>{theme.label}</span>
-          <span className="text-xs tabular-nums text-current/55">
+          {/* 75%, as the tab counters (W-16): 55% read 2.25:1 on the chip. */}
+          <span className="text-xs tabular-nums text-current/75">
             <FormattedNumber value={theme.count} />
           </span>
         </Button>

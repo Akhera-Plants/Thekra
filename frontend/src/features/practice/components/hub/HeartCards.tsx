@@ -31,6 +31,7 @@ import {
   type Store,
 } from '@thekra/practice-core';
 import { Link } from '@/i18n/navigation';
+import { ActionPair } from '@/components/shared/kit/action-pair';
 import { Button } from '@/components/shared/kit/button';
 import { Input } from '@/components/ui/input';
 import { formatDigits } from '@/lib/format/digits';
@@ -268,21 +269,25 @@ export function EveningCard({ ctx, bare = false, onSaved }: HeartCardProps) {
           />
         </>
       ) : null}
-      {hasProgram ? (
-        <Link href="/practice/leave-sin" className="text-link self-start text-sm">
-          {t('checkIn')}
-        </Link>
-      ) : null}
-      <Button
-        size="sm"
-        className="self-start"
-        onClick={() => {
-          updateHeart((h) => saveEvening(h, { date: today, ...(kept ? { kept } : {}) }));
-          onSaved?.();
-        }}
-      >
-        {t('save')}
-      </Button>
+      {/* «تمّت المحاسبة» and «سجّل حالك في برنامجك الخاص» are one choice (O-02): side by side, the same size, the save
+          solid and the check-in outlined, as in the app. Without a program the save stands alone. */}
+      <ActionPair layout={hasProgram ? 'fill' : 'hug'}>
+        {/* A long label wraps inside its button; the two keep one height (grid row), never overflow. */}
+        <Button
+          className="h-auto min-h-11 whitespace-normal py-2 leading-6"
+          onClick={() => {
+            updateHeart((h) => saveEvening(h, { date: today, ...(kept ? { kept } : {}) }));
+            onSaved?.();
+          }}
+        >
+          {t('save')}
+        </Button>
+        {hasProgram ? (
+          <Button asChild variant="outline" className="h-auto min-h-11 whitespace-normal py-2 text-center leading-6">
+            <Link href="/practice/leave-sin">{t('checkIn')}</Link>
+          </Button>
+        ) : null}
+      </ActionPair>
     </Card>
   );
 }

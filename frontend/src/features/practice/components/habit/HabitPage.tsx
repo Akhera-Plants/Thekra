@@ -181,7 +181,7 @@ function HabitSummary({ plan, habit, context }: { plan: Plan; habit: PracticeHab
             <h2 id="habit-loops" className="text-xl font-medium">
               {t('loopsTitle')}
             </h2>
-            <ul className="flex flex-col divide-y divide-border border-y border-border">
+            <ul className="flex flex-col divide-y divide-border border-b border-border">
               {plan.loops.map((loop) => (
                 <li key={loop.id} className="flex items-start justify-between gap-3 py-3">
                   <dl className="flex flex-col gap-1 text-sm leading-7">

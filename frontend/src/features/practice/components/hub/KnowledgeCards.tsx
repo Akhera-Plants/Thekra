@@ -23,6 +23,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import type { QuoteDto } from '@/lib/types/api';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { QuoteCard } from '@/components/shared/quote';
+import { TextSourceLine } from '@/components/shared/quote/TextSourceLine';
 import { getBranch } from '@/lib/api/branches';
 import { getAyah } from '@/lib/api/quran';
 import { formatDigits } from '@/lib/format/digits';
@@ -64,7 +65,7 @@ export function TallySection({ store, today, habits }: { store: Store; today: st
       ) : (
         <>
           <p className="text-sm leading-7 text-muted-foreground">{t('lead')}</p>
-          <ul className="flex flex-col divide-y divide-border border-y border-border">
+          <ul className="flex flex-col divide-y divide-border border-b border-border">
             {rows.map((row) => {
               const plan = store.plans.find((p) => p.id === row.planId);
               return plan ? <TallyRow key={row.planId} plan={plan} tally={row} habit={habitOf(plan, habits)} /> : null;
@@ -106,12 +107,18 @@ function GratitudeLine({ today }: { today: string }) {
     staleTime: TEXT_STALE_MS,
   });
   if (!verse.data) return null;
+  // Its source under it, as every text shown anywhere (W-06): «النحل · 16:53».
   return (
-    <p className="max-w-3xl text-base leading-8 text-muted-foreground">
-      <Link href={`/quotes/${verse.data.id}`} lang="ar" dir="rtl" className="font-quran hover:text-foreground">
-        {verse.data.textAr}
-      </Link>
-    </p>
+    <figure className="flex max-w-3xl flex-col gap-1">
+      <p className="text-base leading-8 text-muted-foreground">
+        <Link href={`/quotes/${verse.data.id}`} lang="ar" dir="rtl" className="font-quran hover:text-foreground">
+          {verse.data.textAr}
+        </Link>
+      </p>
+      <figcaption>
+        <TextSourceLine quote={verse.data} />
+      </figcaption>
+    </figure>
   );
 }
 

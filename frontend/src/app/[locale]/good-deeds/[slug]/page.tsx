@@ -4,7 +4,9 @@ import { Link } from '@/i18n/navigation';
 import { ArabicText } from '@/components/shared/ArabicText';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { SectionDivider } from '@/components/shared/SectionDivider';
-import { Button } from '@/components/shared/kit/button';
+// The variants module only (no 'use client'), so this server component can call it.
+import { buttonVariants } from '@/components/shared/kit/button/variants';
+import { cn } from '@/lib/utils';
 import type { ReaderItem, ReaderSection } from '@/components/shared/editorial/ReminderReader';
 import { GoodDeedReader } from '@/features/good-deed-motivation/components/GoodDeedReader';
 import { DeedHabitAction } from '@/features/practice/components/DeedHabitAction';
@@ -191,13 +193,16 @@ export default async function GoodDeedDetailPage({
               <h2 id="opposite-title" className="text-xl font-medium">
                 {t('oppositeSin')}
               </h2>
-              <Button asChild variant="outline" tone="primary" size="md" className="self-start">
-                <Link href={`/sins/${deed.oppositeSin.slug}`}>
-                  <span lang={/[\u0600-\u06FF]/.test(opposite) ? 'ar' : undefined} dir={/[\u0600-\u06FF]/.test(opposite) ? 'rtl' : undefined}>
-                    {opposite}
-                  </span>
-                </Link>
-              </Button>
+              {/* A link styled as the kit button, not `<Button asChild>`: from a server component the Link can reach the
+                  client Slot as a lazy reference during SSR, which fails («Slot failed to slot onto its children»). */}
+              <Link
+                href={`/sins/${deed.oppositeSin.slug}`}
+                className={cn(buttonVariants({ variant: 'outline', tone: 'primary', size: 'md' }), 'self-start')}
+              >
+                <span lang={/[\u0600-\u06FF]/.test(opposite) ? 'ar' : undefined} dir={/[\u0600-\u06FF]/.test(opposite) ? 'rtl' : undefined}>
+                  {opposite}
+                </span>
+              </Link>
             </section>
           </>
         ) : null}

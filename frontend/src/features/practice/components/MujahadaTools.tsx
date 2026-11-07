@@ -124,7 +124,7 @@ export function ShortWirdDialog({ open, onOpenChange, context, hadith }: ShortWi
         </DialogHeader>
         <div className="flex flex-col gap-5">
           {rows.length > 0 ? (
-            <ul className="flex flex-col divide-y divide-border border-y border-border">
+            <ul className="flex flex-col divide-y divide-border border-b border-border">
               {rows.map((item) => {
                 const plan = store.plans.find((p) => p.id === item.planId);
                 return plan ? <ShortRow key={plan.id} plan={plan} habit={habitOf(plan, habits)} today={today} /> : null;

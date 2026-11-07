@@ -14,7 +14,8 @@ export async function SiteFooter() {
             {tApp('name')} <span>{tApp('tagline')}</span>
           </Link>
           <p>
-            {tFooter('blurbLine1')}
+            {/* The space keeps the words apart on phones, where the line break is hidden (site-public.css). */}
+            {tFooter('blurbLine1')}{' '}
             <br />
             {tFooter('blurbLine2')}
           </p>

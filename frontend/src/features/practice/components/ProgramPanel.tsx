@@ -304,13 +304,20 @@ export function ProgramPanel({ program, entry, common, name, habits, quotes, tod
             <>
               <SectionDivider />
               <section className="flex flex-col gap-3" aria-label={t('textsTitle')}>
-                <EvidenceQuotes ids={textIds.slice(0, TEXTS_SHOWN)} quotes={quotes} heading={t('textsTitle')} subject={name} />
-                {/* The sin's own page holds all its texts; a sin without a written program has only the stage texts here. */}
-                <Button asChild variant="outline" tone="primary" size="md" className="self-start">
-                  <Link href={`/sins/${program.sinSlug}`}>
-                    {t('textsAll')} <DirectionalArrow />
-                  </Link>
-                </Button>
+                {/* «المزيد» on the heading's row (A-03/F-04 a): the sin's own page holds all its texts. */}
+                <EvidenceQuotes
+                  ids={textIds.slice(0, TEXTS_SHOWN)}
+                  quotes={quotes}
+                  heading={t('textsTitle')}
+                  subject={name}
+                  action={
+                    <Button asChild variant="outline" tone="primary" size="sm">
+                      <Link href={`/sins/${program.sinSlug}`}>
+                        {t('textsAll')} <DirectionalArrow />
+                      </Link>
+                    </Button>
+                  }
+                />
               </section>
             </>
           ) : null}

@@ -4,7 +4,8 @@ import { cn } from '@/lib/utils';
 export interface ActionPairProps extends React.ComponentProps<'div'> {
   /**
    * `fill` (default): the two actions share the row equally (two columns of the same width).
-   * `hug`: both actions keep their natural width, side by side at the start edge (cards, list rows).
+   * `hug`: side by side at the start edge (cards, list rows), each at least 8.5rem wide, so two short labels come out the
+   * same size (O-02/W-03: «التفسير» + «عرض كامل»); a longer label keeps its own width rather than overflow a phone.
    */
   layout?: 'fill' | 'hug';
 }
@@ -27,7 +28,7 @@ export function ActionPair({ layout = 'fill', className, children, ...props }: A
         layout === 'fill'
           ? // Equal columns; a column never narrower than 8.5rem, so two long labels wrap to one per row.
             'grid w-full gap-2 [grid-template-columns:repeat(auto-fit,minmax(min(100%,8.5rem),1fr))] [&>*]:w-full'
-          : 'flex flex-wrap items-center gap-2',
+          : 'flex flex-wrap items-center gap-2 [&>*]:min-w-34',
         className,
       )}
       {...props}

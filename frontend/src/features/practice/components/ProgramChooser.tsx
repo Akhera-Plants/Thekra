@@ -142,7 +142,7 @@ export function ProgramChooser({ entries, common, sins, names, preselected, toda
                         onChange={(event) => setQuery(event.target.value)}
                       />
                     </div>
-                    <div className="flex flex-col divide-y divide-border border-y border-border">
+                    <div className="flex flex-col divide-y divide-border border-b border-border">
                       {groups.length === 0 ? <p className="p-2 text-muted-foreground">{t('noMatch')}</p> : null}
                       {groups.map((group) => {
                         const key = group.domain ?? 'other';

@@ -33,7 +33,7 @@ export function Switch({ checked, onCheckedChange, className, disabled, ...props
         className={cn(
           'flex h-7 w-12 items-center rounded-full border p-0.5 transition-colors duration-150 motion-reduce:transition-none',
           'group-focus-visible:outline-2 group-focus-visible:outline-offset-2 group-focus-visible:outline-ring',
-          checked ? 'border-primary bg-primary' : 'border-border bg-muted',
+          checked ? 'border-primary bg-primary' : 'border-control-border bg-muted',
         )}
       >
         <span

@@ -350,7 +350,7 @@ export function PlanSetup({ habits, existing, preselected, freeMinutes, today, o
             {t('finishTitle')}
           </h2>
           <p className="text-muted-foreground">{t('finishLead')}</p>
-          <ul className="flex flex-col divide-y divide-border border-y border-border">
+          <ul className="flex flex-col divide-y divide-border border-b border-border">
             <Switch
               label={t('intention')}
               hint={t('intentionHint')}

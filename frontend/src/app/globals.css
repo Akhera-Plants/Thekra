@@ -38,6 +38,7 @@
   --color-chart-1: var(--chart-1);
   --color-ring: var(--ring);
   --color-input: var(--input);
+  --color-control-border: var(--control-border);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
@@ -141,6 +142,9 @@
   --accent-foreground: #263d35;
   --border: #dce3db;
   --input: #dce3db;
+  /* The edge of an interactive control (field, switch off, checkbox): ≥3:1 on the page and on --muted (WCAG 1.4.11),
+     the app's controlBorder (A-18). --border stays for dividers. */
+  --control-border: #838d85;
   --primary: #326c59;
   --primary-foreground: #ffffff;
   /* The primary colour as TEXT (outline/ghost/link buttons, accents). Same as --primary on the light page. */
@@ -213,6 +217,7 @@
   --accent-foreground: #eeede9;
   --border: #333532;
   --input: #333532;
+  --control-border: #70726e;
   --primary: #326c59;
   --primary-foreground: #ffffff;
   /* --primary on #101010 is 3.1:1; text uses the site's dark accent (9.4:1) while solid fills keep --primary (W-16). */

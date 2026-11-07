@@ -31,7 +31,8 @@ export function ThemeToggle({ labels, className }: ThemeToggleProps) {
   return (
     <button
       type="button"
-      className={cn('icon-button theme-button', className)}
+      // touch-44: the phone header draws it 27×34; the hit area is 44×44 without changing the look (W-17).
+      className={cn('icon-button theme-button touch-44', className)}
       aria-label={isDark ? labels.light : labels.dark}
       aria-pressed={mounted ? isDark : undefined}
       title={labels.toggle}

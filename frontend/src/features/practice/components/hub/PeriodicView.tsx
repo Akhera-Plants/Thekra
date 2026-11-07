@@ -102,7 +102,7 @@ export function PeriodicView() {
           {t('count', { n: formatDigits(planLimits.periodic.count), max: formatDigits(planLimits.periodic.max) })}
         </p>
         {catalog.isError ? <QueryErrorState error={catalog.error} onRetry={() => void catalog.refetch()} className="py-4" /> : null}
-        <ul className="flex flex-col divide-y divide-border border-y border-border">
+        <ul className="flex flex-col divide-y divide-border border-b border-border">
           {templates.map((habit) => {
             const title = locale === 'en' ? habit.titleEn : habit.titleAr;
             return (

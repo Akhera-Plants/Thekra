@@ -1,6 +1,8 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
+import { TitleRow } from '@/components/shared/kit/title-row';
 import { BrandLoader } from '@/components/shared/feedback/BrandLoader';
 import { QueryErrorState } from '@/components/shared/feedback/QueryErrorState';
 import { QuoteCard } from '@/components/shared/quote';
@@ -15,26 +17,30 @@ interface EvidenceQuotesProps {
   heading?: string;
   /** Under the heading: the habit's or sin's name. */
   subject?: string;
+  /** «المزيد» to every text (A-03/F-04): on the heading's row, facing it. */
+  action?: ReactNode;
 }
 
-function EvidenceHeading({ heading, subject }: { heading?: string; subject?: string }) {
+function EvidenceHeading({ heading, subject, action }: { heading?: string; subject?: string; action?: ReactNode }) {
   if (!heading) return null;
   return (
-    <div className="flex flex-col gap-0.5">
-      <h3 className="text-lg font-semibold leading-snug">{heading}</h3>
-      {subject ? <p className="text-sm text-muted-foreground">{subject}</p> : null}
-    </div>
+    <TitleRow action={action}>
+      <div className="flex flex-col gap-0.5">
+        <h3 className="text-lg font-semibold leading-snug">{heading}</h3>
+        {subject ? <p className="text-sm text-muted-foreground">{subject}</p> : null}
+      </div>
+    </TitleRow>
   );
 }
 
 /** The texts behind a habit or a program step, from the database, with the shared quote card. */
-export function EvidenceQuotes({ ids, quotes, heading, subject }: EvidenceQuotesProps) {
+export function EvidenceQuotes({ ids, quotes, heading, subject, action }: EvidenceQuotesProps) {
   const t = useTranslations('practice.evidence');
   const byId = new Map(quotes.map((quote) => [quote.id, quote]));
   const shown = ids.flatMap((id) => byId.get(id) ?? []);
   return (
     <div className="flex flex-col gap-3">
-      <EvidenceHeading heading={heading} subject={subject} />
+      <EvidenceHeading heading={heading} subject={subject} action={action} />
       {shown.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t('none')}</p>
       ) : (

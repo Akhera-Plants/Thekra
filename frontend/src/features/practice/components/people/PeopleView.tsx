@@ -89,7 +89,7 @@ function PeopleBody({ context }: { context: NonNullable<ReturnType<typeof useWir
         {due.length === 0 ? (
           <p className="text-sm leading-7 text-muted-foreground">{store.relatives.length === 0 ? t('emptyAll') : t('dueNone')}</p>
         ) : (
-          <ul className="flex flex-col divide-y divide-border border-y border-border">
+          <ul className="flex flex-col divide-y divide-border border-b border-border">
             {due.map((entry) => (
               <PersonRow key={entry.relative.id} entry={entry} today={today} showCircle />
             ))}
@@ -124,7 +124,7 @@ function PeopleBody({ context }: { context: NonNullable<ReturnType<typeof useWir
               {rows.length === 0 && visited.length === 0 ? (
                 above > 0 ? null : <p className="text-sm text-muted-foreground">{tKin('empty')}</p>
               ) : (
-                <ul className="flex flex-col divide-y divide-border border-y border-border">
+                <ul className="flex flex-col divide-y divide-border border-b border-border">
                   {rows.map((entry) => (
                     <PersonRow key={entry.relative.id} entry={entry} today={today} />
                   ))}

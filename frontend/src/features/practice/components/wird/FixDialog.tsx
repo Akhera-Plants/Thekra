@@ -167,7 +167,7 @@ function MakeUpChooser({ offer, today, onChosen }: { offer: MakeUpOffer; today: 
       </div>
       <fieldset className="flex flex-col">
         <legend className="sr-only">{words.prompt}</legend>
-        <ul className="flex flex-col divide-y divide-border border-y border-border">
+        <ul className="flex flex-col divide-y divide-border border-b border-border">
           {offer.actions.map((key) => {
             const label = key === 'sadaqah' ? words.sadaqah : key === 'custom' ? words.custom : titleOf(key);
             return (

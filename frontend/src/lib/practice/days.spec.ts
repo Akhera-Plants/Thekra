@@ -33,4 +33,10 @@ describe('habit days (A-13 a)', () => {
     expect(next.activeDaysPerWeek).toBe(7);
     expect(() => withWeekdays(plan, [])).toThrow(RangeError);
   });
+
+  it('keeps a habit on one weekday (قيام ليلة الجمعة): one day saves, it does not throw', () => {
+    const next = withWeekdays(plan, [5], '2026-11-07T10:00:00.000Z');
+    expect(next.rule).toEqual({ kind: 'weekdays', days: [5] });
+    expect(next.activeDaysPerWeek).toBe(1);
+  });
 });

@@ -1,7 +1,7 @@
 'use client';
 
 import { useId, useState, type ReactNode } from 'react';
-import { CalendarDays } from 'lucide-react';
+import { CalendarDays, Lightbulb } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import {
@@ -15,6 +15,8 @@ import {
   weeklyReviewDue,
   type WeeklyReview,
 } from '@thekra/practice-core';
+import { Link } from '@/i18n/navigation';
+import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { Button } from '@/components/shared/kit/button';
 import { ActionPair } from '@/components/shared/kit/action-pair';
 import { Switch } from '@/components/shared/kit/switch';
@@ -58,6 +60,7 @@ type Open = 'intention' | 'evening' | 'weekly' | 'day' | null;
 
 function ReviewBody({ ctx, context }: { ctx: HeartContext; context: WirdContext }) {
   const t = useTranslations('practice.review');
+  const tStrategies = useTranslations('practice.strategies');
   const tIntention = useTranslations('practice.heart.intention');
   const tDays = useTranslations('practice.weekdays');
   const locale = useLocale() === 'en' ? 'en' : 'ar';
@@ -105,13 +108,19 @@ function ReviewBody({ ctx, context }: { ctx: HeartContext; context: WirdContext 
 
       <SectionDivider />
 
-      <Section id="review-evening" title={t('eveningTitle')}>
+      {/* The section's action sits on its title row, facing the title (O-02), not under the text. */}
+      <Section
+        id="review-evening"
+        title={t('eveningTitle')}
+        action={
+          evening ? null : (
+            <Button variant="outline" tone="primary" size="sm" onClick={() => setOpen('evening')}>
+              {t('startNow')}
+            </Button>
+          )
+        }
+      >
         <p className="text-sm leading-7 text-muted-foreground">{evening ? t('eveningDone') : t('eveningHint')}</p>
-        {evening ? null : (
-          <Button variant="outline" tone="primary" size="sm" className="self-start" onClick={() => setOpen('evening')}>
-            {t('startNow')}
-          </Button>
-        )}
       </Section>
 
       <SectionDivider />
@@ -170,6 +179,24 @@ function ReviewBody({ ctx, context }: { ctx: HeartContext; context: WirdContext 
         )}
       </Section>
 
+      <SectionDivider />
+
+      {/* «استراتيجيات العادات»: the library's one entry on the site, inside «عاداتي» (F-12 a); each strategy also shows in
+          its moment («أضف», «صلّحها», لحظة مجاهدة). Same entry card as «أهلي وناسي» on «الدورية». */}
+      <Link
+        href="/practice/strategies"
+        className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transition-none"
+      >
+        <span aria-hidden className="flex size-11 shrink-0 items-center justify-center rounded-full bg-secondary text-primary-text">
+          <Lightbulb className="size-5" />
+        </span>
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span className="text-base font-medium">{tStrategies('title')}</span>
+          <span className="text-sm leading-6 text-muted-foreground">{tStrategies('lead')}</span>
+        </span>
+        <DirectionalArrow className="size-5 text-primary-text" />
+      </Link>
+
       <Dialog open={open !== null} onOpenChange={(next) => (next ? undefined : setOpen(null))}>
         <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col gap-4 sm:max-w-lg">
           <DialogHeader className="pe-8">
@@ -227,7 +254,9 @@ function ShortList<T>({ items, render }: { items: readonly T[]; render: (item: T
   const shown = all ? items : items.slice(0, ARCHIVE_SHOWN);
   return (
     <div className="flex flex-col gap-2">
-      <ul className="flex flex-col divide-y divide-border border-y border-border">{shown.map(render)}</ul>
+      {/* No rule under the title (O-04: the flower divider above already parts the section); rows close with a line,
+          as in the app (A-05). */}
+      <ul className="flex flex-col divide-y divide-border border-b border-border">{shown.map(render)}</ul>
       {items.length > ARCHIVE_SHOWN ? (
         <Button variant="ghost" tone="primary" size="sm" className="self-start" aria-expanded={all} onClick={() => setAll((v) => !v)}>
           {all ? t('less') : t('more', { n: formatDigits(items.length - ARCHIVE_SHOWN) })}

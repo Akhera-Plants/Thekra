@@ -213,7 +213,7 @@ function PrayerForm({ saved }: { saved: PrayerSettings | null }) {
         <h2 id="prayer-today" className="text-xl font-medium">
           {t('anchorsTitle')}
         </h2>
-        <ul className="flex flex-col divide-y divide-border border-y border-border">
+        <ul className="flex flex-col divide-y divide-border border-b border-border">
           {PRAYER_ANCHORS.map((anchor) => (
             <li key={anchor} className={cn('flex justify-between py-2.5 text-base', !today && 'text-muted-foreground')}>
               <span>{ANCHOR_LABELS[locale][anchor]}</span>

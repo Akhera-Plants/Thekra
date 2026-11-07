@@ -102,7 +102,7 @@ function RecordBody({ context }: { context: WirdContext }) {
               </h2>
               <p className="text-sm leading-7 text-muted-foreground">{t('commitmentLead')}</p>
             </div>
-            <ul className="flex flex-col divide-y divide-border border-y border-border">
+            <ul className="flex flex-col divide-y divide-border border-b border-border">
               {rates.map((rate) => {
                 const plan = store.plans.find((p) => p.id === rate.planId);
                 return plan ? <CommitmentRow key={plan.id} plan={plan} percent={rate.percent} habit={habitOf(plan, habits)} /> : null;
