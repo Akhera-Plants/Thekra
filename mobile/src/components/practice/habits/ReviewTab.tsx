@@ -29,10 +29,10 @@ import {
 } from '@thekra/practice-core';
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { weekRangeTitle } from '@/lib/practice/calendar-grid';
-import { nowTime, shortDate } from '@/lib/practice/format';
+import { nowTime } from '@/lib/practice/format';
 import { lastReviewDay, reviewLines, type HeartSheet } from '@/lib/practice/habits-view';
 import { usePracticeStore } from '@/lib/practice/practice-store';
-import { useDateNames, usePlanDays } from '@/lib/practice/use-habits-hub';
+import { useDateNames, usePlanDays, useShortDate } from '@/lib/practice/use-habits-hub';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { WeekdayPicker } from '@/components/practice/editors';
 import { HabitLines, HeartSheetView, planTitleOf } from '@/components/practice/hub/HeartCards';
@@ -274,6 +274,7 @@ function PastReview({ review, titleOf }: { review: WeeklyReview; titleOf: (id: s
 
 /** «تعلّم من الخطأ»: what the member wrote was hard on his habits between two days (newest first), each opening its habit. */
 function LearnFromRecent({ from, to, bare }: { from: LocalDate; to: LocalDate; bare?: boolean }) {
+  const shortDate = useShortDate();
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const locale = useUiLocale();

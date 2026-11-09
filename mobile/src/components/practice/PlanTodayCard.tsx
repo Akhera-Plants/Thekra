@@ -8,7 +8,8 @@ import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Check, ChevronLeft, ChevronRight, Minus, PencilLine, Plus } from 'lucide-react-native';
 import { addDays, type Plan } from '@thekra/practice-core';
-import { parseLogAmount, shortDate } from '@/lib/practice/format';
+import { useShortDate } from '@/lib/practice/use-habits-hub';
+import { parseLogAmount } from '@/lib/practice/format';
 import { fixLogStep, type PlanView } from '@/lib/practice/plan-view';
 import { space, useStyles, useTheme, type Theme } from '@/theme';
 import { Button, ButtonPair, Card, ErrorText, Field, Icon, IconButton, NextStep, Text } from '@/ui';
@@ -165,6 +166,7 @@ interface FixPanelProps {
 
 /** «صحّح السجل»: a forgotten or wrong day, up to a week back and never before the plan started. Zero clears it. */
 export function FixPanel({ plan, today: d, amountLabel, onSave, onCancel }: FixPanelProps) {
+  const shortDate = useShortDate();
   const { t } = useTranslation();
   const { rtl } = useTheme();
   const styles = useStyles(makeStyles);

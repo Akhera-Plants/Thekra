@@ -34,6 +34,7 @@ import {
   habitMilestones,
   increase,
   isArchived,
+  isCustomPeriodic,
   isPrayerAnchor,
   LADDER,
   logForDay,
@@ -42,6 +43,7 @@ import {
   missedDayBefore,
   normalize,
   orderedSlots,
+  pendingAsks,
   reflectionOf,
   reflectionsOfPlan,
   REFLECTION_TEXT_MAX,
@@ -61,14 +63,14 @@ import { currentPrayerDay } from '@/lib/practice/prayer';
 import { useMyCircles } from '@/lib/api/circles';
 import { useEvidence, usePracticeCatalog } from '@/lib/api/practice';
 import { pick } from '@/lib/practice/catalog-types';
-import { ruleToWeekdays, shortDate } from '@/lib/practice/format';
+import { ruleToWeekdays } from '@/lib/practice/format';
 import { mendState, showsMend } from '@/lib/practice/habits-view';
 import { archiveLine, milestoneLines, restoreToastKey } from '@/lib/practice/hub-view';
 import { habitLoopInput } from '@/lib/practice/loops';
 import { planView } from '@/lib/practice/plan-view';
 import { newPracticeId, today, usePracticeStore } from '@/lib/practice/practice-store';
 import { formatAmount, habitFor, planRule } from '@/lib/practice/reminders';
-import { useDateNames, useLimits, usePlanDays } from '@/lib/practice/use-habits-hub';
+import { useDateNames, useLimits, usePlanDays, useShortDate } from '@/lib/practice/use-habits-hub';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { EvidenceList } from '@/components/practice/EvidenceList';
@@ -77,6 +79,7 @@ import { MonthPanel } from '@/components/practice/PlanHistoryAndSettings';
 import { PlanEditSheet } from '@/components/practice/PlanEditSheet';
 import { TodayPanel } from '@/components/practice/PlanTodayCard';
 import { ArchiveSheet } from '@/components/practice/habits/HabitActions';
+import { PendingAsks } from '@/components/practice/habits/TodayTab';
 import { ruleWords } from '@/components/practice/habits/PeriodicTab';
 import { LoopsPanel } from '@/components/practice/loops/LoopsPanel';
 import { radius, space, useStyles, type Theme } from '@/theme';
@@ -117,6 +120,7 @@ const makeStyles = (t: Theme) => ({
 });
 
 export default function PlanScreen() {
+  const shortDate = useShortDate();
   const params = useLocalSearchParams<{ id: string; tab?: string }>();
   const id = params.id;
   const { t, i18n } = useTranslation();
@@ -204,6 +208,11 @@ export default function PlanScreen() {
     />
   );
   const archiveInfo = archived ? archiveLine(archiveNote(plan, d)) : null;
+  // A periodic act is a reminder, not a commitment (C-10 / C-17): it keeps «المتابعة» and «التذكيرات» only — no habit
+  // loop, no «العودة بعد انقطاع», no daily questions or minimum.
+  const periodicAct = isCustomPeriodic(plan) || habit?.kind === 'periodic';
+  const tabs: readonly Tab[] = periodicAct ? ['follow', 'reminders'] : TABS;
+  const shownTab: Tab = tabs.includes(tab) ? tab : 'follow';
 
   return (
     <Screen edges={['bottom']} keyboard>
@@ -231,13 +240,13 @@ export default function PlanScreen() {
         ) : null}
       </View>
 
-      <UnderlineTabs items={TABS.map((key) => ({ key, label: t(`habitsHub.plan.tabs.${key}`) }))} value={tab} onChange={setTab} accessibilityLabel={title} />
+      <UnderlineTabs items={tabs.map((key) => ({ key, label: t(`habitsHub.plan.tabs.${key}`) }))} value={shownTab} onChange={setTab} accessibilityLabel={title} />
 
-      {tab === 'follow' ? (
-        <FollowTab plan={plan} title={title} amountLabel={amountLabel} archived={archived} />
-      ) : tab === 'loop' ? (
+      {shownTab === 'follow' ? (
+        <FollowTab plan={plan} title={title} amountLabel={amountLabel} archived={archived} periodicAct={periodicAct} />
+      ) : shownTab === 'loop' ? (
         <LoopTab plan={plan} title={title} />
-      ) : tab === 'reminders' ? (
+      ) : shownTab === 'reminders' ? (
         <RemindersTab plan={plan} title={title} schedule={schedule} onEdit={() => setEditing(true)} />
       ) : (
         <ReturnTab plan={plan} title={title} amountLabel={amountLabel} />
@@ -266,7 +275,7 @@ interface TabProps {
   title: string;
 }
 
-function FollowTab({ plan, title, amountLabel, archived }: TabProps & { amountLabel: (n: number) => string; archived: boolean }) {
+function FollowTab({ plan, title, amountLabel, archived, periodicAct }: TabProps & { amountLabel: (n: number) => string; archived: boolean; periodicAct: boolean }) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const locale = useUiLocale();
@@ -308,12 +317,17 @@ function FollowTab({ plan, title, amountLabel, archived }: TabProps & { amountLa
         />
       ) : null}
 
-      <ReflectionForm plan={plan} />
+      {periodicAct ? null : (
+        <>
+          <ReflectionForm plan={plan} />
+
+          <SectionDivider />
+          <ListRow title={t('habitsHub.minimum.title')} hint={t('habitsHub.minimum.hint')} value={amountLabel(minimumOf(plan))} chevron last onPress={() => setMinOpen(true)} />
+        </>
+      )}
 
       <SectionDivider />
-      <ListRow title={t('habitsHub.minimum.title')} hint={t('habitsHub.minimum.hint')} value={amountLabel(minimumOf(plan))} chevron last onPress={() => setMinOpen(true)} />
-
-      <SectionDivider />
+      {periodicAct ? null : (
       <Section title={t('habitsHub.plan.progress')}>
         <Text variant="body">{t('habitsHub.habits.completionLine', { percent: completion.percent, kept: Math.min(completion.keptDays, completion.targetDays), target: completion.targetDays })}</Text>
         {lines.map((key) => (
@@ -322,9 +336,10 @@ function FollowTab({ plan, title, amountLabel, archived }: TabProps & { amountLa
           </Text>
         ))}
       </Section>
+      )}
       <MonthPanel plan={plan} view={view} today={d} />
 
-      {graduationReady(plan, d) ? (
+      {!periodicAct && graduationReady(plan, d) ? (
         <NextStep title={t('practice.graduation.offer')}>
           <Wrap style={styles.offerActions}>
             <Button
@@ -339,7 +354,7 @@ function FollowTab({ plan, title, amountLabel, archived }: TabProps & { amountLa
         </NextStep>
       ) : null}
 
-      {!archived && view.canIncrease && view.nextAmount !== null ? (
+      {!periodicAct && !archived && view.canIncrease && view.nextAmount !== null ? (
         <NextStep title={t('practice.increase.title')}>
           <Text variant="small">{t('practice.increase.body', { amount: amountLabel(view.nextAmount) })}</Text>
           <Wrap style={styles.offerActions}>
@@ -354,7 +369,7 @@ function FollowTab({ plan, title, amountLabel, archived }: TabProps & { amountLa
         </NextStep>
       ) : null}
 
-      {!archived && view.relapse && !relapseDismissed ? (
+      {!periodicAct && !archived && view.relapse && !relapseDismissed ? (
         <NextStep title={t('practice.relapse.title')}>
           <Text variant="small">{t('practice.relapse.body', { amount: amountLabel(view.relapseAmount) })}</Text>
           <ButtonPair
@@ -535,6 +550,7 @@ function RemindersTab({ plan, schedule, onEdit }: TabProps & { schedule: string;
 }
 
 function ReturnTab({ plan, title, amountLabel }: TabProps & { amountLabel: (n: number) => string }) {
+  const shortDate = useShortDate();
   const { t } = useTranslation();
   const store = usePracticeStore((s) => s.store);
   const heart = usePracticeStore((s) => s.heart);
@@ -551,12 +567,16 @@ function ReturnTab({ plan, title, amountLabel }: TabProps & { amountLabel: (n: n
     doneToday: plan.log[d] ?? 0,
     paused: isArchived(plan),
   });
+  // C-01j: an unanswered day is asked first; «صلّحها» comes once no day of this habit waits for an answer.
+  const asking = pendingAsks(store, d, { ...planDays, isPeriodicAct: (p) => habitFor(p, habits)?.kind === 'periodic' }).some((a) => a.planId === plan.id);
   const hard = reflectionsOfPlan(store, plan.id).filter((r) => r.hard).slice(0, 5);
   const ifThen = plan.loops?.find((l) => l.ifThen)?.ifThen;
   return (
     <>
       <Section title={t('habitsHub.return.title')} lead={t('habitsHub.return.lead')}>
-        {showsMend(mend) ? (
+        {asking ? (
+          <PendingAsks today={d} planId={plan.id} />
+        ) : showsMend(mend) ? (
           <NextStep title={t(mend === 'steps' ? 'practice.hub.missedYesterday' : 'habitsTab.mend.offerLine')}>
             <Wrap>
               <Button label={t('myHabits.fix')} onPress={() => setMending(true)} variant="outline" />

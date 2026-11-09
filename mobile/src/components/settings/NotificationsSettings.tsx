@@ -24,6 +24,7 @@ import { useTranslation } from 'react-i18next';
 import { BellOff, ExternalLink, Laptop, MoonStar, Plus } from 'lucide-react-native';
 import {
   activePeriodicActs,
+  isArchived,
   isPeriodicPlan,
   listedStrategies,
   periodicActKeyOf,
@@ -166,7 +167,7 @@ export function NotificationsSettings() {
     <>
       <StatusLine />
       {denied ? <Notice tone="destructive">{t('practice.permissionDenied')}</Notice> : null}
-      <UnderlineTabs items={items} value={tab} onChange={setTab} accessibilityLabel={t('settings.groups.notifications')} />
+      <UnderlineTabs dense items={items} value={tab} onChange={setTab} accessibilityLabel={t('settings.groups.notifications')} />
       {tab === 'habits' ? <HabitsTab allowed={allowed} /> : null}
       {tab === 'periodic' ? <PeriodicTab allowed={allowed} /> : null}
       {tab === 'heart' ? <HeartTab allowed={allowed} /> : null}
@@ -197,7 +198,8 @@ function HabitsTab({ allowed }: { allowed: Allowed }) {
   const hasProgram = usePracticeStore((s) => s.store.programs.some((p) => p.endedAt === undefined));
   const habits = usePracticeCatalog(locale).data?.habits ?? [];
   // Habits only: a periodic act (catalog or custom) is listed in its own tab.
-  const rows = plans.filter((p) => periodicActKeyOf(p) === null && !isPeriodicPlan(p, { defaultRuleOf: (plan) => habitFor(plan, habits)?.defaultRule }));
+  // Archived habits send nothing, so they are not listed (only the active ones, C-19).
+  const rows = plans.filter((p) => !isArchived(p) && periodicActKeyOf(p) === null && !isPeriodicPlan(p, { defaultRuleOf: (plan) => habitFor(plan, habits)?.defaultRule }));
   const timeLabel = t('practice.notifyPrefs.time');
   const showPrivate = hasProgram || prefs.sinReminders;
 

@@ -83,7 +83,7 @@ Keys live in `mobile/src/lib/i18n/{ar,en}.json` under `habitsHub` unless noted.
 | «انظر ما سبق الزلّة: الوقت والمكان والشعور، وسدّ ذلك الباب قبل أن يُفتح.» | day sheet, «تخفّف» part after a weak day or a slip (firm, no «سامح نفسك») | — |
 | «المتابعة · حلقة العادة · التذكيرات · العودة بعد انقطاع» · «Follow-up · Habit loop · Reminders · Coming back» | habit page tabs | «العودة» (shorter, fits one row with large text) |
 | «سؤالان اختياريان» + «ما الذي أعانك على الالتزام؟» / «ما الذي صعّب عليك؟» + «ملاحظة لهذا اليوم» | habit page › المتابعة | — |
-| «خطوة للعودة» (section) + «إن انقطعت، فارجع في اليوم التالي بقدرك الأدنى: …» | habit page › العودة بعد انقطاع | the designer proposed «خطوة للعودة» instead of «صلّحها»; «صلّحها» stays the button |
+| «صلّحها» (section title and button) + «إن انقطعت، فارجع في اليوم التالي بقدرك الأدنى: …» | habit page › العودة بعد انقطاع | the owner kept «صلّحها» for the button; QA also used it for the section title (it was «خطوة للعودة», the designer's name). Keep it as the title too? |
 | Steps «العادة · القدر والوقت · رسالتك · المراجعة» + «كم ومتى؟» + «راجع قبل الحفظ» + «احفظ العادة» | add flow (the reference indicator, 4 numbered steps: 3 + review) | «رسالة لنفسك» for «رسالتك» |
 | «قضاء الفوائت»: «قضيت n من m» · «اليوم n من 3» · «بقي n يومًا بهذا القدر» · «تتمّه نحو …» · «أنت على قدرك، بارك الله لك.» · «العدد كله / لكل صلاة» | qada screen, «الفرائض» group, سجلّي › حصيلة | «قضيتَ» with the vowel |
 | «أسبوع · شهر · حصيلة» + «تسجيلات الأسبوع» | سجلّي tabs | «الحصيلة» |

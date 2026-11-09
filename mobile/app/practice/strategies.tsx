@@ -20,6 +20,7 @@ import { useTranslation } from 'react-i18next';
 import { Bell, BellRing, ChevronDown, ChevronUp } from 'lucide-react-native';
 import {
   addHabitLoop,
+  isArchived,
   isPeriodicPlan,
   listedStrategies,
   periodicActKeyOf,
@@ -247,7 +248,7 @@ function ApplyFlow({ strategy, onClose }: { strategy: Strategy | null; onClose: 
   const [draft, setDraft] = useState<LoopDraft | null>(null);
   // Habits only (a periodic act has no loop).
   const choices = useMemo(
-    () => plans.filter((p) => periodicActKeyOf(p) === null && !isPeriodicPlan(p, { defaultRuleOf: (plan) => habitFor(plan, habits)?.defaultRule })),
+    () => plans.filter((p) => !isArchived(p) && periodicActKeyOf(p) === null && !isPeriodicPlan(p, { defaultRuleOf: (plan) => habitFor(plan, habits)?.defaultRule })),
     [plans, habits],
   );
   const titleOf = (plan: Plan) => {

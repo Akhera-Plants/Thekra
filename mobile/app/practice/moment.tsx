@@ -9,8 +9,8 @@
  * - ONE prominent act first, in a quiet panel: the first of the acts tied to the Qur'an, the Sunnah or the salaf for
  *   this sin (catalog `sinPrograms.moment`), the other acts as chips under it (a tap makes one the prominent act); the
  *   generic acts when the sin has none of its own. No «الدليل» buttons here (C-16).
- * - Under a hairline in the same panel: «10:00» and «ابدأ عشر دقائق». The timer never starts by itself (C-01c); once
- *   started, the ring counts down.
+ * - Under a hairline in the same panel: a small outlined «ابدأ عشر دقائق» (C-16: small, under the act). The timer never
+ *   starts by itself (C-01c); once started, the ring counts down.
  * - Two buttons: «نصوص تذكّرها» (this sin's texts, in a sheet) and «حلقة المعصية» (the program's loop, in a sheet).
  * - «أدوات تعينك» (the tasbih counter, «وردٌ أقصر», «أعمال سهلة») and «اركب الموجة» in its moment (F-12);
  *   one verse passage on patience, rotating; then «كيف كانت مجاهدتك؟». Healthy words only: a slip is a slip.
@@ -305,20 +305,22 @@ function MujahadaContent() {
             </View>
           </ProgressRing>
         ) : (
+          // Idle: a small optional button under the act (C-16: «المؤقت زر صغير تحته»), never a big clock competing with it.
           <View style={styles.timer}>
-            <Text variant="display">{formatCountdown(URGE_SECONDS)}</Text>
-            <Text variant="caption" tone="muted" align="center">
-              {t('sinProgram.moment.timerLead')}
-            </Text>
             <Button
               label={t('sinProgram.moment.startTimer')}
               icon={Timer}
+              variant="outline"
+              size="sm"
               onPress={() => {
                 const at = Date.now();
                 setStartedAt(at);
                 setNow(at);
               }}
             />
+            <Text variant="caption" tone="muted" align="center">
+              {t('sinProgram.moment.timerLead')}
+            </Text>
           </View>
         )}
       </View>

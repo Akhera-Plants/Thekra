@@ -10,9 +10,9 @@ import { Share, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Plus, Share2, Ticket, XCircle } from 'lucide-react-native';
 import { CircleListSkeleton, CirclesSignedOut } from '@/components/circles/CircleStates';
+import { useShortDate } from '@/lib/practice/use-habits-hub';
 import { useCircleAccess, useCircleUserId, useCreateInvite, useMyInvites, useRevokeInvite } from '@/lib/api/circles';
 import { circleErrorKey, formatInviteCode, personalInviteLink } from '@/lib/circles/circle-view';
-import { shortDate } from '@/lib/practice/format';
 import type { LocalDate } from '@thekra/practice-core';
 import type { CircleInvite } from '@/lib/types/circles';
 import { space, useStyles, type Theme } from '@/theme';
@@ -115,6 +115,7 @@ async function shareInvite(code: string, t: (key: string, opts?: Record<string, 
 }
 
 function InviteRow({ invite, last }: { invite: CircleInvite; last: boolean }) {
+  const shortDate = useShortDate();
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const revoke = useRevokeInvite();

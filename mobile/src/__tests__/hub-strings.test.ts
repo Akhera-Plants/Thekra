@@ -51,7 +51,7 @@ describe('practice strings', () => {
     expect(ar('practice.add.daysCount', { count: 2 })).toBe('يومان');
     expect(ar('practice.monthDays', { done: '4', count: 12 })).toBe('سجّلت في 4 من 12 يومًا');
     expect(ar('practice.duties.minutes', { count: 120 })).toBe('120 دقيقة');
-    expect(ar('practice.notify.kinshipBodyGeneric', { count: 1 })).toBe('حان وقت التواصل مع أحد أقاربك');
+    expect(ar('practice.notify.kinshipBodyGeneric', { count: 1 })).toBe('حان وقت التواصل مع واحد ممن تصلهم');
     const en = i18n.getFixedT('en');
     expect(en('kinship.overdueBy', { count: 1 })).toBe('1 day late');
     expect(en('kinship.overdueBy', { count: 4 })).toBe('4 days late');

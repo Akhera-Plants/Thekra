@@ -46,7 +46,7 @@ import {
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { useCirclePresence } from '@/lib/circles/use-circle-presence';
 import { pick } from './catalog-types';
-import { addMonths, firstWeekday, followToday, monthStart, type DateNames } from './calendar-grid';
+import { addMonths, dayMonth, firstWeekday, followToday, monthStart, type DateNames } from './calendar-grid';
 import { finishedDay, presenceMarks, type PresenceMark } from './hub';
 import { heavyDayOn, setHeavyDay } from './plan-view';
 import { today, usePracticeStore } from './practice-store';
@@ -67,6 +67,15 @@ export function useDateNames(): DateNames {
     }),
     [t],
   );
+}
+
+/**
+ * A short date in words for lines and lists, «7 نوفمبر» / «7 November» (owner rule F-30 / C-23: month names, Western
+ * digits, never «7/11»).
+ */
+export function useShortDate(): (date: LocalDate) => string {
+  const names = useDateNames();
+  return useCallback((date: LocalDate) => dayMonth(date.slice(0, 10) as LocalDate, names), [names]);
 }
 
 /** How often an open hub checks whether the date changed (it also checks on every return to the foreground). */

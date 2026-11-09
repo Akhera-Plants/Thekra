@@ -309,9 +309,9 @@
     "catalogError": "Could not load the habit list.",
     "notify": {
       "habitBody": "Today: {{amount}}",
-      "kinshipTitle": "Ties of kinship",
-      "kinshipBodyGeneric_one": "Time to get in touch with one of your relatives",
-      "kinshipBodyGeneric_other": "Time to get in touch with {{count}} of your relatives",
+      "kinshipTitle": "Ties of kinship and loved ones",
+      "kinshipBodyGeneric_one": "Time to get in touch with one of the people you keep ties with",
+      "kinshipBodyGeneric_other": "Time to get in touch with {{count}} of the people you keep ties with",
       "kinshipBodyNames": "Time to get in touch with: {{names}}",
       "sinBody": "A moment for yourself. Open Thekra.",
       "channelName": "Reminders",
@@ -693,7 +693,7 @@
     "notifyPrefs": {
       "title": "Notifications",
       "habits": "Habits at their times",
-      "periodic": "Periodic acts and ties of kinship",
+      "periodic": "Periodic acts",
       "time": "Time",
       "intention": "Today's intention",
       "eveningReview": "Evening review",
@@ -1551,7 +1551,7 @@
     "add": "Add",
     "remove": "Remove",
     "count": "{{n}} of {{max}}",
-    "empty": "No reminder yet. Write a short line to come back to; it can be your daily text.",
+    "empty": "No reminder yet. Write a short line to come back to on a hard day.",
     "errors": {
       "empty": "Write the line first.",
       "tooLong": "The line is longer than {{max}} characters.",
@@ -1617,7 +1617,7 @@
     "openApp": "Open the app to see today's practice",
     "noHabits": "Open the app and start a small sapling",
     "dailyText": "Daily text",
-    "noText": "Open the app and choose the daily text source",
+    "noText": "Open the app to show today’s reminder",
     "seasons": "Today and the coming occasion",
     "todayOccasion": "Today: {title}",
     "nextOccasion": "Next: {title}, {date}",
@@ -2147,7 +2147,7 @@
         "travel": "Your run is not broken and no reminders ring today. Do the minimum if you can."
       },
       "forgive": "Go easy on yourself today, and keep to the minimum.",
-      "lighten": "As for what you are lightening, hold firm in leaving it today; steadiness on a hard day weighs more.",
+      "lighten": "As for what you are lightening, hold firm in leaving it today, even on a hard day.",
       "setToast": "Your day: {{state}}",
       "normalToast": "Back to a normal day"
     },
@@ -2156,7 +2156,7 @@
       "did": "I did it",
       "didNot": "I didn't",
       "yesterday": "Yesterday",
-      "note": "Without an answer within three days it counts as “not done”."
+      "note": "Until you answer, the day counts as “not done”; you can answer within three days."
     },
     "day": {
       "title": "Your day",
@@ -2254,7 +2254,11 @@
       "restore": "Restore",
       "restoredKept": "“{{habit}}” is back with its progress",
       "restoredReset": "“{{habit}}” is back; its progress starts again",
-      "restoreFull": "You have {{max}} habits. Archive or delete one first."
+      "restoreFull": "You have {{max}} habits. Archive or delete one first.",
+      "freeOne": "Delete from the archive",
+      "pickDelete": "The archive holds {{max}} habits, its most. Which one to delete from it? Its history goes with it.",
+      "deletedToast": "“{{habit}}” deleted from the archive",
+      "fullShort": "The archive is full ({{max}}), so only deleting is left."
     },
     "limit": {
       "title": "You have {{count}} habits",
@@ -2449,7 +2453,7 @@
       "clearedToast": "Suggested minimum restored"
     },
     "return": {
-      "title": "A step back",
+      "title": "Mend it",
       "lead": "If you stopped, do not double up or start from zero: come back with a little today.",
       "noGap": "No break right now. May Allah keep you firm.",
       "rule": "If you stop, come back the next day with your minimum: {{amount}}."

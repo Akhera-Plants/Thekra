@@ -40,11 +40,10 @@ import {
 import { useMyCircles } from '@/lib/api/circles';
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { useSins } from '@/lib/api/sins';
-import { shortDate } from '@/lib/practice/format';
 import { archiveLine, milestoneLines, restoreToastKey } from '@/lib/practice/hub-view';
 import { usePracticeStore } from '@/lib/practice/practice-store';
 import { habitFor } from '@/lib/practice/reminders';
-import { useLimits } from '@/lib/practice/use-habits-hub';
+import { useLimits, useShortDate } from '@/lib/practice/use-habits-hub';
 import { useProgramReveal } from '@/lib/practice/use-program-reveal';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { useAuthStore } from '@/lib/stores/auth-store';
@@ -266,6 +265,7 @@ function HabitRow({ plan, title, today, inCircle, last, onArchive }: { plan: Pla
 
 /** A «تخفّف» program as a habit: covered (no name, a lock) by default; uncovered it shows the sin's name. */
 function LightenRow({ covered, program, last, onOpen }: { covered: boolean; program: SinProgram | null; last: boolean; onOpen: () => void }) {
+  const shortDate = useShortDate();
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const locale = useUiLocale();
@@ -297,6 +297,7 @@ function LightenRow({ covered, program, last, onOpen }: { covered: boolean; prog
 
 /** «الأرشيف»: collapsed by default; each habit with what restoring does now and «أعِدها». */
 function ArchiveSection({ plans, today, title }: { plans: Plan[]; today: LocalDate; title: (p: Plan) => string }) {
+  const shortDate = useShortDate();
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const setStore = usePracticeStore((s) => s.setStore);

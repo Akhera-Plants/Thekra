@@ -20,8 +20,8 @@ import {
   selfMessages,
   type SelfMessage,
 } from '@thekra/practice-core';
+import { useShortDate } from '@/lib/practice/use-habits-hub';
 import { usePracticeCatalog } from '@/lib/api/practice';
-import { shortDate } from '@/lib/practice/format';
 import { newPracticeId, usePracticeStore } from '@/lib/practice/practice-store';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { planTitleOf } from '@/components/practice/hub/HeartCards';
@@ -39,6 +39,7 @@ const makeStyles = (t: Theme) => ({
 type Editing = { kind: 'new' } | { kind: 'edit'; message: SelfMessage } | null;
 
 export default function SelfMessagesScreen() {
+  const shortDate = useShortDate();
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const locale = useUiLocale();

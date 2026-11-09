@@ -28,7 +28,8 @@ import {
   type QadaKey,
   type QadaPlan,
 } from '@thekra/practice-core';
-import { parseLogAmount, shortDate } from '@/lib/practice/format';
+import { useShortDate } from '@/lib/practice/use-habits-hub';
+import { parseLogAmount } from '@/lib/practice/format';
 import { QADA_PACES } from '@/lib/practice/hub-view';
 import { today, usePracticeStore } from '@/lib/practice/practice-store';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
@@ -110,6 +111,7 @@ export default function QadaScreen() {
 }
 
 function ProgressView() {
+  const shortDate = useShortDate();
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const store = usePracticeStore((s) => s.store);

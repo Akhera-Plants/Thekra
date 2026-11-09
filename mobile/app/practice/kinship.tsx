@@ -29,9 +29,8 @@ import {
   type PeopleCircle,
   type Relative,
 } from '@thekra/practice-core';
-import { useLimits } from '@/lib/practice/use-habits-hub';
+import { useLimits, useShortDate } from '@/lib/practice/use-habits-hub';
 import { LimitSheet } from '@/components/practice/LimitSheet';
-import { shortDate } from '@/lib/practice/format';
 import { editedRelative, relativeFromForm, type RelativeFormValues } from '@/lib/practice/kinship-form';
 import { newPracticeId, today, usePracticeStore } from '@/lib/practice/practice-store';
 import { useAuthStore } from '@/lib/stores/auth-store';
@@ -207,6 +206,7 @@ interface PersonRowProps {
 
 /** Name · relation and the due line; «تواصلت معه» (or «تواصلت اليوم»), then «⋯» with «عدّل» and «احذف». */
 function PersonRow({ relative, entry, today: d, last, signedIn, onContacted, onEdit, onDelete }: PersonRowProps) {
+  const shortDate = useShortDate();
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const open = isRelativeOpen(relative);

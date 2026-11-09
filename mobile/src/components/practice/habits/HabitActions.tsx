@@ -5,6 +5,8 @@
  *   beyond that the member deletes one first. There is no second «pause» anywhere: the archive IS the pause.
  * - {@link HabitAddChoiceSheet}: «أضف» with 3 habits: «لديك 3 عادات — أرشِف واحدة أو احذفها» (two buttons) with the
  *   3-day note, then the habit to free; deleting is confirmed in the same sheet.
+ * - {@link ArchiveFullDelete}: the archive is full (10): «احذف واحدة من الأرشيف» — the archived habits, each deleted after
+ *   a confirmation in the same sheet; then archiving goes on. Used by {@link ArchiveSheet} and the limit sheets.
  * Every change toasts.
  */
 
@@ -16,6 +18,7 @@ import {
   ARCHIVE_MAX,
   ARCHIVE_RESET_DAYS,
   archivePlan,
+  archivedPlans,
   canArchive,
   deletePlan,
   habitAddChoice,
@@ -41,32 +44,100 @@ export function ArchiveSheet({ plan, title, today, visible, onClose, onDone }: {
   const store = usePracticeStore((s) => s.store);
   const setStore = usePracticeStore((s) => s.setStore);
   const full = !canArchive(store);
+  // Archive full (C-01d / owner chat: at most 10, beyond that delete): the sheet offers deleting one from the archive.
+  const [freeing, setFreeing] = useState(false);
+  const close = () => {
+    setFreeing(false);
+    onClose();
+  };
   return (
-    <BottomSheet visible={visible && plan !== undefined} title={t('habitsHub.archive.confirmTitle', { habit: title })} onClose={onClose}>
+    <BottomSheet visible={visible && plan !== undefined} title={t('habitsHub.archive.confirmTitle', { habit: title })} onClose={close}>
       <View style={styles.stack}>
-        <Text variant="body">{t('habitsHub.archive.confirmBody', { days: ARCHIVE_RESET_DAYS })}</Text>
-        {full ? <Notice tone="destructive">{t('habitsHub.archive.full', { max: ARCHIVE_MAX })}</Notice> : null}
-        <ButtonPair
-          primary={{
-            label: t('habitsHub.archive.action'),
-            icon: Archive,
-            disabled: full,
-            onPress: () => {
-              if (!plan) return;
-              setStore((s) => archivePlan(s, plan.id, today));
-              toast(t('habitsHub.archive.doneToast', { habit: title }));
-              onClose();
-              onDone?.();
-            },
-          }}
-          secondary={{ label: t('common.cancel'), onPress: onClose }}
-        />
+        {freeing ? (
+          <ArchiveFullDelete onDeleted={() => setFreeing(false)} onBack={() => setFreeing(false)} />
+        ) : (
+          <>
+            <Text variant="body">{t('habitsHub.archive.confirmBody', { days: ARCHIVE_RESET_DAYS })}</Text>
+            {full ? <Notice tone="destructive">{t('habitsHub.archive.full', { max: ARCHIVE_MAX })}</Notice> : null}
+            <ButtonPair
+              primary={
+                full
+                  ? { label: t('habitsHub.archive.freeOne'), icon: Trash2, variant: 'outline', onPress: () => setFreeing(true) }
+                  : {
+                      label: t('habitsHub.archive.action'),
+                      icon: Archive,
+                      onPress: () => {
+                        if (!plan) return;
+                        setStore((s) => archivePlan(s, plan.id, today));
+                        toast(t('habitsHub.archive.doneToast', { habit: title }));
+                        close();
+                        onDone?.();
+                      },
+                    }
+              }
+              secondary={{ label: t('common.cancel'), onPress: close }}
+            />
+          </>
+        )}
       </View>
     </BottomSheet>
   );
 }
 
-type Step = { kind: 'choose' } | { kind: 'pick'; action: 'archive' | 'delete' } | { kind: 'confirmDelete'; plan: Plan };
+/**
+ * The archive is full: pick one archived habit to delete (its history goes with it), confirm, delete, toast. Rendered
+ * inside a sheet; `onDeleted` runs once a place in the archive is free.
+ */
+export function ArchiveFullDelete({ onDeleted, onBack }: { onDeleted: () => void; onBack: () => void }) {
+  const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
+  const locale = useUiLocale();
+  const store = usePracticeStore((s) => s.store);
+  const setStore = usePracticeStore((s) => s.setStore);
+  const habits = usePracticeCatalog(locale).data?.habits ?? [];
+  const signedIn = useAuthStore((s) => Boolean(s.user));
+  const [confirming, setConfirming] = useState<Plan | null>(null);
+  const archived = archivedPlans(store);
+  const title = (p: Plan) => planTitleOf(p, habits, locale);
+  if (confirming) {
+    return (
+      <View style={styles.stack}>
+        <Text variant="body">{t('habitsHub.habits.deleteTitle', { habit: title(confirming) })}</Text>
+        <Text variant="small" tone="muted">
+          {t(signedIn ? 'practice.plan.deleteConfirmSynced' : 'practice.plan.deleteConfirm')}
+        </Text>
+        <ButtonPair
+          primary={{
+            label: t('common.delete'),
+            variant: 'destructive',
+            onPress: () => {
+              setStore((s) => deletePlan(s, confirming.id));
+              toast(t('habitsHub.archive.deletedToast', { habit: title(confirming) }));
+              setConfirming(null);
+              onDeleted();
+            },
+          }}
+          secondary={{ label: t('common.cancel'), onPress: () => setConfirming(null) }}
+        />
+      </View>
+    );
+  }
+  return (
+    <View style={styles.stack}>
+      <Text variant="small" tone="muted">
+        {t('habitsHub.archive.pickDelete', { max: ARCHIVE_MAX })}
+      </Text>
+      <View>
+        {archived.map((p, i) => (
+          <ListRow key={p.id} icon={Trash2} title={title(p)} last={i === archived.length - 1} onPress={() => setConfirming(p)} />
+        ))}
+      </View>
+      <ButtonPair primary={{ label: t('common.back'), onPress: onBack, variant: 'outline' }} />
+    </View>
+  );
+}
+
+type Step = { kind: 'choose' } | { kind: 'freeArchive' } | { kind: 'pick'; action: 'archive' | 'delete' } | { kind: 'confirmDelete'; plan: Plan };
 
 /** «أضف» past the limit: archive or delete one of the three (C-01d). `onFreed` continues the add flow. */
 export function HabitAddChoiceSheet({ visible, today, onClose, onFreed }: { visible: boolean; today: LocalDate; onClose: () => void; onFreed: () => void }) {
@@ -101,8 +172,8 @@ export function HabitAddChoiceSheet({ visible, today, onClose, onFreed }: { visi
               primary={{
                 label: t('habitsHub.limit.archive'),
                 icon: Archive,
-                disabled: !choice?.options.includes('archive'),
-                onPress: () => setStep({ kind: 'pick', action: 'archive' }),
+                // A full archive (10) first asks to delete one from it (owner chat: beyond 10, delete).
+                onPress: () => setStep(choice && !choice.options.includes('archive') ? { kind: 'freeArchive' } : { kind: 'pick', action: 'archive' }),
               }}
               secondary={{ label: t('habitsHub.limit.delete'), icon: Trash2, onPress: () => setStep({ kind: 'pick', action: 'delete' }) }}
             />
@@ -112,6 +183,8 @@ export function HabitAddChoiceSheet({ visible, today, onClose, onFreed }: { visi
               </Text>
             ) : null}
           </>
+        ) : step.kind === 'freeArchive' ? (
+          <ArchiveFullDelete onDeleted={() => setStep({ kind: 'pick', action: 'archive' })} onBack={() => setStep({ kind: 'choose' })} />
         ) : step.kind === 'pick' ? (
           <>
             <Text variant="small" tone="muted">

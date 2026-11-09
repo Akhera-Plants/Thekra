@@ -9,7 +9,7 @@ import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Moon } from 'lucide-react-native';
 import { addDays, normalize, startSeason } from '@thekra/practice-core';
-import { shortDate } from '@/lib/practice/format';
+import { useShortDate } from '@/lib/practice/use-habits-hub';
 import { eachPlan, ramadanSeasonUntil, seasonAmount, showRamadanBlock } from '@/lib/practice/plan-view';
 import { today, usePracticeStore } from '@/lib/practice/practice-store';
 import { space, useStyles } from '@/theme';
@@ -21,6 +21,7 @@ const makeStyles = () => ({
 });
 
 export function RamadanBlock() {
+  const shortDate = useShortDate();
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const store = usePracticeStore((s) => s.store);

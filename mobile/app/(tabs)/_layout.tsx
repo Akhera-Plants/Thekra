@@ -85,7 +85,7 @@ export default function TabLayout() {
           paddingBottom: insets.bottom + TAB_BAR_PADDING,
           elevation: 0,
         },
-        tabBarLabelStyle: { fontFamily: theme.font('medium'), fontSize: 12 },
+        tabBarLabelStyle: { fontFamily: theme.font('medium'), fontSize: 13 },
         tabBarIconStyle: TAB_PILL,
         sceneStyle: { backgroundColor: c.background },
       }}

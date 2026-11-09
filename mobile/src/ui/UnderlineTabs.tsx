@@ -3,6 +3,8 @@
  * labels over one hairline; the current tab in the foreground ink with a 2px primary bar under it, the others muted.
  * Used for the top tabs of «عاداتي» and of the habit page. The row scrolls sideways only when the labels do not fit
  * (English, large text), and the current tab is scrolled into view. Each tab is a 44px target with role `tab`.
+ * `dense` (14px labels, a smaller gap) lets four longer labels fit a phone row (التنبيهات: العادات · الأعمال الدورية ·
+ * النية والمحاسبة · الاستراتيجيات) instead of cutting the last one.
  * The pill `SegmentTabs` stays for secondary choices inside a tab (اليوم / الأسبوع, أسبوع · شهر · حصيلة).
  */
 
@@ -16,7 +18,8 @@ import type { SegmentItem } from './controls';
 const makeStyles = (t: Theme) => ({
   scroll: { flexGrow: 0, borderBottomWidth: 1, borderBottomColor: t.colors.border },
   row: { flexDirection: 'row' as const, flexGrow: 1, gap: space.md },
-  tab: { minHeight: MIN_TARGET + 4, justifyContent: 'center' as const, paddingHorizontal: 2 },
+  rowDense: { gap: space.sm },
+  tab: { minHeight: MIN_TARGET + 4, minWidth: MIN_TARGET, alignItems: 'center' as const, justifyContent: 'center' as const, paddingHorizontal: 2 },
   bar: { position: 'absolute' as const, start: 0, end: 0, bottom: -1, height: 2, borderRadius: 1 },
   label: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 4 },
 });
@@ -26,11 +29,13 @@ export function UnderlineTabs<K extends string>({
   value,
   onChange,
   accessibilityLabel,
+  dense = false,
 }: {
   items: SegmentItem<K>[];
   value: K;
   onChange: (key: K) => void;
   accessibilityLabel?: string;
+  dense?: boolean;
 }) {
   const styles = useStyles(makeStyles);
   const { colors } = useTheme();
@@ -54,7 +59,7 @@ export function UnderlineTabs<K extends string>({
       onLayout={(e) => (sizes.current.view = e.nativeEvent.layout.width)}
       onContentSizeChange={(w) => (sizes.current.content = w)}
     >
-      <View style={styles.row} accessibilityRole="tablist" accessibilityLabel={accessibilityLabel}>
+      <View style={[styles.row, dense && styles.rowDense]} accessibilityRole="tablist" accessibilityLabel={accessibilityLabel}>
         {items.map((item) => {
           const active = item.key === value;
           return (
@@ -67,7 +72,7 @@ export function UnderlineTabs<K extends string>({
               style={({ pressed }) => [styles.tab, pressed && { opacity: 0.7 }]}
             >
               <View style={styles.label}>
-                <Text variant="body" weight={active ? 'medium' : 'regular'} tone={active ? 'default' : 'muted'} numberOfLines={1}>
+                <Text variant={dense ? 'small' : 'body'} weight={active ? 'medium' : 'regular'} tone={active ? 'default' : 'muted'} numberOfLines={1}>
                   {item.label}
                 </Text>
                 {item.count !== undefined ? (

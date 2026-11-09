@@ -232,8 +232,8 @@ function TitleRow({ today }: { today: LocalDate }) {
   );
 }
 
-/** «هل فعلتها؟» for every habit of the last days without a log (no empty entries, C-01j). */
-function PendingAsks({ today }: { today: LocalDate }) {
+/** «هل فعلتها؟» for every habit of the last days without a log (no empty entries, C-01j); `planId` keeps one habit's. */
+export function PendingAsks({ today, planId: only }: { today: LocalDate; planId?: string }) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const locale = useUiLocale();
@@ -243,8 +243,8 @@ function PendingAsks({ today }: { today: LocalDate }) {
   const habits = usePracticeCatalog(locale).data?.habits ?? [];
   const planDays = usePlanDays();
   const asks = useMemo(
-    () => pendingAsks(store, today, { ...planDays, isPeriodicAct: (p) => habitFor(p, habits)?.kind === 'periodic' }),
-    [store, today, planDays, habits],
+    () => pendingAsks(store, today, { ...planDays, isPeriodicAct: (p) => habitFor(p, habits)?.kind === 'periodic' }).filter((a) => only === undefined || a.planId === only),
+    [store, today, planDays, habits, only],
   );
   if (asks.length === 0) return null;
   const yesterday = addDays(today, -1);
@@ -309,7 +309,13 @@ function HabitsGroup({ today, model }: { today: LocalDate; model: TodayModel }) 
 
   const mendFor = useMemo(() => {
     const out = new Map<string, boolean>();
+    // C-01j: a missed day is asked first («هل فعلتها؟»); «صلّحها» shows only once no day of the habit waits for an answer.
+    const asking = new Set(pendingAsks(store, today, { ...planDays, isPeriodicAct: (p) => habitFor(p, habits)?.kind === 'periodic' }).map((a) => a.planId));
     for (const plan of store.plans) {
+      if (asking.has(plan.id)) {
+        out.set(plan.id, false);
+        continue;
+      }
       const state = mendState({
         offer: makeUpOffer(store, plan, today, { ...planDays, heart }),
         missedYesterday: missedDayBefore(store, plan, today, planDays),
@@ -319,7 +325,7 @@ function HabitsGroup({ today, model }: { today: LocalDate; model: TodayModel }) 
       out.set(plan.id, showsMend(state));
     }
     return out;
-  }, [store, today, planDays, heart]);
+  }, [store, today, planDays, heart, habits]);
 
   const addOne = useCallback(
     (item: HabitItem) => setStore((s) => updatePlan(s, item.planId, (p) => logForDay(p, today, 1, todayFn()))),

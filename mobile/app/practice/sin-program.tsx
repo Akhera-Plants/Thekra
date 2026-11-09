@@ -28,7 +28,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { KeyboardAvoidingView, Pressable, ScrollView, View } from 'react-native';
 import { LimitSheet } from '@/components/practice/LimitSheet';
-import { useLimits } from '@/lib/practice/use-habits-hub';
+import { useLimits, useShortDate } from '@/lib/practice/use-habits-hub';
 import { Stack, router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Check, ChevronDown, ChevronUp, LockKeyhole, Plus, ShieldCheck, Trash2, Waves } from 'lucide-react-native';
@@ -60,7 +60,6 @@ import {
 import { StoryLine } from '@/components/practice/hub/KnowledgeCards';
 import { usePracticeCatalog, useSinProgramEvidence } from '@/lib/api/practice';
 import { pick, pickList, type CatalogSinProgram, type StageContent } from '@/lib/practice/catalog-types';
-import { shortDate } from '@/lib/practice/format';
 import { pendingProgram, setMomentSource, setPendingProgram, today, usePracticeStore } from '@/lib/practice/practice-store';
 import {
   categoryFromAnswer,
@@ -612,6 +611,7 @@ interface ProgramViewProps {
 }
 
 function ProgramView({ program, entry, sinName, onSwitch, evidenceById, evidenceLoading, evidenceError }: ProgramViewProps) {
+  const shortDate = useShortDate();
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const locale = useUiLocale();
@@ -1011,6 +1011,7 @@ function triggerLine(c: CheckIn, t: (key: string) => string): string | null {
 
 /** «دفتري الخاص»: past check-ins with their notes, newest first (inside its fold). The name of the sin is not in it. */
 function Notebook({ program }: { program: SinProgram }) {
+  const shortDate = useShortDate();
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const entries = notebookEntries(program, today());
