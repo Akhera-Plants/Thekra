@@ -1,8 +1,9 @@
 /**
  * Reminders for one sin, after the website's sin page (sins/[slug]): the sin's name and description, «كبيرة» with
- * its reference and the contemporary note, «تخفّف من هذه المعصية» on the title's line (every sin; «مقفل ✓» once its program
- * runs, round 6 C-15 / C-12), then the type tabs (and «مقروء / غير مقروء» once a text is read) right under them (owner, 2026-11-01), then inside the tab: «أنا في لحظة
- * مجاهدة» (outlined), the reading sections: what warns against it, the paired
+ * its reference and the contemporary note, «تخفّف من هذه المعصية» on the title's line (every sin; once its program runs,
+ * «مقفل ✓» while locked or «في خطتك» while open, round 6 C-15 / C-12: the page's one action, as on the website), then
+ * the type tabs (and «مقروء / غير مقروء» once a text is read) right under them (owner, 2026-11-01), then inside the tab
+ * the reading sections: what warns against it, the paired
  * deed's virtue (or the reward of leaving it for Allah), a contemporary topic's derived groups; then «من شعب الإيمان»,
  * the paired virtue, and the alternative good deeds last, only on an unpaired sin.
  * Core screen: sin → reminders (mobile-plan §3).
@@ -18,7 +19,7 @@ import { buildTopicSections } from '@/lib/topics';
 import type { SinQuotesMeta, TopicGroup } from '@/lib/types/api';
 import { SinRank } from '@/lib/types/enums';
 import { TopicQuoteList, useLastDefined, useTopicQuoteParams } from '@/components/TopicQuoteList';
-import { SinMomentLink, SinProgramStart } from '@/components/practice/TopicPracticeLinks';
+import { SinProgramStart } from '@/components/practice/TopicPracticeLinks';
 import { TopicBranchLinks } from '@/components/TopicTemplate';
 import { useTheme } from '@/theme';
 import { ListRow, Section, Text } from '@/ui';
@@ -82,8 +83,7 @@ export default function RemindersScreen() {
       }
       emptyMessage={t('reminders.empty')}
       titleAction={sin ? <SinProgramStart sin={sin.slug} /> : null}
-      // Under the tabs: the moment (outlined) → texts → شعب الإيمان → the opposite.
-      intro={sin ? <SinMomentLink sin={sin.slug} /> : null}
+      // Under the tabs: texts → شعب الإيمان → the opposite. «لحظة مجاهدة» opens from the program, the header and «عاداتي».
       footer={
         <>
         <TopicBranchLinks branches={detail.data?.branches} />

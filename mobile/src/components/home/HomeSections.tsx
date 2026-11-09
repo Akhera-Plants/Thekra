@@ -128,9 +128,6 @@ export function HomeSection({ name, today, before }: { name: HomeSectionKey; tod
   switch (name) {
     case 'wird':
       return <WirdSection today={today} before={before} />;
-    case 'daily-text':
-      // Removed in round 6 (C-01q); a stored order may still name it.
-      return null;
     case 'week-branch':
       return <WeekBranchCard today={today} before={before} />;
     case 'occasion':

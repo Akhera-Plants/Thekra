@@ -5,7 +5,6 @@ import { Check, Sparkles } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import {
-  HOME_SECTIONS,
   seasonsOfGood,
   visibleHomeSections,
   type HabitItem,
@@ -14,7 +13,6 @@ import {
 import { Link } from '@/i18n/navigation';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { OrnamentalDivider } from '@/components/home/OrnamentalDivider';
-import { WEB_HOME_SECTIONS, webHomeOrder } from '@/components/home/web-sections';
 import { useSession } from '@/features/auth/hooks/useSession';
 import { useAgendaActions } from '@/features/practice/hooks/useAgendaActions';
 import { usePracticeCatalog } from '@/features/practice/hooks/usePracticeCatalog';
@@ -65,8 +63,6 @@ function useSignedIn(): boolean {
   return known ? session.isAuthenticated : hint;
 }
 
-const WEB_SECTIONS = WEB_HOME_SECTIONS;
-
 /** After these a divider parts the page (the reading sections below the doors keep their own spacing, as before). */
 const DIVIDED_AFTER: ReadonlySet<HomeSectionKey> = new Set(['wird', 'week-branch', 'doors']);
 
@@ -80,7 +76,7 @@ interface HomeSectionsProps {
 
 /**
  * The home (round 5, F-02 a / F-33): a visitor always sees the fixed public order (practice-core `visibleHomeSections`
- * for a visitor: «مناسبة قريبة» when one is near, then the doors and the reading sections). A signed-in member sees
+ * for a visitor: the doors first, then «مناسبة قريبة» when one is near and the reading sections). A signed-in member sees
  * their own order and choice, synced with the app (`settings.homeSections`), with a short «ورد اليوم» first by default
  * and the doors right after it (C-11). «خصّص الرئيسية» lives only in the settings (round 6, C-04), not on this page. «مواسم الخير» is gone (F-17): the occasions live in «سجلّي».
  */
@@ -89,20 +85,12 @@ export function HomeSections({ doors, moments, featured, sources }: HomeSections
   const snapshot = usePracticeStore();
   const stored = snapshot?.store.settings.homeSections;
   const keys = useMemo(() => {
-    if (!signedIn) {
-      // A visitor's order leaves out what is opt-in («شعبة الأسبوع» is a member's choice).
-      return visibleHomeSections(null, false).filter(
-        (key) => WEB_SECTIONS.includes(key) && HOME_SECTIONS.find((s) => s.key === key)?.visibleByDefault,
-      );
-    }
-    return webHomeOrder(stored)
-      .filter((s) => s.visible)
-      .map((s) => s.key);
+    // practice-core: a visitor gets the doors first; a member the short «ورد اليوم», then the doors (C-11).
+    return visibleHomeSections(signedIn ? stored : null, signedIn);
   }, [signedIn, stored]);
 
   const render: Record<HomeSectionKey, () => ReactNode> = {
     wird: () => <HomeWird />,
-    'daily-text': () => null,
     'week-branch': () => <HomeWeekBranch />,
     occasion: () => <HomeOccasion />,
     doors: () => doors,

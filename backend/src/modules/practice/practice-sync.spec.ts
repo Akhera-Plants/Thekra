@@ -366,6 +366,17 @@ describe('round 5: home sections, «الفرائض»', () => {
     throw new Error('expected a 400');
   };
 
+  it('settings: a retired home section of an older app («نص اليوم», round 6) is accepted and dropped', () => {
+    const request = parseSyncRequest(
+      settings({ homeSections: [{ key: 'wird', visible: true }, { key: 'daily-text', visible: true }, { key: 'doors', visible: true }] }),
+    );
+    expect(request.settings?.homeSections).toEqual([
+      { key: 'wird', visible: true },
+      { key: 'doors', visible: true },
+    ]);
+    expect(homeSectionsOf([{ key: 'daily-text', visible: false }, { key: 'sources', visible: true }])).toEqual([{ key: 'sources', visible: true }]);
+  });
+
   it('settings: homeSections in canonical order (unknown fields dropped), fardTracking a boolean', () => {
     const request = parseSyncRequest(settings({ homeSections: [{ visible: false, key: 'sources', x: 1 }, { key: 'wird', visible: true }], fardTracking: true }));
     expect(request.settings?.homeSections).toEqual([

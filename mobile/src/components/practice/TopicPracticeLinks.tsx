@@ -3,30 +3,35 @@
  * at every sin, to start leaving it»), read from the practice catalog the hub already caches:
  * - the good deed's «ابدأ عادة» is in components/TopicTemplate.tsx (`DeedHabitAction`);
  * - `SinProgramStart`: «تخفّف من هذه المعصية» on EVERY sin (owner, 2026-11-01: a sin without a written program runs
- *   the common five stages), or «مقفل ✓» once its program runs (round 6, C-15), the page's ONE action on its title
- *   line. The sin goes to the program page in memory (`setPendingProgram`), never in the route (roadmap §0.2);
- * - `SinMomentLink`: «أنا في لحظة مجاهدة», outlined under the tabs: the moment screen with this sin's acts (F-09).
+ *   the common five stages), or — once its program runs — its state, as on the website: «مقفل ✓» while «تخفّف» is
+ *   locked, «في خطتك» while it is open (round 6, C-15), the page's ONE action on its title line. The sin goes to the
+ *   program page in memory (`setPendingProgram`), never in the route (roadmap §0.2).
+ * «لحظة مجاهدة» is not on the sin page (C-15: one title-line action, as on the website): it opens from the program, the
+ * header button and «عاداتي».
  */
 
 import React, { useState } from 'react';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Check, LockKeyholeOpen, Waves } from 'lucide-react-native';
+import { Check, LockKeyholeOpen } from 'lucide-react-native';
 import { isActiveProgram } from '@thekra/practice-core';
 import { isSignedIn, openSignIn } from '@/lib/auth/require-sign-in';
-import { setMomentSource, setPendingProgram, usePracticeStore } from '@/lib/practice/practice-store';
+import { setPendingProgram, usePracticeStore } from '@/lib/practice/practice-store';
+import { isVaultUnlocked, useVaultState } from '@/lib/practice/vault-runner';
 import { BottomSheet, Button, ButtonPair, Text } from '@/ui';
 
 /**
  * The title line of a sin page (owner round 6, C-15 / C-12): «تخفّف من هذه المعصية» (solid) when no program for it runs,
- * else the program's lock state «مقفل ✓» (outlined; no «أنت مشترك» line). Tapping «مقفل» opens a small popup whose
- * «افتح القفل» opens the program, where the fingerprint / face or the privacy code unlocks it (SinProgramGuard). The
- * sin goes to the program page in memory (`setPendingProgram`), never in the route (roadmap §0.2). Practice is for
+ * else the program's lock state (outlined; no «أنت مشترك» line): «مقفل ✓» while «تخفّف» is locked (the key is not in
+ * memory) — a tap opens a small popup whose «افتح القفل» opens the program, where the fingerprint / face or the privacy
+ * code unlocks it (SinProgramGuard) — and «في خطتك» while it is open (a tap opens the program). The sin goes to the program page in memory (`setPendingProgram`), never in the route (roadmap §0.2). Practice is for
  * members: a guest signs in first.
  */
 export function SinProgramStart({ sin }: { sin: string }) {
   const { t } = useTranslation();
   const isActive = usePracticeStore((s) => s.store.programs.some((p) => p.sinSlug === sin && isActiveProgram(p)));
+  const status = useVaultState((s) => s.status);
+  const unlocked = isVaultUnlocked() || status === 'unlocked';
   const [asking, setAsking] = useState(false);
 
   function handleOpen() {
@@ -37,6 +42,7 @@ export function SinProgramStart({ sin }: { sin: string }) {
   }
 
   if (!isActive) return <Button label={t('topic.lightenThisSin')} size="sm" onPress={handleOpen} />;
+  if (unlocked) return <Button label={t('topic.sinInPlan')} icon={Check} variant="outline" size="sm" onPress={handleOpen} />;
   return (
     <>
       <Button
@@ -63,20 +69,4 @@ export function SinProgramStart({ sin }: { sin: string }) {
       </BottomSheet>
     </>
   );
-}
-
-/**
- * «أنا في لحظة مجاهدة»: shown on every sin page whatever the device holds, so it tells nothing; the screen shows this
- * sin's acts and uses its program only if the user follows it (in-memory hand-off, never a route param).
- */
-export function SinMomentLink({ sin }: { sin: string }) {
-  const { t } = useTranslation();
-
-  function handleMoment() {
-    setMomentSource(sin);
-    if (isSignedIn()) router.push('/practice/moment');
-    else openSignIn('/practice/moment');
-  }
-
-  return <Button label={t('sinProgram.moment.openFromSin')} icon={Waves} variant="outline" onPress={handleMoment} />;
 }

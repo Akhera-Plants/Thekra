@@ -25,10 +25,10 @@ import { BellOff, ExternalLink, Laptop, MoonStar, Plus } from 'lucide-react-nati
 import {
   activePeriodicActs,
   isPeriodicPlan,
+  listedStrategies,
   periodicActKeyOf,
   reminderSlots,
   setHeartPrefs,
-  STRATEGIES,
   toggleStrategy,
   type HeartPrefs,
   type LocalTime,
@@ -454,6 +454,18 @@ function StrategiesTab({ allowed }: { allowed: Allowed }) {
 
   return (
     <Group lead={t('notifications.strategies.lead')}>
+      <View>
+        {listedStrategies().map((strategy) => (
+          <View key={strategy.key} style={styles.switchRow}>
+            <SwitchRow
+              label={locale === 'en' ? strategy.titleEn : strategy.titleAr}
+              value={prefs.weeklyStrategies.includes(strategy.key)}
+              onValueChange={(v) => void toggle(strategy.key, v)}
+            />
+          </View>
+        ))}
+      </View>
+      {/* The day and time under the list, as on the website. */}
       {prefs.weeklyStrategies.length > 0 ? (
         <View style={styles.sub}>
           <ListRow
@@ -465,17 +477,6 @@ function StrategiesTab({ allowed }: { allowed: Allowed }) {
           <TimeValueRow label={timeLabel} value={prefs.strategyTime} last onChange={(time) => setPrefs((p) => ({ ...p, strategyTime: time }))} />
         </View>
       ) : null}
-      <View>
-        {STRATEGIES.filter((s) => s.key !== 'never-twice').map((strategy) => (
-          <View key={strategy.key} style={styles.switchRow}>
-            <SwitchRow
-              label={locale === 'en' ? strategy.titleEn : strategy.titleAr}
-              value={prefs.weeklyStrategies.includes(strategy.key)}
-              onValueChange={(v) => void toggle(strategy.key, v)}
-            />
-          </View>
-        ))}
-      </View>
       <TextLink label={t('practice.notifyPrefs.strategiesLink')} onPress={() => router.push('/practice/strategies')} />
       <BottomSheet visible={pickingDay} title={t('notifications.strategies.day')} onClose={() => setPickingDay(false)}>
         <WeekdayPicker

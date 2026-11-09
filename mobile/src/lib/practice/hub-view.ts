@@ -149,10 +149,18 @@ export function reviewWeekOf(date: LocalDate, reviewDay: number): LocalDate {
 
 // ── «حال يومي» ─────────────────────────────────────────────────────────────────────────────────────────────────
 
-/** The gentle line under the day's title on a hard day (habits only; «تخفّف» has its own words), or null. */
+/** The gentle line under the day's title on a hard day (the habits; «تخفّف» has its own line), or null. */
 export function dayStateLineKey(view: DayStateView): string | null {
   if (view.state === 'normal') return null;
   return 'habitsHub.dayState.forgive';
+}
+
+/**
+ * The firm and kind line for a running «تخفّف» program on a hard day (never «سامح نفسك» about a sin; generic, it names
+ * no sin), as on the website, or null.
+ */
+export function dayStateLightenKey(view: DayStateView, hasProgram: boolean): string | null {
+  return view.state === 'normal' || !hasProgram ? null : 'habitsHub.dayState.lighten';
 }
 
 // ── «العادات» ──────────────────────────────────────────────────────────────────────────────────────────────────

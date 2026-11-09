@@ -7,10 +7,13 @@ import { toast } from 'sonner';
 import {
   activePeriodicActs,
   addDays,
+  correctLog,
   createCustomPeriodic,
   limits,
+  logForDay,
   parseDate,
   PERIODIC_ACTS,
+  updatePlan,
   upsertPlan,
   type LimitKind,
   type PeriodicActInfo,
@@ -45,8 +48,9 @@ import { TimeField } from '../TimeField';
 /**
  * «عاداتي › الأعمال الدورية» (round 6 §6, C-10 / C-17 / C-24 a / C-25; reference layout with our visuals): EVERY periodic
  * act in one place. «صلة الرحم والأحباب» is always first, with the people lists inside it (the old «أهلي وناسي»). Then
- * the member's other acts (practice-core `PERIODIC_ACTS` order, then his own), each row with its next date, an «تعديل»
- * link and a visible trash icon (asks first). ONE «أضف عملًا دوريًا» on the title row opens the eight acts and «عمل من
+ * the member's other acts (practice-core `PERIODIC_ACTS` order, then his own), each row with its next date, «سجّل
+ * العمل» (logs today, with «تراجع»; «سُجّل اليوم» once done), an «تعديل» link and a visible trash icon (asks first) —
+ * the same row as the app (C-24 a). ONE «أضف عملًا دوريًا» on the title row opens the eight acts and «عمل من
  * اختيارك» (a name, a rhythm and a reminder time). Reminders only: no commitment tracking, outside the habit limit.
  */
 export function PeriodicView() {
@@ -155,12 +159,22 @@ function PeriodicBody({ context }: { context: WirdContext }) {
   );
 }
 
-/** One act: its next date large (reference), its name and rhythm, «تعديل» (the habit page) and a trash icon. */
+/** One act: its next date large (reference), its name and rhythm, «سجّل العمل», «تعديل» (the habit page) and a trash icon. */
 function ActRow({ plan, next, context, onDelete }: { plan: Plan; next: string | null; context: WirdContext; onDelete: () => void }) {
   const t = useTranslations('practice.periodic');
   const locale = useLocale() === 'en' ? 'en' : 'ar';
   const { today, habits } = context;
   const words = usePlanWords(plan, habitOf(plan, habits));
+  const doneToday = (plan.log[today] ?? 0) > 0;
+
+  function log() {
+    if (doneToday) return;
+    updateStore((s) => updatePlan(s, plan.id, (p) => logForDay(p, today, 1, today)));
+    toast.success(t('loggedToast', { title: words.title }), {
+      action: { label: t('undo'), onClick: () => updateStore((s) => updatePlan(s, plan.id, (p) => correctLog(p, today, 0))) },
+    });
+  }
+
   const when =
     next === null ? t('none') : next < today ? t('overdue') : next === today ? t('today') : next === addDays(today, 1) ? t('tomorrow') : formatGregorian(next, locale, true);
   const month = next
@@ -169,21 +183,37 @@ function ActRow({ plan, next, context, onDelete }: { plan: Plan; next: string | 
       )
     : null;
   return (
-    <li className="flex items-center gap-3 py-3">
-      <span className="flex w-14 shrink-0 flex-col items-center leading-none" aria-hidden>
-        <span className="text-3xl font-medium tabular-nums">{next ? formatDigits(parseDate(next).day) : '–'}</span>
-        {month ? <span className="mt-1 text-xs text-muted-foreground">{month}</span> : null}
-      </span>
-      <div className="flex min-w-0 flex-1 flex-col">
-        <span className="text-lg leading-7 font-medium break-words" lang={words.titleLang}>
-          {words.title}
+    <li className="flex flex-col gap-2 py-3">
+      <div className="flex items-center gap-3">
+        <span className="flex w-14 shrink-0 flex-col items-center leading-none" aria-hidden>
+          <span className="text-3xl font-medium tabular-nums">{next ? formatDigits(parseDate(next).day) : '–'}</span>
+          {month ? <span className="mt-1 text-xs text-muted-foreground">{month}</span> : null}
         </span>
-        <span className="text-sm leading-6 text-muted-foreground">{when}</span>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <span className="text-lg leading-7 font-medium break-words" lang={words.titleLang}>
+            {words.title}
+          </span>
+          <span className="text-sm leading-6 text-muted-foreground">{when}</span>
+        </div>
+        <Button variant="ghost" tone="destructive" size="sm" iconOnly icon={<Trash2 aria-hidden />} aria-label={t('deleteNamed', { title: words.title })} onClick={onDelete} />
       </div>
-      <Link href={`/practice/habits/${plan.id}`} className="text-link inline-flex min-h-11 items-center px-2 text-sm">
-        {t('edit')}
-      </Link>
-      <Button variant="ghost" tone="destructive" size="sm" iconOnly icon={<Trash2 aria-hidden />} aria-label={t('deleteNamed', { title: words.title })} onClick={onDelete} />
+      <div className="flex items-center gap-3 ps-[4.25rem]">
+        <Button
+          variant="outline"
+          tone="primary"
+          size="sm"
+          icon={doneToday ? <Check aria-hidden /> : undefined}
+          disabled={doneToday}
+          aria-label={doneToday ? undefined : t('logNamed', { title: words.title })}
+          onClick={log}
+        >
+          {doneToday ? t('loggedToday') : t('log')}
+        </Button>
+        <span className="flex-1" />
+        <Link href={`/practice/habits/${plan.id}`} className="text-link inline-flex min-h-11 items-center px-2 text-sm">
+          {t('edit')}
+        </Link>
+      </div>
     </li>
   );
 }

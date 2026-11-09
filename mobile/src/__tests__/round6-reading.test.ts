@@ -4,14 +4,15 @@
  * home moments' safe paths (C-09), the reader's link ids (C-13).
  */
 
-import { STRATEGIES } from '@thekra/practice-core';
+import { listedStrategies, STRATEGIES, strategyAppliesToHabit } from '@thekra/practice-core';
 import { cityLabel } from '../lib/practice/city-name';
-import { APPLY_FIELD, STRATEGY_GROUP, appliesToHabit, applyStrategyDraft, strategiesOf } from '../lib/practice/strategies';
+import { APPLY_FIELD, appliesToHabit, applyStrategyDraft } from '../lib/practice/strategies';
 import { buildTopicSections, filterSectionsByRead } from '../lib/topics';
 import { reportErrorKey } from '../lib/share/report-error';
 import { isTopicPath } from '../lib/home/moments';
 import { joinErrorKey, personalInviteLink, circleErrorKey } from '../lib/circles/circle-view';
 import { ApiError, type QuoteDto, type TopicText } from '../lib/types/api';
+import ar from '../lib/i18n/ar.json';
 
 describe('city name (C-03a)', () => {
   it('shows a known city in the UI language and anything else as typed', () => {
@@ -25,14 +26,16 @@ describe('city name (C-03a)', () => {
 });
 
 describe('strategies (C-18 a)', () => {
-  it('puts every strategy in one group: بناء / ترك / عودة', () => {
-    for (const s of STRATEGIES) expect(['build', 'leave', 'return']).toContain(STRATEGY_GROUP[s.key]);
-    expect(strategiesOf('all').length).toBe(STRATEGIES.length - 1);
-    expect(strategiesOf('leave').map((s) => s.key)).toEqual(['block-sin', 'know-weak', 'ride-wave', 'follow-good']);
+  it('uses the families of practice-core (the same as the website): بناء / ترك / عودة', () => {
+    for (const s of STRATEGIES) expect(['build', 'leave', 'return']).toContain(s.kind);
+    expect(listedStrategies('all').length).toBe(STRATEGIES.length - 1);
+    expect(listedStrategies('leave').map((s) => s.key)).toEqual(['block-sin', 'know-weak', 'ride-wave', 'follow-good']);
   });
 
   it('applies a building or returning strategy to one loop question, never over a written answer', () => {
-    for (const key of Object.keys(APPLY_FIELD)) expect(STRATEGY_GROUP[key]).not.toBe('leave');
+    for (const key of Object.keys(APPLY_FIELD)) expect(strategyAppliesToHabit(key)).toBe(true);
+    // Every strategy practice-core applies to a habit has its loop question in the app.
+    for (const s of listedStrategies()) expect(appliesToHabit(s.key)).toBe(strategyAppliesToHabit(s.key));
     expect(appliesToHabit('ride-wave')).toBe(false);
     expect(applyStrategyDraft('anchor-prayer', {}, 'بعد الفجر')).toEqual({ cue: 'بعد الفجر' });
     expect(applyStrategyDraft('anchor-prayer', { cue: 'بعد العشاء', routine: 'صفحة' }, 'بعد الفجر')).toEqual({ cue: 'بعد العشاء', routine: 'صفحة' });
@@ -86,5 +89,15 @@ describe('home moments (C-09) and رفقة invites (C-01k)', () => {
     expect(circleErrorKey(new ApiError({ status: 409, code: 'CIRCLE_INVITES_ACTIVE_LIMIT', message: '' }))).toBe('circles.errors.invitesActiveLimit');
     expect(joinErrorKey('CIRCLE_FULL')).toBe('circles.errors.full');
     expect(personalInviteLink('ABCDE12345')).toBe('thekra://circles/invite/ABCDE12345');
+  });
+});
+
+// Owner round 6 (§1, §2, C-01d, C-01f, C-01j): the old words are gone from the app's copy (the glossary terms of
+// practice-core nav-map `GLOSSARY` replace them; the website checks the same list in home-sections.spec.ts).
+describe('round-6 wording', () => {
+  const RETIRED = ['فاتتك', 'أقل ما يمكن', 'ترك معصية', 'أهلي وناسي', 'تصفّح النصوص', 'أوقِف مؤقتًا', 'أوقف مؤقتًا', 'موقوفة مؤقتًا'];
+  it('uses none of the retired words in ar.json', () => {
+    const text = JSON.stringify(ar);
+    for (const word of RETIRED) expect(text.includes(word)).toBe(false);
   });
 });

@@ -73,7 +73,7 @@ the clients ship the field together.
 
 | Change | Column / table | Rule |
 | --- | --- | --- |
-| «خصّص الرئيسية» | `PracticeSettings.homeSections Json?` | practice-core `HomeSectionPref[]` `[{ key, visible }]` in the member's order; keys from `HOME_SECTION_KEYS` (`wird, daily-text, week-branch, occasion, doors, moments, featured, sources`), 1–8 entries, unique (`validateHomeSections`). `null` = the defaults; a client never stores the defaults (it sends `null`). jsonb reorders object keys, so the server returns it in the canonical `{ key, visible }` order (`homeSectionsOf`) |
+| «خصّص الرئيسية» | `PracticeSettings.homeSections Json?` | practice-core `HomeSectionPref[]` `[{ key, visible }]` in the member's order; keys from `HOME_SECTION_KEYS` (round 6: `wird, doors, week-branch, occasion, moments, featured, sources`), unique (`validateHomeSections`); the retired `daily-text` (`RETIRED_HOME_SECTION_KEYS`) is still accepted from an older app and dropped on write, 1–8 entries. `null` = the defaults; a client never stores the defaults (it sends `null`). jsonb reorders object keys, so the server returns it in the canonical `{ key, visible }` order (`homeSectionsOf`) |
 | «الفرائض» switch | `PracticeSettings.fardTracking Boolean @default(false)` | opt-in |
 | «الفرائض» marks | `FardMark { userId→User (cascade), date @db.Date, prayer, status String?, clientUpdatedAt, updatedAt @updatedAt }`, `@@id([userId, date, prayer])`, `@@index([userId, updatedAt])` | `prayer` ∈ `fajr dhuhr asr maghrib isha`; `status` ∈ `onTime qada` or `null` (a cleared mark, kept so the clearing syncs); the date is never later than tomorrow (UTC) |
 

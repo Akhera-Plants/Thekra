@@ -14,6 +14,7 @@ import {
   habitMilestones,
   LIMITS,
   programCounters,
+  shareSuggestion,
   type Plan,
   type SinProgram,
 } from '@thekra/practice-core';
@@ -29,6 +30,7 @@ import { limitOptions } from '@/lib/practice/limits';
 import { habitOf } from '@/lib/practice/plans';
 import { planWeekdays } from '@/lib/practice/days';
 import type { PracticeHabit } from '@/lib/types/practice';
+import { useInCircle } from '../../hooks/useInCircle';
 import { useSinNames } from '../../hooks/useSinNames';
 import { useWirdContext, type WirdContext } from '../../hooks/useWirdContext';
 import { GraduationOffers } from '../hub/HabitStats';
@@ -43,7 +45,8 @@ const STRATEGY_TEASER = ['start-tiny', 'if-then', 'prepare-place'] as const;
 
 /**
  * «عاداتي › العادات» (round 6 §2, C-02b / C-01d / C-02e; reference «الخطة» layout with our visuals): the member's habits
- * with their completion percentage and milestone lines («تعدّيت أصعب فترة»، «صنعت العادة»), the line «3 عادات كحد
+ * with their completion percentage and milestone lines («تعدّيت أصعب فترة»، «صنعت العادة»، and «شارك تطورك مع الرفقة»
+ * for a fresh milestone when the member is in a «رفقة» circle, as in the app: GET /circles/access), the line «3 عادات كحد
  * أقصى», ONE «أضف عادة» on the title row, the «تخفَّف» programs as COVERED habit rows, then «الأرشيف» (at most 10, the
  * 3-day note, «أعِدها» / delete). A side column (after the list on a phone) holds «استراتيجيات صناعة العادات والثبات».
  * `?add=1` opens «أضف عادة» here and comes back here.
@@ -192,6 +195,8 @@ function HabitRowItem({ plan, context, onArchive, onDelete }: { plan: Plan; cont
   const daysLine = useDaysLine(plan, habit);
   const completion = habitCompletion(plan, today);
   const milestones = habitMilestones(plan, today);
+  // «رفقة» is in the app: the line is the same suggestion as there, without a web page to open.
+  const share = useInCircle() && shareSuggestion(plan, today) !== null;
   return (
     <li className="flex items-center gap-2 py-1">
       <Link
@@ -219,6 +224,7 @@ function HabitRowItem({ plan, context, onArchive, onDelete }: { plan: Plan; cont
                   {t(`milestones.${m.key}`)}
                 </span>
               ))}
+              {share ? <span className="px-1 py-0.5 text-sm font-medium text-primary-text">{t('share')}</span> : null}
             </span>
           ) : null}
         </span>

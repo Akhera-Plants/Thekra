@@ -59,11 +59,15 @@ export class CircleInvitesService {
   async access(userId: string, now = new Date()): Promise<CircleAccessDto> {
     const enabled = await this.circles.isEnabled(userId);
     if (!enabled) {
-      return { enabled, invites: null };
+      return { enabled, inCircle: false, invites: null };
     }
-    const { active, inPeriod } = await this.counts(this.prisma, userId, now);
+    const [{ active, inPeriod }, membership] = await Promise.all([
+      this.counts(this.prisma, userId, now),
+      this.prisma.circleMember.findFirst({ where: { userId }, select: { id: true } }),
+    ]);
     return {
       enabled,
+      inCircle: membership !== null,
       invites: {
         active,
         activeMax: INVITES_ACTIVE_MAX,

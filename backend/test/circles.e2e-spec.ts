@@ -48,7 +48,7 @@ describe('Circles endpoints (e2e)', () => {
   it('رفقة is off for a plain account: no circle, no join, no invite (403 CIRCLES_NOT_ENABLED)', async () => {
     const access = await http().get('/v1/circles/access').set(owner).expect(200);
     expect(access.headers['cache-control']).toContain('no-store');
-    expect(access.body.data).toEqual({ enabled: false, invites: null });
+    expect(access.body.data).toEqual({ enabled: false, inCircle: false, invites: null });
     for (const res of [
       await http().post('/v1/circles').set(owner).send({ name: 'x', displayName: 'y' }),
       await http().post('/v1/circles/join').set(owner).send({ code: 'ABCDEFGHJK', displayName: 'y' }),
@@ -61,7 +61,7 @@ describe('Circles endpoints (e2e)', () => {
 
   it('an ADMIN account is on; its invite turns رفقة on for the one who redeems it, once', async () => {
     const adminAccess = await http().get('/v1/circles/access').set(friend).expect(200);
-    expect(adminAccess.body.data).toMatchObject({ enabled: true, invites: { active: 0, remaining: 5, ttlDays: 7 } });
+    expect(adminAccess.body.data).toMatchObject({ enabled: true, inCircle: false, invites: { active: 0, remaining: 5, ttlDays: 7 } });
 
     const created = await http().post('/v1/circles/invites').set(friend).send({}).expect(201);
     const code: string = created.body.data.code;
@@ -107,6 +107,8 @@ describe('Circles endpoints (e2e)', () => {
     expect(res.headers['location']).toBe(`/v1/circles/${circleId}`);
     expect(res.body.data).toMatchObject({ name: 'رفقة الفجر', memberCount: 1, me: { isOwner: true, sharesPresence: false } });
     expect(inviteCode).toMatch(/^[2-9A-HJKMNP-Z]{10}$/);
+    // Now in a circle: the website may show «شارك تطورك مع الرفقة».
+    expect((await http().get('/v1/circles/access').set(owner).expect(200)).body.data.inCircle).toBe(true);
   });
 
   it('400 for a name over 40 characters or a direction override', async () => {

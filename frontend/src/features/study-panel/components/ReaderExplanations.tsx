@@ -75,8 +75,8 @@ export function ReaderExplanations({ quoteId, linkId, isHadith }: { quoteId: str
               {data.reminderAngle.text}
             </p>
             <p className="text-sm text-muted-foreground">{t('angleNote')}</p>
-            {/* «أبلغ عن خطأ» under the line (C-01n). The report endpoint takes hadith only for now. */}
-            {isHadith ? <ReportMistakeButton quoteId={quoteId} className="self-start" /> : null}
+            {/* «أبلغ عن خطأ» under the line (C-01n), for every text: the report endpoint takes any type. */}
+            <ReportMistakeButton quoteId={quoteId} className="self-start" />
           </section>
         </>
       ) : null}

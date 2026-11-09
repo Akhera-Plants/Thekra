@@ -11,3 +11,13 @@ describe('«خصّص الرئيسية» names (shared with the app through pract
     }
   });
 });
+
+// Owner round 6 (§1, §2, C-01d, C-01f, C-01j): the old words are gone from the website's copy (the glossary terms of
+// practice-core nav-map `GLOSSARY` replace them; the app checks the same list in round6-reading.test.ts).
+describe('round-6 wording', () => {
+  const RETIRED = ['فاتتك', 'أقل ما يمكن', 'ترك معصية', 'أهلي وناسي', 'تصفّح النصوص', 'أوقِف مؤقتًا', 'أوقف مؤقتًا', 'موقوفة مؤقتًا'];
+  it('uses none of the retired words in ar.json', () => {
+    const text = JSON.stringify(ar);
+    for (const word of RETIRED) expect(text.includes(word), word).toBe(false);
+  });
+});

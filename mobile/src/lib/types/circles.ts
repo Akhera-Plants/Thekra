@@ -79,6 +79,8 @@ export interface SendCheerInput {
 /** GET /circles/access (round 6, C-01k): whether رفقة is on for me, and how many invites I can still give. */
 export interface CircleAccess {
   enabled: boolean;
+  /** In at least one circle now (the website uses it for «شارك تطورك مع الرفقة»; the app reads its circle list). */
+  inCircle?: boolean;
   invites: {
     active: number;
     activeMax: number;

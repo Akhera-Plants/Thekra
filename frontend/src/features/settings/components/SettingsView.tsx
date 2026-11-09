@@ -25,6 +25,7 @@ import {
   navFeature,
   RECITERS,
   reciterOf,
+  resolveHomeSections,
   setHomeSectionVisible,
   setHomeSections,
   setLightenCovered,
@@ -40,7 +41,6 @@ import { Button } from '@/components/shared/kit/button';
 import { Switch } from '@/components/shared/kit/switch';
 import { RecitationButton } from '@/components/shared/quote/RecitationButton';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { webHomeOrder } from '@/components/home/web-sections';
 import { useSession } from '@/features/auth/hooks/useSession';
 import { useSignInHrefs } from '@/features/practice/hooks/useSignInHref';
 import { VaultPanel } from '@/features/practice/components/VaultPanel';
@@ -283,7 +283,7 @@ function CustomizeHomeRow() {
   const snapshot = usePracticeStore();
   const panelId = useId();
   const [open, setOpen] = useState(false);
-  const list = webHomeOrder(snapshot?.store.settings.homeSections);
+  const list = resolveHomeSections(snapshot?.store.settings.homeSections);
   const title = (key: HomeSectionKey) => t(`sections.${key}`);
 
   function move(key: HomeSectionKey, by: -1 | 1) {
@@ -292,7 +292,6 @@ function CustomizeHomeRow() {
     const next = [...list];
     const [item] = next.splice(at, 1);
     next.splice(at + by, 0, item!);
-    // The web order as shown; a section the website does not draw takes its default place again (practice-core).
     updateStore((store) => setHomeSections(store, next));
   }
 
@@ -340,7 +339,7 @@ function CustomizeHomeRow() {
               aria-label={t('show', { title: title(section.key) })}
               checked={section.visible}
               onCheckedChange={(on) =>
-                updateStore((store) => setHomeSections(store, setHomeSectionVisible(webHomeOrder(store.settings.homeSections), section.key, on)))
+                updateStore((store) => setHomeSections(store, setHomeSectionVisible(store.settings.homeSections, section.key, on)))
               }
             />
           </li>

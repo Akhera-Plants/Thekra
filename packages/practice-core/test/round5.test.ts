@@ -129,14 +129,13 @@ describe('nav-map', () => {
 // ── Home sections ───────────────────────────────────────────────────────────────────────────────────────────────
 
 describe('home sections', () => {
-  it('has the eight sections of the plan, in order, with shared names', () => {
-    expect(HOME_SECTION_KEYS).toEqual(['wird', 'daily-text', 'week-branch', 'occasion', 'doors', 'moments', 'featured', 'sources']);
+  it('has the seven sections of the plan, in order, with shared names (round 6: no «نص اليوم», doors after the wird)', () => {
+    expect(HOME_SECTION_KEYS).toEqual(['wird', 'doors', 'week-branch', 'occasion', 'moments', 'featured', 'sources']);
     expect(HOME_SECTIONS.map((s) => s.ar)).toEqual([
       'ورد اليوم',
-      'نص اليوم',
+      'أبواب الخير',
       'شعبة الأسبوع',
       'مناسبة قريبة',
-      'أبواب الخير',
       'في لحظات مثل هذه',
       'تذكرة مختارة',
       'المصادر',
@@ -144,8 +143,26 @@ describe('home sections', () => {
   });
 
   it('visitor: fixed order without members-only sections; member: defaults until customised', () => {
-    expect(visibleHomeSections(null, false)).toEqual(['daily-text', 'occasion', 'doors', 'moments', 'featured', 'sources']);
-    expect(visibleHomeSections(undefined, true)).toEqual(['wird', 'daily-text', 'occasion', 'doors', 'moments', 'featured', 'sources']);
+    expect(visibleHomeSections(null, false)).toEqual(['doors', 'occasion', 'moments', 'featured', 'sources']);
+    expect(visibleHomeSections(undefined, true)).toEqual(['wird', 'doors', 'occasion', 'moments', 'featured', 'sources']);
+  });
+
+  it('accepts and drops the retired «نص اليوم» key of an older stored order', () => {
+    const old = [
+      { key: 'wird', visible: true },
+      { key: 'daily-text', visible: true },
+      { key: 'week-branch', visible: false },
+      { key: 'occasion', visible: true },
+      { key: 'doors', visible: true },
+      { key: 'moments', visible: true },
+      { key: 'featured', visible: true },
+      { key: 'sources', visible: true },
+    ];
+    expect(validateHomeSections(old)).toBeNull();
+    expect(parseHomeSections(old)?.map((s) => s.key)).toEqual(['wird', 'week-branch', 'occasion', 'doors', 'moments', 'featured', 'sources']);
+    expect(visibleHomeSections(old as HomeSectionPref[], true)).not.toContain('daily-text');
+    expect(parseHomeSections([{ key: 'daily-text', visible: true }])).toBeNull();
+    expect(validateHomeSections([{ key: 'nope', visible: true }])).not.toBeNull();
   });
 
   it('parses defensively and resolves new sections into a stored order', () => {
@@ -161,7 +178,7 @@ describe('home sections', () => {
       { key: 'wird', visible: false },
     ]);
     const full = resolveHomeSections(stored);
-    expect(full.map((s) => s.key)).toEqual(['sources', 'wird', 'daily-text', 'week-branch', 'occasion', 'doors', 'moments', 'featured']);
+    expect(full.map((s) => s.key)).toEqual(['sources', 'wird', 'doors', 'week-branch', 'occasion', 'moments', 'featured']);
     expect(full.find((s) => s.key === 'week-branch')?.visible).toBe(false);
     expect(JSON.parse(serializeHomeSections(stored))).toEqual(full);
   });

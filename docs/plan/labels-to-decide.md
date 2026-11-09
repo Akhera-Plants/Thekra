@@ -8,7 +8,7 @@ built, where it shows, and the alternative. Workers append their own section.
 | Built as | Where | Alternative / question |
 | --- | --- | --- |
 | «استراتيجيات العادات» | header «المزيد ▾» item (nav-map name) | the brief says «الاستراتيجيات»; the shorter name would need a nav-map change on both platforms |
-| «في خطتك» | a sin page's title line when this sin's «تخفّف» program runs and is open | «برنامجك»، «تتخفّف منها» |
+| «في خطتك» | a sin page's title line when this sin's «تخفّف» program runs and is open (web and app) | «برنامجك»، «تتخفّف منها» |
 | «مقفل» + ✓ / «أقفل» | «تخفّف» lock state (sin page, `/practice/leave-sin`) | «مقفول» |
 | «عرض التفسير» (verse) / «عرض الشرح» (hadith) | the one button on a text card | the owner wrote «عرض التفسير» for every card; for a hadith «الشرح» is the accurate word |
 | «مقروء» / «غير مقروء» + filter «الكل · غير المقروء · المقروء» | text cards on topic pages (members) | — |
@@ -21,7 +21,7 @@ built, where it shows, and the alternative. Workers append their own section.
 | «التجربة» / «الحساب والبيانات» | settings group titles (from the reference) | «المظهر والتذكير» / «حسابي» |
 | «القارئ» | settings: the reciter row | «صوت التلاوة» |
 | «إخفاء برامج التخفّف» | settings switch (covering of «تخفّف» rows in «العادات») | «غطِّ برامج التخفّف» |
-| «النية والمحاسبة» tab holds «محاسبة المساء» | notifications | practice-core `NOTIFICATION_GROUPS` lists the evening nudge under «العادات»; the web keeps it as ONE switch with the evening review (as since round 5) |
+| «النية والمحاسبة» tab holds «محاسبة المساء» | notifications (web and app; practice-core `NOTIFICATION_GROUPS` matches) | — |
 | «بواسطة تطبيق ذكرى» | last line of a shared text and the share image footer | «تمت المشاركة من ذكرى» (the C-08 mock) |
 | «لم نجد هذه الصفحة» | 404 body heading | — |
 | «احتفظ بما تحب أن تعود إليه.» | saved page lead (C-14) | — |
@@ -34,7 +34,7 @@ The app uses the same words as the web lines above wherever both have the label 
 
 | Built as | Where | Alternative / question |
 | --- | --- | --- |
-| «مقفل» + ✓ (always, once a program runs) | app sin page title line; tap → popup «افتح القفل» | the web shows «في خطتك» while the program is open; on the phone the program always opens with the fingerprint, so the page always reads «مقفل» |
+| «مقفل» + ✓ while locked, «في خطتك» while open (as on the web) | app sin page title line; «مقفل» tap → popup «افتح القفل» | — |
 | «أقفل» | «تخفّف» page title line (locks it at once) | «اقفله الآن» |
 | «تخفّف من هذه المعصية» / «أضف إلى خطتك» / «مُضاف إلى خطتك» | topic page title line (C-12) | — |
 | «افعل هذا الآن» · «أو واحدة من هذه:» · «دقائق تختار أن تبدأها أنت» | «لحظة مجاهدة» panel | «فعلٌ لك الآن» |
@@ -47,7 +47,6 @@ The app uses the same words as the web lines above wherever both have the label 
 | «أدخل رمز الدعوة» · «فعّل رفقة» · «دعواتي» · «أنشئ دعوة» · «ألغِ الدعوة» · «تعمل حتى …» | رفقة (invite-only, C-01k) | «اكتب رمز الدعوة» |
 | «رفقة تُفتح بدعوة من عضو فيها. اطلب رمز دعوة ممن تعرف.» | رفقة, 403 CIRCLES_NOT_ENABLED | — |
 | «أرسلت بلاغات كثيرة في وقت قصير. شكرًا لحرصك، وحاول بعد ساعة.» / «استقبلنا بلاغات كثيرة اليوم فتوقّف الإرسال مؤقتًا…» / «الملاحظة أطول مما نستقبل…» | «أبلغ عن خطأ» (429 REPORT_RATE_LIMITED / 429 REPORTS_PAUSED / 413) | — |
-| «مشاركة الصورة من الهاتف تأتي في تحديث قادم. شارك النص الآن.» | share sheet › «صورة» on iOS/Android (no image-capture module yet) | — |
 | «العودة إلى الرئيسية» | 404 button (C-22) | — |
 | «إلى أبواب الخير» | saved, empty state action (was «استكشف» → the removed browse page) | — |
 | «أن أتخفّف من ذنب» | onboarding goal (C-01f; was «أن أترك معصية») | «أن أتخفّف من معصية» |
@@ -96,17 +95,17 @@ label, the web uses the same words; only the web's own or different lines are li
 
 | Built as (ar · en) | Where | Alternative / question |
 | --- | --- | --- |
-| «سامح نفسك اليوم، واكتفِ بالقدر الأدنى من كل عادة. القليل الدائم خير من الكثير المنقطع.» + for «تخفّف» «أما ما تتخفّف منه فاثبت على تركه اليوم؛ الثبات في اليوم الصعب أعظم أجرًا.» | «اليوم», under the date on a hard «حال يومي» (`practice.dayState.gentle*`) | the app's shorter «سامح نفسك اليوم، وأدِّ القدر الأدنى.» |
-| «انشغالات طارئة» · English «Urgent matters» (the app: «Sudden demands») | «حال يومي» list | one English word for both platforms |
+| Unified with the app: «سامح نفسك اليوم، وأدِّ القدر الأدنى.» + for «تخفّف» «أما ما تتخفّف منه فاثبت على تركه اليوم؛ الثبات في اليوم الصعب أعظم أجرًا.» (now on both); the list's lead and hints are the app's | «اليوم», under the date on a hard «حال يومي» (`practice.dayState.*`, app `habitsHub.dayState.*`) | — |
+| «انشغالات طارئة» · English «Sudden demands» (both) | «حال يومي» list | «Urgent matters» |
 | «هل فعلتها؟» card under today's list, two rows then «المزيد (n)» · toast «سُجِّلت «لم تتم». غدًا فرصة جديدة.» | «اليوم› عادات اليوم», a day's details | — |
 | «مواعيد قادمة» + «الكل» | «اليوم» side column (reference) | «القادم» |
 | Group switcher «الفرائض · عادات اليوم · الأعمال الدورية» · English «Prayers · Habits · Periodic» (short to fit a phone row) | «اليوم» on a phone | the English full names «Obligatory prayers · Today's habits · Periodic acts» do not fit 390px |
 | «في الأرشيف منذ {date} · إن أعدتها يبدأ تقدّمها من جديد» / «يبقى تقدّمها إن أعدتها حتى {date}» | «العادات › الأرشيف» rows | the app's wording (same meaning) |
 | «عندك 3 عادات، وهو الحد» + «أرشِفها / احذفها» per habit + «رجوع» | «أضف عادة» past the limit (C-01d) | — |
 | «مغطّى لخصوصيتك. اضغط واكتب رمز الخصوصية لتراه.» / «مقفل. اضغط واكتب رمز الخصوصية لتفتحه.» | a covered «تخفَّف» row («العادات», «سجلّي») | the app's «تخفّف · مغطّى» |
-| «شارك تطورك مع الرفقة» is NOT shown on the web | «العادات» milestone lines | «رفقة» is app-only and invite-only, and the web cannot tell if the member is in a circle (practice-core `shareSuggestion`: «only to a member of a circle») |
+| «شارك تطورك مع الرفقة» (plain line, no link: «رفقة» is in the app) | «العادات» milestone lines, for a member in a circle (GET /circles/access `inCircle`) | a link to the app |
 | «القوائم: الأقارب، الوالدان، الجيران، الأصدقاء، المرضى (n)» (folded) | «الأعمال الدورية › صلة الرحم والأحباب» | the app's «افتح القوائم» |
-| «تعديل» link + trash icon; no «سجّل العمل» button on the web rows | «الأعمال الدورية» rows (C-24) | logging stays in «اليوم › الأعمال الدورية»; add the button if the owner wants it on both |
+| «سجّل العمل» / «سُجّل اليوم» + «تعديل» link + trash icon (as in the app) | «الأعمال الدورية» rows (C-24) | — |
 | «وقفة مع نفسك» (heading) + «حاسب نفسك اليوم ليخفّ حسابك غدًا. وقفة قصيرة صادقة، ثم خطوة واضحة.» · week: «ثقيلٌ الآن، خفيفٌ بعد.» / «ما تراجعه اليوم بصدق لا يثقل عليك غدًا.» | «محاسبتي» | — |
 | «ابدأ محاسبة المساء» / «ابدأ محاسبة الأسبوع» (replace «حاسب نفسك الآن» / «ابدأ الآن») | «محاسبتي» | — |
 | «لم تتم في {n} أيام» (was «فاتك {n} أيام») | weekly review card, «وقفات سابقة» | — |

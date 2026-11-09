@@ -83,7 +83,8 @@ export function DayStateMenu({ store, today }: { store: Store; today: string }) 
 
 /**
  * The gentle line of a hard day, under the day's title: for the habits «سامح نفسك اليوم…» and the minimum; for a
- * running «تخفَّف» program a firm and kind line instead of forgiveness (never «سامح نفسك» about a sin), generic.
+ * running «تخفَّف» program a firm and kind line instead of forgiveness (never «سامح نفسك» about a sin), generic. The
+ * same words as the app (`habitsHub.dayState.forgive` / `lighten`).
  */
 export function DayStateLine({ store, today }: { store: Store; today: string }) {
   const t = useTranslations('practice.dayState');
@@ -92,7 +93,7 @@ export function DayStateLine({ store, today }: { store: Store; today: string }) 
   const lighten = activePrograms(store.programs).length > 0;
   return (
     <div role="status" className="flex flex-col gap-1 rounded-2xl border border-primary/30 bg-secondary/60 px-4 py-3 text-sm leading-7">
-      <p>{view.excused ? t('gentleExcused') : t('gentle')}</p>
+      <p>{t('gentle')}</p>
       {lighten ? <p className="text-muted-foreground">{t('gentleLighten')}</p> : null}
     </div>
   );

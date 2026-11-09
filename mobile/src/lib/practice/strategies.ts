@@ -7,37 +7,11 @@
  */
 
 import type { Href } from 'expo-router';
-import { STRATEGIES, type HeartPrefs, type Strategy, type StrategyAction } from '@thekra/practice-core';
+import { strategyAppliesToHabit, type HeartPrefs, type StrategyAction } from '@thekra/practice-core';
 import type { HabitLoopField, LoopDraft } from './loops';
 
-/**
- * Round 6 (C-18 a, the reference's design): each strategy is for building a habit, leaving a sin, or returning after a
- * gap. The grouping is ours (for the owner's review in docs/plan/labels-to-decide.md).
- */
-export type StrategyGroup = 'build' | 'leave' | 'return';
-export const STRATEGY_GROUPS: readonly StrategyGroup[] = ['build', 'leave', 'return'];
-
-export const STRATEGY_GROUP: Readonly<Record<string, StrategyGroup>> = {
-  'start-tiny': 'build',
-  'anchor-prayer': 'build',
-  'if-then': 'build',
-  'prepare-place': 'build',
-  bundle: 'build',
-  season: 'build',
-  company: 'build',
-  'block-sin': 'leave',
-  'know-weak': 'leave',
-  'ride-wave': 'leave',
-  'follow-good': 'leave',
-  'never-twice': 'return',
-  'make-up': 'return',
-  'self-review': 'return',
-};
-
-/** The strategies of one group (or all), in practice-core's order, without the unlisted ones. */
-export function strategiesOf(group: StrategyGroup | 'all'): Strategy[] {
-  return listedStrategies().filter((s) => group === 'all' || STRATEGY_GROUP[s.key] === group);
-}
+// The families «بناء / ترك / عودة» (C-18 a), the unlisted «لا تفوّتها مرتين» and whether «طبّقها على عادة» applies are
+// shared with the website: practice-core `strategies.ts` (`STRATEGY_KINDS`, `listedStrategies`, `strategyAppliesToHabit`).
 
 /**
  * «طبّقها على عادة»: the question of the habit loop (src/lib/practice/loops.ts) a building or returning strategy fills.
@@ -56,9 +30,9 @@ export const APPLY_FIELD: Readonly<Record<string, HabitLoopField>> = {
   'self-review': 'reward',
 };
 
-/** True when «طبّقها على عادة» applies the strategy to a habit's loop. */
+/** True when «طبّقها على عادة» applies the strategy to a habit's loop (practice-core decides; every such one has a field). */
 export function appliesToHabit(key: string): boolean {
-  return APPLY_FIELD[key] !== undefined;
+  return strategyAppliesToHabit(key) && APPLY_FIELD[key] !== undefined;
 }
 
 /**
@@ -73,14 +47,6 @@ export function applyStrategyDraft(key: string, current: LoopDraft, example: str
 }
 
 export type StrategyTarget = { kind: 'screen'; href: Href; heart?: Partial<HeartPrefs> } | { kind: 'deeds' };
-
-/** Strategies not shown in the list (they appear in context instead). */
-export const UNLISTED_STRATEGIES: readonly string[] = ['never-twice'];
-
-/** The strategies the page lists, in practice-core's order. */
-export function listedStrategies(): Strategy[] {
-  return STRATEGIES.filter((s) => !UNLISTED_STRATEGIES.includes(s.key));
-}
 
 export function strategyTarget(action: StrategyAction, key?: string): StrategyTarget {
   if (key === 'follow-good') return { kind: 'deeds' };

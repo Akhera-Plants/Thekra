@@ -4,7 +4,18 @@ import { useId, useMemo, useState } from 'react';
 import { Bell, BellRing, ChevronDown, Repeat } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { isPaused, setHeartPrefs, STRATEGIES, toggleStrategy, withCustomPeriodic, type Plan, type Strategy } from '@thekra/practice-core';
+import {
+  isPaused,
+  listedStrategies,
+  setHeartPrefs,
+  STRATEGY_KINDS,
+  strategyAppliesToHabit,
+  toggleStrategy,
+  withCustomPeriodic,
+  type Plan,
+  type Strategy,
+  type StrategyKind,
+} from '@thekra/practice-core';
 import { Link } from '@/i18n/navigation';
 import { Button } from '@/components/shared/kit/button';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
@@ -14,7 +25,7 @@ import { updateHeart } from '@/lib/practice/heart-store';
 import { isPeriodicTemplate } from '@/lib/practice/limits';
 import { notificationPrefsOf, updatePrefs } from '@/lib/practice/local-store';
 import { habitOf } from '@/lib/practice/plans';
-import { appliesToHabit, listedStrategies, STRATEGY_KINDS, strategyKind, strategyTarget, type StrategyKind } from '@/lib/practice/strategies';
+import { strategyTarget } from '@/lib/practice/strategies';
 import { resendPushPrefs } from '@/lib/push/web-push';
 import type { PracticeHabit } from '@/lib/types/practice';
 import { usePracticeCatalog } from '../../hooks/usePracticeCatalog';
@@ -50,7 +61,7 @@ export function StrategiesView() {
     return context.snapshot.store.plans.filter((plan) => !isPaused(plan) && !periodic(plan));
   }, [context]);
   const reminded = context ? notificationPrefsOf(context.snapshot.prefs).strategies : [];
-  const shown = listedStrategies(STRATEGIES).filter((s) => filter === 'all' || strategyKind(s.key) === filter);
+  const shown = listedStrategies(filter);
 
   function toggleReminder(strategy: Strategy) {
     const on = !reminded.includes(strategy.key);
@@ -186,7 +197,7 @@ function StrategyItem({
           <Button variant="outline" tone="primary" size="sm" aria-haspopup="dialog" onClick={onDeeds}>
             {t('try')}
           </Button>
-        ) : appliesToHabit(strategy.key) ? (
+        ) : strategyAppliesToHabit(strategy.key) ? (
           <Button variant="outline" tone="primary" size="sm" aria-haspopup="dialog" onClick={onApply}>
             {t('apply')}
           </Button>

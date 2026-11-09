@@ -91,6 +91,11 @@ import {
   weekStrip,
   type Plan,
   type Store,
+  STRATEGIES,
+  STRATEGY_KINDS,
+  strategyAppliesToHabit,
+  listedStrategies,
+  strategyKind,
 } from '../src/index.js';
 
 const NOW = '2026-11-09T08:00:00.000Z';
@@ -503,6 +508,9 @@ describe('notifications (round 6 §8, C-19)', () => {
       if (k === 'reminderTimes') continue;
       expect(all, k).toContain(k);
     }
+    // «محاسبة المساء» (the evening nudge) sits under «النية والمحاسبة» on both clients.
+    expect(NOTIFICATION_GROUPS.find((g) => g.key === 'heart')?.prefs).toEqual(expect.arrayContaining(['eveningNudge', 'eveningTime']));
+    expect(NOTIFICATION_GROUPS.find((g) => g.key === 'habits')?.prefs).not.toContain('eveningNudge');
   });
 
   it('muted plans and acts, and the intention reminder', () => {
@@ -560,5 +568,23 @@ describe('round 6 sync and storage', () => {
     expect(settingsContent({ hijriOffset: 0, lightenCovered: true, dayStates: [], qada: null, reciter: null })).toBe(
       '{"hijriOffset":0,"reminderTimes":[],"freeMinutesPerDay":null}',
     );
+  });
+});
+
+describe('strategy families (C-18 a, shared by web and app)', () => {
+  it('gives every strategy one family; «ترك» never «طبّقها على عادة»; «لا تفوّتها مرتين» unlisted', () => {
+    for (const strategy of STRATEGIES) {
+      expect(STRATEGY_KINDS).toContain(strategy.kind);
+      expect(strategyKind(strategy.key)).toBe(strategy.kind);
+      if (strategy.kind === 'leave') expect(strategyAppliesToHabit(strategy.key)).toBe(false);
+    }
+    expect(listedStrategies().map((s) => s.key)).not.toContain('never-twice');
+    expect(listedStrategies()).toHaveLength(STRATEGIES.length - 1);
+    expect(listedStrategies('leave').map((s) => s.key)).toEqual(['block-sin', 'know-weak', 'ride-wave', 'follow-good']);
+    expect(listedStrategies('return').map((s) => s.key)).toEqual(['make-up', 'self-review']);
+    expect(STRATEGIES.filter((s) => s.kind === 'return').map((s) => s.key)).toEqual(['never-twice', 'make-up', 'self-review']);
+    expect(strategyAppliesToHabit('start-tiny')).toBe(true);
+    expect(strategyAppliesToHabit('never-twice')).toBe(false);
+    expect(strategyKind('unknown')).toBe('build');
   });
 });

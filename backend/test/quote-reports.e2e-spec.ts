@@ -71,9 +71,20 @@ describe('Quote reports (e2e)', () => {
     expect(await prisma.quoteReport.count()).toBe(0);
   });
 
-  it('404 for a verse or an unknown text', async () => {
-    await http().post(url(Q01)).send({ reason: 'TEXT' }).expect(404);
+  it('404 for an unknown text', async () => {
     await http().post(url('00000000-0000-4000-8000-0000000000aa')).send({ reason: 'TEXT' }).expect(404);
+  });
+
+  it('accepts a report on a verse (round 6: under «وجه التذكير»); it reaches the desk as MEDIUM and never hides the verse', async () => {
+    // Three distinct reporters: anonymous, a member and an admin (as in the hadith case below).
+    const user = await userAuthHeaders(app);
+    const admin = await adminAuthHeaders(app);
+    await http().post(url(Q01)).send({ reason: 'CLASSIFICATION' }).expect(201);
+    await http().post(url(Q01)).set(user).send({ reason: 'CLASSIFICATION' }).expect(201);
+    await http().post(url(Q01)).set(admin).send({ reason: 'TEXT' }).expect(201);
+    const flag = await prisma.quoteFlag.findFirst({ where: { quoteId: Q01, type: 'USER_REPORT' } });
+    expect(flag).toMatchObject({ severity: 'MEDIUM', status: 'OPEN', details: { total: 3, reporters: 3 } });
+    await http().get(`/v1/quotes/${Q01}`).expect(200);
   });
 
   it(`a signed-in reporter is limited per account: 429 REPORT_RATE_LIMITED after ${REPORT_LIMITS.perReporterHour} in an hour`, async () => {

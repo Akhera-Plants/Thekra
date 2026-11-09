@@ -18,7 +18,12 @@ export const REPORT_LIMITS = {
   dedupeHours: 24,
   /** All reports of a UTC day; past it the endpoint answers 429 REPORTS_PAUSED until 00:00 UTC. */
   globalDaily: 1000,
-  /** Distinct reporters on one open flag before it turns HIGH (which hides the text until a reviewer looks). */
+  /**
+   * Distinct reporters on one open flag before it turns HIGH (which hides the text until a reviewer looks). Hadith
+   * only: a report on a verse or another text (owner round 6, C-01n: «أبلغ عن خطأ» under «وجه التذكير» of every text)
+   * reaches the review desk as MEDIUM and never hides the text — anonymous reports must not be able to take a verse
+   * of the Qur'an off the site.
+   */
   escalateReporters: 3,
   /** Newest report entries copied into the open QuoteFlag for the review desk; older ones stay in QuoteReport. */
   flagEntries: 20,
@@ -110,9 +115,12 @@ export class QuoteReportsService {
         select: { id: true },
       }),
     ]);
-    if (!quote || quote.type !== QuoteType.HADITH) {
+    // Any text type (round 6: the reader's «أبلغ عن خطأ» is under «وجه التذكير» of verses too; the hadith-only check
+    // came from the first, hadith-grading version of this endpoint).
+    if (!quote) {
       throw new NotFoundException({ code: 'RESOURCE_NOT_FOUND', message: 'Quote not found' });
     }
+    const canHide = quote.type === QuoteType.HADITH;
     // Already received from this reporter: the same answer, nothing stored again.
     if (duplicate) return { data: { accepted: true } };
     if (today >= REPORT_LIMITS.globalDaily) {
@@ -156,7 +164,7 @@ export class QuoteReportsService {
         reporters: reporters.length,
         reports: entries,
       } as unknown as Prisma.InputJsonValue;
-      const severity = reporters.length >= REPORT_LIMITS.escalateReporters ? 'HIGH' : 'MEDIUM';
+      const severity = canHide && reporters.length >= REPORT_LIMITS.escalateReporters ? 'HIGH' : 'MEDIUM';
       if (open) {
         await tx.quoteFlag.update({ where: { id: open.id }, data: { details, severity } });
       } else {

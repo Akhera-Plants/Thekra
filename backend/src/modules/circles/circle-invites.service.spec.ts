@@ -42,7 +42,7 @@ function setup() {
       updateMany: vi.fn().mockResolvedValue({ count: 1 }),
     },
     user: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
-    circleMember: { count: vi.fn().mockResolvedValue(1) },
+    circleMember: { count: vi.fn().mockResolvedValue(1), findFirst: vi.fn().mockResolvedValue(null) },
     $queryRaw: vi.fn().mockResolvedValue([]),
     $transaction: vi.fn(),
   };
@@ -72,7 +72,7 @@ describe('CircleInvitesService', () => {
     it('off: no invite numbers', async () => {
       const { service, circles } = setup();
       circles.isEnabled.mockResolvedValue(false);
-      expect(await service.access(GUEST, NOW)).toEqual({ enabled: false, invites: null });
+      expect(await service.access(GUEST, NOW)).toEqual({ enabled: false, inCircle: false, invites: null });
     });
 
     it('on: what is left under both limits', async () => {
@@ -80,6 +80,14 @@ describe('CircleInvitesService', () => {
       prisma.circleInvite.count.mockResolvedValueOnce(2).mockResolvedValueOnce(9);
       const access = await service.access(INVITER, NOW);
       expect(access.invites).toMatchObject({ active: 2, createdInPeriod: 9, remaining: 1, ttlDays: INVITE_TTL_DAYS });
+      expect(access.inCircle).toBe(false);
+    });
+
+    it('inCircle: true once I belong to a circle (the website shows «شارك تطورك مع الرفقة» then)', async () => {
+      const { service, prisma } = setup();
+      prisma.circleMember.findFirst.mockResolvedValue({ id: 'm1' });
+      expect((await service.access(INVITER, NOW)).inCircle).toBe(true);
+      expect(prisma.circleMember.findFirst).toHaveBeenCalledWith({ where: { userId: INVITER }, select: { id: true } });
     });
   });
 

@@ -131,6 +131,13 @@ Effort: **S** = under half a day, mechanical; **M** = several files or packages,
 
 - Major gaps from `pnpm outdated -r`: expo 57 → 58 (about 13 packages), react-native 0.86.3 → 0.88.0, react-native-gesture-handler 2.32 → 3.4, i18next 24.2.3 → 26.5.3, react-i18next 15.7.4 → 17.1.0, jest 29 → 30, @types/jest 29 → 30, typescript 6.0.3 → 7.0.2.
 - React is 19.2.3 in mobile and 19.2.8 in frontend (`pnpm ls`). Not evaluated beyond the version gap. Low priority while mobile is not deployed.
+- 2026-11-09 (owner round 6, C-08 native image share): `expo-sharing` ~57.0.25 and `react-native-view-shot` 5.1.0 were
+  added with `EXPO_OFFLINE=1 pnpm exec expo install` (api.expo.dev is blocked here), so the versions are the ones the
+  installed expo 57 `bundledNativeModules.json` lists (`expo-sharing ~57.0.22`, `react-native-view-shot 5.1.0`).
+  `pnpm deprecations` reports their next majors (expo-sharing 58, view-shot 6): they move with the Expo SDK 58 upgrade
+  above, not on their own. No deprecated API is used: `Sharing.isAvailableAsync` / `shareAsync` and `captureRef` /
+  `releaseCapture` (`mobile/src/components/share/ShareSheet.tsx`). The `expo-sharing` config plugin is NOT added: it
+  only configures receiving shares into the app (both platforms default to off), which the app does not do.
 
 ### 11. Majors not audited in depth — [M1]
 

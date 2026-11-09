@@ -1,9 +1,9 @@
 /** Phase 5 on the app: every strategy opens a screen, opt-in switches only for theirs, and the new prefs parse. */
 
-import { DEFAULT_NOTIFICATION_PREFS, STRATEGIES } from '@thekra/practice-core';
+import { DEFAULT_NOTIFICATION_PREFS, listedStrategies, STRATEGIES } from '@thekra/practice-core';
 import { parsePrefs, DEFAULT_PREFS } from '../lib/practice/prefs';
 import { notificationPrefsOf } from '../lib/practice/reminders';
-import { listedStrategies, strategyTarget } from '../lib/practice/strategies';
+import { strategyTarget } from '../lib/practice/strategies';
 
 describe('strategies', () => {
   it('maps every listed strategy to an app route, «أتبِع السيئةَ الحسنة» to the deeds list, never «تخفَّف»', () => {

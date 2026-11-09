@@ -61,13 +61,21 @@ describe('QuoteReportsService', () => {
     });
   });
 
-  it('404 for a missing text or one that is not a hadith (nothing stored)', async () => {
+  it('404 for a missing text (nothing stored)', async () => {
     const { service, prisma } = setup();
-    prisma.quote.findUnique.mockResolvedValueOnce(null).mockResolvedValueOnce({ id: QUOTE, type: 'QURAN_VERSE' });
-    for (let i = 0; i < 2; i++) {
-      expect(statusOf(await service.report(QUOTE, 'TEXT', undefined, { ip: '1.1.1.1' }, NOW).catch((e: unknown) => e))).toBe(404);
-    }
+    prisma.quote.findUnique.mockResolvedValueOnce(null);
+    expect(statusOf(await service.report(QUOTE, 'TEXT', undefined, { ip: '1.1.1.1' }, NOW).catch((e: unknown) => e))).toBe(404);
     expect(prisma.quoteReport.create).not.toHaveBeenCalled();
+  });
+
+  it('accepts a report on a verse (round 6: «أبلغ عن خطأ» under «وجه التذكير»), but never turns it HIGH', async () => {
+    const { service, prisma } = setup();
+    prisma.quote.findUnique.mockResolvedValue({ id: QUOTE, type: 'QURAN_VERSE' });
+    prisma.quoteReport.findMany.mockResolvedValue([{ reporterKey: 'a' }, { reporterKey: 'b' }, { reporterKey: 'c' }]);
+    await expect(service.report(QUOTE, 'CLASSIFICATION', 'لا صلة', { ip: '1.2.3.4' }, NOW)).resolves.toEqual({ data: { accepted: true } });
+    expect(prisma.quoteReport.create).toHaveBeenCalledTimes(1);
+    const flag = prisma.quoteFlag.create.mock.calls[0]![0].data;
+    expect(flag).toMatchObject({ severity: 'MEDIUM', type: 'USER_REPORT', details: { reporters: 3 } });
   });
 
   it('stores the report and opens a MEDIUM flag with a bounded summary (no address)', async () => {

@@ -3,15 +3,17 @@
  * - «نص» (the system share sheet): the text as one flowing paragraph in its marks, its attribution, then «بواسطة تطبيق
  *   ذكرى» and the link (src/lib/share/quote-share.ts `quoteShareText`). Nothing about the user is ever shared.
  * - «صورة»: the card in the owner's chosen design (b: the filled door's green with its leaf drawing; the type and grade
- *   pill, the text in the middle, the source, then the Thekra wordmark, «بواسطة تطبيق ذكرى» and the site). On the web
- *   build it is drawn to a 1080 × 1350 PNG and handed to the browser's share sheet (or downloaded). The phone builds
- *   have no image-capture module yet (react-native-view-shot / expo-sharing are not dependencies), so there the card is
- *   shown to look at and the text share stays the way to send it; the sheet says so in one line.
+ *   pill, the text in the middle, the source, then the Thekra wordmark, «بواسطة تطبيق ذكرى» and the site). On iOS and
+ *   Android the preview card itself is captured to a 1080 × 1350 PNG (react-native-view-shot, a temporary file) and
+ *   handed to the system share sheet (expo-sharing); the file is released afterwards. On the web build it is drawn to
+ *   the same PNG and handed to the browser's share sheet (or downloaded). The text share stays one tap away.
  * A cancelled share shows nothing (no «تمت المشاركة» on a dismissal).
  */
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Platform, Share, View } from 'react-native';
+import * as Sharing from 'expo-sharing';
+import { captureRef, releaseCapture } from 'react-native-view-shot';
 import { useTranslation } from 'react-i18next';
 import { Image as ImageIcon, MessageSquareText } from 'lucide-react-native';
 import type { QuoteDto } from '@/lib/types/api';
@@ -21,7 +23,7 @@ import { SITE_URL } from '@/lib/site';
 import { shareCardImage } from '@/lib/share/web-image';
 import { DoorArt } from '@/components/home/HomeDoors';
 import { QURAN_FONT, WORDMARK_FONT, radius, space, useStyles, useTheme, type Theme } from '@/theme';
-import { BottomSheet, Button, ButtonPair, SegmentTabs, Text, toast, type SegmentItem } from '@/ui';
+import { BottomSheet, ButtonPair, SegmentTabs, Text, toast, type SegmentItem } from '@/ui';
 
 type Mode = 'text' | 'image';
 
@@ -81,6 +83,7 @@ export function ShareSheet({ quote, visible, onClose, showTranslation }: { quote
   const locale = i18n.language === 'en' ? 'en' : 'ar';
   const [mode, setMode] = useState<Mode>('text');
   const [busy, setBusy] = useState(false);
+  const cardRef = useRef<View>(null);
   const web = Platform.OS === 'web';
   const items: SegmentItem<Mode>[] = [
     { key: 'text', label: t('share.asText') },
@@ -100,10 +103,16 @@ export function ShareSheet({ quote, visible, onClose, showTranslation }: { quote
   async function shareImage() {
     setBusy(true);
     try {
-      const result = await shareCardImage(cardContent(quote, labels, locale, t), { ink: ON_GREEN.ink, soft: ON_GREEN.soft });
-      if (result === 'downloaded') toast(t('share.imageSaved'));
-      if (result !== 'failed') onClose();
-      else toast(t('share.imageFailed'));
+      if (web) {
+        const result = await shareCardImage(cardContent(quote, labels, locale, t), { ink: ON_GREEN.ink, soft: ON_GREEN.soft });
+        if (result === 'downloaded') toast(t('share.imageSaved'));
+        if (result !== 'failed') onClose();
+        else toast(t('share.imageFailed'));
+        return;
+      }
+      const result = await shareCardOnPhone(cardRef, t('share.shareImage'));
+      if (result === 'failed') toast(t('share.imageFailed'));
+      else onClose();
     } finally {
       setBusy(false);
     }
@@ -117,10 +126,8 @@ export function ShareSheet({ quote, visible, onClose, showTranslation }: { quote
       footer={
         mode === 'text' ? (
           <ButtonPair size="lg" primary={{ label: t('share.shareText'), icon: MessageSquareText, onPress: () => void shareText() }} secondary={{ label: t('common.cancel'), onPress: onClose }} />
-        ) : web ? (
-          <ButtonPair size="lg" primary={{ label: t('share.shareImage'), icon: ImageIcon, onPress: () => void shareImage(), loading: busy }} secondary={{ label: t('common.cancel'), onPress: onClose }} />
         ) : (
-          <Button label={t('share.shareText')} icon={MessageSquareText} variant="outline" size="lg" block onPress={() => void shareText()} />
+          <ButtonPair size="lg" primary={{ label: t('share.shareImage'), icon: ImageIcon, onPress: () => void shareImage(), loading: busy }} secondary={{ label: t('common.cancel'), onPress: onClose }} />
         )
       }
     >
@@ -131,16 +138,33 @@ export function ShareSheet({ quote, visible, onClose, showTranslation }: { quote
         </Text>
       ) : (
         <View style={styles.preview}>
-          <ShareCard quote={quote} labels={labels} locale={locale} />
-          {web ? null : (
-            <Text variant="caption" tone="muted" align="center">
-              {t('share.imageOnPhone')}
-            </Text>
-          )}
+          <ShareCard ref={cardRef} quote={quote} labels={labels} locale={locale} />
         </View>
       )}
     </BottomSheet>
   );
+}
+
+/** The image's size: 4:5, as on the web (frontend share design b). */
+const IMAGE_SIZE = { width: 1080, height: 1350 } as const;
+
+/**
+ * iOS / Android: the preview card captured to a PNG in the cache and handed to the system share sheet. `failed` when
+ * the capture or the sheet is unavailable (the caller says so and the text share stays); a dismissed sheet is `shared`
+ * too (nothing to say).
+ */
+async function shareCardOnPhone(card: React.RefObject<View | null>, dialogTitle: string): Promise<'shared' | 'failed'> {
+  let uri: string | null = null;
+  try {
+    if (!card.current || !(await Sharing.isAvailableAsync())) return 'failed';
+    uri = await captureRef(card, { format: 'png', quality: 1, result: 'tmpfile', ...IMAGE_SIZE });
+    await Sharing.shareAsync(uri, { mimeType: 'image/png', UTI: 'public.png', dialogTitle });
+    return 'shared';
+  } catch {
+    return 'failed';
+  } finally {
+    if (uri) releaseCapture(uri);
+  }
 }
 
 export interface ShareCardContent {
@@ -173,15 +197,15 @@ export function cardContent(quote: QuoteDto, labels: QuoteShareLabels, locale: '
   };
 }
 
-/** The image card, design b (preview). */
-function ShareCard({ quote, labels, locale }: { quote: QuoteDto; labels: QuoteShareLabels; locale: 'ar' | 'en' }) {
+/** The image card, design b: the preview, and on a phone the view that is captured (`collapsable={false}` keeps it). */
+function ShareCard({ ref, quote, labels, locale }: { ref?: React.Ref<View>; quote: QuoteDto; labels: QuoteShareLabels; locale: 'ar' | 'en' }) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const { colors } = useTheme();
   const c = cardContent(quote, labels, locale, t);
   const long = c.body.length > 260;
   return (
-    <View style={styles.card} accessibilityLabel={`${c.kicker}. ${c.body}. ${c.source}`}>
+    <View ref={ref} collapsable={false} style={styles.card} accessibilityLabel={`${c.kicker}. ${c.body}. ${c.source}`}>
       <View style={styles.art} pointerEvents="none">
         <View style={styles.artInner}>
           <DoorArt kind="deeds" color={colors.pathwayFlourish} opacity={0.22} width={160} height={220} />

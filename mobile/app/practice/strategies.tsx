@@ -1,37 +1,44 @@
 /**
  * «استراتيجيات العادات» (owner round 6, C-18 a: the reference's design — بناء / ترك / عودة, an example, then «طبّقها على
  * عادة»; our kit). One entry in «المزيد». Top to bottom:
- * - the filter «الكل · للبناء · للترك · للعودة» (src/lib/practice/strategies.ts `STRATEGY_GROUP`);
- * - one row per strategy (practice-core `STRATEGIES`, without «لا تفوّتها مرتين», which appears in its moment): its
- *   title and one idea line; «مثال وطريقة التطبيق» opens its example and its action:
+ * - the filter «الكل · للبناء · للترك · للعودة» (practice-core `STRATEGY_KINDS`, the same families as the website);
+ * - one row per strategy (practice-core `listedStrategies`, without «لا تفوّتها مرتين», which appears in its moment): its
+ *   title, one idea line and «ذكّرني بها» (the weekly strategy reminder, the same list as «التنبيهات › الاستراتيجيات»,
+ *   whose day and time are set there); «مثال وطريقة التطبيق» opens its example and its action:
  *   · building / returning: «طبّقها على عادة» → choose one of your habits → the habit-loop builder opens on that habit's
  *     loop with the strategy's question filled by the example (a written answer is never replaced); nothing is saved
  *     until the member reviews it and taps «احفظ الحلقة» (then a toast);
  *   · leaving: its own place («تخفَّف», «لحظة مجاهدة», or the short list of easy good deeds for «أتبع السيئة الحسنة»);
  * - «قبل أن تبدأ»: the educational cards, folded.
- * The weekly reminder of chosen strategies is set in «التنبيهات › الاستراتيجيات» (one setting, one place).
+ * The weekly reminder's day and time are set in «التنبيهات › الاستراتيجيات».
  */
 
 import React, { useMemo, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { ChevronDown, ChevronUp } from 'lucide-react-native';
-import { addHabitLoop, isPeriodicPlan, periodicActKeyOf, setHeartPrefs, updateHabitLoop, updatePlan, type Plan, type Strategy } from '@thekra/practice-core';
+import { Bell, BellRing, ChevronDown, ChevronUp } from 'lucide-react-native';
+import {
+  addHabitLoop,
+  isPeriodicPlan,
+  listedStrategies,
+  periodicActKeyOf,
+  setHeartPrefs,
+  STRATEGY_KINDS,
+  toggleStrategy,
+  updateHabitLoop,
+  updatePlan,
+  type Plan,
+  type Strategy,
+  type StrategyKind,
+} from '@thekra/practice-core';
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { pick } from '@/lib/practice/catalog-types';
 import { draftOf, habitLoopInput, habitLoops, type LoopDraft } from '@/lib/practice/loops';
 import { newPracticeId, usePracticeStore } from '@/lib/practice/practice-store';
 import { habitFor } from '@/lib/practice/reminders';
-import {
-  STRATEGY_GROUPS,
-  STRATEGY_GROUP,
-  appliesToHabit,
-  applyStrategyDraft,
-  strategiesOf,
-  strategyTarget,
-  type StrategyGroup,
-} from '@/lib/practice/strategies';
+import { ensurePermission } from '@/lib/practice/notifications';
+import { appliesToHabit, applyStrategyDraft, strategyTarget } from '@/lib/practice/strategies';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { ConsistencyCard, HabitLoopCard, SinStepsCard } from '@/components/practice/hub/KnowledgeCards';
 import { EasyDeeds } from '@/components/practice/mujahada/EasyDeeds';
@@ -53,13 +60,16 @@ import {
   type SegmentItem,
 } from '@/ui';
 
-type Filter = StrategyGroup | 'all';
+type Filter = StrategyKind | 'all';
 
 const makeStyles = (t: Theme) => ({
   cards: { gap: space.md },
   item: { gap: space.xs, paddingVertical: space.lg, borderBottomWidth: 1, borderBottomColor: t.colors.border },
   itemLast: { borderBottomWidth: 0 },
   kicker: { flexDirection: 'row' as const },
+  head: { flexDirection: 'row' as const, alignItems: 'flex-start' as const, gap: space.sm },
+  headText: { flex: 1, minWidth: 0, gap: space.xs },
+  remind: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 4, minHeight: 44, paddingHorizontal: space.xs },
   disclosure: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.xs, minHeight: 44, alignSelf: 'flex-start' as const },
   pressed: { opacity: 0.7 },
   body: { gap: space.md, paddingTop: space.xs },
@@ -76,9 +86,9 @@ export default function StrategiesScreen() {
   const [applying, setApplying] = useState<Strategy | null>(null);
   const tabs: SegmentItem<Filter>[] = [
     { key: 'all', label: t('practice.strategies.groups.all') },
-    ...STRATEGY_GROUPS.map((g) => ({ key: g, label: t(`practice.strategies.groups.${g}`) })),
+    ...STRATEGY_KINDS.map((g) => ({ key: g, label: t(`practice.strategies.groups.${g}`) })),
   ];
-  const list = strategiesOf(filter);
+  const list = listedStrategies(filter);
 
   return (
     <Screen edges={['bottom']}>
@@ -121,12 +131,25 @@ function StrategyItem({ strategy, last, onApply }: { strategy: Strategy; last: b
   const locale = useUiLocale();
   const styles = useStyles(makeStyles);
   const setHeart = usePracticeStore((s) => s.setHeart);
+  const reminded = usePracticeStore((s) => s.prefs.weeklyStrategies.includes(strategy.key));
+  const setPrefs = usePracticeStore((s) => s.setPrefs);
   const [open, setOpen] = useState(false);
   const [deedsOpen, setDeedsOpen] = useState(false);
   const title = locale === 'en' ? strategy.titleEn : strategy.titleAr;
   const toHabit = appliesToHabit(strategy.key);
   const target = strategyTarget(strategy.action, strategy.key);
-  const group = STRATEGY_GROUP[strategy.key] ?? 'build';
+  const group = strategy.kind;
+
+  /** «ذكّرني بها» (the same switch as «التنبيهات › الاستراتيجيات»; turning it on asks for the permission first). */
+  async function toggleReminder() {
+    const on = !reminded;
+    if (on && !(await ensurePermission(t('practice.notify.channelName')))) {
+      toast(t('practice.permissionDenied'));
+      return;
+    }
+    setPrefs((p) => ({ ...p, weeklyStrategies: toggleStrategy(p.weeklyStrategies, strategy.key) }));
+    toast(on ? t('practice.strategies.reminderOn') : t('practice.strategies.reminderOff'));
+  }
 
   function handleAction() {
     if (toHabit) {
@@ -143,13 +166,29 @@ function StrategyItem({ strategy, last, onApply }: { strategy: Strategy; last: b
 
   return (
     <View style={[styles.item, last && styles.itemLast]}>
-      <Text variant="caption" tone="link">
-        {t(`practice.strategies.groups.${group}`)}
-      </Text>
-      <Text variant="heading">{title}</Text>
-      <Text variant="small" tone="muted">
-        {t(`practice.strategies.items.${strategy.key}.idea`)}
-      </Text>
+      <View style={styles.head}>
+        <View style={styles.headText}>
+          <Text variant="caption" tone="link">
+            {t(`practice.strategies.groups.${group}`)}
+          </Text>
+          <Text variant="heading">{title}</Text>
+          <Text variant="small" tone="muted">
+            {t(`practice.strategies.items.${strategy.key}.idea`)}
+          </Text>
+        </View>
+        <Pressable
+          onPress={() => void toggleReminder()}
+          accessibilityRole="switch"
+          accessibilityState={{ checked: reminded }}
+          accessibilityLabel={t('practice.strategies.remindA11y', { title })}
+          style={({ pressed }) => [styles.remind, pressed && styles.pressed]}
+        >
+          <Icon icon={reminded ? BellRing : Bell} size={18} tone={reminded ? 'link' : 'muted'} />
+          <Text variant="caption" tone={reminded ? 'link' : 'muted'}>
+            {t('practice.strategies.remind')}
+          </Text>
+        </Pressable>
+      </View>
       <Pressable
         onPress={() => setOpen((o) => !o)}
         accessibilityRole="button"

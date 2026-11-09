@@ -22,7 +22,6 @@ import {
   type QadaKey,
   type QadaPlan,
   type Reflection,
-  cloneHomeSections,
   compareFardMarks,
   compareVersions,
   isFardPrayer,
@@ -362,8 +361,8 @@ function parseSettings(raw: unknown): SettingsChange {
     reminderTimes: [...reminderTimes],
     freeMinutesPerDay,
     excusedDays: [...(excusedDays as string[])],
-    // Known fields only, in the canonical order.
-    homeSections: rawHome === null ? null : cloneHomeSections(rawHome as HomeSectionPref[]),
+    // Known fields only, in the canonical order; a retired key (round 6: «نص اليوم») is dropped.
+    homeSections: rawHome === null ? null : parseHomeSections(rawHome),
     fardTracking,
     dayStates: dayStates.length > 0 ? cloneDayStates(dayStates) : null,
     qada: rawQada === null ? null : parseQadaPlan(rawQada),

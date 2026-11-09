@@ -40,7 +40,7 @@ type Step = { kind: 'menu' } | { kind: 'pause' };
 
 /**
  * The limit sheet (redesign §3, round 5 F-30 a): shown instead of adding past a limit. One pair: «أكمل ما عندي» (solid,
- * only closes) and «أوقف عادة مؤقتًا» (pauses one, its history stays). No delete here (F-30 a). A graduation-ready
+ * only closes) and «أرشِف عادة» (round 6: pause = «الأرشيف», one concept; its history stays). No delete here (F-30 a). A graduation-ready
  * sapling also offers «ثبّت … وابدأ الجديدة». The «تخفَّف» limit has only the first action. The day a place opens by
  * itself is written in words.
  */

@@ -10,18 +10,19 @@
  * Pure; never throws on stored input.
  */
 
-/** Every home section, in the default (and visitor) order. Keys never change: they are stored in synced settings. */
+/**
+ * Every home section, in the default (and visitor) order: a member's short «ورد اليوم» and then the doors right away;
+ * a visitor gets the doors first (owner round 6, C-11). Keys never change: they are stored in synced settings.
+ */
 export const HOME_SECTION_KEYS = [
   /** «ورد اليوم»: progress and inline circles for the unchecked habits (members only). */
   'wird',
-  /** «نص اليوم» (F-23), with «⋯» for its source. */
-  'daily-text',
+  /** «أبواب الخير». */
+  'doors',
   /** «شعبة الأسبوع» (F-18). */
   'week-branch',
   /** «مناسبة قريبة» (F-17). */
   'occasion',
-  /** «أبواب الخير». */
-  'doors',
   /** «في لحظات مثل هذه». */
   'moments',
   /** «تذكرة مختارة». */
@@ -31,6 +32,13 @@ export const HOME_SECTION_KEYS = [
 ] as const;
 
 export type HomeSectionKey = (typeof HOME_SECTION_KEYS)[number];
+
+/**
+ * Keys a stored order may still hold from an earlier release: «نص اليوم» (`daily-text`, F-23) was removed in owner round
+ * 6 (C-01q). A list that names one is still valid ({@link validateHomeSections}, so an older app's sync is not refused);
+ * reading it drops the key ({@link parseHomeSections}).
+ */
+export const RETIRED_HOME_SECTION_KEYS: readonly string[] = ['daily-text'];
 
 export interface HomeSectionInfo {
   key: HomeSectionKey;
@@ -45,11 +53,10 @@ export interface HomeSectionInfo {
 /** In the default order. Titles are shared so both clients name the sections the same way (nav-map rule). */
 export const HOME_SECTIONS: readonly HomeSectionInfo[] = [
   { key: 'wird', ar: 'ورد اليوم', en: "Today's practice", visibleByDefault: true, membersOnly: true },
-  { key: 'daily-text', ar: 'نص اليوم', en: 'Text of the day', visibleByDefault: true, membersOnly: false },
+  { key: 'doors', ar: 'أبواب الخير', en: 'Gateways of good', visibleByDefault: true, membersOnly: false },
   // Round 3 item 7: «شعبة الأسبوع» only for a member who chose to study the branches; showing the section is that choice.
   { key: 'week-branch', ar: 'شعبة الأسبوع', en: 'Branch of the week', visibleByDefault: false, membersOnly: false },
   { key: 'occasion', ar: 'مناسبة قريبة', en: 'Coming occasion', visibleByDefault: true, membersOnly: false },
-  { key: 'doors', ar: 'أبواب الخير', en: 'Gateways of good', visibleByDefault: true, membersOnly: false },
   { key: 'moments', ar: 'في لحظات مثل هذه', en: 'In moments like these', visibleByDefault: true, membersOnly: false },
   { key: 'featured', ar: 'تذكرة مختارة', en: 'A chosen reminder', visibleByDefault: true, membersOnly: false },
   { key: 'sources', ar: 'المصادر', en: 'Sources', visibleByDefault: true, membersOnly: false },
@@ -71,7 +78,7 @@ export function defaultHomeSections(): HomeSectionPref[] {
 }
 
 /**
- * Reads a stored list. Never throws: unknown keys, malformed entries and later duplicates are dropped; `null` when
+ * Reads a stored list. Never throws: unknown (and retired) keys, malformed entries and later duplicates are dropped; `null` when
  * nothing usable is left (the defaults apply). Known fields only, in the canonical order `{ key, visible }`.
  */
 export function parseHomeSections(raw: unknown): HomeSectionPref[] | null {
@@ -88,15 +95,20 @@ export function parseHomeSections(raw: unknown): HomeSectionPref[] | null {
   return out.length > 0 ? out : null;
 }
 
-/** First problem of a list sent by a client (the server's check), or null. Duplicates and unknown keys are errors. */
+/**
+ * First problem of a list sent by a client (the server's check), or null. Duplicates and unknown keys are errors; a
+ * retired key ({@link RETIRED_HOME_SECTION_KEYS}) is accepted, so a device on an older release can still sync, and
+ * {@link parseHomeSections} drops it.
+ */
 export function validateHomeSections(raw: unknown): string | null {
   if (!Array.isArray(raw)) return 'homeSections must be null or an array';
-  if (raw.length === 0 || raw.length > HOME_SECTION_KEYS.length) return `homeSections must hold 1…${HOME_SECTION_KEYS.length} sections`;
+  const max = HOME_SECTION_KEYS.length + RETIRED_HOME_SECTION_KEYS.length;
+  if (raw.length === 0 || raw.length > max) return `homeSections must hold 1…${max} sections`;
   const seen = new Set<string>();
   for (const item of raw) {
     if (typeof item !== 'object' || item === null || Array.isArray(item)) return 'homeSections entries must be {key, visible}';
     const r = item as Record<string, unknown>;
-    if (!isHomeSectionKey(r.key)) return `homeSections key must be one of ${HOME_SECTION_KEYS.join(', ')}`;
+    if (!isHomeSectionKey(r.key) && !(typeof r.key === 'string' && RETIRED_HOME_SECTION_KEYS.includes(r.key))) return `homeSections key must be one of ${HOME_SECTION_KEYS.join(', ')}`;
     if (typeof r.visible !== 'boolean') return 'homeSections visible must be true or false';
     if (seen.has(r.key)) return 'homeSections keys must be unique';
     seen.add(r.key);

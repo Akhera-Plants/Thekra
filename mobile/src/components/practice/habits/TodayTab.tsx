@@ -19,6 +19,7 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronUp, Leaf, Plus, Repeat, Users } from 'lucide-react-native';
 import {
+  activePrograms,
   addDays,
   answerDidIt,
   answerDidNot,
@@ -45,7 +46,7 @@ import { usePracticeCatalog } from '@/lib/api/practice';
 import { safeHijri, shortDayTitle } from '@/lib/practice/calendar-grid';
 import { nowTime } from '@/lib/practice/format';
 import { mendState, showsMend } from '@/lib/practice/habits-view';
-import { bandOf, byBand, dayStateLineKey, DEFAULT_TODAY_GROUP, SIDE_BY_SIDE_WIDTH, TODAY_GROUPS, type TodayGroup } from '@/lib/practice/hub-view';
+import { bandOf, byBand, dayStateLightenKey, dayStateLineKey, DEFAULT_TODAY_GROUP, SIDE_BY_SIDE_WIDTH, TODAY_GROUPS, type TodayGroup } from '@/lib/practice/hub-view';
 import { currentPrayerLookup } from '@/lib/practice/prayer';
 import { today as todayFn, usePracticeStore } from '@/lib/practice/practice-store';
 import { habitFor } from '@/lib/practice/reminders';
@@ -107,6 +108,7 @@ export function TodayTab({ today }: { today: LocalDate }) {
   const [openDay, setOpenDay] = useState<LocalDate | null>(null);
   const day = dayStateOn(store, today);
   const lineKey = dayStateLineKey(day);
+  const lightenKey = dayStateLightenKey(day, activePrograms(store.programs).length > 0);
   const model = useTodayModel(today);
 
   const counts: Record<TodayGroup, number | undefined> = {
@@ -123,7 +125,11 @@ export function TodayTab({ today }: { today: LocalDate }) {
       <WeekStrip today={today} onOpenDay={setOpenDay} />
       <View style={styles.tight}>
         <TitleRow today={today} />
-        {lineKey ? <Notice icon={Leaf}>{t(lineKey)}</Notice> : null}
+        {lineKey ? (
+          <Notice icon={Leaf}>
+            {lightenKey ? `${t(lineKey)}\n${t(lightenKey)}` : t(lineKey)}
+          </Notice>
+        ) : null}
       </View>
       {wide ? (
         <View style={styles.columns}>

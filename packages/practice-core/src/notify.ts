@@ -130,14 +130,15 @@ export interface NotificationGroup {
 }
 
 /**
- * «العادات» (each habit's own switch via `mutedPlans`, the evening nudge, the private «تخفّف» moment on the app) ·
- * «الأعمال الدورية» (only the member's active acts, each with a switch via `mutedActs` / `mutedPlans`; none → an add
- * button; «مناسبة قريبة») · «النية والمحاسبة» · «الاستراتيجيات».
+ * «العادات» (each habit's own switch via `mutedPlans`, the private «تخفّف» moment on the app) · «الأعمال الدورية» (only
+ * the member's active acts, each with a switch via `mutedActs` / `mutedPlans`; none → an add button; «مناسبة قريبة») ·
+ * «النية والمحاسبة» (the intention, «محاسبة المساء» — one switch for the evening review and its nudge, as both clients
+ * draw it — and the weekly review) · «الاستراتيجيات».
  */
 export const NOTIFICATION_GROUPS: readonly NotificationGroup[] = [
-  { key: 'habits', prefs: ['habits', 'mutedPlans', 'eveningNudge', 'eveningTime', 'privateMoment', 'privateTime'] },
+  { key: 'habits', prefs: ['habits', 'mutedPlans', 'privateMoment', 'privateTime'] },
   { key: 'periodic', prefs: ['periodic', 'periodicTime', 'mutedActs', 'occasions', 'occasionTime'] },
-  { key: 'heart', prefs: ['intentionReminder', 'intentionTime', 'fridayReview', 'fridayTime', 'reviewDay'] },
+  { key: 'heart', prefs: ['intentionReminder', 'intentionTime', 'eveningNudge', 'eveningTime', 'fridayReview', 'fridayTime', 'reviewDay'] },
   { key: 'strategies', prefs: ['strategies', 'strategyDay', 'strategyTime'] },
 ];
 

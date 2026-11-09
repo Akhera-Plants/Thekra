@@ -1,7 +1,7 @@
 /**
  * Home (owner round 5, F-02 a; round 6 §8, C-04 / C-06 / C-09 / C-11 / C-01q): a visitor sees the doors first, then the
  * public sections; a signed-in member who never customised the page sees the short «ورد اليوم» (progress and a circle per
- * habit not logged yet, logging right here) and then the doors right away (`homeSectionsFor`), then the rest. A member's
+ * habit not logged yet, logging right here) and then the doors right away (practice-core `visibleHomeSections`), then the rest. A member's
  * own order and choice (synced with the account) is kept. «خصّص الرئيسية» lives only in the settings («اللغة والمظهر»):
  * no button on the page. «نص اليوم» is gone. Sections: «ورد اليوم», «شعبة الأسبوع», «مناسبة قريبة», «أبواب الخير»,
  * «في لحظات مثل هذه» (from the API), «تذكرة مختارة», «المصادر» (src/components/home/HomeSections.tsx). The flower divider
@@ -11,8 +11,8 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { setHomeSections } from '@thekra/practice-core';
-import { homeSectionsFor, weekBranchMigration } from '@/lib/home/home-edit';
+import { setHomeSections, visibleHomeSections } from '@thekra/practice-core';
+import { weekBranchMigration } from '@/lib/home/home-edit';
 import { usePracticeStore } from '@/lib/practice/practice-store';
 import { useHubDays } from '@/lib/practice/use-habits-hub';
 import { useAuthStore } from '@/lib/stores/auth-store';
@@ -45,7 +45,7 @@ export default function HomeScreen() {
     void qc.refetchQueries({ type: 'active' }).finally(() => setRefreshing(false));
   }, [qc]);
 
-  const sections = homeSectionsFor(stored, member).filter(shows);
+  const sections = visibleHomeSections(stored, member).filter(shows);
   return (
     <Screen refreshing={refreshing} onRefresh={handleRefresh}>
       <AppHeader />

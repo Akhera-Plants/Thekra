@@ -7,8 +7,8 @@ import { useLocale, useTranslations } from 'next-intl';
 import {
   activePeriodicActs,
   isPaused,
+  listedStrategies,
   setHeartPrefs,
-  STRATEGIES,
   toggleStrategy,
   withCustomPeriodic,
   type HeartPrefs,
@@ -321,7 +321,7 @@ export function NotificationsSettings() {
           <SegmentTabsContent value="strategies" className="pt-6">
             <Group id="notify-strategies" title={t('tabs.strategies')}>
               <li className="py-3 text-sm leading-7 text-muted-foreground">{t('strategiesLead')}</li>
-              {STRATEGIES.map((strategy) => (
+              {listedStrategies().map((strategy) => (
                 <SwitchRow
                   key={strategy.key}
                   label={locale === 'en' ? strategy.titleEn : strategy.titleAr}

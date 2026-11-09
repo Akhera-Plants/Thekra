@@ -29,11 +29,12 @@ import {
   upsertPlan,
   validateHabitLoop,
   visibleHomeSections,
+  type HomeSectionPref,
   type AgendaOccasion,
   type Plan,
   type Store,
 } from '@thekra/practice-core';
-import { homeEditRows, homeSectionsFor, moveSectionBy, toggleSection, weekBranchMigration } from '../lib/home/home-edit';
+import { homeEditRows, moveSectionBy, toggleSection, weekBranchMigration } from '../lib/home/home-edit';
 import {
   activeDaysFrom,
   answersOf,
@@ -133,10 +134,9 @@ describe('«صلّحها» and the make-up deed', () => {
 
 describe('«خصّص الرئيسية»', () => {
   it('gives a visitor the fixed public order, without «ورد اليوم»', () => {
-    expect(visibleHomeSections(undefined, false)).toEqual(['daily-text', 'occasion', 'doors', 'moments', 'featured', 'sources']);
-    expect(visibleHomeSections([{ key: 'sources', visible: true }], false)[0]).toBe('daily-text');
-    // The app drops «نص اليوم» (round 6, C-01q) and puts the doors first for a visitor.
-    expect(homeSectionsFor(undefined, false)).toEqual(['doors', 'occasion', 'moments', 'featured', 'sources']);
+    // Round 6 (practice-core): no «نص اليوم» (C-01q), the doors first for a visitor (C-11).
+    expect(visibleHomeSections(undefined, false)).toEqual(['doors', 'occasion', 'moments', 'featured', 'sources']);
+    expect(visibleHomeSections([{ key: 'sources', visible: true }], false)[0]).toBe('doors');
   });
 
   it('edits a draft: up/down at the ends, the switch, the defaults stored as absent (round 6: no «نص اليوم»)', () => {
@@ -144,10 +144,10 @@ describe('«خصّص الرئيسية»', () => {
     expect(rows[0]).toMatchObject({ key: 'wird', title: 'ورد اليوم', canUp: false, canDown: true });
     // Round 6 (C-11): the doors right after «ورد اليوم»; «نص اليوم» is not offered (C-01q).
     expect(rows[1]?.key).toBe('doors');
-    expect(rows.some((r) => r.key === 'daily-text')).toBe(false);
+    expect(rows.map((r) => r.key as string)).not.toContain('daily-text');
     expect(rows.at(-1)).toMatchObject({ key: 'sources', canDown: false });
     let draft = moveSectionBy(null, 'doors', 1);
-    const shown = draft.filter((x) => x.key !== 'daily-text').map((x) => x.key);
+    const shown = draft.map((x) => x.key);
     expect(shown.indexOf('doors')).toBe(shown.indexOf('week-branch') + 1);
     draft = moveSectionBy(draft, 'wird', -1);
     expect(draft[0]?.key).toBe('wird');
@@ -155,7 +155,7 @@ describe('«خصّص الرئيسية»', () => {
     expect(draft.find((s) => s.key === 'featured')?.visible).toBe(false);
     const stored = setHomeSections(emptyStore(), homeSectionsToStore(draft) ?? null, NOW);
     // «شعبة الأسبوع» is off, so the step past it leaves the page order as it was.
-    expect(homeSectionsFor(stored.settings.homeSections, true)).toEqual(['wird', 'doors', 'occasion', 'moments', 'sources']);
+    expect(visibleHomeSections(stored.settings.homeSections, true)).toEqual(['wird', 'doors', 'occasion', 'moments', 'sources']);
     // Back to the defaults: nothing stored (it follows later default changes).
     const reset = setHomeSections(stored, homeSectionsToStore(parseHomeSections([])) ?? null, NOW);
     expect(reset.settings.homeSections).toBeUndefined();
@@ -163,10 +163,11 @@ describe('«خصّص الرئيسية»', () => {
   });
 
   it('round 6 (C-11 / C-01q): a member starts with «ورد اليوم» then the doors; a visitor with the doors; never «نص اليوم»', () => {
-    expect(homeSectionsFor(undefined, true).slice(0, 2)).toEqual(['wird', 'doors']);
-    expect(homeSectionsFor(undefined, false)[0]).toBe('doors');
-    expect(homeSectionsFor(undefined, false)).not.toContain('daily-text');
-    expect(homeSectionsFor([{ key: 'daily-text', visible: true }, { key: 'sources', visible: true }], true)).not.toContain('daily-text');
+    expect(visibleHomeSections(undefined, true).slice(0, 2)).toEqual(['wird', 'doors']);
+    expect(visibleHomeSections(undefined, false)[0]).toBe('doors');
+    // An order stored by an older release still names «نص اليوم»: it is dropped.
+    const old = [{ key: 'daily-text', visible: true }, { key: 'sources', visible: true }] as unknown as HomeSectionPref[];
+    expect(visibleHomeSections(old, true)).not.toContain('daily-text' as never);
   });
 
   it('moves the device switch «شعبة الأسبوع» once into the synced sections', () => {

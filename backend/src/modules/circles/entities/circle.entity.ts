@@ -53,9 +53,14 @@ export interface CircleDetailDto {
   cheeredToday: string[];
 }
 
-/** GET /circles/access: whether رفقة is on for me, and (when it is) how many invites I can still give. */
+/**
+ * GET /circles/access: whether رفقة is on for me, whether I am in a circle now (so «شارك تطورك مع الرفقة» shows only
+ * to a member of one, on the website as in the app), and (when it is on) how many invites I can still give.
+ */
 export interface CircleAccessDto {
   enabled: boolean;
+  /** True when I belong to at least one circle (always false while رفقة is off). */
+  inCircle: boolean;
   invites: {
     /** Unused, unexpired invites I hold now. */
     active: number;

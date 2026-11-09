@@ -34,7 +34,7 @@
       "good-deeds": "Good deeds",
       "branches": "The Branches of Faith",
       "habits": "My habits",
-      "people": "My family and people",
+      "people": "Ties of kinship and loved ones",
       "saved": "Saved",
       "settings": "Settings",
       "circles": "Companions",
@@ -321,7 +321,6 @@
       "show": "Show «{title}»",
       "sections": {
         "wird": "Today's practice",
-        "daily-text": "Text of the day",
         "week-branch": "Branch of the week",
         "occasion": "Coming occasion",
         "doors": "Gateways of good",
@@ -1212,7 +1211,7 @@
       "unlogged": "Unmarked.",
       "readAbout": "Read about this deed",
       "pausedSince": "Archived since {date}",
-      "resume": "Resume",
+      "resume": "Bring it back",
       "pause": "Archive it",
       "graduateOffer": "This habit has taken root, by the grace of Allah. Move it to the established habits?",
       "graduate": "Move to established habits",
@@ -1370,7 +1369,7 @@
         "periodicHint": "A reminder on its day only, no commitment tracking",
         "habitCount": "{n} of {max}",
         "habitFullOn": "{count} · room for a new habit on {date}",
-        "habitFull": "{count} · pause one to start another"
+        "habitFull": "{count} · archive one to start another"
       },
       "day": {
         "empty": "Nothing is asked of this day.",
@@ -1469,6 +1468,11 @@
       "mineTitle": "Your other acts",
       "mineEmpty": "No other periodic act yet.",
       "edit": "Edit",
+      "log": "Log it",
+      "logNamed": "Log “{title}” today",
+      "loggedToday": "Logged today",
+      "loggedToast": "“{title}” logged. May Allah accept it from you",
+      "undo": "Undo",
       "deleteNamed": "Delete «{title}»",
       "customOpen": "An act of your own",
       "customTitle": "An act of your own",
@@ -1498,28 +1502,28 @@
     },
     "limits": {
       "keepGoing": "Keep up what I have",
-      "pickPause": "Choose what to pause; its record is kept.",
-      "pauseAction": "Pause",
+      "pickPause": "Choose what to archive; its record is kept.",
+      "pauseAction": "Archive",
       "back": "Back",
       "establishAndStart": "Establish “{title}” and start the new one",
       "sapling": {
         "title": "A little kept up beats a lot left off",
-        "hint": "Keep going, or pause a habit for now to start another.",
-        "pause": "Pause a habit for now"
+        "hint": "Keep up what you have, or archive a habit to start another.",
+        "pause": "Archive a habit"
       },
       "periodic": {
         "title": "A little kept up beats a lot left off",
-        "hint": "Keep up what you have, or pause an act to start another.",
-        "pause": "Pause an act"
+        "hint": "Keep up what you have, or archive an act to start another.",
+        "pause": "Archive an act"
       },
       "program": {
         "title": "One program that holds beats many that crowd",
         "hint": "Keep going with your program, then start another.",
-        "pause": "Pause"
+        "pause": "Archive"
       },
       "unlocksOn": "You can add one on {date} if you keep going.",
       "why": {
-        "habits_young": "You have {count} habits that have not reached three months yet. When one reaches three months you can add another, or pause one for now.",
+        "habits_young": "You have {count} habits that have not reached three months yet. When one reaches three months you can add another, or archive one.",
         "periodic_full": "You have {count} periodic acts, which is the limit. Delete one to add another.",
         "programs_full": "You are working on {count} programs, which is the limit. End one to start another.",
         "programs_young": "Start a new program once every program you are working on has lasted two months."
@@ -1839,7 +1843,7 @@
     },
     "myReminders": {
       "title": "My reminders",
-      "lead": "Lines you write for yourself, shown as the daily text if you choose them.",
+      "lead": "Lines you write to yourself, to come back to when you need them.",
       "newLabel": "New line",
       "add": "Add",
       "remove": "Remove",
@@ -2029,24 +2033,23 @@
     "dayState": {
       "label": "My day",
       "labelWith": "My day: {state}",
-      "question": "How is your day? On a hard day only your minimum is asked.",
+      "question": "Choose what describes your day. On a hard day every habit asks only its minimum.",
       "states": {
         "normal": "A normal day",
         "sick": "Seriously ill",
-        "busy": "Urgent matters",
+        "busy": "Sudden demands",
         "travel": "Travelling",
         "legacySick": "Ill or travelling"
       },
       "hints": {
-        "normal": "Your habits at their usual amount.",
-        "sick": "Excused: nothing breaks, and the minimum if you can.",
-        "busy": "The minimum of each habit is enough today.",
-        "travel": "Excused: nothing breaks, and the minimum if you can."
+        "normal": "Every habit at its usual amount.",
+        "sick": "Your run is not broken and no reminders ring today. Do the minimum if you can.",
+        "busy": "Every habit asks its minimum today; any amount you log completes the day.",
+        "travel": "Your run is not broken and no reminders ring today. Do the minimum if you can."
       },
       "saved": "Your day: {state}",
-      "savedNormal": "A normal day: your habits at their usual amount.",
-      "gentle": "Be easy on yourself today and keep to the minimum of each habit. A little that lasts is better than much that stops.",
-      "gentleExcused": "Be easy on yourself today: your day is excused and nothing breaks. If you can, keep the minimum of each habit.",
+      "savedNormal": "Back to a normal day",
+      "gentle": "Go easy on yourself today, and keep to the minimum.",
       "gentleLighten": "As for what you are lightening, hold firm in leaving it today; steadiness on a hard day weighs more."
     },
     "heartSlot": {
@@ -2257,13 +2260,13 @@
       },
       "editTitle": "Edit the habit",
       "saved": "Saved.",
-      "paused": "Paused; its record is kept.",
-      "resumed": "Resumed. May Allah help you.",
+      "paused": "Archived; its record is kept.",
+      "resumed": "Brought back. May Allah help you.",
       "times": "Reminder times",
       "save": "Save",
       "cancel": "Cancel",
-      "pause": "Pause it",
-      "resume": "Resume it",
+      "pause": "Archive it",
+      "resume": "Bring it back",
       "summary": "Habit summary",
       "archivedSince": "Archived since {date}",
       "minimumLine": "Minimum: {amount}",
@@ -2512,6 +2515,7 @@
         "hardest-passed": "Past the hardest stretch",
         "habit-made": "Habit made"
       },
+      "share": "Share your progress with your companions",
       "options": "Options for «{title}»",
       "archive": "Archive it",
       "delete": "Delete it",

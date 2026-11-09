@@ -86,16 +86,6 @@
     "pairNeglectHeading": "What warns against it",
     "contemporaryNote": "A contemporary topic: its texts come from the chapters below"
   },
-  "browse": {
-    "title": "Browse texts",
-    "searchPlaceholder": "Search verses and hadiths...",
-    "filterType": "Type",
-    "filterGrade": "Grade",
-    "tabAll": "All",
-    "tabQuran": "Quran",
-    "tabHadith": "Hadith",
-    "empty": "No results found"
-  },
   "quoteDetail": {
     "source": "Source",
     "provenance": "Provenance",
@@ -541,29 +531,29 @@
     },
     "limits": {
       "keepGoing": "Keep up what I have",
-      "pickPause": "Choose what to pause; its record is kept.",
+      "pickPause": "Choose what to archive; its record is kept.",
       "pickDelete": "Choose what to delete.",
-      "pauseAction": "Pause",
+      "pauseAction": "Archive",
       "deleteAction": "Delete",
       "deleteConfirm": "Yes, delete",
       "deleteNote": "It is deleted with its record and cannot be restored.",
       "back": "Back",
       "sapling": {
         "title": "Three new habits at once",
-        "hint": "Keep up what you have, or pause a sapling to start another.",
-        "pause": "Pause a habit",
+        "hint": "Keep up what you have, or archive a habit to start another.",
+        "pause": "Archive a habit",
         "delete": "Delete a habit"
       },
       "periodic": {
         "title": "You have seven periodic acts",
-        "hint": "Keep up what you have, or pause an act to start another.",
-        "pause": "Pause an act",
+        "hint": "Keep up what you have, or archive an act to start another.",
+        "pause": "Archive an act",
         "delete": "Delete an act"
       },
       "program": {
         "title": "Step by step",
         "hint": "Complete your program, then start another.",
-        "pause": "Pause",
+        "pause": "Archive",
         "delete": "Delete"
       },
       "why": {
@@ -607,12 +597,12 @@
       "title": "Established habits"
     },
     "paused": {
-      "title": "Paused",
-      "since": "Paused since {{date}}",
-      "resume": "Resume",
-      "pause": "Pause",
-      "done": "Habit paused",
-      "resumed": "Habit resumed",
+      "title": "Archived",
+      "since": "Archived since {{date}}",
+      "resume": "Bring it back",
+      "pause": "Archive",
+      "done": "Habit archived",
+      "resumed": "Habit brought back",
       "pauseHint": "Its days and log stay as they are"
     },
     "graduation": {
@@ -813,7 +803,9 @@
       "lead": "Start with one idea and make it part of your habit.",
       "try": "Try it",
       "remind": "Remind me",
-      "remindHint": "Turn on “Remind me” for the ones you choose: one reminder on Saturday.",
+      "remindA11y": "Remind me of “{{title}}” once a week",
+      "reminderOn": "You will be reminded of it once a week.",
+      "reminderOff": "Reminder turned off.",
       "cardsTitle": "Before you start",
       "time": "Reminder time",
       "items": {
@@ -1030,7 +1022,6 @@
       "title": "A moment of striving",
       "lead": "Ten minutes of striving; Allah sees your effort.",
       "open": "A moment of striving",
-      "openFromSin": "I am in a moment of striving",
       "timer": "Time left of ten minutes",
       "remaining": "{{time}} left",
       "actionsTitle": "Do one now",
@@ -1220,8 +1211,7 @@
     "shareText": "Share the text",
     "shareImage": "Share the image",
     "imageSaved": "Image saved",
-    "imageFailed": "Could not prepare the image. Share the text instead.",
-    "imageOnPhone": "Sharing the image from the phone comes in a coming update. Share the text for now."
+    "imageFailed": "Could not prepare the image. Share the text instead."
   },
   "vault": {
     "title": "«Lighten» encrypted in your account",
@@ -1270,8 +1260,8 @@
       "book": "Book excerpt"
     },
     "narrator": "Narrator",
-    "favoriteAdd": "Add to favorites",
-    "favoriteRemove": "Remove from favorites",
+    "favoriteAdd": "Save",
+    "favoriteRemove": "Remove from saved",
     "open": "Read the full text",
     "whyVerse": "Why this verse?",
     "whyHadith": "Why this hadith?",
@@ -1549,6 +1539,7 @@
     "lightenThisSin": "Lighten this sin",
     "locked": "Locked",
     "lockedLabel": "Locked. Tap to unlock",
+    "sinInPlan": "In your plan",
     "unlock": "Unlock",
     "addToPlan": "Add to your plan",
     "inPlan": "In your plan"
@@ -1903,7 +1894,6 @@
       "leave-sin": "Lighten",
       "circles": "Companions",
       "saved": "Saved",
-      "browse": "Browse texts",
       "branches": "The Branches of Faith",
       "strategies": "Habit strategies",
       "settings": "Settings",
@@ -2157,6 +2147,7 @@
         "travel": "Your run is not broken and no reminders ring today. Do the minimum if you can."
       },
       "forgive": "Go easy on yourself today, and keep to the minimum.",
+      "lighten": "As for what you are lightening, hold firm in leaving it today; steadiness on a hard day weighs more.",
       "setToast": "Your day: {{state}}",
       "normalToast": "Back to a normal day"
     },
