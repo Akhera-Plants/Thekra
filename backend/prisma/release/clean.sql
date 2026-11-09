@@ -35,6 +35,10 @@ DELETE FROM "User";
 -- with an empty history. Source.lastSyncedAt stays: it describes the content.
 DELETE FROM "SyncLog";
 
+-- QuoteReport: local «أبلغ عن خطأ» reports (round 6), one row each with a keyed reporter hash, used only for the
+-- report limits and dedupe. Production keeps its own; the QuoteFlag summaries stay (see below).
+DELETE FROM "QuoteReport";
+
 -- QuoteFlag.resolvedBy holds the local user id (JWT sub) of whoever resolved a
 -- flag. Those users were deleted above, so the ids would point at nobody in
 -- production. The flag itself, its status, note and resolvedAt stay: OPEN HIGH

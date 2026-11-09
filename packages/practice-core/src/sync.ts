@@ -10,6 +10,9 @@
  * | log (plan, date) | the later correction wins (`correctedAt`, absent = oldest); at the same correction the larger amount: plain logging never goes down (`mergeLogEntry`) |
  * | contact (relative, date) | union; `deleted: true` removes it; a later non-deleted write restores it. A local change not yet pushed is kept (it is the later write) |
  * | fard (date, prayer) | last writer wins by `clientUpdatedAt`; equal times: a cleared mark (`status: null`), then the larger status (`compareFardMarks`) |
+ * | reflection (plan, date) | round 6: last writer wins by `clientUpdatedAt`; equal times: the larger canonical content (`compareReflections`) |
+ * | qadaLog (date, prayer) | round 6: last writer wins by `clientUpdatedAt`; equal times: the larger count (`compareQadaLogs`) |
+ * | read (quoteId) | round 6: last writer wins by `clientUpdatedAt`; equal times: unread (`compareReadMarks`) |
  *
  * Pending detection compares versions, not clocks: `store.sync.acked` remembers the version of each item the server
  * holds (an item is acked when the server returns exactly the local version). A device with a wrong clock still
@@ -21,6 +24,11 @@ import { isIsoTime, isValidDate, isValidTime, isoMillis, type IsoTime, type Loca
 import { HIJRI_OFFSET_MAX, HIJRI_OFFSET_MIN } from './hijri.js';
 import { compareFardMarks, FARD_PRAYERS, fardKey, isFardPrayer, isFardStatus, type FardMark, type FardPrayer, type FardStatus } from './fard.js';
 import { cloneHomeSections, validateHomeSections, type HomeSectionPref } from './home.js';
+import { cloneDayStates, parseDayStates, validateDayStates, type DayStateEntry } from './day-state.js';
+import { cloneQadaPlan, compareQadaLogs, isQadaKey, parseQadaPlan, qadaLogKey, QADA_KEYS, type QadaKey, type QadaLog, type QadaPlan } from './qada.js';
+import { cloneReflection, compareReflections, reflectionContent, REFLECTION_FIELDS, reflectionKey, validateReflectionTexts, type Reflection } from './reflection.js';
+import { compareReadMarks, isQuoteId, parseReadMarks, type ReadMark } from './reads.js';
+import { isReciterKey } from './reciters.js';
 import { latestDate, validateRelative, type KinshipRule, type Relative } from './kinship.js';
 import { cloneHabitLoop, logEntry, mergeLogEntry, validateHabitLoops, validatePlan, type HabitLoop, type LogEntry, type Plan, type PlanUnit } from './plan.js';
 import type { Rule } from './rules.js';
@@ -85,6 +93,39 @@ export interface WireSettings {
   homeSections?: HomeSectionPref[] | null;
   /** «الفرائض» switch (round 5): absent (an older client) = off. */
   fardTracking?: boolean;
+  /** «حال يومي» (round 6): null or absent = none. */
+  dayStates?: DayStateEntry[] | null;
+  /** «قضاء الفوائت» plan (round 6): null or absent = none. */
+  qada?: QadaPlan | null;
+  /** «تخفّف» rows covered (round 6): absent = true. */
+  lightenCovered?: boolean;
+  /** Reciter key (round 6): null or absent = the default. */
+  reciter?: string | null;
+  clientUpdatedAt: IsoTime;
+}
+
+/** One habit reflection (round 6). Null answers are absent; all null = a cleared reflection. */
+export interface WireReflection {
+  planId: string;
+  date: LocalDate;
+  helped: string | null;
+  hard: string | null;
+  note: string | null;
+  clientUpdatedAt: IsoTime;
+}
+
+/** One «قضاء الفوائت» day count (round 6). `count: 0` clears the day. */
+export interface WireQadaLog {
+  date: LocalDate;
+  prayer: QadaKey;
+  count: number;
+  clientUpdatedAt: IsoTime;
+}
+
+/** One read mark (round 6). */
+export interface WireRead {
+  quoteId: string;
+  read: boolean;
   clientUpdatedAt: IsoTime;
 }
 
@@ -105,6 +146,10 @@ export interface SyncChanges {
   contacts: WireContact[];
   /** «الفرائض» marks (round 5). Absent: none. */
   fard?: WireFard[];
+  /** Round 6 lists. Absent: none. */
+  reflections?: WireReflection[];
+  qadaLogs?: WireQadaLog[];
+  reads?: WireRead[];
 }
 
 export interface SyncRequest {
@@ -120,6 +165,10 @@ export interface ServerSettings {
   excusedDays?: LocalDate[];
   homeSections?: HomeSectionPref[] | null;
   fardTracking?: boolean;
+  dayStates?: DayStateEntry[] | null;
+  qada?: QadaPlan | null;
+  lightenCovered?: boolean;
+  reciter?: string | null;
   clientUpdatedAt?: IsoTime;
   updatedAt?: IsoTime;
 }
@@ -134,6 +183,10 @@ export interface SyncResponse {
   contacts: WireContact[];
   /** «الفرائض» marks (round 5); an older server omits it. */
   fard?: WireFard[];
+  /** Round 6 lists; an older server omits them. */
+  reflections?: WireReflection[];
+  qadaLogs?: WireQadaLog[];
+  reads?: WireRead[];
 }
 
 /** The contract's limit on items per sync request. */
@@ -195,7 +248,8 @@ const tombVersion = (t: Tombstone): Version => ({ time: isoMillis(t.deletedAt), 
 
 /**
  * The canonical settings content. `excusedDays` is added only when not empty, `homeSections` only when set and
- * `fardTracking` only when on, so settings without them keep the content older clients and acks know.
+ * `fardTracking` only when on, so settings without them keep the content older clients and acks know. Round 6 adds, in
+ * this order and each only when set: `dayStates` (not empty), `qada`, `lightenCovered` (only when `false`), `reciter`.
  */
 export function settingsContent(s: {
   hijriOffset: number;
@@ -204,6 +258,10 @@ export function settingsContent(s: {
   excusedDays?: LocalDate[];
   homeSections?: readonly HomeSectionPref[] | null;
   fardTracking?: boolean;
+  dayStates?: readonly DayStateEntry[] | null;
+  qada?: QadaPlan | null;
+  lightenCovered?: boolean;
+  reciter?: string | null;
 }): string {
   const out: Record<string, unknown> = {
     hijriOffset: s.hijriOffset,
@@ -213,6 +271,10 @@ export function settingsContent(s: {
   if (s.excusedDays && s.excusedDays.length > 0) out.excusedDays = s.excusedDays;
   if (s.homeSections && s.homeSections.length > 0) out.homeSections = cloneHomeSections(s.homeSections);
   if (s.fardTracking === true) out.fardTracking = true;
+  if (s.dayStates && s.dayStates.length > 0) out.dayStates = cloneDayStates(s.dayStates);
+  if (s.qada) out.qada = cloneQadaPlan(s.qada);
+  if (s.lightenCovered === false) out.lightenCovered = false;
+  if (s.reciter) out.reciter = s.reciter;
   return JSON.stringify(out);
 }
 const settingsVersion = (s: Settings): Version => ({ time: isoMillis(s.updatedAt), deleted: false, content: settingsContent(s) });
@@ -225,6 +287,12 @@ const contactKey = (relativeId: string, date: string) => `contact:${relativeId}|
 const fardAckKey = (date: string, prayer: string) => `fard:${fardKey(date, prayer as FardPrayer)}`;
 /** The acked version of a mark: its status and the edit time in milliseconds. */
 const fardVersion = (m: Pick<FardMark, 'status' | 'updatedAt'>) => `${m.status ?? '-'}@${isoMillis(m.updatedAt)}`;
+const reflectionAckKey = (planId: string, date: string) => `reflection:${reflectionKey(planId, date)}`;
+const reflectionVersion = (r: Reflection) => `${hash(reflectionContent(r))}@${isoMillis(r.updatedAt)}`;
+const qadaAckKey = (date: string, prayer: QadaKey) => `qada:${qadaLogKey(date, prayer)}`;
+const qadaVersion = (l: Pick<QadaLog, 'count' | 'updatedAt'>) => `${l.count}@${isoMillis(l.updatedAt)}`;
+const readAckKey = (quoteId: string) => `read:${quoteId}`;
+const readVersion = (m: Pick<ReadMark, 'read' | 'updatedAt'>) => `${m.read ? 1 : 0}@${isoMillis(m.updatedAt)}`;
 
 // ── Local changes ─────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -292,6 +360,10 @@ export function localChanges(store: Store, opts: LocalChangesOptions = {}): Sync
       excusedDays: [...(s.excusedDays ?? [])],
       homeSections: s.homeSections ? cloneHomeSections(s.homeSections) : null,
       fardTracking: s.fardTracking === true,
+      dayStates: s.dayStates && s.dayStates.length > 0 ? cloneDayStates(s.dayStates) : null,
+      qada: s.qada ? cloneQadaPlan(s.qada) : null,
+      lightenCovered: s.lightenCovered !== false,
+      reciter: s.reciter ?? null,
       clientUpdatedAt: toIso(isoMillis(s.updatedAt)),
     };
     budget--;
@@ -340,6 +412,36 @@ export function localChanges(store: Store, opts: LocalChangesOptions = {}): Sync
     take(fard, { date: m.date, prayer: m.prayer, status: m.status, clientUpdatedAt: toIso(isoMillis(m.updatedAt)) });
   }
   if (fard.length > 0) out.fard = fard;
+  // Round 6. Reflections need their plan on the server: only once every plan fits, and only for a plan this store
+  // knows (live, or deleted with its tombstone in the same request).
+  const reflections: WireReflection[] = [];
+  if (parentsComplete) {
+    const known = new Set([...store.plans.map((p) => p.id), ...store.tombstones.filter((t) => t.kind === 'plan').map((t) => t.id)]);
+    for (const r of store.reflections ?? []) {
+      if (!known.has(r.planId) || !pending(reflectionAckKey(r.planId, r.date), reflectionVersion(r))) continue;
+      take(reflections, {
+        planId: r.planId,
+        date: r.date,
+        helped: r.helped ?? null,
+        hard: r.hard ?? null,
+        note: r.note ?? null,
+        clientUpdatedAt: toIso(isoMillis(r.updatedAt)),
+      });
+    }
+  }
+  if (reflections.length > 0) out.reflections = reflections;
+  const qadaLogs: WireQadaLog[] = [];
+  for (const l of store.qadaLogs ?? []) {
+    if (!pending(qadaAckKey(l.date, l.prayer), qadaVersion(l))) continue;
+    take(qadaLogs, { date: l.date, prayer: l.prayer, count: l.count, clientUpdatedAt: toIso(isoMillis(l.updatedAt)) });
+  }
+  if (qadaLogs.length > 0) out.qadaLogs = qadaLogs;
+  const reads: WireRead[] = [];
+  for (const m of store.reads ?? []) {
+    if (!pending(readAckKey(m.quoteId), readVersion(m))) continue;
+    take(reads, { quoteId: m.quoteId, read: m.read, clientUpdatedAt: toIso(isoMillis(m.updatedAt)) });
+  }
+  if (reads.length > 0) out.reads = reads;
   return out;
 }
 
@@ -356,7 +458,10 @@ export function countChanges(changes: SyncChanges): number {
     changes.logs.length +
     changes.relatives.length +
     changes.contacts.length +
-    (changes.fard?.length ?? 0)
+    (changes.fard?.length ?? 0) +
+    (changes.reflections?.length ?? 0) +
+    (changes.qadaLogs?.length ?? 0) +
+    (changes.reads?.length ?? 0)
   );
 }
 
@@ -393,6 +498,10 @@ function planFromWire(w: Record<string, unknown>, log: Record<string, number>, u
   }
   // Phase-6 prayer anchors: null or absent means none.
   if (Array.isArray(w.slotAnchors) && w.slotAnchors.some((a) => a !== null)) plan.slotAnchors = [...w.slotAnchors];
+  // Round 6: «القدر الأدنى», the start amount, the restart day; null or absent means not set.
+  for (const k of ['minimum', 'startAmount', 'restartedOn'] as const) {
+    if (w[k] !== null && w[k] !== undefined) plan[k] = w[k];
+  }
   // «حلقة العادة» (2026-11-01): null, absent (an older server) or empty means none. Kept in canonical field order.
   if (Array.isArray(w.loops) && w.loops.length > 0) {
     if (validateHabitLoops(w.loops) !== null) return null;
@@ -465,7 +574,16 @@ export function applyServerChanges(store: Store, response: SyncResponse | { data
     const homeValid = home === null || home === undefined || validateHomeSections(home) === null;
     const fardOn = w.fardTracking;
     const fardValid = fardOn === undefined || fardOn === null || typeof fardOn === 'boolean';
-    if (valid && excusedValid && homeValid && fardValid) {
+    // Round 6 fields: null or absent (an older server) = not set.
+    const ds = w.dayStates;
+    const dsValid = ds === null || ds === undefined || validateDayStates(ds) === null;
+    const qada = w.qada === null || w.qada === undefined ? null : parseQadaPlan(w.qada);
+    const qadaValid = w.qada === null || w.qada === undefined || qada !== null;
+    const covered = w.lightenCovered;
+    const coveredValid = covered === undefined || covered === null || typeof covered === 'boolean';
+    const reciter = w.reciter;
+    const reciterValid = reciter === undefined || reciter === null || isReciterKey(reciter);
+    if (valid && excusedValid && homeValid && fardValid && dsValid && qadaValid && coveredValid && reciterValid) {
       const incoming: Settings = { hijriOffset: off, updatedAt: time };
       if ((w.reminderTimes as LocalTime[]).length > 0) incoming.reminderTimes = [...(w.reminderTimes as LocalTime[])];
       if (typeof free === 'number') incoming.freeMinutesPerDay = free;
@@ -473,6 +591,11 @@ export function applyServerChanges(store: Store, response: SyncResponse | { data
       if (days.length > 0) incoming.excusedDays = days;
       if (Array.isArray(home)) incoming.homeSections = cloneHomeSections(home as HomeSectionPref[]);
       if (fardOn === true) incoming.fardTracking = true;
+      const states = parseDayStates(ds);
+      if (states.length > 0) incoming.dayStates = states;
+      if (qada) incoming.qada = qada;
+      if (covered === false) incoming.lightenCovered = false;
+      if (typeof reciter === 'string') incoming.reciter = reciter;
       const vIn = settingsVersion(incoming);
       if (compareVersions(settingsVersion(settings), vIn) < 0) settings = incoming;
       if (versionKey(settingsVersion(settings)) === versionKey(vIn)) acked.settings = versionKey(vIn);
@@ -598,6 +721,39 @@ export function applyServerChanges(store: Store, response: SyncResponse | { data
     if (fardVersion(after) === fardVersion(incoming)) acked[fardAckKey(incoming.date, incoming.prayer)] = fardVersion(incoming);
   }
 
+  // Round 6: reflections (their plan must be known here, live or deleted), «قضاء» day counts and read marks.
+  const reflections = new Map((store.reflections ?? []).map((r) => [reflectionKey(r.planId, r.date), r]));
+  for (const item of arr(body.reflections)) {
+    if (!isRecord(item) || typeof item.planId !== 'string' || !isValidDate(item.date) || !isIsoTime(item.clientUpdatedAt)) continue;
+    if (!plans.has(item.planId) && !tombs.has(`plan:${item.planId}`)) continue;
+    if (validateReflectionTexts(item) !== null) continue;
+    const incoming: Reflection = { planId: item.planId, date: item.date, updatedAt: item.clientUpdatedAt };
+    for (const k of REFLECTION_FIELDS) if (typeof item[k] === 'string' && (item[k] as string).length > 0) incoming[k] = item[k] as string;
+    const clean = cloneReflection(incoming);
+    const key = reflectionKey(clean.planId, clean.date);
+    const local = reflections.get(key);
+    if (!local || compareReflections(local, clean) < 0) reflections.set(key, clean);
+    if (reflectionVersion(reflections.get(key) as Reflection) === reflectionVersion(clean)) acked[reflectionAckKey(clean.planId, clean.date)] = reflectionVersion(clean);
+  }
+  const qadaLogs = new Map((store.qadaLogs ?? []).map((l) => [qadaLogKey(l.date, l.prayer), l]));
+  for (const item of arr(body.qadaLogs)) {
+    if (!isRecord(item) || !isValidDate(item.date) || !isQadaKey(item.prayer) || !isIsoTime(item.clientUpdatedAt)) continue;
+    if (typeof item.count !== 'number' || !Number.isInteger(item.count) || item.count < 0) continue;
+    const incoming: QadaLog = { date: item.date, prayer: item.prayer, count: item.count, updatedAt: item.clientUpdatedAt };
+    const key = qadaLogKey(incoming.date, incoming.prayer);
+    const local = qadaLogs.get(key);
+    if (!local || compareQadaLogs(local, incoming) < 0) qadaLogs.set(key, incoming);
+    if (qadaVersion(qadaLogs.get(key) as QadaLog) === qadaVersion(incoming)) acked[qadaAckKey(incoming.date, incoming.prayer)] = qadaVersion(incoming);
+  }
+  const reads = new Map((store.reads ?? []).map((m) => [m.quoteId, m]));
+  for (const item of arr(body.reads)) {
+    if (!isRecord(item) || !isQuoteId(item.quoteId) || typeof item.read !== 'boolean' || !isIsoTime(item.clientUpdatedAt)) continue;
+    const incoming: ReadMark = { quoteId: item.quoteId.toLowerCase(), read: item.read, updatedAt: item.clientUpdatedAt };
+    const local = reads.get(incoming.quoteId);
+    if (!local || compareReadMarks(local, incoming) < 0) reads.set(incoming.quoteId, incoming);
+    if (readVersion(reads.get(incoming.quoteId) as ReadMark) === readVersion(incoming)) acked[readAckKey(incoming.quoteId)] = readVersion(incoming);
+  }
+
   // A pushed contact removal that the server now holds needs no tombstone any more.
   for (const [k, t] of tombs) {
     if (t.kind === 'contact' && acked[`contact:${t.id}`] === 'deleted') tombs.delete(k);
@@ -618,6 +774,10 @@ export function applyServerChanges(store: Store, response: SyncResponse | { data
       if (!plans.has(planId) && !tombs.has(`plan:${planId}`)) delete acked[key];
     }
     if (key.startsWith('contact:') && !relatives.has(key.slice(8, key.lastIndexOf('|')))) delete acked[key];
+    if (key.startsWith('reflection:')) {
+      const planId = key.slice(11, key.lastIndexOf('|'));
+      if (!plans.has(planId) && !tombs.has(`plan:${planId}`)) delete acked[key];
+    }
   }
 
   const next: Store = {
@@ -633,5 +793,16 @@ export function applyServerChanges(store: Store, response: SyncResponse | { data
       a.date !== b.date ? (a.date < b.date ? -1 : 1) : FARD_PRAYERS.indexOf(a.prayer) - FARD_PRAYERS.indexOf(b.prayer),
     );
   }
+  if (reflections.size > 0) {
+    next.reflections = [...reflections.values()].sort((a, b) =>
+      a.date !== b.date ? (a.date < b.date ? -1 : 1) : a.planId < b.planId ? -1 : a.planId > b.planId ? 1 : 0,
+    );
+  }
+  if (qadaLogs.size > 0) {
+    next.qadaLogs = [...qadaLogs.values()].sort((a, b) =>
+      a.date !== b.date ? (a.date < b.date ? -1 : 1) : QADA_KEYS.indexOf(a.prayer) - QADA_KEYS.indexOf(b.prayer),
+    );
+  }
+  if (reads.size > 0) next.reads = parseReadMarks([...reads.values()]);
   return next;
 }

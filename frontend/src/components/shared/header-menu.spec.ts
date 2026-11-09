@@ -7,8 +7,9 @@ import { currentHeaderItem, HEADER_MENU, HEADER_MENU_ITEMS } from './header-menu
 describe('header menu (W-10 a: one menu for visitor and member)', () => {
   it('has the two groups in the plan order', () => {
     expect(HEADER_MENU.map((g) => [g.key, g.items.map((i) => i.key)])).toEqual([
-      ['doors', ['leave-sin', 'good-deeds', 'branches', 'browse']],
-      ['members', ['habits', 'people', 'saved', 'settings', 'circles']],
+      // Round 6: «تصفّح النصوص» and «أهلي وناسي» are gone (practice-core nav-map).
+      ['doors', ['leave-sin', 'good-deeds', 'branches']],
+      ['members', ['habits', 'saved', 'settings', 'circles']],
     ]);
   });
 
@@ -30,7 +31,7 @@ describe('header menu (W-10 a: one menu for visitor and member)', () => {
     expect(currentHeaderItem('/practice')).toBe('habits');
     expect(currentHeaderItem('/practice/review')).toBe('habits');
     expect(currentHeaderItem('/practice/habits/p1')).toBe('habits');
-    expect(currentHeaderItem('/practice/people')).toBe('people');
+    expect(currentHeaderItem('/practice/periodic')).toBe('habits');
     expect(currentHeaderItem('/practice/leave-sin/moment')).toBe('leave-sin');
     expect(currentHeaderItem('/favorites/reminders')).toBe('saved');
     expect(currentHeaderItem('/settings/notifications')).toBe('settings');

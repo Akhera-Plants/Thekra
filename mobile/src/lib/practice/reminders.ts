@@ -154,6 +154,13 @@ export function notificationPrefsOf(prefs: PracticePrefs, reviewDay: number = DE
     // The weekly strategy reminder is gone (round 5, F-12 a): the deprecated fields stay empty.
     strategies: [],
     strategyTime: DEFAULT_NOTIFICATION_PREFS.strategyTime,
+    // Round 6 switches (strategy day, «نية اليوم», per-habit / per-act mutes): the defaults until the app's
+    // «التنبيهات» screen offers them.
+    strategyDay: DEFAULT_NOTIFICATION_PREFS.strategyDay,
+    intentionReminder: DEFAULT_NOTIFICATION_PREFS.intentionReminder,
+    intentionTime: DEFAULT_NOTIFICATION_PREFS.intentionTime,
+    mutedPlans: [],
+    mutedActs: [],
   };
 }
 

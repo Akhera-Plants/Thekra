@@ -1198,6 +1198,26 @@ export class QuotesService {
 
   /** Public explanations. A fabricated hadith stays 404, same as quote detail. */
   async listPublicExplanations(quoteId: string, lang: 'ar' | 'en' = 'ar') {
+    const { rows } = await this.publicExplanationRows(quoteId, lang);
+    return {
+      data: rows.map((row) => ({
+        id: row.id,
+        kind: row.kind,
+        languageCode: row.languageCode,
+        text: row.text,
+        reference: row.reference,
+        origin: row.origin,
+        source: row.source,
+      })),
+    };
+  }
+
+  /**
+   * The explanation rows of a public text (404 otherwise, as quote detail): sharh / fawaid / gharib / long sharh by
+   * quote id, and for a verse every tafsir passage that covers its ayah. Ordered by sortOrder, then id.
+   * Shared by GET /quotes/:id/explanations and the reader (quote-reader.service.ts).
+   */
+  async publicExplanationRows(quoteId: string, lang: 'ar' | 'en' = 'ar') {
     const quote = await this.prisma.quote.findUnique({
       where: { id: quoteId },
       select: {
@@ -1274,57 +1294,6 @@ export class QuotesService {
       return Number(match[1]) === surah && ayah >= start && ayah <= end;
     });
 
-    return {
-      data: covering.map((row) => ({
-        id: row.id,
-        kind: row.kind,
-        languageCode: row.languageCode,
-        text: row.text,
-        reference: row.reference,
-        origin: row.origin,
-        source: row.source,
-      })),
-    };
-  }
-
-  /** Public mistake report. No account and no personal data are stored. */
-  async report(quoteId: string, reason: string, note?: string) {
-    const quote = await this.prisma.quote.findUnique({
-      where: { id: quoteId },
-      select: { id: true, type: true },
-    });
-    if (!quote || quote.type !== QuoteType.HADITH) {
-      throw new NotFoundException({ code: 'RESOURCE_NOT_FOUND', message: 'Quote not found' });
-    }
-    const entry = { reason, note: note?.trim() || null };
-    const open = await this.prisma.quoteFlag.findFirst({
-      where: { quoteId, type: 'USER_REPORT', source: 'USER', status: 'OPEN' },
-    });
-    if (!open) {
-      await this.prisma.quoteFlag.create({
-        data: {
-          quoteId,
-          type: 'USER_REPORT',
-          severity: 'MEDIUM',
-          source: 'USER',
-          details: { reports: [entry] },
-        },
-      });
-      return { data: { accepted: true } };
-    }
-    const details = open.details;
-    const previous = details && typeof details === 'object' && !Array.isArray(details)
-      && Array.isArray((details as { reports?: unknown }).reports)
-      ? (details as { reports: unknown[] }).reports
-      : [];
-    const reports = [...previous, entry];
-    await this.prisma.quoteFlag.update({
-      where: { id: open.id },
-      data: {
-        details: { reports } as Prisma.InputJsonValue,
-        severity: reports.length >= 3 ? 'HIGH' : 'MEDIUM',
-      },
-    });
-    return { data: { accepted: true } };
+    return { quote: { id: quote.id, type: quote.type }, rows: covering };
   }
 }

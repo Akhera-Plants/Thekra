@@ -23,6 +23,7 @@ one carries a comment explaining it.
 | Every `Favorite` row | Each row is one user's saved quote (personal data). It is the only table with a foreign key to `User`. |
 | Refresh tokens / sessions | Nothing to remove: refresh tokens are stateless JWTs, and there is no token or session table. |
 | Every `SyncLog` row | Run history of local content-sync jobs: timings and error text from the developer's machine. The API only shows it on admin routes. |
+| Every `QuoteReport` row | Local «أبلغ عن خطأ» reports (round 6): one row per report with a keyed reporter hash, used only for dedupe and limits. Production keeps its own. The `QuoteFlag` summaries stay. |
 | `QuoteFlag.resolvedBy` values | These hold local user ids, which would point at nobody in production. Today every value is already NULL. The flags themselves stay. |
 | Local `_prisma_migrations` rows | Replaced by the rows a fresh `prisma migrate deploy` writes. Three local rows (`add_query_indexes`, `add_sin_rank`, `add_iman_branches`) carry checksums of older versions of their files. The schema itself is identical, and each build diffs it to prove so. |
 
@@ -53,6 +54,9 @@ Sizes are local totals (heap + indexes + TOAST) as of 2026-10-22.
 | User | 2 | 48 kB | **drop rows** | Development seed accounts. |
 | Favorite | 3 | 48 kB | **drop rows** | Belongs to users. |
 | SyncLog | 494 | 296 kB | **drop rows** | Local job history. |
+| QuoteReport | — | — | **drop rows** | Round 6: per-report rows for the report limits (no address stored). |
+| HomeMoment | — | — | keep | Round 6: the home «في لحظات مثل هذه» list (seed: `home-moments:import`). While empty the API serves `prisma/taxonomy/home-moments.yaml`. |
+| CircleInvite | — | — | **drop rows** (via `User`) | Round 6: رفقة invites cascade with the inviter, so they go with the `User` rows. |
 
 Nothing else is trimmed. The API never reads `rawPayload`, but dropping it would save only
 ~33 MB and lose provenance. The custom-format dump is **50 MB** compressed, and restores to

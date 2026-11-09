@@ -10,17 +10,21 @@
  * - **«تخفَّف» programs: at most 3 at a time, and a new one may start only when every running one has lasted
  *   {@link PROGRAM_SETTLE_DAYS} (60) days** (days since its `startedOn`).
  * - **أعمال دورية: 7.** Periodic acts are reminders, not habits: live, unpaused plans from a periodic template (the
- *   catalog's `kind: periodic`, passed as {@link LimitOptions.isPeriodicAct}) plus people lists (each circle with at
- *   least one person is one act, however many people it holds). They never count toward the habits (nor the streak:
+ *   catalog's `kind: periodic`, passed as {@link LimitOptions.isPeriodicAct}), the member's own acts (always periodic,
+ *   `periodic.ts`), plus «صلة الرحم والأحباب» (round 6: ALL people lists together are one act, however many people or
+ *   lists it holds). Plans of the same catalog act count once. They never count toward the habits (nor the streak:
  *   pass the same `isPeriodicAct` to the streak functions).
+ * - Round 6: a habit restored after more than 3 days in the archive starts again (`Plan.restartedOn`): its kept days
+ *   count from the restart.
  *
  * {@link limitBlock} tells the clients why adding is refused and the first day it unlocks by itself. Pure; the store
  * is not changed.
  */
 import { addDays, diffDays, maxDate, type LocalDate } from './dates.js';
 import { circleOf, type PeopleCircle } from './kinship.js';
-import { isEstablished, isPaused, type Plan } from './plan.js';
+import { isEstablished, isPaused, progressStart, type Plan } from './plan.js';
 import { activePrograms, type SinProgram } from './sin-program.js';
+import { periodicActKeyOf, withCustomPeriodic } from './periodic.js';
 import type { Store } from './storage.js';
 
 export type LimitKind = 'sapling' | 'periodic' | 'program';
@@ -70,11 +74,12 @@ export interface Limits {
  * (`[pausedOn, resumedOn)`, or up to today while still paused). 0 before it starts.
  */
 export function keptDays(plan: Plan, today: LocalDate): number {
-  const age = diffDays(plan.createdOn, today);
+  const start = progressStart(plan);
+  const age = diffDays(start, today);
   if (age <= 0) return 0;
   let paused = 0;
-  if (plan.pausedOn !== undefined && plan.pausedOn < today) {
-    const from = maxDate(plan.pausedOn, plan.createdOn);
+  if (plan.pausedOn !== undefined && plan.pausedOn < today && (plan.resumedOn === undefined || plan.resumedOn > start)) {
+    const from = maxDate(plan.pausedOn, start);
     const until = plan.resumedOn !== undefined && plan.resumedOn < today ? plan.resumedOn : today;
     paused = Math.max(0, diffDays(from, until));
   }
@@ -101,23 +106,30 @@ export function programSettlesOn(program: SinProgram): LocalDate {
  * The limit counts {@link countsTowardHabitLimit} instead (young habits, established or not).
  */
 export function isSapling(plan: Plan, opts: LimitOptions = {}): boolean {
-  return !isEstablished(plan) && !isPaused(plan) && !(opts.isPeriodicAct?.(plan) ?? false);
+  return !isEstablished(plan) && !isPaused(plan) && !withCustomPeriodic(opts.isPeriodicAct)(plan);
 }
 
 /** True for a live habit that takes one of the 3 places on `today`: unpaused, not periodic, kept under 90 days. */
 export function countsTowardHabitLimit(plan: Plan, today: LocalDate, opts: LimitOptions = {}): boolean {
-  return !isPaused(plan) && !(opts.isPeriodicAct?.(plan) ?? false) && !isSettledHabit(plan, today);
+  return !isPaused(plan) && !withCustomPeriodic(opts.isPeriodicAct)(plan) && !isSettledHabit(plan, today);
 }
 
 /** The limit a new plan falls under. */
 export function limitKindOfPlan(plan: Plan, opts: LimitOptions = {}): LimitKind {
-  return opts.isPeriodicAct?.(plan) ? 'periodic' : 'sapling';
+  return withCustomPeriodic(opts.isPeriodicAct)(plan) ? 'periodic' : 'sapling';
 }
 
 const count = (n: number, max: number, full = n >= max): LimitCount => ({ count: n, max, full });
 
+/** Acts in use: plans of one catalog act count once, a plan outside the catalog list once each, all people lists once. */
+function periodicActCount(plans: readonly Plan[], hasPeople: boolean): number {
+  const keys = new Set<string>(plans.map((p) => periodicActKeyOf(p) ?? `plan:${p.id}`));
+  if (hasPeople) keys.add('silat');
+  return keys.size;
+}
+
 export function limits(store: Store, today: LocalDate, opts: LimitOptions = {}): Limits {
-  const isPeriodicAct = opts.isPeriodicAct ?? (() => false);
+  const isPeriodicAct = withCustomPeriodic(opts.isPeriodicAct);
   const saplings = store.plans
     .filter((p) => countsTowardHabitLimit(p, today, opts))
     .sort((a, b) => (habitSettlesOn(a, today) < habitSettlesOn(b, today) ? -1 : habitSettlesOn(a, today) > habitSettlesOn(b, today) ? 1 : 0));
@@ -127,7 +139,7 @@ export function limits(store: Store, today: LocalDate, opts: LimitOptions = {}):
   const programYoung = programs.some((p) => programSettlesOn(p) > today);
   const result: Omit<Limits, 'canAdd'> = {
     sapling: count(saplings.length, LIMITS.sapling),
-    periodic: count(periodicPlans.length + circles.length, LIMITS.periodic),
+    periodic: count(periodicActCount(periodicPlans, circles.length > 0), LIMITS.periodic),
     program: count(programs.length, LIMITS.program, programs.length >= LIMITS.program || programYoung),
     saplings,
     graduationReady: [],
@@ -138,7 +150,9 @@ export function limits(store: Store, today: LocalDate, opts: LimitOptions = {}):
   return {
     ...result,
     canAdd(kind, addOpts = {}) {
-      if (kind === 'periodic' && addOpts.circle !== undefined && circles.includes(addOpts.circle)) return true;
+      // Round 6: every people list is inside «صلة الرحم والأحباب»: once the act is in use, another person adds no act.
+      const silatInUse = circles.length > 0 || periodicPlans.some((p) => periodicActKeyOf(p) === 'silat');
+      if (kind === 'periodic' && addOpts.circle !== undefined && silatInUse) return true;
       return !result[kind].full;
     },
   };

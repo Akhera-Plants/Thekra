@@ -56,7 +56,8 @@ describe('links of these pages use the map’s routes', () => {
   });
 
   it('sends «جرّبها» of the strategies to round-5 places only', () => {
-    const webRoutes = new Set(['/practice', '/practice/record', '/practice/review', '/practice/people', '/practice/leave-sin', '/practice/leave-sin/moment']);
+    // Round 6: «أهلي وناسي» is gone; «تفقّد صديق» opens «صلة الرحم والأحباب» inside the periodic acts.
+    const webRoutes = new Set(['/practice', '/practice/record', '/practice/review', '/practice/periodic', '/practice/leave-sin', '/practice/leave-sin/moment']);
     for (const action of ['add', 'habits', 'wird', 'record', 'seasons', 'moment', 'leaveSin', 'friends', 'pledges', 'evening'] as const) {
       const { href } = strategyTarget(action);
       expect(webRoutes.has(typeof href === 'string' ? href : href.pathname), action).toBe(true);

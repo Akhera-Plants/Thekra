@@ -51,9 +51,16 @@ function storedPrefs(raw: object): Prisma.InputJsonObject {
     fridayReview: all.fridayReview,
     fridayTime: all.fridayTime,
     reviewDay: all.reviewDay,
-    // Round 5: «مناسبة قريبة»; the strategy reminder is gone, so `strategies` / `strategyTime` are no longer stored.
     occasions: all.occasions,
     occasionTime: all.occasionTime,
+    // Round 6 (C-19): the weekly strategy reminder, «نية اليوم», per-habit / per-act switches.
+    strategies: all.strategies,
+    strategyTime: all.strategyTime,
+    strategyDay: all.strategyDay,
+    intentionReminder: all.intentionReminder,
+    intentionTime: all.intentionTime,
+    mutedPlans: all.mutedPlans,
+    mutedActs: all.mutedActs,
   };
 }
 

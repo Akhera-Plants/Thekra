@@ -2,8 +2,10 @@ import { Transform } from 'class-transformer';
 import { IsEnum, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { LinkReviewStatus } from '@prisma/client';
 import { IsStrictInt } from '../../../common/decorators/is-strict-int.decorator.js';
+import { LinkEditorialFieldsDto } from './link-editorial-fields.dto.js';
 
-export class UpdateSinLinkDto {
+/** PATCH a link: score, note, review status, and the round-6 editorial fields (LinkEditorialFieldsDto). */
+export class UpdateSinLinkDto extends LinkEditorialFieldsDto {
   @IsOptional()
   @IsStrictInt()
   @Min(0)

@@ -1,6 +1,6 @@
 /**
  * One navigation map for the website and the app (owner round 5, F-34 a / W-11 c,
- * docs/plan/2026-11-07-owner-round-5.md §1): every feature's Arabic and English name, its web route and its app route.
+ * docs/plan/2026-11-07-owner-round-5.md §1; round 6 §1, docs/plan/2026-11-09-owner-round-6.md): every feature's Arabic and English name, its web route and its app route.
  * Each client has a test that compares its menus and page titles with this list, so a name or a place cannot drift
  * between the two platforms again. When a page moves or is renamed, change it here first; both clients' tests then
  * say what to follow.
@@ -25,7 +25,7 @@ export type NavGroup =
   | 'habits'
   /** «أبواب الخير»: the public doors (web header group of the same name). */
   | 'doors'
-  /** Member features listed in «المزيد» (app) and «للأعضاء» (web). */
+  /** «المزيد»: the web header menu and the app tab (round 6: الاستراتيجيات، المحفوظات، رفقة). */
   | 'members'
   /** «الإعدادات» and its pages. */
   | 'settings';
@@ -47,67 +47,113 @@ export interface NavFeature {
 }
 
 /**
- * Every page of the round-5 information architecture, both platforms (round plan §1, App and Web tables). In menu
- * order within each group.
+ * Every page of the information architecture, both platforms. Round 6 (docs/plan/2026-11-09-owner-round-6.md §1):
+ * «أهلي وناسي» and «تصفّح النصوص» are gone; «صلة الرحم والأحباب» is one act INSIDE «الأعمال الدورية» (no page, menu
+ * entry or tab of its own); «عاداتي» has five tabs «اليوم · العادات · الأعمال الدورية · محاسبتي · سجلّي»; «خصّص الرئيسية»
+ * lives only in the settings. Menus are built from {@link WEB_HEADER}, {@link WEB_ACCOUNT_MENU}, {@link APP_TABS},
+ * {@link APP_MORE} and {@link HABITS_TABS}. In menu order within each group.
  */
 export const NAV_FEATURES: readonly NavFeature[] = [
   // ── Home ──
   { key: 'home', ar: 'الرئيسية', en: 'Home', web: '/', app: '/', group: 'home' },
-  { key: 'customize-home', ar: 'خصّص الرئيسية', en: 'Customize home', web: '/', app: '/', group: 'home', parent: 'home' },
 
   // ── عاداتي (app tab `app/(tabs)/habits.tsx`; web `/practice/*`) ──
   { key: 'habits', ar: 'عاداتي', en: 'My habits', web: '/practice', app: '/habits', group: 'habits' },
-  { key: 'wird', ar: 'ورد اليوم', en: "Today's practice", web: '/practice', app: '/habits?tab=wird', group: 'habits', parent: 'habits' },
-  { key: 'periodic', ar: 'الدورية', en: 'Periodic acts', web: '/practice/periodic', app: '/habits?tab=periodic', group: 'habits', parent: 'habits' },
+  { key: 'today', ar: 'اليوم', en: 'Today', web: '/practice', app: '/habits?tab=today', group: 'habits', parent: 'habits' },
+  { key: 'my-habits', ar: 'العادات', en: 'Habits', web: '/practice/habits', app: '/habits?tab=habits', group: 'habits', parent: 'habits' },
+  { key: 'periodic', ar: 'الأعمال الدورية', en: 'Periodic acts', web: '/practice/periodic', app: '/habits?tab=periodic', group: 'habits', parent: 'habits' },
   { key: 'review', ar: 'محاسبتي', en: 'My self-review', web: '/practice/review', app: '/habits?tab=review', group: 'habits', parent: 'habits' },
   { key: 'record', ar: 'سجلّي', en: 'My record', web: '/practice/record', app: '/habits?tab=record', group: 'habits', parent: 'habits' },
-  { key: 'habit', ar: 'صفحة العادة', en: 'Habit page', web: '/practice/habits/[id]', app: '/practice/plan/[id]', group: 'habits', parent: 'habits' },
+  { key: 'habit', ar: 'صفحة العادة', en: 'Habit page', web: '/practice/habits/[id]', app: '/practice/plan/[id]', group: 'habits', parent: 'my-habits' },
   { key: 'add', ar: 'أضف', en: 'Add', web: null, app: '/practice/add', group: 'habits', parent: 'habits' },
-  { key: 'fard', ar: 'الفرائض', en: 'Obligatory prayers', web: '/practice', app: '/habits?tab=wird', group: 'habits', parent: 'wird' },
+  { key: 'fard', ar: 'الفرائض', en: 'Obligatory prayers', web: '/practice', app: '/habits?tab=today', group: 'habits', parent: 'today' },
+  { key: 'qada', ar: 'قضاء الفوائت', en: 'Making up missed prayers', web: '/practice', app: '/habits?tab=today', group: 'habits', parent: 'fard' },
+  { key: 'silat', ar: 'صلة الرحم والأحباب', en: 'Ties of kinship and loved ones', web: '/practice/periodic', app: '/habits?tab=periodic', group: 'habits', parent: 'periodic' },
+  { key: 'self-messages', ar: 'رسائلي إلى نفسي', en: 'My messages to myself', web: '/practice', app: '/habits', group: 'habits', parent: 'habits' },
+  { key: 'leave-sin', ar: 'تخفَّف', en: 'Lighten', web: '/practice/leave-sin', app: '/practice/sin-program', group: 'habits', parent: 'my-habits' },
   { key: 'moment', ar: 'لحظة مجاهدة', en: 'A moment of striving', web: '/practice/leave-sin/moment', app: '/practice/moment', group: 'habits' },
 
-  // ── أبواب الخير (web header group; app home doors) ──
-  { key: 'leave-sin', ar: 'تخفَّف', en: 'Lighten', web: '/practice/leave-sin', app: '/practice/sin-program', group: 'doors' },
-  { key: 'sins', ar: 'ساعدني أترك معصية', en: 'Help me leave a sin', web: '/sins', app: '/sins', group: 'doors' },
+  // ── أبواب الخير (web header links; app home doors) ──
   { key: 'good-deeds', ar: 'الطاعات', en: 'Good deeds', web: '/good-deeds', app: '/good-deeds', group: 'doors' },
+  { key: 'sins', ar: 'تخفَّف من ذنب', en: 'Lighten a sin', web: '/sins', app: '/sins', group: 'doors' },
   { key: 'branches', ar: 'شعب الإيمان', en: 'The Branches of Faith', web: '/branches', app: '/branches', group: 'doors' },
-  { key: 'browse', ar: 'تصفّح النصوص', en: 'Browse texts', web: '/browse', app: '/browse', group: 'doors' },
 
-  // ── للأعضاء (web) / المزيد (app) ──
-  { key: 'people', ar: 'أهلي وناسي', en: 'My family and people', web: '/practice/people', app: '/practice/kinship', group: 'members' },
-  { key: 'circles', ar: 'رفقة', en: 'Companions', web: null, app: '/circles', group: 'members' },
+  // ── «المزيد» (web header menu and app tab) ──
+  { key: 'strategies', ar: 'استراتيجيات العادات', en: 'Habit strategies', web: '/practice/strategies', app: '/practice/strategies', group: 'members' },
   { key: 'saved', ar: 'المحفوظات', en: 'Saved', web: '/favorites', app: '/favorites', group: 'members' },
   { key: 'saved-texts', ar: 'النصوص', en: 'Texts', web: '/favorites', app: '/favorites?tab=texts', group: 'members', parent: 'saved' },
   { key: 'my-reminders', ar: 'تذكيراتي', en: 'My reminders', web: '/favorites/reminders', app: '/favorites?tab=reminders', group: 'members', parent: 'saved' },
-  { key: 'strategies', ar: 'استراتيجيات العادات', en: 'Habit strategies', web: '/practice/strategies', app: '/practice/strategies', group: 'members' },
+  { key: 'circles', ar: 'رفقة', en: 'Companions', web: null, app: '/circles', group: 'members' },
   { key: 'garden', ar: 'الحديقة', en: 'The garden', web: null, app: '/garden', group: 'members' },
   { key: 'more', ar: 'المزيد', en: 'More', web: null, app: '/more', group: 'members' },
 
-  // ── الإعدادات ──
-  // The app has no settings screen of its own: its rows are the last group of «المزيد».
+  // ── الإعدادات (web: only in the account menu; app: the last group of «المزيد») ──
   { key: 'settings', ar: 'الإعدادات', en: 'Settings', web: '/settings', app: '/more', group: 'settings' },
   { key: 'account', ar: 'الحساب', en: 'Account', web: '/settings', app: '/settings/account', group: 'settings', parent: 'settings' },
   { key: 'privacy', ar: 'الخصوصية والتشفير', en: 'Privacy and encryption', web: '/settings', app: '/settings/privacy', group: 'settings', parent: 'settings' },
   { key: 'notifications', ar: 'التنبيهات', en: 'Notifications', web: '/settings/notifications', app: '/settings/notifications', group: 'settings', parent: 'settings' },
   { key: 'prayer-times', ar: 'أوقات الصلاة', en: 'Prayer times', web: '/settings/prayer-times', app: '/practice/prayer-times', group: 'settings', parent: 'settings' },
   { key: 'appearance', ar: 'اللغة والمظهر', en: 'Language and appearance', web: null, app: '/settings/appearance', group: 'settings', parent: 'settings' },
+  { key: 'customize-home', ar: 'خصّص الرئيسية', en: 'Customize home', web: '/settings', app: '/settings/appearance', group: 'settings', parent: 'appearance' },
   { key: 'about', ar: 'عن ذكرى', en: 'About Thekra', web: '/about', app: '/settings/about', group: 'settings', parent: 'settings' },
 ];
 
 /**
- * Old web paths that redirect (round plan §1 Web table and «Removed screens»). The new place is a feature's `web`
- * route. The web client keeps its redirects in step with this list.
+ * The web header (round 6 §1, C-07 b, C-05 a): the links, then «المزيد ▾» with its items, then the account avatar menu.
+ * An item of «المزيد» is never also in the header, and vice versa (`nav-map` test). Settings are ONLY in the account menu.
+ */
+export const WEB_HEADER: { readonly links: readonly string[]; readonly more: readonly string[] } = {
+  links: ['home', 'good-deeds', 'sins', 'branches', 'habits'],
+  more: ['strategies', 'saved', 'circles'],
+};
+
+/** The account avatar menu of the web header (C-05 a): الحساب، الإعدادات، then the action {@link SIGN_OUT}. */
+export const WEB_ACCOUNT_MENU: readonly string[] = ['account', 'settings'];
+
+/** The last row of the account menu: an action, not a page. */
+export const SIGN_OUT = { ar: 'تسجيل الخروج', en: 'Sign out' } as const;
+
+/** The app's tabs (unchanged): الرئيسية · عاداتي · المزيد. */
+export const APP_TABS: readonly string[] = ['home', 'habits', 'more'];
+
+/**
+ * The app's «المزيد» (round 6 §1): the web «المزيد» (+ «الحديقة», app only and unchanged, §10), then the settings rows.
+ * No «تصفّح النصوص», no people page.
+ */
+export const APP_MORE: { readonly mine: readonly string[]; readonly settings: readonly string[] } = {
+  mine: ['strategies', 'saved', 'circles', 'garden'],
+  settings: ['account', 'privacy', 'notifications', 'prayer-times', 'appearance', 'about'],
+};
+
+/** The tabs of «عاداتي», in order (web routes and app `?tab=` values come from {@link NAV_FEATURES}). */
+export const HABITS_TABS: readonly string[] = ['today', 'my-habits', 'periodic', 'review', 'record'];
+
+/**
+ * Keys removed in round 6 → the key to use now, so an older client build that still asks for them finds a page instead
+ * of throwing (`navFeature` follows them). `browse` has no successor (the feature is gone; its old path goes home).
+ * @deprecated Clients move to the new keys; remove once none asks for an old one.
+ */
+export const NAV_KEY_ALIASES: Readonly<Record<string, string>> = {
+  wird: 'today',
+  people: 'periodic',
+};
+
+/**
+ * Old web paths that redirect (round plans §1). The new place is a feature's `web` route. The web client keeps its
+ * redirects in step with this list. Round 6: `/practice/habits` is the «العادات» tab again (no redirect),
+ * `/practice/people` and `/practice/kinship` go to «الأعمال الدورية», `/browse` goes home.
  */
 export const WEB_REDIRECTS: readonly { from: string; to: string }[] = [
   { from: '/practice/reviews', to: '/practice/review' },
   { from: '/practice/pledges', to: '/practice/review' },
   { from: '/calendar', to: '/practice/record' },
-  { from: '/practice/habits', to: '/practice/record' },
-  { from: '/practice/kinship', to: '/practice/people' },
+  { from: '/practice/kinship', to: '/practice/periodic' },
+  { from: '/practice/people', to: '/practice/periodic' },
   { from: '/practice/my-reminders', to: '/favorites/reminders' },
   { from: '/practice/notifications', to: '/settings/notifications' },
   { from: '/practice/prayer-times', to: '/settings/prayer-times' },
   { from: '/names', to: '/' },
+  { from: '/browse', to: '/' },
 ];
 
 /** One shared word: the form to use and the forms to avoid, on both platforms. */
@@ -132,13 +178,6 @@ export const GLOSSARY: readonly GlossaryTerm[] = [
     en: 'texts',
     avoidAr: ['اقتباسات', 'اقتباس'],
     note: 'Owner, round 5: «اقتباسات» → «نصوص» (a verse or a hadith is not a quotation).',
-  },
-  {
-    key: 'browse',
-    ar: 'تصفّح النصوص',
-    en: 'Browse texts',
-    avoidAr: ['استكشف', 'استكشف النصوص'],
-    note: 'The web said «تصفّح», the app «استكشف النصوص». Picked «تصفّح»: it says what the page is (a library to read through), and it is the word the site already uses; «النصوص» names what is browsed.',
   },
   {
     key: 'notifications',
@@ -166,14 +205,56 @@ export const GLOSSARY: readonly GlossaryTerm[] = [
     ar: 'حال يومي',
     en: 'My day',
     avoidAr: ['يومي ثقيل', 'عذر اليوم'],
-    note: 'One control on both platforms (F-34): it opens the choices «يوم ثقيل» and «عذر (مرض أو سفر)».',
+    note: 'Round 6 (C-01r): one control that opens a list — يوم عادي · مرض شديد · انشغالات طارئة · سفر (practice-core day-state.ts).',
   },
   {
-    key: 'people',
-    ar: 'أهلي وناسي',
-    en: 'My family and people',
+    key: 'silat',
+    ar: 'صلة الرحم والأحباب',
+    en: 'Ties of kinship and loved ones',
+    avoidAr: ['أهلي وناسي'],
+    note: 'Round 6 (C-05, C-10, C-01i): «أهلي وناسي» does not exist any more. Its people lists (kin, parents, neighbours, friends, the sick) live inside this ONE periodic act, never a page, menu entry or tab of its own.',
+  },
+  {
+    key: 'archive',
+    ar: 'الأرشيف',
+    en: 'Archive',
+    avoidAr: ['أوقِف مؤقتًا', 'موقوفة مؤقتًا', 'إيقاف مؤقت'],
+    note: 'Round 6 (owner chat, C-01d): archive IS the old pause — one concept. At most 10; restoring after more than 3 days starts the progress again (archive.ts).',
+  },
+  {
+    key: 'minimum',
+    ar: 'القدر الأدنى',
+    en: 'Minimum',
+    avoidAr: ['أقل ما يمكن'],
+    note: 'Round 6 (C-01r): the amount the member sets and never lowers; a hard day asks exactly it (plan.ts minimumOf).',
+  },
+  {
+    key: 'not-done',
+    ar: 'لم تتم',
+    en: 'Not done',
+    avoidAr: ['فاتتك', 'فشلت'],
+    note: 'Round 6 (C-01j): a past asked day without a log, in a calm style; for a few days the row still asks «هل فعلتها؟» (فعلتها / لم أفعل).',
+  },
+  {
+    key: 'self-messages',
+    ar: 'رسائلي إلى نفسي',
+    en: 'My messages to myself',
     avoidAr: [],
-    note: 'F-15 a: the page holds kin, parents, neighbours, friends and the sick. «صلة الرحم» stays the name of the kin list only.',
+    note: 'Round 6 (C-02c): a list (add / edit / delete, at most 10) opened from the top of «عاداتي», no longer inside «محاسبتي».',
+  },
+  {
+    key: 'qada',
+    ar: 'قضاء الفوائت',
+    en: 'Making up missed prayers',
+    avoidAr: [],
+    note: 'Round 6 (C-01a): owed prayers, a pace and a circular progress chart, inside «الفرائض».',
+  },
+  {
+    key: 'read',
+    ar: 'مقروء',
+    en: 'Read',
+    avoidAr: [],
+    note: 'Round 6 (owner chat): «مقروء» / «غير مقروء» on texts in topic pages (reads.ts).',
   },
   {
     key: 'habit',
@@ -187,7 +268,7 @@ export const GLOSSARY: readonly GlossaryTerm[] = [
     ar: 'عمل دوري',
     en: 'periodic act',
     avoidAr: [],
-    note: 'A reminder only (no commitment tracking); the tab is «الدورية».',
+    note: 'A reminder only (no commitment tracking); the tab is «الأعمال الدورية» (round 6).',
   },
   {
     key: 'fard',
@@ -215,7 +296,7 @@ export const GLOSSARY: readonly GlossaryTerm[] = [
     ar: 'محاسبتي',
     en: 'My self-review',
     avoidAr: ['التزاماتي'],
-    note: 'The «عاداتي» tab of «نية اليوم», the evening and weekly reviews and «رسائلي إلى نفسي».',
+    note: 'The «عاداتي» tab of «نية اليوم», the evening and weekly reviews (tabs «اليوم / الأسبوع»). Round 6: «رسائلي إلى نفسي» moved out; no «حاسب نفسك الآن».',
   },
   {
     key: 'record',
@@ -226,10 +307,10 @@ export const GLOSSARY: readonly GlossaryTerm[] = [
   },
   {
     key: 'lighten',
-    ar: 'تخفَّف',
-    en: 'Lighten',
-    avoidAr: [],
-    note: 'The sin-leaving program; never names the sin in menus or notifications.',
+    ar: 'تخفَّف من ذنب',
+    en: 'Lighten a sin',
+    avoidAr: ['ترك معصية', 'ترك المعصية', 'أترك معصية'],
+    note: 'Round 6 (C-01f): never «ترك معصية» as a label; «تخفَّف من ذنب / من معصية» everywhere. The door opens a searchable list of sins; a program is a habit of type «تخفَّف» (covered by default). Never names the sin in menus or notifications.',
   },
   {
     key: 'moment',
@@ -247,9 +328,10 @@ export const GLOSSARY: readonly GlossaryTerm[] = [
   },
 ];
 
-/** The feature with this key, or undefined. */
+/** The feature with this key (or the successor of a removed key, {@link NAV_KEY_ALIASES}), or undefined. */
 export function navFeature(key: string): NavFeature | undefined {
-  return NAV_FEATURES.find((f) => f.key === key);
+  const k = NAV_KEY_ALIASES[key] ?? key;
+  return NAV_FEATURES.find((f) => f.key === k);
 }
 
 /** The name of a feature in a language; throws on an unknown key (a typo in a client should fail its test). */

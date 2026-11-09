@@ -79,6 +79,13 @@ export interface CheckIn {
   goodDeed?: true;
   /** «حدّ صغير لغد»: shown on the next day's page. */
   nextLimit?: LimitRef;
+  /**
+   * Round 6 (C-27): «ما الذي أعانك على تجنّبها؟» — the member's own short answer (≤ {@link CHECK_IN_ANSWER_MAX}). Like
+   * the note, it lives only inside the encrypted vault.
+   */
+  helped?: string;
+  /** Round 6 (C-27): «ما الذي صعّب عليك تركها؟» (≤ {@link CHECK_IN_ANSWER_MAX}), vault only. */
+  hard?: string;
   /** When this check-in was last written. Merging two devices keeps the later one ({@link mergePrograms}). */
   updatedAt?: IsoTime;
 }
@@ -401,8 +408,16 @@ export function validateCheckIn(c: unknown): string | null {
   }
   if (r.goodDeed !== undefined && r.goodDeed !== true) return 'check-in goodDeed must be true when present';
   if (r.nextLimit !== undefined && !isLimitRef(r.nextLimit)) return 'check-in nextLimit must be a limit key or action:<n>';
+  for (const k of ['helped', 'hard'] as const) {
+    if (r[k] !== undefined && (typeof r[k] !== 'string' || (r[k] as string).length > CHECK_IN_ANSWER_MAX)) {
+      return `check-in ${k} must be a string of at most ${CHECK_IN_ANSWER_MAX} characters`;
+    }
+  }
   return null;
 }
+
+/** Characters of a check-in's «ما الذي أعانك / صعّب» answer (round 6). */
+export const CHECK_IN_ANSWER_MAX = 300;
 
 /** Returns an English error message for the trigger chips, or `null`. */
 export function validateTriggers(t: unknown): string | null {
@@ -442,6 +457,11 @@ export function sanitizeCheckIn(c: unknown): unknown {
   }
   if (r.goodDeed !== undefined && r.goodDeed !== true) delete r.goodDeed;
   if (r.nextLimit !== undefined && !isLimitRef(r.nextLimit)) delete r.nextLimit;
+  for (const k of ['helped', 'hard'] as const) {
+    if (r[k] === undefined) continue;
+    if (typeof r[k] !== 'string' || (r[k] as string).trim().length === 0) delete r[k];
+    else r[k] = (r[k] as string).slice(0, CHECK_IN_ANSWER_MAX);
+  }
   return r;
 }
 
@@ -467,6 +487,8 @@ export function checkIn(
   if (value !== 'held' && previous?.triggers) entry.triggers = { ...previous.triggers };
   if (value !== 'held' && previous?.nextLimit) entry.nextLimit = previous.nextLimit;
   if (previous?.goodDeed) entry.goodDeed = true;
+  if (previous?.helped !== undefined) entry.helped = previous.helped;
+  if (previous?.hard !== undefined) entry.hard = previous.hard;
   entry.updatedAt = now;
   const checkIns = program.checkIns.filter((c) => c.date !== date).concat(entry);
   checkIns.sort(byDate);
@@ -478,6 +500,10 @@ export interface CheckInDetails {
   triggers?: Triggers | null;
   goodDeed?: boolean;
   nextLimit?: LimitRef | null;
+  /** Round 6: «ما الذي أعانك على تجنّبها؟»; `null` or empty clears it. */
+  helped?: string | null;
+  /** Round 6: «ما الذي صعّب عليك تركها؟»; `null` or empty clears it. */
+  hard?: string | null;
 }
 
 /**
@@ -510,6 +536,13 @@ export function annotateCheckIn(program: SinProgram, date: LocalDate, details: C
     if (details.nextLimit === null) delete entry.nextLimit;
     else if (!isLimitRef(details.nextLimit)) throw new RangeError('Invalid limit');
     else entry.nextLimit = details.nextLimit;
+  }
+  for (const k of ['helped', 'hard'] as const) {
+    const v = details[k];
+    if (v === undefined) continue;
+    const text = typeof v === 'string' ? v.trim().slice(0, CHECK_IN_ANSWER_MAX).trim() : '';
+    if (text.length === 0) delete entry[k];
+    else entry[k] = text;
   }
   entry.updatedAt = now;
   return { ...program, checkIns: program.checkIns.map((c) => (c.date === date ? entry : c)) };

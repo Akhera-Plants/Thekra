@@ -15,8 +15,15 @@
  * - «مناسبة قريبة» (round 5, F-17; opt-in, off by default): the day before a non-weekly occasion of the practice catalog
  *   (Arafah, the ten days, Ashura, the white days…; never Mondays/Thursdays or Friday), at the user's time. The client
  *   passes the catalog's occasions (`GET /v1/practice/catalog`), the server its own copy of the same catalog.
- * - The weekly strategy reminder («ذكّرني بها») was removed in round 5 (F-12 a): strategies appear in their moment.
- *   Its prefs still parse (older devices and stored push prefs), but nothing is planned from them.
+ * - Round 6 (C-19): the weekly strategy reminder is back «as the reference has it»: the chosen strategies
+ *   (`strategies`), one a week rotating, on the member's day and time (`strategyDay`, `strategyTime`). Opt-in: nothing
+ *   is planned without a chosen strategy.
+ * - Round 6: «نية اليوم» reminder (opt-in, `intentionReminder` at `intentionTime`), unless that day's intention is made
+ *   (`intentionDoneOn`).
+ * - Round 6: per-item switches — `mutedPlans` (a habit or periodic plan by id) and `mutedActs` (a periodic act by its
+ *   `periodic.ts` key, e.g. `silat` for every people list) — so «التنبيهات» can list one row per habit and per active act.
+ * - The settings page groups the switches in four tabs ({@link NOTIFICATION_GROUPS}): العادات · الأعمال الدورية · النية
+ *   والمحاسبة · الاستراتيجيات. There is no calendar (ICS) file in it any more (C-19).
  * - Quiet hours {@link QUIET_START}–{@link QUIET_END}: nothing the policy chose rings inside them. A habit slot inside
  *   them rings only for the night prayer ({@link NIGHT_HABIT_KEYS}) or when the user set that time himself (it is not
  *   one of the catalog's suggested slots). Times the user picks in «التنبيهات» are his own choice.
@@ -33,7 +40,8 @@ import { isPaused, reminderSlots, requiredOn, type Plan } from './plan.js';
 import { activePrograms } from './sin-program.js';
 import { isExcused, type Store } from './storage.js';
 import { isPeriodicPlan } from './wird.js';
-import { cleanStrategyKeys, strategyByKey } from './strategies.js';
+import { cleanStrategyKeys, strategyByKey, strategyOfWeek, STRATEGY_WEEKDAY } from './strategies.js';
+import { periodicActKeyOf } from './periodic.js';
 import type { PrayerTimesLookup } from './prayer.js';
 import { occurrences, type Rule } from './rules.js';
 import type { AgendaOccasion } from './agenda.js';
@@ -49,14 +57,11 @@ export const DAILY_CAP = 4;
 /** A people list reminds again after this many days while someone stays due. */
 export const PERIODIC_REPEAT_DAYS = 7;
 
-/**
- * `strategy` is never planned since round 5 (the weekly strategy reminder was removed, F-12 a); it stays in the union
- * only so older client code that switches on it still compiles. Remove it once no client mentions it.
- */
-export type NotificationKind = 'habit' | 'periodic' | 'evening' | 'friday' | 'private' | 'occasion' | 'strategy' | 'digest';
+/** `strategy` is planned again since round 6 (C-19); `intention` is new in round 6. */
+export type NotificationKind = 'habit' | 'periodic' | 'evening' | 'friday' | 'private' | 'occasion' | 'strategy' | 'intention' | 'digest';
 
 /** The kinds {@link notificationPlan} plans (when `kinds` is not given). */
-export const NOTIFICATION_KINDS: readonly NotificationKind[] = ['habit', 'periodic', 'evening', 'friday', 'private', 'occasion', 'digest'];
+export const NOTIFICATION_KINDS: readonly NotificationKind[] = ['habit', 'periodic', 'evening', 'friday', 'private', 'occasion', 'strategy', 'intention', 'digest'];
 
 /** Every switch and time of «التنبيهات». Device-local on each client (the web sends it with its push subscription). */
 export interface NotificationPrefs {
@@ -79,14 +84,22 @@ export interface NotificationPrefs {
   /** «مناسبة قريبة» (round 5): the day before a non-weekly occasion. Opt-in, off by default. */
   occasions: boolean;
   occasionTime: LocalTime;
-  /**
-   * @deprecated Round 5 (F-12 a) removed the weekly strategy reminder: still parsed (older prefs), never planned.
-   * Clients drop their «ذكّرني بها» switches; remove this field once none reads it.
-   */
+  /** The strategies reminded (round 6: planned again), one a week rotating. Empty: no strategy reminder. */
   strategies: string[];
-  /** @deprecated See {@link NotificationPrefs.strategies}. */
   strategyTime: LocalTime;
+  /** The strategy reminder's weekday, 0 = Sunday … 6 = Saturday (round 6). */
+  strategyDay: number;
+  /** «نية اليوم» reminder (round 6, opt-in). */
+  intentionReminder: boolean;
+  intentionTime: LocalTime;
+  /** Plans whose reminders are off (habits and periodic plans), by id (round 6). */
+  mutedPlans: string[];
+  /** Periodic acts whose reminders are off, by `periodic.ts` key (`silat` = every people list) (round 6). */
+  mutedActs: string[];
 }
+
+/** Ids kept in `mutedPlans` / `mutedActs` at most. */
+export const MAX_MUTED = 100;
 
 export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
   habits: true,
@@ -103,20 +116,54 @@ export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
   occasionTime: '20:00',
   strategies: [],
   strategyTime: '10:00',
+  strategyDay: STRATEGY_WEEKDAY,
+  intentionReminder: false,
+  intentionTime: '07:30',
+  mutedPlans: [],
+  mutedActs: [],
 };
 
-const PREF_BOOLS = ['habits', 'periodic', 'eveningNudge', 'fridayReview', 'privateMoment', 'occasions'] as const;
-const PREF_TIMES = ['periodicTime', 'eveningTime', 'fridayTime', 'privateTime', 'occasionTime', 'strategyTime'] as const;
+/** A tab of «التنبيهات» (round 6, C-19) and the prefs it holds, in order. No calendar file in any tab. */
+export interface NotificationGroup {
+  key: 'habits' | 'periodic' | 'heart' | 'strategies';
+  prefs: readonly (keyof NotificationPrefs)[];
+}
+
+/**
+ * «العادات» (each habit's own switch via `mutedPlans`, the evening nudge, the private «تخفّف» moment on the app) ·
+ * «الأعمال الدورية» (only the member's active acts, each with a switch via `mutedActs` / `mutedPlans`; none → an add
+ * button; «مناسبة قريبة») · «النية والمحاسبة» · «الاستراتيجيات».
+ */
+export const NOTIFICATION_GROUPS: readonly NotificationGroup[] = [
+  { key: 'habits', prefs: ['habits', 'mutedPlans', 'eveningNudge', 'eveningTime', 'privateMoment', 'privateTime'] },
+  { key: 'periodic', prefs: ['periodic', 'periodicTime', 'mutedActs', 'occasions', 'occasionTime'] },
+  { key: 'heart', prefs: ['intentionReminder', 'intentionTime', 'fridayReview', 'fridayTime', 'reviewDay'] },
+  { key: 'strategies', prefs: ['strategies', 'strategyDay', 'strategyTime'] },
+];
+
+const PREF_BOOLS = ['habits', 'periodic', 'eveningNudge', 'fridayReview', 'privateMoment', 'occasions', 'intentionReminder'] as const;
+const PREF_TIMES = ['periodicTime', 'eveningTime', 'fridayTime', 'privateTime', 'occasionTime', 'strategyTime', 'intentionTime'] as const;
+
+const ids = (raw: unknown): string[] =>
+  Array.isArray(raw) ? [...new Set(raw.filter((v): v is string => typeof v === 'string' && v.length > 0 && v.length <= 80))].slice(0, MAX_MUTED) : [];
 
 /** Never throws: unknown or invalid fields fall back to the defaults, unknown keys are dropped. */
 export function parseNotificationPrefs(raw: unknown, defaults: NotificationPrefs = DEFAULT_NOTIFICATION_PREFS): NotificationPrefs {
-  const out: NotificationPrefs = { ...defaults, strategies: [...defaults.strategies] };
+  const out: NotificationPrefs = {
+    ...defaults,
+    strategies: [...defaults.strategies],
+    mutedPlans: [...defaults.mutedPlans],
+    mutedActs: [...defaults.mutedActs],
+  };
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return out;
   const r = raw as Record<string, unknown>;
   for (const k of PREF_BOOLS) if (typeof r[k] === 'boolean') out[k] = r[k] as boolean;
   for (const k of PREF_TIMES) if (isValidTime(r[k])) out[k] = r[k] as LocalTime;
   if (typeof r.reviewDay === 'number' && Number.isInteger(r.reviewDay) && r.reviewDay >= 0 && r.reviewDay <= 6) out.reviewDay = r.reviewDay;
   if (Array.isArray(r.strategies)) out.strategies = cleanStrategyKeys(r.strategies);
+  if (typeof r.strategyDay === 'number' && Number.isInteger(r.strategyDay) && r.strategyDay >= 0 && r.strategyDay <= 6) out.strategyDay = r.strategyDay;
+  if (Array.isArray(r.mutedPlans)) out.mutedPlans = ids(r.mutedPlans);
+  if (Array.isArray(r.mutedActs)) out.mutedActs = ids(r.mutedActs);
   return out;
 }
 
@@ -141,7 +188,7 @@ export interface PlannedNotification {
   occasions?: string[];
   /** `occasion`: the day the occasions start (the entry's `date` + 1). */
   occasionDate?: LocalDate;
-  /** @deprecated Never set since round 5 (no strategy reminders). */
+  /** `strategy`: the strategy of that week (round 6). */
   strategy?: string;
 }
 
@@ -166,6 +213,8 @@ export interface NotificationPlanInput {
   kinds?: readonly NotificationKind[];
   /** True when that Friday's review is already saved (no reminder). */
   reviewDoneOn?: (friday: LocalDate) => boolean;
+  /** True when that day's «نية اليوم» is already made (no reminder). The server does not know it (device-local). */
+  intentionDoneOn?: (date: LocalDate) => boolean;
   /**
    * The practice catalog's occasions (`GET /v1/practice/catalog` `occasions`), for «مناسبة قريبة». Absent: none. The
    * Hijri offset is the store's (`settings.hijriOffset`).
@@ -192,8 +241,12 @@ function quietExempt(plan: Plan, time: LocalTime, defaultSlotsOf: NotificationPl
 function habitEntries(input: NotificationPlanInput, dates: readonly LocalDate[]): PlannedNotification[] {
   const { store, today, now, dayOptions = {} } = input;
   const out: PlannedNotification[] = [];
+  const mutedPlans = new Set(input.prefs.mutedPlans ?? []);
+  const mutedActs = new Set(input.prefs.mutedActs ?? []);
   for (const plan of store.plans) {
-    if (reminderSlots(plan).length === 0) continue;
+    if (reminderSlots(plan).length === 0 || mutedPlans.has(plan.id)) continue;
+    const act = periodicActKeyOf(plan);
+    if (act !== null && mutedActs.has(act)) continue;
     const periodic = isPeriodicPlan(plan, dayOptions);
     for (const date of dates) {
       if (isExcused(store, date) || !planAsksOn(plan, date, dayOptions)) continue;
@@ -212,6 +265,8 @@ function habitEntries(input: NotificationPlanInput, dates: readonly LocalDate[])
 
 function periodicEntries(input: NotificationPlanInput, end: LocalDate): PlannedNotification[] {
   const { store, prefs, today, now } = input;
+  // Round 6: every people list is the act «صلة الرحم والأحباب» (`silat`).
+  if ((prefs.mutedActs ?? []).includes('silat')) return [];
   const time = prefs.periodicTime;
   const firstDay = time > now ? today : addDays(today, 1);
   const byDate = new Map<LocalDate, string[]>();
@@ -268,6 +323,30 @@ function privateEntries(input: NotificationPlanInput, dates: readonly LocalDate[
   return dates
     .filter((date) => !(date === today && (time <= now || checkedInToday)))
     .map((date) => ({ kind: 'private' as const, key: `private:${date}`, date, time }));
+}
+
+/** Round 6: the weekly strategy reminder on the member's day and time, rotating the chosen strategies. */
+function strategyEntries(input: NotificationPlanInput, dates: readonly LocalDate[]): PlannedNotification[] {
+  const { prefs, today, now } = input;
+  const keys = cleanStrategyKeys(prefs.strategies);
+  if (keys.length === 0) return [];
+  const day = prefs.strategyDay ?? STRATEGY_WEEKDAY;
+  const out: PlannedNotification[] = [];
+  for (const date of dates) {
+    if (date === today && prefs.strategyTime <= now) continue;
+    const strategy = strategyOfWeek(keys, date, day);
+    if (strategy) out.push({ kind: 'strategy', key: `strategy:${date}`, date, time: prefs.strategyTime, strategy });
+  }
+  return out;
+}
+
+/** Round 6: «نية اليوم» reminder on each day not yet made (opt-in). Only while some habit is live. */
+function intentionEntries(input: NotificationPlanInput, dates: readonly LocalDate[]): PlannedNotification[] {
+  const { store, prefs, today, now } = input;
+  if (!store.plans.some((p) => !isPaused(p))) return [];
+  return dates
+    .filter((date) => !(date === today && prefs.intentionTime <= now) && !isExcused(store, date) && !input.intentionDoneOn?.(date))
+    .map((date) => ({ kind: 'intention' as const, key: `intention:${date}`, date, time: prefs.intentionTime }));
 }
 
 /**
@@ -368,10 +447,15 @@ export function notificationPlan(input: NotificationPlanInput): PlannedNotificat
     ...(kinds.has('evening') && prefs.eveningNudge ? eveningEntries(input, dates) : []),
     ...(kinds.has('friday') && prefs.fridayReview ? fridayEntries(input, dates) : []),
     ...(kinds.has('private') && prefs.privateMoment ? privateEntries(input, dates) : []),
+    ...(kinds.has('intention') && prefs.intentionReminder ? intentionEntries(input, dates) : []),
   ].sort(byTime);
   const capped = capPerDay(all, input.dailyCap ?? DAILY_CAP);
   // «مناسبة قريبة» is information, at most one a day, chosen by the user: outside the daily cap, never in a digest.
-  const occasions = kinds.has('occasion') && prefs.occasions ? occasionEntries(input, dates) : [];
+  // The weekly strategy (round 6) is information too: outside the cap, like «مناسبة قريبة».
+  const occasions = [
+    ...(kinds.has('occasion') && prefs.occasions ? occasionEntries(input, dates) : []),
+    ...(kinds.has('strategy') ? strategyEntries(input, dates) : []),
+  ].sort(byTime);
   const out = [...capped];
   // Merged in by time; the capped entries keep their order.
   for (const o of occasions) {
@@ -401,10 +485,10 @@ export const NOTIFY_TEXTS = {
     occasionTitle: 'مناسبة قريبة',
     /** `title`: the occasion's catalog title (the first, when two start the same day). */
     occasionBody: (title: string) => `غدًا: ${title}`,
-    /** @deprecated No strategy reminders since round 5. */
     strategyTitle: 'استراتيجية الأسبوع',
-    /** @deprecated No strategy reminders since round 5. */
     strategyBody: (key: string) => strategyByKey(key)?.titleAr ?? '',
+    intentionTitle: 'نية اليوم',
+    intentionBody: 'دقيقة تجدّد فيها نيتك لهذا اليوم',
   },
   en: {
     wirdTitle: "Today's practice",
@@ -414,10 +498,10 @@ export const NOTIFY_TEXTS = {
     digestBody: (n: number) => (n === 1 ? 'You have 1 act today' : `You have ${n} acts today`),
     occasionTitle: 'Coming occasion',
     occasionBody: (title: string) => `Tomorrow: ${title}`,
-    /** @deprecated No strategy reminders since round 5. */
     strategyTitle: 'Strategy of the week',
-    /** @deprecated No strategy reminders since round 5. */
     strategyBody: (key: string) => strategyByKey(key)?.titleEn ?? '',
+    intentionTitle: "Today's intention",
+    intentionBody: 'A minute to renew your intention for today',
   },
 } as const;
 

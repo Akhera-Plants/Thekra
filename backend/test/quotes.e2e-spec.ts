@@ -316,9 +316,19 @@ describe('Quotes endpoints (e2e)', () => {
     await request(app.getHttpServer()).get('/v1/review/flags').set(userHdrs).expect(403);
     await request(app.getHttpServer()).get('/v1/review/flags').set(adminHdrs).expect(200);
 
+    // Round 6 (C-01s): one reporter repeating a report counts once; three different reporters turn the flag HIGH.
     for (let index = 0; index < 3; index += 1) {
       await request(app.getHttpServer())
         .post(`/v1/quotes/${autoId}/reports`)
+        .send({ reason: 'TEXT', note: 'لفظة غير واضحة' })
+        .expect(201);
+    }
+    expect((await prisma.quoteFlag.findFirst({ where: { quoteId: autoId, type: 'USER_REPORT', status: 'OPEN' } }))?.severity).toBe('MEDIUM');
+    await request(app.getHttpServer()).get(`/v1/quotes/${autoId}`).expect(200);
+    for (const headers of [userHdrs, adminHdrs]) {
+      await request(app.getHttpServer())
+        .post(`/v1/quotes/${autoId}/reports`)
+        .set(headers)
         .send({ reason: 'TEXT', note: 'لفظة غير واضحة' })
         .expect(201);
     }

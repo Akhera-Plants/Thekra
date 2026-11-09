@@ -134,17 +134,21 @@ describe('limits', () => {
     expect(fewer.canAdd('sapling')).toBe(true);
   });
 
-  it('a people list is one periodic act, however many people; adding to a list in use is always allowed', () => {
+  it('round 6: every people list together is ONE periodic act («صلة الرحم والأحباب»); adding a person is always allowed', () => {
     let s = storeOf({ ...plan('e'), habitKey: 'sadaqah-weekly' });
     const rule = { kind: 'everyNDays' as const, n: 7, anchor: '2026-10-28' };
     for (const [id, circle] of [['r1', 'kin'], ['r2', 'kin'], ['r3', 'parents'], ['r4', 'neighbors'], ['r5', 'friends'], ['r6', 'sick']] as const) {
       s = upsertRelative(s, createRelative({ id, name: id, relation: '', rule, circle }, T), T);
     }
     const l = limits(s, '2026-10-28', { isPeriodicAct });
-    expect(l.periodic.count).toBe(6);
+    expect(l.periodic.count).toBe(2);
     expect(LIMITS.periodic).toBe(7);
     expect(l.canAdd('periodic')).toBe(true);
-    const seven = limits(upsertPlan(s, { ...plan('g'), habitKey: 'sadaqah-weekly' }, T), '2026-10-28', { isPeriodicAct });
+    // A second plan of the same catalog act (sadaqah) adds no act; five own acts fill the seven.
+    let full = upsertPlan(s, { ...plan('g'), habitKey: 'sadaqah-weekly' }, T);
+    expect(limits(full, '2026-10-28', { isPeriodicAct }).periodic.count).toBe(2);
+    for (const id of ['c1', 'c2', 'c3', 'c4', 'c5']) full = upsertPlan(full, { ...plan(id), habitKey: 'custom-periodic' }, T);
+    const seven = limits(full, '2026-10-28', { isPeriodicAct });
     expect(seven.periodic.full).toBe(true);
     expect(seven.canAdd('periodic')).toBe(false);
     expect(seven.canAdd('periodic', { circle: 'kin' })).toBe(true);

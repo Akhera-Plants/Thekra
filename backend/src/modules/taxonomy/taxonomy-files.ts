@@ -4,7 +4,8 @@ import { join } from 'node:path';
 /**
  * The reviewer files under prisma/taxonomy/ that the API reads at runtime
  * (topic pairs, topic themes, the text review list, the hidden-quotes list, and the practice catalog:
- * deed schedules and sin programs, the «الميزان» / stories ids, and the Names of Allah).
+ * deed schedules and sin programs, the «الميزان» / stories ids, the Names of Allah, and the home
+ * «في لحظات مثل هذه» seed, served while the HomeMoment table is empty).
  *
  * Paths come from this module's location, never process.cwd(): src/ and dist/
  * both sit one level below backend/, so ../../../prisma/taxonomy is the same
@@ -26,6 +27,7 @@ export const TAXONOMY_FILES = [
   'sin-programs.yaml',
   'heart-texts.yaml',
   'names-of-allah.yaml',
+  'home-moments.yaml',
 ] as const;
 export type TaxonomyFile = (typeof TAXONOMY_FILES)[number];
 

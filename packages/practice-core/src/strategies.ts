@@ -47,7 +47,7 @@ export const STRATEGIES: readonly Strategy[] = [
 
 export const STRATEGY_KEYS: readonly string[] = STRATEGIES.map((s) => s.key);
 
-/** The strategy reminder rings on this weekday (6 = Saturday, the start of the week). */
+/** The strategy reminder's default weekday (6 = Saturday); round 6: the member chooses the day (`NotificationPrefs.strategyDay`). */
 export const STRATEGY_WEEKDAY = 6;
 
 export function strategyByKey(key: string): Strategy | undefined {
@@ -68,12 +68,12 @@ export function toggleStrategy(keys: readonly string[], key: string): string[] {
 }
 
 /**
- * The strategy reminded on `date` (a {@link STRATEGY_WEEKDAY}) among the chosen ones, rotating week by week; null on
- * other days or without a choice.
+ * The strategy reminded on `date` (the reminder's weekday, {@link STRATEGY_WEEKDAY} by default) among the chosen ones,
+ * rotating week by week; null on other days or without a choice.
  */
-export function strategyOfWeek(keys: readonly string[], date: LocalDate): string | null {
+export function strategyOfWeek(keys: readonly string[], date: LocalDate, day: number = STRATEGY_WEEKDAY): string | null {
   const chosen = cleanStrategyKeys(keys);
-  if (chosen.length === 0 || weekday(date) !== STRATEGY_WEEKDAY) return null;
+  if (chosen.length === 0 || weekday(date) !== day) return null;
   const week = Math.floor(toDayNumber(date) / 7);
   return chosen[((week % chosen.length) + chosen.length) % chosen.length] ?? null;
 }

@@ -158,6 +158,10 @@ describe('localChanges', () => {
       excusedDays: [],
       homeSections: null,
       fardTracking: false,
+      dayStates: null,
+      qada: null,
+      lightenCovered: true,
+      reciter: null,
       clientUpdatedAt: at(3),
     });
     expect(c.plans).toEqual([
@@ -176,6 +180,8 @@ describe('localChanges', () => {
         amountChangedOn: '2026-10-01',
         ebbSince: null,
         season: null,
+        // Round 6: createPlan records the start amount (in the canonical content only when set).
+        startAmount: 5,
         clientUpdatedAt: at(1),
         deletedAt: null,
       },

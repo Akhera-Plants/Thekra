@@ -17,6 +17,7 @@
 import { addDays } from './dates.js';
 import { adherence, isEbbOn, isPaused, type Plan } from './plan.js';
 import { isExcused, type Store } from './storage.js';
+import { withCustomPeriodic } from './periodic.js';
 import type { LocalDate } from './dates.js';
 
 export const COMMITMENT_DAYS = 30;
@@ -48,7 +49,7 @@ export function planCommitment(plan: Plan, today: LocalDate, days = COMMITMENT_D
 export function commitmentRates(store: Pick<Store, 'plans'>, today: LocalDate, opts: CommitmentOptions = {}): CommitmentRate[] {
   const rows: CommitmentRate[] = [];
   for (const plan of store.plans) {
-    if (isPaused(plan) || opts.isPeriodicAct?.(plan)) continue;
+    if (isPaused(plan) || withCustomPeriodic(opts.isPeriodicAct)(plan)) continue;
     const rate = planCommitment(plan, today, opts.days);
     if (rate === null) continue;
     rows.push({ planId: plan.id, rate, percent: Math.round(rate * 100) });
@@ -66,7 +67,8 @@ export function meanCommitment(rates: readonly CommitmentRate[]): number | null 
 export function excuseOfYesterday(store: Pick<Store, 'plans' | 'settings'>, today: LocalDate): 'excused' | 'heavy' | null {
   const yesterday = addDays(today, -1);
   if (isExcused(store, yesterday)) return 'excused';
-  return store.plans.some((p) => isEbbOn(p, yesterday)) ? 'heavy' : null;
+  const busy = store.settings.dayStates?.some((e) => e.date === yesterday && e.state === 'busy') ?? false;
+  return busy || store.plans.some((p) => isEbbOn(p, yesterday)) ? 'heavy' : null;
 }
 
 /**

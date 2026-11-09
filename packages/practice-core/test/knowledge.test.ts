@@ -173,11 +173,18 @@ describe('استراتيجيات العادات', () => {
     expect(new Set([strategyOfWeek(two, '2026-10-31'), strategyOfWeek(two, '2026-11-07')])).toEqual(new Set(two));
   });
 
-  it('notificationPlan: plans no strategy reminder any more (round 5, F-12 a), even with old prefs', () => {
+  it('notificationPlan: round 6 plans the weekly strategy again, on the chosen day and time, rotating', () => {
     const store = storeOf();
-    const prefs = { ...DEFAULT_NOTIFICATION_PREFS, strategies: ['start-tiny', 'company'], strategyTime: '11:00' };
+    const prefs = { ...DEFAULT_NOTIFICATION_PREFS, strategies: ['start-tiny', 'company'], strategyTime: '11:00', strategyDay: 0 };
     const plan = notificationPlan({ store, prefs, today: '2026-10-28', now: '08:00', days: 14 });
-    expect(plan.filter((e) => e.kind === 'strategy')).toEqual([]);
+    const entries = plan.filter((e) => e.kind === 'strategy');
+    // Sundays 2026-11-01 and 2026-11-08, one strategy each, alternating.
+    expect(entries.map((e) => [e.date, e.time])).toEqual([
+      ['2026-11-01', '11:00'],
+      ['2026-11-08', '11:00'],
+    ]);
+    expect(new Set(entries.map((e) => e.strategy)).size).toBe(2);
+    expect(notificationPlan({ store, prefs: { ...prefs, strategies: [] }, today: '2026-10-28', now: '08:00', days: 14 }).some((e) => e.kind === 'strategy')).toBe(false);
   });
 
   it('parses the strategy prefs, dropping unknown keys and bad times', () => {

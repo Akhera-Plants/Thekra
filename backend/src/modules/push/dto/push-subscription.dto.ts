@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { parseResolvedAnchorTimes, PRAYER_CACHE_DAYS, STRATEGY_KEYS } from '@thekra/practice-core';
+import { MAX_MUTED, parseResolvedAnchorTimes, PRAYER_CACHE_DAYS, STRATEGY_KEYS } from '@thekra/practice-core';
 import {
   ArrayMaxSize,
   IsArray,
@@ -59,13 +59,16 @@ export class PushPrefsDto {
   /** «مناسبة قريبة» (round 5): the day before a non-weekly occasion, at `occasionTime`. Off by default. */
   @IsOptional() @IsBoolean() occasions?: boolean;
   @IsOptional() @IsString() @Matches(HH_MM) occasionTime?: string;
-  /**
-   * @deprecated Round 5 removed the weekly strategy reminder. Still accepted (older web builds send it, and the
-   * global pipe refuses unknown fields), never stored or planned.
-   */
+  /** Round 6 (C-19): the weekly strategy reminder is back: the chosen strategies, one a week, on `strategyDay` at `strategyTime`. */
   @IsOptional() @IsArray() @ArrayMaxSize(STRATEGY_KEYS.length) @IsIn(STRATEGY_KEYS, { each: true }) strategies?: string[];
-  /** @deprecated See {@link PushPrefsDto.strategies}. */
   @IsOptional() @IsString() @Matches(HH_MM) strategyTime?: string;
+  @IsOptional() @IsInt() @Min(0) @Max(6) strategyDay?: number;
+  /** Round 6: «نية اليوم» reminder (opt-in). */
+  @IsOptional() @IsBoolean() intentionReminder?: boolean;
+  @IsOptional() @IsString() @Matches(HH_MM) intentionTime?: string;
+  /** Round 6: plans (by id) and periodic acts (by practice-core key, e.g. `silat`) whose reminders are off. */
+  @IsOptional() @IsArray() @ArrayMaxSize(MAX_MUTED) @IsString({ each: true }) @MaxLength(80, { each: true }) mutedPlans?: string[];
+  @IsOptional() @IsArray() @ArrayMaxSize(MAX_MUTED) @IsString({ each: true }) @MaxLength(80, { each: true }) mutedActs?: string[];
   /** Phase 6: anchored habit slots («بعد الفجر»…) resolve from these per day; days without an entry use the defaults. */
   @IsOptional() @IsAnchorTimes() anchorTimes?: Record<string, Record<string, string>>;
 }

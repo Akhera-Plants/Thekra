@@ -118,47 +118,12 @@ describe('nav-map', () => {
     }
   });
 
-  it('covers the round-5 tables (web and app)', () => {
-    const web = new Set(NAV_FEATURES.map((f) => f.web));
-    for (const route of [
-      '/practice',
-      '/practice/periodic',
-      '/practice/review',
-      '/practice/record',
-      '/practice/habits/[id]',
-      '/practice/people',
-      '/practice/leave-sin',
-      '/favorites',
-      '/favorites/reminders',
-      '/settings/notifications',
-      '/settings/prayer-times',
-      '/practice/strategies',
-    ]) {
-      expect(web.has(route), route).toBe(true);
-    }
-    for (const key of ['wird', 'periodic', 'review', 'record', 'more', 'circles', 'saved', 'my-reminders', 'browse', 'branches', 'strategies', 'settings', 'account', 'notifications', 'prayer-times', 'appearance', 'about', 'leave-sin', 'people', 'privacy']) {
-      expect(NAV_FEATURES.some((f) => f.key === key), key).toBe(true);
-    }
-    expect(navName('circles', 'ar')).toBe('رفقة');
-    expect(NAV_FEATURES.find((f) => f.key === 'circles')?.web).toBeNull();
-    expect(featureAtRoute('web', '/practice')?.key).toBe('habits');
-    // The app has no settings screen: its rows are the last group of «المزيد».
-    expect(featureAtRoute('app', '/more')?.key).toBe('more');
-    expect(() => navName('nope', 'ar')).toThrow();
-  });
-
   it('redirects every old web path to a page of the map', () => {
     const web = new Set(NAV_FEATURES.map((f) => f.web));
     for (const r of WEB_REDIRECTS) expect(web.has(r.to), r.from).toBe(true);
   });
 
-  it('glossary: unique keys, names used by the map, no avoided word in any feature name', () => {
-    expect(new Set(GLOSSARY.map((t) => t.key)).size).toBe(GLOSSARY.length);
-    expect(GLOSSARY.find((t) => t.key === 'texts')?.avoidAr).toContain('اقتباسات');
-    for (const f of NAV_FEATURES) expect(avoidedWordsIn(f.ar), f.key).toEqual([]);
-    expect(avoidedWordsIn('استكشف النصوص')).toEqual([{ word: 'استكشف', use: 'تصفّح النصوص' }, { word: 'استكشف النصوص', use: 'تصفّح النصوص' }]);
-    expect(navName('browse', 'ar')).toBe(GLOSSARY.find((t) => t.key === 'browse')?.ar);
-  });
+  // Round 6 replaced the round-5 tables and glossary checks: see test/round6.test.ts.
 });
 
 // ── Home sections ───────────────────────────────────────────────────────────────────────────────────────────────
@@ -482,13 +447,14 @@ describe('notifications (round 5)', () => {
   const MONTHLY: AgendaOccasion = { key: 'mid', titleAr: 'منتصف الشهر', titleEn: 'Mid-month', deed: 'x', rule: { kind: 'monthlyDay', day: 15 } };
   const WEEKLY: AgendaOccasion = { key: 'ithnayn-khamis', titleAr: 'الاثنين والخميس', titleEn: 'Mon/Thu', deed: 'siyam', rule: { kind: 'weekdays', days: [1, 4] } };
 
-  it('parses old prefs harmlessly and plans no strategy reminder', () => {
+  it('parses old prefs harmlessly (round 6: a chosen strategy is reminded again on its day)', () => {
     const prefs = parseNotificationPrefs({ strategies: ['company'], strategyTime: '09:00', occasions: true, occasionTime: '19:30' });
     expect(prefs.occasions).toBe(true);
     expect(prefs.occasionTime).toBe('19:30');
     expect(DEFAULT_NOTIFICATION_PREFS.occasions).toBe(false);
     const plan = notificationPlan({ store: emptyStore(), prefs, today: '2026-11-07', now: '08:00', days: 14 });
-    expect(plan.some((e) => e.kind === 'strategy')).toBe(false);
+    // Default strategy day is Saturday: 2026-11-07 (today, 09:00 still ahead) and 2026-11-14.
+    expect(plan.filter((e) => e.kind === 'strategy').map((e) => e.date)).toEqual(['2026-11-07', '2026-11-14']);
   });
 
   it('«مناسبة قريبة»: the day before a non-weekly occasion starts, at the user’s time, opt-in', () => {

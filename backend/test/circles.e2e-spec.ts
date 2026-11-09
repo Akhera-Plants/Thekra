@@ -1,6 +1,6 @@
 /**
- * E2E spec for رفقة (/v1/circles): auth, the envelope and status codes, who sees the invite code, that no user
- * id or email leaves the API, presence marks, cheers, and the owner-only actions.
+ * E2E spec for رفقة (/v1/circles): auth, the envelope and status codes, invite-only access (round 6, C-01k), who
+ * sees the invite code, that no user id or email leaves the API, presence marks, cheers, and the owner-only actions.
  */
 
 import { INestApplication } from '@nestjs/common';
@@ -38,6 +38,62 @@ describe('Circles endpoints (e2e)', () => {
   it('401 without a token', async () => {
     const res = await http().get('/v1/circles').expect(401);
     expect(res.body.error.code).toBe('UNAUTHENTICATED');
+  });
+
+  const register = async (email: string) => {
+    await http().post('/v1/auth/register').send({ email, password: TEST_PASSWORD, displayName: 'Test User' }).expect(201);
+    return authHeaders(app, email, TEST_PASSWORD);
+  };
+
+  it('رفقة is off for a plain account: no circle, no join, no invite (403 CIRCLES_NOT_ENABLED)', async () => {
+    const access = await http().get('/v1/circles/access').set(owner).expect(200);
+    expect(access.headers['cache-control']).toContain('no-store');
+    expect(access.body.data).toEqual({ enabled: false, invites: null });
+    for (const res of [
+      await http().post('/v1/circles').set(owner).send({ name: 'x', displayName: 'y' }),
+      await http().post('/v1/circles/join').set(owner).send({ code: 'ABCDEFGHJK', displayName: 'y' }),
+      await http().post('/v1/circles/invites').set(owner).send({}),
+    ]) {
+      expect(res.status).toBe(403);
+      expect(res.body.error.code).toBe('CIRCLES_NOT_ENABLED');
+    }
+  });
+
+  it('an ADMIN account is on; its invite turns رفقة on for the one who redeems it, once', async () => {
+    const adminAccess = await http().get('/v1/circles/access').set(friend).expect(200);
+    expect(adminAccess.body.data).toMatchObject({ enabled: true, invites: { active: 0, remaining: 5, ttlDays: 7 } });
+
+    const created = await http().post('/v1/circles/invites').set(friend).send({}).expect(201);
+    const code: string = created.body.data.code;
+    expect(created.headers['location']).toBe(`/v1/circles/invites/${created.body.data.id}`);
+    expect(created.body.data).toMatchObject({ status: 'active', circle: null });
+    expect(code).toMatch(/^[2-9A-HJKMNP-Z]{10}$/);
+
+    expect((await http().post('/v1/circles/invites/redeem').set(friend).send({ code }).expect(400)).body.error.code).toBe('CIRCLE_INVITE_OWN');
+    const redeemed = await http().post('/v1/circles/invites/redeem').set(owner).send({ code: code.toLowerCase() }).expect(200);
+    expect(redeemed.body.data).toEqual({ enabled: true, circle: null, joinError: null });
+    expect((await http().get('/v1/circles/access').set(owner).expect(200)).body.data.enabled).toBe(true);
+
+    const late = await register('e2e-circle-late@thekra.test');
+    expect((await http().post('/v1/circles/invites/redeem').set(late).send({ code }).expect(404)).body.error.code).toBe('CIRCLE_INVITE_INVALID');
+    expect((await http().get('/v1/circles/access').set(late).expect(200)).body.data.enabled).toBe(false);
+
+    const mine = await http().get('/v1/circles/invites').set(friend).expect(200);
+    expect(mine.body.data).toEqual([expect.objectContaining({ status: 'redeemed', code: null })]);
+    const json = JSON.stringify(mine.body);
+    for (const secret of [TEST_USER_ID, 'e2e-user@thekra.test']) expect(json).not.toContain(secret);
+  });
+
+  it('invites: revoke an unused one; 400 for a bad circle id or code', async () => {
+    const created = await http().post('/v1/circles/invites').set(friend).send({}).expect(201);
+    await http().delete(`/v1/circles/invites/${created.body.data.id}`).set(owner).expect(404);
+    await http().delete(`/v1/circles/invites/${created.body.data.id}`).set(friend).expect(204);
+    await http().delete(`/v1/circles/invites/${created.body.data.id}`).set(friend).expect(404);
+    const other = await register('e2e-circle-revoked@thekra.test');
+    await http().post('/v1/circles/invites/redeem').set(other).send({ code: created.body.data.code }).expect(404);
+    await http().post('/v1/circles/invites').set(friend).send({ circleId: 'not-a-uuid' }).expect(400);
+    await http().post('/v1/circles/invites/redeem').set(other).send({ code: '<script>' }).expect(400);
+    await http().post('/v1/circles/invites/redeem').set(other).send({ code: 'ABCDEFGHJK', extra: 1 }).expect(400);
   });
 
   it('POST /v1/circles → 201 with Location, the owner sees the invite code', async () => {
@@ -116,6 +172,29 @@ describe('Circles endpoints (e2e)', () => {
     expect(seen.body.data.cheers).toEqual([expect.objectContaining({ message: 'thabat', fromName: 'سالم', toMe: true })]);
   });
 
+  it('an owner’s circle invite turns رفقة on and joins the circle; a member cannot invite to it', async () => {
+    expect((await http().post('/v1/circles/invites').set(friend).send({ circleId }).expect(403)).body.error.code).toBe('CIRCLE_OWNER_ONLY');
+    const created = await http().post('/v1/circles/invites').set(owner).send({ circleId }).expect(201);
+    expect(created.body.data.circle).toEqual({ id: circleId, name: 'رفقة الفجر' });
+
+    const guest = await register('e2e-circle-guest@thekra.test');
+    const nameless = await http().post('/v1/circles/invites/redeem').set(guest).send({ code: created.body.data.code }).expect(400);
+    expect(nameless.body.error).toMatchObject({ code: 'CIRCLE_DISPLAY_NAME_REQUIRED', details: { circleName: 'رفقة الفجر' } });
+
+    const joined = await http()
+      .post('/v1/circles/invites/redeem')
+      .set(guest)
+      .send({ code: created.body.data.code, displayName: 'ضيف' })
+      .expect(200);
+    expect(joined.body.data).toMatchObject({ enabled: true, joinError: null, circle: { id: circleId, memberCount: 3, inviteCode: null } });
+    const json = JSON.stringify(joined.body);
+    for (const secret of [TEST_USER_ID, TEST_ADMIN_ID, 'e2e-user@thekra.test', 'e2e-admin@thekra.test']) expect(json).not.toContain(secret);
+
+    const detail = await http().get(`/v1/circles/${circleId}`).set(guest).expect(200);
+    await http().delete(`/v1/circles/${circleId}/membership`).set(guest).expect(204);
+    expect(detail.body.data.members).toHaveLength(3);
+  });
+
   it('owner-only actions answer 403 to a member; rotating invalidates the old code', async () => {
     expect((await http().post(`/v1/circles/${circleId}/invite-code`).set(friend).expect(403)).body.error.code).toBe('CIRCLE_OWNER_ONLY');
     await http().delete(`/v1/circles/${circleId}`).set(friend).expect(403);
@@ -134,15 +213,19 @@ describe('Circles endpoints (e2e)', () => {
   });
 
   it('deleting the account removes the memberships; a circle left empty is gone, its code no longer works', async () => {
-    const email = 'e2e-circle-leaver@thekra.test';
-    await http().post('/v1/auth/register').send({ email, password: TEST_PASSWORD, displayName: 'Test User' }).expect(201);
-    const leaver = await authHeaders(app, email, TEST_PASSWORD);
+    const leaver = await register('e2e-circle-leaver@thekra.test');
+    const invite = await http().post('/v1/circles/invites').set(friend).send({}).expect(201);
+    await http().post('/v1/circles/invites/redeem').set(leaver).send({ code: invite.body.data.code }).expect(200);
     const created = await http().post('/v1/circles').set(leaver).send({ name: 'وحدي', displayName: 'م' }).expect(201);
     await http().patch(`/v1/circles/${created.body.data.id}/membership`).set(leaver).send({ sharesPresence: true }).expect(200);
     await http().put('/v1/circles/presence').set(leaver).send({ date: today() }).expect(200);
 
     await http().delete('/v1/auth/me').set(leaver).send({ password: TEST_PASSWORD }).expect(204);
     expect(await prisma.circleMember.count()).toBe(0);
+    // The invite the leaver redeemed stays the inviter's (status only), without a pointer to the deleted account.
+    const used = await prisma.circleInvite.findUnique({ where: { code: invite.body.data.code } });
+    expect(used).toMatchObject({ inviterId: TEST_ADMIN_ID, redeemedById: null });
+    expect(used?.redeemedAt).not.toBeNull();
     expect(await prisma.circlePresence.count()).toBe(0);
 
     await http().post('/v1/circles/join').set(friend).send({ code: created.body.data.inviteCode, displayName: 'x' }).expect(404);

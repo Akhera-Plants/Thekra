@@ -27,6 +27,7 @@ import { PracticeModule } from './modules/practice/practice.module.js';
 import { PushModule } from './modules/push/push.module.js';
 import { ReminderSetsModule } from './modules/reminder-sets/reminder-sets.module.js';
 import { CirclesModule } from './modules/circles/circles.module.js';
+import { HomeMomentsModule } from './modules/home-moments/home-moments.module.js';
 import { ContentSyncModule } from './modules/content-sync/content-sync.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 
@@ -124,6 +125,8 @@ const REQUEST_ID_RE = /^[A-Za-z0-9._-]{1,128}$/;
     ReminderSetsModule,
     // رفقة: private companion circles
     CirclesModule,
+    // Round 6: home «في لحظات مثل هذه» from the API
+    HomeMomentsModule,
     HadithModule,
     QuranModule,
     ClassificationModule,

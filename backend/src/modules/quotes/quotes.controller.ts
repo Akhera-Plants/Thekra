@@ -1,11 +1,15 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Ip, Param, ParseUUIDPipe, Post, Query, UseGuards } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { CurrentUser, type JwtPayload } from '../../common/decorators/current-user.decorator.js';
+import { MaxBodyBytes } from '../../common/guards/max-body-bytes.guard.js';
 import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard.js';
 import { FavoritesService } from '../favorites/favorites.service.js';
 import { QuoteDetailQueryDto } from './dto/quote-detail-query.dto.js';
 import { ReportQuoteDto } from './dto/report-quote.dto.js';
 import { QuotesQueryDto } from './dto/quotes-query.dto.js';
+import { QuoteReaderQueryDto } from './dto/quote-reader-query.dto.js';
+import { QuoteReaderService } from './quote-reader.service.js';
+import { QuoteReportsService } from './quote-reports.service.js';
 import { QuotesService } from './quotes.service.js';
 import { PUBLIC_CACHE, PublicCache } from '../../common/http/public-cache.js';
 
@@ -14,6 +18,8 @@ export class QuotesController {
   constructor(
     private readonly quotesService: QuotesService,
     private readonly favoritesService: FavoritesService,
+    private readonly reports: QuoteReportsService,
+    private readonly reader: QuoteReaderService,
   ) {}
 
   /** #8 GET /quotes — optional auth enriches isFavorite
@@ -45,12 +51,22 @@ export class QuotesController {
     return this.quotesService.reminderOfTheDay(query.lang ?? 'ar');
   }
 
-  /** Mistake report. No login. The address is used only for the rate limit and is not stored. */
+  /**
+   * Mistake report. No login needed; a token, when sent, makes the limits count per account. Abuse limits
+   * (round 6, C-01s): 5 a minute per address here, a 2 KB body, and in QuoteReportsService per-reporter hour/day
+   * limits, a 24 h dedupe and a global daily cap. The address is never stored, only a keyed hash with the day.
+   */
   @Post(':id/reports')
   @HttpCode(HttpStatus.CREATED)
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
-  report(@Param('id', ParseUUIDPipe) id: string, @Body() dto: ReportQuoteDto) {
-    return this.quotesService.report(id, dto.reason, dto.note);
+  @UseGuards(MaxBodyBytes(2048), OptionalJwtAuthGuard)
+  report(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: ReportQuoteDto,
+    @CurrentUser() user: JwtPayload | undefined,
+    @Ip() ip: string | undefined,
+  ) {
+    return this.reports.report(id, dto.reason, dto.note, { userId: user?.sub, ip });
   }
 
   /** Explanations for a quote. MAWDU quotes stay 404. */
@@ -61,6 +77,16 @@ export class QuotesController {
     @Query() query: QuoteDetailQueryDto,
   ) {
     return this.quotesService.listPublicExplanations(id, query.lang ?? 'ar');
+  }
+
+  /**
+   * The reader (round 6, C-13): for a verse the three tafsirs inline (المختصر، السعدي، ابن عاشور), for a hadith its
+   * sharh / fawaid, and the «وجه التذكير» of the link it was opened from (`linkId`) when one is written.
+   */
+  @Get(':id/reader')
+  @PublicCache(PUBLIC_CACHE.quote)
+  readerContent(@Param('id', ParseUUIDPipe) id: string, @Query() query: QuoteReaderQueryDto) {
+    return this.reader.read(id, query.lang ?? 'ar', query.linkId);
   }
 
   /** #9 GET /quotes/:id — optional auth enriches isFavorite */

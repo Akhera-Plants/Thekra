@@ -52,3 +52,44 @@ export interface CircleDetailDto {
   /** Targets I already cheered today (member ids, or `circle`): one cheer per target per day. */
   cheeredToday: string[];
 }
+
+/** GET /circles/access: whether رفقة is on for me, and (when it is) how many invites I can still give. */
+export interface CircleAccessDto {
+  enabled: boolean;
+  invites: {
+    /** Unused, unexpired invites I hold now. */
+    active: number;
+    activeMax: number;
+    /** Invites I created in the last `periodDays` days. */
+    createdInPeriod: number;
+    periodMax: number;
+    periodDays: number;
+    /** What I can create now (both limits applied). */
+    remaining: number;
+    /** Days an invite works. */
+    ttlDays: number;
+  } | null;
+}
+
+export type CircleInviteStatus = 'active' | 'redeemed' | 'revoked' | 'expired';
+
+/** One of my invites. It never says who redeemed it. */
+export interface CircleInviteDto {
+  id: string;
+  /** Only while `status` is `active`. */
+  code: string | null;
+  status: CircleInviteStatus;
+  /** The circle the invite also joins, if any. */
+  circle: { id: string; name: string } | null;
+  expiresAt: string;
+  createdAt: string;
+}
+
+/** POST /circles/invites/redeem. */
+export interface RedeemCircleInviteResultDto {
+  enabled: true;
+  /** The circle joined through the invite. */
+  circle: CircleDetailDto | null;
+  /** Why the invite's circle was not joined: CIRCLE_FULL, CIRCLE_LIMIT_REACHED or CIRCLE_INVITE_CIRCLE_GONE. */
+  joinError: string | null;
+}

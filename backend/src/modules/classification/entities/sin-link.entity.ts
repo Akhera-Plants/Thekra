@@ -1,4 +1,4 @@
-import type { LinkReviewStatus, QuoteType } from '@prisma/client';
+import type { LinkConcern, LinkReviewStatus, QuoteType } from '@prisma/client';
 
 export interface SinLinkDto {
   id: string;
@@ -7,6 +7,13 @@ export interface SinLinkDto {
   relevanceScore: number | null;
   note: string | null;
   reviewStatus: LinkReviewStatus;
+  /** «وجه التذكير» (round 6), null until written by hand. */
+  reminderAngle?: string | null;
+  reminderAngleEn?: string | null;
+  /** Owner-review flag raised while linking (round 6, C-01n). */
+  concern?: LinkConcern | null;
+  concernNote?: string | null;
+  concernAt?: Date | null;
   sin: {
     slug: string;
     name: string;

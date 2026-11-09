@@ -16,6 +16,7 @@ const mockUser: User = {
   passwordHash: '', // filled per test
   role: 'USER' as never,
   lastLoginAt: null,
+  circlesEnabledAt: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };

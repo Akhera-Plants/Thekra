@@ -16,10 +16,8 @@ import {
   BookOpen,
   Clock,
   DoorOpen,
-  HeartHandshake,
   Info,
   Languages,
-  Library,
   Lightbulb,
   ShieldCheck,
   UserRound,
@@ -36,10 +34,8 @@ import { ListRow, PageHeader, Screen, SectionDivider, SectionHeader } from '@/ui
 
 const ICONS: Record<MoreKey, LucideIcon> = {
   'leave-sin': DoorOpen,
-  people: HeartHandshake,
   circles: Users,
   saved: Bookmark,
-  browse: Library,
   branches: BookOpen,
   strategies: Lightbulb,
   account: UserRound,

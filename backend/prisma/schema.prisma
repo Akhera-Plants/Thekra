@@ -219,6 +219,19 @@ enum LinkReviewStatus {
   REJECTED
 }
 
+/// A concern raised on a topic↔text link for the owner's review (round 6, C-01n). The link itself is unchanged.
+enum LinkConcern {
+  /// The text has no real link to the topic («لا علاقة حقيقية»).
+  NO_REAL_LINK
+}
+
+/// Topic kind a home «في لحظات مثل هذه» row opens (round 6, C-09).
+enum HomeMomentTopic {
+  SIN
+  GOOD_DEED
+  BRANCH
+}
+
 /// A book's own chapter, mapped to one entity after the owner reviews it once.
 enum ChapterMapTarget {
   SIN
@@ -227,30 +240,30 @@ enum ChapterMapTarget {
 }
 
 model Source {
-  id            String     @id @default(uuid())
+  id            String             @id @default(uuid())
   name          String
   nameAr        String?
   type          SourceType
   author        String?
   authorAr      String?
-  language      String     @default("ar")
-  isExternalApi Boolean    @default(false)
+  language      String             @default("ar")
+  isExternalApi Boolean            @default(false)
   apiProvider   String?
   apiBaseUrl    String?
   lastSyncedAt  DateTime?
   /// When set, this row is an old id for `canonical`. Quotes live on the canonical source.
   canonicalId   String?
-  canonical     Source?  @relation("SourceAlias", fields: [canonicalId], references: [id])
-  aliases       Source[] @relation("SourceAlias")
+  canonical     Source?            @relation("SourceAlias", fields: [canonicalId], references: [id])
+  aliases       Source[]           @relation("SourceAlias")
   quotes        Quote[]
   syncLogs      SyncLog[]
-  explanations  Explanation[] @relation("ExplanationSource")
-  imanBranches  ImanBranch[]  @relation("ImanBranchSource")
-  rankedSins    Sin[]         @relation("SinRankSource")
+  explanations  Explanation[]      @relation("ExplanationSource")
+  imanBranches  ImanBranch[]       @relation("ImanBranchSource")
+  rankedSins    Sin[]              @relation("SinRankSource")
   chapterMaps   ChapterEntityMap[]
   bookSections  BookSection[]
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
 }
 
 model Quote {
@@ -286,10 +299,10 @@ model Quote {
   page   String?
 
   /// Who assigned Quote.grade, and where. Never inferred for a whole book.
-  gradeAuthority String?
-  gradeReference String?
+  gradeAuthority       String?
+  gradeReference       String?
   /// AUTHORITY_LEGACY and IBN_RAJAB stay stored and are not published. SAHIHAYN, AUTO_SAHIHAYN, MANUAL, SUNAN_TAHQIQ, and HADEETHENC are.
-  gradeSource    GradeSource @default(AUTHORITY_LEGACY)
+  gradeSource          GradeSource  @default(AUTHORITY_LEGACY)
   /// Previous authority grade, kept when a sahihayn match replaces it.
   legacyGrade          HadithGrade?
   legacyGradeAuthority String?
@@ -303,17 +316,17 @@ model Quote {
   matnAr String?
 
   /// Athar (Companion / Successor saying), not a prophetic hadith. Never graded as hadith.
-  isAthar         Boolean @default(false)
+  isAthar              Boolean               @default(false)
   /// Key from taxonomy/athar-speakers.yaml when the speaker is listed; null when unlisted or marfu.
-  atharSpeakerKey String?
+  atharSpeakerKey      String?
   /// Display name (Arabic) for the listed speaker; null when unlisted or marfu.
-  atharSpeakerAr  String?
+  atharSpeakerAr       String?
   /// Story only: from the first speaker frame to the end, chain and junk cut.
-  atharTextAr     String?
+  atharTextAr          String?
   /// SAID = the speaker's own words («—»). NARRATED = they report someone else («رواه»).
   atharAttributionKind AtharAttributionKind?
   /// Empty until the reviewer writes keep or drop. Public requires KEEP.
-  atharReviewDecision AtharReviewDecision?
+  atharReviewDecision  AtharReviewDecision?
 
   /// The import run that created or last changed this row (e.g. 2026-10-arnaut-tahqiq).
   /// ImportChange keeps the values it replaced, so a batch can be reverted.
@@ -324,17 +337,19 @@ model Quote {
   textSource     TextSource @default(MANUAL)
   textVerifiedAt DateTime?
 
-  translations  Translation[]
-  tags          QuoteTag[]
-  sinLinks        SinQuote[]
-  goodDeedLinks   GoodDeedQuote[]
-  favorites       Favorite[]
-  imanBranchLinks ImanBranchQuote[]
-  explanations    Explanation[]
-  matches         HadithMatch[]
-  flags           QuoteFlag[]
-  sectionItems    SectionItem[]
+  translations     Translation[]
+  tags             QuoteTag[]
+  sinLinks         SinQuote[]
+  goodDeedLinks    GoodDeedQuote[]
+  favorites        Favorite[]
+  imanBranchLinks  ImanBranchQuote[]
+  explanations     Explanation[]
+  matches          HadithMatch[]
+  flags            QuoteFlag[]
+  sectionItems     SectionItem[]
   reminderSetItems ReminderSetItem[]
+  /// Public «أبلغ عن خطأ» reports (round 6, C-01s), one row each; QuoteFlag keeps the open summary.
+  reports          QuoteReport[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -356,22 +371,22 @@ model Quote {
 
 /// One heading in a book, in the order the author printed it.
 model BookSection {
-  id       String        @id @default(uuid())
-  sourceId String
-  source   Source        @relation(fields: [sourceId], references: [id], onDelete: Cascade)
-  parentId String?
-  parent   BookSection?  @relation("BookSectionTree", fields: [parentId], references: [id], onDelete: Cascade)
-  children BookSection[] @relation("BookSectionTree")
-  level    BookLevel
+  id             String          @id @default(uuid())
+  sourceId       String
+  source         Source          @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  parentId       String?
+  parent         BookSection?    @relation("BookSectionTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children       BookSection[]   @relation("BookSectionTree")
+  level          BookLevel
   /// Printed number, when the heading has one. Null for an unnumbered bab.
-  number   String?
-  titleAr  String
+  number         String?
+  titleAr        String
   /// Position in the book, starting at 1.
-  order    Int
-  volume   String?
-  page     String?
-  items    SectionItem[]
-  sinQuotes SinQuote[]
+  order          Int
+  volume         String?
+  page           String?
+  items          SectionItem[]
+  sinQuotes      SinQuote[]
   goodDeedQuotes GoodDeedQuote[]
 
   @@unique([sourceId, order])
@@ -454,6 +469,22 @@ model QuoteFlag {
   @@index([quoteId, type, status])
 }
 
+/// One public mistake report (round 6, C-01s). `reporterKey` is a keyed hash of the signed-in account, or of the
+/// anonymous client address for that UTC day: never the raw address or user id. Used for dedupe and limits.
+model QuoteReport {
+  id          String   @id @default(uuid())
+  quoteId     String
+  quote       Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  reason      String
+  note        String?
+  reporterKey String
+  createdAt   DateTime @default(now())
+
+  @@index([reporterKey, createdAt])
+  @@index([createdAt])
+  @@index([quoteId, reporterKey, reason])
+}
+
 model Translation {
   id           String @id @default(uuid())
   quoteId      String
@@ -465,47 +496,47 @@ model Translation {
 }
 
 model TopicDomain {
-  key        String     @id
-  nameAr     String
-  nameEn     String
-  order      Int
-  sins       Sin[]
-  goodDeeds  GoodDeed[]
+  key       String     @id
+  nameAr    String
+  nameEn    String
+  order     Int
+  sins      Sin[]
+  goodDeeds GoodDeed[]
 }
 
 model Sin {
-  id               String     @id @default(uuid())
-  name             String
-  nameAr           String
-  slug             String     @unique
-  category         String?
-  description      String?
-  descriptionAr    String?
-  severity         Int?
+  id                 String             @id @default(uuid())
+  name               String
+  nameAr             String
+  slug               String             @unique
+  category           String?
+  description        String?
+  descriptionAr      String?
+  severity           Int?
   /// Null until a curator classifies the sin. Never derived from severity.
-  rank             SinRank?
-  origin           EntityOrigin @default(CURATED)
-  domainKey        String?
-  domain           TopicDomain? @relation(fields: [domainKey], references: [key])
-  isContemporary   Boolean      @default(false)
+  rank               SinRank?
+  origin             EntityOrigin       @default(CURATED)
+  domainKey          String?
+  domain             TopicDomain?       @relation(fields: [domainKey], references: [key])
+  isContemporary     Boolean            @default(false)
   /// Hidden topics stay out of every public response until the owner unhides them.
-  isHidden         Boolean      @default(false)
+  isHidden           Boolean            @default(false)
   /// False topics stay usable (tark-lillah) and are omitted from lists.
-  isListed         Boolean      @default(true)
-  taxonomyOrder    Int          @default(0)
+  isListed           Boolean            @default(true)
+  taxonomyOrder      Int                @default(0)
   oppositeGoodDeedId String?
-  oppositeGoodDeed   GoodDeed?  @relation("OppositeOfGoodDeed", fields: [oppositeGoodDeedId], references: [id])
-  rankSourceId     String?
-  rankSource       Source?    @relation("SinRankSource", fields: [rankSourceId], references: [id])
-  rankReference    String?
-  quotes           SinQuote[]
-  relatedGoodDeeds GoodDeed[] @relation("OppositeOfSin")
-  derivationsFrom  TopicDerivation[] @relation("DerivationFromSin")
-  derivationsTo    TopicDerivation[] @relation("DerivationToSin")
-  imanBranches     ImanBranchSin[]
-  chapterMaps      ChapterEntityMap[]
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @updatedAt
+  oppositeGoodDeed   GoodDeed?          @relation("OppositeOfGoodDeed", fields: [oppositeGoodDeedId], references: [id])
+  rankSourceId       String?
+  rankSource         Source?            @relation("SinRankSource", fields: [rankSourceId], references: [id])
+  rankReference      String?
+  quotes             SinQuote[]
+  relatedGoodDeeds   GoodDeed[]         @relation("OppositeOfSin")
+  derivationsFrom    TopicDerivation[]  @relation("DerivationFromSin")
+  derivationsTo      TopicDerivation[]  @relation("DerivationToSin")
+  imanBranches       ImanBranchSin[]
+  chapterMaps        ChapterEntityMap[]
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
 
   @@index([rank])
   @@index([domainKey])
@@ -513,61 +544,72 @@ model Sin {
 }
 
 model GoodDeed {
-  id            String          @id @default(uuid())
-  name          String
-  nameAr        String
-  slug          String          @unique
-  category      String?
-  description   String?
-  descriptionAr String?
-  reward        String?
-  rewardAr      String?
-  origin        EntityOrigin @default(CURATED)
-  domainKey     String?
-  domain        TopicDomain? @relation(fields: [domainKey], references: [key])
-  isContemporary Boolean     @default(false)
-  isHidden      Boolean      @default(false)
-  isListed      Boolean      @default(true)
-  taxonomyOrder Int          @default(0)
-  oppositeSinId String?
-  oppositeSin   Sin?                 @relation("OppositeOfSin", fields: [oppositeSinId], references: [id])
-  oppositeOf    Sin[]                @relation("OppositeOfGoodDeed")
-  quotes        GoodDeedQuote[]
-  derivationsFrom TopicDerivation[] @relation("DerivationFromDeed")
-  derivationsTo   TopicDerivation[] @relation("DerivationToDeed")
-  imanBranches  ImanBranchGoodDeed[]
-  chapterMaps   ChapterEntityMap[]
-  createdAt     DateTime             @default(now())
-  updatedAt     DateTime             @updatedAt
+  id              String               @id @default(uuid())
+  name            String
+  nameAr          String
+  slug            String               @unique
+  category        String?
+  description     String?
+  descriptionAr   String?
+  reward          String?
+  rewardAr        String?
+  origin          EntityOrigin         @default(CURATED)
+  domainKey       String?
+  domain          TopicDomain?         @relation(fields: [domainKey], references: [key])
+  isContemporary  Boolean              @default(false)
+  isHidden        Boolean              @default(false)
+  isListed        Boolean              @default(true)
+  taxonomyOrder   Int                  @default(0)
+  oppositeSinId   String?
+  oppositeSin     Sin?                 @relation("OppositeOfSin", fields: [oppositeSinId], references: [id])
+  oppositeOf      Sin[]                @relation("OppositeOfGoodDeed")
+  quotes          GoodDeedQuote[]
+  derivationsFrom TopicDerivation[]    @relation("DerivationFromDeed")
+  derivationsTo   TopicDerivation[]    @relation("DerivationToDeed")
+  imanBranches    ImanBranchGoodDeed[]
+  chapterMaps     ChapterEntityMap[]
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
 
   @@index([oppositeSinId])
   @@index([domainKey])
 }
 
 model SinQuote {
-  id             String   @id @default(uuid())
-  sinId          String
-  sin            Sin      @relation(fields: [sinId], references: [id], onDelete: Cascade)
-  quoteId        String
-  quote          Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
-  relevanceScore Int?              @default(0)
-  note           String?
-  reviewStatus   LinkReviewStatus @default(NOT_REVIEWED)
-  basis          LinkBasis        @default(MANUAL)
-  classifiedBy   ClassifiedBy     @default(BOOK)
-  sectionId      String?
-  section        BookSection?     @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  id              String           @id @default(uuid())
+  sinId           String
+  sin             Sin              @relation(fields: [sinId], references: [id], onDelete: Cascade)
+  quoteId         String
+  quote           Quote            @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  relevanceScore  Int?             @default(0)
+  note            String?
+  reviewStatus    LinkReviewStatus @default(NOT_REVIEWED)
+  basis           LinkBasis        @default(MANUAL)
+  classifiedBy    ClassifiedBy     @default(BOOK)
+  sectionId       String?
+  section         BookSection?     @relation(fields: [sectionId], references: [id], onDelete: SetNull)
   /// Keys from taxonomy/topic-themes.yaml whose pattern matches this link's chapter title. Written by import:taxonomy.
-  themeKeys      String[]         @default([])
+  themeKeys       String[]         @default([])
+  /// «وجه التذكير» (round 6, C-13): why this text reminds of this topic. Written by hand in the next phase, never
+  /// generated. The reader shows it only when present.
+  reminderAngle   String?
+  /// English «وجه التذكير», only when a person wrote it (no machine translation).
+  reminderAngleEn String?
+  /// Raised while linking when the text has no real link to the topic; listed for the owner at
+  /// GET /v1/admin/link-concerns. It does not hide the link: the owner decides.
+  concern         LinkConcern?
+  concernNote     String?
+  concernAt       DateTime?
   /// D-2: added for admin sort=newest and curator audit trail.
-  createdAt      DateTime         @default(now())
+  createdAt       DateTime         @default(now())
   /// D-2: added for curator audit trail.
-  updatedAt      DateTime         @updatedAt
+  updatedAt       DateTime         @updatedAt
 
   @@unique([sinId, quoteId])
   @@index([themeKeys], type: Gin)
   /// D-3: quoteId index for reverse lookups (find all sins referencing a quote).
   @@index([quoteId])
+  @@index([concern])
   /// D-3: composite index supporting the core reminder loop (filter by sin, sort by score).
   @@index([sinId, relevanceScore(sort: Desc, nulls: Last)])
   @@index([sectionId])
@@ -575,29 +617,40 @@ model SinQuote {
 }
 
 model GoodDeedQuote {
-  id             String   @id @default(uuid())
-  goodDeedId     String
-  goodDeed       GoodDeed @relation(fields: [goodDeedId], references: [id], onDelete: Cascade)
-  quoteId        String
-  quote          Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
-  relevanceScore Int?              @default(0)
-  note           String?
-  reviewStatus   LinkReviewStatus @default(NOT_REVIEWED)
-  basis          LinkBasis        @default(MANUAL)
-  classifiedBy   ClassifiedBy     @default(BOOK)
-  sectionId      String?
-  section        BookSection?     @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  id              String           @id @default(uuid())
+  goodDeedId      String
+  goodDeed        GoodDeed         @relation(fields: [goodDeedId], references: [id], onDelete: Cascade)
+  quoteId         String
+  quote           Quote            @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  relevanceScore  Int?             @default(0)
+  note            String?
+  reviewStatus    LinkReviewStatus @default(NOT_REVIEWED)
+  basis           LinkBasis        @default(MANUAL)
+  classifiedBy    ClassifiedBy     @default(BOOK)
+  sectionId       String?
+  section         BookSection?     @relation(fields: [sectionId], references: [id], onDelete: SetNull)
   /// Keys from taxonomy/topic-themes.yaml whose pattern matches this link's chapter title. Written by import:taxonomy.
-  themeKeys      String[]         @default([])
+  themeKeys       String[]         @default([])
+  /// «وجه التذكير» (round 6, C-13): why this text reminds of this topic. Written by hand in the next phase, never
+  /// generated. The reader shows it only when present.
+  reminderAngle   String?
+  /// English «وجه التذكير», only when a person wrote it (no machine translation).
+  reminderAngleEn String?
+  /// Raised while linking when the text has no real link to the topic; listed for the owner at
+  /// GET /v1/admin/link-concerns. It does not hide the link: the owner decides.
+  concern         LinkConcern?
+  concernNote     String?
+  concernAt       DateTime?
   /// D-2: added for admin sort=newest and curator audit trail.
-  createdAt      DateTime         @default(now())
+  createdAt       DateTime         @default(now())
   /// D-2: added for curator audit trail.
-  updatedAt      DateTime         @updatedAt
+  updatedAt       DateTime         @updatedAt
 
   @@unique([goodDeedId, quoteId])
   @@index([themeKeys], type: Gin)
   /// D-3: quoteId index for reverse lookups (find all good deeds referencing a quote).
   @@index([quoteId])
+  @@index([concern])
   /// D-3: composite index supporting the core reminder loop (filter by deed, sort by score).
   @@index([goodDeedId, relevanceScore(sort: Desc, nulls: Last)])
   @@index([sectionId])
@@ -607,15 +660,15 @@ model GoodDeedQuote {
 /// A contemporary topic draws its public texts from one or more classical topics.
 /// Exactly one "from" and one "to" are set (SQL CHECK). Either side may be a sin or a deed.
 model TopicDerivation {
-  id              String    @id @default(uuid())
-  fromSinId       String?
-  fromSin         Sin?      @relation("DerivationFromSin", fields: [fromSinId], references: [id], onDelete: Cascade)
-  fromGoodDeedId  String?
-  fromGoodDeed    GoodDeed? @relation("DerivationFromDeed", fields: [fromGoodDeedId], references: [id], onDelete: Cascade)
-  toSinId         String?
-  toSin           Sin?      @relation("DerivationToSin", fields: [toSinId], references: [id], onDelete: Cascade)
-  toGoodDeedId    String?
-  toGoodDeed      GoodDeed? @relation("DerivationToDeed", fields: [toGoodDeedId], references: [id], onDelete: Cascade)
+  id             String    @id @default(uuid())
+  fromSinId      String?
+  fromSin        Sin?      @relation("DerivationFromSin", fields: [fromSinId], references: [id], onDelete: Cascade)
+  fromGoodDeedId String?
+  fromGoodDeed   GoodDeed? @relation("DerivationFromDeed", fields: [fromGoodDeedId], references: [id], onDelete: Cascade)
+  toSinId        String?
+  toSin          Sin?      @relation("DerivationToSin", fields: [toSinId], references: [id], onDelete: Cascade)
+  toGoodDeedId   String?
+  toGoodDeed     GoodDeed? @relation("DerivationToDeed", fields: [toGoodDeedId], references: [id], onDelete: Cascade)
 
   @@index([fromSinId])
   @@index([fromGoodDeedId])
@@ -683,21 +736,32 @@ model ChapterEntityMap {
 
 /// Curator or suggested link: a quote that teaches this branch.
 model ImanBranchQuote {
-  id             String           @id @default(uuid())
-  imanBranchId   String
-  imanBranch     ImanBranch       @relation(fields: [imanBranchId], references: [id], onDelete: Cascade)
-  quoteId        String
-  quote          Quote            @relation(fields: [quoteId], references: [id], onDelete: Cascade)
-  relevanceScore Int?             @default(0)
-  note           String?
-  reviewStatus   LinkReviewStatus @default(NOT_REVIEWED)
-  basis          LinkBasis        @default(MANUAL)
-  classifiedBy   ClassifiedBy     @default(BOOK)
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  id              String           @id @default(uuid())
+  imanBranchId    String
+  imanBranch      ImanBranch       @relation(fields: [imanBranchId], references: [id], onDelete: Cascade)
+  quoteId         String
+  quote           Quote            @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  relevanceScore  Int?             @default(0)
+  note            String?
+  reviewStatus    LinkReviewStatus @default(NOT_REVIEWED)
+  basis           LinkBasis        @default(MANUAL)
+  classifiedBy    ClassifiedBy     @default(BOOK)
+  /// «وجه التذكير» (round 6, C-13): why this text reminds of this topic. Written by hand in the next phase, never
+  /// generated. The reader shows it only when present.
+  reminderAngle   String?
+  /// English «وجه التذكير», only when a person wrote it (no machine translation).
+  reminderAngleEn String?
+  /// Raised while linking when the text has no real link to the topic; listed for the owner at
+  /// GET /v1/admin/link-concerns. It does not hide the link: the owner decides.
+  concern         LinkConcern?
+  concernNote     String?
+  concernAt       DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 
   @@unique([imanBranchId, quoteId])
   @@index([quoteId])
+  @@index([concern])
   @@index([imanBranchId, relevanceScore(sort: Desc, nulls: Last)])
   @@index([basis])
 }
@@ -794,30 +858,39 @@ model SyncLog {
 }
 
 model User {
-  id           String     @id @default(uuid())
-  email        String     @unique
-  displayName  String?
+  id                    String             @id @default(uuid())
+  email                 String             @unique
+  displayName           String?
   /// Phase 4: nullable so existing/OAuth-only users remain valid
-  passwordHash String?
+  passwordHash          String?
   /// Phase 4: required by RolesGuard; defaults USER
-  role         UserRole   @default(USER)
+  role                  UserRole           @default(USER)
   /// Phase 4: optional, useful for support dashboards
-  lastLoginAt  DateTime?
-  favorites    Favorite[]
+  lastLoginAt           DateTime?
+  favorites             Favorite[]
   /// Practice sync (docs/plan/2026-10-practice-sync-contract.md §2). All cascade with the user.
-  practiceSettings PracticeSettings?
-  habitPlans       HabitPlan[]
-  relatives        Relative[]
+  practiceSettings      PracticeSettings?
+  habitPlans            HabitPlan[]
+  relatives             Relative[]
   /// «الفرائض» marks (round 5), cascade with the user.
-  fardMarks        FardMark[]
+  fardMarks             FardMark[]
+  /// «قضاء الفوائت» day counts (round 6), cascade with the user.
+  qadaLogs              QadaLog[]
+  /// Read marks of texts (round 6), cascade with the user.
+  quoteReads            QuoteRead[]
   /// The sin program, encrypted on the device; the server never sees it in clear.
-  sinVault         SinVault?
+  sinVault              SinVault?
   /// Web push: one row per browser that turned reminders on (docs/plan/2026-10-web-push.md).
-  pushSubscriptions PushSubscription[]
+  pushSubscriptions     PushSubscription[]
   /// رفقة: private circles this user belongs to (cascade with the user).
-  circleMemberships CircleMember[]
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  circleMemberships     CircleMember[]
+  /// رفقة is invite-only (round 6, C-01k): set when this user redeems an enabled member's invite. ADMIN users are
+  /// always enabled. Members from before the change were backfilled by the migration.
+  circlesEnabledAt      DateTime?
+  circleInvitesSent     CircleInvite[]     @relation("CircleInviteInviter")
+  circleInvitesRedeemed CircleInvite[]     @relation("CircleInviteRedeemer")
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
 }
 
 /// Practice sync (docs/plan/2026-10-practice-sync-contract.md). Plans and relatives use the client's UUID as id;
@@ -835,6 +908,14 @@ model PracticeSettings {
   homeSections      Json?
   /// «الفرائض» (round 5): the five-prayer rows are on. Off by default.
   fardTracking      Boolean  @default(false)
+  /// «حال يومي» (round 6): practice-core DayStateEntry[] ({date, state} ascending, state sick|busy|travel); null = none.
+  dayStates         Json?
+  /// «قضاء الفوائت» (round 6): practice-core QadaPlan ({owed, perDay, startedOn}); null = none.
+  qada              Json?
+  /// «تخفّف» rows covered in «العادات» (round 6). On by default.
+  lightenCovered    Boolean  @default(true)
+  /// Quran reciter key (round 6, practice-core RECITERS); null = the default reciter.
+  reciter           String?
   clientUpdatedAt   DateTime
   updatedAt         DateTime @updatedAt
 }
@@ -858,9 +939,9 @@ model FardMark {
 }
 
 model HabitPlan {
-  id                String      @id
+  id                String            @id
   userId            String
-  user              User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   habitKey          String?
   deedSlug          String
   title             String
@@ -872,24 +953,32 @@ model HabitPlan {
   activeDaysPerWeek Int
   slots             String[]
   rule              Json?
-  createdOn         DateTime    @db.Date
-  amountChangedOn   DateTime    @db.Date
-  ebbSince          DateTime?   @db.Date
+  createdOn         DateTime          @db.Date
+  amountChangedOn   DateTime          @db.Date
+  ebbSince          DateTime?         @db.Date
   season            Json?
   /// «أوقِف مؤقتًا»: asks for nothing from this day (no reminders, not in limits or streak); history kept.
-  pausedOn          DateTime?   @db.Date
+  pausedOn          DateTime?         @db.Date
   /// The day the last pause ended («استأنف»); only with pausedOn, never before it.
-  resumedOn         DateTime?   @db.Date
+  resumedOn         DateTime?         @db.Date
   /// «عادة راسخة»: moved out of the saplings by the user; one reminder slot.
-  establishedOn     DateTime?   @db.Date
+  establishedOn     DateTime?         @db.Date
   /// Phase 6 prayer anchors: one per slot («after-fajr»… or null for a fixed time); null when the plan has none.
   slotAnchors       Json?
   /// «حلقة العادة» (2026-11-01): the member's habit loops (practice-core HabitLoop[]); null when none.
   loops             Json?
+  /// «القدر الأدنى» (round 6): the least the member does on a hard day, never lowered; null = the old token amount.
+  minimum           Float?
+  /// The amount the plan started with (round 6); a restore after a long archive goes back to it.
+  startAmount       Float?
+  /// The day progress started again after more than 3 days in the archive (round 6).
+  restartedOn       DateTime?         @db.Date
   clientUpdatedAt   DateTime
-  updatedAt         DateTime    @updatedAt
+  updatedAt         DateTime          @updatedAt
   deletedAt         DateTime?
   logs              HabitLog[]
+  /// Daily reflections (round 6).
+  reflections       HabitReflection[]
 
   @@index([userId, updatedAt])
 }
@@ -908,6 +997,54 @@ model HabitLog {
   updatedAt   DateTime  @updatedAt
 
   @@id([planId, date])
+}
+
+/// A habit's daily reflection (round 6, C-27): «ما الذي أعانك؟» / «ما الذي صعّب عليك؟» and a day note, the member's own
+/// words (never logged). Merge: last writer wins per (plan, date) by `clientUpdatedAt` (ties: the larger canonical
+/// content); a cleared reflection keeps the row with no answers so the clearing syncs. Sin-program answers never come
+/// here (they live in the encrypted vault).
+model HabitReflection {
+  planId          String
+  plan            HabitPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  date            DateTime  @db.Date
+  helped          String?
+  hard            String?
+  note            String?
+  clientUpdatedAt DateTime
+  updatedAt       DateTime  @updatedAt
+
+  @@id([planId, date])
+  @@index([updatedAt])
+}
+
+/// «قضاء الفوائت» (round 6, C-01a): prayers made up on one day for one key (fajr…isha, or any). Merge: last writer
+/// wins per (user, date, prayer) by `clientUpdatedAt` (ties: the larger count); 0 is a cleared day.
+model QadaLog {
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date            DateTime @db.Date
+  /// fajr | dhuhr | asr | maghrib | isha | any
+  prayer          String
+  count           Int
+  clientUpdatedAt DateTime
+  updatedAt       DateTime @updatedAt
+
+  @@id([userId, date, prayer])
+  @@index([userId, updatedAt])
+}
+
+/// A text the member marked read or unread (round 6). Only the Quote id (no foreign key: a text that leaves the
+/// public set must not fail the sync). Merge: last writer wins per (user, quote) by `clientUpdatedAt` (ties: unread).
+model QuoteRead {
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quoteId         String
+  read            Boolean
+  clientUpdatedAt DateTime
+  updatedAt       DateTime @updatedAt
+
+  @@id([userId, quoteId])
+  @@index([userId, updatedAt])
 }
 
 /// صلة الرحم: a nickname and a rhythm, never contact details.
@@ -1006,6 +1143,7 @@ model Circle {
   updatedAt  DateTime       @updatedAt
   members    CircleMember[]
   cheers     CircleCheer[]
+  invites    CircleInvite[]
 }
 
 /// A user inside a circle. Clients only ever see `id` (the member id), never `userId`. `displayName` is chosen per
@@ -1058,6 +1196,27 @@ model CircleCheer {
   @@unique([senderId, target, day])
   @@index([circleId, createdAt])
   @@index([receiverId])
+}
+
+/// رفقة personal invite (round 6, C-01k): one use, expires. Redeeming turns رفقة on for the redeemer and, when the
+/// invite names a circle the inviter still belongs to, joins it.
+model CircleInvite {
+  id           String    @id @default(uuid())
+  code         String    @unique
+  inviterId    String
+  inviter      User      @relation("CircleInviteInviter", fields: [inviterId], references: [id], onDelete: Cascade)
+  circleId     String?
+  circle       Circle?   @relation(fields: [circleId], references: [id], onDelete: SetNull)
+  expiresAt    DateTime
+  redeemedAt   DateTime?
+  redeemedById String?
+  redeemedBy   User?     @relation("CircleInviteRedeemer", fields: [redeemedById], references: [id], onDelete: SetNull)
+  revokedAt    DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@index([inviterId, createdAt])
+  @@index([circleId])
+  @@index([redeemedById])
 }
 
 model Favorite {
@@ -1115,4 +1274,28 @@ model ReminderSetItem {
   @@id([setId, quoteId])
   @@index([setId, position])
   @@index([quoteId])
+}
+
+/// Home «في لحظات مثل هذه» (round 6, C-09): chosen by us for every user, phrased as help
+/// («تعينك على التخفّف من الغضب»). Seeded from prisma/taxonomy/home-moments.yaml (home-moments:import), edited at
+/// /v1/admin/home-moments. While the table is empty the API serves the YAML built into the bundle.
+model HomeMoment {
+  id          String          @id @default(uuid())
+  key         String          @unique
+  topicType   HomeMomentTopic
+  /// Sin / good-deed slug, or the branch number for BRANCH.
+  topicSlug   String
+  labelAr     String
+  labelEn     String
+  /// The situation line («قبل أن تردّ وأنت غاضب»), optional.
+  situationAr String?
+  situationEn String?
+  /// Icon key the apps map to their own icon set (pause, sun, message-circle, heart, …).
+  icon        String
+  sortOrder   Int             @default(0)
+  published   Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([published, sortOrder])
 }

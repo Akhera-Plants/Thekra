@@ -2,11 +2,18 @@ import { Injectable, NotFoundException, UnprocessableEntityException } from '@ne
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { PushService } from '../push/push.service.js';
+import { isReciterKey, parseQadaPlan } from '@thekra/practice-core';
 import {
+  dayStatesOf,
   fardWins,
   homeSectionsOf,
+  MAX_ARCHIVED_PLANS,
   MAX_LIVE_PLANS,
   MAX_LIVE_RELATIVES,
+  MAX_READ_MARKS,
+  qadaLogWins,
+  readWins,
+  reflectionWins,
   parseSyncRequest,
   planToWire,
   planVersion,
@@ -16,6 +23,9 @@ import {
   settingsVersion,
   wins,
   type FardWire,
+  type QadaLogWire,
+  type ReadWire,
+  type ReflectionWire,
   type PlanChange,
   type PlanWire,
   type PracticeChangesDto,
@@ -64,6 +74,9 @@ function tombstonePlan(id: string, clientUpdatedAt: string, deletedAt: string): 
     establishedOn: null,
     slotAnchors: null,
     loops: null,
+    minimum: null,
+    startAmount: null,
+    restartedOn: null,
     clientUpdatedAt,
     deletedAt,
   };
@@ -117,6 +130,7 @@ export class PracticeSyncService {
         await this.assertUser(tx, userId);
         const plans = await this.resolvePlans(tx, userId, request);
         const relatives = await this.resolveRelatives(tx, userId, request);
+        const archivedBefore = request.plans.length ? await this.archivedCount(tx, userId) : 0;
         if (request.settings && (await this.settingsWin(tx, userId, request.settings))) {
           await this.upsertSettings(tx, userId, request.settings);
         }
@@ -125,7 +139,10 @@ export class PracticeSyncService {
         await this.upsertRelatives(tx, userId, relatives);
         await this.upsertContacts(tx, request);
         await this.upsertFard(tx, userId, await this.resolveFard(tx, userId, request));
-        await this.assertLimits(tx, userId, request);
+        await this.upsertReflections(tx, await this.resolveReflections(tx, request));
+        await this.upsertQadaLogs(tx, userId, await this.resolveQadaLogs(tx, userId, request));
+        await this.upsertReads(tx, userId, await this.resolveReads(tx, userId, request));
+        await this.assertLimits(tx, userId, request, archivedBefore);
         return readPracticeChanges(tx, userId, request.since, await this.serverTime(tx), {
           settings: request.settings !== null,
           planIds: request.plans.map((change) => (change.kind === 'live' ? change.plan.id : change.id)),
@@ -133,11 +150,14 @@ export class PracticeSyncService {
           relativeIds: request.relatives.map((change) => (change.kind === 'live' ? change.relative.id : change.id)),
           contactKeys: request.contacts.map(({ relativeId, date }) => ({ relativeId, date })),
           fardKeys: request.fard.map(({ date, prayer }) => ({ date, prayer })),
+          reflectionKeys: request.reflections.map(({ planId, date }) => ({ planId, date })),
+          qadaKeys: request.qadaLogs.map(({ date, prayer }) => ({ date, prayer })),
+          readIds: request.reads.map(({ quoteId }) => quoteId),
         });
       },
       { maxWait: 5_000, timeout: 20_000 },
     );
-    // «الفرائض» marks never change a reminder, so they alone do not re-plan.
+    // «الفرائض» marks, reflections, «قضاء» counts and read marks never change a reminder, so they alone do not re-plan.
     const changed =
       request.settings !== null ||
       request.plans.length + request.logs.length + request.relatives.length + request.contacts.length > 0;
@@ -164,11 +184,12 @@ export class PracticeSyncService {
    */
   private async resolvePlans(tx: Tx, userId: string, request: SyncRequest): Promise<PlanWire[]> {
     const incomingIds = request.plans.map((change) => (change.kind === 'live' ? change.plan.id : change.id));
-    const ids = [...new Set([...incomingIds, ...request.logs.map((log) => log.planId)])];
+    const ids = [...new Set([...incomingIds, ...request.logs.map((log) => log.planId), ...request.reflections.map((r) => r.planId)])];
     const existing = ids.length ? await tx.habitPlan.findMany({ where: { id: { in: ids } } }) : [];
     if (existing.some((row) => row.userId !== userId)) throw notFound('Plan');
     const owned = new Set([...existing.map((row) => row.id), ...incomingIds]);
     if (request.logs.some((log) => !owned.has(log.planId))) throw notFound('Plan');
+    if (request.reflections.some((r) => !owned.has(r.planId))) throw notFound('Plan');
     const stored = new Map(existing.map((row) => [row.id, row]));
     const storedVersion = (row: (typeof existing)[number]) =>
       planVersion(
@@ -218,6 +239,10 @@ export class PracticeSyncService {
           excusedDays: row.excusedDays,
           homeSections: homeSectionsOf(row.homeSections),
           fardTracking: row.fardTracking,
+          dayStates: dayStatesOf(row.dayStates),
+          qada: row.qada === null ? null : parseQadaPlan(row.qada),
+          lightenCovered: row.lightenCovered,
+          reciter: isReciterKey(row.reciter) ? row.reciter : null,
           clientUpdatedAt: row.clientUpdatedAt.toISOString(),
         })
       : null;
@@ -228,9 +253,10 @@ export class PracticeSyncService {
   private async upsertSettings(tx: Tx, userId: string, settings: NonNullable<SyncRequest['settings']>): Promise<void> {
     await tx.$executeRaw`
       INSERT INTO "PracticeSettings" ("userId", "hijriOffset", "reminderTimes", "freeMinutesPerDay", "excusedDays",
-        "homeSections", "fardTracking", "clientUpdatedAt", "updatedAt")
+        "homeSections", "fardTracking", "dayStates", "qada", "lightenCovered", "reciter", "clientUpdatedAt", "updatedAt")
       VALUES (${userId}, ${settings.hijriOffset}, ${settings.reminderTimes}::text[], ${settings.freeMinutesPerDay}::int,
               ${settings.excusedDays}::text[], ${json(settings.homeSections)}::jsonb, ${settings.fardTracking},
+              ${json(settings.dayStates)}::jsonb, ${json(settings.qada)}::jsonb, ${settings.lightenCovered}, ${settings.reciter}::text,
               ${settings.clientUpdatedAt}::timestamp(3), now() AT TIME ZONE 'UTC')
       ON CONFLICT ("userId") DO UPDATE SET
         "hijriOffset" = EXCLUDED."hijriOffset",
@@ -239,6 +265,10 @@ export class PracticeSyncService {
         "excusedDays" = EXCLUDED."excusedDays",
         "homeSections" = EXCLUDED."homeSections",
         "fardTracking" = EXCLUDED."fardTracking",
+        "dayStates" = EXCLUDED."dayStates",
+        "qada" = EXCLUDED."qada",
+        "lightenCovered" = EXCLUDED."lightenCovered",
+        "reciter" = EXCLUDED."reciter",
         "clientUpdatedAt" = EXCLUDED."clientUpdatedAt",
         "updatedAt" = EXCLUDED."updatedAt"
       WHERE "PracticeSettings"."clientUpdatedAt" <= EXCLUDED."clientUpdatedAt"`;
@@ -251,11 +281,13 @@ export class PracticeSyncService {
     await tx.$executeRaw`
       INSERT INTO "HabitPlan" ("id", "userId", "habitKey", "deedSlug", "title", "unit", "amount", "ceiling",
         "activeDaysPerWeek", "slots", "rule", "createdOn", "amountChangedOn", "ebbSince", "season",
-        "pausedOn", "resumedOn", "establishedOn", "slotAnchors", "loops", "clientUpdatedAt", "updatedAt", "deletedAt")
+        "pausedOn", "resumedOn", "establishedOn", "slotAnchors", "loops", "minimum", "startAmount", "restartedOn",
+        "clientUpdatedAt", "updatedAt", "deletedAt")
       SELECT t.id, ${userId}, t.habit_key, t.deed_slug, t.title, t.unit, t.amount, t.ceiling, t.active_days,
         ARRAY(SELECT jsonb_array_elements_text(t.slots::jsonb)), t.rule::jsonb, t.created_on::date,
         t.amount_changed_on::date, t.ebb_since::date, t.season::jsonb, t.paused_on::date, t.resumed_on::date,
-        t.established_on::date, t.slot_anchors::jsonb, t.loops::jsonb, t.client_updated_at::timestamp(3), now() AT TIME ZONE 'UTC', t.deleted_at::timestamp(3)
+        t.established_on::date, t.slot_anchors::jsonb, t.loops::jsonb, t.minimum, t.start_amount, t.restarted_on::date,
+        t.client_updated_at::timestamp(3), now() AT TIME ZONE 'UTC', t.deleted_at::timestamp(3)
       FROM unnest(
         ${column('id')}::text[], ${column('habitKey')}::text[], ${column('deedSlug')}::text[], ${column('title')}::text[],
         ${column('unit')}::text[], ${column('amount')}::float8[], ${column('ceiling')}::float8[], ${column('activeDaysPerWeek')}::int[],
@@ -263,9 +295,11 @@ export class PracticeSyncService {
         ${column('createdOn')}::text[], ${column('amountChangedOn')}::text[], ${column('ebbSince')}::text[],
         ${plans.map((plan) => json(plan.season))}::text[], ${column('pausedOn')}::text[], ${column('resumedOn')}::text[],
         ${column('establishedOn')}::text[], ${plans.map((plan) => json(plan.slotAnchors))}::text[],
-        ${plans.map((plan) => json(plan.loops))}::text[], ${column('clientUpdatedAt')}::text[], ${column('deletedAt')}::text[]
+        ${plans.map((plan) => json(plan.loops))}::text[], ${column('minimum')}::float8[], ${column('startAmount')}::float8[],
+        ${column('restartedOn')}::text[], ${column('clientUpdatedAt')}::text[], ${column('deletedAt')}::text[]
       ) AS t(id, habit_key, deed_slug, title, unit, amount, ceiling, active_days, slots, rule, created_on,
-             amount_changed_on, ebb_since, season, paused_on, resumed_on, established_on, slot_anchors, loops, client_updated_at, deleted_at)
+             amount_changed_on, ebb_since, season, paused_on, resumed_on, established_on, slot_anchors, loops,
+             minimum, start_amount, restarted_on, client_updated_at, deleted_at)
       ON CONFLICT ("id") DO UPDATE SET
         "habitKey" = EXCLUDED."habitKey", "deedSlug" = EXCLUDED."deedSlug", "title" = EXCLUDED."title",
         "unit" = EXCLUDED."unit", "amount" = EXCLUDED."amount", "ceiling" = EXCLUDED."ceiling",
@@ -274,6 +308,7 @@ export class PracticeSyncService {
         "ebbSince" = EXCLUDED."ebbSince", "season" = EXCLUDED."season",
         "pausedOn" = EXCLUDED."pausedOn", "resumedOn" = EXCLUDED."resumedOn", "establishedOn" = EXCLUDED."establishedOn",
         "slotAnchors" = EXCLUDED."slotAnchors", "loops" = EXCLUDED."loops",
+        "minimum" = EXCLUDED."minimum", "startAmount" = EXCLUDED."startAmount", "restartedOn" = EXCLUDED."restartedOn",
         "clientUpdatedAt" = EXCLUDED."clientUpdatedAt", "updatedAt" = EXCLUDED."updatedAt",
         "deletedAt" = EXCLUDED."deletedAt"
       WHERE "HabitPlan"."userId" = EXCLUDED."userId"
@@ -364,17 +399,123 @@ export class PracticeSyncService {
       WHERE "FardMark"."clientUpdatedAt" <= EXCLUDED."clientUpdatedAt"`;
   }
 
-  private async assertLimits(tx: Tx, userId: string, request: SyncRequest): Promise<void> {
-    const [plans, relatives] = await Promise.all([
+  /** Live plans in the archive (paused and not resumed). */
+  private async archivedCount(tx: Tx, userId: string): Promise<number> {
+    return tx.habitPlan.count({ where: { userId, deletedAt: null, pausedOn: { not: null }, resumedOn: null } });
+  }
+
+  /**
+   * Live plans and relatives, and (round 6) the archive: a request may not take the archive past
+   * {@link MAX_ARCHIVED_PLANS} (an account already above it, from before round 6, may keep it but not grow it).
+   */
+  private async assertLimits(tx: Tx, userId: string, request: SyncRequest, archivedBefore: number): Promise<void> {
+    const [plans, relatives, archived] = await Promise.all([
       request.plans.length ? tx.habitPlan.count({ where: { userId, deletedAt: null } }) : 0,
       request.relatives.length ? tx.relative.count({ where: { userId, deletedAt: null } }) : 0,
+      request.plans.length ? this.archivedCount(tx, userId) : 0,
     ]);
-    if (plans > MAX_LIVE_PLANS || relatives > MAX_LIVE_RELATIVES) {
+    const archiveFull = archived > MAX_ARCHIVED_PLANS && archived > archivedBefore;
+    if (plans > MAX_LIVE_PLANS || relatives > MAX_LIVE_RELATIVES || archiveFull) {
       throw new UnprocessableEntityException({
         code: 'PRACTICE_LIMIT_REACHED',
-        message: `At most ${MAX_LIVE_PLANS} plans and ${MAX_LIVE_RELATIVES} relatives per account`,
-        details: { plans: MAX_LIVE_PLANS, relatives: MAX_LIVE_RELATIVES },
+        message: `At most ${MAX_LIVE_PLANS} plans, ${MAX_ARCHIVED_PLANS} of them archived, and ${MAX_LIVE_RELATIVES} relatives per account`,
+        details: { plans: MAX_LIVE_PLANS, relatives: MAX_LIVE_RELATIVES, archived: MAX_ARCHIVED_PLANS },
       });
     }
+  }
+
+  /** Round 6: the incoming reflections that win over the stored copy (practice-core `compareReflections`). */
+  private async resolveReflections(tx: Tx, request: SyncRequest): Promise<ReflectionWire[]> {
+    if (request.reflections.length === 0) return [];
+    const rows = await tx.habitReflection.findMany({
+      where: { OR: request.reflections.map((r) => ({ planId: r.planId, date: new Date(r.date) })) },
+    });
+    const stored = new Map(rows.map((row) => [`${row.planId}|${row.date.toISOString().slice(0, 10)}`, row]));
+    return request.reflections.filter((r) => {
+      const row = stored.get(`${r.planId}|${r.date}`);
+      return reflectionWins(
+        row
+          ? { planId: row.planId, date: r.date, helped: row.helped, hard: row.hard, note: row.note, clientUpdatedAt: row.clientUpdatedAt.toISOString() }
+          : null,
+        r,
+      );
+    });
+  }
+
+  /** Writes reflections that won; never over a newer concurrent write. Ownership was checked in resolvePlans. */
+  private async upsertReflections(tx: Tx, reflections: ReflectionWire[]): Promise<void> {
+    if (reflections.length === 0) return;
+    await tx.$executeRaw`
+      INSERT INTO "HabitReflection" ("planId", "date", "helped", "hard", "note", "clientUpdatedAt", "updatedAt")
+      SELECT t.plan_id, t.date::date, t.helped, t.hard, t.note, t.client_updated_at::timestamp(3), now() AT TIME ZONE 'UTC'
+      FROM unnest(
+        ${reflections.map((r) => r.planId)}::text[], ${reflections.map((r) => r.date)}::text[],
+        ${reflections.map((r) => r.helped)}::text[], ${reflections.map((r) => r.hard)}::text[],
+        ${reflections.map((r) => r.note)}::text[], ${reflections.map((r) => r.clientUpdatedAt)}::text[]
+      ) AS t(plan_id, date, helped, hard, note, client_updated_at)
+      ON CONFLICT ("planId", "date") DO UPDATE SET
+        "helped" = EXCLUDED."helped", "hard" = EXCLUDED."hard", "note" = EXCLUDED."note",
+        "clientUpdatedAt" = EXCLUDED."clientUpdatedAt", "updatedAt" = EXCLUDED."updatedAt"
+      WHERE "HabitReflection"."clientUpdatedAt" <= EXCLUDED."clientUpdatedAt"`;
+  }
+
+  /** Round 6: the incoming «قضاء» day counts that win (practice-core `compareQadaLogs`). */
+  private async resolveQadaLogs(tx: Tx, userId: string, request: SyncRequest): Promise<QadaLogWire[]> {
+    if (request.qadaLogs.length === 0) return [];
+    const rows = await tx.qadaLog.findMany({
+      where: { userId, OR: request.qadaLogs.map((l) => ({ date: new Date(l.date), prayer: l.prayer })) },
+    });
+    const stored = new Map(rows.map((row) => [`${row.date.toISOString().slice(0, 10)}|${row.prayer}`, row]));
+    return request.qadaLogs.filter((l) => {
+      const row = stored.get(`${l.date}|${l.prayer}`);
+      return qadaLogWins(row ? { count: row.count, clientUpdatedAt: row.clientUpdatedAt.toISOString() } : null, l);
+    });
+  }
+
+  private async upsertQadaLogs(tx: Tx, userId: string, logs: QadaLogWire[]): Promise<void> {
+    if (logs.length === 0) return;
+    await tx.$executeRaw`
+      INSERT INTO "QadaLog" ("userId", "date", "prayer", "count", "clientUpdatedAt", "updatedAt")
+      SELECT ${userId}, t.date::date, t.prayer, t.count, t.client_updated_at::timestamp(3), now() AT TIME ZONE 'UTC'
+      FROM unnest(
+        ${logs.map((l) => l.date)}::text[], ${logs.map((l) => l.prayer)}::text[], ${logs.map((l) => l.count)}::int[],
+        ${logs.map((l) => l.clientUpdatedAt)}::text[]
+      ) AS t(date, prayer, count, client_updated_at)
+      ON CONFLICT ("userId", "date", "prayer") DO UPDATE SET
+        "count" = EXCLUDED."count", "clientUpdatedAt" = EXCLUDED."clientUpdatedAt", "updatedAt" = EXCLUDED."updatedAt"
+      WHERE "QadaLog"."clientUpdatedAt" <= EXCLUDED."clientUpdatedAt"`;
+  }
+
+  /** Round 6: the incoming read marks that win (practice-core `compareReadMarks`). */
+  private async resolveReads(tx: Tx, userId: string, request: SyncRequest): Promise<ReadWire[]> {
+    if (request.reads.length === 0) return [];
+    const rows = await tx.quoteRead.findMany({ where: { userId, quoteId: { in: request.reads.map((m) => m.quoteId) } } });
+    const stored = new Map(rows.map((row) => [row.quoteId, row]));
+    return request.reads.filter((m) => {
+      const row = stored.get(m.quoteId);
+      return readWins(row ? { read: row.read, clientUpdatedAt: row.clientUpdatedAt.toISOString() } : null, m);
+    });
+  }
+
+  /**
+   * Writes read marks that won, then keeps the newest {@link MAX_READ_MARKS} of the user (by `clientUpdatedAt`): the
+   * clients keep the same newest set, so the oldest marks fall away on both sides instead of failing the sync.
+   */
+  private async upsertReads(tx: Tx, userId: string, reads: ReadWire[]): Promise<void> {
+    if (reads.length === 0) return;
+    await tx.$executeRaw`
+      INSERT INTO "QuoteRead" ("userId", "quoteId", "read", "clientUpdatedAt", "updatedAt")
+      SELECT ${userId}, t.quote_id, t.read, t.client_updated_at::timestamp(3), now() AT TIME ZONE 'UTC'
+      FROM unnest(
+        ${reads.map((m) => m.quoteId)}::text[], ${reads.map((m) => m.read)}::boolean[], ${reads.map((m) => m.clientUpdatedAt)}::text[]
+      ) AS t(quote_id, read, client_updated_at)
+      ON CONFLICT ("userId", "quoteId") DO UPDATE SET
+        "read" = EXCLUDED."read", "clientUpdatedAt" = EXCLUDED."clientUpdatedAt", "updatedAt" = EXCLUDED."updatedAt"
+      WHERE "QuoteRead"."clientUpdatedAt" <= EXCLUDED."clientUpdatedAt"`;
+    await tx.$executeRaw`
+      DELETE FROM "QuoteRead" WHERE "userId" = ${userId} AND "quoteId" IN (
+        SELECT "quoteId" FROM "QuoteRead" WHERE "userId" = ${userId}
+        ORDER BY "clientUpdatedAt" DESC, "quoteId" DESC OFFSET ${MAX_READ_MARKS}
+      )`;
   }
 }

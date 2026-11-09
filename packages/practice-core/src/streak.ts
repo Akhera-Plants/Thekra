@@ -7,7 +7,8 @@
  * - «يومي ثقيل»: on a day with an ebb ({@link isEbbOn}) the minimum counts: anything at all logged completes it.
  * - A day that asks for nothing is skipped: it neither breaks the run nor adds to it. A paused plan asks for nothing
  *   while paused, so it never enters the streak.
- * - «عذر» (sick or travelling, `settings.excusedDays`): the day is skipped too.
+ * - «عذر» (sick or travelling, `settings.excusedDays`; round 6 «حال يومي» `sick` / `travel`): the day is skipped too;
+ *   «انشغالات طارئة» (`busy`) counts like «يومي ثقيل».
  * - «قضاء»: a day may be made up until noon of the next day ({@link makeUpDeadline}). Until then an incomplete
  *   yesterday does not end the run (it is still open, like today). A log written after that (a correction stamped
  *   later, `logCorrectedAt`) is kept in the record but does not count for the streak. Plain `logDone` has no time:
@@ -24,6 +25,7 @@ import { addDays, isoMillis, parseDate, type IsoTime, type LocalDate } from './d
 import { planAsksOn, type PlanDayOptions } from './agenda.js';
 import { correctLog, isEbbOn, logDone, type Plan } from './plan.js';
 import { isExcused, type Store } from './storage.js';
+import { withCustomPeriodic } from './periodic.js';
 
 /** Local hour of the next day until which a day can be made up («قضاء»; Dhuhr when prayer times are unknown). */
 export const MAKE_UP_HOUR = 12;
@@ -85,7 +87,8 @@ export function streakDay(store: Store, date: LocalDate, opts: StreakOptions = {
   const asked = habits.filter((p) => planAsksOn(p, date, opts));
   if (asked.length === 0) return 'skipped';
   const deadlineOf = opts.deadlineOf ?? makeUpDeadline;
-  if (asked.some((p) => isEbbOn(p, date))) {
+  // «يومي ثقيل» (a plan ebb) or «انشغالات طارئة» (round 6 `busy`): the minimum counts, anything logged completes the day.
+  if (asked.some((p) => isEbbOn(p, date)) || store.settings.dayStates?.some((e) => e.date === date && e.state === 'busy')) {
     return habits.some((p) => countsOn(p, date, deadlineOf)) ? 'complete' : 'incomplete';
   }
   return asked.every((p) => countsOn(p, date, deadlineOf)) ? 'complete' : 'incomplete';
@@ -93,8 +96,8 @@ export function streakDay(store: Store, date: LocalDate, opts: StreakOptions = {
 
 /** The plans that may enter the streak: every plan but the periodic acts. */
 function streakPlans(store: Store, opts: StreakOptions): Plan[] {
-  const periodic = opts.isPeriodicAct;
-  return periodic ? store.plans.filter((p) => !periodic(p)) : store.plans;
+  const periodic = withCustomPeriodic(opts.isPeriodicAct);
+  return store.plans.filter((p) => !periodic(p));
 }
 
 /** The first day any habit plan exists, or null without one: nothing before it can be asked. */

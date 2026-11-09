@@ -6,7 +6,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, type CircleMember } from '@prisma/client';
+import { Prisma, UserRole, type CircleMember } from '@prisma/client';
 import { addDays, diffDays, eachDay, isValidDate, type LocalDate } from '@thekra/practice-core';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type { CreateCircleDto } from './dto/create-circle.dto.js';
@@ -48,6 +48,23 @@ function isUniqueViolation(error: unknown): boolean {
 
 const notFound = () => new NotFoundException({ code: 'CIRCLE_NOT_FOUND', message: 'Circle not found' });
 
+/** A Prisma client or an interactive-transaction client: the member checks run inside either. */
+type Db = Pick<PrismaService, 'circleMember' | '$queryRaw'>;
+
+/**
+ * رفقة is invite-only (round 6, C-01k): on for an ADMIN account, and for a user who redeemed an enabled member's
+ * invite (`User.circlesEnabledAt`). Members from before the change were backfilled by the migration.
+ */
+export function circlesEnabled(user: { role: string; circlesEnabledAt: Date | null } | null): boolean {
+  return user != null && (user.role === UserRole.ADMIN || user.circlesEnabledAt != null);
+}
+
+export const notEnabled = () =>
+  new ForbiddenException({
+    code: 'CIRCLES_NOT_ENABLED',
+    message: 'رفقة opens with an invite from a member',
+  });
+
 /**
  * رفقة: private, invite-only circles (roadmap §0.5 note of 2026-10-29). A member shares a display name and, when
  * they turn it on, a bare «حضرت اليوم» mark per day; nothing about which habit, how much, the sin program or
@@ -74,7 +91,18 @@ export class CirclesService {
     }));
   }
 
+  /** True when رفقة is on for this account (see `circlesEnabled`). */
+  async isEnabled(userId: string): Promise<boolean> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { role: true, circlesEnabledAt: true } });
+    return circlesEnabled(user);
+  }
+
+  async assertEnabled(userId: string): Promise<void> {
+    if (!(await this.isEnabled(userId))) throw notEnabled();
+  }
+
   async create(userId: string, dto: CreateCircleDto, now = new Date()): Promise<CircleDetailDto> {
+    await this.assertEnabled(userId);
     await this.assertBelowCircleLimit(userId);
     await this.deleteEmptyCircles();
     const circle = await this.withFreshCode((inviteCode) =>
@@ -91,29 +119,39 @@ export class CirclesService {
     return this.findOne(userId, circle.id, undefined, now);
   }
 
-  /** Joining a circle one already belongs to answers that circle (a second tap on the link is harmless). */
+  /**
+   * Joining with a circle's own code needs رفقة to be on (a personal invite turns it on: circle-invites.service.ts).
+   * Joining a circle one already belongs to answers that circle (a second tap on the link is harmless).
+   */
   async join(userId: string, dto: JoinCircleDto, now = new Date()): Promise<CircleDetailDto> {
+    await this.assertEnabled(userId);
     const inviteCode = normalizeInviteCode(dto.code);
     await this.deleteEmptyCircles();
     const circle = await this.prisma.circle.findUnique({ where: { inviteCode }, select: { id: true } });
     if (!circle) throw new NotFoundException({ code: 'CIRCLE_INVITE_INVALID', message: 'This invite code is not valid' });
 
-    await this.prisma.$transaction(async (tx) => {
-      // Serialises joins of one circle, so two people cannot both take the 12th place.
-      await tx.$queryRaw`SELECT "id" FROM "Circle" WHERE "id" = ${circle.id} FOR UPDATE`;
-      const existing = await tx.circleMember.findUnique({ where: { circleId_userId: { circleId: circle.id, userId } } });
-      if (existing) return;
-      const [memberCount, myCircles] = await Promise.all([
-        tx.circleMember.count({ where: { circleId: circle.id } }),
-        tx.circleMember.count({ where: { userId } }),
-      ]);
-      if (myCircles >= CIRCLES_PER_USER_MAX) throw this.limitReached();
-      if (memberCount >= CIRCLE_MAX_MEMBERS) {
-        throw new ConflictException({ code: 'CIRCLE_FULL', message: `A circle has at most ${CIRCLE_MAX_MEMBERS} members` });
-      }
-      await tx.circleMember.create({ data: { circleId: circle.id, userId, displayName: dto.displayName } });
-    });
+    await this.prisma.$transaction((tx) => this.addMember(tx, circle.id, userId, dto.displayName));
     return this.findOne(userId, circle.id, undefined, now);
+  }
+
+  /**
+   * Adds `userId` to the circle inside the caller's transaction; a no-op for a member. Throws CIRCLE_FULL or
+   * CIRCLE_LIMIT_REACHED (409).
+   */
+  async addMember(tx: Db, circleId: string, userId: string, displayName: string): Promise<void> {
+    // Serialises joins of one circle, so two people cannot both take the 12th place.
+    await tx.$queryRaw`SELECT "id" FROM "Circle" WHERE "id" = ${circleId} FOR UPDATE`;
+    const existing = await tx.circleMember.findUnique({ where: { circleId_userId: { circleId, userId } } });
+    if (existing) return;
+    const [memberCount, myCircles] = await Promise.all([
+      tx.circleMember.count({ where: { circleId } }),
+      tx.circleMember.count({ where: { userId } }),
+    ]);
+    if (myCircles >= CIRCLES_PER_USER_MAX) throw this.limitReached();
+    if (memberCount >= CIRCLE_MAX_MEMBERS) {
+      throw new ConflictException({ code: 'CIRCLE_FULL', message: `A circle has at most ${CIRCLE_MAX_MEMBERS} members` });
+    }
+    await tx.circleMember.create({ data: { circleId, userId, displayName } });
   }
 
   async findOne(userId: string, circleId: string, today: string | undefined, now = new Date()): Promise<CircleDetailDto> {
@@ -273,7 +311,7 @@ export class CirclesService {
     return member;
   }
 
-  private async ownerOf(userId: string, circleId: string): Promise<CircleMember> {
+  async ownerOf(userId: string, circleId: string): Promise<CircleMember> {
     const me = await this.ownerChecked(await this.memberOf(userId, circleId));
     if (!me.isOwner) throw new ForbiddenException({ code: 'CIRCLE_OWNER_ONLY', message: 'Only the circle owner can do this' });
     return me;

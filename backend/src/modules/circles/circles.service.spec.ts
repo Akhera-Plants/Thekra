@@ -82,6 +82,9 @@ function makePrisma(me: Member | null = member()) {
       findMany: vi.fn().mockResolvedValue([]),
       create: vi.fn().mockResolvedValue({ id: 'cheer-1' }),
     },
+    user: {
+      findUnique: vi.fn().mockResolvedValue({ role: 'USER', circlesEnabledAt: new Date('2026-10-01T00:00:00.000Z') }),
+    },
     $queryRaw: vi.fn().mockResolvedValue([]),
     $transaction: vi.fn(),
   };
@@ -132,6 +135,30 @@ describe('CirclesService', () => {
       expect(prisma.circle.create).toHaveBeenCalledTimes(2);
       const [first, second] = prisma.circle.create.mock.calls.map(([arg]) => (arg as { data: { inviteCode: string } }).data.inviteCode);
       expect(first).not.toBe(second);
+    });
+  });
+
+  describe('invite-only (round 6, C-01k)', () => {
+    it('refuses to create or join while رفقة is off (403 CIRCLES_NOT_ENABLED)', async () => {
+      const prisma = makePrisma();
+      prisma.user.findUnique.mockResolvedValue({ role: 'USER', circlesEnabledAt: null });
+      for (const call of [
+        () => service(prisma).create(USER, { name: 'x', displayName: 'y' }, NOW),
+        () => service(prisma).join(USER, { code: 'ABCDEFGHJK', displayName: 'y' }, NOW),
+      ]) {
+        const error = await call().catch((e: unknown) => e);
+        expect(statusOf(error)).toBe(403);
+        expect(codeOf(error)).toBe('CIRCLES_NOT_ENABLED');
+      }
+      expect(prisma.circle.create).not.toHaveBeenCalled();
+      expect(prisma.circleMember.create).not.toHaveBeenCalled();
+    });
+
+    it('an ADMIN account is on without an invite; an unknown user is off', async () => {
+      const prisma = makePrisma();
+      prisma.user.findUnique.mockResolvedValueOnce({ role: 'ADMIN', circlesEnabledAt: null }).mockResolvedValueOnce(null);
+      expect(await service(prisma).isEnabled(USER)).toBe(true);
+      expect(await service(prisma).isEnabled(OTHER_USER)).toBe(false);
     });
   });
 

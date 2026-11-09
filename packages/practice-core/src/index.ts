@@ -31,3 +31,14 @@ export * from './home.js';
 export * from './fard.js';
 export * from './commitment.js';
 export * from './heart-slot.js';
+// Round 6 (docs/plan/2026-11-09-owner-round-6.md).
+export * from './archive.js';
+export * from './day-state.js';
+export * from './day-log.js';
+export * from './reflection.js';
+export * from './progress.js';
+export * from './qada.js';
+export * from './habit-list.js';
+export * from './periodic.js';
+export * from './reads.js';
+export * from './reciters.js';

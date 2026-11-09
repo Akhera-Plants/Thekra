@@ -3,7 +3,7 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { LinkReviewStatus, Prisma, QuoteType } from '@prisma/client';
+import { LinkConcern, LinkReviewStatus, Prisma, QuoteType } from '@prisma/client';
 import { paginated } from '../../common/dto/paginated-result.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { GradePolicy } from '../hadith/grade-policy.js';
@@ -11,6 +11,7 @@ import type { BulkLinkGoodDeedQuotesDto } from './dto/bulk-link-good-deed-quotes
 import type { BulkLinkItemDto } from './dto/bulk-link-item.dto.js';
 import type { BulkLinkSinQuotesDto } from './dto/bulk-link-sin-quotes.dto.js';
 import type { GoodDeedQuotesAdminQueryDto } from './dto/good-deed-quotes-admin-query.dto.js';
+import type { LinkConcernsQueryDto, LinkKind } from './dto/link-concerns-query.dto.js';
 import type { LinkGoodDeedQuoteDto } from './dto/link-good-deed-quote.dto.js';
 import type { LinkSinQuoteDto } from './dto/link-sin-quote.dto.js';
 import type { SinQuotesAdminQueryDto } from './dto/sin-quotes-admin-query.dto.js';
@@ -53,6 +54,32 @@ const ADMIN_LINK_ORDER_BY_NEWEST = [
   { id: 'asc' as const },
 ];
 
+
+/** PATCH fields of a topic↔text link (the three link tables share them). */
+type LinkUpdate = {
+  relevanceScore?: number;
+  note?: string | null;
+  reviewStatus?: LinkReviewStatus;
+  reminderAngle?: string | null;
+  reminderAngleEn?: string | null;
+  concern?: LinkConcern | null;
+  concernNote?: string | null;
+};
+
+/** One row of GET /admin/link-concerns. */
+export interface LinkConcernDto {
+  kind: LinkKind;
+  linkId: string;
+  concern: LinkConcern;
+  concernNote: string | null;
+  concernAt: string | null;
+  reviewStatus: LinkReviewStatus;
+  topic: { slug: string; nameAr: string };
+  quote: { id: string; type: QuoteType; excerpt: string };
+}
+
+const CONCERN_EXCERPT = 200;
+const CONCERN_QUOTE_SELECT = { id: true, type: true, textAr: true } as const;
 
 /** Response shape from bulkLink* methods. */
 export interface BulkResult {
@@ -292,7 +319,7 @@ export class ClassificationService {
   private async doUpdate<TLinkDto>(
     binding: ClassifyBinding,
     id: string,
-    dto: { relevanceScore?: number; note?: string | null; reviewStatus?: LinkReviewStatus },
+    dto: LinkUpdate,
   ): Promise<TLinkDto> {
     const existing: unknown = await binding.delegate['findUnique']({ where: { id } });
     if (!existing) {
@@ -305,6 +332,10 @@ export class ClassificationService {
         ...(dto.relevanceScore !== undefined && { relevanceScore: dto.relevanceScore }),
         ...(dto.note !== undefined && { note: dto.note }),
         ...(dto.reviewStatus !== undefined && { reviewStatus: dto.reviewStatus }),
+        ...(dto.reminderAngle !== undefined && { reminderAngle: dto.reminderAngle }),
+        ...(dto.reminderAngleEn !== undefined && { reminderAngleEn: dto.reminderAngleEn }),
+        ...(dto.concern !== undefined && { concern: dto.concern, concernAt: dto.concern === null ? null : new Date() }),
+        ...(dto.concernNote !== undefined && { concernNote: dto.concernNote }),
       },
       include: binding.include,
     })) as TLinkDto;
@@ -320,6 +351,48 @@ export class ClassificationService {
       throw new NotFoundException({ code: 'RESOURCE_NOT_FOUND', message: binding.notFoundMessage });
     }
     await binding.delegate['delete']({ where: { id } });
+  }
+
+  // ─── Link concerns (round 6, C-01n) ──────────────────────────────────────────
+
+  /**
+   * Links flagged while linking (e.g. NO_REAL_LINK), newest first, at most `limit` per link table, with each
+   * table's total. Read-only: a concern never hides a link; the owner decides with the link PATCH.
+   */
+  async listLinkConcerns(query: LinkConcernsQueryDto): Promise<{
+    data: LinkConcernDto[];
+    meta: { counts: Record<LinkKind, number>; limitPerKind: number };
+  }> {
+    const limit = query.limit ?? 100;
+    const where = { concern: query.concern ? query.concern : { not: null } } as const;
+    const wants = (kind: LinkKind) => query.kind === undefined || query.kind === kind;
+    const page = { where, orderBy: [{ concernAt: 'desc' as const }, { id: 'asc' as const }], take: limit };
+    const base = { id: true, concern: true, concernNote: true, concernAt: true, reviewStatus: true, quote: { select: CONCERN_QUOTE_SELECT } } as const;
+    const [sins, deeds, branches, sinCount, deedCount, branchCount] = await Promise.all([
+      wants('sin') ? this.prisma.sinQuote.findMany({ ...page, select: { ...base, sin: { select: { slug: true, nameAr: true } } } }) : [],
+      wants('good-deed') ? this.prisma.goodDeedQuote.findMany({ ...page, select: { ...base, goodDeed: { select: { slug: true, nameAr: true } } } }) : [],
+      wants('branch') ? this.prisma.imanBranchQuote.findMany({ ...page, select: { ...base, imanBranch: { select: { number: true, titleAr: true } } } }) : [],
+      wants('sin') ? this.prisma.sinQuote.count({ where }) : 0,
+      wants('good-deed') ? this.prisma.goodDeedQuote.count({ where }) : 0,
+      wants('branch') ? this.prisma.imanBranchQuote.count({ where }) : 0,
+    ]);
+    type Row = { id: string; concern: LinkConcern | null; concernNote: string | null; concernAt: Date | null; reviewStatus: LinkReviewStatus; quote: { id: string; type: QuoteType; textAr: string } };
+    const present = (kind: LinkKind, row: Row, topic: { slug: string; nameAr: string }): LinkConcernDto => ({
+      kind,
+      linkId: row.id,
+      concern: row.concern as LinkConcern,
+      concernNote: row.concernNote,
+      concernAt: row.concernAt?.toISOString() ?? null,
+      reviewStatus: row.reviewStatus,
+      topic,
+      quote: { id: row.quote.id, type: row.quote.type, excerpt: row.quote.textAr.slice(0, CONCERN_EXCERPT) },
+    });
+    const data = [
+      ...sins.map((row) => present('sin', row, row.sin)),
+      ...deeds.map((row) => present('good-deed', row, row.goodDeed)),
+      ...branches.map((row) => present('branch', row, { slug: String(row.imanBranch.number), nameAr: row.imanBranch.titleAr })),
+    ].sort((a, b) => (b.concernAt ?? '').localeCompare(a.concernAt ?? '') || a.linkId.localeCompare(b.linkId));
+    return { data, meta: { counts: { sin: sinCount, 'good-deed': deedCount, branch: branchCount }, limitPerKind: limit } };
   }
 
   // ─── Binding objects (constructed per-call — no state) ────────────────────────
@@ -362,10 +435,7 @@ export class ClassificationService {
     });
   }
 
-  async updateBranchLink(
-    id: string,
-    dto: { relevanceScore?: number; note?: string | null; reviewStatus?: LinkReviewStatus },
-  ) {
+  async updateBranchLink(id: string, dto: LinkUpdate) {
     return this.doUpdate(this.branchBinding, id, dto);
   }
 

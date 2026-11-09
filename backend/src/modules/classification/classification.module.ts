@@ -8,6 +8,7 @@ import {
   SinQuotesAdminController,
 } from './classification.admin.controller.js';
 import { ClassificationService } from './classification.service.js';
+import { LinkConcernsAdminController } from './link-concerns.admin.controller.js';
 
 @Module({
   imports: [AuthModule],
@@ -16,6 +17,7 @@ import { ClassificationService } from './classification.service.js';
     GoodDeedQuotesAdminController,
     BranchQuotesAdminController,
     ChapterMapsAdminController,
+    LinkConcernsAdminController,
   ],
   providers: [ClassificationService, ChapterMapsService],
   exports: [ClassificationService],

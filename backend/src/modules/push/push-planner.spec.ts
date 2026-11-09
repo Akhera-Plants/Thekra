@@ -48,7 +48,7 @@ describe('planPushes', () => {
     ]);
   });
 
-  it('a sick person reminds every two days until visited; other lists use the generic wording', () => {
+  it('a sick person reminds every two days until visited; other lists use the «صلة الرحم والأحباب» wording', () => {
     const sick: Relative = {
       id: 'r-sick',
       name: 'أبو محمد',
@@ -59,7 +59,7 @@ describe('planPushes', () => {
     };
     const out = run(store([], [sick]), { windowHours: 96 });
     expect(out.map((p) => p.key)).toEqual(['kinship:2026-10-29', 'kinship:2026-10-31']);
-    expect(out[0]).toMatchObject({ title: 'أعمال دورية', body: 'حان وقت التواصل مع 1 من قوائمك' });
+    expect(out[0]).toMatchObject({ title: 'صلة الرحم والأحباب', body: 'حان وقت التواصل مع 1 من أحبابك' });
     expect(run(store([], [{ ...sick, history: ['2026-10-28'], lastContactedOn: '2026-10-28' }]), { windowHours: 96 })).toEqual([]);
   });
 
@@ -102,7 +102,7 @@ describe('planPushes', () => {
     };
     const out = run(store([], [rel, { ...rel, id: 'r2', name: 'عمي' }]));
     expect(out).toHaveLength(1);
-    expect(out[0]).toMatchObject({ key: 'kinship:2026-10-29', title: 'صلة الرحم', body: 'حان وقت التواصل مع 2 من أقاربك', url: '/practice/people' });
+    expect(out[0]).toMatchObject({ key: 'kinship:2026-10-29', title: 'صلة الرحم والأحباب', body: 'حان وقت التواصل مع 2 من أقاربك', url: '/practice/periodic' });
     expect(out[0]!.fireAt.toISOString()).toBe('2026-10-29T15:00:00.000Z');
     expect(JSON.stringify(out)).not.toMatch(/سعاد|عمي/);
   });
@@ -136,9 +136,23 @@ describe('planPushes', () => {
     expect(JSON.stringify(nudges)).not.toMatch(/my own title/);
   });
 
-  it('plans no strategy reminder any more (round 5, F-12 a), even from stored prefs that hold strategies', () => {
+  it('round 6 (C-19): the weekly strategy reminder is back on the chosen day and time; nothing without a chosen strategy', () => {
     const prefs = { ...QUIET_PREFS, habits: false, strategies: ['start-tiny'], strategyTime: '10:00' };
-    expect(run(store([]), { prefs, windowHours: 96 })).toEqual([]);
+    const out = run(store([]), { prefs, windowHours: 96 });
+    expect(out.map((p) => [p.key, p.title, p.body, p.url, p.tag])).toEqual([
+      ['strategy:2026-10-31', 'استراتيجية الأسبوع', 'ابدأ صغيرًا جدًا', '/practice/strategies', 'strategy'],
+    ]);
+    expect(run(store([]), { prefs: { ...prefs, strategies: [] }, windowHours: 96 })).toEqual([]);
+  });
+
+  it('round 6: muted habits and «صلة الرحم والأحباب» are left out; «نية اليوم» rings when on', () => {
+    const rel: Relative = { id: 'r1', name: 'خالتي', relation: '', rule: { kind: 'everyNDays', n: 7, anchor: '2026-10-01' }, history: [] };
+    const prefs = { ...QUIET_PREFS, mutedPlans: ['a'], mutedActs: ['silat'], intentionReminder: true, intentionTime: '07:30' };
+    const out = run(store([plan({ id: 'a' }), plan({ id: 'b' })], [rel]), { prefs, windowHours: 24 });
+    expect(out.some((p) => p.key.startsWith('habit:a:'))).toBe(false);
+    expect(out.some((p) => p.key.startsWith('habit:b:'))).toBe(true);
+    expect(out.some((p) => p.key.startsWith('kinship:'))).toBe(false);
+    expect(out.find((p) => p.key.startsWith('intention:'))).toMatchObject({ title: 'نية اليوم', url: '/practice/review', tag: 'intention' });
   });
 
   it('«مناسبة قريبة»: opt-in, the day before a non-weekly occasion, at its time, linking to the deed page', () => {

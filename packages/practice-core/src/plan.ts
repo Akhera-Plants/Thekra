@@ -99,6 +99,22 @@ export interface Plan {
    * when none. Synced with the plan (part of its last-writer-wins content); see {@link HabitLoop}.
    */
   loops?: HabitLoop[];
+  /**
+   * «القدر الأدنى» (round 6, §2): the amount the member set as the least he will do on a hard day, never lowered further.
+   * On «يومي ثقيل» / a hard «حال يومي» the plan asks exactly this ({@link minimumOf}); {@link decreaseTo} never goes
+   * below it. Positive and not above the everyday amount. Absent: the old «أقل ما يمكن» ({@link EBB_AMOUNT}).
+   */
+  minimum?: number;
+  /**
+   * Round 6: the amount the plan started with ({@link createPlan}). A restore after a long archive goes back to it
+   * ({@link restartProgress}). Absent on plans made before round 6.
+   */
+  startAmount?: number;
+  /**
+   * Round 6: the day the habit's progress started again after more than {@link ARCHIVE_RESET_DAYS} days in the archive.
+   * Kept days, the per-habit streak, completion and milestones count from here; the log before it stays (history).
+   */
+  restartedOn?: LocalDate;
   /** ISO time of the last local edit of the plan's own fields (not its log). Set by the helpers; v1 data gets it on upgrade. */
   updatedAt?: IsoTime;
 }
@@ -391,7 +407,18 @@ export function validatePlan(plan: unknown): string | null {
     const e = validateHabitLoops(p.loops);
     if (e) return e;
   }
+  if (p.minimum !== undefined) {
+    if (!isPositive(p.minimum)) return 'minimum must be a positive number';
+    const base = isRecord(p.season) && isPositive(p.season.previous) ? p.season.previous : (p.amount as number);
+    if (p.minimum > base) return 'minimum must not be above the everyday amount';
+  }
+  if (p.startAmount !== undefined && !isPositive(p.startAmount)) return 'startAmount must be a positive number';
+  if (p.restartedOn !== undefined && !isValidDate(p.restartedOn)) return 'restartedOn must be YYYY-MM-DD';
   return null;
+}
+
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === 'object' && v !== null && !Array.isArray(v);
 }
 
 function assertPlan(plan: Plan): void {
@@ -412,11 +439,21 @@ export interface NewPlan {
   createdOn: LocalDate;
   habitKey?: string;
   rule?: Rule;
+  /** «القدر الأدنى» (round 6), optional: not above `amount`. */
+  minimum?: number;
 }
 
-/** A new plan with an empty log. Throws when a field is invalid. */
+/** A new plan with an empty log; `startAmount` = `amount` (round 6). Throws when a field is invalid. */
 export function createPlan(input: NewPlan, now: IsoTime = nowIso()): Plan {
-  const plan: Plan = { ...input, slots: [...input.slots], amountChangedOn: input.createdOn, log: {}, updatedAt: now };
+  const plan: Plan = {
+    ...input,
+    slots: [...input.slots],
+    amountChangedOn: input.createdOn,
+    log: {},
+    startAmount: input.amount,
+    updatedAt: now,
+  };
+  if (plan.minimum === undefined) delete plan.minimum;
   if (plan.ceiling === undefined) delete plan.ceiling;
   if (plan.habitKey === undefined) delete plan.habitKey;
   if (plan.rule === undefined) delete plan.rule;
@@ -473,7 +510,7 @@ export function isEbbOn(plan: Plan, date: LocalDate): boolean {
 export function requiredOn(plan: Plan, date: LocalDate): number {
   if (!isValidDate(date)) throw new RangeError('Invalid date');
   const base = baseAmount(plan);
-  if (isEbbOn(plan, date)) return Math.min(base, EBB_AMOUNT);
+  if (isEbbOn(plan, date)) return minimumOf(plan);
   if (plan.season && date <= plan.season.until) return plan.season.amount;
   return base;
 }
@@ -616,6 +653,7 @@ export function increase(plan: Plan, today: LocalDate, now: IsoTime = nowIso()):
 export function decreaseTo(plan: Plan, amount: number, today: LocalDate, now: IsoTime = nowIso()): Plan {
   if (!isValidDate(today)) throw new RangeError('Invalid today');
   if (!isPositive(amount) || amount >= baseAmount(plan)) throw new RangeError('amount must be positive and lower than the current amount');
+  if (plan.minimum !== undefined && amount < plan.minimum) throw new RangeError('amount must not be below the plan minimum');
   if (plan.season) return { ...plan, season: { ...plan.season, previous: amount }, amountChangedOn: today, updatedAt: now };
   return { ...plan, amount, amountChangedOn: today, updatedAt: now };
 }
@@ -624,7 +662,7 @@ export type PlanStatus = 'ok' | 'relapse';
 
 /** 'relapse' when nothing was logged in the last 7 days (today included) and the plan is older than 7 days. */
 export function status(plan: Plan, today: LocalDate): PlanStatus {
-  if (diffDays(plan.createdOn, today) <= RELAPSE_DAYS) return 'ok';
+  if (diffDays(progressStart(plan), today) <= RELAPSE_DAYS) return 'ok';
   const end = toDayNumber(today);
   for (let n = end - RELAPSE_DAYS + 1; n <= end; n++) {
     if ((plan.log[fromDayNumber(n)] ?? 0) > 0) return 'ok';
@@ -712,7 +750,7 @@ export function isEstablished(plan: Plan): boolean {
 export function graduationReady(plan: Plan, today: LocalDate): boolean {
   if (!isValidDate(today)) throw new RangeError('Invalid today');
   if (isEstablished(plan) || isPaused(plan)) return false;
-  if (diffDays(plan.createdOn, today) < GRADUATION_MIN_DAYS) return false;
+  if (diffDays(progressStart(plan), today) < GRADUATION_MIN_DAYS) return false;
   return adherence(plan, addDays(today, -GRADUATION_WINDOW_DAYS), addDays(today, -1)) >= GRADUATION_ADHERENCE;
 }
 
@@ -769,7 +807,62 @@ export function reminderSlots(plan: Plan, prayer?: PrayerTimes): LocalTime[] {
   return isEstablished(plan) ? slots.slice(0, 1) : slots;
 }
 
-/** The smallest amount that keeps the day («ولو بالقليل»): the heavy-day amount. */
+/**
+ * The smallest amount that keeps the day («ولو بالقليل»): the heavy-day amount. The member's «القدر الأدنى»
+ * ({@link Plan.minimum}, round 6) when set, else {@link EBB_AMOUNT}; never above the everyday amount.
+ */
 export function minimumOf(plan: Plan): number {
-  return Math.min(baseAmount(plan), EBB_AMOUNT);
+  return Math.min(baseAmount(plan), plan.minimum ?? EBB_AMOUNT);
 }
+
+/**
+ * «القدر الأدنى» (round 6): sets (or clears, with `null`) the member's minimum. Throws when it is not positive or is
+ * above the everyday amount.
+ */
+export function setMinimum(plan: Plan, minimum: number | null, now: IsoTime = nowIso()): Plan {
+  const copy: Plan = { ...plan, updatedAt: now };
+  if (minimum === null) delete copy.minimum;
+  else copy.minimum = minimum;
+  assertPlan(copy);
+  return copy;
+}
+
+/** The lowest amount the plan may be lowered to ({@link decreaseTo}): its «القدر الأدنى», else the ladder's first step. */
+export function lowestAmount(plan: Plan): number {
+  return plan.minimum ?? (LADDER[0] as number);
+}
+
+/** {@link relapseSuggestion} that never goes under the plan's «القدر الأدنى». */
+export function relapseSuggestionFor(plan: Plan): number {
+  return Math.max(relapseSuggestion(baseAmount(plan)), plan.minimum ?? 0);
+}
+
+/** The amount a restart goes back to: `startAmount`, else the minimum, else the current amount (round 6). */
+export function startAmountOf(plan: Plan): number {
+  const base = baseAmount(plan);
+  return Math.min(base, plan.startAmount ?? plan.minimum ?? base);
+}
+
+/** The day the habit's progress counts from: `createdOn`, or the later `restartedOn` (round 6). */
+export function progressStart(plan: Pick<Plan, 'createdOn' | 'restartedOn'>): LocalDate {
+  return plan.restartedOn !== undefined && plan.restartedOn > plan.createdOn ? plan.restartedOn : plan.createdOn;
+}
+
+/**
+ * Starts the habit's progress again on `today` (round 6, a restore after more than {@link ARCHIVE_RESET_DAYS} days
+ * archived): the amount goes back to {@link startAmountOf} (a season and «راسخة» end), the hold restarts, and
+ * `restartedOn = today`. The log is kept. Does not resume a paused plan (see `archive.ts` `restorePlan`).
+ */
+export function restartProgress(plan: Plan, today: LocalDate, now: IsoTime = nowIso()): Plan {
+  if (!isValidDate(today)) throw new RangeError('Invalid today');
+  const copy: Plan = { ...plan, amount: startAmountOf(plan), amountChangedOn: today, restartedOn: today, updatedAt: now };
+  delete copy.season;
+  delete copy.ebb;
+  delete copy.establishedOn;
+  if (copy.minimum !== undefined && copy.minimum > copy.amount) copy.minimum = copy.amount;
+  assertPlan(copy);
+  return copy;
+}
+
+/** Days in the archive after which a restore starts the habit's progress again (round 6, «الأرشيف»). */
+export const ARCHIVE_RESET_DAYS = 3;

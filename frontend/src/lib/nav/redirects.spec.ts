@@ -23,9 +23,10 @@ describe('web redirects (round 5 §1, practice-core WEB_REDIRECTS)', () => {
     expect(target('/names/:rest+')).toBe('/');
     expect(target('/en/names/:rest+')).toBe('/en');
     expect(target('/calendar/:rest+')).toBe('/practice/record');
-    // `/practice/habits/<id>` is the habit page.
-    expect(target('/practice/habits')).toBe('/practice/record');
-    expect(target('/practice/habits/:rest+')).toBeUndefined();
+    // Round 6: `/practice/habits` is the «العادات» tab again (no redirect); `/practice/people` goes to the periodic acts.
+    expect(target('/practice/habits')).toBeUndefined();
+    expect(target('/practice/people/:rest+')).toBe('/practice/periodic');
+    expect(target('/browse/:rest+')).toBe('/');
   });
 
   it('never redirects a current page', () => {

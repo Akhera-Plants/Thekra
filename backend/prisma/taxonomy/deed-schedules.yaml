@@ -404,6 +404,45 @@ habits:
       anchors: [before-sleep]
     basis: text
     evidence: [54cb1111-a5da-412a-a828-90989973ef18, 28b92310-7fb6-4522-9d85-6a6c8282523f]
+  # Round 6 (docs/plan/2026-11-09-owner-round-6.md §6): two yearly fasts as periodic acts. Their rules and evidence are
+  # those of the occasions `arafah` and `ashura` above (same Quote ids, checked 2026-10-28 against production); no new
+  # text or id. Pending the sheikh's review like the rest of this file.
+  - key: siyam-arafah
+    kind: periodic
+    titleAr: صيام يوم عرفة
+    titleEn: Fasting the Day of Arafah
+    deed: siyam
+    unit: times
+    unitLabelAr: يوم
+    unitLabelEn: day
+    start: { far: 1, near: 1 }
+    defaultRule: { kind: hijriYearly, month: 12, day: 9 }
+    defaultSlots: ['04:30']
+    window:
+      from: isha
+      to: fajr
+      toMinutes: -10
+      anchors: [before-sleep]
+    basis: text
+    evidence: [0d77e977-f40b-473b-8b14-42b5fb82951a]
+  - key: siyam-ashura
+    kind: periodic
+    titleAr: صيام عاشوراء ويوم قبله
+    titleEn: Fasting Ashura and the day before
+    deed: siyam
+    unit: times
+    unitLabelAr: يوم
+    unitLabelEn: day
+    start: { far: 1, near: 1 }
+    defaultRule: { kind: hijriWindow, month: 1, fromDay: 9, toDay: 10 }
+    defaultSlots: ['04:30']
+    window:
+      from: isha
+      to: fajr
+      toMinutes: -10
+      anchors: [before-sleep]
+    basis: text
+    evidence: [0d77e977-f40b-473b-8b14-42b5fb82951a, dcbeea3e-17bd-4eea-8008-c5f21616b6f9, 2f5090f5-82a8-4066-9481-29c1d1c5ab3b]
   - key: kahf-jumua
     kind: periodic
     titleAr: سورة الكهف يوم الجمعة

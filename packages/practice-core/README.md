@@ -43,6 +43,16 @@ pnpm --filter @thekra/practice-core typecheck  # tsc --noEmit
 | `fard` (round 5) | «الفرائض»: `FARD_PRAYERS`, `FARD_STATUSES` (`onTime`, `qada`), `FardMark`, `FARD_LABELS`, `FARD_EVIDENCE` (empty, TODO), `parseFardMarks`, `fardOn`, `setFard`, `canMarkFard`, `fardEnabled` / `setFardTracking`, `fardStats` (30 days), `compareFardMarks`; marks in `Store.fard` (synced per mark) |
 | `commitment` (round 5) | moved from the clients: `planCommitment`, `commitmentRates`, `meanCommitment`, `excuseOfYesterday`, `usualDeedDue` (60% rule), `COMMITMENT_DAYS`, `USUAL_DEED_THRESHOLD` |
 | `heart-slot` (round 5) | `heartSlot(heart, store, today, time, opts)` → the one card of «ورد اليوم» (`intention` / `evening` / `weekly` / `usual-deed`) or null; `USUAL_DEED_UNTIL` |
+| `archive` (round 6) | «الأرشيف» = the old pause: `ARCHIVE_MAX` (10), `ARCHIVE_RESET_DAYS` (3), `isArchived`, `archivedPlans`, `canArchive`, `archivePlan`, `restorePlan` / `restorePlanInStore` (→ `{ plan, reset }`), `archiveNote`, `habitAddChoice` (the «أضف» sheet at 3: archive / delete) |
+| `day-state` (round 6) | «حال يومي»: `DAY_STATES` (`normal sick busy travel`), `DAY_STATE_INFO` (excused / minimum), `dayStateOn` (reads round-5 «عذر» / ebb as `legacy`), `setDayState`, `requiredOnDay`, `isHardDay`; in `settings.dayStates` (synced) |
+| `day-log` (round 6) | unlogged days: `dayLogState` (`done partial open ask notDone markedNotDone excused notAsked archived beforeStart future`), `UNLOGGED_ASK_DAYS` (3), `answerDidIt` / `answerDidNot`, `pendingAsks`; the week from the review day: `weekStart`, `weekDays`, `weekStrip`; «سجلّي»: `dayDetails`, `programDayDetails` |
+| `reflection` (round 6) | `Reflection` (`helped`, `hard`, `note` per plan and day), `setReflection`, `reflectionOf`, `reflectionsOfPlan`, `parseReflections`, `compareReflections`; `Store.reflections` (synced). Sin answers: `CheckIn.helped` / `CheckIn.hard` (vault only) |
+| `progress` (round 6) | `habitCompletion` (% to 66 kept days, 100 once «راسخة»), `habitMilestones` (`hardest-passed`, `habit-made`), `shareSuggestion`, `habitStreak`; `plan.ts`: `minimum`, `setMinimum`, `startAmount`, `restartedOn`, `restartProgress`, `progressStart`, `lowestAmount`, `relapseSuggestionFor` |
+| `qada` (round 6) | «قضاء الفوائت»: `QadaPlan` (`settings.qada`), `QadaLog` (`Store.qadaLogs`, synced), `setQadaPlan`, `logQada`, `setQadaCount`, `qadaProgress` (the circle) |
+| `habit-list` (round 6) | «تخفّف» programs as habits: `habitListRows(store, programs or null)`, `isLightenCovered`, `setLightenCovered` (`settings.lightenCovered`, synced) |
+| `periodic` (round 6) | «الأعمال الدورية»: `PERIODIC_ACTS` (8 acts, «صلة الرحم والأحباب» holds every people list), `PERIODIC_TEMPLATE_KEYS`, `activePeriodicActs`, `periodicActKeyOf`, `silatPeople`, `createCustomPeriodic` (`CUSTOM_PERIODIC_KEY`), `withCustomPeriodic` |
+| `reads` (round 6) | read / unread texts: `markRead`, `markUnread`, `isRead`, `readSet`, `READS_MAX` (3000); `Store.reads` (synced) |
+| `reciters` (round 6) | `RECITERS` (EveryAyah folders, one constant), `ayahAudioUrl(surah, ayah, reciter?)`, `chosenReciter`, `setReciter` (`settings.reciter`, synced) |
 
 ### Hijri
 

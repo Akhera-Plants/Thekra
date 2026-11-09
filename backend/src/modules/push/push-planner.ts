@@ -31,8 +31,11 @@ import { zonedParts, zonedToUtc } from './zoned-time.js';
  *   (`PushSubscription.prefs`, sent by the web app with the subscription).
  * - «مناسبة قريبة» (round 5, opt-in): the day before a non-weekly occasion of the practice catalog (the same
  *   deed-schedules.yaml the clients read through `GET /v1/practice/catalog`), at the browser's chosen time; it opens the
- *   occasion's good-deed page. The weekly strategy reminder was removed in round 5 (F-12 a): stored prefs that still
- *   hold strategies plan nothing.
+ *   occasion's good-deed page.
+ * - Round 6 (C-19): the weekly strategy reminder is back (the chosen strategies, one a week, on the browser's chosen day
+ *   and time; it opens «استراتيجيات العادات»), the «نية اليوم» reminder (opt-in; the server cannot see whether the day's
+ *   intention is made, since it is device-local, so it rings on every day with a live habit), and per-habit /
+ *   per-act switches (`mutedPlans`, `mutedActs`). People lists are «صلة الرحم والأحباب», inside «الأعمال الدورية».
  * - Quiet hours 23:00–05:00 (the night prayer and the user's own times excepted), at most 4 a day and then one digest.
  * - The sin program is never here: the server cannot read it.
  * - Prayer anchors («بعد الفجر»…): the server never calls AlAdhan. The browser resolves the anchors from its own 30-day
@@ -49,8 +52,8 @@ export type PushLocale = 'ar' | 'en';
 
 export interface PlannedPush {
   /**
-   * `habit:<planId>:<date>:<time>`, `kinship:<date>`, `evening:<date>`, `friday:<date>`, `occasion:<date>` or
-   * `digest:<date>`: what the reminder is for, stable across re-plans.
+   * `habit:<planId>:<date>:<time>`, `kinship:<date>`, `evening:<date>`, `friday:<date>`, `occasion:<date>`,
+   * `strategy:<date>`, `intention:<date>` or `digest:<date>`: what the reminder is for, stable across re-plans.
    */
   key: string;
   fireAt: Date;
@@ -67,18 +70,18 @@ export interface PlannedPush {
 const TEXTS = {
   ar: {
     habitBody: (amount: string) => `المطلوب اليوم: ${amount}`,
-    kinshipTitle: 'صلة الرحم',
+    kinshipTitle: 'صلة الرحم والأحباب',
     kinshipBody: (n: number) => `حان وقت التواصل مع ${n} من أقاربك`,
-    peopleTitle: 'أعمال دورية',
-    peopleBody: (n: number) => `حان وقت التواصل مع ${n} من قوائمك`,
+    peopleTitle: 'صلة الرحم والأحباب',
+    peopleBody: (n: number) => `حان وقت التواصل مع ${n} من أحبابك`,
     units: { minutes: 'دقيقة', count: 'مرة', times: 'مرة' } as Record<PlanUnit, string>,
   },
   en: {
     habitBody: (amount: string) => `Today: ${amount}`,
-    kinshipTitle: 'Ties of kinship',
+    kinshipTitle: 'Ties of kinship and loved ones',
     kinshipBody: (n: number) => `Time to get in touch with ${n} of your relatives`,
-    peopleTitle: 'Periodic acts',
-    peopleBody: (n: number) => `Time to get in touch with ${n} people from your lists`,
+    peopleTitle: 'Ties of kinship and loved ones',
+    peopleBody: (n: number) => `Time to get in touch with ${n} of your loved ones`,
     units: { minutes: 'minutes', count: 'times', times: 'times' } as Record<PlanUnit, string>,
   },
 } as const;
@@ -162,7 +165,7 @@ export function planPushes(input: PushPlanInput): PlannedPush[] {
     defaultSlotsOf: (plan) => habitFor(plan, habits)?.defaultSlots,
     prayerTimesOn: (date) => anchorPrayerTimes(input.anchorTimes?.[date]),
     occasions: (input.occasions ?? []).map((o) => ({ key: o.key, titleAr: o.titleAr, titleEn: o.titleEn, deed: o.deed, rule: o.rule })),
-    kinds: ['habit', 'periodic', 'evening', 'friday', 'occasion', 'digest'],
+    kinds: ['habit', 'periodic', 'evening', 'friday', 'occasion', 'strategy', 'intention', 'digest'],
   });
   const occasionsByKey = new Map((input.occasions ?? []).map((o) => [o.key, o]));
 
@@ -187,7 +190,7 @@ export function planPushes(input: PushPlanInput): PlannedPush[] {
         fireAt,
         title: kin ? texts.kinshipTitle : texts.peopleTitle,
         body: kin ? texts.kinshipBody(count) : texts.peopleBody(count),
-        url: sitePath(locale, '/practice/people'),
+        url: sitePath(locale, '/practice/periodic'),
         tag: 'kinship',
       });
     } else if (entry.kind === 'evening') {
@@ -205,6 +208,12 @@ export function planPushes(input: PushPlanInput): PlannedPush[] {
         url: sitePath(locale, `/good-deeds/${encodeURIComponent(first.deed)}`),
         tag: 'occasion',
       });
+    } else if (entry.kind === 'strategy') {
+      const body = policy.strategyBody(entry.strategy ?? '');
+      if (!body) continue;
+      out.push({ key: entry.key, fireAt, title: policy.strategyTitle, body, url: sitePath(locale, '/practice/strategies'), tag: 'strategy' });
+    } else if (entry.kind === 'intention') {
+      out.push({ key: entry.key, fireAt, title: policy.intentionTitle, body: policy.intentionBody, url: sitePath(locale, '/practice/review'), tag: 'intention' });
     } else if (entry.kind === 'digest') {
       out.push({ key: entry.key, fireAt, title: policy.wirdTitle, body: policy.digestBody(entry.count ?? 1), url: practice, tag: 'digest' });
     }

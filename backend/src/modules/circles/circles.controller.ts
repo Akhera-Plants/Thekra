@@ -21,7 +21,10 @@ import { CurrentUser, type JwtPayload } from '../../common/decorators/current-us
 import { PRIVATE_CACHE_HEADER } from '../../common/http/public-cache.js';
 import { setCreated } from '../../common/http/set-created.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
+import { CircleInvitesService } from './circle-invites.service.js';
 import { CirclesService } from './circles.service.js';
+import { CreateCircleInviteDto } from './dto/create-circle-invite.dto.js';
+import { RedeemCircleInviteDto } from './dto/redeem-circle-invite.dto.js';
 import { CircleQueryDto } from './dto/circle-query.dto.js';
 import { CreateCircleDto } from './dto/create-circle.dto.js';
 import { JoinCircleDto } from './dto/join-circle.dto.js';
@@ -32,11 +35,18 @@ import { UpdateMembershipDto } from './dto/update-membership.dto.js';
 /** Guessing invite codes: 5 tries a minute per client, on top of the code's own size. */
 const JOIN_THROTTLE = { default: { limit: 5, ttl: 60_000 } };
 
-/** رفقة: private circles of the signed-in user. Never CDN-cached. */
+/**
+ * رفقة: private circles of the signed-in user. Never CDN-cached. Invite-only (round 6, C-01k): creating or joining a
+ * circle needs رفقة to be on, which a member's personal invite does (`/circles/invites/*`).
+ * The fixed paths stay above `:id`, which would otherwise catch them.
+ */
 @Controller('circles')
 @UseGuards(JwtAuthGuard)
 export class CirclesController {
-  constructor(private readonly circles: CirclesService) {}
+  constructor(
+    private readonly circles: CirclesService,
+    private readonly invites: CircleInvitesService,
+  ) {}
 
   @Get()
   @Header('Cache-Control', PRIVATE_CACHE_HEADER)
@@ -57,6 +67,40 @@ export class CirclesController {
   @Throttle(JOIN_THROTTLE)
   join(@CurrentUser() user: JwtPayload, @Body() dto: JoinCircleDto) {
     return this.circles.join(user.sub, dto);
+  }
+
+  @Get('access')
+  @Header('Cache-Control', PRIVATE_CACHE_HEADER)
+  access(@CurrentUser() user: JwtPayload) {
+    return this.invites.access(user.sub);
+  }
+
+  @Get('invites')
+  @Header('Cache-Control', PRIVATE_CACHE_HEADER)
+  listInvites(@CurrentUser() user: JwtPayload) {
+    return this.invites.list(user.sub);
+  }
+
+  @Post('invites')
+  @HttpCode(HttpStatus.CREATED)
+  @Throttle(JOIN_THROTTLE)
+  async createInvite(@CurrentUser() user: JwtPayload, @Body() dto: CreateCircleInviteDto, @Res({ passthrough: true }) res: Response) {
+    const invite = await this.invites.create(user.sub, dto);
+    setCreated(res, `/v1/circles/invites/${invite.id}`);
+    return invite;
+  }
+
+  @Post('invites/redeem')
+  @HttpCode(HttpStatus.OK)
+  @Throttle(JOIN_THROTTLE)
+  redeemInvite(@CurrentUser() user: JwtPayload, @Body() dto: RedeemCircleInviteDto) {
+    return this.invites.redeem(user.sub, dto);
+  }
+
+  @Delete('invites/:inviteId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async revokeInvite(@CurrentUser() user: JwtPayload, @Param('inviteId', ParseUUIDPipe) inviteId: string): Promise<void> {
+    await this.invites.revoke(user.sub, inviteId);
   }
 
   @Put('presence')

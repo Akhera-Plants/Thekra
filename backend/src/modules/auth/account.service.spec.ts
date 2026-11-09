@@ -33,6 +33,18 @@ async function makeService(userExists = true) {
         { userId: USER_ID, date: new Date('2026-10-27T00:00:00Z'), prayer: 'fajr', status: 'qada', clientUpdatedAt: new Date('2026-10-27T05:00:00Z') },
       ]),
     },
+    // Round 6: reflections, «قضاء الفوائت» and read marks are exported too.
+    habitReflection: {
+      findMany: vi.fn().mockResolvedValue([
+        { planId: 'p1', date: new Date('2026-10-27T00:00:00Z'), helped: 'صحبة', hard: null, note: null, clientUpdatedAt: new Date('2026-10-27T05:00:00Z') },
+      ]),
+    },
+    qadaLog: {
+      findMany: vi.fn().mockResolvedValue([
+        { userId: USER_ID, date: new Date('2026-10-27T00:00:00Z'), prayer: 'any', count: 2, clientUpdatedAt: new Date('2026-10-27T05:00:00Z') },
+      ]),
+    },
+    quoteRead: { findMany: vi.fn().mockResolvedValue([]) },
   };
   const push = { forgetUser: vi.fn().mockResolvedValue(undefined) };
   return {
@@ -75,6 +87,9 @@ describe('AccountService', () => {
         relatives: [],
         contacts: [],
         fard: [{ date: '2026-10-27', prayer: 'fajr', status: 'qada', clientUpdatedAt: '2026-10-27T05:00:00.000Z' }],
+        reflections: [{ planId: 'p1', date: '2026-10-27', helped: 'صحبة', hard: null, note: null, clientUpdatedAt: '2026-10-27T05:00:00.000Z' }],
+        qadaLogs: [{ date: '2026-10-27', prayer: 'any', count: 2, clientUpdatedAt: '2026-10-27T05:00:00.000Z' }],
+        reads: [],
       },
       sinVault: VAULT,
     });

@@ -6,7 +6,9 @@
  */
 import { navFeature } from '@thekra/practice-core';
 
-export type HeaderMenuKey = 'leave-sin' | 'good-deeds' | 'branches' | 'browse' | 'habits' | 'people' | 'saved' | 'settings' | 'circles';
+// Round 6 (practice-core nav-map): «تصفّح النصوص» and «أهلي وناسي» are gone. The full round-6 header (WEB_HEADER,
+// WEB_ACCOUNT_MENU) is for the UI work; this list only drops the removed items.
+export type HeaderMenuKey = 'leave-sin' | 'good-deeds' | 'branches' | 'habits' | 'saved' | 'settings' | 'circles';
 
 export interface HeaderMenuItem {
   key: HeaderMenuKey;
@@ -26,8 +28,8 @@ function item(key: HeaderMenuKey): HeaderMenuItem {
 }
 
 export const HEADER_MENU: readonly HeaderMenuGroup[] = [
-  { key: 'doors', items: (['leave-sin', 'good-deeds', 'branches', 'browse'] as const).map(item) },
-  { key: 'members', items: (['habits', 'people', 'saved', 'settings', 'circles'] as const).map(item) },
+  { key: 'doors', items: (['leave-sin', 'good-deeds', 'branches'] as const).map(item) },
+  { key: 'members', items: (['habits', 'saved', 'settings', 'circles'] as const).map(item) },
 ];
 
 export const HEADER_MENU_ITEMS: readonly HeaderMenuItem[] = HEADER_MENU.flatMap((group) => group.items);

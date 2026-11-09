@@ -46,10 +46,8 @@ describe('names and places follow the navigation map', () => {
   it('lists the plan’s groups in order, each screen once, the settings rows last', () => {
     expect(items.map((i) => i.key)).toEqual([
       'leave-sin',
-      'people',
       'circles',
       'saved',
-      'browse',
       'branches',
       'strategies',
       'account',
@@ -81,12 +79,13 @@ describe('names and places follow the navigation map', () => {
   });
 
   it('asks a guest to sign in for members-only rows, never for reading or account rows', () => {
-    const people = items.find((i) => i.key === 'people')!;
-    const browse = items.find((i) => i.key === 'browse')!;
+    // Round 6: «أهلي وناسي» and «تصفّح النصوص» are gone from the map.
+    const saved = items.find((i) => i.key === 'saved')!;
+    const branches = items.find((i) => i.key === 'branches')!;
     const account = items.find((i) => i.key === 'account')!;
-    expect(moreAction(people, false)).toEqual({ kind: 'signIn', next: '/practice/kinship' });
-    expect(moreAction(people, true)).toEqual({ kind: 'open', href: '/practice/kinship' });
-    expect(moreAction(browse, false)).toEqual({ kind: 'open', href: '/browse' });
+    expect(moreAction(saved, false)).toEqual({ kind: 'signIn', next: '/favorites' });
+    expect(moreAction(saved, true)).toEqual({ kind: 'open', href: '/favorites' });
+    expect(moreAction(branches, false)).toEqual({ kind: 'open', href: '/branches' });
     expect(moreAction(account, false)).toEqual({ kind: 'open', href: '/settings/account' });
   });
 });

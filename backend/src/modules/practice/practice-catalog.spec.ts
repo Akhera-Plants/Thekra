@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { MURAQABA_QUOTE_IDS, stagesFor, validateRule } from '@thekra/practice-core';
+import { MURAQABA_QUOTE_IDS, PERIODIC_ACTS, PERIODIC_TEMPLATE_KEYS, stagesFor, validateRule } from '@thekra/practice-core';
 import { taxonomyFilePath } from '../taxonomy/taxonomy-files.js';
 import { topicSide } from '../taxonomy/topic-pairs.js';
 import { buildPracticeCatalog, practiceCatalog, programForSin, scheduleForDeed } from './practice-catalog.js';
@@ -96,7 +96,7 @@ describe('practice catalog — the real reviewer files', () => {
   it('scheduleForDeed filters by deed slug', () => {
     const siyam = scheduleForDeed('siyam');
     expect(siyam.occasions.map((o) => o.key)).toEqual(['ayyam-bid', 'ithnayn-khamis', 'arafah', 'ashura', 'shawwal-six']);
-    expect(siyam.habits.map((h) => h.key)).toEqual(['siyam-ayyam-bid', 'siyam-ithnayn-khamis']);
+    expect(siyam.habits.map((h) => h.key)).toEqual(['siyam-ayyam-bid', 'siyam-ithnayn-khamis', 'siyam-arafah', 'siyam-ashura']);
     expect(scheduleForDeed('dhikr').habits.map((h) => h.key)).toEqual(['adhkar-sabah-masa', 'tasbih-after-salah']);
     expect(scheduleForDeed('no-such-deed')).toEqual({ habits: [], occasions: [] });
   });
@@ -112,6 +112,8 @@ describe('practice catalog — the real reviewer files', () => {
       ['iyadat-marid', 'sick'],
       ['siyam-ayyam-bid', null],
       ['siyam-ithnayn-khamis', null],
+      ['siyam-arafah', null],
+      ['siyam-ashura', null],
       ['kahf-jumua', null],
       ['khatma', null],
       ['ziyarat-qubur', null],
@@ -128,6 +130,27 @@ describe('practice catalog — the real reviewer files', () => {
     const checked = new Set([...schedulesText.matchAll(/\[([0-9a-f-]{36})\] # checked: /g)].map((m) => m[1]));
     for (const h of periodic.filter((x) => !before.has(x.key))) {
       for (const id of h.evidence) expect(known.has(id) || checked.has(id), `${h.key} ${id}`).toBe(true);
+    }
+  });
+
+  it('round 6: every template of the practice-core periodic acts exists, is periodic and has public evidence ids', () => {
+    const byKey = new Map(practiceCatalog().habits.map((h) => [h.key, h]));
+    for (const key of PERIODIC_TEMPLATE_KEYS) {
+      const h = byKey.get(key);
+      expect(h, key).toBeDefined();
+      expect(h?.kind, key).toBe('periodic');
+      expect(h?.evidence.length, key).toBeGreaterThan(0);
+    }
+    // «صلة الرحم والأحباب» holds every people list; every people template belongs to it.
+    const silat = PERIODIC_ACTS.find((a) => a.key === 'silat');
+    const people = practiceCatalog().habits.filter((h) => h.people !== undefined).map((h) => h.key);
+    expect([...(silat?.templates ?? [])].sort()).toEqual([...people].sort());
+    expect(PERIODIC_ACTS).toHaveLength(8);
+    // The two yearly fasts reuse exactly the rule and ids of their occasions (no new text).
+    const occ = new Map(practiceCatalog().occasions.map((o) => [o.key, o]));
+    for (const [template, occasion] of [['siyam-arafah', 'arafah'], ['siyam-ashura', 'ashura']] as const) {
+      expect(byKey.get(template)?.defaultRule).toEqual(occ.get(occasion)?.rule);
+      expect(byKey.get(template)?.evidence).toEqual(occ.get(occasion)?.evidence);
     }
   });
 

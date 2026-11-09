@@ -84,6 +84,38 @@ its newer settings edit resets them to the defaults (as for `excusedDays`); the 
 «الفرائض» marks are not habits: they never count toward the habit limits, the streak or the push reminders (a sync
 that carries only marks does not re-plan pushes).
 
+**Round 6 (2026-11-09, migration `20261109170000_round6_practice`, additive;
+[owner round 6](2026-11-09-owner-round-6.md) §2–§8):**
+
+| Change | Column / table | Rule |
+| --- | --- | --- |
+| «القدر الأدنى» | `HabitPlan.minimum Float?` | positive, not above the everyday amount (`validatePlan`); a hard day asks exactly it (`minimumOf`); `decreaseTo` never goes below it |
+| Start amount | `HabitPlan.startAmount Float?` | set by `createPlan` (= the first amount); older plans: null |
+| Restart after the archive | `HabitPlan.restartedOn @db.Date?` | set when a plan is restored after more than 3 days archived (`restorePlan` → `restartProgress`): amount back to the start, hold restarted, kept days / per-habit streak / milestones count from it. History logs are kept |
+| «الأرشيف» = pause | `HabitPlan.pausedOn` / `resumedOn` (unchanged) | an archived plan is a paused one (old data reads as archived). At most **10** archived live plans: a request that takes the count above 10 → 422 `PRACTICE_LIMIT_REACHED` (`details.archived = 10`); an account already above 10 may keep them but not add more |
+| «حال يومي» | `PracticeSettings.dayStates Json?` | practice-core `DayStateEntry[]` `[{ date, state }]`, `state` ∈ `sick busy travel`, ascending, unique, ≤ 60 (`validateDayStates`); null = none. `sick` / `travel` days are also in `excusedDays` (older clients skip them); `busy` on today also starts the plans' one-day `ebb` (older clients ask the minimum). Old data: an excused day without a state reads as `sick` (`legacy`), a plan ebb as `busy` (`legacy`) |
+| «قضاء الفوائت» plan | `PracticeSettings.qada Json?` | practice-core `QadaPlan` `{ owed: { fajr, dhuhr, asr, maghrib, isha, any }, perDay, startedOn }` (each owed 0…10000, at least one > 0; `perDay` 1…50; `validateQadaPlan`); null = none. jsonb reorders keys: the server returns it through `parseQadaPlan` (canonical order) |
+| «قضاء الفوائت» make-ups | `QadaLog { userId→User (cascade), date @db.Date, prayer, count Int, clientUpdatedAt, updatedAt }`, `@@id([userId, date, prayer])` | `prayer` ∈ `fajr dhuhr asr maghrib isha any`; `count` 0…100 (0 = a cleared day, kept so it syncs); the date is never later than tomorrow (UTC) |
+| «تخفّف» covering | `PracticeSettings.lightenCovered Boolean @default(true)` | the «تخفّف» rows in «العادات» are covered by default; `false` = the member turned it off. The programs themselves stay in the vault |
+| Reciter | `PracticeSettings.reciter String?` | a practice-core `RECITERS` key; null = the default (`alafasy`) |
+| Habit reflections | `HabitReflection { planId→HabitPlan (cascade), date @db.Date, helped?, hard?, note?, clientUpdatedAt, updatedAt }`, `@@id([planId, date])` | «ما الذي أعانك؟» / «ما الذي صعّب عليك؟» / day note, each ≤ 300 characters, stored as sent; all null = a cleared reflection (kept so it syncs); date ≤ tomorrow (UTC); the plan must be the user's or in the same request (else 404, like logs). Sin-program answers never come here: they are `CheckIn.helped` / `CheckIn.hard` inside the vault |
+| Read marks | `QuoteRead { userId→User (cascade), quoteId, read Boolean, clientUpdatedAt, updatedAt }`, `@@id([userId, quoteId])` | `quoteId` a UUID (stored lower-case; no foreign key, so a text leaving the public set never fails a sync); the server keeps the newest 3000 per user by `clientUpdatedAt` (`READS_MAX`), the clients the same |
+
+Merge rules: the plan fields and the settings fields are part of their record (last writer wins). In the canonical content
+`minimum`, `startAmount`, `restartedOn` come after `loops`, each only when set; `settingsContent` adds `dayStates` (not
+empty), `qada`, `lightenCovered` (only when `false`), `reciter` after `fardTracking`, each only when set — so every older
+record keeps its content and acked versions stay valid. An older client omits them: its newer edit resets them to the
+defaults (as before). The three lists are last writer wins per key by `clientUpdatedAt`; ties: reflection → the larger
+canonical content (`compareReflections`), `qadaLog` → the larger count (`compareQadaLogs`), read → unread
+(`compareReadMarks`). Reflections, «قضاء» counts and read marks never change a reminder, so a sync that carries only
+them does not re-plan pushes. Export (`GET /v1/auth/me/export`) includes all three lists; `DELETE /v1/auth/me` cascades them.
+
+Device-local in round 6 (never synced): «رسائلي إلى نفسي» (`HeartData.messages`, at most 10: private words, like the rest
+of HeartData), the notification switches (the web sends its own with its push subscription, now with `strategies`,
+`strategyDay`, `strategyTime`, `intentionReminder`, `intentionTime`, `mutedPlans`, `mutedActs`). «الأعمال الدورية» needs
+no new data: a periodic act is a plan (catalog template or `habitKey = custom-periodic`) or, for «صلة الرحم والأحباب»,
+the existing `Relative` rows of every circle (no row moved or renamed: the round-5 people are now the people of this act).
+
 ## 3. Sync API (all JWT, `private, no-store`, throttled like other user routes)
 
 ### `GET /v1/me/practice?since=<ISO>` → changes after `since` (everything when absent)
@@ -109,10 +141,22 @@ that carries only marks does not re-plan pushes).
 Round 5: `settings` also carries `"homeSections": [ { "key": "sources", "visible": true }, … ] | null` and
 `"fardTracking": false`.
 
+Round 6: `settings` also carries `"dayStates": [ { "date": "2026-11-09", "state": "travel" } ] | null`,
+`"qada": { "owed": { "fajr": 3, "dhuhr": 0, "asr": 0, "maghrib": 0, "isha": 0, "any": 10 }, "perDay": 2, "startedOn": "2026-11-01" } | null`,
+`"lightenCovered": true` and `"reciter": "husary" | null`; plans carry `"minimum"`, `"startAmount"`, `"restartedOn"` (null
+when not set); and three lists:
+
+```json
+"reflections": [ { "planId": "…", "date": "2026-11-08", "helped": "…" | null, "hard": null, "note": null, "clientUpdatedAt": "…" } ],
+"qadaLogs": [ { "date": "2026-11-08", "prayer": "fajr", "count": 2, "clientUpdatedAt": "…" } ],
+"reads": [ { "quoteId": "5671bf91-…", "read": true, "clientUpdatedAt": "…" } ]
+```
+
 ### `POST /v1/me/practice/sync` → apply local changes, return everything changed since `since`
 
 Body: `{ "since": "<ISO>|null", "changes": { "settings"?: {…, "clientUpdatedAt"}, "plans": [...], "logs": [...],
-"relatives": [...], "contacts": [...], "fard"?: [...] } }` with at most 500 items in total (fard marks count). Response: same shape as GET, computed
+"relatives": [...], "contacts": [...], "fard"?: [...], "reflections"?: [...], "qadaLogs"?: [...], "reads"?: [...] } }`
+with at most 500 items in total (fard marks and the round-6 lists count). Response: same shape as GET, computed
 after applying, with `since` = the request's `since`.
 
 Merge rules (server and practice-core apply the same ones):
@@ -123,6 +167,7 @@ Merge rules (server and practice-core apply the same ones):
 | log (plan, date) | the later `correctedAt` wins (absent/null counts as the oldest); at the same `correctedAt` the larger amount wins. So plain logging never goes down (same-day partial amounts add up on the device first), and an undo of «تمّ» or a fixed amount (practice-core `correctLog`, which sets `correctedAt`; `amount` may then be 0) is not undone by a device that still holds the old amount. Added 2026-10-29 (`HabitLog.correctedAt`); a client that never sends `correctedAt` keeps the old max rule |
 | contact (relative, date) | union; `deleted: true` sets a tombstone; a later non-deleted write clears it |
 | fard (date, prayer) | last writer wins by `clientUpdatedAt`; at equal times a cleared mark (`status: null`) wins, then the larger status (practice-core `compareFardMarks`). Round 5 |
+| reflection (plan, date) · qadaLog (date, prayer) · read (quote) | last writer wins by `clientUpdatedAt`; ties: the larger canonical content · the larger count · unread. Round 6 |
 
 Phase-2 compatibility: a client that omits `pausedOn` / `resumedOn` / `establishedOn` sends null, `circle` → `kin`,
 `excusedDays` → `[]`. The canonical content (`planFields`, `relativeFields`, `settingsContent`) carries the new values

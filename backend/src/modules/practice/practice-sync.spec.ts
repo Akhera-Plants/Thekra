@@ -39,11 +39,24 @@ const PLAN = {
   establishedOn: null,
   slotAnchors: null,
   loops: null,
+  minimum: null,
+  startAmount: null,
+  restartedOn: null,
   clientUpdatedAt: '2026-10-28T10:00:00.000Z',
   deletedAt: null,
 };
-/** A plan as a client from before 2026-10-31 sends it: no pausedOn / resumedOn / establishedOn / slotAnchors / loops. */
-const { pausedOn: _p, resumedOn: _r, establishedOn: _e, slotAnchors: _a, loops: _l, ...OLD_PLAN } = PLAN;
+/** A plan as a client from before 2026-10-31 sends it: no pausedOn / resumedOn / establishedOn / slotAnchors / loops (nor round 6 fields). */
+const {
+  pausedOn: _p,
+  resumedOn: _r,
+  establishedOn: _e,
+  slotAnchors: _a,
+  loops: _l,
+  minimum: _m,
+  startAmount: _s,
+  restartedOn: _ro,
+  ...OLD_PLAN
+} = PLAN;
 const LOOP = { id: 'loop-1', cue: 'بعد الفجر', craving: 'السكينة', routine: 'أذكار الصباح', reward: 'طمأنينة', updatedAt: '2026-10-28T10:00:00Z' };
 const RELATIVE = {
   id: REL_ID,
@@ -89,6 +102,11 @@ describe('parseSyncRequest', () => {
       excusedDays: [],
       homeSections: null,
       fardTracking: false,
+      // Round 6: an older client omits these; they read as the defaults.
+      dayStates: null,
+      qada: null,
+      lightenCovered: true,
+      reciter: null,
       clientUpdatedAt: '2026-10-28T09:00:00.000Z',
     });
     expect(request.plans).toEqual([{ kind: 'live', plan: PLAN }]);
@@ -422,5 +440,107 @@ describe('round 5: home sections, «الفرائض»', () => {
     expect(homeSectionsOf(null)).toBeNull();
     expect(homeSectionsOf([{ key: 'x', visible: true }])).toBeNull();
     expect(homeSectionsOf({})).toBeNull();
+  });
+});
+
+describe('round 6 (docs/plan/2026-11-09-owner-round-6.md, sync contract «Round 6»)', () => {
+  const SETTINGS = { hijriOffset: 0, reminderTimes: [], clientUpdatedAt: '2026-10-28T09:00:00.000Z' };
+  const QADA = { owed: { fajr: 3, dhuhr: 0, asr: 0, maghrib: 0, isha: 0, any: 10 }, perDay: 2, startedOn: '2026-10-20' };
+  const QUOTE = '5671bf91-6335-49b4-9011-61c74dd1c460';
+
+  it('accepts the new settings fields in canonical order and versions them like practice-core', () => {
+    const request = parse({
+      settings: {
+        ...SETTINGS,
+        dayStates: [{ state: 'busy', date: '2026-10-27' }, { date: '2026-10-28', state: 'sick' }],
+        qada: { startedOn: QADA.startedOn, perDay: 2, owed: { any: 10, fajr: 3 } },
+        lightenCovered: false,
+        reciter: 'husary',
+      },
+    });
+    expect(request.settings).toMatchObject({
+      dayStates: [{ date: '2026-10-27', state: 'busy' }, { date: '2026-10-28', state: 'sick' }],
+      qada: QADA,
+      lightenCovered: false,
+      reciter: 'husary',
+    });
+    expect(JSON.stringify(request.settings?.qada)).toBe(JSON.stringify(QADA));
+    const s = request.settings as NonNullable<typeof request.settings>;
+    expect(settingsVersion(s).content).toBe(settingsContent(s));
+    expect(settingsVersion(s).content).toContain('"reciter":"husary"');
+  });
+
+  it('accepts the new plan fields and keeps them in the canonical content', () => {
+    const request = parse({ plans: [{ ...PLAN, amount: 5, minimum: 2, startAmount: 1, restartedOn: '2026-10-28' }] });
+    const change = request.plans[0] as Extract<PlanChange, { kind: 'live' }>;
+    expect(change.plan).toMatchObject({ minimum: 2, startAmount: 1, restartedOn: '2026-10-28' });
+    expect(planVersion(change).content).toContain('"minimum":2,"startAmount":1,"restartedOn":"2026-10-28"');
+  });
+
+  it('parses reflections, «قضاء» day counts and read marks; merges duplicates with the practice-core rules', () => {
+    const later = '2026-10-28T11:00:00.000Z';
+    const request = parse({
+      reflections: [
+        { planId: PLAN_ID, date: '2026-10-28', helped: 'صحبة', hard: null, note: '', clientUpdatedAt: T0, extra: 1 },
+        { planId: PLAN_ID, date: '2026-10-28', hard: 'السهر', clientUpdatedAt: later },
+      ],
+      qadaLogs: [
+        { date: '2026-10-28', prayer: 'fajr', count: 3, clientUpdatedAt: later },
+        { date: '2026-10-28', prayer: 'fajr', count: 9, clientUpdatedAt: T0 },
+      ],
+      reads: [{ quoteId: QUOTE.toUpperCase(), read: true, clientUpdatedAt: T0 }],
+    });
+    expect(request.reflections).toEqual([{ planId: PLAN_ID, date: '2026-10-28', helped: null, hard: 'السهر', note: null, clientUpdatedAt: later }]);
+    expect(request.qadaLogs).toEqual([{ date: '2026-10-28', prayer: 'fajr', count: 3, clientUpdatedAt: later }]);
+    expect(request.reads).toEqual([{ quoteId: QUOTE, read: true, clientUpdatedAt: T0 }]);
+  });
+
+  it('rejects bad round-6 items with their index, and counts them toward the item limit', () => {
+    const cases: [Record<string, unknown>, string, number][] = [
+      [{ settings: { ...SETTINGS, dayStates: [{ date: '2026-10-28', state: 'tired' }] } }, 'settings', 0],
+      [{ settings: { ...SETTINGS, qada: { owed: { fajr: 0 }, perDay: 1, startedOn: '2026-10-28' } } }, 'settings', 0],
+      [{ settings: { ...SETTINGS, reciter: 'nobody' } }, 'settings', 0],
+      [{ settings: { ...SETTINGS, lightenCovered: 'no' } }, 'settings', 0],
+      [{ plans: [{ ...PLAN, minimum: 2 }] }, 'plans', 0],
+      [{ plans: [{ ...PLAN, restartedOn: 'today' }] }, 'plans', 0],
+      [{ reflections: [{ planId: PLAN_ID, date: '2026-10-28', helped: 'x'.repeat(301), clientUpdatedAt: T0 }] }, 'reflections', 0],
+      [{ reflections: [{ planId: PLAN_ID, date: '2026-11-05', helped: 'x', clientUpdatedAt: T0 }] }, 'reflections', 0],
+      [{ qadaLogs: [{ date: '2026-10-28', prayer: 'witr', count: 1, clientUpdatedAt: T0 }] }, 'qadaLogs', 0],
+      [{ qadaLogs: [{ date: '2026-10-28', prayer: 'fajr', count: 101, clientUpdatedAt: T0 }] }, 'qadaLogs', 0],
+      [{ reads: [{ quoteId: 'not-a-uuid', read: true, clientUpdatedAt: T0 }] }, 'reads', 0],
+    ];
+    for (const [changes, kind, index] of cases) {
+      const { status, body } = errorOf(() => parseSyncRequest({ since: null, changes }, NOW));
+      expect(status, JSON.stringify(changes)).toBe(400);
+      expect(body.details).toMatchObject({ kind, index });
+    }
+    const reads = Array.from({ length: MAX_SYNC_ITEMS + 1 }, (_, i) => ({
+      quoteId: `5671bf91-6335-49b4-9011-${String(i).padStart(12, '0')}`,
+      read: true,
+      clientUpdatedAt: T0,
+    }));
+    expect(() => parseSyncRequest({ changes: { reads } }, NOW)).toThrow(PayloadTooLargeException);
+  });
+
+  it('a stored plan row reads its round-6 columns', () => {
+    const row = {
+      ...PLAN,
+      userId: 'u',
+      rule: { kind: 'daily' },
+      createdOn: new Date('2026-10-28T00:00:00.000Z'),
+      amountChangedOn: new Date('2026-10-28T00:00:00.000Z'),
+      ebbSince: null,
+      season: null,
+      pausedOn: null,
+      resumedOn: null,
+      establishedOn: null,
+      minimum: 1,
+      startAmount: 1,
+      restartedOn: new Date('2026-10-28T00:00:00.000Z'),
+      clientUpdatedAt: new Date('2026-10-28T10:00:00.000Z'),
+      updatedAt: NOW,
+      deletedAt: null,
+    };
+    expect(planToWire(row)).toMatchObject({ minimum: 1, startAmount: 1, restartedOn: '2026-10-28' });
   });
 });

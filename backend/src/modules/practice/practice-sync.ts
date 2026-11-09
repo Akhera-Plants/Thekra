@@ -1,6 +1,27 @@
 import { BadRequestException, PayloadTooLargeException } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import {
+  ARCHIVE_MAX,
+  cloneDayStates,
+  cloneReflection,
+  compareQadaLogs,
+  compareReadMarks,
+  compareReflections,
+  isQadaKey,
+  isQuoteId,
+  isReciterKey,
+  parseDayStates,
+  parseQadaPlan,
+  QADA_DAY_MAX,
+  READS_MAX,
+  REFLECTION_FIELDS,
+  validateDayStates,
+  validateQadaPlan,
+  validateReflectionTexts,
+  type DayStateEntry,
+  type QadaKey,
+  type QadaPlan,
+  type Reflection,
   cloneHomeSections,
   compareFardMarks,
   compareVersions,
@@ -54,6 +75,10 @@ import type { PrismaService } from '../../prisma/prisma.service.js';
 export const MAX_SYNC_ITEMS = 500;
 export const MAX_LIVE_PLANS = 50;
 export const MAX_LIVE_RELATIVES = 200;
+/** Round 6: archived (paused) plans at most; practice-core `ARCHIVE_MAX`. */
+export const MAX_ARCHIVED_PLANS = ARCHIVE_MAX;
+/** Round 6: read marks kept per user (the oldest are dropped beyond it); practice-core `READS_MAX`. */
+export const MAX_READ_MARKS = READS_MAX;
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ISO_UTC = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/;
@@ -75,6 +100,11 @@ export interface SettingsWire {
   homeSections: HomeSectionPref[] | null;
   /** «الفرائض» switch (round 5); an older client omits it: off. */
   fardTracking: boolean;
+  /** Round 6 «حال يومي» (null = none), «قضاء الفوائت» plan (null = none), «تخفّف» covering (default on), reciter (null = default). An older client omits them. */
+  dayStates: DayStateEntry[] | null;
+  qada: QadaPlan | null;
+  lightenCovered: boolean;
+  reciter: string | null;
   /** The device time of the edit (last-writer-wins key). */
   clientUpdatedAt: string;
   /** The server time of the last write. */
@@ -111,6 +141,10 @@ export interface PlanWire {
   slotAnchors: (PrayerAnchor | null)[] | null;
   /** «حلقة العادة» (2026-11-01): practice-core HabitLoop[], null when none. An older client omits it. */
   loops: HabitLoop[] | null;
+  /** Round 6: «القدر الأدنى», the start amount and the restart day; null when not set. An older client omits them. */
+  minimum: number | null;
+  startAmount: number | null;
+  restartedOn: string | null;
   clientUpdatedAt: string;
   deletedAt: string | null;
 }
@@ -157,6 +191,31 @@ export interface FardWire {
   clientUpdatedAt: string;
 }
 
+/** A habit reflection (round 6). All answers null = a cleared reflection. Last writer wins per (plan, date). */
+export interface ReflectionWire {
+  planId: string;
+  date: string;
+  helped: string | null;
+  hard: string | null;
+  note: string | null;
+  clientUpdatedAt: string;
+}
+
+/** «قضاء الفوائت» made up on one day for one key (round 6); 0 clears it. Last writer wins per (date, prayer). */
+export interface QadaLogWire {
+  date: string;
+  prayer: QadaKey;
+  count: number;
+  clientUpdatedAt: string;
+}
+
+/** A read mark of a text (round 6). Last writer wins per quote. */
+export interface ReadWire {
+  quoteId: string;
+  read: boolean;
+  clientUpdatedAt: string;
+}
+
 export interface PracticeChangesDto {
   serverTime: string;
   settings: SettingsWire | null;
@@ -165,6 +224,9 @@ export interface PracticeChangesDto {
   relatives: (RelativeWire | DeletedWire)[];
   contacts: ContactWire[];
   fard: FardWire[];
+  reflections: ReflectionWire[];
+  qadaLogs: QadaLogWire[];
+  reads: ReadWire[];
 }
 
 /** Settings as sent by a device. */
@@ -183,9 +245,12 @@ export interface SyncRequest {
   relatives: RelativeChange[];
   contacts: ContactWire[];
   fard: FardWire[];
+  reflections: ReflectionWire[];
+  qadaLogs: QadaLogWire[];
+  reads: ReadWire[];
 }
 
-type Kind = 'settings' | 'plans' | 'logs' | 'relatives' | 'contacts' | 'fard' | 'request';
+type Kind = 'settings' | 'plans' | 'logs' | 'relatives' | 'contacts' | 'fard' | 'reflections' | 'qadaLogs' | 'reads' | 'request';
 
 class ItemError extends Error {}
 
@@ -283,6 +348,15 @@ function parseSettings(raw: unknown): SettingsChange {
   if (rawHome !== null) check(validateHomeSections(rawHome));
   const fardTracking = raw['fardTracking'] ?? false;
   if (typeof fardTracking !== 'boolean') throw new ItemError('fardTracking must be true or false');
+  const rawStates = raw['dayStates'] ?? null;
+  if (rawStates !== null) check(validateDayStates(rawStates));
+  const rawQada = raw['qada'] ?? null;
+  if (rawQada !== null) check(validateQadaPlan(rawQada));
+  const lightenCovered = raw['lightenCovered'] ?? true;
+  if (typeof lightenCovered !== 'boolean') throw new ItemError('lightenCovered must be true or false');
+  const reciter = raw['reciter'] ?? null;
+  if (reciter !== null && !isReciterKey(reciter)) throw new ItemError('reciter must be null or a known reciter key');
+  const dayStates = rawStates === null ? [] : parseDayStates(rawStates);
   return {
     hijriOffset,
     reminderTimes: [...reminderTimes],
@@ -291,6 +365,10 @@ function parseSettings(raw: unknown): SettingsChange {
     // Known fields only, in the canonical order.
     homeSections: rawHome === null ? null : cloneHomeSections(rawHome as HomeSectionPref[]),
     fardTracking,
+    dayStates: dayStates.length > 0 ? cloneDayStates(dayStates) : null,
+    qada: rawQada === null ? null : parseQadaPlan(rawQada),
+    lightenCovered,
+    reciter: reciter as string | null,
     clientUpdatedAt: timestamp(raw['clientUpdatedAt'], 'clientUpdatedAt'),
   };
 }
@@ -323,6 +401,11 @@ function parsePlan(raw: unknown): PlanChange {
   if (rawLoops !== null) check(validateHabitLoops(rawLoops));
   // Known fields only, in the canonical order (unknown loop fields are dropped like any unknown field).
   const loops = Array.isArray(rawLoops) && rawLoops.length > 0 ? (rawLoops as HabitLoop[]).map(cloneHabitLoop) : null;
+  const minimum = raw['minimum'] ?? null;
+  if (minimum !== null && !isAmount(minimum)) throw new ItemError(`minimum must be null or a number above 0 and at most ${MAX_AMOUNT}`);
+  const startAmount = raw['startAmount'] ?? null;
+  if (startAmount !== null && !isAmount(startAmount)) throw new ItemError(`startAmount must be null or a number above 0 and at most ${MAX_AMOUNT}`);
+  const restartedOn = optionalDate(raw['restartedOn'], 'restartedOn');
   // The practice-core shape: `log` travels separately, `ebb`/`season`/`ceiling` are optional.
   check(
     validatePlan({
@@ -344,6 +427,9 @@ function parsePlan(raw: unknown): PlanChange {
       ...(establishedOn ? { establishedOn } : {}),
       ...(slotAnchors ? { slotAnchors } : {}),
       ...(loops ? { loops } : {}),
+      ...(minimum !== null ? { minimum } : {}),
+      ...(startAmount !== null ? { startAmount } : {}),
+      ...(restartedOn ? { restartedOn } : {}),
     }),
   );
   const plan = raw as Record<string, unknown> & {
@@ -389,6 +475,9 @@ function parsePlan(raw: unknown): PlanChange {
       establishedOn,
       slotAnchors: slotAnchors ? [...slotAnchors] : null,
       loops,
+      minimum: minimum as number | null,
+      startAmount: startAmount as number | null,
+      restartedOn,
       clientUpdatedAt,
       deletedAt: null,
     },
@@ -467,6 +556,71 @@ function parseFard(raw: unknown, latestDay: string): FardWire {
   return { date: day, prayer: raw['prayer'], status, clientUpdatedAt: timestamp(raw['clientUpdatedAt'], 'clientUpdatedAt') };
 }
 
+/** A habit reflection (round 6). The day may not be later than tomorrow in UTC. Answers ≤ 300 characters, stored as sent. */
+function parseReflection(raw: unknown, latestDay: string): ReflectionWire {
+  if (!isRecord(raw)) throw new ItemError('reflection must be an object');
+  const day = date(raw['date'], 'date');
+  if (day > latestDay) throw new ItemError('date must not be in the future');
+  check(validateReflectionTexts(raw));
+  const text = (k: (typeof REFLECTION_FIELDS)[number]) => {
+    const v = raw[k];
+    return typeof v === 'string' && v.length > 0 ? v : null;
+  };
+  return {
+    planId: uuid(raw['planId'], 'planId'),
+    date: day,
+    helped: text('helped'),
+    hard: text('hard'),
+    note: text('note'),
+    clientUpdatedAt: timestamp(raw['clientUpdatedAt'], 'clientUpdatedAt'),
+  };
+}
+
+/** One «قضاء الفوائت» day count (round 6). The day may not be later than tomorrow in UTC. */
+function parseQadaLog(raw: unknown, latestDay: string): QadaLogWire {
+  if (!isRecord(raw)) throw new ItemError('qadaLog must be an object');
+  const day = date(raw['date'], 'date');
+  if (day > latestDay) throw new ItemError('date must not be in the future');
+  if (!isQadaKey(raw['prayer'])) throw new ItemError('prayer must be one of fajr, dhuhr, asr, maghrib, isha, any');
+  if (!isInt(raw['count'], 0, QADA_DAY_MAX)) throw new ItemError(`count must be an integer 0…${QADA_DAY_MAX}`);
+  return { date: day, prayer: raw['prayer'], count: raw['count'], clientUpdatedAt: timestamp(raw['clientUpdatedAt'], 'clientUpdatedAt') };
+}
+
+/** One read mark (round 6): a Quote id (UUID, stored lower-case) and true/false. */
+function parseRead(raw: unknown): ReadWire {
+  if (!isRecord(raw)) throw new ItemError('read must be an object');
+  if (!isQuoteId(raw['quoteId'])) throw new ItemError('quoteId must be a UUID');
+  if (typeof raw['read'] !== 'boolean') throw new ItemError('read must be true or false');
+  return { quoteId: raw['quoteId'].toLowerCase(), read: raw['read'], clientUpdatedAt: timestamp(raw['clientUpdatedAt'], 'clientUpdatedAt') };
+}
+
+/** practice-core `Reflection` of a wire reflection (for `compareReflections`). */
+export function coreReflection(r: Pick<ReflectionWire, 'planId' | 'date' | 'helped' | 'hard' | 'note' | 'clientUpdatedAt'>): Reflection {
+  return cloneReflection({
+    planId: r.planId,
+    date: r.date,
+    ...(r.helped ? { helped: r.helped } : {}),
+    ...(r.hard ? { hard: r.hard } : {}),
+    ...(r.note ? { note: r.note } : {}),
+    updatedAt: r.clientUpdatedAt,
+  });
+}
+
+/** Of two copies of one reflection, true when `incoming` wins (practice-core `compareReflections`). */
+export function reflectionWins(stored: ReflectionWire | null, incoming: ReflectionWire): boolean {
+  return stored === null || compareReflections(coreReflection(stored), coreReflection(incoming)) < 0;
+}
+
+/** Of two copies of one «قضاء» day count, true when `incoming` wins (practice-core `compareQadaLogs`). */
+export function qadaLogWins(stored: Pick<QadaLogWire, 'count' | 'clientUpdatedAt'> | null, incoming: Pick<QadaLogWire, 'count' | 'clientUpdatedAt'>): boolean {
+  return stored === null || compareQadaLogs({ count: stored.count, updatedAt: stored.clientUpdatedAt }, { count: incoming.count, updatedAt: incoming.clientUpdatedAt }) < 0;
+}
+
+/** Of two copies of one read mark, true when `incoming` wins (practice-core `compareReadMarks`). */
+export function readWins(stored: Pick<ReadWire, 'read' | 'clientUpdatedAt'> | null, incoming: Pick<ReadWire, 'read' | 'clientUpdatedAt'>): boolean {
+  return stored === null || compareReadMarks({ read: stored.read, updatedAt: stored.clientUpdatedAt }, { read: incoming.read, updatedAt: incoming.clientUpdatedAt }) < 0;
+}
+
 /** Of two copies of one mark, the one practice-core `compareFardMarks` keeps (later time; then a cleared mark). */
 export function fardWins(stored: Pick<FardWire, 'status' | 'clientUpdatedAt'> | null, incoming: Pick<FardWire, 'status' | 'clientUpdatedAt'>): boolean {
   if (stored === null) return true;
@@ -533,6 +687,9 @@ function corePlan(plan: PlanWire): Plan {
     ...(plan.establishedOn ? { establishedOn: plan.establishedOn } : {}),
     ...(plan.slotAnchors ? { slotAnchors: plan.slotAnchors } : {}),
     ...(plan.loops ? { loops: plan.loops } : {}),
+    ...(plan.minimum !== null ? { minimum: plan.minimum } : {}),
+    ...(plan.startAmount !== null ? { startAmount: plan.startAmount } : {}),
+    ...(plan.restartedOn ? { restartedOn: plan.restartedOn } : {}),
   };
 }
 
@@ -568,7 +725,8 @@ export function relativeVersion(change: RelativeChange): Version {
  * when set, fardTracking only when on).
  */
 export function settingsVersion(
-  settings: Omit<SettingsChange, 'homeSections' | 'fardTracking'> & Partial<Pick<SettingsChange, 'homeSections' | 'fardTracking'>>,
+  settings: Omit<SettingsChange, 'homeSections' | 'fardTracking' | 'dayStates' | 'qada' | 'lightenCovered' | 'reciter'> &
+    Partial<Pick<SettingsChange, 'homeSections' | 'fardTracking' | 'dayStates' | 'qada' | 'lightenCovered' | 'reciter'>>,
 ): Version {
   return { time: Date.parse(settings.clientUpdatedAt), deleted: false, content: settingsContent(settings) };
 }
@@ -612,10 +770,21 @@ export function parseSyncRequest(body: unknown, now: Date = new Date()): SyncReq
     relatives: list(changes, 'relatives'),
     contacts: list(changes, 'contacts'),
     fard: list(changes, 'fard'),
+    reflections: list(changes, 'reflections'),
+    qadaLogs: list(changes, 'qadaLogs'),
+    reads: list(changes, 'reads'),
   };
   const settingsRaw = changes['settings'] ?? null;
   const total =
-    raw.plans.length + raw.logs.length + raw.relatives.length + raw.contacts.length + raw.fard.length + (settingsRaw ? 1 : 0);
+    raw.plans.length +
+    raw.logs.length +
+    raw.relatives.length +
+    raw.contacts.length +
+    raw.fard.length +
+    raw.reflections.length +
+    raw.qadaLogs.length +
+    raw.reads.length +
+    (settingsRaw ? 1 : 0);
   if (total > MAX_SYNC_ITEMS) {
     throw new PayloadTooLargeException({
       code: 'PRACTICE_TOO_LARGE',
@@ -623,6 +792,7 @@ export function parseSyncRequest(body: unknown, now: Date = new Date()): SyncReq
     });
   }
   const [settings] = settingsRaw === null ? [null] : parseEach([settingsRaw], 'settings', parseSettings);
+  const tomorrow = new Date(now.getTime() + 86_400_000).toISOString().slice(0, 10);
   return {
     since,
     settings: settings ?? null,
@@ -642,6 +812,21 @@ export function parseSyncRequest(body: unknown, now: Date = new Date()): SyncReq
       parseEach(raw.fard, 'fard', (item) => parseFard(item, new Date(now.getTime() + 86_400_000).toISOString().slice(0, 10))),
       (mark) => `${mark.date}|${mark.prayer}`,
       (kept, next) => (fardWins(kept, next) ? next : kept),
+    ),
+    reflections: dedupe(
+      parseEach(raw.reflections, 'reflections', (item) => parseReflection(item, tomorrow)),
+      (r) => `${r.planId}|${r.date}`,
+      (kept, next) => (reflectionWins(kept, next) ? next : kept),
+    ),
+    qadaLogs: dedupe(
+      parseEach(raw.qadaLogs, 'qadaLogs', (item) => parseQadaLog(item, tomorrow)),
+      (l) => `${l.date}|${l.prayer}`,
+      (kept, next) => (qadaLogWins(kept, next) ? next : kept),
+    ),
+    reads: dedupe(
+      parseEach(raw.reads, 'reads', parseRead),
+      (m) => m.quoteId,
+      (kept, next) => (readWins(kept, next) ? next : kept),
     ),
   };
 }
@@ -690,6 +875,9 @@ export function planToWire(row: PlanRow): PlanWire {
     establishedOn: optionalDay(row.establishedOn),
     slotAnchors: anchorsOf(row.slotAnchors),
     loops: loopsOf(row.loops),
+    minimum: row.minimum,
+    startAmount: row.startAmount,
+    restartedOn: optionalDay(row.restartedOn),
     clientUpdatedAt: row.clientUpdatedAt.toISOString(),
     deletedAt: iso(row.deletedAt),
   };
@@ -717,6 +905,10 @@ export interface EchoKeys {
   contactKeys: { relativeId: string; date: string }[];
   /** «الفرائض» marks of the request (absent: none). */
   fardKeys?: { date: string; prayer: string }[];
+  /** Round 6 items of the request (absent: none). */
+  reflectionKeys?: { planId: string; date: string }[];
+  qadaKeys?: { date: string; prayer: string }[];
+  readIds?: string[];
 }
 
 const NO_ECHO: EchoKeys = { settings: false, planIds: [], logKeys: [], relativeIds: [], contactKeys: [], fardKeys: [] };
@@ -726,7 +918,10 @@ const NO_ECHO: EchoKeys = { settings: false, planIds: [], logKeys: [], relativeI
  * items named in `echo`. Takes the client or a transaction; read-only.
  */
 export async function readPracticeChanges(
-  db: Pick<PrismaService, 'practiceSettings' | 'habitPlan' | 'habitLog' | 'relative' | 'relativeContact' | 'fardMark'>,
+  db: Pick<
+    PrismaService,
+    'practiceSettings' | 'habitPlan' | 'habitLog' | 'relative' | 'relativeContact' | 'fardMark' | 'habitReflection' | 'qadaLog' | 'quoteRead'
+  >,
   userId: string,
   since: Date | null,
   serverTime: Date,
@@ -735,7 +930,10 @@ export async function readPracticeChanges(
   const changed = since ? { updatedAt: { gt: since } } : {};
   const orEcho = <T>(echoed: T[]) => (since ? { OR: [changed, ...echoed] } : {});
   const fardKeys = echo.fardKeys ?? [];
-  const [settings, plans, logs, relatives, contacts, fard] = await Promise.all([
+  const reflectionKeys = echo.reflectionKeys ?? [];
+  const qadaKeys = echo.qadaKeys ?? [];
+  const readIds = echo.readIds ?? [];
+  const [settings, plans, logs, relatives, contacts, fard, reflections, qadaLogs, reads] = await Promise.all([
     db.practiceSettings.findFirst({ where: { userId, ...(echo.settings ? {} : changed) } }),
     db.habitPlan.findMany({ where: { userId, ...orEcho(echo.planIds.length ? [{ id: { in: echo.planIds } }] : []) }, orderBy: { id: 'asc' } }),
     db.habitLog.findMany({
@@ -757,6 +955,18 @@ export async function readPracticeChanges(
       where: { userId, ...orEcho(fardKeys.map((key) => ({ date: new Date(key.date), prayer: key.prayer }))) },
       orderBy: [{ date: 'asc' }, { prayer: 'asc' }],
     }),
+    db.habitReflection.findMany({
+      where: { plan: { userId }, ...orEcho(reflectionKeys.map((key) => ({ planId: key.planId, date: new Date(key.date) }))) },
+      orderBy: [{ date: 'asc' }, { planId: 'asc' }],
+    }),
+    db.qadaLog.findMany({
+      where: { userId, ...orEcho(qadaKeys.map((key) => ({ date: new Date(key.date), prayer: key.prayer }))) },
+      orderBy: [{ date: 'asc' }, { prayer: 'asc' }],
+    }),
+    db.quoteRead.findMany({
+      where: { userId, ...orEcho(readIds.length ? [{ quoteId: { in: readIds } }] : []) },
+      orderBy: [{ clientUpdatedAt: 'asc' }, { quoteId: 'asc' }],
+    }),
   ]);
   return {
     serverTime: serverTime.toISOString(),
@@ -768,6 +978,10 @@ export async function readPracticeChanges(
           excusedDays: settings.excusedDays,
           homeSections: homeSectionsOf(settings.homeSections),
           fardTracking: settings.fardTracking,
+          dayStates: dayStatesOf(settings.dayStates),
+          qada: settings.qada === null ? null : parseQadaPlan(settings.qada),
+          lightenCovered: settings.lightenCovered,
+          reciter: isReciterKey(settings.reciter) ? settings.reciter : null,
           clientUpdatedAt: settings.clientUpdatedAt.toISOString(),
           updatedAt: settings.updatedAt.toISOString(),
         }
@@ -786,7 +1000,26 @@ export async function readPracticeChanges(
         ? [{ date: day(mark.date), prayer: mark.prayer, status: mark.status, clientUpdatedAt: mark.clientUpdatedAt.toISOString() }]
         : [],
     ),
+    reflections: reflections.map((r) => ({
+      planId: r.planId,
+      date: day(r.date),
+      helped: r.helped,
+      hard: r.hard,
+      note: r.note,
+      clientUpdatedAt: r.clientUpdatedAt.toISOString(),
+    })),
+    qadaLogs: qadaLogs.flatMap((l) =>
+      isQadaKey(l.prayer) ? [{ date: day(l.date), prayer: l.prayer, count: l.count, clientUpdatedAt: l.clientUpdatedAt.toISOString() }] : [],
+    ),
+    reads: reads.map((m) => ({ quoteId: m.quoteId, read: m.read, clientUpdatedAt: m.clientUpdatedAt.toISOString() })),
   };
+}
+
+/** A stored `dayStates` value in the canonical field order; null for none or bad data. */
+export function dayStatesOf(value: unknown): DayStateEntry[] | null {
+  if (value === null || value === undefined || validateDayStates(value) !== null) return null;
+  const list = parseDayStates(value);
+  return list.length > 0 ? cloneDayStates(list) : null;
 }
 
 /**

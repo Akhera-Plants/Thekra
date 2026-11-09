@@ -181,6 +181,27 @@ export interface HeartData {
   pledges: Pledge[];
   /** Round 5 (F-08 a): the good deeds chosen in «صلّحها». Absent or empty: none. */
   makeUps?: MakeUpDeed[];
+  /**
+   * «رسائلي إلى نفسي» (round 6, C-02c): the member's own list (add / edit / delete, at most {@link SELF_MESSAGES_MAX}).
+   * Device-local like the rest of HeartData (never synced, never sent): private words, and HeartData has never left the
+   * device. Absent or empty: none.
+   */
+  messages?: SelfMessage[];
+}
+
+/** «رسائلي إلى نفسي» kept at most (round 6). */
+export const SELF_MESSAGES_MAX = 10;
+/** Characters of one message. */
+export const SELF_MESSAGE_MAX_LENGTH = 280;
+
+/** One message the member wrote to himself (round 6). Optionally tied to a habit (the skippable step of «أضف»). */
+export interface SelfMessage {
+  id: string;
+  text: string;
+  /** The habit it was written for, when written in the add-habit flow. */
+  planId?: string;
+  createdAt: IsoTime;
+  updatedAt: IsoTime;
 }
 
 export function emptyHeart(): HeartData {
@@ -288,6 +309,71 @@ export function parseHeart(json: unknown): HeartData {
   out.pledges = pledges.slice(0, MAX_PLEDGES);
   const makeUps = parseMakeUps(raw.makeUps);
   if (makeUps.length > 0) out.makeUps = makeUps;
+  const messages = parseSelfMessages(raw.messages);
+  if (messages.length > 0) out.messages = messages;
+  return out;
+}
+
+/** One message cleaned: single spaces kept per line, trimmed, at most {@link SELF_MESSAGE_MAX_LENGTH}; empty → undefined. */
+export function cleanSelfMessage(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const text = value.replace(/[ \t]+/g, ' ').trim().slice(0, SELF_MESSAGE_MAX_LENGTH).trim();
+  return text.length > 0 ? text : undefined;
+}
+
+/** Valid messages, unique ids (the later wins), oldest first, at most {@link SELF_MESSAGES_MAX}. Never throws. */
+export function parseSelfMessages(raw: unknown): SelfMessage[] {
+  if (!Array.isArray(raw)) return [];
+  const byId = new Map<string, SelfMessage>();
+  for (const v of raw) {
+    if (!isRecord(v) || typeof v.id !== 'string' || v.id.length === 0 || v.id.length > 64) continue;
+    const text = cleanSelfMessage(v.text);
+    if (!text || !isIsoTime(v.createdAt) || !isIsoTime(v.updatedAt)) continue;
+    const m: SelfMessage = { id: v.id, text, createdAt: v.createdAt, updatedAt: v.updatedAt };
+    if (typeof v.planId === 'string' && v.planId.length > 0) m.planId = v.planId;
+    byId.delete(m.id);
+    byId.set(m.id, m);
+  }
+  return [...byId.values()].sort((a, b) => (a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0)).slice(0, SELF_MESSAGES_MAX);
+}
+
+/** «رسائلي إلى نفسي», newest first. With `planId`, only that habit's. */
+export function selfMessages(data: Pick<HeartData, 'messages'>, planId?: string): SelfMessage[] {
+  return [...(data.messages ?? [])].filter((m) => planId === undefined || m.planId === planId).reverse();
+}
+
+export type SelfMessageError = 'empty' | 'full' | 'unknown';
+
+/** Why a message cannot be added (or, with `id`, edited), or null. */
+export function selfMessageError(data: Pick<HeartData, 'messages'>, text: string, id?: string): SelfMessageError | null {
+  if (!cleanSelfMessage(text)) return 'empty';
+  const list = data.messages ?? [];
+  if (id !== undefined) return list.some((m) => m.id === id) ? null : 'unknown';
+  return list.length >= SELF_MESSAGES_MAX ? 'full' : null;
+}
+
+/** Adds a message. Throws when it is empty, the list is full or the id is used. */
+export function addSelfMessage(data: HeartData, input: { id: string; text: string; planId?: string }, now: IsoTime = nowIso()): HeartData {
+  const err = selfMessageError(data, input.text);
+  if (err) throw new RangeError(`Cannot add the message: ${err}`);
+  if ((data.messages ?? []).some((m) => m.id === input.id)) throw new RangeError('A message with this id exists');
+  const m: SelfMessage = { id: input.id, text: cleanSelfMessage(input.text) as string, createdAt: now, updatedAt: now };
+  if (input.planId) m.planId = input.planId;
+  return { ...data, messages: [...(data.messages ?? []), m] };
+}
+
+/** Changes a message's text. Throws when it is empty or unknown. */
+export function editSelfMessage(data: HeartData, id: string, text: string, now: IsoTime = nowIso()): HeartData {
+  const err = selfMessageError(data, text, id);
+  if (err) throw new RangeError(`Cannot edit the message: ${err}`);
+  return { ...data, messages: (data.messages ?? []).map((m) => (m.id === id ? { ...m, text: cleanSelfMessage(text) as string, updatedAt: now } : m)) };
+}
+
+/** Deletes a message (no-op when unknown). */
+export function removeSelfMessage(data: HeartData, id: string): HeartData {
+  const messages = (data.messages ?? []).filter((m) => m.id !== id);
+  const out: HeartData = { ...data, messages };
+  if (messages.length === 0) delete out.messages;
   return out;
 }
 
@@ -422,11 +508,23 @@ export function previousStep(amount: number): number | null {
   return best;
 }
 
+/**
+ * The amount «خفّف» lowers a plan to: the ladder step below, never under the plan's «القدر الأدنى» (round 6); null when
+ * the plan is already at its floor.
+ */
+export function lighterAmount(plan: Plan): number | null {
+  const base = baseAmount(plan);
+  const lower = previousStep(base);
+  if (lower === null) return null;
+  const floored = plan.minimum !== undefined ? Math.max(lower, plan.minimum) : lower;
+  return floored < base ? floored : null;
+}
+
 /** «خطوة للأسبوع القادم» choices of a plan: «زِد خطوة» only where allowed (`canIncrease`), «خفّف» when there is a lower step. */
 export function stepChoices(plan: Plan, today: LocalDate): StepChoice[] {
   const out: StepChoice[] = [];
   if (!isPaused(plan) && canIncrease(plan, today)) out.push('increase');
-  if (previousStep(baseAmount(plan)) !== null) out.push('lighten');
+  if (lighterAmount(plan) !== null) out.push('lighten');
   out.push('keep');
   return out;
 }
@@ -435,7 +533,7 @@ export function stepChoices(plan: Plan, today: LocalDate): StepChoice[] {
 export function applyStep(plan: Plan, choice: StepChoice, today: LocalDate, now: IsoTime = nowIso()): Plan {
   if (choice === 'increase') return increase(plan, today, now);
   if (choice === 'lighten') {
-    const lower = previousStep(baseAmount(plan));
+    const lower = lighterAmount(plan);
     return lower === null ? plan : decreaseTo(plan, lower, today, now);
   }
   return plan;

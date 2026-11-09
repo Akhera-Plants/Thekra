@@ -12,12 +12,12 @@ import type { Href } from 'expo-router';
 import { navFeature } from '@thekra/practice-core';
 
 /** The nav-map keys «المزيد» lists. */
+// Round 6 (practice-core nav-map): «أهلي وناسي» and «تصفّح النصوص» are gone. The full round-6 list (APP_MORE) is for
+// the UI work; this list only drops the removed items.
 export type MoreKey =
   | 'leave-sin'
-  | 'people'
   | 'circles'
   | 'saved'
-  | 'browse'
   | 'branches'
   | 'strategies'
   | 'account'
@@ -55,12 +55,12 @@ export const MORE_MENU: readonly MoreGroup[] = [
   {
     key: 'mine',
     titleKey: 'more.groups.mine',
-    items: [item('leave-sin', true), item('people', true), item('circles', true), item('saved', true)],
+    items: [item('leave-sin', true), item('circles', true), item('saved', true)],
   },
   {
     key: 'read',
     titleKey: 'more.groups.read',
-    items: [item('browse', false), item('branches', false), item('strategies', true)],
+    items: [item('branches', false), item('strategies', true)],
   },
   {
     key: 'settings',

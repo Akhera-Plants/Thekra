@@ -27,6 +27,11 @@ import type { PrayerAnchor } from './prayer.js';
 import { parseFardMarks, type FardMark } from './fard.js';
 import { homeSectionsToStore, parseHomeSections, validateHomeSections, type HomeSectionPref } from './home.js';
 import { cloneSinLoop, sanitizeCheckIn, validateCheckIn, validateProgram, validateSinLoop, type CheckIn, type SinProgram } from './sin-program.js';
+import { parseDayStates, validateDayStates, type DayStateEntry } from './day-state.js';
+import { cloneQadaPlan, parseQadaLogs, parseQadaPlan, validateQadaPlan, type QadaLog, type QadaPlan } from './qada.js';
+import { parseReflections, type Reflection } from './reflection.js';
+import { parseReadMarks, type ReadMark } from './reads.js';
+import { isReciterKey } from './reciters.js';
 
 export const STORE_VERSION = 2;
 /** Most excused days kept (the newest win). */
@@ -52,6 +57,20 @@ export interface Settings {
   homeSections?: HomeSectionPref[];
   /** «الفرائض» (round 5, F-05 a): the five-prayer rows are on. Absent: off. */
   fardTracking?: true;
+  /**
+   * «حال يومي» (round 6, `day-state.ts`): the hard days and their state, ascending, at most {@link MAX_EXCUSED_DAYS}.
+   * `sick` / `travel` days are also in {@link excusedDays}. Absent or empty: none.
+   */
+  dayStates?: DayStateEntry[];
+  /** «قضاء الفوائت» (round 6, `qada.ts`): the owed prayers and the pace. Absent: none. */
+  qada?: QadaPlan;
+  /**
+   * «تخفّف» rows in «العادات» are covered by default (round 6, C-02e): `false` when the member turned the covering off.
+   * Never stored as `true` (absent = covered).
+   */
+  lightenCovered?: false;
+  /** The chosen Quran reciter (round 6, `reciters.ts` key). Absent: the default reciter. */
+  reciter?: string;
   /** ISO time of the last local edit. Absent while the settings were never edited (any synced version wins). */
   updatedAt?: IsoTime;
 }
@@ -93,6 +112,12 @@ export interface Store {
    * literals stay valid; read it as `store.fard ?? []`.
    */
   fard?: FardMark[];
+  /** Habit reflections (round 6, `reflection.ts`), synced per (plan, date). */
+  reflections?: Reflection[];
+  /** «قضاء الفوائت» make-ups (round 6, `qada.ts`), synced per (date, prayer). */
+  qadaLogs?: QadaLog[];
+  /** Read marks of texts (round 6, `reads.ts`), synced per Quote id. */
+  reads?: ReadMark[];
 }
 
 /** What may leave the device in clear: no `programs` (and no sync bookkeeping), by construction. */
@@ -167,6 +192,9 @@ export function clonePlan(p: Plan): Plan {
   if (p.loops !== undefined && p.loops.length > 0) out.loops = p.loops.map(cloneHabitLoop);
   if (p.updatedAt !== undefined) out.updatedAt = p.updatedAt;
   if (p.logCorrectedAt !== undefined) out.logCorrectedAt = { ...p.logCorrectedAt };
+  if (p.minimum !== undefined) out.minimum = p.minimum;
+  if (p.startAmount !== undefined) out.startAmount = p.startAmount;
+  if (p.restartedOn !== undefined) out.restartedOn = p.restartedOn;
   return out;
 }
 
@@ -191,6 +219,8 @@ function cloneCheckIn(c: CheckIn): CheckIn {
   if (c.triggers !== undefined) out.triggers = { ...c.triggers };
   if (c.goodDeed === true) out.goodDeed = true;
   if (c.nextLimit !== undefined) out.nextLimit = c.nextLimit;
+  if (c.helped !== undefined) out.helped = c.helped;
+  if (c.hard !== undefined) out.hard = c.hard;
   return out;
 }
 
@@ -217,6 +247,10 @@ export interface PlanStateFields {
   slotAnchors?: (PrayerAnchor | null)[];
   /** «حلقة العادة» (2026-11-01), only when the plan has at least one loop. */
   loops?: HabitLoop[];
+  /** Round 6, each only when set: «القدر الأدنى», the start amount, the day progress restarted. */
+  minimum?: number;
+  startAmount?: number;
+  restartedOn?: LocalDate;
 }
 
 /**
@@ -232,6 +266,9 @@ export function planFields(p: Plan) {
   if (p.establishedOn !== undefined) state.establishedOn = p.establishedOn;
   if (p.slotAnchors !== undefined && p.slotAnchors.some((a) => a !== null)) state.slotAnchors = [...p.slotAnchors];
   if (p.loops !== undefined && p.loops.length > 0) state.loops = p.loops.map(cloneHabitLoop);
+  if (p.minimum !== undefined) state.minimum = p.minimum;
+  if (p.startAmount !== undefined) state.startAmount = p.startAmount;
+  if (p.restartedOn !== undefined) state.restartedOn = p.restartedOn;
   return {
     habitKey: p.habitKey ?? null,
     deedSlug: p.deedSlug,
@@ -283,6 +320,12 @@ function parseSettings(raw: unknown, upgradeTime: IsoTime | null): Settings {
   const home = parseHomeSections(s.homeSections);
   if (home) settings.homeSections = home;
   if (s.fardTracking === true) settings.fardTracking = true;
+  const dayStates = parseDayStates(s.dayStates);
+  if (dayStates.length > 0) settings.dayStates = dayStates;
+  const qada = parseQadaPlan(s.qada);
+  if (qada) settings.qada = qada;
+  if (s.lightenCovered === false) settings.lightenCovered = false;
+  if (isReciterKey(s.reciter)) settings.reciter = s.reciter;
   if (isIsoTime(s.updatedAt)) settings.updatedAt = s.updatedAt;
   else if (upgradeTime !== null && (settings.hijriOffset !== 0 || (settings.reminderTimes?.length ?? 0) > 0)) {
     // A v1 store whose settings were changed from the defaults: give them a version so they sync.
@@ -441,9 +484,17 @@ export function parseStore(json: unknown, now: IsoTime = nowIso()): Store {
       tombstones: raw.v === 2 ? parseTombstones(raw.tombstones) : [],
       sync: raw.v === 2 ? parseSync(raw.sync) : { lastSyncedAt: null, acked: {} },
     });
-    // Present only when there is a mark, so stores without «الفرائض» keep their exact shape.
+    // Present only when there is a mark, so stores without «الفرائض» keep their exact shape (same for round 6 lists).
+    const out: Store = { ...store };
     const fard = parseFardMarks(raw.fard);
-    return fard.length > 0 ? { ...store, fard } : store;
+    if (fard.length > 0) out.fard = fard;
+    const reflections = parseReflections(raw.reflections);
+    if (reflections.length > 0) out.reflections = reflections;
+    const qadaLogs = parseQadaLogs(raw.qadaLogs);
+    if (qadaLogs.length > 0) out.qadaLogs = qadaLogs;
+    const reads = parseReadMarks(raw.reads);
+    if (reads.length > 0) out.reads = reads;
+    return out;
   } catch {
     return emptyStore();
   }
@@ -459,6 +510,9 @@ export function exportForSync(store: Store): SyncPayload {
   const clean = parseStore(store as unknown);
   const out: SyncPayload = { v: clean.v, plans: clean.plans, relatives: clean.relatives, settings: clean.settings, tombstones: clean.tombstones };
   if (clean.fard) out.fard = clean.fard;
+  if (clean.reflections) out.reflections = clean.reflections;
+  if (clean.qadaLogs) out.qadaLogs = clean.qadaLogs;
+  if (clean.reads) out.reads = clean.reads;
   return out;
 }
 
@@ -612,6 +666,15 @@ export function updateSettings(store: Store, patch: Partial<Omit<Settings, 'upda
     else delete parsed.homeSections;
   }
   if ('fardTracking' in patch && patch.fardTracking !== undefined && patch.fardTracking !== true) throw new RangeError('Invalid fardTracking');
+  if ('dayStates' in patch && patch.dayStates !== undefined && validateDayStates(patch.dayStates) !== null) throw new RangeError('Invalid dayStates');
+  if ('dayStates' in patch && (patch.dayStates === undefined || patch.dayStates.length === 0)) delete parsed.dayStates;
+  if ('qada' in patch) {
+    if (patch.qada !== undefined && validateQadaPlan(patch.qada) !== null) throw new RangeError('Invalid qada');
+    if (patch.qada === undefined) delete parsed.qada;
+    else parsed.qada = cloneQadaPlan(patch.qada);
+  }
+  if ('lightenCovered' in patch && patch.lightenCovered !== undefined && patch.lightenCovered !== false) throw new RangeError('Invalid lightenCovered');
+  if ('reciter' in patch && patch.reciter !== undefined && !isReciterKey(patch.reciter)) throw new RangeError('Invalid reciter');
   return { ...store, settings: { ...parsed, updatedAt: now } };
 }
 

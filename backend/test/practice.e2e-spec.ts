@@ -46,7 +46,16 @@ const RELATIVE = {
   deletedAt: null,
 };
 /** What the server returns for a plan / relative an older client sent (missing phase-2/6 fields = defaults). */
-const PHASE2_PLAN_DEFAULTS = { pausedOn: null, resumedOn: null, establishedOn: null, slotAnchors: null, loops: null };
+const PHASE2_PLAN_DEFAULTS = {
+  pausedOn: null,
+  resumedOn: null,
+  establishedOn: null,
+  slotAnchors: null,
+  loops: null,
+  minimum: null,
+  startAmount: null,
+  restartedOn: null,
+};
 const planOut = <T extends object>(plan: T) => ({ ...PHASE2_PLAN_DEFAULTS, ...plan });
 const relativeOut = <T extends object>(relative: T) => ({ circle: 'kin', ...relative });
 const b64 = (bytes: number) => Buffer.alloc(bytes, 9).toString('base64');
@@ -512,6 +521,92 @@ describe('Practice, calendar and account endpoints (e2e)', () => {
     // Export carries the marks; deleting the account cascades them (covered with the rest below).
     const exported = await request(server()).get('/v1/auth/me/export').set(auth).expect(200);
     expect(exported.body.data.practice.fard).toHaveLength(2);
+  });
+
+  it('round 6: minimum / restart, «حال يومي», «قضاء», covering, reciter, reflections and read marks sync; archive ≤ 10', async () => {
+    const { auth, userId } = await register();
+    const QUOTE = '5671bf91-6335-49b4-9011-61c74dd1c460';
+    // Plan ids are global: this test uses its own.
+    const PLAN_ID = '88888888-8888-4888-8888-888888888888';
+    const qada = { owed: { fajr: 3, dhuhr: 0, asr: 0, maghrib: 0, isha: 0, any: 10 }, perDay: 2, startedOn: '2026-10-20' };
+    const settings = {
+      hijriOffset: 0,
+      reminderTimes: [],
+      excusedDays: ['2026-10-28'],
+      dayStates: [{ date: '2026-10-27', state: 'busy' }, { date: '2026-10-28', state: 'travel' }],
+      qada,
+      lightenCovered: false,
+      reciter: 'sudais',
+      clientUpdatedAt: T(10),
+    };
+    const first = await sync(auth, {
+      since: null,
+      changes: {
+        settings,
+        plans: [{ ...PLAN, id: PLAN_ID, amount: 5, minimum: 2, startAmount: 1, restartedOn: '2026-10-28' }],
+        reflections: [{ planId: PLAN_ID, date: '2026-10-28', helped: 'صحبة', hard: null, note: 'يوم هادئ', clientUpdatedAt: T(10) }],
+        qadaLogs: [{ date: '2026-10-28', prayer: 'fajr', count: 2, clientUpdatedAt: T(10) }],
+        reads: [{ quoteId: QUOTE, read: true, clientUpdatedAt: T(10) }],
+      },
+    }).expect(200);
+    const data = first.body.data;
+    // jsonb reorders keys; the server returns the canonical order the device sent.
+    expect(JSON.stringify(data.settings.qada)).toBe(JSON.stringify(qada));
+    expect(data.settings).toMatchObject({ dayStates: settings.dayStates, lightenCovered: false, reciter: 'sudais' });
+    expect(data.plans[0]).toMatchObject({ minimum: 2, startAmount: 1, restartedOn: '2026-10-28' });
+    expect(data.reflections).toEqual([{ planId: PLAN_ID, date: '2026-10-28', helped: 'صحبة', hard: null, note: 'يوم هادئ', clientUpdatedAt: T(10) }]);
+    expect(data.qadaLogs).toEqual([{ date: '2026-10-28', prayer: 'fajr', count: 2, clientUpdatedAt: T(10) }]);
+    expect(data.reads).toEqual([{ quoteId: QUOTE, read: true, clientUpdatedAt: T(10) }]);
+
+    // Last writer wins per item; an older write loses and the winner is echoed back.
+    const stale = await sync(auth, {
+      since: null,
+      changes: {
+        reflections: [{ planId: PLAN_ID, date: '2026-10-28', helped: 'قديم', clientUpdatedAt: T(5) }],
+        qadaLogs: [{ date: '2026-10-28', prayer: 'fajr', count: 9, clientUpdatedAt: T(5) }],
+        reads: [{ quoteId: QUOTE, read: false, clientUpdatedAt: T(20) }],
+      },
+    }).expect(200);
+    expect(stale.body.data.reflections[0]).toMatchObject({ helped: 'صحبة', clientUpdatedAt: T(10) });
+    expect(stale.body.data.qadaLogs[0]).toMatchObject({ count: 2 });
+    expect(stale.body.data.reads[0]).toMatchObject({ read: false, clientUpdatedAt: T(20) });
+    // A cleared reflection keeps its row (all answers null) so the clearing reaches other devices.
+    await sync(auth, { since: null, changes: { reflections: [{ planId: PLAN_ID, date: '2026-10-28', clientUpdatedAt: T(30) }] } }).expect(200);
+    expect(await prisma.habitReflection.findUniqueOrThrow({ where: { planId_date: { planId: PLAN_ID, date: new Date('2026-10-28') } } })).toMatchObject({
+      helped: null,
+      hard: null,
+      note: null,
+    });
+
+    // A reflection for a plan the user does not own: 404, nothing applied.
+    const other = await register();
+    await sync(other.auth, {
+      since: null,
+      changes: { reflections: [{ planId: PLAN_ID, date: '2026-10-28', helped: 'x', clientUpdatedAt: T(40) }] },
+    }).expect(404);
+
+    // An older client's newer settings reset the round-6 settings to the defaults (last writer wins on the record).
+    const old = await sync(auth, { since: null, changes: { settings: { hijriOffset: 1, reminderTimes: [], clientUpdatedAt: T(50) } } }).expect(200);
+    expect(old.body.data.settings).toMatchObject({ dayStates: null, qada: null, lightenCovered: true, reciter: null });
+
+    // The archive holds at most 10 plans: an 11th archived plan is refused with nothing applied.
+    const plan = (n: number, paused: boolean) => ({
+      ...PLAN,
+      id: `77777777-7777-4777-8777-${String(n).padStart(12, '0')}`,
+      ...(paused ? { pausedOn: '2026-10-28' } : {}),
+      clientUpdatedAt: T(1),
+    });
+    await sync(auth, { since: null, changes: { plans: Array.from({ length: 10 }, (_, i) => plan(i, true)) } }).expect(200);
+    const full = await sync(auth, { since: null, changes: { plans: [plan(10, true)] } }).expect(422);
+    expect(full.body.error.code).toBe('PRACTICE_LIMIT_REACHED');
+    expect(await prisma.habitPlan.count({ where: { userId, pausedOn: { not: null } } })).toBe(10);
+    // Unarchived plans and edits of archived ones still pass.
+    await sync(auth, { since: null, changes: { plans: [plan(11, false), { ...plan(0, true), title: 'renamed', clientUpdatedAt: T(2) }] } }).expect(200);
+
+    // Export carries the round-6 data.
+    const exported = await request(server()).get('/v1/auth/me/export').set(auth).expect(200);
+    expect(exported.body.data.practice).toMatchObject({ qadaLogs: [{ count: 2 }], reads: [{ quoteId: QUOTE, read: false }] });
+    expect(exported.body.data.practice.reflections).toHaveLength(1);
   });
 
   it('export carries practice data and the vault ciphertext; DELETE /auth/me cascades all of it', async () => {

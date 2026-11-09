@@ -16,11 +16,11 @@ import {
   isPausedOn,
   isPlanDueOn,
   minimumOf,
-  requiredOn,
   type AdherenceBand,
   type Plan,
 } from './plan.js';
 import { isExcused } from './storage.js';
+import { requiredOnDay } from './day-state.js';
 import { occurrences, type Rule } from './rules.js';
 import { activePrograms, type SinProgram } from './sin-program.js';
 import type { Store } from './storage.js';
@@ -115,8 +115,9 @@ export function missedDayBefore(store: Store, plan: Plan, date: LocalDate, opts:
   return (plan.log[before] ?? 0) <= 0;
 }
 
-function habitItem(plan: Plan, date: LocalDate): HabitItem {
-  const required = requiredOn(plan, date);
+function habitItem(store: Pick<Store, 'settings' | 'plans'>, plan: Plan, date: LocalDate): HabitItem {
+  // Round 6 «حال يومي»: a hard day asks the plan's «القدر الأدنى».
+  const required = requiredOnDay(store, plan, date);
   const done = plan.log[date] ?? 0;
   const remaining = Math.max(0, required - done);
   return { kind: 'habit', planId: plan.id, required, done, remaining, complete: remaining === 0 };
@@ -163,7 +164,7 @@ function occasionItems(occasions: readonly AgendaOccasion[], date: LocalDate, hi
  */
 export function dayAgenda(store: Store, date: LocalDate, opts: AgendaOptions = {}): AgendaItem[] {
   const asked = store.plans.filter((p) => planAsksOn(p, date, opts)).map((p) => {
-    const item = habitItem(p, date);
+    const item = habitItem(store, p, date);
     if (missedDayBefore(store, p, date, opts)) {
       item.missedYesterday = true;
       item.minimum = Math.min(minimumOf(p), item.required);

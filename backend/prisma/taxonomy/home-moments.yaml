@@ -1,0 +1,63 @@
+# Home «في لحظات مثل هذه» (round 6, C-09, docs/plan/2026-11-09-owner-round-6.md §8): chosen by us for every user,
+# never by the user. Served by GET /v1/home-moments?lang=ar|en (CDN-cached).
+#
+# Where the list lives
+#   - The database table HomeMoment is the live list; the admin desk edits it at /v1/admin/home-moments.
+#   - This file seeds it:
+#       pnpm --filter backend home-moments:import            (dry run: shows what would change)
+#       pnpm --filter backend home-moments:import --apply    (writes; local database unless you mean otherwise)
+#     Re-running sets these keys back to this file; a second run writes nothing. Rows not in the file are left alone.
+#   - While the table is empty (e.g. a database that never ran the import) the API serves this file, which is built
+#     into the bundle; so a change here alone reaches users with the next API deploy.
+#
+# Rules
+#   - Labels are phrased as help for the moment, never as an accusation: «تعينك على التخفّف من الغضب».
+#   - topic: sin | good-deed | branch, with the page's slug (for branch: its number). Every slug must exist in
+#     taxonomy.yaml; the import refuses a topic missing from the database it writes to, and the API drops a row
+#     whose topic is missing or hidden.
+#   - English is our own UI wording (not a translation of a religious text).
+#   - icon: a key the web and the app map to their icon sets (pause, sun, message-circle, heart, …).
+#   - First list: the four moments the web and the app showed before round 6 (frontend Moments.tsx, mobile
+#     HomeSections.tsx), on the same topics, reworded as help. The new wording is for the owner to confirm
+#     (round 6 §4: uncertain labels go to the one labels-to-decide list).
+
+moments:
+  - key: anger
+    topic: sin
+    slug: ghadab
+    labelAr: تعينك على التخفّف من الغضب
+    labelEn: Help to let go of anger
+    situationAr: قبل أن تردّ وأنت غاضب
+    situationEn: Before you reply in anger
+    icon: pause
+    sortOrder: 10
+
+  - key: prayer
+    topic: good-deed
+    slug: salah
+    labelAr: تعينك على المحافظة على الصلاة
+    labelEn: Help to keep up the prayer
+    situationAr: حين تتثاقل عن الصلاة
+    situationEn: When prayer feels heavy
+    icon: sun
+    sortOrder: 20
+
+  - key: backbiting
+    topic: sin
+    slug: ghibah
+    labelAr: تعينك على التخفّف من الغيبة
+    labelEn: Help to keep away from backbiting
+    situationAr: قبل أن تنشر كلامًا عن شخص
+    situationEn: Before you spread talk about someone
+    icon: message-circle
+    sortOrder: 30
+
+  - key: kindness
+    topic: good-deed
+    slug: kalam-tayyib
+    labelAr: تعينك على جبر الخواطر بالكلمة الطيبة
+    labelEn: Help to lift someone’s spirit with a kind word
+    situationAr: حين تريد جبر خاطر أحد
+    situationEn: When you want to lift someone’s spirit
+    icon: heart
+    sortOrder: 40
