@@ -577,7 +577,7 @@ function ReturnTab({ plan, title, amountLabel }: TabProps & { amountLabel: (n: n
         {asking ? (
           <PendingAsks today={d} planId={plan.id} />
         ) : showsMend(mend) ? (
-          <NextStep title={t(mend === 'steps' ? 'practice.hub.missedYesterday' : 'habitsTab.mend.offerLine')}>
+          <NextStep title={t(mend === 'steps' ? 'habitsHub.return.gapYesterday' : 'habitsHub.return.gapTwice')}>
             <Wrap>
               <Button label={t('myHabits.fix')} onPress={() => setMending(true)} variant="outline" />
             </Wrap>

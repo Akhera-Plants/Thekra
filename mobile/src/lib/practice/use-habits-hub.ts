@@ -22,6 +22,7 @@ import {
   logContact,
   logForDay,
   logMinimum,
+  makeUpOffer,
   minimumMet,
   minimumToLog,
   longestStreak,
@@ -164,8 +165,11 @@ export function useOffDayHabits(date: LocalDate): HabitItem[] {
 export function useAgendaRows(items: readonly AgendaItem[], date: LocalDate, todayDate: LocalDate): AgendaRowModel[] {
   const { t } = useTranslation();
   const locale = useUiLocale();
-  const plans = usePracticeStore((s) => s.store.plans);
-  const relatives = usePracticeStore((s) => s.store.relatives);
+  const store = usePracticeStore((s) => s.store);
+  const heart = usePracticeStore((s) => s.heart);
+  const planDays = usePlanDays();
+  const plans = store.plans;
+  const relatives = store.relatives;
   const habits = usePracticeCatalog(locale).data?.habits;
   return useMemo(() => {
     const isToday = date === todayDate;
@@ -186,8 +190,10 @@ export function useAgendaRows(items: readonly AgendaItem[], date: LocalDate, tod
         // «لا تفوّتها مرتين»: missed yesterday, so the row asks for its minimum with one gentle line. The asked amount
         // stays the same once «أقل ما يمكن» is logged (A-23: it no longer jumps to the full amount).
         const missed = item.missedYesterday && item.minimum && (item.done === 0 || minimumMet(plan, date));
+        // Two days missed in a row (the «صلّحها» offer is open): «انقطعت يومين…» instead of «لا تفوّتها مرتين» (web parity).
+        const twice = missed && isToday && makeUpOffer(store, plan, date, { ...planDays, heart }) !== null;
         const required = missed
-          ? `${t('practice.hub.missedYesterday')} · ${t('practice.hub.required', { amount: amount(item.minimum as number) })}`
+          ? `${t(twice ? 'practice.hub.missedTwice' : 'practice.hub.missedYesterday')} · ${t('practice.hub.required', { amount: amount(item.minimum as number) })}`
           : t('practice.hub.required', { amount: amount(item.required) });
         const meta = minimumMet(plan, date)
           ? `${required} · ${t('practice.heart.minimumMet')}`
@@ -222,7 +228,7 @@ export function useAgendaRows(items: readonly AgendaItem[], date: LocalDate, tod
       }
     }
     return rows;
-  }, [items, date, todayDate, plans, relatives, habits, locale, t]);
+  }, [items, date, todayDate, store, heart, planDays, plans, relatives, habits, locale, t]);
 }
 
 /** Presence marks from `from` to `to`, computed up to today only (the future has no mark). */

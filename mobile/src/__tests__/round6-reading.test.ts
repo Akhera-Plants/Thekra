@@ -40,6 +40,9 @@ describe('strategies (C-18 a)', () => {
     expect(applyStrategyDraft('anchor-prayer', {}, 'بعد الفجر')).toEqual({ cue: 'بعد الفجر' });
     expect(applyStrategyDraft('anchor-prayer', { cue: 'بعد العشاء', routine: 'صفحة' }, 'بعد الفجر')).toEqual({ cue: 'بعد العشاء', routine: 'صفحة' });
     expect(applyStrategyDraft('if-then', { routine: 'صفحة' }, 'إذا…')).toEqual({ routine: 'صفحة', ifThen: 'إذا…' });
+    // The example's «مثال:» lead is dropped, as on the website.
+    expect(applyStrategyDraft('start-tiny', {}, 'مثال: دقيقتان من القرآن')).toEqual({ routine: 'دقيقتان من القرآن' });
+    expect(applyStrategyDraft('start-tiny', {}, 'Example: two minutes')).toEqual({ routine: 'two minutes' });
   });
 });
 

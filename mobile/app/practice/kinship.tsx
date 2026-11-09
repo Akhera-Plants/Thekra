@@ -14,7 +14,7 @@ import React, { useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Check, Pencil, Plus, Trash2 } from 'lucide-react-native';
+import { Check, Plus, Trash2 } from 'lucide-react-native';
 import {
   circleOf,
   deleteRelative,
@@ -36,20 +36,17 @@ import { newPracticeId, today, usePracticeStore } from '@/lib/practice/practice-
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { RelativeForm } from '@/components/practice/RelativeForm';
 import { space, useStyles, type Theme } from '@/theme';
-import { ActionMenu, BottomSheet, Button, Loading, PageHeader, Screen, SectionDivider, SectionHeader, Text, toast } from '@/ui';
+import { BottomSheet, Button, ButtonPair, IconButton, Loading, PageHeader, Screen, SectionDivider, SectionHeader, Text, toast } from '@/ui';
+import { EditLink } from '@/components/practice/habits/PeriodicTab';
 
 const makeStyles = (t: Theme) => ({
   section: { gap: space.xs },
-  row: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    gap: space.sm,
-    paddingVertical: space.md,
-    borderBottomWidth: 1,
-    borderBottomColor: t.colors.border,
-  },
   rowLast: { borderBottomWidth: 0 },
   rowText: { flex: 1, minWidth: 0, gap: 2 },
+  person: { gap: space.xs, paddingVertical: space.md, borderBottomWidth: 1, borderBottomColor: t.colors.border },
+  personTop: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.sm },
+  personActions: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.sm },
+  grow: { flex: 1 },
 });
 
 /** The sections in the plan's order (F-15 a). */
@@ -204,11 +201,15 @@ interface PersonRowProps {
   onDelete: () => void;
 }
 
-/** Name · relation and the due line; «تواصلت معه» (or «تواصلت اليوم»), then «⋯» with «عدّل» and «احذف». */
+/**
+ * Name · relation and the due line, a visible trash icon (delete asks first), then «تواصلت معه» (or «تواصلت اليوم»)
+ * and «تعديل» as a link — the same as every periodic row (C-24 a), no «⋯».
+ */
 function PersonRow({ relative, entry, today: d, last, signedIn, onContacted, onEdit, onDelete }: PersonRowProps) {
   const shortDate = useShortDate();
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
+  const [confirming, setConfirming] = useState(false);
   const open = isRelativeOpen(relative);
   const dueText = !open
     ? t('practice.circles.sick.visited')
@@ -222,48 +223,52 @@ function PersonRow({ relative, entry, today: d, last, signedIn, onContacted, onE
   const lastText = relative.lastContactedOn ? t('kinship.lastContact', { date: shortDate(relative.lastContactedOn) }) : t('kinship.never');
   const contactedToday = relative.lastContactedOn === d;
   return (
-    <View style={[styles.row, last && styles.rowLast]}>
-      <View style={styles.rowText}>
-        <Text variant="body" weight="medium">
-          {relative.name}
-          {relative.relation ? (
-            <Text variant="small" tone="muted">
-              {` · ${relative.relation}`}
-            </Text>
-          ) : null}
-        </Text>
-        <Text variant="caption" tone="muted">
-          {[dueText, lastText].filter(Boolean).join(' · ')}
-        </Text>
+    <View style={[styles.person, last && styles.rowLast]}>
+      <View style={styles.personTop}>
+        <View style={styles.rowText}>
+          <Text variant="body" weight="medium">
+            {relative.name}
+            {relative.relation ? (
+              <Text variant="small" tone="muted">
+                {` · ${relative.relation}`}
+              </Text>
+            ) : null}
+          </Text>
+          <Text variant="caption" tone="muted">
+            {[dueText, lastText].filter(Boolean).join(' · ')}
+          </Text>
+        </View>
+        <IconButton icon={Trash2} label={t('habitsTab.people.deleteTitle', { name: relative.name })} onPress={() => setConfirming(true)} />
       </View>
-      {open ? (
-        <Button
-          label={contactedToday ? t('kinship.contactedToday') : t('kinship.contacted')}
-          icon={contactedToday ? Check : undefined}
-          onPress={onContacted}
-          disabled={contactedToday}
-          variant="outline"
-          size="sm"
-          accessibilityLabel={`${t('kinship.contacted')}: ${relative.name}`}
-        />
-      ) : null}
-      <ActionMenu
-        label={t('kinship.edit', { name: relative.name })}
-        items={[
-          { label: t('habitsTab.plan.edit'), icon: Pencil, onPress: onEdit },
-          {
-            label: t('kinship.delete'),
-            icon: Trash2,
-            destructive: true,
-            onPress: onDelete,
-            confirm: {
-              title: t('habitsTab.people.deleteTitle', { name: relative.name }),
-              message: t(signedIn ? 'kinship.deleteConfirmSynced' : 'kinship.deleteConfirm'),
-              confirmLabel: t('common.delete'),
+      <View style={styles.personActions}>
+        {open ? (
+          <Button
+            label={contactedToday ? t('kinship.contactedToday') : t('kinship.contacted')}
+            icon={contactedToday ? Check : undefined}
+            onPress={onContacted}
+            disabled={contactedToday}
+            variant="outline"
+            size="sm"
+            accessibilityLabel={`${t('kinship.contacted')}: ${relative.name}`}
+          />
+        ) : null}
+        <View style={styles.grow} />
+        <EditLink onPress={onEdit} label={relative.name} />
+      </View>
+      <BottomSheet visible={confirming} title={t('habitsTab.people.deleteTitle', { name: relative.name })} onClose={() => setConfirming(false)}>
+        <Text variant="body">{t(signedIn ? 'kinship.deleteConfirmSynced' : 'kinship.deleteConfirm')}</Text>
+        <ButtonPair
+          primary={{
+            label: t('common.delete'),
+            variant: 'destructive',
+            onPress: () => {
+              setConfirming(false);
+              onDelete();
             },
-          },
-        ]}
-      />
+          }}
+          secondary={{ label: t('common.cancel'), onPress: () => setConfirming(false) }}
+        />
+      </BottomSheet>
     </View>
   );
 }

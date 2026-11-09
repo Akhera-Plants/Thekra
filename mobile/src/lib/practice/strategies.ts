@@ -43,7 +43,12 @@ export function applyStrategyDraft(key: string, current: LoopDraft, example: str
   const field = APPLY_FIELD[key];
   if (!field) return { ...current };
   const existing = (current[field] ?? '').trim();
-  return existing ? { ...current } : { ...current, [field]: example };
+  return existing ? { ...current } : { ...current, [field]: exampleAnswer(example) };
+}
+
+/** The example line as a loop answer: without its «مثال:» / «Example:» lead (same as the website). */
+export function exampleAnswer(example: string): string {
+  return example.replace(/^\s*(?:مثال|Example)\s*[:：]\s*/u, '').trim();
 }
 
 export type StrategyTarget = { kind: 'screen'; href: Href; heart?: Partial<HeartPrefs> } | { kind: 'deeds' };

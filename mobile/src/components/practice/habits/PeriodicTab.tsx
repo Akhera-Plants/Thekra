@@ -223,8 +223,8 @@ function PlanActRow({ act, plan, next, today, last }: { act: ActivePeriodicAct; 
   );
 }
 
-/** «تعديل» as a link (C-24 a): primary words, a 44px target. */
-function EditLink({ onPress, label }: { onPress: () => void; label: string }) {
+/** «تعديل» as a link (C-24 a): primary words, a 44px target. Also used by the people rows of «صلة الرحم والأحباب». */
+export function EditLink({ onPress, label }: { onPress: () => void; label: string }) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   return (

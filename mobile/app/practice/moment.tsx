@@ -28,6 +28,7 @@ import {
   activePrograms,
   addSinLoop,
   formatCountdown,
+  isLightenCovered,
   momentProgram,
   recordWavePassed,
   removeSinLoop,
@@ -55,6 +56,7 @@ import { momentToolsFor } from '@/lib/practice/moment-tools';
 import { mujahadaPassage } from '@/lib/practice/mujahada';
 import { momentSource, newPracticeId, today, usePracticeStore } from '@/lib/practice/practice-store';
 import { programEntry } from '@/lib/practice/sin-program-view';
+import { unlockWithDevice } from '@/lib/practice/use-sin-privacy';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { radius, space, useStyles, useTheme, type Theme } from '@/theme';
 import {
@@ -163,6 +165,9 @@ function MujahadaContent() {
   const styles = useStyles(makeStyles);
   const locale = useUiLocale();
   const programs = usePracticeStore((s) => s.store.programs);
+  // «تخفَّف» covered (round 6 C-02e, the default): the page names no program, and «حلقة المعصية» (the member's own
+  // answers) opens only after the device lock, like every other place a program appears (web MujahadaView parity).
+  const covered = usePracticeStore((s) => isLightenCovered(s.store));
   const setStore = usePracticeStore((s) => s.setStore);
   const catalog = usePracticeCatalog(locale);
   const evidence = useSinProgramEvidence(catalog.data, locale);
@@ -221,9 +226,14 @@ function MujahadaContent() {
 
   // «نصوص تذكّرها» and «حلقة المعصية», both outlined (the panel holds the one solid button).
   const textsAction = textIds.length > 0 || sinForActs ? { label: t('sinProgram.moment.texts'), icon: BookOpen, onPress: openTexts, variant: 'outline' as const } : null;
-  const loopAction = program ? { label: t('loops.sin.title'), icon: Repeat, onPress: () => setSheet('loop'), variant: 'outline' as const } : null;
+  const loopAction = program ? { label: t('loops.sin.title'), icon: Repeat, onPress: () => void openLoop(), variant: 'outline' as const } : null;
   const pairFirst = textsAction ?? loopAction;
   const pairSecond = textsAction ? loopAction : null;
+
+  async function openLoop() {
+    if (covered && !(await unlockWithDevice({ promptMessage: t('sinLock.prompt'), cancelLabel: t('common.cancel') }))) return;
+    setSheet('loop');
+  }
 
   function openTexts() {
     if (textIds.length > 0) setSheet('texts');
@@ -263,7 +273,7 @@ function MujahadaContent() {
           </Text>
           <Wrap>
             {running.map((p) => (
-              <Chip key={p.sinSlug} label={sinName(p.sinSlug)} selected={program?.sinSlug === p.sinSlug} onPress={() => setPicked(p.sinSlug)} />
+              <Chip key={p.sinSlug} label={covered ? t('sinProgram.moment.programN', { n: running.indexOf(p) + 1 }) : sinName(p.sinSlug)} selected={program?.sinSlug === p.sinSlug} onPress={() => setPicked(p.sinSlug)} />
             ))}
           </Wrap>
         </View>
@@ -273,7 +283,7 @@ function MujahadaContent() {
       <View style={styles.panel}>
         <Text variant="caption" tone="muted">
           {/* The program's name as plain text, never a header (and only the user's own program). */}
-          {acts.own && program && !asksWhich ? `${t('sinProgram.moment.kicker')} · ${sinName(program.sinSlug)}` : t('sinProgram.moment.kicker')}
+          {!covered && acts.own && program && !asksWhich ? `${t('sinProgram.moment.kicker')} · ${sinName(program.sinSlug)}` : t('sinProgram.moment.kicker')}
         </Text>
         {shown ? (
           <Text variant="display" accessibilityRole="text">

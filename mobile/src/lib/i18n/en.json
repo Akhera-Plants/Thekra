@@ -488,7 +488,8 @@
       "addPeriodicHint": "A reminder of a weekly or monthly deed, or of people to check on.",
       "addPeriodicTitle": "A periodic act",
       "periodicNote": "Periodic acts are reminders only, without the commitment tracking of habits.",
-      "periodicPeople": "You add the people on their list"
+      "periodicPeople": "You add the people on their list",
+      "missedTwice": "Two days missed: come back today, even a little"
     },
     "time": {
       "am": "AM",
@@ -882,7 +883,7 @@
       "pickHabit": "Choose the habit to apply “{{strategy}}” to, then review its loop before saving.",
       "next": "Review the loop",
       "addHabit": "Add a habit",
-      "applied": "Saved in the loop of “{{habit}}”"
+      "applied": "Applied to “{{habit}}”. It is in “Habit loop”."
     },
     "onboarding": {
       "stepOf": "Step {{step}} of 3",
@@ -1047,7 +1048,8 @@
       "orOther": "Or one of these:",
       "timerLead": "Minutes you choose to start",
       "startTimer": "Start ten minutes",
-      "texts": "Texts to remember"
+      "texts": "Texts to remember",
+      "programN": "Program {{n}}"
     },
     "triggers": {
       "title": "What came before it? (optional)",
@@ -2456,7 +2458,9 @@
       "title": "Mend it",
       "lead": "If you stopped, do not double up or start from zero: come back with a little today.",
       "noGap": "No break right now. May Allah keep you firm.",
-      "rule": "If you stop, come back the next day with your minimum: {{amount}}."
+      "rule": "If you stop, come back the next day with your minimum: {{amount}}.",
+      "gapYesterday": "Not done yesterday. Today, even a little.",
+      "gapTwice": "Two days missed. Mend it with one good deed today."
     },
     "add": {
       "steps": {

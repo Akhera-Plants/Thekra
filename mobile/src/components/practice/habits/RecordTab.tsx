@@ -181,12 +181,13 @@ function WeekPart({ today, onOpenDay }: { today: LocalDate; onOpenDay: (d: Local
                     onPress={() => onOpenDay(d)}
                     accessibilityRole="button"
                     accessibilityLabel={`${names.weekday(weekdayOf(d))} ${Number(d.slice(8))}`}
-                    style={({ pressed }) => [styles.head, pressed && styles.headPressed, !opens && styles.cellFuture]}
+                    // A future day is plain muted text (readable, AA), not faded (web parity).
+                    style={({ pressed }) => [styles.head, pressed && opens && styles.headPressed]}
                   >
                     <Text variant="caption" tone={d === today ? 'link' : 'muted'} numberOfLines={1}>
                       {t(`practice.hub.weekdayShort.${weekdayOf(d)}`)}
                     </Text>
-                    <Text variant="small" weight={d === today ? 'semibold' : 'regular'} tone={d === today ? 'link' : 'default'} style={styles.num}>
+                    <Text variant="small" weight={d === today ? 'semibold' : 'regular'} tone={d === today ? 'link' : opens ? 'default' : 'muted'} style={styles.num}>
                       {String(Number(d.slice(8)))}
                     </Text>
                   </Pressable>
@@ -287,7 +288,9 @@ function MonthPart({ onOpenDay }: { onOpenDay: (d: LocalDate) => void }) {
   const hijriOffset = store.settings.hijriOffset;
   const showHijri = usePracticeStore((s) => s.prefs.showHijri);
   const catalog = usePracticeCatalog(locale);
-  const { today, month, first, shiftMonth } = useHubDays();
+  const { today, month, shiftMonth } = useHubDays();
+  // The month rows start on the review day too, like the week strip and the week table (round 6 §2; web parity).
+  const first = usePracticeStore((s) => s.heart.prefs.reviewDay);
   const summary = useMonthPresence(today);
   const marks = usePresenceMarks(month, monthEnd(month), today);
   const split = useMemo(() => splitOccasions(catalog.data?.occasions ?? []), [catalog.data?.occasions]);
