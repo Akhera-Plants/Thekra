@@ -8,17 +8,17 @@
  * («لحظة مجاهدة» from a sin page) a guest sees the page, which then stores nothing.
  */
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { AppState, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { LockKeyhole, Sprout } from 'lucide-react-native';
+import { Check, LockKeyhole, Sprout } from 'lucide-react-native';
 import { useRequireSignIn } from '@/lib/auth/require-sign-in';
 import { usePracticeStore } from '@/lib/practice/practice-store';
 import { unlockWithDevice, useAppInForeground } from '@/lib/practice/use-sin-privacy';
 import { openWithDevice } from '@/lib/practice/vault-runner';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { space, useStyles, type Theme } from '@/theme';
-import { EmptyState, Icon, Screen, Text } from '@/ui';
+import { BottomSheet, Button, ButtonPair, Icon, Screen, Text } from '@/ui';
 import { VaultCodeUnlock } from './VaultCard';
 
 const makeStyles = (t: Theme) => ({
@@ -31,9 +31,18 @@ const makeStyles = (t: Theme) => ({
     backgroundColor: t.colors.background,
   },
   locked: { flexGrow: 1, justifyContent: 'center' as const },
+  lockedBox: { alignItems: 'center' as const, gap: space.lg },
 });
 
 type GuardState = 'checking' | 'open' | 'code' | 'locked';
+
+/** «أقفل» on the program page (round 6, C-15): closes it at once; reopening asks the device lock (or the code) again. */
+const LockContext = createContext<(() => void) | null>(null);
+
+/** The guarded page's «أقفل», or null outside the guard. */
+export function useLockProgram(): (() => void) | null {
+  return useContext(LockContext);
+}
 
 export function SinProgramGuard({ children, requireAccount = false }: { children: React.ReactNode; requireAccount?: boolean }) {
   const { t } = useTranslation();
@@ -95,6 +104,11 @@ export function SinProgramGuard({ children, requireAccount = false }: { children
     return () => sub.remove();
   }, [userId]);
 
+  const lockNow = useCallback(() => {
+    relocked.current = true;
+    setState('locked');
+  }, []);
+
   const retry = () => {
     if (!relocked.current) {
       open();
@@ -114,17 +128,56 @@ export function SinProgramGuard({ children, requireAccount = false }: { children
   return (
     <View style={styles.frame}>
       {state === 'open' ? (
-        children
+        <LockContext.Provider value={userId ? lockNow : null}>{children}</LockContext.Provider>
       ) : state === 'code' && userId ? (
         <Screen edges={['bottom']} keyboard contentStyle={styles.locked}>
           <VaultCodeUnlock userId={userId} onOpened={() => setState('open')} />
         </Screen>
       ) : (
         <Screen edges={['bottom']} contentStyle={styles.locked}>
-          <EmptyState icon={LockKeyhole} message={t('sinLock.lockedTitle')} hint={t('sinLock.lockedHint')} actionLabel={t('sinLock.unlock')} onAction={retry} />
+          <LockedState onUnlock={retry} />
         </Screen>
       )}
       {foreground ? null : <PrivacyCover />}
+    </View>
+  );
+}
+
+/**
+ * The locked page (round 6, C-15): the lock state «مقفل ✓», nothing else; a tap opens a small popup whose «افتح القفل»
+ * asks the device lock (or the code) again.
+ */
+function LockedState({ onUnlock }: { onUnlock: () => void }) {
+  const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
+  const [asking, setAsking] = useState(false);
+  return (
+    <View style={styles.lockedBox}>
+      <Icon icon={LockKeyhole} size={36} tone="link" strokeWidth={1.3} />
+      <Text variant="title" align="center">
+        {t('sinLock.lockedTitle')}
+      </Text>
+      <Button label={t('topic.locked')} icon={Check} variant="outline" onPress={() => setAsking(true)} accessibilityLabel={t('topic.lockedLabel')} />
+      <BottomSheet
+        visible={asking}
+        title={t('sinLock.lockedTitle')}
+        onClose={() => setAsking(false)}
+        footer={
+          <ButtonPair
+            size="lg"
+            primary={{
+              label: t('topic.unlock'),
+              onPress: () => {
+                setAsking(false);
+                onUnlock();
+              },
+            }}
+            secondary={{ label: t('common.cancel'), onPress: () => setAsking(false) }}
+          />
+        }
+      >
+        <Text variant="body">{t('sinLock.lockedHint')}</Text>
+      </BottomSheet>
     </View>
   );
 }

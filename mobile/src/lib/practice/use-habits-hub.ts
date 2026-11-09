@@ -1,8 +1,9 @@
 /**
- * Hooks of «ورد اليوم» and «سجلّي»: today (following the clock) and the month the grid shows, the day's agenda and
+ * Hooks of «عاداتي › اليوم» and «سجلّي»: today (following the clock) and the month the grid shows, the day's agenda and
  * the presence marks (practice-core `dayAgenda` / `presence`, memoized for the visible range only), the quick log with
- * its undo, «يومي ثقيل», the streak (practice-core `currentStreak` / `longestStreak`), the month summary and the
- * periodic acts. Every edit goes through practice-core store helpers.
+ * its undo, «يومي ثقيل» (kept for the garden; «حال يومي» is practice-core `setDayState`), the streak (practice-core
+ * `currentStreak` / `longestStreak`), the month summary and the limits. Every edit goes through practice-core store
+ * helpers. The periodic acts' rows are built in «الأعمال الدورية» itself (practice-core `activePeriodicActs`).
  *
  * A habit is asked for only on its own days (practice-core `planAsksOn` / `isPlanDueOn`: its rule, else the catalog
  * habit's default rule, else daily), the same answer the reminders use; on other days it stays loggable in the
@@ -14,13 +15,9 @@ import { AppState } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 import {
-  addDays,
   correctLog,
-  diffDays,
   currentStreak,
   dayAgenda,
-  canExcuse,
-  isExcused,
   limits,
   logContact,
   logForDay,
@@ -29,7 +26,6 @@ import {
   minimumToLog,
   longestStreak,
   streakDisplay,
-  toggleExcusedDay,
   removeContact,
   minDate,
   monthSummary,
@@ -50,13 +46,13 @@ import {
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { useCirclePresence } from '@/lib/circles/use-circle-presence';
 import { pick } from './catalog-types';
-import { addMonths, firstWeekday, followToday, monthStart, shortDayTitle, type DateNames } from './calendar-grid';
+import { addMonths, firstWeekday, followToday, monthStart, type DateNames } from './calendar-grid';
 import { finishedDay, presenceMarks, type PresenceMark } from './hub';
 import { heavyDayOn, setHeavyDay } from './plan-view';
 import { today, usePracticeStore } from './practice-store';
 import { formatAmount, habitFor } from './reminders';
 import { useUiLocale } from './use-practice-lifecycle';
-import { periodicActs, type AgendaRowModel, type PeriodicAct } from './wird';
+import type { AgendaRowModel } from './wird';
 
 export type { AgendaRowModel } from './wird';
 
@@ -377,14 +373,6 @@ export function useStreak(todayDate: LocalDate): { current: number; longest: num
   }, [store, todayDate, planDays]);
 }
 
-/** «عذر (مرض أو سفر)» for one day: whether it is marked, whether it may be, and the toggle (practice-core). */
-export function useExcuse(date: LocalDate, todayDate: LocalDate) {
-  const store = usePracticeStore((s) => s.store);
-  const setStore = usePracticeStore((s) => s.setStore);
-  const toggle = useCallback(() => setStore((s) => toggleExcusedDay(s, date, todayDate)), [setStore, date, todayDate]);
-  return { excused: isExcused(store, date), allowed: canExcuse(date, todayDate) && store.plans.length > 0, toggle };
-}
-
 /** The limits (3 young habits, 7 periodic acts, 3 «تخفَّف» programs); periodic acts come from the catalog's templates. */
 export function useLimits(todayDate: LocalDate = today()): Limits {
   const locale = useUiLocale();
@@ -394,54 +382,4 @@ export function useLimits(todayDate: LocalDate = today()): Limits {
     () => limits(store, todayDate, { isPeriodicAct: (plan) => habitFor(plan, habits ?? [])?.kind === 'periodic' }),
     [store, todayDate, habits],
   );
-}
-
-/** One periodic act with its words ready: the name, a relative's relation, and when it is next due. */
-export interface PeriodicRowModel {
-  key: string;
-  act: PeriodicAct;
-  title: string;
-  /** A relative's relation, or «صلة الرحم» when it has none; a habit's next-date rule stays on its page. */
-  note: string;
-  /** «اليوم», «غدًا», «الجمعة 6 نوفمبر», «فات موعده منذ 3 أيام». */
-  when: string;
-}
-
-/**
- * Every periodic act, soonest first: relatives (people lists) and the plans made from a periodic template. A habit
- * whose rule is not daily stays a habit (owner round 3, item 6): it shows in the day lists only.
- */
-export function usePeriodicRows(todayDate: LocalDate): PeriodicRowModel[] {
-  const { t } = useTranslation();
-  const locale = useUiLocale();
-  const store = usePracticeStore((s) => s.store);
-  const habits = usePracticeCatalog(locale).data?.habits;
-  const planDays = usePlanDays();
-  const names = useDateNames();
-  return useMemo(() => {
-    const tomorrow = addDays(todayDate, 1);
-    const when = (act: PeriodicAct): string => {
-      if (act.next === null) return t('practice.periodic.noNext');
-      if (act.next < todayDate) return t('practice.hub.relativeOverdue', { count: diffDays(act.next, todayDate) });
-      if (act.next === todayDate) return t('practice.today');
-      if (act.next === tomorrow) return t('practice.periodic.tomorrow');
-      return shortDayTitle(act.next, names);
-    };
-    const rows: PeriodicRowModel[] = [];
-    for (const act of periodicActs(store, todayDate, planDays)) {
-      if (act.kind === 'relative') {
-        const rel = store.relatives.find((r) => r.id === act.id);
-        if (!rel) continue;
-        rows.push({ key: `r-${act.id}`, act, title: rel.name, note: rel.relation || t('kinship.title'), when: when(act) });
-      } else {
-        const plan = store.plans.find((p) => p.id === act.id);
-        if (!plan) continue;
-        const habit = habitFor(plan, habits ?? []);
-        // A habit is never a periodic act (owner round 3, item 6): only the catalog's periodic templates are listed here.
-        if (habit?.kind !== 'periodic') continue;
-        rows.push({ key: `h-${act.id}`, act, title: habit ? pick(habit, 'title', locale) : plan.title, note: '', when: when(act) });
-      }
-    }
-    return rows;
-  }, [store, todayDate, planDays, habits, locale, names, t]);
 }

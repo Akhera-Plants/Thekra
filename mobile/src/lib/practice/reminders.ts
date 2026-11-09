@@ -42,7 +42,7 @@ export const REMINDER_SOURCE = 'thekra-practice';
 export const REMINDER_DAYS = 14;
 export const MAX_PENDING = 60;
 
-export type ReminderKind = 'habit' | 'kinship' | 'sin' | 'evening' | 'friday' | 'occasion' | 'digest';
+export type ReminderKind = 'habit' | 'kinship' | 'sin' | 'evening' | 'friday' | 'occasion' | 'strategy' | 'intention' | 'digest';
 
 /** Where a tapped «مناسبة قريبة» opens: the «سجلّي» calendar with its occasion marks (F-17). */
 export const OCCASION_ROUTE = '/habits?tab=record';
@@ -95,7 +95,14 @@ export interface ReminderInput {
   reviewDoneOn?: (day: LocalDate) => boolean;
   /** The catalog's occasions (`GET /v1/practice/catalog` `occasions`), for «مناسبة قريبة». Absent: none. */
   occasions?: readonly AgendaOccasion[];
+  /** True when that day's «نية اليوم» is already made (no reminder). */
+  intentionDoneOn?: (day: LocalDate) => boolean;
 }
+
+/** Where a tapped weekly strategy opens: «استراتيجيات العادات». */
+export const STRATEGY_ROUTE = '/practice/strategies';
+/** Where a tapped «نية اليوم» opens: «عاداتي › محاسبتي». */
+export const INTENTION_ROUTE = '/habits?tab=review';
 
 /** The catalog habit of a plan (`habitKey`; plans from tests or old data may carry the key as their id). */
 export function habitFor(plan: Pick<Plan, 'id' | 'habitKey'>, habits: readonly CatalogHabit[]): CatalogHabit | undefined {
@@ -151,16 +158,14 @@ export function notificationPrefsOf(prefs: PracticePrefs, reviewDay: number = DE
     privateTime: prefs.sinReminderTime,
     occasions: prefs.occasionReminders,
     occasionTime: prefs.occasionTime,
-    // The weekly strategy reminder is gone (round 5, F-12 a): the deprecated fields stay empty.
-    strategies: [],
-    strategyTime: DEFAULT_NOTIFICATION_PREFS.strategyTime,
-    // Round 6 switches (strategy day, «نية اليوم», per-habit / per-act mutes): the defaults until the app's
-    // «التنبيهات» screen offers them.
-    strategyDay: DEFAULT_NOTIFICATION_PREFS.strategyDay,
-    intentionReminder: DEFAULT_NOTIFICATION_PREFS.intentionReminder,
-    intentionTime: DEFAULT_NOTIFICATION_PREFS.intentionTime,
-    mutedPlans: [],
-    mutedActs: [],
+    // Round 6 (C-19): the weekly strategy, «نية اليوم», and one switch per habit / periodic plan / periodic act.
+    strategies: prefs.weeklyStrategies ?? [],
+    strategyTime: prefs.strategyTime ?? DEFAULT_NOTIFICATION_PREFS.strategyTime,
+    strategyDay: prefs.strategyDay ?? DEFAULT_NOTIFICATION_PREFS.strategyDay,
+    intentionReminder: prefs.intentionReminder ?? DEFAULT_NOTIFICATION_PREFS.intentionReminder,
+    intentionTime: prefs.intentionTime ?? DEFAULT_NOTIFICATION_PREFS.intentionTime,
+    mutedPlans: prefs.mutedPlans ?? [],
+    mutedActs: prefs.mutedActs ?? [],
   };
 }
 
@@ -181,6 +186,7 @@ export function planReminders(input: ReminderInput): PlannedReminder[] {
     // Prayer anchors («بعد الفجر»…) from the 30-day AlAdhan cache; default times when unset or not cached.
     prayerTimesOn: prayerLookup(prefs.prayerCache, prefs.prayer),
     reviewDoneOn: input.reviewDoneOn,
+    intentionDoneOn: input.intentionDoneOn,
     occasions: input.occasions,
   });
   const occasionTitles = new Map((input.occasions ?? []).map((o) => [o.key, locale === 'en' ? o.titleEn || o.titleAr : o.titleAr]));
@@ -225,6 +231,15 @@ export function planReminders(input: ReminderInput): PlannedReminder[] {
       if (!title) continue;
       const words = NOTIFY_TEXTS[locale];
       out.push({ ...base, id: `${REMINDER_SOURCE}:${e.key}`, kind: 'occasion', title: words.occasionTitle, body: words.occasionBody(title), route: OCCASION_ROUTE });
+    } else if (e.kind === 'strategy') {
+      // The policy's shared words (practice-core NOTIFY_TEXTS): «استراتيجية الأسبوع» and the strategy's title.
+      const words = NOTIFY_TEXTS[locale];
+      const body = words.strategyBody(e.strategy ?? '');
+      if (!body) continue;
+      out.push({ ...base, id: `${REMINDER_SOURCE}:${e.key}`, kind: 'strategy', title: words.strategyTitle, body, route: STRATEGY_ROUTE });
+    } else if (e.kind === 'intention') {
+      const words = NOTIFY_TEXTS[locale];
+      out.push({ ...base, id: `${REMINDER_SOURCE}:${e.key}`, kind: 'intention', title: words.intentionTitle, body: words.intentionBody, route: INTENTION_ROUTE });
     } else if (e.kind === 'digest') {
       out.push({ ...base, id: `${REMINDER_SOURCE}:${e.key}`, kind: 'digest', title: texts.wirdTitle, body: texts.digestBody(e.count ?? 1), route: '/habits' });
     }
@@ -238,6 +253,18 @@ export function remindersOn(planned: readonly Pick<PlannedReminder, 'date'>[], d
 }
 
 /** True when at least one reminder switch is on (otherwise the page says they are all off). */
-export function anyReminderOn(prefs: Pick<PracticePrefs, 'habitReminders' | 'kinshipReminders' | 'eveningNudge' | 'fridayReminder' | 'sinReminders' | 'occasionReminders'>): boolean {
-  return prefs.habitReminders || prefs.kinshipReminders || prefs.eveningNudge || prefs.fridayReminder || prefs.sinReminders || prefs.occasionReminders;
+export function anyReminderOn(
+  prefs: Pick<PracticePrefs, 'habitReminders' | 'kinshipReminders' | 'eveningNudge' | 'fridayReminder' | 'sinReminders' | 'occasionReminders'> &
+    Partial<Pick<PracticePrefs, 'intentionReminder' | 'weeklyStrategies'>>,
+): boolean {
+  return (
+    prefs.habitReminders ||
+    prefs.kinshipReminders ||
+    prefs.eveningNudge ||
+    prefs.fridayReminder ||
+    prefs.sinReminders ||
+    prefs.occasionReminders ||
+    Boolean(prefs.intentionReminder) ||
+    (prefs.weeklyStrategies?.length ?? 0) > 0
+  );
 }

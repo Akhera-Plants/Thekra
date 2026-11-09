@@ -1,59 +1,83 @@
 /**
- * «التفسير» for a verse, «الشرح» for a hadith: the website's study page (StudyFullPage), opened from the quote card as a
- * native form sheet (app/_layout.tsx; deep links open it the same way). The sheet's top row has the generic title and
- * close; then the text (verses in Amiri Quran), one tab per source that has a reading in the UI language (rules in
- * src/lib/study/tabs.ts), and the reading with its source and reference.
+ * The reader (owner round 6, C-13 / C-01n; our design): opened from a card's «عرض التفسير» / «عرض الشرح» as a native
+ * form sheet (app/_layout.tsx; deep links open it the same way). Three parts separated by the flower divider, nothing
+ * behind a click:
+ * 1. the text: its reference line, the Arabic (verses in Amiri Quran), the English translation in the English UI, the
+ *    grade; the verse's play button reads in the member's reciter (settings);
+ * 2. «وجه التذكير» — only when the topic link (`?linkId=`) has one written (`GET /quotes/:id/reader`), labelled as
+ *    our editorial wording, with «أبلغ عن خطأ» under it;
+ * 3. the explanations inline: for a verse المختصر، السعدي، ابن عاشور (التحرير والتنوير), each under its name; for a
+ *    hadith its sharh, fawaid and the rest (src/lib/study/tabs.ts groups them), each under its name.
+ * «أبلغ عن خطأ» is also at the end when there is no «وجه التذكير». Opening the reader marks the text «مقروء» (practice-core
+ * reads.ts, synced with the account).
  */
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { BookMarked, WifiOff } from 'lucide-react-native';
-import { useQuote, useQuoteExplanations } from '@/lib/api/quotes';
-import { availableStudyTabs, pickTabRows, type ExplanationRow, type StudyTabId } from '@/lib/study/tabs';
-import { QuoteType } from '@/lib/types/enums';
+import { BookMarked, Share2, WifiOff } from 'lucide-react-native';
+import { isQuoteId, markRead } from '@thekra/practice-core';
+import { useQuote, useQuoteReader, type QuoteReaderDto } from '@/lib/api/quotes';
+import { usePracticeStore } from '@/lib/practice/practice-store';
+import { availableStudyTabs, pickTabRows, type ExplanationRow } from '@/lib/study/tabs';
+import { HadithGrade, QuoteType } from '@/lib/types/enums';
 import type { QuoteDto } from '@/lib/types/api';
 import { StudyReading, StudyReadingSkeleton } from '@/components/StudyReading';
+import { GradeBadge } from '@/components/GradeBadge';
+import { VerseAudioButton } from '@/components/VerseAudioButton';
+import { ReportMistakeSheet } from '@/components/ReportMistakeSheet';
+import { ShareSheet } from '@/components/share/ShareSheet';
+import { stripOuterQuotes } from '@/lib/quote-text';
 import { space, useStyles, useTheme, type Theme } from '@/theme';
 import { useIsOffline } from '@/lib/query-client';
-import { EmptyState, ErrorState, Notice, SegmentTabs, SheetScreen, Skeleton, Text } from '@/ui';
-
-const NO_ROWS: ExplanationRow[] = [];
+import { EmptyState, ErrorState, IconButton, Notice, SectionDivider, SectionHeader, SheetScreen, Skeleton, Text, TextLink } from '@/ui';
 
 const makeStyles = (t: Theme) => ({
-  quote: {
-    gap: space.sm,
-    paddingStart: space.lg,
-    borderStartWidth: 2,
-    borderStartColor: t.colors.ring,
-  },
-  reference: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, alignItems: 'center' as const, gap: space.sm },
+  quote: { gap: space.md },
+  head: { flexDirection: 'row' as const, alignItems: 'flex-start' as const, gap: space.sm },
+  reference: { flex: 1, flexDirection: 'row' as const, flexWrap: 'wrap' as const, alignItems: 'center' as const, gap: space.sm, minHeight: 44 },
+  actions: { flexDirection: 'row' as const, alignItems: 'center' as const },
   ltr: { writingDirection: 'ltr' as const },
   rtl: { writingDirection: 'rtl' as const },
-  study: { gap: space.xl },
+  angle: { gap: space.sm, paddingStart: space.lg, borderStartWidth: 2, borderStartColor: t.colors.ring },
+  part: { gap: space.lg },
   skeleton: { gap: space.lg },
 });
 
-export default function QuoteStudyScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+export default function QuoteReaderScreen() {
+  const { id, linkId } = useLocalSearchParams<{ id: string; linkId?: string }>();
   const quoteId = id ?? '';
   const { t } = useTranslation();
   const isOffline = useIsOffline();
+  const styles = useStyles(makeStyles);
+  const setStore = usePracticeStore((s) => s.setStore);
+  const hydrated = usePracticeStore((s) => s.hydrated);
+  const [reporting, setReporting] = useState(false);
 
   const { data: quote, isLoading, isError, refetch } = useQuote(quoteId);
-  const explanations = useQuoteExplanations(quoteId);
-  const refetchExplanations = explanations.refetch;
+  const reader = useQuoteReader(quoteId, typeof linkId === 'string' ? linkId : undefined);
+  const refetchReader = reader.refetch;
+
+  // Opening the reader is reading: the text is marked «مقروء» once the store is ready.
+  useEffect(() => {
+    if (hydrated && quote && isQuoteId(quote.id)) setStore((s) => markRead(s, quote.id));
+  }, [hydrated, quote, setStore]);
 
   const handleRetry = useCallback(() => {
     void refetch();
-    void refetchExplanations();
-  }, [refetch, refetchExplanations]);
+    void refetchReader();
+  }, [refetch, refetchReader]);
 
   if (isLoading) {
     return (
       <SheetScreen>
-        <StudyScreenSkeleton />
+        <View style={styles.skeleton}>
+          <Skeleton width={110} height={12} />
+          <Skeleton height={18} />
+          <Skeleton width="80%" height={18} />
+        </View>
+        <StudyReadingSkeleton />
       </SheetScreen>
     );
   }
@@ -67,110 +91,160 @@ export default function QuoteStudyScreen() {
     );
   }
 
-  const isVerse = quote.type === QuoteType.QURAN_VERSE;
-
+  const angle = reader.data?.reminderAngle ?? null;
   return (
-    <SheetScreen title={isVerse ? t('study.titleTafsir') : t('study.titleSharh')}>
+    <SheetScreen title={t('study.readerTitle')}>
       {isOffline ? <Notice icon={WifiOff}>{t('common.offlineBanner')}</Notice> : null}
-      <StudyQuote quote={quote} />
-      {explanations.isLoading ? (
+      <ReaderQuote quote={quote} />
+
+      {angle ? (
+        <>
+          <SectionDivider />
+          <View style={styles.part}>
+            <SectionHeader title={t('study.angle.title')} size="heading" />
+            <View style={styles.angle}>
+              <Text variant="reading" style={angle.languageCode === 'ar' ? styles.rtl : styles.ltr}>
+                {angle.text}
+              </Text>
+              <Text variant="caption" tone="muted">
+                {t('study.angle.editorial')}
+              </Text>
+            </View>
+            <TextLink label={t('report.title')} onPress={() => setReporting(true)} />
+          </View>
+        </>
+      ) : null}
+
+      <SectionDivider />
+      {reader.isLoading ? (
         <StudyReadingSkeleton />
-      ) : explanations.isError ? (
+      ) : reader.isError ? (
         <ErrorState message={t('study.error')} onRetry={handleRetry} />
       ) : (
-        <StudyTabs quote={quote} rows={explanations.data ?? NO_ROWS} />
+        <ReaderExplanations quote={quote} data={reader.data} />
       )}
+
+      {angle ? null : (
+        <>
+          <SectionDivider />
+          <TextLink label={t('report.title')} onPress={() => setReporting(true)} />
+        </>
+      )}
+      <ReportMistakeSheet quoteId={quote.id} visible={reporting} onClose={() => setReporting(false)} />
     </SheetScreen>
   );
 }
 
-/** The sources as tabs (only those with a reading) and the reading of the chosen one. */
-function StudyTabs({ quote, rows }: { quote: QuoteDto; rows: ExplanationRow[] }) {
+/** The text being read: its reference, the actions (listen, share), the Arabic, the translation in English, the grade. */
+function ReaderQuote({ quote }: { quote: QuoteDto }) {
+  const styles = useStyles(makeStyles);
+  const { t } = useTranslation();
+  const { english } = useTheme();
+  const [sharing, setSharing] = useState(false);
+  const isVerse = quote.type === QuoteType.QURAN_VERSE;
+  const sourceName = english ? quote.source.name || quote.source.nameAr : quote.source.nameAr ?? quote.source.name;
+  const surahName = english ? quote.quran?.surahName || quote.quran?.surahNameAr : quote.quran?.surahNameAr;
+  const surah = quote.quran?.surahNumber ?? null;
+  const ayah = quote.quran?.ayahNumber ?? null;
+  const hadithRef = quote.hadith?.reference?.trim() || null;
+  const showSource = Boolean(sourceName && !(hadithRef && sourceName && hadithRef.includes(sourceName)));
+  const translation = english ? quote.translation?.text : null;
+  const grade = quote.type === QuoteType.HADITH && !quote.isAthar ? quote.hadith?.grade : null;
+
+  return (
+    <View style={styles.quote}>
+      <View style={styles.head}>
+        <View style={styles.reference}>
+          {isVerse ? (
+            <>
+              {surahName ? (
+                <Text variant="caption" tone="muted">
+                  {surahName}
+                </Text>
+              ) : null}
+              {surah && ayah ? (
+                <Text variant="caption" tone="muted" style={styles.ltr}>
+                  {`${surah}:${ayah}`}
+                </Text>
+              ) : null}
+            </>
+          ) : (
+            <>
+              {showSource ? (
+                <Text variant="caption" tone="muted">
+                  {sourceName}
+                </Text>
+              ) : null}
+              {hadithRef ? (
+                <Text variant="caption" tone="muted">
+                  {hadithRef}
+                </Text>
+              ) : null}
+              {grade && grade !== HadithGrade.UNGRADED ? <GradeBadge grade={grade} /> : null}
+            </>
+          )}
+        </View>
+        <View style={styles.actions}>
+          {isVerse && surah && ayah ? <VerseAudioButton surah={surah} ayah={ayah} /> : null}
+          {isVerse || quote.type === QuoteType.HADITH ? <IconButton icon={Share2} label={t('share.action')} onPress={() => setSharing(true)} /> : null}
+        </View>
+      </View>
+      <Text variant={isVerse ? 'quran' : 'reading'} style={styles.rtl} textBreakStrategy="highQuality" selectable>
+        {stripOuterQuotes(quote.textAr)}
+      </Text>
+      {translation ? <Text variant="body">{translation}</Text> : null}
+      {quote.isAthar ? (
+        <Text variant="caption" tone="muted">
+          {t('share.atharNotice')}
+        </Text>
+      ) : null}
+      {sharing ? <ShareSheet quote={quote} visible={sharing} onClose={() => setSharing(false)} showTranslation={Boolean(translation)} /> : null}
+    </View>
+  );
+}
+
+/** Part 3: the tafsirs (verses) or the hadith explanations, each under its own name, inline. */
+function ReaderExplanations({ quote, data }: { quote: QuoteDto; data: QuoteReaderDto | undefined }) {
   const styles = useStyles(makeStyles);
   const { t } = useTranslation();
   const { english } = useTheme();
   const locale = english ? 'en' : 'ar';
-  const tabs = useMemo(() => availableStudyTabs(rows, quote.type, locale), [rows, quote.type, locale]);
-  const [tab, setTab] = useState<StudyTabId | null>(null);
-  const activeTab = tab && tabs.includes(tab) ? tab : (tabs[0] ?? null);
-  const activeRows = useMemo(() => (activeTab ? pickTabRows(rows, activeTab, locale) : NO_ROWS), [rows, activeTab, locale]);
-  const tabItems = useMemo(() => tabs.map((key) => ({ key, label: t(`study.tabs.${key}`) })), [tabs, t]);
+  const isVerse = quote.type === QuoteType.QURAN_VERSE;
 
-  if (!activeTab) {
-    const isVerse = quote.type === QuoteType.QURAN_VERSE;
+  const parts = useMemo(() => {
+    if (!data) return [];
+    if (isVerse) {
+      return data.tafsirs
+        .map((tafsir) => ({
+          key: tafsir.key,
+          title: t(`study.reader.${tafsir.key}`),
+          rows: tafsir.entries.map<ExplanationRow>((e) => ({
+            id: e.id,
+            kind: 'TAFSIR',
+            languageCode: tafsir.languageCode,
+            text: e.text,
+            reference: e.reference,
+            source: tafsir.source,
+          })),
+        }))
+        .filter((p) => p.rows.length > 0);
+    }
+    const rows = data.explanations as ExplanationRow[];
+    return availableStudyTabs(rows, quote.type, locale).map((tab) => ({ key: tab, title: t(`study.tabs.${tab}`), rows: pickTabRows(rows, tab, locale) }));
+  }, [data, isVerse, quote.type, locale, t]);
+
+  if (parts.length === 0) {
     return <EmptyState icon={BookMarked} message={isVerse ? t('study.emptyTafsir') : t('study.emptySharh')} />;
   }
-
   return (
-    <View style={styles.study}>
-      <SegmentTabs items={tabItems} value={activeTab} onChange={setTab} />
-      <StudyReading rows={activeRows} />
+    <View style={{ gap: space['2xl'] }}>
+      {parts.map((part) => (
+        <View key={part.key} style={styles.part}>
+          <SectionHeader title={part.title} size="heading" />
+          <StudyReading rows={part.rows} />
+        </View>
+      ))}
     </View>
   );
 }
 
-/** The text being read: its reference line, the Arabic, and in English the translation under it. */
-function StudyQuote({ quote }: { quote: QuoteDto }) {
-  const styles = useStyles(makeStyles);
-  const { english } = useTheme();
-  const isVerse = quote.type === QuoteType.QURAN_VERSE;
-  const sourceName = english ? quote.source.name || quote.source.nameAr : quote.source.nameAr ?? quote.source.name;
-  const surahName = english ? quote.quran?.surahName || quote.quran?.surahNameAr : quote.quran?.surahNameAr;
-  const ayahKey = quote.quran?.surahNumber && quote.quran.ayahNumber ? `${quote.quran.surahNumber}:${quote.quran.ayahNumber}` : null;
-  const hadithRef = quote.hadith?.reference?.trim() || null;
-  const showSource = Boolean(sourceName && !(hadithRef && sourceName && hadithRef.includes(sourceName)));
-  const translation = english ? quote.translation?.text : null;
-
-  return (
-    <View style={styles.quote}>
-      <View style={styles.reference}>
-        {isVerse ? (
-          <>
-            {surahName ? (
-              <Text variant="caption" tone="muted">
-                {surahName}
-              </Text>
-            ) : null}
-            {ayahKey ? (
-              <Text variant="caption" tone="muted" style={styles.ltr}>
-                {ayahKey}
-              </Text>
-            ) : null}
-          </>
-        ) : (
-          <>
-            {showSource ? (
-              <Text variant="caption" tone="muted">
-                {sourceName}
-              </Text>
-            ) : null}
-            {hadithRef ? (
-              <Text variant="caption" tone="muted">
-                {hadithRef}
-              </Text>
-            ) : null}
-          </>
-        )}
-      </View>
-      <Text variant={isVerse ? 'quran' : 'reading'} style={styles.rtl} textBreakStrategy="highQuality" selectable>
-        {quote.textAr}
-      </Text>
-      {translation ? <Text variant="body">{translation}</Text> : null}
-    </View>
-  );
-}
-
-/** The sheet's shape while the quote loads: the quoted text, then the readings. */
-function StudyScreenSkeleton() {
-  const styles = useStyles(makeStyles);
-  return (
-    <View style={styles.skeleton}>
-      <View style={styles.quote}>
-        <Skeleton width={110} height={12} />
-        <Skeleton height={18} />
-        <Skeleton width="80%" height={18} />
-      </View>
-      <StudyReadingSkeleton />
-    </View>
-  );
-}

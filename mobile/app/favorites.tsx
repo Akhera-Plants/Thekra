@@ -2,7 +2,7 @@
  * «المحفوظات» (owner round 5, F-22 a: one home for both on the app and the web), opened from «المزيد», in two tabs:
  * «النصوص» (the saved quote cards, after the website's favorites page; offline-capable, served from the cache without a
  * connection, see `useFavorites`) and «تذكيراتي» (the user's own lines, `MyRemindersPanel`, the only place they are
- * written). The tab is a `?tab=texts|reminders` query (practice-core nav-map); the old `?part=mine` and the old
+ * written), under the reference's line «احتفظ بما تحب أن تعود إليه» (round 6, C-14). The tab is a `?tab=texts|reminders` query (practice-core nav-map); the old `?part=mine` and the old
  * practice/my-reminders route land on «تذكيراتي». A guest sees why to sign in and the way to do it; an empty list
  * points to where texts are found.
  */
@@ -57,7 +57,7 @@ function FavoritesHeader({ part, onPart }: { part: Part; onPart?: (part: Part) =
   ];
   return (
     <View style={styles.header}>
-      <PageHeader title={t('favorites.title')} />
+      <PageHeader title={t('favorites.title')} lead={t('favorites.lead')} />
       {onPart ? <SegmentTabs items={parts} value={part} onChange={onPart} /> : null}
       {isOffline && part === 'texts' ? <Notice icon={WifiOff}>{t('common.offlineBanner')}</Notice> : null}
     </View>
@@ -122,8 +122,8 @@ export default function FavoritesScreen() {
       icon={Bookmark}
       message={t('favorites.empty')}
       hint={t('favorites.emptyHint')}
-      actionLabel={t('tabs.browse')}
-      onAction={() => router.navigate('/browse')}
+      actionLabel={t('favorites.emptyAction')}
+      onAction={() => router.navigate('/')}
     />
   );
 

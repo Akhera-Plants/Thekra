@@ -34,7 +34,16 @@ function quote(over: Partial<QuoteDto>): QuoteDto {
 describe('quote share text', () => {
   it('hadith: text, attribution with grade in Western digits, canonical /quotes link', () => {
     const text = quoteShareText(quote({}), { locale: 'ar', showTranslation: false, labels });
-    expect(text).toBe('نص الحديث\n\nصحيح البخاري · صحيح البخاري 6464 · صحيح\n\nhttps://thekra-web.vercel.app/quotes/q1');
+    expect(text).toBe('«نص الحديث»\n\nصحيح البخاري · صحيح البخاري 6464 · صحيح\n\nhttps://thekra-web.vercel.app/quotes/q1');
+  });
+
+  it('round 6 (C-08): one flowing paragraph in its marks, then «بواسطة تطبيق ذكرى» and the link under it', () => {
+    const text = quoteShareText(quote({ textAr: 'سطر أول\n\nسطر   ثان' }), { locale: 'ar', showTranslation: false, labels: { ...labels, sharedVia: 'بواسطة تطبيق ذكرى' } });
+    expect(text.startsWith('«سطر أول سطر ثان»\n\n')).toBe(true);
+    expect(text.endsWith('\n\nبواسطة تطبيق ذكرى\nhttps://thekra-web.vercel.app/quotes/q1')).toBe(true);
+    const verse = quoteShareText(quote({ type: 'QURAN_VERSE', textAr: 'آية', hadith: null }), { locale: 'ar', showTranslation: false, labels });
+    expect(verse.startsWith('﴿آية﴾')).toBe(true);
+    expect(quoteShareText(quote({ textAr: '«قال»' }), { locale: 'ar', showTranslation: false, labels }).startsWith('«قال»\n')).toBe(true);
   });
 
   it('athar: always labelled, never with a hadith grade', () => {

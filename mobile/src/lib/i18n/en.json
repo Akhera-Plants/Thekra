@@ -8,7 +8,7 @@
   "home": {
     "title": "Thekra",
     "subtitle": "Where would you like to start today?",
-    "sinAction": "Help me resist a sin",
+    "sinAction": "Help me lighten a sin",
     "sinSubtitle": "Read what helps you resist it",
     "goodDeedAction": "Guide me to an act of obedience",
     "goodDeedSubtitle": "Read what motivates and rewards",
@@ -16,7 +16,7 @@
     "eyebrow": "A reminder for every step",
     "entryTitle": "Gateways of good",
     "sinOverline": "A door of return",
-    "sinEntryLabel": "Lighten: leave a sin",
+    "sinEntryLabel": "Lighten a sin",
     "sinEntryDescription": "A reminder that restrains you, and hope that helps you.",
     "sinCta": "Read on sins and their cure",
     "deedOverline": "A step toward good",
@@ -53,7 +53,7 @@
     "filterScholar": "Scholars",
     "filterBook": "Books",
     "empty": "No reminders for this sin yet",
-    "eyebrow": "Leaving a sin",
+    "eyebrow": "Lighten a sin",
     "filterVerses": "Verses",
     "warningHeading": "What warns against it",
     "startProgram": "Start \"Lighten\"",
@@ -134,7 +134,9 @@
     "empty": "No saved texts yet",
     "emptyHint": "Tap the save icon on any text to add it here",
     "signInPrompt": "Sign in to sync favorites across your devices",
-    "tabTexts": "Texts"
+    "tabTexts": "Texts",
+    "lead": "Keep what you would like to come back to.",
+    "emptyAction": "To the gateways of good"
   },
   "settings": {
     "title": "Settings",
@@ -182,7 +184,17 @@
     },
     "weekBranch": "Branch of the week",
     "weekBranchHint": "One branch of faith each week",
-    "dangerZone": "Danger zone"
+    "dangerZone": "Danger zone",
+    "reciter": {
+      "title": "Reciter",
+      "lead": "Verses are recited in the voice you choose. Listen to a verse before you choose.",
+      "saved": "Reciter saved"
+    },
+    "lightenCovered": {
+      "label": "Cover my “Lighten” programs",
+      "hint": "They show in “Habits” as a covered row, opened with your fingerprint or code.",
+      "saved": "Setting saved"
+    }
   },
   "auth": {
     "loginTitle": "Sign in",
@@ -232,7 +244,8 @@
     "done": "Done",
     "more": "More",
     "moreActions": "More actions",
-    "undo": "Undo"
+    "undo": "Undo",
+    "backHome": "Back to home"
   },
   "errors": {
     "network": "Could not reach the server",
@@ -423,7 +436,7 @@
       "addRelative": "A relative",
       "addRelativeHint": "A name or nickname, and how often to reach them.",
       "addProgram": "Lighten",
-      "addProgramHint": "Steps to leave a sin, saved encrypted, never shown in a notification.",
+      "addProgramHint": "Steps to lighten a sin, saved encrypted, never shown in a notification.",
       "previousMonth": "Previous month",
       "nextMonth": "Next month",
       "markFull": "All of it done",
@@ -672,8 +685,8 @@
         "sadaqahPlain": "I give in charity",
         "keptToast": "Kept, may Allah bless you"
       },
-      "minimum": "The least I can",
-      "minimumMet": "The least logged",
+      "minimum": "Minimum",
+      "minimumMet": "Minimum logged",
       "reviews": {
         "title": "Self-review",
         "lead": "Your weekly reviews, private to you.",
@@ -797,7 +810,7 @@
       "title": "Habit strategies",
       "entryHint_one": "{{count}} tried way to build a habit",
       "entryHint_other": "{{count}} tried ways to build a habit",
-      "lead": "Tried ways that help build good and leave the bad.",
+      "lead": "Start with one idea and make it part of your habit.",
       "try": "Try it",
       "remind": "Remind me",
       "remindHint": "Turn on “Remind me” for the ones you choose: one reminder on Saturday.",
@@ -864,7 +877,20 @@
       "listTitle": "The strategies",
       "example": "Example",
       "hideDeeds": "Hide the list",
-      "deedsLead": "Easy good deeds with a great reward. Open one, or make it a habit."
+      "deedsLead": "Easy good deeds with a great reward. Open one, or make it a habit.",
+      "oneIsEnough": "One strategy is enough to begin",
+      "groups": {
+        "all": "All",
+        "build": "Build",
+        "leave": "Leave",
+        "return": "Return"
+      },
+      "howTo": "Example and how to apply it",
+      "apply": "Apply it to a habit",
+      "pickHabit": "Choose the habit to apply “{{strategy}}” to, then review its loop before saving.",
+      "next": "Review the loop",
+      "addHabit": "Add a habit",
+      "applied": "Saved in the loop of “{{habit}}”"
     },
     "onboarding": {
       "stepOf": "Step {{step}} of 3",
@@ -903,7 +929,7 @@
     "evidenceDeedTitle": "Verses and hadith to help you with this deed"
   },
   "kinship": {
-    "title": "Ties of kinship",
+    "title": "Ties of kinship and loved ones",
     "privacy": "Write a nickname only (e.g. my aunt). No phone number, email or link.",
     "add": "Add a relative",
     "name": "Name or nickname",
@@ -1025,7 +1051,12 @@
       "toolsTitle": "Tools that help",
       "evidence": "Evidence",
       "evidenceFor": "Evidence: {{act}}",
-      "evidenceMissing": "The text could not be shown now. Try again shortly."
+      "evidenceMissing": "The text could not be shown now. Try again shortly.",
+      "kicker": "Do this now",
+      "orOther": "Or one of these:",
+      "timerLead": "Minutes you choose to start",
+      "startTimer": "Start ten minutes",
+      "texts": "Texts to remember"
     },
     "triggers": {
       "title": "What came before it? (optional)",
@@ -1118,7 +1149,7 @@
       "note": "No counter goes back to zero: every day you held stays yours.",
       "hope": "A text of hope"
     },
-    "textsTitle": "Verses and hadith to help you leave this sin",
+    "textsTitle": "Verses and hadith to help you lighten this sin",
     "categoryQuestion": "Does it involve a right of another person?",
     "yes": "Yes",
     "no": "No",
@@ -1182,7 +1213,15 @@
   "share": {
     "action": "Share",
     "atharNotice": "A saying, not a hadith",
-    "atharNarrated": "Narrated by {{speaker}}"
+    "atharNarrated": "Narrated by {{speaker}}",
+    "sharedVia": "via the Thekra app",
+    "asText": "Text",
+    "asImage": "Image",
+    "shareText": "Share the text",
+    "shareImage": "Share the image",
+    "imageSaved": "Image saved",
+    "imageFailed": "Could not prepare the image. Share the text instead.",
+    "imageOnPhone": "Sharing the image from the phone comes in a coming update. Share the text for now."
   },
   "vault": {
     "title": "«Lighten» encrypted in your account",
@@ -1263,6 +1302,18 @@
       "gharib": "Word meanings",
       "fath": "Fath al-Bari",
       "nawawi": "Nawawi's commentary"
+    },
+    "showTafsir": "Show the tafsir",
+    "showSharh": "Show the explanation",
+    "readerTitle": "Reading the text",
+    "angle": {
+      "title": "Why it reminds",
+      "editorial": "Thekra’s own editorial wording, not a tafsir or an explanation attributed to a scholar."
+    },
+    "reader": {
+      "mukhtasar": "Al-Mukhtasar fi al-Tafsir",
+      "sadi": "Tafsir al-Sa‘di",
+      "ibn-ashur": "Al-Tahrir wa al-Tanwir (Ibn ‘Ashur)"
     }
   },
   "garden": {
@@ -1398,10 +1449,46 @@
       "ownerOnly": "Only the circle's owner can do this.",
       "invalid": "Check what you entered and try again.",
       "tooManyTries": "Too many tries. Wait a minute, then try again.",
-      "generic": "That did not work just now. Please try again."
+      "generic": "That did not work just now. Please try again.",
+      "notEnabled": "Companions opens with an invite from a member. Ask someone you know for a code.",
+      "inviteOwn": "This is your own invite; share it with someone else.",
+      "invitesActiveLimit": "You have unused invites. Cancel one or wait until it is used.",
+      "invitesPeriodLimit": "You have reached this month’s invites. They renew soon.",
+      "inviteCircleGone": "Companions is on, but the circle you were invited to is no longer there.",
+      "displayNameRequired": "Write the name to show in the circle."
     },
     "createdToast": "Circle created",
-    "joinedToast": "You joined “{{name}}”"
+    "joinedToast": "You joined “{{name}}”",
+    "invites": {
+      "title": "My invites",
+      "lead": "Companions is invite-only: whoever you invite gets it, and no one else knows whom you invited.",
+      "redeemTitle": "Enter an invite code",
+      "redeemLead": "Companions opens with an invite from a member. Type the code you received.",
+      "redeem": "Turn on Companions",
+      "redeemed": "Companions is on for you",
+      "nameIn": "Your name in “{{name}}”",
+      "create": "Create an invite",
+      "created": "Invite created",
+      "mine": "Your invites",
+      "empty": "You have not created an invite yet.",
+      "remaining_one": "You can invite one person now. An invite works once, for {{days}} days.",
+      "remaining_other": "You can invite {{count}} people now. Each invite works once, for {{days}} days.",
+      "none": "You have used the invites you can give. They renew within {{days}} days, or cancel an unused one.",
+      "left_one": "1 invite left",
+      "left_other": "{{count}} invites left",
+      "until": "Works until {{date}}",
+      "status": {
+        "redeemed": "Used",
+        "revoked": "Cancelled",
+        "expired": "Expired",
+        "active": "Open"
+      },
+      "revoke": "Cancel the invite",
+      "revokeTitle": "Cancel this invite?",
+      "revokeBody": "Its code will stop working.",
+      "revoked": "Invite cancelled",
+      "shareMessage": "I invite you to Companions in the Thekra app.\nInvite code: {{code}}\n{{link}}"
+    }
   },
   "branches": {
     "pageTitle": "The Branches of Faith",
@@ -1428,7 +1515,8 @@
     "prompt": "Open «Lighten»",
     "lockedTitle": "«Lighten» is locked",
     "lockedHint": "Open it with your fingerprint or your device code.",
-    "unlock": "Open"
+    "unlock": "Open",
+    "lock": "Lock"
   },
   "record": {
     "title": "My habits",
@@ -1457,7 +1545,13 @@
     "oppositeTitle": "Opposite sin",
     "startLighten": "Start Lighten",
     "continueLighten": "Continue Lighten",
-    "startHabit": "Start a habit"
+    "startHabit": "Start a habit",
+    "lightenThisSin": "Lighten this sin",
+    "locked": "Locked",
+    "lockedLabel": "Locked. Tap to unlock",
+    "unlock": "Unlock",
+    "addToPlan": "Add to your plan",
+    "inPlan": "In your plan"
   },
   "myReminders": {
     "title": "My reminders",
@@ -1780,6 +1874,24 @@
       "today_two": "{{count}} reminders reach you today.",
       "today_few": "{{count}} reminders reach you today.",
       "today_many": "{{count}} reminders reach you today."
+    },
+    "tabs": {
+      "habits": "Habits",
+      "periodic": "Periodic acts",
+      "heart": "Intention and review",
+      "strategies": "Strategies"
+    },
+    "habit": {
+      "noTime": "No time set yet",
+      "timesHint": "Set each habit’s times on its page."
+    },
+    "periodic": {
+      "none": "You have no periodic acts yet.",
+      "add": "Add a periodic act"
+    },
+    "strategies": {
+      "lead": "One idea a week from the strategies you choose, in turn.",
+      "day": "Day"
     }
   },
   "more": {
@@ -1789,7 +1901,6 @@
     },
     "items": {
       "leave-sin": "Lighten",
-      "people": "My family and people",
       "circles": "Companions",
       "saved": "Saved",
       "browse": "Browse texts",
@@ -1801,12 +1912,14 @@
       "notifications": "Notifications",
       "prayer-times": "Prayer times",
       "appearance": "Language and appearance",
-      "about": "About Thekra"
+      "about": "About Thekra",
+      "garden": "The garden"
     }
   },
   "habitsTab": {
     "tabs": {
-      "wird": "Today's practice",
+      "today": "Today",
+      "habits": "Habits",
       "periodic": "Periodic acts",
       "review": "My self-review",
       "record": "My record"
@@ -1885,7 +1998,7 @@
       "weeklyDay": "Its day: {{day}}",
       "weeklyDone": "Reviewed the week of {{date}}",
       "weeklyLast": "Last one: the week of {{date}}",
-      "startWeekly": "Review yourself now",
+      "startWeekly": "Start the weekly review",
       "pickDay": "Choose the day",
       "dayRow": "Review day",
       "intentionSwitch": "Show it every morning",
@@ -1968,8 +2081,8 @@
       "lead": "Choose one; you can change it any time.",
       "deed": "To keep up a good deed",
       "deedHint": "One habit, very small",
-      "sin": "To leave a sin",
-      "sinHint": "The private «Lighten» program; we do not ask about it here",
+      "sin": "To lighten a sin",
+      "sinHint": "The private “Lighten” program; we do not ask about the sin here",
       "read": "Only to read",
       "readHint": "The texts and doors, no habits for now"
     },
@@ -1984,5 +2097,449 @@
       "leadSin": "A private reminder in general words that names nothing.",
       "label": "Reminder time"
     }
+  },
+  "reads": {
+    "read": "Read",
+    "unread": "Unread",
+    "markRead": "Unread. Tap to mark as read",
+    "markUnread": "Read. Tap to mark as unread",
+    "filter": {
+      "all": "All",
+      "unread": "Unread",
+      "read": "Read"
+    },
+    "empty": {
+      "unread": "You have read every text shown here.",
+      "read": "You have not read a text here yet."
+    }
+  },
+  "habitsHub": {
+    "today": {
+      "groups": {
+        "fard": "Prayers",
+        "habits": "Habits",
+        "periodic": "Periodic"
+      },
+      "bands": {
+        "start": "Start of the day",
+        "during": "During the day",
+        "end": "End of the day"
+      },
+      "counterLabel": "{{done}} of {{required}} logged",
+      "addOne": "Add one to “{{habit}}”",
+      "minimum": "Minimum",
+      "noHabits": "No habits yet. Start with a small one.",
+      "noPeriodic": "No periodic act is due today.",
+      "allPeriodic": "All periodic acts"
+    },
+    "week": {
+      "previous": "Previous week",
+      "next": "Next week",
+      "done": "Done",
+      "partial": "Partly done",
+      "notDone": "Not done",
+      "excused": "Excused",
+      "future": "Not yet"
+    },
+    "dayState": {
+      "button": "My day",
+      "lead": "Choose what describes your day. On a hard day every habit asks only its minimum.",
+      "states": {
+        "normal": "A normal day",
+        "sick": "Seriously ill",
+        "busy": "Sudden demands",
+        "travel": "Travelling"
+      },
+      "hints": {
+        "normal": "Every habit at its usual amount.",
+        "sick": "Your run is not broken and no reminders ring today. Do the minimum if you can.",
+        "busy": "Every habit asks its minimum today; any amount you log completes the day.",
+        "travel": "Your run is not broken and no reminders ring today. Do the minimum if you can."
+      },
+      "forgive": "Go easy on yourself today, and keep to the minimum.",
+      "setToast": "Your day: {{state}}",
+      "normalToast": "Back to a normal day"
+    },
+    "ask": {
+      "title": "Did you do it?",
+      "did": "I did it",
+      "didNot": "I didn't",
+      "yesterday": "Yesterday",
+      "note": "Without an answer within three days it counts as “not done”."
+    },
+    "day": {
+      "title": "Your day",
+      "state": "That day: {{state}}",
+      "done": "Done",
+      "partial": "{{done}} of {{required}}",
+      "open": "Not logged yet",
+      "ask": "Did you do it?",
+      "notDone": "Not done",
+      "excused": "Excused",
+      "notAsked": "Not one of its days",
+      "archived": "Archived",
+      "empty": "Your habits asked nothing that day.",
+      "qada_one": "Made up one prayer",
+      "qada_other": "Made up {{count}} prayers",
+      "didToast": "“{{habit}}” logged. May Allah accept it from you",
+      "didNotToast": "Logged: not done",
+      "reviewTitle": "That day's review",
+      "reviewOffer": "You have not reviewed this week yet. A short pause now lightens what comes after.",
+      "reviewStart": "Review that week",
+      "eveningDone": "You reviewed that evening",
+      "weeklyDone": "You reviewed that week"
+    },
+    "learn": {
+      "title": "Learn from the slip",
+      "lead": "See the path that led you away, so you can close it next time.",
+      "dayLead": "What you wrote made it hard these last days.",
+      "weekLead": "The habits that slipped this week, and what you wrote made them hard.",
+      "habitLead": "What you wrote made this habit hard.",
+      "run_one": "Not done for one day",
+      "run_other": "Not done for {{count}} days in a row",
+      "noHard": "You did not write what made it hard. Write it on the habit page and it shows here.",
+      "empty": "Nothing written yet. «What made it hard?» is on each habit’s page.",
+      "yourPlan": "Your plan if something gets in the way",
+      "openHabit": "Open the habit"
+    },
+    "reflect": {
+      "title": "Two optional questions",
+      "lead": "What you write shows in My record when you open the day.",
+      "helped": "What helped you keep it?",
+      "hard": "What made it hard?",
+      "note": "A note for today",
+      "helpedPlaceholder": "e.g. I prayed Fajr at the mosque",
+      "hardPlaceholder": "e.g. I stayed up late",
+      "helpedShort": "Helped",
+      "hardShort": "Made it hard",
+      "noteShort": "Note",
+      "helpedSin": "Helped you avoid it",
+      "hardSin": "Made it hard to leave",
+      "save": "Save",
+      "savedToast": "Your answers are saved"
+    },
+    "lighten": {
+      "title": "Lighten",
+      "type": "Lighten habit",
+      "covered": "Lighten · covered",
+      "tapHint": "Tap to open it with your fingerprint or device code",
+      "coveredDay": "Lighten details are covered.",
+      "coveredTotal": "Lighten programs are covered.",
+      "show": "Show",
+      "noneThatDay": "No program that day.",
+      "noCheckIn": "You did not log that day",
+      "value": {
+        "held": "I held firm",
+        "weak": "I was weak",
+        "fell_repented": "I slipped, then repented"
+      },
+      "learnLine": "Look at what came before the slip (the time, the place, the feeling) and close that door before it opens."
+    },
+    "habits": {
+      "title": "Your habits",
+      "maxLine": "{{max}} habits at most · you have {{count}}",
+      "add": "Add a habit",
+      "empty": "No habit yet. Start with a small one you can keep.",
+      "completion": "{{percent}}% complete",
+      "completionLine": "{{percent}}% complete · {{kept}} of {{target}} days",
+      "milestoneHardest": "You are past the hardest stretch",
+      "milestoneMade": "You made the habit",
+      "share": "Share your progress with your companions",
+      "actions": "Options for “{{habit}}”",
+      "deleteTitle": "Delete “{{habit}}”?"
+    },
+    "archive": {
+      "title": "Archive ({{count}} of {{max}})",
+      "lead": "Habits you set aside. Their history stays in My record.",
+      "action": "Archive",
+      "menuHint": "Leaves Today and the three habits",
+      "confirmTitle": "Archive “{{habit}}”?",
+      "confirmBody": "It leaves “Today” and does not count toward your three habits; its history stays in My record. After more than {{days}} days in the archive, its progress starts again when you bring it back.",
+      "full": "The archive is full ({{max}}). Delete one from it first.",
+      "doneToast": "“{{habit}}” archived",
+      "since": "since {{date}}",
+      "keeps": "Keeps its progress if restored by {{date}}",
+      "willReset": "Its progress starts again if restored",
+      "restore": "Restore",
+      "restoredKept": "“{{habit}}” is back with its progress",
+      "restoredReset": "“{{habit}}” is back; its progress starts again",
+      "restoreFull": "You have {{max}} habits. Archive or delete one first."
+    },
+    "limit": {
+      "title": "You have {{count}} habits",
+      "body": "That is the most to start with. To add a new one, archive or delete one.",
+      "note": "A habit kept in the archive for more than {{days}} days starts its progress again when you bring it back.",
+      "archive": "Archive a habit",
+      "delete": "Delete a habit",
+      "pickArchive": "Which one to archive?",
+      "pickDelete": "Which one to delete? Its history goes with it."
+    },
+    "messages": {
+      "title": "My messages to myself",
+      "lead": "Lines you write to yourself, to come back to on a hard day.",
+      "entryHint": "A line to come back to on a hard day",
+      "add": "Add a message",
+      "count": "{{count}} of {{max}}",
+      "empty": "No messages yet",
+      "emptyHint": "Write what you want to remember when the road feels heavy.",
+      "editTitle": "Edit the message",
+      "save": "Save",
+      "delete": "Delete the message",
+      "deleteBody": "This message is deleted from your device.",
+      "addedToast": "Your message is added",
+      "savedToast": "Your message is saved",
+      "deletedToast": "Message deleted",
+      "full": "You have 10 messages, the limit. Delete one to add another.",
+      "emptyError": "Write the message first."
+    },
+    "strategies": {
+      "title": "Strategies for building habits and staying firm",
+      "lead": "Practical ideas to build a habit, stay with it, and come back after a break.",
+      "open": "Habit strategies",
+      "hint": "Build · leave · return, and apply one to a habit"
+    },
+    "periodic": {
+      "title": "Periodic acts",
+      "lead": "Good deeds on a schedule, with a reminder when they are due. They do not count toward habit commitment.",
+      "add": "Add an act",
+      "addTitle": "Add a periodic act",
+      "empty": "No periodic acts yet",
+      "full": "You have 7 periodic acts, the limit. Delete one to add another.",
+      "silat": "Ties of kinship and loved ones",
+      "silatLead": "Relatives, parents, neighbours, friends and the sick: a nickname for each, no phone numbers, each reminded on their own rhythm.",
+      "silatHint": "Relatives, parents, neighbours, friends and the sick",
+      "silatLine_one": "One person · due today: {{due}}",
+      "silatLine_other": "{{count}} people · due today: {{due}}",
+      "openPeople": "Open the lists",
+      "custom": "An act of your own",
+      "customHint": "A name you choose, a repeating date and a reminder",
+      "log": "Log it",
+      "loggedToday": "Logged today",
+      "loggedToast": "“{{act}}” logged. May Allah accept it from you",
+      "edit": "Edit",
+      "delete": "Delete “{{act}}”",
+      "deleteTitle": "Delete “{{act}}”?",
+      "deleteBody": "This act and its reminders are deleted from your device.",
+      "deleteBodySynced": "This act and its reminders are deleted from your account.",
+      "deletedToast": "“{{act}}” deleted",
+      "noNext": "No date soon",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "inDays_one": "Tomorrow",
+      "inDays_other": "In {{count}} days",
+      "overdue_one": "Was due yesterday",
+      "overdue_other": "Was due {{count}} days ago"
+    },
+    "rule": {
+      "daily": "Every day",
+      "everyNDays_one": "Every day",
+      "everyNDays_other": "Every {{count}} days",
+      "everyNWeeks_one": "Every week",
+      "everyNWeeks_other": "Every {{count}} weeks",
+      "monthlyDay": "Every month, on day {{day}}",
+      "hijriMonthDays": "Days {{days}} of each Hijri month",
+      "yearly": "Once a year"
+    },
+    "custom": {
+      "lead": "A good deed you want to be reminded of when it is due.",
+      "editTitle": "Edit the act",
+      "name": "Name of the act",
+      "namePlaceholder": "e.g. Visit my grandmother",
+      "nameError": "Write the name of the act.",
+      "rhythm": "Repeats",
+      "rhythms": {
+        "weekly": "Weekly",
+        "everyNDays": "Every few days",
+        "monthly": "Monthly"
+      },
+      "everyN": "Every how many days? (2 to 365)",
+      "monthDay": "Which day of the month? (1 to 28)",
+      "rhythmError": "Choose a rhythm that is not every day.",
+      "reminders": "Reminder",
+      "save": "Save the act",
+      "addedToast": "“{{act}}” added",
+      "savedToast": "“{{act}}” saved"
+    },
+    "fard": {
+      "offLine": "Mark your five prayers each day: on time or made up. They do not count toward your three habits.",
+      "on": "Track the obligatory prayers"
+    },
+    "qada": {
+      "title": "Making up missed prayers",
+      "lead": "If you owe prayers, plan to make them up at a pace you can keep, and log what you make up.",
+      "entryHint": "Plan to make up the prayers you owe, at your own pace",
+      "ringLabel": "{{done}} of {{owed}} made up",
+      "doneOf": "{{done}} of {{owed}} made up",
+      "todayLine": "Today {{done}} of {{pace}}",
+      "daysLeft_one": "One day left at this pace",
+      "daysLeft_other": "{{count}} days left at this pace",
+      "finishOn": "done around {{date}}",
+      "finished": "You have made up all you owed. May Allah accept it from you.",
+      "onPace": "You are keeping your pace. May Allah bless it.",
+      "todayTitle": "Made up today",
+      "todayLead": "Add one for each prayer you make up.",
+      "anyPrayer": "Prayer",
+      "less": "One less for {{prayer}}",
+      "more": "One more for {{prayer}}",
+      "modeTotal": "One total",
+      "modePerPrayer": "Per prayer",
+      "totalLabel": "How many prayers do you owe?",
+      "paceTitle": "How many a day?",
+      "paceHint": "Choose an amount you can keep, even a small one.",
+      "perDay_one": "One a day",
+      "perDay_other": "{{count}} a day",
+      "paceOther": "Or type the number",
+      "start": "Start making up",
+      "save": "Save",
+      "edit": "Edit the plan",
+      "remove": "Delete the make-up plan",
+      "removeBody": "The plan is deleted; what you logged stays.",
+      "removedToast": "Make-up plan deleted",
+      "startedToast": "You have started. May Allah help you",
+      "savedToast": "Make-up plan saved",
+      "owedError": "Enter the number of prayers (1 to {{max}}).",
+      "paceError": "Choose 1 to {{max}} a day."
+    },
+    "record": {
+      "week": "Week",
+      "month": "Month",
+      "total": "Totals",
+      "weekTitle": "This week's log",
+      "habit": "Habit",
+      "legendDone": "Done",
+      "legendPartial": "Partly done",
+      "legendEmpty": "Not one of its days",
+      "excusedShort": "Exc.",
+      "monthHint": "Tap a day to see its details and your answers.",
+      "completionTitle": "How complete your habits are",
+      "keptLine": "{{kept}} of {{target}} days kept"
+    },
+    "review": {
+      "lead": "Hold yourself to account today, so your reckoning tomorrow is lighter.",
+      "day": "Today",
+      "week": "Week",
+      "nextStep": "Your next step",
+      "noStep": "You choose one step for your week in the weekly review.",
+      "stepLine": "{{choice}}: {{habit}}",
+      "openHabit": "Open the habit",
+      "startWeekly": "Weekly review",
+      "eveningLead": "A short pause before sleep, from the time you choose.",
+      "startEvening": "Start",
+      "weekLead": "Heavy now, light later.",
+      "weeklyOpen": "This week is not reviewed yet · its day: {{day}}",
+      "start": "Start",
+      "pastTitle": "Earlier reviews",
+      "yourLine": "You wrote to yourself"
+    },
+    "plan": {
+      "tabs": {
+        "follow": "Follow-up",
+        "loop": "Habit loop",
+        "reminders": "Reminders",
+        "return": "Coming back"
+      },
+      "edit": "Edit",
+      "progress": "Your progress",
+      "loopTitle": "Habit loop",
+      "loopLead": "The cue, the craving, the routine, the reward, and your plan if something gets in the way.",
+      "loopSaved": "Loop saved",
+      "loopRemoved": "Loop removed",
+      "remindersTitle": "When you are reminded",
+      "editReminders": "Edit times and days",
+      "notifications": "Notifications",
+      "notificationsHint": "Device permission and every habit’s reminders"
+    },
+    "minimum": {
+      "title": "Minimum",
+      "hint": "The least you keep on a hard day, and never go below.",
+      "sheetLead": "On a hard day the habit asks only this. Choose something small you can always do.",
+      "savedToast": "Minimum: {{amount}}",
+      "clear": "Back to the suggested minimum",
+      "clearedToast": "Suggested minimum restored"
+    },
+    "return": {
+      "title": "A step back",
+      "lead": "If you stopped, do not double up or start from zero: come back with a little today.",
+      "noGap": "No break right now. May Allah keep you firm.",
+      "rule": "If you stop, come back the next day with your minimum: {{amount}}."
+    },
+    "add": {
+      "steps": {
+        "what": "Habit",
+        "amount": "Amount & time",
+        "message": "Your message",
+        "review": "Review"
+      },
+      "stepOf": "Step {{n}} of {{total}}",
+      "amountTitle": "How much and when?",
+      "minimumTitle": "Minimum (optional)",
+      "minimumHint": "The least you do on a hard day. You can change it later on the habit page.",
+      "messageTitle": "A message to yourself",
+      "messageLead": "A line to read when the road feels heavy. Optional.",
+      "messageLabel": "Your message",
+      "messagePlaceholder": "e.g. A little that lasts is better than a lot that stops",
+      "reviewTitle": "Review before saving",
+      "reviewLead": "You can change everything later on the habit page.",
+      "reviewHabit": "Habit",
+      "reviewStart": "You start with",
+      "reviewDays": "Its days",
+      "reviewDefaultDays": "Its suggested dates",
+      "save": "Save the habit"
+    }
+  },
+  "report": {
+    "title": "Report a mistake",
+    "lead": "What did you notice in this text? We review every report.",
+    "reason": "Reason",
+    "reasons": {
+      "TEXT": "The text is corrupt",
+      "ISNAD": "The chain is wrong",
+      "GRADE": "The citation is wrong",
+      "CLASSIFICATION": "The classification is wrong",
+      "OTHER": "Something else"
+    },
+    "note": "Note (optional)",
+    "send": "Send report",
+    "sent": "We received your report and will review the text.",
+    "thanksTitle": "Thank you",
+    "done": "Done",
+    "errors": {
+      "tooMany": "You sent many reports in a short time. Thank you for caring; try again in an hour.",
+      "paused": "We received many reports today, so sending is paused for now. Please try tomorrow.",
+      "tooLong": "The note is longer than we accept. Shorten it, then send.",
+      "gone": "This text is no longer published.",
+      "generic": "Could not send the report now. Try again shortly."
+    }
+  },
+  "aboutPage": {
+    "lead": "Every book named, every narration graded.",
+    "intro": "Thekra cites the book and the person who graded a narration. A book is never given one grade for every hadith in it.",
+    "methodologyTitle": "Content methodology",
+    "methodologyBody": "Every text names its source. A verse shows its surah and ayah; a hadith shows its book, number, and the grade given by the authority that graded it. Quoted words stay distinct from any explanation Thekra adds.",
+    "openitiTitle": "OpenITI",
+    "openitiBody": "Digital texts imported from OpenITI are used under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 licence. Attribution: OpenITI. Thekra does not sell this text and does not run ads on it. If the dataset is shared, it stays under the same licence.",
+    "philosophyTitle": "Thekra's philosophy",
+    "conditions": {
+      "remembrance": {
+        "title": "A reminder",
+        "line": "Authentic texts only, each with its source shown."
+      },
+      "heart": {
+        "title": "For one who has a heart",
+        "line": "Habits that revive the heart, a program that lightens it, and the branches of faith."
+      },
+      "listening": {
+        "title": "Or gives ear",
+        "line": "One text at a time, one task per page, and few notifications."
+      },
+      "presence": {
+        "title": "While present",
+        "line": "A present heart and honest self-review, with no points, ranks or comparisons."
+      }
+    },
+    "eyebrow": "Thekra, for whoever has a heart",
+    "privacyTitle": "Privacy",
+    "privacyBody": "Your habits are kept in your account; “Lighten” is encrypted so no one else can read it, and no notification names it. Logging is for reminding and following up; acceptance is with Allah.",
+    "more": "The full methodology on the website"
   }
 }

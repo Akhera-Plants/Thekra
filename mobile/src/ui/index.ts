@@ -10,4 +10,5 @@ export { Flourish, type FlourishKind } from './Flourish';
 export { Button, ButtonPair, TextLink, IconButton, MIN_TARGET, type ButtonVariant, type ButtonSize, type PairAction } from './Button';
 export { Card, PathwayCard, NextStep, ListRow } from './Card';
 export { SegmentTabs, Toggle, Chip, CheckRow, SwitchRow, Field, ErrorText, type SegmentItem } from './controls';
+export { UnderlineTabs } from './UnderlineTabs';
 export { EmptyState, ErrorState, Notice, Skeleton, QuoteCardSkeleton } from './feedback';

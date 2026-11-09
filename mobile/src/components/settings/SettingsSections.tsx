@@ -1,26 +1,31 @@
 /**
  * The contents of the Settings group screens (app/settings/*): a titled group of hairline rows (`SettingsGroup`),
- * «الخصوصية والتشفير» (where «تخفَّف» is kept: always encrypted in the account; export, the offline copy),
- * «اللغة والمظهر» and «عن ذكرى». «التنبيهات» has its own component (NotificationsSettings.tsx). No «delete all data» here (owner, 2026-11-01): «تخفَّف» keeps its own one-tap wipe, and the account
+ * «الخصوصية والتشفير» (where «تخفَّف» is kept: always encrypted in the account; «إخفاء برامج التخفّف» in «العادات»; export,
+ * the offline copy), «اللغة والمظهر» (theme, language, the Hijri date, the Quran reciter with a one-ayah preview, and
+ * «خصّص الرئيسية», round 6 C-04: only here, never on the home page). «عن ذكرى» is its own page (app/settings/about.tsx). «التنبيهات» has its own component (NotificationsSettings.tsx). No «delete all data» here (owner, 2026-11-01): «تخفَّف» keeps its own one-tap wipe, and the account
  * deletion stays under «الحساب».
  */
 
 import React, { useState } from 'react';
-import { ActivityIndicator, Alert, Linking, Share, View } from 'react-native';
+import { ActivityIndicator, Alert, Share, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQueryClient } from '@tanstack/react-query';
-import Constants from 'expo-constants';
-import { BookOpen, Database, Download, ExternalLink, FileText, Info } from 'lucide-react-native';
+import { Database, Download, LayoutList, Mic } from 'lucide-react-native';
+import { RECITERS, chosenReciter, isLightenCovered, setLightenCovered, setReciter } from '@thekra/practice-core';
 import { exportAccountData } from '@/lib/api/practice';
 import { usePracticeStore } from '@/lib/practice/practice-store';
-import { SITE_ABOUT_PATH, SITE_PRIVACY_PATH, sitePageUrl } from '@/lib/site';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { switchDirectionIfNeeded, type SupportedLocale } from '@/lib/i18n';
 import { setApiLocale } from '@/lib/api-client';
 import { space, useStyles, useTheme, useThemePreference, type Theme, type ThemePreference } from '@/theme';
 import { VaultSignInNote, VaultStatusCard } from '@/components/practice/VaultCard';
-import { ErrorText, Icon, ListRow, SegmentTabs, SwitchRow, Text, type SegmentItem } from '@/ui';
+import { HomeEditSheet } from '@/components/home/HomeSections';
+import { VerseAudioButton } from '@/components/VerseAudioButton';
+import { BottomSheet, CheckRow, ErrorText, ListRow, SegmentTabs, SwitchRow, Text, toast, type SegmentItem } from '@/ui';
+
+/** The ayah every reciter is previewed with (al-Fatiha 1:2), read from the reciter's own files. */
+const PREVIEW_AYAH = { surah: 1, ayah: 2 } as const;
 
 const QUERY_CACHE_KEY = 'thekra_query_cache';
 const LOCALE_STORAGE_KEY = 'thekra_locale';
@@ -34,6 +39,9 @@ const makeStyles = (t: Theme) => ({
   switchRow: { paddingVertical: space.sm, borderBottomWidth: 1, borderBottomColor: t.colors.border },
   last: { borderBottomWidth: 0 },
   choice: { gap: space.sm, paddingVertical: space.lg, borderBottomWidth: 1, borderBottomColor: t.colors.border },
+  reciterRow: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.xs },
+  reciterPick: { flex: 1, minWidth: 0 },
+  reciters: { gap: space.sm },
 });
 
 /** A group of hairline rows; on a group's own screen the page title names it, so `title` is left out there. */
@@ -99,6 +107,7 @@ export function PrivacySection() {
     <>
       {/* «تخفَّف» is always kept encrypted in the account and opened with the fingerprint: one status line here. */}
       {userId ? <VaultStatusCard /> : <VaultSignInNote />}
+      {userId ? <LightenCoverRow /> : null}
       <SettingsGroup>
         {userId ? (
           <ListRow
@@ -118,9 +127,8 @@ export function PrivacySection() {
 }
 
 /**
- * Theme (device, light, dark) and language, each a segmented choice like the site's, and «إظهار التاريخ الهجري».
- * Round 5: «شعبة الأسبوع» moved to the home sections and the branches page (F-18 a), «نص اليوم» to the home section's
- * «⋯» (F-23 a).
+ * Theme (device, light, dark) and language, each a segmented choice like the site's, «إظهار التاريخ الهجري», «القارئ»
+ * and (members) «خصّص الرئيسية» (round 6, C-04). «نص اليوم» is gone (C-01q).
  */
 export function AppearanceSection() {
   const { t, i18n } = useTranslation();
@@ -130,6 +138,8 @@ export function AppearanceSection() {
   const currentLocale: SupportedLocale = i18n.language === 'en' ? 'en' : 'ar';
   const showHijri = usePracticeStore((s) => s.prefs.showHijri);
   const setPrefs = usePracticeStore((s) => s.setPrefs);
+  const member = useAuthStore((s) => s.user !== null);
+  const [editingHome, setEditingHome] = useState(false);
 
   const themeItems: SegmentItem<ThemePreference>[] = THEME_OPTIONS.map((key) => ({ key, label: t(`theme.${key}`) }));
   const localeItems: SegmentItem<SupportedLocale>[] = [
@@ -156,29 +166,86 @@ export function AppearanceSection() {
         <Text variant="label">{t('settings.language')}</Text>
         <SegmentTabs items={localeItems} value={currentLocale} onChange={(locale) => void changeLocale(locale)} />
       </View>
-      <View style={[styles.switchRow, styles.last]}>
+      <View style={styles.switchRow}>
         <SwitchRow
           label={t('settings.showHijri')}
           value={showHijri}
           onValueChange={(on) => setPrefs((p) => ({ ...p, showHijri: on }))}
         />
       </View>
+      <ReciterRow />
+      {member ? (
+        <>
+          <ListRow icon={LayoutList} title={t('homeSections.edit.title')} hint={t('homeSections.edit.lead')} chevron last onPress={() => setEditingHome(true)} />
+          <HomeEditSheet visible={editingHome} onClose={() => setEditingHome(false)} />
+        </>
+      ) : null}
     </SettingsGroup>
   );
 }
 
-/** The site's pages open in the browser; the version is the app's own. */
-export function AboutSection() {
+/**
+ * «القارئ» (round 6 §8 «Audio»): the reciter of every verse card, chosen from practice-core `RECITERS` (synced with the
+ * settings record). Each row previews one ayah in that reciter; choosing saves at once with a toast.
+ */
+function ReciterRow() {
   const { t, i18n } = useTranslation();
-  const version = Constants.expoConfig?.version ?? '0.1.0';
-  const openSite = (path: string) => () => void Linking.openURL(sitePageUrl(path, i18n.language)).catch(() => undefined);
-  const external = <Icon icon={ExternalLink} size={18} tone="muted" />;
+  const styles = useStyles(makeStyles);
+  const english = i18n.language === 'en';
+  const reciter = usePracticeStore((s) => chosenReciter(s.store));
+  const setStore = usePracticeStore((s) => s.setStore);
+  const [open, setOpen] = useState(false);
+
+  function choose(key: string) {
+    if (key !== reciter.key) {
+      setStore((s) => setReciter(s, key));
+      toast(t('settings.reciter.saved'));
+    }
+    setOpen(false);
+  }
 
   return (
-    <SettingsGroup>
-      <ListRow icon={BookOpen} title={t('settings.aboutThekra')} onPress={openSite(SITE_ABOUT_PATH)} trailing={external} />
-      <ListRow icon={FileText} title={t('settings.privacyPolicy')} onPress={openSite(SITE_PRIVACY_PATH)} trailing={external} />
-      <ListRow icon={Info} title={t('settings.version')} value={version} />
-    </SettingsGroup>
+    <>
+      <ListRow icon={Mic} title={t('settings.reciter.title')} value={english ? reciter.en : reciter.ar} chevron onPress={() => setOpen(true)} />
+      <BottomSheet visible={open} title={t('settings.reciter.title')} onClose={() => setOpen(false)}>
+        <Text variant="small" tone="muted">
+          {t('settings.reciter.lead')}
+        </Text>
+        <View style={styles.reciters} accessibilityRole="radiogroup">
+          {RECITERS.map((r) => (
+            <View key={r.key} style={styles.reciterRow}>
+              <View style={styles.reciterPick}>
+                <CheckRow radio title={english ? r.en : r.ar} checked={r.key === reciter.key} onPress={() => choose(r.key)} />
+              </View>
+              <VerseAudioButton surah={PREVIEW_AYAH.surah} ayah={PREVIEW_AYAH.ayah} previewReciter={r.key} />
+            </View>
+          ))}
+        </View>
+      </BottomSheet>
+    </>
+  );
+}
+
+/**
+ * «إخفاء برامج التخفّف» (round 6 §2, C-02e): «تخفَّف» programs show in «العادات» as covered rows by default (the device
+ * lock or the privacy code opens them). Turning this off shows them uncovered; the encryption does not change.
+ */
+function LightenCoverRow() {
+  const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
+  const covered = usePracticeStore((s) => isLightenCovered(s.store));
+  const setStore = usePracticeStore((s) => s.setStore);
+  return (
+    <View style={[styles.switchRow, styles.last]}>
+      <SwitchRow
+        label={t('settings.lightenCovered.label')}
+        hint={t('settings.lightenCovered.hint')}
+        value={covered}
+        onValueChange={(on) => {
+          setStore((s) => setLightenCovered(s, on));
+          toast(t('settings.lightenCovered.saved'));
+        }}
+      />
+    </View>
   );
 }

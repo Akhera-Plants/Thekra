@@ -1,102 +1,141 @@
 /**
- * The habit page (owner round 5, F-31 a; A-14 superseded): a summary, not a second place to log. Top to bottom: the
- * name with «عدّل» on its line and one line of its schedule («3 أيام في الأسبوع · بعد الفجر»), the notes that need a
- * decision (paused → «استأنف», ready to settle, a reminder time outside the deed's window), «صلّحها» after a missed day,
- * «آخر 30 يومًا» with «صحّح السجل» on its line, «زد خطوة» when due (and the lighter step after a weak month), the two
- * answers saved from «أضف» (F-13), and «آيات وأحاديث تعينك على هذه الطاعة». Every setting (times, days, the answers)
- * is in ONE «عدّل» sheet; the header «⋯» holds «عدّل», pause or resume, and delete (confirmed there, A-15). Logging
- * happens in «ورد اليوم»; here only «صحّح السجل». Sections are divided by the flower divider; every save toasts.
+ * The habit page (owner round 6, §3; C-02e a, C-27 a, C-01b; the reference's layout, our kit). Logging and a day note
+ * ARE here (the owner overrides F-31).
+ * - A tinted head card: today's amount, its days and times, «تعديل» on its line; the header «⋯» holds «أرشِف» (with
+ *   the 3-day note) and «احذف» (confirmed). An archived habit says so and offers «أعِدها» (archive = the old pause).
+ * - Reference tabs «المتابعة · حلقة العادة · التذكيرات · العودة بعد انقطاع» (`?tab=follow|loop|reminders|return`):
+ *   - المتابعة: today's log (the whole amount, «+1», a typed part, «صحّح السجل»), the day note and the two optional
+ *     questions «ما الذي أعانك على الالتزام؟» / «ما الذي صعّب عليك؟» (practice-core `setReflection`, shown in «سجلّي»),
+ *     «القدر الأدنى» (`setMinimum`: the floor a hard day asks, never lowered further), the completion and its
+ *     milestones, «آخر 30 يومًا», «زِد خطوة» / the lighter step when due, and «آيات وأحاديث تعينك على هذه الطاعة»;
+ *   - حلقة العادة: the member's loops (own form; the two answers of «أضف» are its first loop);
+ *   - التذكيرات: the times and days, edited in ONE sheet, the deed-window fix, and the link to «التنبيهات»;
+ *   - العودة بعد انقطاع: «صلّحها» when the gap condition holds (the make-up good deed after two missed days), the
+ *     lighter restart, and what the member wrote was hard (learn from the slip).
+ * Sections are divided by the flower divider; every save toasts.
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Pause, PencilLine, Play, SearchX, Trash2 } from 'lucide-react-native';
+import { Archive, BellRing, PencilLine, RotateCcw, SearchX, Trash2 } from 'lucide-react-native';
 import {
+  addHabitLoop,
   ANCHOR_LABELS,
+  archiveNote,
+  baseAmount,
   correctLog,
   decreaseTo,
   deletePlan,
   establishPlan,
   graduationReady,
+  habitCompletion,
+  habitMilestones,
   increase,
-  isPaused,
+  isArchived,
   isPrayerAnchor,
+  LADDER,
+  logForDay,
   makeUpOffer,
+  minimumOf,
   missedDayBefore,
   normalize,
   orderedSlots,
-  pausePlan,
-  resumePlan,
+  reflectionOf,
+  reflectionsOfPlan,
+  REFLECTION_TEXT_MAX,
+  removeHabitLoop,
+  restorePlanInStore,
+  setMinimum,
+  setReflection,
+  shareSuggestion,
   slotChoices,
+  updateHabitLoop,
   updatePlan,
   type Plan,
 } from '@thekra/practice-core';
 import { useDisplayTime } from '@/components/practice/editors';
 import { fixedChoices, unsuitableChoices, windowRange } from '@/lib/practice/deed-window';
 import { currentPrayerDay } from '@/lib/practice/prayer';
+import { useMyCircles } from '@/lib/api/circles';
 import { useEvidence, usePracticeCatalog } from '@/lib/api/practice';
 import { pick } from '@/lib/practice/catalog-types';
 import { ruleToWeekdays, shortDate } from '@/lib/practice/format';
-import { answersOf, mendState, showsMend } from '@/lib/practice/habits-view';
+import { mendState, showsMend } from '@/lib/practice/habits-view';
+import { archiveLine, milestoneLines, restoreToastKey } from '@/lib/practice/hub-view';
+import { habitLoopInput } from '@/lib/practice/loops';
 import { planView } from '@/lib/practice/plan-view';
-import { today, usePracticeStore } from '@/lib/practice/practice-store';
+import { newPracticeId, today, usePracticeStore } from '@/lib/practice/practice-store';
 import { formatAmount, habitFor, planRule } from '@/lib/practice/reminders';
-import { usePlanDays } from '@/lib/practice/use-habits-hub';
+import { useDateNames, useLimits, usePlanDays } from '@/lib/practice/use-habits-hub';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { EvidenceList } from '@/components/practice/EvidenceList';
 import { HabitFixSheet } from '@/components/practice/HabitFixSheet';
 import { MonthPanel } from '@/components/practice/PlanHistoryAndSettings';
 import { PlanEditSheet } from '@/components/practice/PlanEditSheet';
-import { FixPanel } from '@/components/practice/PlanTodayCard';
-import { space, useStyles, type Theme } from '@/theme';
+import { TodayPanel } from '@/components/practice/PlanTodayCard';
+import { ArchiveSheet } from '@/components/practice/habits/HabitActions';
+import { ruleWords } from '@/components/practice/habits/PeriodicTab';
+import { LoopsPanel } from '@/components/practice/loops/LoopsPanel';
+import { radius, space, useStyles, type Theme } from '@/theme';
 import {
   ActionMenu,
   BottomSheet,
   Button,
   ButtonPair,
+  Chip,
   EmptyState,
+  Field,
+  ListRow,
   Loading,
   NextStep,
-  PageHeader,
+  Notice,
   Screen,
   Section,
   SectionDivider,
   Text,
+  UnderlineTabs,
   Wrap,
   toast,
 } from '@/ui';
 
+const TABS = ['follow', 'loop', 'reminders', 'return'] as const;
+type Tab = (typeof TABS)[number];
+const parseTab = (raw: unknown): Tab => (TABS as readonly string[]).includes(raw as string) ? (raw as Tab) : 'follow';
+
 const makeStyles = (t: Theme) => ({
+  head: { gap: space.sm, padding: space.lg, borderRadius: radius.card, backgroundColor: t.colors.primarySoft },
+  headTop: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.md },
+  grow: { flex: 1, minWidth: 0, gap: 2 },
+  stack: { gap: space.md },
   offerActions: { marginTop: space.sm },
   answer: { gap: 2, paddingVertical: space.sm, borderBottomWidth: 1, borderBottomColor: t.colors.border },
   answerLast: { borderBottomWidth: 0 },
+  multiline: { minHeight: 88, textAlignVertical: 'top' as const, paddingTop: space.sm },
 });
 
 export default function PlanScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const params = useLocalSearchParams<{ id: string; tab?: string }>();
+  const id = params.id;
   const { t, i18n } = useTranslation();
   const locale = useUiLocale();
   const styles = useStyles(makeStyles);
   const hydrated = usePracticeStore((s) => s.hydrated);
   const store = usePracticeStore((s) => s.store);
-  const heart = usePracticeStore((s) => s.heart);
   const plan = store.plans.find((p) => p.id === id);
   const setStore = usePracticeStore((s) => s.setStore);
   const catalog = usePracticeCatalog(locale);
   const habits = catalog.data?.habits ?? [];
   const habit = plan ? habitFor(plan, habits) : undefined;
-  const evidence = useEvidence(habit?.evidence ?? [], locale);
   const signedIn = useAuthStore((s) => Boolean(s.user));
-  const planDays = usePlanDays();
   const show = useDisplayTime();
-
-  const [relapseDismissed, setRelapseDismissed] = useState(false);
+  const names = useDateNames();
+  const limits = useLimits();
+  const [tab, setTab] = useState<Tab>(parseTab(params.tab));
   const [editing, setEditing] = useState(false);
-  const [fixingLog, setFixingLog] = useState(false);
-  const [mending, setMending] = useState(false);
+  const [archiving, setArchiving] = useState(false);
 
   if (!hydrated) return <Loading />;
   if (!plan) {
@@ -109,69 +148,32 @@ export default function PlanScreen() {
 
   const d = today();
   const view = planView(plan, d);
-  const unitFallback = {
-    minutes: t('practice.units.minutes'),
-    count: t('practice.units.count'),
-    times: t('practice.units.times'),
-  };
+  const unitFallback = { minutes: t('practice.units.minutes'), count: t('practice.units.count'), times: t('practice.units.times') };
   const amountLabel = (n: number) => formatAmount(n, plan.unit, habit, locale, unitFallback);
   const title = habit ? pick(habit, 'title', locale) : plan.title;
-  const paused = isPaused(plan);
+  const archived = isArchived(plan);
   const weekdays = ruleToWeekdays(planRule(plan, habits));
   const lang = i18n.language === 'en' ? 'en' : 'ar';
-  // «3 أيام في الأسبوع · بعد الفجر، 21:00 · 5 دقائق»: the schedule and today's amount in one line.
+  const rule = planRule(plan, habits);
   const slotWords = slotChoices(plan).map((s) => (isPrayerAnchor(s) ? ANCHOR_LABELS[lang][s] : show(s)));
-  const schedule = [
-    weekdays ? t('habitsTab.plan.daysPerWeek', { days: t('practice.add.daysCount', { count: weekdays.length }) }) : null,
-    slotWords.join(lang === 'ar' ? '، ' : ', '),
-    amountLabel(view.required),
-  ]
-    .filter(Boolean)
-    .join(' · ');
+  const schedule = [rule ? ruleWords(rule, t, locale, names.weekday) : null, slotWords.join(lang === 'ar' ? '، ' : ', ')].filter(Boolean).join(' · ');
 
-  // A slot chosen before the deed had a time window (e.g. «بعد الظهر» on Duha): a short notice and one fix.
-  const prayerDay = currentPrayerDay(d);
-  const offSlots = habit?.window ? unsuitableChoices(slotChoices(plan), habit.window, prayerDay) : [];
-  const range = windowRange(habit?.window, prayerDay);
-  const mend = mendState({
-    offer: makeUpOffer(store, plan, d, { ...planDays, heart }),
-    missedYesterday: missedDayBefore(store, plan, d, planDays),
-    doneToday: plan.log[d] ?? 0,
-    paused,
-  });
-  const answers = answersOf(plan.loops);
-
-  // practice-core `updatePlan` keeps `updatedAt` right for sync (a log alone does not bump it).
   function update(fn: (p: Plan) => Plan) {
     setStore((s) => updatePlan(s, id as string, fn));
   }
 
-  function handleFixSlots() {
-    if (!habit || !plan) return;
-    const ordered = orderedSlots(fixedChoices(slotChoices(plan), habit.defaultSlots, habit.window, prayerDay));
-    update((p) => {
-      const next: Plan = { ...p, slots: ordered.slots };
-      if (ordered.slotAnchors) next.slotAnchors = ordered.slotAnchors;
-      else delete next.slotAnchors;
-      return next;
+  function handleRestore() {
+    if (!limits.canAdd('sapling')) {
+      toast(t('habitsHub.archive.restoreFull', { max: 3 }));
+      return;
+    }
+    let reset = false;
+    setStore((s) => {
+      const r = restorePlanInStore(s, id as string, d);
+      reset = r.reset;
+      return r.store;
     });
-    toast(t('practice.plan.settingsSaved'));
-  }
-
-  function handleFixSave(date: string, amount: number) {
-    update((p) => correctLog(p, date, amount));
-    setFixingLog(false);
-    toast(t('practice.plan.fixSaved'));
-  }
-
-  function handlePause() {
-    update((p) => pausePlan(p, d));
-    toast(t('practice.paused.done'));
-  }
-
-  function handleResume() {
-    update((p) => resumePlan(p, d));
-    toast(t('practice.paused.resumed'));
+    toast(t(restoreToastKey(reset), { habit: title }));
   }
 
   function handleRemove() {
@@ -180,22 +182,20 @@ export default function PlanScreen() {
     toast(t('practice.plan.deleted'));
   }
 
-  // «⋯» (A-15): «عدّل», pause or resume, and delete (red, confirmed in the menu's own sheet). Signed in, the deletion
-  // syncs to the account (a tombstone), so the confirmation does not say «من هذا الجهاز».
   const renderMenu = () => (
     <ActionMenu
       items={[
-        { label: t('habitsTab.plan.edit'), icon: PencilLine, onPress: () => setEditing(true) },
-        paused
-          ? { label: t('practice.paused.resume'), icon: Play, onPress: handleResume }
-          : { label: t('practice.paused.pause'), icon: Pause, onPress: handlePause, hint: t('practice.paused.pauseHint') },
+        { label: t('habitsHub.plan.edit'), icon: PencilLine, onPress: () => setEditing(true) },
+        archived
+          ? { label: t('habitsHub.archive.restore'), icon: RotateCcw, onPress: handleRestore }
+          : { label: t('habitsHub.archive.action'), icon: Archive, hint: t('habitsHub.archive.menuHint'), onPress: () => setArchiving(true) },
         {
           label: t('practice.plan.delete'),
           icon: Trash2,
           destructive: true,
           onPress: handleRemove,
           confirm: {
-            title: t('practice.plan.delete'),
+            title: t('habitsHub.habits.deleteTitle', { habit: title }),
             message: t(signedIn ? 'practice.plan.deleteConfirmSynced' : 'practice.plan.deleteConfirm'),
             confirmLabel: t('common.delete'),
           },
@@ -203,67 +203,143 @@ export default function PlanScreen() {
       ]}
     />
   );
+  const archiveInfo = archived ? archiveLine(archiveNote(plan, d)) : null;
 
   return (
-    <Screen edges={['bottom']}>
+    <Screen edges={['bottom']} keyboard>
       <Stack.Screen options={{ title, headerRight: renderMenu }} />
-      <PageHeader
+      <Text variant="display" accessibilityRole="header">
+        {title}
+      </Text>
+      <View style={styles.head}>
+        <View style={styles.headTop}>
+          <View style={styles.grow}>
+            <Text variant="title">{amountLabel(view.required)}</Text>
+            <Text variant="small" tone="muted">
+              {schedule}
+            </Text>
+          </View>
+          <Button label={t('habitsHub.plan.edit')} variant="outline" size="sm" onPress={() => setEditing(true)} />
+        </View>
+        {archived && archiveInfo ? (
+          <>
+            <Text variant="small">
+              {`${t('habitsHub.archive.since', { date: shortDate(plan.pausedOn ?? d) })} · ${t(archiveInfo.key, { ...archiveInfo.params, date: archiveInfo.params.date ? shortDate(String(archiveInfo.params.date)) : undefined })}`}
+            </Text>
+            <Button label={t('habitsHub.archive.restore')} icon={RotateCcw} onPress={handleRestore} />
+          </>
+        ) : null}
+      </View>
+
+      <UnderlineTabs items={TABS.map((key) => ({ key, label: t(`habitsHub.plan.tabs.${key}`) }))} value={tab} onChange={setTab} accessibilityLabel={title} />
+
+      {tab === 'follow' ? (
+        <FollowTab plan={plan} title={title} amountLabel={amountLabel} archived={archived} />
+      ) : tab === 'loop' ? (
+        <LoopTab plan={plan} title={title} />
+      ) : tab === 'reminders' ? (
+        <RemindersTab plan={plan} title={title} schedule={schedule} onEdit={() => setEditing(true)} />
+      ) : (
+        <ReturnTab plan={plan} title={title} amountLabel={amountLabel} />
+      )}
+
+      <PlanEditSheet
+        visible={editing}
+        plan={plan}
         title={title}
-        action={<Button label={t('habitsTab.plan.edit')} icon={PencilLine} variant="outline" size="sm" onPress={() => setEditing(true)} />}
-      >
-        <Text variant="small" tone="muted">
-          {schedule}
-        </Text>
-      </PageHeader>
+        window={habit?.window}
+        ruleWeekdays={weekdays}
+        onClose={() => setEditing(false)}
+        onSave={(next) => {
+          update(() => next);
+          setEditing(false);
+          toast(t('practice.plan.settingsSaved'));
+        }}
+      />
+      <ArchiveSheet plan={plan} title={title} today={d} visible={archiving} onClose={() => setArchiving(false)} onDone={() => router.back()} />
+    </Screen>
+  );
+}
 
-      {paused ? (
-        <NextStep title={t('practice.paused.since', { date: plan.pausedOn ? shortDate(plan.pausedOn) : '' })}>
-          <Wrap style={styles.offerActions}>
-            <Button label={t('practice.paused.resume')} onPress={handleResume} />
-          </Wrap>
-        </NextStep>
+interface TabProps {
+  plan: Plan;
+  title: string;
+}
+
+function FollowTab({ plan, title, amountLabel, archived }: TabProps & { amountLabel: (n: number) => string; archived: boolean }) {
+  const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
+  const locale = useUiLocale();
+  const setStore = usePracticeStore((s) => s.setStore);
+  const habits = usePracticeCatalog(locale).data?.habits ?? [];
+  const habit = habitFor(plan, habits);
+  const evidence = useEvidence(habit?.evidence ?? [], locale);
+  const inCircle = (useMyCircles().data?.length ?? 0) > 0;
+  const [fixing, setFixing] = useState(false);
+  const [relapseDismissed, setRelapseDismissed] = useState(false);
+  const [minOpen, setMinOpen] = useState(false);
+  const d = today();
+  const view = planView(plan, d);
+  const completion = habitCompletion(plan, d);
+  const lines = milestoneLines(habitMilestones(plan, d), shareSuggestion(plan, d), inCircle);
+  const update = (fn: (p: Plan) => Plan) => setStore((s) => updatePlan(s, plan.id, fn));
+  const unitLabel = habit ? pick(habit, 'unitLabel', locale) || t(`practice.units.${plan.unit}`) : t(`practice.units.${plan.unit}`);
+  return (
+    <>
+      {!archived ? (
+        <TodayPanel
+          plan={plan}
+          view={view}
+          today={d}
+          amountLabel={amountLabel}
+          unitLabel={unitLabel}
+          fixing={fixing}
+          onLog={(amount) => {
+            update((p) => logForDay(p, d, amount, today()));
+            toast(t('practice.plan.logged'));
+          }}
+          onFixOpen={() => setFixing(true)}
+          onFixSave={(date, amount) => {
+            update((p) => correctLog(p, date, amount));
+            setFixing(false);
+            toast(t('practice.plan.fixSaved'));
+          }}
+          onFixCancel={() => setFixing(false)}
+        />
       ) : null}
 
-      {offSlots.length > 0 ? (
-        <NextStep title={t('practice.window.unsuitable')}>
-          {range ? <Text variant="small">{t('practice.window.line', { from: show(range.from), to: show(range.to) })}</Text> : null}
-          <Wrap style={styles.offerActions}>
-            <Button label={t('practice.window.fix')} onPress={handleFixSlots} variant="outline" />
-          </Wrap>
-        </NextStep>
-      ) : null}
+      <ReflectionForm plan={plan} />
+
+      <SectionDivider />
+      <ListRow title={t('habitsHub.minimum.title')} hint={t('habitsHub.minimum.hint')} value={amountLabel(minimumOf(plan))} chevron last onPress={() => setMinOpen(true)} />
+
+      <SectionDivider />
+      <Section title={t('habitsHub.plan.progress')}>
+        <Text variant="body">{t('habitsHub.habits.completionLine', { percent: completion.percent, kept: Math.min(completion.keptDays, completion.targetDays), target: completion.targetDays })}</Text>
+        {lines.map((key) => (
+          <Text key={key} variant="small" tone="link" onPress={key === 'habitsHub.habits.share' ? () => router.push('/circles') : undefined}>
+            {t(key)}
+          </Text>
+        ))}
+      </Section>
+      <MonthPanel plan={plan} view={view} today={d} />
 
       {graduationReady(plan, d) ? (
         <NextStep title={t('practice.graduation.offer')}>
           <Wrap style={styles.offerActions}>
             <Button
               label={t('practice.graduation.action')}
+              variant="outline"
               onPress={() => {
                 update((p) => establishPlan(p, d));
                 toast(t('habitsTab.record.establishedToast'));
               }}
-              variant="outline"
             />
           </Wrap>
         </NextStep>
       ) : null}
 
-      {showsMend(mend) ? (
-        <NextStep title={t(mend === 'steps' ? 'practice.hub.missedYesterday' : 'habitsTab.mend.offerLine')}>
-          <Wrap style={styles.offerActions}>
-            <Button label={t('myHabits.fix')} onPress={() => setMending(true)} variant="outline" />
-          </Wrap>
-        </NextStep>
-      ) : null}
-
-      <View>
-        <MonthPanel plan={plan} view={view} today={d} />
-        <Wrap style={styles.offerActions}>
-          <Button label={t('practice.plan.fixOpen')} icon={PencilLine} onPress={() => setFixingLog(true)} variant="ghost" size="sm" />
-        </Wrap>
-      </View>
-
-      {!paused && view.canIncrease && view.nextAmount !== null ? (
+      {!archived && view.canIncrease && view.nextAmount !== null ? (
         <NextStep title={t('practice.increase.title')}>
           <Text variant="small">{t('practice.increase.body', { amount: amountLabel(view.nextAmount) })}</Text>
           <Wrap style={styles.offerActions}>
@@ -278,7 +354,7 @@ export default function PlanScreen() {
         </NextStep>
       ) : null}
 
-      {!paused && view.relapse && !relapseDismissed ? (
+      {!archived && view.relapse && !relapseDismissed ? (
         <NextStep title={t('practice.relapse.title')}>
           <Text variant="small">{t('practice.relapse.body', { amount: amountLabel(view.relapseAmount) })}</Text>
           <ButtonPair
@@ -296,32 +372,6 @@ export default function PlanScreen() {
         </NextStep>
       ) : null}
 
-      {answers.after || answers.ifBlocked ? (
-        <>
-          <SectionDivider />
-          <Section title={t('habitsTab.plan.answersTitle')}>
-            <View>
-              {answers.after ? (
-                <View style={[styles.answer, !answers.ifBlocked && styles.answerLast]}>
-                  <Text variant="caption" tone="muted">
-                    {t('habitsTab.loop.after')}
-                  </Text>
-                  <Text variant="body">{answers.after}</Text>
-                </View>
-              ) : null}
-              {answers.ifBlocked ? (
-                <View style={[styles.answer, styles.answerLast]}>
-                  <Text variant="caption" tone="muted">
-                    {t('habitsTab.loop.ifBlocked')}
-                  </Text>
-                  <Text variant="body">{answers.ifBlocked}</Text>
-                </View>
-              ) : null}
-            </View>
-          </Section>
-        </>
-      ) : null}
-
       {habit?.evidence?.length ? <SectionDivider /> : null}
       <EvidenceList
         ids={habit?.evidence}
@@ -334,23 +384,216 @@ export default function PlanScreen() {
         moreHref={habit ? `/good-deeds/${habit.deed}` : undefined}
       />
 
-      <PlanEditSheet
-        visible={editing}
-        plan={plan}
-        title={title}
-        window={habit?.window}
-        ruleWeekdays={weekdays}
-        onClose={() => setEditing(false)}
-        onSave={(next) => {
-          update(() => next);
-          setEditing(false);
-          toast(t('practice.plan.settingsSaved'));
-        }}
+      <MinimumSheet plan={plan} visible={minOpen} amountLabel={amountLabel} onClose={() => setMinOpen(false)} />
+    </>
+  );
+}
+
+/** The day note and the two optional questions (C-27): saved together, toasted; empty answers clear. */
+function ReflectionForm({ plan }: { plan: Plan }) {
+  const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
+  const store = usePracticeStore((s) => s.store);
+  const setStore = usePracticeStore((s) => s.setStore);
+  const d = today();
+  const saved = reflectionOf(store, plan.id, d);
+  const [note, setNote] = useState(saved?.note ?? '');
+  const [helped, setHelped] = useState(saved?.helped ?? '');
+  const [hard, setHard] = useState(saved?.hard ?? '');
+  useEffect(() => {
+    setNote(saved?.note ?? '');
+    setHelped(saved?.helped ?? '');
+    setHard(saved?.hard ?? '');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [plan.id, d]);
+  const changed = note !== (saved?.note ?? '') || helped !== (saved?.helped ?? '') || hard !== (saved?.hard ?? '');
+  return (
+    <Section title={t('habitsHub.reflect.title')} lead={t('habitsHub.reflect.lead')}>
+      <View style={styles.stack}>
+        <Field label={t('habitsHub.reflect.helped')} value={helped} onChangeText={setHelped} maxLength={REFLECTION_TEXT_MAX} placeholder={t('habitsHub.reflect.helpedPlaceholder')} />
+        <Field label={t('habitsHub.reflect.hard')} value={hard} onChangeText={setHard} maxLength={REFLECTION_TEXT_MAX} placeholder={t('habitsHub.reflect.hardPlaceholder')} />
+        <Field label={t('habitsHub.reflect.note')} value={note} onChangeText={setNote} maxLength={REFLECTION_TEXT_MAX} multiline style={styles.multiline} />
+        <Button
+          label={t('habitsHub.reflect.save')}
+          variant="outline"
+          disabled={!changed}
+          onPress={() => {
+            setStore((s) => setReflection(s, { planId: plan.id, date: d, today: d, note, helped, hard }));
+            toast(t('habitsHub.reflect.savedToast'));
+          }}
+        />
+      </View>
+    </Section>
+  );
+}
+
+/** «القدر الأدنى»: a ladder step not above the everyday amount; «الافتراضي» clears it (the old «أقل ما يمكن»). */
+function MinimumSheet({ plan, visible, amountLabel, onClose }: { plan: Plan; visible: boolean; amountLabel: (n: number) => string; onClose: () => void }) {
+  const { t } = useTranslation();
+  const setStore = usePracticeStore((s) => s.setStore);
+  const base = baseAmount(plan);
+  const choices = useMemo(() => LADDER.filter((v) => v <= base), [base]);
+  const current = plan.minimum ?? null;
+  return (
+    <BottomSheet visible={visible} title={t('habitsHub.minimum.title')} onClose={onClose}>
+      <Text variant="small" tone="muted">
+        {t('habitsHub.minimum.sheetLead')}
+      </Text>
+      <Wrap>
+        {choices.map((v) => (
+          <Chip
+            key={v}
+            label={amountLabel(v)}
+            selected={current === v}
+            onPress={() => {
+              setStore((s) => updatePlan(s, plan.id, (p) => setMinimum(p, v)));
+              toast(t('habitsHub.minimum.savedToast', { amount: amountLabel(v) }));
+              onClose();
+            }}
+          />
+        ))}
+      </Wrap>
+      {current !== null ? (
+        <Button
+          label={t('habitsHub.minimum.clear')}
+          variant="ghost"
+          onPress={() => {
+            setStore((s) => updatePlan(s, plan.id, (p) => setMinimum(p, null)));
+            toast(t('habitsHub.minimum.clearedToast'));
+            onClose();
+          }}
+        />
+      ) : null}
+    </BottomSheet>
+  );
+}
+
+function LoopTab({ plan, title }: TabProps) {
+  const { t } = useTranslation();
+  const setStore = usePracticeStore((s) => s.setStore);
+  const update = (fn: (p: Plan) => Plan, toastKey: string) => {
+    setStore((s) => updatePlan(s, plan.id, fn));
+    toast(t(toastKey));
+  };
+  return (
+    <Section title={t('habitsHub.plan.loopTitle')} lead={t('habitsHub.plan.loopLead')}>
+      <LoopsPanel
+        kind="habit"
+        loops={plan.loops ?? []}
+        subject={title}
+        onAdd={(draft) => update((p) => addHabitLoop(p, newPracticeId(), habitLoopInput(draft)), 'habitsHub.plan.loopSaved')}
+        onUpdate={(loopId, draft) => update((p) => updateHabitLoop(p, loopId, habitLoopInput(draft)), 'habitsHub.plan.loopSaved')}
+        onRemove={(loopId) => update((p) => removeHabitLoop(p, loopId), 'habitsHub.plan.loopRemoved')}
       />
-      <BottomSheet visible={fixingLog} title={t('practice.plan.fixOpen')} onClose={() => setFixingLog(false)}>
-        <FixPanel plan={plan} today={d} amountLabel={amountLabel} onSave={handleFixSave} onCancel={() => setFixingLog(false)} />
-      </BottomSheet>
-      <HabitFixSheet visible={mending} onClose={() => setMending(false)} plan={plan} habit={habit} title={title} today={d} />
-    </Screen>
+    </Section>
+  );
+}
+
+function RemindersTab({ plan, schedule, onEdit }: TabProps & { schedule: string; onEdit: () => void }) {
+  const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
+  const locale = useUiLocale();
+  const setStore = usePracticeStore((s) => s.setStore);
+  const habits = usePracticeCatalog(locale).data?.habits ?? [];
+  const habit = habitFor(plan, habits);
+  const show = useDisplayTime();
+  const d = today();
+  const prayerDay = currentPrayerDay(d);
+  const offSlots = habit?.window ? unsuitableChoices(slotChoices(plan), habit.window, prayerDay) : [];
+  const range = windowRange(habit?.window, prayerDay);
+  function fixSlots() {
+    if (!habit) return;
+    const ordered = orderedSlots(fixedChoices(slotChoices(plan), habit.defaultSlots, habit.window, prayerDay));
+    setStore((s) =>
+      updatePlan(s, plan.id, (p) => {
+        const next: Plan = { ...p, slots: ordered.slots };
+        if (ordered.slotAnchors) next.slotAnchors = ordered.slotAnchors;
+        else delete next.slotAnchors;
+        return next;
+      }),
+    );
+    toast(t('practice.plan.settingsSaved'));
+  }
+  return (
+    <>
+      <Section title={t('habitsHub.plan.remindersTitle')}>
+        <Text variant="body">{schedule}</Text>
+        <Button label={t('habitsHub.plan.editReminders')} icon={PencilLine} variant="outline" onPress={onEdit} />
+      </Section>
+      {offSlots.length > 0 ? (
+        <NextStep title={t('practice.window.unsuitable')}>
+          {range ? <Text variant="small">{t('practice.window.line', { from: show(range.from), to: show(range.to) })}</Text> : null}
+          <Wrap style={styles.offerActions}>
+            <Button label={t('practice.window.fix')} onPress={fixSlots} variant="outline" />
+          </Wrap>
+        </NextStep>
+      ) : null}
+      <SectionDivider />
+      <ListRow icon={BellRing} title={t('habitsHub.plan.notifications')} hint={t('habitsHub.plan.notificationsHint')} chevron last onPress={() => router.push('/settings/notifications')} />
+    </>
+  );
+}
+
+function ReturnTab({ plan, title, amountLabel }: TabProps & { amountLabel: (n: number) => string }) {
+  const { t } = useTranslation();
+  const store = usePracticeStore((s) => s.store);
+  const heart = usePracticeStore((s) => s.heart);
+  const setStore = usePracticeStore((s) => s.setStore);
+  const locale = useUiLocale();
+  const habits = usePracticeCatalog(locale).data?.habits ?? [];
+  const planDays = usePlanDays();
+  const [mending, setMending] = useState(false);
+  const d = today();
+  const view = planView(plan, d);
+  const mend = mendState({
+    offer: makeUpOffer(store, plan, d, { ...planDays, heart }),
+    missedYesterday: missedDayBefore(store, plan, d, planDays),
+    doneToday: plan.log[d] ?? 0,
+    paused: isArchived(plan),
+  });
+  const hard = reflectionsOfPlan(store, plan.id).filter((r) => r.hard).slice(0, 5);
+  const ifThen = plan.loops?.find((l) => l.ifThen)?.ifThen;
+  return (
+    <>
+      <Section title={t('habitsHub.return.title')} lead={t('habitsHub.return.lead')}>
+        {showsMend(mend) ? (
+          <NextStep title={t(mend === 'steps' ? 'practice.hub.missedYesterday' : 'habitsTab.mend.offerLine')}>
+            <Wrap>
+              <Button label={t('myHabits.fix')} onPress={() => setMending(true)} variant="outline" />
+            </Wrap>
+          </NextStep>
+        ) : (
+          <Notice>{t('habitsHub.return.noGap')}</Notice>
+        )}
+        <Text variant="body">{t('habitsHub.return.rule', { amount: amountLabel(minimumOf(plan)) })}</Text>
+        {view.relapse ? (
+          <Button
+            label={t('practice.relapse.action', { amount: amountLabel(view.relapseAmount) })}
+            variant="outline"
+            onPress={() => {
+              setStore((s) => updatePlan(s, plan.id, (p) => decreaseTo(normalize(p, d), view.relapseAmount, d)));
+              toast(t('practice.plan.settingsSaved'));
+            }}
+          />
+        ) : null}
+        {ifThen ? <Text variant="small">{`${t('habitsHub.learn.yourPlan')}: ${ifThen}`}</Text> : null}
+      </Section>
+      <SectionDivider />
+      <Section title={t('habitsHub.learn.title')} lead={t('habitsHub.learn.habitLead')}>
+        {hard.length === 0 ? (
+          <Text variant="small" tone="muted">
+            {t('habitsHub.learn.empty')}
+          </Text>
+        ) : (
+          hard.map((r) => (
+            <Text key={r.date} variant="body">
+              <Text variant="small" tone="muted">{`${shortDate(r.date)}: `}</Text>
+              {r.hard}
+            </Text>
+          ))
+        )}
+      </Section>
+      <HabitFixSheet visible={mending} onClose={() => setMending(false)} plan={plan} habit={habitFor(plan, habits)} title={title} today={d} />
+    </>
   );
 }

@@ -28,6 +28,7 @@ import { useDisplayTime } from '@/components/practice/editors';
 import { today, usePracticeStore } from '@/lib/practice/practice-store';
 import { currentPrayerLookup, lookupCity, refreshPrayerTimes } from '@/lib/practice/prayer';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
+import { cityLabel } from '@/lib/practice/city-name';
 import { space, useStyles, type Theme } from '@/theme';
 import { ActionMenu, BottomSheet, Button, Chip, ErrorText, Field, Icon, ListRow, Notice, PageHeader, Screen, Section, SectionDivider, Text, toast } from '@/ui';
 
@@ -107,7 +108,7 @@ export default function PrayerTimesScreen() {
   }
 
   const savedLine = saved
-    ? [saved.city, zone, methodName(saved.method)].filter(Boolean).join(' · ')
+    ? [cityLabel(saved.city, locale), zone, methodName(saved.method)].filter(Boolean).join(' · ')
     : null;
 
   return (

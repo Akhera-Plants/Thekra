@@ -1,7 +1,7 @@
 /**
  * Reminders for one sin, after the website's sin page (sins/[slug]): the sin's name and description, «كبيرة» with
- * its reference and the contemporary note, «ابدأ تخفَّف» on the title's line (every sin; the page's one primary, owner
- * round 5, F-10 a / A-07), then the type tabs right under them (owner, 2026-11-01), then inside the tab: «أنا في لحظة
+ * its reference and the contemporary note, «تخفّف من هذه المعصية» on the title's line (every sin; «مقفل ✓» once its program
+ * runs, round 6 C-15 / C-12), then the type tabs (and «مقروء / غير مقروء» once a text is read) right under them (owner, 2026-11-01), then inside the tab: «أنا في لحظة
  * مجاهدة» (outlined), the reading sections: what warns against it, the paired
  * deed's virtue (or the reward of leaving it for Allah), a contemporary topic's derived groups; then «من شعب الإيمان»,
  * the paired virtue, and the alternative good deeds last, only on an unpaired sin.

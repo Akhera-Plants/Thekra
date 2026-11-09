@@ -10,6 +10,7 @@ import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { pick } from '@/lib/practice/catalog-types';
+import { isCustomPeriodic } from '@thekra/practice-core';
 import { COMMITMENT_DAYS, commitmentRates, meanCommitment } from '@/lib/practice/commitment';
 import { usePracticeStore } from '@/lib/practice/practice-store';
 import { habitFor } from '@/lib/practice/reminders';
@@ -37,7 +38,7 @@ export function CommitmentChart({ today }: { today: LocalDate }) {
   const store = usePracticeStore((s) => s.store);
   const habits = usePracticeCatalog(locale).data?.habits ?? [];
   const rates = useMemo(
-    () => commitmentRates(store, today, { isPeriodicAct: (plan) => habitFor(plan, habits)?.kind === 'periodic' }),
+    () => commitmentRates(store, today, { isPeriodicAct: (plan) => isCustomPeriodic(plan) || habitFor(plan, habits)?.kind === 'periodic' }),
     [store, today, habits],
   );
   const mean = meanCommitment(rates);

@@ -11,13 +11,16 @@ import React, { memo, useCallback, useMemo, useState } from 'react';
 import { RefreshControl, SectionList, View, type SectionListRenderItem } from 'react-native';
 import type { UseInfiniteQueryResult } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { readSet } from '@thekra/practice-core';
 import { useToggleFavorite } from '@/lib/api/favorites';
-import type { TopicSection } from '@/lib/topics';
+import { usePracticeStore } from '@/lib/practice/practice-store';
+import { filterSectionsByRead, type ReadFilter, type TopicSection } from '@/lib/topics';
 import type { QuoteDto } from '@/lib/types/api';
 import type { QuoteType } from '@/lib/types/enums';
 import { QuoteCard } from '@/components/QuoteCard';
 import { GUTTER, space, useStyles, useTheme } from '@/theme';
 import {
+  Chip,
   EmptyState,
   ErrorState,
   PageHeader,
@@ -26,6 +29,7 @@ import {
   SegmentTabs,
   Skeleton,
   Text,
+  Wrap,
   type SegmentItem,
 } from '@/ui';
 
@@ -95,9 +99,9 @@ const makeStyles = () => ({
 });
 
 /** One row: a component, so the favorite hook runs under React's rules (never inside `renderItem` itself). */
-const QuoteItem = memo(function QuoteItem({ quote, linkNote }: { quote: QuoteDto; linkNote?: string }) {
+const QuoteItem = memo(function QuoteItem({ quote, linkId }: { quote: QuoteDto; linkId?: string }) {
   const { isFavorite, toggle } = useToggleFavorite(quote.id);
-  return <QuoteCard quote={quote} isFavorite={isFavorite} onToggleFavorite={toggle} linkNote={linkNote} />;
+  return <QuoteCard quote={quote} isFavorite={isFavorite} onToggleFavorite={toggle} linkId={linkId} showRead />;
 });
 
 function CardGap() {
@@ -117,7 +121,7 @@ function SectionTitle({ section }: { section: TopicSection }) {
 
 const keyExtractor = (quote: QuoteDto) => quote.id;
 const renderItem: SectionListRenderItem<QuoteDto, TopicSection> = ({ item, section }) => (
-  <QuoteItem quote={item} linkNote={section.notes[item.id]} />
+  <QuoteItem quote={item} linkId={section.links[item.id]} />
 );
 const renderSectionHeader = ({ section }: { section: TopicSection }) => <SectionTitle section={section} />;
 
@@ -155,6 +159,15 @@ export function TopicQuoteList({
   // The type tabs are on every topic page (owner round 3, item 2), contemporary topics included.
   const showTabs = tabs.length > 1;
 
+  // «مقروء» / «غير مقروء» (round 6): a filter over the loaded texts; the marks are the member's (practice-core reads.ts).
+  const [readFilter, setReadFilter] = useState<ReadFilter>('all');
+  const reads = usePracticeStore((s) => s.store.reads);
+  const readIds = useMemo(() => readSet({ reads }), [reads]);
+  const shownSections = useMemo(() => filterSectionsByRead(sections, readFilter, readIds), [sections, readFilter, readIds]);
+  const readFilters: ReadFilter[] = ['all', 'unread', 'read'];
+  // The filter shows once a text of this page is read (before that every text is unread: nothing to filter).
+  const anyRead = readFilter !== 'all' || sections.some((sec) => sec.data.some((q) => readIds.has(q.id.toLowerCase())));
+
   const handleRefresh = useCallback(() => void refetch(), [refetch]);
   const handleRetryMore = useCallback(() => void fetchNextPage(), [fetchNextPage]);
   const handleEndReached = useCallback(() => {
@@ -167,6 +180,13 @@ export function TopicQuoteList({
         {meta}
       </PageHeader>
       {showTabs ? <SegmentTabs items={tabs} value={filter} onChange={onFilterChange} /> : null}
+      {anyRead ? (
+        <Wrap>
+          {readFilters.map((key) => (
+            <Chip key={key} label={t(`reads.filter.${key}`)} selected={readFilter === key} onPress={() => setReadFilter(key)} />
+          ))}
+        </Wrap>
+      ) : null}
       {intro ? <View style={styles.intro}>{intro}</View> : null}
     </View>
   ) : isLoading ? (
@@ -185,6 +205,8 @@ export function TopicQuoteList({
     </View>
   ) : isError ? (
     <ErrorState onRetry={handleRefresh} />
+  ) : readFilter !== 'all' && sections.length > 0 ? (
+    <EmptyState message={t(`reads.empty.${readFilter}`)} />
   ) : (
     <EmptyState message={emptyMessage} />
   );
@@ -200,7 +222,7 @@ export function TopicQuoteList({
   return (
     <Screen edges={['bottom']} scroll={false} contentStyle={styles.frame}>
       <SectionList
-        sections={isLoading ? [] : sections}
+        sections={isLoading ? [] : shownSections}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
         renderSectionHeader={renderSectionHeader}

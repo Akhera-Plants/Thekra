@@ -103,7 +103,7 @@ interface CheckControlProps {
 }
 
 /** A round check with a 48 target: ring, half, or filled with a tick; a locked day shows its state, dimmed. */
-function CheckControl({ label, checked, partial, disabled, onPress }: CheckControlProps) {
+export function CheckControl({ label, checked, partial, disabled, onPress }: CheckControlProps) {
   const styles = useStyles(makeStyles);
   const { colors } = useTheme();
   const scale = useTickSpring(checked);
@@ -164,7 +164,7 @@ interface RowBodyProps {
   onPress: () => void;
 }
 
-function RowBody({ title, titleNote, meta, metaIcon, settled, onPress }: RowBodyProps) {
+export function RowBody({ title, titleNote, meta, metaIcon, settled, onPress }: RowBodyProps) {
   const styles = useStyles(makeStyles);
   return (
     <Pressable
@@ -198,7 +198,7 @@ function RowBody({ title, titleNote, meta, metaIcon, settled, onPress }: RowBody
 export type UndoKind = 'logged' | 'cleared';
 
 /** «سُجِّل · تراجع» after a tick, «أُلغي التسجيل · تراجع» after an untick. */
-function UndoLine({ kind, onUndo }: { kind: UndoKind; onUndo: () => void }) {
+export function UndoLine({ kind, onUndo }: { kind: UndoKind; onUndo: () => void }) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   return (

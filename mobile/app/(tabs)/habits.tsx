@@ -1,9 +1,9 @@
 /**
- * «عاداتي» (owner round 5, §1 IA; docs/plan/2026-11-07-owner-round-5.md): ONE place for the practice, with segmented
- * tabs «ورد اليوم · الدورية · محاسبتي · سجلّي» (src/components/practice/habits/*). The tab is the `?tab=` param
- * (`/habits?tab=review`), so a deep link, a notification or another screen can open it, and switching tabs updates it.
- * Logging happens only in «ورد اليوم» (and the home page's «ورد اليوم» entry). Members only: the tab bar asks a guest
- * to sign in first; this covers a link or a notification. The app header (wordmark and «لحظة مجاهدة») is first.
+ * «عاداتي» (owner round 6, §2; docs/plan/2026-11-09-owner-round-6.md): ONE place for the practice, with the
+ * reference's underline tabs «اليوم · العادات · الأعمال الدورية · محاسبتي · سجلّي» (src/components/practice/habits/*).
+ * The tab is the `?tab=` param (`/habits?tab=review`), so a deep link, a notification or another screen can open it;
+ * the old `?tab=wird` opens «اليوم» (hub-view `parseHabitsTab`). Members only: the tab bar asks a guest to sign in
+ * first; this covers a link or a notification. The app header (wordmark and «لحظة مجاهدة») is first.
  */
 
 import React, { useCallback } from 'react';
@@ -11,22 +11,24 @@ import { View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useRequireSignIn } from '@/lib/auth/require-sign-in';
-import { HABITS_TABS, parseHabitsTab, type HabitsTab } from '@/lib/practice/habits-view';
+import { HABITS_TABS, parseHabitsTab, type HabitsTab } from '@/lib/practice/hub-view';
 import { usePracticeStore } from '@/lib/practice/practice-store';
 import { useHubDays } from '@/lib/practice/use-habits-hub';
 import { AppHeader } from '@/components/nav/AppHeader';
+import { HabitsListTab } from '@/components/practice/habits/HabitsListTab';
 import { PeriodicTab } from '@/components/practice/habits/PeriodicTab';
 import { RecordTab } from '@/components/practice/habits/RecordTab';
 import { ReviewTab } from '@/components/practice/habits/ReviewTab';
-import { WirdTab } from '@/components/practice/habits/WirdTab';
+import { TodayTab } from '@/components/practice/habits/TodayTab';
 import { space, useStyles, type Theme } from '@/theme';
-import { Screen, SegmentTabs, Skeleton, type SegmentItem } from '@/ui';
+import { Screen, Skeleton, UnderlineTabs, type SegmentItem } from '@/ui';
 
 const SKELETON_ROWS = ['r1', 'r2', 'r3'];
 
-/** The tab labels are the nav map's names (`wird`, `periodic`, `review`, `record`; tested). */
+/** The tab labels are the nav map's names (tested in navigation.test.ts). */
 const TAB_LABEL_KEYS: Record<HabitsTab, string> = {
-  wird: 'habitsTab.tabs.wird',
+  today: 'habitsTab.tabs.today',
+  habits: 'habitsTab.tabs.habits',
   periodic: 'habitsTab.tabs.periodic',
   review: 'habitsTab.tabs.review',
   record: 'habitsTab.tabs.record',
@@ -58,11 +60,13 @@ export default function HabitsScreen() {
   return (
     <Screen>
       <AppHeader />
-      <SegmentTabs items={items} value={tab} onChange={handleTab} />
+      <UnderlineTabs items={items} value={tab} onChange={handleTab} accessibilityLabel={t('tabs.habits')} />
       {!ready ? (
         <HabitsSkeleton />
-      ) : tab === 'wird' ? (
-        <WirdTab today={today} />
+      ) : tab === 'today' ? (
+        <TodayTab today={today} />
+      ) : tab === 'habits' ? (
+        <HabitsListTab today={today} />
       ) : tab === 'periodic' ? (
         <PeriodicTab today={today} />
       ) : tab === 'review' ? (

@@ -1,15 +1,19 @@
 /**
- * «لحظة مجاهدة» (was «لحظة ضعف»; owner round 3, item 15; round 5, F-09 / F-12; the route keeps its name `moment`).
+ * «لحظة مجاهدة» (owner round 6, C-01c / C-16: the reference's layout, our acts; the route keeps its name `moment`).
  * Which program it is about comes from the device only (practice-core `momentProgram`: a sin page's or «تخفَّف»'s
  * in-memory hand-off, never a route param); opened from the app header or the widget with several programs running,
- * a short chooser asks which one. The requests are the same for every user: the catalog, the evidence of EVERY act
- * of every sin at once (`useMomentEvidence`) and the public sins list for the names.
+ * a short chooser asks which one. The requests are the same for every user: the catalog, the evidence of every program
+ * at once, and the public sins list for the names.
  *
- * Top to bottom: the ten-minute ring; «افعل واحدة الآن»: the acts tied to the texts for this sin (catalog
- * `sinPrograms.moment`, e.g. anger: seek refuge, sit down, hold back, speak good or stay silent), each with a small
- * «الدليل» that opens its texts in a sheet; the generic acts when the sin has none of its own or no program is known;
- * then «أدوات تعينك» (the tasbih counter, «وردٌ أقصر», «أعمال سهلة»), the «اركب الموجة» strategy in its moment (F-12);
- * one verse passage on patience, rotating; then «كيف كانت مجاهدتك؟». Healthy words only: a slip is a slip.
+ * Top to bottom:
+ * - ONE prominent act first, in a quiet panel: the first of the acts tied to the Qur'an, the Sunnah or the salaf for
+ *   this sin (catalog `sinPrograms.moment`), the other acts as chips under it (a tap makes one the prominent act); the
+ *   generic acts when the sin has none of its own. No «الدليل» buttons here (C-16).
+ * - Under a hairline in the same panel: «10:00» and «ابدأ عشر دقائق». The timer never starts by itself (C-01c); once
+ *   started, the ring counts down.
+ * - Two buttons: «نصوص تذكّرها» (this sin's texts, in a sheet) and «حلقة المعصية» (the program's loop, in a sheet).
+ * - «أدوات تعينك» (the tasbih counter, «وردٌ أقصر», «أعمال سهلة») and «اركب الموجة» in its moment (F-12);
+ *   one verse passage on patience, rotating; then «كيف كانت مجاهدتك؟». Healthy words only: a slip is a slip.
  *
  * Privacy: SinProgramGuard (the vault opened on the device, the cover in the app switcher). The page may name the
  * user's own program (as plain text, never a header); a notification never does. Screenshots are allowed.
@@ -19,15 +23,20 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { BookOpen, Check, HandHeart, ListChecks, Sprout, Waves, type LucideIcon } from 'lucide-react-native';
+import { BookOpen, Check, HandHeart, ListChecks, Repeat, Sprout, Timer, Waves, type LucideIcon } from 'lucide-react-native';
 import {
   activePrograms,
+  addSinLoop,
   formatCountdown,
   momentProgram,
   recordWavePassed,
+  removeSinLoop,
   strategyByKey,
+  updateSinLoop,
   urgeProgress,
   urgeTextIndex,
+  URGE_SECONDS,
+  type SinProgram,
 } from '@thekra/practice-core';
 import { QuoteCard } from '@/components/QuoteCard';
 import { EvidenceList } from '@/components/practice/EvidenceList';
@@ -38,11 +47,13 @@ import { useSinName } from '@/components/practice/sin/use-sin-name';
 import { EasyDeeds } from '@/components/practice/mujahada/EasyDeeds';
 import { MinimumWirdSheet } from '@/components/practice/mujahada/MinimumWirdSheet';
 import { TasbihSheet } from '@/components/practice/mujahada/TasbihSheet';
-import { useEvidence, useMomentEvidence, usePracticeCatalog, useSinProgramEvidence } from '@/lib/api/practice';
+import { LoopsPanel } from '@/components/practice/loops/LoopsPanel';
+import { useEvidence, usePracticeCatalog, useSinProgramEvidence } from '@/lib/api/practice';
+import { sinLoopInput, sinLoops } from '@/lib/practice/loops';
 import { pick, type MomentTool } from '@/lib/practice/catalog-types';
 import { momentToolsFor } from '@/lib/practice/moment-tools';
 import { mujahadaPassage } from '@/lib/practice/mujahada';
-import { momentSource, today, usePracticeStore } from '@/lib/practice/practice-store';
+import { momentSource, newPracticeId, today, usePracticeStore } from '@/lib/practice/practice-store';
 import { programEntry } from '@/lib/practice/sin-program-view';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { radius, space, useStyles, useTheme, type Theme } from '@/theme';
@@ -98,6 +109,17 @@ const makeStyles = (t: Theme) => ({
   actText: { flex: 1, minWidth: 0 },
   verse: { gap: space.sm, alignItems: 'center' as const },
   chooser: { gap: space.sm },
+  /** The reference's quiet panel: the one act first, then the timer under a hairline. */
+  panel: {
+    gap: space.md,
+    padding: space.xl,
+    borderRadius: radius.panel,
+    backgroundColor: t.colors.muted,
+    borderWidth: 1,
+    borderColor: t.colors.border,
+  },
+  rule: { height: 1, backgroundColor: t.colors.border, marginVertical: space.sm },
+  timer: { alignItems: 'center' as const, gap: space.sm },
 });
 
 type Outcome = { kind: 'held'; result: 'saved' | 'kept' | 'none' } | { kind: 'slipped' } | null;
@@ -136,30 +158,6 @@ function ToolCard({ icon, title, hint, onPress }: { icon: LucideIcon; title: str
   );
 }
 
-/** One act: its command, and «الدليل» on the row's end (A-07) naming the act for screen readers (A-19). */
-function ActRow({ tool, last, onEvidence }: { tool: MomentTool; last: boolean; onEvidence: () => void }) {
-  const { t } = useTranslation();
-  const styles = useStyles(makeStyles);
-  const locale = useUiLocale();
-  const title = pick(tool, 'title', locale);
-  return (
-    <View style={[styles.act, last && styles.actLast]}>
-      <View style={styles.actDot} />
-      <Text variant="heading" style={styles.actText}>
-        {title}
-      </Text>
-      <Button
-        label={t('sinProgram.moment.evidence')}
-        icon={BookOpen}
-        variant="outline"
-        size="sm"
-        onPress={onEvidence}
-        accessibilityLabel={t('sinProgram.moment.evidenceFor', { act: title })}
-      />
-    </View>
-  );
-}
-
 function MujahadaContent() {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
@@ -168,28 +166,32 @@ function MujahadaContent() {
   const setStore = usePracticeStore((s) => s.setStore);
   const catalog = usePracticeCatalog(locale);
   const evidence = useSinProgramEvidence(catalog.data, locale);
-  const actEvidence = useMomentEvidence(catalog.data, locale);
   const { name: sinName } = useSinName();
   const mujahada = catalog.data?.mujahada;
   // Read once: the hand-off of the screen that opened this one (undefined: the header, the widget, a notification).
   const [source] = useState(momentSource);
-  const [startedAt] = useState(() => Date.now());
-  const [now, setNow] = useState(startedAt);
+  // The page opened at `openedAt`; the ten minutes start only on «ابدأ عشر دقائق» (C-01c).
+  const [openedAt] = useState(() => Date.now());
+  const [startedAt, setStartedAt] = useState<number | null>(null);
+  const [now, setNow] = useState(openedAt);
   const [early, setEarly] = useState(false);
   const [outcome, setOutcome] = useState<Outcome>(null);
   const [fixOpen, setFixOpen] = useState(false);
   const [tool, setTool] = useState<Tool | null>(null);
-  const [act, setAct] = useState<MomentTool | null>(null);
+  /** The act shown large (a chip's tap); the first act by default. */
+  const [main, setMain] = useState<string | null>(null);
+  const [sheet, setSheet] = useState<'texts' | 'loop' | null>(null);
   /** The program picked in the chooser (several running, opened without a hand-off). */
   const [picked, setPicked] = useState<string | null>(null);
 
   useEffect(() => {
+    if (startedAt === null) return;
     const timer = setInterval(() => setNow(Date.now()), TICK_MS);
     return () => clearInterval(timer);
-  }, []);
+  }, [startedAt]);
 
   const d = today();
-  const elapsed = (now - startedAt) / 1000;
+  const elapsed = (now - (startedAt ?? openedAt)) / 1000;
   const running = useMemo(() => activePrograms(programs), [programs]);
   const fallback = useMemo(() => momentProgram(programs, source, d), [programs, source, d]);
   // No hand-off and several programs: the user says which one (the most recent working one is the default).
@@ -208,8 +210,25 @@ function MujahadaContent() {
   const texts = useEvidence([...(passage ?? []), ...(sayingId ? [sayingId] : [])], locale);
   const verses = (passage ?? []).flatMap((id) => texts.data?.get(id) ?? []);
   const saying = sayingId ? texts.data?.get(sayingId) : undefined;
-  const progress = urgeProgress(startedAt, now);
-  const asking = progress.done || early;
+  const progress = startedAt === null ? null : urgeProgress(startedAt, now);
+  const asking = Boolean(progress?.done) || early;
+  const shown = acts.tools.find((x) => x.key === main) ?? acts.tools[0];
+  // «نصوص تذكّرها»: the program's texts for this sin (public quotes by id), else this sin's own page.
+  const textIds = entry?.evidence ?? [];
+  const loops = program ? sinLoops(program) : [];
+  const editProgram = (change: (p: SinProgram) => SinProgram) =>
+    setStore((s) => ({ ...s, programs: s.programs.map((p) => (program && p.sinSlug === program.sinSlug && p.endedAt === undefined ? change(p) : p)) }));
+
+  // «نصوص تذكّرها» and «حلقة المعصية», both outlined (the panel holds the one solid button).
+  const textsAction = textIds.length > 0 || sinForActs ? { label: t('sinProgram.moment.texts'), icon: BookOpen, onPress: openTexts, variant: 'outline' as const } : null;
+  const loopAction = program ? { label: t('loops.sin.title'), icon: Repeat, onPress: () => setSheet('loop'), variant: 'outline' as const } : null;
+  const pairFirst = textsAction ?? loopAction;
+  const pairSecond = textsAction ? loopAction : null;
+
+  function openTexts() {
+    if (textIds.length > 0) setSheet('texts');
+    else if (sinForActs) router.push(`/sins/${sinForActs}`);
+  }
   const canFix = Boolean(program && entry && common);
   const wave = strategyByKey('ride-wave');
 
@@ -235,16 +254,7 @@ function MujahadaContent() {
 
   return (
     <Screen edges={['bottom']}>
-      <PageHeader title={t('sinProgram.moment.title')} lead={t('sinProgram.moment.lead')} />
-
-      <ProgressRing fraction={progress.fraction} label={t('sinProgram.moment.remaining', { time: formatCountdown(progress.remaining) })}>
-        <View style={styles.center} importantForAccessibility="no-hide-descendants">
-          <Text variant="display">{formatCountdown(progress.remaining)}</Text>
-          <Text variant="caption" tone="muted" align="center">
-            {t('sinProgram.moment.timer')}
-          </Text>
-        </View>
-      </ProgressRing>
+      <PageHeader title={t('sinProgram.moment.title')} />
 
       {asksWhich ? (
         <View style={styles.chooser} accessibilityRole="radiogroup" accessibilityLabel={t('sinProgram.moment.which')}>
@@ -259,20 +269,61 @@ function MujahadaContent() {
         </View>
       ) : null}
 
-      {acts.tools.length > 0 ? (
-        <Section>
-          <SectionHeader
-            title={t('sinProgram.moment.actionsTitle')}
-            // The program's name as plain text under the title, never a header (and only the user's own program).
-            subtitle={acts.own && program && !asksWhich ? sinName(program.sinSlug) : undefined}
-          />
-          <View>
-            {acts.tools.map((tool, i) => (
-              <ActRow key={tool.key} tool={tool} last={i === acts.tools.length - 1} onEvidence={() => setAct(tool)} />
-            ))}
+      {/* ONE act first (C-16), the others as chips, then the optional timer under a hairline. */}
+      <View style={styles.panel}>
+        <Text variant="caption" tone="muted">
+          {/* The program's name as plain text, never a header (and only the user's own program). */}
+          {acts.own && program && !asksWhich ? `${t('sinProgram.moment.kicker')} · ${sinName(program.sinSlug)}` : t('sinProgram.moment.kicker')}
+        </Text>
+        {shown ? (
+          <Text variant="display" accessibilityRole="text">
+            {pick(shown, 'title', locale)}
+          </Text>
+        ) : null}
+        {acts.tools.length > 1 ? (
+          <>
+            <Text variant="small" tone="muted">
+              {t('sinProgram.moment.orOther')}
+            </Text>
+            <Wrap>
+              {acts.tools
+                .filter((x) => x.key !== shown?.key)
+                .map((x) => (
+                  <Chip key={x.key} label={pick(x, 'title', locale)} onPress={() => setMain(x.key)} />
+                ))}
+            </Wrap>
+          </>
+        ) : null}
+        <View style={styles.rule} />
+        {progress ? (
+          <ProgressRing fraction={progress.fraction} label={t('sinProgram.moment.remaining', { time: formatCountdown(progress.remaining) })}>
+            <View style={styles.center} importantForAccessibility="no-hide-descendants">
+              <Text variant="display">{formatCountdown(progress.remaining)}</Text>
+              <Text variant="caption" tone="muted" align="center">
+                {t('sinProgram.moment.timer')}
+              </Text>
+            </View>
+          </ProgressRing>
+        ) : (
+          <View style={styles.timer}>
+            <Text variant="display">{formatCountdown(URGE_SECONDS)}</Text>
+            <Text variant="caption" tone="muted" align="center">
+              {t('sinProgram.moment.timerLead')}
+            </Text>
+            <Button
+              label={t('sinProgram.moment.startTimer')}
+              icon={Timer}
+              onPress={() => {
+                const at = Date.now();
+                setStartedAt(at);
+                setNow(at);
+              }}
+            />
           </View>
-        </Section>
-      ) : null}
+        )}
+      </View>
+
+      {pairFirst ? <ButtonPair primary={pairFirst} secondary={pairSecond} /> : null}
 
       <Section title={t('sinProgram.moment.toolsTitle')}>
         <View style={styles.tools}>
@@ -363,24 +414,28 @@ function MujahadaContent() {
         <Button label={t('sinProgram.moment.back')} onPress={() => router.replace('/practice/sin-program')} variant="outline" arrow />
       ) : null}
 
-      <BottomSheet visible={act !== null} title={act ? pick(act, 'title', locale) : ''} onClose={() => setAct(null)}>
-        {act ? (
-          <>
-            <EvidenceList
-              ids={act.evidence}
-              byId={actEvidence.data}
-              loading={actEvidence.isLoading}
-              error={actEvidence.isError}
-              title={t('sinProgram.moment.evidence')}
-              size="heading"
-            />
-            {/* Loaded, yet none of its texts came back (unpublished since, or offline with an old cache): say so. */}
-            {!actEvidence.isLoading && !actEvidence.isError && !act.evidence.some((id) => actEvidence.data?.has(id)) ? (
-              <Text variant="small" tone="muted">
-                {t('sinProgram.moment.evidenceMissing')}
-              </Text>
-            ) : null}
-          </>
+      <BottomSheet visible={sheet === 'texts'} title={t('sinProgram.moment.texts')} onClose={() => setSheet(null)}>
+        <EvidenceList
+          ids={textIds}
+          byId={evidence.data}
+          loading={evidence.isLoading}
+          error={evidence.isError}
+          title={t('sinProgram.textsTitle')}
+          size="heading"
+          moreHref={sinForActs ? `/sins/${sinForActs}` : undefined}
+        />
+      </BottomSheet>
+      <BottomSheet visible={sheet === 'loop'} title={t('loops.sin.title')} onClose={() => setSheet(null)}>
+        {program ? (
+          <LoopsPanel
+            kind="sin"
+            single
+            addLabel={t('sinProgram.loopTask.fill')}
+            loops={loops}
+            onAdd={(draft) => editProgram((p) => addSinLoop(p, newPracticeId(), sinLoopInput(draft)))}
+            onUpdate={(id, draft) => editProgram((p) => updateSinLoop(p, id, sinLoopInput(draft)))}
+            onRemove={(id) => editProgram((p) => removeSinLoop(p, id))}
+          />
         ) : null}
       </BottomSheet>
       <BottomSheet visible={tool === 'deeds'} title={t('mujahada.tools.deeds')} onClose={() => setTool(null)}>
@@ -392,7 +447,7 @@ function MujahadaContent() {
       <TasbihSheet
         visible={tool === 'tasbih'}
         onClose={() => setTool(null)}
-        remaining={progress.remaining}
+        remaining={progress?.remaining ?? URGE_SECONDS}
         multiplierHadith={mujahada?.multiplierHadith}
       />
       <MinimumWirdSheet visible={tool === 'wird'} onClose={() => setTool(null)} sittingPrayerHadith={mujahada?.sittingPrayerHadith} />

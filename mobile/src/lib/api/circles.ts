@@ -9,8 +9,11 @@ import { apiDelete, apiGet, apiPatch, apiPost, apiPut } from '../api-client';
 import { queryKeys } from '../query-keys';
 import { useAuthStore } from '../stores/auth-store';
 import type {
+  CircleAccess,
   CircleDetail,
+  CircleInvite,
   CircleSummary,
+  RedeemInviteResult,
   CreateCircleInput,
   JoinCircleInput,
   SendCheerInput,
@@ -150,4 +153,60 @@ export function useRotateInviteCode(id: string) {
 export function useDeleteCircle(id: string) {
   const forget = useForgetCircle(id);
   return useMutation({ mutationFn: () => deleteCircle(id), onSuccess: forget });
+}
+
+// ── Invites (round 6, C-01k: رفقة is invite-only) ──────────────────────────────
+
+export async function fetchCircleAccess(): Promise<CircleAccess> {
+  return (await apiGet<CircleAccess>('/circles/access', noLang)).data;
+}
+
+export async function fetchMyInvites(): Promise<CircleInvite[]> {
+  return (await apiGet<CircleInvite[]>('/circles/invites', noLang)).data;
+}
+
+export async function createInvite(circleId?: string): Promise<CircleInvite> {
+  return (await apiPost<CircleInvite>('/circles/invites', circleId ? { circleId } : {}, noLang)).data;
+}
+
+export async function revokeInvite(id: string): Promise<void> {
+  await apiDelete(`/circles/invites/${encodeURIComponent(id)}`, noLang);
+}
+
+export async function redeemInvite(input: { code: string; displayName?: string }): Promise<RedeemInviteResult> {
+  return (await apiPost<RedeemInviteResult>('/circles/invites/redeem', input, noLang)).data;
+}
+
+/** Whether رفقة is on for me (a personal invite turns it on). */
+export function useCircleAccess() {
+  const userId = useCircleUserId();
+  return useQuery({
+    queryKey: [...queryKeys.circles.all, userId ?? '', 'access'],
+    queryFn: fetchCircleAccess,
+    enabled: userId !== null,
+  });
+}
+
+export function useMyInvites(enabled: boolean) {
+  const userId = useCircleUserId();
+  return useQuery({
+    queryKey: [...queryKeys.circles.all, userId ?? '', 'invites'],
+    queryFn: fetchMyInvites,
+    enabled: userId !== null && enabled,
+  });
+}
+
+export function useCreateInvite() {
+  const invalidate = useInvalidateCircles();
+  return useMutation({ mutationFn: (circleId?: string) => createInvite(circleId), onSettled: invalidate });
+}
+
+export function useRevokeInvite() {
+  const invalidate = useInvalidateCircles();
+  return useMutation({ mutationFn: revokeInvite, onSettled: invalidate });
+}
+
+export function useRedeemInvite() {
+  const invalidate = useInvalidateCircles();
+  return useMutation({ mutationFn: redeemInvite, onSuccess: invalidate });
 }

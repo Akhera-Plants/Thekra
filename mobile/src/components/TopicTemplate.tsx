@@ -69,9 +69,10 @@ export function BranchRelatedLinks({
 }
 
 /**
- * The ONE action of a good-deed page, on its title line (owner round 5, F-10 a / A-07; a `sm` button): «ابدأ عادة»
- * (solid) opens the add flow with this deed's catalog habit chosen (a people list opens its list); «في عاداتك»
- * (outlined, with a check) opens the plan when it is already a habit. Hidden when no catalog habit maps to the deed.
+ * The ONE action of a good-deed page, on its title line opposite the title (owner round 6, C-12; a `sm` button):
+ * «أضف إلى خطتك» (solid) opens the add flow with this deed's catalog habit chosen (a people list opens its list);
+ * «مُضاف إلى خطتك» (outlined, with a check) opens the habit when it is already in the plan. Hidden when no catalog habit
+ * maps to the deed. No line under it (the «ابدأ صغيرًا» advice belongs to the add flow's step).
  */
 export function DeedHabitAction({ deed }: { deed: string }) {
   const { t } = useTranslation();
@@ -84,12 +85,12 @@ export function DeedHabitAction({ deed }: { deed: string }) {
   const plan = plans.find((p) => (p.habitKey ?? p.id) === habit.key);
   if (plan && !habit.people) {
     return (
-      <Button label={t('topic.habitAdded')} icon={Check} variant="outline" size="sm" onPress={() => router.push(`/practice/plan/${plan.id}`)} />
+      <Button label={t('topic.inPlan')} icon={Check} variant="outline" size="sm" onPress={() => router.push(`/practice/plan/${plan.id}`)} />
     );
   }
   return (
     <Button
-      label={t('topic.startHabit')}
+      label={t('topic.addToPlan')}
       size="sm"
       onPress={() =>
         habit.people

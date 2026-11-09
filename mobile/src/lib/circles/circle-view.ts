@@ -19,6 +19,11 @@ export function inviteLink(code: string): string {
   return `thekra://circles/join?code=${encodeURIComponent(code)}`;
 }
 
+/** The app's deep link of a personal رفقة invite (round 6, C-01k): opens «أدخل رمز الدعوة» with the code filled in. */
+export function personalInviteLink(code: string): string {
+  return `thekra://circles/invite/${encodeURIComponent(code)}`;
+}
+
 /** `ABCDEFGHJK` → `ABCDE-FGHJK`: easier to read aloud and to copy by hand. The server ignores the dash. */
 export function formatInviteCode(code: string): string {
   return code.length === 10 ? `${code.slice(0, 5)}-${code.slice(5)}` : code;
@@ -32,6 +37,13 @@ export function cleanTypedCode(raw: string): string {
 /** i18n keys under `circles.errors`, by API error code. */
 const ERROR_KEYS: Record<string, string> = {
   CIRCLE_INVITE_INVALID: 'inviteInvalid',
+  // Round 6 (C-01k): رفقة is invite-only.
+  CIRCLES_NOT_ENABLED: 'notEnabled',
+  CIRCLE_INVITE_OWN: 'inviteOwn',
+  CIRCLE_INVITES_ACTIVE_LIMIT: 'invitesActiveLimit',
+  CIRCLE_INVITES_PERIOD_LIMIT: 'invitesPeriodLimit',
+  CIRCLE_INVITE_CIRCLE_GONE: 'inviteCircleGone',
+  CIRCLE_DISPLAY_NAME_REQUIRED: 'displayNameRequired',
   CIRCLE_FULL: 'full',
   CIRCLE_LIMIT_REACHED: 'limit',
   CIRCLE_CHEER_ALREADY_SENT: 'cheerSent',
@@ -40,6 +52,11 @@ const ERROR_KEYS: Record<string, string> = {
   CIRCLE_OWNER_ONLY: 'ownerOnly',
   VALIDATION_FAILED: 'invalid',
 };
+
+/** The `circles.errors.*` key for a `joinError` code of a redeemed invite (رفقة is on, the circle was not joined). */
+export function joinErrorKey(code: string): string {
+  return `circles.errors.${ERROR_KEYS[code] ?? 'generic'}`;
+}
 
 /** The `circles.errors.*` key (or `errors.network`) for a failed request. */
 export function circleErrorKey(error: unknown): string {

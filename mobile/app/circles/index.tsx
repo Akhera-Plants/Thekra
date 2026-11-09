@@ -1,15 +1,18 @@
 /**
- * «رفقة»: my private circles. Signed out it invites sign-in; with none it explains and offers to start one or join
- * with a code. Each row says how many members and whether my presence shows there. No counts of days, no ranking.
+ * «رفقة»: my private circles. Round 6 (C-01k): رفقة is invite-only. Signed out it invites sign-in; while رفقة is not on
+ * for me (`GET /circles/access`) it shows «أدخل رمز الدعوة» only (RedeemInvite); once on: my circles (or the empty
+ * state with «أنشئ رفقة» / «انضم برمز»), and «دعواتي» to invite someone. Each row says how many members and whether my
+ * presence shows there. No counts of days, no ranking.
  */
 
 import React, { useCallback } from 'react';
 import { View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Lock, Users } from 'lucide-react-native';
+import { Lock, Ticket, Users } from 'lucide-react-native';
 import { CircleListSkeleton, CirclesSignedOut } from '@/components/circles/CircleStates';
-import { useCircleUserId, useMyCircles } from '@/lib/api/circles';
+import { RedeemInvite } from '@/components/circles/RedeemInvite';
+import { useCircleAccess, useCircleUserId, useMyCircles } from '@/lib/api/circles';
 import { circleErrorKey } from '@/lib/circles/circle-view';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { CIRCLES_PER_USER_MAX, type CircleSummary } from '@/lib/types/circles';
@@ -51,6 +54,37 @@ function Actions({ count }: { count: number }) {
   );
 }
 
+/** «دعواتي»: what is left to give, opening the invites screen. */
+function InvitesRow() {
+  const { t } = useTranslation();
+  const access = useCircleAccess();
+  const remaining = access.data?.invites?.remaining;
+  return (
+    <ListRow
+      icon={Ticket}
+      title={t('circles.invites.title')}
+      hint={remaining === undefined ? undefined : t('circles.invites.left', { count: remaining })}
+      onPress={() => router.push('/circles/invites')}
+      last
+    />
+  );
+}
+
+/** رفقة on: the circles; off: the invite code only. */
+function Access() {
+  const { t } = useTranslation();
+  const access = useCircleAccess();
+  if (access.isPending) return <CircleListSkeleton />;
+  if (access.isError) return <ErrorState message={t(circleErrorKey(access.error))} onRetry={() => void access.refetch()} />;
+  if (!access.data.enabled) return <RedeemInvite />;
+  return (
+    <>
+      <CircleList />
+      <InvitesRow />
+    </>
+  );
+}
+
 function CircleList() {
   const { t } = useTranslation();
   const circles = useMyCircles();
@@ -84,7 +118,7 @@ export default function CirclesScreen() {
   return (
     <Screen edges={['bottom']} refreshing={circles.isRefetching} onRefresh={userId ? () => void circles.refetch() : undefined}>
       <PageHeader title={t('circles.title')} lead={t('circles.lead')} />
-      {userId ? <CircleList /> : isRestoringSession ? <CircleListSkeleton /> : <CirclesSignedOut />}
+      {userId ? <Access /> : isRestoringSession ? <CircleListSkeleton /> : <CirclesSignedOut />}
       <Notice icon={Lock}>{t('circles.privacyNote')}</Notice>
     </Screen>
   );

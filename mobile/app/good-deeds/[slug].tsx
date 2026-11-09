@@ -1,8 +1,8 @@
 /**
  * Motivations for one good deed, after the website's good-deed page (good-deeds/[slug]): the deed's name (a paired
  * page's shared title), description and the contemporary note, then the type tabs right under them (owner,
- * 2026-11-01), «ابدأ عادة» on the title's line (the page's ONE primary, owner round 5, F-10 a / A-07; when a catalog
- * habit maps to the deed), then inside the tab: its reward as a next-step note (unpaired only, under «الكل»), the
+ * 2026-11-01), «أضف إلى خطتك» / «مُضاف إلى خطتك» on the title's line (the page's ONE action, round 6 C-12; when a
+ * catalog habit maps to the deed), then inside the tab: its reward as a next-step note (unpaired only, under «الكل»), the
  * reading sections (its merit and reward,
  * the opposite sin's warning, a contemporary topic's derived groups), «من شعب الإيمان», and the opposite sin on an
  * unpaired page.

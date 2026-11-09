@@ -4,12 +4,13 @@
  * the home doors' sizes per screen width.
  */
 
-import { NAV_FEATURES, navFeature, navName } from '@thekra/practice-core';
+import { APP_MORE, NAV_FEATURES, navFeature, navName } from '@thekra/practice-core';
 import ar from '../lib/i18n/ar.json';
 import en from '../lib/i18n/en.json';
 import { MORE_MENU, TABS, moreAction } from '../lib/nav/more-menu';
 import { TAB_PILL, tabIconLook } from '../lib/nav/tab-bar';
-import { HABITS_TABS, parseHabitsTab } from '../lib/practice/habits-view';
+import { HABITS_TABS, HABITS_TAB_FEATURE, parseHabitsTab } from '../lib/practice/hub-view';
+import { HABITS_TABS as CORE_HABITS_TABS } from '@thekra/practice-core';
 import { light } from '../theme/palette';
 import { SMALL_PHONE, TABLET, doorLayout } from '../lib/home/door-layout';
 
@@ -44,12 +45,12 @@ describe('names and places follow the navigation map', () => {
   });
 
   it('lists the plan’s groups in order, each screen once, the settings rows last', () => {
+    // Round 6 (practice-core APP_MORE): the web «المزيد» + «الحديقة», then the settings rows; no «تصفّح النصوص», no people page.
     expect(items.map((i) => i.key)).toEqual([
-      'leave-sin',
-      'circles',
-      'saved',
-      'branches',
       'strategies',
+      'saved',
+      'circles',
+      'garden',
       'account',
       'privacy',
       'notifications',
@@ -57,6 +58,7 @@ describe('names and places follow the navigation map', () => {
       'appearance',
       'about',
     ]);
+    expect(items.map((i) => i.key)).toEqual([...APP_MORE.mine, ...APP_MORE.settings]);
     expect(new Set(items.map((i) => i.path)).size).toBe(items.length);
     // Every app feature of the map's settings group has a row (none is lost with the old settings tab).
     for (const f of NAV_FEATURES.filter((x) => x.group === 'settings' && x.parent === 'settings' && x.app)) {
@@ -64,29 +66,37 @@ describe('names and places follow the navigation map', () => {
     }
   });
 
-  it('names the four «عاداتي» tabs as the map does; `?tab=` opens one, anything else «ورد اليوم»', () => {
-    const keys = { wird: 'wird', periodic: 'periodic', review: 'review', record: 'record' } as const;
+  it('names the five «عاداتي» tabs as the map does; `?tab=` opens one, old links still land, anything else «اليوم»', () => {
+    // Round 6 (§2): «اليوم · العادات · الأعمال الدورية · محاسبتي · سجلّي», in the map's order (HABITS_TABS there).
+    expect(HABITS_TABS.map((tab) => HABITS_TAB_FEATURE[tab])).toEqual([...CORE_HABITS_TABS]);
     for (const tab of HABITS_TABS) {
-      const f = navFeature(keys[tab])!;
+      const f = navFeature(HABITS_TAB_FEATURE[tab])!;
       expect(f.app).toBe(`/habits?tab=${tab}`);
       expect(lookup(ar, `habitsTab.tabs.${tab}`)).toBe(f.ar);
       expect(lookup(en, `habitsTab.tabs.${tab}`)).toBe(f.en);
     }
     expect(parseHabitsTab('review')).toBe('review');
     expect(parseHabitsTab(['record'])).toBe('record');
-    expect(parseHabitsTab('stats')).toBe('wird');
-    expect(parseHabitsTab(undefined)).toBe('wird');
+    expect(parseHabitsTab('habits')).toBe('habits');
+    // Links from earlier builds and notifications.
+    expect(parseHabitsTab('wird')).toBe('today');
+    expect(parseHabitsTab('people')).toBe('periodic');
+    expect(parseHabitsTab('stats')).toBe('today');
+    expect(parseHabitsTab(undefined)).toBe('today');
+    // «صلة الرحم والأحباب» opens inside «الأعمال الدورية», never a tab of its own.
+    expect(navFeature('silat')?.app).toBe('/habits?tab=periodic');
   });
 
   it('asks a guest to sign in for members-only rows, never for reading or account rows', () => {
     // Round 6: «أهلي وناسي» and «تصفّح النصوص» are gone from the map.
     const saved = items.find((i) => i.key === 'saved')!;
-    const branches = items.find((i) => i.key === 'branches')!;
+    const about = items.find((i) => i.key === 'about')!;
     const account = items.find((i) => i.key === 'account')!;
     expect(moreAction(saved, false)).toEqual({ kind: 'signIn', next: '/favorites' });
     expect(moreAction(saved, true)).toEqual({ kind: 'open', href: '/favorites' });
-    expect(moreAction(branches, false)).toEqual({ kind: 'open', href: '/branches' });
+    expect(moreAction(about, false)).toEqual({ kind: 'open', href: '/settings/about' });
     expect(moreAction(account, false)).toEqual({ kind: 'open', href: '/settings/account' });
+    expect(items.some((i) => (i.key as string) === 'browse' || (i.key as string) === 'people')).toBe(false);
   });
 });
 

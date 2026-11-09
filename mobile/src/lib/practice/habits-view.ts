@@ -1,6 +1,6 @@
 /**
- * Pure models of «عاداتي» (owner round 5, §1 IA; docs/plan/2026-11-07-owner-round-5.md): the four segmented tabs and
- * their `?tab=` param, the one heart card of «ورد اليوم» (F-06 / F-35 / A-01: one line and an action that opens a
+ * Pure models of «عاداتي» (owner round 5, §1 IA; docs/plan/2026-11-07-owner-round-5.md; the round-6 tabs are in
+ * hub-view.ts): the one heart card of «ورد اليوم» (F-06 / F-35 / A-01: one line and an action that opens a
  * sheet), the state of «صلّحها» (F-08 a: one good deed after two missed days), the weekly occasions as one row and the
  * next non-weekly one (A-28 a, F-17), the weakest habits of a weekly review (A-12 a), the last review day, and the
  * two optional questions of «أضف» saved as the plan's loop (F-13 a). Kept apart from the screens so a test can hold
@@ -25,15 +25,8 @@ import {
 
 // ── The tabs of «عاداتي» ────────────────────────────────────────────────────────────────────────────────────────
 
-/** In order. The keys are the `?tab=` values of the nav map (`/habits?tab=wird` …). */
-export const HABITS_TABS = ['wird', 'periodic', 'review', 'record'] as const;
-export type HabitsTab = (typeof HABITS_TABS)[number];
-
-/** The tab a link asks for; anything else (none, an old value) opens «ورد اليوم». */
-export function parseHabitsTab(raw: unknown): HabitsTab {
-  const value = Array.isArray(raw) ? raw[0] : raw;
-  return (HABITS_TABS as readonly string[]).includes(value as string) ? (value as HabitsTab) : 'wird';
-}
+/** Round 6: five tabs «اليوم · العادات · الأعمال الدورية · محاسبتي · سجلّي» (hub-view.ts; `?tab=wird` still opens «اليوم»). */
+export { HABITS_TABS, parseHabitsTab, type HabitsTab } from './hub-view';
 
 // ── The heart card ──────────────────────────────────────────────────────────────────────────────────────────────
 

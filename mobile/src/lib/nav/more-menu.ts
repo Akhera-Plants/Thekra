@@ -1,25 +1,22 @@
 /**
- * «المزيد» (owner round 5, §1 IA; docs/plan/2026-11-07-owner-round-5.md): the screens that are not a tab, in three
- * groups and in the plan's order, the settings rows last (the app has no settings tab any more). Every row is a
- * feature of the shared navigation map (practice-core `nav-map.ts`): its route comes from there, and a test holds its
- * Arabic and English label to the map's names, so the app and the website cannot drift apart again.
+ * «المزيد» (round 6 §1, docs/plan/2026-11-09-owner-round-6.md; practice-core `APP_MORE`): the web header's «المزيد»
+ * (الاستراتيجيات، المحفوظات، رفقة) and «الحديقة» (app only), then the settings rows. No «تصفّح النصوص» and no people
+ * page. Every row is a feature of the shared navigation map (practice-core `nav-map.ts`): its route comes from there,
+ * and a test holds its Arabic and English label to the map's names, so the app and the website cannot drift apart.
  *
  * `members` rows open «تسجيل الدخول» for a guest first (then the screen). Icons are chosen in the screen; this list is
  * pure so a test can check it.
  */
 
 import type { Href } from 'expo-router';
-import { navFeature } from '@thekra/practice-core';
+import { APP_MORE, navFeature } from '@thekra/practice-core';
 
-/** The nav-map keys «المزيد» lists. */
-// Round 6 (practice-core nav-map): «أهلي وناسي» and «تصفّح النصوص» are gone. The full round-6 list (APP_MORE) is for
-// the UI work; this list only drops the removed items.
+/** The nav-map keys «المزيد» lists (practice-core `APP_MORE`). */
 export type MoreKey =
-  | 'leave-sin'
-  | 'circles'
-  | 'saved'
-  | 'branches'
   | 'strategies'
+  | 'saved'
+  | 'circles'
+  | 'garden'
   | 'account'
   | 'privacy'
   | 'notifications'
@@ -39,41 +36,24 @@ export interface MoreItem {
 }
 
 export interface MoreGroup {
-  key: 'mine' | 'read' | 'settings';
+  key: 'mine' | 'settings';
   /** i18n key of the group heading (`settings`: the nav-map name «الإعدادات»). */
   titleKey: string;
   items: MoreItem[];
 }
 
-function item(key: MoreKey, members: boolean): MoreItem {
+/** Rows a guest may open without signing in (reading and account rows). */
+const OPEN_TO_GUESTS: ReadonlySet<MoreKey> = new Set(['account', 'privacy', 'appearance', 'about']);
+
+function item(key: MoreKey): MoreItem {
   const app = navFeature(key)?.app;
   if (!app) throw new RangeError(`No app route for ${key}`);
-  return { key, labelKey: `more.items.${key}`, href: app as Href, path: app, members };
+  return { key, labelKey: `more.items.${key}`, href: app as Href, path: app, members: !OPEN_TO_GUESTS.has(key) };
 }
 
 export const MORE_MENU: readonly MoreGroup[] = [
-  {
-    key: 'mine',
-    titleKey: 'more.groups.mine',
-    items: [item('leave-sin', true), item('circles', true), item('saved', true)],
-  },
-  {
-    key: 'read',
-    titleKey: 'more.groups.read',
-    items: [item('branches', false), item('strategies', true)],
-  },
-  {
-    key: 'settings',
-    titleKey: 'more.items.settings',
-    items: [
-      item('account', false),
-      item('privacy', false),
-      item('notifications', true),
-      item('prayer-times', true),
-      item('appearance', false),
-      item('about', false),
-    ],
-  },
+  { key: 'mine', titleKey: 'more.groups.mine', items: APP_MORE.mine.map((k) => item(k as MoreKey)) },
+  { key: 'settings', titleKey: 'more.items.settings', items: APP_MORE.settings.map((k) => item(k as MoreKey)) },
 ];
 
 /** What a tap does: open the screen, or ask a guest to sign in first (then the screen). */

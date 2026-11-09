@@ -1,11 +1,13 @@
 /**
- * «أهلي وناسي» (owner round 5, F-15 a): ONE page for the people a member keeps in touch with, on the device
- * (roadmap §2.4): a nickname and a rhythm per person, never contact details (practice-core `looksLikeContactDetails`
- * through kinship-form.ts). Top to bottom: «هذا الأسبوع» (everyone due or overdue, from every list), then one section
- * per list — الأقارب، الوالدان، الجيران، الأصدقاء، المرضى — each with «أضف» on its title line and the rest of its people.
- * A row has «تواصلت معه» («تراجع» in the toast); its «⋯» holds «عدّل» (the form in a sheet) and «احذف» (confirmed
- * there). A new list counts as one periodic act (7 at most: the limit sheet past it). `?circle=` and `?add=1` (the
- * «أضف» sheet's people templates) open that list's form at once.
+ * «صلة الرحم والأحباب» (owner round 6, §6; C-05, C-10, C-01i): the detail of ONE periodic act inside «الأعمال
+ * الدورية». «أهلي وناسي» does not exist any more: its people lists live HERE, inside the act, never as a page, menu
+ * entry or tab of their own (the route `/practice/kinship` is kept so older links, notifications and the garden still
+ * land; the data is the same `Relative` rows, nothing migrates). A nickname and a rhythm per person, never contact
+ * details (practice-core `looksLikeContactDetails` through kinship-form.ts). Top to bottom: «هذا الأسبوع» (everyone due
+ * or overdue, from every list), then one section per list — الأقارب، الوالدان، الجيران، الأصدقاء، المرضى — each with
+ * «أضف» on its title line. A row has «تواصلت معه» («تراجع» in the toast); its «⋯» holds «عدّل» (the form in a sheet)
+ * and «احذف» (confirmed there). The act counts once toward the 7 periodic acts (practice-core `periodicActKeyOf`).
+ * `?circle=` and `?add=1` open that list's form at once.
  */
 
 import React, { useMemo, useState } from 'react';
@@ -54,7 +56,7 @@ const makeStyles = (t: Theme) => ({
 /** The sections in the plan's order (F-15 a). */
 const ORDER: readonly PeopleCircle[] = ['kin', 'parents', 'neighbors', 'friends', 'sick'];
 
-export default function PeopleScreen() {
+export default function SilatScreen() {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const hydrated = usePracticeStore((s) => s.hydrated);
@@ -130,7 +132,7 @@ export default function PeopleScreen() {
 
   return (
     <Screen edges={['bottom']} keyboard>
-      <PageHeader title={t('more.items.people')} lead={t('habitsTab.people.lead')} />
+      <PageHeader eyebrow={t('habitsTab.tabs.periodic')} title={t('habitsHub.periodic.silat')} lead={t('habitsHub.periodic.silatLead')} />
 
       {nowDue.length > 0 ? (
         <View style={styles.section}>

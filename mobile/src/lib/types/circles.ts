@@ -75,3 +75,38 @@ export interface SendCheerInput {
   message: CheerMessage;
   toMemberId?: string;
 }
+
+/** GET /circles/access (round 6, C-01k): whether رفقة is on for me, and how many invites I can still give. */
+export interface CircleAccess {
+  enabled: boolean;
+  invites: {
+    active: number;
+    activeMax: number;
+    createdInPeriod: number;
+    periodMax: number;
+    periodDays: number;
+    /** What I can create now (both limits applied). */
+    remaining: number;
+    /** Days an invite works. */
+    ttlDays: number;
+  } | null;
+}
+
+export type CircleInviteStatus = 'active' | 'redeemed' | 'revoked' | 'expired';
+
+/** One of my invites. It never says who redeemed it. */
+export interface CircleInvite {
+  id: string;
+  /** Only while `status` is `active`. */
+  code: string | null;
+  status: CircleInviteStatus;
+  circle: { id: string; name: string } | null;
+  expiresAt: string;
+  createdAt: string;
+}
+
+export interface RedeemInviteResult {
+  enabled: true;
+  circle: CircleDetail | null;
+  joinError: string | null;
+}

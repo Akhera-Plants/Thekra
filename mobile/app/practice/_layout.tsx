@@ -1,5 +1,6 @@
 /**
- * Stack for the practice screens: add habit, the habit page, «أهلي وناسي» (kinship), «تخفَّف», «لحظة مجاهدة»,
+ * Stack for the practice screens: add habit, the habit page, «صلة الرحم والأحباب» (kinship: one periodic act's people),
+ * «عمل من عندك» (periodic-custom), «قضاء الفوائت» (qada), «رسائلي إلى نفسي» (self-messages), «تخفَّف», «لحظة مجاهدة»,
  * «استراتيجيات العادات», «أوقات الصلاة», «نص اليوم» and the onboarding. The routes of removed screens (calendar,
  * pledges, reviews, duties, loops, habits, periodic) are plain redirects into «عاداتي» (owner round 5, §1 IA).
  * The native header shows only Back; each screen shows its own title. The `title` options below name the screens for
@@ -26,7 +27,10 @@ export default function PracticeLayout() {
       <Stack.Screen name="add" options={{ title: t('practice.add.title') }} />
       <Stack.Screen name="onboarding" options={{ title: t('onboarding.title'), headerBackVisible: false, gestureEnabled: false }} />
       <Stack.Screen name="plan/[id]" options={{ title: t('practice.title') }} />
-      <Stack.Screen name="kinship" options={{ title: t('more.items.people') }} />
+      <Stack.Screen name="kinship" options={{ title: t('habitsHub.periodic.silat') }} />
+      <Stack.Screen name="periodic-custom" options={{ title: t('habitsHub.periodic.custom') }} />
+      <Stack.Screen name="qada" options={{ title: t('habitsHub.qada.title') }} />
+      <Stack.Screen name="self-messages" options={{ title: t('habitsHub.messages.title') }} />
       <Stack.Screen name="sin-program" options={{ title: t('sinProgram.title') }} />
       <Stack.Screen name="moment" options={{ title: t('sinProgram.moment.title') }} />
       <Stack.Screen name="strategies" options={{ title: t('practice.strategies.title') }} />

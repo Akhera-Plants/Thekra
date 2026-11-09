@@ -9,24 +9,28 @@ import { ActivityIndicator, Pressable, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { CircleAlert, Pause, Play } from 'lucide-react-native';
-import { RECITATION, ayahAudioUrl, stopRecitation, toggleRecitation, useRecitation } from '@/lib/audio/recitation';
+import { chosenReciter, reciterOf } from '@thekra/practice-core';
+import { RECITATION, ayahAudioUrl, recitationKey, stopRecitation, toggleRecitation, useRecitation } from '@/lib/audio/recitation';
+import { usePracticeStore } from '@/lib/practice/practice-store';
 import { radius, useTheme } from '@/theme';
 import { Icon } from '@/ui';
 
-export function VerseAudioButton({ surah, ayah }: { surah: number; ayah: number }) {
+export function VerseAudioButton({ surah, ayah, previewReciter }: { surah: number; ayah: number; previewReciter?: string }) {
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();
-  const key = `${surah}:${ayah}`;
+  const key = recitationKey(surah, ayah, previewReciter);
+  const chosen = usePracticeStore((s) => chosenReciter(s.store));
   const state = useRecitation((s) => (s.key === key ? s.state : 'idle'));
   // Leaving the screen (or unmounting the card) stops this verse.
   useFocusEffect(useCallback(() => () => stopRecitation(key), [key]));
   if (!RECITATION.enabled || !ayahAudioUrl(surah, ayah)) return null;
-  const reciter = i18n.language === 'en' ? RECITATION.reciterEn : RECITATION.reciterAr;
+  const who = previewReciter ? reciterOf(previewReciter) : chosen;
+  const reciter = i18n.language === 'en' ? who.en : who.ar;
   const active = state === 'playing' || state === 'loading';
   const label = active ? t('audio.pause') : state === 'error' ? t('audio.error') : t('audio.play', { reciter });
   return (
     <Pressable
-      onPress={() => toggleRecitation(surah, ayah)}
+      onPress={() => toggleRecitation(surah, ayah, previewReciter)}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ busy: state === 'loading', selected: active }}

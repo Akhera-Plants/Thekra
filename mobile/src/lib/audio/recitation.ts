@@ -1,6 +1,7 @@
 /**
- * Quran recitation for verse cards (owner round 5, F-03 a): one ayah streamed from a per-ayah source, one reciter,
- * never hadith. One recitation plays at a time in the whole app; a new one stops the last. The screen that started it
+ * Quran recitation for verse cards (owner round 5, F-03 a; round 6 §8 «Audio»): one ayah streamed from a per-ayah
+ * source, in the reciter the member chose in the settings (practice-core `reciters.ts`: `RECITERS`, `chosenReciter`,
+ * `ayahAudioUrl`), never hadith. One recitation plays at a time in the whole app; a new one stops the last. The screen that started it
  * stops it when it loses focus (VerseAudioButton).
  *
  * SOURCE: everything about the source is in `RECITATION` below, so it can be changed or switched off in one place.
@@ -15,16 +16,27 @@
 
 import { create } from 'zustand';
 import type { AudioPlayer, AudioStatus } from 'expo-audio';
+import { ayahAudioUrl as reciterAyahUrl, chosenReciter, reciterOf, type Reciter } from '@thekra/practice-core';
 
 export const RECITATION = {
   /** Switch the play button off everywhere. */
   enabled: true,
-  /** Per-ayah files: `${base}${SSS}${AAA}.mp3`. */
+  /** Per-ayah files of the default reciter: `${base}${SSS}${AAA}.mp3` (the others: practice-core `RECITERS`). */
   base: 'https://everyayah.com/data/Alafasy_128kbps/',
-  /** The reciter's name for the button's label. */
-  reciterAr: 'مشاري العفاسي',
-  reciterEn: 'Mishary Alafasy',
 } as const;
+
+/** The member's reciter (settings, synced), else the default. */
+export function currentReciter(): Reciter {
+  // Read lazily: the store module loads AsyncStorage, which tests of the pure helpers here do not need.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { usePracticeStore } = require('@/lib/practice/practice-store') as typeof import('@/lib/practice/practice-store');
+  return chosenReciter(usePracticeStore.getState().store);
+}
+
+/** The player key of one ayah in one reciter (a preview in the settings is another key than the same ayah on a card). */
+export function recitationKey(surah: number, ayah: number, reciterKey?: string): string {
+  return reciterKey ? `${reciterKey}|${surah}:${ayah}` : `${surah}:${ayah}`;
+}
 
 const pad3 = (n: number) => String(Math.trunc(n)).padStart(3, '0');
 
@@ -66,10 +78,13 @@ function ensurePlayer(): AudioPlayer {
   return player;
 }
 
-/** Plays the ayah, or pauses it when it is the one playing. Any other recitation stops first. */
-export function toggleRecitation(surah: number, ayah: number): void {
-  const key = `${surah}:${ayah}`;
-  const url = ayahAudioUrl(surah, ayah);
+/**
+ * Plays the ayah, or pauses it when it is the one playing. Any other recitation stops first. `previewReciter` plays
+ * it in that reciter (the settings' preview); otherwise the member's reciter.
+ */
+export function toggleRecitation(surah: number, ayah: number, previewReciter?: string): void {
+  const key = recitationKey(surah, ayah, previewReciter);
+  const url = reciterAyahUrl(surah, ayah, reciterOf(previewReciter ?? currentReciter().key).key);
   if (!url || !RECITATION.enabled) return;
   const current = useRecitation.getState();
   try {

@@ -3,36 +3,34 @@
  * hides itself when it has nothing to show:
  * - «ورد اليوم» (members): the day's progress, a circle for each habit not yet logged (it logs right here, with
  *   «تراجع» in the toast; O-03), and «افتح ورد اليوم»;
- * - «نص اليوم» (F-23): one text a day from the source chosen on `practice/daily-text` (its «⋯» opens that picker);
  * - «شعبة الأسبوع» (F-18): one compact row;
  * - «مناسبة قريبة» (F-17): the next non-weekly occasion within ~10 days (hidden when none);
- * - «أبواب الخير» (F-10 a: honest labels «اقرأ في فضل الطاعات», «اقرأ في المعاصي وعلاجها»), «في لحظات مثل هذه»,
- *   «تذكرة مختارة» and «المصادر»;
+ * - «أبواب الخير» (round 6, C-06: the reference's drawings and the website's action colours, `HomeDoors`);
+ * - «في لحظات مثل هذه» (round 6, C-09: our list from `GET /v1/home-moments`, the same for every user; hidden when
+ *   empty), «تذكرة مختارة» and «المصادر»;
  * and «خصّص الرئيسية»: the edit sheet (a switch and «أعلى» / «أسفل» per section), saved with practice-core
- * `setHomeSections` so it syncs.
+ * `setHomeSections` so it syncs. Round 6 (C-04): it opens from the settings («اللغة والمظهر»), never from the home page.
+ * «نص اليوم» is gone (C-01q).
  */
 
 import React, { useMemo, useState } from 'react';
-import { Pressable, View, useWindowDimensions } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { router, type Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import {
-  BookOpen,
   CalendarDays,
   Check,
   ChevronDown,
   ChevronUp,
-  DoorOpen,
   Heart,
   MessageCircle,
   Pause,
-  Sprout,
+  Sparkles,
   Sun,
   type LucideIcon,
 } from 'lucide-react-native';
 import {
   correctLog,
-  dailyPick,
   dayCompletion,
   HOME_SECTIONS,
   homeSectionsToStore,
@@ -44,12 +42,10 @@ import {
   type HomeSectionPref,
   type LocalDate,
 } from '@thekra/practice-core';
-import { useEvidence, usePracticeCatalog } from '@/lib/api/practice';
+import { useHomeMoments } from '@/lib/api/home-moments';
+import { usePracticeCatalog } from '@/lib/api/practice';
 import { useReminderOfTheDay } from '@/lib/api/quotes';
-import { useReminderSets } from '@/lib/api/reminder-sets';
-import { useFavorites } from '@/lib/api/favorites';
 import { useSourceStripNames } from '@/lib/api/sources';
-import { doorLayout } from '@/lib/home/door-layout';
 import { homeEditRows, moveSectionBy, toggleSection } from '@/lib/home/home-edit';
 import { pick } from '@/lib/practice/catalog-types';
 import { dayMonth } from '@/lib/practice/calendar-grid';
@@ -58,14 +54,13 @@ import { today as todayFn, usePracticeStore } from '@/lib/practice/practice-stor
 import { habitFor } from '@/lib/practice/reminders';
 import { useAgendaRows, useDateNames, useDayAgenda, usePlanDays } from '@/lib/practice/use-habits-hub';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
-import { QuoteLine } from '@/components/QuoteLine';
 import { FeaturedReminder } from '@/components/home/FeaturedReminder';
+import { HomeDoors } from '@/components/home/HomeDoors';
 import { SourceStrip } from '@/components/home/SourceStrip';
 import { HabitRow } from '@/components/practice/hub/AgendaRows';
 import { WeekBranchCard } from '@/components/practice/hub/KnowledgeCards';
 import { radius, space, useStyles, type Theme } from '@/theme';
 import {
-  ActionMenu,
   BottomSheet,
   Button,
   ButtonPair,
@@ -73,7 +68,6 @@ import {
   Icon,
   IconButton,
   ListRow,
-  PathwayCard,
   Section,
   SectionHeader,
   Text,
@@ -91,10 +85,6 @@ const makeStyles = (t: Theme) => ({
     flexDirection: 'row' as const,
   },
   progressFill: { height: 8, borderRadius: radius.full, backgroundColor: t.colors.primary },
-  doors: { gap: space.md, width: '100%' as const, alignSelf: 'center' as const },
-  mainDoors: { gap: space.md },
-  mainDoorsRow: { flexDirection: 'row' as const, alignItems: 'stretch' as const },
-  mainDoorRow: { flex: 1 },
   occasion: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
@@ -120,19 +110,8 @@ const makeStyles = (t: Theme) => ({
   editTitle: { flex: 1, minWidth: 0 },
 });
 
-interface Moment {
-  href: Href;
-  labelKey: string;
-  icon: LucideIcon;
-}
-
-/** The site's curated moments (frontend/src/components/home/Moments.tsx), on the app's topic routes. */
-const MOMENTS: Moment[] = [
-  { href: '/sins/ghadab', labelKey: 'home.momentAnger', icon: Pause },
-  { href: '/good-deeds/salah', labelKey: 'home.momentPrayer', icon: Sun },
-  { href: '/sins/ghibah', labelKey: 'home.momentBackbiting', icon: MessageCircle },
-  { href: '/good-deeds/kalam-tayyib', labelKey: 'home.momentKindness', icon: Heart },
-];
+/** The API's icon keys (home-moments.yaml) on lucide glyphs; an unknown key gets a neutral one. */
+const MOMENT_ICONS: Record<string, LucideIcon> = { pause: Pause, sun: Sun, 'message-circle': MessageCircle, heart: Heart };
 
 /** The title of a section, shared with the web (practice-core `HOME_SECTIONS`). */
 export function useSectionTitle(key: HomeSectionKey): string {
@@ -150,7 +129,8 @@ export function HomeSection({ name, today, before }: { name: HomeSectionKey; tod
     case 'wird':
       return <WirdSection today={today} before={before} />;
     case 'daily-text':
-      return <DailyTextSection today={today} before={before} />;
+      // Removed in round 6 (C-01q); a stored order may still name it.
+      return null;
     case 'week-branch':
       return <WeekBranchCard today={today} before={before} />;
     case 'occasion':
@@ -269,73 +249,6 @@ function WirdSection({ today, before }: { today: LocalDate } & Before) {
   );
 }
 
-// ── «نص اليوم» ─────────────────────────────────────────────────────────────────────────────────────────────
-
-/**
- * One text for today from the chosen source (the same `dailyPick` the widget uses): a reminder set, the saved texts,
- * the member's own lines, or one habit's texts. «مواسم الخير» (the old default, gone with F-17) reads the texts of the
- * member's habits, else the first reminder set.
- */
-function DailyTextSection({ today, before }: { today: LocalDate } & Before) {
-  const { t } = useTranslation();
-  const locale = useUiLocale();
-  const styles = useStyles(makeStyles);
-  const source = usePracticeStore((s) => s.prefs.todayText);
-  const mine = usePracticeStore((s) => s.prefs.myReminders);
-  const plans = usePracticeStore((s) => s.store.plans);
-  const habits = usePracticeCatalog(locale).data?.habits ?? [];
-  const sets = useReminderSets();
-  const saved = useFavorites();
-  const habitIds = useMemo(() => {
-    if (source.kind === 'habit') return habits.find((h) => h.key === source.habitKey)?.evidence ?? [];
-    if (source.kind === 'seasons') return plans.flatMap((p) => habitFor(p, habits)?.evidence ?? []);
-    return [];
-  }, [source, habits, plans]);
-  const habitTexts = useEvidence(dailyPick(habitIds, today) ? [dailyPick(habitIds, today) as string] : [], locale);
-  const title = useSectionTitle('daily-text');
-
-  let body: React.ReactNode = null;
-  if (source.kind === 'mine') {
-    const line = dailyPick(mine, today);
-    body = line ? (
-      <Text variant="reading">{line.text}</Text>
-    ) : (
-      <Text variant="small" tone="muted">
-        {t('homeSections.dailyText.mineEmpty')}
-      </Text>
-    );
-  } else {
-    const quotes =
-      source.kind === 'set'
-        ? (sets.data?.find((s) => s.slug === source.slug)?.items ?? [])
-        : source.kind === 'saved'
-          ? (saved.data ?? [])
-          : habitIds.length > 0
-            ? [...(habitTexts.data?.values() ?? [])]
-            : (sets.data?.[0]?.items ?? []);
-    const quote = habitIds.length > 0 && (source.kind === 'habit' || source.kind === 'seasons') ? quotes[0] : dailyPick(quotes, today);
-    body = quote ? <QuoteLine quote={quote} numberOfLines={6} /> : null;
-  }
-  if (!body) return null;
-  return (
-    <>
-      {before}
-      <View style={styles.section}>
-        <SectionHeader
-          title={title}
-          action={
-            <ActionMenu
-              label={t('homeSections.dailyText.menu')}
-              items={[{ label: t('homeSections.dailyText.source'), icon: BookOpen, onPress: () => router.push('/practice/daily-text') }]}
-            />
-          }
-        />
-        {body}
-      </View>
-    </>
-  );
-}
-
 // ── «مناسبة قريبة» ─────────────────────────────────────────────────────────────────────────────────────────
 
 function OccasionSection({ today, before }: { today: LocalDate } & Before) {
@@ -388,69 +301,38 @@ function OccasionSection({ today, before }: { today: LocalDate } & Before) {
 // ── The public sections ────────────────────────────────────────────────────────────────────────────────────
 
 function DoorsSection({ before }: Before) {
-  const { t } = useTranslation();
   const styles = useStyles(makeStyles);
-  const { width } = useWindowDimensions();
-  const layout = doorLayout(width);
-  const twoUp = layout.columns === 2;
   const title = useSectionTitle('doors');
   return (
     <>
       {before}
       <View style={styles.section}>
         <SectionHeader title={title} />
-        <View style={[styles.doors, { maxWidth: layout.maxWidth }]}>
-          <View style={[styles.mainDoors, twoUp && styles.mainDoorsRow]}>
-            <PathwayCard
-              primary
-              icon={Sprout}
-              label={t('home.deedOverline')}
-              title={t('home.deedEntryLabel')}
-              body={t('home.deedEntryDescription')}
-              action={t('home.deedCta')}
-              onPress={() => router.push('/good-deeds')}
-              layout={layout}
-              style={twoUp ? styles.mainDoorRow : undefined}
-            />
-            <PathwayCard
-              icon={DoorOpen}
-              label={t('home.sinOverline')}
-              title={t('home.sinEntryLabel')}
-              body={t('home.sinEntryDescription')}
-              action={t('home.sinCta')}
-              onPress={() => router.push('/sins')}
-              layout={layout}
-              style={twoUp ? styles.mainDoorRow : undefined}
-            />
-          </View>
-          <PathwayCard
-            size="row"
-            icon={BookOpen}
-            title={t('home.branchEntryLabel')}
-            body={t('home.branchEntryDescription')}
-            action={t('home.branchCta')}
-            onPress={() => router.push('/branches')}
-          />
-        </View>
+        <HomeDoors />
       </View>
     </>
   );
 }
 
 function MomentsSection({ before }: Before) {
-  const { t } = useTranslation();
+  const title = useSectionTitle('moments');
+  const moments = useHomeMoments();
+  const list = moments.data ?? [];
+  // Ours, from the API; nothing to show (none published, loading, offline without a cache): no section, no divider.
+  if (list.length === 0) return null;
   return (
     <>
       {before}
-      <Section title={t('home.momentsHeading')}>
+      <Section title={title}>
         <View>
-          {MOMENTS.map((moment, i) => (
+          {list.map((moment, i) => (
             <ListRow
-              key={moment.labelKey}
-              icon={moment.icon}
-              title={t(moment.labelKey)}
-              onPress={() => router.push(moment.href)}
-              last={i === MOMENTS.length - 1}
+              key={moment.key}
+              icon={MOMENT_ICONS[moment.icon] ?? Sparkles}
+              title={moment.label}
+              hint={moment.situation ?? undefined}
+              onPress={() => router.push(moment.topic.path as Href)}
+              last={i === list.length - 1}
             />
           ))}
         </View>

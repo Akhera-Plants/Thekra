@@ -71,6 +71,8 @@ export interface TopicSection {
   data: QuoteDto[];
   /** The link note of each text that has one, by quote id. */
   notes: Record<string, string>;
+  /** The topic↔text link id of each text, by quote id (the reader's «وجه التذكير», round 6). */
+  links: Record<string, string>;
 }
 
 export interface TopicSectionOptions {
@@ -84,11 +86,13 @@ export interface TopicSectionOptions {
 export function buildTopicSections(pages: readonly TopicPageData[], options: TopicSectionOptions): TopicSection[] {
   const seen = new Set<string>();
   const notes: Record<string, string> = {};
+  const links: Record<string, string> = {};
   const fresh = (rows: readonly TopicText[]) =>
     rows.flatMap((row) => {
       if (seen.has(row.quote.id)) return [];
       seen.add(row.quote.id);
       if (row.link.note) notes[row.quote.id] = row.link.note;
+      if (row.link.id) links[row.quote.id] = row.link.id;
       return [row.quote];
     });
 
@@ -100,7 +104,7 @@ export function buildTopicSections(pages: readonly TopicPageData[], options: Top
   }
   if (!options.sectioned) {
     const flat = [...own, ...companion];
-    return flat.length > 0 ? [{ key: 'all', title: null, data: flat, notes }] : [];
+    return flat.length > 0 ? [{ key: 'all', title: null, data: flat, notes, links }] : [];
   }
 
   // Derived groups come page by page like the topic's own texts: one group per topic across the pages.
@@ -115,9 +119,22 @@ export function buildTopicSections(pages: readonly TopicPageData[], options: Top
   }
 
   const sections: TopicSection[] = [
-    { key: 'own', title: options.ownTitle, data: own, notes },
-    { key: 'companion', title: options.companionTitle, data: companion, notes },
-    ...[...groups.entries()].map(([key, { group, data }]) => ({ key: `derived:${key}`, title: options.groupTitle(group), data, notes })),
+    { key: 'own', title: options.ownTitle, data: own, notes, links },
+    { key: 'companion', title: options.companionTitle, data: companion, notes, links },
+    ...[...groups.entries()].map(([key, { group, data }]) => ({ key: `derived:${key}`, title: options.groupTitle(group), data, notes, links })),
   ];
   return sections.filter((section) => section.data.length > 0);
+}
+
+/** «مقروء» / «غير مقروء» filter of a topic page (round 6, owner chat). */
+export type ReadFilter = 'all' | 'unread' | 'read';
+
+/**
+ * The sections with only the texts the filter keeps (`read`: ids marked read); a section left empty is dropped. The
+ * API's reading order is kept.
+ */
+export function filterSectionsByRead(sections: readonly TopicSection[], filter: ReadFilter, read: ReadonlySet<string>): TopicSection[] {
+  if (filter === 'all') return [...sections];
+  const keep = (id: string) => read.has(id.toLowerCase()) === (filter === 'read');
+  return sections.map((s) => ({ ...s, data: s.data.filter((q) => keep(q.id)) })).filter((s) => s.data.length > 0);
 }

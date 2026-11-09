@@ -22,6 +22,8 @@ export type ShareLocale = 'ar' | 'en';
 export interface QuoteShareLabels {
   /** «أثر، وليس حديثًا» / its English wording. */
   atharNotice: string;
+  /** The closing line before the link (round 6, C-08): «بواسطة تطبيق ذكرى» / "via the Thekra app". */
+  sharedVia?: string;
   /** «رواه {{speaker}}» */
   atharNarrated: (speaker: string) => string;
   /** Grade words keyed by HadithGrade (SAHIH, HASAN, …). */
@@ -101,15 +103,36 @@ export function quoteAttribution(quote: QuoteDto, labels: QuoteShareLabels, loca
   return lines.map(toWesternDigits);
 }
 
+/**
+ * One paragraph of running text (round 6, C-08: «معمولله راب»): the line breaks and runs of spaces a stored text may
+ * carry (verse ends, OCR columns) become single spaces, so the messaging app wraps it naturally. Letters, marks and
+ * punctuation are untouched.
+ */
+export function flowingText(text: string): string {
+  return text.replace(/\s*\n+\s*/g, ' ').replace(/[ \t\u00a0]{2,}/g, ' ').trim();
+}
+
+/** The text between its own marks: ﴿…﴾ for a verse, «…» for the rest, unless the stored text already has them. */
+function quoted(quote: QuoteDto): string {
+  const text = flowingText(quote.textAr);
+  if (quote.type === QuoteType.QURAN_VERSE) return /^﴿[\s\S]*﴾$/.test(text) ? text : `﴿${text}﴾`;
+  return /^[«"“][\s\S]*[»"”]$/.test(text) ? text : `«${text}»`;
+}
+
+/**
+ * The shared text (round 6, C-08): the text as one flowing paragraph in its marks, the translation when the card shows
+ * the sourced one, the attribution lines, then «بواسطة تطبيق ذكرى» and the link on the line under it. Nothing else.
+ */
 export function quoteShareText(
   quote: QuoteDto,
   options: { locale: ShareLocale; showTranslation: boolean; labels: QuoteShareLabels },
 ): string {
-  const parts = [quote.textAr.trim()];
+  const parts = [quoted(quote)];
   const translation = options.showTranslation ? quote.translation?.text?.trim() : null;
-  if (translation) parts.push(translation);
+  if (translation) parts.push(flowingText(translation));
   const attribution = quoteAttribution(quote, options.labels, options.locale);
   if (attribution.length > 0) parts.push(attribution.join('\n'));
-  parts.push(quotePageUrl(quote.id, options.locale));
+  const link = quotePageUrl(quote.id, options.locale);
+  parts.push(options.labels.sharedVia ? `${options.labels.sharedVia}\n${link}` : link);
   return parts.join('\n\n');
 }

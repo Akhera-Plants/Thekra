@@ -5,17 +5,24 @@
  *   at the end.
  * - Body: Uthmani verse text in Amiri Quran; hadith and sayings in Plex at reading size. English UI with a
  *   translation shows it in Source Serif under the Arabic.
- * - «لماذا هذه الآية؟» / «لماذا هذا الحديث؟» (QuoteWhy): the link note and a short tafsir or sharh, opened in place.
- * - «اقرأ التفسير» (verses) / «اقرأ الشرح» (hadith): the card's main action, the study sheet (quotes/study/[id]).
+ * - ONE action (owner round 6, C-12): «عرض التفسير» (verses) / «عرض الشرح» (hadith), opening the reader
+ *   (quotes/study/[id]: the text, «وجه التذكير» for the topic link `linkId`, the tafsirs or sharh inline). No «لماذا
+ *   هذه الآية؟» and no separate tafsir button any more.
+ * - On a topic page, the read mark (round 6, owner chat; practice-core `reads.ts`): «مقروء» / «غير مقروء» beside the
+ *   action; a tap switches it. The reader marks a text read when it opens.
  * - Tapping the text opens the quote page, except on that page.
- * Share sends the text, its attribution and the public link only, never anything about the user.
+ * Share opens the share sheet (text or image, C-08); it sends the text, its attribution and the public link only,
+ * never anything about the user.
  */
 
-import React, { useCallback } from 'react';
-import { Pressable, Share, View } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { Pressable, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { BookMarked, BookOpen, Bookmark, BookmarkCheck, MessageSquareQuote, Share2, type LucideIcon } from 'lucide-react-native';
+import { BookMarked, BookOpen, Bookmark, BookmarkCheck, Check, Circle, MessageSquareQuote, Share2, type LucideIcon } from 'lucide-react-native';
+import { isQuoteId, setRead } from '@thekra/practice-core';
+import { usePracticeStore } from '@/lib/practice/practice-store';
+import { ShareSheet } from '@/components/share/ShareSheet';
 import { radius, space, useStyles, type Theme } from '@/theme';
 import { Button, IconButton } from '@/ui/Button';
 import { Icon } from '@/ui/Icon';
@@ -24,10 +31,9 @@ import { Notice } from '@/ui/feedback';
 import { GradeBadge } from './GradeBadge';
 import { VerseAudioButton } from './VerseAudioButton';
 import { stripOuterQuotes } from '@/lib/quote-text';
-import { QuoteWhy } from './QuoteWhy';
 import { HadithGrade, QuoteType } from '@/lib/types/enums';
 import type { QuoteDto } from '@/lib/types/api';
-import { atharSpeakerLine, gradeCitationLine, quoteShareText, type QuoteShareLabels } from '@/lib/share/quote-share';
+import { atharSpeakerLine, gradeCitationLine, type QuoteShareLabels } from '@/lib/share/quote-share';
 
 interface QuoteCardProps {
   quote: QuoteDto;
@@ -37,10 +43,12 @@ interface QuoteCardProps {
   shareable?: boolean;
   /** On the quote page itself: the site's weak and «ليس من الصحيحين» notices, and the text does not link to the page. */
   detail?: boolean;
-  /** The topic link's note (`TopicText.link.note`): shown under «لماذا…؟» when it is a public attribution. */
-  linkNote?: string | null;
-  /** «اقرأ الشرح»: bordered on lists (default), solid only on the quote's own page where it is the main action. */
+  /** The topic↔text link (`TopicText.link.id`): the reader shows that link's «وجه التذكير». */
+  linkId?: string | null;
+  /** «عرض التفسير»: bordered on lists (default), solid only on the quote's own page where it is the main action. */
   primaryExplain?: boolean;
+  /** Show the read mark «مقروء» / «غير مقروء» (topic pages). */
+  showRead?: boolean;
 }
 
 const TYPE: Record<QuoteType, { key: string; icon: LucideIcon }> = {
@@ -86,11 +94,14 @@ const makeStyles = (t: Theme) => ({
   },
   capsuleRule: { width: 1, height: 12, backgroundColor: t.colors.border },
   actions: { flexDirection: 'row' as const, alignItems: 'center' as const },
+  foot: { flexDirection: 'row' as const, alignItems: 'center' as const, flexWrap: 'wrap' as const, gap: space.md },
+  explain: { flexGrow: 1 },
+  read: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 6, minHeight: 44, paddingHorizontal: space.xs },
   body: { gap: space.sm },
   bodyPressed: { opacity: 0.7 },
 });
 
-export function QuoteCard({ quote, isFavorite = false, onToggleFavorite, shareable = true, detail, linkNote, primaryExplain = false }: QuoteCardProps) {
+export function QuoteCard({ quote, isFavorite = false, onToggleFavorite, shareable = true, detail, linkId, primaryExplain = false, showRead = false }: QuoteCardProps) {
   const { t, i18n } = useTranslation();
   const styles = useStyles(makeStyles);
   const arabicUI = i18n.language !== 'en';
@@ -117,7 +128,14 @@ export function QuoteCard({ quote, isFavorite = false, onToggleFavorite, shareab
   const isWeak = grade === HadithGrade.DAIF || grade === HadithGrade.MAWDU;
   const isOutsideSahihayn = isHadith && Boolean(quote.hadith?.outsideSahihayn);
   const handleOpenQuote = useCallback(() => router.push(`/quotes/${quote.id}`), [quote.id]);
-  const handleOpenStudy = useCallback(() => router.push(`/quotes/study/${quote.id}`), [quote.id]);
+  const handleOpenStudy = useCallback(
+    () => router.push(linkId ? { pathname: '/quotes/study/[id]', params: { id: quote.id, linkId } } : `/quotes/study/${quote.id}`),
+    [quote.id, linkId],
+  );
+  const [sharing, setSharing] = useState(false);
+  const read = usePracticeStore((s) => (showRead ? (s.store.reads ?? []).some((m) => m.quoteId === quote.id.toLowerCase() && m.read) : false));
+  const setStore = usePracticeStore((s) => s.setStore);
+  const canMarkRead = showRead && isQuoteId(quote.id);
 
   const body = (
     <>
@@ -128,19 +146,6 @@ export function QuoteCard({ quote, isFavorite = false, onToggleFavorite, shareab
       {translation ? <Text variant="body">{translation}</Text> : null}
     </>
   );
-
-  async function handleShare() {
-    const message = quoteShareText(quote, {
-      locale: arabicUI ? 'ar' : 'en',
-      showTranslation: Boolean(translation),
-      labels: shareLabels,
-    });
-    try {
-      await Share.share({ message });
-    } catch {
-      // Dismissed or unavailable: nothing to do.
-    }
-  }
 
   return (
     <View style={styles.card} accessibilityLabel={typeLabel}>
@@ -235,7 +240,7 @@ export function QuoteCard({ quote, isFavorite = false, onToggleFavorite, shareab
             <VerseAudioButton surah={quote.quran.surahNumber} ayah={quote.quran.ayahNumber} />
           ) : null}
           {shareable && (isQuran || isHadith) ? (
-            <IconButton icon={Share2} label={t('share.action')} onPress={() => void handleShare()} />
+            <IconButton icon={Share2} label={t('share.action')} onPress={() => setSharing(true)} />
           ) : null}
           {onToggleFavorite ? (
             <IconButton
@@ -268,16 +273,38 @@ export function QuoteCard({ quote, isFavorite = false, onToggleFavorite, shareab
         </Pressable>
       )}
 
-      <QuoteWhy quote={quote} linkNote={linkNote} />
-
-      {isQuran || isHadith ? (
-        <Button
-          icon={BookMarked}
-          label={isQuran ? t('study.openTafsir') : t('study.openSharh')}
-          onPress={handleOpenStudy}
-          variant={primaryExplain ? 'solid' : 'outline'}
-          block
-        />
+      {isQuran || isHadith || canMarkRead ? (
+        <View style={styles.foot}>
+          {isQuran || isHadith ? (
+            <View style={styles.explain}>
+              <Button
+                icon={BookMarked}
+                label={isQuran ? t('study.showTafsir') : t('study.showSharh')}
+                onPress={handleOpenStudy}
+                variant={primaryExplain ? 'solid' : 'outline'}
+                block
+              />
+            </View>
+          ) : null}
+          {canMarkRead ? (
+            <Pressable
+              onPress={() => setStore((s) => setRead(s, quote.id, !read))}
+              accessibilityRole="button"
+              accessibilityState={{ checked: read }}
+              accessibilityLabel={read ? t('reads.markUnread') : t('reads.markRead')}
+              hitSlop={4}
+              style={({ pressed }) => [styles.read, pressed && { opacity: 0.7 }]}
+            >
+              <Icon icon={read ? Check : Circle} size={15} tone={read ? 'link' : 'muted'} />
+              <Text variant="caption" tone={read ? 'link' : 'muted'}>
+                {read ? t('reads.read') : t('reads.unread')}
+              </Text>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : null}
+      {shareable && sharing ? (
+        <ShareSheet quote={quote} visible={sharing} onClose={() => setSharing(false)} showTranslation={Boolean(translation)} />
       ) : null}
     </View>
   );

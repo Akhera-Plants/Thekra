@@ -12,6 +12,7 @@ import {
   DEFAULT_TODAY_TEXT_SOURCE,
   isValidTime,
   parseMyReminders,
+  parseNotificationPrefs,
   parsePrayerCache,
   parsePrayerSettings,
   parseTodayTextSource,
@@ -71,11 +72,27 @@ export interface PracticePrefs {
   showHijri: boolean;
   /**
    * «مناسبة قريبة» (owner round 5, F-17): one reminder the evening before a coming occasion of the catalog (Arafah, the
-   * white days…). Opt-in, off by default. (The weekly strategy reminder and its prefs were removed in round 5, F-12 a;
-   * older stored `strategies` / `strategyReminders` / `strategyTime` values are ignored when read.)
+   * white days…). Opt-in, off by default.
    */
   occasionReminders: boolean;
   occasionTime: LocalTime;
+  /**
+   * Round 6 (C-19, practice-core `NotificationPrefs`): the weekly strategy reminder is back (the chosen strategies, one
+   * a week rotating, on the member's day and time; none chosen = none planned), the «نية اليوم» reminder (opt-in), and
+   * one switch per habit / periodic plan (`mutedPlans`, by plan id) and per periodic act (`mutedActs`, by
+   * practice-core `periodic.ts` key; `silat` = every people list).
+   */
+  /**
+   * The strategies chosen in round 6 (practice-core `NotificationPrefs.strategies`). A new key on purpose: the round-4
+   * `strategies` some devices still store were dropped in round 5 (F-12 a) and must not come back unasked.
+   */
+  weeklyStrategies: string[];
+  strategyDay: number;
+  strategyTime: LocalTime;
+  intentionReminder: boolean;
+  intentionTime: LocalTime;
+  mutedPlans: string[];
+  mutedActs: string[];
   /** «تذكيراتي» (phase 6): the user's own short lines, on this device only (≤ 120 characters, at most 20). */
   myReminders: MyReminder[];
   /** «أوقات الصلاة»: the city whose prayer times anchor «بعد الفجر»… slots; null = default times. */
@@ -105,6 +122,13 @@ export const DEFAULT_PREFS: PracticePrefs = {
   showHijri: false,
   occasionReminders: DEFAULT_NOTIFICATION_PREFS.occasions,
   occasionTime: DEFAULT_NOTIFICATION_PREFS.occasionTime,
+  weeklyStrategies: [],
+  strategyDay: DEFAULT_NOTIFICATION_PREFS.strategyDay,
+  strategyTime: DEFAULT_NOTIFICATION_PREFS.strategyTime,
+  intentionReminder: DEFAULT_NOTIFICATION_PREFS.intentionReminder,
+  intentionTime: DEFAULT_NOTIFICATION_PREFS.intentionTime,
+  mutedPlans: [],
+  mutedActs: [],
   myReminders: [],
   prayer: null,
   prayerCache: null,
@@ -126,7 +150,15 @@ export function parsePrefs(json: unknown): PracticePrefs {
   }
   if (!isRecord(raw) || raw.v !== 1) return { ...DEFAULT_PREFS, myReminders: [] };
   const bool = (k: keyof PracticePrefs) => (typeof raw[k] === 'boolean' ? (raw[k] as boolean) : (DEFAULT_PREFS[k] as boolean));
-  const time = (k: 'kinshipTime' | 'sinReminderTime' | 'eveningTime' | 'fridayTime' | 'occasionTime') => (isValidTime(raw[k]) ? (raw[k] as string) : DEFAULT_PREFS[k]);
+  const time = (k: 'kinshipTime' | 'sinReminderTime' | 'eveningTime' | 'fridayTime' | 'occasionTime' | 'strategyTime' | 'intentionTime') =>
+    isValidTime(raw[k]) ? (raw[k] as string) : DEFAULT_PREFS[k];
+  // The round-6 switches are read through practice-core's own parser (known strategy keys, bounded id lists).
+  const notify = parseNotificationPrefs({
+    strategies: raw.weeklyStrategies,
+    strategyDay: raw.strategyDay,
+    mutedPlans: raw.mutedPlans,
+    mutedActs: raw.mutedActs,
+  });
   return {
     v: 1,
     habitReminders: bool('habitReminders'),
@@ -145,6 +177,13 @@ export function parsePrefs(json: unknown): PracticePrefs {
     showHijri: bool('showHijri'),
     occasionReminders: bool('occasionReminders'),
     occasionTime: time('occasionTime'),
+    weeklyStrategies: notify.strategies,
+    strategyDay: notify.strategyDay,
+    strategyTime: time('strategyTime'),
+    intentionReminder: bool('intentionReminder'),
+    intentionTime: time('intentionTime'),
+    mutedPlans: notify.mutedPlans,
+    mutedActs: notify.mutedActs,
     myReminders: parseMyReminders(raw.myReminders),
     prayer: parsePrayerSettings(raw.prayer),
     prayerCache: parsePrayerCache(raw.prayerCache),

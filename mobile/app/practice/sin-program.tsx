@@ -21,7 +21,7 @@
  * - «رحلتي»: the stages with this week's task («حلقة المعصية» is the first week's task, filled once), the «متى تضعف؟»
  *   summary, the texts under «اعرف ضررها» («آيات وأحاديث تعينك على ترك هذه المعصية», O-05 / A-03), practical steps,
  *   good habits in its place, help, and the notebook's past days (folded).
- * The privacy line folds to one row once the program is saved. «أنهِ هذا البرنامج» lives in the header's «⋯» menu
+ * Round 6 (C-15): no privacy line on the page; «أقفل» on the title line locks it again. «أنهِ هذا البرنامج» lives in the header's «⋯» menu
  * (A-15), confirmed there; it removes check-ins, notes and loops. Reminders are set in «التنبيهات» only (A-20).
  */
 
@@ -31,7 +31,7 @@ import { LimitSheet } from '@/components/practice/LimitSheet';
 import { useLimits } from '@/lib/practice/use-habits-hub';
 import { Stack, router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Check, ChevronDown, ChevronUp, Plus, ShieldCheck, Trash2, Waves } from 'lucide-react-native';
+import { Check, ChevronDown, ChevronUp, LockKeyhole, Plus, ShieldCheck, Trash2, Waves } from 'lucide-react-native';
 import {
   activePrograms,
   addSinLoop,
@@ -79,7 +79,7 @@ import { LoopsPanel } from '@/components/practice/loops/LoopsPanel';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import type { QuoteDto } from '@/lib/types/api';
 import { EvidenceList } from '@/components/practice/EvidenceList';
-import { SinProgramGuard } from '@/components/practice/SinProgramGuard';
+import { SinProgramGuard, useLockProgram } from '@/components/practice/SinProgramGuard';
 import { FixItSheet, useLimitLabel } from '@/components/practice/sin/FixItSheet';
 import { TriggerChips } from '@/components/practice/sin/TriggerChips';
 import { useSinName } from '@/components/practice/sin/use-sin-name';
@@ -186,13 +186,14 @@ function SinProgramContent() {
   // An end marker is kept only while an encrypted copy may exist (also while that is not known yet).
   const keepMarker = userId !== null && vaultStatus !== 'none';
   const [ended, setEnded] = useState(false);
-  // «ابدأ «تخفَّف»» on a sin page hands its choice over in memory (never the route); read once, then cleared.
+  // «تخفّف من هذه المعصية» / «مقفل ✓» on a sin page hands its sin over in memory (never the route); read once, then cleared.
   const [pendingSin] = useState(pendingProgram);
   useEffect(() => setPendingProgram(null), []);
+  const lock = useLockProgram();
   /** Null until the user opens or closes the chooser: a sin page's hand-off opens it beside the current program. */
   const [choosing, setChoosing] = useState<boolean | null>(null);
-  /** The program shown when several run (chosen from the title's sheet). */
-  const [focus, setFocus] = useState<string | null>(null);
+  /** The program shown when several run (chosen from the title's sheet; a sin page's hand-off shows its own). */
+  const [focus, setFocus] = useState<string | null>(pendingSin);
   const [switching, setSwitching] = useState(false);
   // Up to 3 programs, each running one at least two months old before another starts (practice-core `limits`).
   const planLimits = useLimits();
@@ -270,11 +271,9 @@ function SinProgramContent() {
                 : () => null,
           }}
         />
-        <PageHeader title={t('sinProgram.title')} lead={t('sinProgram.lead')}>
-          {saved ? <PrivacyLine /> : null}
-        </PageHeader>
-        {/* Not beside «احفظه مشفّرًا»: that line says the program is on this device only, so this promise would contradict it. */}
-        {saved || needsProtect ? null : <Notice icon={ShieldCheck}>{t('sinProgram.privacy')}</Notice>}
+        {/* Round 6 (C-15): no «محفوظ مشفّرًا في حسابك» line; the lock button «أقفل» on the title line closes the page
+            at once (the locked state reads «مقفل ✓», and a tap asks the device lock or the code again). */}
+        <PageHeader title={t('sinProgram.title')} lead={t('sinProgram.lead')} action={saved && lock ? <Button label={t('sinLock.lock')} icon={LockKeyhole} variant="outline" size="sm" onPress={lock} /> : undefined} />
         {ended ? <Notice icon={Check}>{t('sinProgram.end.done')}</Notice> : null}
         {showChooser ? (
           <ChooseProgram
@@ -338,35 +337,6 @@ function SinProgramContent() {
         />
       </Screen>
     </KeyboardAvoidingView>
-  );
-}
-
-/** «محفوظ مشفّرًا»: one quiet row once the program is saved; a tap shows the whole line (A-21 a). */
-function PrivacyLine() {
-  const { t } = useTranslation();
-  const styles = useStyles(makeStyles);
-  const [open, setOpen] = useState(false);
-  return (
-    <View style={styles.tight}>
-      <Pressable
-        onPress={() => setOpen((o) => !o)}
-        accessibilityRole="button"
-        accessibilityState={{ expanded: open }}
-        hitSlop={4}
-        style={({ pressed }) => [styles.privacy, pressed && { opacity: 0.7 }]}
-      >
-        <Icon icon={ShieldCheck} size={17} tone="link" />
-        <Text variant="small" tone="muted">
-          {t('sinProgram.privacyShort')}
-        </Text>
-        <Icon icon={open ? ChevronUp : ChevronDown} size={16} tone="muted" />
-      </Pressable>
-      {open ? (
-        <Text variant="small" tone="muted">
-          {t('sinProgram.privacy')}
-        </Text>
-      ) : null}
-    </View>
   );
 }
 

@@ -32,10 +32,15 @@ describe('strategies', () => {
     expect(listedStrategies()).toHaveLength(STRATEGIES.length - 1);
   });
 
-  it('keeps no strategy reminder prefs any more (round 5, F-12 a)', () => {
+  it('round 6 (C-19): the weekly strategy is chosen again under a new key; the round-4 `strategies` stay dropped', () => {
     expect(DEFAULT_PREFS).not.toHaveProperty('strategies');
-    const prefs = parsePrefs({ v: 1, strategies: ['company', 'nope', 'start-tiny'], strategyTime: '09:30' });
-    expect(prefs).not.toHaveProperty('strategies');
-    expect(notificationPrefsOf(prefs)).toMatchObject({ strategies: [], strategyTime: DEFAULT_NOTIFICATION_PREFS.strategyTime });
+    expect(DEFAULT_PREFS.weeklyStrategies).toEqual([]);
+    const old = parsePrefs({ v: 1, strategies: ['company', 'nope', 'start-tiny'], strategyTime: '09:30' });
+    expect(old).not.toHaveProperty('strategies');
+    expect(notificationPrefsOf(old)).toMatchObject({ strategies: [], strategyTime: '09:30' });
+    const chosen = parsePrefs({ v: 1, weeklyStrategies: ['company', 'nope', 'start-tiny'], strategyDay: 2 });
+    expect(chosen.weeklyStrategies).toEqual(['start-tiny', 'company']);
+    expect(notificationPrefsOf(chosen)).toMatchObject({ strategies: ['start-tiny', 'company'], strategyDay: 2 });
+    expect(DEFAULT_NOTIFICATION_PREFS.strategies).toEqual([]);
   });
 });

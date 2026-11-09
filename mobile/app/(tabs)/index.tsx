@@ -1,35 +1,26 @@
 /**
- * Home (owner round 5, F-02 a; practice-core `home.ts`): a visitor sees the public sections in their fixed order; a
- * signed-in member sees `visibleHomeSections` (their order and choice, synced with the account) and «خصّص الرئيسية»
- * at the end, which opens the edit sheet (a switch and «أعلى» / «أسفل» per section). Sections: «ورد اليوم» (members:
- * progress and a circle per habit not logged yet, logging right here), «نص اليوم», «شعبة الأسبوع», «مناسبة قريبة»,
- * «أبواب الخير», «في لحظات مثل هذه», «تذكرة مختارة», «المصادر» (src/components/home/HomeSections.tsx). The flower
- * divider sits between visible sections only. «مواسم الخير» has no entry any more (F-17). The device-local «شعبة
- * الأسبوع» switch moves once into the synced sections (src/lib/home/home-edit.ts).
+ * Home (owner round 5, F-02 a; round 6 §8, C-04 / C-06 / C-09 / C-11 / C-01q): a visitor sees the doors first, then the
+ * public sections; a signed-in member who never customised the page sees the short «ورد اليوم» (progress and a circle per
+ * habit not logged yet, logging right here) and then the doors right away (`homeSectionsFor`), then the rest. A member's
+ * own order and choice (synced with the account) is kept. «خصّص الرئيسية» lives only in the settings («اللغة والمظهر»):
+ * no button on the page. «نص اليوم» is gone. Sections: «ورد اليوم», «شعبة الأسبوع», «مناسبة قريبة», «أبواب الخير»,
+ * «في لحظات مثل هذه» (from the API), «تذكرة مختارة», «المصادر» (src/components/home/HomeSections.tsx). The flower divider
+ * sits between visible sections only. The device-local «شعبة الأسبوع» switch moves once into the synced sections
+ * (src/lib/home/home-edit.ts).
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { View } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
-import { LayoutList } from 'lucide-react-native';
-import { setHomeSections, visibleHomeSections } from '@thekra/practice-core';
-import { weekBranchMigration } from '@/lib/home/home-edit';
+import { setHomeSections } from '@thekra/practice-core';
+import { homeSectionsFor, weekBranchMigration } from '@/lib/home/home-edit';
 import { usePracticeStore } from '@/lib/practice/practice-store';
 import { useHubDays } from '@/lib/practice/use-habits-hub';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { AppHeader } from '@/components/nav/AppHeader';
-import { HomeEditSheet, HomeSection, useSectionShows } from '@/components/home/HomeSections';
-import { space, useStyles, type Theme } from '@/theme';
-import { Button, Screen, SectionDivider } from '@/ui';
-
-const makeStyles = (_t: Theme) => ({
-  customize: { alignItems: 'center' as const, paddingTop: space.sm },
-});
+import { HomeSection, useSectionShows } from '@/components/home/HomeSections';
+import { Screen, SectionDivider } from '@/ui';
 
 export default function HomeScreen() {
-  const { t } = useTranslation();
-  const styles = useStyles(makeStyles);
   const member = useAuthStore((s) => s.user !== null);
   const hydrated = usePracticeStore((s) => s.hydrated);
   const stored = usePracticeStore((s) => s.store.settings.homeSections);
@@ -38,7 +29,6 @@ export default function HomeScreen() {
   const setPrefs = usePracticeStore((s) => s.setPrefs);
   const { today } = useHubDays();
   const shows = useSectionShows(today);
-  const [editing, setEditing] = useState(false);
   const qc = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -55,22 +45,13 @@ export default function HomeScreen() {
     void qc.refetchQueries({ type: 'active' }).finally(() => setRefreshing(false));
   }, [qc]);
 
-  const sections = visibleHomeSections(stored, member).filter(shows);
+  const sections = homeSectionsFor(stored, member).filter(shows);
   return (
     <Screen refreshing={refreshing} onRefresh={handleRefresh}>
       <AppHeader />
       {sections.map((name, i) => (
         <HomeSection key={name} name={name} today={today} before={i > 0 ? <SectionDivider /> : null} />
       ))}
-      {member ? (
-        <>
-          <SectionDivider />
-          <View style={styles.customize}>
-            <Button label={t('homeSections.edit.title')} icon={LayoutList} variant="ghost" onPress={() => setEditing(true)} />
-          </View>
-          <HomeEditSheet visible={editing} onClose={() => setEditing(false)} />
-        </>
-      ) : null}
     </Screen>
   );
 }
