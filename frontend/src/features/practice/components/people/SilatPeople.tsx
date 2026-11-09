@@ -39,8 +39,8 @@ const SECTIONS: readonly PeopleCircle[] = ['kin', 'parents', 'neighbors', 'frien
  * The people of «صلة الرحم والأحباب» (round 6 §6, C-10 / C-01i): the round-5 people lists — الأقارب، الوالدان،
  * الجيران، الأصدقاء، المرضى — now live INSIDE this one periodic act on «الأعمال الدورية» (no page, menu entry or tab of
  * their own; `/practice/people` redirects here). Who is due this week (or overdue) is on top, across the lists. Each list
- * has «أضف» on its title line, opening a dialog (a toast after adding). A row logs «تواصلت» with an undo; edit and
- * delete live in its «⋯» (delete asks first). `#circle-<key>` (an old link to one list) scrolls to that list.
+ * has «أضف» on its title line, opening a dialog (a toast after adding). A row logs «تواصلت» with an undo; like every
+ * periodic row (C-24 a) it has «تعديل» as a link and a visible trash icon (delete asks first). `#circle-<key>` (an old link to one list) scrolls to that list.
  */
 export function SilatPeople({ context }: { context: WirdContext }) {
   const t = useTranslations('practice.people');
@@ -229,7 +229,8 @@ function PersonRow({ entry, today, showCircle = false }: { entry: DueEntry; toda
             </Button>
           )}
           <RowMenu
-            label={t('optionsOf', { name: relative.name })}
+            inline
+            label={tPeople('removeNamed', { name: relative.name })}
             edit={{ label: t('edit'), onSelect: () => setEditing(true) }}
             remove={{
               label: t('remove'),
@@ -281,7 +282,8 @@ function VisitedRow({ relative }: { relative: Relative }) {
         <span className="text-sm text-muted-foreground">{tPeople('visitedNote')}</span>
       </span>
       <RowMenu
-        label={t('optionsOf', { name: relative.name })}
+        inline
+        label={tPeople('removeNamed', { name: relative.name })}
         remove={{
           label: t('remove'),
           confirmTitle: tPeople('removeTitle', { name: relative.name }),

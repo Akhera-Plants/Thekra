@@ -163,7 +163,7 @@ function WeekTable({ context, reviewDay, onOpenDay }: { context: WirdContext; re
                 {days.map((d) => (
                   <th key={d} scope="col" className="px-0.5 py-2 font-normal">
                     {d > today ? (
-                      <span className="flex flex-col items-center leading-5 text-muted-foreground opacity-60">
+                      <span className="flex flex-col items-center leading-5 text-muted-foreground">
                         <span className="text-xs">{tDays(`d${weekday(d)}`)}</span>
                         <span className="tabular-nums">{formatDigits(parseDate(d).day)}</span>
                       </span>
@@ -302,6 +302,7 @@ function MonthTab({ context }: { context: WirdContext }) {
           onSelect={(date) => setPicked(date)}
           onMonthChange={setMonth}
           action={<HijriOffsetDialog />}
+          weekStart={heart?.prefs.reviewDay ?? DEFAULT_REVIEW_DAY}
         />
         <label className="flex min-h-11 items-center gap-3 self-start text-sm">
           <input type="checkbox" className="size-4 accent-primary" checked={showHijri} onChange={(event) => updatePrefs((p) => ({ ...p, showHijri: event.target.checked }))} />

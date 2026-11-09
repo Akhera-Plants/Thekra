@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { STRATEGIES } from '@thekra/practice-core';
-import { strategyTarget } from './strategies';
+import { STRATEGIES, strategyAppliesToHabit } from '@thekra/practice-core';
+import { APPLY_FIELD, applyStrategyDraft, exampleAnswer, strategyTarget } from './strategies';
 
 describe('strategyTarget', () => {
   it('maps every strategy to a page of the site', () => {
@@ -20,3 +20,24 @@ describe('strategyTarget', () => {
 });
 
 // The families and the unlisted «لا تفوّتها مرتين» are tested in practice-core (test/round6.test.ts).
+
+describe('«طبّقها على عادة» (C-18 a)', () => {
+  const empty = { cue: '', craving: '', routine: '', reward: '', obstacle: '', ifThen: '' };
+
+  it('has a loop question for every strategy that applies to a habit', () => {
+    for (const strategy of STRATEGIES) {
+      if (strategyAppliesToHabit(strategy.key)) expect(APPLY_FIELD[strategy.key], strategy.key).toBeDefined();
+    }
+  });
+
+  it('fills the strategy question with its example, without the «مثال:» lead', () => {
+    expect(exampleAnswer('مثال: دقيقتان من القرآن بدل جزء كامل.')).toBe('دقيقتان من القرآن بدل جزء كامل.');
+    expect(exampleAnswer('Example: two minutes of Quran.')).toBe('two minutes of Quran.');
+    expect(applyStrategyDraft('start-tiny', empty, 'مثال: دقيقتان.').routine).toBe('دقيقتان.');
+  });
+
+  it('never replaces a written answer, and leaves a leaving strategy alone', () => {
+    expect(applyStrategyDraft('start-tiny', { ...empty, routine: 'صفحة' }, 'مثال: دقيقتان.').routine).toBe('صفحة');
+    expect(applyStrategyDraft('block-sin', empty, 'مثال: احذف التطبيق.')).toEqual(empty);
+  });
+});

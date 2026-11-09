@@ -41,6 +41,7 @@ import {
   deleteSinLoop,
   saveHabitLoop,
   saveSinLoop,
+  type HabitLoopStep,
 } from '@/lib/practice/loops';
 import { cn } from '@/lib/utils';
 
@@ -167,7 +168,7 @@ function LoopStepper<S extends string>({ kind, open, onOpenChange, steps, initia
   );
 }
 
-type Editing = { id: string | null } | null;
+type Editing = { id: string | null; apply?: boolean } | null;
 
 /** One saved loop as a short chain of its answers, with «عدّل» and «احذف». */
 function LoopCard<S extends string>({
@@ -235,7 +236,19 @@ const habitValues = (loop: HabitLoop) => ({ ...emptyHabit(), ...loop, obstacle: 
  * «ابنِ حلقة عادتك الخاصة» for one habit (owner round 3, item 17): its loops (up to 5), each viewable, editable and
  * removable, and the stepper to build another. Saved on the plan (`loops`) and synced with it.
  */
-export function HabitLoops({ plan, compact = false }: { plan: Plan; compact?: boolean }) {
+export function HabitLoops({
+  plan,
+  compact = false,
+  apply,
+}: {
+  plan: Plan;
+  compact?: boolean;
+  /**
+   * «طبّقها على عادة» (C-18 a): one solid action opens the stepper on the habit's first loop (or a new one) with the
+   * answers from `draft` (the strategy's question filled by its example; the member reviews before saving).
+   */
+  apply?: { label: string; draft: (current: Record<HabitLoopStep, string>) => Record<HabitLoopStep, string>; onSaved: () => void };
+}) {
   const t = useTranslations('practice.loops');
   const [editing, setEditing] = useState<Editing>(null);
   const loops = plan.loops ?? [];
@@ -258,7 +271,11 @@ export function HabitLoops({ plan, compact = false }: { plan: Plan; compact?: bo
           ))}
         </ol>
       ) : null}
-      {canAddHabitLoop(plan) ? (
+      {apply ? (
+        <Button tone="primary" className="self-start" onClick={() => setEditing({ id: loops[0]?.id ?? null, apply: true })}>
+          {apply.label}
+        </Button>
+      ) : canAddHabitLoop(plan) ? (
         <button type="button" className="outline-button button-wrap self-start" onClick={() => setEditing({ id: null })}>
           <Plus aria-hidden />
           {loops.length === 0 ? t('habit.build') : t('habit.another')}
@@ -267,15 +284,18 @@ export function HabitLoops({ plan, compact = false }: { plan: Plan; compact?: bo
         <p className="text-sm text-muted-foreground">{t('max', { n: formatDigits(MAX_HABIT_LOOPS) })}</p>
       )}
       <LoopStepper
-        key={editing?.id ?? 'new'}
+        key={`${editing?.id ?? 'new'}${editing?.apply ? '-apply' : ''}`}
         kind="habit"
         open={editing !== null}
         onOpenChange={(open) => (open ? undefined : setEditing(null))}
         steps={HABIT_LOOP_STEPS}
-        initial={current ? habitValues(current) : emptyHabit()}
+        initial={editing?.apply && apply ? apply.draft(current ? habitValues(current) : emptyHabit()) : current ? habitValues(current) : emptyHabit()}
         maxLength={MAX_LOOP_TEXT}
         required="routine"
-        onSave={(values) => updateStore((s) => saveHabitLoop(s, plan.id, editing?.id ?? null, cleanHabitLoopInput(values)))}
+        onSave={(values) => {
+          updateStore((s) => saveHabitLoop(s, plan.id, editing?.id ?? null, cleanHabitLoopInput(values)));
+          if (editing?.apply) apply?.onSaved();
+        }}
       />
     </section>
   );

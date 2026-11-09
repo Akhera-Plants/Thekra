@@ -521,7 +521,7 @@ function ReturnTab({ plan, context, title }: { plan: Plan; context: WirdContext;
       </div>
       {gap ? (
         <div className="flex flex-col items-start gap-2 rounded-2xl border border-border bg-card p-4">
-          <p className="text-base">{missedYesterday ? t('gapYesterday') : t('gapTwice')}</p>
+          <p className="text-base">{offer !== null ? t('gapTwice') : t('gapYesterday')}</p>
           <FixButton
             plan={plan}
             title={title}

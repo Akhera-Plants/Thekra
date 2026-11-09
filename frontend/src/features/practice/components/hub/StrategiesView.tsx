@@ -25,7 +25,7 @@ import { updateHeart } from '@/lib/practice/heart-store';
 import { isPeriodicTemplate } from '@/lib/practice/limits';
 import { notificationPrefsOf, updatePrefs } from '@/lib/practice/local-store';
 import { habitOf } from '@/lib/practice/plans';
-import { strategyTarget } from '@/lib/practice/strategies';
+import { APPLY_FIELD, applyStrategyDraft, strategyTarget } from '@/lib/practice/strategies';
 import { resendPushPrefs } from '@/lib/push/web-push';
 import type { PracticeHabit } from '@/lib/types/practice';
 import { usePracticeCatalog } from '../../hooks/usePracticeCatalog';
@@ -264,7 +264,27 @@ function ApplyDialog({
                 <HabitChoice key={p.id} plan={p} habit={habitOf(p, catalog)} checked={plan?.id === p.id} onChoose={() => setChosen(p.id)} />
               ))}
             </fieldset>
-            {plan ? <HabitLoops key={plan.id} plan={plan} compact /> : null}
+            {plan ? (
+              <HabitLoops
+                key={plan.id}
+                plan={plan}
+                compact
+                apply={
+                  strategy && APPLY_FIELD[strategy.key]
+                    ? {
+                        label: t('applyNext'),
+                        draft: (current) => applyStrategyDraft(strategy.key, current, t(`items.${strategy.key}.example`)),
+                        onSaved: () => {
+                          const habit = habitOf(plan, catalog);
+                          toast.success(t('applied', { habit: habit ? (english ? habit.titleEn : habit.titleAr) : plan.title }));
+                          setChosen(null);
+                          onClose();
+                        },
+                      }
+                    : undefined
+                }
+              />
+            ) : null}
           </div>
         )}
       </DialogContent>

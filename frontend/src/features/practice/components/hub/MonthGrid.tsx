@@ -50,6 +50,8 @@ interface MonthGridProps {
   maxMonth?: YearMonth;
   onSelect: (date: string) => void;
   onMonthChange: (month: YearMonth) => void;
+  /** The first weekday of each row (0 = Sunday … 6 = Saturday): the member's review day in «سجلّي» (round 6 §2). */
+  weekStart?: number;
 }
 
 const DAYS_IN_WEEK = 7;
@@ -103,6 +105,7 @@ export function MonthGrid({
   maxMonth,
   onSelect,
   onMonthChange,
+  weekStart: weekStartProp,
 }: MonthGridProps) {
   const t = useTranslations('practice.monthGrid');
   const tDays = useTranslations('practice.weekdays');
@@ -113,7 +116,7 @@ export function MonthGrid({
   const tableRef = useRef<HTMLTableElement>(null);
   const pendingFocus = useRef(false);
   const [focusDate, setFocusDate] = useState<string | null>(null);
-  const weekStart = weekStartFor(locale);
+  const weekStart = weekStartProp ?? weekStartFor(locale);
   const weeks = monthWeeks(month, weekStart);
   const hijriOk = showHijri && isHijriSupported();
   const hijriMonth = showHijri ? hijriMonthLabel(hijriMonthSpan(month, hijriOffset)) : null;

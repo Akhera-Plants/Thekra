@@ -35,6 +35,8 @@ async function expectArabic(page: Page, path: string) {
 }
 
 test('Arabic pages contain no Latin letters except the language switch', async ({ page }) => {
+  // About ten full page loads in one test: the default 30 s is too tight on a slow machine (it took 31 s locally).
+  test.setTimeout(90_000);
   await expectArabic(page, '/');
   await expectArabic(page, '/sins');
   // Client-side navigations: wait for the new URL, not just an idle network (the old page

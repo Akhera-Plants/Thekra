@@ -117,7 +117,7 @@ function DayCell({ day, label, today, onOpen }: { day: WeekStripDay; label: stri
   );
   if (day.date > today) {
     return (
-      <div className={cn(shell, 'opacity-55')} aria-label={name} title={t('future')}>
+      <div className={cn(shell, 'text-muted-foreground')} aria-label={name} title={t('future')}>
         {body}
       </div>
     );

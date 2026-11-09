@@ -26,13 +26,15 @@ interface HubMonthProps {
   onMonthChange: (month: YearMonth) => void;
   /** The section's action on its title line («ضبط الهجري» in «سجلّي»). */
   action?: ReactNode;
+  /** The first weekday of each row: the member's review day, as the week strip and the week table (round 6 §2). */
+  weekStart?: number;
 }
 
 /**
  * The one month calendar of «سجلّي»: days present in the last 30 and the plans' kind band, then the month with a
  * presence mark per day and the occasions marked. A tapped day opens its list under the grid.
  */
-export function HubMonth({ store, today, selected, month, occasions, planDays, showHijri, onSelect, onMonthChange, action }: HubMonthProps) {
+export function HubMonth({ store, today, selected, month, occasions, planDays, showHijri, onSelect, onMonthChange, action, weekStart }: HubMonthProps) {
   const t = useTranslations('practice.hub.month');
   const tGrid = useTranslations('practice.monthGrid');
   const hijriOffset = store.settings.hijriOffset;
@@ -76,6 +78,7 @@ export function HubMonth({ store, today, selected, month, occasions, planDays, s
         presence={days}
         onSelect={onSelect}
         onMonthChange={onMonthChange}
+        weekStart={weekStart}
       />
       <ul className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted-foreground">
         <li className="flex items-center gap-1.5">

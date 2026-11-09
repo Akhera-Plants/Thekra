@@ -28,7 +28,7 @@ export default function manifest(): MetadataRoute.Manifest {
       { src: '/icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
     ],
     shortcuts: [
-      { name: 'أعنّي على ترك معصية', short_name: 'المعاصي', url: '/sins' },
+      { name: 'تخفَّف من معصية', short_name: 'تخفَّف', url: '/sins' },
       { name: 'أعنّي على فعل طاعة', short_name: 'الطاعات', url: '/good-deeds' },
       { name: 'شُعب الإيمان', short_name: 'الشعب', url: '/branches' },
     ],

@@ -1,4 +1,5 @@
 import { navFeature, type HeartPrefs, type StrategyAction } from '@thekra/practice-core';
+import type { HabitLoopStep } from './loops';
 
 /** Where «جرّبها» leads on the web, and the device switch it turns on first (if any). */
 export interface StrategyTarget {
@@ -44,3 +45,34 @@ export function strategyTarget(action: StrategyAction): StrategyTarget {
 
 // The families «بناء / ترك / عودة», the unlisted «لا تفوّتها مرتين» and «طبّقها على عادة» are shared with the app:
 // practice-core `strategies.ts` (`STRATEGY_KINDS`, `listedStrategies`, `strategyAppliesToHabit`).
+
+/**
+ * «طبّقها على عادة» (owner round 6, C-18 a; same map as the app's `APPLY_FIELD`): the question of the habit loop a
+ * building or returning strategy fills with its example. A leaving strategy has none (it opens its own place).
+ */
+export const APPLY_FIELD: Readonly<Record<string, HabitLoopStep>> = {
+  'start-tiny': 'routine',
+  'anchor-prayer': 'cue',
+  'if-then': 'ifThen',
+  'prepare-place': 'cue',
+  bundle: 'reward',
+  season: 'cue',
+  company: 'craving',
+  'make-up': 'ifThen',
+  'self-review': 'reward',
+};
+
+/** The example line as a loop answer: without its «مثال:» / «Example:» lead. */
+export function exampleAnswer(example: string): string {
+  return example.replace(/^\s*(?:مثال|Example)\s*[:：]\s*/u, '').trim();
+}
+
+/**
+ * The loop answers to review: the habit's own (its first loop, or empty), with the strategy's question filled by its
+ * example when that question has no answer yet. A written answer is never replaced; nothing is saved here.
+ */
+export function applyStrategyDraft(key: string, current: Record<HabitLoopStep, string>, example: string): Record<HabitLoopStep, string> {
+  const field = APPLY_FIELD[key];
+  if (!field || current[field].trim()) return { ...current };
+  return { ...current, [field]: exampleAnswer(example) };
+}

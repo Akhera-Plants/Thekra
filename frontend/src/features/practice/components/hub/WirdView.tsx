@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useId, useMemo, useState } from 'react';
+import { Fragment, useEffect, useId, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ChevronDown } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
@@ -44,7 +44,7 @@ import { TodayList } from './TodayList';
  * - the day's title row: the date (Hijri and the next prayer when set), «حال يومي» (a list of states) and «أضف»;
  * - «هل فعلتها؟» for recent days without a log; the gentle line of a hard day;
  * - the groups «الفرائض · عادات اليوم · الأعمال الدورية» reachable WITHOUT scrolling: a segment row selects one on a
- *   phone; on a wide screen «عادات اليوم» comes first and the other two sit side by side under it. Habits are grouped by
+ *   phone; on a wide screen all three show in the owner's order (C-03b: الفرائض، العادات، الدورية). Habits are grouped by
  *   the part of the day, a counted habit has its inline counter, «صلّحها» shows on a row in a gap;
  * - a side column (after the groups on a phone): ONE heart card, the coming periodic acts, «المزيد لليوم».
  * `?add=1` opens «أضف عادة» in place; a new member without habits gets the three-step start first (F-26 a).
@@ -152,17 +152,15 @@ function TodayBody({ context }: { context: WirdContext }) {
         ) : null}
 
         {wide ? (
+          // C-03b (owner's choice): the main column reads «الفرائض» first, then the habits by part of the day, then the
+          // periodic acts due today; every group is on screen at once (no segment row on a wide screen).
           <div className="flex flex-col gap-8">
-            {habitsList}
-            {groups.length > 1 ? (
-              <>
-                <SectionDivider />
-                <div className={cn('grid gap-10', groups.length === 3 && 'xl:grid-cols-2')}>
-                  {groups.includes('fard') ? <div className="min-w-0">{fardList}</div> : null}
-                  {groups.includes('periodic') ? <div className="min-w-0">{periodicList}</div> : null}
-                </div>
-              </>
-            ) : null}
+            {groups.map((key, index) => (
+              <Fragment key={key}>
+                {index > 0 ? <SectionDivider /> : null}
+                <div className="min-w-0">{groupBody(key)}</div>
+              </Fragment>
+            ))}
           </div>
         ) : groups.length > 1 ? (
           <SegmentTabs

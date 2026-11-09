@@ -5,6 +5,7 @@ import { BookOpen, Check, HandHeart, ListChecks, Repeat, Sprout, Timer, Waves } 
 import { useLocale, useTranslations } from 'next-intl';
 import {
   activePrograms,
+  isLightenCovered,
   formatCountdown,
   momentProgram,
   programEntryFor,
@@ -40,6 +41,8 @@ import { PracticeLoading } from './PracticeLoading';
 import { ProgressRing } from './ProgressRing';
 import { ShortWirdDialog, TasbihDialog } from './MujahadaTools';
 import { SinLoops } from './LoopBuilder';
+import { CoveredGate } from './lighten/CoveredGate';
+import { useSinVault } from '../hooks/useSinVault';
 
 const noSubscribe = () => () => {};
 const serverSource = () => undefined;
@@ -65,7 +68,9 @@ interface MujahadaViewProps {
  * Privacy: which sin it is about comes from this device only (an in-memory hand-off, never the URL). Every request is
  * the same for every member: the catalog, the texts of EVERY act and every program at once (fixed batches of 50), and
  * the public sin list for the names. The page may name the member's own program as plain text, never a heading or the
- * tab title; a notification never names it.
+ * tab title; a notification never names it. While «تخفَّف» is covered (round 6 §2, C-02e, the default) the page names no
+ * program at all, and «حلقة المعصية» (the member's own answers) opens only after the privacy code, like every other
+ * place a program appears.
  */
 export function MujahadaView({ verse }: MujahadaViewProps) {
   const t = useTranslations('leaveSin.moment');
@@ -75,6 +80,7 @@ export function MujahadaView({ verse }: MujahadaViewProps) {
   const catalog = usePracticeCatalog();
   const sins = useSinNames(locale);
   const source = useSyncExternalStore(noSubscribe, momentSourceForView, serverSource);
+  const { userId } = useSinVault();
   const mujahada = catalog.data?.mujahada;
   const moment = catalog.data?.sinPrograms.moment;
   const ids = useMemo(
@@ -141,6 +147,8 @@ export function MujahadaView({ verse }: MujahadaViewProps) {
   const item = index >= 0 ? items[index] : undefined;
   const asking = Boolean(progress?.done) || early;
   const wave = strategyByKey('ride-wave');
+  // Covered (the default): no program is named here, and its loop asks the privacy code first (CoveredGate).
+  const covered = userId !== null && isLightenCovered(snapshot.store);
 
   function answerHeld() {
     if (!program) {
@@ -190,7 +198,7 @@ export function MujahadaView({ verse }: MujahadaViewProps) {
                     on ? 'border-primary bg-primary/10 text-primary-text' : 'border-border hover:border-primary',
                   )}
                 >
-                  {names.get(p.sinSlug) ?? '…'}
+                  {covered ? t('programN', { n: formatDigits(running.indexOf(p) + 1) }) : (names.get(p.sinSlug) ?? '…')}
                 </button>
               );
             })}
@@ -204,7 +212,7 @@ export function MujahadaView({ verse }: MujahadaViewProps) {
         <div className="flex min-w-0 flex-col gap-4">
           <div className="flex flex-col gap-1">
             <p className="text-sm text-muted-foreground">
-              {acts.own && program && !asksWhich && names.get(program.sinSlug) ? names.get(program.sinSlug) : t('kicker')}
+              {!covered && acts.own && program && !asksWhich && names.get(program.sinSlug) ? names.get(program.sinSlug) : t('kicker')}
             </p>
             <h2 id="moment-act" className="text-2xl leading-[1.6] font-medium md:text-[30px]">
               {firstAct ? (english ? firstAct.titleEn : firstAct.titleAr) : t('actionsTitle')}
@@ -371,7 +379,13 @@ export function MujahadaView({ verse }: MujahadaViewProps) {
               <DialogTitle className="leading-8">{t('loopButton')}</DialogTitle>
               <DialogDescription className="leading-7">{t('loopLead')}</DialogDescription>
             </DialogHeader>
-            <SinLoops program={program} hideLead />
+            {covered ? (
+              <CoveredGate store={snapshot.store} as="block">
+                {() => <SinLoops program={program} hideLead />}
+              </CoveredGate>
+            ) : (
+              <SinLoops program={program} hideLead />
+            )}
           </DialogContent>
         </Dialog>
       ) : null}

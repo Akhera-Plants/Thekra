@@ -1388,6 +1388,7 @@
         "logged": "Logged.",
         "unlogged": "Unmarked.",
         "missedYesterday": "Never miss it twice: today, even a little",
+        "missedTwice": "Two days missed: come back today, even a little",
         "afterMakeUp": "What you log here is saved but does not count for the streak; a make-up is open until noon the next day."
       },
       "month": {
@@ -1502,29 +1503,35 @@
     },
     "limits": {
       "keepGoing": "Keep up what I have",
-      "pickPause": "Choose what to archive; its record is kept.",
+      "pickPause": "Choose what to archive; its record is kept. If it stays in the archive more than {days} days, its progress starts again.",
+      "pickDelete": "The archive holds {max} habits and acts, which is the limit. Choose what to delete.",
+      "deleteAction": "Delete",
       "pauseAction": "Archive",
       "back": "Back",
       "establishAndStart": "Establish “{title}” and start the new one",
       "sapling": {
         "title": "A little kept up beats a lot left off",
         "hint": "Keep up what you have, or archive a habit to start another.",
-        "pause": "Archive a habit"
+        "pause": "Archive a habit",
+        "delete": "Delete a habit"
       },
       "periodic": {
         "title": "A little kept up beats a lot left off",
         "hint": "Keep up what you have, or archive an act to start another.",
-        "pause": "Archive an act"
+        "pause": "Archive an act",
+        "delete": "Delete an act"
       },
       "program": {
         "title": "One program that holds beats many that crowd",
         "hint": "Keep going with your program, then start another.",
-        "pause": "Archive"
+        "pause": "Archive",
+        "delete": "Delete"
       },
       "unlocksOn": "You can add one on {date} if you keep going.",
       "why": {
         "habits_young": "You have {count} habits that have not reached three months yet. When one reaches three months you can add another, or archive one.",
-        "periodic_full": "You have {count} periodic acts, which is the limit. Delete one to add another.",
+        "periodic_full": "You have {count} periodic acts, which is the limit. Archive or delete one to add another.",
+        "periodic_full_archive_full": "You have {count} periodic acts, which is the limit, and the archive is full. Delete one to add another.",
         "programs_full": "You are working on {count} programs, which is the limit. End one to start another.",
         "programs_young": "Start a new program once every program you are working on has lasted two months."
       }
@@ -1801,6 +1808,8 @@
       "reminderOn": "You will be reminded of it once a week.",
       "reminderOff": "Reminder turned off.",
       "note": "Strategy reminders come once a week at most; set their day and time in Notifications. These are practical guides, not religious rulings.",
+      "applyNext": "Review the loop and apply it",
+      "applied": "Applied to “{habit}”. It is in “Habit loop”.",
       "chooseHabit": "Which habit?",
       "noHabits": "Add a habit first, then apply what fits it.",
       "addHabit": "Add a habit"
@@ -2219,6 +2228,7 @@
         "friends": "A word every two weeks.",
         "sick": "Add them when they fall ill; a reminder every two days until you visit."
       },
+      "removeNamed": "Delete “{name}”",
       "addTo": "Add to {list}",
       "added": "«{name}» added.",
       "visited": "Visited",
@@ -2809,6 +2819,7 @@
       },
       "toolsTitle": "Tools that help",
       "evidenceMissing": "The text could not be shown now. Try again shortly.",
+      "programN": "Program {n}",
       "which": "Which program is this moment for?",
       "kicker": "A moment for you",
       "actLead": "Do this now, or choose another one below.",

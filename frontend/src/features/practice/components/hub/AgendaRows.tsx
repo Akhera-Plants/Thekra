@@ -170,7 +170,7 @@ export function HabitRow({ item, plan, habit, isEnabled, disabledNoteId, undo, o
     <>
       {item.missedYesterday && item.minimum && item.done === 0 ? (
         <>
-          {t('missedYesterday')} · {t('required', { amount: words.amount(item.minimum) })}
+          {makeUp ? t('missedTwice') : t('missedYesterday')} · {t('required', { amount: words.amount(item.minimum) })}
         </>
       ) : (
         t('required', { amount: words.amount(item.required) })
