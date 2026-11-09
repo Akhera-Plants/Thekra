@@ -44,7 +44,7 @@ export function FavoritesList() {
       <div className="saved-list">
         <div className="empty-state">
           <Bookmark className="size-[34px]" aria-hidden />
-          <h2>{t('favorites.empty')}</h2>
+          <h2>{t('favorites.emptyTitle')}</h2>
           <p>{t('favorites.emptyHint')}</p>
           <Link className="solid-button" href="/#paths">
             {t('favorites.choosePath')} <DirectionalArrow className="size-[18px]" />

@@ -34,7 +34,7 @@ export default async function MujahadaPage({ params }: PageProps<'/[locale]/prac
         ariaLabel={tNav('breadcrumbs')}
         items={[{ label: tCrumbs('home'), href: '/' }, { label: t('title'), href: '/practice/leave-sin' }, { label: t('moment.title') }]}
       />
-      <header className="page-heading mx-auto w-full max-w-2xl">
+      <header className="page-heading">
         <h1 id="page-title" tabIndex={-1}>
           {t('moment.title')}
         </h1>

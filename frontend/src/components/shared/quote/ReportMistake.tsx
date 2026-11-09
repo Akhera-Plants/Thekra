@@ -1,13 +1,14 @@
 'use client';
 
 import { useId, useState } from 'react';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Flag } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { apiPost } from '@/lib/api-client';
 import { Button } from '@/components/shared/kit/button';
 import { ActionPair } from '@/components/shared/kit/action-pair';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { failureKey, reportFailure } from '@/lib/errors';
+import { ApiError } from '@/lib/types/api';
 
 const REASONS = ['TEXT', 'ISNAD', 'GRADE', 'CLASSIFICATION', 'OTHER'] as const;
 
@@ -35,6 +36,13 @@ export function ReportMistakeDialog({
   const [sent, setSent] = useState(false);
   const [pending, setPending] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
+  /** The endpoint's own limits (round 6, C-01s), said kindly: thanks first, then when to try again. */
+  const reportFailureMessage = (error: unknown): string | null => {
+    if (!(error instanceof ApiError)) return null;
+    if (error.status === 429) return error.code === 'REPORTS_PAUSED' ? t('reportPaused') : t('reportRateLimited');
+    if (error.status === 413) return t('reportTooLong');
+    return null;
+  };
 
   function change(next: boolean) {
     onOpenChange(next);
@@ -74,7 +82,7 @@ export function ReportMistakeDialog({
                 .then(() => setSent(true))
                 .catch((error: unknown) => {
                   reportFailure('quote report', error);
-                  setFailure(tFeedback(`error.${failureKey(error)}`));
+                  setFailure(reportFailureMessage(error) ?? tFeedback(`error.${failureKey(error)}`));
                 })
                 .finally(() => setPending(false));
             }}
@@ -131,3 +139,18 @@ export function ReportMistakeDialog({
     </Dialog>
   );
 }
+
+/** «أبلغ عن خطأ» as a quiet text button that opens {@link ReportMistakeDialog} (the reader, under «وجه التذكير»). */
+export function ReportMistakeButton({ quoteId, className }: { quoteId: string; className?: string }) {
+  const t = useTranslations('quote');
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button variant="ghost" tone="neutral" size="sm" icon={<Flag aria-hidden />} className={className} onClick={() => setOpen(true)} aria-haspopup="dialog">
+        {t('report')}
+      </Button>
+      <ReportMistakeDialog quoteId={quoteId} open={open} onOpenChange={setOpen} />
+    </>
+  );
+}
+

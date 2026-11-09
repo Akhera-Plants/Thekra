@@ -3,14 +3,15 @@
  * periodic acts (their catalog habit has `kind: periodic`), the templates «أضف عملًا دوريًا» lists, and a plan made
  * from a template. The rules themselves live in practice-core, shared with the app and the extension.
  */
-import { createPlan, type LimitOptions, type LocalDate, type PeopleCircle, type Plan } from '@thekra/practice-core';
+import { createPlan, isCustomPeriodic, type LimitOptions, type LocalDate, type PeopleCircle, type Plan } from '@thekra/practice-core';
 import type { PracticeHabit } from '@/lib/types/practice';
 import { newUuid } from './ids';
 import { habitOf } from './plans';
 
 /** The lookup practice-core `limits` needs: a plan from a periodic template is a periodic act, not a sapling. */
 export function limitOptions(habits: ReadonlyMap<string, PracticeHabit>): LimitOptions {
-  return { isPeriodicAct: (plan) => habitOf(plan, habits)?.kind === 'periodic' };
+  // A member's own periodic act (round 6, practice-core `createCustomPeriodic`) is always periodic.
+  return { isPeriodicAct: (plan) => isCustomPeriodic(plan) || habitOf(plan, habits)?.kind === 'periodic' };
 }
 
 export function isPeriodicTemplate(habit: PracticeHabit | undefined): boolean {

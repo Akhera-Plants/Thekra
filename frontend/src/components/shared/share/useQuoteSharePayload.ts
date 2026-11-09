@@ -36,6 +36,7 @@ export function useShareLabels(): ShareLabels {
       outsideSahihayn: tQuote('outsideSahihayn'),
       atharNotice: tShare('atharNotice'),
       atharNarrated: (speaker: string) => tShare('atharNarrated', { speaker }),
+      byline: tShare('byline'),
     }),
     [tApp, tQuote, tShare],
   );

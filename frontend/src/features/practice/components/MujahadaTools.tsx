@@ -24,8 +24,8 @@ type Phrase = (typeof PHRASES)[number];
 interface TasbihDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** The ten-minute timer of the page (it keeps running behind the dialog). */
-  progress: UrgeProgress;
+  /** The ten-minute timer of the page (it keeps running behind the dialog); null while the member has not started it. */
+  progress: UrgeProgress | null;
   /** «الحسنة بعشر أمثالها إلى سبعمائة ضعف», by id; hidden while it cannot be read. */
   hadith: QuoteDto | null;
 }
@@ -44,7 +44,7 @@ export function TasbihDialog({ open, onOpenChange, progress, hadith }: TasbihDia
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{t('title')}</DialogTitle>
-          <DialogDescription>{t('remaining', { time: formatCountdown(progress.remaining) })}</DialogDescription>
+          <DialogDescription>{progress ? t('remaining', { time: formatCountdown(progress.remaining) }) : t('lead')}</DialogDescription>
         </DialogHeader>
         <div className="flex flex-col items-center gap-5 text-center">
           <ul className="flex flex-wrap justify-center gap-2" aria-label={t('phrasesLabel')}>

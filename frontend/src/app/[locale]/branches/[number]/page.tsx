@@ -65,6 +65,7 @@ export default async function BranchDetailPage({
     id: item.quote.id,
     quote: item.quote,
     note: item.link.note,
+    linkId: item.link.id,
   }));
   const countsByKind = (branchQuotes.meta as BranchQuotesMeta | undefined)?.countsByKind;
 

@@ -1,13 +1,10 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Pause, Play } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { isPaused, isPrayerAnchor, isValidTime, pausePlan, resumePlan, slotChoices, updatePlan, type Plan } from '@thekra/practice-core';
+import { isPrayerAnchor, isValidTime, slotChoices, updatePlan, type Plan } from '@thekra/practice-core';
 import { Button } from '@/components/shared/kit/button';
-import { ActionPair } from '@/components/shared/kit/action-pair';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { planWeekdays, sameWeekdays, withWeekdays } from '@/lib/practice/days';
@@ -22,39 +19,21 @@ import { SlotPicker, useWindowRange, WindowLine } from '../SlotPicker';
 /** Time fields shown: the plan's times plus one empty field, at least two, at most four. */
 const MAX_SLOTS = 4;
 
-interface HabitEditDialogProps {
+interface HabitSettingsFormProps {
   plan: Plan;
   habit: PracticeHabit | undefined;
   today: string;
-  title: string;
   amountLabel: (n: number) => string;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  /** After a save (a toast is shown). */
+  onDone?: () => void;
 }
 
 /**
- * «عدّل» on the habit page (round 5, F-31 a): ONE dialog for the reminder times (only those that suit the deed's
- * window), the days themselves (A-13 a), a lower everyday amount (going up stays with «زد خطوة») and «أوقف مؤقتًا» /
- * «استأنف». Delete is not here: it sits in the page's «⋯» with a confirmation. Saving closes and says so.
+ * «التذكيرات» of the habit page (round 6 §3, reference tab): the reminder times (only those that suit the deed's
+ * window), the days themselves (A-13 a) and a lower everyday amount (going up stays with «زد خطوة»). Archive and delete
+ * are in the page's «⋯». Saving says so.
  */
-export function HabitEditDialog({ plan, habit, today, title, amountLabel, open, onOpenChange }: HabitEditDialogProps) {
-  const t = useTranslations('practice.habitPage');
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col gap-4 sm:max-w-xl">
-        <DialogHeader className="pe-8">
-          <DialogTitle className="leading-8">{t('editTitle')}</DialogTitle>
-          <DialogDescription className="leading-7">{title}</DialogDescription>
-        </DialogHeader>
-        {open ? (
-          <EditForm plan={plan} habit={habit} today={today} amountLabel={amountLabel} onDone={() => onOpenChange(false)} />
-        ) : null}
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function EditForm({ plan, habit, today, amountLabel, onDone }: Omit<HabitEditDialogProps, 'open' | 'onOpenChange' | 'title'> & { onDone: () => void }) {
+export function HabitSettingsForm({ plan, habit, today, amountLabel, onDone }: HabitSettingsFormProps) {
   const t = useTranslations('practice.habitPage');
   const tSetup = useTranslations('practice.setup');
   const tToday = useTranslations('practice.today');
@@ -70,7 +49,6 @@ function EditForm({ plan, habit, today, amountLabel, onDone }: Omit<HabitEditDia
   const [amount, setAmount] = useState(String(amounts[0]));
   const [errors, setErrors] = useState<(string | null)[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
-  const paused = isPaused(plan);
 
   function save() {
     const next = slots.map((slot) => {
@@ -94,17 +72,11 @@ function EditForm({ plan, habit, today, amountLabel, onDone }: Omit<HabitEditDia
       }),
     );
     toast.success(t('saved'));
-    onDone();
-  }
-
-  function togglePause() {
-    updateStore((store) => updatePlan(store, plan.id, (p) => (paused ? resumePlan(p, today) : pausePlan(p, today))));
-    toast.success(paused ? t('resumed') : t('paused'));
-    onDone();
+    onDone?.();
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto pe-1">
+    <div className="flex flex-col gap-5">
       <fieldset className="flex flex-col gap-3">
         <legend className="mb-1 text-base font-medium">{t('times')}</legend>
         <WindowLine window={window} prayer={prayer} />
@@ -155,14 +127,8 @@ function EditForm({ plan, habit, today, amountLabel, onDone }: Omit<HabitEditDia
       </div>
 
       <div className="flex flex-col gap-3 border-t border-border pt-4">
-        <ActionPair>
-          <Button onClick={save}>{t('save')}</Button>
-          <Button variant="outline" tone="neutral" onClick={onDone}>
-            {t('cancel')}
-          </Button>
-        </ActionPair>
-        <Button variant="ghost" tone="neutral" size="sm" className="self-start" icon={paused ? <Play aria-hidden /> : <Pause aria-hidden />} onClick={togglePause}>
-          {paused ? t('resume') : t('pause')}
+        <Button className="self-start" onClick={save}>
+          {t('save')}
         </Button>
       </div>
     </div>

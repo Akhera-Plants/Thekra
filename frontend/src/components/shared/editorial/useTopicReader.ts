@@ -41,7 +41,7 @@ interface UseTopicReaderOptions {
   initialHasNext?: boolean;
 }
 
-const toReader = (item: TopicText): ReaderItem => ({ id: item.quote.id, quote: item.quote, note: item.link.note });
+const toReader = (item: TopicText): ReaderItem => ({ id: item.quote.id, quote: item.quote, note: item.link.note, linkId: item.link.id });
 
 /**
  * Mirror the chip in ?theme= without a navigation (the list is fetched on the client). A new history

@@ -87,7 +87,7 @@ export function BranchReader({ number, lang, items: initialItems, total, countsB
       const more = (continuation.data?.pages ?? []).flatMap((page) =>
         page.data.items
           .filter((item) => !seen.has(item.quote.id) && seen.add(item.quote.id))
-          .map((item) => ({ id: item.quote.id, quote: item.quote, note: item.link.note })),
+          .map((item) => ({ id: item.quote.id, quote: item.quote, note: item.link.note, linkId: item.link.id })),
       );
       return [...initialItems, ...more];
     }
@@ -99,6 +99,7 @@ export function BranchReader({ number, lang, items: initialItems, total, countsB
         id: item.quote.id,
         quote: item.quote,
         note: item.link.note,
+    linkId: item.link.id,
       })),
     );
   }, [isFiltered, initialItems, data, failed, continuation.data]);

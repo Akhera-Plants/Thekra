@@ -70,10 +70,11 @@ export default async function GoodDeedDetailPage({
     lang: locale as LocaleCode,
   }).catch((error: unknown) => rethrowUnlessNotFound('good-deed quotes', error));
 
-  const toReader = (item: { quote: { id: string }; link: { note: string | null } }): ReaderItem => ({
+  const toReader = (item: { quote: { id: string }; link: { id: string; note: string | null } }): ReaderItem => ({
     id: item.quote.id,
     quote: item.quote as ReaderItem['quote'],
     note: item.link.note,
+    linkId: item.link.id,
   });
   const virtue = (quotes?.data.items ?? []).map(toReader);
   const seen = new Set(virtue.map((item) => item.id));
@@ -121,14 +122,17 @@ export default async function GoodDeedDetailPage({
       <article className="flex min-w-0 flex-1 flex-col gap-10">
         <header className="page-heading">
           <p className="eyebrow">{tCrumbs('goodDeeds')}</p>
-          <h1
-            id="page-title"
-            tabIndex={-1}
-            lang={/[\u0600-\u06FF]/.test(heading) ? 'ar' : undefined}
-            dir={/[\u0600-\u06FF]/.test(heading) ? 'rtl' : undefined}
-          >
-            {heading}
-          </h1>
+          <div className="title-line">
+            <h1
+              id="page-title"
+              tabIndex={-1}
+              lang={/[\u0600-\u06FF]/.test(heading) ? 'ar' : undefined}
+              dir={/[\u0600-\u06FF]/.test(heading) ? 'rtl' : undefined}
+            >
+              {heading}
+            </h1>
+            <DeedHabitAction habits={deed.schedule?.habits} />
+          </div>
           {description ? <p className="page-lead">{description}</p> : null}
           {reward ? (
             <aside className="next-step" aria-label={t('rewardHeading')}>
@@ -139,8 +143,6 @@ export default async function GoodDeedDetailPage({
           {deed.isContemporary ? (
             <p className="page-lead">{t('contemporaryNote')}</p>
           ) : null}
-          {/* The one action, under the title (owner, 2026-11-01). */}
-          <DeedHabitAction habits={deed.schedule?.habits} />
         </header>
 
         {/* The topic template (owner, 2026-11-01): the tabs right under the title; «الميزان» and every text inside them,

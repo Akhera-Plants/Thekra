@@ -1,96 +1,272 @@
 'use client';
 
-import { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { useId, useMemo, useState } from 'react';
+import { Bell, BellRing, ChevronDown, Repeat } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
-import { setHeartPrefs, STRATEGIES, type Strategy } from '@thekra/practice-core';
+import { toast } from 'sonner';
+import { isPaused, setHeartPrefs, STRATEGIES, toggleStrategy, withCustomPeriodic, type Plan, type Strategy } from '@thekra/practice-core';
 import { Link } from '@/i18n/navigation';
 import { Button } from '@/components/shared/kit/button';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
-import { SegmentTabs, SegmentTabsContent } from '@/components/shared/kit/segment-tabs';
+import { SegmentTabs } from '@/components/shared/kit/segment-tabs';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { updateHeart } from '@/lib/practice/heart-store';
-import { listedStrategies, strategyTarget } from '@/lib/practice/strategies';
+import { isPeriodicTemplate } from '@/lib/practice/limits';
+import { notificationPrefsOf, updatePrefs } from '@/lib/practice/local-store';
+import { habitOf } from '@/lib/practice/plans';
+import { appliesToHabit, listedStrategies, STRATEGY_KINDS, strategyKind, strategyTarget, type StrategyKind } from '@/lib/practice/strategies';
+import { resendPushPrefs } from '@/lib/push/web-push';
+import type { PracticeHabit } from '@/lib/types/practice';
 import { usePracticeCatalog } from '../../hooks/usePracticeCatalog';
+import { useWirdContext } from '../../hooks/useWirdContext';
 import { EasyDeedsDialog } from '../EasyDeedsDialog';
+import { HabitLoops } from '../LoopBuilder';
+import { usePlanWords } from '../plan-words';
 import { ConsistencyCard, HabitLoopCard, SinStepsCard } from './HabitCards';
 
-type Tab = 'list' | 'cards';
+type Filter = 'all' | StrategyKind;
 
 /**
- * «استراتيجيات العادات» (redesign §4.5; owner round 3; round 5, F-12 a), the same page as the app
- * (mobile/app/practice/strategies.tsx): a library to read. The strategies themselves appear in their moment («ابدأ
- * صغيرًا» in «أضف», «اركب الموجة» in «لحظة مجاهدة», «اقضِ ما فاتك» in «صلّحها», «حاسب نفسك» in «محاسبتي»), so there is no
- * «ذكّرني بها», no weekly reminder and no loop builder here. Two tabs keep the page short (owner, 2026-11-03):
- * 1. «الاستراتيجيات» (first): practice-core `STRATEGIES` without «لا تفوّتها مرتين» (it appears the day after a missed
- *    habit, on its row), each a folded row: one idea line, its example and «جرّبها» (the page it maps to, from the shared
- *    navigation map; «أتبِع السيئةَ الحسنة» opens a short list of easy, high-reward good deeds instead);
- * 2. «قبل أن تبدأ»: the educational cards.
+ * «استراتيجيات العادات» (owner round 6, C-18 a: the reference's layout, our visuals): a card «ابنِ حلقة تناسب عادتك»
+ * (choose a habit, build its loop), the family filter «الكل · للبناء · للترك · للعودة», then the strategies in two
+ * columns — each its idea, a folded example, its action («طبّقها على عادة» for «بناء» and «عودة», «جرّبها» for
+ * «ترك»), and «ذكّرني بها» (the weekly strategy reminder of «التنبيهات», practice-core `toggleStrategy`). «لا تفوّتها
+ * مرتين» still appears only in its moment (a habit's row the day after a miss). «قبل أن تبدأ» keeps the educational cards.
  */
 export function StrategiesView() {
   const t = useTranslations('practice.strategies');
   const english = useLocale() === 'en';
   const catalog = usePracticeCatalog();
-  const [tab, setTab] = useState<Tab>('list');
+  const context = useWirdContext();
+  const [filter, setFilter] = useState<Filter>('all');
   const [deedsOpen, setDeedsOpen] = useState(false);
+  /** «طبّقها على عادة»: the strategy being applied (null: none; 'loop': the card's own «ابنِ الحلقة»). */
+  const [applying, setApplying] = useState<Strategy | 'loop' | null>(null);
+  const listId = useId();
+
+  const habits = useMemo(() => {
+    if (!context) return [];
+    const periodic = withCustomPeriodic((plan: Plan) => isPeriodicTemplate(habitOf(plan, context.habits)));
+    return context.snapshot.store.plans.filter((plan) => !isPaused(plan) && !periodic(plan));
+  }, [context]);
+  const reminded = context ? notificationPrefsOf(context.snapshot.prefs).strategies : [];
+  const shown = listedStrategies(STRATEGIES).filter((s) => filter === 'all' || strategyKind(s.key) === filter);
+
+  function toggleReminder(strategy: Strategy) {
+    const on = !reminded.includes(strategy.key);
+    updatePrefs((p) => {
+      const notify = notificationPrefsOf(p);
+      return { ...p, notify: { ...notify, strategies: toggleStrategy(notify.strategies, strategy.key) } };
+    });
+    void resendPushPrefs(english ? 'en' : 'ar');
+    toast.success(on ? t('reminderOn') : t('reminderOff'));
+  }
 
   return (
-    <div className="flex max-w-3xl flex-col gap-6">
-      <SegmentTabs
-        aria-label={t('tabsLabel')}
-        items={[
-          { value: 'list', label: t('listTitle') },
-          { value: 'cards', label: t('cardsTitle') },
-        ]}
-        value={tab}
-        onValueChange={(value) => setTab(value === 'cards' ? 'cards' : 'list')}
-        className="gap-6"
-      >
-        <SegmentTabsContent value="list">
-          <ul className="flex flex-col divide-y divide-border">
-            {listedStrategies(STRATEGIES).map((strategy) => (
-              <StrategyItem key={strategy.key} strategy={strategy} english={english} onDeeds={() => setDeedsOpen(true)} />
-            ))}
-          </ul>
-        </SegmentTabsContent>
-        <SegmentTabsContent value="cards" className="flex flex-col gap-4">
+    <div className="flex flex-col gap-10">
+      <section aria-labelledby="strategy-loop-title" className="strategy-hero">
+        <div className="flex min-w-0 flex-col gap-1">
+          <p className="text-sm text-muted-foreground">{t('loopKicker')}</p>
+          <h2 id="strategy-loop-title" className="text-2xl font-medium md:text-[28px]">
+            {t('loopTitle')}
+          </h2>
+          <p className="text-sm leading-7 text-muted-foreground">{t('loopLead')}</p>
+        </div>
+        <div className="flex shrink-0 flex-col gap-2 sm:min-w-56">
+          <Button variant="solid" tone="primary" size="md" icon={<Repeat aria-hidden />} onClick={() => setApplying('loop')}>
+            {t('loopAction')}
+          </Button>
+        </div>
+      </section>
+
+      <section aria-labelledby="strategy-list-title" className="flex flex-col gap-6">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <h2 id="strategy-list-title" className="text-2xl font-medium">
+            {t('listHeading')}
+          </h2>
+          <SegmentTabs
+            aria-label={t('filterLabel')}
+            controls={listId}
+            items={[{ value: 'all', label: t('kinds.all') }, ...STRATEGY_KINDS.map((kind) => ({ value: kind, label: t(`kinds.${kind}`) }))]}
+            value={filter}
+            onValueChange={(value) => setFilter(value as Filter)}
+            className="w-auto"
+          />
+        </div>
+        <ul id={listId} className="strategy-grid">
+          {shown.map((strategy) => (
+            <StrategyItem
+              key={strategy.key}
+              strategy={strategy}
+              english={english}
+              reminded={reminded.includes(strategy.key)}
+              onReminder={() => toggleReminder(strategy)}
+              onApply={() => setApplying(strategy)}
+              onDeeds={() => setDeedsOpen(true)}
+            />
+          ))}
+        </ul>
+        <p className="text-sm leading-7 text-muted-foreground">{t('note')}</p>
+      </section>
+
+      <details className="group border-t border-border pt-2">
+        <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 text-xl font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring [&::-webkit-details-marker]:hidden">
+          {t('cardsTitle')}
+          <ChevronDown aria-hidden className="size-5 text-muted-foreground transition-transform group-open:rotate-180 motion-reduce:transition-none" />
+        </summary>
+        <div className="flex max-w-3xl flex-col gap-4 pb-2">
           <HabitLoopCard />
           <SinStepsCard withSource />
           <ConsistencyCard />
-        </SegmentTabsContent>
-      </SegmentTabs>
+        </div>
+      </details>
 
+      <ApplyDialog
+        applying={applying}
+        onClose={() => setApplying(null)}
+        habits={habits}
+        catalog={context?.habits ?? new Map()}
+        english={english}
+      />
       <EasyDeedsDialog open={deedsOpen} onOpenChange={setDeedsOpen} slugs={catalog.data?.mujahada?.easyHighReward ?? []} />
     </div>
   );
 }
 
-/** One strategy as a folded row (owner, 2026-11-03: organise, don't stack text): opened, the idea, its example, «جرّبها». */
-function StrategyItem({ strategy, english, onDeeds }: { strategy: Strategy; english: boolean; onDeeds: () => void }) {
+/** One strategy: title, idea, a folded example, its action and «ذكّرني بها». */
+function StrategyItem({
+  strategy,
+  english,
+  reminded,
+  onReminder,
+  onApply,
+  onDeeds,
+}: {
+  strategy: Strategy;
+  english: boolean;
+  reminded: boolean;
+  onReminder: () => void;
+  onApply: () => void;
+  onDeeds: () => void;
+}) {
   const t = useTranslations('practice.strategies');
   const target = strategyTarget(strategy.action);
+  const title = english ? strategy.titleEn : strategy.titleAr;
   return (
-    <li id={`strategy-${strategy.key}`}>
-      <details className="group">
-        <summary className="flex min-h-14 cursor-pointer list-none items-center gap-3 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring [&::-webkit-details-marker]:hidden">
-          <span className="min-w-0 flex-1 text-lg font-medium">{english ? strategy.titleEn : strategy.titleAr}</span>
-          <ChevronDown aria-hidden className="size-5 text-muted-foreground transition-transform group-open:rotate-180 motion-reduce:transition-none" />
-        </summary>
-        <div className="flex flex-col items-start gap-3 pb-5">
-          <p className="text-base leading-8">{t(`items.${strategy.key}.idea`)}</p>
-          <p className="text-sm leading-7 text-muted-foreground">{t(`items.${strategy.key}.example`)}</p>
-          {strategy.key === 'follow-good' ? (
-            <Button tone="primary" size="sm" aria-haspopup="dialog" onClick={onDeeds}>
-              {t('try')}
-            </Button>
-          ) : (
-            <Button asChild tone="primary" size="sm">
-              <Link href={target.href} onClick={target.heart ? () => updateHeart((h) => setHeartPrefs(h, target.heart ?? {})) : undefined}>
-                {t('try')} <DirectionalArrow />
-              </Link>
-            </Button>
-          )}
+    <li id={`strategy-${strategy.key}`} className="flex flex-col gap-3 border-b border-border py-6">
+      <div className="flex items-start gap-3">
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <h3 className="text-xl font-medium">{title}</h3>
+          <p className="text-base leading-8 text-muted-foreground">{t(`items.${strategy.key}.idea`)}</p>
         </div>
+        <Button
+          variant="ghost"
+          tone="neutral"
+          size="sm"
+          aria-pressed={reminded}
+          aria-label={t('remind', { title })}
+          icon={reminded ? <BellRing aria-hidden /> : <Bell aria-hidden />}
+          className="shrink-0 text-muted-foreground aria-pressed:text-primary-text"
+          onClick={onReminder}
+        >
+          <span aria-hidden className="text-[13px]">
+            {t('remindShort')}
+          </span>
+        </Button>
+      </div>
+      <details className="group">
+        <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-1.5 text-sm font-medium text-primary-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring [&::-webkit-details-marker]:hidden">
+          <ChevronDown aria-hidden className="size-4 transition-transform group-open:rotate-180 motion-reduce:transition-none" />
+          {t('exampleToggle')}
+        </summary>
+        <p className="pt-1 text-sm leading-7 text-muted-foreground">{t(`items.${strategy.key}.example`)}</p>
       </details>
+      <div>
+        {strategy.key === 'follow-good' ? (
+          <Button variant="outline" tone="primary" size="sm" aria-haspopup="dialog" onClick={onDeeds}>
+            {t('try')}
+          </Button>
+        ) : appliesToHabit(strategy.key) ? (
+          <Button variant="outline" tone="primary" size="sm" aria-haspopup="dialog" onClick={onApply}>
+            {t('apply')}
+          </Button>
+        ) : (
+          <Button asChild variant="outline" tone="primary" size="sm">
+            <Link href={target.href} onClick={target.heart ? () => updateHeart((h) => setHeartPrefs(h, target.heart ?? {})) : undefined}>
+              {t('try')} <DirectionalArrow />
+            </Link>
+          </Button>
+        )}
+      </div>
     </li>
+  );
+}
+
+/**
+ * «طبّقها على عادة»: choose one of the member's habits, then build its loop with the strategy's idea in view (the
+ * stepper of «حلقة العادة», saved on the habit). Without a habit, one line and «أضف عادة».
+ */
+function ApplyDialog({
+  applying,
+  onClose,
+  habits,
+  catalog,
+  english,
+}: {
+  applying: Strategy | 'loop' | null;
+  onClose: () => void;
+  habits: readonly Plan[];
+  catalog: ReadonlyMap<string, PracticeHabit>;
+  english: boolean;
+}) {
+  const t = useTranslations('practice.strategies');
+  const [chosen, setChosen] = useState<string | null>(null);
+  const strategy = applying && applying !== 'loop' ? applying : null;
+  const plan = habits.find((p) => p.id === chosen) ?? (habits.length === 1 ? habits[0] : undefined);
+  return (
+    <Dialog
+      open={applying !== null}
+      onOpenChange={(open) => {
+        if (!open) {
+          setChosen(null);
+          onClose();
+        }
+      }}
+    >
+      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
+        <DialogHeader className="pe-8">
+          <DialogTitle className="leading-8">{strategy ? (english ? strategy.titleEn : strategy.titleAr) : t('loopTitle')}</DialogTitle>
+          <DialogDescription className="leading-7">{strategy ? t(`items.${strategy.key}.idea`) : t('loopLead')}</DialogDescription>
+        </DialogHeader>
+        {habits.length === 0 ? (
+          <div className="flex flex-col items-start gap-3">
+            <p className="text-base leading-7">{t('noHabits')}</p>
+            <Button asChild variant="solid" tone="primary" size="md">
+              <Link href={{ pathname: '/practice', query: { add: '1' } }}>{t('addHabit')}</Link>
+            </Button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4">
+            <fieldset className="flex flex-col gap-1">
+              <legend className="mb-1 text-sm font-medium text-muted-foreground">{t('chooseHabit')}</legend>
+              {habits.map((p) => (
+                <HabitChoice key={p.id} plan={p} habit={habitOf(p, catalog)} checked={plan?.id === p.id} onChoose={() => setChosen(p.id)} />
+              ))}
+            </fieldset>
+            {plan ? <HabitLoops key={plan.id} plan={plan} compact /> : null}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function HabitChoice({ plan, habit, checked, onChoose }: { plan: Plan; habit: PracticeHabit | undefined; checked: boolean; onChoose: () => void }) {
+  const words = usePlanWords(plan, habit);
+  return (
+    <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg px-1 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ring">
+      <input type="radio" name="strategy-habit" className="size-4 accent-primary" checked={checked} onChange={onChoose} />
+      <span lang={words.titleLang}>{words.title}</span>
+    </label>
   );
 }

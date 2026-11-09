@@ -51,3 +51,41 @@ export const IN_CONTEXT_STRATEGIES: readonly string[] = ['never-twice'];
 export function listedStrategies<T extends Pick<Strategy, 'key'>>(strategies: readonly T[]): T[] {
   return strategies.filter((s) => !IN_CONTEXT_STRATEGIES.includes(s.key));
 }
+
+/**
+ * The three families of «استراتيجيات العادات» (owner round 6, C-18 a: the reference's «بناء / ترك / عودة»): building a
+ * habit, leaving a sin («تخفّف»), and coming back after a gap. Every practice-core strategy has exactly one family
+ * (`strategies.spec.ts`).
+ */
+export type StrategyKind = 'build' | 'leave' | 'return';
+export const STRATEGY_KINDS: readonly StrategyKind[] = ['build', 'leave', 'return'];
+
+const KIND_OF: Readonly<Record<string, StrategyKind>> = {
+  'start-tiny': 'build',
+  'anchor-prayer': 'build',
+  'if-then': 'build',
+  'prepare-place': 'build',
+  bundle: 'build',
+  season: 'build',
+  company: 'build',
+  'block-sin': 'leave',
+  'know-weak': 'leave',
+  'ride-wave': 'leave',
+  'follow-good': 'leave',
+  'never-twice': 'return',
+  'make-up': 'return',
+  'self-review': 'return',
+};
+
+/** The family of a strategy (a strategy added later without one counts as «بناء»). */
+export function strategyKind(key: string): StrategyKind {
+  return KIND_OF[key] ?? 'build';
+}
+
+/**
+ * True when «طبّقها على عادة» fits the strategy: it shapes a habit's loop (cue, routine, obstacle, «إذا… فإني…»). The
+ * «ترك» strategies open «تخفّف» instead, and «أتبِع السيئة الحسنة» its list of easy deeds.
+ */
+export function appliesToHabit(key: string): boolean {
+  return strategyKind(key) !== 'leave';
+}

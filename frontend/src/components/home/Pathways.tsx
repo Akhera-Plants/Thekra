@@ -1,11 +1,13 @@
-import { BookOpen, DoorOpen, Leaf, Sprout } from 'lucide-react';
+import { Leaf } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
+import { DoorArt } from './DoorArt';
 
 /**
- * «أبواب الخير», the page's h1 (`#paths`), in the owner's order: «أعنّي على فعل طاعة» (the primary card) · «أعنّي على
- * ترك معصية» · «شُعَب الإيمان» (with a branching tree, its own drawing). «مواسم الخير» is gone (round 5, F-17: the
+ * «أبواب الخير», the page's h1 (`#paths`), in the owner's order: «أعنّي على فعل طاعة» (the primary card) · «تخفّف من
+ * معصية» · «شُعَب الإيمان». Round 6 (C-06): the three cards are the same size, each with the reference preview's line
+ * drawing (leaf, arch-door, open book) in its corner behind the text (`DoorArt`); colours stay the site's. «مواسم الخير» is gone (round 5, F-17: the
  * occasions live in «سجلّي» and the «مناسبة قريبة» home section); `/names` redirects home (F-19 a).
  */
 export async function Pathways() {
@@ -29,10 +31,8 @@ export async function Pathways() {
 
       <div className="pathways">
         <Link className="pathway pathway-primary" href="/good-deeds">
+          <DoorArt kind="leaf" className="door-art" />
           <span className="pathway-top">
-            <span className="pathway-icon">
-              <Sprout className="size-7" aria-hidden />
-            </span>
             <span className="pathway-overline">{t('deedOverline')}</span>
           </span>
           <span className="pathway-title">{t('deedEntryLabel')}</span>
@@ -46,10 +46,8 @@ export async function Pathways() {
         </Link>
 
         <Link className="pathway pathway-soft" href="/sins">
+          <DoorArt kind="arch" className="door-art" />
           <span className="pathway-top">
-            <span className="pathway-icon">
-              <DoorOpen className="size-7" aria-hidden />
-            </span>
             <span className="pathway-overline">{t('sinOverline')}</span>
           </span>
           <span className="pathway-title">{t('sinEntryLabel')}</span>
@@ -63,10 +61,8 @@ export async function Pathways() {
         </Link>
 
         <Link className="pathway pathway-faith" href="/branches">
+          <DoorArt kind="book" className="door-art" />
           <span className="pathway-top">
-            <span className="pathway-icon">
-              <BookOpen className="size-7" aria-hidden />
-            </span>
             <span className="pathway-overline">{t('branchOverline')}</span>
           </span>
           <span className="pathway-title">{t('branchEntryLabel')}</span>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
-import { BookOpen, Check, HandHeart, ListChecks, Sprout, Waves } from 'lucide-react';
+import { BookOpen, Check, HandHeart, ListChecks, Repeat, Sprout, Timer, Waves } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
   activePrograms,
@@ -10,6 +10,7 @@ import {
   programEntryFor,
   recordWavePassed,
   strategyByKey,
+  URGE_SECONDS,
   urgeProgress,
 } from '@thekra/practice-core';
 import { Link } from '@/i18n/navigation';
@@ -27,7 +28,7 @@ import { allMomentEvidenceIds, momentToolsFor } from '@/lib/practice/moment-tool
 import { mujahadaIds, mujahadaIndex, mujahadaItems } from '@/lib/practice/mujahada';
 import { allProgramEvidenceIds } from '@/lib/practice/programs';
 import type { QuoteDto } from '@/lib/types/api';
-import type { MomentTool, PracticeHabit } from '@/lib/types/practice';
+import type { PracticeHabit } from '@/lib/types/practice';
 import { cn } from '@/lib/utils';
 import { usePracticeCatalog } from '../hooks/usePracticeCatalog';
 import { usePracticeEvidence } from '../hooks/usePracticeEvidence';
@@ -38,13 +39,14 @@ import { FixItSheet } from './FixItSheet';
 import { PracticeLoading } from './PracticeLoading';
 import { ProgressRing } from './ProgressRing';
 import { ShortWirdDialog, TasbihDialog } from './MujahadaTools';
+import { SinLoops } from './LoopBuilder';
 
 const noSubscribe = () => () => {};
 const serverSource = () => undefined;
 const TICK_MS = 1000;
 
 type Outcome = { kind: 'held'; result: 'saved' | 'kept' | 'none' } | { kind: 'slipped' } | null;
-type Tool = 'tasbih' | 'wird' | 'deeds';
+type Tool = 'tasbih' | 'wird' | 'deeds' | 'texts' | 'loop';
 
 interface MujahadaViewProps {
   /** Al-A'raf 7:201 as stored: shown only while the catalog has no «لحظة مجاهدة» verses. */
@@ -52,11 +54,13 @@ interface MujahadaViewProps {
 }
 
 /**
- * «لحظة مجاهدة» (owner round 3, item 15; round 5, F-09 / F-12), the same screen as the app (mobile/app/practice/moment.tsx).
- * Top to bottom: the ten-minute ring; «افعل واحدة الآن»: the acts tied to the texts for this sin (catalog
- * `sinPrograms.moment`: the member's program, else the sin page it was opened from, else the generic acts), each with a
- * small «الدليل» that opens its texts; «أدوات تعينك» (the tasbih counter, «وردٌ أقصر», «أعمال سهلة») and the «اركب
- * الموجة» line; one verse passage on patience, rotating; then «كيف كانت مجاهدتك؟». Kind words only.
+ * «لحظة مجاهدة» (owner round 6, C-01c / C-16: the reference's layout, our visuals), the same screen as the app
+ * (mobile/app/practice/moment.tsx). One act first and prominent — the acts tied to the Qur'an, the Sunnah or the salaf
+ * for this sin (catalog `sinPrograms.moment`: the member's program, else the sin page it was opened from, else the
+ * generic acts) — the other acts under it, then «نصوص تذكّرها» (the texts of these acts) and «حلقة المعصية» (the
+ * program's loop). No «الدليل» buttons here. The ten-minute timer is optional: it starts only on «ابدأ عشر دقائق».
+ * Then «أدوات تعينك» (the tasbih counter, «وردٌ أقصر», «أعمال سهلة») and the «اركب الموجة» line; one verse passage on
+ * patience; then «كيف كانت مجاهدتك؟». Kind words only.
  *
  * Privacy: which sin it is about comes from this device only (an in-memory hand-off, never the URL). Every request is
  * the same for every member: the catalog, the texts of EVERY act and every program at once (fixed batches of 50), and
@@ -89,33 +93,30 @@ export function MujahadaView({ verse }: MujahadaViewProps) {
     [sins.data, english],
   );
 
+  /** The optional ten-minute timer (C-01c / C-16: it starts only when the member asks). */
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [now, setNow] = useState(0);
   const [early, setEarly] = useState(false);
   const [outcome, setOutcome] = useState<Outcome>(null);
   const [fixOpen, setFixOpen] = useState(false);
   const [tool, setTool] = useState<Tool | null>(null);
-  const [act, setAct] = useState<MomentTool | null>(null);
+  /** The act shown first (the first act until the member picks another). */
+  const [chosenAct, setChosenAct] = useState<string | null>(null);
   /** The program picked in the chooser (several running, opened without a hand-off). */
   const [picked, setPicked] = useState<string | null>(null);
+  /** The rotating text's clock: the page's own start (not the optional timer's). */
+  const [openedAt] = useState(() => Date.now());
 
   useEffect(() => {
-    const first = window.setTimeout(() => {
-      const at = Date.now();
-      setStartedAt(at);
-      setNow(at);
-    }, 0);
+    if (startedAt === null) return;
     const timer = window.setInterval(() => setNow(Date.now()), TICK_MS);
-    return () => {
-      window.clearTimeout(first);
-      window.clearInterval(timer);
-    };
-  }, []);
+    return () => window.clearInterval(timer);
+  }, [startedAt]);
 
-  if (!context || startedAt === null) return <PracticeLoading />;
+  if (!context) return <PracticeLoading />;
 
   const { today, snapshot } = context;
-  const progress = urgeProgress(startedAt, now);
+  const progress = startedAt === null ? null : urgeProgress(startedAt, Math.max(now, startedAt));
   const running = activePrograms(snapshot.store.programs);
   const fallback = momentProgram(snapshot.store.programs, source, today);
   // No hand-off and several programs: the member says which one (the program in focus is the default).
@@ -124,6 +125,10 @@ export function MujahadaView({ verse }: MujahadaViewProps) {
   // A sin page's hand-off without a program still gets that sin's acts (public content of the page it came from).
   const sinForActs = program?.sinSlug ?? (typeof source === 'string' ? source : null);
   const acts = momentToolsFor(moment, sinForActs);
+  const firstAct = acts.tools.find((a) => a.key === chosenAct) ?? acts.tools[0];
+  const otherActs = acts.tools.filter((a) => a !== firstAct);
+  // «نصوص تذكّرها»: the texts tied to these acts (this sin's, else the generic ones), each once, as read from the API.
+  const remindIds = [...new Set(acts.tools.flatMap((a) => a.evidence))];
   const sinPrograms = catalog.data?.sinPrograms;
   const entry = program && sinPrograms ? programEntryFor(sinPrograms.programs, program.sinSlug, program.category) : null;
   const common = sinPrograms?.common ?? null;
@@ -132,9 +137,9 @@ export function MujahadaView({ verse }: MujahadaViewProps) {
   const items = mujahadaItems(mujahada).filter((it) =>
     it.kind === 'passage' ? it.ids.every((id) => quotes.has(id)) : quotes.has(it.id),
   );
-  const index = mujahadaIndex(items.length, today, (now - startedAt) / 1000);
+  const index = mujahadaIndex(items.length, today, ((startedAt ?? openedAt) - openedAt) / 1000);
   const item = index >= 0 ? items[index] : undefined;
-  const asking = progress.done || early;
+  const asking = Boolean(progress?.done) || early;
   const wave = strategyByKey('ride-wave');
 
   function answerHeld() {
@@ -164,18 +169,7 @@ export function MujahadaView({ verse }: MujahadaViewProps) {
   );
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-8">
-      <div className="flex justify-center">
-        <ProgressRing fraction={progress.fraction} label={t('remaining', { time: formatCountdown(progress.remaining) })}>
-          <span className="text-3xl font-medium tabular-nums" aria-hidden>
-            {formatCountdown(progress.remaining)}
-          </span>
-          <span className="max-w-32 text-center text-xs leading-5 text-muted-foreground" aria-hidden>
-            {t('timer')}
-          </span>
-        </ProgressRing>
-      </div>
-
+    <div className="flex w-full flex-col gap-8">
       {asksWhich ? (
         <div className="flex flex-col gap-2">
           <p id="moment-which" className="text-sm font-medium text-muted-foreground">
@@ -204,42 +198,79 @@ export function MujahadaView({ verse }: MujahadaViewProps) {
         </div>
       ) : null}
 
-      {acts.tools.length > 0 ? (
-        <section aria-labelledby="moment-acts" className="flex flex-col gap-2">
-          <div className="flex flex-col gap-0.5">
-            <h2 id="moment-acts" className="text-xl font-medium">
-              {t('actionsTitle')}
+      {/* The reference layout (C-01c): ONE act first and prominent, the other acts under it, the two ways to
+          remember (texts, the loop), and the optional timer on the side. No «الدليل» here (C-16). */}
+      <section aria-labelledby="moment-act" className="moment-panel">
+        <div className="flex min-w-0 flex-col gap-4">
+          <div className="flex flex-col gap-1">
+            <p className="text-sm text-muted-foreground">
+              {acts.own && program && !asksWhich && names.get(program.sinSlug) ? names.get(program.sinSlug) : t('kicker')}
+            </p>
+            <h2 id="moment-act" className="text-2xl leading-[1.6] font-medium md:text-[30px]">
+              {firstAct ? (english ? firstAct.titleEn : firstAct.titleAr) : t('actionsTitle')}
             </h2>
-            {/* The program's name as plain text under the title, never a heading (and only the member's own program). */}
-            {acts.own && program && !asksWhich && names.get(program.sinSlug) ? (
-              <p className="text-sm text-muted-foreground">{names.get(program.sinSlug)}</p>
-            ) : null}
+            <p className="text-sm leading-7 text-muted-foreground">{t('actLead')}</p>
           </div>
-          <ul className="flex flex-col divide-y divide-border">
-            {acts.tools.map((tool) => {
-              const title = english ? tool.titleEn : tool.titleAr;
-              return (
-                <li key={tool.key} className="flex min-h-14 items-center gap-3 py-2">
-                  <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-primary" />
-                  <span className="min-w-0 flex-1 text-lg leading-8 font-medium">{title}</span>
-                  <Button
-                    variant="outline"
-                    tone="neutral"
-                    size="sm"
-                    className="shrink-0"
-                    icon={<BookOpen aria-hidden />}
-                    aria-haspopup="dialog"
-                    aria-label={t('evidenceFor', { act: title })}
-                    onClick={() => setAct(tool)}
-                  >
-                    {t('evidence')}
-                  </Button>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-      ) : null}
+          {otherActs.length > 0 ? (
+            <div role="group" aria-label={t('otherActs')} className="flex flex-wrap gap-2">
+              {otherActs.map((a) => (
+                <button
+                  key={a.key}
+                  type="button"
+                  onClick={() => setChosenAct(a.key)}
+                  className="min-h-11 rounded-lg border border-border bg-card px-4 text-[15px] transition-colors duration-150 hover:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transition-none"
+                >
+                  {english ? a.titleEn : a.titleAr}
+                </button>
+              ))}
+            </div>
+          ) : null}
+          <ActionPair layout="hug">
+            <Button variant="outline" tone="primary" size="md" icon={<BookOpen aria-hidden />} aria-haspopup="dialog" onClick={() => setTool('texts')}>
+              {t('textsButton')}
+            </Button>
+            {program ? (
+              <Button variant="outline" tone="primary" size="md" icon={<Repeat aria-hidden />} aria-haspopup="dialog" onClick={() => setTool('loop')}>
+                {t('loopButton')}
+              </Button>
+            ) : null}
+          </ActionPair>
+        </div>
+
+        <div className="moment-timer">
+          {progress ? (
+            <ProgressRing fraction={progress.fraction} label={t('remaining', { time: formatCountdown(progress.remaining) })}>
+              <span className="text-3xl font-medium tabular-nums" aria-hidden>
+                {formatCountdown(progress.remaining)}
+              </span>
+              <span className="max-w-32 text-center text-xs leading-5 text-muted-foreground" aria-hidden>
+                {t('timer')}
+              </span>
+            </ProgressRing>
+          ) : (
+            <>
+              <span className="font-english text-5xl tabular-nums md:text-6xl" aria-hidden>
+                {formatCountdown(URGE_SECONDS)}
+              </span>
+              <span className="text-sm text-muted-foreground">{t('timerHint')}</span>
+              <Button
+                variant="solid"
+                tone="primary"
+                size="md"
+                icon={<Timer aria-hidden />}
+                onClick={() => {
+                  const at = Date.now();
+                  setStartedAt(at);
+                  setNow(at);
+                }}
+              >
+                {t('startTimer')}
+              </Button>
+            </>
+          )}
+        </div>
+      </section>
+      <p className="-mt-4 text-sm text-muted-foreground">{t('timerNote')}</p>
 
       <section aria-labelledby="moment-tools" className="flex flex-col gap-3">
         <h2 id="moment-tools" className="text-xl font-medium">
@@ -311,9 +342,8 @@ export function MujahadaView({ verse }: MujahadaViewProps) {
                 </Button>
               </ActionPair>
             ) : (
-              // Before the ten minutes end: the answers one tap away (never a lone, unexplained button), and «ارجع إلى
-              // تخفَّف» beside it at the same size (A-06).
-              <ActionPair>
+              // The answers one tap away (never a lone, unexplained button), and «ارجع إلى تخفَّف» beside it (A-06).
+              <ActionPair layout={program ? undefined : 'hug'}>
                 <Button tone="primary" size="lg" onClick={() => setEarly(true)}>
                   {t('answerEarly')}
                 </Button>
@@ -325,14 +355,26 @@ export function MujahadaView({ verse }: MujahadaViewProps) {
         {program && (asking || outcome) ? <div className="flex">{backLink}</div> : null}
       </section>
 
-      <ActEvidenceDialog
-        act={act}
-        onClose={() => setAct(null)}
+      <RemindTextsDialog
+        open={tool === 'texts'}
+        onClose={() => setTool(null)}
+        ids={remindIds}
         quotes={quotes}
         loading={evidence.isPending}
         error={evidence.isError ? evidence.error : null}
         onRetry={() => void evidence.refetch()}
       />
+      {program ? (
+        <Dialog open={tool === 'loop'} onOpenChange={(open) => setTool(open ? 'loop' : null)}>
+          <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-xl">
+            <DialogHeader className="pe-8">
+              <DialogTitle className="leading-8">{t('loopButton')}</DialogTitle>
+              <DialogDescription className="leading-7">{t('loopLead')}</DialogDescription>
+            </DialogHeader>
+            <SinLoops program={program} hideLead />
+          </DialogContent>
+        </Dialog>
+      ) : null}
       <TasbihDialog
         open={tool === 'tasbih'}
         onOpenChange={(open) => setTool(open ? 'tasbih' : null)}
@@ -380,31 +422,31 @@ function WaveLine({ title }: { title: string }) {
   );
 }
 
-interface ActEvidenceDialogProps {
-  act: MomentTool | null;
+interface RemindTextsDialogProps {
+  open: boolean;
   onClose: () => void;
-  /** Every act's texts, fetched at once for all members (never this act's ids alone). */
+  /** The texts of this sin's acts (every act's texts are fetched at once for all members, never these ids alone). */
+  ids: readonly string[];
   quotes: ReadonlyMap<string, QuoteDto>;
   loading: boolean;
   error: unknown;
   onRetry: () => void;
 }
 
-/** An act's texts, read by id from the database (never typed here). */
-function ActEvidenceDialog({ act, onClose, quotes, loading, error, onRetry }: ActEvidenceDialogProps) {
+/** «نصوص تذكّرها» (C-16): the texts tied to this sin's acts, read by id from the database (never typed here). */
+function RemindTextsDialog({ open, onClose, ids, quotes, loading, error, onRetry }: RemindTextsDialogProps) {
   const t = useTranslations('leaveSin.moment');
-  const english = useLocale() === 'en';
-  const shown = act ? act.evidence.flatMap((id) => quotes.get(id) ?? []) : [];
+  const shown = ids.flatMap((id) => quotes.get(id) ?? []);
   return (
-    <Dialog open={act !== null} onOpenChange={(open) => (open ? undefined : onClose())}>
+    <Dialog open={open} onOpenChange={(next) => (next ? undefined : onClose())}>
       <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col gap-3 sm:max-w-xl">
         <DialogHeader className="pe-8">
-          <DialogTitle className="leading-8">{t('evidence')}</DialogTitle>
-          <DialogDescription className="leading-7">{act ? (english ? act.titleEn : act.titleAr) : ''}</DialogDescription>
+          <DialogTitle className="leading-8">{t('textsButton')}</DialogTitle>
+          <DialogDescription className="leading-7">{t('textsLead')}</DialogDescription>
         </DialogHeader>
         <div className="min-h-0 flex-1 overflow-y-auto">
           {loading ? (
-            <BrandLoader label={t('evidence')} showLabel />
+            <BrandLoader label={t('textsButton')} showLabel />
           ) : error ? (
             <QueryErrorState error={error} onRetry={onRetry} className="py-6" />
           ) : shown.length === 0 ? (
@@ -413,7 +455,7 @@ function ActEvidenceDialog({ act, onClose, quotes, loading, error, onRetry }: Ac
             <ul className="flex flex-col gap-4">
               {shown.map((quote) => (
                 <li key={quote.id}>
-                  <QuoteCard quote={quote} density="compact" intent="good-deed" />
+                  <QuoteCard quote={quote} density="compact" intent="good-deed" detailHref={`/quotes/${quote.id}`} />
                 </li>
               ))}
             </ul>

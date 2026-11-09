@@ -5,6 +5,7 @@ import { limits, type LimitKind } from '@thekra/practice-core';
 import { QueryErrorState } from '@/components/shared/feedback/QueryErrorState';
 import { isPeriodicTemplate, limitOptions } from '@/lib/practice/limits';
 import type { WirdContext } from '../../hooks/useWirdContext';
+import { HabitLimitSheet } from '../habits/HabitActions';
 import { LimitSheet } from '../LimitSheet';
 import { PlanSetup } from '../PlanSetup';
 import { PracticeLoading } from '../PracticeLoading';
@@ -13,13 +14,14 @@ interface AddHabitFlowProps {
   context: WirdContext;
   /** A catalog habit key to start with (a good-deed page's «ابدأ بها»). */
   habitKey: string | null;
-  /** Closes the flow (back to «ورد اليوم»). */
+  /** Closes the flow (back to where it started: «اليوم» or «العادات»). */
   onClose: () => void;
 }
 
 /**
- * «أضف عادة» on «ورد اليوم» (`/practice?add=1`, with `&habit=<key>` from a good-deed page). Past the limit the limit
- * dialog shows first (F-30 a: «أكمل ما عندي» · «أوقف عادة مؤقتًا»); a place freed there goes on with the steps.
+ * «أضف عادة» (`/practice?add=1` or `/practice/habits?add=1`, with `&habit=<key>` from a good-deed page). With 3 habits
+ * the sheet says so first (round 6, C-01d: archive one or delete one, with the 3-day note); a place freed there goes on
+ * with the steps. A periodic template past its limit shows the periodic limit sheet.
  */
 export function AddHabitFlow({ context, habitKey, onClose }: AddHabitFlowProps) {
   const { snapshot, today, habits, catalog } = context;
@@ -35,6 +37,18 @@ export function AddHabitFlow({ context, habitKey, onClose }: AddHabitFlowProps) 
   if (catalog.isError) return <QueryErrorState error={catalog.error} onRetry={() => void catalog.refetch()} />;
 
   const limitReached = !finishingFirst && !freed && plans.length > 0 && !planLimits.canAdd(kind);
+  if (limitReached && kind === 'sapling') {
+    return (
+      <HabitLimitSheet
+        open
+        onOpenChange={(open) => (open ? undefined : onClose())}
+        store={snapshot.store}
+        today={today}
+        habits={habits}
+        onFreed={() => setFreed(true)}
+      />
+    );
+  }
   if (limitReached) {
     return (
       <LimitSheet

@@ -13,7 +13,7 @@ import {
   type ShareImageLayout,
   type ShareTextRole,
 } from './image-layout';
-import { isArabicLine, type SharePayload } from './share-text';
+import { isArabicLine, naturalBody, type SharePayload } from './share-text';
 
 interface Faces {
   body: string;
@@ -22,12 +22,10 @@ interface Faces {
 }
 
 interface Palette {
-  background: string;
-  card: string;
-  border: string;
-  foreground: string;
-  muted: string;
-  primary: string;
+  /** The «أعنّي على فعل طاعة» door's fill (round 6, C-08 option b): the card. */
+  door: string;
+  /** Its ink: the text, the chip and the footer. */
+  ink: string;
 }
 
 function cssVar(name: string): string {
@@ -47,14 +45,16 @@ function resolveColor(token: string): string {
 
 function readPalette(): Palette {
   return {
-    background: resolveColor('--background'),
-    card: resolveColor('--card'),
-    border: resolveColor('--border'),
-    foreground: resolveColor('--foreground'),
-    muted: resolveColor('--muted-foreground'),
-    primary: resolveColor('--primary'),
+    door: resolveColor('--primary'),
+    ink: resolveColor('--primary-foreground'),
   };
 }
+
+/** The leaf of the «أعنّي على فعل طاعة» door (components/home/DoorArt.tsx), drawn faint in the card's corner. */
+const LEAF_PATHS = [
+  'M110 258c13-50 10-117 45-195M123 189c-56-7-73-41-59-79 36 1 61 30 59 79ZM132 156c47-7 77-37 66-75-37 2-65 30-66 75ZM142 111c-33-18-40-52-20-78 25 11 32 39 20 78ZM155 63c-3-28 9-48 31-53 8 26-7 48-31 53Z',
+  'M66 112c20 26 39 52 57 77M132 156c19-25 40-49 66-75M123 34c8 27 15 53 19 77M155 63l31-53',
+];
 
 /** Font stacks from the next/font variables; the other script's face follows as a fallback. */
 function readFaces(payload: SharePayload, uiLocale: 'ar' | 'en'): Faces {
@@ -124,7 +124,9 @@ export async function prepareShareImage(
   payload: SharePayload,
   options: { uiLocale: 'ar' | 'en'; siteName: string; host: string },
 ): Promise<PreparedShareImage> {
-  const footer = [options.siteName, options.host];
+  // Footer (C-08): «بواسطة تطبيق ذكرى» and the site's address, each on one line.
+  const footer = [payload.byline, options.host];
+  void options.siteName;
   const faces = readFaces(payload, options.uiLocale);
   await loadFaces(faces, payload, footer);
 
@@ -138,7 +140,7 @@ export async function prepareShareImage(
   const uiDir: CanvasDirection = options.uiLocale === 'ar' ? 'rtl' : 'ltr';
 
   const layout = layoutShareImage(
-    { body: payload.body, bodyFace: payload.bodyFace, attribution: payload.attribution },
+    { body: naturalBody(payload.body), bodyFace: payload.bodyFace, attribution: payload.attribution },
     (text, size, role) => {
       ctx.font = fontFor(faces, role, size);
       ctx.direction = role === 'body' ? bodyDir : lineDirection(text, uiDir);
@@ -158,6 +160,12 @@ export async function prepareShareImage(
   };
 }
 
+/**
+ * Option b of the owner's share choices (round 6, C-08): a card in the door's green, a chip with the text's type at
+ * the top, the text in the middle (every line, never cut), its source under a short rule, then a footer line with
+ * «بواسطة تطبيق ذكرى» on the reading start and the site's address on the end (one line each, never wrapped). The leaf
+ * of the door sits faint in a corner. Colours are the site's tokens.
+ */
 function drawImage(
   ctx: CanvasRenderingContext2D,
   layout: ShareImageFit,
@@ -169,76 +177,97 @@ function drawImage(
   const m = SHARE_IMAGE;
   const palette = readPalette();
   const centerX = m.width / 2;
+  const rtl = dirs.uiDir === 'rtl';
 
-  ctx.fillStyle = palette.background;
+  ctx.fillStyle = palette.door;
   ctx.fillRect(0, 0, m.width, m.height);
 
-  const inset = m.frameInset;
-  ctx.beginPath();
-  if (typeof ctx.roundRect === 'function') {
-    ctx.roundRect(inset, inset, m.width - 2 * inset, m.height - 2 * inset, 36);
-  } else {
-    ctx.rect(inset, inset, m.width - 2 * inset, m.height - 2 * inset);
-  }
-  ctx.fillStyle = palette.card;
-  ctx.fill();
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = palette.border;
-  ctx.stroke();
+  // The leaf, faint, from the bottom corner on the reading start side.
+  ctx.save();
+  ctx.globalAlpha = 0.14;
+  ctx.strokeStyle = palette.ink;
+  ctx.lineWidth = 1.2;
+  const scale = 2.2;
+  ctx.translate(rtl ? m.width - 40 - 240 * scale * 0.55 : -40, m.height - 260 * scale - 60);
+  ctx.scale(scale, scale);
+  for (const d of LEAF_PATHS) ctx.stroke(new Path2D(d));
+  ctx.restore();
 
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
-  // Heading: the type label («آية قرآنية», «حديث نبوي», «أثر»).
+  // The type chip («آية قرآنية», «حديث نبوي», «أثر»).
   ctx.font = fontFor(faces, 'heading', m.headingSize);
   ctx.direction = lineDirection(payload.heading, dirs.uiDir);
-  ctx.fillStyle = palette.primary;
-  ctx.fillText(payload.heading, centerX, layout.headingTop + (m.headingSize * 1.4) / 2);
+  const chipW = ctx.measureText(payload.heading).width + 56;
+  const chipH = m.headingSize * 1.9;
+  const chipY = layout.headingTop + (m.headingSize * 1.4) / 2;
+  ctx.save();
+  ctx.globalAlpha = 0.16;
+  ctx.fillStyle = palette.ink;
+  ctx.beginPath();
+  if (typeof ctx.roundRect === 'function') ctx.roundRect(centerX - chipW / 2, chipY - chipH / 2, chipW, chipH, chipH / 2);
+  else ctx.rect(centerX - chipW / 2, chipY - chipH / 2, chipW, chipH);
+  ctx.fill();
+  ctx.restore();
+  ctx.fillStyle = palette.ink;
+  ctx.fillText(payload.heading, centerX, chipY);
 
   // Body: every line, never cut.
   ctx.font = fontFor(faces, 'body', layout.fontSize);
   ctx.direction = dirs.bodyDir;
-  ctx.fillStyle = palette.foreground;
+  ctx.fillStyle = palette.ink;
   layout.bodyLines.forEach((line, index) => {
     ctx.fillText(line, centerX, layout.bodyTop + index * layout.lineHeight + layout.lineHeight / 2);
   });
 
   // A short rule between the text and its attribution.
   const ruleY = layout.metaTop - m.bodyMetaGap / 2;
-  ctx.strokeStyle = palette.primary;
+  ctx.save();
+  ctx.globalAlpha = 0.6;
+  ctx.strokeStyle = palette.ink;
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(centerX - 60, ruleY);
   ctx.lineTo(centerX + 60, ruleY);
   ctx.stroke();
+  ctx.restore();
 
   ctx.font = fontFor(faces, 'meta', m.metaSize);
-  ctx.fillStyle = palette.muted;
+  ctx.fillStyle = palette.ink;
+  ctx.save();
+  ctx.globalAlpha = 0.85;
   layout.metaLines.forEach((line, index) => {
     ctx.direction = lineDirection(line, dirs.uiDir);
-    ctx.fillText(
-      line,
-      centerX,
-      layout.metaTop + index * layout.metaLineHeight + layout.metaLineHeight / 2,
-    );
+    ctx.fillText(line, centerX, layout.metaTop + index * layout.metaLineHeight + layout.metaLineHeight / 2);
   });
+  ctx.restore();
 
-  // Footer: site name, then its address.
-  const [name, host] = footer;
-  ctx.strokeStyle = palette.border;
+  // Footer: a hairline, then «بواسطة تطبيق ذكرى» on the reading start and the address on the end.
+  const [byline, host] = footer;
+  ctx.save();
+  ctx.globalAlpha = 0.35;
+  ctx.strokeStyle = palette.ink;
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(m.paddingX, layout.footerTop);
   ctx.lineTo(m.width - m.paddingX, layout.footerTop);
   ctx.stroke();
+  ctx.restore();
 
-  ctx.font = fontFor(faces, 'footer', m.footerNameSize);
-  ctx.direction = lineDirection(name, dirs.uiDir);
-  ctx.fillStyle = palette.primary;
-  ctx.fillText(name, centerX, layout.footerTop + 36);
-
+  const footerY = layout.footerTop + m.footerHeight / 2;
+  const startX = rtl ? m.width - m.paddingX : m.paddingX;
+  const endX = rtl ? m.paddingX : m.width - m.paddingX;
+  ctx.fillStyle = palette.ink;
+  ctx.font = fontFor(faces, 'footer', m.footerHostSize + 4);
+  ctx.direction = lineDirection(byline ?? '', dirs.uiDir);
+  ctx.textAlign = rtl ? 'right' : 'left';
+  ctx.fillText(byline ?? '', startX, footerY);
   ctx.font = fontFor(faces, 'meta', m.footerHostSize);
   ctx.direction = 'ltr';
-  ctx.fillStyle = palette.muted;
-  ctx.fillText(host, centerX, layout.footerTop + 74);
+  ctx.textAlign = rtl ? 'left' : 'right';
+  ctx.save();
+  ctx.globalAlpha = 0.85;
+  ctx.fillText(host ?? '', endX, footerY);
+  ctx.restore();
 }

@@ -5,6 +5,7 @@ import { ChevronDown } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import {
   canMakeUp,
+  logForDay,
   logMinimum,
   makeUpOffer,
   minimumMet,
@@ -19,6 +20,7 @@ import { Link } from '@/i18n/navigation';
 import { formatDigits } from '@/lib/format/digits';
 import { canLogOn } from '@/lib/practice/hub';
 import { updateStore } from '@/lib/practice/local-store';
+import { dayPartOf, groupByDayPart } from '@/lib/practice/day-parts';
 import { habitOf } from '@/lib/practice/plans';
 import type { TaskItem, WirdDay } from '@/lib/practice/wird';
 import type { PracticeHabit, ScheduleBasis } from '@/lib/types/practice';
@@ -47,6 +49,10 @@ interface TodayListProps {
   planDays?: PlanDayOptions;
   /** A second list of the same day (the periodic acts due): no «تمّ» line, cheer or story of its own. */
   secondary?: boolean;
+  /** Round 6 (reference «اليوم»): the habits under «بداية اليوم · خلال اليوم · ختام اليوم» by their first reminder. */
+  dayParts?: boolean;
+  /** The title is shown by the parent (a group switcher): kept for screen readers only. */
+  hideTitle?: boolean;
 }
 
 /**
@@ -55,8 +61,25 @@ interface TodayListProps {
  * inline undo; done rows sink to the bottom, dimmed. Habits the day does not ask for sit behind ONE collapsed row
  * «ليست مطلوبة اليوم (n)», still loggable and never counted as missed. Logging works for today and the 6 days before.
  */
-export function TodayList({ title, store, date, today, day, habits, occasionBasis, canAdd = false, footer, completeCard, heart = null, planDays, secondary = false }: TodayListProps) {
+export function TodayList({
+  title,
+  store,
+  date,
+  today,
+  day,
+  habits,
+  occasionBasis,
+  canAdd = false,
+  footer,
+  completeCard,
+  heart = null,
+  planDays,
+  secondary = false,
+  dayParts,
+  hideTitle = false,
+}: TodayListProps) {
   const t = useTranslations('practice.wird');
+  const tParts = useTranslations('practice.todayTab.parts');
   const tDay = useTranslations('practice.hub.day');
   const headingId = useId();
   const noteId = useId();
@@ -92,6 +115,7 @@ export function TodayList({ title, store, date, today, day, habits, occasionBasi
         minimumMet={minimumMet(plan, date)}
         today={isToday ? today : undefined}
         makeUp={isToday && heart ? makeUpOffer(store, plan, today, { ...planDays, heart }) : null}
+        onAddOne={() => updateStore((s) => updatePlan(s, plan.id, (p) => logForDay(p, date, 1, today)))}
         onMinimum={
           !item.complete && minimumToLog(plan, date) !== null
             ? () => {
@@ -131,7 +155,7 @@ export function TodayList({ title, store, date, today, day, habits, occasionBasi
 
   return (
     <section aria-labelledby={headingId} className="flex flex-col gap-3">
-      <h2 id={headingId} tabIndex={-1} className="scroll-mt-24 text-2xl font-medium focus:outline-none">
+      <h2 id={headingId} tabIndex={-1} className={cn('scroll-mt-24 text-2xl font-medium focus:outline-none', hideTitle && 'sr-only')}>
         {title}
       </h2>
 
@@ -151,7 +175,9 @@ export function TodayList({ title, store, date, today, day, habits, occasionBasi
         </ul>
       ) : null}
 
-      {tasks.length > 0 ? (
+      {tasks.length > 0 && dayParts ? (
+        <PartedRows tasks={tasks} store={store} render={taskRow} partTitle={(part) => tParts(part)} />
+      ) : tasks.length > 0 ? (
         <ul className="flex flex-col divide-y divide-border border-b border-border" aria-label={title}>
           {day.open.map(taskRow)}
           {day.done.map(taskRow)}
@@ -203,5 +229,38 @@ export function TodayList({ title, store, date, today, day, habits, occasionBasi
 
       {footer}
     </section>
+  );
+}
+
+/** The habits under their part of the day (open first in each), then the other rows (people, the private check-in). */
+function PartedRows({
+  tasks,
+  store,
+  render,
+  partTitle,
+}: {
+  tasks: TaskItem[];
+  store: Store;
+  render: (item: TaskItem) => ReactNode;
+  partTitle: (part: 'start' | 'during' | 'end') => string;
+}) {
+  const habitsOnly = tasks.filter((item): item is HabitItem => item.kind === 'habit');
+  const others = tasks.filter((item) => item.kind !== 'habit');
+  const groups = groupByDayPart(habitsOnly, (item) => {
+    const plan = store.plans.find((p) => p.id === item.planId);
+    return plan ? dayPartOf(plan) : 'during';
+  });
+  return (
+    <div className="flex flex-col gap-4">
+      {groups.map((group) => (
+        <div key={group.part} className="flex flex-col gap-1">
+          <h3 className="text-sm text-muted-foreground">{partTitle(group.part)}</h3>
+          <ul className="flex flex-col divide-y divide-border border-b border-border" aria-label={partTitle(group.part)}>
+            {[...group.items.filter((i) => !i.complete), ...group.items.filter((i) => i.complete)].map(render)}
+          </ul>
+        </div>
+      ))}
+      {others.length > 0 ? <ul className="flex flex-col divide-y divide-border border-b border-border">{others.map(render)}</ul> : null}
+    </div>
   );
 }

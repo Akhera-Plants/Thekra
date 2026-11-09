@@ -20,9 +20,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { updateStore } from '@/lib/practice/local-store';
 import { cn } from '@/lib/utils';
 import { EvidenceButton } from '../EvidenceButton';
+import { QadaSection } from './QadaSection';
 
 /**
- * «الفرائض» (round 5, F-05 a): opt-in rows of the five prayers on «ورد اليوم», each with «في وقتها» and «قضاء» (a second
+ * «الفرائض» (round 5, F-05 a; round 6 adds «قضاء الفوائت» under the rows): opt-in rows of the five prayers on «ورد اليوم», each with «في وقتها» and «قضاء» (a second
  * tap clears it). Not a habit: outside the limit of 3 and the streak. The evidence opens behind «الدليل»; the section's
  * «⋯» hides it again (the marks are kept). Turned on from «أضف».
  */
@@ -91,6 +92,10 @@ export function FardSection({ store, today }: { store: Store; today: string }) {
           </li>
         ))}
       </ul>
+      {/* «قضاء الفوائت» (round 6 §5): old prayers owed, inside «الفرائض». */}
+      <div className="pt-3">
+        <QadaSection store={store} today={today} />
+      </div>
     </section>
   );
 }

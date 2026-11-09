@@ -1,22 +1,17 @@
 'use client';
 
-import { useMemo, useState, type ReactNode } from 'react';
-import { useLocale, useTranslations } from 'next-intl';
+import { useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { establishPlan, graduationReady, updatePlan, type Plan } from '@thekra/practice-core';
 import { Button } from '@/components/shared/kit/button';
 import { habitOf } from '@/lib/practice/plans';
 import type { PracticeHabit } from '@/lib/types/practice';
 import { formatDigits } from '@/lib/format/digits';
-import { formatGregorian } from '@/lib/practice/format';
-import { monthOf, type YearMonth } from '@/lib/practice/hub';
-import { updatePrefs, updateStore } from '@/lib/practice/local-store';
-import { wirdDay, wirdSummary } from '@/lib/practice/wird';
+import { updateStore } from '@/lib/practice/local-store';
+import { wirdSummary } from '@/lib/practice/wird';
 import type { WirdContext } from '../../hooks/useWirdContext';
 import { usePlanWords } from '../plan-words';
-import { ExcuseToggle } from './ExcuseToggle';
-import { HubMonth } from './HubMonth';
 import { StreakFlame } from './StreakFlame';
-import { TodayList } from './TodayList';
 
 /**
  * The statistics of «عاداتي» (owner, 2026-11-01: «السجل» and the habit page became one page). The streak line sits
@@ -47,62 +42,6 @@ export function StreakLine({ context }: { context: WirdContext }) {
   );
 }
 
-/** One calendar month; a tapped day opens its list under it (loggable for the last 7 days). */
-export function MonthPanel({ context, action }: { context: WirdContext; action?: ReactNode }) {
-  const t = useTranslations('practice.record');
-  const tWird = useTranslations('practice.wird');
-  const locale = useLocale() === 'en' ? 'en' : 'ar';
-  const { snapshot, today, habits, occasions, occasionBasis, planDays } = context;
-  const { store, prefs } = snapshot;
-  const showHijri = prefs.showHijri === true;
-  const [picked, setPicked] = useState<string | null>(null);
-  const [month, setMonth] = useState<YearMonth>(() => monthOf(today));
-  const pickedDay = useMemo(
-    () => (picked ? wirdDay(store, picked, { occasions, ...planDays }) : null),
-    [store, picked, occasions, planDays],
-  );
-
-  return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-3">
-        <HubMonth
-          store={store}
-          today={today}
-          selected={picked}
-          month={month}
-          occasions={occasions}
-          planDays={planDays}
-          showHijri={showHijri}
-          onSelect={(date) => setPicked((current) => (current === date ? null : date))}
-          onMonthChange={setMonth}
-          action={action}
-        />
-        <label className="flex min-h-11 items-center gap-3 self-start text-sm">
-          <input
-            type="checkbox"
-            className="size-4 accent-primary"
-            checked={showHijri}
-            onChange={(event) => updatePrefs((p) => ({ ...p, showHijri: event.target.checked }))}
-          />
-          {t('showHijri')}
-        </label>
-      </div>
-      {picked && pickedDay ? (
-        <TodayList
-          title={picked === today ? tWird('today') : formatGregorian(picked, locale, true)}
-          store={store}
-          date={picked}
-          today={today}
-          day={pickedDay}
-          habits={habits}
-          occasionBasis={occasionBasis}
-          footer={store.plans.length > 0 ? <ExcuseToggle store={store} today={today} date={picked} /> : null}
-        />
-      ) : null}
-    </div>
-  );
-}
-
 /** «رسخت هذه العادة بفضل الله. انقلها إلى الراسخة؟»: offered, never automatic. */
 export function GraduationOffers({ context }: { context: WirdContext }) {
   const { snapshot, today, habits } = context;
@@ -115,9 +54,10 @@ function GraduationOffer({ plan, habits, today }: { plan: Plan; habits: Readonly
   const words = usePlanWords(plan, habitOf(plan, habits));
   return (
     <div className="next-step !mt-0 flex flex-col items-start gap-2">
-      <p>
-        <strong lang={words.titleLang}>{words.title}</strong> · {t('graduateOffer')}
+      <p className="text-base font-medium" lang={words.titleLang}>
+        {words.title}
       </p>
+      <p>{t('graduateOffer')}</p>
       <Button
         className="h-auto whitespace-normal py-2 text-start"
         variant="outline"

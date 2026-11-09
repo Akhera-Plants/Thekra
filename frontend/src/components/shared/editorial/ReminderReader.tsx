@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, useId, type ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
 import { ChevronDown } from 'lucide-react';
 import { QuoteCard } from '@/components/shared/quote/QuoteCard';
 import { NarrationList } from '@/components/shared/quote/NarrationList';
@@ -10,7 +11,7 @@ import { ThemeChips, type ThemeChip } from '@/components/shared/editorial/ThemeC
 import type { QuoteCardIntent } from '@/components/shared/quote/QuoteCard';
 import type { CountsByKind, QuoteDto } from '@/lib/types/api';
 import { QuoteType } from '@/lib/types/enums';
-import { StudyPanel } from '@/features/study-panel/components/StudyPanel';
+import { useReadMarks } from '@/features/topic/hooks/useReadMarks';
 import { useQuoteFavoriteProps } from '@/features/favorites/hooks/useQuoteFavoriteProps';
 import { cn } from '@/lib/utils';
 
@@ -18,7 +19,12 @@ export interface ReaderItem {
   id: string;
   quote: QuoteDto;
   note?: string | null;
+  /** The topic↔text link id: the reader shows that link's «وجه التذكير» (round 6, C-13). */
+  linkId?: string | null;
 }
+
+/** «مقروء» filter (round 6): every text, the unread ones, or the read ones. */
+export type ReadFilter = 'all' | 'unread' | 'read';
 
 export interface ReaderSection {
   heading: string;
@@ -150,8 +156,12 @@ export function ReminderReader({
   const [filter, setFilter] = useState<TypeFilter>('all');
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [localLoadingMore, setLocalLoadingMore] = useState(false);
-  const [studyQuoteId, setStudyQuoteId] = useState<string | null>(null);
+  const [readFilter, setReadFilter] = useState<ReadFilter>('all');
   const favoriteProps = useQuoteFavoriteProps();
+  const reads = useReadMarks();
+  const tReads = useTranslations('reads');
+  const readFilterOn = reads.enabled && readFilter !== 'all';
+  const passesRead = (item: ReaderItem) => !readFilterOn || reads.isRead(item.quote.id) === (readFilter === 'read');
   const listId = useId();
 
   const baseSections = useMemo(
@@ -235,12 +245,16 @@ export function ReminderReader({
     [highlight, activeTheme, activeFilter],
   );
   const listSections = useMemo(() => {
-    if (highlightItems.length === 0) return shownSections;
     const ids = new Set(highlightItems.map((item) => item.id));
     return shownSections
       .map((section) => ({ ...section, items: section.items.filter((item) => !ids.has(item.id)) }))
       .filter((section) => section.items.length > 0);
   }, [shownSections, highlightItems]);
+  // The read filter narrows what is loaded (the pages keep loading with «عرض المزيد»).
+  const readSections = listSections
+    .map((section) => ({ ...section, items: section.items.filter(passesRead) }))
+    .filter((section) => section.items.length > 0);
+  const readHighlight = highlightItems.filter(passesRead);
   const showIntro = Boolean(intro) && activeFilter === 'all' && !activeTheme;
 
   // «Show more» is available when:
@@ -290,31 +304,17 @@ export function ReminderReader({
     },
   ];
 
-  const studyListIds = useMemo(
-    () =>
-      filteredFlat
-        .filter(
-          (item) =>
-            item.quote.type === QuoteType.QURAN_VERSE
-            || item.quote.type === QuoteType.HADITH,
-        )
-        .map((item) => item.quote.id),
-    [filteredFlat],
-  );
-  const studyQuote =
-    studyQuoteId
-      ? ([...allItems, ...(highlight?.items ?? [])].find((item) => item.quote.id === studyQuoteId)?.quote ?? null)
-      : null;
-
   const SectionHeading = heading ? 'h3' : 'h2';
   const renderCard = (item: ReaderItem) => (
     <QuoteCard
       quote={item.quote}
       link={item.note ? { relevanceScore: null, note: item.note } : null}
+      linkId={item.linkId ?? null}
       detailHref={`/quotes/${item.quote.id}`}
       intent={intent}
-      onOpenStudy={(quote) => setStudyQuoteId(quote.id)}
       clamp
+      read={reads.enabled ? reads.isRead(item.quote.id) : undefined}
+      onToggleRead={reads.enabled ? (value) => reads.setRead(item.quote.id, value) : undefined}
       {...favoriteProps(item.quote)}
     />
   );
@@ -358,6 +358,22 @@ export function ReminderReader({
             lang={themeLang}
           />
         ) : null}
+        {reads.enabled ? (
+          <div className="flex justify-end">
+            <SegmentTabs
+              aria-label={tReads('filterLabel')}
+              controls={listId}
+              items={[
+                { value: 'all', label: tReads('all') },
+                { value: 'unread', label: tReads('unread') },
+                { value: 'read', label: tReads('read') },
+              ]}
+              value={readFilter}
+              onValueChange={(value) => setReadFilter(value as ReadFilter)}
+              className="w-auto"
+            />
+          </div>
+        ) : null}
       </div>
 
       <div
@@ -367,17 +383,20 @@ export function ReminderReader({
         aria-busy={busy || undefined}
         className="flex flex-col gap-8 transition-opacity duration-150 md:gap-9 aria-busy:opacity-60"
       >
-        {highlight && highlightItems.length > 0 ? (
+        {highlight && readHighlight.length > 0 ? (
           <section aria-labelledby={`${listId}-mizan`} className="flex flex-col gap-3">
             <SectionHeading id={`${listId}-mizan`} className="font-arabic-display text-[20px] font-semibold md:text-[22px]">
               {highlight.title}
             </SectionHeading>
             {highlight.lead ? <p className="-mt-1 text-sm leading-7 text-muted-foreground">{highlight.lead}</p> : null}
-            <NarrationList items={highlightItems} renderItem={(item) => renderCard({ ...item, note: null })} />
+            <NarrationList items={readHighlight} renderItem={(item) => renderCard({ ...item, note: null })} />
           </section>
         ) : null}
         {showIntro ? intro : null}
-        {listSections.map((section) => (
+        {readFilterOn && readSections.length === 0 && readHighlight.length === 0 ? (
+          <p className="py-6 text-center text-muted-foreground">{readFilter === 'read' ? tReads('noneRead') : tReads('noneUnread')}</p>
+        ) : null}
+        {readSections.map((section) => (
           <section key={section.heading || 'texts'} className="flex flex-col gap-8 md:gap-9">
             {section.heading ? (
               <SectionHeading className="font-arabic-display text-[20px] font-semibold md:text-[22px]">
@@ -406,15 +425,6 @@ export function ReminderReader({
         </div>
       ) : null}
 
-      <StudyPanel
-        open={Boolean(studyQuote)}
-        onOpenChange={(open) => {
-          if (!open) setStudyQuoteId(null);
-        }}
-        quote={studyQuote}
-        listIds={studyListIds}
-        onNavigate={setStudyQuoteId}
-      />
     </section>
   );
 }

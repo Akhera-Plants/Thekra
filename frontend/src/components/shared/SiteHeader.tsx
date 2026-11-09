@@ -1,30 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ChevronDown, Menu, Smartphone, X } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link, usePathname } from '@/i18n/navigation';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { LocaleSwitcher } from './LocaleSwitcher';
 import { ThemeToggle } from './ThemeToggle';
 import { AuthNavItems } from './AuthNavItems';
-import { currentHeaderItem, HEADER_MENU, type HeaderMenuItem, type HeaderMenuKey } from './header-menu';
+import { currentHeaderItem, HEADER_LINKS, HEADER_MORE, isMoreCurrent, type HeaderMenuItem, type HeaderMenuKey } from './header-menu';
 
 /**
- * Public site header (thekra-source chrome) with ONE menu for a visitor and a member (owner round 5, W-10 a):
- * «أبواب الخير» then «للأعضاء» (`header-menu.ts`). On a wide screen «القائمة» opens a dropdown; at phone width the same
- * list opens in a side drawer from the inline-start side. «رفقة (في التطبيق)» opens a short note (W-12 b).
+ * Public site header (owner round 6, C-07 b): the brand, then the links «الرئيسية · الطاعات · تخفّف من ذنب · شعب
+ * الإيمان · عاداتي», then «المزيد ▾» (الاستراتيجيات، المحفوظات، «رفقة (في التطبيق)»), then language, theme and the
+ * account (C-05 a: the settings live only in the account avatar menu). «المزيد» opens on hover, on click and from the
+ * keyboard. Below the wide layout the same items open in a side drawer from the inline-start side. «رفقة» opens a
+ * short note that it lives in the app (W-12 b).
  */
 export function SiteHeader() {
   const pathname = usePathname();
@@ -51,7 +45,22 @@ export function SiteHeader() {
       </Link>
 
       <nav className="main-nav" aria-label={tNav('main')}>
-        <MenuDropdown current={current} onAppNote={() => setAppNoteOpen(true)} />
+        <ul className="header-links">
+          {HEADER_LINKS.map((entry) => (
+            <li key={entry.key}>
+              <Link
+                href={entry.href ?? '/'}
+                className="nav-link header-link"
+                aria-current={current === entry.key ? 'page' : undefined}
+              >
+                {tNav(`menuItems.${entry.key}`)}
+              </Link>
+            </li>
+          ))}
+          <li>
+            <MoreMenu current={current} onAppNote={() => setAppNoteOpen(true)} />
+          </li>
+        </ul>
         <span className="nav-divider" aria-hidden />
         <LocaleSwitcher label={tLocale('label')} className="nav-link" />
         <ThemeToggle
@@ -82,49 +91,108 @@ function useItemLabel() {
   return (key: HeaderMenuKey) => (key === 'circles' ? tNav('inApp', { name: tNav('menuItems.circles') }) : tNav(`menuItems.${key}`));
 }
 
-/** Wide screens: the grouped list in a dropdown (Radix: arrow keys, Escape, focus returns to the trigger). */
-function MenuDropdown({ current, onAppNote }: MenuProps) {
+/** Hover leaves the trigger or the list for this long before the list closes (time to cross the gap). */
+const HOVER_CLOSE_MS = 180;
+
+/**
+ * «المزيد ▾» (C-07 b): a Radix menu (arrow keys, Escape, focus back to the trigger) that also opens on hover with a
+ * mouse. A click while the hover has it open keeps it open (the click «pins» it); a second click closes it.
+ */
+function MoreMenu({ current, onAppNote }: MenuProps) {
   const tNav = useTranslations('nav');
   const label = useItemLabel();
+  const [open, setOpen] = useState(false);
+  const byHover = useRef(false);
+  /** A click that pinned the hover-opened list: the close requests of that same click are ignored until then. */
+  const pinnedUntil = useRef(0);
+  const closeTimer = useRef<number | null>(null);
+
+  const cancelClose = () => {
+    if (closeTimer.current !== null) window.clearTimeout(closeTimer.current);
+    closeTimer.current = null;
+  };
+  useEffect(() => cancelClose, []);
+
+  const hoverOpen = (event: React.PointerEvent) => {
+    if (event.pointerType !== 'mouse') return;
+    cancelClose();
+    if (!open) {
+      byHover.current = true;
+      setOpen(true);
+    }
+  };
+  const hoverClose = (event: React.PointerEvent) => {
+    if (event.pointerType !== 'mouse' || !byHover.current) return;
+    cancelClose();
+    closeTimer.current = window.setTimeout(() => {
+      setOpen(false);
+      byHover.current = false;
+    }, HOVER_CLOSE_MS);
+  };
+
   return (
-    <DropdownMenu modal={false}>
+    <DropdownMenu
+      modal={false}
+      open={open}
+      onOpenChange={(next) => {
+        cancelClose();
+        // A click on the trigger while the hover opened the list pins it instead of closing it (Radix may ask to close
+        // twice for that one press: the trigger's toggle and the outside-press of the open list).
+        if (!next && byHover.current) {
+          byHover.current = false;
+          pinnedUntil.current = Date.now() + 400;
+          return;
+        }
+        if (!next && Date.now() < pinnedUntil.current) return;
+        byHover.current = false;
+        setOpen(next);
+      }}
+    >
       <DropdownMenuTrigger asChild>
-        <button type="button" className="nav-link nav-link-primary nav-more" data-current={current ? true : undefined}>
-          {tNav('menu')}
+        <button
+          type="button"
+          className="nav-link nav-more header-link"
+          data-current={isMoreCurrent(current) ? true : undefined}
+          onPointerEnter={hoverOpen}
+          onPointerLeave={hoverClose}
+        >
+          {tNav('more')}
           <ChevronDown className="size-4" aria-hidden />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" sideOffset={8} className="w-64 p-1.5">
-        {HEADER_MENU.map((group, index) => (
-          <DropdownMenuGroup key={group.key}>
-            {index > 0 ? <DropdownMenuSeparator /> : null}
-            <DropdownMenuLabel className="px-2 pt-1.5 pb-1 text-xs font-medium text-muted-foreground">
-              {tNav(`menuGroups.${group.key}`)}
-            </DropdownMenuLabel>
-            {group.items.map((item) => (
-              <DropdownMenuItem
-                key={item.key}
-                asChild={item.href !== null}
-                className="min-h-11 px-2 text-[15px]"
-                onSelect={item.href === null ? onAppNote : undefined}
+      <DropdownMenuContent
+        align="start"
+        sideOffset={6}
+        className="w-60 p-1.5"
+        onPointerEnter={hoverOpen}
+        onPointerLeave={hoverClose}
+        // Closed by the mouse leaving: the focus does not jump back to the trigger.
+        onCloseAutoFocus={(event) => {
+          if (closeTimer.current !== null || byHover.current) event.preventDefault();
+        }}
+      >
+        {HEADER_MORE.map((entry) => (
+          <DropdownMenuItem
+            key={entry.key}
+            asChild={entry.href !== null}
+            className="min-h-11 px-2.5 text-[15px]"
+            onSelect={entry.href === null ? onAppNote : undefined}
+          >
+            {entry.href !== null ? (
+              <Link
+                href={entry.href}
+                aria-current={current === entry.key ? 'page' : undefined}
+                className={cn(current === entry.key && 'text-primary-text')}
               >
-                {item.href !== null ? (
-                  <Link
-                    href={item.href}
-                    aria-current={current === item.key ? 'page' : undefined}
-                    className={cn(current === item.key && 'text-primary-text')}
-                  >
-                    {label(item.key)}
-                  </Link>
-                ) : (
-                  <span className="flex items-center gap-2">
-                    {label(item.key)}
-                    <Smartphone aria-hidden className="size-4 text-muted-foreground" />
-                  </span>
-                )}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuGroup>
+                {label(entry.key)}
+              </Link>
+            ) : (
+              <span className="flex items-center gap-2">
+                {label(entry.key)}
+                <Smartphone aria-hidden className="size-4 text-muted-foreground" />
+              </span>
+            )}
+          </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
@@ -132,8 +200,9 @@ function MenuDropdown({ current, onAppNote }: MenuProps) {
 }
 
 /**
- * Phones: «القائمة» opens a drawer from the inline-start side (right in Arabic, left in English). Radix Dialog traps
- * focus, closes on Escape and on the overlay, and returns focus to the button. A new page closes it (keyed by path).
+ * Narrow screens: «القائمة» opens a drawer from the inline-start side (right in Arabic, left in English) with the same
+ * links and, under «المزيد», the same items. Radix Dialog traps focus, closes on Escape and on the overlay, and returns
+ * focus to the button. A new page closes it (keyed by path).
  */
 function MenuDrawer({ current, onAppNote }: MenuProps) {
   const tNav = useTranslations('nav');
@@ -143,8 +212,8 @@ function MenuDrawer({ current, onAppNote }: MenuProps) {
   const rowClass =
     'flex min-h-12 w-full items-center gap-2 rounded-lg px-3 text-start text-base transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring aria-[current=page]:font-medium aria-[current=page]:text-primary-text';
 
-  function row(item: HeaderMenuItem) {
-    if (item.href === null) {
+  function row(entry: HeaderMenuItem) {
+    if (entry.href === null) {
       return (
         <button
           type="button"
@@ -154,14 +223,14 @@ function MenuDrawer({ current, onAppNote }: MenuProps) {
             onAppNote();
           }}
         >
-          {label(item.key)}
+          {label(entry.key)}
           <Smartphone aria-hidden className="size-4 text-muted-foreground" />
         </button>
       );
     }
     return (
-      <Link href={item.href} className={rowClass} aria-current={current === item.key ? 'page' : undefined} onClick={() => setOpen(false)}>
-        {label(item.key)}
+      <Link href={entry.href} className={rowClass} aria-current={current === entry.key ? 'page' : undefined} onClick={() => setOpen(false)}>
+        {label(entry.key)}
       </Link>
     );
   }
@@ -188,29 +257,28 @@ function MenuDrawer({ current, onAppNote }: MenuProps) {
           </SheetClose>
         </div>
         <nav aria-label={tNav('menu')} className="flex flex-col gap-5 px-3 py-4">
-          {HEADER_MENU.map((group, index) => (
-            <section
-              key={group.key}
-              aria-labelledby={`drawer-${group.key}`}
-              className={cn('flex flex-col gap-1', index > 0 && 'border-t border-border pt-4')}
-            >
-              <h2 id={`drawer-${group.key}`} className="px-3 text-xs font-medium text-muted-foreground">
-                {tNav(`menuGroups.${group.key}`)}
-              </h2>
-              <ul className="flex flex-col gap-0.5">
-                {group.items.map((item) => (
-                  <li key={item.key}>{row(item)}</li>
-                ))}
-              </ul>
-            </section>
-          ))}
+          <ul className="flex flex-col gap-0.5">
+            {HEADER_LINKS.map((entry) => (
+              <li key={entry.key}>{row(entry)}</li>
+            ))}
+          </ul>
+          <section aria-labelledby="drawer-more" className="flex flex-col gap-1 border-t border-border pt-4">
+            <h2 id="drawer-more" className="px-3 text-xs font-medium text-muted-foreground">
+              {tNav('more')}
+            </h2>
+            <ul className="flex flex-col gap-0.5">
+              {HEADER_MORE.map((entry) => (
+                <li key={entry.key}>{row(entry)}</li>
+              ))}
+            </ul>
+          </section>
         </nav>
       </SheetContent>
     </Sheet>
   );
 }
 
-/** «رفقة» lives in the app (W-12 b): one short note, no store link until the owner publishes one. */
+/** «رفقة» lives in the app (W-12 b, C-01k: invite-only there): one short note, no store link until the owner publishes one. */
 function AppOnlyNote({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const tNav = useTranslations('nav');
   return (

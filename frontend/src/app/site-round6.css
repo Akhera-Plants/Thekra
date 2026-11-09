@@ -1,0 +1,75 @@
+/* Owner round 6 (docs/plan/2026-11-09-owner-round-6.md): the layout ideas taken from the reference preview, in the
+   site's own tokens (site-public.css aliases). Kept in one file so the round's changes stay reviewable. */
+
+/* ── Skip link: visually hidden until it has keyboard focus (C-15: it must never show on a page by itself). ── */
+.site-public .skip-link:not(:focus-visible){position:fixed;inline-size:1px;block-size:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;transform:none}
+.site-public .skip-link:focus-visible{transform:none;border-radius:8px}
+
+/* ── Header (C-07 b): links, «المزيد ▾», then language/theme/account. The current link is underlined. ── */
+.header-links{display:flex;align-items:center;gap:22px;list-style:none;margin:0;padding:0}
+.header-link{position:relative;white-space:nowrap}
+.header-link[aria-current=page],.nav-more[data-current]{color:var(--green);font-weight:500}
+.header-link[aria-current=page]::after{content:"";position:absolute;inset-inline:0;bottom:3px;block-size:2px;border-radius:2px;background:currentColor}
+@media(max-width:1240px){.brand-message{display:none}.header-links{gap:18px}}
+@media(max-width:1120px){.site-public .header-auth .auth-register{display:none}}
+@media(max-width:1023px){.header-links{display:none}.main-nav .menu-toggle{display:inline-flex}}
+
+/* ── Home doors (C-06): three cards of one size, the reference drawings in the corner behind the text. ── */
+.pathways{grid-template-columns:repeat(3,minmax(0,1fr))}
+.pathway{min-height:263px}
+.door-art{position:absolute;inset-inline-end:-30px;top:22px;inline-size:170px;block-size:236px;color:var(--green);opacity:.13;pointer-events:none;z-index:0}
+.pathway-primary .door-art{color:var(--primary-ink);opacity:.22}
+.pathway-top{min-height:22px}
+.pathway-cta{align-self:flex-start}
+@media(max-width:650px){
+  .pathways{grid-template-columns:1fr;gap:14px}
+  .pathway,.pathway-faith{min-height:203px;padding:22px 22px 20px;display:flex;flex-direction:column;align-items:stretch;text-align:start}
+  .pathway-faith .pathway-top{display:flex}
+  .pathway-faith .pathway-overline{display:inline}
+  .pathway-title,.pathway-faith .pathway-title{font-size:25px;margin-top:10px;max-width:76%}
+  .pathway-description,.pathway-faith .pathway-description{font-size:14px;max-width:none;margin-block:4px 18px}
+  .pathway-cta,.pathway-faith .pathway-cta{font-size:14px;min-height:44px;padding:8px 14px;margin:0;margin-top:auto}
+  .door-art{inline-size:145px;block-size:200px;top:14px;inset-inline-end:-18px}
+}
+
+/* ── «في لحظات مثل هذه» (C-09): the help line, its situation under it. ── */
+.moment-copy{display:flex;flex-direction:column;flex:1;min-width:0;line-height:1.6}
+.moment-copy small{font-size:13px;color:var(--muted-proto)}
+
+/* ── Settings (C-03a): two groups side by side on a wide screen, one column on a phone; the danger zone last. ── */
+.settings-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:40px;max-inline-size:1140px}
+.settings-danger{padding-top:4px}
+@media(min-width:1024px){.settings-grid{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:64px;row-gap:48px}.settings-danger{grid-column:1/-1;max-inline-size:540px}}
+
+/* ── Notifications (C-19): the tabs, and the browser's status in a side column on a wide screen. ── */
+.notify-layout{display:grid;grid-template-columns:minmax(0,1fr);gap:40px}
+@media(min-width:1024px){.notify-layout{grid-template-columns:minmax(0,720px) minmax(0,320px);justify-content:space-between;column-gap:64px}.notify-aside{position:sticky;top:24px;align-self:start}}
+
+/* ── Strategies (C-18 a): the loop card, then two columns of strategies. ── */
+.strategy-hero{display:flex;flex-direction:column;gap:20px;padding:28px;border-radius:12px;background:var(--sage)}
+@media(min-width:768px){.strategy-hero{flex-direction:row;align-items:center;justify-content:space-between}}
+.strategy-grid{display:grid;grid-template-columns:minmax(0,1fr);column-gap:40px;list-style:none;margin:0;padding:0}
+@media(min-width:900px){.strategy-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* ── Topic pages (C-12): the plan action on the title line, opposite the name. ── */
+.title-line{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 24px}
+.title-line>h1{min-width:0}
+
+/* ── «لحظة مجاهدة» (C-01c/C-16): one prominent act, the other acts, and the optional timer on the side. ── */
+.moment-panel{display:grid;grid-template-columns:minmax(0,1fr);gap:28px;padding:28px;border-radius:12px;background:var(--sage)}
+.moment-timer{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center}
+@media(min-width:900px){.moment-panel{grid-template-columns:minmax(0,1fr) 260px;padding:40px;align-items:center}}
+@media(max-width:650px){.moment-panel{padding:22px 18px}}
+
+/* ── About (C-21): one reading column, short sections parted by hairlines. ── */
+.about-column{display:flex;flex-direction:column;max-inline-size:760px}
+.about-block{display:flex;flex-direction:column;gap:14px;padding-block:28px;border-bottom:1px solid var(--line)}
+.about-block:first-child{padding-top:0}
+.about-text{font-size:17px;line-height:2;color:var(--ink)}
+.about-page .about-paths{margin-top:32px}
+
+/* ── 404 (C-22): one centred block under the page title. ── */
+.not-found-block{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;padding-block:48px 72px}
+.not-found-block .solid-button{margin-top:8px}
+.page-heading:has(.title-line){max-width:none}
+.page-heading:has(.title-line)>:not(.title-line){max-width:800px}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useId, type ReactNode } from 'react';
-import { Check, NotebookPen, Sparkles, Undo2 } from 'lucide-react';
+import { Check, NotebookPen, Plus, Sparkles, Undo2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
   type HabitItem,
@@ -33,10 +33,12 @@ interface RowShellProps {
   detailId?: string;
   isMuted?: boolean;
   undo?: ReactNode;
+  /** At the line's end, outside the link (the inline counter of a counted habit). */
+  trailing?: ReactNode;
 }
 
 /** One line of the day: the control (or icon) at the start, then a link to the item's own page. */
-function RowShell({ lead, href, title, detail, detailId, isMuted = false, undo }: RowShellProps) {
+function RowShell({ lead, href, title, detail, detailId, isMuted = false, undo, trailing }: RowShellProps) {
   return (
     <li className="flex flex-col py-2">
       <div className="flex items-center gap-2">
@@ -53,6 +55,7 @@ function RowShell({ lead, href, title, detail, detailId, isMuted = false, undo }
           </span>
           <DirectionalArrow className="size-4 text-muted-foreground opacity-60 transition-opacity group-hover:opacity-100" />
         </Link>
+        {trailing}
       </div>
       {undo}
     </li>
@@ -153,9 +156,11 @@ interface HabitRowProps {
   today?: string;
   /** Two asked days missed in a row: «صلّحها» offers one good deed (F-08 a). */
   makeUp?: MakeUpOffer | null;
+  /** Round 6 (reference): a counted habit (pages, times…) logs one more from the row: «2 / 4 +». */
+  onAddOne?: () => void;
 }
 
-export function HabitRow({ item, plan, habit, isEnabled, disabledNoteId, undo, onToggle, onUndo, onMinimum, minimumMet = false, today, makeUp = null }: HabitRowProps) {
+export function HabitRow({ item, plan, habit, isEnabled, disabledNoteId, undo, onToggle, onUndo, onMinimum, minimumMet = false, today, makeUp = null, onAddOne }: HabitRowProps) {
   const t = useTranslations('practice.hub.day');
   const tToday = useTranslations('practice.today');
   const tHeart = useTranslations('practice.heart');
@@ -218,7 +223,24 @@ export function HabitRow({ item, plan, habit, isEnabled, disabledNoteId, undo, o
       detailId={detailId}
       isMuted={item.complete}
       undo={secondary}
+      trailing={
+        onAddOne && isEnabled && !item.complete && plan.unit === 'count' && item.required > 1 ? (
+          <InlineCounter done={item.done} required={item.required} label={tToday('addOne', { title: words.title })} onAdd={onAddOne} />
+        ) : null
+      }
     />
+  );
+}
+
+/** «2 / 4 +»: what is logged of a counted habit today, and one more. */
+function InlineCounter({ done, required, label, onAdd }: { done: number; required: number; label: string; onAdd: () => void }) {
+  return (
+    <span className="flex shrink-0 items-center gap-1.5">
+      <span className="text-sm tabular-nums text-muted-foreground" aria-hidden>
+        <span className="text-base font-medium text-foreground">{formatDigits(done)}</span> / {formatDigits(required)}
+      </span>
+      <Button variant="outline" tone="primary" size="sm" iconOnly icon={<Plus aria-hidden />} aria-label={label} onClick={onAdd} />
+    </span>
   );
 }
 
@@ -253,7 +275,7 @@ export function RelativeRow({ item, relative, isEnabled, disabledNoteId, undo, o
           onToggle={onToggle}
         />
       }
-      href="/practice/people"
+      href="/practice/periodic"
       title={
         <>
           <bdi lang={langOf(relative.name)}>{relative.name}</bdi>

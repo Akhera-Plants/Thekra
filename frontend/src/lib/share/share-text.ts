@@ -41,6 +41,8 @@ export interface ShareLabels {
   atharNotice: string;
   /** «رواه X» / «Narrated by X» */
   atharNarrated: (speaker: string) => string;
+  /** «بواسطة تطبيق ذكرى» / «via the Thekra app»: the last line of a shared text and the image footer (C-08). */
+  byline: string;
 }
 
 export interface SharePayload {
@@ -55,6 +57,8 @@ export interface SharePayload {
   /** Attribution lines as the card shows them, Western digits. */
   attribution: string[];
   isAthar: boolean;
+  /** «بواسطة تطبيق ذكرى». */
+  byline: string;
 }
 
 export interface QuoteShareOptions {
@@ -233,17 +237,32 @@ export function quoteSharePayload(quote: QuoteDto, options: QuoteShareOptions): 
     bodyFace,
     attribution,
     isAthar,
+    byline: labels.byline,
   };
 }
 
 /**
- * The shared text: body, a blank line, the attribution lines, and (for targets that take one
- * string, such as WhatsApp or the clipboard) a blank line and the URL.
+ * The text exactly as stored, laid out for a message (owner round 6, C-08: «رتّب النص … طبيعي»): line breaks and
+ * runs of spaces inside a paragraph become one space (so the message app wraps it naturally instead of showing stray
+ * short lines), and a blank line between paragraphs is kept. No word is changed, added or dropped.
+ */
+export function naturalBody(body: string): string {
+  return body
+    .replace(/\r\n?/g, '\n')
+    .split(/\n[ \t]*\n+/)
+    .map((paragraph) => paragraph.replace(/\s+/g, ' ').trim())
+    .filter(Boolean)
+    .join('\n\n');
+}
+
+/**
+ * The shared text (C-08): the body (laid out naturally), a blank line, the attribution lines, a blank line, then
+ * «بواسطة تطبيق ذكرى» and — for targets that take one string, such as WhatsApp or the clipboard — the URL under it.
  */
 export function shareText(payload: SharePayload, url?: string): string {
-  const parts = [payload.body];
+  const parts = [naturalBody(payload.body)];
   if (payload.attribution.length > 0) parts.push(payload.attribution.join('\n'));
-  if (url) parts.push(url);
+  parts.push(url ? `${payload.byline}\n${url}` : payload.byline);
   return parts.join('\n\n');
 }
 

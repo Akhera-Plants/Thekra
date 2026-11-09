@@ -1,19 +1,16 @@
 'use client';
 
 import { useEffect, useId, useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { CalendarPlus, Check, Plus, Undo2 } from 'lucide-react';
+import { Check, ChevronDown, Plus, Undo2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import {
-  buildIcs,
   circleOf,
   deleteRelative,
   dueList,
   isRelativeOpen,
   limits,
   logContact,
-  PEOPLE_CIRCLES,
   undoContact,
   updateRelative,
   type DueEntry,
@@ -22,46 +19,30 @@ import {
 } from '@thekra/practice-core';
 import { Button } from '@/components/shared/kit/button';
 import { TitleRow } from '@/components/shared/kit/title-row';
-import { SectionDivider } from '@/components/shared/SectionDivider';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { formatDigits } from '@/lib/format/digits';
-import { downloadTextFile, ICS_MIME } from '@/lib/practice/download';
 import { formatGregorian } from '@/lib/practice/format';
-import { kinshipEvents, langOf, rhythmOf } from '@/lib/practice/kinship';
+import { langOf, rhythmOf } from '@/lib/practice/kinship';
 import { limitOptions } from '@/lib/practice/limits';
-import { updatePrefs, updateStore } from '@/lib/practice/local-store';
+import { updateStore } from '@/lib/practice/local-store';
 import { useDeletesEverywhere } from '../../hooks/useDeletesEverywhere';
-import { useWirdContext } from '../../hooks/useWirdContext';
+import type { WirdContext } from '../../hooks/useWirdContext';
 import { LimitSheet } from '../LimitSheet';
-import { PracticeLoading } from '../PracticeLoading';
 import { RelativeForm } from '../RelativeForm';
 import { RowMenu } from '../RowMenu';
-import { SyncStatus } from '../SyncStatus';
+import { cn } from '@/lib/utils';
 
-/** The page's sections, in the owner's order (F-15 a). */
+/** The lists inside the act, in the owner's order (F-15 a). */
 const SECTIONS: readonly PeopleCircle[] = ['kin', 'parents', 'neighbors', 'friends', 'sick'];
 
 /**
- * «أهلي وناسي» (round 5, F-15 a): one page for every people list — الأقارب، الوالدان، الجيران، الأصدقاء، المرضى. Who is
- * due this week (or overdue) is on top, across the lists. Each section has «أضف» on its title line, opening a dialog
- * (no form always open; a toast after adding, W-26). A row logs «تواصلت» with an undo; edit and delete live in its «⋯»
- * (delete asks first). `?circle=` or `#circle-<key>` (an old link to one list) scrolls to that section.
+ * The people of «صلة الرحم والأحباب» (round 6 §6, C-10 / C-01i): the round-5 people lists — الأقارب، الوالدان،
+ * الجيران، الأصدقاء، المرضى — now live INSIDE this one periodic act on «الأعمال الدورية» (no page, menu entry or tab of
+ * their own; `/practice/people` redirects here). Who is due this week (or overdue) is on top, across the lists. Each list
+ * has «أضف» on its title line, opening a dialog (a toast after adding). A row logs «تواصلت» with an undo; edit and
+ * delete live in its «⋯» (delete asks first). `#circle-<key>` (an old link to one list) scrolls to that list.
  */
-export function PeopleView() {
-  const context = useWirdContext();
-  const requested = useSearchParams().get('circle');
-  const ready = context !== null;
-  useEffect(() => {
-    if (!ready) return;
-    const hash = window.location.hash.startsWith('#circle-') ? window.location.hash.slice(1) : null;
-    const key = hash ?? (requested && PEOPLE_CIRCLES.includes(requested as PeopleCircle) ? `circle-${requested}` : null);
-    if (key) document.getElementById(key)?.scrollIntoView({ block: 'start' });
-  }, [ready, requested]);
-  if (!context) return <PracticeLoading />;
-  return <PeopleBody context={context} />;
-}
-
-function PeopleBody({ context }: { context: NonNullable<ReturnType<typeof useWirdContext>> }) {
+export function SilatPeople({ context }: { context: WirdContext }) {
   const t = useTranslations('practice.people');
   const tKin = useTranslations('practice.kinship');
   const { snapshot, today, habits } = context;
@@ -74,6 +55,14 @@ function PeopleBody({ context }: { context: NonNullable<ReturnType<typeof useWir
     const list = dueList(open, today);
     return [...list.overdue, ...list.thisWeek];
   }, [open, today]);
+  // The five lists stay folded under who is due (a long page on a phone); an old link to one list opens them.
+  // (Rendered only on the device, after the store is read: `window` is there.)
+  const [listsOpen, setListsOpen] = useState(() => store.relatives.length === 0 || window.location.hash.startsWith('#circle-'));
+  const listsId = useId();
+  useEffect(() => {
+    const hash = window.location.hash.startsWith('#circle-') ? window.location.hash.slice(1) : null;
+    if (hash) document.getElementById(hash)?.scrollIntoView({ block: 'start' });
+  }, []);
 
   function startAdding(circle: PeopleCircle) {
     if (planLimits.canAdd('periodic', { circle })) setAdding(circle);
@@ -81,11 +70,11 @@ function PeopleBody({ context }: { context: NonNullable<ReturnType<typeof useWir
   }
 
   return (
-    <div className="flex max-w-3xl flex-col gap-8">
-      <section aria-labelledby="people-due" className="flex flex-col gap-3">
-        <h2 id="people-due" className="text-2xl font-medium">
+    <div className="flex flex-col gap-6">
+      <section aria-labelledby="people-due" className="flex flex-col gap-2">
+        <h4 id="people-due" className="text-base font-medium">
           {t('dueTitle')}
-        </h2>
+        </h4>
         {due.length === 0 ? (
           <p className="text-sm leading-7 text-muted-foreground">{store.relatives.length === 0 ? t('emptyAll') : t('dueNone')}</p>
         ) : (
@@ -97,17 +86,26 @@ function PeopleBody({ context }: { context: NonNullable<ReturnType<typeof useWir
         )}
       </section>
 
-      {SECTIONS.map((circle) => {
-        const people = store.relatives.filter((r) => circleOf(r) === circle);
-        // Who is due this week is listed once, on top; the section keeps the rest and says how many are up there.
-        const list = dueList(people.filter(isRelativeOpen), today);
-        const rows = list.later;
-        const above = list.overdue.length + list.thisWeek.length;
-        const visited = people.filter((r) => !isRelativeOpen(r));
-        return (
-          <div key={circle} className="contents">
-            <SectionDivider />
-            <section id={`circle-${circle}`} aria-labelledby={`circle-${circle}-title`} className="flex scroll-mt-24 flex-col gap-3">
+      <button
+        type="button"
+        aria-expanded={listsOpen}
+        aria-controls={listsId}
+        onClick={() => setListsOpen((v) => !v)}
+        className="flex min-h-11 items-center gap-2 rounded-xl border border-border px-4 text-start text-base font-medium transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      >
+        <span className="flex-1">{t('listsToggle', { n: formatDigits(store.relatives.length) })}</span>
+        <ChevronDown aria-hidden className={cn('size-4 transition-transform duration-150 motion-reduce:transition-none', listsOpen && 'rotate-180')} />
+      </button>
+      <div id={listsId} hidden={!listsOpen} className="flex flex-col gap-6">
+        {SECTIONS.map((circle) => {
+          const people = store.relatives.filter((r) => circleOf(r) === circle);
+          // Who is due this week is listed once, on top; the list keeps the rest and says how many are up there.
+          const list = dueList(people.filter(isRelativeOpen), today);
+          const rows = list.later;
+          const above = list.overdue.length + list.thisWeek.length;
+          const visited = people.filter((r) => !isRelativeOpen(r));
+          return (
+            <section key={circle} id={`circle-${circle}`} aria-labelledby={`circle-${circle}-title`} className="flex scroll-mt-24 flex-col gap-2 border-t border-border pt-4">
               <TitleRow
                 action={
                   <Button variant="outline" tone="primary" size="sm" icon={<Plus aria-hidden />} onClick={() => startAdding(circle)}>
@@ -115,9 +113,9 @@ function PeopleBody({ context }: { context: NonNullable<ReturnType<typeof useWir
                   </Button>
                 }
               >
-                <h2 id={`circle-${circle}-title`} className="text-xl font-medium">
+                <h4 id={`circle-${circle}-title`} className="text-base font-medium">
                   {t(`sections.${circle}`)}
-                </h2>
+                </h4>
                 <p className="text-sm leading-7 text-muted-foreground">{t(`hints.${circle}`)}</p>
               </TitleRow>
               {above > 0 ? <p className="text-sm text-muted-foreground">{t('above', { count: above, n: formatDigits(above) })}</p> : null}
@@ -134,17 +132,9 @@ function PeopleBody({ context }: { context: NonNullable<ReturnType<typeof useWir
                 </ul>
               )}
             </section>
-          </div>
-        );
-      })}
-
-      {store.relatives.length > 0 ? (
-        <>
-          <SectionDivider />
-          <CalendarExport relatives={store.relatives} today={today} withNames={snapshot.prefs.kinshipNamesInCalendar === true} />
-        </>
-      ) : null}
-      <SyncStatus persistent={snapshot.persistent} quiet />
+          );
+        })}
+      </div>
 
       <Dialog open={adding !== null} onOpenChange={(next) => (next ? undefined : setAdding(null))}>
         <DialogContent className="sm:max-w-lg">
@@ -301,39 +291,5 @@ function VisitedRow({ relative }: { relative: Relative }) {
         }}
       />
     </li>
-  );
-}
-
-/** An optional calendar file of the next 90 days (generic titles unless names are turned on). */
-function CalendarExport({ relatives, today, withNames }: { relatives: readonly Relative[]; today: string; withNames: boolean }) {
-  const t = useTranslations('practice.kinship');
-  const namesId = useId();
-  function handleExport() {
-    const events = kinshipEvents(relatives, today, (relative) => (withNames ? t('icsTitleNamed', { name: relative.name }) : t('icsTitle')));
-    downloadTextFile('thekra-people.ics', buildIcs({ calendarName: t('icsName'), events }), ICS_MIME);
-  }
-  return (
-    <section aria-labelledby="people-export" className="flex flex-col gap-3">
-      <h2 id="people-export" className="text-xl font-medium">
-        {t('exportTitle')}
-      </h2>
-      <label htmlFor={namesId} className="flex min-h-11 cursor-pointer items-start gap-3">
-        <input
-          id={namesId}
-          type="checkbox"
-          className="mt-1.5 size-4 shrink-0 accent-primary"
-          checked={withNames}
-          aria-describedby={`${namesId}-note`}
-          onChange={(event) => updatePrefs((prefs) => ({ ...prefs, kinshipNamesInCalendar: event.target.checked }))}
-        />
-        <span>{t('namesOptIn')}</span>
-      </label>
-      <p id={`${namesId}-note`} className="text-sm leading-7 text-muted-foreground">
-        {withNames ? t('namesWarning') : t('genericNote')}
-      </p>
-      <Button variant="outline" tone="primary" size="md" className="self-start" icon={<CalendarPlus aria-hidden />} onClick={handleExport}>
-        {t('export')}
-      </Button>
-    </section>
   );
 }

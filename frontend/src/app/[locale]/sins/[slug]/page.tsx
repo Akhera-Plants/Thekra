@@ -73,10 +73,11 @@ export default async function SinDetailPage({
     lang: locale as LocaleCode,
   }).catch((error: unknown) => rethrowUnlessNotFound('sin quotes', error));
 
-  const toReader = (item: { quote: { id: string }; link: { note: string | null } }): ReaderItem => ({
+  const toReader = (item: { quote: { id: string }; link: { id: string; note: string | null } }): ReaderItem => ({
     id: item.quote.id,
     quote: item.quote as ReaderItem['quote'],
     note: item.link.note,
+    linkId: item.link.id,
   });
   const warning = (quotes?.data.items ?? []).map(toReader);
   const seen = new Set(warning.map((item) => item.id));
@@ -127,14 +128,17 @@ export default async function SinDetailPage({
       <article className="flex min-w-0 flex-1 flex-col gap-10">
         <header className="page-heading">
           <p className="eyebrow">{tCrumbs('sins')}</p>
-          <h1
-            id="page-title"
-            tabIndex={-1}
-            lang={/[\u0600-\u06FF]/.test(heading) ? 'ar' : undefined}
-            dir={/[\u0600-\u06FF]/.test(heading) ? 'rtl' : undefined}
-          >
-            {heading}
-          </h1>
+          <div className="title-line">
+            <h1
+              id="page-title"
+              tabIndex={-1}
+              lang={/[\u0600-\u06FF]/.test(heading) ? 'ar' : undefined}
+              dir={/[\u0600-\u06FF]/.test(heading) ? 'rtl' : undefined}
+            >
+              {heading}
+            </h1>
+            <StartProgramLink slug={slug} />
+          </div>
           {description ? <p className="page-lead">{description}</p> : null}
           {sin.rank === SinRank.KABIRA && sin.rankReference && (
             <p className="page-lead">
@@ -150,8 +154,6 @@ export default async function SinDetailPage({
           {sin.isContemporary ? (
             <p className="page-lead">{t('contemporaryNote')}</p>
           ) : null}
-          {/* The one action, under the title (owner, 2026-11-01): «تخفَّف من معصية» is open for every sin. */}
-          <StartProgramLink slug={slug} />
         </header>
 
         {/* The topic template (owner, 2026-11-01): the tabs right under the title; «الميزان» and every text inside them,

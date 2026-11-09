@@ -109,7 +109,7 @@ describe('wirdSummary', () => {
 
 describe('periodicHref', () => {
   it('opens a relative on the kinship page and a habit on its plan', () => {
-    expect(periodicHref({ kind: 'relative', id: 'r1', next: TODAY })).toBe('/practice/people');
+    expect(periodicHref({ kind: 'relative', id: 'r1', next: TODAY })).toBe('/practice/periodic');
     expect(periodicHref({ kind: 'habit', id: 'p1', next: null })).toBe('/practice/habits/p1');
   });
 });

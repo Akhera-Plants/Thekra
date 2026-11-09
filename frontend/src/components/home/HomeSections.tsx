@@ -1,16 +1,12 @@
 'use client';
 
-import { Fragment, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
-import { ArrowDown, ArrowUp, Check, Settings2, Sparkles } from 'lucide-react';
+import { Fragment, useEffect, useMemo, useSyncExternalStore, type ReactNode } from 'react';
+import { Check, Sparkles } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import {
   HOME_SECTIONS,
-  moveHomeSection,
-  resolveHomeSections,
   seasonsOfGood,
-  setHomeSectionVisible,
-  setHomeSections,
   visibleHomeSections,
   type HabitItem,
   type HomeSectionKey,
@@ -18,9 +14,7 @@ import {
 import { Link } from '@/i18n/navigation';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { OrnamentalDivider } from '@/components/home/OrnamentalDivider';
-import { Button } from '@/components/shared/kit/button';
-import { Switch } from '@/components/shared/kit/switch';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { WEB_HOME_SECTIONS, webHomeOrder } from '@/components/home/web-sections';
 import { useSession } from '@/features/auth/hooks/useSession';
 import { useAgendaActions } from '@/features/practice/hooks/useAgendaActions';
 import { usePracticeCatalog } from '@/features/practice/hooks/usePracticeCatalog';
@@ -31,12 +25,10 @@ import { WeekBranchCard } from '@/features/practice/components/hub/KnowledgeCard
 import { usePlanWords } from '@/features/practice/components/plan-words';
 import { formatDigits } from '@/lib/format/digits';
 import { formatGregorian } from '@/lib/practice/format';
-import { updateStore } from '@/lib/practice/local-store';
 import { habitOf } from '@/lib/practice/plans';
 import { wirdDay } from '@/lib/practice/wird';
 import type { Plan } from '@thekra/practice-core';
 import type { PracticeHabit } from '@/lib/types/practice';
-import { cn } from '@/lib/utils';
 
 /** Remembers the last answer, so a signed-in user does not see the guest page flash first. Per-device convenience only. */
 const SIGNED_IN_HINT = 'thekra.home.signed-in';
@@ -73,8 +65,7 @@ function useSignedIn(): boolean {
   return known ? session.isAuthenticated : hint;
 }
 
-/** Sections the website has. «نص اليوم» is the app's (the site has no such text yet), so it is never drawn here. */
-const WEB_SECTIONS: readonly HomeSectionKey[] = HOME_SECTIONS.map((s) => s.key).filter((key) => key !== 'daily-text');
+const WEB_SECTIONS = WEB_HOME_SECTIONS;
 
 /** After these a divider parts the page (the reading sections below the doors keep their own spacing, as before). */
 const DIVIDED_AFTER: ReadonlySet<HomeSectionKey> = new Set(['wird', 'week-branch', 'doors']);
@@ -90,19 +81,23 @@ interface HomeSectionsProps {
 /**
  * The home (round 5, F-02 a / F-33): a visitor always sees the fixed public order (practice-core `visibleHomeSections`
  * for a visitor: «مناسبة قريبة» when one is near, then the doors and the reading sections). A signed-in member sees
- * their own order and choice, synced with the app (`settings.homeSections`), with «ورد اليوم» first by default, and
- * «خصّص الرئيسية» at the end (show/hide and move up/down). «مواسم الخير» is gone (F-17): the occasions live in «سجلّي».
+ * their own order and choice, synced with the app (`settings.homeSections`), with a short «ورد اليوم» first by default
+ * and the doors right after it (C-11). «خصّص الرئيسية» lives only in the settings (round 6, C-04), not on this page. «مواسم الخير» is gone (F-17): the occasions live in «سجلّي».
  */
 export function HomeSections({ doors, moments, featured, sources }: HomeSectionsProps) {
   const signedIn = useSignedIn();
   const snapshot = usePracticeStore();
   const stored = snapshot?.store.settings.homeSections;
   const keys = useMemo(() => {
-    const list = visibleHomeSections(signedIn ? stored : null, signedIn);
-    // A visitor's order leaves out what is opt-in («شعبة الأسبوع» is a member's choice).
-    return list.filter(
-      (key) => WEB_SECTIONS.includes(key) && (signedIn || HOME_SECTIONS.find((s) => s.key === key)?.visibleByDefault),
-    );
+    if (!signedIn) {
+      // A visitor's order leaves out what is opt-in («شعبة الأسبوع» is a member's choice).
+      return visibleHomeSections(null, false).filter(
+        (key) => WEB_SECTIONS.includes(key) && HOME_SECTIONS.find((s) => s.key === key)?.visibleByDefault,
+      );
+    }
+    return webHomeOrder(stored)
+      .filter((s) => s.visible)
+      .map((s) => s.key);
   }, [signedIn, stored]);
 
   const render: Record<HomeSectionKey, () => ReactNode> = {
@@ -124,7 +119,6 @@ export function HomeSections({ doors, moments, featured, sources }: HomeSections
           {DIVIDED_AFTER.has(key) && index < keys.length - 1 ? <OrnamentalDivider /> : null}
         </Fragment>
       ))}
-      {signedIn && snapshot ? <CustomizeHome /> : null}
     </>
   );
 }
@@ -268,89 +262,5 @@ function HomeOccasion() {
         <DirectionalArrow className="size-4 text-muted-foreground" />
       </Link>
     </section>
-  );
-}
-
-/** «خصّص الرئيسية»: show/hide and move each section; every change is saved at once (synced with the app). */
-function CustomizeHome() {
-  const t = useTranslations('home.customize');
-  const snapshot = usePracticeStore();
-  const [open, setOpen] = useState(false);
-  const list = resolveHomeSections(snapshot?.store.settings.homeSections).filter((s) => WEB_SECTIONS.includes(s.key));
-  const title = (key: HomeSectionKey) => t(`sections.${key}`);
-
-  function move(key: HomeSectionKey, by: -1 | 1) {
-    const at = list.findIndex((s) => s.key === key);
-    const other = list[at + by];
-    if (!other) return;
-    updateStore((store) => {
-      const full = resolveHomeSections(store.settings.homeSections);
-      return setHomeSections(store, moveHomeSection(full, key, full.findIndex((s) => s.key === other.key)));
-    });
-  }
-
-  return (
-    <div className="flex justify-center pt-6 pb-2">
-      <Button variant="outline" tone="neutral" icon={<Settings2 aria-hidden />} onClick={() => setOpen(true)}>
-        {t('open')}
-      </Button>
-      <Dialog
-        open={open}
-        onOpenChange={(next) => {
-          setOpen(next);
-          if (!next) toast.success(t('saved'));
-        }}
-      >
-        <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col gap-4 sm:max-w-md">
-          <DialogHeader className="pe-8">
-            <DialogTitle className="leading-8">{t('open')}</DialogTitle>
-            <DialogDescription className="leading-7">{t('lead')}</DialogDescription>
-          </DialogHeader>
-          <ol className="flex min-h-0 flex-1 flex-col divide-y divide-border overflow-y-auto border-y border-border">
-            {list.map((section, index) => (
-              <li key={section.key} className="flex min-h-14 items-center gap-2 py-1.5">
-                <span className={cn('min-w-0 flex-1 text-base', !section.visible && 'text-muted-foreground')}>{title(section.key)}</span>
-                <Button
-                  variant="ghost"
-                  tone="neutral"
-                  size="sm"
-                  iconOnly
-                  icon={<ArrowUp aria-hidden />}
-                  aria-label={t('up', { title: title(section.key) })}
-                  disabled={index === 0}
-                  onClick={() => move(section.key, -1)}
-                />
-                <Button
-                  variant="ghost"
-                  tone="neutral"
-                  size="sm"
-                  iconOnly
-                  icon={<ArrowDown aria-hidden />}
-                  aria-label={t('down', { title: title(section.key) })}
-                  disabled={index === list.length - 1}
-                  onClick={() => move(section.key, 1)}
-                />
-                <Switch
-                  aria-label={t('show', { title: title(section.key) })}
-                  checked={section.visible}
-                  onCheckedChange={(on) =>
-                    updateStore((store) => setHomeSections(store, setHomeSectionVisible(store.settings.homeSections, section.key, on)))
-                  }
-                />
-              </li>
-            ))}
-          </ol>
-          <Button
-            className="self-start"
-            onClick={() => {
-              setOpen(false);
-              toast.success(t('saved'));
-            }}
-          >
-            {t('done')}
-          </Button>
-        </DialogContent>
-      </Dialog>
-    </div>
   );
 }

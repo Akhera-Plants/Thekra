@@ -11,6 +11,7 @@ import { getGoodDeeds } from '@/lib/api/good-deeds';
 import { getQuotes, getReminderOfTheDay } from '@/lib/api/quotes';
 import { reportFailure } from '@/lib/errors';
 import { getSourceStripNames } from '@/lib/api/source-strip';
+import { getHomeMoments } from '@/lib/api/home-moments';
 import { utcDayNumber } from '@/lib/day';
 import { QuoteType } from '@/lib/types/enums';
 import type { GoodDeedDto, QuoteDto } from '@/lib/types/api';
@@ -76,11 +77,12 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
   const t = await getTranslations('home');
   const day = utcDayNumber();
 
-  const [reminderResult, deedsResult, scholarsResult, sourceNames] = await Promise.all([
+  const [reminderResult, deedsResult, scholarsResult, sourceNames, moments] = await Promise.all([
     getReminderOfTheDay(lang).then((result) => result.data).then(ok, failed('home reminder')),
     getGoodDeeds({ limit: 100, sort: 'quoteCount', lang }).then((result) => result.data).then(ok, failed('home deeds')),
     getQuotes({ type: [QuoteType.SCHOLAR_QUOTE], limit: 12, lang }).then((result) => result.data).then(ok, failed('home reflections')),
     getSourceStripNames(lang),
+    getHomeMoments(lang),
   ]);
   // Each block is optional, but with all three down the API is unreachable: show the retry
   // (error.tsx) instead of caching a bare page for everyone.
@@ -101,9 +103,11 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
       <HomeSections
         doors={<Pathways />}
         moments={
-          <div className="pt-2">
-            <Moments />
-          </div>
+          moments.length > 0 ? (
+            <div className="pt-2">
+              <Moments moments={moments} />
+            </div>
+          ) : null
         }
         featured={
           reminder || deed || reflection ? (

@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useSession } from '@/features/auth/hooks/useSession';
 import { Link, useRouter } from '@/i18n/navigation';
+import { HEADER_ACCOUNT } from './header-menu';
 
 function initials(name: string | null, email: string): string {
   if (name) {
@@ -80,7 +81,7 @@ export function AuthNavItems() {
         <button
           type="button"
           aria-label={t('userMenu')}
-          className="rounded-full focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/40"
+          className="inline-flex size-11 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <Avatar className="size-8">
             <AvatarFallback className="text-xs">
@@ -96,15 +97,18 @@ export function AuthNavItems() {
           </div>
         )}
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link href="/settings">{tNav('settings')}</Link>
-        </DropdownMenuItem>
+        {/* The account menu (C-05 a): الحساب، الإعدادات، then تسجيل الخروج. The settings live only here. */}
+        {HEADER_ACCOUNT.map((entry) => (
+          <DropdownMenuItem key={entry.key} asChild className="min-h-11">
+            <Link href={entry.href ?? '/settings'}>{tNav(`menuItems.${entry.key}`)}</Link>
+          </DropdownMenuItem>
+        ))}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={handleLogout}
-          className="text-destructive focus:text-destructive"
+          className="min-h-11 text-destructive focus:text-destructive"
         >
-          {t('logout')}
+          {tNav('signOut')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

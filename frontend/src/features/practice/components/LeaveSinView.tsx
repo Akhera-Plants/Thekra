@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState, useSyncExternalStore } from 'react';
-import { Check, ChevronDown, LockKeyhole, Plus, ShieldCheck } from 'lucide-react';
+import { Check, Plus } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { activePrograms, limits, programEntryFor, type SinProgram } from '@thekra/practice-core';
 import { BrandLoader } from '@/components/shared/feedback/BrandLoader';
@@ -9,7 +9,6 @@ import { QueryErrorState } from '@/components/shared/feedback/QueryErrorState';
 import { Button } from '@/components/shared/kit/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { pendingProgramForSession, updateStore } from '@/lib/practice/local-store';
-import { setVaultSession } from '@/lib/practice/vault-flow';
 import { cn } from '@/lib/utils';
 import { allProgramEvidenceIds } from '@/lib/practice/programs';
 import type { PracticeHabit } from '@/lib/types/practice';
@@ -25,7 +24,8 @@ import { PracticeLoading } from './PracticeLoading';
 import { LimitSheet } from './LimitSheet';
 import { ProgramChooser } from './ProgramChooser';
 import { ProgramPanel } from './ProgramPanel';
-import { CreateCodeForm, ForgotCode, UnlockForm } from './VaultForms';
+import { CreateCodeForm } from './VaultForms';
+import { VaultLockState } from './VaultLockState';
 
 const noSubscribe = () => () => {};
 const serverPending = () => null;
@@ -35,7 +35,8 @@ const serverPending = () => null;
  * the sin). The page opens with the privacy code once per tab (docs/plan/2026-11-01-sin-vault-always-on.md §2–3); the
  * first program asks for a new code before it starts (§1). Round 5 (F-11 a / A-21 a), as in the app: ONE program is
  * shown at a time, its name a selectable title that switches between the running programs (and starts another), then
- * its one tab bar «اليوم · رحلتي» (ProgramPanel). Once saved in the account, the privacy line folds to one row. Every
+ * its one tab bar «اليوم · رحلتي» (ProgramPanel). Round 6 (C-15): no privacy line; the lock state is «أقفل» / «مقفل ✓»
+ * (a tap on the latter opens the unlock popup); the sin list of the chooser is searchable. Every
  * request is the same for every member (catalog, the whole sin list, all evidence).
  */
 export function LeaveSinView() {
@@ -85,30 +86,20 @@ export function LeaveSinView() {
     );
   }
 
-  // Saved in the account: the privacy line folds to one row (A-21 a); before that it is said in full.
-  const privacyLine = vault.data ? (
-    <PrivacyRow unlocked={session !== null} />
-  ) : (
-    <p className="flex items-start gap-2 text-sm leading-7 text-muted-foreground">
-      <ShieldCheck className="mt-1.5 size-4 shrink-0 text-primary-text" aria-hidden />
-      <span>{t('privacy')}</span>
-    </p>
-  );
+  // Round 6 (C-15): no «محفوظ مشفّرًا في حسابك» line. While open, a quiet save status and «أقفل»; locked, «مقفل ✓»
+  // (VaultLockState), whose tap opens the unlock popup.
+  const lockRow = vault.data ? (
+    <div className="flex min-h-11 flex-wrap items-center justify-end gap-x-3 gap-y-1 text-sm text-muted-foreground">
+      {session ? <SaveStatus /> : null}
+      <VaultLockState />
+    </div>
+  ) : null;
 
-  // Locked: the code opens «تخفَّف» for this tab; changes made elsewhere on this device are merged in.
   if (vault.data && !session) {
     return (
-      <div className="flex max-w-2xl flex-col gap-6">
-        {privacyLine}
-        <section aria-labelledby="vault-locked" className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5">
-          <h2 id="vault-locked" className="flex items-center gap-2 text-xl font-medium">
-            <LockKeyhole className="size-5 text-primary-text" aria-hidden />
-            {t('vault.lockedTitle')}
-          </h2>
-          <p className="text-muted-foreground">{t('vault.lockedLead')}</p>
-          <UnlockForm programs={snapshot.store.programs} userId={userId} onMissing={() => void vault.refetch()} />
-          <ForgotCode userId={userId} />
-        </section>
+      <div className="flex max-w-2xl flex-col gap-4">
+        <p className="text-base leading-8 text-muted-foreground">{t('vault.lockedNote')}</p>
+        <VaultLockState className="self-start" />
       </div>
     );
   }
@@ -124,7 +115,6 @@ export function LeaveSinView() {
   if (!vault.data && active.length > 0) {
     return (
       <div className="flex max-w-2xl flex-col gap-6">
-        {privacyLine}
         <section aria-labelledby="vault-create" className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5">
           <h2 id="vault-create" className="text-xl font-medium">
             {t('vault.protectTitle')}
@@ -163,7 +153,7 @@ export function LeaveSinView() {
 
   return (
     <div className="flex max-w-3xl flex-col gap-8">
-      {privacyLine}
+      {lockRow}
       {ended ? (
         <p className="next-step !mt-0 flex items-start gap-2" role="status">
           <Check className="mt-1.5 size-4 shrink-0 text-primary-text" aria-hidden />
@@ -303,39 +293,7 @@ export function LeaveSinView() {
   );
 }
 
-/**
- * «محفوظ مشفّرًا في حسابك»: one quiet row once the program is saved; a tap shows the whole line (A-21 a). While unlocked
- * it also says a save in progress or its failure, and offers «أقفل».
- */
-function PrivacyRow({ unlocked }: { unlocked: boolean }) {
-  const t = useTranslations('leaveSin');
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="flex flex-col gap-1">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm leading-7 text-muted-foreground">
-        <button
-          type="button"
-          aria-expanded={open}
-          aria-controls="privacy-detail"
-          onClick={() => setOpen((o) => !o)}
-          className="flex min-h-11 items-center gap-2 rounded-md transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-        >
-          <ShieldCheck className="size-4 shrink-0 text-primary-text" aria-hidden />
-          <span>{t('privacyShort')}</span>
-          <ChevronDown aria-hidden className={cn('size-4 transition-transform motion-reduce:transition-none', open && 'rotate-180')} />
-        </button>
-        {unlocked ? <SaveStatus /> : null}
-      </div>
-      {open ? (
-        <p id="privacy-detail" className="max-w-2xl text-sm leading-7 text-muted-foreground">
-          {t('privacy')}
-        </p>
-      ) : null}
-    </div>
-  );
-}
-
-/** The save in progress or its failure (quiet while saved), and «أقفل». */
+/** The save in progress or its failure (quiet while saved). */
 function SaveStatus() {
   const t = useTranslations('leaveSin.vault');
   const state = useVaultSaveState();
@@ -345,9 +303,6 @@ function SaveStatus() {
         {state === 'saving' ? t('saving') : state === 'error' ? t('errors.save') : state === 'reopen' ? t('errors.reopen') : null}
       </span>
       {state === 'saving' ? <BrandLoader label={t('saving')} /> : null}
-      <Button variant="outline" tone="neutral" size="sm" icon={<LockKeyhole aria-hidden />} onClick={() => setVaultSession(null)}>
-        {t('lock')}
-      </Button>
     </>
   );
 }

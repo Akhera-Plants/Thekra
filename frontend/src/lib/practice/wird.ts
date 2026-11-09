@@ -92,9 +92,9 @@ export function wirdSummary(store: Store, today: LocalDate, opts: PlanDayOptions
   };
 }
 
-/** Where a periodic act opens: a relative on «أهلي وناسي» (add and edit live there), a plan on its habit page. */
+/** Where a periodic act opens: a relative in «صلة الرحم والأحباب» on «الأعمال الدورية» (add and edit live there), a plan on its habit page. */
 export function periodicHref(act: PeriodicAct): string {
-  return act.kind === 'relative' ? '/practice/people' : `/practice/habits/${act.id}`;
+  return act.kind === 'relative' ? '/practice/periodic' : `/practice/habits/${act.id}`;
 }
 
 /**

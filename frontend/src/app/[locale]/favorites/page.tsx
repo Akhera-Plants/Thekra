@@ -37,6 +37,7 @@ export default async function FavoritesPage({ params, searchParams }: PageProps<
 
       <header className="page-heading">
         <h1 id="page-title" tabIndex={-1}>{t('pageTitle')}</h1>
+        <p className="page-lead">{t('lead')}</p>
       </header>
 
       <FavoritesGuard>

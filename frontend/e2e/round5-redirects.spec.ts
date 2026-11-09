@@ -8,13 +8,17 @@ const CASES: [string, string][] = [
   ['/practice/reviews', '/practice/review'],
   ['/practice/pledges', '/practice/review'],
   ['/calendar', '/practice/record'],
-  ['/practice/habits', '/practice/record'],
-  ['/practice/kinship?circle=friends', '/practice/people?circle=friends'],
+  // Round 6: `/practice/habits` is the «العادات» tab again; «أهلي وناسي» lives inside «الأعمال الدورية».
+  ['/practice/kinship?circle=friends', '/practice/periodic?circle=friends'],
+  ['/practice/people', '/practice/periodic'],
   ['/practice/my-reminders', '/favorites/reminders'],
   ['/practice/notifications', '/settings/notifications'],
   ['/practice/prayer-times', '/settings/prayer-times'],
   ['/names', '/'],
   ['/names/al-rahman', '/'],
+  // Round 6 (C-01l): «تصفّح النصوص» is gone; its pages go home.
+  ['/browse', '/'],
+  ['/browse/quran/2', '/'],
 ];
 
 for (const [from, to] of CASES) {

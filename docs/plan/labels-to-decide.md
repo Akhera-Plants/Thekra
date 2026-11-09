@@ -88,3 +88,28 @@ Keys live in `mobile/src/lib/i18n/{ar,en}.json` under `habitsHub` unless noted.
 | Steps «العادة · القدر والوقت · رسالتك · المراجعة» + «كم ومتى؟» + «راجع قبل الحفظ» + «احفظ العادة» | add flow (the reference indicator, 4 numbered steps: 3 + review) | «رسالة لنفسك» for «رسالتك» |
 | «قضاء الفوائت»: «قضيت n من m» · «اليوم n من 3» · «بقي n يومًا بهذا القدر» · «تتمّه نحو …» · «أنت على قدرك، بارك الله لك.» · «العدد كله / لكل صلاة» | qada screen, «الفرائض» group, سجلّي › حصيلة | «قضيتَ» with the vowel |
 | «أسبوع · شهر · حصيلة» + «تسجيلات الأسبوع» | سجلّي tabs | «الحصيلة» |
+
+## Website «عاداتي» (web A: tabs, اليوم, العادات, الأعمال الدورية, محاسبتي, سجلّي, habit page, add flow, قضاء الفوائت)
+
+Keys live in `frontend/messages/{ar,en}.json` under `practice.*`. Where the app («App «عاداتي»» above) already has a
+label, the web uses the same words; only the web's own or different lines are listed.
+
+| Built as (ar · en) | Where | Alternative / question |
+| --- | --- | --- |
+| «سامح نفسك اليوم، واكتفِ بالقدر الأدنى من كل عادة. القليل الدائم خير من الكثير المنقطع.» + for «تخفّف» «أما ما تتخفّف منه فاثبت على تركه اليوم؛ الثبات في اليوم الصعب أعظم أجرًا.» | «اليوم», under the date on a hard «حال يومي» (`practice.dayState.gentle*`) | the app's shorter «سامح نفسك اليوم، وأدِّ القدر الأدنى.» |
+| «انشغالات طارئة» · English «Urgent matters» (the app: «Sudden demands») | «حال يومي» list | one English word for both platforms |
+| «هل فعلتها؟» card under today's list, two rows then «المزيد (n)» · toast «سُجِّلت «لم تتم». غدًا فرصة جديدة.» | «اليوم› عادات اليوم», a day's details | — |
+| «مواعيد قادمة» + «الكل» | «اليوم» side column (reference) | «القادم» |
+| Group switcher «الفرائض · عادات اليوم · الأعمال الدورية» · English «Prayers · Habits · Periodic» (short to fit a phone row) | «اليوم» on a phone | the English full names «Obligatory prayers · Today's habits · Periodic acts» do not fit 390px |
+| «في الأرشيف منذ {date} · إن أعدتها يبدأ تقدّمها من جديد» / «يبقى تقدّمها إن أعدتها حتى {date}» | «العادات › الأرشيف» rows | the app's wording (same meaning) |
+| «عندك 3 عادات، وهو الحد» + «أرشِفها / احذفها» per habit + «رجوع» | «أضف عادة» past the limit (C-01d) | — |
+| «مغطّى لخصوصيتك. اضغط واكتب رمز الخصوصية لتراه.» / «مقفل. اضغط واكتب رمز الخصوصية لتفتحه.» | a covered «تخفَّف» row («العادات», «سجلّي») | the app's «تخفّف · مغطّى» |
+| «شارك تطورك مع الرفقة» is NOT shown on the web | «العادات» milestone lines | «رفقة» is app-only and invite-only, and the web cannot tell if the member is in a circle (practice-core `shareSuggestion`: «only to a member of a circle») |
+| «القوائم: الأقارب، الوالدان، الجيران، الأصدقاء، المرضى (n)» (folded) | «الأعمال الدورية › صلة الرحم والأحباب» | the app's «افتح القوائم» |
+| «تعديل» link + trash icon; no «سجّل العمل» button on the web rows | «الأعمال الدورية» rows (C-24) | logging stays in «اليوم › الأعمال الدورية»; add the button if the owner wants it on both |
+| «وقفة مع نفسك» (heading) + «حاسب نفسك اليوم ليخفّ حسابك غدًا. وقفة قصيرة صادقة، ثم خطوة واضحة.» · week: «ثقيلٌ الآن، خفيفٌ بعد.» / «ما تراجعه اليوم بصدق لا يثقل عليك غدًا.» | «محاسبتي» | — |
+| «ابدأ محاسبة المساء» / «ابدأ محاسبة الأسبوع» (replace «حاسب نفسك الآن» / «ابدأ الآن») | «محاسبتي» | — |
+| «لم تتم في {n} أيام» (was «فاتك {n} أيام») | weekly review card, «وقفات سابقة» | — |
+| «تعلّم من الخطأ: {habit}» + 14-day bar + «آخر يوم أتممتها فيه…» + «طريق العودة: ارجع بقدر أصغر (…)، ثم ابنِ من جديد.» | سجلّي day, محاسبتي, habit page «العودة بعد انقطاع» | — |
+| «أتممتها {n} يومًا من {target} تحتاجها العادة لترسخ» (66 days, practice-core `GRADUATION_MIN_DAYS`) | habit page › المتابعة › تقدّمك | — |
+| «أسبوع · شهر · حصيلة» (the reference «الأسبوع · الشهر · الحصيلة») | سجلّي tabs | with «ال» |

@@ -28,6 +28,7 @@ export default async function FavoriteRemindersPage({ params }: PageProps<'/[loc
       <Breadcrumbs ariaLabel={tNav('breadcrumbs')} items={[{ label: tCrumbs('home'), href: '/' }, { label: tCrumbs('favorites') }]} />
       <header className="page-heading">
         <h1 id="page-title" tabIndex={-1}>{t('pageTitle')}</h1>
+        <p className="page-lead">{t('lead')}</p>
       </header>
       <FavoritesGuard>
         <SavedTabs initial="reminders" />

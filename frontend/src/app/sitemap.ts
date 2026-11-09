@@ -37,12 +37,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entry('/branches', 0.9),
     entry('/about', 0.5),
     // «عاداتي» and its tabs (round 5 §1); the settings pages are not listed (robots keeps /settings out).
-    entry('/browse', 0.6),
     entry('/practice', 0.6),
     entry('/practice/periodic', 0.4),
     entry('/practice/review', 0.3),
     entry('/practice/record', 0.4),
-    entry('/practice/people', 0.4),
     entry('/practice/strategies', 0.3),
     ...sins.map((slug) => entry(`/sins/${slug}`, 0.8)),
     ...deeds.map((slug) => entry(`/good-deeds/${slug}`, 0.8)),

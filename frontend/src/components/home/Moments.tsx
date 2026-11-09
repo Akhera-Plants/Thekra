@@ -1,28 +1,28 @@
-import { Heart, MessageCircle, Pause, Sun, type LucideIcon } from 'lucide-react';
+import { Heart, MessageCircle, Pause, Sparkles, Sun, type LucideIcon } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
+import type { HomeMoment } from '@/lib/api/home-moments';
 
-export interface MomentLink {
-  href: string;
-  labelKey: 'momentAnger' | 'momentPrayer' | 'momentBackbiting' | 'momentKindness';
-  icon: LucideIcon;
-}
-
-/** Curated moment links mapped to real topic slugs (not prototype sample IDs). */
-export const DEFAULT_MOMENTS: MomentLink[] = [
-  { href: '/sins/ghadab', labelKey: 'momentAnger', icon: Pause },
-  { href: '/good-deeds/salah', labelKey: 'momentPrayer', icon: Sun },
-  { href: '/sins/ghibah', labelKey: 'momentBackbiting', icon: MessageCircle },
-  { href: '/good-deeds/kalam-tayyib', labelKey: 'momentKindness', icon: Heart },
-];
+/** The API's icon keys (backend `home-moments.yaml`); an unknown key gets a neutral mark. */
+const ICONS: Record<string, LucideIcon> = {
+  pause: Pause,
+  sun: Sun,
+  'message-circle': MessageCircle,
+  heart: Heart,
+};
 
 interface MomentsProps {
-  moments?: MomentLink[];
+  moments: readonly HomeMoment[];
 }
 
-export async function Moments({ moments = DEFAULT_MOMENTS }: MomentsProps) {
+/**
+ * «في لحظات مثل هذه» (round 6, C-09): the list comes from the API, the same for every user and edited by us; each row
+ * is phrased as help («تعينك على التخفّف من الغضب») with its situation under it, and opens its topic page.
+ */
+export async function Moments({ moments }: MomentsProps) {
   const t = await getTranslations('home');
+  if (moments.length === 0) return null;
 
   return (
     <section className="moments-section" aria-labelledby="moments-title">
@@ -32,13 +32,16 @@ export async function Moments({ moments = DEFAULT_MOMENTS }: MomentsProps) {
       </div>
       <div className="moments-list">
         {moments.map((moment) => {
-          const Icon = moment.icon;
+          const Icon = ICONS[moment.icon] ?? Sparkles;
           return (
-            <Link key={moment.href} className="moment" href={moment.href}>
+            <Link key={moment.key} className="moment" href={moment.topic.path}>
               <span className="moment-symbol">
                 <Icon className="size-[18px]" aria-hidden />
               </span>
-              <span>{t(moment.labelKey)}</span>
+              <span className="moment-copy">
+                <span>{moment.label}</span>
+                {moment.situation ? <small>{moment.situation}</small> : null}
+              </span>
               <span className="link-arrow">
                 <DirectionalArrow className="size-[17px]" />
               </span>

@@ -292,12 +292,12 @@ export function EveningCard({ ctx, bare = false, onSaved }: HeartCardProps) {
   );
 }
 
-/** «المحاسبة الأسبوعية» (the chosen day; the next morning if skipped): kept, weakened, one step, the heart, a line to oneself. */
+/** «المحاسبة الأسبوعية» (the chosen day; the next morning if skipped): kept, weakened, one step, the heart. */
 export function WeeklyCard({ ctx, bare = false, onSaved, weekOf: forced }: HeartCardProps & { weekOf?: string }) {
   const t = useTranslations('practice.heart.weekly');
   const english = useLocale() === 'en';
   const { store, heart, today, time, habits, planDays } = ctx;
-  // «حاسب نفسك الآن» in «محاسبتي» opens the review for the current week even on another day (`weekOf`).
+  // «ابدأ محاسبة الأسبوع» in «محاسبتي» opens the review for the current week even on another day (`weekOf`).
   const weekOf = forced ?? weeklyReviewDue(heart, today, time);
   const summary = useMemo(() => (weekOf ? weekSummary(store, weekOf, today, planDays) : null), [store, weekOf, today, planDays]);
   const candidates = useMemo(() => store.plans.filter((p) => !p.pausedOn || p.resumedOn), [store.plans]);
@@ -305,8 +305,6 @@ export function WeeklyCard({ ctx, bare = false, onSaved, weekOf: forced }: Heart
   const [planId, setPlanId] = useState<string | null>(null);
   const [choice, setChoice] = useState<StepChoice>('keep');
   const [feeling, setFeeling] = useState<HeartFeeling | null>(null);
-  const [message, setMessage] = useState('');
-  const messageId = useId();
   if (!weekOf || !summary) return null;
 
   const selectedId = planId ?? firstPlan;
@@ -331,7 +329,6 @@ export function WeeklyCard({ ctx, bare = false, onSaved, weekOf: forced }: Heart
         weak: summary.weak.map((r) => ({ planId: r.planId, title: title(r.planId), missed: r.missed })),
         ...(step ? { step } : {}),
         ...(feeling ? { heart: feeling } : {}),
-        message,
       }),
     );
     onSaved?.();
@@ -382,10 +379,7 @@ export function WeeklyCard({ ctx, bare = false, onSaved, weekOf: forced }: Heart
       ) : null}
       <h3 className="text-base font-medium">{t('heart')}</h3>
       <Chips label={t('heart')} value={feeling} onChange={setFeeling} options={(['present', 'middle', 'hard'] as const).map((k) => ({ key: k, text: t(k) }))} />
-      <label htmlFor={messageId} className="text-base font-medium">
-        {t('message')}
-      </label>
-      <Input id={messageId} value={message} maxLength={140} placeholder={t('messagePlaceholder')} onChange={(e) => setMessage(e.target.value)} className="h-11" />
+      {/* Round 6 (C-02c): no «رسالة إلى نفسي» here any more; the messages are a list at the top of «عاداتي». */}
       <Button className="self-start" onClick={save}>
         {t('save')}
       </Button>

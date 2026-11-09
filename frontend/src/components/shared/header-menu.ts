@@ -1,46 +1,59 @@
 /**
- * The site header's one menu (owner round 5, W-10 a / W-12 b; docs/plan/2026-11-07-owner-round-5.md §1): the same list
- * for a visitor and a member, in two groups — «أبواب الخير» (تخفَّف، الطاعات، شعب الإيمان، تصفّح النصوص) then «للأعضاء»
- * (عاداتي، أهلي وناسي، المحفوظات، الإعدادات، «رفقة (في التطبيق)»). Every item is a practice-core `NAV_FEATURES` key: its
- * route comes from the shared map, and `header-menu.spec.ts` checks the labels in the message files against it.
+ * The site header (owner round 6, C-07 b / C-05 a; docs/plan/2026-11-09-owner-round-6.md §1), built from practice-core
+ * `WEB_HEADER` and `WEB_ACCOUNT_MENU`: the links «الرئيسية · الطاعات · تخفّف من ذنب · شعب الإيمان · عاداتي», then
+ * «المزيد ▾» (الاستراتيجيات، المحفوظات، «رفقة (في التطبيق)»), then the account avatar menu (الحساب، الإعدادات،
+ * تسجيل الخروج). An item of «المزيد» is never also a header link, and the settings live only in the account menu.
+ * Every item is a `NAV_FEATURES` key: its route comes from the shared map, and `header-menu.spec.ts` checks the labels
+ * in the message files against it. On a phone the drawer holds the same links and «المزيد» items.
  */
-import { navFeature } from '@thekra/practice-core';
+import { navFeature, WEB_ACCOUNT_MENU, WEB_HEADER } from '@thekra/practice-core';
 
-// Round 6 (practice-core nav-map): «تصفّح النصوص» and «أهلي وناسي» are gone. The full round-6 header (WEB_HEADER,
-// WEB_ACCOUNT_MENU) is for the UI work; this list only drops the removed items.
-export type HeaderMenuKey = 'leave-sin' | 'good-deeds' | 'branches' | 'habits' | 'saved' | 'settings' | 'circles';
+export type HeaderLinkKey = 'home' | 'good-deeds' | 'sins' | 'branches' | 'habits';
+export type HeaderMoreKey = 'strategies' | 'saved' | 'circles';
+export type HeaderAccountKey = 'account' | 'settings';
+export type HeaderMenuKey = HeaderLinkKey | HeaderMoreKey;
 
-export interface HeaderMenuItem {
-  key: HeaderMenuKey;
+export interface HeaderMenuItem<K extends string = HeaderMenuKey> {
+  key: K;
   /** The web route; null for «رفقة», which lives in the app (it opens a short note instead). */
   href: string | null;
 }
 
-export interface HeaderMenuGroup {
-  key: 'doors' | 'members';
-  items: readonly HeaderMenuItem[];
-}
-
-function item(key: HeaderMenuKey): HeaderMenuItem {
+function item<K extends string>(key: K): HeaderMenuItem<K> {
   const feature = navFeature(key);
   if (!feature) throw new RangeError(`Unknown nav feature: ${key}`);
   return { key, href: feature.web };
 }
 
-export const HEADER_MENU: readonly HeaderMenuGroup[] = [
-  { key: 'doors', items: (['leave-sin', 'good-deeds', 'branches'] as const).map(item) },
-  { key: 'members', items: (['habits', 'saved', 'settings', 'circles'] as const).map(item) },
-];
+export const HEADER_LINKS: readonly HeaderMenuItem<HeaderLinkKey>[] = (WEB_HEADER.links as readonly HeaderLinkKey[]).map(item);
+export const HEADER_MORE: readonly HeaderMenuItem<HeaderMoreKey>[] = (WEB_HEADER.more as readonly HeaderMoreKey[]).map(item);
+/**
+ * The account menu's pages. «الحساب» and «الإعدادات» share the settings page in the map; «الحساب» opens it at its
+ * account group (`#account`).
+ */
+export const HEADER_ACCOUNT: readonly HeaderMenuItem<HeaderAccountKey>[] = (WEB_ACCOUNT_MENU as readonly HeaderAccountKey[]).map(
+  (key) => {
+    const entry = item(key);
+    return key === 'account' && entry.href ? { key, href: `${entry.href}#account` } : entry;
+  },
+);
 
-export const HEADER_MENU_ITEMS: readonly HeaderMenuItem[] = HEADER_MENU.flatMap((group) => group.items);
+export const HEADER_MENU_ITEMS: readonly HeaderMenuItem[] = [...HEADER_LINKS, ...HEADER_MORE];
 
 /**
- * The item that marks the current page (locale prefix already removed), or null. The deepest route wins: «أهلي وناسي»
- * and «تخفَّف» live under `/practice` but are items of their own; every other practice page is «عاداتي».
+ * The item that marks the current page (locale prefix already removed), or null. The deepest route wins:
+ * «الاستراتيجيات» lives under `/practice` but is an item of its own; every other practice page is «عاداتي», and «تخفّف»
+ * (`/practice/leave-sin`) belongs to «عاداتي» too (a program is a habit of type «تخفّف»). «الرئيسية» marks only `/`.
  */
 export function currentHeaderItem(pathname: string): HeaderMenuKey | null {
-  const under = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  if (pathname === '/' || pathname === '') return 'home';
+  const under = (href: string) => href !== '/' && (pathname === href || pathname.startsWith(`${href}/`));
   const hits = HEADER_MENU_ITEMS.filter((entry): entry is HeaderMenuItem & { href: string } => entry.href !== null && under(entry.href));
   hits.sort((a, b) => b.href.length - a.href.length);
   return hits[0]?.key ?? null;
+}
+
+/** True when the current page is one of «المزيد» (the trigger is then marked). */
+export function isMoreCurrent(current: HeaderMenuKey | null): boolean {
+  return current !== null && HEADER_MORE.some((entry) => entry.key === current);
 }

@@ -11,7 +11,7 @@ import { MyRemindersPanel } from './MyRemindersPanel';
 export type { SavedTab };
 
 /**
- * «المحفوظات» in two tabs (owner round 5, F-22 a / W-30; the app's `app/favorites.tsx`): «النصوص» and «تذكيراتي». Each
+ * «المحفوظات» in two tabs (round 6, C-14: the reference's underline tabs and its line «احتفظ بما تحب أن تعود إليه») (owner round 5, F-22 a / W-30; the app's `app/favorites.tsx`): «النصوص» and «تذكيراتي». Each
  * tab has its address (`/favorites`, `/favorites/reminders`); a tap keeps the address in step without a navigation or a
  * history entry, so a reload or a shared link opens the same tab.
  */
@@ -35,7 +35,8 @@ export function SavedTabs({ initial }: { initial: SavedTab }) {
       ]}
       value={tab}
       onValueChange={choose}
-      className="gap-8"
+      variant="underline"
+      className="gap-8 [&_[data-slot=tabs-trigger]]:min-h-12 [&_[data-slot=tabs-trigger]]:text-[15px]"
     >
       <SegmentTabsContent value="texts">
         <FavoritesList />

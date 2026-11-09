@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { FormattedNumber } from '@/components/shared/FormattedNumber';
 import { SectionDivider } from '@/components/shared/SectionDivider';
 import { Badge } from '@/components/ui/badge';
 import { Link } from '@/i18n/navigation';
-import { Button } from '@/components/shared/kit/button';
 import { GradeBadge } from '@/components/shared/quote/GradeBadge';
 import { QuoteBody } from '@/components/shared/quote/QuoteBody';
 import { QuoteMoreMenu } from '@/components/shared/quote/QuoteMoreMenu';
@@ -14,7 +14,8 @@ import { RecitationButton } from '@/components/shared/quote/RecitationButton';
 import { SourceAttribution } from '@/components/shared/quote/SourceAttribution';
 import { ShareButton } from '@/components/shared/share/ShareButton';
 import { useQuoteSharePayload } from '@/components/shared/share/useQuoteSharePayload';
-import { StudyPanel } from '@/features/study-panel/components/StudyPanel';
+import { ReaderExplanations } from '@/features/study-panel/components/ReaderExplanations';
+import { markReadOnOpen, useReadMarks } from '@/features/topic/hooks/useReadMarks';
 import type { QuoteDetailDto } from '@/lib/types/api';
 import { HadithGrade } from '@/lib/types/enums';
 
@@ -23,14 +24,21 @@ interface QuoteDetailProps {
 }
 
 /**
- * Full quote detail — used on /quotes/[id].
- * Server-rendered (revalidate: 3600) for SEO.
+ * The reader, /quotes/[id] (owner round 6, C-13 / C-01n): our design with three parts parted by the flower divider —
+ * the text (with its grade, recitation in the member's reciter, share and «⋯») · «وجه التذكير» of the topic it was
+ * opened from (`?linkId=`, only when written) · the explanations inline (المختصر، السعدي، ابن عاشور for a verse; the
+ * sharh for a hadith). Then the source and the related topics. A member's text is marked «مقروء» when it opens.
+ * Server-rendered (ISR) for SEO; the link and the explanations load on the client.
  */
 export function QuoteDetail({ quote }: QuoteDetailProps) {
   const t = useTranslations('quote');
   const tDetail = useTranslations('quoteDetail');
   const arabic = useLocale() === 'ar';
-  const [studyOpen, setStudyOpen] = useState(false);
+  const reads = useReadMarks();
+  // Opening the reader marks the text read (members; synced with the account).
+  useEffect(() => {
+    if (reads.enabled) markReadOnOpen(quote.id);
+  }, [reads.enabled, quote.id]);
 
   const grade = quote.hadith?.grade;
   const isWeak =
@@ -97,24 +105,10 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
       </QuoteBody>
 
       {canStudy ? (
-        <Button
-          type="button"
-          variant="outline"
-          tone="neutral"
-          size="md"
-          className="self-start"
-          onClick={() => setStudyOpen(true)}
-        >
-          {quote.type === 'QURAN_VERSE' ? t('openTafsir') : t('openSharh')}
-        </Button>
+        <Suspense fallback={null}>
+          <ReaderSections quoteId={quote.id} isHadith={quote.type === 'HADITH' && !quote.isAthar} />
+        </Suspense>
       ) : null}
-
-      <StudyPanel
-        open={studyOpen}
-        onOpenChange={setStudyOpen}
-        quote={quote}
-        listIds={[quote.id]}
-      />
 
       <SectionDivider />
 
@@ -202,4 +196,10 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
       )}
     </article>
   );
+}
+
+/** The parts after the text; `?linkId=` names the topic link whose «وجه التذكير» to show. */
+function ReaderSections({ quoteId, isHadith }: { quoteId: string; isHadith: boolean }) {
+  const linkId = useSearchParams().get('linkId');
+  return <ReaderExplanations quoteId={quoteId} linkId={linkId} isHadith={isHadith} />;
 }

@@ -1,14 +1,8 @@
 'use client';
 
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
-import {
-  BookMarked,
-  BookOpen,
-  ChevronDown,
-  Info,
-  MessageSquareQuote,
-} from 'lucide-react';
+import { BookOpen, CheckCheck, MessageSquareQuote } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
@@ -16,7 +10,6 @@ import { FormattedNumber } from '@/components/shared/FormattedNumber';
 import { cn } from '@/lib/utils';
 import type { QuoteDto, QuoteLinkDto } from '@/lib/types/api';
 import { HadithGrade, QuoteType } from '@/lib/types/enums';
-import { publicLinkNote } from '@/lib/format/link-note';
 import { englishProvenance } from '@/lib/format/provenance';
 import { formatGradeCitation } from '@/lib/format/grade-citation';
 import { GradeBadge } from './GradeBadge';
@@ -25,7 +18,6 @@ import { FavoriteButton } from './FavoriteButton';
 import { QuoteMoreMenu } from './QuoteMoreMenu';
 import { RecitationButton } from './RecitationButton';
 import { Button } from '@/components/shared/kit/button';
-import { ActionPair } from '@/components/shared/kit/action-pair';
 import { ShareButton } from '../share/ShareButton';
 import { useQuoteSharePayload } from '../share/useQuoteSharePayload';
 
@@ -84,8 +76,17 @@ export interface QuoteCardProps extends VariantProps<typeof quoteCardVariants> {
   isFavorite?: boolean;
   onToggleFavorite?: (quoteId: string, currentlyFavorited: boolean) => void;
   isFavoritePending?: boolean;
-  /** Opens the study panel (tafsir / sharh). */
+  /**
+   * Opens the study panel (tafsir / sharh).
+   * @deprecated Round 6 (C-12): a text card has ONE button, «عرض التفسير», which opens the reader (`detailHref`); the
+   * study panel is no longer offered from a card. Kept so older callers compile; ignored.
+   */
   onOpenStudy?: (quote: QuoteDto) => void;
+  /** The topic↔text link, so the reader can show its «وجه التذكير» (`/quotes/<id>?linkId=`). */
+  linkId?: string | null;
+  /** «مقروء» / «غير مقروء» (round 6): shown when given (members). */
+  read?: boolean;
+  onToggleRead?: (read: boolean) => void;
   /**
    * Topic lists (W-24 b): the text is cut to 4 lines; when it is longer, the card's link reads «اقرأ كاملًا» and opens
    * the text page (the same link as «عرض كامل», never a second button to the same page).
@@ -103,7 +104,9 @@ function visibleArabic(value: string | null | undefined, arabic: boolean): strin
 export function QuoteCard({
   quote,
   link,
-  onOpenStudy,
+  linkId,
+  read,
+  onToggleRead,
   detailHref,
   density,
   intent,
@@ -118,8 +121,6 @@ export function QuoteCard({
   const arabic = locale === 'ar';
   const t = useTranslations('quote');
   const tFav = useTranslations('favorites');
-  const panelId = useId();
-  const [contextOpen, setContextOpen] = useState(false);
   const bodyRef = useRef<HTMLDivElement>(null);
   const [cut, setCut] = useState(false);
 
@@ -152,8 +153,8 @@ export function QuoteCard({
     isHadith &&
     (grade === HadithGrade.DAIF || grade === HadithGrade.MAWDU);
 
-  const note = publicLinkNote(link?.note, arabic ? 'ar' : 'en');
-  const hasDisclosure = Boolean(note);
+  // Round 6 (C-12): no «لماذا هذه الآية؟» panel on the card; the link's note and «وجه التذكير» live in the reader.
+  void link;
   const showViewLink = Boolean(detailHref);
   const showFavorite = Boolean(
     showFavoriteButton && onToggleFavorite,
@@ -183,10 +184,6 @@ export function QuoteCard({
     gradeReference: quote.citation?.gradeReference,
     grade: quote.hadith?.grade,
   });
-  const volume = visibleArabic(quote.citation?.volume, arabic);
-  const page = visibleArabic(quote.citation?.page, arabic);
-  const pageOrChapter = visibleArabic(quote.book?.pageOrChapter, arabic);
-  const whyLabel = isQuran ? t('whyVerse') : t('whyHadith');
   // Verses, hadith and athar (stored as hadith) are the shareable public texts.
   const shareable = isQuran || isHadith;
   const sharePayload = useQuoteSharePayload(quote);
@@ -324,7 +321,7 @@ export function QuoteCard({
                     {arabic ? narrator : (englishProvenance(narrator) ?? narrator)}
                   </p>
                 ) : null}
-                {!hasDisclosure && gradeLine && !quote.isAthar ? (
+                {gradeLine && !quote.isAthar ? (
                   <p className="text-xs text-muted-foreground">
                     <FormattedNumber value={gradeLine} />
                   </p>
@@ -434,114 +431,35 @@ export function QuoteCard({
           <QuoteBody quote={quote} className={clamp ? 'line-clamp-4' : undefined} />
         </div>
 
-        {/* «التفسير/الشرح» and «عرض كامل» (or «اقرأ كاملًا» when the text is cut): one pair, side by side, same size
-            (O-02/W-03). */}
-        {(onOpenStudy && (isQuran || isHadith)) || showViewLink ? (
-          <ActionPair layout="hug" className={cn(arabic && 'font-arabic-ui')}>
-            {onOpenStudy && (isQuran || isHadith) ? (
-              <Button
-                variant="outline"
-                tone="neutral"
-                size="md"
-                icon={<BookMarked aria-hidden />}
-                onClick={() => onOpenStudy(quote)}
-              >
-                {isQuran ? t('openTafsir') : t('openSharh')}
-              </Button>
-            ) : null}
+        {/* ONE button (round 6, C-12): «عرض التفسير» (a verse) / «عرض الشرح» (a hadith) opens the reader, where the text,
+            «وجه التذكير» and the explanations read inline; other texts «اقرأ كاملًا». The read mark sits beside it. */}
+        {(showViewLink && detailHref) || onToggleRead ? (
+          <div className={cn('flex flex-wrap items-center justify-between gap-3', arabic && 'font-arabic-ui')}>
             {showViewLink && detailHref ? (
               <Button asChild variant="outline" tone="primary" size="md">
-                <Link href={detailHref}>
-                  {cut ? t('readFull') : t('viewFull')}
+                <Link href={linkId ? `${detailHref}?linkId=${encodeURIComponent(linkId)}` : detailHref}>
+                  {isQuran ? t('openReaderTafsir') : isHadith && !isAthar ? t('openReaderSharh') : cut ? t('readFull') : t('viewFull')}
                   <DirectionalArrow className="size-3.5" />
                 </Link>
               </Button>
-            ) : null}
-          </ActionPair>
-        ) : null}
-
-        {hasDisclosure ? (
-          <div
-            className={cn(
-              'overflow-hidden rounded-2xl bg-primary/[0.06]',
-              'ring-1 ring-primary/10',
+            ) : (
+              <span />
             )}
-          >
-            <button
-              type="button"
-              className={cn(
-                'flex w-full min-h-11 items-center gap-2 px-3.5 py-2.5 text-start',
-                'text-sm text-foreground/90',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
-                arabic && 'font-arabic-ui',
-              )}
-              aria-expanded={contextOpen}
-              aria-controls={panelId}
-              onClick={() => setContextOpen((open) => !open)}
-            >
-              <Info className="size-4 shrink-0 text-primary-text" aria-hidden />
-              <span className="min-w-0 flex-1">{whyLabel}</span>
-              <ChevronDown
+            {onToggleRead ? (
+              <button
+                type="button"
+                aria-pressed={Boolean(read)}
+                aria-label={t('read')}
+                onClick={() => onToggleRead(!read)}
                 className={cn(
-                  'size-4 shrink-0 text-muted-foreground motion-safe:transition-transform motion-safe:duration-200',
-                  contextOpen && 'rotate-180',
+                  'inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-[13px] transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
+                  read ? 'text-primary-text' : 'text-muted-foreground hover:text-foreground',
                 )}
-                aria-hidden
-              />
-            </button>
-
-            <div
-              id={panelId}
-              role="region"
-              aria-label={whyLabel}
-              hidden={!contextOpen}
-              className={cn(
-                contextOpen
-                  ? 'border-t border-primary/10'
-                  : 'hidden',
-              )}
-            >
-              {contextOpen ? (
-                <div className="flex flex-col gap-3 px-3.5 py-3 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-top-1 motion-safe:duration-200">
-                  {note ? (
-                    <p
-                      dir={arabic ? 'rtl' : undefined}
-                      lang={arabic ? 'ar' : 'en'}
-                      className={cn(
-                        'text-sm leading-relaxed text-muted-foreground',
-                        arabic && 'font-arabic-ui',
-                      )}
-                    >
-                      {note}
-                    </p>
-                  ) : null}
-
-                  {(gradeLine || volume || page || pageOrChapter) && (
-                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-xs text-muted-foreground">
-                      {gradeLine ? <FormattedNumber value={gradeLine} /> : null}
-                      {volume ? (
-                        <span>
-                          <span className="me-1">{t('volume')}:</span>
-                          <FormattedNumber value={volume} />
-                        </span>
-                      ) : null}
-                      {page ? (
-                        <span>
-                          <span className="me-1">{t('page')}:</span>
-                          <FormattedNumber value={page} />
-                        </span>
-                      ) : null}
-                      {pageOrChapter ? (
-                        <span className="inline-flex rounded-full bg-background/70 px-2 py-0.5 text-[13px] md:text-[14px]">
-                          <FormattedNumber value={pageOrChapter} />
-                        </span>
-                      ) : null}
-                    </div>
-                  )}
-
-                </div>
-              ) : null}
-            </div>
+              >
+                <CheckCheck aria-hidden className={cn('size-4', !read && 'opacity-50')} />
+                {read ? t('read') : t('unread')}
+              </button>
+            ) : null}
           </div>
         ) : null}
       </article>

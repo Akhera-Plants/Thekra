@@ -5,6 +5,7 @@ import { Loader2, Pause, Play } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/shared/kit/button';
 import { recitationUrl } from '@/lib/quran/recitation';
+import { usePracticeStore } from '@/features/practice/hooks/usePracticeStore';
 import { cn } from '@/lib/utils';
 
 type PlayState = 'idle' | 'loading' | 'playing' | 'error';
@@ -55,12 +56,29 @@ function useVerseState(src: string | null): PlayState {
 }
 
 /**
- * Play / pause the recitation of one verse (F-03 a). A toggle button with a changing name («استمع إلى الآية» /
+ * Play / pause the recitation of one verse (F-03 a) in the member's chosen reciter (round 6). A toggle button with a changing name («استمع إلى الآية» /
  * «أوقف التلاوة»), 44px like every icon action of the card. A failed load says so in a polite live region.
  */
-export function RecitationButton({ surah, ayah, className }: { surah: number; ayah: number; className?: string }) {
+export function RecitationButton({
+  surah,
+  ayah,
+  reciter: chosen,
+  label,
+  className,
+}: {
+  surah: number;
+  ayah: number;
+  /** A reciter key to play instead of the member's (the settings' preview). */
+  reciter?: string;
+  /** The play name, when it is not «استمع إلى الآية» (the settings' preview). */
+  label?: string;
+  className?: string;
+}) {
   const t = useTranslations('quote.recitation');
-  const src = recitationUrl(surah, ayah);
+  // The member's reciter (settings, synced); the default reciter until the device store is read.
+  const stored = usePracticeStore()?.store.settings.reciter ?? null;
+  const reciter = chosen ?? stored;
+  const src = recitationUrl(surah, ayah, reciter);
   const state = useVerseState(src);
   // The failure is said once in the live region; a new press clears it (the state leaves 'error').
   const announce = state === 'error' ? t('failed') : '';
@@ -107,7 +125,7 @@ export function RecitationButton({ surah, ayah, className }: { surah: number; ay
         size="sm"
         iconOnly
         icon={<Icon aria-hidden className={cn(state === 'loading' && 'animate-spin motion-reduce:animate-none')} />}
-        aria-label={active ? t('pause') : t('play')}
+        aria-label={active ? t('pause') : (label ?? t('play'))}
         aria-pressed={active}
         className={cn('size-11 text-muted-foreground hover:text-foreground aria-pressed:text-primary-text', className)}
         onClick={toggle}

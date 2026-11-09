@@ -6,7 +6,8 @@ import { Button } from '@/components/shared/kit/button';
 import { renderExplanationText } from '../lib/quranic-spans';
 import { LONG_PREVIEW_CHARS, type ExplanationRow } from '../lib/tabs';
 
-export function StudyReading({ rows }: { rows: ExplanationRow[] }) {
+/** `hideCaption`: a caption equal to it is not repeated (the reader already titles each source). */
+export function StudyReading({ rows, hideCaption }: { rows: ExplanationRow[]; hideCaption?: string }) {
   const t = useTranslations('studyPanel');
   const locale = useLocale();
   const [expanded, setExpanded] = useState(false);
@@ -52,7 +53,7 @@ export function StudyReading({ rows }: { rows: ExplanationRow[] }) {
                 {expanded ? t('readLess') : t('readMore')}
               </Button>
             ) : null}
-            {caption ? (
+            {caption && caption !== hideCaption ? (
               <figcaption
                 dir={/[\u0600-\u06FF]/.test(caption) ? 'rtl' : 'ltr'}
                 lang={/[\u0600-\u06FF]/.test(caption) ? 'ar' : locale}

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { QuoteDto } from '@/lib/types/api';
 import {
   displayedBody,
+  naturalBody,
   quoteSharePayload,
   shareIntents,
   shareText,
@@ -17,6 +18,7 @@ const AR: ShareLabels = {
   outsideSahihayn: 'ليس من الصحيحين',
   atharNotice: 'أثر، وليس حديثًا',
   atharNarrated: (speaker) => `رواه ${speaker}`,
+  byline: 'بواسطة تطبيق ذكرى',
 };
 
 const EN: ShareLabels = {
@@ -28,6 +30,7 @@ const EN: ShareLabels = {
   outsideSahihayn: 'Not from the two Sahihs',
   atharNotice: 'A saying, not a hadith',
   atharNarrated: (speaker) => `Narrated by ${speaker}`,
+  byline: 'via the Thekra app',
 };
 
 function quote(overrides: Partial<QuoteDto>): QuoteDto {
@@ -228,11 +231,16 @@ describe('shareText and shareIntents', () => {
   const payload = quoteSharePayload(verse, { locale: 'ar', labels: AR });
   const url = 'https://thekra-web.vercel.app/quotes/q1';
 
-  it('body, blank line, attribution, blank line, URL', () => {
+  it('body, blank line, attribution, blank line, «بواسطة تطبيق ذكرى» and the URL (round 6, C-08)', () => {
     expect(shareText(payload, url)).toBe(
-      'لِمَن كَانَ لَهُۥ قَلْبٌ\n\nق 50:37 · القرآن الكريم\n\nhttps://thekra-web.vercel.app/quotes/q1',
+      'لِمَن كَانَ لَهُۥ قَلْبٌ\n\nق 50:37 · القرآن الكريم\n\nبواسطة تطبيق ذكرى\nhttps://thekra-web.vercel.app/quotes/q1',
     );
-    expect(shareText(payload)).toBe('لِمَن كَانَ لَهُۥ قَلْبٌ\n\nق 50:37 · القرآن الكريم');
+    expect(shareText(payload)).toBe('لِمَن كَانَ لَهُۥ قَلْبٌ\n\nق 50:37 · القرآن الكريم\n\nبواسطة تطبيق ذكرى');
+  });
+
+  it('lays the body out naturally: no stray line breaks inside a paragraph, no word changed', () => {
+    expect(naturalBody('سددوا  وقاربوا،\nواعلموا أن لن\n  يدخل')).toBe('سددوا وقاربوا، واعلموا أن لن يدخل');
+    expect(naturalBody('الأول\n\n\nالثاني\r\nتتمة')).toBe('الأول\n\nالثاني تتمة');
   });
 
   it('builds plain intent URLs; URL-field targets do not repeat the URL in the text', () => {
