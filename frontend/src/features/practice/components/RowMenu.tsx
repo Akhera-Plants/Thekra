@@ -3,14 +3,7 @@
 import { useState } from 'react';
 import { Ellipsis, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/shared/kit/button';
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -70,28 +63,18 @@ export function RowMenu({ label, edit, remove, inline = false }: RowMenuProps) {
         </DropdownMenuContent>
       </DropdownMenu>
       )}
-      <AlertDialog open={confirming} onOpenChange={setConfirming}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{remove.confirmTitle}</AlertDialogTitle>
-            {remove.note ? <AlertDialogDescription>{remove.note}</AlertDialogDescription> : null}
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <Button variant="outline" tone="neutral" onClick={() => setConfirming(false)}>
-              {remove.keep}
-            </Button>
-            <Button
-              tone="destructive"
-              onClick={() => {
-                setConfirming(false);
-                remove.onConfirm();
-              }}
-            >
-              {remove.confirm}
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Our one confirmation (owner round 7, R7-A2), the same as the app's. */}
+      <ConfirmDialog
+        open={confirming}
+        onOpenChange={setConfirming}
+        title={remove.confirmTitle}
+        description={remove.note}
+        confirmLabel={remove.confirm}
+        cancelLabel={remove.keep}
+        tone="destructive"
+        icon={Trash2}
+        onConfirm={() => remove.onConfirm()}
+      />
     </>
   );
 }

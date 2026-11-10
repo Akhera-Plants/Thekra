@@ -26,6 +26,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { formatDigits } from '@/lib/format/digits';
 import { formatGregorian } from '@/lib/practice/format';
 import { limitOptions } from '@/lib/practice/limits';
@@ -56,39 +57,23 @@ export function ArchiveDialog({ plan, store, today, habits, onOpenChange, onDone
   const room = canArchive(store);
   const note = plan ? archiveNote(plan, today) : null;
   return (
-    <AlertDialog open={plan !== null} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{plan ? <PlanTitleText plan={plan} habits={habits} template={(title) => t('confirmTitle', { title })} /> : null}</AlertDialogTitle>
-          <AlertDialogDescription className="leading-7">
-            {room && note
-              ? t('note', { days: formatDigits(note.resetDays), date: formatGregorian(note.keepsProgressUntil, locale) })
-              : t('full', { max: formatDigits(ARCHIVE_MAX) })}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <ActionPair>
-            {room ? (
-              <Button
-                icon={<Archive aria-hidden />}
-                onClick={() => {
-                  if (!plan) return;
-                  updateStore((s) => archivePlan(s, plan.id, today));
-                  toast.success(t('archived'));
-                  onOpenChange(false);
-                  onDone?.();
-                }}
-              >
-                {t('confirm')}
-              </Button>
-            ) : null}
-            <Button variant="outline" tone="neutral" onClick={() => onOpenChange(false)}>
-              {room ? t('cancel') : t('close')}
-            </Button>
-          </ActionPair>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    // Our one confirmation (owner round 7, R7-A2), the same as the app's.
+    <ConfirmDialog
+      open={plan !== null}
+      onOpenChange={onOpenChange}
+      title={plan ? <PlanTitleText plan={plan} habits={habits} template={(title) => t('deleteTitle', { title })} /> : null}
+      description={everywhere ? tToday('removeNoteAccount') : tToday('removeNoteDevice')}
+      confirmLabel={tToday('removeConfirm')}
+      cancelLabel={tToday('keep')}
+      tone="destructive"
+      icon={Trash2}
+      onConfirm={() => {
+        if (!plan) return;
+        updateStore((s) => deletePlan(s, plan.id));
+        toast.success(t('deleted'));
+        onDone?.();
+      }}
+    />
   );
 }
 
