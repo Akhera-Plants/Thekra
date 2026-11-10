@@ -13,6 +13,7 @@ import { HadithGrade, QuoteType } from '@/lib/types/enums';
 import { englishProvenance } from '@/lib/format/provenance';
 import { formatGradeCitation } from '@/lib/format/grade-citation';
 import { GradeBadge } from './GradeBadge';
+import { SourceBadge } from './SourceBadge';
 import { QuoteBody } from './QuoteBody';
 import { FavoriteButton } from './FavoriteButton';
 import { QuoteMoreMenu } from './QuoteMoreMenu';
@@ -171,13 +172,7 @@ export function QuoteCard({
     : (quote.source.name || quote.source.nameAr);
   const quietSource =
     sourceName && !(arabic && /[A-Za-z]/.test(sourceName)) ? sourceName : null;
-  const sourceDir = quietSource && /[\u0600-\u06FF]/.test(quietSource) ? 'rtl' : 'ltr';
-  const sourceLang = sourceDir === 'rtl' ? 'ar' : 'en';
   const hadithRefRaw = quote.hadith?.reference?.trim() || null;
-  const hadithRef =
-    hadithRefRaw && !(arabic && /[A-Za-z]/.test(hadithRefRaw))
-      ? (arabic ? hadithRefRaw : (englishProvenance(hadithRefRaw) ?? hadithRefRaw))
-      : null;
   const gradeLine = formatGradeCitation({
     locale: arabic ? 'ar' : 'en',
     gradeAuthority: quote.citation?.gradeAuthority,
@@ -257,47 +252,7 @@ export function QuoteCard({
 
             {isHadith ? (
               <div className="flex min-w-0 flex-col items-start gap-1.5">
-                <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5">
-                  {(() => {
-                    const refAlreadyNamesSource =
-                      Boolean(quietSource && hadithRef && hadithRef.includes(quietSource));
-                    const showSourceInCapsule = Boolean(quietSource && !refAlreadyNamesSource);
-                    if (!showSourceInCapsule && !hadithRef) return null;
-                    return (
-                      <span
-                        className={cn(
-                          'inline-flex max-w-full flex-wrap items-center gap-x-2 rounded-full',
-                          'border border-border/70 bg-background/80 px-2.5 py-1 text-[13px] text-foreground md:text-[14px]',
-                          arabic && 'font-arabic-ui',
-                        )}
-                      >
-                        {showSourceInCapsule ? (
-                          <span
-                            dir={sourceDir}
-                            lang={sourceLang}
-                            className="min-w-0 truncate"
-                          >
-                            {quietSource}
-                          </span>
-                        ) : null}
-                        {showSourceInCapsule && hadithRef ? (
-                          <span aria-hidden className="h-3 w-px shrink-0 bg-border" />
-                        ) : null}
-                        {hadithRef ? (
-                          <FormattedNumber
-                            value={hadithRef}
-                            className={cn(
-                              'min-w-0',
-                              showSourceInCapsule
-                                ? 'tabular-nums text-muted-foreground'
-                                : undefined,
-                            )}
-                          />
-                        ) : null}
-                      </span>
-                    );
-                  })()}
-                </div>
+                <SourceBadge quote={quote} />
                 {narrator ? (
                   <p
                     dir={arabic ? 'rtl' : undefined}

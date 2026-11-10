@@ -39,7 +39,7 @@ import { useDateNames, useLimits, usePlanDays } from '@/lib/practice/use-habits-
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { radius, space, useStyles, type Theme } from '@/theme';
-import { BottomSheet, Button, ButtonPair, EmptyState, IconButton, ListRow, Notice, SectionHeader, Text, toast } from '@/ui';
+import { BottomSheet, Button, ConfirmDialog, EmptyState, IconButton, ListRow, Notice, SectionHeader, Text, toast } from '@/ui';
 
 const makeStyles = (t: Theme) => ({
   root: { gap: space.lg },
@@ -204,21 +204,21 @@ function PlanActRow({ act, plan, next, today, last }: { act: ActivePeriodicAct; 
         <View style={styles.grow} />
         <EditLink onPress={edit} label={title} />
       </View>
-      <BottomSheet visible={confirming} title={t('habitsHub.periodic.deleteTitle', { act: title })} onClose={() => setConfirming(false)}>
-        <Text variant="body">{t(signedIn ? 'habitsHub.periodic.deleteBodySynced' : 'habitsHub.periodic.deleteBody')}</Text>
-        <ButtonPair
-          primary={{
-            label: t('common.delete'),
-            variant: 'destructive',
-            onPress: () => {
-              setStore((s) => deletePlan(s, plan.id));
-              setConfirming(false);
-              toast(t('habitsHub.periodic.deletedToast', { act: title }));
-            },
-          }}
-          secondary={{ label: t('common.cancel'), onPress: () => setConfirming(false) }}
-        />
-      </BottomSheet>
+      {/* The same small confirmation as the website's (owner round 7, R7-A2): ConfirmDialog, not a sheet. */}
+      <ConfirmDialog
+        visible={confirming}
+        title={t('habitsHub.periodic.deleteTitle', { act: title })}
+        message={t(signedIn ? 'habitsHub.periodic.deleteBodySynced' : 'habitsHub.periodic.deleteBody')}
+        confirmLabel={t('common.delete')}
+        tone="destructive"
+        icon={Trash2}
+        onCancel={() => setConfirming(false)}
+        onConfirm={() => {
+          setStore((s) => deletePlan(s, plan.id));
+          setConfirming(false);
+          toast(t('habitsHub.periodic.deletedToast', { act: title }));
+        }}
+      />
     </View>
   );
 }

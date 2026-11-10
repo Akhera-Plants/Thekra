@@ -8,6 +8,7 @@ import { SectionDivider } from '@/components/shared/SectionDivider';
 import { Badge } from '@/components/ui/badge';
 import { Link } from '@/i18n/navigation';
 import { GradeBadge } from '@/components/shared/quote/GradeBadge';
+import { SourceBadge } from '@/components/shared/quote/SourceBadge';
 import { QuoteBody } from '@/components/shared/quote/QuoteBody';
 import { QuoteMoreMenu } from '@/components/shared/quote/QuoteMoreMenu';
 import { RecitationButton } from '@/components/shared/quote/RecitationButton';
@@ -70,6 +71,8 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
             label={t(`grade.${grade.toLowerCase()}`)}
           />
         )}
+        {/* Beside the grade the source is a badge, as on the cards and in the app (owner round 7, B4). */}
+        {quote.type === 'HADITH' ? <SourceBadge quote={quote} /> : null}
         {canStudy ? (
           <span className="ms-auto flex items-center gap-0.5">
             {quote.type === 'QURAN_VERSE' && quote.quran?.surahNumber && quote.quran.ayahNumber ? (
@@ -116,6 +119,7 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
       <SourceAttribution
         quote={quote}
         citationAnchorId={`quote-${quote.id}-source`}
+        sourceInHeader
         labels={{
           narrator: t('narrator'),
           reference: t('reference'),
