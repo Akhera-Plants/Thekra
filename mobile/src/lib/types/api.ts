@@ -284,10 +284,22 @@ export interface SinQuotesResponse {
   alternatives: GoodDeedSummaryDto[];
 }
 
+/** One theme chip of a topic page (`meta.themes`, topic-themes.yaml), as the website reads it. */
+export interface TopicThemeCount {
+  key: string;
+  ar: string;
+  en: string;
+  count: number;
+}
+
 export interface SinQuotesMeta extends PageMeta {
   ordering?: string;
   countsByType?: Partial<Record<QuoteType, number>>;
   appliedGrades?: HadithGrade[];
+  /** The page's theme chips with counts (whole page, whatever the filter); the website's chips. */
+  themes?: TopicThemeCount[];
+  /** The applied `theme=` key, or null. */
+  theme?: string | null;
 }
 
 export interface GoodDeedQuotesResponse {
@@ -305,6 +317,10 @@ export interface GoodDeedQuotesMeta extends PageMeta {
   ordering?: string;
   countsByType?: Partial<Record<QuoteType, number>>;
   appliedGrades?: HadithGrade[];
+  /** The page's theme chips with counts (whole page, whatever the filter); the website's chips. */
+  themes?: TopicThemeCount[];
+  /** The applied `theme=` key, or null. */
+  theme?: string | null;
 }
 
 /** One of the 77 شعب الإيمان (`GET /v1/branches`). English title and summary are often missing (no machine translation). */
@@ -372,6 +388,8 @@ export interface SinQuotesQuery {
   limit?: number;
   lang?: LocaleCode;
   type?: QuoteType[];
+  /** A theme chip's key (`meta.themes[].key`): only that theme's texts, one list. */
+  theme?: string;
   grades?: HadithGrade[];
   includeWeak?: boolean;
   minScore?: number;
@@ -394,6 +412,8 @@ export interface GoodDeedQuotesQuery {
   limit?: number;
   lang?: LocaleCode;
   type?: QuoteType[];
+  /** A theme chip's key (`meta.themes[].key`): only that theme's texts, one list. */
+  theme?: string;
   grades?: HadithGrade[];
   includeWeak?: boolean;
   minScore?: number;

@@ -4,6 +4,8 @@ export { Icon, ForwardArrow, ForwardChevron, BackChevron } from './Icon';
 export { Screen, SheetScreen, PageHeader, BrandBar, Section, SectionHeader, Row, Wrap, Rule, Loading, useStackScreenOptions, type SectionHeaderProps } from './layout';
 export { SectionDivider } from './SectionDivider';
 export { ToastHost, toast, useToast, type ToastOptions } from './Toast';
+export { ConfirmDialog, ConfirmHost, confirm, useConfirm, type ConfirmOptions, type ConfirmDialogProps } from './ConfirmDialog';
+export { ProfileMark } from './ProfileMark';
 export { ActionMenu, type ActionMenuItem } from './ActionMenu';
 export { BottomSheet } from './Sheet';
 export { Flourish, type FlourishKind } from './Flourish';

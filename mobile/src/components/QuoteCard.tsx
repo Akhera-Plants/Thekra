@@ -1,15 +1,16 @@
 /**
  * QuoteCard: the website's quote card (frontend/src/components/shared/quote/QuoteCard.tsx) on the app theme.
- * - Header: the type pill (primary at 10%, icon + «آية قرآنية» / «حديث نبوي» / «أثر»), the reference capsule
- *   (surah | 2:255, or source | reference), the grade seal, narrator and grade-citation lines; share and favorite
- *   at the end.
+ * - Header: the type pill (primary at 10%, icon + «آية قرآنية» / «حديث نبوي» / «أثر») with the grade seal beside it
+ *   (round 7, B3), then the reference capsule (surah | 2:255, or source | reference; never «القرآن الكريم», B8), the
+ *   narrator and the grade-citation line without the book the capsule names (B4); share and favorite at the end.
  * - Body: Uthmani verse text in Amiri Quran; hadith and sayings in Plex at reading size. English UI with a
  *   translation shows it in Source Serif under the Arabic.
  * - ONE action (owner round 6, C-12): «عرض التفسير» (verses) / «عرض الشرح» (hadith), opening the reader
  *   (quotes/study/[id]: the text, «وجه التذكير» for the topic link `linkId`, the tafsirs or sharh inline). No «لماذا
  *   هذه الآية؟» and no separate tafsir button any more.
- * - On a topic page, the read mark (round 6, owner chat; practice-core `reads.ts`): «مقروء» / «غير مقروء» beside the
- *   action; a tap switches it. The reader marks a text read when it opens.
+ * - On a topic page, the read mark (round 6; practice-core `reads.ts`): «تعليم كمقروء» / «مقروء», a bordered button the
+ *   same size as the solid «عرض التفسير» beside it (round 7, B5); a tap switches it. The reader marks a text read when
+ *   it opens.
  * - Tapping the text opens the quote page, except on that page.
  * Share opens the share sheet (text or image, C-08); it sends the text, its attribution and the public link only,
  * never anything about the user.
@@ -19,12 +20,12 @@ import React, { useCallback, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { BookMarked, BookOpen, Bookmark, BookmarkCheck, Check, Circle, MessageSquareQuote, Share2, type LucideIcon } from 'lucide-react-native';
+import { BookMarked, BookOpen, Bookmark, BookmarkCheck, Check, CheckCheck, MessageSquareQuote, Share2, type LucideIcon } from 'lucide-react-native';
 import { isQuoteId, setRead } from '@thekra/practice-core';
 import { usePracticeStore } from '@/lib/practice/practice-store';
 import { ShareSheet } from '@/components/share/ShareSheet';
 import { radius, space, useStyles, type Theme } from '@/theme';
-import { Button, IconButton } from '@/ui/Button';
+import { ButtonPair, IconButton } from '@/ui/Button';
 import { Icon } from '@/ui/Icon';
 import { Text } from '@/ui/Text';
 import { Notice } from '@/ui/feedback';
@@ -45,7 +46,7 @@ interface QuoteCardProps {
   detail?: boolean;
   /** The topic↔text link (`TopicText.link.id`): the reader shows that link's «وجه التذكير». */
   linkId?: string | null;
-  /** «عرض التفسير»: bordered on lists (default), solid only on the quote's own page where it is the main action. */
+  /** @deprecated Owner round 7 (B5): «عرض التفسير» is solid on every card now. Kept so callers compile; ignored. */
   primaryExplain?: boolean;
   /** Show the read mark «مقروء» / «غير مقروء» (topic pages). */
   showRead?: boolean;
@@ -94,14 +95,11 @@ const makeStyles = (t: Theme) => ({
   },
   capsuleRule: { width: 1, height: 12, backgroundColor: t.colors.border },
   actions: { flexDirection: 'row' as const, alignItems: 'center' as const },
-  foot: { flexDirection: 'row' as const, alignItems: 'center' as const, flexWrap: 'wrap' as const, gap: space.md },
-  explain: { flexGrow: 1 },
-  read: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 6, minHeight: 44, paddingHorizontal: space.xs },
   body: { gap: space.sm },
   bodyPressed: { opacity: 0.7 },
 });
 
-export function QuoteCard({ quote, isFavorite = false, onToggleFavorite, shareable = true, detail, linkId, primaryExplain = false, showRead = false }: QuoteCardProps) {
+export function QuoteCard({ quote, isFavorite = false, onToggleFavorite, shareable = true, detail, linkId, showRead = false }: QuoteCardProps) {
   const { t, i18n } = useTranslation();
   const styles = useStyles(makeStyles);
   const arabicUI = i18n.language !== 'en';
@@ -118,7 +116,8 @@ export function QuoteCard({ quote, isFavorite = false, onToggleFavorite, shareab
     grade: { SAHIH: t('grade.SAHIH'), HASAN: t('grade.HASAN'), DAIF: t('grade.DAIF'), MAWDU: t('grade.MAWDU') },
   };
   const speakerLine = atharSpeakerLine(quote, shareLabels);
-  const gradeLine = gradeCitationLine(quote, arabicUI ? 'ar' : 'en');
+  // The source badge already names the book and number: the line never repeats it (owner round 7, B4).
+  const gradeLine = gradeCitationLine(quote, arabicUI ? 'ar' : 'en', { besideSource: quote.hadith?.reference });
   const sourceName = arabicUI ? quote.source.nameAr ?? quote.source.name : quote.source.name || quote.source.nameAr;
   const surahName = arabicUI ? quote.quran?.surahNameAr : quote.quran?.surahName || quote.quran?.surahNameAr;
   const hadithRef = quote.hadith?.reference?.trim() || null;
@@ -151,11 +150,15 @@ export function QuoteCard({ quote, isFavorite = false, onToggleFavorite, shareab
     <View style={styles.card} accessibilityLabel={typeLabel}>
       <View style={styles.header}>
         <View style={styles.meta}>
-          <View style={[styles.typePill, isAthar && styles.typePillQuiet]}>
-            <Icon icon={type.icon} size={14} tone={isAthar ? 'muted' : 'link'} />
-            <Text variant="caption" weight="medium" tone={isAthar ? 'muted' : 'link'}>
-              {typeLabel}
-            </Text>
+          {/* Row 1 (owner round 7, B3): the type and, beside it, the grade — the word only. */}
+          <View style={styles.capsuleRow}>
+            <View style={[styles.typePill, isAthar && styles.typePillQuiet]}>
+              <Icon icon={type.icon} size={14} tone={isAthar ? 'muted' : 'link'} />
+              <Text variant="caption" weight="medium" tone={isAthar ? 'muted' : 'link'}>
+                {typeLabel}
+              </Text>
+            </View>
+            {grade && grade !== HadithGrade.UNGRADED ? <GradeBadge grade={grade} /> : null}
           </View>
 
           {isQuran && quote.quran ? (
@@ -177,11 +180,7 @@ export function QuoteCard({ quote, isFavorite = false, onToggleFavorite, shareab
                   ) : null}
                 </View>
               ) : null}
-              {sourceName ? (
-                <Text variant="caption" tone="muted">
-                  {sourceName}
-                </Text>
-              ) : null}
+              {/* No «القرآن الكريم» beside «آية قرآنية» (owner round 7, B8). */}
             </View>
           ) : null}
 
@@ -203,7 +202,6 @@ export function QuoteCard({ quote, isFavorite = false, onToggleFavorite, shareab
                     ) : null}
                   </View>
                 ) : null}
-                {grade && grade !== HadithGrade.UNGRADED ? <GradeBadge grade={grade} /> : null}
               </View>
               {narrator ? (
                 <Text variant="caption" tone="muted">
@@ -273,35 +271,33 @@ export function QuoteCard({ quote, isFavorite = false, onToggleFavorite, shareab
         </Pressable>
       )}
 
-      {isQuran || isHadith || canMarkRead ? (
-        <View style={styles.foot}>
-          {isQuran || isHadith ? (
-            <View style={styles.explain}>
-              <Button
-                icon={BookMarked}
-                label={isQuran ? t('study.showTafsir') : t('study.showSharh')}
-                onPress={handleOpenStudy}
-                variant={primaryExplain ? 'solid' : 'outline'}
-                block
-              />
-            </View>
-          ) : null}
-          {canMarkRead ? (
-            <Pressable
-              onPress={() => setStore((s) => setRead(s, quote.id, !read))}
-              accessibilityRole="button"
-              accessibilityState={{ checked: read }}
-              accessibilityLabel={read ? t('reads.markUnread') : t('reads.markRead')}
-              hitSlop={4}
-              style={({ pressed }) => [styles.read, pressed && { opacity: 0.7 }]}
-            >
-              <Icon icon={read ? Check : Circle} size={15} tone={read ? 'link' : 'muted'} />
-              <Text variant="caption" tone={read ? 'link' : 'muted'}>
-                {read ? t('reads.read') : t('reads.unread')}
-              </Text>
-            </Pressable>
-          ) : null}
-        </View>
+      {/* Owner round 7 (B5): «عرض التفسير» / «عرض الشرح» is the card's solid primary; «تعليم كمقروء» sits beside it as a
+          clear bordered button of the same size (ButtonPair). */}
+      {isQuran || isHadith ? (
+        <ButtonPair
+          primary={{ label: isQuran ? t('study.showTafsir') : t('study.showSharh'), onPress: handleOpenStudy, icon: BookMarked }}
+          secondary={
+            canMarkRead
+              ? {
+                  label: read ? t('reads.read') : t('reads.markAction'),
+                  icon: read ? CheckCheck : Check,
+                  onPress: () => setStore((s) => setRead(s, quote.id, !read)),
+                  accessibilityLabel: read ? t('reads.markUnread') : t('reads.markRead'),
+                  variant: 'outline',
+                }
+              : null
+          }
+        />
+      ) : canMarkRead ? (
+        <ButtonPair
+          primary={{
+            label: read ? t('reads.read') : t('reads.markAction'),
+            icon: read ? CheckCheck : Check,
+            onPress: () => setStore((s) => setRead(s, quote.id, !read)),
+            accessibilityLabel: read ? t('reads.markUnread') : t('reads.markRead'),
+            variant: 'outline',
+          }}
+        />
       ) : null}
       {shareable && sharing ? (
         <ShareSheet quote={quote} visible={sharing} onClose={() => setSharing(false)} showTranslation={Boolean(translation)} />

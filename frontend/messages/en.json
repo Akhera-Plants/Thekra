@@ -4,7 +4,8 @@
     "tagline": "For whoever has a heart",
     "description": "Reminders from the Quran, authentic Sunnah, and the words of scholars, arranged by sins, good deeds, and the branches of faith, with each text's source named.",
     "intentionReminder": "I want nothing from this except Allah.",
-    "close": "Close"
+    "close": "Close",
+    "cancel": "Cancel"
   },
   "theme": {
     "toggle": "Toggle theme",
@@ -488,6 +489,7 @@
     "openReaderSharh": "Show the explanation",
     "read": "Read",
     "unread": "Unread",
+    "markRead": "Mark as read",
     "reportRateLimited": "Thank you for caring. We have received many reports from you in a short time; please send this one a little later.",
     "reportPaused": "Thank you. Reports are paused for the rest of today; please send it tomorrow.",
     "reportTooLong": "The note is too long to send. Shorten it a little, then send it."
@@ -1727,19 +1729,26 @@
       "items": {
         "start-tiny": {
           "idea": "Start with an amount so small it needs no effort.",
-          "example": "Example: two minutes of Quran instead of a whole juz."
+          "example": "Example: two minutes of Quran instead of a whole juz.",
+          "ask": "What is the smallest amount of {habit} you will start with?",
+          "suggest": "I start with just {amount}, and add nothing until it settles."
         },
         "anchor-prayer": {
           "idea": "Place the habit after a set prayer, so the prayer reminds you of it.",
-          "example": "Example: the adhkar right after the Fajr prayer."
+          "example": "Example: the adhkar right after the Fajr prayer.",
+          "ask": "After which prayer will you do {habit}?",
+          "suggest": "Right after the {prayer} prayer, where I pray."
         },
         "if-then": {
           "idea": "Decide in advance what you will do when the moment comes.",
-          "example": "Example: if I miss my wird, then I will read one page before sleep."
+          "example": "Example: if I miss my wird, then I will read one page before sleep.",
+          "ask": "If {habit} slips past its time, what will you do?",
+          "suggest": "If it slips past its time, then before I sleep I do my minimum: {amount}."
         },
         "prepare-place": {
           "idea": "Set out what the habit needs before its time.",
-          "example": "Example: the mushaf on the desk, the prayer mat laid out."
+          "example": "Example: the mushaf on the desk, the prayer mat laid out.",
+          "ask": "What will you set out for {habit} before its time, and where?"
         },
         "block-sin": {
           "idea": "Make the way to what you want to leave harder: put its means out of reach and lengthen the path to it.",
@@ -1750,12 +1759,15 @@
           "example": "Example: after a missed day, start your day with its smallest amount."
         },
         "make-up": {
-          "idea": "What you missed yesterday can be made up until Dhuhr the next day.",
-          "example": "Example: you missed your night wird, so read it in the forenoon."
+          "idea": "What you did not finish yesterday, finish before noon today, and it counts for its day.",
+          "example": "Example: you missed your night wird, so read it in the forenoon.",
+          "ask": "If you miss {habit} one day, when will you finish it?",
+          "suggest": "If I miss a day, I finish it the next morning, before noon."
         },
         "bundle": {
           "idea": "Pair the habit with something you enjoy and look forward to.",
-          "example": "Example: tasbih on your way to work."
+          "example": "Example: I read my wird with the morning coffee I enjoy.",
+          "ask": "What do you enjoy that you will pair with {habit}?"
         },
         "season": {
           "idea": "Seasons of good help a start; hearts are more willing in them.",
@@ -1808,11 +1820,14 @@
       "reminderOn": "You will be reminded of it once a week.",
       "reminderOff": "Reminder turned off.",
       "note": "Strategy reminders come once a week at most; set their day and time in Notifications. These are practical guides, not religious rulings.",
-      "applyNext": "Review the loop and apply it",
       "applied": "Applied to “{habit}”. It is in “Habit loop”.",
       "chooseHabit": "Which habit?",
       "noHabits": "Add a habit first, then apply what fits it.",
-      "addHabit": "Add a habit"
+      "addHabit": "Add a habit",
+      "savedIn": "Saved in “Habit loop”: {field}",
+      "replaces": "Your current answer: “{text}”. This replaces it.",
+      "saveApply": "Save in the habit loop",
+      "cancel": "Cancel"
     },
     "onboarding": {
       "stepOf": "Step {step} of 3",
@@ -2321,7 +2336,9 @@
       "noPlan": "Not written yet. Add it in «Habit loop».",
       "makeUps": "What you chose to mend it",
       "openRecord": "Open the full record",
-      "keptDaysReady": "Done on {n} days. If you feel it has settled, move it to settled habits from «Habits»."
+      "keptDaysReady": "Done on {n} days. If you feel it has settled, move it to settled habits from «Habits».",
+      "editHabit": "Edit habit",
+      "written": "You wrote on it"
     },
     "selfMessages": {
       "button": "My messages to myself",
@@ -2385,7 +2402,8 @@
         "weak": "Felt weak, did not fall",
         "fell_repented": "Fell and repented"
       },
-      "dialogNote": "The day's details: habits, what you wrote, and the obligatory prayers."
+      "dialogNote": "The day's details: habits, what you wrote, and the obligatory prayers.",
+      "nothingWritten": "You wrote nothing about this day."
     },
     "asks": {
       "title": "Did you do it?",
@@ -2747,7 +2765,7 @@
       "changeSave": "Save the new code",
       "protectTitle": "Protect your program with a privacy code",
       "createTitle": "Your privacy code",
-      "createLead": "One step before your program starts.",
+      "createLead": "Optional: it keeps your program in your account, locked. You can set it later from inside the program.",
       "createWhy": "The code locks «Lighten» so nobody can read it, not even the Thekra team. It is saved to your account, encrypted, and opens on any device.",
       "forgot": {
         "button": "Forgot the code?",
@@ -2760,7 +2778,9 @@
       "locked": "Locked",
       "lockedState": "Locked. Open it with your privacy code",
       "lockedToast": "Lighten is locked.",
-      "lockedNote": "Lighten is locked now. Open it with your privacy code to see your program."
+      "lockedNote": "Lighten is locked now. Open it with your privacy code to see your program.",
+      "skip": "Skip and start",
+      "skipNote": "Without a code the program stays on this device only."
     },
     "moment": {
       "title": "A moment of striving",
@@ -2920,7 +2940,21 @@
       }
     },
     "endedNote": "The program is closed. You can start it again or choose another whenever you wish.",
-    "inPlan": "In your plan"
+    "inPlan": "In your plan",
+    "privacy": {
+      "menu": "Privacy and hiding",
+      "title": "Privacy and hiding",
+      "noCode": "Your program is on this device only and shows in “Habits”. Set a privacy code to keep it in your account, locked and hidden.",
+      "withCode": "Your programs are kept in your account, locked with your code.",
+      "saveCode": "Save the code",
+      "saved": "Your program is kept in your account, locked, and hidden in “Habits”.",
+      "coverLabel": "Hide Lighten in “Habits” and “My record”",
+      "coverHint": "It shows as a covered row that names nothing, opened with the privacy code.",
+      "coverOn": "Lighten is hidden.",
+      "coverOff": "Lighten is shown.",
+      "deviceOnly": "On this device only ·",
+      "hideWithCode": "Hide it with a code"
+    }
   },
   "topic": {
     "branchesTitle": "From the branches of faith",
@@ -2945,6 +2979,11 @@
     "angleTitle": "Why it reminds",
     "angleNote": "An editorial line by Thekra linking the text to the topic; not a tafsir or an explanation attributed to a scholar.",
     "tafsirTitle": "Tafsir",
-    "sharhTitle": "Explanation"
+    "sharhTitle": "Explanation",
+    "tafsirTabs": {
+      "mukhtasar": "Al-Mukhtasar",
+      "sadi": "Al-Sa'di",
+      "ibn-ashur": "Ibn Ashur"
+    }
   }
 }

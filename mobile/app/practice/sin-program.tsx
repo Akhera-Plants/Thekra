@@ -35,6 +35,8 @@ import { Check, ChevronDown, ChevronUp, LockKeyhole, Plus, ShieldCheck, Trash2, 
 import {
   activePrograms,
   addSinLoop,
+  isLightenCovered,
+  setLightenCovered,
   afterFall,
   annotateCheckIn,
   checkIn,
@@ -102,6 +104,7 @@ import {
   type SegmentItem,
   SegmentTabs,
   Skeleton,
+  SwitchRow,
   Text,
   TextLink,
   toast,
@@ -118,6 +121,7 @@ const makeStyles = (t: Theme) => ({
   flex: { flex: 1 },
   block: { gap: space.md },
   tight: { gap: space.xs },
+  deviceLine: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, alignItems: 'center' as const, columnGap: space.sm },
   options: { gap: space.sm },
   note: { minHeight: 96, textAlignVertical: 'top' as const },
   track: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.xs, paddingVertical: space.xs },
@@ -194,6 +198,7 @@ function SinProgramContent() {
   /** The program shown when several run (chosen from the title's sheet; a sin page's hand-off shows its own). */
   const [focus, setFocus] = useState<string | null>(pendingSin);
   const [switching, setSwitching] = useState(false);
+  const [privacyOpen, setPrivacyOpen] = useState(false);
   // Up to 3 programs, each running one at least two months old before another starts (practice-core `limits`).
   const planLimits = useLimits();
   const setStore = usePracticeStore((s) => s.setStore);
@@ -217,8 +222,9 @@ function SinProgramContent() {
   const showChooser = programs.length === 0 || (canStart && (choosing ?? preselected !== null));
   const canAddAnother = allSins.some((x) => !following.has(x.slug));
   const current = programs.find((p) => p.sinSlug === focus) ?? programs[0];
-  // Programs kept from an older build, before «تخفَّف» was always saved: protect them with a code once.
-  const needsProtect = userId !== null && vaultStatus === 'none' && programs.length > 0;
+  // Round 7 (C6): programs without a privacy code (skipped at the start, or kept from an older build) stay on this device
+  // only; the code is set later from «⋯ › الخصوصية والإخفاء» (or the line under the title).
+  const noCode = userId !== null && vaultStatus === 'none' && programs.length > 0;
   // Saved in the account: the privacy line folds to one row (A-21 a).
   const saved = vaultStatus !== 'none' && programs.length > 0;
 
@@ -238,7 +244,10 @@ function SinProgramContent() {
   async function protect(code: string): Promise<string | null> {
     if (!userId) return 'failed';
     const err = await createVaultWithCode(userId, code, programs);
-    if (!err) toast(t('vault.savedToast'));
+    if (!err) {
+      toast(t('sinProgram.privacySheet.saved'));
+      setPrivacyOpen(false);
+    }
     return err;
   }
 
@@ -253,6 +262,7 @@ function SinProgramContent() {
                 ? () => (
                     <ActionMenu
                       items={[
+                        { label: t('sinProgram.privacySheet.menu'), icon: ShieldCheck, onPress: () => setPrivacyOpen(true) },
                         {
                           label: t('sinProgram.end.button'),
                           icon: Trash2,
@@ -284,7 +294,10 @@ function SinProgramContent() {
             onCancel={programs.length > 0 ? () => setChoosing(false) : undefined}
           />
         ) : null}
-        {needsProtect && userId ? <ProtectPrograms onSubmit={protect} /> : null}
+        {noCode && !showChooser ? <DeviceOnlyLine onOpen={() => setPrivacyOpen(true)} /> : null}
+        {userId ? (
+          <ProgramPrivacySheet visible={privacyOpen} noCode={noCode} onClose={() => setPrivacyOpen(false)} onProtect={protect} />
+        ) : null}
         {programs.length > 0 && !showChooser && current ? (
           <>
             <ProgramView
@@ -339,26 +352,61 @@ function SinProgramContent() {
   );
 }
 
-/**
- * Programs kept from an older build, not saved in the account yet: one folded line (A-21 a: the code card no longer sits
- * open above the program); «احفظها مشفّرة» opens the code form, which is gone once saved.
- */
-function ProtectPrograms({ onSubmit }: { onSubmit: (code: string) => Promise<string | null> }) {
+/** One quiet line under the title while there is no privacy code (round 7, C6), and the way to set it. */
+function DeviceOnlyLine({ onOpen }: { onOpen: () => void }) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
-  const [open, setOpen] = useState(false);
-  if (open) return <PrivacyCodeForm submitLabel={t('vault.protect')} onSubmit={onSubmit} onCancel={() => setOpen(false)} />;
   return (
-    <NextStep>
-      <View style={styles.tight}>
-        <Text variant="body">{t('sinProgram.protect.line')}</Text>
-        <Button label={t('sinProgram.protect.open')} icon={ShieldCheck} variant="outline" size="sm" onPress={() => setOpen(true)} />
-      </View>
-    </NextStep>
+    <View style={styles.deviceLine}>
+      <Text variant="small" tone="muted">
+        {t('sinProgram.privacySheet.deviceOnly')}
+      </Text>
+      <TextLink label={t('sinProgram.privacySheet.hideWithCode')} onPress={onOpen} />
+    </View>
   );
 }
 
-/** A folded part of «رحلتي» (the notebook's past days, the loop in later weeks): title, count, chevron. */
+/**
+ * «الخصوصية والإخفاء» of «تخفَّف» (owner round 7, C6: «تعديل لاحقًا إني أخفيها من مكان صحيح جوا العادة نفسها»): without
+ * a code, the code form (it seals the programs into the account; they are then covered in «العادات» and «سجلّي», the
+ * default); with a code, the covering switch (the same setting as in «الإعدادات»), here where the program is.
+ */
+function ProgramPrivacySheet({
+  visible,
+  noCode,
+  onClose,
+  onProtect,
+}: {
+  visible: boolean;
+  noCode: boolean;
+  onClose: () => void;
+  onProtect: (code: string) => Promise<string | null>;
+}) {
+  const { t } = useTranslation();
+  const covered = usePracticeStore((s) => isLightenCovered(s.store));
+  const setStore = usePracticeStore((s) => s.setStore);
+  return (
+    <BottomSheet visible={visible} title={t('sinProgram.privacySheet.title')} onClose={onClose}>
+      <Text variant="small" tone="muted">
+        {noCode ? t('sinProgram.privacySheet.noCode') : t('sinProgram.privacySheet.withCode')}
+      </Text>
+      {noCode ? (
+        <PrivacyCodeForm submitLabel={t('sinProgram.privacySheet.saveCode')} onSubmit={onProtect} onCancel={onClose} />
+      ) : (
+        <SwitchRow
+          label={t('sinProgram.privacySheet.coverLabel')}
+          hint={t('sinProgram.privacySheet.coverHint')}
+          value={covered}
+          onValueChange={(on) => {
+            setStore((s) => setLightenCovered(s, on));
+            toast(on ? t('sinProgram.privacySheet.coverOn') : t('sinProgram.privacySheet.coverOff'));
+          }}
+        />
+      )}
+    </BottomSheet>
+  );
+}
+
 function Fold({ title, count, children }: { title: string; count?: number; children: React.ReactNode }) {
   const styles = useStyles(makeStyles);
   const [open, setOpen] = useState(false);
@@ -471,7 +519,7 @@ function ChooseProgram({ sins, entries, following, preselected, onStarted, onCan
   function handleStart() {
     const program = newProgram();
     if (!program) return;
-    // The account has no vault yet: the privacy code first, then the program starts already saved.
+    // The account has no vault yet: the privacy code is offered first (optional since round 7, C6).
     if (userId && vaultStatus === 'none') {
       setAskCode(true);
       return;
@@ -491,8 +539,16 @@ function ChooseProgram({ sins, entries, following, preselected, onStarted, onCan
     return err;
   }
 
+  // Round 7 (C6): the code is optional; «تخطَّ وابدأ» starts the program on this device only.
+  function startWithoutCode() {
+    const program = newProgram();
+    if (!program) return;
+    setStore((s) => ({ ...s, programs: withProgramStarted(s.programs, program) }));
+    onStarted(program.sinSlug);
+  }
+
   if (askCode) {
-    return <PrivacyCodeForm submitLabel={t('sinProgram.start')} onSubmit={startWithCode} onCancel={() => setAskCode(false)} />;
+    return <PrivacyCodeForm submitLabel={t('sinProgram.start')} onSubmit={startWithCode} onSkip={startWithoutCode} />;
   }
 
   return (

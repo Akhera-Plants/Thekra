@@ -49,7 +49,7 @@ export async function generateMetadata({
 /** Browser bar colour = the page colour of each theme (globals.css --background), so nothing changes visually. */
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#fffcf9' },
+    { media: '(prefers-color-scheme: light)', color: '#fbfcfb' },
     { media: '(prefers-color-scheme: dark)', color: '#101010' },
   ],
 };

@@ -34,6 +34,11 @@ export type HabitListRow =
 
 export interface HabitListOptions {
   isPeriodicAct?: (plan: Plan) => boolean;
+  /**
+   * Round 7 (C6): false while the member has no «رمز الخصوصية» (the programs stay on this device, unencrypted, and
+   * there is nothing to unlock): the rows show like any habit. Default: the setting ({@link isLightenCovered}).
+   */
+  covered?: boolean;
 }
 
 /**
@@ -51,7 +56,7 @@ export function habitListRows(
     if (opts.hasPrograms) rows.push({ kind: 'lighten', covered: true, locked: true, program: null, startedOn: null });
     return rows;
   }
-  const covered = isLightenCovered(store);
+  const covered = opts.covered ?? isLightenCovered(store);
   for (const program of [...activePrograms(programs)].sort((a, b) => (a.startedOn < b.startedOn ? -1 : 1))) {
     rows.push({ kind: 'lighten', covered, locked: false, program, startedOn: program.startedOn });
   }

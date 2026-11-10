@@ -46,7 +46,7 @@ function makePrisma(me: Member | null = member()) {
     circle: {
       findUnique: vi.fn().mockResolvedValue({
         id: CIRCLE,
-        name: 'رفقة الفجر',
+        name: 'صحبة الفجر',
         intention: null,
         inviteCode: 'ABCDEFGHJK',
         members: [
@@ -78,10 +78,9 @@ function makePrisma(me: Member | null = member()) {
       createMany: vi.fn().mockResolvedValue({ count: 1 }),
       deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
     },
-    circleCheer: {
-      findMany: vi.fn().mockResolvedValue([]),
-      create: vi.fn().mockResolvedValue({ id: 'cheer-1' }),
-    },
+    circleRound: { findMany: vi.fn().mockResolvedValue([]) },
+    circleMessage: { findMany: vi.fn().mockResolvedValue([]) },
+    circleMute: { findMany: vi.fn().mockResolvedValue([]) },
     user: {
       findUnique: vi.fn().mockResolvedValue({ role: 'USER', circlesEnabledAt: new Date('2026-10-01T00:00:00.000Z') }),
     },
@@ -110,7 +109,7 @@ describe('CirclesService', () => {
   describe('create', () => {
     it('makes the creator the owner and returns the invite code', async () => {
       const prisma = makePrisma();
-      const detail = await service(prisma).create(USER, { name: 'رفقة الفجر', displayName: 'أبو عمر' }, NOW);
+      const detail = await service(prisma).create(USER, { name: 'صحبة الفجر', displayName: 'أبو عمر' }, NOW);
       expect(prisma.circle.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({ members: { create: { userId: USER, displayName: 'أبو عمر', isOwner: true } } }),
@@ -139,7 +138,7 @@ describe('CirclesService', () => {
   });
 
   describe('invite-only (round 6, C-01k)', () => {
-    it('refuses to create or join while رفقة is off (403 CIRCLES_NOT_ENABLED)', async () => {
+    it('refuses to create or join while صحبة is off (403 CIRCLES_NOT_ENABLED)', async () => {
       const prisma = makePrisma();
       prisma.user.findUnique.mockResolvedValue({ role: 'USER', circlesEnabledAt: null });
       for (const call of [
@@ -307,48 +306,59 @@ describe('CirclesService', () => {
     });
   });
 
-  describe('cheers', () => {
-    it('to a member: one per target per day', async () => {
+  describe('round 7 additions to the circle', () => {
+    it('my running round, the lines I sent today and the members I hid', async () => {
       const prisma = makePrisma();
-      expect(await service(prisma).sendCheer(USER, CIRCLE, { message: 'thabat', toMemberId: OTHER }, NOW)).toEqual({ id: 'cheer-1' });
-      expect(prisma.circleCheer.create).toHaveBeenCalledWith({
-        data: {
-          circleId: CIRCLE,
-          senderId: ME,
-          receiverId: OTHER,
-          target: OTHER,
-          message: 'thabat',
-          day: new Date('2026-10-29T00:00:00.000Z'),
+      const startedAt = new Date('2026-10-29T11:30:00.000Z');
+      prisma.circleRound.findMany.mockResolvedValue([
+        {
+          id: 'r1',
+          memberId: ME,
+          kind: 'study',
+          label: 'compiler design',
+          minutes: 60,
+          number: 4,
+          startedAt,
+          endedAt: null,
+          outcome: null,
+          member: { displayName: 'أبو عمر' },
+          messages: [],
         },
-        select: { id: true },
+      ]);
+      prisma.circleMessage.findMany.mockResolvedValue([
+        { key: 'thabat', receiverId: OTHER },
+        { key: 'progress', receiverId: null },
+      ]);
+      prisma.circleMute.findMany.mockResolvedValue([{ mutedId: OTHER }]);
+      const detail = await service(prisma).findOne(USER, CIRCLE, undefined, NOW);
+      expect(detail.myOpenRound).toEqual(
+        expect.objectContaining({ id: 'r1', number: 4, label: 'compiler design', closed: false, endsAt: '2026-10-29T12:30:00.000Z' }),
+      );
+      expect(detail.sentToday).toEqual([`thabat:${OTHER}`, 'progress:circle']);
+      expect(detail.mutedMemberIds).toEqual([OTHER]);
+      expect(prisma.circleMessage.findMany).toHaveBeenCalledWith({
+        where: { senderId: ME, kind: 'PRESET', day: new Date('2026-10-29T00:00:00.000Z') },
+        select: { key: true, receiverId: true },
       });
-      prisma.circleCheer.create.mockRejectedValueOnce(p2002());
-      const error = await service(prisma).sendCheer(USER, CIRCLE, { message: 'jazak', toMemberId: OTHER }, NOW).catch((e: unknown) => e);
-      expect(statusOf(error)).toBe(409);
-      expect(codeOf(error)).toBe('CIRCLE_CHEER_ALREADY_SENT');
     });
 
-    it('to the whole circle targets `circle`', async () => {
+    it('a round left open past its time and the grace period is not running any more', async () => {
       const prisma = makePrisma();
-      await service(prisma).sendCheer(USER, CIRCLE, { message: 'dhakkarani' }, NOW);
-      expect(prisma.circleCheer.create).toHaveBeenCalledWith(
-        expect.objectContaining({ data: expect.objectContaining({ receiverId: null, target: 'circle' }) }),
-      );
-    });
-
-    it('refuses oneself, a member of another circle and a non-member sender', async () => {
-      expect(codeOf(await service(makePrisma()).sendCheer(USER, CIRCLE, { message: 'thabat', toMemberId: ME }, NOW).catch((e: unknown) => e))).toBe(
-        'CIRCLE_CHEER_SELF',
-      );
-      const prisma = makePrisma();
-      prisma.circleMember.findFirst.mockResolvedValue(null);
-      expect(codeOf(await service(prisma).sendCheer(USER, CIRCLE, { message: 'thabat', toMemberId: OTHER }, NOW).catch((e: unknown) => e))).toBe(
-        'CIRCLE_MEMBER_NOT_FOUND',
-      );
-      expect(prisma.circleMember.findFirst).toHaveBeenCalledWith({ where: { id: OTHER, circleId: CIRCLE }, select: { id: true } });
-      expect(codeOf(await service(makePrisma(null)).sendCheer(OTHER_USER, CIRCLE, { message: 'thabat' }, NOW).catch((e: unknown) => e))).toBe(
-        'CIRCLE_NOT_FOUND',
-      );
+      prisma.circleRound.findMany.mockResolvedValue([
+        {
+          id: 'r0',
+          memberId: ME,
+          kind: 'focus',
+          label: null,
+          minutes: 25,
+          number: 1,
+          startedAt: new Date('2026-10-29T04:00:00.000Z'),
+          endedAt: null,
+          outcome: null,
+          member: { displayName: 'أبو عمر' },
+        },
+      ]);
+      expect((await service(prisma).findOne(USER, CIRCLE, undefined, NOW)).myOpenRound).toBeNull();
     });
   });
 

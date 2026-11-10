@@ -5,27 +5,35 @@ import { Bell, BellRing, ChevronDown, Repeat } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import {
+  applyStrategyToPlan,
+  FARD_LABELS,
   isPaused,
   listedStrategies,
+  MAX_LOOP_TEXT,
   setHeartPrefs,
   STRATEGY_KINDS,
+  strategyApplyField,
   strategyAppliesToHabit,
   toggleStrategy,
+  updatePlan,
   withCustomPeriodic,
   type Plan,
   type Strategy,
   type StrategyKind,
 } from '@thekra/practice-core';
 import { Link } from '@/i18n/navigation';
+import { ActionPair } from '@/components/shared/kit/action-pair';
 import { Button } from '@/components/shared/kit/button';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import { SegmentTabs } from '@/components/shared/kit/segment-tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 import { updateHeart } from '@/lib/practice/heart-store';
 import { isPeriodicTemplate } from '@/lib/practice/limits';
-import { notificationPrefsOf, updatePrefs } from '@/lib/practice/local-store';
+import { newUuid } from '@/lib/practice/ids';
+import { notificationPrefsOf, updatePrefs, updateStore } from '@/lib/practice/local-store';
 import { habitOf } from '@/lib/practice/plans';
-import { APPLY_FIELD, applyStrategyDraft, strategyTarget } from '@/lib/practice/strategies';
+import { applySuggestion, quoted, strategyTarget } from '@/lib/practice/strategies';
 import { resendPushPrefs } from '@/lib/push/web-push';
 import type { PracticeHabit } from '@/lib/types/practice';
 import { usePracticeCatalog } from '../../hooks/usePracticeCatalog';
@@ -40,9 +48,10 @@ type Filter = 'all' | StrategyKind;
 /**
  * «استراتيجيات العادات» (owner round 6, C-18 a: the reference's layout, our visuals): a card «ابنِ حلقة تناسب عادتك»
  * (choose a habit, build its loop), the family filter «الكل · للبناء · للترك · للعودة», then the strategies in two
- * columns — each its idea, a folded example, its action («طبّقها على عادة» for «بناء» and «عودة», «جرّبها» for
- * «ترك»), and «ذكّرني بها» (the weekly strategy reminder of «التنبيهات», practice-core `toggleStrategy`). «لا تفوّتها
- * مرتين» still appears only in its moment (a habit's row the day after a miss). «قبل أن تبدأ» keeps the educational cards.
+ * columns — each its idea, a folded example, its action («طبّقها على عادة» for a strategy that is one answer of a habit's
+ * loop, «جرّبها» for the rest: «ترك», a season, «صحبة», the evening review; round 7, C2), and «ذكّرني بها» (the weekly
+ * strategy reminder of «التنبيهات», practice-core `toggleStrategy`). «لا تفوّتها مرتين» still appears only in its moment
+ * (a habit's row the day after a miss). «قبل أن تبدأ» keeps the educational cards.
  */
 export function StrategiesView() {
   const t = useTranslations('practice.strategies');
@@ -91,7 +100,8 @@ export function StrategiesView() {
       </section>
 
       <section aria-labelledby="strategy-list-title" className="flex flex-col gap-6">
-        <div className="flex flex-wrap items-end justify-between gap-4">
+        {/* Round 7 (C1): the family filter sits under its heading, not on its line. */}
+        <div className="flex flex-col items-start gap-4">
           <h2 id="strategy-list-title" className="text-2xl font-medium">
             {t('listHeading')}
           </h2>
@@ -214,8 +224,11 @@ function StrategyItem({
 }
 
 /**
- * «طبّقها على عادة»: choose one of the member's habits, then build its loop with the strategy's idea in view (the
- * stepper of «حلقة العادة», saved on the habit). Without a habit, one line and «أضف عادة».
+ * «طبّقها على عادة» (round 7, C2): choose one of the member's habits, then the ONE question of its loop this strategy
+ * answers, asked about that habit («بعد أي صلاة تعمل «ورد القرآن»؟»), with an answer built from the habit when it says
+ * something (practice-core `strategyApplyField`, `applyStrategyToPlan`). Saved into the habit's first loop; an answer it
+ * replaces is shown first. «ابنِ الحلقة» (no strategy) opens the whole loop builder of the chosen habit. Without a
+ * habit, one line and «أضف عادة».
  */
 function ApplyDialog({
   applying,
@@ -234,16 +247,12 @@ function ApplyDialog({
   const [chosen, setChosen] = useState<string | null>(null);
   const strategy = applying && applying !== 'loop' ? applying : null;
   const plan = habits.find((p) => p.id === chosen) ?? (habits.length === 1 ? habits[0] : undefined);
+  function close() {
+    setChosen(null);
+    onClose();
+  }
   return (
-    <Dialog
-      open={applying !== null}
-      onOpenChange={(open) => {
-        if (!open) {
-          setChosen(null);
-          onClose();
-        }
-      }}
-    >
+    <Dialog open={applying !== null} onOpenChange={(open) => (open ? undefined : close())}>
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
         <DialogHeader className="pe-8">
           <DialogTitle className="leading-8">{strategy ? (english ? strategy.titleEn : strategy.titleAr) : t('loopTitle')}</DialogTitle>
@@ -257,38 +266,92 @@ function ApplyDialog({
             </Button>
           </div>
         ) : (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-5">
             <fieldset className="flex flex-col gap-1">
               <legend className="mb-1 text-sm font-medium text-muted-foreground">{t('chooseHabit')}</legend>
               {habits.map((p) => (
                 <HabitChoice key={p.id} plan={p} habit={habitOf(p, catalog)} checked={plan?.id === p.id} onChoose={() => setChosen(p.id)} />
               ))}
             </fieldset>
-            {plan ? (
-              <HabitLoops
-                key={plan.id}
-                plan={plan}
-                compact
-                apply={
-                  strategy && APPLY_FIELD[strategy.key]
-                    ? {
-                        label: t('applyNext'),
-                        draft: (current) => applyStrategyDraft(strategy.key, current, t(`items.${strategy.key}.example`)),
-                        onSaved: () => {
-                          const habit = habitOf(plan, catalog);
-                          toast.success(t('applied', { habit: habit ? (english ? habit.titleEn : habit.titleAr) : plan.title }));
-                          setChosen(null);
-                          onClose();
-                        },
-                      }
-                    : undefined
-                }
-              />
+            {plan && strategy ? (
+              <ApplyAnswer key={`${strategy.key}-${plan.id}`} strategy={strategy} plan={plan} habit={habitOf(plan, catalog)} onDone={close} />
+            ) : plan ? (
+              <HabitLoops key={plan.id} plan={plan} compact />
             ) : null}
           </div>
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** The one loop question a strategy answers for the chosen habit, its answer, and «احفظ في حلقة العادة» · «إلغاء». */
+function ApplyAnswer({ strategy, plan, habit, onDone }: { strategy: Strategy; plan: Plan; habit: PracticeHabit | undefined; onDone: () => void }) {
+  const t = useTranslations('practice.strategies');
+  const tLoops = useTranslations('practice.loops.habit.steps');
+  const english = useLocale() === 'en';
+  const words = usePlanWords(plan, habit);
+  const id = useId();
+  const field = strategyApplyField(strategy.key);
+  const current = (field ? plan.loops?.[0]?.[field] : undefined)?.trim() ?? '';
+  const suggestion = applySuggestion(
+    strategy.key,
+    plan,
+    { amount: words.amount, prayer: (p) => FARD_LABELS[english ? 'en' : 'ar'].prayers[p] },
+    (key, values) => t(key as never, values as never),
+  );
+  const [text, setText] = useState(suggestion || current);
+  if (!field) return null;
+  const replacing = current !== '' && text.trim() !== current;
+
+  function save() {
+    if (!field || !text.trim()) return;
+    updateStore((store) =>
+      updatePlan(store, plan.id, (p) =>
+        applyStrategyToPlan(p, strategy.key, text, { loopId: newUuid(), routine: `${words.title}: ${words.amount(p.amount)}` }),
+      ),
+    );
+    toast.success(t('applied', { habit: words.title }));
+    onDone();
+  }
+
+  return (
+    <form
+      className="flex flex-col gap-3 border-t border-border pt-5"
+      onSubmit={(event) => {
+        event.preventDefault();
+        save();
+      }}
+    >
+      <div className="flex flex-col gap-1">
+        <label htmlFor={id} className="text-lg leading-8 font-medium">
+          {t(`items.${strategy.key}.ask` as never, { habit: quoted(words.title, english) } as never)}
+        </label>
+        <p className="text-sm text-muted-foreground">{t('savedIn', { field: tLoops(`${field}.label`) })}</p>
+      </div>
+      <Textarea
+        id={id}
+        rows={3}
+        maxLength={MAX_LOOP_TEXT}
+        value={text}
+        placeholder={t(`items.${strategy.key}.example`)}
+        aria-describedby={replacing ? `${id}-current` : undefined}
+        onChange={(event) => setText(event.target.value)}
+      />
+      {replacing ? (
+        <p id={`${id}-current`} className="text-sm leading-7 text-muted-foreground">
+          {t('replaces', { text: current })}
+        </p>
+      ) : null}
+      <ActionPair>
+        <Button type="submit" variant="solid" tone="primary" disabled={!text.trim()}>
+          {t('saveApply')}
+        </Button>
+        <Button variant="outline" tone="neutral" onClick={onDone}>
+          {t('cancel')}
+        </Button>
+      </ActionPair>
+    </form>
   );
 }
 

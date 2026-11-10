@@ -1,5 +1,5 @@
 /**
- * The plants of «بستاني», drawn by hand in the website's line style (src/ui/Decor.tsx: the sprig and the olive): thin
+ * The plants of «بستان العادات», drawn by hand in the website's line style (src/ui/Decor.tsx: the sprig and the olive): thin
  * #41816D strokes, leaves washed with the pathway-flourish sage, on a soft mound of earth. One drawing per growth stage
  * (garden.ts), each a step on from the last, so a plant only ever gains. A resting plant («يومي ثقيل») keeps its drawing
  * and gains a crescent moon above it. Drawn for Arabic and mirrored for English, like the site's `--art-mirror`.

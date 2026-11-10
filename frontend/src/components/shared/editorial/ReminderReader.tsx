@@ -304,6 +304,7 @@ export function ReminderReader({
     },
   ];
 
+  const showThemes = Boolean(themes && themes.length > 0 && onThemeChange && themes.some((theme) => theme.count > 0 || theme.key === activeTheme));
   const SectionHeading = heading ? 'h3' : 'h2';
   const renderCard = (item: ReaderItem) => (
     <QuoteCard
@@ -348,30 +349,38 @@ export function ReminderReader({
           )}
           listClassName="w-full sm:w-fit"
         />
-        {themes && themes.length > 0 && onThemeChange ? (
-          <ThemeChips
-            themes={themes}
-            value={activeTheme}
-            onValueChange={changeTheme}
-            allLabel={labels.themeAll ?? labels.tabAll}
-            label={labels.themesLabel ?? labels.tabsLabel}
-            lang={themeLang}
-          />
-        ) : null}
-        {reads.enabled ? (
-          <div className="flex justify-end">
-            <SegmentTabs
-              aria-label={tReads('filterLabel')}
-              controls={listId}
-              items={[
-                { value: 'all', label: tReads('all') },
-                { value: 'unread', label: tReads('unread') },
-                { value: 'read', label: tReads('read') },
-              ]}
-              value={readFilter}
-              onValueChange={(value) => setReadFilter(value as ReadFilter)}
-              className="w-auto"
-            />
+        {/* Owner round 7 (B2): the theme chips and the read filter are one group, parted by a bold green bar; the group
+            wraps on a phone (the bar stays with the read filter). Without chips the read filter stands alone. */}
+        {showThemes || reads.enabled ? (
+          <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
+            {showThemes ? (
+              <ThemeChips
+                themes={themes!}
+                value={activeTheme}
+                onValueChange={changeTheme}
+                allLabel={labels.themeAll ?? labels.tabAll}
+                label={labels.themesLabel ?? labels.tabsLabel}
+                lang={themeLang}
+                className="flex-wrap overflow-visible py-0"
+              />
+            ) : null}
+            {reads.enabled ? (
+              <div className="flex shrink-0 items-center gap-3">
+                {showThemes ? <span aria-hidden className="h-8 w-[3px] shrink-0 rounded-full bg-primary" /> : null}
+                <SegmentTabs
+                  aria-label={tReads('filterLabel')}
+                  controls={listId}
+                  items={[
+                    { value: 'all', label: tReads('all') },
+                    { value: 'unread', label: tReads('unread') },
+                    { value: 'read', label: tReads('read') },
+                  ]}
+                  value={readFilter}
+                  onValueChange={(value) => setReadFilter(value as ReadFilter)}
+                  className="w-auto"
+                />
+              </div>
+            ) : null}
           </div>
         ) : null}
       </div>

@@ -20,7 +20,7 @@ test('header: the links, then «المزيد» with its own items; no «تصفّ
   await more.focus();
   await page.keyboard.press('Enter');
   const menu = page.getByRole('menu');
-  await expect(menu.getByRole('menuitem')).toHaveText(['استراتيجيات العادات', 'المحفوظات', 'رفقة (في التطبيق)']);
+  await expect(menu.getByRole('menuitem')).toHaveText(['استراتيجيات العادات', 'المحفوظات', 'صحبة (في التطبيق)']);
   await page.keyboard.press('Escape');
   await expect(menu).toHaveCount(0);
   await expect(more).toBeFocused();

@@ -146,7 +146,8 @@ export function quoteCardAttribution(
     const { surahNumber, ayahNumber } = quote.quran;
     const verseRef = surahNumber && ayahNumber ? `${surahNumber}:${ayahNumber}` : null;
     const capsule = [surahName?.trim() || null, verseRef].filter(Boolean).join(' ');
-    const line = [capsule || null, quietSource].filter(Boolean).join(SEPARATOR);
+    // «القرآن الكريم» is not repeated beside a verse reference (owner round 7, B8), as on the card.
+    const line = capsule || null;
     if (line) lines.push(line);
   }
 
@@ -178,6 +179,8 @@ export function quoteCardAttribution(
         gradeAuthority: quote.citation?.gradeAuthority,
         gradeReference: quote.citation?.gradeReference,
         grade: quote.hadith?.grade,
+        // The book and number are in the line above: never twice (owner round 7, B4).
+        besideSource: hadithRefRaw,
       });
       if (gradeLine) lines.push(gradeLine);
     }
@@ -191,7 +194,8 @@ export function quoteCardAttribution(
         quote.atharAttributionKind === 'NARRATED' ? labels.atharNarrated(speaker) : `— ${speaker}`,
       );
     }
-    if (isAthar) lines.push(atharLine(labels, hadithRef));
+    // The reference is already in the capsule line (B4).
+    if (isAthar) lines.push(atharLine(labels, capsule.length > 0 ? null : hadithRef));
 
     if (grade === HadithGrade.DAIF || grade === HadithGrade.MAWDU) lines.push(labels.weakNotice);
     if (quote.hadith?.outsideSahihayn) lines.push(labels.outsideSahihayn);

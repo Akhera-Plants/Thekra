@@ -105,3 +105,26 @@ describe('formatGradeCitation — Musnad Ahmad and Ibn Hibban (Arna\'ut tahqiq)'
     );
   });
 });
+
+describe('formatGradeCitation beside the source badge (round 7, B4)', () => {
+  const badge = 'صحيح البخاري، رقم 2595';
+  it('drops «رواه البخاري، رقم 2595» when the badge names the same book and number', () => {
+    expect(formatGradeCitation({ locale: 'ar', gradeAuthority: 'رواه البخاري', gradeReference: 'البخاري 2595', besideSource: badge })).toBeNull();
+    expect(formatGradeCitation({ locale: 'en', gradeAuthority: 'رواه البخاري', gradeReference: 'البخاري 2595', besideSource: badge })).toBeNull();
+  });
+  it('keeps the line when the badge is another book', () => {
+    expect(
+      formatGradeCitation({ locale: 'ar', gradeAuthority: 'رواه مسلم', gradeReference: 'مسلم 253', besideSource: 'رياض الصالحين، رقم 1200' }),
+    ).toBe('رواه مسلم، رقم 253');
+  });
+  it('keeps only the grader when the badge already names the Sunan book and number', () => {
+    const input = { gradeAuthority: 'شعيب الأرنؤوط', gradeReference: 'سنن أبي داود، رقم 5186', grade: 'SAHIH', besideSource: 'سنن ابي داود، رقم 5186' };
+    expect(formatGradeCitation({ locale: 'ar', ...input })).toBe('صحّحه شعيب الأرنؤوط');
+    expect(formatGradeCitation({ locale: 'en', ...input })).toBe("Graded sahih by Shu'ayb al-Arna'ut");
+  });
+  it('keeps «متفق عليه» (it adds the second book)', () => {
+    expect(
+      formatGradeCitation({ locale: 'ar', gradeAuthority: 'متفق عليه', gradeReference: 'البخاري 1038، مسلم 71', besideSource: 'صحيح البخاري، رقم 1038' }),
+    ).toBe('متفق عليه، البخاري 1038، مسلم 71');
+  });
+});

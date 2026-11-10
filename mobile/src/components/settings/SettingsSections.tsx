@@ -7,7 +7,7 @@
  */
 
 import React, { useState } from 'react';
-import { ActivityIndicator, Alert, Share, View } from 'react-native';
+import { ActivityIndicator, Share, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQueryClient } from '@tanstack/react-query';
@@ -22,7 +22,7 @@ import { space, useStyles, useTheme, useThemePreference, type Theme, type ThemeP
 import { VaultSignInNote, VaultStatusCard } from '@/components/practice/VaultCard';
 import { HomeEditSheet } from '@/components/home/HomeSections';
 import { VerseAudioButton } from '@/components/VerseAudioButton';
-import { BottomSheet, CheckRow, ErrorText, ListRow, SegmentTabs, SwitchRow, Text, toast, type SegmentItem } from '@/ui';
+import { BottomSheet, CheckRow, ErrorText, ListRow, SegmentTabs, SwitchRow, Text, confirm, toast, type SegmentItem } from '@/ui';
 
 /** The ayah every reciter is previewed with (al-Fatiha 1:2), read from the reciter's own files. */
 const PREVIEW_AYAH = { surah: 1, ayah: 2 } as const;
@@ -90,17 +90,17 @@ export function PrivacySection() {
   }
 
   function handleClearCache() {
-    Alert.alert(t('settings.clearCache'), t('settings.clearCacheConfirm'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('settings.clearCache'),
-        style: 'destructive',
-        onPress: async () => {
-          qc.clear();
-          await AsyncStorage.removeItem(QUERY_CACHE_KEY);
-        },
-      },
-    ]);
+    void confirm({
+      title: t('settings.clearCache'),
+      message: t('settings.clearCacheConfirm'),
+      confirmLabel: t('settings.clearCacheAction'),
+      tone: 'destructive',
+      icon: Database,
+    }).then(async (ok) => {
+      if (!ok) return;
+      qc.clear();
+      await AsyncStorage.removeItem(QUERY_CACHE_KEY);
+    });
   }
 
   return (

@@ -6,8 +6,8 @@
  *    grade; the verse's play button reads in the member's reciter (settings);
  * 2. «وجه التذكير» — only when the topic link (`?linkId=`) has one written (`GET /quotes/:id/reader`), labelled as
  *    our editorial wording, with «أبلغ عن خطأ» under it;
- * 3. the explanations inline: for a verse المختصر، السعدي، ابن عاشور (التحرير والتنوير), each under its name; for a
- *    hadith its sharh, fawaid and the rest (src/lib/study/tabs.ts groups them), each under its name.
+ * 3. the explanations: for a verse المختصر، السعدي، ابن عاشور (التحرير والتنوير); for a hadith its sharh, fawaid and the
+ *    rest (src/lib/study/tabs.ts groups them) — side by side as tabs, the reader picking one (owner round 7, B6).
  * «أبلغ عن خطأ» is also at the end when there is no «وجه التذكير». Opening the reader marks the text «مقروء» (practice-core
  * reads.ts, synced with the account).
  */
@@ -29,9 +29,9 @@ import { VerseAudioButton } from '@/components/VerseAudioButton';
 import { ReportMistakeSheet } from '@/components/ReportMistakeSheet';
 import { ShareSheet } from '@/components/share/ShareSheet';
 import { stripOuterQuotes } from '@/lib/quote-text';
-import { space, useStyles, useTheme, type Theme } from '@/theme';
+import { radius, space, useStyles, useTheme, type Theme } from '@/theme';
 import { useIsOffline } from '@/lib/query-client';
-import { EmptyState, ErrorState, IconButton, Notice, SectionDivider, SectionHeader, SheetScreen, Skeleton, Text, TextLink } from '@/ui';
+import { EmptyState, ErrorState, IconButton, Notice, SectionDivider, SectionHeader, SegmentTabs, SheetScreen, Skeleton, Text, TextLink } from '@/ui';
 
 const makeStyles = (t: Theme) => ({
   quote: { gap: space.md },
@@ -42,6 +42,19 @@ const makeStyles = (t: Theme) => ({
   rtl: { writingDirection: 'rtl' as const },
   angle: { gap: space.sm, paddingStart: space.lg, borderStartWidth: 2, borderStartColor: t.colors.ring },
   part: { gap: space.lg },
+  capsule: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: space.sm,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: t.colors.border,
+    backgroundColor: t.colors.background,
+    maxWidth: '100%' as const,
+  },
+  capsuleRule: { width: 1, height: 12, backgroundColor: t.colors.border },
   skeleton: { gap: space.lg },
 });
 
@@ -170,15 +183,21 @@ function ReaderQuote({ quote }: { quote: QuoteDto }) {
             </>
           ) : (
             <>
-              {showSource ? (
-                <Text variant="caption" tone="muted">
-                  {sourceName}
-                </Text>
-              ) : null}
-              {hadithRef ? (
-                <Text variant="caption" tone="muted">
-                  {hadithRef}
-                </Text>
+              {/* Beside the grade the source is a badge, as on the card (owner round 7, B4). */}
+              {showSource || hadithRef ? (
+                <View style={styles.capsule}>
+                  {showSource ? (
+                    <Text variant="caption" numberOfLines={1}>
+                      {sourceName}
+                    </Text>
+                  ) : null}
+                  {showSource && hadithRef ? <View style={styles.capsuleRule} /> : null}
+                  {hadithRef ? (
+                    <Text variant="caption" tone={showSource ? 'muted' : 'default'} numberOfLines={1} style={{ flexShrink: 1 }}>
+                      {hadithRef}
+                    </Text>
+                  ) : null}
+                </View>
               ) : null}
               {grade && grade !== HadithGrade.UNGRADED ? <GradeBadge grade={grade} /> : null}
             </>
@@ -203,13 +222,14 @@ function ReaderQuote({ quote }: { quote: QuoteDto }) {
   );
 }
 
-/** Part 3: the tafsirs (verses) or the hadith explanations, each under its own name, inline. */
+/** Part 3: the tafsirs (verses) or the hadith explanations, as tabs (round 7, B6). */
 function ReaderExplanations({ quote, data }: { quote: QuoteDto; data: QuoteReaderDto | undefined }) {
   const styles = useStyles(makeStyles);
   const { t } = useTranslation();
   const { english } = useTheme();
   const locale = english ? 'en' : 'ar';
   const isVerse = quote.type === QuoteType.QURAN_VERSE;
+  const [picked, setPicked] = useState<string | null>(null);
 
   const parts = useMemo(() => {
     if (!data) return [];
@@ -218,6 +238,7 @@ function ReaderExplanations({ quote, data }: { quote: QuoteDto; data: QuoteReade
         .map((tafsir) => ({
           key: tafsir.key,
           title: t(`study.reader.${tafsir.key}`),
+          tab: t(`study.readerTab.${tafsir.key}`),
           rows: tafsir.entries.map<ExplanationRow>((e) => ({
             id: e.id,
             kind: 'TAFSIR',
@@ -230,21 +251,24 @@ function ReaderExplanations({ quote, data }: { quote: QuoteDto; data: QuoteReade
         .filter((p) => p.rows.length > 0);
     }
     const rows = data.explanations as ExplanationRow[];
-    return availableStudyTabs(rows, quote.type, locale).map((tab) => ({ key: tab, title: t(`study.tabs.${tab}`), rows: pickTabRows(rows, tab, locale) }));
+    return availableStudyTabs(rows, quote.type, locale).map((tab) => ({ key: tab, title: t(`study.tabs.${tab}`), tab: t(`study.tabs.${tab}`), rows: pickTabRows(rows, tab, locale) }));
   }, [data, isVerse, quote.type, locale, t]);
 
-  if (parts.length === 0) {
+  const active = parts.find((p) => p.key === picked) ?? parts[0] ?? null;
+
+  if (!active) {
     return <EmptyState icon={BookMarked} message={isVerse ? t('study.emptyTafsir') : t('study.emptySharh')} />;
   }
+  // Owner round 7 (B6): the tafsirs (and a hadith's explanations) sit side by side as tabs — «المختصر · السعدي · ابن
+  // عاشور» — and the reader picks one; never stacked under each other.
   return (
-    <View style={{ gap: space['2xl'] }}>
-      {parts.map((part) => (
-        <View key={part.key} style={styles.part}>
-          <SectionHeader title={part.title} size="heading" />
-          <StudyReading rows={part.rows} />
-        </View>
-      ))}
+    <View style={styles.part}>
+      {parts.length > 1 ? (
+        <SegmentTabs items={parts.map((p) => ({ key: p.key, label: p.tab }))} value={active.key} onChange={setPicked} />
+      ) : (
+        <SectionHeader title={active.title} size="heading" />
+      )}
+      <StudyReading key={active.key} rows={active.rows} />
     </View>
   );
 }
-

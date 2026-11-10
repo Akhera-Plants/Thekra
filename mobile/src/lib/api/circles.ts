@@ -1,9 +1,9 @@
 /**
- * رفقة (/v1/circles): fetchers and TanStack Query hooks. Everything here needs a signed-in user; the queries stay
+ * صحبة (/v1/circles): fetchers and TanStack Query hooks. Everything here needs a signed-in user; the queries stay
  * disabled without one. Nothing is persisted to AsyncStorage (see PERSISTED_QUERY_KEYS).
  */
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AxiosRequestConfig } from 'axios';
 import { apiDelete, apiGet, apiPatch, apiPost, apiPut } from '../api-client';
 import { queryKeys } from '../query-keys';
@@ -12,11 +12,17 @@ import type {
   CircleAccess,
   CircleDetail,
   CircleInvite,
+  CircleMessage,
+  CircleMessagesPage,
+  CircleRound,
   CircleSummary,
+  ReportInput,
+  RoundReplyKey,
+  SendMessageInput,
+  StartRoundInput,
   RedeemInviteResult,
   CreateCircleInput,
   JoinCircleInput,
-  SendCheerInput,
   UpdateMembershipInput,
 } from '../types/circles';
 
@@ -50,8 +56,47 @@ export async function leaveCircle(id: string): Promise<void> {
   await apiDelete(`${circlePath(id)}/membership`, noLang);
 }
 
-export async function sendCheer(id: string, input: SendCheerInput): Promise<void> {
-  await apiPost<{ id: string }>(`${circlePath(id)}/cheers`, input, noLang);
+// ── Round 7: the feed, rounds, keep, report, hide ─────────────────────────────
+
+export const FEED_PAGE_SIZE = 30;
+
+export async function fetchMessages(id: string, opts: { before?: string; saved?: boolean }): Promise<CircleMessagesPage> {
+  const params: Record<string, string | number> = { limit: FEED_PAGE_SIZE };
+  if (opts.before) params.before = opts.before;
+  if (opts.saved) params.saved = 'true';
+  return (await apiGet<CircleMessagesPage>(`${circlePath(id)}/messages`, { ...noLang, params })).data;
+}
+
+export async function sendMessage(id: string, input: SendMessageInput): Promise<CircleMessage> {
+  return (await apiPost<CircleMessage>(`${circlePath(id)}/messages`, input, noLang)).data;
+}
+
+export async function startRound(id: string, input: StartRoundInput): Promise<CircleRound> {
+  return (await apiPost<CircleRound>(`${circlePath(id)}/rounds`, input, noLang)).data;
+}
+
+export async function endRound(id: string, roundId: string, outcome: 'done' | 'not_done'): Promise<CircleRound> {
+  return (await apiPost<CircleRound>(`${circlePath(id)}/rounds/${encodeURIComponent(roundId)}/end`, { outcome }, noLang)).data;
+}
+
+export async function replyToRound(id: string, roundId: string, key: RoundReplyKey): Promise<CircleMessage> {
+  return (await apiPost<CircleMessage>(`${circlePath(id)}/rounds/${encodeURIComponent(roundId)}/replies`, { key }, noLang)).data;
+}
+
+export async function setMessageKept(id: string, messageId: string, kept: boolean): Promise<void> {
+  const path = `${circlePath(id)}/messages/${encodeURIComponent(messageId)}/save`;
+  if (kept) await apiPut(path, undefined, noLang);
+  else await apiDelete(path, noLang);
+}
+
+export async function reportInCircle(id: string, input: ReportInput): Promise<{ received: true; muted: boolean }> {
+  return (await apiPost<{ received: true; muted: boolean }>(`${circlePath(id)}/reports`, input, noLang)).data;
+}
+
+export async function setMemberMuted(id: string, memberId: string, muted: boolean): Promise<void> {
+  const path = `${circlePath(id)}/mutes/${encodeURIComponent(memberId)}`;
+  if (muted) await apiPut(path, undefined, noLang);
+  else await apiDelete(path, noLang);
 }
 
 export async function removeMember(id: string, memberId: string): Promise<void> {
@@ -120,9 +165,78 @@ export function useUpdateMembership(id: string) {
   return useMutation({ mutationFn: (input: UpdateMembershipInput) => updateMembership(id, input), onSuccess: invalidate });
 }
 
-export function useSendCheer(id: string) {
-  const invalidate = useInvalidateCircles();
-  return useMutation({ mutationFn: (input: SendCheerInput) => sendCheer(id, input), onSettled: invalidate });
+/** The feed polls while the screen is open (no sockets): new lines show within this many milliseconds. */
+export const FEED_POLL_MS = 20_000;
+
+/**
+ * «رسائل الصحبة»: pages of 30, newest first from the API (the screen shows them oldest at the top). `saved` reads
+ * «المحفوظة» only. Polls while mounted and focused.
+ */
+export function useCircleMessages(id: string, saved: boolean) {
+  const userId = useCircleUserId();
+  return useInfiniteQuery({
+    queryKey: [...queryKeys.circles.detail(userId ?? '', id), 'messages', saved ? 'saved' : 'all'],
+    queryFn: ({ pageParam }) => fetchMessages(id, { before: pageParam, saved }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (last) => last.nextBefore ?? undefined,
+    enabled: userId !== null && id.length > 0,
+    refetchInterval: saved ? false : FEED_POLL_MS,
+    refetchIntervalInBackground: false,
+  });
+}
+
+/** Everything under this circle (its detail, its feed pages) is refetched after a write. */
+function useInvalidateCircle(id: string) {
+  const qc = useQueryClient();
+  const userId = useCircleUserId();
+  return () => qc.invalidateQueries({ queryKey: queryKeys.circles.detail(userId ?? '', id) });
+}
+
+export function useSendMessage(id: string) {
+  const invalidate = useInvalidateCircle(id);
+  return useMutation({ mutationFn: (input: SendMessageInput) => sendMessage(id, input), onSettled: invalidate });
+}
+
+export function useStartRound(id: string) {
+  const invalidate = useInvalidateCircle(id);
+  return useMutation({ mutationFn: (input: StartRoundInput) => startRound(id, input), onSettled: invalidate });
+}
+
+export function useEndRound(id: string) {
+  const invalidate = useInvalidateCircle(id);
+  return useMutation({
+    mutationFn: ({ roundId, outcome }: { roundId: string; outcome: 'done' | 'not_done' }) => endRound(id, roundId, outcome),
+    onSettled: invalidate,
+  });
+}
+
+export function useReplyToRound(id: string) {
+  const invalidate = useInvalidateCircle(id);
+  return useMutation({
+    mutationFn: ({ roundId, key }: { roundId: string; key: RoundReplyKey }) => replyToRound(id, roundId, key),
+    onSettled: invalidate,
+  });
+}
+
+export function useKeepMessage(id: string) {
+  const invalidate = useInvalidateCircle(id);
+  return useMutation({
+    mutationFn: ({ messageId, kept }: { messageId: string; kept: boolean }) => setMessageKept(id, messageId, kept),
+    onSettled: invalidate,
+  });
+}
+
+export function useReport(id: string) {
+  const invalidate = useInvalidateCircle(id);
+  return useMutation({ mutationFn: (input: ReportInput) => reportInCircle(id, input), onSettled: invalidate });
+}
+
+export function useMuteMember(id: string) {
+  const invalidate = useInvalidateCircle(id);
+  return useMutation({
+    mutationFn: ({ memberId, muted }: { memberId: string; muted: boolean }) => setMemberMuted(id, memberId, muted),
+    onSettled: invalidate,
+  });
 }
 
 /** After leaving or deleting, the circle's own cache is dropped (a refetch would only answer 404). */
@@ -155,7 +269,7 @@ export function useDeleteCircle(id: string) {
   return useMutation({ mutationFn: () => deleteCircle(id), onSuccess: forget });
 }
 
-// ── Invites (round 6, C-01k: رفقة is invite-only) ──────────────────────────────
+// ── Invites (round 6, C-01k: صحبة is invite-only) ──────────────────────────────
 
 export async function fetchCircleAccess(): Promise<CircleAccess> {
   return (await apiGet<CircleAccess>('/circles/access', noLang)).data;
@@ -177,7 +291,7 @@ export async function redeemInvite(input: { code: string; displayName?: string }
   return (await apiPost<RedeemInviteResult>('/circles/invites/redeem', input, noLang)).data;
 }
 
-/** Whether رفقة is on for me (a personal invite turns it on). */
+/** Whether صحبة is on for me (a personal invite turns it on). */
 export function useCircleAccess() {
   const userId = useCircleUserId();
   return useQuery({

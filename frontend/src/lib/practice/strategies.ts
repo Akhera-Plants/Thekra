@@ -1,5 +1,4 @@
-import { navFeature, type HeartPrefs, type StrategyAction } from '@thekra/practice-core';
-import type { HabitLoopStep } from './loops';
+import { anchoredPrayerOf, minimumOf, navFeature, type HeartPrefs, type Plan, type StrategyAction } from '@thekra/practice-core';
 
 /** Where «جرّبها» leads on the web, and the device switch it turns on first (if any). */
 export interface StrategyTarget {
@@ -43,36 +42,41 @@ export function strategyTarget(action: StrategyAction): StrategyTarget {
   }
 }
 
-// The families «بناء / ترك / عودة», the unlisted «لا تفوّتها مرتين» and «طبّقها على عادة» are shared with the app:
-// practice-core `strategies.ts` (`STRATEGY_KINDS`, `listedStrategies`, `strategyAppliesToHabit`).
+// The families «بناء / ترك / عودة», the unlisted «لا تفوّتها مرتين» and «طبّقها على عادة» (which loop answer each
+// strategy writes, and the save itself) are shared with the app: practice-core `strategies.ts` (`STRATEGY_KINDS`,
+// `listedStrategies`, `strategyApplyField`, `applyStrategyToPlan`).
 
-/**
- * «طبّقها على عادة» (owner round 6, C-18 a; same map as the app's `APPLY_FIELD`): the question of the habit loop a
- * building or returning strategy fills with its example. A leaving strategy has none (it opens its own place).
- */
-export const APPLY_FIELD: Readonly<Record<string, HabitLoopStep>> = {
-  'start-tiny': 'routine',
-  'anchor-prayer': 'cue',
-  'if-then': 'ifThen',
-  'prepare-place': 'cue',
-  bundle: 'reward',
-  season: 'cue',
-  company: 'craving',
-  'make-up': 'ifThen',
-  'self-review': 'reward',
-};
-
-/** The example line as a loop answer: without its «مثال:» / «Example:» lead. */
-export function exampleAnswer(example: string): string {
-  return example.replace(/^\s*(?:مثال|Example)\s*[:：]\s*/u, '').trim();
+/** The words a suggestion needs: the habit's amount in its own unit, and a prayer's name. */
+export interface SuggestionWords {
+  amount: (n: number) => string;
+  prayer: (prayer: NonNullable<ReturnType<typeof anchoredPrayerOf>>) => string;
 }
 
 /**
- * The loop answers to review: the habit's own (its first loop, or empty), with the strategy's question filled by its
- * example when that question has no answer yet. A written answer is never replaced; nothing is saved here.
+ * «طبّقها على عادة» (round 7, C2): the answer offered for the chosen habit, built from the habit itself — its own
+ * «القدر الأدنى» for «ابدأ صغيرًا جدًا» and «إذا… فإني…», the prayer it is already tied to for «اربطها بصلاة», the
+ * app's make-up window for «اقضِ ما فاتك». Empty when the habit says nothing about it («هيّئ مكانك», «اجمعها بما تحب»,
+ * a habit not tied to a prayer): the member writes it, with the strategy's example as the hint. `t` reads
+ * `practice.strategies.items.<key>.suggest`.
  */
-export function applyStrategyDraft(key: string, current: Record<HabitLoopStep, string>, example: string): Record<HabitLoopStep, string> {
-  const field = APPLY_FIELD[key];
-  if (!field || current[field].trim()) return { ...current };
-  return { ...current, [field]: exampleAnswer(example) };
+export function applySuggestion(key: string, plan: Plan, words: SuggestionWords, t: (key: string, values?: Record<string, string>) => string): string {
+  switch (key) {
+    case 'start-tiny':
+    case 'if-then':
+      return t(`items.${key}.suggest`, { amount: words.amount(minimumOf(plan)) });
+    case 'anchor-prayer': {
+      const prayer = anchoredPrayerOf(plan);
+      return prayer ? t('items.anchor-prayer.suggest', { prayer: words.prayer(prayer) }) : '';
+    }
+    case 'make-up':
+      return t('items.make-up.suggest');
+    default:
+      return '';
+  }
+}
+
+/** A habit's name inside a question: in «» (“” in English), unless the name already carries its own quotes. */
+export function quoted(title: string, english: boolean): string {
+  if (/[«»“”"]/.test(title)) return title;
+  return english ? `“${title}”` : `«${title}»`;
 }

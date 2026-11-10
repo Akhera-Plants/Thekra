@@ -20,7 +20,7 @@ Do not ask the owner about things that follow from the current product.
 ## 1. Navigation and naming
 
 - **Web header (C-07 b):** الرئيسية · الطاعات · تخفّف من ذنب · شعب الإيمان · عاداتي · المزيد ▾. «المزيد» holds
-  الاستراتيجيات، المحفوظات، رفقة (في التطبيق). An item in «المزيد» never also appears in the header, and vice versa.
+  الاستراتيجيات، المحفوظات، صحبة (في التطبيق). An item in «المزيد» never also appears in the header, and vice versa.
   «تصفّح النصوص» is removed (C-01l). Settings are ONLY in the account-avatar menu (C-05 a): الحساب، الإعدادات، الخروج.
 - **App:** tabs stay الرئيسية · عاداتي · المزيد. «المزيد» list mirrors the web «المزيد» + الإعدادات, without «تصفّح
   النصوص» and without a people page.
@@ -48,7 +48,7 @@ Do not ask the owner about things that follow from the current product.
   answer it counts as «لم تتم». No empty entries. «صلّحها» keeps its name (owner chat) and lives in the gap context:
   the habit row when the gap condition holds, and the habit page tab «العودة بعد انقطاع».
 - **«العادات» tab (C-02b, C-01d):** the user's habits with completion percentage and milestone lines
-  («تعدّيت أصعب فترة»، «صنعت العادة»، «شارك تطورك مع الرفقة»); the archive (see below); a section «استراتيجيات صناعة
+  («تعدّيت أصعب فترة»، «صنعت العادة»، «شارك تطورك مع الصحبة»); the archive (see below); a section «استراتيجيات صناعة
   العادات والثبات» instead of «ما يساند خطتك».
 - **Archive = pause (one concept, name «الأرشيف») (owner chat + C-01d):** max **10** archived habits; beyond that the
   user must delete. Archiving more than **3 days** resets the habit's progress (streak/ladder start over when restored)
@@ -130,7 +130,7 @@ no data loss; old links redirect.
 - **Strategies (C-18 a):** reference design: بناء / ترك / عودة + «طبّقها على عادة».
 - **About (C-21):** reference design, our content. **404 (C-22):** reference component, button «العودة إلى الرئيسية».
 - **Report a mistake (C-01s):** protect the endpoint from abuse (rate limit, size limits, dedupe).
-- **رفقة (C-01k):** invite-only: the feature turns on for a user only when an existing member invites him.
+- **صحبة (C-01k):** invite-only: the feature turns on for a user only when an existing member invites him.
 - Keep: Western digits (C-23), our English/dark/footer/a11y (C-28–30, 32), prayer times (C-20).
 - **Desktop (C-03b/d/e):** reference layouts with our visuals (ورد اليوم two columns; سجلّي calendar + side; forms ≤720px).
 

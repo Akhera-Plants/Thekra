@@ -866,3 +866,19 @@ export function restartProgress(plan: Plan, today: LocalDate, now: IsoTime = now
 
 /** Days in the archive after which a restore starts the habit's progress again (round 6, «الأرشيف»). */
 export const ARCHIVE_RESET_DAYS = 3;
+
+/**
+ * «تعديل العادة» (round 7, C3/C5): a lower everyday amount and «القدر الأدنى» saved together, in the order the rules
+ * accept — the minimum first, never above the new amount (so lowering the amount under the old minimum lowers it too
+ * instead of failing), then the amount ({@link decreaseTo}). `minimum` undefined keeps the plan's own (clamped to the
+ * amount); a value equal to the current {@link minimumOf} changes nothing. An amount above the current one throws
+ * (going up is {@link increase}).
+ */
+export function setAmountAndMinimum(plan: Plan, amount: number, minimum: number | undefined, today: LocalDate, now: IsoTime = nowIso()): Plan {
+  if (amount > baseAmount(plan)) throw new RangeError('Increase through the step rule');
+  const wanted = minimum ?? plan.minimum;
+  const floor = wanted === undefined ? undefined : Math.min(wanted, amount);
+  let next = floor !== undefined && floor !== minimumOf(plan) ? setMinimum(plan, floor, now) : plan;
+  if (amount < baseAmount(next)) next = decreaseTo(next, amount, today, now);
+  return next;
+}

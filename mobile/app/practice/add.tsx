@@ -14,11 +14,11 @@
  */
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import { usePreventRemove } from 'expo-router/react-navigation';
 import { useTranslation } from 'react-i18next';
-import { CircleAlert, CircleCheck, HardDrive, Lightbulb } from 'lucide-react-native';
+import { BellOff, CircleAlert, CircleCheck, HardDrive, Lightbulb } from 'lucide-react-native';
 import {
   addSelfMessage,
   dailyLoad,
@@ -77,6 +77,7 @@ import {
   SwitchRow,
   Text,
   Wrap,
+  confirm,
   toast,
 } from '@/ui';
 
@@ -249,7 +250,7 @@ export default function AddHabitScreen() {
   async function askForReminders() {
     if (await ensurePermission(t('practice.notify.channelName'))) return;
     setPrefs((p) => ({ ...p, habitReminders: false }));
-    Alert.alert(t('practice.permissionDenied'));
+    void confirm({ title: t('practice.permissionDeniedTitle'), message: t('practice.permissionDenied'), confirmLabel: t('common.ok'), cancelLabel: null, icon: BellOff });
   }
 
   if (step === 'what' || !habit) {

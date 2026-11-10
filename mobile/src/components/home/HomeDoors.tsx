@@ -7,7 +7,7 @@
  * The cards keep our kit (type, radius, padding, hairline). The fills and the action's text, background and border are
  * the WEBSITE's exactly (frontend/src/app/site-public.css, last `.pathway-*` rules; globals.css tokens):
  * - the filled door: `--primary` fill and border, `--primary-foreground` ink, the action transparent with
- *   `--pathway-return-cta` (#eef4ef) text and `--pathway-return-cta-border` (#bdd4c7) border;
+ *   `--pathway-return-cta` (#ffffff) text and `--pathway-return-cta-border` (#bdd4c7) border;
  * - «تخفَّف»: `--sage` (= `--secondary`) fill, «شُعَب الإيمان»: `--paper` (= `--card`) fill, both with `--line` borders and
  *   the action transparent with `--green` text (`--primary`; dark: `--ring`) and a `--brand` (`--ring`) border.
  * One column on a phone (the reference's phone layout), three side by side on a wide screen.
@@ -22,7 +22,7 @@ import { radius, space, useStyles, useTheme, type Theme } from '@/theme';
 import { ForwardArrow, Text } from '@/ui';
 
 /** The website's fixed pathway colours (globals.css `--pathway-return-*`, the same in light and dark). */
-export const DOOR_CTA_ON_PRIMARY = { text: '#eef4ef', border: '#bdd4c7' } as const;
+export const DOOR_CTA_ON_PRIMARY = { text: '#ffffff', border: '#bdd4c7' } as const;
 
 type DoorKind = 'deeds' | 'sins' | 'faith';
 

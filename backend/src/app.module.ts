@@ -123,7 +123,7 @@ const REQUEST_ID_RE = /^[A-Za-z0-9._-]{1,128}$/;
     PushModule,
     // Phase 6: «مجموعات التذكير»
     ReminderSetsModule,
-    // رفقة: private companion circles
+    // صحبة: private companion circles
     CirclesModule,
     // Round 6: home «في لحظات مثل هذه» from the API
     HomeMomentsModule,

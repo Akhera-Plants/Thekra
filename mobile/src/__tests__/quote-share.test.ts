@@ -93,3 +93,34 @@ describe('grade citation line (lecturer retellings)', () => {
     expect(quoteShareText(retold, { locale: 'en', showTranslation: false, labels })).not.toContain('رواه بمعناه');
   });
 });
+
+describe('grade line beside the source (owner round 7, B4)', () => {
+  const bukhari = quote({
+    hadith: { narrator: null, narratorAr: null, grade: 'SAHIH', reference: 'صحيح البخاري، رقم 2595' },
+    citation: { volume: null, page: null, gradeAuthority: 'رواه البخاري', gradeReference: 'البخاري 2595' },
+  });
+  it('says the two Sahihs in their short form', () => {
+    expect(gradeCitationLine(bukhari, 'ar')).toBe('رواه البخاري، رقم 2595');
+  });
+  it('drops the line when the source beside it names the same book and number', () => {
+    expect(gradeCitationLine(bukhari, 'ar', { besideSource: bukhari.hadith!.reference })).toBeNull();
+  });
+  it('keeps it when the source is another book', () => {
+    expect(gradeCitationLine(bukhari, 'ar', { besideSource: 'رياض الصالحين، رقم 1200' })).toBe('رواه البخاري، رقم 2595');
+  });
+  it('keeps only the grader when the book is already shown', () => {
+    const arnaut = quote({
+      hadith: { narrator: null, narratorAr: null, grade: 'SAHIH', reference: 'سنن أبي داود، رقم 5186' },
+      citation: { volume: null, page: null, gradeAuthority: 'شعيب الأرنؤوط', gradeReference: 'سنن ابي داود، رقم 5186' },
+    });
+    expect(gradeCitationLine(arnaut, 'ar', { besideSource: arnaut.hadith!.reference })).toBe('حكمه شعيب الأرنؤوط');
+  });
+  it('shares a verse without «القرآن الكريم»', () => {
+    const text = quoteShareText(
+      quote({ type: 'QURAN_VERSE', textAr: 'آية', hadith: null, quran: { surahNumber: 31, ayahNumber: 13, surahName: 'Luqman', surahNameAr: 'لقمان' } as QuoteDto['quran'], source: { id: 's', name: 'The Quran', nameAr: 'القرآن الكريم' } as QuoteDto['source'] }),
+      { locale: 'ar', showTranslation: false, labels },
+    );
+    expect(text).toContain('لقمان (31:13)');
+    expect(text).not.toContain('القرآن الكريم');
+  });
+});

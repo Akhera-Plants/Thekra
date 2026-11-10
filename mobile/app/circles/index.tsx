@@ -1,7 +1,7 @@
 /**
- * «رفقة»: my private circles. Round 6 (C-01k): رفقة is invite-only. Signed out it invites sign-in; while رفقة is not on
+ * «صحبة»: my private circles. Round 6 (C-01k): صحبة is invite-only. Signed out it invites sign-in; while صحبة is not on
  * for me (`GET /circles/access`) it shows «أدخل رمز الدعوة» only (RedeemInvite); once on: my circles (or the empty
- * state with «أنشئ رفقة» / «انضم برمز»), and «دعواتي» to invite someone. Each row says how many members and whether my
+ * state with «أنشئ صحبة» / «انضم برمز»), and «دعواتي» to invite someone. Each row says how many members and whether my
  * presence shows there. No counts of days, no ranking.
  */
 
@@ -70,7 +70,7 @@ function InvitesRow() {
   );
 }
 
-/** رفقة on: the circles; off: the invite code only. */
+/** صحبة on: the circles; off: the invite code only. */
 function Access() {
   const { t } = useTranslation();
   const access = useCircleAccess();

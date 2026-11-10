@@ -22,11 +22,26 @@ export interface FavoritesResponse {
   meta: PageMeta;
 }
 
+/** One saved text as `GET /v1/favorites` returns it: the favorite row with its quote inside (backend FavoritesService). */
+export interface FavoriteRowDto {
+  id: string;
+  createdAt: string;
+  quote: QuoteDto;
+}
+
+/**
+ * The saved texts, newest first. The API sends favorite rows (`{ id, createdAt, quote }`), not bare quotes: the list
+ * unwraps them. Reading a row as a quote is what broke «المحفوظات» with «خطأ غير متوقع» as soon as anything was saved
+ * (owner round 7, B10).
+ */
 export async function getFavorites(
   params?: FavoritesQuery,
 ): Promise<FavoritesResponse> {
-  const { data, meta } = await apiGet<QuoteDto[]>('/favorites', { params });
-  return { items: data, meta: meta! };
+  const { data, meta } = await apiGet<Array<FavoriteRowDto | QuoteDto>>('/favorites', { params });
+  const items = (data ?? [])
+    .map((row) => ('quote' in row && row.quote ? row.quote : (row as QuoteDto)))
+    .filter((quote): quote is QuoteDto => Boolean(quote?.type));
+  return { items, meta: meta! };
 }
 
 /** Returns the full set of favorited quote IDs for the current user. */

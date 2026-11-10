@@ -1,5 +1,5 @@
 /**
- * «بستاني»: growth stages from days tended (any amount counts), never lower for more days or for missed days, rest
+ * «بستان العادات»: growth stages from days tended (any amount counts), never lower for more days or for missed days, rest
  * during «يومي ثقيل», no plant for the sin program, and the tended line in both languages.
  */
 

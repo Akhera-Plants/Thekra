@@ -26,7 +26,7 @@ built, where it shows, and the alternative. Workers append their own section.
 | «لم نجد هذه الصفحة» | 404 body heading | — |
 | «احتفظ بما تحب أن تعود إليه.» | saved page lead (C-14) | — |
 
-## App (app B: «المزيد», home, settings, notifications, strategies, تخفّف, لحظة مجاهدة, topic pages, reader, share, saved, رفقة, about, 404)
+## App (app B: «المزيد», home, settings, notifications, strategies, تخفّف, لحظة مجاهدة, topic pages, reader, share, saved, صحبة, about, 404)
 
 The app uses the same words as the web lines above wherever both have the label («عرض التفسير / عرض الشرح»، «مقروء / غير
 مقروء»، «وجه التذكير»، «للبناء · للترك · للعودة»، «طبّقها على عادة»، «نصوص تذكّرها»، «حلقة المعصية»، «ابدأ عشر دقائق»، «القارئ»،
@@ -44,8 +44,8 @@ The app uses the same words as the web lines above wherever both have the label 
 | Strategy groups: بناء = ابدأ صغيرًا، اربطها بصلاة، «إذا… فإني…»، هيّئ مكانك، اجمعها بما تحب، ابدأ في موسم، الصحبة الصالحة · ترك = صعّب طريق المعصية، اعرف متى تضعف، اركب الموجة، أتبع السيئة الحسنة · عودة = اقضِ ما فاتك، حاسب نفسك (لا تفوّتها مرتين) | strategies filter (C-18 a) | the grouping is ours |
 | «طبّقها على عادة» fills one loop question with the example (ابدأ صغيرًا → الفعل؛ اربطها بصلاة، هيّئ مكانك، ابدأ في موسم → الإشارة؛ «إذا… فإني…»، اقضِ ما فاتك → «إن… فإني…»؛ اجمعها بما تحب، حاسب نفسك → المكافأة؛ الصحبة الصالحة → النية) | strategies → the habit's loop, reviewed before saving | — |
 | Notification tabs «العادات · الأعمال الدورية · النية والمحاسبة · الاستراتيجيات» | settings › التنبيهات (the row scrolls at 390px; the 4th tab is half visible until scrolled) | «الاستراتيجيات» → «أفكار» to fit one row |
-| «أدخل رمز الدعوة» · «فعّل رفقة» · «دعواتي» · «أنشئ دعوة» · «ألغِ الدعوة» · «تعمل حتى …» | رفقة (invite-only, C-01k) | «اكتب رمز الدعوة» |
-| «رفقة تُفتح بدعوة من عضو فيها. اطلب رمز دعوة ممن تعرف.» | رفقة, 403 CIRCLES_NOT_ENABLED | — |
+| «أدخل رمز الدعوة» · «فعّل صحبة» · «دعواتي» · «أنشئ دعوة» · «ألغِ الدعوة» · «تعمل حتى …» | صحبة (invite-only, C-01k) | «اكتب رمز الدعوة» |
+| «صحبة تُفتح بدعوة من عضو فيها. اطلب رمز دعوة ممن تعرف.» | صحبة, 403 CIRCLES_NOT_ENABLED | — |
 | «أرسلت بلاغات كثيرة في وقت قصير. شكرًا لحرصك، وحاول بعد ساعة.» / «استقبلنا بلاغات كثيرة اليوم فتوقّف الإرسال مؤقتًا…» / «الملاحظة أطول مما نستقبل…» | «أبلغ عن خطأ» (429 REPORT_RATE_LIMITED / 429 REPORTS_PAUSED / 413) | — |
 | «العودة إلى الرئيسية» | 404 button (C-22) | — |
 | «إلى أبواب الخير» | saved, empty state action (was «استكشف» → the removed browse page) | — |
@@ -64,7 +64,7 @@ Keys live in `mobile/src/lib/i18n/{ar,en}.json` under `habitsHub` unless noted.
 | «هل فعلتها؟» + «فعلتها / لم أفعل» + «إن لم تُجب قبل انقضاء الأيام الثلاثة تُحسب «لم تتم».» | «اليوم» card, day sheet | shorter note, or none |
 | «بداية اليوم · خلال اليوم · ختام اليوم» | «اليوم › عادات اليوم» bands (by the habit's first reminder: before 10:00 / before 18:00 / after) | the band cut-offs (10:00, 18:00) are ours |
 | «القدر الأدنى» (also `practice.heart.minimum`, was «أقل ما يمكن»; `practice.heart.minimumMet` «سجّلت القدر الأدنى») | «اليوم» row button, habit page row, add step 2 | — |
-| «تعدّيت أصعب فترة» · «صنعت العادة» · «شارك تطورك مع الرفقة» | «العادات» rows, habit page | the owner's words, kept as written |
+| «تعدّيت أصعب فترة» · «صنعت العادة» · «شارك تطورك مع الصحبة» | «العادات» rows, habit page | the owner's words, kept as written |
 | «3 عادات كحد أقصى · لديك 2» | «العادات» header line | — |
 | «تخفّف · مغطّى» + «اضغط لتفتحه ببصمتك أو رمز جهازك» · «Lighten · covered» | «العادات», a covered program row | «برنامج خاص» |
 | «اكشفها» · «Show» | سجلّي (day sheet, حصيلة): reveal «تخفّف» after the device lock | «افتحها» |
@@ -103,7 +103,7 @@ label, the web uses the same words; only the web's own or different lines are li
 | «في الأرشيف منذ {date} · إن أعدتها يبدأ تقدّمها من جديد» / «يبقى تقدّمها إن أعدتها حتى {date}» | «العادات › الأرشيف» rows | the app's wording (same meaning) |
 | «عندك 3 عادات، وهو الحد» + «أرشِفها / احذفها» per habit + «رجوع» | «أضف عادة» past the limit (C-01d) | — |
 | «مغطّى لخصوصيتك. اضغط واكتب رمز الخصوصية لتراه.» / «مقفل. اضغط واكتب رمز الخصوصية لتفتحه.» | a covered «تخفَّف» row («العادات», «سجلّي») | the app's «تخفّف · مغطّى» |
-| «شارك تطورك مع الرفقة» (plain line, no link: «رفقة» is in the app) | «العادات» milestone lines, for a member in a circle (GET /circles/access `inCircle`) | a link to the app |
+| «شارك تطورك مع الصحبة» (plain line, no link: «صحبة» is in the app) | «العادات» milestone lines, for a member in a circle (GET /circles/access `inCircle`) | a link to the app |
 | «القوائم: الأقارب، الوالدان، الجيران، الأصدقاء، المرضى (n)» (folded) | «الأعمال الدورية › صلة الرحم والأحباب» | the app's «افتح القوائم» |
 | «سجّل العمل» / «سُجّل اليوم» + «تعديل» link + trash icon (as in the app) | «الأعمال الدورية» rows (C-24) | — |
 | «وقفة مع نفسك» (heading) + «حاسب نفسك اليوم ليخفّ حسابك غدًا. وقفة قصيرة صادقة، ثم خطوة واضحة.» · week: «ثقيلٌ الآن، خفيفٌ بعد.» / «ما تراجعه اليوم بصدق لا يثقل عليك غدًا.» | «محاسبتي» | — |

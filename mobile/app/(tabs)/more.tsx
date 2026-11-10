@@ -1,6 +1,6 @@
 /**
  * «المزيد» (round 6 §1; src/lib/nav/more-menu.ts `MORE_MENU`, from practice-core `APP_MORE`): «لك» (استراتيجيات
- * العادات، المحفوظات، رفقة، الحديقة), then «الإعدادات» (الحساب، الخصوصية والتشفير، التنبيهات، أوقات الصلاة، اللغة
+ * العادات، المحفوظات، صحبة، بستان العادات), then «الإعدادات» (الحساب، الخصوصية والتشفير، التنبيهات، أوقات الصلاة، اللغة
  * والمظهر، عن ذكرى). No «تصفّح النصوص» and no people page. On a phone the two groups stack under the flower divider; on
  * a wide screen they sit side by side (the reference's two columns, C-03a). A members-only row asks a guest to sign in
  * first. Rows show their current value where there is one (the account e-mail, the city in the UI language, the
@@ -19,7 +19,7 @@ import { usePracticeStore } from '@/lib/practice/practice-store';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { AppHeader } from '@/components/nav/AppHeader';
 import { space, useStyles, type Theme } from '@/theme';
-import { ListRow, PageHeader, Screen, SectionDivider, SectionHeader } from '@/ui';
+import { ListRow, PageHeader, ProfileMark, Screen, SectionDivider, SectionHeader } from '@/ui';
 
 const ICONS: Record<MoreKey, LucideIcon> = {
   strategies: Lightbulb,
@@ -71,6 +71,7 @@ export default function MoreScreen() {
           <ListRow
             key={entry.key}
             icon={ICONS[entry.key]}
+            leading={entry.key === 'account' && email ? <ProfileMark size={28} /> : undefined}
             title={t(entry.labelKey)}
             value={values[entry.key]}
             chevron

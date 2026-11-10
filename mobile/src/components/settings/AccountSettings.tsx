@@ -6,11 +6,11 @@
  */
 
 import React, { useState } from 'react';
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
-import { CircleCheck, LogOut, RefreshCw, Trash2, UserRound } from 'lucide-react-native';
+import { CircleCheck, LogOut, RefreshCw, Trash2 } from 'lucide-react-native';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { deleteAccount } from '@/lib/api/practice';
 import { syncPractice, useSyncStatus } from '@/lib/practice/sync-runner';
@@ -18,7 +18,7 @@ import { nowTime } from '@/lib/practice/format';
 import { queryKeys } from '@/lib/query-keys';
 import { ApiError } from '@/lib/types/api';
 import { radius, space, useStyles, useTheme, type Theme } from '@/theme';
-import { Button, Field, ListRow, Notice, Text, SectionDivider, ButtonPair } from '@/ui';
+import { Button, Field, ListRow, Notice, Text, SectionDivider, ButtonPair, ProfileMark, confirm } from '@/ui';
 import { SettingsGroup } from './SettingsSections';
 
 const makeStyles = (t: Theme) => ({
@@ -69,17 +69,9 @@ export function AccountSettings() {
     }
   }
 
-  function handleLogout() {
-    Alert.alert(t('settings.signOut'), '', [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('settings.signOut'),
-        style: 'destructive',
-        onPress: async () => {
-          await logout();
-        },
-      },
-    ]);
+  async function handleLogout() {
+    const ok = await confirm({ title: t('settings.signOutTitle'), confirmLabel: t('settings.signOut'), tone: 'destructive', icon: LogOut });
+    if (ok) await logout();
   }
 
   function openDelete() {
@@ -94,7 +86,7 @@ export function AccountSettings() {
 
       {user ? (
         <SettingsGroup title={t('settings.signOutGroup')}>
-          <ListRow icon={LogOut} title={t('settings.signOut')} onPress={handleLogout} />
+          <ListRow icon={LogOut} title={t('settings.signOut')} onPress={() => void handleLogout()} />
         </SettingsGroup>
       ) : null}
 
@@ -143,7 +135,7 @@ function AccountSection({ accountDeleted }: { accountDeleted: boolean }) {
       {accountDeleted && !user ? <Notice icon={CircleCheck}>{t('settings.deleted')}</Notice> : null}
       {user ? (
         <>
-          <ListRow icon={UserRound} title={user.email} ltrTitle hint={t('settings.signedIn')} />
+          <ListRow leading={<ProfileMark size={28} />} title={user.email} ltrTitle hint={t('settings.signedIn')} />
           <ListRow
             icon={RefreshCw}
             title={t('settings.syncNow')}

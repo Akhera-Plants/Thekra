@@ -56,7 +56,7 @@ Sizes are local totals (heap + indexes + TOAST) as of 2026-10-22.
 | SyncLog | 494 | 296 kB | **drop rows** | Local job history. |
 | QuoteReport | — | — | **drop rows** | Round 6: per-report rows for the report limits (no address stored). |
 | HomeMoment | — | — | keep | Round 6: the home «في لحظات مثل هذه» list (seed: `home-moments:import`). While empty the API serves `prisma/taxonomy/home-moments.yaml`. |
-| CircleInvite | — | — | **drop rows** (via `User`) | Round 6: رفقة invites cascade with the inviter, so they go with the `User` rows. |
+| CircleInvite | — | — | **drop rows** (via `User`) | Round 6: صحبة invites cascade with the inviter, so they go with the `User` rows. |
 
 Nothing else is trimmed. The API never reads `rawPayload`, but dropping it would save only
 ~33 MB and lose provenance. The custom-format dump is **50 MB** compressed, and restores to

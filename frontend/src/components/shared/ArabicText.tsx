@@ -48,9 +48,11 @@ export function ArabicText({
     <Tag
       dir="rtl"
       lang="ar"
+      // Size before face: tailwind-merge drops a `leading-*` that comes before a `text-*` size, which left the verses at the
+      // size's 1.33 line height — too short for Amiri Quran's marks, so a clamped card cut the text (owner round 7, B7).
       className={cn(
-        faceClasses[resolvedFace],
         sizeClasses[size],
+        faceClasses[resolvedFace],
         className,
       )}
     >

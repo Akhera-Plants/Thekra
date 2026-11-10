@@ -25,7 +25,6 @@ import {
   reflectionOf,
   relapseSuggestionFor,
   requiredOnDay,
-  setMinimum,
   setReflection,
   status as planStatus,
   type Plan,
@@ -48,7 +47,7 @@ import { cn } from '@/lib/utils';
 import { useHeart } from '../../hooks/useHeart';
 import { useWirdContext, type WirdContext } from '../../hooks/useWirdContext';
 import { CommitmentChart } from '../CommitmentChart';
-import { LearnFromSlip } from '../day/DayDetails';
+import { HabitDayDialog, LearnFromSlip } from '../day/DayDetails';
 import { FetchedEvidence } from '../EvidenceQuotes';
 import { ArchiveDialog, DeleteDialog, restoreHabit, HabitLimitSheet } from '../habits/HabitActions';
 import { HabitLoops } from '../LoopBuilder';
@@ -64,9 +63,10 @@ type HabitTab = (typeof TABS)[number];
 
 /**
  * «صفحة العادة» (round 6 §3, C-02e a / C-27 a / C-03c; reference layout with our visuals): the «عاداتي» tabs, a wide
- * header (the amount, the days and times, «تعديل» and «⋯»: correct the log, read about the deed, archive, delete), then
- * the reference tabs «المتابعة · حلقة العادة · التذكيرات · العودة بعد انقطاع». Logging and the day note ARE here (the
- * owner overrides F-31), with the two optional questions; «القدر الأدنى»; the last 30 days and the completion. On a wide
+ * header (the amount, the days and times, «القدر الأدنى», «تعديل العادة» — one dialog for all of them, round 7 C3 — and
+ * «⋯»: correct the log, read about the deed, archive, delete), then the reference tabs «المتابعة · حلقة العادة ·
+ * التذكيرات · العودة بعد انقطاع». Logging and the day note ARE here (the owner overrides F-31), with the two optional
+ * questions; the last 30 days (a day opens what was recorded on it, C4) and the completion. On a wide
  * screen the texts that help sit in a second column («آيات وأحاديث تعينك على هذه الطاعة»).
  */
 export function HabitPage({ id }: { id: string }) {
@@ -105,6 +105,7 @@ function HabitView({ plan, habit, context }: { plan: Plan; habit: PracticeHabit 
   const [archiving, setArchiving] = useState(false);
   const [removing, setRemoving] = useState(false);
   const [limitOpen, setLimitOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
   const archived = isArchived(plan);
   const days = planWeekdays(plan, habit?.defaultRule);
   const daysLine =
@@ -146,8 +147,8 @@ function HabitView({ plan, habit, context }: { plan: Plan; habit: PracticeHabit 
               {t('restore')}
             </Button>
           ) : (
-            <Button variant="outline" tone="neutral" size="sm" onClick={() => setTab('reminders')}>
-              {t('edit')}
+            <Button variant="outline" tone="primary" size="sm" icon={<PencilLine aria-hidden />} onClick={() => setEditing(true)}>
+              {t('editHabit')}
             </Button>
           )}
           <DropdownMenu modal={false}>
@@ -241,6 +242,18 @@ function HabitView({ plan, habit, context }: { plan: Plan; habit: PracticeHabit 
             <DialogDescription className="leading-7">{words.title}</DialogDescription>
           </DialogHeader>
           {fixing ? <LogEditor plan={plan} today={today} unit={words.unit} onDone={() => setFixing(false)} /> : null}
+        </DialogContent>
+      </Dialog>
+      {/* «تعديل العادة» (round 7, C3): times, days, amount and «القدر الأدنى» in one dialog; the header shows them. */}
+      <Dialog open={editing} onOpenChange={setEditing}>
+        <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-xl">
+          <DialogHeader className="pe-8">
+            <DialogTitle className="leading-8">{t('editHabit')}</DialogTitle>
+            <DialogDescription className="leading-7">{words.title}</DialogDescription>
+          </DialogHeader>
+          {editing ? (
+            <HabitSettingsForm plan={plan} habit={habit} today={today} amountLabel={words.amount} withMinimum onDone={() => setEditing(false)} />
+          ) : null}
         </DialogContent>
       </Dialog>
       <ArchiveDialog plan={archiving ? plan : null} store={snapshot.store} today={today} habits={habits} onOpenChange={setArchiving} onDone={() => router.replace('/practice/habits')} />
@@ -353,8 +366,6 @@ function FollowTab({ plan, context }: { plan: Plan; context: WirdContext }) {
         <ReflectionForm key={date} plan={plan} date={date} context={context} />
       </section>
 
-      <MinimumRow plan={plan} amountLabel={words.amount} />
-
       <SectionDivider />
 
       <section aria-labelledby="habit-progress" className="flex flex-col gap-3">
@@ -460,44 +471,6 @@ function Field({ id, label, value, onChange, rows }: { id: string; label: string
   );
 }
 
-/** «القدر الأدنى» (C-01r): the amount a hard day asks, chosen by the member, never above the everyday amount. */
-function MinimumRow({ plan, amountLabel }: { plan: Plan; amountLabel: (n: number) => string }) {
-  const t = useTranslations('practice.habitPage');
-  const id = useId();
-  const options = useMemo(() => Array.from({ length: Math.min(plan.amount, 60) }, (_, i) => i + 1), [plan.amount]);
-  return (
-    <section aria-labelledby={`${id}-title`} className="flex flex-col gap-2">
-      <h2 id={`${id}-title`} className="text-lg font-medium">
-        {t('minimumTitle')}
-      </h2>
-      <p className="text-sm leading-7 text-muted-foreground">{t('minimumLead')}</p>
-      <div className="flex flex-wrap items-center gap-3">
-        <label htmlFor={id} className="sr-only">
-          {t('minimumTitle')}
-        </label>
-        <Select
-          value={String(minimumOf(plan))}
-          onValueChange={(v) => {
-            changePlan(plan.id, (p) => setMinimum(p, Number(v)));
-            toast.success(t('minimumSaved', { amount: amountLabel(Number(v)) }));
-          }}
-        >
-          <SelectTrigger id={id} className="h-11 w-52">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {options.map((n) => (
-              <SelectItem key={n} value={String(n)}>
-                {amountLabel(n)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-    </section>
-  );
-}
-
 /** «العودة بعد انقطاع»: «صلّحها» when the gap condition holds, a smaller way back after a long gap, the member's own plan, and the path of the slip. */
 function ReturnTab({ plan, context, title }: { plan: Plan; context: WirdContext; title: string }) {
   const t = useTranslations('practice.habitPage');
@@ -600,6 +573,7 @@ function LastDays({ plan, today, context }: { plan: Plan; today: string; context
     return out;
   }, [plan, today, context.planDays, context.snapshot.store]);
   const doneDays = days.filter((d) => d.level === 'full' || d.level === 'some').length;
+  const [openDay, setOpenDay] = useState<string | null>(null);
   return (
     <div className="flex flex-col gap-3 pt-2">
       <div className="flex flex-col gap-0.5">
@@ -608,23 +582,43 @@ function LastDays({ plan, today, context }: { plan: Plan; today: string; context
           {t('doneDays', { count: doneDays, n: formatDigits(doneDays), total: formatDigits(MONTH_DAYS) })}
         </p>
       </div>
+      {/* Round 7 (C4): a day opens what was logged and written on it; a day with words carries a small dot. */}
       <ol className="grid grid-cols-10 gap-1.5 sm:max-w-md sm:grid-cols-15" aria-label={t('lastDays', { n: formatDigits(MONTH_DAYS) })}>
-        {days.map((day) => (
-          <li
-            key={day.date}
-            title={formatGregorian(day.date, locale, true)}
-            aria-label={`${formatGregorian(day.date, locale, true)}: ${t(`level.${day.level}`)}`}
-            className={cn(
-              'aspect-square rounded-md border',
-              day.level === 'full' && 'border-primary bg-primary',
-              day.level === 'some' && 'border-primary bg-[linear-gradient(to_top,var(--primary)_50%,transparent_50%)]',
-              day.level === 'none' && 'border-border bg-transparent',
-              day.level === 'off' && 'border-transparent bg-muted',
-              day.level === 'before' && 'border-dashed border-border bg-transparent opacity-50',
-              day.date === today && 'ring-2 ring-ring ring-offset-1 ring-offset-background',
-            )}
-          />
-        ))}
+        {days.map((day) => {
+          const written = reflectionOf(context.snapshot.store, plan.id, day.date) !== null;
+          const label = `${formatGregorian(day.date, locale, true)}: ${t(`level.${day.level}`)}${written ? ` · ${t('written')}` : ''}`;
+          return (
+            <li key={day.date} className="aspect-square">
+              <button
+                type="button"
+                title={formatGregorian(day.date, locale, true)}
+                aria-label={label}
+                disabled={day.level === 'before'}
+                onClick={() => setOpenDay(day.date)}
+                className={cn(
+                  'relative size-full rounded-md border transition-transform duration-150 enabled:hover:scale-110 motion-reduce:transition-none',
+                  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
+                  day.level === 'full' && 'border-primary bg-primary',
+                  day.level === 'some' && 'border-primary bg-[linear-gradient(to_top,var(--primary)_50%,transparent_50%)]',
+                  day.level === 'none' && 'border-border bg-transparent',
+                  day.level === 'off' && 'border-transparent bg-muted',
+                  day.level === 'before' && 'cursor-default border-dashed border-border bg-transparent opacity-50',
+                  day.date === today && 'ring-2 ring-ring ring-offset-1 ring-offset-background',
+                )}
+              >
+                {written ? (
+                  <span
+                    aria-hidden
+                    className={cn(
+                      'absolute inset-x-0 bottom-0.5 mx-auto block size-1.5 rounded-full',
+                      day.level === 'full' ? 'bg-primary-foreground' : 'bg-primary',
+                    )}
+                  />
+                ) : null}
+              </button>
+            </li>
+          );
+        })}
       </ol>
       <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
         {(['full', 'some', 'none', 'off'] as const).map((level) => (
@@ -642,10 +636,15 @@ function LastDays({ plan, today, context }: { plan: Plan; today: string; context
             {t(`level.${level}`)}
           </li>
         ))}
+        <li className="flex items-center gap-1.5">
+          <span aria-hidden className="size-1.5 rounded-full bg-primary" />
+          {t('written')}
+        </li>
       </ul>
       <Link href="/practice/record" className="text-link self-start text-sm">
         {t('openRecord')}
       </Link>
+      <HabitDayDialog context={context} plan={plan} date={openDay} onClose={() => setOpenDay(null)} />
     </div>
   );
 }

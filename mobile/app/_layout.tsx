@@ -30,7 +30,7 @@ import { useAuthStore } from '@/lib/stores/auth-store';
 import { dark, FontFiles, light, loadThemePreference, radius, ThemeProvider, useTheme } from '@/theme';
 import { usePracticeLifecycle } from '@/lib/practice/use-practice-lifecycle';
 import { useWidgetSync } from '@/widget/use-widget-sync';
-import { ToastHost, useStackScreenOptions } from '@/ui';
+import { ConfirmHost, ToastHost, useStackScreenOptions } from '@/ui';
 
 // A deep link or a reminder tap that cold-starts the app lands on its screen with the tabs under it, so Back works.
 export const unstable_settings = { anchor: '(tabs)' };
@@ -158,6 +158,7 @@ function ThemedShell() {
       <PracticeLifecycle />
       {/* The one save confirmation (A-11), above every screen. */}
       <ToastHost />
+      <ConfirmHost />
       <StatusBar style={theme.dark ? 'light' : 'dark'} />
     </NavigationThemeProvider>
   );

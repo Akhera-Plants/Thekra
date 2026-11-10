@@ -30,9 +30,19 @@ export interface HomeEditRow {
   canDown: boolean;
 }
 
-/** The rows of the edit mode, in the draft's order. */
+/**
+ * Sections the website shows and the app does not (owner round 7, B9: «تذكير تعرف مصدره» is for the website only). The
+ * key stays in the synced order, so the website keeps its place and choice; the app neither renders nor lists it.
+ */
+export const WEB_ONLY_HOME_SECTIONS: readonly HomeSectionKey[] = ['sources'];
+
+export function isAppHomeSection(key: HomeSectionKey): boolean {
+  return !WEB_ONLY_HOME_SECTIONS.includes(key);
+}
+
+/** The rows of the edit mode, in the draft's order (the app's sections only). */
 export function homeEditRows(draft: readonly HomeSectionPref[] | null | undefined, lang: 'ar' | 'en'): HomeEditRow[] {
-  const list = resolveHomeSections(draft);
+  const list = resolveHomeSections(draft).filter((s) => isAppHomeSection(s.key));
   return list.map((s, i) => {
     const info = HOME_SECTIONS.find((h) => h.key === s.key);
     return { key: s.key, title: info ? info[lang] : s.key, visible: s.visible, canUp: i > 0, canDown: i < list.length - 1 };
@@ -42,9 +52,12 @@ export function homeEditRows(draft: readonly HomeSectionPref[] | null | undefine
 /** «أعلى» (-1) / «أسفل» (+1): one step, clamped at the ends. */
 export function moveSectionBy(draft: readonly HomeSectionPref[] | null | undefined, key: HomeSectionKey, delta: -1 | 1): HomeSectionPref[] {
   const list = resolveHomeSections(draft);
-  const at = list.findIndex((s) => s.key === key);
-  if (at < 0 || !list[at + delta]) return list;
-  return moveHomeSection(list, key, at + delta);
+  // One step among the sections the app shows: a web-only section in between is stepped over.
+  const shown = list.filter((s) => isAppHomeSection(s.key));
+  const at = shown.findIndex((s) => s.key === key);
+  const neighbour = at < 0 ? undefined : shown[at + delta];
+  if (!neighbour) return list;
+  return moveHomeSection(list, key, list.findIndex((s) => s.key === neighbour.key));
 }
 
 /** The switch of one section. */

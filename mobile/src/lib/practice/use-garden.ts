@@ -1,5 +1,5 @@
 /**
- * «بستاني»: the plants of the device store (practice-core plans and relatives, never the sin programs), each named by
+ * «بستان العادات»: the plants of the device store (practice-core plans and relatives, never the sin programs), each named by
  * its catalog habit title, from the pure growth rules in garden.ts.
  */
 

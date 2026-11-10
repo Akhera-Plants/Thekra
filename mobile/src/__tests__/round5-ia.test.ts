@@ -145,7 +145,9 @@ describe('«خصّص الرئيسية»', () => {
     // Round 6 (C-11): the doors right after «ورد اليوم»; «نص اليوم» is not offered (C-01q).
     expect(rows[1]?.key).toBe('doors');
     expect(rows.map((r) => r.key as string)).not.toContain('daily-text');
-    expect(rows.at(-1)).toMatchObject({ key: 'sources', canDown: false });
+    // «المصادر» is web only (owner round 7, B9): the app lists and renders the rest.
+    expect(rows.map((r) => r.key as string)).not.toContain('sources');
+    expect(rows.at(-1)).toMatchObject({ key: 'featured', canDown: false });
     let draft = moveSectionBy(null, 'doors', 1);
     const shown = draft.map((x) => x.key);
     expect(shown.indexOf('doors')).toBe(shown.indexOf('week-branch') + 1);

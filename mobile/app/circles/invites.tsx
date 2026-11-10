@@ -1,5 +1,5 @@
 /**
- * «دعواتي» (round 6, C-01k): رفقة is invite-only, and a member whose رفقة is on can invite a few people. The line of
+ * «دعواتي» (round 6, C-01k): صحبة is invite-only, and a member whose صحبة is on can invite a few people. The line of
  * what is left (`remaining`, both limits applied, and how long an invite works), «أنشئ دعوة» (a one-use code that
  * expires), then my invites: an active one shows its code with «شارك» and, in «⋯», «ألغِ الدعوة» (confirmed); a used,
  * cancelled or expired one shows its state only. The inviter never learns who used an invite.

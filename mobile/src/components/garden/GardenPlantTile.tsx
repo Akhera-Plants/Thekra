@@ -1,5 +1,5 @@
 /**
- * One plant of «بستاني»: its drawing, the habit's name and how many days it was tended (or that it is resting with
+ * One plant of «بستان العادات»: its drawing, the habit's name and how many days it was tended (or that it is resting with
  * the user). A tap opens the plan (or صلة الرحم). No border or card: the plants stand on their own earth.
  */
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { BookOpen, CheckCheck, MessageSquareQuote } from 'lucide-react';
+import { BookOpen, Check, CheckCheck, MessageSquareQuote } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
@@ -183,6 +183,8 @@ export function QuoteCard({
     gradeAuthority: quote.citation?.gradeAuthority,
     gradeReference: quote.citation?.gradeReference,
     grade: quote.hadith?.grade,
+    // The source badge already names the book and number: the line never repeats it (owner round 7, B4).
+    besideSource: hadithRefRaw,
   });
   // Verses, hadith and athar (stored as hadith) are the shareable public texts.
   const shareable = isQuran || isHadith;
@@ -195,71 +197,62 @@ export function QuoteCard({
       >
         <header className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 flex-1 flex-col items-start gap-2">
-            <span
-              className={cn(
-                'inline-flex min-h-8 items-center gap-1.5 rounded-full px-2.5 py-1',
-                'text-[13px] font-medium md:text-[14px]',
-                isAthar
-                  ? 'bg-muted text-muted-foreground'
-                  : 'bg-primary/10 text-primary-text',
-                arabic && 'font-arabic-ui',
-              )}
-            >
-              <Icon className="size-3.5 shrink-0" aria-hidden />
-              {typeLabel}
-            </span>
-
-            {isQuran && quote.quran ? (
-              <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                {(surahName || (quote.quran.surahNumber && quote.quran.ayahNumber)) && (
-                  <span
-                    className={cn(
-                      'inline-flex max-w-full flex-wrap items-center gap-x-2 rounded-full',
-                      'border border-border/70 bg-background/80 px-2.5 py-1 text-[13px] text-foreground md:text-[14px]',
-                      arabic && 'font-arabic-ui',
-                    )}
-                  >
-                    {surahName ? (
-                      <span
-                        dir={arabic ? 'rtl' : undefined}
-                        lang={arabic ? 'ar' : 'en'}
-                        className="min-w-0 truncate"
-                      >
-                        {surahName}
-                      </span>
-                    ) : null}
-                    {quote.quran.surahNumber && quote.quran.ayahNumber ? (
-                      <>
-                        <span
-                          aria-hidden
-                          className="h-3 w-px shrink-0 bg-border"
-                        />
-                        {/* Deliberate dir="ltr": «2:255» must read surah:ayah in both locales. */}
-                        <bdi
-                          dir="ltr"
-                          className="tabular-nums text-muted-foreground"
-                        >
-                          <FormattedNumber value={quote.quran.surahNumber} />
-                          :
-                          <FormattedNumber value={quote.quran.ayahNumber} />
-                        </bdi>
-                      </>
-                    ) : null}
-                  </span>
+            {/* Row 1 (owner round 7, B3): the type and, beside it, the grade — the word only. */}
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <span
+                className={cn(
+                  'inline-flex min-h-8 items-center gap-1.5 rounded-full px-2.5 py-1',
+                  'text-[13px] font-medium md:text-[14px]',
+                  isAthar
+                    ? 'bg-muted text-muted-foreground'
+                    : 'bg-primary/10 text-primary-text',
+                  arabic && 'font-arabic-ui',
                 )}
-                {quietSource ? (
+              >
+                <Icon className="size-3.5 shrink-0" aria-hidden />
+                {typeLabel}
+              </span>
+              {isHadith && grade && grade !== HadithGrade.UNGRADED && !quote.isAthar ? (
+                <GradeBadge grade={grade} label={t(`grade.${grade.toLowerCase()}`)} />
+              ) : null}
+            </div>
+
+            {/* A verse: «الأنعام | 6:121» only — «القرآن الكريم» adds nothing beside «آية قرآنية» (B8). */}
+            {isQuran && quote.quran && (surahName || (quote.quran.surahNumber && quote.quran.ayahNumber)) ? (
+              <span
+                className={cn(
+                  'inline-flex max-w-full flex-wrap items-center gap-x-2 rounded-full',
+                  'border border-border/70 bg-background/80 px-2.5 py-1 text-[13px] text-foreground md:text-[14px]',
+                  arabic && 'font-arabic-ui',
+                )}
+              >
+                {surahName ? (
                   <span
-                    dir={sourceDir}
-                    lang={sourceLang}
-                    className={cn(
-                      'text-[13px] text-muted-foreground md:text-[14px]',
-                      sourceDir === 'rtl' && 'font-arabic-ui',
-                    )}
+                    dir={arabic ? 'rtl' : undefined}
+                    lang={arabic ? 'ar' : 'en'}
+                    className="min-w-0 truncate"
                   >
-                    {quietSource}
+                    {surahName}
                   </span>
                 ) : null}
-              </div>
+                {quote.quran.surahNumber && quote.quran.ayahNumber ? (
+                  <>
+                    <span
+                      aria-hidden
+                      className="h-3 w-px shrink-0 bg-border"
+                    />
+                    {/* Deliberate dir="ltr": «2:255» must read surah:ayah in both locales. */}
+                    <bdi
+                      dir="ltr"
+                      className="tabular-nums text-muted-foreground"
+                    >
+                      <FormattedNumber value={quote.quran.surahNumber} />
+                      :
+                      <FormattedNumber value={quote.quran.ayahNumber} />
+                    </bdi>
+                  </>
+                ) : null}
+              </span>
             ) : null}
 
             {isHadith ? (
@@ -304,9 +297,6 @@ export function QuoteCard({
                       </span>
                     );
                   })()}
-                  {grade && grade !== HadithGrade.UNGRADED && !quote.isAthar ? (
-                    <GradeBadge grade={grade} label={t(`grade.${grade.toLowerCase()}`)} />
-                  ) : null}
                 </div>
                 {narrator ? (
                   <p
@@ -371,9 +361,8 @@ export function QuoteCard({
                       arabic && 'font-arabic-ui',
                     )}
                   >
-                    {arabic
-                      ? `أثر، وليس حديثًا${hadithRef ? ` · ${hadithRef}` : ''}`
-                      : `A saying, not a hadith${hadithRef ? ` · ${hadithRef}` : ''}`}
+                    {/* The reference is in the badge above: never a second time here (B4). */}
+                    {arabic ? 'أثر، وليس حديثًا' : 'A saying, not a hadith'}
                   </p>
                 ) : null}
                 {isWeak ? (
@@ -431,34 +420,38 @@ export function QuoteCard({
           <QuoteBody quote={quote} className={clamp ? 'line-clamp-4' : undefined} />
         </div>
 
-        {/* ONE button (round 6, C-12): «عرض التفسير» (a verse) / «عرض الشرح» (a hadith) opens the reader, where the text,
-            «وجه التذكير» and the explanations read inline; other texts «اقرأ كاملًا». The read mark sits beside it. */}
+        {/* ONE action (round 6, C-12): «عرض التفسير» (a verse) / «عرض الشرح» (a hadith) opens the reader, where the text,
+            «وجه التذكير» and the explanations read inline; other texts «اقرأ كاملًا». Owner round 7 (B5): that action is the
+            card's solid primary, and «تعليم كمقروء» sits beside it as a clear bordered button of the same size. */}
         {(showViewLink && detailHref) || onToggleRead ? (
-          <div className={cn('flex flex-wrap items-center justify-between gap-3', arabic && 'font-arabic-ui')}>
+          // text-sm font-medium on the row: the site's `button { font: inherit }` would otherwise give the read button a
+          // larger face than the link beside it.
+          <div className={cn('flex flex-wrap items-center gap-3 text-sm font-medium', arabic && 'font-arabic-ui')}>
             {showViewLink && detailHref ? (
-              <Button asChild variant="outline" tone="primary" size="md">
+              <Button asChild variant="solid" tone="primary" size="md" className="min-w-0 flex-1 sm:flex-none">
                 <Link href={linkId ? `${detailHref}?linkId=${encodeURIComponent(linkId)}` : detailHref}>
                   {isQuran ? t('openReaderTafsir') : isHadith && !isAthar ? t('openReaderSharh') : cut ? t('readFull') : t('viewFull')}
                   <DirectionalArrow className="size-3.5" />
                 </Link>
               </Button>
-            ) : (
-              <span />
-            )}
+            ) : null}
             {onToggleRead ? (
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                tone="primary"
+                size="md"
                 aria-pressed={Boolean(read)}
-                aria-label={t('read')}
                 onClick={() => onToggleRead(!read)}
+                icon={read ? <CheckCheck aria-hidden /> : <Check aria-hidden />}
                 className={cn(
-                  'inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-[13px] transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
-                  read ? 'text-primary-text' : 'text-muted-foreground hover:text-foreground',
+                  'min-w-0 flex-1 sm:flex-none',
+                  // Read: the same border, a soft fill, so the state reads at a glance without a second solid button.
+                  read && 'bg-primary/10',
                 )}
               >
-                <CheckCheck aria-hidden className={cn('size-4', !read && 'opacity-50')} />
-                {read ? t('read') : t('unread')}
-              </button>
+                {read ? t('read') : t('markRead')}
+              </Button>
             ) : null}
           </div>
         ) : null}

@@ -1,6 +1,6 @@
 /**
- * `thekra://circles/invite/<code>` (round 6, C-01k): a personal رفقة invite opens «أدخل رمز الدعوة» with the code filled
- * in; signed out, the code stays in the route while the user signs in. A member whose رفقة is already on goes to the list.
+ * `thekra://circles/invite/<code>` (round 6, C-01k): a personal صحبة invite opens «أدخل رمز الدعوة» with the code filled
+ * in; signed out, the code stays in the route while the user signs in. A member whose صحبة is already on goes to the list.
  */
 
 import React from 'react';

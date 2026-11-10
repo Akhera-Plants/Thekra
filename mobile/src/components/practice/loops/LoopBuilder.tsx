@@ -7,13 +7,13 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Trash, X } from 'lucide-react-native';
 import { canLeaveStep, loopProblem, loopSteps, loopTextMax, type LoopDraft, type LoopKind } from '@/lib/practice/loops';
 import { GUTTER, radius, space, useStyles, type Theme } from '@/theme';
-import { Button, ErrorText, Field, IconButton, Text, ButtonPair } from '@/ui';
+import { Button, ErrorText, Field, IconButton, Text, ButtonPair, useConfirm } from '@/ui';
 
 const makeStyles = (t: Theme) => ({
   root: { flex: 1, justifyContent: 'flex-end' as const },
@@ -56,6 +56,7 @@ export interface LoopBuilderProps {
 
 export function LoopBuilder({ kind, visible, initial, subject, editing, onClose, onSave, onDelete }: LoopBuilderProps) {
   const { t } = useTranslation();
+  const { confirm, dialog } = useConfirm();
   const styles = useStyles(makeStyles);
   const insets = useSafeAreaInsets();
   const steps = loopSteps(kind);
@@ -92,10 +93,9 @@ export function LoopBuilder({ kind, visible, initial, subject, editing, onClose,
 
   function confirmDelete() {
     if (!onDelete) return;
-    Alert.alert(t('loops.deleteTitle'), t('loops.deleteBody'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      { text: t('loops.delete'), style: 'destructive', onPress: onDelete },
-    ]);
+    void confirm({ title: t('loops.deleteTitle'), message: t('loops.deleteBody'), confirmLabel: t('loops.delete'), tone: 'destructive' }).then(
+      (ok) => ok && onDelete(),
+    );
   }
 
   function skip() {
@@ -188,6 +188,7 @@ export function LoopBuilder({ kind, visible, initial, subject, editing, onClose,
           </View>
         </View>
       </KeyboardAvoidingView>
+      {dialog}
     </Modal>
   );
 }

@@ -590,10 +590,10 @@ model SinQuote {
   section         BookSection?     @relation(fields: [sectionId], references: [id], onDelete: SetNull)
   /// Keys from taxonomy/topic-themes.yaml whose pattern matches this link's chapter title. Written by import:taxonomy.
   themeKeys       String[]         @default([])
-  /// «وجه التذكير» (round 6, C-13): why this text reminds of this topic. Written by hand in the next phase, never
-  /// generated. The reader shows it only when present.
+  /// «وجه التذكير» (round 6, C-13): why this text reminds of this topic. Our editorial line (never a quotation of the
+  /// text); written for every public link in round 7 (E3) with the owner's approval. The reader shows it only when present.
   reminderAngle   String?
-  /// English «وجه التذكير», only when a person wrote it (no machine translation).
+  /// English «وجه التذكير»: our own line with the same meaning (not a translation of the text).
   reminderAngleEn String?
   /// Raised while linking when the text has no real link to the topic; listed for the owner at
   /// GET /v1/admin/link-concerns. It does not hide the link: the owner decides.
@@ -631,10 +631,10 @@ model GoodDeedQuote {
   section         BookSection?     @relation(fields: [sectionId], references: [id], onDelete: SetNull)
   /// Keys from taxonomy/topic-themes.yaml whose pattern matches this link's chapter title. Written by import:taxonomy.
   themeKeys       String[]         @default([])
-  /// «وجه التذكير» (round 6, C-13): why this text reminds of this topic. Written by hand in the next phase, never
-  /// generated. The reader shows it only when present.
+  /// «وجه التذكير» (round 6, C-13): why this text reminds of this topic. Our editorial line (never a quotation of the
+  /// text); written for every public link in round 7 (E3) with the owner's approval. The reader shows it only when present.
   reminderAngle   String?
-  /// English «وجه التذكير», only when a person wrote it (no machine translation).
+  /// English «وجه التذكير»: our own line with the same meaning (not a translation of the text).
   reminderAngleEn String?
   /// Raised while linking when the text has no real link to the topic; listed for the owner at
   /// GET /v1/admin/link-concerns. It does not hide the link: the owner decides.
@@ -746,10 +746,10 @@ model ImanBranchQuote {
   reviewStatus    LinkReviewStatus @default(NOT_REVIEWED)
   basis           LinkBasis        @default(MANUAL)
   classifiedBy    ClassifiedBy     @default(BOOK)
-  /// «وجه التذكير» (round 6, C-13): why this text reminds of this topic. Written by hand in the next phase, never
-  /// generated. The reader shows it only when present.
+  /// «وجه التذكير» (round 6, C-13): why this text reminds of this topic. Our editorial line (never a quotation of the
+  /// text); written for every public link in round 7 (E3) with the owner's approval. The reader shows it only when present.
   reminderAngle   String?
-  /// English «وجه التذكير», only when a person wrote it (no machine translation).
+  /// English «وجه التذكير»: our own line with the same meaning (not a translation of the text).
   reminderAngleEn String?
   /// Raised while linking when the text has no real link to the topic; listed for the owner at
   /// GET /v1/admin/link-concerns. It does not hide the link: the owner decides.
@@ -882,13 +882,16 @@ model User {
   sinVault              SinVault?
   /// Web push: one row per browser that turned reminders on (docs/plan/2026-10-web-push.md).
   pushSubscriptions     PushSubscription[]
-  /// رفقة: private circles this user belongs to (cascade with the user).
+  /// صحبة: private circles this user belongs to (cascade with the user).
   circleMemberships     CircleMember[]
-  /// رفقة is invite-only (round 6, C-01k): set when this user redeems an enabled member's invite. ADMIN users are
+  /// صحبة is invite-only (round 6, C-01k): set when this user redeems an enabled member's invite. ADMIN users are
   /// always enabled. Members from before the change were backfilled by the migration.
   circlesEnabledAt      DateTime?
   circleInvitesSent     CircleInvite[]     @relation("CircleInviteInviter")
   circleInvitesRedeemed CircleInvite[]     @relation("CircleInviteRedeemer")
+  /// Round 7 (D8): abuse reports this user filed, and those about them (both kept, unlinked, if an account goes).
+  circleReportsFiled    CircleReport[]     @relation("CircleReportReporter")
+  circleReportsAbout    CircleReport[]     @relation("CircleReportReported")
   createdAt             DateTime           @default(now())
   updatedAt             DateTime           @updatedAt
 }
@@ -1130,38 +1133,48 @@ model PushReminder {
   @@index([fireAt])
 }
 
-/// رفقة (docs/plan/2026-10-features-roadmap.md §0.5 note of 2026-10-29): a private, invite-only circle of at most
+/// صحبة (docs/plan/2026-10-features-roadmap.md §0.5 note of 2026-10-29): a private, invite-only circle of at most
 /// 12 members. Joined only with `inviteCode` (random, never derived from anything). Deleting the circle deletes its
-/// members, marks and cheers.
+/// members, marks, rounds and messages.
 model Circle {
-  id         String         @id @default(uuid())
+  id         String          @id @default(uuid())
   name       String
   /// «نيّتنا», optional.
   intention  String?
-  inviteCode String         @unique
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
+  inviteCode String          @unique
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
   members    CircleMember[]
   cheers     CircleCheer[]
   invites    CircleInvite[]
+  messages   CircleMessage[]
+  rounds     CircleRound[]
+  reports    CircleReport[]
 }
 
 /// A user inside a circle. Clients only ever see `id` (the member id), never `userId`. `displayName` is chosen per
 /// circle on join. `sharesPresence` is off until the member turns it on.
 model CircleMember {
-  id             String           @id @default(uuid())
-  circleId       String
-  circle         Circle           @relation(fields: [circleId], references: [id], onDelete: Cascade)
-  userId         String
-  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  displayName    String
+  id               String              @id @default(uuid())
+  circleId         String
+  circle           Circle              @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  userId           String
+  user             User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  displayName      String
   /// The creator, or the earliest member after the creator left or deleted their account.
-  isOwner        Boolean          @default(false)
-  sharesPresence Boolean          @default(false)
-  joinedAt       DateTime         @default(now())
-  presences      CirclePresence[]
-  cheersSent     CircleCheer[]    @relation("CircleCheerSender")
-  cheersReceived CircleCheer[]    @relation("CircleCheerReceiver")
+  isOwner          Boolean             @default(false)
+  sharesPresence   Boolean             @default(false)
+  joinedAt         DateTime            @default(now())
+  presences        CirclePresence[]
+  cheersSent       CircleCheer[]       @relation("CircleCheerSender")
+  cheersReceived   CircleCheer[]       @relation("CircleCheerReceiver")
+  messagesSent     CircleMessage[]     @relation("CircleMessageSender")
+  messagesReceived CircleMessage[]     @relation("CircleMessageReceiver")
+  rounds           CircleRound[]
+  savedMessages    CircleMessageSave[]
+  mutes            CircleMute[]        @relation("CircleMuteBy")
+  mutedBy          CircleMute[]        @relation("CircleMuteOf")
+  reportsAbout     CircleReport[]
 
   @@unique([circleId, userId])
   @@index([userId])
@@ -1177,9 +1190,9 @@ model CirclePresence {
   @@id([memberId, date])
 }
 
-/// A preset encouragement line (`message` is a key, never free text). `receiverId` null = the whole circle.
-/// `target` is the receiver's member id or `circle`; with `day` (server UTC date) it limits a sender to one cheer
-/// per target per day.
+/// Legacy (round 7): superseded by CircleMessage (kind PRESET), which the round-7 migration filled from these rows.
+/// Nothing reads or writes it any more; drop it in a later migration. Was: a preset encouragement line (`message`
+/// is a key, never free text), `receiverId` null = the whole circle, one per sender, target and day.
 model CircleCheer {
   id         String        @id @default(uuid())
   circleId   String
@@ -1198,7 +1211,7 @@ model CircleCheer {
   @@index([receiverId])
 }
 
-/// رفقة personal invite (round 6, C-01k): one use, expires. Redeeming turns رفقة on for the redeemer and, when the
+/// صحبة personal invite (round 6, C-01k): one use, expires. Redeeming turns صحبة on for the redeemer and, when the
 /// invite names a circle the inviter still belongs to, joins it.
 model CircleInvite {
   id           String    @id @default(uuid())
@@ -1217,6 +1230,132 @@ model CircleInvite {
   @@index([inviterId, createdAt])
   @@index([circleId])
   @@index([redeemedById])
+}
+
+/// Round 7 (D5–D7, docs/plan/2026-11-10-owner-round-7.md): one line in a صحبة's feed. The words are the apps'
+/// (`key`); the only text a member types is a round's short `label` (CircleRound). `receiverId` null = the whole
+/// صحبة; a PRESET to one member is seen by the two of them only. `day` is the server UTC date (daily limits).
+model CircleMessage {
+  id         String              @id @default(uuid())
+  circleId   String
+  circle     Circle              @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  senderId   String
+  sender     CircleMember        @relation("CircleMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId String?
+  receiver   CircleMember?       @relation("CircleMessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  kind       CircleMessageKind
+  /// PRESET and REPLY: the line's key. Null for ROUND_START / ROUND_END.
+  key        String?
+  roundId    String?
+  round      CircleRound?        @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  /// PRESET `progress` only: `{ done, total }`, how many of the sender's habits of the day are done (counts only).
+  data       Json?
+  day        DateTime            @db.Date
+  createdAt  DateTime            @default(now())
+  saves      CircleMessageSave[]
+  reports    CircleReport[]
+
+  @@index([circleId, createdAt])
+  @@index([senderId, day])
+  @@index([receiverId])
+  @@index([roundId])
+}
+
+enum CircleMessageKind {
+  PRESET
+  ROUND_START
+  ROUND_END
+  REPLY
+}
+
+/// Round 7 (D5): «بدأت جولة مذاكرة · compiler design · 60 دقيقة», then «تم الحمد لله» or «لم يتم». `kind` is a key
+/// (study, focus, habit…); `label` is the one short free text (trimmed, no control or direction characters).
+/// `day` is the member's local date and `number` counts their rounds of that day in this صحبة.
+model CircleRound {
+  id        String              @id @default(uuid())
+  circleId  String
+  circle    Circle              @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  memberId  String
+  member    CircleMember        @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  kind      String
+  label     String?
+  minutes   Int
+  day       DateTime            @db.Date
+  number    Int
+  startedAt DateTime            @default(now())
+  endedAt   DateTime?
+  outcome   CircleRoundOutcome?
+  messages  CircleMessage[]
+
+  @@unique([memberId, day, number])
+  @@index([circleId, startedAt])
+}
+
+enum CircleRoundOutcome {
+  DONE
+  NOT_DONE
+}
+
+/// Round 7 (D7): «احتفظ بها», a message a member keeps for later. Gone with the membership or the message.
+model CircleMessageSave {
+  memberId  String
+  member    CircleMember  @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  messageId String
+  message   CircleMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  createdAt DateTime      @default(now())
+
+  @@id([memberId, messageId])
+  @@index([messageId])
+}
+
+/// Round 7 (D8): a member hides another member's messages from their own feed. Nobody else is told.
+model CircleMute {
+  memberId  String
+  member    CircleMember @relation("CircleMuteBy", fields: [memberId], references: [id], onDelete: Cascade)
+  mutedId   String
+  muted     CircleMember @relation("CircleMuteOf", fields: [mutedId], references: [id], onDelete: Cascade)
+  createdAt DateTime     @default(now())
+
+  @@id([memberId, mutedId])
+  @@index([mutedId])
+}
+
+/// Round 7 (D8): a report of a member or of one message, for the owner of Thekra (admin list). It never removes or
+/// hides anything by itself (the reporter's own feed drops a reported message). The names and words are copied at
+/// report time, so the report still reads after a member leaves or a message is gone.
+model CircleReport {
+  id               String           @id @default(uuid())
+  kind             CircleReportKind
+  circleId         String?
+  circle           Circle?          @relation(fields: [circleId], references: [id], onDelete: SetNull)
+  circleName       String
+  reporterId       String?
+  reporter         User?            @relation("CircleReportReporter", fields: [reporterId], references: [id], onDelete: SetNull)
+  reporterName     String
+  reportedMemberId String?
+  reportedMember   CircleMember?    @relation(fields: [reportedMemberId], references: [id], onDelete: SetNull)
+  reportedUserId   String?
+  reportedUser     User?            @relation("CircleReportReported", fields: [reportedUserId], references: [id], onDelete: SetNull)
+  reportedName     String
+  messageId        String?
+  message          CircleMessage?   @relation(fields: [messageId], references: [id], onDelete: SetNull)
+  /// MESSAGE reports: what the message said (`kind`, `key`, round `label`…), as stored.
+  messageSnapshot  Json?
+  reason           String
+  note             String?
+  createdAt        DateTime         @default(now())
+
+  @@index([createdAt])
+  @@index([reporterId, createdAt])
+  @@index([circleId])
+  @@index([reportedMemberId])
+  @@index([reportedUserId])
+  @@index([messageId])
+}
+
+enum CircleReportKind {
+  MEMBER
+  MESSAGE
 }
 
 model Favorite {

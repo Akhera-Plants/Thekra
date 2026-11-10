@@ -27,7 +27,8 @@ import { radius, space, useStyles, useTheme, type Theme } from '@/theme';
 import { ForwardArrow, Icon } from './Icon';
 import { Text } from './Text';
 
-export type ButtonVariant = 'solid' | 'outline' | 'ghost' | 'destructive';
+/** `danger`: the solid destructive fill, only for the confirming action of a ConfirmDialog («احذفها»). */
+export type ButtonVariant = 'solid' | 'outline' | 'ghost' | 'destructive' | 'danger';
 export type ButtonSize = 'lg' | 'md' | 'sm';
 
 /** The minimum touch target on every control (WCAG 2.5.5, Apple HIG 44pt; A-09). */
@@ -76,6 +77,7 @@ const makeStyles = (t: Theme) => ({
   ghost: { backgroundColor: 'transparent', borderColor: t.colors.controlBorder },
   ghostPressed: { backgroundColor: t.colors.accent, borderColor: t.colors.ring },
   destructive: { backgroundColor: t.colors.card, borderColor: t.colors.destructive },
+  danger: { backgroundColor: t.colors.destructive, borderColor: t.colors.destructive },
   disabled: { opacity: 0.45 },
   label: { flexShrink: 1, textAlign: 'center' as const },
   textLink: {
@@ -123,6 +125,8 @@ export function Button({
   const styles = useStyles(makeStyles);
   const { colors } = useTheme();
   const tone = variant === 'solid' ? 'inverse' : variant === 'destructive' ? 'destructive' : variant === 'ghost' ? 'default' : 'link';
+  /** The danger fill takes its own foreground (white on the light theme, ink on the dark one). */
+  const ink = variant === 'danger' ? colors.destructiveForeground : undefined;
   const off = disabled || loading;
   const handleTextLayout = useCallback(
     (e: NativeSyntheticEvent<TextLayoutEventData>) => onLabelLines?.(e.nativeEvent.lines.length),
@@ -132,7 +136,7 @@ export function Button({
     <Pressable
       onPress={onPress}
       disabled={off}
-      android_ripple={{ color: variant === 'solid' ? colors.ring : colors.accent }}
+      android_ripple={{ color: variant === 'solid' ? colors.ring : variant === 'danger' ? colors.destructiveSoft : colors.accent }}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityHint={accessibilityHint}
@@ -146,26 +150,26 @@ export function Button({
         pressed && variant === 'solid' && { opacity: 0.88 },
         pressed && variant === 'outline' && styles.outlinePressed,
         pressed && variant === 'ghost' && styles.ghostPressed,
-        pressed && variant === 'destructive' && { opacity: 0.8 },
+        pressed && (variant === 'destructive' || variant === 'danger') && { opacity: 0.8 },
         off && styles.disabled,
         style,
       ]}
     >
       {loading ? (
-        <ActivityIndicator size="small" color={variant === 'solid' ? colors.primaryForeground : colors.primary} />
+        <ActivityIndicator size="small" color={ink ?? (variant === 'solid' ? colors.primaryForeground : colors.primary)} />
       ) : icon ? (
-        <Icon icon={icon} size={size === 'sm' ? 16 : 17} tone={tone} />
+        <Icon icon={icon} size={size === 'sm' ? 16 : 17} tone={tone} color={ink} />
       ) : null}
       <Text
         variant={size === 'lg' ? 'body' : 'small'}
         weight="medium"
         tone={tone}
-        style={styles.label}
+        style={[styles.label, ink ? { color: ink } : null]}
         onTextLayout={onLabelLines ? handleTextLayout : undefined}
       >
         {label}
       </Text>
-      {arrow ? <ForwardArrow size={size === 'sm' ? 16 : 17} tone={tone} /> : null}
+      {arrow ? <ForwardArrow size={size === 'sm' ? 16 : 17} tone={tone} color={ink} /> : null}
     </Pressable>
   );
 }

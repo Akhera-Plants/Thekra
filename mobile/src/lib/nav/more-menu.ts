@@ -1,6 +1,6 @@
 /**
  * «المزيد» (round 6 §1, docs/plan/2026-11-09-owner-round-6.md; practice-core `APP_MORE`): the web header's «المزيد»
- * (الاستراتيجيات، المحفوظات، رفقة) and «الحديقة» (app only), then the settings rows. No «تصفّح النصوص» and no people
+ * (الاستراتيجيات، المحفوظات، صحبة) and «بستان العادات» (app only), then the settings rows. No «تصفّح النصوص» and no people
  * page. Every row is a feature of the shared navigation map (practice-core `nav-map.ts`): its route comes from there,
  * and a test holds its Arabic and English label to the map's names, so the app and the website cannot drift apart.
  *

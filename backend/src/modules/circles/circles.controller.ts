@@ -29,15 +29,21 @@ import { CircleQueryDto } from './dto/circle-query.dto.js';
 import { CreateCircleDto } from './dto/create-circle.dto.js';
 import { JoinCircleDto } from './dto/join-circle.dto.js';
 import { PresenceDto } from './dto/presence.dto.js';
-import { SendCheerDto } from './dto/send-cheer.dto.js';
+import { CircleFeedService } from './circle-feed.service.js';
+import { EndRoundDto, MessagesQueryDto, ReplyRoundDto, ReportDto, SendMessageDto, StartRoundDto } from './dto/companion.dto.js';
 import { UpdateMembershipDto } from './dto/update-membership.dto.js';
 
 /** Guessing invite codes: 5 tries a minute per client, on top of the code's own size. */
 const JOIN_THROTTLE = { default: { limit: 5, ttl: 60_000 } };
+/** Round 7: per-instance bursts; the daily limits live in the database (CircleFeedService FEED_LIMITS). */
+const MESSAGE_THROTTLE = { default: { limit: 20, ttl: 60_000 } };
+const ROUND_THROTTLE = { default: { limit: 10, ttl: 60_000 } };
+const REPORT_THROTTLE = { default: { limit: 5, ttl: 60_000 } };
 
 /**
- * رفقة: private circles of the signed-in user. Never CDN-cached. Invite-only (round 6, C-01k): creating or joining a
- * circle needs رفقة to be on, which a member's personal invite does (`/circles/invites/*`).
+ * صحبة: private circles of the signed-in user. Never CDN-cached. Invite-only (round 6, C-01k): creating or joining a
+ * circle needs صحبة to be on, which a member's personal invite does (`/circles/invites/*`). Round 7: the feed,
+ * rounds, suggested lines, «احتفظ بها», reports and hiding a member (CircleFeedService).
  * The fixed paths stay above `:id`, which would otherwise catch them.
  */
 @Controller('circles')
@@ -46,6 +52,7 @@ export class CirclesController {
   constructor(
     private readonly circles: CirclesService,
     private readonly invites: CircleInvitesService,
+    private readonly feed: CircleFeedService,
   ) {}
 
   @Get()
@@ -132,10 +139,96 @@ export class CirclesController {
     await this.circles.leave(user.sub, id);
   }
 
-  @Post(':id/cheers')
+  @Get(':id/messages')
+  @Header('Cache-Control', PRIVATE_CACHE_HEADER)
+  messages(@CurrentUser() user: JwtPayload, @Param('id', ParseUUIDPipe) id: string, @Query() query: MessagesQueryDto) {
+    return this.feed.messages(user.sub, id, query);
+  }
+
+  @Post(':id/messages')
   @HttpCode(HttpStatus.CREATED)
-  sendCheer(@CurrentUser() user: JwtPayload, @Param('id', ParseUUIDPipe) id: string, @Body() dto: SendCheerDto) {
-    return this.circles.sendCheer(user.sub, id, dto);
+  @Throttle(MESSAGE_THROTTLE)
+  sendMessage(@CurrentUser() user: JwtPayload, @Param('id', ParseUUIDPipe) id: string, @Body() dto: SendMessageDto) {
+    return this.feed.send(user.sub, id, dto);
+  }
+
+  @Put(':id/messages/:messageId/save')
+  @HttpCode(HttpStatus.OK)
+  @Throttle(MESSAGE_THROTTLE)
+  saveMessage(
+    @CurrentUser() user: JwtPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('messageId', ParseUUIDPipe) messageId: string,
+  ) {
+    return this.feed.save(user.sub, id, messageId);
+  }
+
+  @Delete(':id/messages/:messageId/save')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async unsaveMessage(
+    @CurrentUser() user: JwtPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('messageId', ParseUUIDPipe) messageId: string,
+  ): Promise<void> {
+    await this.feed.unsave(user.sub, id, messageId);
+  }
+
+  @Post(':id/rounds')
+  @HttpCode(HttpStatus.CREATED)
+  @Throttle(ROUND_THROTTLE)
+  startRound(@CurrentUser() user: JwtPayload, @Param('id', ParseUUIDPipe) id: string, @Body() dto: StartRoundDto) {
+    return this.feed.startRound(user.sub, id, dto);
+  }
+
+  @Post(':id/rounds/:roundId/end')
+  @HttpCode(HttpStatus.OK)
+  @Throttle(ROUND_THROTTLE)
+  endRound(
+    @CurrentUser() user: JwtPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('roundId', ParseUUIDPipe) roundId: string,
+    @Body() dto: EndRoundDto,
+  ) {
+    return this.feed.endRound(user.sub, id, roundId, dto);
+  }
+
+  @Post(':id/rounds/:roundId/replies')
+  @HttpCode(HttpStatus.CREATED)
+  @Throttle(MESSAGE_THROTTLE)
+  replyToRound(
+    @CurrentUser() user: JwtPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('roundId', ParseUUIDPipe) roundId: string,
+    @Body() dto: ReplyRoundDto,
+  ) {
+    return this.feed.replyToRound(user.sub, id, roundId, dto);
+  }
+
+  @Post(':id/reports')
+  @HttpCode(HttpStatus.OK)
+  @Throttle(REPORT_THROTTLE)
+  report(@CurrentUser() user: JwtPayload, @Param('id', ParseUUIDPipe) id: string, @Body() dto: ReportDto) {
+    return this.feed.report(user.sub, id, dto);
+  }
+
+  @Put(':id/mutes/:memberId')
+  @HttpCode(HttpStatus.OK)
+  mute(
+    @CurrentUser() user: JwtPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('memberId', ParseUUIDPipe) memberId: string,
+  ) {
+    return this.feed.mute(user.sub, id, memberId);
+  }
+
+  @Delete(':id/mutes/:memberId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async unmute(
+    @CurrentUser() user: JwtPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('memberId', ParseUUIDPipe) memberId: string,
+  ): Promise<void> {
+    await this.feed.unmute(user.sub, id, memberId);
   }
 
   @Delete(':id/members/:memberId')

@@ -1,13 +1,40 @@
 /**
- * رفقة (/v1/circles) shapes, mirroring backend/src/modules/circles/entities/circle.entity.ts. Members are known by
+ * صحبة (/v1/circles) shapes, mirroring backend/src/modules/circles/entities/circle.entity.ts. Members are known by
  * their member id only; the API never sends a user id or an email.
  */
 
-export type CheerMessage = 'thabat' | 'jazak' | 'dhakkarani';
+/**
+ * Round 7 (D6): the suggested lines by what the صحبة is for, as the API keys them (backend companion.dto.ts). The
+ * words are in `circles.lines` (to the whole صحبة) and `circles.linesTo` (to one member).
+ */
+export const PRESET_GROUPS = {
+  progress: ['progress', 'steady', 'back'],
+  encourage: ['thabat', 'jazak', 'dhakkarani', 'keep_going'],
+  support: ['ask_dua', 'ask_remind', 'ask_join', 'ask_heavy'],
+  remind: ['thabbatak', 'niyya', 'dont_break'],
+} as const;
+export type PresetGroup = keyof typeof PRESET_GROUPS;
+export type PresetKey = (typeof PRESET_GROUPS)[PresetGroup][number];
+export const PRESET_GROUP_KEYS: readonly PresetGroup[] = ['progress', 'encourage', 'support', 'remind'];
+/** Groups whose lines may go to one member; the others speak about the sender and go to the whole صحبة. */
+export const DIRECTED_GROUPS: readonly PresetGroup[] = ['encourage', 'remind'];
 
-export const CHEER_MESSAGES: readonly CheerMessage[] = ['thabat', 'jazak', 'dhakkarani'];
+/** Round 7 (D5). */
+export const ROUND_KINDS = ['study', 'focus', 'habit', 'reading', 'listening', 'task', 'sport'] as const;
+export type RoundKind = (typeof ROUND_KINDS)[number];
+export const ROUND_MINUTE_PRESETS = [15, 25, 30, 45, 60] as const;
+export const ROUND_MINUTES_MAX = 240;
+export const ROUND_LABEL_MAX = 60;
+export const ROUND_CHEERS = ['go', 'with_you', 'next_time'] as const;
+export const ROUND_CONGRATS = ['mashallah', 'barak', 'zadak'] as const;
+export type RoundReplyKey = (typeof ROUND_CHEERS)[number] | (typeof ROUND_CONGRATS)[number];
 
-/** A cheer to the whole circle targets this key in `cheeredToday`. */
+/** Round 7 (D8). */
+export const REPORT_REASONS = ['offensive', 'harassment', 'inappropriate', 'spam', 'other'] as const;
+export type ReportReason = (typeof REPORT_REASONS)[number];
+export const REPORT_NOTE_MAX = 300;
+
+/** A line to the whole صحبة targets this key in `sentToday`. */
 export const WHOLE_CIRCLE = 'circle';
 
 /** The API's limits (backend circles DTOs and service). */
@@ -32,13 +59,43 @@ export interface CircleMember {
   presentDays: string[];
 }
 
-export interface CircleCheer {
+export interface CircleRound {
   id: string;
-  message: CheerMessage;
-  fromMemberId: string;
-  fromName: string;
-  toMe: boolean;
+  memberId: string;
+  memberName: string;
+  isMine: boolean;
+  kind: RoundKind;
+  label: string | null;
+  minutes: number;
+  /** «الجولة n اليوم». */
+  number: number;
+  startedAt: string;
+  endsAt: string;
+  outcome: 'done' | 'not_done' | null;
+  /** Ended, or forgotten past its time. */
+  closed: boolean;
+  /** Reply keys I already sent to it. */
+  myReplies: string[];
+}
+
+export type CircleMessageKind = 'preset' | 'round_start' | 'round_end' | 'reply';
+
+export interface CircleMessage {
+  id: string;
+  kind: CircleMessageKind;
+  key: string | null;
+  from: { memberId: string; name: string; isMe: boolean };
+  /** Null: to the whole صحبة. */
+  to: { memberId: string; name: string; isMe: boolean } | null;
+  progress: { done: number; total: number } | null;
+  round: CircleRound | null;
+  saved: boolean;
   createdAt: string;
+}
+
+export interface CircleMessagesPage {
+  items: CircleMessage[];
+  nextBefore: string | null;
 }
 
 export interface CircleDetail {
@@ -51,8 +108,12 @@ export interface CircleDetail {
   me: { memberId: string; displayName: string; isOwner: boolean; sharesPresence: boolean };
   days: string[];
   members: CircleMember[];
-  cheers: CircleCheer[];
-  cheeredToday: string[];
+  /** My round still running in this صحبة. */
+  myOpenRound: CircleRound | null;
+  /** Lines I sent today, `key:target` (`target` is a member id or `circle`). */
+  sentToday: string[];
+  /** Members whose messages I hid. */
+  mutedMemberIds: string[];
 }
 
 export interface CreateCircleInput {
@@ -71,15 +132,33 @@ export interface UpdateMembershipInput {
   sharesPresence?: boolean;
 }
 
-export interface SendCheerInput {
-  message: CheerMessage;
+export interface SendMessageInput {
+  key: PresetKey;
   toMemberId?: string;
+  progress?: { done: number; total: number };
 }
 
-/** GET /circles/access (round 6, C-01k): whether رفقة is on for me, and how many invites I can still give. */
+export interface StartRoundInput {
+  kind: RoundKind;
+  label?: string;
+  minutes: number;
+  /** The device's local date. */
+  today: string;
+}
+
+export interface ReportInput {
+  kind: 'member' | 'message';
+  memberId?: string;
+  messageId?: string;
+  reason: ReportReason;
+  note?: string;
+  mute?: boolean;
+}
+
+/** GET /circles/access (round 6, C-01k): whether صحبة is on for me, and how many invites I can still give. */
 export interface CircleAccess {
   enabled: boolean;
-  /** In at least one circle now (the website uses it for «شارك تطورك مع الرفقة»; the app reads its circle list). */
+  /** In at least one circle now (the website uses it for «شارك تطورك مع الصحبة»; the app reads its circle list). */
   inCircle?: boolean;
   invites: {
     active: number;

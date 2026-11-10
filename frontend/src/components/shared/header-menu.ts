@@ -1,7 +1,7 @@
 /**
  * The site header (owner round 6, C-07 b / C-05 a; docs/plan/2026-11-09-owner-round-6.md §1), built from practice-core
  * `WEB_HEADER` and `WEB_ACCOUNT_MENU`: the links «الرئيسية · الطاعات · تخفّف من ذنب · شعب الإيمان · عاداتي», then
- * «المزيد ▾» (الاستراتيجيات، المحفوظات، «رفقة (في التطبيق)»), then the account avatar menu (الحساب، الإعدادات،
+ * «المزيد ▾» (الاستراتيجيات، المحفوظات، «صحبة (في التطبيق)»), then the account avatar menu (الحساب، الإعدادات،
  * تسجيل الخروج). An item of «المزيد» is never also a header link, and the settings live only in the account menu.
  * Every item is a `NAV_FEATURES` key: its route comes from the shared map, and `header-menu.spec.ts` checks the labels
  * in the message files against it. On a phone the drawer holds the same links and «المزيد» items.
@@ -15,7 +15,7 @@ export type HeaderMenuKey = HeaderLinkKey | HeaderMoreKey;
 
 export interface HeaderMenuItem<K extends string = HeaderMenuKey> {
   key: K;
-  /** The web route; null for «رفقة», which lives in the app (it opens a short note instead). */
+  /** The web route; null for «صحبة», which lives in the app (it opens a short note instead). */
   href: string | null;
 }
 

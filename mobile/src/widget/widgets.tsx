@@ -11,7 +11,7 @@ import { FlexWidget, SvgWidget, TextWidget } from 'react-native-android-widget';
 import { MOMENT_URI, WIRD_URI, type WidgetView } from './snapshot';
 
 const C = {
-  background: '#fffcf9',
+  background: '#fbfcfb',
   foreground: '#263d35',
   muted: '#64746c',
   primary: '#326c59',

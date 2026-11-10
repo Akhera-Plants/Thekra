@@ -28,7 +28,7 @@ export default function RemindersScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const { t } = useTranslation();
   const { english } = useTheme();
-  const { filter, setFilter, params } = useTopicQuoteParams();
+  const { filter, setFilter, theme, setTheme, params } = useTopicQuoteParams();
   const query = useSinQuotesInfinite(slug ?? '', params);
   // The detail carries what the quotes page does not: the pair, the rank reference, the contemporary flag.
   const detail = useSin(slug ?? '');
@@ -37,17 +37,24 @@ export default function RemindersScreen() {
   const sin = useLastDefined(firstPage?.data.sin);
   // The API counts within the active filter, so the tab counts are the ones read under «الكل».
   const counts = useLastDefined(filter === 'ALL' ? (firstPage?.meta as SinQuotesMeta | undefined)?.countsByType : undefined);
+  // The website's sub-topic chips (owner round 7, B2): `meta.themes` covers the whole page whatever the filter.
+  const themeCounts = useLastDefined((firstPage?.meta as SinQuotesMeta | undefined)?.themes);
+  const themes = useMemo(
+    () => (themeCounts ?? []).map((chip) => ({ key: chip.key, label: english ? chip.en : chip.ar, count: chip.count })),
+    [themeCounts, english],
+  );
   const paired = Boolean(detail.data?.pair);
   const groupTitle = useCallback((group: TopicGroup) => (english ? group.name || group.nameAr : group.nameAr), [english]);
   const sections = useMemo(
     () =>
       buildTopicSections(query.data?.pages.map((p) => p.data) ?? [], {
-        sectioned: filter === 'ALL',
+        // A theme is one merged list (as on the website), without the section headings.
+        sectioned: filter === 'ALL' && !theme,
         ownTitle: paired ? t('reminders.pairWarningHeading') : t('reminders.warningHeading'),
         companionTitle: paired ? t('reminders.pairRewardHeading') : t('reminders.rewardHeading'),
         groupTitle,
       }),
-    [query.data, filter, paired, t, groupTitle],
+    [query.data, filter, theme, paired, t, groupTitle],
   );
   // A paired page is one topic with its virtue: «بدلًا من ذلك» is for an unpaired sin only (as on the website).
   const alternatives = detail.isLoading || paired ? [] : (firstPage?.data.alternatives ?? []);
@@ -61,6 +68,9 @@ export default function RemindersScreen() {
       counts={counts}
       filter={filter}
       onFilterChange={setFilter}
+      themes={themes}
+      theme={theme}
+      onThemeChange={setTheme}
       eyebrow={t('reminders.eyebrow')}
       title={sin ? (english ? sin.name || sin.nameAr : sin.nameAr) : null}
       lead={sin ? (english ? sin.description : sin.descriptionAr) : null}

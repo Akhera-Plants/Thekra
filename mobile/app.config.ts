@@ -65,7 +65,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           image: './assets/splash-icon.png',
           imageWidth: 96,
           // The website's page colour in each theme, so the first frame matches the app behind it.
-          backgroundColor: '#fffcf9',
+          backgroundColor: '#fbfcfb',
           dark: { backgroundColor: '#101010' },
           resizeMode: 'contain',
         },

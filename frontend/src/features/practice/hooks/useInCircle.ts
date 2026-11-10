@@ -4,7 +4,7 @@ import { getCircleAccess } from '@/lib/api/circles';
 import { queryKeys } from '@/lib/query-keys';
 
 /**
- * True when the signed-in member is in a «رفقة» circle (GET /circles/access), so «شارك تطورك مع الرفقة» shows as in the
+ * True when the signed-in member is in a «صحبة» circle (GET /circles/access), so «شارك تطورك مع الصحبة» shows as in the
  * app. False for a visitor, while loading, and on any error (the line is a suggestion, never needed).
  */
 export function useInCircle(): boolean {

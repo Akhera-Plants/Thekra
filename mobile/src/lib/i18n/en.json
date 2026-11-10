@@ -32,10 +32,7 @@
     "branchEntryLabel": "The Branches of Faith",
     "branchEntryDescription": "Meanings that build the heart and the deed.",
     "branchCta": "Begin reading",
-    "todayHeading": "A chosen reminder",
-    "sourcesHeading": "Reminders you can source",
-    "sourcesLead": "From the Book of Allah, authentic Sunnah, and the words of the scholars.",
-    "sourcesAria": "Text sources"
+    "todayHeading": "A chosen reminder"
   },
   "sinPicker": {
     "searchPlaceholder": "What is weighing on you?",
@@ -157,6 +154,8 @@
     "vaultHint": "An encrypted copy of your “Lighten” programs in your account.",
     "exportHint": "A copy of your account data as JSON.",
     "clearCacheHint": "Texts saved for reading offline.",
+    "clearCacheAction": "Clear it",
+    "signOutTitle": "Sign out of your account?",
     "remindersCount_one": "1 reminder scheduled on this device.",
     "remindersCount_other": "{{count}} reminders scheduled on this device.",
     "on": "On",
@@ -272,6 +271,7 @@
     "remindersSwitch": "Remind me of my habits",
     "remindersHint": "Notifications for the next 14 days.",
     "permissionDenied": "Notifications are not allowed. You can turn them on in the device settings.",
+    "permissionDeniedTitle": "Notifications are off",
     "privateNote": "Your habits are kept in your account, and work offline too.",
     "monthTitle": "Last 30 days",
     "monthDays_one": "You logged {{done}} of 1 day",
@@ -812,19 +812,26 @@
       "items": {
         "start-tiny": {
           "idea": "Start with an amount so small it needs no effort.",
-          "example": "Two minutes of Quran instead of a whole juz."
+          "example": "Two minutes of Quran instead of a whole juz.",
+          "ask": "What is the smallest amount of {{habit}} you will start with?",
+          "suggest": "I start with just {{amount}}, and add nothing until it settles."
         },
         "anchor-prayer": {
           "idea": "Place the habit after a set prayer, so the prayer reminds you of it.",
-          "example": "The adhkar right after the Fajr prayer."
+          "example": "The adhkar right after the Fajr prayer.",
+          "ask": "After which prayer will you do {{habit}}?",
+          "suggest": "Right after the {{prayer}} prayer, where I pray."
         },
         "if-then": {
           "idea": "Decide in advance what you will do when the moment comes.",
-          "example": "If I miss my wird, then I will read one page before sleep."
+          "example": "If I miss my wird, then I will read one page before sleep.",
+          "ask": "If {{habit}} slips past its time, what will you do?",
+          "suggest": "If it slips past its time, then before I sleep I do my minimum: {{amount}}."
         },
         "prepare-place": {
           "idea": "Set out what the habit needs before its time.",
-          "example": "The mushaf on the desk, the prayer mat laid out."
+          "example": "The mushaf on the desk, the prayer mat laid out.",
+          "ask": "What will you set out for {{habit}} before its time, and where?"
         },
         "block-sin": {
           "idea": "Keep the means of the sin out of reach, and make the way to it long.",
@@ -835,12 +842,15 @@
           "example": "After a missed day, start your day with its smallest amount."
         },
         "make-up": {
-          "idea": "What you missed yesterday can be made up until Dhuhr the next day.",
-          "example": "You missed your night wird, so read it in the forenoon."
+          "idea": "What you did not finish yesterday, finish before noon today, and it counts for its day.",
+          "example": "You missed your night wird, so read it in the forenoon.",
+          "ask": "If you miss {{habit}} one day, when will you finish it?",
+          "suggest": "If I miss a day, I finish it the next morning, before noon."
         },
         "bundle": {
           "idea": "Pair the habit with something you enjoy and look forward to.",
-          "example": "Tasbih on your way to work."
+          "example": "I read my wird with the morning coffee I enjoy.",
+          "ask": "What do you enjoy that you will pair with {{habit}}?"
         },
         "season": {
           "idea": "Seasons of good help a start; hearts are more willing in them.",
@@ -880,10 +890,12 @@
       },
       "howTo": "Example and how to apply it",
       "apply": "Apply it to a habit",
-      "pickHabit": "Choose the habit to apply “{{strategy}}” to, then review its loop before saving.",
-      "next": "Review the loop",
       "addHabit": "Add a habit",
-      "applied": "Applied to “{{habit}}”. It is in “Habit loop”."
+      "applied": "Applied to “{{habit}}”. It is in “Habit loop”.",
+      "savedIn": "Saved in “Habit loop”: {{field}}",
+      "replaces": "Your current answer: “{{text}}”. This replaces it.",
+      "saveApply": "Save in the habit loop",
+      "chooseHabit": "Which habit?"
     },
     "onboarding": {
       "stepOf": "Step {{step}} of 3",
@@ -1166,9 +1178,19 @@
       "fill": "Fill in the loop",
       "done": "You wrote your loop. Come back to it if something changes."
     },
-    "protect": {
-      "line": "Your program is on this device only. Save it encrypted in your account with a privacy code.",
-      "open": "Save it encrypted"
+    "privacySheet": {
+      "menu": "Privacy and hiding",
+      "title": "Privacy and hiding",
+      "noCode": "Your program is on this device only and shows in “Habits”. Set a privacy code to keep it in your account, locked and hidden.",
+      "withCode": "Your programs are kept in your account, locked with your code.",
+      "saveCode": "Save the code",
+      "saved": "Your program is kept in your account, locked, and hidden in “Habits”.",
+      "coverLabel": "Hide Lighten in “Habits” and “My record”",
+      "coverHint": "It shows as a covered row that names nothing, opened with your fingerprint or the privacy code.",
+      "coverOn": "Lighten is hidden.",
+      "coverOff": "Lighten is shown.",
+      "deviceOnly": "On this device only ·",
+      "hideWithCode": "Hide it with a code"
     }
   },
   "calendar": {
@@ -1235,8 +1257,8 @@
       "failed": "That did not work, try again."
     },
     "codeTitle": "Choose a privacy code",
-    "codeLead": "Only once. It encrypts «Lighten» in your account; then your fingerprint opens it.",
-    "codeLeadNoBiometrics": "It encrypts «Lighten» in your account, and you type it to open it.",
+    "codeLead": "Optional: it keeps Lighten in your account, locked; then your fingerprint opens it. You can set it later.",
+    "codeLeadNoBiometrics": "Optional: it keeps Lighten in your account, locked; you type it to open it. You can set it later.",
     "unlockLead": "To open «Lighten» on this device. After that, your fingerprint is enough.",
     "forgot": "Forgot the code?",
     "startOver": "Start again",
@@ -1247,7 +1269,9 @@
     "statusPending": "Changes are waiting to be saved to your account; they are saved once you are online.",
     "statusSaved": "Saved encrypted in your account, after every change.",
     "statusLocked": "Saved encrypted in your account. Your fingerprint opens it.",
-    "savedToast": "Saved with your privacy code"
+    "savedToast": "Saved with your privacy code",
+    "skip": "Skip and start",
+    "skipNote": "Without a code the program stays on this device only."
   },
   "app": {
     "name": "Thekra",
@@ -1306,10 +1330,15 @@
       "mukhtasar": "Al-Mukhtasar fi al-Tafsir",
       "sadi": "Tafsir al-Sa‘di",
       "ibn-ashur": "Al-Tahrir wa al-Tanwir (Ibn ‘Ashur)"
+    },
+    "readerTab": {
+      "mukhtasar": "Al-Mukhtasar",
+      "sadi": "Al-Sa‘di",
+      "ibn-ashur": "Ibn ‘Ashur"
     }
   },
   "garden": {
-    "title": "My garden",
+    "title": "Habit garden",
     "lead": "Every day you show up, even a little, waters your garden.",
     "resting": "A heavy day: your garden rests with you, just as it is.",
     "restingPlant": "Resting with you",
@@ -1384,30 +1413,13 @@
     "codeLabel": "Invite code",
     "joinButton": "Join",
     "intention": "Our intention",
-    "weekTitle": "Last 7 days",
+    "weekTitle": "The circle’s achievements in the last 7 days",
     "weekLead": "A mark for whoever logged something that day, among those who share.",
     "presentA11y": "{{name}}, {{day}}: present",
     "blankA11y": "{{name}}, {{day}}: no mark",
     "notSharingHint": "Your presence is hidden from them. You can turn it on in your circle settings.",
-    "cheersTitle": "Received",
-    "cheersEmpty": "Nothing has reached you yet.",
-    "cheerFrom": "From {{name}}",
-    "cheerToAll": "To the circle",
-    "sendTitle": "Send a kind word",
-    "sendLead": "One word per person each day.",
     "toCircle": "The whole circle",
-    "sentToday": "Sent today",
-    "cheer": {
-      "thabat": "I prayed for your steadfastness",
-      "jazak": "May Allah reward you with good",
-      "dhakkarani": "Allah reminded me of you"
-    },
-    "cheerAll": {
-      "thabat": "I prayed for your steadfastness, all of you",
-      "jazak": "May Allah reward you all with good",
-      "dhakkarani": "Allah reminded me of you all"
-    },
-    "inviteTitle": "Invite to it",
+    "inviteTitle": "Invite to the circle",
     "inviteLead": "Anyone with the code can join. Change it whenever you like, and the old one stops working.",
     "full": "The circle is full: {{count}} of {{max}}",
     "shareInvite": "Share the code",
@@ -1436,7 +1448,7 @@
       "inviteInvalid": "This code is not valid, or the owner changed it.",
       "full": "This circle is full.",
       "limit": "You are in 5 circles, which is the most.",
-      "cheerSent": "You sent them one today; you can again tomorrow.",
+      "cheerSent": "You sent them this one today; you can again tomorrow.",
       "notFound": "This circle is not available to you.",
       "ownerOnly": "Only the circle's owner can do this.",
       "invalid": "Check what you entered and try again.",
@@ -1447,7 +1459,13 @@
       "invitesActiveLimit": "You have unused invites. Cancel one or wait until it is used.",
       "invitesPeriodLimit": "You have reached this month’s invites. They renew soon.",
       "inviteCircleGone": "Companions is on, but the circle you were invited to is no longer there.",
-      "displayNameRequired": "Write the name to show in the circle."
+      "displayNameRequired": "Write the name to show in the circle.",
+      "roundOpen": "You have a round that has not ended. End it first.",
+      "roundEnded": "This round has ended.",
+      "roundsLimit": "Many rounds today. You can start more tomorrow.",
+      "messagesLimit": "Many messages today. You can send more tomorrow.",
+      "reportsLimit": "Many reports today. Try again tomorrow.",
+      "messageGone": "This message is no longer available."
     },
     "createdToast": "Circle created",
     "joinedToast": "You joined “{{name}}”",
@@ -1480,7 +1498,155 @@
       "revokeBody": "Its code will stop working.",
       "revoked": "Invite cancelled",
       "shareMessage": "I invite you to Companions in the Thekra app.\nInvite code: {{code}}\n{{link}}"
-    }
+    },
+    "weekToday": "Today",
+    "inviteButton": "Invite",
+    "codeCaption": "Invite code",
+    "copyCode": "Copy the code",
+    "codeCopied": "Code copied",
+    "memberActions": "Options for {{name}}",
+    "unmute": "Show {{name}}’s messages",
+    "unmuted": "You will see {{name}}’s messages again",
+    "feed": {
+      "title": "Circle messages",
+      "all": "All",
+      "saved": "Kept",
+      "empty": "No messages yet. Start a round or send a kind word.",
+      "savedEmpty": "You have not kept a message yet. Tap a message, then “Keep it”.",
+      "older": "Older messages",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "toYou": "To you",
+      "toName": "To {{name}}",
+      "toAll": "To the circle",
+      "actions": "Message options",
+      "copy": "Copy",
+      "copied": "Message copied",
+      "keep": "Keep it",
+      "kept": "Kept in “Kept”",
+      "unkeep": "Remove from Kept",
+      "unkept": "Removed from Kept",
+      "keptA11y": "Kept",
+      "reportMessage": "Report the message",
+      "reportMember": "Report {{name}}",
+      "hideMember": "Hide {{name}}’s messages from me",
+      "hidden": "You will not see {{name}}’s messages",
+      "send": "Send a message"
+    },
+    "round": {
+      "start": "Start a round",
+      "sheetTitle": "New round",
+      "kindLabel": "What will you do?",
+      "kinds": {
+        "study": "Study",
+        "focus": "Focus",
+        "habit": "Habit",
+        "reading": "Reading",
+        "listening": "Listening to a lesson",
+        "task": "Task",
+        "sport": "Exercise"
+      },
+      "labelLabel": "On what exactly? (optional)",
+      "labelHint": "For example: chapter three, or a lecture series. The circle’s members see it.",
+      "fromHabits": "From my habits",
+      "minutesLabel": "For how long?",
+      "custom": "Other",
+      "customLabel": "Minutes",
+      "customHint": "From 1 to 240 minutes",
+      "begin": "Start the round",
+      "started": "Round started. May Allah help you",
+      "preview": "They see: {{text}}",
+      "startedLine": "Started a {{kind}} round",
+      "number": "Round {{number}} today",
+      "endsAt": "Ends {{time}}",
+      "timeUp": "Time is up",
+      "running": "Running",
+      "yours": "Your round now",
+      "done": "Done, praise be to Allah",
+      "notDone": "Not done",
+      "endedDone": "May Allah accept it from you",
+      "endedNotDone": "No harm. Next round, in sha Allah",
+      "againTitle": "Another round?",
+      "againSame": "Start the same",
+      "againEdit": "Change",
+      "dismiss": "Not now",
+      "replyOn": "On a {{kind}} round",
+      "replies": {
+        "go": "Good luck, may Allah help you",
+        "with_you": "With you in my prayers",
+        "next_time": "No harm. Next round, in sha Allah",
+        "mashallah": "Masha Allah, may Allah accept it from you",
+        "barak": "May Allah bless your time",
+        "zadak": "May Allah give you more success"
+      },
+      "replyEncourage": "Encourage",
+      "replyCongrats": "Congratulate",
+      "minutes_one": "1 minute",
+      "minutes_other": "{{count}} minutes"
+    },
+    "send": {
+      "title": "Send a message",
+      "lead": "Pick what fits: to the whole circle, or to one member when encouraging or reminding.",
+      "groups": {
+        "progress": "Share your progress",
+        "encourage": "Encourage",
+        "support": "Ask for help",
+        "remind": "Remind and steady"
+      },
+      "to": "To",
+      "noHabitsToday": "No habits ask for anything today, so there is no progress to share.",
+      "progressFrom": "From Today’s practice, as numbers only: no habit is named.",
+      "sent": "Sent",
+      "sentA11y": "Sent today"
+    },
+    "lines": {
+      "progress": "I have done {{done}} of my {{total}} habits today",
+      "progressAll": "All my habits are done today, praise be to Allah",
+      "steady": "Still keeping at it, even if only a little",
+      "back": "Back after a break, praise be to Allah",
+      "thabat": "I prayed for your steadfastness, all of you",
+      "jazak": "May Allah reward you all with good",
+      "dhakkarani": "Allah reminded me of you all",
+      "keep_going": "Keep going, all of you: a small step each day is enough",
+      "ask_dua": "Pray for my steadfastness",
+      "ask_remind": "Remind me of my wird today",
+      "ask_join": "Who starts a round with me now?",
+      "ask_heavy": "My day is heavy; help me with a prayer",
+      "thabbatak": "May Allah keep you all steadfast",
+      "niyya": "Renew your intention before your wird",
+      "dont_break": "Even a little today; do not break it"
+    },
+    "linesTo": {
+      "thabat": "I prayed for your steadfastness",
+      "jazak": "May Allah reward you with good",
+      "dhakkarani": "Allah reminded me of you",
+      "keep_going": "Keep going: a small step each day is enough",
+      "thabbatak": "May Allah keep you steadfast",
+      "niyya": "Renew your intention before your wird",
+      "dont_break": "Even a little today; do not break it"
+    },
+    "report": {
+      "memberTitle": "Report {{name}}",
+      "messageTitle": "Report a message",
+      "lead": "The report reaches the Thekra team only. Nothing is removed automatically, and no one learns that you reported.",
+      "reasonLabel": "Reason",
+      "reasons": {
+        "offensive": "Offensive words",
+        "harassment": "Harassment or pestering",
+        "inappropriate": "Inappropriate content",
+        "spam": "Repeated unwanted messages",
+        "other": "Something else"
+      },
+      "noteLabel": "Details (optional)",
+      "noteHint": "300 characters at most",
+      "mute": "Hide their messages from me",
+      "muteHint": "Their messages stop showing to you, and they are not told. You can show them again in your circle settings.",
+      "submit": "Send the report",
+      "sent": "Your report arrived. May Allah reward you",
+      "sentMuted": "Your report arrived, and their messages are hidden from you"
+    },
+    "rotated": "Code changed; the old one no longer works",
+    "mutedHint": "Their messages are hidden from you"
   },
   "branches": {
     "pageTitle": "The Branches of Faith",
@@ -1544,7 +1710,8 @@
     "sinInPlan": "In your plan",
     "unlock": "Unlock",
     "addToPlan": "Add to your plan",
-    "inPlan": "In your plan"
+    "inPlan": "In your plan",
+    "themeAll": "All"
   },
   "myReminders": {
     "title": "My reminders",
@@ -1905,7 +2072,7 @@
       "prayer-times": "Prayer times",
       "appearance": "Language and appearance",
       "about": "About Thekra",
-      "garden": "The garden"
+      "garden": "Habit garden"
     }
   },
   "habitsTab": {
@@ -1975,7 +2142,9 @@
       "days": "Its days",
       "daysPerWeek": "{{days}} a week",
       "answersTitle": "Your plan",
-      "increasedToast": "One step up. May Allah bless it."
+      "increasedToast": "One step up. May Allah bless it.",
+      "amount": "Amount a day",
+      "amountHint": "You can lighten it at any time; the settling period starts again. Going up is one step, after a steady month."
     },
     "periodic": {
       "peopleHint": "Relatives, parents, neighbours, friends and the sick"
@@ -2095,6 +2264,7 @@
     "unread": "Unread",
     "markRead": "Unread. Tap to mark as read",
     "markUnread": "Read. Tap to mark as unread",
+    "markAction": "Mark as read",
     "filter": {
       "all": "All",
       "unread": "Unread",
@@ -2180,7 +2350,10 @@
       "reviewOffer": "You have not reviewed this week yet. A short pause now lightens what comes after.",
       "reviewStart": "Review that week",
       "eveningDone": "You reviewed that evening",
-      "weeklyDone": "You reviewed that week"
+      "weeklyDone": "You reviewed that week",
+      "nothingWritten": "You wrote nothing about this day.",
+      "written": "You wrote on it",
+      "writtenLegend": "A day you wrote on"
     },
     "learn": {
       "title": "Learn from the slip",
@@ -2444,7 +2617,8 @@
       "remindersTitle": "When you are reminded",
       "editReminders": "Edit times and days",
       "notifications": "Notifications",
-      "notificationsHint": "Device permission and every habit’s reminders"
+      "notificationsHint": "Device permission and every habit’s reminders",
+      "editHabit": "Edit habit"
     },
     "minimum": {
       "title": "Minimum",
@@ -2452,7 +2626,8 @@
       "sheetLead": "On a hard day the habit asks only this. Choose something small you can always do.",
       "savedToast": "Minimum: {{amount}}",
       "clear": "Back to the suggested minimum",
-      "clearedToast": "Suggested minimum restored"
+      "clearedToast": "Suggested minimum restored",
+      "headLine": "Minimum: {{amount}}"
     },
     "return": {
       "title": "Mend it",

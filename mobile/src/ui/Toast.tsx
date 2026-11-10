@@ -3,6 +3,9 @@
  * line at the bottom of the screen, gone by itself after a few seconds, with an optional «تراجع». It is announced to
  * screen readers (VoiceOver/TalkBack announcement; a polite live region on the web) and never takes the focus.
  *
+ * Owner round 7 (R7-A3): the same toast as the website (frontend/src/app/overlays.css) — a white card with a hairline
+ * and a soft lift, the mark in a tinted circle, the line in ink at reading size, the action outlined in the primary.
+ *
  * Use: `toast('حُفظت المحاسبة')` or `toast({ message, actionLabel: t('common.undo'), onAction })` from anywhere
  * (also outside React). `ToastHost` is mounted once in app/_layout.tsx. A new toast replaces the one on screen.
  */
@@ -11,9 +14,8 @@ import React, { useEffect, useRef } from 'react';
 import { AccessibilityInfo, Animated, Platform, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { create } from 'zustand';
-import { CircleCheck } from 'lucide-react-native';
+import { Check, CircleAlert } from 'lucide-react-native';
 import { radius, space, useStyles, useTheme, type Theme } from '@/theme';
-import { MIN_TARGET } from './Button';
 import { Icon } from './Icon';
 import { Text } from './Text';
 
@@ -24,6 +26,8 @@ export interface ToastOptions {
   onAction?: () => void;
   /** Milliseconds on screen (default 3500, 6000 with an action so it can be reached). */
   duration?: number;
+  /** `error` for a failure (destructive mark); `success` (default) otherwise. */
+  tone?: 'success' | 'error';
 }
 
 interface ToastState {
@@ -61,36 +65,38 @@ const makeStyles = (t: Theme) => ({
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
     gap: space.md,
-    minHeight: 52,
-    maxWidth: 520,
+    minHeight: 56,
+    maxWidth: 420,
     width: '100%' as const,
-    paddingStart: space.lg,
-    paddingEnd: space.sm,
-    paddingVertical: space.xs,
+    paddingStart: space.md,
+    paddingEnd: space.md,
+    paddingVertical: space.sm,
     borderRadius: radius.card,
-    backgroundColor: t.dark ? t.colors.muted : t.colors.foreground,
-    borderWidth: t.dark ? 1 : 0,
-    borderColor: t.colors.controlBorder,
-    shadowColor: t.colors.foreground,
-    shadowOpacity: 0.18,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
+    backgroundColor: t.colors.card,
+    borderWidth: 1,
+    borderColor: t.colors.border,
+    shadowColor: '#000000',
+    shadowOpacity: t.dark ? 0.45 : 0.12,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
   },
-  message: { flex: 1, minWidth: 0, paddingVertical: space.sm },
+  mark: { width: 28, height: 28, borderRadius: radius.full, alignItems: 'center' as const, justifyContent: 'center' as const },
+  message: { flex: 1, minWidth: 0, paddingVertical: space.xs },
   action: {
-    minHeight: MIN_TARGET,
-    minWidth: MIN_TARGET,
+    minHeight: 36,
     paddingHorizontal: space.md,
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
     borderRadius: radius.control,
+    borderWidth: 1,
+    borderColor: t.colors.primary,
   },
 });
 
 export function ToastHost() {
   const styles = useStyles(makeStyles);
-  const { colors, dark } = useTheme();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const current = useToastStore((s) => s.current);
   const hide = useToastStore((s) => s.hide);
@@ -117,9 +123,7 @@ export function ToastHost() {
   }, [current, anim, hide]);
 
   if (!current) return null;
-  // Light theme: ink toast with page-coloured words; dark: the raised surface with ink words.
-  const ink = dark ? colors.foreground : colors.background;
-  const actionInk = dark ? colors.link : colors.background;
+  const error = current.tone === 'error';
   return (
     <View pointerEvents="box-none" style={[styles.layer, { bottom: insets.bottom + BOTTOM_GAP }]}>
       <Animated.View
@@ -131,8 +135,10 @@ export function ToastHost() {
           { opacity: anim, transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }) }] },
         ]}
       >
-        <Icon icon={CircleCheck} size={18} color={dark ? colors.link : colors.background} />
-        <Text variant="small" style={[styles.message, { color: ink }]}>
+        <View style={[styles.mark, { backgroundColor: error ? colors.destructiveSoft : colors.primarySoft }]}>
+          <Icon icon={error ? CircleAlert : Check} size={16} strokeWidth={2} tone={error ? 'destructive' : 'link'} />
+        </View>
+        <Text variant="lead" weight="medium" style={styles.message}>
           {current.message}
         </Text>
         {current.actionLabel && current.onAction ? (
@@ -143,9 +149,10 @@ export function ToastHost() {
             }}
             accessibilityRole="button"
             accessibilityLabel={current.actionLabel}
-            style={({ pressed }) => [styles.action, pressed && { opacity: 0.7 }]}
+            hitSlop={{ top: 4, bottom: 4 }}
+            style={({ pressed }) => [styles.action, pressed && { backgroundColor: colors.primarySoft }]}
           >
-            <Text variant="small" weight="semibold" style={{ color: actionInk, textDecorationLine: 'underline' }}>
+            <Text variant="small" weight="medium" tone="link">
               {current.actionLabel}
             </Text>
           </Pressable>

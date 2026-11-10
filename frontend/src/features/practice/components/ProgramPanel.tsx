@@ -50,6 +50,7 @@ import { EvidenceQuotes } from './EvidenceQuotes';
 import { FixItSheet } from './FixItSheet';
 import { SinLoops } from './LoopBuilder';
 import { RowMenu } from './RowMenu';
+import { ProgramPrivacyDialog } from './lighten/ProgramPrivacy';
 import { StoryLine } from './hub/KnowledgeCards';
 import { TriggerChips } from './TriggerChips';
 
@@ -104,6 +105,10 @@ export function ProgramPanel({ program, entry, common, name, habits, quotes, tod
   const fell = view.today?.value === 'fell_repented' && afterFall(program) === 'fixit';
   const limitLabel = useLimitLabel(actions);
   const [fixOpen, setFixOpen] = useState(false);
+  const [privacyOpen, setPrivacyOpen] = useState(false);
+  const tPrivacy = useTranslations('leaveSin.privacy');
+  // Round 7 (C6): started without a privacy code — on this device only until one is set.
+  const noCode = vault.isSuccess && vault.data === null;
   const [tab, setTab] = useState<ProgramTab>('today');
   const counters = programCounters(program, today);
   const todayLimit = limitForToday(program, today);
@@ -141,6 +146,7 @@ export function ProgramPanel({ program, entry, common, name, habits, quotes, tod
         action={
           <RowMenu
             label={t('menu')}
+            edit={{ label: tPrivacy('menu'), onSelect: () => setPrivacyOpen(true) }}
             remove={{
               label: t('end.button'),
               confirmTitle: t('end.confirmTitle'),
@@ -170,8 +176,17 @@ export function ProgramPanel({ program, entry, common, name, habits, quotes, tod
             </span>
             <InfoTip>{pathLong}</InfoTip>
           </p>
+          {noCode ? (
+            <p className="flex flex-wrap items-center gap-x-2 text-sm leading-7 text-muted-foreground">
+              <span>{tPrivacy('deviceOnly')}</span>
+              <button type="button" className="text-link min-h-11" onClick={() => setPrivacyOpen(true)}>
+                {tPrivacy('hideWithCode')}
+              </button>
+            </p>
+          ) : null}
         </div>
       </TitleRow>
+      <ProgramPrivacyDialog open={privacyOpen} onOpenChange={setPrivacyOpen} />
 
       <SegmentTabs
         aria-label={t('tabsLabel')}

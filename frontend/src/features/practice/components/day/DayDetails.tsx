@@ -75,7 +75,8 @@ export function DayDetailsPanel({ context, heart, date, bare = false }: DayDetai
   const { snapshot, today, planDays } = context;
   const { store } = snapshot;
   const details = useMemo(() => dayDetails(store, date, today, planDays), [store, date, today, planDays]);
-  const rows = details.habits.filter((h) => (h.state !== 'notAsked' && h.state !== 'archived') || h.done > 0);
+  // A day the habit did not ask for still shows when something was logged or written on it (round 7, C4).
+  const rows = details.habits.filter((h) => (h.state !== 'notAsked' && h.state !== 'archived') || h.done > 0 || h.reflection !== null);
   const slipped = rows.filter((h) => countsAsNotDone(h.state));
   const fardMarked = FARD_PRAYERS.filter((p) => details.fard[p] !== null);
   const labels = FARD_LABELS[locale];
@@ -215,7 +216,10 @@ export function StateChip({ state, label }: { state: DayLogState; label: string 
   );
 }
 
-/** The two answers and the day note, as short quoted lines. */
+/**
+ * What was written on a day (round 7, C4): the two answers and the day note, each under its own question, in one quiet
+ * bordered card with hairlines between them — the member's words in full, nothing added.
+ */
 export function ReflectionLines({ reflection, sin = false }: { reflection: Pick<Reflection, 'helped' | 'hard' | 'note'>; sin?: boolean }) {
   const t = useTranslations('practice.reflection');
   const items = [
@@ -225,11 +229,11 @@ export function ReflectionLines({ reflection, sin = false }: { reflection: Pick<
   ].filter((x): x is { key: string; label: string; text: string } => x !== null);
   if (items.length === 0) return null;
   return (
-    <dl className="flex flex-col gap-1.5 border-s-2 border-border ps-3 text-sm leading-7">
+    <dl className="flex flex-col divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
       {items.map((item) => (
-        <div key={item.key}>
-          <dt className="inline text-muted-foreground">{item.label} </dt>
-          <dd className="inline break-words">{item.text}</dd>
+        <div key={item.key} className="flex flex-col gap-1 px-4 py-3">
+          <dt className="text-[13px] leading-6 text-muted-foreground">{item.label}</dt>
+          <dd className="text-base leading-7 break-words whitespace-pre-line">{item.text}</dd>
         </div>
       ))}
     </dl>
@@ -362,6 +366,38 @@ export function DayDetailsDialog({ context, heart, date, onClose }: { context: W
           <DialogDescription className="sr-only">{t('dialogNote')}</DialogDescription>
         </DialogHeader>
         <div className="min-h-0 flex-1 overflow-y-auto pe-1">{date ? <DayDetailsPanel context={context} heart={heart} date={date} bare /> : null}</div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/**
+ * One habit's day, opened from the habit page's «آخر 30 يومًا» (round 7, C4): its state and amount, «هل فعلتها؟» while
+ * the day can still be answered, and what was written that day (the two answers and the note).
+ */
+export function HabitDayDialog({ context, plan, date, onClose }: { context: WirdContext; plan: Plan; date: string | null; onClose: () => void }) {
+  const locale = useLocale() === 'en' ? 'en' : 'ar';
+  const t = useTranslations('practice.dayDetails');
+  const { snapshot, today, planDays } = context;
+  const row = useMemo(
+    () => (date ? (dayDetails(snapshot.store, date, today, planDays).habits.find((h) => h.planId === plan.id) ?? null) : null),
+    [snapshot.store, date, today, planDays, plan.id],
+  );
+  return (
+    <Dialog open={date !== null} onOpenChange={(open) => (open ? undefined : onClose())}>
+      <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col gap-4 sm:max-w-md">
+        <DialogHeader className="pe-8">
+          <DialogTitle className="leading-8">{date ? formatGregorian(date, locale, true) : null}</DialogTitle>
+          <DialogDescription className="sr-only">{t('dialogNote')}</DialogDescription>
+        </DialogHeader>
+        <div className="min-h-0 flex-1 overflow-y-auto pe-1">
+          {date && row ? (
+            <ul className="flex flex-col">
+              <HabitDayRow row={row} plan={plan} context={context} date={date} />
+            </ul>
+          ) : null}
+          {date && row && !row.reflection ? <p className="text-sm leading-7 text-muted-foreground">{t('nothingWritten')}</p> : null}
+        </div>
       </DialogContent>
     </Dialog>
   );

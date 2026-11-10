@@ -3,12 +3,12 @@
  * from frontend/src/app/globals.css); no remote images, no fonts from the network. Logical properties only.
  */
 :root {
-  --background: #fffcf9;
+  --background: #fbfcfb;
   --foreground: #263d35;
-  --muted-foreground: #64746c;
+  --muted-foreground: #5c6c64;
   --border: #dce3db;
   --primary: #326c59;
-  --gold: #8f6514;
+  --streak: #2a7158;
   --pathway-flourish: #d9e5d8;
   --muted: #edf4ef;
   color-scheme: light dark;
@@ -17,11 +17,11 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #101010;
-    --foreground: #eeede9;
-    --muted-foreground: #aaa9a4;
+    --foreground: #eceeed;
+    --muted-foreground: #a7aba9;
     --border: #333532;
     --primary: #326c59;
-    --gold: #e0b555;
+    --streak: #9fd4bc;
     --pathway-flourish: #1e1f1e;
     --muted: #1e1f1e;
   }
@@ -120,7 +120,7 @@ body.plain {
 }
 
 .streak {
-  color: var(--gold);
+  color: var(--streak);
   font-variant-numeric: tabular-nums;
 }
 

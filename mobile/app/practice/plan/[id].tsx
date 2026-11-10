@@ -1,13 +1,14 @@
 /**
  * The habit page (owner round 6, §3; C-02e a, C-27 a, C-01b; the reference's layout, our kit). Logging and a day note
  * ARE here (the owner overrides F-31).
- * - A tinted head card: today's amount, its days and times, «تعديل» on its line; the header «⋯» holds «أرشِف» (with
+ * - A tinted head card: today's amount, its days and times and «القدر الأدنى», «تعديل العادة» on its line (round 7, C3:
+ *   times, days, amount and minimum in ONE sheet; the minimum is not repeated lower down); the header «⋯» holds «أرشِف» (with
  *   the 3-day note) and «احذف» (confirmed). An archived habit says so and offers «أعِدها» (archive = the old pause).
  * - Reference tabs «المتابعة · حلقة العادة · التذكيرات · العودة بعد انقطاع» (`?tab=follow|loop|reminders|return`):
  *   - المتابعة: today's log (the whole amount, «+1», a typed part, «صحّح السجل»), the day note and the two optional
  *     questions «ما الذي أعانك على الالتزام؟» / «ما الذي صعّب عليك؟» (practice-core `setReflection`, shown in «سجلّي»),
- *     «القدر الأدنى» (`setMinimum`: the floor a hard day asks, never lowered further), the completion and its
- *     milestones, «آخر 30 يومًا», «زِد خطوة» / the lighter step when due, and «آيات وأحاديث تعينك على هذه الطاعة»;
+ *     the completion and its milestones, «آخر 30 يومًا» (a day opens what was logged and written on it, round 7 C4),
+ *     «زِد خطوة» / the lighter step when due, and «آيات وأحاديث تعينك على هذه الطاعة»;
  *   - حلقة العادة: the member's loops (own form; the two answers of «أضف» are its first loop);
  *   - التذكيرات: the times and days, edited in ONE sheet, the deed-window fix, and the link to «التنبيهات»;
  *   - العودة بعد انقطاع: «صلّحها» when the gap condition holds (the make-up good deed after two missed days), the
@@ -15,7 +16,7 @@
  * Sections are divided by the flower divider; every save toasts.
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -24,7 +25,6 @@ import {
   addHabitLoop,
   ANCHOR_LABELS,
   archiveNote,
-  baseAmount,
   correctLog,
   decreaseTo,
   deletePlan,
@@ -36,7 +36,6 @@ import {
   isArchived,
   isCustomPeriodic,
   isPrayerAnchor,
-  LADDER,
   logForDay,
   makeUpOffer,
   minimumOf,
@@ -49,7 +48,6 @@ import {
   REFLECTION_TEXT_MAX,
   removeHabitLoop,
   restorePlanInStore,
-  setMinimum,
   setReflection,
   shareSuggestion,
   slotChoices,
@@ -85,10 +83,8 @@ import { LoopsPanel } from '@/components/practice/loops/LoopsPanel';
 import { radius, space, useStyles, type Theme } from '@/theme';
 import {
   ActionMenu,
-  BottomSheet,
   Button,
   ButtonPair,
-  Chip,
   EmptyState,
   Field,
   ListRow,
@@ -161,6 +157,10 @@ export default function PlanScreen() {
   const rule = planRule(plan, habits);
   const slotWords = slotChoices(plan).map((s) => (isPrayerAnchor(s) ? ANCHOR_LABELS[lang][s] : show(s)));
   const schedule = [rule ? ruleWords(rule, t, locale, names.weekday) : null, slotWords.join(lang === 'ar' ? '، ' : ', ')].filter(Boolean).join(' · ');
+  // A periodic act is a reminder, not a commitment (C-10 / C-17): no minimum. Round 7 (C3): the minimum is shown here,
+  // in the head, and edited from «تعديل العادة» only.
+  const periodicAct = isCustomPeriodic(plan) || habit?.kind === 'periodic';
+  const headLine = periodicAct ? schedule : [schedule, t('habitsHub.minimum.headLine', { amount: amountLabel(minimumOf(plan)) })].filter(Boolean).join(' · ');
 
   function update(fn: (p: Plan) => Plan) {
     setStore((s) => updatePlan(s, id as string, fn));
@@ -189,7 +189,7 @@ export default function PlanScreen() {
   const renderMenu = () => (
     <ActionMenu
       items={[
-        { label: t('habitsHub.plan.edit'), icon: PencilLine, onPress: () => setEditing(true) },
+        { label: t('habitsHub.plan.editHabit'), icon: PencilLine, onPress: () => setEditing(true) },
         archived
           ? { label: t('habitsHub.archive.restore'), icon: RotateCcw, onPress: handleRestore }
           : { label: t('habitsHub.archive.action'), icon: Archive, hint: t('habitsHub.archive.menuHint'), onPress: () => setArchiving(true) },
@@ -208,9 +208,7 @@ export default function PlanScreen() {
     />
   );
   const archiveInfo = archived ? archiveLine(archiveNote(plan, d)) : null;
-  // A periodic act is a reminder, not a commitment (C-10 / C-17): it keeps «المتابعة» and «التذكيرات» only — no habit
-  // loop, no «العودة بعد انقطاع», no daily questions or minimum.
-  const periodicAct = isCustomPeriodic(plan) || habit?.kind === 'periodic';
+  // A periodic act keeps «المتابعة» and «التذكيرات» only — no habit loop, no «العودة بعد انقطاع», no daily questions.
   const tabs: readonly Tab[] = periodicAct ? ['follow', 'reminders'] : TABS;
   const shownTab: Tab = tabs.includes(tab) ? tab : 'follow';
 
@@ -225,10 +223,10 @@ export default function PlanScreen() {
           <View style={styles.grow}>
             <Text variant="title">{amountLabel(view.required)}</Text>
             <Text variant="small" tone="muted">
-              {schedule}
+              {headLine}
             </Text>
           </View>
-          <Button label={t('habitsHub.plan.edit')} variant="outline" size="sm" onPress={() => setEditing(true)} />
+          <Button label={t('habitsHub.plan.editHabit')} icon={PencilLine} variant="outline" size="sm" onPress={() => setEditing(true)} />
         </View>
         {archived && archiveInfo ? (
           <>
@@ -256,6 +254,9 @@ export default function PlanScreen() {
         visible={editing}
         plan={plan}
         title={title}
+        today={d}
+        amountLabel={amountLabel}
+        withAmounts={!periodicAct}
         window={habit?.window}
         ruleWeekdays={weekdays}
         onClose={() => setEditing(false)}
@@ -286,7 +287,6 @@ function FollowTab({ plan, title, amountLabel, archived, periodicAct }: TabProps
   const inCircle = (useMyCircles().data?.length ?? 0) > 0;
   const [fixing, setFixing] = useState(false);
   const [relapseDismissed, setRelapseDismissed] = useState(false);
-  const [minOpen, setMinOpen] = useState(false);
   const d = today();
   const view = planView(plan, d);
   const completion = habitCompletion(plan, d);
@@ -321,8 +321,6 @@ function FollowTab({ plan, title, amountLabel, archived, periodicAct }: TabProps
         <>
           <ReflectionForm plan={plan} />
 
-          <SectionDivider />
-          <ListRow title={t('habitsHub.minimum.title')} hint={t('habitsHub.minimum.hint')} value={amountLabel(minimumOf(plan))} chevron last onPress={() => setMinOpen(true)} />
         </>
       )}
 
@@ -399,7 +397,6 @@ function FollowTab({ plan, title, amountLabel, archived, periodicAct }: TabProps
         moreHref={habit ? `/good-deeds/${habit.deed}` : undefined}
       />
 
-      <MinimumSheet plan={plan} visible={minOpen} amountLabel={amountLabel} onClose={() => setMinOpen(false)} />
     </>
   );
 }
@@ -439,47 +436,6 @@ function ReflectionForm({ plan }: { plan: Plan }) {
         />
       </View>
     </Section>
-  );
-}
-
-/** «القدر الأدنى»: a ladder step not above the everyday amount; «الافتراضي» clears it (the old «أقل ما يمكن»). */
-function MinimumSheet({ plan, visible, amountLabel, onClose }: { plan: Plan; visible: boolean; amountLabel: (n: number) => string; onClose: () => void }) {
-  const { t } = useTranslation();
-  const setStore = usePracticeStore((s) => s.setStore);
-  const base = baseAmount(plan);
-  const choices = useMemo(() => LADDER.filter((v) => v <= base), [base]);
-  const current = plan.minimum ?? null;
-  return (
-    <BottomSheet visible={visible} title={t('habitsHub.minimum.title')} onClose={onClose}>
-      <Text variant="small" tone="muted">
-        {t('habitsHub.minimum.sheetLead')}
-      </Text>
-      <Wrap>
-        {choices.map((v) => (
-          <Chip
-            key={v}
-            label={amountLabel(v)}
-            selected={current === v}
-            onPress={() => {
-              setStore((s) => updatePlan(s, plan.id, (p) => setMinimum(p, v)));
-              toast(t('habitsHub.minimum.savedToast', { amount: amountLabel(v) }));
-              onClose();
-            }}
-          />
-        ))}
-      </Wrap>
-      {current !== null ? (
-        <Button
-          label={t('habitsHub.minimum.clear')}
-          variant="ghost"
-          onPress={() => {
-            setStore((s) => updatePlan(s, plan.id, (p) => setMinimum(p, null)));
-            toast(t('habitsHub.minimum.clearedToast'));
-            onClose();
-          }}
-        />
-      ) : null}
-    </BottomSheet>
   );
 }
 

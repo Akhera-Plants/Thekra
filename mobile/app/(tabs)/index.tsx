@@ -4,7 +4,8 @@
  * habit not logged yet, logging right here) and then the doors right away (practice-core `visibleHomeSections`), then the rest. A member's
  * own order and choice (synced with the account) is kept. «خصّص الرئيسية» lives only in the settings («اللغة والمظهر»):
  * no button on the page. «نص اليوم» is gone. Sections: «ورد اليوم», «شعبة الأسبوع», «مناسبة قريبة», «أبواب الخير»,
- * «في لحظات مثل هذه» (from the API), «تذكرة مختارة», «المصادر» (src/components/home/HomeSections.tsx). The flower divider
+ * «في لحظات مثل هذه» (from the API), «تذكرة مختارة» (src/components/home/HomeSections.tsx); «المصادر» is web only (round
+ * 7, B9). The flower divider
  * sits between visible sections only. The device-local «شعبة الأسبوع» switch moves once into the synced sections
  * (src/lib/home/home-edit.ts).
  */
@@ -12,7 +13,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { setHomeSections, visibleHomeSections } from '@thekra/practice-core';
-import { weekBranchMigration } from '@/lib/home/home-edit';
+import { isAppHomeSection, weekBranchMigration } from '@/lib/home/home-edit';
 import { usePracticeStore } from '@/lib/practice/practice-store';
 import { useHubDays } from '@/lib/practice/use-habits-hub';
 import { useAuthStore } from '@/lib/stores/auth-store';
@@ -45,7 +46,8 @@ export default function HomeScreen() {
     void qc.refetchQueries({ type: 'active' }).finally(() => setRefreshing(false));
   }, [qc]);
 
-  const sections = visibleHomeSections(stored, member).filter(shows);
+  // «المصادر» («تذكير تعرف مصدره») is for the website only (owner round 7, B9).
+  const sections = visibleHomeSections(stored, member).filter(isAppHomeSection).filter(shows);
   return (
     <Screen refreshing={refreshing} onRefresh={handleRefresh}>
       <AppHeader />

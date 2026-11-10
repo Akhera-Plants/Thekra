@@ -3,7 +3,7 @@
  * - «رسائلي إلى نفسي» as a clear entry at the top (the list screen: add / edit / delete, at most 10);
  * - «عاداتك» with the ONE «أضف عادة» and the line «3 عادات كحد أقصى»; each habit with its completion (practice-core
  *   `habitCompletion`) as a thin bar and a percent, and its milestone lines «تعدّيت أصعب فترة» / «صنعت العادة» /
- *   «شارك تطورك مع الرفقة» (the last for circle members only); «⋯» holds «أرشِف» (with the 3-day note) and «احذف»
+ *   «شارك تطورك مع الصحبة» (the last for circle members only); «⋯» holds «أرشِف» (with the 3-day note) and «احذف»
  *   (confirmed); the «رسخت؟» offer when practice-core offers it;
  * - the «تخفّف» programs as habits of type «تخفّف» (practice-core `habitListRows`): a neutral covered row by default
  *   — never a sin's name, never blurred — and a tap asks the device lock first (`useProgramReveal`);
@@ -95,9 +95,15 @@ export function HabitsListTab({ today }: { today: LocalDate }) {
   const [limitOpen, setLimitOpen] = useState(false);
   const isPeriodicAct = (p: Plan) => habitFor(p, habits)?.kind === 'periodic';
   const rows = useMemo(
-    () => habitListRows(store, store.programs.length > 0 ? store.programs : null, { isPeriodicAct, hasPrograms: reveal.hasPrograms }),
+    () =>
+      habitListRows(store, store.programs.length > 0 ? store.programs : null, {
+        isPeriodicAct,
+        hasPrograms: reveal.hasPrograms,
+        // Round 7 (C6): no privacy code → nothing to unlock, so the programs show like any habit.
+        ...(reveal.noCode ? { covered: false } : {}),
+      }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [store, habits, reveal.hasPrograms],
+    [store, habits, reveal.hasPrograms, reveal.noCode],
   );
   const habitRows = rows.filter((r) => r.kind === 'habit');
   const lightenRows = rows.filter((r) => r.kind === 'lighten');

@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { useConfirm } from '@/components/ui/confirm-dialog';
 import { Pencil, Trash2, Plus, Check, X } from 'lucide-react';
 import type { QuoteDetailDto } from '@/lib/types/api';
 
@@ -28,6 +29,8 @@ interface EditState {
 
 export function TranslationEditor({ quoteId, allTranslations = [] }: TranslationEditorProps) {
   const t = useTranslations('admin');
+  // Our own confirmation, never window.confirm (owner round 7, R7-A2).
+  const { confirm, dialog } = useConfirm();
   const [editing, setEditing] = useState<EditState | null>(null);
   const [adding, setAdding] = useState(false);
   const [newLang, setNewLang] = useState('en');
@@ -135,9 +138,9 @@ export function TranslationEditor({ quoteId, allTranslations = [] }: Translation
                     aria-label={t('common.delete')}
                     disabled={isRemoving}
                     onClick={() => {
-                      if (window.confirm(t('common.confirmDelete'))) {
-                        remove(languageCode);
-                      }
+                      void confirm({ title: t('common.confirmDelete'), confirmLabel: t('common.delete'), tone: 'destructive' }).then(
+                        (ok) => ok && remove(languageCode),
+                      );
                     }}
                   >
                     <Trash2 className="h-3.5 w-3.5" aria-hidden />
@@ -186,6 +189,7 @@ export function TranslationEditor({ quoteId, allTranslations = [] }: Translation
           </div>
         </>
       )}
+      {dialog}
     </section>
   );
 }

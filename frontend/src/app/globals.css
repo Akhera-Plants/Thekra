@@ -3,6 +3,7 @@
 @import "shadcn/tailwind.css";
 @import "./site-public.css";
 @import "./site-round6.css";
+@import "./overlays.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -71,8 +72,11 @@
   --color-intent-good-deed-foreground: var(--intent-good-deed-foreground);
   --color-intent-iman-branch: var(--intent-iman-branch);
   --color-intent-iman-branch-foreground: var(--intent-iman-branch-foreground);
-  /* Streak flame («ورد اليوم», «سجلّي»): warm gold, never red. ≥ 4.5:1 on background, card and muted in both themes. */
-  --color-gold: var(--gold);
+  /* Streak flame («ورد اليوم», «سجلّي»): a bright green of the brand family (owner round 7, R7-A1: no gold), never red.
+     ≥ 4.5:1 on background, card and muted in both themes. */
+  --color-streak: var(--streak);
+  /* Modal veil (dialogs, sheets) and the overlays' lifted shadow. */
+  --color-overlay: var(--overlay);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -127,12 +131,16 @@
 
 :root {
   --radius: 0.625rem;
-  /* Viridian/Shell public identity (thekra-source) — semantic names unchanged */
-  --background: #fffcf9;
+  /* Viridian/Shell public identity (thekra-source) — semantic names unchanged.
+     Owner round 7 (R7-A1): the green stays; the cream/ivory/gold that came with it is gone. The page is a near-white
+     with the faintest cool cast, cards and popovers are white, light text on the green is pure white, and what was gold
+     (good deeds, «حسن», the streak, lit stars) is a deep teal/green of the same family. mobile/src/theme/palette.ts
+     and extension/src/{popup,newtab}/*.css carry the same values. */
+  --background: #fbfcfb;
   --foreground: #263d35;
-  --card: #fffefd;
+  --card: #ffffff;
   --card-foreground: #263d35;
-  --popover: #fffefd;
+  --popover: #ffffff;
   --popover-foreground: #263d35;
   --secondary: #edf4ef;
   --secondary-foreground: #263d35;
@@ -152,7 +160,7 @@
   --primary-text: #326c59;
   --ring: #41816d;
   --destructive: #a0443a;
-  --destructive-foreground: #fffcf9;
+  --destructive-foreground: #ffffff;
   --chart-1: #dce3db;
   --chart-2: #64746c;
   --chart-3: #41816d;
@@ -168,11 +176,15 @@
   --sidebar-ring: var(--ring);
   --intent-sin: #326c59;
   --intent-sin-foreground: #ffffff;
-  --intent-good-deed: #8a6a2f;
+  /* Deep teal (was gold #8a6a2f): 6.5:1 with white, 5.8:1 on --muted. */
+  --intent-good-deed: #2a6670;
   --intent-good-deed-foreground: #ffffff;
   --intent-iman-branch: #3d4a5c;
   --intent-iman-branch-foreground: #ffffff;
-  --gold: #8f6514;
+  /* 5.7:1 on the page, 5.2:1 on --muted. */
+  --streak: #2a7158;
+  --overlay: rgb(24 40 34 / 0.42);
+  --overlay-shadow: rgb(24 40 34 / 0.16);
   --grade-sahih: var(--intent-sin);
   --grade-sahih-foreground: var(--intent-sin-foreground);
   --grade-hasan: var(--intent-good-deed);
@@ -181,20 +193,20 @@
   --grade-daif-foreground: #263d35;
   --grade-mawdu: var(--destructive);
   --grade-mawdu-foreground: var(--destructive-foreground);
-  --folio: #fffefd;
+  --folio: #ffffff;
   --folio-edge: #dce3db;
   --folio-ink: #263d35;
   --thread: color-mix(in srgb, #326c59 40%, transparent);
   --star: color-mix(in srgb, #64746c 35%, transparent);
-  --star-lit: #8a6a2f;
-  --star-lit-glow: color-mix(in srgb, #8a6a2f 55%, transparent);
+  --star-lit: #2a7158;
+  --star-lit-glow: color-mix(in srgb, #2a7158 45%, transparent);
   --shelf: #263d35;
   --spine-shade: color-mix(in srgb, #000 30%, transparent);
   --spine-sheen: color-mix(in srgb, #fff 10%, transparent);
   /* Public pathway cards (site-public.css). Same value in light and dark. */
   --pathway-shadow: #203a2a09;
-  --pathway-return-ink: #eef4ef;
-  --pathway-return-cta: #eef4ef;
+  --pathway-return-ink: #ffffff;
+  --pathway-return-cta: #ffffff;
   --pathway-return-cta-ink: #285542;
   --pathway-return-cta-border: #bdd4c7;
   --pathway-return-cta-hover: #ffffff0b;
@@ -204,21 +216,22 @@
 
 .dark {
   --featured-full-shadow: rgb(0 0 0 / .45);
+  /* Neutral greys, no warm cast (R7-A1). */
   --background: #101010;
-  --foreground: #eeede9;
+  --foreground: #eceeed;
   --card: #181818;
-  --card-foreground: #eeede9;
+  --card-foreground: #eceeed;
   --popover: #181818;
-  --popover-foreground: #eeede9;
+  --popover-foreground: #eceeed;
   --secondary: #1e1f1e;
-  --secondary-foreground: #eeede9;
+  --secondary-foreground: #eceeed;
   --muted: #1e1f1e;
-  --muted-foreground: #aaa9a4;
+  --muted-foreground: #a7aba9;
   --accent: #242524;
-  --accent-foreground: #eeede9;
+  --accent-foreground: #eceeed;
   --border: #333532;
   --input: #333532;
-  --control-border: #70726e;
+  --control-border: #6f7371;
   --primary: #326c59;
   --primary-foreground: #ffffff;
   /* --primary on #101010 is 3.1:1; text uses the site's dark accent (9.4:1) while solid fills keep --primary (W-16). */
@@ -228,10 +241,10 @@
   --destructive: #d46e62;
   --destructive-foreground: #101010;
   --chart-1: #333532;
-  --chart-2: #aaa9a4;
+  --chart-2: #a7aba9;
   --chart-3: #8bc2aa;
   --chart-4: #41816d;
-  --chart-5: #eeede9;
+  --chart-5: #eceeed;
   --sidebar: var(--background);
   --sidebar-foreground: var(--foreground);
   --sidebar-primary: var(--primary);
@@ -242,26 +255,28 @@
   --sidebar-ring: var(--ring);
   --intent-sin: #8bc2aa;
   --intent-sin-foreground: #101010;
-  --intent-good-deed: #c4a35a;
+  --intent-good-deed: #86bfc6;
   --intent-good-deed-foreground: #101010;
   --intent-iman-branch: #9aa3b2;
   --intent-iman-branch-foreground: #101010;
-  --gold: #e0b555;
+  --streak: #9fd4bc;
+  --overlay: rgb(0 0 0 / 0.6);
+  --overlay-shadow: rgb(0 0 0 / 0.5);
   --grade-sahih: var(--intent-sin);
   --grade-sahih-foreground: var(--intent-sin-foreground);
   --grade-hasan: var(--intent-good-deed);
   --grade-hasan-foreground: var(--intent-good-deed-foreground);
-  --grade-daif: #6a6a66;
-  --grade-daif-foreground: #eeede9;
+  --grade-daif: #686c6a;
+  --grade-daif-foreground: #eceeed;
   --grade-mawdu: var(--destructive);
   --grade-mawdu-foreground: var(--destructive-foreground);
   --folio: #181818;
   --folio-edge: #333532;
-  --folio-ink: #eeede9;
+  --folio-ink: #eceeed;
   --thread: color-mix(in srgb, #8bc2aa 40%, transparent);
-  --star: color-mix(in srgb, #eeede9 28%, transparent);
-  --star-lit: #c4a35a;
-  --star-lit-glow: color-mix(in srgb, #c4a35a 50%, transparent);
+  --star: color-mix(in srgb, #eceeed 28%, transparent);
+  --star-lit: #9fd4bc;
+  --star-lit-glow: color-mix(in srgb, #9fd4bc 45%, transparent);
   --shelf: #1e1f1e;
 }
 /* 🎨 ---------------------------- END SWAP POINT ---------------------------- */
@@ -310,15 +325,15 @@
    These are page-agnostic. Dark versions of the path tones for printed-book feel. */
 .book-cloth-a {
   background: oklch(0.32 0.06 262); /* Ink-slate dark — branches */
-  color: oklch(0.97 0.004 90);
+  color: oklch(0.99 0 0);
 }
 .book-cloth-b {
-  background: oklch(0.38 0.09 58);  /* Amber dark — good deeds */
-  color: oklch(0.97 0.004 90);
+  background: oklch(0.36 0.06 200); /* Deep teal — good deeds (was amber, R7-A1) */
+  color: oklch(0.99 0 0);
 }
 .book-cloth-c {
-  background: oklch(0.34 0.07 195); /* Verdigris dark — sins */
-  color: oklch(0.97 0.004 90);
+  background: oklch(0.34 0.07 165); /* Verdigris dark — sins */
+  color: oklch(0.99 0 0);
 }
 
 

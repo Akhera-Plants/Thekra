@@ -1,0 +1,31 @@
+import { PrismaService } from '../../prisma/prisma.service.js';
+import { PushService } from '../push/push.service.js';
+import { type PracticeChangesDto } from './practice-sync.js';
+export declare const SYNC_OVERLAP_MS = 30000;
+export declare class PracticeSyncService {
+    private readonly prisma;
+    private readonly push;
+    constructor(prisma: PrismaService, push: PushService);
+    changes(userId: string, since: Date | null): Promise<PracticeChangesDto>;
+    sync(userId: string, body: unknown): Promise<PracticeChangesDto>;
+    private assertUser;
+    private serverTime;
+    private resolvePlans;
+    private resolveRelatives;
+    private settingsWin;
+    private upsertSettings;
+    private upsertPlans;
+    private upsertLogs;
+    private upsertRelatives;
+    private upsertContacts;
+    private resolveFard;
+    private upsertFard;
+    private archivedCount;
+    private assertLimits;
+    private resolveReflections;
+    private upsertReflections;
+    private resolveQadaLogs;
+    private upsertQadaLogs;
+    private resolveReads;
+    private upsertReads;
+}

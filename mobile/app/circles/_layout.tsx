@@ -1,5 +1,5 @@
 /**
- * Stack for «رفقة»: the list, start a circle, join with a code (also the `thekra://circles/join?code=` link), my
+ * Stack for «صحبة»: the list, start a circle, join with a code (also the `thekra://circles/join?code=` link), my
  * invites, a personal invite (`thekra://circles/invite/<code>`, round 6), a circle and my settings in it. The native header shows only Back; each screen shows its own title.
  */
 

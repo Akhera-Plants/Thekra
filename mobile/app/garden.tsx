@@ -1,5 +1,5 @@
 /**
- * «بستاني», a pushed screen opened from «سجلّي»: a calm garden that grows with the user's presence. One plant per
+ * «بستان العادات» (round 7, C7; was «بستاني» / «الحديقة»), a pushed screen opened from «سجلّي»: a calm garden that grows with the user's presence. One plant per
  * habit plan, and one for صلة الرحم when relatives exist; never anything for the sin program. A plant grows with the
  * days anything was logged for it, never shrinks, and rests with the user on «يومي ثقيل» (src/lib/practice/garden.ts).
  * No failure words, no public counter: the garden lives in the device store and only its owner sees it.

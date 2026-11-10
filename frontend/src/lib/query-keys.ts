@@ -69,7 +69,7 @@ export const queryKeys = {
     occasions: (p: OccasionsQuery) => ['calendar', 'occasions', p] as const,
     /** Per account, so a sign-in as someone else never reads the previous account's vault from the cache. */
     vault: (userId: string) => ['me', 'sin-vault', userId] as const,
-    /** «رفقة» access (per account): whether it is on and whether I am in a circle. */
+    /** «صحبة» access (per account): whether it is on and whether I am in a circle. */
     circleAccess: (userId: string) => ['circles', 'access', userId] as const,
   },
   /** Web push: the public config, and this browser's permission and subscription (not server data). */

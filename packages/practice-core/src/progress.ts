@@ -1,7 +1,7 @@
 /**
  * A habit's completion and milestones (owner round 6, C-02b; docs/plan/2026-11-09-owner-round-6.md §2 «العادات»): the
  * percentage of the way to a made habit, and the milestone lines «تعدّيت أصعب فترة», «صنعت العادة» and the suggestion
- * «شارك تطورك مع الرفقة». Keys only; the clients own the words.
+ * «شارك تطورك مع الصحبة». Keys only; the clients own the words.
  *
  * Rules (from the ladder in `plan.ts`, research notes docs/research/anas-sheikh-akrim/4EkrbmmIlno-analysis.md §4):
  * - **Completion**: kept days (archive days left out, from the restart after a long archive) over
@@ -10,7 +10,7 @@
  * - **`hardest-passed` «تعدّيت أصعب فترة»**: the first hold of the ladder ({@link HOLD_DAYS}, 28 days: «اثبت على البداية
  *   شهرًا قبل أي زيادة») kept with at least {@link HARDEST_ADHERENCE} (50%, the «جيد» band) of its asked days logged.
  * - **`habit-made` «صنعت العادة»**: the habit was marked «راسخة» (`establishedOn`), offered by `graduationReady`.
- * - **share** «شارك تطورك مع الرفقة»: suggested for {@link SHARE_SUGGEST_DAYS} days after a milestone (the client shows it
+ * - **share** «شارك تطورك مع الصحبة»: suggested for {@link SHARE_SUGGEST_DAYS} days after a milestone (the client shows it
  *   only to a member of a circle).
  * - **Per-habit streak**: asked days in a row with something logged that counts (the «قضاء» rule of `streak.ts`), from
  *   the habit's progress start; excused days and days it does not ask pass through; today and a yesterday that can
@@ -27,7 +27,7 @@ import { isExcused, type Store } from './storage.js';
 
 /** Share of the first hold's asked days that must be logged for «تعدّيت أصعب فترة». */
 export const HARDEST_ADHERENCE = 0.5;
-/** Days after a milestone during which «شارك تطورك مع الرفقة» is suggested. */
+/** Days after a milestone during which «شارك تطورك مع الصحبة» is suggested. */
 export const SHARE_SUGGEST_DAYS = 7;
 
 export type MilestoneKey = 'hardest-passed' | 'habit-made';
@@ -69,7 +69,7 @@ export function habitMilestones(plan: Plan, today: LocalDate): Milestone[] {
   return out.sort((a, b) => (a.on < b.on ? -1 : a.on > b.on ? 1 : 0));
 }
 
-/** The milestone to celebrate now with «شارك تطورك مع الرفقة» (the latest within {@link SHARE_SUGGEST_DAYS} days), or null. */
+/** The milestone to celebrate now with «شارك تطورك مع الصحبة» (the latest within {@link SHARE_SUGGEST_DAYS} days), or null. */
 export function shareSuggestion(plan: Plan, today: LocalDate): Milestone | null {
   const list = habitMilestones(plan, today);
   const latest = list[list.length - 1];

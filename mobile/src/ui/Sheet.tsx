@@ -60,7 +60,7 @@ export function BottomSheet({
             <Text variant="heading" accessibilityRole="header" style={styles.title}>
               {title}
             </Text>
-            <IconButton icon={X} label={t('common.close')} onPress={onClose} />
+            <IconButton icon={X} label={t('common.close')} onPress={onClose} bordered />
           </View>
           <ScrollView
             contentContainerStyle={[styles.content, { paddingBottom: footer ? space.lg : insets.bottom + space.xl }]}

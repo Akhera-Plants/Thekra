@@ -4,9 +4,9 @@
  * home moments' safe paths (C-09), the reader's link ids (C-13).
  */
 
-import { listedStrategies, STRATEGIES, strategyAppliesToHabit } from '@thekra/practice-core';
+import { createPlan, listedStrategies, STRATEGIES, strategyAppliesToHabit } from '@thekra/practice-core';
 import { cityLabel } from '../lib/practice/city-name';
-import { APPLY_FIELD, appliesToHabit, applyStrategyDraft } from '../lib/practice/strategies';
+import { appliesToHabit, applySuggestion } from '../lib/practice/strategies';
 import { buildTopicSections, filterSectionsByRead } from '../lib/topics';
 import { reportErrorKey } from '../lib/share/report-error';
 import { isTopicPath } from '../lib/home/moments';
@@ -32,17 +32,26 @@ describe('strategies (C-18 a)', () => {
     expect(listedStrategies('leave').map((s) => s.key)).toEqual(['block-sin', 'know-weak', 'ride-wave', 'follow-good']);
   });
 
-  it('applies a building or returning strategy to one loop question, never over a written answer', () => {
-    for (const key of Object.keys(APPLY_FIELD)) expect(strategyAppliesToHabit(key)).toBe(true);
-    // Every strategy practice-core applies to a habit has its loop question in the app.
+  it('applies a strategy only where it is one answer of a habit loop (round 7, C2), built from the habit', () => {
     for (const s of listedStrategies()) expect(appliesToHabit(s.key)).toBe(strategyAppliesToHabit(s.key));
-    expect(appliesToHabit('ride-wave')).toBe(false);
-    expect(applyStrategyDraft('anchor-prayer', {}, 'بعد الفجر')).toEqual({ cue: 'بعد الفجر' });
-    expect(applyStrategyDraft('anchor-prayer', { cue: 'بعد العشاء', routine: 'صفحة' }, 'بعد الفجر')).toEqual({ cue: 'بعد العشاء', routine: 'صفحة' });
-    expect(applyStrategyDraft('if-then', { routine: 'صفحة' }, 'إذا…')).toEqual({ routine: 'صفحة', ifThen: 'إذا…' });
-    // The example's «مثال:» lead is dropped, as on the website.
-    expect(applyStrategyDraft('start-tiny', {}, 'مثال: دقيقتان من القرآن')).toEqual({ routine: 'دقيقتان من القرآن' });
-    expect(applyStrategyDraft('start-tiny', {}, 'Example: two minutes')).toEqual({ routine: 'two minutes' });
+    for (const key of ['ride-wave', 'season', 'company', 'self-review']) expect(appliesToHabit(key)).toBe(false);
+    const plan = createPlan(
+      { id: 'p1', deedSlug: 'quran', title: 'ورد القرآن', unit: 'minutes', amount: 10, activeDaysPerWeek: 7, slots: ['05:30'], createdOn: '2026-10-01' },
+      '2026-11-10T08:00:00.000Z',
+    );
+    const words = { amount: (n: number) => `${n} دقائق`, prayer: () => 'الفجر' };
+    const t = (key: string, values?: Record<string, string>) => `${key}|${Object.values(values ?? {}).join(',')}`;
+    expect(applySuggestion('start-tiny', { ...plan, minimum: 2 }, words, t)).toBe('items.start-tiny.suggest|2 دقائق');
+    expect(applySuggestion('anchor-prayer', { ...plan, slotAnchors: ['after-fajr'] }, words, t)).toBe('items.anchor-prayer.suggest|الفجر');
+    expect(applySuggestion('anchor-prayer', plan, words, t)).toBe('');
+    expect(applySuggestion('bundle', plan, words, t)).toBe('');
+  });
+
+  it('has the question and words of every applied strategy in Arabic', () => {
+    for (const s of STRATEGIES.filter((x) => strategyAppliesToHabit(x.key))) {
+      const item = (ar.practice.strategies.items as Record<string, { ask?: string }>)[s.key];
+      expect(`${s.key}: ${item?.ask ?? ''}`).toContain('{{habit}}');
+    }
   });
 });
 
@@ -79,7 +88,7 @@ describe('report a mistake (C-01s)', () => {
   });
 });
 
-describe('home moments (C-09) and رفقة invites (C-01k)', () => {
+describe('home moments (C-09) and صحبة invites (C-01k)', () => {
   it('follows only the app’s topic routes', () => {
     expect(isTopicPath('/sins/ghadab')).toBe(true);
     expect(isTopicPath('/branches/12')).toBe(true);

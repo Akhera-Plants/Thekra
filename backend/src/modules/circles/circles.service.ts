@@ -11,8 +11,8 @@ import { addDays, diffDays, eachDay, isValidDate, type LocalDate } from '@thekra
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type { CreateCircleDto } from './dto/create-circle.dto.js';
 import type { JoinCircleDto } from './dto/join-circle.dto.js';
-import type { CheerMessage, SendCheerDto } from './dto/send-cheer.dto.js';
 import type { UpdateMembershipDto } from './dto/update-membership.dto.js';
+import { isRoundClosed, ROUND_MAX_OPEN_MS, roundInclude, toRoundDto } from './companion-view.js';
 import type { CircleDetailDto, CircleSummaryDto } from './entities/circle.entity.js';
 
 export const CIRCLE_MAX_MEMBERS = 12;
@@ -22,10 +22,9 @@ const CODE_ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
 const CODE_LENGTH = 10;
 const CODE_ATTEMPTS = 3;
 const RECENT_DAYS = 7;
-const RECENT_CHEERS = 10;
 /** Local dates accepted from a client: server UTC today ±1 day covers every time zone. */
 const DATE_WINDOW_DAYS = 1;
-const WHOLE_CIRCLE = 'circle';
+export const WHOLE_CIRCLE = 'circle';
 
 export function generateInviteCode(): string {
   let code = '';
@@ -38,21 +37,21 @@ export function normalizeInviteCode(raw: string): string {
   return raw.replace(/[\s-]/g, '').toUpperCase();
 }
 
-const utcToday = (now: Date): LocalDate => now.toISOString().slice(0, 10);
-const toDbDate = (date: LocalDate): Date => new Date(`${date}T00:00:00.000Z`);
+export const utcToday = (now: Date): LocalDate => now.toISOString().slice(0, 10);
+export const toDbDate = (date: LocalDate): Date => new Date(`${date}T00:00:00.000Z`);
 const fromDbDate = (date: Date): LocalDate => date.toISOString().slice(0, 10);
 
-function isUniqueViolation(error: unknown): boolean {
+export function isUniqueViolation(error: unknown): boolean {
   return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002';
 }
 
-const notFound = () => new NotFoundException({ code: 'CIRCLE_NOT_FOUND', message: 'Circle not found' });
+export const notFound = () => new NotFoundException({ code: 'CIRCLE_NOT_FOUND', message: 'Circle not found' });
 
 /** A Prisma client or an interactive-transaction client: the member checks run inside either. */
 type Db = Pick<PrismaService, 'circleMember' | '$queryRaw'>;
 
 /**
- * رفقة is invite-only (round 6, C-01k): on for an ADMIN account, and for a user who redeemed an enabled member's
+ * صحبة is invite-only (round 6, C-01k): on for an ADMIN account, and for a user who redeemed an enabled member's
  * invite (`User.circlesEnabledAt`). Members from before the change were backfilled by the migration.
  */
 export function circlesEnabled(user: { role: string; circlesEnabledAt: Date | null } | null): boolean {
@@ -62,13 +61,14 @@ export function circlesEnabled(user: { role: string; circlesEnabledAt: Date | nu
 export const notEnabled = () =>
   new ForbiddenException({
     code: 'CIRCLES_NOT_ENABLED',
-    message: 'رفقة opens with an invite from a member',
+    message: 'صحبة opens with an invite from a member',
   });
 
 /**
- * رفقة: private, invite-only circles (roadmap §0.5 note of 2026-10-29). A member shares a display name and, when
+ * صحبة: private, invite-only circles (roadmap §0.5 note of 2026-10-29). A member shares a display name and, when
  * they turn it on, a bare «حضرت اليوم» mark per day; nothing about which habit, how much, the sin program or
- * relatives ever reaches this module. Non-members get 404 for every circle (its existence is not revealed).
+ * relatives ever reaches this module (round 7's «شارك تقدّمي» sends two counts the member chose to send: see
+ * CircleFeedService). Non-members get 404 for every circle (its existence is not revealed).
  */
 @Injectable()
 export class CirclesService {
@@ -91,7 +91,7 @@ export class CirclesService {
     }));
   }
 
-  /** True when رفقة is on for this account (see `circlesEnabled`). */
+  /** True when صحبة is on for this account (see `circlesEnabled`). */
   async isEnabled(userId: string): Promise<boolean> {
     const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { role: true, circlesEnabledAt: true } });
     return circlesEnabled(user);
@@ -120,7 +120,7 @@ export class CirclesService {
   }
 
   /**
-   * Joining with a circle's own code needs رفقة to be on (a personal invite turns it on: circle-invites.service.ts).
+   * Joining with a circle's own code needs صحبة to be on (a personal invite turns it on: circle-invites.service.ts).
    * Joining a circle one already belongs to answers that circle (a second tap on the link is harmless).
    */
   async join(userId: string, dto: JoinCircleDto, now = new Date()): Promise<CircleDetailDto> {
@@ -158,7 +158,7 @@ export class CirclesService {
     const day = today === undefined ? utcToday(now) : this.assertDateInWindow(today, now);
     const days = eachDay(addDays(day, 1 - RECENT_DAYS), day);
     const me = await this.ownerChecked(await this.memberOf(userId, circleId));
-    const [circle, cheers, cheeredToday] = await Promise.all([
+    const [circle, openRounds, sentToday, mutes] = await Promise.all([
       this.prisma.circle.findUnique({
         where: { id: circleId },
         include: {
@@ -168,17 +168,18 @@ export class CirclesService {
           },
         },
       }),
-      this.prisma.circleCheer.findMany({
-        where: { circleId, OR: [{ receiverId: me.id }, { receiverId: null }] },
-        orderBy: { createdAt: 'desc' },
-        take: RECENT_CHEERS,
-        include: { sender: { select: { displayName: true } } },
+      this.prisma.circleRound.findMany({
+        where: { memberId: me.id, endedAt: null, startedAt: { gt: new Date(now.getTime() - ROUND_MAX_OPEN_MS) } },
+        orderBy: { startedAt: 'desc' },
+        include: roundInclude(me.id),
       }),
-      this.prisma.circleCheer.findMany({
-        where: { senderId: me.id, day: toDbDate(utcToday(now)) },
-        select: { target: true },
+      this.prisma.circleMessage.findMany({
+        where: { senderId: me.id, kind: 'PRESET', day: toDbDate(utcToday(now)) },
+        select: { key: true, receiverId: true },
       }),
+      this.prisma.circleMute.findMany({ where: { memberId: me.id }, select: { mutedId: true } }),
     ]);
+    const openRound = openRounds.find((r) => !isRoundClosed(r, now));
     if (!circle) throw notFound();
     return {
       id: circle.id,
@@ -196,15 +197,9 @@ export class CirclesService {
         isMe: m.id === me.id,
         presentDays: m.sharesPresence ? m.presences.map((p) => fromDbDate(p.date)).sort() : [],
       })),
-      cheers: cheers.map((c) => ({
-        id: c.id,
-        message: c.message as CheerMessage,
-        fromMemberId: c.senderId,
-        fromName: c.sender.displayName,
-        toMe: c.receiverId === me.id,
-        createdAt: c.createdAt.toISOString(),
-      })),
-      cheeredToday: cheeredToday.map((c) => c.target),
+      myOpenRound: openRound ? toRoundDto(openRound, me.id, now) : null,
+      sentToday: sentToday.map((m) => `${m.key}:${m.receiverId ?? WHOLE_CIRCLE}`),
+      mutedMemberIds: mutes.map((m) => m.mutedId),
     };
   }
 
@@ -238,36 +233,6 @@ export class CirclesService {
   async clearPresence(userId: string, date: string, now = new Date()): Promise<void> {
     const day = toDbDate(this.assertDateInWindow(date, now));
     await this.prisma.circlePresence.deleteMany({ where: { date: day, member: { userId } } });
-  }
-
-  /** One cheer per sender, target and server UTC day. */
-  async sendCheer(userId: string, circleId: string, dto: SendCheerDto, now = new Date()): Promise<{ id: string }> {
-    const me = await this.memberOf(userId, circleId);
-    if (dto.toMemberId !== undefined) {
-      if (dto.toMemberId === me.id) {
-        throw new BadRequestException({ code: 'CIRCLE_CHEER_SELF', message: 'A cheer goes to another member or to the circle' });
-      }
-      const receiver = await this.prisma.circleMember.findFirst({ where: { id: dto.toMemberId, circleId }, select: { id: true } });
-      if (!receiver) throw new NotFoundException({ code: 'CIRCLE_MEMBER_NOT_FOUND', message: 'Member not found' });
-    }
-    try {
-      return await this.prisma.circleCheer.create({
-        data: {
-          circleId,
-          senderId: me.id,
-          receiverId: dto.toMemberId ?? null,
-          target: dto.toMemberId ?? WHOLE_CIRCLE,
-          message: dto.message,
-          day: toDbDate(utcToday(now)),
-        },
-        select: { id: true },
-      });
-    } catch (error) {
-      if (isUniqueViolation(error)) {
-        throw new ConflictException({ code: 'CIRCLE_CHEER_ALREADY_SENT', message: 'Already sent to them today' });
-      }
-      throw error;
-    }
   }
 
   /** When the owner leaves, the earliest remaining member becomes owner; the last one out deletes the circle. */
@@ -305,7 +270,7 @@ export class CirclesService {
     await this.prisma.circle.delete({ where: { id: circleId } });
   }
 
-  private async memberOf(userId: string, circleId: string): Promise<CircleMember> {
+  async memberOf(userId: string, circleId: string): Promise<CircleMember> {
     const member = await this.prisma.circleMember.findUnique({ where: { circleId_userId: { circleId, userId } } });
     if (!member) throw notFound();
     return member;
@@ -356,7 +321,7 @@ export class CirclesService {
     });
   }
 
-  private assertDateInWindow(date: string, now: Date): LocalDate {
+  assertDateInWindow(date: string, now: Date): LocalDate {
     if (!isValidDate(date) || Math.abs(diffDays(utcToday(now), date)) > DATE_WINDOW_DAYS) {
       throw new BadRequestException({ code: 'CIRCLE_DATE_OUT_OF_RANGE', message: 'date must be today (YYYY-MM-DD, ±1 day)' });
     }

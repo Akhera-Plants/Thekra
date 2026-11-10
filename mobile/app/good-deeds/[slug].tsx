@@ -26,7 +26,7 @@ export default function MotivationsScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const { t } = useTranslation();
   const { english } = useTheme();
-  const { filter, setFilter, params } = useTopicQuoteParams();
+  const { filter, setFilter, theme, setTheme, params } = useTopicQuoteParams();
   const query = useGoodDeedQuotesInfinite(slug ?? '', params);
   // The detail carries the pair and the contemporary flag, which the quotes page does not.
   const detail = useGoodDeed(slug ?? '');
@@ -35,17 +35,24 @@ export default function MotivationsScreen() {
   const deed = useLastDefined(firstPage?.data.goodDeed);
   // The API counts within the active filter, so the tab counts are the ones read under «الكل».
   const counts = useLastDefined(filter === 'ALL' ? (firstPage?.meta as GoodDeedQuotesMeta | undefined)?.countsByType : undefined);
+  // The website's sub-topic chips (owner round 7, B2): `meta.themes` covers the whole page whatever the filter.
+  const themeCounts = useLastDefined((firstPage?.meta as GoodDeedQuotesMeta | undefined)?.themes);
+  const themes = useMemo(
+    () => (themeCounts ?? []).map((chip) => ({ key: chip.key, label: english ? chip.en : chip.ar, count: chip.count })),
+    [themeCounts, english],
+  );
   const pair = detail.data?.pair ?? null;
   const groupTitle = useCallback((group: TopicGroup) => (english ? group.name || group.nameAr : group.nameAr), [english]);
   const sections = useMemo(
     () =>
       buildTopicSections(query.data?.pages.map((p) => p.data) ?? [], {
-        sectioned: filter === 'ALL',
+        // A theme is one merged list (as on the website), without the section headings.
+        sectioned: filter === 'ALL' && !theme,
         ownTitle: pair ? t('motivations.pairVirtueHeading') : t('motivations.virtueHeading'),
         companionTitle: pair ? t('motivations.pairNeglectHeading') : t('motivations.neglectHeading'),
         groupTitle,
       }),
-    [query.data, filter, pair, t, groupTitle],
+    [query.data, filter, theme, pair, t, groupTitle],
   );
   // As on the website: English shows the English description and reward or nothing, never Arabic prose; a paired
   // page is titled by the pair and carries no separate reward note.
@@ -61,6 +68,9 @@ export default function MotivationsScreen() {
       counts={counts}
       filter={filter}
       onFilterChange={setFilter}
+      themes={themes}
+      theme={theme}
+      onThemeChange={setTheme}
       eyebrow={t('motivations.eyebrow')}
       title={deed ? title : null}
       lead={deed ? (english ? deed.description : deed.descriptionAr) : null}

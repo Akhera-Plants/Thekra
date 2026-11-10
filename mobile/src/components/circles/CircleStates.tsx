@@ -1,5 +1,5 @@
 /**
- * The «رفقة» screens' shared states: signed out (circles need an account), and skeletons in the shape of the list
+ * The «صحبة» screens' shared states: signed out (circles need an account), and skeletons in the shape of the list
  * and of a circle while they load.
  */
 

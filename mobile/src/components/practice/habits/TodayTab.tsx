@@ -10,7 +10,7 @@
  *    the habits banded بداية / خلال / ختام اليوم with the inline counter; «صلّحها» only on a row in the gap context;
  *    «قضاء الفوائت» is inside «الفرائض»;
  * 5. ONE heart card (practice-core `heartSlot`), as in the reference (after the day's list);
- * 6. one collapsed «المزيد لليوم», «رفقتك» for circle members, the widget line.
+ * 6. one collapsed «المزيد لليوم», «صحبتك» for circle members, the widget line.
  */
 
 import React, { useCallback, useMemo, useState } from 'react';
@@ -535,7 +535,7 @@ function MoreForToday({ today }: { today: LocalDate }) {
   );
 }
 
-/** «رفقتك: n حضروا اليوم» (F-16): members of a circle only; opens the circle. */
+/** «صحبتك: n حضروا اليوم» (F-16): members of a circle only; opens the circle. */
 function CirclesLine({ today }: { today: LocalDate }) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);

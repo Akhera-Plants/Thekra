@@ -7,7 +7,7 @@
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { PLEDGE_DEED_INFO, SADAQAH_EVIDENCE, type PledgeAction } from '@thekra/practice-core';
 import { useEvidence } from '@/lib/api/practice';
@@ -16,7 +16,7 @@ import { newPracticeId, today, usePracticeStore } from '@/lib/practice/practice-
 import { draftReady, pledgeOfPlan, removePlanPledge, savePlanPledge, type PledgeDraft } from '@/lib/practice/pledges';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { radius, space, useStyles, useTheme, type Theme } from '@/theme';
-import { ButtonPair, Field, MIN_TARGET, Text, toast } from '@/ui';
+import { ButtonPair, Field, MIN_TARGET, Text, toast, useConfirm } from '@/ui';
 import { BottomSheet } from './mujahada/Sheet';
 
 const makeStyles = (t: Theme) => ({
@@ -88,6 +88,7 @@ export interface PledgeSheetProps {
 
 export function PledgeSheet({ visible, planId, habitTitle, onClose, onDone }: PledgeSheetProps) {
   const { t } = useTranslation();
+  const { confirm, dialog } = useConfirm();
   const locale = useUiLocale();
   const styles = useStyles(makeStyles);
   const heart = usePracticeStore((s) => s.heart);
@@ -122,18 +123,17 @@ export function PledgeSheet({ visible, planId, habitTitle, onClose, onDone }: Pl
 
   function remove() {
     if (!planId) return;
-    Alert.alert(t('practice.notifyPrefs.pledgeDelete'), t('practice.notifyPrefs.pledgeDeleteConfirm', { habit: habitTitle }), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('common.delete'),
-        style: 'destructive',
-        onPress: () => {
-          setHeart((h) => removePlanPledge(h, planId));
-          onClose();
-          onDone(t('practice.notifyPrefs.pledgeDeleted', { habit: habitTitle }));
-        },
-      },
-    ]);
+    void confirm({
+      title: t('practice.notifyPrefs.pledgeDelete'),
+      message: t('practice.notifyPrefs.pledgeDeleteConfirm', { habit: habitTitle }),
+      confirmLabel: t('common.delete'),
+      tone: 'destructive',
+    }).then((ok) => {
+      if (!ok) return;
+      setHeart((h) => removePlanPledge(h, planId));
+      onClose();
+      onDone(t('practice.notifyPrefs.pledgeDeleted', { habit: habitTitle }));
+    });
   }
 
   return (
@@ -185,6 +185,7 @@ export function PledgeSheet({ visible, planId, habitTitle, onClose, onDone }: Pl
         })}
       </View>
       <EvidenceSheet option={evidence} onClose={() => setEvidence(null)} />
+      {dialog}
     </BottomSheet>
   );
 }

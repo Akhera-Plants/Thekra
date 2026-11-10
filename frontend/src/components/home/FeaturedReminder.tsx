@@ -69,6 +69,8 @@ export function FeaturedReminder({ quote }: FeaturedReminderProps) {
     gradeAuthority: quote.citation?.gradeAuthority,
     gradeReference: quote.citation?.gradeReference,
     grade: quote.hadith?.grade,
+    // The reference follows in the same line: the book and number are said once (owner round 7, B4).
+    besideSource: quote.hadith?.reference,
   });
   const rawReference = quote.hadith?.reference?.trim()
     || (quote.quran?.surahNumber != null && quote.quran.ayahNumber != null

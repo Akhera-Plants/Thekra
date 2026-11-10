@@ -45,8 +45,8 @@ const STRATEGY_TEASER = ['start-tiny', 'if-then', 'prepare-place'] as const;
 
 /**
  * «عاداتي › العادات» (round 6 §2, C-02b / C-01d / C-02e; reference «الخطة» layout with our visuals): the member's habits
- * with their completion percentage and milestone lines («تعدّيت أصعب فترة»، «صنعت العادة»، and «شارك تطورك مع الرفقة»
- * for a fresh milestone when the member is in a «رفقة» circle, as in the app: GET /circles/access), the line «3 عادات كحد
+ * with their completion percentage and milestone lines («تعدّيت أصعب فترة»، «صنعت العادة»، and «شارك تطورك مع الصحبة»
+ * for a fresh milestone when the member is in a «صحبة» circle, as in the app: GET /circles/access), the line «3 عادات كحد
  * أقصى», ONE «أضف عادة» on the title row, the «تخفَّف» programs as COVERED habit rows, then «الأرشيف» (at most 10, the
  * 3-day note, «أعِدها» / delete). A side column (after the list on a phone) holds «استراتيجيات صناعة العادات والثبات».
  * `?add=1` opens «أضف عادة» here and comes back here.
@@ -195,7 +195,7 @@ function HabitRowItem({ plan, context, onArchive, onDelete }: { plan: Plan; cont
   const daysLine = useDaysLine(plan, habit);
   const completion = habitCompletion(plan, today);
   const milestones = habitMilestones(plan, today);
-  // «رفقة» is in the app: the line is the same suggestion as there, without a web page to open.
+  // «صحبة» is in the app: the line is the same suggestion as there, without a web page to open.
   const share = useInCircle() && shareSuggestion(plan, today) !== null;
   return (
     <li className="flex items-center gap-2 py-1">

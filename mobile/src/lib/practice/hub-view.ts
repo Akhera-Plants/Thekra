@@ -167,7 +167,7 @@ export function dayStateLightenKey(view: DayStateView, hasProgram: boolean): str
 
 /**
  * The milestone lines under a habit (keys from practice-core `habitMilestones`), newest last, then «شارك تطورك مع
- * الرفقة» when practice-core suggests it and the member is in a circle.
+ * الصحبة» when practice-core suggests it and the member is in a circle.
  */
 export function milestoneLines(milestones: readonly Milestone[], share: Milestone | null, inCircle: boolean): string[] {
   const keys: string[] = milestones.map((m) => (m.key === 'habit-made' ? 'habitsHub.habits.milestoneMade' : 'habitsHub.habits.milestoneHardest'));

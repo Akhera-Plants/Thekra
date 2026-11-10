@@ -1,6 +1,6 @@
 /**
- * «رفقة» lives in the app only (practice-core nav-map); the website reads just one thing about it: whether the member is
- * in a circle, so «شارك تطورك مع الرفقة» shows on the same habits as in the app (owner round 6, C-02b).
+ * «صحبة» lives in the app only (practice-core nav-map); the website reads just one thing about it: whether the member is
+ * in a circle, so «شارك تطورك مع الصحبة» shows on the same habits as in the app (owner round 6, C-02b).
  */
 import { apiGet } from '@/lib/api-client';
 

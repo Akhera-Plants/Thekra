@@ -19,15 +19,17 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Bell, BellRing, ChevronDown, ChevronUp } from 'lucide-react-native';
 import {
-  addHabitLoop,
+  applyStrategyToPlan,
+  FARD_LABELS,
   isArchived,
   isPeriodicPlan,
   listedStrategies,
+  MAX_LOOP_TEXT,
   periodicActKeyOf,
   setHeartPrefs,
   STRATEGY_KINDS,
+  strategyApplyField,
   toggleStrategy,
-  updateHabitLoop,
   updatePlan,
   type Plan,
   type Strategy,
@@ -35,21 +37,20 @@ import {
 } from '@thekra/practice-core';
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { pick } from '@/lib/practice/catalog-types';
-import { draftOf, habitLoopInput, habitLoops, type LoopDraft } from '@/lib/practice/loops';
 import { newPracticeId, usePracticeStore } from '@/lib/practice/practice-store';
-import { habitFor } from '@/lib/practice/reminders';
+import { formatAmount, habitFor } from '@/lib/practice/reminders';
 import { ensurePermission } from '@/lib/practice/notifications';
-import { appliesToHabit, applyStrategyDraft, strategyTarget } from '@/lib/practice/strategies';
+import { appliesToHabit, applySuggestion, quoted, strategyTarget } from '@/lib/practice/strategies';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { ConsistencyCard, HabitLoopCard, SinStepsCard } from '@/components/practice/hub/KnowledgeCards';
 import { EasyDeeds } from '@/components/practice/mujahada/EasyDeeds';
-import { LoopBuilder } from '@/components/practice/loops/LoopBuilder';
 import { space, useStyles, type Theme } from '@/theme';
 import {
   BottomSheet,
   Button,
   ButtonPair,
   CheckRow,
+  Field,
   Icon,
   PageHeader,
   Screen,
@@ -77,6 +78,7 @@ const makeStyles = (t: Theme) => ({
   fold: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.sm, minHeight: 56 },
   foldTitle: { flex: 1, minWidth: 0 },
   options: { gap: space.sm },
+  multiline: { minHeight: 88, textAlignVertical: 'top' as const, paddingTop: space.sm },
 });
 
 export default function StrategiesScreen() {
@@ -234,8 +236,10 @@ function StrategyItem({ strategy, last, onApply }: { strategy: Strategy; last: b
 }
 
 /**
- * «طبّقها على عادة»: choose a habit, then review its loop in the builder with the strategy's question filled. Saving
- * edits that habit's first loop (or adds one) through practice-core, so it syncs like any loop.
+ * «طبّقها على عادة» (round 7, C2; the website's flow): choose a habit, then the ONE question of its loop the strategy
+ * answers, asked about that habit, with an answer built from the habit when it says something (lib `applySuggestion`).
+ * «احفظ في حلقة العادة» writes it into the habit's first loop through practice-core `applyStrategyToPlan` (synced like
+ * any loop); an answer it replaces is shown first.
  */
 function ApplyFlow({ strategy, onClose }: { strategy: Strategy | null; onClose: () => void }) {
   const { t } = useTranslation();
@@ -245,86 +249,129 @@ function ApplyFlow({ strategy, onClose }: { strategy: Strategy | null; onClose: 
   const setStore = usePracticeStore((s) => s.setStore);
   const habits = usePracticeCatalog(locale).data?.habits ?? [];
   const [picked, setPicked] = useState<string | null>(null);
-  const [draft, setDraft] = useState<LoopDraft | null>(null);
+  const [text, setText] = useState('');
   // Habits only (a periodic act has no loop).
   const choices = useMemo(
     () => plans.filter((p) => !isArchived(p) && periodicActKeyOf(p) === null && !isPeriodicPlan(p, { defaultRuleOf: (plan) => habitFor(plan, habits)?.defaultRule })),
     [plans, habits],
   );
+  const unitFallback = { minutes: t('practice.units.minutes'), count: t('practice.units.count'), times: t('practice.units.times') };
   const titleOf = (plan: Plan) => {
     const habit = habitFor(plan, habits);
     return habit ? pick(habit, 'title', locale) : plan.title;
   };
-  const plan = plans.find((p) => p.id === picked) ?? null;
-  const loop = plan ? habitLoops(plan)[0] : undefined;
+  const amountOf = (plan: Plan) => (n: number) => formatAmount(n, plan.unit, habitFor(plan, habits), locale, unitFallback);
+  const plan = choices.find((p) => p.id === picked) ?? (choices.length === 1 ? choices[0] : undefined);
+  const field = strategy ? strategyApplyField(strategy.key) : null;
+  const current = plan && field ? (plan.loops?.[0]?.[field] ?? '').trim() : '';
+  const replacing = current !== '' && text.trim() !== current;
+
+  function startFor(next: Plan | undefined) {
+    if (!strategy || !next || !field) {
+      setText('');
+      return;
+    }
+    const suggestion = applySuggestion(
+      strategy.key,
+      next,
+      { amount: amountOf(next), prayer: (p) => FARD_LABELS[locale].prayers[p] },
+      (key, values) => t(`practice.strategies.${key}`, values),
+    );
+    setText(suggestion || (next.loops?.[0]?.[field] ?? '').trim());
+  }
+
+  // Opening the sheet (or a single habit) starts from that habit's own answer.
+  const [opened, setOpened] = useState<string | null>(null);
+  const openKey = strategy && plan ? `${strategy.key}-${plan.id}` : null;
+  if (openKey !== opened) {
+    setOpened(openKey);
+    startFor(plan);
+  }
 
   function close() {
     setPicked(null);
-    setDraft(null);
+    setText('');
+    setOpened(null);
     onClose();
   }
 
-  function next() {
-    if (!strategy || !plan) return;
-    setDraft(applyStrategyDraft(strategy.key, loop ? draftOf(loop) : {}, t(`practice.strategies.items.${strategy.key}.example`)));
-  }
-
-  function save(answers: LoopDraft) {
-    if (!plan) return;
-    const input = habitLoopInput(answers);
-    setStore((s) => updatePlan(s, plan.id, (p) => (loop ? updateHabitLoop(p, loop.id, input) : addHabitLoop(p, newPracticeId(), input))));
-    toast(t('practice.strategies.applied', { habit: titleOf(plan) }));
+  function save() {
+    if (!strategy || !plan || !text.trim()) return;
+    const amount = amountOf(plan);
+    setStore((s) =>
+      updatePlan(s, plan.id, (p) => applyStrategyToPlan(p, strategy.key, text, { loopId: newPracticeId(), routine: `${titleOf(p)}: ${amount(p.amount)}` })),
+    );
+    toast(t('practice.strategies.applied', { habit: quoted(titleOf(plan), locale === 'en') }));
     close();
   }
 
   const title = strategy ? (locale === 'en' ? strategy.titleEn : strategy.titleAr) : '';
   return (
-    <>
-      <BottomSheet
-        visible={strategy !== null && draft === null}
-        title={t('practice.strategies.apply')}
-        onClose={close}
-        footer={
-          choices.length > 0 ? (
-            <ButtonPair
-              size="lg"
-              primary={{ label: t('practice.strategies.next'), onPress: next, disabled: !plan }}
-              secondary={{ label: t('common.cancel'), onPress: close }}
-            />
-          ) : undefined
-        }
-      >
+    <BottomSheet
+      visible={strategy !== null}
+      title={title}
+      onClose={close}
+      footer={
+        choices.length > 0 ? (
+          <ButtonPair
+            size="lg"
+            primary={{ label: t('practice.strategies.saveApply'), onPress: save, disabled: !plan || !text.trim() }}
+            secondary={{ label: t('common.cancel'), onPress: close }}
+          />
+        ) : undefined
+      }
+    >
+      {strategy ? (
         <Text variant="small" tone="muted">
-          {t('practice.strategies.pickHabit', { strategy: title })}
+          {t(`practice.strategies.items.${strategy.key}.idea`)}
         </Text>
-        {choices.length === 0 ? (
-          <View style={styles.options}>
-            <Text variant="body">{t('loops.habit.noHabits')}</Text>
-            <Button
-              label={t('practice.strategies.addHabit')}
-              onPress={() => {
-                close();
-                router.push('/practice/add');
-              }}
-            />
-          </View>
-        ) : (
-          <View style={styles.options} accessibilityRole="radiogroup">
+      ) : null}
+      {choices.length === 0 ? (
+        <View style={styles.options}>
+          <Text variant="body">{t('loops.habit.noHabits')}</Text>
+          <Button
+            label={t('practice.strategies.addHabit')}
+            onPress={() => {
+              close();
+              router.push('/practice/add');
+            }}
+          />
+        </View>
+      ) : (
+        <>
+          <View style={styles.options} accessibilityRole="radiogroup" accessibilityLabel={t('practice.strategies.chooseHabit')}>
+            <Text variant="label">{t('practice.strategies.chooseHabit')}</Text>
             {choices.map((p) => (
-              <CheckRow key={p.id} radio title={titleOf(p)} checked={picked === p.id} onPress={() => setPicked(p.id)} />
+              <CheckRow key={p.id} radio title={titleOf(p)} checked={plan?.id === p.id} onPress={() => setPicked(p.id)} />
             ))}
           </View>
-        )}
-      </BottomSheet>
-      <LoopBuilder
-        kind="habit"
-        visible={draft !== null}
-        initial={draft ?? undefined}
-        subject={plan ? titleOf(plan) : undefined}
-        editing={Boolean(loop)}
-        onClose={close}
-        onSave={save}
-      />
-    </>
+          {plan && strategy && field ? (
+            <>
+              <SectionDivider />
+              <View style={styles.options}>
+                <Text variant="heading">{t(`practice.strategies.items.${strategy.key}.ask`, { habit: quoted(titleOf(plan), locale === 'en') })}</Text>
+                <Text variant="caption" tone="muted">
+                  {t('practice.strategies.savedIn', { field: t(`loops.habit.steps.${field}.label`) })}
+                </Text>
+                <Field
+                  value={text}
+                  onChangeText={setText}
+                  multiline
+                  maxLength={MAX_LOOP_TEXT}
+                  placeholder={t(`practice.strategies.items.${strategy.key}.example`)}
+                  accessibilityLabel={t(`practice.strategies.items.${strategy.key}.ask`, { habit: quoted(titleOf(plan), locale === 'en') })}
+                  style={styles.multiline}
+                />
+                {replacing ? (
+                  <Text variant="small" tone="muted">
+                    {t('practice.strategies.replaces', { text: current })}
+                  </Text>
+                ) : null}
+              </View>
+            </>
+          ) : null}
+        </>
+      )}
+    </BottomSheet>
   );
 }

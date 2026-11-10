@@ -28,7 +28,7 @@ App header (every tab, `src/components/nav/AppHeader.tsx`): «ذكرى» with th
 side, the framed menu button alone on the inline-end side (the left in Arabic, the right in English). The menu opens the
 side menu (`SideMenu.tsx`, a core Modal + Animated drawer, no drawer package) from that same inline-end side, with the
 screens that are not tabs, in groups (`src/lib/nav/side-menu.ts`): «أعمالي» (أعمال دورية، المحاسبة، استراتيجيات العادات),
-«مع الناس» (رفقة), «للقراءة» (استكشف النصوص، المحفوظات، مواسم الخير). «تخفَّف» is not in it: it is the home door «تخفَّف من
+«مع الناس» (صحبة), «للقراءة» (استكشف النصوص، المحفوظات، مواسم الخير). «تخفَّف» is not in it: it is the home door «تخفَّف من
 معصية» and a section of «عاداتي». Members-only items open sign-in first.  
 Home: «أبواب الخير»: «أعنّي على فعل طاعة» (filled), «تخفَّف من معصية» (the sins list), «شُعَب الإيمان» (compact). Each main
 door keeps its plant whole in its own square at the bottom inline-end corner, never under the words; sizes per screen

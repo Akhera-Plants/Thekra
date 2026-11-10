@@ -144,7 +144,7 @@ describe('nav-map (round 6 §1)', () => {
 
   it('web header and «المزيد» never share an item; settings only in the account menu', () => {
     expect(WEB_HEADER.links.map((k) => navFeature(k)?.ar)).toEqual(['الرئيسية', 'الطاعات', 'تخفَّف من ذنب', 'شعب الإيمان', 'عاداتي']);
-    expect(WEB_HEADER.more.map((k) => navFeature(k)?.ar)).toEqual(['استراتيجيات العادات', 'المحفوظات', 'رفقة']);
+    expect(WEB_HEADER.more.map((k) => navFeature(k)?.ar)).toEqual(['استراتيجيات العادات', 'المحفوظات', 'صحبة']);
     for (const k of WEB_HEADER.more) expect(WEB_HEADER.links).not.toContain(k);
     expect([...WEB_HEADER.links, ...WEB_HEADER.more]).not.toContain('settings');
     expect(WEB_ACCOUNT_MENU).toEqual(['account', 'settings']);

@@ -5,7 +5,9 @@
  * The idea and example lines are UI copy of each client; the short titles live here because the web push planner and
  * the app's local notifications both name the strategy of the week. Wording is ours, not a quoted text.
  */
-import { toDayNumber, weekday, type LocalDate } from './dates.js';
+import { nowIso, toDayNumber, weekday, type IsoTime, type LocalDate } from './dates.js';
+import { addHabitLoop, MAX_LOOP_TEXT, updateHabitLoop, type Plan } from './plan.js';
+import type { PrayerAnchor } from './prayer.js';
 
 /** What «جرّبها» opens. Each client maps it to its own screen. */
 export type StrategyAction =
@@ -28,6 +30,11 @@ export type StrategyAction =
 export type StrategyKind = 'build' | 'leave' | 'return';
 export const STRATEGY_KINDS: readonly StrategyKind[] = ['build', 'leave', 'return'];
 
+/**
+ * The answer of «حلقة العادة» a strategy writes when it is applied to a habit («طبّقها على عادة», owner round 7, C2).
+ */
+export type StrategyLoopField = 'cue' | 'routine' | 'reward' | 'ifThen';
+
 export interface Strategy {
   key: string;
   action: StrategyAction;
@@ -35,18 +42,24 @@ export interface Strategy {
   kind: StrategyKind;
   titleAr: string;
   titleEn: string;
+  /**
+   * «طبّقها على عادة»: the loop answer this strategy fills for the chosen habit (round 7, C2). Absent: the strategy is
+   * not an answer of a habit's loop, so «جرّبها» opens its own place (a season on «سجلّي», «صحبة», the evening review,
+   * and every «ترك» strategy).
+   */
+  applyField?: StrategyLoopField;
 }
 
 /** In the order of the plan («ابدأ صغيرًا جدًا» … «حاسب نفسك»). Keys never change: they are stored in the prefs. */
 export const STRATEGIES: readonly Strategy[] = [
-  { key: 'start-tiny', action: 'add', kind: 'build', titleAr: 'ابدأ صغيرًا جدًا', titleEn: 'Start very small' },
-  { key: 'anchor-prayer', action: 'habits', kind: 'build', titleAr: 'اربطها بصلاة', titleEn: 'Tie it to a prayer' },
-  { key: 'if-then', action: 'pledges', kind: 'build', titleAr: '«إذا… فإني…»', titleEn: '"If…, then I will…"' },
-  { key: 'prepare-place', action: 'habits', kind: 'build', titleAr: 'هيّئ مكانك', titleEn: 'Prepare your place' },
+  { key: 'start-tiny', action: 'add', kind: 'build', titleAr: 'ابدأ صغيرًا جدًا', titleEn: 'Start very small', applyField: 'routine' },
+  { key: 'anchor-prayer', action: 'habits', kind: 'build', titleAr: 'اربطها بصلاة', titleEn: 'Tie it to a prayer', applyField: 'cue' },
+  { key: 'if-then', action: 'pledges', kind: 'build', titleAr: '«إذا… فإني…»', titleEn: '"If…, then I will…"', applyField: 'ifThen' },
+  { key: 'prepare-place', action: 'habits', kind: 'build', titleAr: 'هيّئ مكانك', titleEn: 'Prepare your place', applyField: 'cue' },
   { key: 'block-sin', action: 'leaveSin', kind: 'leave', titleAr: 'صعّب طريق المعصية', titleEn: 'Make the way to the sin harder' },
   { key: 'never-twice', action: 'wird', kind: 'return', titleAr: 'لا تفوّتها مرتين', titleEn: 'Never miss it twice' },
-  { key: 'make-up', action: 'record', kind: 'return', titleAr: 'اقضِ ما فاتك', titleEn: 'Make up what you missed' },
-  { key: 'bundle', action: 'add', kind: 'build', titleAr: 'اجمعها بما تحب', titleEn: 'Pair it with what you love' },
+  { key: 'make-up', action: 'record', kind: 'return', titleAr: 'اقضِ ما فاتك', titleEn: 'Make up what you missed', applyField: 'ifThen' },
+  { key: 'bundle', action: 'add', kind: 'build', titleAr: 'اجمعها بما تحب', titleEn: 'Pair it with what you love', applyField: 'reward' },
   { key: 'season', action: 'seasons', kind: 'build', titleAr: 'ابدأ في موسم', titleEn: 'Start in a season' },
   { key: 'know-weak', action: 'leaveSin', kind: 'leave', titleAr: 'اعرف متى تضعف', titleEn: 'Know when you weaken' },
   { key: 'ride-wave', action: 'moment', kind: 'leave', titleAr: 'اركب الموجة', titleEn: 'Ride the wave' },
@@ -74,12 +87,48 @@ export function listedStrategies(kind: StrategyKind | 'all' = 'all'): Strategy[]
 }
 
 /**
- * True when «طبّقها على عادة» fits the strategy: a building or returning strategy shapes a habit's loop. A «ترك»
- * strategy opens its own place instead («تخفّف», «لحظة مجاهدة», or the easy good deeds of «أتبع السيئة الحسنة»).
+ * True when «طبّقها على عادة» fits the strategy: it is one answer of a habit's loop ({@link Strategy.applyField}). A
+ * «ترك» strategy opens its own place instead («تخفّف», «لحظة مجاهدة», or the easy good deeds of «أتبع السيئة الحسنة»),
+ * and so do «ابدأ في موسم» (the occasions of «سجلّي»), «الصحبة الصالحة» («صحبة») and «حاسب نفسك» (the evening review):
+ * none of them is an answer about one habit (round 7, C2).
  */
 export function strategyAppliesToHabit(key: string): boolean {
   const strategy = strategyByKey(key);
-  return strategy !== undefined && strategy.kind !== 'leave' && !IN_CONTEXT_STRATEGIES.includes(key);
+  return strategy?.applyField !== undefined && strategy.kind !== 'leave' && !IN_CONTEXT_STRATEGIES.includes(key);
+}
+
+/** The loop answer a strategy fills, or null when it is not applied to a habit. */
+export function strategyApplyField(key: string): StrategyLoopField | null {
+  return strategyAppliesToHabit(key) ? (strategyByKey(key)?.applyField ?? null) : null;
+}
+
+/** The prayer of a plan's first prayer-anchored reminder («بعد الفجر» → `fajr`), for «اربطها بصلاة»; null without one. */
+export function anchoredPrayerOf(plan: Pick<Plan, 'slotAnchors'>): 'fajr' | 'dhuhr' | 'asr' | 'maghrib' | 'isha' | null {
+  const anchor = (plan.slotAnchors ?? []).find((a): a is Exclude<PrayerAnchor, 'before-sleep'> => a !== null && a !== 'before-sleep');
+  return anchor ? (anchor.slice('after-'.length) as 'fajr' | 'dhuhr' | 'asr' | 'maghrib' | 'isha') : null;
+}
+
+/**
+ * «طبّقها على عادة» saved (round 7, C2): writes `answer` into the strategy's question of the habit's FIRST loop (the
+ * loop the habit page shows first), or starts that loop when the habit has none; then `routine` (the habit itself, «ورد
+ * القرآن: 2 صفحة») fills its required «الفعل» unless the strategy writes it. Only that one answer changes; the plan's
+ * `updatedAt` moves, so it syncs like any edit. Throws for a strategy that is not applied to a habit or an empty answer.
+ */
+export function applyStrategyToPlan(
+  plan: Plan,
+  key: string,
+  answer: string,
+  opts: { loopId: string; routine: string; now?: IsoTime },
+): Plan {
+  const field = strategyApplyField(key);
+  if (field === null) throw new RangeError('This strategy is not applied to a habit');
+  const text = answer.trim().slice(0, MAX_LOOP_TEXT).trim();
+  if (text === '') throw new RangeError('The answer must not be empty');
+  const now = opts.now ?? nowIso();
+  const first = plan.loops?.[0];
+  if (first) return updateHabitLoop(plan, first.id, { [field]: text }, now);
+  const routine = field === 'routine' ? text : opts.routine.trim().slice(0, MAX_LOOP_TEXT).trim() || text;
+  return addHabitLoop(plan, opts.loopId, { cue: '', craving: '', reward: '', ...{ [field]: text }, routine }, now);
 }
 
 /** The strategy reminder's default weekday (6 = Saturday); round 6: the member chooses the day (`NotificationPrefs.strategyDay`). */

@@ -173,7 +173,8 @@ describe('quoteSharePayload: athar', () => {
     expect(payload.attribution).toEqual([
       'الزهد لابن المبارك · الزهد 1',
       '— عمر بن الخطاب',
-      'أثر، وليس حديثًا · الزهد 1',
+      // The reference is in the capsule line above: said once (owner round 7, B4).
+      'أثر، وليس حديثًا',
     ]);
     expect(payload.attribution.join('\n')).not.toContain('صحيح');
   });
@@ -207,13 +208,14 @@ describe('quoteSharePayload: verse', () => {
     expect(payload.body).toBe('لِمَن كَانَ لَهُۥ قَلْبٌ');
     expect(payload.bodyFace).toBe('quran');
     expect(payload.heading).toBe('آية قرآنية');
-    expect(payload.attribution).toEqual(['ق 50:37 · القرآن الكريم']);
+    // «القرآن الكريم» is not repeated beside a verse reference (owner round 7, B8).
+    expect(payload.attribution).toEqual(['ق 50:37']);
   });
 
   it('English: sourced translation and English surah name', () => {
     const payload = quoteSharePayload(verse, { locale: 'en', labels: EN });
     expect(payload.body).toBe('for whoever has a heart');
-    expect(payload.attribution).toEqual(['Qaf 50:37 · The Noble Quran']);
+    expect(payload.attribution).toEqual(['Qaf 50:37']);
   });
 
   it('the display override folds digits and drops empty lines', () => {
@@ -233,9 +235,9 @@ describe('shareText and shareIntents', () => {
 
   it('body, blank line, attribution, blank line, «بواسطة تطبيق ذكرى» and the URL (round 6, C-08)', () => {
     expect(shareText(payload, url)).toBe(
-      'لِمَن كَانَ لَهُۥ قَلْبٌ\n\nق 50:37 · القرآن الكريم\n\nبواسطة تطبيق ذكرى\nhttps://thekra-web.vercel.app/quotes/q1',
+      'لِمَن كَانَ لَهُۥ قَلْبٌ\n\nق 50:37\n\nبواسطة تطبيق ذكرى\nhttps://thekra-web.vercel.app/quotes/q1',
     );
-    expect(shareText(payload)).toBe('لِمَن كَانَ لَهُۥ قَلْبٌ\n\nق 50:37 · القرآن الكريم\n\nبواسطة تطبيق ذكرى');
+    expect(shareText(payload)).toBe('لِمَن كَانَ لَهُۥ قَلْبٌ\n\nق 50:37\n\nبواسطة تطبيق ذكرى');
   });
 
   it('lays the body out naturally: no stray line breaks inside a paragraph, no word changed', () => {

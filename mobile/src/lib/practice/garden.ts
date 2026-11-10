@@ -1,5 +1,5 @@
 /**
- * «بستاني»: one plant per habit plan (and one for صلة الرحم when relatives exist), grown by presence.
+ * «بستان العادات»: one plant per habit plan (and one for صلة الرحم when relatives exist), grown by presence.
  *
  * Method (docs/research/anas-sheikh-akrim/4EkrbmmIlno-analysis.md §8, roadmap §0): a plant grows with the number of
  * days anything at all was logged for it («أي قدر يُحسب»), counted over its whole history, never a run of days. Nothing

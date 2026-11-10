@@ -1,6 +1,10 @@
 /**
  * The website's palette, value for value: `:root` and `.dark` in frontend/src/app/globals.css
  * (Viridian/Shell). Change a colour there first, then here, so the site and the app stay one product.
+ *
+ * Owner round 7 (R7-A1): the green stays; every cream, ivory and gold that came with it is gone. Surfaces are white
+ * or a near-white with the faintest cool cast, light text on the green is pure white, and the accents that were gold
+ * (good deeds, «حسن», the streak flame) are a deep teal from the green family. Dark: neutral greys, no warm cast.
  */
 
 export interface Palette {
@@ -32,6 +36,8 @@ export interface Palette {
   ring: string;
   destructive: string;
   destructiveForeground: string;
+  /** Destructive at ~10%: the soft circle behind a ConfirmDialog's warning mark. */
+  destructiveSoft: string;
   intentSin: string;
   intentSinForeground: string;
   intentGoodDeed: string;
@@ -58,15 +64,15 @@ export interface Palette {
 }
 
 export const light: Palette = {
-  background: '#fffcf9',
+  background: '#fbfcfb',
   foreground: '#263d35',
-  card: '#fffefd',
+  card: '#ffffff',
   muted: '#edf4ef',
-  /** 4.9:1 on `muted` (was #64746c, 4.4:1 on the segment track; A-18). */
-  mutedForeground: '#5d6c65',
+  /** 4.96:1 on `muted`, 5.4:1 on the page (A-18; the site's `--muted-foreground`). */
+  mutedForeground: '#5c6c64',
   accent: '#f0f3ee',
   border: '#dce3db',
-  /** 3.4:1 on the page, 3.1:1 on `muted`. */
+  /** 3.3:1 on the page, 3.1:1 on `muted`. */
   controlBorder: '#838d85',
   input: '#838d85',
   primary: '#326c59',
@@ -74,58 +80,62 @@ export const light: Palette = {
   link: '#326c59',
   ring: '#41816d',
   destructive: '#a0443a',
-  destructiveForeground: '#fffcf9',
+  destructiveForeground: '#ffffff',
+  destructiveSoft: 'rgba(160, 68, 58, 0.10)',
   intentSin: '#326c59',
   intentSinForeground: '#ffffff',
-  intentGoodDeed: '#8a6a2f',
+  /** Deep teal (was gold): 6.5:1 with white, 5.8:1 on `muted`. */
+  intentGoodDeed: '#2a6670',
   intentGoodDeedForeground: '#ffffff',
   intentImanBranch: '#3d4a5c',
   intentImanBranchForeground: '#ffffff',
   gradeSahih: '#326c59',
   gradeSahihForeground: '#ffffff',
-  gradeHasan: '#8a6a2f',
+  gradeHasan: '#2a6670',
   gradeHasanForeground: '#ffffff',
   gradeDaif: '#8a948c',
   gradeDaifForeground: '#263d35',
   gradeMawdu: '#a0443a',
-  gradeMawduForeground: '#fffcf9',
+  gradeMawduForeground: '#ffffff',
   primarySoft: 'rgba(50, 108, 89, 0.10)',
   flourish: '#d9e5d8',
   decor: '#41816d',
   pathwayFlourish: '#d9e5d8',
-  overlay: 'rgba(16, 16, 16, 0.45)',
+  overlay: 'rgba(24, 40, 34, 0.42)',
 };
 
 export const dark: Palette = {
   background: '#101010',
-  foreground: '#eeede9',
+  foreground: '#eceeed',
   card: '#181818',
   muted: '#1e1f1e',
-  mutedForeground: '#aaa9a4',
+  mutedForeground: '#a7aba9',
   accent: '#242524',
   border: '#333532',
-  /** 3.9:1 on the page, 3.4:1 on `muted`. */
-  controlBorder: '#70726e',
-  input: '#70726e',
+  /** 4.0:1 on the page, 3.4:1 on `muted`. */
+  controlBorder: '#6f7371',
+  input: '#6f7371',
   primary: '#326c59',
   primaryForeground: '#ffffff',
   link: '#8bc2aa',
   ring: '#8bc2aa',
-  destructive: '#c45a4e',
+  /** 4.9:1 on `muted`, 5.6:1 on the page (the site's dark `--destructive`). */
+  destructive: '#d46e62',
   destructiveForeground: '#101010',
+  destructiveSoft: 'rgba(212, 110, 98, 0.16)',
   intentSin: '#8bc2aa',
   intentSinForeground: '#101010',
-  intentGoodDeed: '#c4a35a',
+  intentGoodDeed: '#86bfc6',
   intentGoodDeedForeground: '#101010',
   intentImanBranch: '#9aa3b2',
   intentImanBranchForeground: '#101010',
   gradeSahih: '#8bc2aa',
   gradeSahihForeground: '#101010',
-  gradeHasan: '#c4a35a',
+  gradeHasan: '#86bfc6',
   gradeHasanForeground: '#101010',
-  gradeDaif: '#6a6a66',
-  gradeDaifForeground: '#eeede9',
-  gradeMawdu: '#c45a4e',
+  gradeDaif: '#686c6a',
+  gradeDaifForeground: '#eceeed',
+  gradeMawdu: '#d46e62',
   gradeMawduForeground: '#101010',
   primarySoft: 'rgba(50, 108, 89, 0.18)',
   flourish: '#2a3a32',

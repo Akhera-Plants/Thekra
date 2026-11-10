@@ -64,6 +64,36 @@ export function atharSpeakerLine(quote: QuoteDto, labels: Pick<QuoteShareLabels,
 
 const ARABIC_SCRIPT = /[\u0600-\u06FF]/;
 
+/** Letters only: no harakat, one alif, ة→ه, ى→ي — so «أبي داود» and «ابي داود» compare equal. */
+function foldArabic(value: string): string {
+  return value
+    .replace(/[\u064B-\u065F\u0670\u0640]/g, '')
+    .replace(/[أإآٱ]/g, 'ا')
+    .replace(/ة/g, 'ه')
+    .replace(/ى/g, 'ي');
+}
+
+const PUNCTUATION = /[،,:؛()\-–—.]/g;
+
+/**
+ * Does `part` («البخاري 2595», «سنن ابن ماجه، رقم 4229») name the same book and number as the source shown beside it
+ * («صحيح البخاري، رقم 2595»)? The web's `repeatsSource` (frontend/src/lib/format/grade-citation.ts).
+ */
+export function repeatsSource(part: string | null | undefined, badge: string | null | undefined): boolean {
+  if (!part?.trim() || !badge?.trim()) return false;
+  const numbers = (value: string): string[] => toWesternDigits(value).match(/\d+/g) ?? [];
+  const partNumbers = numbers(part);
+  const badgeNumbers = numbers(badge);
+  if (partNumbers.length === 0 || !partNumbers.every((n) => badgeNumbers.includes(n))) return false;
+  const core = foldArabic(toWesternDigits(part))
+    .replace(/\d+/g, ' ')
+    .replace(/(^|\s)(?:رواه|رقم)(?=\s|$)/g, ' ')
+    .replace(PUNCTUATION, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return core.length > 0 && foldArabic(toWesternDigits(badge)).replace(PUNCTUATION, ' ').replace(/\s+/g, ' ').includes(core);
+}
+
 /**
  * The grade line the web QuoteCard shows from `citation` (frontend/src/lib/format/grade-citation.ts), for
  * rows that carry a `gradeReference`: «<gradeReference> · حكمه <gradeAuthority>» («حسّنه» for a hasan grade).
@@ -72,13 +102,43 @@ const ARABIC_SCRIPT = /[\u0600-\u06FF]/;
  * English UI: parts that are Arabic-only text are dropped; when nothing English is left, no line.
  * An athar never gets a grade line (rule 4).
  */
-export function gradeCitationLine(quote: QuoteDto, locale: ShareLocale): string | null {
+export function gradeCitationLine(
+  quote: QuoteDto,
+  locale: ShareLocale,
+  options: {
+    /**
+     * The source shown beside the grade (the raw `hadith.reference`, «صحيح البخاري، رقم 2595»). The source appears once
+     * (owner round 7, B4): when the line's reference names the same book and number, it is left out — a «رواه البخاري»
+     * line goes entirely, a grader keeps only «حكمه …».
+     */
+    besideSource?: string | null;
+  } = {},
+): string | null {
   if (quote.isAthar) return null;
   const reference = quote.citation?.gradeReference?.trim() || null;
   if (!reference) return null;
   const authority = quote.citation?.gradeAuthority?.trim() || null;
   const verb = quote.hadith?.grade === HadithGrade.HASAN ? 'حسّنه' : 'حكمه';
-  const line = authority ? `${reference}${SEPARATOR}${verb} ${authority}` : reference;
+  if (repeatsSource(reference, options.besideSource)) {
+    // «رواه البخاري» / «رواه مسلم» only names the book again; a grader («حكمه شعيب الأرنؤوط») still says something.
+    if (!authority || /^رواه\s/.test(authority)) return null;
+    const graded = `${verb} ${authority}`;
+    if (locale === 'ar') return toWesternDigits(graded);
+    return ARABIC_SCRIPT.test(authority) ? null : graded;
+  }
+  // The two Sahihs read in their short form, as on the website («رواه البخاري، رقم 2595», «متفق عليه، البخاري 1، مسلم
+  // 2»), never «… · حكمه متفق عليه».
+  const sahihayn = authority && /^(?:رواه البخاري|رواه مسلم|متفق عليه)$/.test(authority);
+  const number = reference.match(/\d+/)?.[0];
+  const line = sahihayn
+    ? authority === 'متفق عليه'
+      ? `${authority}، ${reference}`
+      : number
+        ? `${authority}، رقم ${number}`
+        : authority!
+    : authority
+      ? `${reference}${SEPARATOR}${verb} ${authority}`
+      : reference;
   if (locale === 'ar') return toWesternDigits(line);
   if (!ARABIC_SCRIPT.test(line)) return line;
   const kept = [reference, authority].filter((part): part is string => Boolean(part) && !ARABIC_SCRIPT.test(part!));
@@ -93,9 +153,11 @@ export function quoteAttribution(quote: QuoteDto, labels: QuoteShareLabels, loca
     quote.type === QuoteType.HADITH && !quote.isAthar && quote.hadith?.grade && quote.hadith.grade !== HadithGrade.UNGRADED
       ? labels.grade[quote.hadith.grade] ?? null
       : null;
-  const main = [source, provenance && provenance !== source ? provenance : null, grade].filter(Boolean).join(SEPARATOR);
+  // A verse: «لقمان (31:13)» without «القرآن الكريم» (owner round 7, B8), as on the card.
+  const shownSource = quote.type === QuoteType.QURAN_VERSE && provenance ? null : source;
+  const main = [shownSource, provenance && provenance !== source ? provenance : null, grade].filter(Boolean).join(SEPARATOR);
   if (main) lines.push(main);
-  const gradeLine = gradeCitationLine(quote, locale);
+  const gradeLine = gradeCitationLine(quote, locale, { besideSource: quote.hadith?.reference });
   if (gradeLine) lines.push(gradeLine);
   const speaker = atharSpeakerLine(quote, labels);
   if (speaker) lines.push(speaker);

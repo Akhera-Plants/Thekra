@@ -16,7 +16,10 @@
  * - The lifecycle refresh (`refreshVault`) never reads the keystore (that would ask for the fingerprint at every
  *   foreground): it learns whether a vault exists, merges and saves while the key is in memory.
  * - Sign-out clears the kept key and the local programs; «ابدأ من جديد» also DELETEs the vault.
- * Never logs anything from the programs, the code or the key. Nothing says «على جهازك فقط»: there is no device-only mode.
+ * - Round 7 (C6, owner): the code is optional. A member who skips it keeps the programs on this device only (status
+ *   `none`): they are never sent (the practice sync refuses programs; nothing is sealed without a key) and never wiped
+ *   on sign-out. Setting the code later (`createVaultWithCode`) seals them into the account.
+ * Never logs anything from the programs, the code or the key.
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -361,8 +364,9 @@ export async function lockVault(): Promise<void> {
   session = null;
   lastRemote = null;
   await forgetKeptKey();
-  const pending = useVaultState.getState().pending;
-  if (!pending) await usePracticeStore.getState().wipePrograms();
+  const { pending, status } = useVaultState.getState();
+  // Round 7 (C6): programs started without a privacy code exist only on this device (`none`): never wiped here.
+  if (!pending && status !== 'none') await usePracticeStore.getState().wipePrograms();
   useVaultState.setState({ status: 'unknown', error: null, pending });
 }
 

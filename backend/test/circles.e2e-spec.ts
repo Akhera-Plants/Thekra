@@ -1,6 +1,6 @@
 /**
- * E2E spec for رفقة (/v1/circles): auth, the envelope and status codes, invite-only access (round 6, C-01k), who
- * sees the invite code, that no user id or email leaves the API, presence marks, cheers, and the owner-only actions.
+ * E2E spec for صحبة (/v1/circles): auth, the envelope and status codes, invite-only access (round 6, C-01k), who
+ * sees the invite code, that no user id or email leaves the API, presence marks, the round-7 feed (lines, rounds, keep, report, hide), and the owner-only actions.
  */
 
 import { INestApplication } from '@nestjs/common';
@@ -45,7 +45,7 @@ describe('Circles endpoints (e2e)', () => {
     return authHeaders(app, email, TEST_PASSWORD);
   };
 
-  it('رفقة is off for a plain account: no circle, no join, no invite (403 CIRCLES_NOT_ENABLED)', async () => {
+  it('صحبة is off for a plain account: no circle, no join, no invite (403 CIRCLES_NOT_ENABLED)', async () => {
     const access = await http().get('/v1/circles/access').set(owner).expect(200);
     expect(access.headers['cache-control']).toContain('no-store');
     expect(access.body.data).toEqual({ enabled: false, inCircle: false, invites: null });
@@ -59,7 +59,7 @@ describe('Circles endpoints (e2e)', () => {
     }
   });
 
-  it('an ADMIN account is on; its invite turns رفقة on for the one who redeems it, once', async () => {
+  it('an ADMIN account is on; its invite turns صحبة on for the one who redeems it, once', async () => {
     const adminAccess = await http().get('/v1/circles/access').set(friend).expect(200);
     expect(adminAccess.body.data).toMatchObject({ enabled: true, inCircle: false, invites: { active: 0, remaining: 5, ttlDays: 7 } });
 
@@ -100,14 +100,14 @@ describe('Circles endpoints (e2e)', () => {
     const res = await http()
       .post('/v1/circles')
       .set(owner)
-      .send({ name: '  رفقة الفجر ', intention: 'نتعاون على الثبات', displayName: 'أبو عمر' })
+      .send({ name: '  صحبة الفجر ', intention: 'نتعاون على الثبات', displayName: 'أبو عمر' })
       .expect(201);
     circleId = res.body.data.id;
     inviteCode = res.body.data.inviteCode;
     expect(res.headers['location']).toBe(`/v1/circles/${circleId}`);
-    expect(res.body.data).toMatchObject({ name: 'رفقة الفجر', memberCount: 1, me: { isOwner: true, sharesPresence: false } });
+    expect(res.body.data).toMatchObject({ name: 'صحبة الفجر', memberCount: 1, me: { isOwner: true, sharesPresence: false } });
     expect(inviteCode).toMatch(/^[2-9A-HJKMNP-Z]{10}$/);
-    // Now in a circle: the website may show «شارك تطورك مع الرفقة».
+    // Now in a circle: the website may show «شارك تطورك مع الصحبة».
     expect((await http().get('/v1/circles/access').set(owner).expect(200)).body.data.inCircle).toBe(true);
   });
 
@@ -159,29 +159,92 @@ describe('Circles endpoints (e2e)', () => {
     expect(res.body.data.members.every((m: { presentDays: string[] }) => m.presentDays.length === 0)).toBe(true);
   });
 
-  it('cheers: one per target per day, the receiver sees it', async () => {
+  it('suggested lines: once per line and target a day; a line to one member stays between the two', async () => {
     const detail = await http().get(`/v1/circles/${circleId}`).set(friend).expect(200);
     const ownerMember = detail.body.data.members.find((m: { isOwner: boolean }) => m.isOwner).memberId;
-    await http().post(`/v1/circles/${circleId}/cheers`).set(friend).send({ message: 'thabat', toMemberId: ownerMember }).expect(201);
-    const again = await http()
-      .post(`/v1/circles/${circleId}/cheers`)
-      .set(friend)
-      .send({ message: 'jazak', toMemberId: ownerMember })
-      .expect(409);
+    await http().post(`/v1/circles/${circleId}/messages`).set(friend).send({ key: 'thabat', toMemberId: ownerMember }).expect(201);
+    const again = await http().post(`/v1/circles/${circleId}/messages`).set(friend).send({ key: 'thabat', toMemberId: ownerMember }).expect(409);
     expect(again.body.error.code).toBe('CIRCLE_CHEER_ALREADY_SENT');
-    await http().post(`/v1/circles/${circleId}/cheers`).set(friend).send({ message: 'free text' }).expect(400);
-    const seen = await http().get(`/v1/circles/${circleId}`).set(owner).expect(200);
-    expect(seen.body.data.cheers).toEqual([expect.objectContaining({ message: 'thabat', fromName: 'سالم', toMe: true })]);
+    await http().post(`/v1/circles/${circleId}/messages`).set(friend).send({ key: 'jazak', toMemberId: ownerMember }).expect(201);
+    await http().post(`/v1/circles/${circleId}/messages`).set(friend).send({ key: 'free text' }).expect(400);
+    // «شارك تقدّمي» goes to the whole صحبة with two counts only.
+    const target = await http().post(`/v1/circles/${circleId}/messages`).set(friend).send({ key: 'progress', toMemberId: ownerMember, progress: { done: 1, total: 2 } });
+    expect(target.status).toBe(400);
+    await http().post(`/v1/circles/${circleId}/messages`).set(friend).send({ key: 'progress', progress: { done: 2, total: 3 } }).expect(201);
+    const seen = await http().get(`/v1/circles/${circleId}/messages`).set(owner).expect(200);
+    expect(seen.headers['cache-control']).toContain('no-store');
+    expect(seen.body.data.items.map((m: { key: string }) => m.key)).toEqual(['progress', 'jazak', 'thabat']);
+    expect(seen.body.data.items[0]).toMatchObject({ progress: { done: 2, total: 3 }, to: null, from: { name: 'سالم', isMe: false } });
+    expect((await http().get(`/v1/circles/${circleId}`).set(friend).expect(200)).body.data.sentToday).toContain(`thabat:${ownerMember}`);
   });
 
-  it('an owner’s circle invite turns رفقة on and joins the circle; a member cannot invite to it', async () => {
+  it('rounds: start, one at a time, «تم», the others congratulate; the label is cleaned', async () => {
+    const started = await http()
+      .post(`/v1/circles/${circleId}/rounds`)
+      .set(owner)
+      .send({ kind: 'study', label: '  compiler\u202Edesign  ', minutes: 60, today: today() })
+      .expect(201);
+    expect(started.body.data).toMatchObject({ kind: 'study', label: 'compiler design', minutes: 60, number: 1, outcome: null, closed: false });
+    const roundId = started.body.data.id as string;
+    const second = await http().post(`/v1/circles/${circleId}/rounds`).set(owner).send({ kind: 'focus', minutes: 25, today: today() }).expect(409);
+    expect(second.body.error.code).toBe('CIRCLE_ROUND_OPEN');
+    expect((await http().get(`/v1/circles/${circleId}`).set(owner).expect(200)).body.data.myOpenRound).toMatchObject({ id: roundId });
+    await http().post(`/v1/circles/${circleId}/rounds/${roundId}/replies`).set(friend).send({ key: 'go' }).expect(201);
+    await http().post(`/v1/circles/${circleId}/rounds/${roundId}/end`).set(friend).send({ outcome: 'done' }).expect(404);
+    await http().post(`/v1/circles/${circleId}/rounds/${roundId}/end`).set(owner).send({ outcome: 'done' }).expect(200);
+    await http().post(`/v1/circles/${circleId}/rounds/${roundId}/end`).set(owner).send({ outcome: 'done' }).expect(409);
+    const wrong = await http().post(`/v1/circles/${circleId}/rounds/${roundId}/replies`).set(friend).send({ key: 'go' }).expect(400);
+    expect(wrong.body.error.code).toBe('CIRCLE_REPLY_KIND');
+    await http().post(`/v1/circles/${circleId}/rounds/${roundId}/replies`).set(friend).send({ key: 'mashallah' }).expect(201);
+    const next = await http().post(`/v1/circles/${circleId}/rounds`).set(owner).send({ kind: 'study', minutes: 30, today: today() }).expect(201);
+    expect(next.body.data.number).toBe(2);
+    const feed = await http().get(`/v1/circles/${circleId}/messages?limit=4`).set(friend).expect(200);
+    expect(feed.body.data.items.map((m: { kind: string }) => m.kind)).toEqual(['round_start', 'reply', 'round_end', 'reply']);
+    expect(feed.body.data.nextBefore).toEqual(feed.body.data.items[3].id);
+    const older = await http().get(`/v1/circles/${circleId}/messages?limit=50&before=${feed.body.data.nextBefore}`).set(friend).expect(200);
+    expect(older.body.data.items[0].kind).toBe('round_start');
+    expect(older.body.data.nextBefore).toBeNull();
+  });
+
+  it('keep a message, report it and hide its sender: only the reporter’s own feed changes', async () => {
+    const feed = await http().get(`/v1/circles/${circleId}/messages`).set(owner).expect(200);
+    const fromSalem = feed.body.data.items.find((m: { from: { name: string } }) => m.from.name === 'سالم');
+    await http().put(`/v1/circles/${circleId}/messages/${fromSalem.id}/save`).set(owner).expect(200);
+    const saved = await http().get(`/v1/circles/${circleId}/messages?saved=true`).set(owner).expect(200);
+    expect(saved.body.data.items.map((m: { id: string }) => m.id)).toEqual([fromSalem.id]);
+
+    const report = { kind: 'message', messageId: fromSalem.id, reason: 'offensive', note: 'ملاحظة' };
+    expect((await http().post(`/v1/circles/${circleId}/reports`).set(owner).send(report).expect(200)).body.data).toEqual({ received: true, muted: false });
+    await http().post(`/v1/circles/${circleId}/reports`).set(owner).send(report).expect(200);
+    expect(await prisma.circleReport.count()).toBe(1);
+    const after = await http().get(`/v1/circles/${circleId}/messages?limit=50`).set(owner).expect(200);
+    expect(after.body.data.items.some((m: { id: string }) => m.id === fromSalem.id)).toBe(false);
+    // Nothing changes for the others.
+    const theirs = await http().get(`/v1/circles/${circleId}/messages?limit=50`).set(friend).expect(200);
+    expect(theirs.body.data.items.some((m: { id: string }) => m.id === fromSalem.id)).toBe(true);
+
+    const salemId = fromSalem.from.memberId as string;
+    await http().post(`/v1/circles/${circleId}/reports`).set(owner).send({ kind: 'member', memberId: salemId, reason: 'harassment', mute: true }).expect(200);
+    const muted = await http().get(`/v1/circles/${circleId}/messages?limit=50`).set(owner).expect(200);
+    expect(muted.body.data.items.some((m: { from: { memberId: string } }) => m.from.memberId === salemId)).toBe(false);
+    expect((await http().get(`/v1/circles/${circleId}`).set(owner).expect(200)).body.data.mutedMemberIds).toEqual([salemId]);
+    await http().delete(`/v1/circles/${circleId}/mutes/${salemId}`).set(owner).expect(204);
+
+    // The owner of Thekra reads them; a plain account cannot.
+    await http().get('/v1/admin/circle-reports').set(owner).expect(403);
+    const list = await http().get('/v1/admin/circle-reports').set(friend).expect(200);
+    expect(list.body.data).toHaveLength(2);
+    expect(list.body.data[1]).toMatchObject({ kind: 'message', reason: 'offensive', note: 'ملاحظة', reported: { name: 'سالم', stillMember: true } });
+  });
+
+  it('an owner’s circle invite turns صحبة on and joins the circle; a member cannot invite to it', async () => {
     expect((await http().post('/v1/circles/invites').set(friend).send({ circleId }).expect(403)).body.error.code).toBe('CIRCLE_OWNER_ONLY');
     const created = await http().post('/v1/circles/invites').set(owner).send({ circleId }).expect(201);
-    expect(created.body.data.circle).toEqual({ id: circleId, name: 'رفقة الفجر' });
+    expect(created.body.data.circle).toEqual({ id: circleId, name: 'صحبة الفجر' });
 
     const guest = await register('e2e-circle-guest@thekra.test');
     const nameless = await http().post('/v1/circles/invites/redeem').set(guest).send({ code: created.body.data.code }).expect(400);
-    expect(nameless.body.error).toMatchObject({ code: 'CIRCLE_DISPLAY_NAME_REQUIRED', details: { circleName: 'رفقة الفجر' } });
+    expect(nameless.body.error).toMatchObject({ code: 'CIRCLE_DISPLAY_NAME_REQUIRED', details: { circleName: 'صحبة الفجر' } });
 
     const joined = await http()
       .post('/v1/circles/invites/redeem')
@@ -210,8 +273,11 @@ describe('Circles endpoints (e2e)', () => {
     expect((await http().get('/v1/circles').set(friend).expect(200)).body.data).toEqual([]);
     await http().delete(`/v1/circles/${circleId}`).set(owner).expect(204);
     expect((await http().get('/v1/circles').set(owner).expect(200)).body.data).toEqual([]);
-    expect(await prisma.circleCheer.count()).toBe(0);
+    expect(await prisma.circleMessage.count()).toBe(0);
+    expect(await prisma.circleRound.count()).toBe(0);
     expect(await prisma.circleMember.count()).toBe(0);
+    // Reports stay for the owner of Thekra, unlinked from the deleted circle.
+    expect(await prisma.circleReport.count({ where: { circleId: null } })).toBe(2);
   });
 
   it('deleting the account removes the memberships; a circle left empty is gone, its code no longer works', async () => {

@@ -7,6 +7,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { privacyCodeProblem, VaultLockedError, type SinProgram } from '@thekra/practice-core';
 import { BrandLoader } from '@/components/shared/feedback/BrandLoader';
+import { ActionPair } from '@/components/shared/kit/action-pair';
 import { Button } from '@/components/shared/kit/button';
 import {
   AlertDialog,
@@ -128,6 +129,13 @@ interface CreateCodeFormProps {
   /** After the vault is saved and unlocked in this tab. */
   onCreated: (programs: readonly SinProgram[]) => void;
   onCancel?: () => void;
+  /**
+   * Round 7 (C6): the code is optional when a program starts. «تخطَّ وابدأ» starts it without one: it then stays on this
+   * device only (it is never sent unencrypted), and the code can be set later from the program's «الخصوصية والإخفاء».
+   */
+  onSkip?: () => void;
+  /** The submit label (default «احفظ وابدأ»). */
+  submitLabel?: string;
   /** Another device made the vault meanwhile: unlock it instead. */
   onExists: () => void;
 }
@@ -136,7 +144,7 @@ interface CreateCodeFormProps {
  * «رمز الخصوصية» before the first program (docs/plan/2026-11-01-sin-vault-always-on.md §1): the code locks «تخفَّف»
  * so that nobody, not even the site's team, can read it; a forgotten code cannot be recovered.
  */
-export function CreateCodeForm({ programs, userId, onCreated, onCancel, onExists }: CreateCodeFormProps) {
+export function CreateCodeForm({ programs, userId, onCreated, onCancel, onSkip, submitLabel, onExists }: CreateCodeFormProps) {
   const t = useTranslations('leaveSin.vault');
   const queryClient = useQueryClient();
   const [busy, setBusy] = useState(false);
@@ -180,17 +188,22 @@ export function CreateCodeForm({ programs, userId, onCreated, onCancel, onExists
             {t('errors.create')}
           </p>
         ) : null}
-        <div className="flex flex-wrap items-center gap-3">
+        <ActionPair>
           <Button type="submit" tone="primary" disabled={busy}>
-            {t('save')}
+            {submitLabel ?? t('save')}
           </Button>
-          {onCancel ? (
+          {onSkip ? (
+            <Button variant="outline" tone="primary" onClick={onSkip} disabled={busy}>
+              {t('skip')}
+            </Button>
+          ) : onCancel ? (
             <Button variant="outline" tone="neutral" onClick={onCancel} disabled={busy}>
               {t('cancel')}
             </Button>
           ) : null}
-          {busy ? <BrandLoader label={t('working')} showLabel /> : null}
-        </div>
+        </ActionPair>
+        {busy ? <BrandLoader label={t('working')} showLabel /> : null}
+        {onSkip ? <p className="text-sm leading-7 text-muted-foreground">{t('skipNote')}</p> : null}
       </form>
     </Form>
   );

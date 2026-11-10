@@ -51,7 +51,7 @@ function setup() {
     isEnabled: vi.fn().mockResolvedValue(true),
     ownerOf: vi.fn().mockResolvedValue({ id: 'm1', isOwner: true }),
     addMember: vi.fn().mockResolvedValue(undefined),
-    findOne: vi.fn().mockResolvedValue({ id: CIRCLE, name: 'رفقة الفجر' }),
+    findOne: vi.fn().mockResolvedValue({ id: CIRCLE, name: 'صحبة الفجر' }),
   };
   const service = new CircleInvitesService(prisma as unknown as PrismaService, circles as unknown as CirclesService);
   return { prisma, circles, service };
@@ -83,7 +83,7 @@ describe('CircleInvitesService', () => {
       expect(access.inCircle).toBe(false);
     });
 
-    it('inCircle: true once I belong to a circle (the website shows «شارك تطورك مع الرفقة» then)', async () => {
+    it('inCircle: true once I belong to a circle (the website shows «شارك تطورك مع الصحبة» then)', async () => {
       const { service, prisma } = setup();
       prisma.circleMember.findFirst.mockResolvedValue({ id: 'm1' });
       expect((await service.access(INVITER, NOW)).inCircle).toBe(true);
@@ -92,7 +92,7 @@ describe('CircleInvitesService', () => {
   });
 
   describe('create', () => {
-    it('403 CIRCLES_NOT_ENABLED for a user whose رفقة is off', async () => {
+    it('403 CIRCLES_NOT_ENABLED for a user whose صحبة is off', async () => {
       const { service, circles, prisma } = setup();
       circles.isEnabled.mockResolvedValue(false);
       const error = await service.create(GUEST, {}, NOW).catch((e: unknown) => e);
@@ -129,7 +129,7 @@ describe('CircleInvitesService', () => {
   });
 
   describe('redeem', () => {
-    it('claims the invite atomically and turns رفقة on', async () => {
+    it('claims the invite atomically and turns صحبة on', async () => {
       const { service, prisma } = setup();
       const result = await service.redeem(GUEST, { code: 'abcde-fghjk' }, NOW);
       expect(prisma.circleInvite.findUnique).toHaveBeenCalledWith(expect.objectContaining({ where: { code: 'ABCDEFGHJK' } }));
@@ -172,7 +172,7 @@ describe('CircleInvitesService', () => {
 
     it('a circle invite needs the display name first and stays unused without it', async () => {
       const { service, prisma } = setup();
-      prisma.circleInvite.findUnique.mockResolvedValue(activeInvite({ circleId: CIRCLE, circle: { name: 'رفقة الفجر' } }));
+      prisma.circleInvite.findUnique.mockResolvedValue(activeInvite({ circleId: CIRCLE, circle: { name: 'صحبة الفجر' } }));
       const error = await service.redeem(GUEST, { code: 'ABCDEFGHJK' }, NOW).catch((e: unknown) => e);
       expect(statusOf(error)).toBe(400);
       expect(codeOf(error)).toBe('CIRCLE_DISPLAY_NAME_REQUIRED');
@@ -181,14 +181,14 @@ describe('CircleInvitesService', () => {
 
     it('a circle invite joins the circle while the inviter is still in it', async () => {
       const { service, prisma, circles } = setup();
-      prisma.circleInvite.findUnique.mockResolvedValue(activeInvite({ circleId: CIRCLE, circle: { name: 'رفقة الفجر' } }));
+      prisma.circleInvite.findUnique.mockResolvedValue(activeInvite({ circleId: CIRCLE, circle: { name: 'صحبة الفجر' } }));
       const result = await service.redeem(GUEST, { code: 'ABCDEFGHJK', displayName: 'سالم' }, NOW);
       expect(circles.addMember).toHaveBeenCalledWith(prisma, CIRCLE, GUEST, 'سالم');
       expect(result.circle).toMatchObject({ id: CIRCLE });
       expect(result.joinError).toBeNull();
     });
 
-    it('a full circle still turns رفقة on and says why it was not joined', async () => {
+    it('a full circle still turns صحبة on and says why it was not joined', async () => {
       const { service, prisma, circles } = setup();
       prisma.circleInvite.findUnique.mockResolvedValue(activeInvite({ circleId: CIRCLE, circle: { name: 'x' } }));
       circles.addMember.mockRejectedValue(new HttpException({ code: 'CIRCLE_FULL' }, 409));
@@ -197,7 +197,7 @@ describe('CircleInvitesService', () => {
       expect(result).toEqual({ enabled: true, circle: null, joinError: 'CIRCLE_FULL' });
     });
 
-    it('the inviter left the circle: رفقة on, circle not joined', async () => {
+    it('the inviter left the circle: صحبة on, circle not joined', async () => {
       const { service, prisma, circles } = setup();
       prisma.circleInvite.findUnique.mockResolvedValue(activeInvite({ circleId: CIRCLE, circle: { name: 'x' } }));
       prisma.circleMember.count.mockResolvedValue(0);

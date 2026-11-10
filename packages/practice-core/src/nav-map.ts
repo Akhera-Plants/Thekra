@@ -9,7 +9,7 @@
  * - `web` is the Next.js path without the locale prefix (Arabic has none, English adds `/en`); `[id]` marks a segment.
  * - `app` is the Expo Router href. A segmented tab inside a screen is a `?tab=` query (e.g. `/habits?tab=periodic`),
  *   so a deep link can open it.
- * - `null`: the feature has no page on that platform (e.g. «رفقة» lives in the app only; the web menu links to the app).
+ * - `null`: the feature has no page on that platform (e.g. «صحبة» lives in the app only; the web menu links to the app).
  *
  * {@link GLOSSARY} holds the shared words every screen must use (and the ones to avoid). It is for the owner to
  * approve (round plan §1 «Shared map»); a change there is a product decision, not a refactor.
@@ -25,7 +25,7 @@ export type NavGroup =
   | 'habits'
   /** «أبواب الخير»: the public doors (web header group of the same name). */
   | 'doors'
-  /** «المزيد»: the web header menu and the app tab (round 6: الاستراتيجيات، المحفوظات، رفقة). */
+  /** «المزيد»: the web header menu and the app tab (round 6: الاستراتيجيات، المحفوظات، صحبة). */
   | 'members'
   /** «الإعدادات» and its pages. */
   | 'settings';
@@ -83,8 +83,8 @@ export const NAV_FEATURES: readonly NavFeature[] = [
   { key: 'saved', ar: 'المحفوظات', en: 'Saved', web: '/favorites', app: '/favorites', group: 'members' },
   { key: 'saved-texts', ar: 'النصوص', en: 'Texts', web: '/favorites', app: '/favorites?tab=texts', group: 'members', parent: 'saved' },
   { key: 'my-reminders', ar: 'تذكيراتي', en: 'My reminders', web: '/favorites/reminders', app: '/favorites?tab=reminders', group: 'members', parent: 'saved' },
-  { key: 'circles', ar: 'رفقة', en: 'Companions', web: null, app: '/circles', group: 'members' },
-  { key: 'garden', ar: 'الحديقة', en: 'The garden', web: null, app: '/garden', group: 'members' },
+  { key: 'circles', ar: 'صحبة', en: 'Companions', web: null, app: '/circles', group: 'members' },
+  { key: 'garden', ar: 'بستان العادات', en: 'Habit garden', web: null, app: '/garden', group: 'members' },
   { key: 'more', ar: 'المزيد', en: 'More', web: null, app: '/more', group: 'members' },
 
   // ── الإعدادات (web: only in the account menu; app: the last group of «المزيد») ──
@@ -117,7 +117,7 @@ export const SIGN_OUT = { ar: 'تسجيل الخروج', en: 'Sign out' } as con
 export const APP_TABS: readonly string[] = ['home', 'habits', 'more'];
 
 /**
- * The app's «المزيد» (round 6 §1): the web «المزيد» (+ «الحديقة», app only and unchanged, §10), then the settings rows.
+ * The app's «المزيد» (round 6 §1): the web «المزيد» (+ «بستان العادات», app only, §10; renamed in round 7, C7), then the settings rows.
  * No «تصفّح النصوص», no people page.
  */
 export const APP_MORE: { readonly mine: readonly string[]; readonly settings: readonly string[] } = {
@@ -321,10 +321,10 @@ export const GLOSSARY: readonly GlossaryTerm[] = [
   },
   {
     key: 'companions',
-    ar: 'رفقة',
+    ar: 'صحبة',
     en: 'Companions',
-    avoidAr: ['الدوائر'],
-    note: 'In the app only; the web menu shows «رفقة (في التطبيق)» (W-12 b).',
+    avoidAr: ['الدوائر', 'رفقة'],
+    note: 'In the app only; the web menu shows «صحبة (في التطبيق)» (W-12 b). Owner round 7 (D1): «رفقة» became «صحبة» everywhere.',
   },
 ];
 

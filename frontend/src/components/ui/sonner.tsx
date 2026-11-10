@@ -2,7 +2,7 @@
 
 import { useTheme } from "next-themes"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
-import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react"
+import { CheckIcon, CircleAlertIcon, InfoIcon, Loader2Icon, TriangleAlertIcon, XIcon } from "lucide-react"
 
 const Toaster = ({ ...props }: ToasterProps) => {
   const { theme = "system" } = useTheme()
@@ -11,29 +11,23 @@ const Toaster = ({ ...props }: ToasterProps) => {
     <Sonner
       theme={theme as ToasterProps["theme"]}
       className="toaster group"
+      // Owner round 7 (R7-A3): the toast in our identity — a white card, the mark in a tinted circle, the line at
+      // reading size, an outlined action (src/app/overlays.css). Bottom centre on every page, as in the app.
       icons={{
-        success: (
-          <CircleCheckIcon className="size-4" />
-        ),
-        info: (
-          <InfoIcon className="size-4" />
-        ),
-        warning: (
-          <TriangleAlertIcon className="size-4" />
-        ),
-        error: (
-          <OctagonXIcon className="size-4" />
-        ),
-        loading: (
-          <Loader2Icon className="size-4 animate-spin" />
-        ),
+        success: <CheckIcon strokeWidth={2} />,
+        info: <InfoIcon strokeWidth={1.8} />,
+        warning: <TriangleAlertIcon strokeWidth={1.8} />,
+        error: <CircleAlertIcon strokeWidth={1.8} />,
+        loading: <Loader2Icon className="animate-spin" strokeWidth={1.8} />,
+        close: <XIcon className="size-3.5" strokeWidth={1.8} />,
       }}
       style={
         {
           "--normal-bg": "var(--popover)",
           "--normal-text": "var(--popover-foreground)",
           "--normal-border": "var(--border)",
-          "--border-radius": "var(--radius)",
+          "--border-radius": "0.875rem",
+          "--width": "min(380px, calc(100vw - 2rem))",
         } as React.CSSProperties
       }
       toastOptions={{

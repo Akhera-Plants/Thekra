@@ -1,9 +1,9 @@
 /**
- * «أدخل رمز الدعوة» (owner round 6, C-01k: رفقة opens for a member only when an existing member invites him). The code
- * (a shared `thekra://circles/invite/<code>` link fills it in), then «فعّل رفقة». An invite that also joins a circle asks
+ * «أدخل رمز الدعوة» (owner round 6, C-01k: صحبة opens for a member only when an existing member invites him). The code
+ * (a shared `thekra://circles/invite/<code>` link fills it in), then «فعّل صحبة». An invite that also joins a circle asks
  * for the name to show there (the API says so with CIRCLE_DISPLAY_NAME_REQUIRED, and names the circle). Every refusal is
- * one kind sentence (`circleErrorKey`); a redeemed invite whose circle could not be joined still turns رفقة on and says
- * why (`joinErrorKey`). After success: a toast, then the circle or the رفقة list.
+ * one kind sentence (`circleErrorKey`); a redeemed invite whose circle could not be joined still turns صحبة on and says
+ * why (`joinErrorKey`). After success: a toast, then the circle or the صحبة list.
  */
 
 import React, { useState } from 'react';

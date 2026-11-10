@@ -45,6 +45,33 @@ async function makeService(userExists = true) {
       ]),
     },
     quoteRead: { findMany: vi.fn().mockResolvedValue([]) },
+    circleMember: {
+      findMany: vi.fn().mockResolvedValue([
+        { circleId: 'c1', displayName: 'أبو عمر', isOwner: true, sharesPresence: false, joinedAt: createdAt, circle: { name: 'صحبة الفجر' } },
+      ]),
+    },
+    circleMessage: {
+      findMany: vi.fn().mockResolvedValue([{ id: 'm1', circleId: 'c1', kind: 'PRESET', key: 'thabat', data: null, roundId: null, createdAt }]),
+    },
+    circleRound: {
+      findMany: vi.fn().mockResolvedValue([
+        {
+          id: 'r1',
+          circleId: 'c1',
+          kind: 'study',
+          label: 'compiler design',
+          minutes: 60,
+          day: new Date('2026-10-27T00:00:00Z'),
+          number: 4,
+          startedAt: createdAt,
+          endedAt: null,
+          outcome: null,
+        },
+      ]),
+    },
+    circleMessageSave: { findMany: vi.fn().mockResolvedValue([{ messageId: 'm2', createdAt, message: { circleId: 'c1' } }]) },
+    circleMute: { findMany: vi.fn().mockResolvedValue([]) },
+    circleReport: { findMany: vi.fn().mockResolvedValue([]) },
   };
   const push = { forgetUser: vi.fn().mockResolvedValue(undefined) };
   return {
@@ -73,7 +100,7 @@ describe('AccountService', () => {
     }
   });
 
-  it('exports the user, favorites, practice data and the vault ciphertext, and never the password hash', async () => {
+  it('exports the user, favorites, practice data, the vault ciphertext and my صحبة data, and never the password hash', async () => {
     const { service } = await makeService();
     const result = await service.exportAccount(USER_ID, new Date('2026-10-28T00:00:00Z'));
     expect(result).toEqual({
@@ -92,6 +119,27 @@ describe('AccountService', () => {
         reads: [],
       },
       sinVault: VAULT,
+      circles: {
+        memberships: [{ circleId: 'c1', circleName: 'صحبة الفجر', displayName: 'أبو عمر', isOwner: true, sharesPresence: false, joinedAt: createdAt }],
+        messages: [{ id: 'm1', circleId: 'c1', kind: 'PRESET', key: 'thabat', data: null, roundId: null, createdAt }],
+        rounds: [
+          {
+            id: 'r1',
+            circleId: 'c1',
+            kind: 'study',
+            label: 'compiler design',
+            minutes: 60,
+            day: '2026-10-27',
+            number: 4,
+            startedAt: createdAt,
+            endedAt: null,
+            outcome: null,
+          },
+        ],
+        kept: [{ messageId: 'm2', circleId: 'c1', createdAt }],
+        hidden: [],
+        reportsFiled: [],
+      },
     });
     expect(JSON.stringify(result)).not.toContain('argon2');
   });

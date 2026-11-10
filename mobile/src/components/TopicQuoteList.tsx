@@ -51,11 +51,26 @@ type TopicQueryState = Pick<
   'isLoading' | 'isError' | 'isRefetching' | 'isFetchNextPageError' | 'hasNextPage' | 'isFetchingNextPage' | 'fetchNextPage' | 'refetch'
 >;
 
-/** The type filter of a topic page and the request params it gives. */
+/**
+ * The type filter and the theme chip of a topic page and the request params they give. A new theme starts on «الكل»
+ * (a theme may hold no text of the current type), as on the website.
+ */
 export function useTopicQuoteParams() {
   const [filter, setFilter] = useState<TopicFilter>('ALL');
-  const params = { type: filter !== 'ALL' ? [filter] : undefined, limit: PAGE_SIZE };
-  return { filter, setFilter, params };
+  const [theme, setThemeKey] = useState<string | null>(null);
+  const setTheme = useCallback((key: string | null) => {
+    setThemeKey(key);
+    setFilter('ALL');
+  }, []);
+  const params = { type: filter !== 'ALL' ? [filter] : undefined, theme: theme ?? undefined, limit: PAGE_SIZE };
+  return { filter, setFilter, theme, setTheme, params };
+}
+
+/** One theme chip of the page (the website's sub-topic chips, `meta.themes`). */
+export interface TopicThemeChip {
+  key: string;
+  label: string;
+  count: number;
 }
 
 /** The last defined value: keeps the title and the tab counts in place while a new filter loads. */
@@ -83,6 +98,11 @@ interface TopicQuoteListProps {
   titleAction?: React.ReactNode;
   /** The top of the tab's content, under the tabs (a secondary action, the reward…). */
   intro?: React.ReactNode;
+  /** The sub-topic chips (owner round 7, B2; the website's chips from `meta.themes`); none when omitted or empty. */
+  themes?: TopicThemeChip[];
+  /** The active chip, null for «الكل». */
+  theme?: string | null;
+  onThemeChange?: (key: string | null) => void;
   footer?: React.ReactNode;
 }
 
@@ -96,6 +116,8 @@ const makeStyles = () => ({
   sectionTitle: { paddingTop: space.lg, paddingBottom: space.lg },
   stack: { gap: space.lg },
   footer: { gap: space['2xl'], paddingTop: space.lg },
+  readGroup: { flexDirection: 'row' as const, alignItems: 'center' as const, flexWrap: 'wrap' as const, gap: space.sm },
+  bar: { width: 3, height: 32, borderRadius: 2, marginHorizontal: space.xs },
 });
 
 /** One row: a component, so the favorite hook runs under React's rules (never inside `renderItem` itself). */
@@ -139,6 +161,9 @@ export function TopicQuoteList({
   titleAction,
   intro,
   footer,
+  themes,
+  theme = null,
+  onThemeChange,
 }: TopicQuoteListProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -168,6 +193,9 @@ export function TopicQuoteList({
   // The filter shows once a text of this page is read (before that every text is unread: nothing to filter).
   const anyRead = readFilter !== 'all' || sections.some((sec) => sec.data.some((q) => readIds.has(q.id.toLowerCase())));
 
+  const shownThemes = (themes ?? []).filter((chip) => chip.count > 0 || chip.key === theme);
+  const showThemes = Boolean(onThemeChange) && shownThemes.length > 0;
+
   const handleRefresh = useCallback(() => void refetch(), [refetch]);
   const handleRetryMore = useCallback(() => void fetchNextPage(), [fetchNextPage]);
   const handleEndReached = useCallback(() => {
@@ -180,11 +208,32 @@ export function TopicQuoteList({
         {meta}
       </PageHeader>
       {showTabs ? <SegmentTabs items={tabs} value={filter} onChange={onFilterChange} /> : null}
-      {anyRead ? (
+      {/* Owner round 7 (B2): the sub-topic chips and the read filter are one group, parted by a bold green bar (the bar
+          stays with the read filter when the group wraps). */}
+      {showThemes || anyRead ? (
         <Wrap>
-          {readFilters.map((key) => (
-            <Chip key={key} label={t(`reads.filter.${key}`)} selected={readFilter === key} onPress={() => setReadFilter(key)} />
-          ))}
+          {showThemes ? (
+            <>
+              <Chip label={t('topic.themeAll')} selected={theme === null} onPress={() => onThemeChange?.(null)} />
+              {shownThemes.map((chip) => (
+                <Chip
+                  key={chip.key}
+                  label={chip.label}
+                  count={chip.count}
+                  selected={chip.key === theme}
+                  onPress={() => onThemeChange?.(chip.key === theme ? null : chip.key)}
+                />
+              ))}
+            </>
+          ) : null}
+          {anyRead ? (
+            <View style={styles.readGroup}>
+              {showThemes ? <View style={[styles.bar, { backgroundColor: colors.primary }]} /> : null}
+              {readFilters.map((key) => (
+                <Chip key={key} label={t(`reads.filter.${key}`)} selected={readFilter === key} onPress={() => setReadFilter(key)} />
+              ))}
+            </View>
+          ) : null}
         </Wrap>
       ) : null}
       {intro ? <View style={styles.intro}>{intro}</View> : null}

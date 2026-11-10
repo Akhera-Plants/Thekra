@@ -45,7 +45,6 @@ import {
 import { useHomeMoments } from '@/lib/api/home-moments';
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { useReminderOfTheDay } from '@/lib/api/quotes';
-import { useSourceStripNames } from '@/lib/api/sources';
 import { homeEditRows, moveSectionBy, toggleSection } from '@/lib/home/home-edit';
 import { pick } from '@/lib/practice/catalog-types';
 import { dayMonth } from '@/lib/practice/calendar-grid';
@@ -56,7 +55,6 @@ import { useAgendaRows, useDateNames, useDayAgenda, usePlanDays } from '@/lib/pr
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { FeaturedReminder } from '@/components/home/FeaturedReminder';
 import { HomeDoors } from '@/components/home/HomeDoors';
-import { SourceStrip } from '@/components/home/SourceStrip';
 import { HabitRow } from '@/components/practice/hub/AgendaRows';
 import { WeekBranchCard } from '@/components/practice/hub/KnowledgeCards';
 import { radius, space, useStyles, type Theme } from '@/theme';
@@ -139,7 +137,8 @@ export function HomeSection({ name, today, before }: { name: HomeSectionKey; tod
     case 'featured':
       return <FeaturedSection before={before} />;
     case 'sources':
-      return <SourcesSection before={before} />;
+      // «تذكير تعرف مصدره» is for the website only (owner round 7, B9); the key stays in the synced order.
+      return null;
   }
 }
 
@@ -351,16 +350,6 @@ function FeaturedSection({ before }: Before) {
         isError={reminder.isError}
         onRetry={() => void reminder.refetch()}
       />
-    </>
-  );
-}
-
-function SourcesSection({ before }: Before) {
-  const sources = useSourceStripNames();
-  return (
-    <>
-      {before}
-      <SourceStrip names={sources.data} isLoading={sources.isLoading} />
     </>
   );
 }

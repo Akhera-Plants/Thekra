@@ -24,7 +24,7 @@ interface CoveredGateProps {
  * web's fingerprint / PIN) and only then renders the programs; this happens on every visit while the member keeps the
  * covering on (`settings.lightenCovered`, the default; he may turn it off in the settings). With the covering off, an
  * open vault shows the programs directly; a locked vault still asks the code. Never blurred text. Nothing shows for a
- * member without programs.
+ * member without programs. A member who skipped the code (round 7, C6) sees the programs directly: nothing is locked.
  */
 export function CoveredGate({ store, children, as = 'row', className }: CoveredGateProps) {
   const t = useTranslations('practice.covered');
@@ -34,8 +34,11 @@ export function CoveredGate({ store, children, as = 'row', className }: CoveredG
   const programs = activePrograms(store.programs);
   const hasVault = Boolean(vault.data);
   if (!userId || (!hasVault && programs.length === 0)) return null;
+  // Round 7 (C6): without a privacy code (the account has no vault, known for sure) the programs stay on this device and
+  // there is nothing to unlock: they show like any habit. Until the vault is known they stay covered.
+  const noCode = vault.isSuccess && vault.data === null;
   const covered = isLightenCovered(store);
-  const open = session !== null && (revealed || !covered);
+  const open = noCode || (session !== null && (revealed || !covered));
   if (open) return <>{children(programs)}</>;
 
   const Shell = as === 'row' ? 'li' : 'div';

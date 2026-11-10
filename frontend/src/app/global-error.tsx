@@ -43,7 +43,7 @@ export default function GlobalError({
         <main role="alert" style={{ maxInlineSize: '28rem' }}>
           <svg viewBox="0 0 48 48" width="56" height="56" aria-hidden style={{ marginBlockEnd: '1rem' }}>
             <rect width="48" height="48" rx="12" fill="#326C59" />
-            <g fill="none" stroke="#FFF5EE" strokeWidth="1.8" strokeLinejoin="round">
+            <g fill="none" stroke="#FFFFFF" strokeWidth="1.8" strokeLinejoin="round">
               <path d="M24 37V18M24 30C13 30 11 23 12 15c8 0 12 5 12 15Zm0 0c11 0 13-7 12-15-8 0-12 5-12 15Zm0-12c-5-5-5-8 0-13 5 5 5 8 0 13Z" />
             </g>
           </svg>

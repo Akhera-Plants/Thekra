@@ -15,9 +15,9 @@ import { currentHeaderItem, HEADER_LINKS, HEADER_MORE, isMoreCurrent, type Heade
 
 /**
  * Public site header (owner round 6, C-07 b): the brand, then the links «الرئيسية · الطاعات · تخفّف من ذنب · شعب
- * الإيمان · عاداتي», then «المزيد ▾» (الاستراتيجيات، المحفوظات، «رفقة (في التطبيق)»), then language, theme and the
+ * الإيمان · عاداتي», then «المزيد ▾» (الاستراتيجيات، المحفوظات، «صحبة (في التطبيق)»), then language, theme and the
  * account (C-05 a: the settings live only in the account avatar menu). «المزيد» opens on hover, on click and from the
- * keyboard. Below the wide layout the same items open in a side drawer from the inline-start side. «رفقة» opens a
+ * keyboard. Below the wide layout the same items open in a side drawer from the inline-start side. «صحبة» opens a
  * short note that it lives in the app (W-12 b).
  */
 export function SiteHeader() {
@@ -85,7 +85,7 @@ interface MenuProps {
   onAppNote: () => void;
 }
 
-/** The item's label: «رفقة» says where it lives («رفقة (في التطبيق)»). */
+/** The item's label: «صحبة» says where it lives («صحبة (في التطبيق)»). */
 function useItemLabel() {
   const tNav = useTranslations('nav');
   return (key: HeaderMenuKey) => (key === 'circles' ? tNav('inApp', { name: tNav('menuItems.circles') }) : tNav(`menuItems.${key}`));
@@ -278,7 +278,7 @@ function MenuDrawer({ current, onAppNote }: MenuProps) {
   );
 }
 
-/** «رفقة» lives in the app (W-12 b, C-01k: invite-only there): one short note, no store link until the owner publishes one. */
+/** «صحبة» lives in the app (W-12 b, C-01k: invite-only there): one short note, no store link until the owner publishes one. */
 function AppOnlyNote({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const tNav = useTranslations('nav');
   return (

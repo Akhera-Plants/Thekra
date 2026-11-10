@@ -29,7 +29,12 @@ describe('header (round 6, C-07 b / C-05 a)', () => {
     }
   });
 
-  it('only «رفقة» has no web page (it opens a note that it lives in the app)', () => {
+  it('names the feature «صحبة» everywhere: «رفقة» is gone from the copy (owner round 7, D1)', () => {
+    expect(JSON.stringify(ar)).not.toMatch(/رفق(ة|ت|ات)/);
+    expect(ar.nav.menuItems.circles).toBe('صحبة');
+  });
+
+  it('only «صحبة» has no web page (it opens a note that it lives in the app)', () => {
     expect(HEADER_MENU_ITEMS.filter((i) => i.href === null).map((i) => i.key)).toEqual(['circles']);
   });
 

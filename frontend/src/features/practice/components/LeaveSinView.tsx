@@ -33,7 +33,8 @@ const serverPending = () => null;
 /**
  * «تخفَّف» (owner, 2026-11-01: any sin can start it; always kept in the account, encrypted, so the server cannot read
  * the sin). The page opens with the privacy code once per tab (docs/plan/2026-11-01-sin-vault-always-on.md §2–3); the
- * first program asks for a new code before it starts (§1). Round 5 (F-11 a / A-21 a), as in the app: ONE program is
+ * first program offers a new code before it starts (§1) — optional since round 7 (C6): «تخطَّ وابدأ» keeps the program on
+ * this device only (never sent unencrypted) until a code is set from its «⋯ › الخصوصية والإخفاء». Round 5 (F-11 a / A-21 a), as in the app: ONE program is
  * shown at a time, its name a selectable title that switches between the running programs (and starts another), then
  * its one tab bar «اليوم · رحلتي» (ProgramPanel). Round 6 (C-15): no privacy line; the lock state is «أقفل» / «مقفل ✓»
  * (a tap on the latter opens the unlock popup); the sin list of the chooser is searchable. Every
@@ -111,24 +112,8 @@ export function LeaveSinView() {
     return entry ? [{ program, entry }] : [];
   });
 
-  // Programs made on this device before «تخفَّف» was always encrypted: protect them with a code first.
-  if (!vault.data && active.length > 0) {
-    return (
-      <div className="flex max-w-2xl flex-col gap-6">
-        <section aria-labelledby="vault-create" className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5">
-          <h2 id="vault-create" className="text-xl font-medium">
-            {t('vault.protectTitle')}
-          </h2>
-          <CreateCodeForm
-            programs={snapshot.store.programs}
-            userId={userId}
-            onCreated={() => undefined}
-            onExists={() => void vault.refetch()}
-          />
-        </section>
-      </div>
-    );
-  }
+  // Round 7 (C6): programs without a privacy code (skipped, or made before «تخفَّف» was encrypted) run as they are, on
+  // this device only; the code is set later from the program's «⋯ › الخصوصية والإخفاء».
 
   const preselectNew =
     preselected && names.has(preselected) && !active.some((a) => a.program.sinSlug === preselected) ? preselected : null;
@@ -139,15 +124,22 @@ export function LeaveSinView() {
   const current = active.find((a) => a.program.sinSlug === focus) ?? active[0];
   const canAddAnother = active.length < names.size;
 
-  function start(program: SinProgram) {
-    if (!session) {
-      setPending(program);
-      return;
-    }
+  /** Starts a program: kept on this device, and sealed into the account when a privacy code is open in this tab. */
+  function begin(program: SinProgram) {
     updateStore((store) => ({ ...store, programs: [...store.programs.filter((p) => p.sinSlug !== program.sinSlug), program] }));
     setChoosing(false);
     setEnded(false);
     setFocus(program.sinSlug);
+  }
+
+  function start(program: SinProgram) {
+    // No vault yet: the privacy code is offered first, and can be skipped (round 7, C6). A program started without it
+    // stays on this device only: practice-core never syncs programs unencrypted.
+    if (!session && !vault.data) {
+      setPending(program);
+      return;
+    }
+    begin(program);
   }
 
 
@@ -270,7 +262,10 @@ export function LeaveSinView() {
                 setPending(null);
                 setChoosing(false);
               }}
-              onCancel={() => setPending(null)}
+              onSkip={() => {
+                begin(pending);
+                setPending(null);
+              }}
               onExists={() => {
                 setPending(null);
                 void vault.refetch();

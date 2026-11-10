@@ -24,20 +24,26 @@ export function useProgramReveal() {
   const localPrograms = usePracticeStore((s) => s.store.programs.length > 0);
   const [revealed, setRevealed] = useState(false);
   const labels = { promptMessage: t('sinLock.prompt'), cancelLabel: t('common.cancel') };
-  const open = isVaultUnlocked() || status === 'unlocked';
+  // Round 7 (C6): programs without a privacy code (no vault) stay on this device and are not covered: nothing to unlock.
+  const noCode = status === 'none' && localPrograms;
+  const open = isVaultUnlocked() || status === 'unlocked' || noCode;
   /** The member has «تخفّف» programs (or a vault that holds them, still locked). */
   const hasPrograms = localPrograms || status === 'locked' || status === 'unlocked';
 
   const openProgram = useCallback(async () => {
-    if (open) {
+    if (open && !noCode) {
       const ok = await unlockWithDevice(labels);
       if (!ok) return;
     }
     router.push('/practice/sin-program');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, labels.promptMessage, labels.cancelLabel]);
+  }, [open, noCode, labels.promptMessage, labels.cancelLabel]);
 
   const reveal = useCallback(async () => {
+    if (noCode) {
+      setRevealed(true);
+      return;
+    }
     if (open) {
       if (await unlockWithDevice(labels)) setRevealed(true);
       return;
@@ -47,7 +53,15 @@ export function useProgramReveal() {
     if (result === 'open' || result === 'offline') setRevealed(true);
     else if (result === 'code') router.push('/practice/sin-program');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, userId, labels.promptMessage, labels.cancelLabel]);
+  }, [open, noCode, userId, labels.promptMessage, labels.cancelLabel]);
 
-  return { open, hasPrograms, revealed: revealed && (isVaultUnlocked() || status === 'unlocked' || localPrograms), openProgram, reveal };
+  return {
+    open,
+    hasPrograms,
+    /** No privacy code: shown like any habit (round 7, C6). */
+    noCode,
+    revealed: noCode || (revealed && (isVaultUnlocked() || status === 'unlocked' || localPrograms)),
+    openProgram,
+    reveal,
+  };
 }

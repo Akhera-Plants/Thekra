@@ -296,6 +296,7 @@ export function NextStep({ title, children }: { title?: string; children: React.
 /** `.topic-item`: icon, title (and hint), forward arrow; hairline under it. */
 export function ListRow({
   icon,
+  leading,
   title,
   hint,
   onPress,
@@ -307,6 +308,8 @@ export function ListRow({
   last,
 }: {
   icon?: LucideIcon;
+  /** A drawn mark in place of the icon (the profile mark on the account row). */
+  leading?: React.ReactNode;
   title: string;
   hint?: string;
   onPress?: () => void;
@@ -328,7 +331,7 @@ export function ListRow({
   const end = trailing ?? forward;
   const content = (
     <>
-      {icon ? <Icon icon={icon} size={24} tone={destructive ? 'destructive' : 'link'} strokeWidth={1.3} /> : null}
+      {leading ?? (icon ? <Icon icon={icon} size={24} tone={destructive ? 'destructive' : 'link'} strokeWidth={1.3} /> : null)}
       <View style={styles.listText}>
         <Text
           variant="body"

@@ -73,3 +73,5 @@
 .not-found-block .solid-button{margin-top:8px}
 .page-heading:has(.title-line){max-width:none}
 .page-heading:has(.title-line)>:not(.title-line){max-width:800px}
+/* ── Topic pages (owner round 7, B1): the title and «آيات وأحاديث تعينك…» sit close — 24px, not 31px + the article's 40px gap. ── */
+.topic-page .page-heading{margin-bottom:-16px}

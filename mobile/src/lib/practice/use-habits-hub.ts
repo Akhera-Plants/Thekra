@@ -254,7 +254,7 @@ export type HubLastLog =
  * a logged amount. A light haptic on each tick, a success haptic when the tap finishes the day.
  */
 export function useAgendaActions(date: LocalDate) {
-  useCirclePresence(); // «حضرت اليوم» to the user's circles (رفقة), when sharing is on there
+  useCirclePresence(); // «حضرت اليوم» to the user's circles (صحبة), when sharing is on there
   const setStore = usePracticeStore((s) => s.setStore);
   const planDays = usePlanDays();
   const [lastLog, setLastLog] = useState<HubLastLog | null>(null);

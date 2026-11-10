@@ -47,11 +47,13 @@ import { BottomSheet, Button, ButtonPair, Icon, SectionDivider, Text, toast } fr
 
 const makeStyles = (t: Theme) => ({
   block: { gap: space.sm },
-  row: { gap: 4, paddingVertical: space.sm, borderBottomWidth: 1, borderBottomColor: t.colors.border },
+  row: { gap: space.sm, paddingVertical: space.md, borderBottomWidth: 1, borderBottomColor: t.colors.border },
   rowLast: { borderBottomWidth: 0 },
   head: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.sm },
   title: { flex: 1, minWidth: 0 },
-  answer: { paddingStart: space.md, borderStartWidth: 2, borderStartColor: t.colors.border, gap: 2 },
+  answers: { borderWidth: 1, borderColor: t.colors.border, borderRadius: radius.card, backgroundColor: t.colors.card, overflow: 'hidden' as const },
+  answer: { gap: 2, paddingHorizontal: space.md, paddingVertical: space.sm },
+  answerRule: { borderTopWidth: 1, borderTopColor: t.colors.border },
   path: { flexDirection: 'row' as const, gap: 4, flexWrap: 'wrap' as const },
   pathDot: { width: 12, height: 12, borderRadius: radius.full, borderWidth: 1, borderColor: t.colors.border },
   pathKept: { backgroundColor: t.colors.primary, borderColor: t.colors.primary },
@@ -78,19 +80,23 @@ const STATE_KEY: Partial<Record<DayLogState, string>> = {
   archived: 'habitsHub.day.archived',
 };
 
-export function DaySheet({ date, onClose }: { date: LocalDate | null; onClose: () => void }) {
+/**
+ * `planId` (round 7, C4: a day of «آخر 30 يومًا» on the habit page): that habit only — its state, «هل فعلتها؟» and what
+ * was written on the day — without the day's other parts.
+ */
+export function DaySheet({ date, onClose, planId }: { date: LocalDate | null; onClose: () => void; planId?: string }) {
   const { t } = useTranslation();
   const names = useDateNames();
   const [shown, setShown] = useState<LocalDate | null>(date);
   if (date && date !== shown) setShown(date);
   return (
     <BottomSheet visible={date !== null} title={shown ? shortDayTitle(shown, names) : t('habitsHub.day.title')} onClose={onClose}>
-      {shown ? <DayBody date={shown} onClose={onClose} /> : null}
+      {shown ? <DayBody date={shown} onClose={onClose} planId={planId} /> : null}
     </BottomSheet>
   );
 }
 
-function DayBody({ date, onClose }: { date: LocalDate; onClose: () => void }) {
+function DayBody({ date, onClose, planId }: { date: LocalDate; onClose: () => void; planId?: string }) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const locale = useUiLocale();
@@ -106,10 +112,11 @@ function DayBody({ date, onClose }: { date: LocalDate; onClose: () => void }) {
     const plan = store.plans.find((p) => p.id === planId);
     return !plan || isCustomPeriodic(plan) || habitFor(plan, habits)?.kind === 'periodic';
   };
-  const rows = details.habits.filter((h) => !isPeriodic(h.planId));
+  const rows = planId ? details.habits.filter((h) => h.planId === planId) : details.habits.filter((h) => !isPeriodic(h.planId));
+  const single = planId !== undefined;
   const unitFallback = { minutes: t('practice.units.minutes'), count: t('practice.units.count'), times: t('practice.units.times') };
   const slips = rows
-    .filter((h) => countsAsNotDone(h.state))
+    .filter((h) => !single && countsAsNotDone(h.state))
     .map((h) => {
       const plan = store.plans.find((p) => p.id === h.planId);
       return plan ? slipPath(store, plan, date, d, planDays) : null;
@@ -166,11 +173,17 @@ function DayBody({ date, onClose }: { date: LocalDate; onClose: () => void }) {
                   />
                 ) : null}
                 {h.reflection ? (
-                  <View style={styles.answer}>
-                    {h.reflection.helped ? <Answer label={t('habitsHub.reflect.helpedShort')} text={h.reflection.helped} /> : null}
-                    {h.reflection.hard ? <Answer label={t('habitsHub.reflect.hardShort')} text={h.reflection.hard} /> : null}
-                    {h.reflection.note ? <Answer label={t('habitsHub.reflect.noteShort')} text={h.reflection.note} /> : null}
-                  </View>
+                  <Answers
+                    items={[
+                      { label: t('habitsHub.reflect.helped'), text: h.reflection.helped },
+                      { label: t('habitsHub.reflect.hard'), text: h.reflection.hard },
+                      { label: t('habitsHub.reflect.note'), text: h.reflection.note },
+                    ]}
+                  />
+                ) : single ? (
+                  <Text variant="small" tone="muted">
+                    {t('habitsHub.day.nothingWritten')}
+                  </Text>
                 ) : null}
               </View>
             );
@@ -178,14 +191,14 @@ function DayBody({ date, onClose }: { date: LocalDate; onClose: () => void }) {
         </View>
       )}
 
-      {fardEnabled(store) && marks.length > 0 ? (
+      {!single && fardEnabled(store) && marks.length > 0 ? (
         <Text variant="small">
           {`${FARD_LABELS[locale].title}: ${marks
             .map((p) => `${FARD_LABELS[locale].prayers[p]} ${t(details.fard[p] === 'onTime' ? 'habitsTab.fard.onTime' : 'habitsTab.fard.qada')}`)
             .join(locale === 'ar' ? '، ' : ', ')}`}
         </Text>
       ) : null}
-      {details.qada > 0 ? <Text variant="small">{t('habitsHub.day.qada', { count: details.qada })}</Text> : null}
+      {!single && details.qada > 0 ? <Text variant="small">{t('habitsHub.day.qada', { count: details.qada })}</Text> : null}
 
       {slips.length > 0 ? (
         <>
@@ -229,7 +242,7 @@ function DayBody({ date, onClose }: { date: LocalDate; onClose: () => void }) {
         </>
       ) : null}
 
-      <ProgramsOfDay date={date} />
+      {single ? null : <ProgramsOfDay date={date} />}
 
       {/* The week's review once its day has come; inside the running week, today's evening review. */}
       <HeartSheetView sheet={weekly ? (weekOf <= d ? 'weekly' : 'evening') : null} today={d} weekOf={weekOf <= d ? weekOf : null} onClose={() => setWeekly(false)} />
@@ -237,12 +250,25 @@ function DayBody({ date, onClose }: { date: LocalDate; onClose: () => void }) {
   );
 }
 
-function Answer({ label, text }: { label: string; text: string }) {
+/**
+ * What was written on a day (round 7, C4): each answer under its own question, in one quiet bordered card with hairlines
+ * between them — the member's words in full, nothing added. Empty answers are left out.
+ */
+export function Answers({ items }: { items: { label: string; text?: string | null }[] }) {
+  const styles = useStyles(makeStyles);
+  const shown = items.filter((i): i is { label: string; text: string } => Boolean(i.text));
+  if (shown.length === 0) return null;
   return (
-    <Text variant="small">
-      <Text variant="small" tone="muted">{`${label}: `}</Text>
-      {text}
-    </Text>
+    <View style={styles.answers}>
+      {shown.map((item, i) => (
+        <View key={item.label} style={[styles.answer, i > 0 && styles.answerRule]}>
+          <Text variant="caption" tone="muted">
+            {item.label}
+          </Text>
+          <Text variant="body">{item.text}</Text>
+        </View>
+      ))}
+    </View>
   );
 }
 
@@ -331,9 +357,15 @@ function ProgramsOfDay({ date }: { date: LocalDate }) {
               <Text variant="small" tone="muted">
                 {p.checkIn ? t(`habitsHub.lighten.value.${p.checkIn.value}`) : t('habitsHub.lighten.noCheckIn')}
               </Text>
-              {p.checkIn?.helped ? <Answer label={t('habitsHub.reflect.helpedSin')} text={p.checkIn.helped} /> : null}
-              {p.checkIn?.hard ? <Answer label={t('habitsHub.reflect.hardSin')} text={p.checkIn.hard} /> : null}
-              {p.checkIn?.note ? <Answer label={t('habitsHub.reflect.noteShort')} text={p.checkIn.note} /> : null}
+              {p.checkIn ? (
+                <Answers
+                  items={[
+                    { label: t('habitsHub.reflect.helpedSin'), text: p.checkIn.helped },
+                    { label: t('habitsHub.reflect.hardSin'), text: p.checkIn.hard },
+                    { label: t('habitsHub.reflect.note'), text: p.checkIn.note },
+                  ]}
+                />
+              ) : null}
               {p.checkIn && p.checkIn.value !== 'held' ? (
                 <Text variant="small" tone="muted">
                   {t('habitsHub.lighten.learnLine')}

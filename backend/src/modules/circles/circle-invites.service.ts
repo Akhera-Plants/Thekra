@@ -45,8 +45,8 @@ type InviteRow = {
 };
 
 /**
- * رفقة invites (round 6, C-01k). A member whose رفقة is on hands someone a one-use code that expires; redeeming it
- * turns رفقة on for the redeemer and, when the invite names a circle the inviter owns, joins that circle. The
+ * صحبة invites (round 6, C-01k). A member whose صحبة is on hands someone a one-use code that expires; redeeming it
+ * turns صحبة on for the redeemer and, when the invite names a circle the inviter owns, joins that circle. The
  * inviter learns only the invite's status, never who redeemed it or anything they do.
  */
 @Injectable()
@@ -90,7 +90,7 @@ export class CircleInvitesService {
     return rows.map((row) => this.present(row, now));
   }
 
-  /** An invite to رفقة, or (owner only) to one of the inviter's circles. */
+  /** An invite to صحبة, or (owner only) to one of the inviter's circles. */
   async create(userId: string, dto: CreateCircleInviteDto, now = new Date()): Promise<CircleInviteDto> {
     if (!(await this.circles.isEnabled(userId))) throw notEnabled();
     if (dto.circleId !== undefined) await this.circles.ownerOf(userId, dto.circleId);
@@ -138,7 +138,7 @@ export class CircleInvitesService {
   /**
    * Redeems a code: one use, before it expires, not one's own. A wrong, used, revoked or expired code all answer
    * the same 404. Redeeming the same invite again is harmless. When the invite names a circle and joining fails
-   * (full, or the redeemer is in too many circles), رفقة is still turned on and `joinError` says why.
+   * (full, or the redeemer is in too many circles), صحبة is still turned on and `joinError` says why.
    */
   async redeem(userId: string, dto: RedeemCircleInviteDto, now = new Date()): Promise<RedeemCircleInviteResultDto> {
     const code = normalizeInviteCode(dto.code);

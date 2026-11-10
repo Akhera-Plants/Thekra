@@ -45,7 +45,7 @@ describe('names and places follow the navigation map', () => {
   });
 
   it('lists the plan’s groups in order, each screen once, the settings rows last', () => {
-    // Round 6 (practice-core APP_MORE): the web «المزيد» + «الحديقة», then the settings rows; no «تصفّح النصوص», no people page.
+    // Round 6 (practice-core APP_MORE): the web «المزيد» + «بستان العادات», then the settings rows; no «تصفّح النصوص», no people page.
     expect(items.map((i) => i.key)).toEqual([
       'strategies',
       'saved',

@@ -10,14 +10,14 @@
  */
 
 import React, { useState } from 'react';
-import { ActivityIndicator, Alert, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { CloudUpload, KeyRound, LockKeyhole, LockKeyholeOpen, type LucideIcon } from 'lucide-react-native';
 import { privacyCodeProblem } from '@thekra/practice-core';
 import { canKeepKeyBehindBiometrics, unlockWithCode, useVaultState, wipeSinProgramEverywhere } from '@/lib/practice/vault-runner';
 import { space, useStyles, useTheme } from '@/theme';
-import { ButtonPair, Card, ErrorText, Field, Icon, NextStep, Row, Text, TextLink } from '@/ui';
+import { ButtonPair, Card, ErrorText, Field, Icon, NextStep, Row, Text, TextLink, confirm as askConfirm } from '@/ui';
 
 /** i18n key under `vault.errors` for a new code, or null when it can be used (practice-core `privacyCodeProblem`). */
 export function validateNewCode(code: string, confirm: string): 'tooShort' | 'weak' | 'mismatch' | null {
@@ -98,12 +98,17 @@ export interface PrivacyCodeFormProps {
   /** Creates the vault with the code; resolves an error key under `vault.errors`, or null when done. */
   onSubmit: (code: string) => Promise<string | null>;
   onCancel?: () => void;
-  /** «ابدأ» for the first program, «احفظ» for programs kept from an older build. */
+  /**
+   * Round 7 (C6): the code is optional when a program starts. «تخطَّ وابدأ» starts it without one: it then stays on this
+   * device only (never sent unencrypted); the code can be set later from the program's «⋯ › الخصوصية والإخفاء».
+   */
+  onSkip?: () => void;
+  /** «ابدأ» for the first program, «احفظ الرمز» from the program's privacy sheet. */
   submitLabel: string;
 }
 
 /** «رمز الخصوصية»: asked once, before the first program; then the fingerprint / face opens «تخفَّف». */
-export function PrivacyCodeForm({ onSubmit, onCancel, submitLabel }: PrivacyCodeFormProps) {
+export function PrivacyCodeForm({ onSubmit, onCancel, onSkip, submitLabel }: PrivacyCodeFormProps) {
   const { t } = useTranslation();
   const status = useVaultState((s) => s.status);
   const [code, setCode] = useState('');
@@ -139,9 +144,14 @@ export function PrivacyCodeForm({ onSubmit, onCancel, submitLabel }: PrivacyCode
         <ButtonPair
           size="lg"
           primary={{ label: submitLabel, onPress: () => void submit(), disabled: code.length === 0 }}
-          secondary={onCancel ? { label: t('common.cancel'), onPress: onCancel } : null}
+          secondary={onSkip ? { label: t('vault.skip'), onPress: onSkip } : onCancel ? { label: t('common.cancel'), onPress: onCancel } : null}
         />
       )}
+      {onSkip ? (
+        <Text variant="small" tone="muted">
+          {t('vault.skipNote')}
+        </Text>
+      ) : null}
     </VaultBox>
   );
 }
@@ -161,14 +171,9 @@ export function VaultCodeUnlock({ userId, onOpened }: { userId: string; onOpened
   }
 
   function startOver() {
-    Alert.alert(t('vault.startOverTitle'), t('vault.startOverBody'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('vault.startOver'),
-        style: 'destructive',
-        onPress: () => void wipeSinProgramEverywhere(userId).then(onOpened),
-      },
-    ]);
+    void askConfirm({ title: t('vault.startOverTitle'), message: t('vault.startOverBody'), confirmLabel: t('vault.startOver'), tone: 'destructive' }).then(
+      (ok) => ok && void wipeSinProgramEverywhere(userId).then(onOpened),
+    );
   }
 
   return (

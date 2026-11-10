@@ -85,7 +85,7 @@ export const queryKeys = {
       ['calendar', 'occasions', from, to, hijriOffset, lang] as const,
   },
   /**
-   * رفقة: private, never persisted (not in PERSISTED_QUERY_KEYS). Keyed by the signed-in user, so another account on
+   * صحبة: private, never persisted (not in PERSISTED_QUERY_KEYS). Keyed by the signed-in user, so another account on
    * the same device never sees the previous one's circles from the cache.
    */
   circles: {

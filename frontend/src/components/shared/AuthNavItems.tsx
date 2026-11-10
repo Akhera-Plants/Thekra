@@ -8,7 +8,6 @@
 import { useSyncExternalStore } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,18 +18,7 @@ import {
 import { useSession } from '@/features/auth/hooks/useSession';
 import { Link, useRouter } from '@/i18n/navigation';
 import { HEADER_ACCOUNT } from './header-menu';
-
-function initials(name: string | null, email: string): string {
-  if (name) {
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .slice(0, 2)
-      .toUpperCase();
-  }
-  return email[0].toUpperCase();
-}
+import { ProfileMark } from './ProfileMark';
 
 function GuestAuthLinks({
   signIn,
@@ -81,19 +69,21 @@ export function AuthNavItems() {
         <button
           type="button"
           aria-label={t('userMenu')}
-          className="inline-flex size-11 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="group inline-flex size-11 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <Avatar className="size-8">
-            <AvatarFallback className="text-xs">
-              {initials(user?.name ?? null, user?.email ?? '')}
-            </AvatarFallback>
-          </Avatar>
+          <ProfileMark className="group-hover:border-primary/40 group-hover:bg-primary/15 group-data-[state=open]:border-primary/40 group-data-[state=open]:bg-primary/15" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
+      <DropdownMenuContent align="end" className="w-60">
         {user?.email && (
-          <div className="px-2 py-1.5">
-            <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+          <div className="flex items-center gap-2.5 px-2 py-2">
+            <ProfileMark className="size-8" />
+            <div className="min-w-0">
+              {user.name ? <p className="truncate text-sm font-medium text-foreground">{user.name}</p> : null}
+              <p className="truncate text-xs text-muted-foreground">
+                <bdi>{user.email}</bdi>
+              </p>
+            </div>
           </div>
         )}
         <DropdownMenuSeparator />

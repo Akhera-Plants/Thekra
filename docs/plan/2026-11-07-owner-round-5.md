@@ -18,7 +18,7 @@ The owner: «ورد اليوم» and «عاداتي» must not both exist; «و�
     in the morning → evening review in its time → weekly review on its day → «عملك المعتاد يُكتب لك» the morning after an
     excuse, F-06/F-35/A-01: a one-line card with «ابدأ» that opens a sheet); «الفرائض» rows if enabled (F-05); habits of
     today (circle logs; the row opens the habit page; «صلّحها» offers the make-up deed after two missed days, F-08);
-    periodic acts due today or overdue only (F-14); one collapsed «المزيد لليوم» row (شعبة الأسبوع, حصيلتي); «رفقتك: n
+    periodic acts due today or overdue only (F-14); one collapsed «المزيد لليوم» row (شعبة الأسبوع, حصيلتي); «صحبتك: n
     حضروا اليوم» for circle members only (F-16). No top verse line (O-06 b).
   - الدورية: every periodic act + add; entry to «أهلي وناسي» (F-15).
   - محاسبتي: نية اليوم (its switch lives here), محاسبة المساء (start now), المحاسبة الأسبوعية, رسائلي إلى نفسي, the
@@ -27,7 +27,7 @@ The owner: «ورد اليوم» and «عاداتي» must not both exist; «و�
 - **الرئيسية**: visitor = fixed order. Member = customizable sections (F-02 a) with «خصّص الرئيسية» at the end:
   ورد اليوم (progress + inline circles for the unchecked habits, logs directly — O-03), نص اليوم (F-23), شعبة الأسبوع
   (F-18), مناسبة قريبة (F-17), أبواب الخير, في لحظات مثل هذه, تذكرة مختارة, المصادر. Order/visibility synced.
-- **المزيد**: تخفَّف · أهلي وناسي · رفقة · المحفوظات (النصوص | تذكيراتي) · استكشف النصوص · شعب الإيمان ·
+- **المزيد**: تخفَّف · أهلي وناسي · صحبة · المحفوظات (النصوص | تذكيراتي) · استكشف النصوص · شعب الإيمان ·
   استراتيجيات العادات · then الإعدادات (الحساب, التنبيهات, أوقات الصلاة, اللغة والمظهر, عن ذكرى).
 - Removed screens: `practice/calendar` (folded into سجلّي; F-17), `practice/duties` (F-28), `practice/pledges` (F-08),
   `practice/loops` entry (F-13: two optional questions in «أضف»), `names/*` UI (F-19; API stays), `practice/daily-text`
@@ -48,7 +48,7 @@ The owner: «ورد اليوم» and «عاداتي» must not both exist; «و�
 | أوقات الصلاة | `/settings/prayer-times` | `/practice/prayer-times` |
 | استراتيجيات العادات | `/practice/strategies` | — |
 `/names/*` is removed (redirect to `/`). Header: ONE menu for visitor and member (W-10 a): «أبواب الخير» (تخفَّف، الطاعات،
-شعب الإيمان، تصفّح) then «للأعضاء» (عاداتي، أهلي وناسي، المحفوظات، الإعدادات، «رفقة (في التطبيق)» W-12 b).
+شعب الإيمان، تصفّح) then «للأعضاء» (عاداتي، أهلي وناسي، المحفوظات، الإعدادات، «صحبة (في التطبيق)» W-12 b).
 
 ### Shared map (F-34 a, W-11 c)
 `packages/practice-core/src/nav-map.ts`: every feature's Arabic and English name and its web route and app route; a test
