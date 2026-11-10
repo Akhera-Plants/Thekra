@@ -39,7 +39,7 @@ export function GradeBadge({ grade }: { grade: HadithGradeType | null | undefine
   const seal = SEAL[g];
   return (
     <View style={[styles.seal, { backgroundColor: colors[seal.bg] }]}>
-      <Text variant="caption" weight="semibold" style={{ color: colors[seal.fg], fontSize: 12, lineHeight: 18 }}>
+      <Text variant="caption" weight="semibold" style={{ color: colors[seal.fg], fontSize: 13, lineHeight: 19 }}>
         {t(`grade.${g}`)}
       </Text>
     </View>

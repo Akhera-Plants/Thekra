@@ -44,7 +44,7 @@ export function GradeBadge({ grade, label, className }: GradeBadgeProps) {
   return (
     <span
       className={cn(
-        'inline-flex h-7 min-w-7 items-center justify-center rounded-full px-2.5 text-xs font-semibold',
+        'inline-flex h-7 min-w-7 items-center justify-center rounded-full px-2.5 text-[13px] font-semibold',
         classes,
         className,
       )}

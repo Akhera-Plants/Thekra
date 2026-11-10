@@ -124,6 +124,10 @@ export function QuoteCard({
   const tFav = useTranslations('favorites');
   const bodyRef = useRef<HTMLDivElement>(null);
   const [cut, setCut] = useState(false);
+  // null until measured: the text starts clamped (no jump for long texts), then a text that fits in 4 lines drops the
+  // clamp so its overflow is visible again: the clamp's `overflow: hidden` clipped the marks under the last line (the
+  // kasra of «وَإِذْ», owner round 7, B7).
+  const [fits, setFits] = useState<boolean | null>(null);
 
   // Is the 4-line cut hiding text? Measured after layout and on resize (fonts, width); false until then.
   useEffect(() => {
@@ -131,10 +135,15 @@ export function QuoteCard({
     const node = bodyRef.current?.querySelector('blockquote');
     if (!node) return;
     // Diacritics and Quranic marks paint above and below the line box and add a few pixels of scroll height, so a
-    // text counts as cut only when at least half a line is hidden.
+    // text counts as cut only when at least half a line is hidden. scrollHeight is the full text's height whether the
+    // clamp is on or off, so the measure holds in both states.
     const measure = () => {
-      const line = Number.parseFloat(getComputedStyle(node).lineHeight) || 32;
-      setCut(node.scrollHeight - node.clientHeight > line / 2);
+      const style = getComputedStyle(node);
+      const line = Number.parseFloat(style.lineHeight) || 32;
+      const padding = (Number.parseFloat(style.paddingTop) || 0) + (Number.parseFloat(style.paddingBottom) || 0);
+      const isCut = node.scrollHeight - padding - 4 * line > line / 2;
+      setCut(isCut);
+      setFits(!isCut);
     };
     measure();
     const observer = new ResizeObserver(measure);
@@ -372,7 +381,7 @@ export function QuoteCard({
         </header>
 
         <div ref={bodyRef} id={`quote-${quote.id}-text`} className="min-w-0 overflow-visible">
-          <QuoteBody quote={quote} className={clamp ? 'line-clamp-4' : undefined} />
+          <QuoteBody quote={quote} className={clamp && fits !== true ? 'line-clamp-4' : undefined} />
         </div>
 
         {/* ONE action (round 6, C-12): «عرض التفسير» (a verse) / «عرض الشرح» (a hadith) opens the reader, where the text,

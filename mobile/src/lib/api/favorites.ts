@@ -53,7 +53,9 @@ export function useFavorites() {
     queryFn: () => fetchFavorites(),
     select: (r) => favoriteQuotes(r.data),
     networkMode: 'offlineFirst',  // serve from cache when offline
-    staleTime: Infinity,           // never refetch automatically in the session
+    // Refetched when the page opens after a minute: texts saved on the website (or another phone) must show here too;
+    // with `Infinity` the persisted list never updated (owner round 7, B10). Offline, the cached list still shows.
+    staleTime: 60_000,
   });
 }
 

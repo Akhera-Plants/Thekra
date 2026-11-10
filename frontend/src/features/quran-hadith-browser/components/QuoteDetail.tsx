@@ -66,7 +66,8 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
     <article className="flex flex-col gap-6">
       {/* Grade badge + type */}
       <header className="flex flex-wrap items-center gap-2">
-        <Badge variant="outline">
+        {/* 13px: the Arabic floor beside the grade and source badges. */}
+        <Badge variant="outline" className="text-[13px]">
           {t(`type.${
             quote.isAthar
               ? 'athar'
