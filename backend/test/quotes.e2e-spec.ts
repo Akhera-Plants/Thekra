@@ -316,7 +316,7 @@ describe('Quotes endpoints (e2e)', () => {
     await request(app.getHttpServer()).get('/v1/review/flags').set(userHdrs).expect(403);
     await request(app.getHttpServer()).get('/v1/review/flags').set(adminHdrs).expect(200);
 
-    // Round 6 (C-01s): one reporter repeating a report counts once; three different reporters turn the flag HIGH.
+    // Round 7 (E1): reports reach the review desk as MEDIUM and never hide the text, however many reporters.
     for (let index = 0; index < 3; index += 1) {
       await request(app.getHttpServer())
         .post(`/v1/quotes/${autoId}/reports`)
@@ -335,9 +335,9 @@ describe('Quotes endpoints (e2e)', () => {
     const flag = await prisma.quoteFlag.findFirst({
       where: { quoteId: autoId, type: 'USER_REPORT', status: 'OPEN' },
     });
-    expect(flag?.severity).toBe('HIGH');
+    expect(flag?.severity).toBe('MEDIUM');
     expect(JSON.stringify(flag?.details)).not.toMatch(/[0-9]{1,3}(\.[0-9]{1,3}){3}/);
-    await request(app.getHttpServer()).get(`/v1/quotes/${autoId}`).expect(404);
+    await request(app.getHttpServer()).get(`/v1/quotes/${autoId}`).expect(200);
   });
 
   it('GET /v1/quotes?q=يغتب → finds Q01 (Quran verse with that Arabic root)', async () => {

@@ -109,7 +109,7 @@ describe('Quote reports (e2e)', () => {
     expect(await prisma.quoteReport.count()).toBe(REPORT_LIMITS.globalDaily);
   });
 
-  it('three distinct reporters turn the flag HIGH and the text is hidden until reviewed; a repeat does not count', async () => {
+  it('reports never hide a text, however many reporters (round 7, E1); a repeat does not count', async () => {
     await http().post(url(Q11)).send({ reason: 'TEXT' }).expect(201);
     // Without TRUST_PROXY a forwarded address is ignored: this is the same anonymous reporter (and deduped).
     await http().post(url(Q11)).set('X-Forwarded-For', '198.51.100.1').send({ reason: 'TEXT' }).expect(201);
@@ -121,7 +121,7 @@ describe('Quote reports (e2e)', () => {
     await http().get(`/v1/quotes/${Q11}`).expect(200);
     await http().post(url(Q11)).set(admin).send({ reason: 'TEXT' }).expect(201);
     const flag = await prisma.quoteFlag.findFirst({ where: { quoteId: Q11, type: 'USER_REPORT' } });
-    expect(flag).toMatchObject({ severity: 'HIGH', details: { total: 4, reporters: 3 } });
-    await http().get(`/v1/quotes/${Q11}`).expect(404);
+    expect(flag).toMatchObject({ severity: 'MEDIUM', details: { total: 4, reporters: 3 } });
+    await http().get(`/v1/quotes/${Q11}`).expect(200);
   });
 });
