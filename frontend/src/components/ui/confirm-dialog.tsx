@@ -79,7 +79,8 @@ export function ConfirmDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={(next) => (busy ? undefined : onOpenChange(next))}>
-      <AlertDialogContent size="sm" data-tone={tone}>
+      {/* Without a line of context there is nothing to describe the dialog by (Radix asks for an explicit opt-out). */}
+      <AlertDialogContent size="sm" data-tone={tone} {...(description ? {} : { "aria-describedby": undefined })}>
         <AlertDialogHeader>
           {Mark ? (
             <AlertDialogMedia
