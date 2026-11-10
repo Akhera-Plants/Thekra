@@ -1588,10 +1588,10 @@
       "title": "Send a message",
       "lead": "Pick what fits: to the whole circle, or to one member when encouraging or reminding.",
       "groups": {
-        "progress": "Share your progress",
+        "progress": "My progress",
         "encourage": "Encourage",
         "support": "Ask for help",
-        "remind": "Remind and steady"
+        "remind": "Remind"
       },
       "to": "To",
       "noHabitsToday": "No habits ask for anything today, so there is no progress to share.",

@@ -168,13 +168,13 @@ describe('round 7: «صحبة»', () => {
 
   it('D5/D7: the words of each kind of line, as shown and copied', () => {
     const t = i18n.getFixedT('ar');
-    expect(roundLine(t, round)).toBe('بدأت جولة مذاكرة · compiler design · 60 دقيقة');
+    expect(roundLine(t, round)).toBe('بدأت جولة مذاكرة · \u2068compiler design\u2069 · 60 دقيقة');
     expect(roundLine(t, { kind: 'task', label: null, minutes: 15 })).toBe('بدأت جولة مهمة · 15 دقيقة');
     expect(messageText(t, message({}))).toBe('دعوت لكم بالثبات');
     expect(messageText(t, message({ to: { memberId: 'b', name: 'أحمد', isMe: true } }))).toBe('دعوت لك بالثبات');
     expect(messageText(t, message({ key: 'progress', progress: { done: 2, total: 3 } }))).toBe('أنجزت 2 من 3 من عاداتي اليوم');
     expect(messageText(t, message({ key: 'progress', progress: { done: 3, total: 3 } }))).toBe('أتممت عاداتي اليوم كلها، الحمد لله');
-    expect(messageText(t, message({ kind: 'round_start', key: null, round }))).toBe('بدأت جولة مذاكرة · compiler design · 60 دقيقة');
+    expect(messageText(t, message({ kind: 'round_start', key: null, round }))).toBe('بدأت جولة مذاكرة · \u2068compiler design\u2069 · 60 دقيقة');
     expect(messageText(t, message({ kind: 'round_end', key: null, round: { ...round, outcome: 'done' } }))).toBe('تم الحمد لله');
     expect(messageText(t, message({ kind: 'round_end', key: null, round: { ...round, outcome: 'not_done' } }))).toBe('لم يتم');
     expect(messageText(t, message({ kind: 'reply', key: 'barak', round }))).toBe('بارك الله في وقتك');

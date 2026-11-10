@@ -14,7 +14,7 @@ import React, { useEffect, useRef } from 'react';
 import { AccessibilityInfo, Animated, Platform, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { create } from 'zustand';
-import { Check, CircleAlert } from 'lucide-react-native';
+import { Check, CircleAlert, Info } from 'lucide-react-native';
 import { radius, space, useStyles, useTheme, type Theme } from '@/theme';
 import { Icon } from './Icon';
 import { Text } from './Text';
@@ -26,8 +26,8 @@ export interface ToastOptions {
   onAction?: () => void;
   /** Milliseconds on screen (default 3500, 6000 with an action so it can be reached). */
   duration?: number;
-  /** `error` for a failure (destructive mark); `success` (default) otherwise. */
-  tone?: 'success' | 'error';
+  /** `error` for a failure (destructive mark), `info` for a notice that is neither (an «i»); `success` (default) otherwise. */
+  tone?: 'success' | 'error' | 'info';
 }
 
 interface ToastState {
@@ -136,7 +136,7 @@ export function ToastHost() {
         ]}
       >
         <View style={[styles.mark, { backgroundColor: error ? colors.destructiveSoft : colors.primarySoft }]}>
-          <Icon icon={error ? CircleAlert : Check} size={16} strokeWidth={2} tone={error ? 'destructive' : 'link'} />
+          <Icon icon={error ? CircleAlert : current.tone === 'info' ? Info : Check} size={16} strokeWidth={2} tone={error ? 'destructive' : 'link'} />
         </View>
         <Text variant="lead" weight="medium" style={styles.message}>
           {current.message}

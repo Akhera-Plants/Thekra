@@ -147,7 +147,7 @@ function StrategyItem({ strategy, last, onApply }: { strategy: Strategy; last: b
   async function toggleReminder() {
     const on = !reminded;
     if (on && !(await ensurePermission(t('practice.notify.channelName')))) {
-      toast(t('practice.permissionDenied'));
+      toast({ message: t('practice.permissionDenied'), tone: 'info' });
       return;
     }
     setPrefs((p) => ({ ...p, weeklyStrategies: toggleStrategy(p.weeklyStrategies, strategy.key) }));

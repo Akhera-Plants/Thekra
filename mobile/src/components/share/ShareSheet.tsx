@@ -107,11 +107,11 @@ export function ShareSheet({ quote, visible, onClose, showTranslation }: { quote
         const result = await shareCardImage(cardContent(quote, labels, locale, t), { ink: ON_GREEN.ink, soft: ON_GREEN.soft });
         if (result === 'downloaded') toast(t('share.imageSaved'));
         if (result !== 'failed') onClose();
-        else toast(t('share.imageFailed'));
+        else toast({ message: t('share.imageFailed'), tone: 'error' });
         return;
       }
       const result = await shareCardOnPhone(cardRef, t('share.shareImage'));
-      if (result === 'failed') toast(t('share.imageFailed'));
+      if (result === 'failed') toast({ message: t('share.imageFailed'), tone: 'error' });
       else onClose();
     } finally {
       setBusy(false);

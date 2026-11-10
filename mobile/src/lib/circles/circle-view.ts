@@ -88,7 +88,9 @@ export function minutesText(t: TFunction, minutes: number): string {
 /** «جولة مذاكرة · compiler design · 60 دقيقة»: what a round says in the feed and in the preview before it starts. */
 export function roundLine(t: TFunction, round: Pick<CircleRound, 'kind' | 'label' | 'minutes'>): string {
   const head = t('circles.round.startedLine', { kind: t(`circles.round.kinds.${round.kind}`) });
-  return [head, round.label, minutesText(t, round.minutes)].filter(Boolean).join(' · ');
+  // The label is isolated (FSI…PDI) so a Latin label («compiler design») keeps its place in an Arabic line.
+  const label = round.label ? `\u2068${round.label}\u2069` : null;
+  return [head, label, minutesText(t, round.minutes)].filter(Boolean).join(' · ');
 }
 
 /** The words of one feed line, as shown and as copied. A label typed by a member is the only free text. */
