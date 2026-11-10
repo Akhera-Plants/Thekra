@@ -11,7 +11,7 @@ import { useQuoteSharePayload } from '@/components/shared/share/useQuoteSharePay
 import { useFavoriteQuoteIds } from '@/features/favorites/hooks/useFavoriteQuoteIds';
 import { useToggleFavorite } from '@/features/favorites/hooks/useToggleFavorite';
 import { formatDigits } from '@/lib/format/digits';
-import { formatGradeCitation } from '@/lib/format/grade-citation';
+import { collectorReferences, formatGradeCitation } from '@/lib/format/grade-citation';
 import { englishOnlyProvenance } from '@/lib/format/provenance';
 import { QuoteType } from '@/lib/types/enums';
 import type { QuoteDto } from '@/lib/types/api';
@@ -71,6 +71,14 @@ export function FeaturedReminder({ quote }: FeaturedReminderProps) {
     grade: quote.hadith?.grade,
     // The reference follows in the same line: the book and number are said once (owner round 7, B4).
     besideSource: quote.hadith?.reference,
+    collectorInBadge: true,
+  });
+  // The collector (Muslim 206) joins the one stamp line when it is another book than the source named.
+  const collectors = collectorReferences({
+    locale,
+    gradeAuthority: quote.citation?.gradeAuthority,
+    gradeReference: quote.citation?.gradeReference,
+    besideSource: [quote.source?.nameAr, quote.hadith?.reference].filter(Boolean).join(' '),
   });
   const rawReference = quote.hadith?.reference?.trim()
     || (quote.quran?.surahNumber != null && quote.quran.ayahNumber != null
@@ -85,7 +93,7 @@ export function FeaturedReminder({ quote }: FeaturedReminderProps) {
     rawReference && locale === 'en'
       ? englishOnlyProvenance(rawReference)
       : rawReference;
-  const meta = [gradeLine, sourceLine].filter(Boolean).join(' · ');
+  const meta = [sourceLine, ...collectors, gradeLine].filter(Boolean).join(' · ');
   const body = english ?? text;
   const scale = featuredVerseScale(body.length);
   // Share exactly what this card shows: its text and its source stamp.

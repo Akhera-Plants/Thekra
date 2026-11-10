@@ -304,7 +304,8 @@ export function Toggle({
       accessibilityRole="switch"
       accessibilityLabel={label}
       accessibilityState={{ checked: value, disabled: Boolean(disabled) }}
-      style={disabled ? { opacity: 0.45 } : undefined}
+      // The track is 52×32; the pressable itself is 44 high (round 7, QA: touch height) without changing the look.
+      style={[{ minHeight: MIN_TARGET, minWidth: MIN_TARGET, justifyContent: 'center' as const, alignItems: 'center' as const }, disabled ? { opacity: 0.45 } : null]}
     >
       <Animated.View style={[styles.toggle, { backgroundColor }]}>
         <Animated.View style={[styles.thumb, { marginStart }]} />

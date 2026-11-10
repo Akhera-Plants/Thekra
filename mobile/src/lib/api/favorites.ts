@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuthStore } from '../stores/auth-store';
 import { apiGet, apiPost, apiDelete } from '../api-client';
 import { queryKeys } from '../query-keys';
 import type { QuoteDto } from '../types/api';
@@ -47,8 +48,19 @@ export async function removeFavorite(quoteId: string) {
 
 // ── Hooks ─────────────────────────────────────────────────────────────────────
 
+/**
+ * Saved texts belong to an account: the two favorites queries wait for the session (owner round 7, QA: a 401 on
+ * `/favorites` and `/favorites/quote-ids` at first load). The access token is restored after launch (`rehydrate`), so a
+ * query fired before it was ready was refused, refreshed and sent again; for a guest it was refused every time.
+ */
+function useSignedIn(): boolean {
+  return useAuthStore((s) => s.user !== null);
+}
+
 export function useFavorites() {
+  const signedIn = useSignedIn();
   return useQuery({
+    enabled: signedIn,
     queryKey: queryKeys.favorites.all,
     queryFn: () => fetchFavorites(),
     select: (r) => favoriteQuotes(r.data),
@@ -60,7 +72,9 @@ export function useFavorites() {
 }
 
 export function useFavoriteIds() {
+  const signedIn = useSignedIn();
   return useQuery({
+    enabled: signedIn,
     queryKey: queryKeys.favorites.quoteIds,
     queryFn: () => fetchFavoriteIds(),
     select: (r) => new Set(r.data),

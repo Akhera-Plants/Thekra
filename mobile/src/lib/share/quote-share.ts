@@ -74,6 +74,32 @@ function foldArabic(value: string): string {
 }
 
 const PUNCTUATION = /[،,:؛()\-–—.]/g;
+const SAHIHAYN = /^(?:رواه البخاري|رواه مسلم|متفق عليه)$/;
+const COLLECTORS: Record<string, [string, string]> = {
+  'البخاري': ['صحيح البخاري', 'Sahih al-Bukhari'],
+  'مسلم': ['صحيح مسلم', 'Sahih Muslim'],
+};
+
+/**
+ * The original collector of a hadith whose source capsule names another book (Riyad as-Salihin, Shu'ab al-Iman, …), as the
+ * text of a second capsule: «صحيح مسلم، رقم 206» / "Sahih Muslim, no. 206". Empty when the authority is not «رواه البخاري /
+ * رواه مسلم / متفق عليه» or when the capsule already names that book and number (owner round 7, B4). Same rule as the
+ * web's `collectorReferences` (frontend/src/lib/format/grade-citation.ts).
+ */
+export function collectorReferences(quote: QuoteDto, locale: ShareLocale, besideSource?: string | null): string[] {
+  if (quote.isAthar) return [];
+  const authority = quote.citation?.gradeAuthority?.trim();
+  const reference = quote.citation?.gradeReference?.trim();
+  if (!authority || !reference || !SAHIHAYN.test(authority)) return [];
+  const out: string[] = [];
+  for (const part of reference.split(/[،,]/)) {
+    const match = toWesternDigits(part).match(/(البخاري|مسلم)\s*(\d+)/);
+    const names = match?.[1] ? COLLECTORS[match[1]] : undefined;
+    if (!match || !names || repeatsSource(part, besideSource)) continue;
+    out.push(locale === 'en' ? `${names[1]}, no. ${match[2]}` : `${names[0]}، رقم ${match[2]}`);
+  }
+  return out;
+}
 
 /**
  * Does `part` («البخاري 2595», «سنن ابن ماجه، رقم 4229») name the same book and number as the source shown beside it
@@ -112,12 +138,18 @@ export function gradeCitationLine(
      * line goes entirely, a grader keeps only «حكمه …».
      */
     besideSource?: string | null;
+    /**
+     * The collector is drawn as its own capsule beside the source capsule (`collectorReferences`), so the plain «رواه
+     * مسلم، رقم 206» line is not written at all. A grader («حكمه …») is unaffected.
+     */
+    collectorInBadge?: boolean;
   } = {},
 ): string | null {
   if (quote.isAthar) return null;
   const reference = quote.citation?.gradeReference?.trim() || null;
   if (!reference) return null;
   const authority = quote.citation?.gradeAuthority?.trim() || null;
+  if (options.collectorInBadge && authority && SAHIHAYN.test(authority)) return null;
   const verb = quote.hadith?.grade === HadithGrade.HASAN ? 'حسّنه' : 'حكمه';
   if (repeatsSource(reference, options.besideSource)) {
     // «رواه البخاري» / «رواه مسلم» only names the book again; a grader («حكمه شعيب الأرنؤوط») still says something.
@@ -128,7 +160,7 @@ export function gradeCitationLine(
   }
   // The two Sahihs read in their short form, as on the website («رواه البخاري، رقم 2595», «متفق عليه، البخاري 1، مسلم
   // 2»), never «… · حكمه متفق عليه».
-  const sahihayn = authority && /^(?:رواه البخاري|رواه مسلم|متفق عليه)$/.test(authority);
+  const sahihayn = authority && SAHIHAYN.test(authority);
   const number = reference.match(/\d+/)?.[0];
   const line = sahihayn
     ? authority === 'متفق عليه'
@@ -155,9 +187,11 @@ export function quoteAttribution(quote: QuoteDto, labels: QuoteShareLabels, loca
       : null;
   // A verse: «لقمان (31:13)» without «القرآن الكريم» (owner round 7, B8), as on the card.
   const shownSource = quote.type === QuoteType.QURAN_VERSE && provenance ? null : source;
-  const main = [shownSource, provenance && provenance !== source ? provenance : null, grade].filter(Boolean).join(SEPARATOR);
+  // The original collector joins the source in the same line (a second capsule on the card), never a line of its own.
+  const collectors = collectorReferences(quote, locale, [source, quote.hadith?.reference].filter(Boolean).join(' '));
+  const main = [shownSource, provenance && provenance !== source ? provenance : null, ...collectors, grade].filter(Boolean).join(SEPARATOR);
   if (main) lines.push(main);
-  const gradeLine = gradeCitationLine(quote, locale, { besideSource: quote.hadith?.reference });
+  const gradeLine = gradeCitationLine(quote, locale, { besideSource: quote.hadith?.reference, collectorInBadge: true });
   if (gradeLine) lines.push(gradeLine);
   const speaker = atharSpeakerLine(quote, labels);
   if (speaker) lines.push(speaker);

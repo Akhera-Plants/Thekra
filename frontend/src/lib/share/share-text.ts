@@ -12,7 +12,7 @@
  */
 
 import { formatDigits } from '@/lib/format/digits';
-import { formatGradeCitation } from '@/lib/format/grade-citation';
+import { alsoInRepeatsSource, collectorReferences, formatGradeCitation } from '@/lib/format/grade-citation';
 import { englishProvenance } from '@/lib/format/provenance';
 import type { QuoteDto } from '@/lib/types/api';
 import { HadithGrade, QuoteType } from '@/lib/types/enums';
@@ -158,9 +158,19 @@ export function quoteCardAttribution(
       grade && grade !== HadithGrade.UNGRADED && !isAthar
         ? labels.grade[grade.toLowerCase() as keyof ShareLabels['grade']]
         : null;
+    // The original collector joins the source in the same line (a second badge on the card), never a line of its own.
+    const collectors = isAthar
+      ? []
+      : collectorReferences({
+          locale,
+          gradeAuthority: quote.citation?.gradeAuthority,
+          gradeReference: quote.citation?.gradeReference,
+          besideSource: [quietSource, hadithRefRaw].filter(Boolean).join(' '),
+        });
     const capsule = [
       quietSource && !refAlreadyNamesSource ? quietSource : null,
       hadithRef,
+      ...collectors,
       gradeLabel,
     ].filter(Boolean);
     if (capsule.length > 0) lines.push(capsule.join(SEPARATOR));
@@ -181,12 +191,13 @@ export function quoteCardAttribution(
         grade: quote.hadith?.grade,
         // The book and number are in the line above: never twice (owner round 7, B4).
         besideSource: hadithRefRaw,
+        collectorInBadge: true,
       });
       if (gradeLine) lines.push(gradeLine);
     }
 
     const alsoIn = quote.citation?.alsoIn?.trim();
-    if (alsoIn) lines.push(alsoIn);
+    if (alsoIn && !alsoInRepeatsSource(alsoIn, hadithRefRaw, quote.source?.nameAr)) lines.push(alsoIn);
 
     if (isAthar && quote.atharSpeakerAr?.trim()) {
       const speaker = quote.atharSpeakerAr.trim();

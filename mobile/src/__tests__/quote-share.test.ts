@@ -2,7 +2,7 @@
  * QuoteCard share text: displayed text + attribution (+ «أثر، وليس حديثًا» for an athar) + public link.
  */
 
-import { gradeCitationLine, quotePageUrl, quoteShareText, type QuoteShareLabels } from '../lib/share/quote-share';
+import { collectorReferences, gradeCitationLine, quotePageUrl, quoteShareText, type QuoteShareLabels } from '../lib/share/quote-share';
 import type { QuoteDto } from '../lib/types/api';
 
 const labels: QuoteShareLabels = {
@@ -107,6 +107,12 @@ describe('grade line beside the source (owner round 7, B4)', () => {
   });
   it('keeps it when the source is another book', () => {
     expect(gradeCitationLine(bukhari, 'ar', { besideSource: 'رياض الصالحين، رقم 1200' })).toBe('رواه البخاري، رقم 2595');
+  });
+  it('never writes the plain collector line when it has its own capsule, and names it there instead', () => {
+    expect(gradeCitationLine(bukhari, 'ar', { besideSource: 'رياض الصالحين، رقم 1200', collectorInBadge: true })).toBeNull();
+    expect(collectorReferences(bukhari, 'ar', 'رياض الصالحين، رقم 1200')).toEqual(['صحيح البخاري، رقم 2595']);
+    expect(collectorReferences(bukhari, 'en', 'رياض الصالحين، رقم 1200')).toEqual(['Sahih al-Bukhari, no. 2595']);
+    expect(collectorReferences(bukhari, 'ar', bukhari.hadith!.reference)).toEqual([]);
   });
   it('keeps only the grader when the book is already shown', () => {
     const arnaut = quote({

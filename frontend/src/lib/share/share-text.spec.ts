@@ -138,7 +138,6 @@ describe('quoteSharePayload: hadith', () => {
     expect(payload.attribution).toEqual([
       'صحيح البخاري · 1 · صحيح',
       'الراوي: عمر بن الخطاب',
-      'رواه البخاري، رقم 1',
     ]);
     expect(payload.isAthar).toBe(false);
   });

@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 import type { QuoteDto, QuoteLinkDto } from '@/lib/types/api';
 import { HadithGrade, QuoteType } from '@/lib/types/enums';
 import { englishProvenance } from '@/lib/format/provenance';
-import { formatGradeCitation } from '@/lib/format/grade-citation';
+import { alsoInRepeatsSource, formatGradeCitation } from '@/lib/format/grade-citation';
 import { GradeBadge } from './GradeBadge';
 import { SourceBadge } from './SourceBadge';
 import { QuoteBody } from './QuoteBody';
@@ -189,6 +189,7 @@ export function QuoteCard({
     grade: quote.hadith?.grade,
     // The source badge already names the book and number: the line never repeats it (owner round 7, B4).
     besideSource: hadithRefRaw,
+    collectorInBadge: true,
   });
   // Verses, hadith and athar (stored as hadith) are the shareable public texts.
   const shareable = isQuran || isHadith;
@@ -276,16 +277,16 @@ export function QuoteCard({
                   </p>
                 ) : null}
                 {gradeLine && !quote.isAthar ? (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-[13px] text-muted-foreground">
                     <FormattedNumber value={gradeLine} />
                   </p>
                 ) : null}
-                {quote.citation?.alsoIn ? (
+                {quote.citation?.alsoIn && !alsoInRepeatsSource(quote.citation.alsoIn, hadithRefRaw, quote.source.nameAr) ? (
                   <p
                     dir={/[\u0600-\u06FF]/.test(quote.citation.alsoIn) ? 'rtl' : 'ltr'}
                     lang={/[\u0600-\u06FF]/.test(quote.citation.alsoIn) ? 'ar' : 'en'}
                     className={cn(
-                      'text-xs text-muted-foreground',
+                      'text-[13px] text-muted-foreground',
                       arabic && 'font-arabic-ui',
                     )}
                   >
@@ -321,7 +322,7 @@ export function QuoteCard({
                     dir={arabic ? 'rtl' : 'ltr'}
                     lang={arabic ? 'ar' : 'en'}
                     className={cn(
-                      'text-xs text-muted-foreground',
+                      'text-[13px] text-muted-foreground',
                       arabic && 'font-arabic-ui',
                     )}
                   >
@@ -330,12 +331,12 @@ export function QuoteCard({
                   </p>
                 ) : null}
                 {isWeak ? (
-                  <p role="note" className="text-xs text-muted-foreground">
+                  <p role="note" className="text-[13px] text-muted-foreground">
                     {t('weakNotice')}
                   </p>
                 ) : null}
                 {quote.hadith?.outsideSahihayn ? (
-                  <p role="note" className="text-xs text-muted-foreground">
+                  <p role="note" className="text-[13px] text-muted-foreground">
                     {t('outsideSahihayn')}
                   </p>
                 ) : null}
@@ -343,7 +344,7 @@ export function QuoteCard({
             ) : null}
 
             {!isQuran && !isHadith ? (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[13px] text-muted-foreground">
                 {quietSource
                   ?? visibleArabic(quote.book?.bookTitle, arabic)
                   ?? typeLabel}

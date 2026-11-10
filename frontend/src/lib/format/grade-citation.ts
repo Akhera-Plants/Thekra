@@ -21,6 +21,12 @@ export function formatGradeCitation(input: {
    * 2595» goes, «سنن أبي داود، رقم 5186 · صحّحه شعيب الأرنؤوط» keeps only «صحّحه شعيب الأرنؤوط».
    */
   besideSource?: string | null;
+  /**
+   * The collector (البخاري / مسلم with its own number) is drawn as its own badge next to the source badge, so the plain
+   * «رواه مسلم، رقم 206» line is not written at all (owner round 7, B4: no second plain source line beside a badge).
+   * The grader attribution («صحّحه …») is unaffected.
+   */
+  collectorInBadge?: boolean;
 }): string | null {
   const line = composeGradeCitation(input);
   return input.locale === 'en' ? englishPartsOnly(line) : line;
@@ -52,6 +58,7 @@ function composeGradeCitation(input: {
   gradeReference: string | null | undefined;
   grade?: string | null;
   besideSource?: string | null;
+  collectorInBadge?: boolean;
 }): string | null {
   const authority = input.gradeAuthority?.trim() || null;
   const reference = input.gradeReference?.trim() || null;
@@ -60,6 +67,7 @@ function composeGradeCitation(input: {
   const badge = input.besideSource?.trim() || null;
 
   if (authority && SAHIHAYN.test(authority)) {
+    if (input.collectorInBadge) return null;
     if (authority !== 'متفق عليه' && repeatsSource(reference ?? authority, badge)) return null;
     const line =
       authority === 'متفق عليه'
@@ -79,6 +87,10 @@ function composeGradeCitation(input: {
         : input.locale === 'ar'
           ? 'صحيح'
           : 'Authentic';
+    // Beside a source badge only the grader speaks: the explanatory book it cites is a second source line (round 7, B4).
+    if (input.collectorInBadge) {
+      return input.locale === 'ar' ? `حكم موسوعة الأحاديث النبوية: ${gradeWord}` : `Hadeeth Encyclopedia ruling: ${gradeWord}`;
+    }
     if (input.locale === 'ar') {
       return reference
         ? `حكم موسوعة الأحاديث النبوية: ${gradeWord} — ${reference}`
@@ -110,6 +122,52 @@ function composeGradeCitation(input: {
   const alone = reference ?? authority;
   if (!alone || repeatsSource(alone, badge)) return null;
   return input.locale === 'en' ? (englishProvenance(alone) ?? alone) : alone;
+}
+
+const COLLECTOR_BOOKS: Record<string, string> = { 'البخاري': 'صحيح البخاري', 'مسلم': 'صحيح مسلم' };
+
+/**
+ * The original collector of a hadith whose source badge names another book (Riyad as-Salihin, Shu'ab al-Iman, …), as the
+ * text of a second badge: «صحيح مسلم، رقم 206» / «Sahih Muslim, no. 206». Empty when the authority is not «رواه البخاري /
+ * رواه مسلم / متفق عليه», or when the badge already names that book and number (nothing is said twice, owner round 7, B4).
+ * Web and app compute it the same way (mobile/src/lib/share/quote-share.ts).
+ */
+export function collectorReferences(input: {
+  locale: 'ar' | 'en';
+  gradeAuthority: string | null | undefined;
+  gradeReference: string | null | undefined;
+  besideSource?: string | null;
+}): string[] {
+  const authority = input.gradeAuthority?.trim();
+  const reference = input.gradeReference?.trim();
+  if (!authority || !reference || !SAHIHAYN.test(authority)) return [];
+  const out: string[] = [];
+  for (const part of reference.split(/[،,]/)) {
+    const match = formatDigits(part).match(/(البخاري|مسلم)\s*(\d+)/);
+    if (!match?.[1] || !match[2]) continue;
+    if (repeatsSource(part, input.besideSource)) continue;
+    const line = `${COLLECTOR_BOOKS[match[1]]}، رقم ${match[2]}`;
+    out.push(input.locale === 'en' ? (englishProvenance(line) ?? line) : line);
+  }
+  return out;
+}
+
+/**
+ * «ورد في الجامع لشعب الإيمان للبيهقي، رقم 6621» under a badge that already says «الجامع لشعب الإيمان (ط الرشد)، رقم 6621»
+ * is the same book and number twice: it goes.
+ */
+export function alsoInRepeatsSource(
+  alsoIn: string | null | undefined,
+  badge: string | null | undefined,
+  sourceName: string | null | undefined,
+): boolean {
+  if (!alsoIn?.trim() || !badge?.trim()) return false;
+  const numbers = (value: string): string[] => formatDigits(value).match(/\d+/g) ?? [];
+  const mine = numbers(alsoIn);
+  const theirs = numbers(badge);
+  if (mine.length === 0 || !mine.every((n) => theirs.includes(n))) return false;
+  const title = foldArabic(sourceName ?? '').replace(/\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim();
+  return title.length > 0 && foldArabic(alsoIn).includes(title);
 }
 
 /** Letters only: no harakat, one alif, ة→ه, ى→ي — so «أبي داود» and «ابي داود» compare equal. */

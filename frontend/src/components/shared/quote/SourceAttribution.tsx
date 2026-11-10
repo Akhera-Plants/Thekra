@@ -62,6 +62,7 @@ export function SourceAttribution({
     gradeReference: citation?.gradeReference,
     grade: hadith?.grade,
     besideSource: badgeShown ? hadith?.reference : null,
+    collectorInBadge: badgeShown,
   });
   const sourceName = arabic ? source.nameAr : (source.name || source.nameAr);
   const sourceInArabic = Boolean(sourceName && /[\u0600-\u06FF]/.test(sourceName));

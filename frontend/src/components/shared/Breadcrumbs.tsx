@@ -27,7 +27,7 @@ export function Breadcrumbs({ items, ariaLabel }: BreadcrumbsProps) {
               {last || !item.href ? (
                 <span aria-current={last ? 'page' : undefined}>{item.label}</span>
               ) : (
-                <Link href={item.href}>{item.label}</Link>
+                <Link href={item.href} className="touch-44">{item.label}</Link>
               )}
             </li>
           );

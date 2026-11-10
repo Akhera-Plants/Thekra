@@ -34,7 +34,7 @@ import { VerseAudioButton } from './VerseAudioButton';
 import { stripOuterQuotes } from '@/lib/quote-text';
 import { HadithGrade, QuoteType } from '@/lib/types/enums';
 import type { QuoteDto } from '@/lib/types/api';
-import { atharSpeakerLine, gradeCitationLine, type QuoteShareLabels } from '@/lib/share/quote-share';
+import { atharSpeakerLine, collectorReferences, gradeCitationLine, type QuoteShareLabels } from '@/lib/share/quote-share';
 
 interface QuoteCardProps {
   quote: QuoteDto;
@@ -117,10 +117,12 @@ export function QuoteCard({ quote, isFavorite = false, onToggleFavorite, shareab
   };
   const speakerLine = atharSpeakerLine(quote, shareLabels);
   // The source badge already names the book and number: the line never repeats it (owner round 7, B4).
-  const gradeLine = gradeCitationLine(quote, arabicUI ? 'ar' : 'en', { besideSource: quote.hadith?.reference });
+  const gradeLine = gradeCitationLine(quote, arabicUI ? 'ar' : 'en', { besideSource: quote.hadith?.reference, collectorInBadge: true });
   const sourceName = arabicUI ? quote.source.nameAr ?? quote.source.name : quote.source.name || quote.source.nameAr;
   const surahName = arabicUI ? quote.quran?.surahNameAr : quote.quran?.surahName || quote.quran?.surahNameAr;
   const hadithRef = quote.hadith?.reference?.trim() || null;
+  // The original collector (Muslim 206) as a second capsule when the source capsule is another book (owner round 7, B4).
+  const collectors = isHadith ? collectorReferences(quote, arabicUI ? 'ar' : 'en', [sourceName, hadithRef].filter(Boolean).join(' ')) : [];
   const narrator = arabicUI ? quote.hadith?.narratorAr : quote.hadith?.narrator || quote.hadith?.narratorAr;
   const showSourceInCapsule = Boolean(sourceName && !(hadithRef && sourceName && hadithRef.includes(sourceName)));
   const translation = arabicUI ? null : quote.translation?.text;
@@ -202,6 +204,13 @@ export function QuoteCard({ quote, isFavorite = false, onToggleFavorite, shareab
                     ) : null}
                   </View>
                 ) : null}
+                {collectors.map((line) => (
+                  <View key={line} style={styles.capsule}>
+                    <Text variant="caption" numberOfLines={1} style={{ flexShrink: 1 }}>
+                      {line}
+                    </Text>
+                  </View>
+                ))}
               </View>
               {narrator ? (
                 <Text variant="caption" tone="muted">
@@ -209,7 +218,7 @@ export function QuoteCard({ quote, isFavorite = false, onToggleFavorite, shareab
                 </Text>
               ) : null}
               {gradeLine && !isAthar ? (
-                <Text variant="caption" tone="muted" style={{ fontSize: 12 }}>
+                <Text variant="caption" tone="muted" style={{ fontSize: 13 }}>
                   {gradeLine}
                 </Text>
               ) : null}
@@ -219,7 +228,7 @@ export function QuoteCard({ quote, isFavorite = false, onToggleFavorite, shareab
                 </Text>
               ) : null}
               {isAthar ? (
-                <Text variant="caption" tone="muted" style={{ fontSize: 12 }}>
+                <Text variant="caption" tone="muted" style={{ fontSize: 13 }}>
                   {t('share.atharNotice')}
                 </Text>
               ) : null}
@@ -227,7 +236,7 @@ export function QuoteCard({ quote, isFavorite = false, onToggleFavorite, shareab
           ) : null}
 
           {!isQuran && !isHadith ? (
-            <Text variant="caption" tone="muted" style={{ fontSize: 12 }}>
+            <Text variant="caption" tone="muted" style={{ fontSize: 13 }}>
               {sourceName ?? quote.book?.bookTitle ?? typeLabel}
             </Text>
           ) : null}

@@ -112,7 +112,13 @@ function DayBody({ date, onClose, planId }: { date: LocalDate; onClose: () => vo
     const plan = store.plans.find((p) => p.id === planId);
     return !plan || isCustomPeriodic(plan) || habitFor(plan, habits)?.kind === 'periodic';
   };
-  const rows = planId ? details.habits.filter((h) => h.planId === planId) : details.habits.filter((h) => !isPeriodic(h.planId));
+  // A habit the day did not ask for (or one in the archive) shows only when something was logged or written on it, as on the
+  // website (round 7, C4): the day lists what was recorded, not every archived habit.
+  const rows = planId
+    ? details.habits.filter((h) => h.planId === planId)
+    : details.habits.filter(
+        (h) => !isPeriodic(h.planId) && ((h.state !== 'notAsked' && h.state !== 'archived') || h.done > 0 || h.reflection !== null),
+      );
   const single = planId !== undefined;
   const unitFallback = { minutes: t('practice.units.minutes'), count: t('practice.units.count'), times: t('practice.units.times') };
   const slips = rows

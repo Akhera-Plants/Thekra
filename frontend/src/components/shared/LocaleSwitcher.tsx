@@ -49,7 +49,7 @@ export function LocaleSwitcher({ label, className }: LocaleSwitcherProps) {
       onPointerEnter={() => router.prefetch(pathname, { locale: otherLocale })}
       onFocus={() => router.prefetch(pathname, { locale: otherLocale })}
       className={cn(
-        'inline-flex min-h-11 items-center px-2 text-[15px] text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/40 md:text-base',
+        'inline-flex min-h-11 min-w-11 items-center justify-center px-2 text-[15px] text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/40 md:text-base',
         className,
       )}
     >

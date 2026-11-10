@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatGradeCitation } from './grade-citation';
+import { alsoInRepeatsSource, collectorReferences, formatGradeCitation } from './grade-citation';
 
 describe('formatGradeCitation', () => {
   it('puts the Sunan book and number before the Arnaut grader (en)', () => {
@@ -112,6 +112,15 @@ describe('formatGradeCitation beside the source badge (round 7, B4)', () => {
     expect(formatGradeCitation({ locale: 'ar', gradeAuthority: 'رواه البخاري', gradeReference: 'البخاري 2595', besideSource: badge })).toBeNull();
     expect(formatGradeCitation({ locale: 'en', gradeAuthority: 'رواه البخاري', gradeReference: 'البخاري 2595', besideSource: badge })).toBeNull();
   });
+  it('leaves the plain collector line out when the collector has its own badge (collectorInBadge)', () => {
+    expect(
+      formatGradeCitation({ locale: 'ar', gradeAuthority: 'رواه مسلم', gradeReference: 'مسلم 253', besideSource: 'رياض الصالحين، رقم 1200', collectorInBadge: true }),
+    ).toBeNull();
+    // the grader is never lost
+    expect(
+      formatGradeCitation({ locale: 'ar', gradeAuthority: 'شعيب الأرنؤوط', gradeReference: 'سنن أبي داود، رقم 5186', grade: 'SAHIH', besideSource: 'سنن ابي داود، رقم 5186', collectorInBadge: true }),
+    ).toBe('صحّحه شعيب الأرنؤوط');
+  });
   it('keeps the line when the badge is another book', () => {
     expect(
       formatGradeCitation({ locale: 'ar', gradeAuthority: 'رواه مسلم', gradeReference: 'مسلم 253', besideSource: 'رياض الصالحين، رقم 1200' }),
@@ -126,5 +135,28 @@ describe('formatGradeCitation beside the source badge (round 7, B4)', () => {
     expect(
       formatGradeCitation({ locale: 'ar', gradeAuthority: 'متفق عليه', gradeReference: 'البخاري 1038، مسلم 71', besideSource: 'صحيح البخاري، رقم 1038' }),
     ).toBe('متفق عليه، البخاري 1038، مسلم 71');
+  });
+});
+
+describe('collectorReferences: the original collector as a second badge (round 7, B4)', () => {
+  it('names Muslim beside Riyad as-Salihin or Shu\'ab al-Iman', () => {
+    expect(collectorReferences({ locale: 'ar', gradeAuthority: 'رواه مسلم', gradeReference: 'مسلم 253', besideSource: 'رياض الصالحين، رقم 1200' })).toEqual(['صحيح مسلم، رقم 253']);
+    expect(collectorReferences({ locale: 'en', gradeAuthority: 'رواه البخاري', gradeReference: 'البخاري 5533', besideSource: 'رياض الصالحين، رقم 1200' })).toEqual(['Sahih al-Bukhari, no. 5533']);
+  });
+  it('says nothing when the badge already is that book and number', () => {
+    expect(collectorReferences({ locale: 'ar', gradeAuthority: 'رواه البخاري', gradeReference: 'البخاري 2595', besideSource: 'صحيح البخاري، رقم 2595' })).toEqual([]);
+  });
+  it('keeps only the other book of «متفق عليه»', () => {
+    expect(collectorReferences({ locale: 'ar', gradeAuthority: 'متفق عليه', gradeReference: 'البخاري 1038، مسلم 71', besideSource: 'صحيح البخاري، رقم 1038' })).toEqual(['صحيح مسلم، رقم 71']);
+  });
+  it('ignores a grader that is not a collector', () => {
+    expect(collectorReferences({ locale: 'ar', gradeAuthority: 'شعيب الأرنؤوط', gradeReference: 'سنن أبي داود، رقم 5186', besideSource: 'رياض الصالحين، رقم 1' })).toEqual([]);
+  });
+});
+
+describe('alsoInRepeatsSource', () => {
+  it('drops «ورد في … رقم 6621» under the badge of the same book and number', () => {
+    expect(alsoInRepeatsSource('ورد في الجامع لشعب الإيمان للبيهقي، رقم 6621', 'الجامع لشعب الإيمان (ط الرشد)، رقم 6621', 'الجامع لشعب الإيمان (ط الرشد)')).toBe(true);
+    expect(alsoInRepeatsSource('ورد في سنن أبي داود، رقم 12', 'الجامع لشعب الإيمان (ط الرشد)، رقم 6621', 'الجامع لشعب الإيمان (ط الرشد)')).toBe(false);
   });
 });

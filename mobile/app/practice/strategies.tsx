@@ -75,6 +75,7 @@ const makeStyles = (t: Theme) => ({
   disclosure: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.xs, minHeight: 44, alignSelf: 'flex-start' as const },
   pressed: { opacity: 0.7 },
   body: { gap: space.md, paddingTop: space.xs },
+  action: { flexDirection: 'row' as const, paddingTop: space.xs },
   fold: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.sm, minHeight: 56 },
   foldTitle: { flex: 1, minWidth: 0 },
   options: { gap: space.sm },
@@ -207,28 +208,31 @@ function StrategyItem({ strategy, last, onApply }: { strategy: Strategy; last: b
       {open ? (
         <View style={styles.body}>
           <Text variant="body">{`${t('practice.strategies.example')}: ${t(`practice.strategies.items.${strategy.key}.example`)}`}</Text>
-          <Button
-            label={
-              toHabit
-                ? t('practice.strategies.apply')
-                : target.kind === 'deeds' && deedsOpen
-                  ? t('practice.strategies.hideDeeds')
-                  : t('practice.strategies.try')
-            }
-            icon={target.kind === 'deeds' && deedsOpen ? ChevronUp : undefined}
-            arrow={!(target.kind === 'deeds' && deedsOpen)}
-            onPress={handleAction}
-            variant={target.kind === 'deeds' && deedsOpen ? 'outline' : 'solid'}
-            size="sm"
-          />
-          {!toHabit && target.kind === 'deeds' && deedsOpen ? (
-            <View style={{ gap: space.sm }}>
-              <Text variant="small" tone="muted">
-                {t('practice.strategies.deedsLead')}
-              </Text>
-              <EasyDeeds />
-            </View>
-          ) : null}
+        </View>
+      ) : null}
+      {/* The action sits on the card like the website's (round 7, QA): «طبّقها على عادة» / «جرّبها», not only in the example. */}
+      <View style={styles.action}>
+        <Button
+          label={
+            toHabit
+              ? t('practice.strategies.apply')
+              : target.kind === 'deeds' && deedsOpen
+                ? t('practice.strategies.hideDeeds')
+                : t('practice.strategies.try')
+          }
+          icon={target.kind === 'deeds' && deedsOpen ? ChevronUp : undefined}
+          arrow={!(target.kind === 'deeds' && deedsOpen)}
+          onPress={handleAction}
+          variant="outline"
+          size="sm"
+        />
+      </View>
+      {!toHabit && target.kind === 'deeds' && deedsOpen ? (
+        <View style={{ gap: space.sm }}>
+          <Text variant="small" tone="muted">
+            {t('practice.strategies.deedsLead')}
+          </Text>
+          <EasyDeeds />
         </View>
       ) : null}
     </View>

@@ -54,6 +54,7 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
     gradeReference: quote.citation?.gradeReference,
     grade: quote.hadith?.grade,
     besideSource: isHadith ? quote.hadith?.reference : null,
+    collectorInBadge: isHadith,
   });
   const hasProvenance = !isHadith || Boolean(
     (arabic ? quote.hadith?.narratorAr : quote.hadith?.narrator || quote.hadith?.narratorAr)

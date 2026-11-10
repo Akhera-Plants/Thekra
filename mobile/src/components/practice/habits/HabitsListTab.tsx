@@ -15,7 +15,7 @@ import React, { useMemo, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Archive, ChevronDown, ChevronUp, Lightbulb, LockKeyhole, Mail, Plus, RotateCcw, Sprout, Trash2, TreeDeciduous } from 'lucide-react-native';
+import { Archive, ChevronDown, ChevronUp, Lightbulb, LockKeyhole, Mail, Plus, RotateCcw, Sprout, Trash2, TreeDeciduous, Waves } from 'lucide-react-native';
 import {
   ARCHIVE_MAX,
   archiveNote,
@@ -286,7 +286,7 @@ function LightenRow({ covered, program, last, onOpen }: { covered: boolean; prog
   return (
     <Pressable onPress={onOpen} accessibilityRole="button" accessibilityLabel={`${t('habitsHub.lighten.type')}: ${name}`} style={({ pressed }) => [styles.row, last && styles.rowLast, pressed && { backgroundColor: colors.accent }]}>
       <View style={styles.covered}>
-        <Icon icon={LockKeyhole} size={18} tone="muted" />
+        <Icon icon={covered || !program ? LockKeyhole : Waves} size={18} tone="muted" />
       </View>
       <View style={styles.texts}>
         <Text variant="body" weight="medium">
