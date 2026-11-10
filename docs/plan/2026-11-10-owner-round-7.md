@@ -84,3 +84,13 @@ QA pass checks every id on the web AND the app. Owner's closing line: «تأكد
 ## Answers to round-6 questions
 - Report rule: E1 (not «3 reporters»).
 - Garden: C7.
+
+## Status 2026-11-10 (E3 done)
+- «وجه التذكير» written to production for the 8,253 public links: 6,926 lines (Arabic + English) and 1,327
+  `NO_REAL_LINK` concerns (SinQuote 1,370 / 346, GoodDeedQuote 4,260 / 927, ImanBranchQuote 1,296 / 54). Only empty
+  fields were written (`reminderAngle IS NULL`, `concern IS NULL`); nothing else changed. The backup of that morning
+  (all 49 tables, 2026-11-10T08:55Z) was the pre-write backup; the owner has its encrypted copy.
+- The concerns are listed at `GET /v1/admin/link-concerns` for the owner to decide (they do not hide a text). The count
+  is high (16%): most are verses/hadiths attached to topics they do not belong to by the old keyword matching; the owner
+  should review the topic mapping (worst: «التوبة والاستغفار», «ذكر الله», «الجهاد», «الغضب»).
+- ~21k links to hidden/unreviewed texts have no line (never shown).
