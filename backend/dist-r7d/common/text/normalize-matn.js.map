@@ -1,1 +1,0 @@
-{"version":3,"file":"normalize-matn.js","sourceRoot":"","sources":["../../../src/common/text/normalize-matn.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,eAAe,EAAE,MAAM,wBAAwB,CAAC;AAGzD,MAAM,UAAU,aAAa,CAAC,KAAa;IACzC,OAAO,eAAe,CAAC,KAAK,CAAC;SAC1B,OAAO,CAAC,qBAAqB,EAAE,GAAG,CAAC;SACnC,OAAO,CAAC,MAAM,EAAE,GAAG,CAAC;SACpB,IAAI,EAAE,CAAC;AACZ,CAAC"}

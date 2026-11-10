@@ -1,1 +1,0 @@
-{"version":3,"file":"quote-reader-query.dto.js","sourceRoot":"","sources":["../../../../src/modules/quotes/dto/quote-reader-query.dto.ts"],"names":[],"mappings":";;;;;;;;;AAAA,OAAO,EAAE,UAAU,EAAE,MAAM,EAAE,MAAM,iBAAiB,CAAC;AACrD,OAAO,EAAE,cAAc,EAAE,MAAM,yCAAyC,CAAC;AAGzE,MAAM,OAAO,mBAAoB,SAAQ,cAAc;IAIrD,MAAM,CAAU;CACjB;AADC;IAFC,UAAU,EAAE;IACZ,MAAM,EAAE;;mDACO"}
