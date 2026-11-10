@@ -191,7 +191,11 @@ export function TopicQuoteList({
   const shownSections = useMemo(() => filterSectionsByRead(sections, readFilter, readIds), [sections, readFilter, readIds]);
   const readFilters: ReadFilter[] = ['all', 'unread', 'read'];
   // The filter shows once a text of this page is read (before that every text is unread: nothing to filter).
-  const anyRead = readFilter !== 'all' || sections.some((sec) => sec.data.some((q) => readIds.has(q.id.toLowerCase())));
+  const anyReadNow = readFilter !== 'all' || sections.some((sec) => sec.data.some((q) => readIds.has(q.id.toLowerCase())));
+  // Once shown it stays while the page is open: a theme chip's list may hold none of the read texts.
+  const [readShown, setReadShown] = useState(false);
+  if (anyReadNow && !readShown) setReadShown(true);
+  const anyRead = anyReadNow || readShown;
 
   const shownThemes = (themes ?? []).filter((chip) => chip.count > 0 || chip.key === theme);
   const showThemes = Boolean(onThemeChange) && shownThemes.length > 0;

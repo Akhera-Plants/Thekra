@@ -66,7 +66,7 @@ export function ActionMenu({ items, label }: { items: ActionMenuItem[]; label?: 
           <View style={styles.confirm}>
             {asking.confirm?.message ? <Text variant="body">{asking.confirm.message}</Text> : null}
             <ButtonPair
-              primary={{ label: asking.confirm?.confirmLabel ?? asking.label, onPress: () => run(asking), variant: 'destructive' }}
+              primary={{ label: asking.confirm?.confirmLabel ?? asking.label, onPress: () => run(asking), variant: 'danger' }}
               secondary={{ label: t('common.cancel'), onPress: () => setAsking(null), variant: 'outline' }}
             />
           </View>

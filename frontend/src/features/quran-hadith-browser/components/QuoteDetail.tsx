@@ -19,6 +19,7 @@ import { ReaderExplanations } from '@/features/study-panel/components/ReaderExpl
 import { markReadOnOpen, useReadMarks } from '@/features/topic/hooks/useReadMarks';
 import type { QuoteDetailDto } from '@/lib/types/api';
 import { HadithGrade } from '@/lib/types/enums';
+import { formatGradeCitation } from '@/lib/format/grade-citation';
 
 interface QuoteDetailProps {
   quote: QuoteDetailDto;
@@ -45,6 +46,19 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
   const isWeak =
     grade === HadithGrade.DAIF || grade === HadithGrade.MAWDU;
   const canStudy = quote.type === 'QURAN_VERSE' || quote.type === 'HADITH';
+  const isHadith = quote.type === 'HADITH';
+  // What the provenance part adds once the source badge is in the header (owner round 7, B4).
+  const footerGradeLine = formatGradeCitation({
+    locale: arabic ? 'ar' : 'en',
+    gradeAuthority: quote.citation?.gradeAuthority,
+    gradeReference: quote.citation?.gradeReference,
+    grade: quote.hadith?.grade,
+    besideSource: isHadith ? quote.hadith?.reference : null,
+  });
+  const hasProvenance = !isHadith || Boolean(
+    (arabic ? quote.hadith?.narratorAr : quote.hadith?.narrator || quote.hadith?.narratorAr)
+      || quote.citation?.volume || quote.citation?.page || footerGradeLine,
+  );
   // Same shareable units as the quote cards: verses, hadith and athar.
   const sharePayload = useQuoteSharePayload(quote);
 
@@ -96,7 +110,7 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
       )}
 
       <QuoteBody quote={quote}>
-        {(quote.citation?.volume || quote.citation?.page || quote.citation?.gradeAuthority || quote.citation?.gradeReference || quote.book?.pageOrChapter) && (
+        {(quote.citation?.volume || quote.citation?.page || footerGradeLine || quote.book?.pageOrChapter) && (
           <a
             href={`#quote-${quote.id}-source`}
             className="ms-1 inline-block text-sm text-primary-text underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -113,23 +127,26 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
         </Suspense>
       ) : null}
 
-      <SectionDivider />
-
-      {/* Provenance */}
-      <SourceAttribution
-        quote={quote}
-        citationAnchorId={`quote-${quote.id}-source`}
-        sourceInHeader
-        labels={{
-          narrator: t('narrator'),
-          reference: t('reference'),
-          source: t('source'),
-          volume: t('volume'),
-          page: t('page'),
-          gradeAuthority: t('gradeAuthority'),
-          gradeReference: t('gradeReference'),
-        }}
-      />
+      {/* Provenance: for a hadith the badge above already gives the source, so this part shows only what it adds. */}
+      {hasProvenance ? (
+        <>
+          <SectionDivider />
+          <SourceAttribution
+            quote={quote}
+            citationAnchorId={`quote-${quote.id}-source`}
+            sourceInHeader
+            labels={{
+              narrator: t('narrator'),
+              reference: t('reference'),
+              source: t('source'),
+              volume: t('volume'),
+              page: t('page'),
+              gradeAuthority: t('gradeAuthority'),
+              gradeReference: t('gradeReference'),
+            }}
+          />
+        </>
+      ) : null}
 
       {/* Tags */}
       {quote.tags.length > 0 && (
