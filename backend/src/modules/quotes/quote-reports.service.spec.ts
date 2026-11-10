@@ -120,7 +120,7 @@ describe('QuoteReportsService', () => {
     expect(prisma.quoteReport.create).not.toHaveBeenCalled();
   });
 
-  it(`turns the open flag HIGH only at ${REPORT_LIMITS.escalateReporters} distinct reporters, keeping ${REPORT_LIMITS.flagEntries} entries`, async () => {
+  it(`never turns the open flag HIGH, however many reporters (round 7, E1), keeping ${REPORT_LIMITS.flagEntries} entries`, async () => {
     const { service, prisma } = setup();
     const old = Array.from({ length: REPORT_LIMITS.flagEntries }, (_, i) => ({ reason: 'TEXT', note: `n${i}`, at: NOW.toISOString() }));
     prisma.quoteFlag.findFirst.mockResolvedValue({ id: 'f1', createdAt: new Date('2026-11-01T00:00:00.000Z'), details: { total: 57, reports: old } });
@@ -131,12 +131,13 @@ describe('QuoteReportsService', () => {
     expect(update.details.total).toBe(58);
     expect(update.details.reports).toHaveLength(REPORT_LIMITS.flagEntries);
     expect(update.details.reports.at(-1)).toMatchObject({ reason: 'GRADE' });
-    expect(prisma.quoteReport.findMany.mock.calls[0]![0]).toMatchObject({ distinct: ['reporterKey'], take: REPORT_LIMITS.escalateReporters });
+    expect(prisma.quoteReport.findMany.mock.calls[0]![0]).toMatchObject({ distinct: ['reporterKey'], take: REPORT_LIMITS.reporterCountCap });
 
     prisma.quoteReport.findMany.mockResolvedValueOnce([{ reporterKey: 'a' }, { reporterKey: 'b' }, { reporterKey: 'c' }]);
     await service.report(QUOTE, 'ISNAD', undefined, { ip: '5.6.7.8' }, NOW);
     update = prisma.quoteFlag.update.mock.calls[1]![0].data;
-    expect(update.severity).toBe('HIGH');
+    expect(update.severity).toBe('MEDIUM');
+    expect(update.details.reporters).toBe(3);
   });
 
   it('locks the text row before writing, so two first reports cannot open two flags', async () => {

@@ -1,7 +1,7 @@
 import { createHmac } from 'node:crypto';
 import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Prisma, QuoteType } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type { EnvironmentVariables } from '../../config/env.validation.js';
 import type { ReportReason } from './dto/report-quote.dto.js';
@@ -19,12 +19,10 @@ export const REPORT_LIMITS = {
   /** All reports of a UTC day; past it the endpoint answers 429 REPORTS_PAUSED until 00:00 UTC. */
   globalDaily: 1000,
   /**
-   * Distinct reporters on one open flag before it turns HIGH (which hides the text until a reviewer looks). Hadith
-   * only: a report on a verse or another text (owner round 6, C-01n: «أبلغ عن خطأ» under «وجه التذكير» of every text)
-   * reaches the review desk as MEDIUM and never hides the text — anonymous reports must not be able to take a verse
-   * of the Qur'an off the site.
+   * Distinct reporters counted on one open flag, for the review desk only. A report never hides a text, however many
+   * arrive (owner round 7, E1): the flag stays MEDIUM and only the owner hides a text.
    */
-  escalateReporters: 3,
+  reporterCountCap: 50,
   /** Newest report entries copied into the open QuoteFlag for the review desk; older ones stay in QuoteReport. */
   flagEntries: 20,
 } as const;
@@ -106,7 +104,7 @@ export class QuoteReportsService {
     const note = cleanReportNote(rawNote);
 
     const [quote, today, lastHour, lastDay, duplicate] = await Promise.all([
-      this.prisma.quote.findUnique({ where: { id: quoteId }, select: { id: true, type: true } }),
+      this.prisma.quote.findUnique({ where: { id: quoteId }, select: { id: true } }),
       this.prisma.quoteReport.count({ where: { createdAt: { gte: utcMidnight(now) } } }),
       this.prisma.quoteReport.count({ where: { reporterKey: key, createdAt: { gt: new Date(now.getTime() - HOUR_MS) } } }),
       this.prisma.quoteReport.count({ where: { reporterKey: key, createdAt: { gt: new Date(now.getTime() - DAY_MS) } } }),
@@ -120,7 +118,6 @@ export class QuoteReportsService {
     if (!quote) {
       throw new NotFoundException({ code: 'RESOURCE_NOT_FOUND', message: 'Quote not found' });
     }
-    const canHide = quote.type === QuoteType.HADITH;
     // Already received from this reporter: the same answer, nothing stored again.
     if (duplicate) return { data: { accepted: true } };
     if (today >= REPORT_LIMITS.globalDaily) {
@@ -155,7 +152,7 @@ export class QuoteReportsService {
         where: { quoteId, createdAt: { gte: since } },
         distinct: ['reporterKey'],
         select: { reporterKey: true },
-        take: REPORT_LIMITS.escalateReporters,
+        take: REPORT_LIMITS.reporterCountCap,
       });
       const entry: ReportEntry = { reason, note, at: now.toISOString() };
       const entries = [...reportEntries(open?.details ?? null), entry].slice(-REPORT_LIMITS.flagEntries);
@@ -164,7 +161,7 @@ export class QuoteReportsService {
         reporters: reporters.length,
         reports: entries,
       } as unknown as Prisma.InputJsonValue;
-      const severity = canHide && reporters.length >= REPORT_LIMITS.escalateReporters ? 'HIGH' : 'MEDIUM';
+      const severity = 'MEDIUM';
       if (open) {
         await tx.quoteFlag.update({ where: { id: open.id }, data: { details, severity } });
       } else {
