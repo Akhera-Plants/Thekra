@@ -3,6 +3,13 @@
 > Owner decision, 2026-11-01 (docs/plan/2026-11-01-owner-round-3.md): «تخفَّف» data (programs, check-ins, notes, «حلقة
 > المعصية») is always kept in the member's account, encrypted so that the server cannot read it, and unlocked on the
 > device (fingerprint / face on the app). There is no "on this device only" mode, and no screen says «على جهازك فقط».
+>
+> **Superseded in part by owner round 7 (2026-11-10, C6):** the privacy code is now OPTIONAL when a program starts
+> («تخطَّ وابدأ»). Without a code the program stays on this device only — it is never sent unencrypted (the practice sync
+> refuses programs and nothing is sealed without a key), it shows uncovered like any habit, it is not wiped on sign-out,
+> and one short line says «بلا رمز يبقى البرنامج على هذا الجهاز فقط». The code can be set later inside the program
+> («⋯ › الخصوصية والإخفاء», or «أخفِه برمز» under its name), which seals it into the account as in §1 and covers it;
+> with a code, the same place holds the covering switch. §6 «never offer a device-only mode» no longer applies.
 
 The server and the crypto are unchanged: `GET|PUT|DELETE /v1/me/sin-vault` (contract
 [2026-10-practice-sync-contract.md](2026-10-practice-sync-contract.md) §3 «Sin vault») and practice-core `vault.ts`. The

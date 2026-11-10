@@ -1588,9 +1588,9 @@
       "title": "Send a message",
       "lead": "Pick what fits: to the whole circle, or to one member when encouraging or reminding.",
       "groups": {
-        "progress": "My progress",
+        "progress": "Progress",
         "encourage": "Encourage",
-        "support": "Ask for help",
+        "support": "Ask",
         "remind": "Remind"
       },
       "to": "To",
