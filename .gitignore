@@ -41,3 +41,4 @@ thekra-source/
 # Local database backups (pg_dump). Never committed: size, and the corpus licences.
 /backups/
 .r8*/
+frontend-r8*/
