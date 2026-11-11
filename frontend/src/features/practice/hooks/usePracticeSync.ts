@@ -17,19 +17,26 @@ export interface PracticeSyncState {
   sessionLoading: boolean;
 }
 
+/** Runs practice sync for the signed-in account while the app is open. Mounted once, for every page (`PracticeSyncHost`). */
+export function usePracticeSyncRunner(): void {
+  const { user, isAuthenticated } = useSession();
+  const account = isAuthenticated && user ? user.id : null;
+  useEffect(() => {
+    setSyncAccount(account);
+    return () => setSyncAccount(null);
+  }, [account]);
+}
+
 /**
- * Runs practice sync while the calling page is open and the visitor is signed in, and returns its status. Mount it
- * once per page (the status component does). A signed-in visit also re-sends this browser's push subscription, if
- * it has one (once per account and language per page load).
+ * The sync status for a page that shows it (the status component). A signed-in visit also re-sends this browser's push
+ * subscription, if it has one (once per account and language per page load). The sync itself runs from
+ * `PracticeSyncHost`, so a data page that does not show the status (habits, reviews) is current too: the device copy is
+ * emptied at sign-out, and the next sign-in must refill it wherever the person lands.
  */
 export function usePracticeSync(): PracticeSyncState {
   const { user, isAuthenticated, isLoading } = useSession();
   const account = isAuthenticated && user ? user.id : null;
   const locale = useLocale() === 'en' ? 'en' : 'ar';
-  useEffect(() => {
-    setSyncAccount(account);
-    return () => setSyncAccount(null);
-  }, [account]);
   useEffect(() => {
     if (account) void refreshPushSubscription(account, locale);
   }, [account, locale]);

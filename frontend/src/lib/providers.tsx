@@ -7,6 +7,7 @@ import { useState, type ReactNode } from 'react';
 import { ThemeProvider } from '@/components/shared/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { PracticeSyncHost } from '@/features/practice/components/PracticeSyncHost';
 import { createQueryClient } from '@/lib/query-client';
 
 interface AppProvidersProps {
@@ -27,6 +28,7 @@ export function AppProviders({ children }: AppProvidersProps) {
         <Direction.Provider dir={dir}>
           <TooltipProvider>
             {children}
+            <PracticeSyncHost />
             {/* Save feedback («حُفظ …»): one toaster for the whole site, in the page's direction. */}
             {/* Its region is named in the page language (sonner's default «Notifications alt+T» is English on /). */}
             <Toaster position="bottom-center" dir={dir} customAriaLabel={tFeedback('toastsLabel')} />
