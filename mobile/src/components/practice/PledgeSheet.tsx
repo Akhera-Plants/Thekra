@@ -1,7 +1,7 @@
 /**
  * «التزام شخصي» for one habit (owner round 4): the sheet opened from «التزاماتي» and from the habit's page. Its title is
  * the habit; a radio list of practice-core's deeds (`PLEDGE_DEED_INFO`, titled in the UI locale), «أتصدق بـ…» (with its
- * amount) and «نص أكتبه» (with its line). Each deed has a small «الدليل» button that opens a second sheet with the
+ * amount) and «نص أكتبه» (with its line). Each deed has a small «المعينات» button that opens a second sheet with the
  * evidence and its source; nothing of it is shown in the list. «احفظ» saves, closes and reports back
  * (`onDone(message)`); with a pledge already there, «احذف الالتزام» (confirmed) at the bottom removes it.
  */
@@ -198,7 +198,7 @@ function EvidenceButton({ label, title, onPress }: { label: string; title: strin
       onPress={onPress}
       android_ripple={{ color: colors.accent }}
       accessibilityRole="button"
-      // «الدليل: <the deed>», never fourteen bare «الدليل» (A-19).
+      // «المعينات: <the deed>», never fourteen bare «المعينات» (A-19).
       accessibilityLabel={`${label}: ${title}`}
       style={({ pressed }) => [styles.evidenceButton, pressed && styles.evidenceButtonPressed]}
     >

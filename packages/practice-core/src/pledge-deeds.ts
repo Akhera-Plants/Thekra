@@ -1,7 +1,7 @@
 /**
  * «التزام شخصي»: the good deeds a user may choose, per habit, for when that habit is missed two days in a row — deeds
  * the revelation ties to forgiveness or to wiping out sins (owner round 4: at least ten, each a little demanding,
- * «برّ الوالدين» first). Each carries its evidence, shown behind a small «الدليل» button on the clients.
+ * «برّ الوالدين» first). Each carries its evidence, shown behind a small «المعينات» button on the clients.
  *
  * Content rules (docs/guide/PROJECT_GUIDE.md §3): nothing here is a quoted text. `evidence` are Quote ids that are
  * public on the site (checked 2026-11-03 against production: published grade source, not athar, not hidden, no open

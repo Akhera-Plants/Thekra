@@ -24,7 +24,7 @@ import { QadaSection } from './QadaSection';
 
 /**
  * «الفرائض» (round 5, F-05 a; round 6 adds «قضاء الفوائت» under the rows): opt-in rows of the five prayers on «ورد اليوم», each with «في وقتها» and «قضاء» (a second
- * tap clears it). Not a habit: outside the limit of 3 and the streak. The evidence opens behind «الدليل»; the section's
+ * tap clears it). Not a habit: outside the limit of 3 and the streak. The evidence opens behind «المعينات»; the section's
  * «⋯» hides it again (the marks are kept). Turned on from «أضف».
  */
 export function FardSection({ store, today }: { store: Store; today: string }) {

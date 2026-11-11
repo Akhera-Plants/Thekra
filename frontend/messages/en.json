@@ -2111,9 +2111,8 @@
       "qada": "Made up"
     },
     "evidenceButton": {
-      "evidence": "The evidence",
-      "evidenceOf": "The evidence: {deed}",
-      "title": "Verses and hadith to help you with this good deed"
+      "evidence": "What helps",
+      "evidenceOf": "What helps: {deed}"
     },
     "start": {
       "skipAll": "Skip the start",

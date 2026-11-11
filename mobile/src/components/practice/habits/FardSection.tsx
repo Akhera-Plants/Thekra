@@ -1,7 +1,7 @@
 /**
  * «الفرائض» on «ورد اليوم» (owner round 5, F-05 a): opt-in rows for the five prayers, each with «في وقتها» and «قضاء»
  * (a second tap on the chosen one clears it). Not a habit: outside the limit of 3, the streak and the reminders
- * (practice-core `fard.ts`). The section title carries «الدليل» (FARD_EVIDENCE, public Quote ids read from the API) and
+ * (practice-core `fard.ts`). The section title carries «المعينات» (FARD_EVIDENCE, public Quote ids read from the API) and
  * the «⋯» with the switch that hides the section (it is turned on again from «أضف» or the onboarding). No blame words:
  * an empty prayer is just empty.
  */

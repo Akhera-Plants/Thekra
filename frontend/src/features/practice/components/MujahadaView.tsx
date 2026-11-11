@@ -61,7 +61,7 @@ interface MujahadaViewProps {
  * (mobile/app/practice/moment.tsx). One act first and prominent — the acts tied to the Qur'an, the Sunnah or the salaf
  * for this sin (catalog `sinPrograms.moment`: the member's program, else the sin page it was opened from, else the
  * generic acts) — the other acts under it, then «نصوص تذكّرها» (the texts of these acts) and «حلقة المعصية» (the
- * program's loop). No «الدليل» buttons here. The ten-minute timer is optional: it starts only on «ابدأ عشر دقائق».
+ * program's loop). No «المعينات» buttons here. The ten-minute timer is optional: it starts only on «ابدأ عشر دقائق».
  * Then «أدوات تعينك» (the tasbih counter, «وردٌ أقصر», «أعمال سهلة») and the «اركب الموجة» line; one verse passage on
  * patience; then «كيف كانت مجاهدتك؟». Kind words only.
  *
@@ -207,7 +207,7 @@ export function MujahadaView({ verse }: MujahadaViewProps) {
       ) : null}
 
       {/* The reference layout (C-01c): ONE act first and prominent, the other acts under it, the two ways to
-          remember (texts, the loop), and the optional timer on the side. No «الدليل» here (C-16). */}
+          remember (texts, the loop), and the optional timer on the side. No «المعينات» here (C-16). */}
       <section aria-labelledby="moment-act" className="moment-panel">
         <div className="flex min-w-0 flex-col gap-4">
           <div className="flex flex-col gap-1">

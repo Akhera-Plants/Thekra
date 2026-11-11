@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { FetchedEvidence } from './EvidenceQuotes';
 
 /**
- * A small bordered «الدليل» button: the deed's evidence in a dialog, read from the API by Quote id (never typed here), the
+ * A small bordered «المعينات» button: the deed's evidence in a dialog, read from the API by Quote id (never typed here), the
  * same way a habit shows its texts. Fetched only when opened.
  */
 export function EvidenceButton({ ids, deed }: { ids: readonly string[]; deed: string }) {
@@ -29,8 +29,8 @@ export function EvidenceButton({ ids, deed }: { ids: readonly string[]; deed: st
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col gap-3 sm:max-w-lg">
           <DialogHeader className="pe-8">
-            {/* The dialog names what the texts are for (O-05/W-05); the button keeps the short «الدليل» (F-04 a). */}
-            <DialogTitle className="leading-8">{t('title')}</DialogTitle>
+            {/* The dialog carries the same name as the button, with the deed beneath (owner, round 8). */}
+            <DialogTitle className="leading-8">{t('evidence')}</DialogTitle>
             <DialogDescription className="leading-7">{deed}</DialogDescription>
           </DialogHeader>
           <div className="min-h-0 flex-1 overflow-y-auto">{open ? <FetchedEvidence ids={ids} /> : null}</div>

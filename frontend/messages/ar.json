@@ -2111,9 +2111,8 @@
       "qada": "قضاء"
     },
     "evidenceButton": {
-      "evidence": "الدليل",
-      "evidenceOf": "الدليل: {deed}",
-      "title": "آيات وأحاديث تعينك على هذه الطاعة"
+      "evidence": "المعينات",
+      "evidenceOf": "المعينات: {deed}"
     },
     "start": {
       "skipAll": "تخطَّ البداية",

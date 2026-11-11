@@ -55,7 +55,7 @@ interface FixButtonProps {
 
 /**
  * «صلّحها» on a habit row (round 5, F-08 a / F-12 a): one bordered button that opens a dialog. After two missed asked
- * days: «أتبع السيئة الحسنة: اختر عملًا واحدًا اليوم» with the shared deeds (each with «الدليل»), a sadaqah and a deed
+ * days: «أتبع السيئة الحسنة: اختر عملًا واحدًا اليوم» with the shared deeds (each with «المعينات»), a sadaqah and a deed
  * of one's own. After one missed day: «لا تفوّتها مرتين» with the pair «سجّل أقل ما يمكن اليوم» · «اقضِ ما فاتك»
  * (yesterday, while its window is open). A choice saves, closes and says so.
  */

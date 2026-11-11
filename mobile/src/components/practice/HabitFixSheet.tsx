@@ -2,7 +2,7 @@
  * «صلّحها» for a good-deed habit (owner round 3, decision 1; round 5, F-08 a / F-12 a), opened from the habit's row in
  * «ورد اليوم» (and from its page):
  * - after two missed asked days in a row (practice-core `makeUpOffer`): «أتبع السيئة الحسنة: اختر عملًا واحدًا اليوم»
- *   first, the deeds of `PLEDGE_DEED_INFO` (each with «الدليل»: public Quote ids read from the API), then «أتصدّق» and
+ *   first, the deeds of `PLEDGE_DEED_INFO` (each with «المعينات»: public Quote ids read from the API), then «أتصدّق» and
  *   «عمل أختاره بنفسي»; once one is chosen, the deed and «فعلته»;
  * - then the steps, each with its own action and its strategy line in the moment it helps (F-12 a): (1) «لا تفوّتها
  *   مرتين»: log the least of it today; (2) «اقضِ ما فاتك»: log yesterday while it can still be made up (practice-core
@@ -239,7 +239,7 @@ function MakeUpPart({ plan, on, today, onEvidence }: { plan: Plan; on: LocalDate
   );
 }
 
-/** «الدليل» of one deed: its public texts, read from the API. */
+/** «المعينات» of one deed: its public texts, read from the API. */
 function DeedEvidenceSheet({ action, onClose }: { action: PledgeAction | null; onClose: () => void }) {
   const { t } = useTranslation();
   const locale = useUiLocale();
