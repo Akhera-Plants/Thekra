@@ -395,6 +395,8 @@ describe('CircleFeedService', () => {
           messageSnapshot: { kind: 'PRESET', key: 'thabat' },
           reason: 'offensive',
           note: null,
+          status: 'OPEN',
+          handledAt: null,
           createdAt: NOW,
         },
       ]);
@@ -402,11 +404,14 @@ describe('CircleFeedService', () => {
       prisma.circleMember.findMany.mockResolvedValue([{ id: OTHER }]);
       const { data, nextBefore } = await feed(prisma).adminReports({});
       expect(nextBefore).toBeNull();
+      expect(prisma.circleReport.findMany.mock.calls[0]![0].where).toEqual({ status: 'OPEN' });
       expect(data[0]).toEqual({
         id: 'rep-1',
         kind: 'message',
         reason: 'offensive',
         note: null,
+        status: 'open',
+        handledAt: null,
         createdAt: NOW.toISOString(),
         circle: { id: CIRCLE, name: 'صحبة الفجر' },
         reporter: { userId: USER, name: 'أبو عمر' },
