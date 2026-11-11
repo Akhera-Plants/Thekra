@@ -74,14 +74,14 @@ No person's name (lecturer, author) inside the product. «بستاني» is remo
     «راسخة» does not free a place before 90 days. A paused habit does not count.
   - **«تخفَّف»: at most 3 programs at a time, and a new one only when every running one has lasted 60 days**
     (`PROGRAM_SETTLE_DAYS`, from its start).
-  - **أعمال دورية: 7** (a people list counts as one). They are reminders, not habits: never in the habit count or the
+  - **أعمال دورية: 8** (owner round 8, Q9; was 7) (a people list counts as one). They are reminders, not habits: never in the habit count or the
     streak (pass `isPeriodicAct` to `limits` and to the streak functions).
   - At a limit the sheet shows why and when it unlocks (`limitBlock` → `reason`, `unlocksOn`, `waitingOn`):
     - `habits_young`: «لديك 3 غراس لم تُكمل ثلاثة أشهر بعد. تستطيع إضافة طاعة جديدة يوم {unlocksOn} حين يُتمّ أحدها
       ثلاثة أشهر، أو أوقِف أحدها مؤقتًا.» Choices: «أكمل ما عندي» (primary), «أوقِف غرسًا مؤقتًا», «احذف غرسًا».
     - `programs_young`: «ابدأ برنامجًا جديدًا حين يُتمّ كل برنامج تعمل عليه شهرين (يوم {unlocksOn}).»
     - `programs_full`: «تعمل على 3 برامج، وهذا الحد. أنهِ أحدها لتبدأ غيره.»
-    - `periodic_full`: «لديك 7 أعمال دورية، وهذا الحد. احذف أحدها لتضيف غيره.»
+    - `periodic_full`: «لديك 8 أعمال دورية، وهذا الحد. احذف أحدها لتضيف غيره.»
   - «ثبّت … وابدأ الجديدة» is no longer offered (`limits().graduationReady` is always empty).
 - Graduation to راسخة: ≥ 66 days old and ≥ 80% adherence over the last 30 days; offered, never automatic. راسخة: lighter
   reminders, weekly glance; since 2026-11-01 a habit leaves the count of 3 only after 90 kept days, «راسخة» or not.

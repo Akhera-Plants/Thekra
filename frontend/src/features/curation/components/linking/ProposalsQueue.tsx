@@ -4,6 +4,9 @@ import { useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { ErrorState } from '@/components/shared/ErrorState';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { adminLabel, topicName } from '@/lib/format/admin-labels';
 import { formatDigits } from '@/lib/format/digits';
@@ -120,6 +123,7 @@ export function ProposalsQueue({ kind, onKindChange }: ProposalsQueueProps) {
         </ToggleGroupItem>
       </ToggleGroup>
       <DataTable
+        className="hidden md:flex"
         caption={t('title')}
         columns={columns}
         rows={list.data?.data ?? []}
@@ -146,27 +150,88 @@ export function ProposalsQueue({ kind, onKindChange }: ProposalsQueueProps) {
             ) : null}
           </div>
         )}
-        footer={
-          meta ? (
-            <TablePager
-              page={page}
-              totalPages={meta.totalPages}
-              total={meta.total}
-              onPageChange={(next) => {
-                setExpanded(null);
-                setPage(next);
-              }}
-              hint={<span className="hidden md:inline">{tTable('keyboard')}</span>}
-              labels={{
-                prev: tTable('prev'),
-                next: tTable('next'),
-                page: (p, total) => tTable('page', { page: p, total }),
-                rows: (count) => t('total', { count }),
-              }}
-            />
-          ) : null
-        }
       />
+      {/* Phone: the table loses its text column and pushes the buttons off screen, so each proposal is a card. */}
+      <div className="md:hidden">
+        {list.isLoading ? (
+          <div className="flex flex-col gap-3">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <Skeleton key={index} className="h-36 w-full rounded-xl" />
+            ))}
+          </div>
+        ) : list.isError ? (
+          <ErrorState message={t('loadError')} retryLabel={tTable('retry')} onRetry={() => void list.refetch()} />
+        ) : (list.data?.data ?? []).length === 0 ? (
+          <EmptyState message={t('empty')} />
+        ) : (
+          <ul className="flex flex-col gap-3" aria-label={t('title')}>
+            {(list.data?.data ?? []).map((row) => (
+              <ProposalCard key={row.id} row={row} locale={locale} busy={decide.isPending} onAct={(status) => act(row, status)} />
+            ))}
+          </ul>
+        )}
+      </div>
+      {meta ? (
+        <TablePager
+          page={page}
+          totalPages={meta.totalPages}
+          total={meta.total}
+          onPageChange={(next) => {
+            setExpanded(null);
+            setPage(next);
+          }}
+          hint={<span className="hidden md:inline">{tTable('keyboard')}</span>}
+          labels={{
+            prev: tTable('prev'),
+            next: tTable('next'),
+            page: (p, total) => tTable('page', { page: p, total }),
+            rows: (count) => t('total', { count }),
+          }}
+        />
+          ) : null}
     </div>
+  );
+}
+
+function ProposalCard({
+  row,
+  locale,
+  busy,
+  onAct,
+}: {
+  row: ProposedLinkDto;
+  locale: string;
+  busy: boolean;
+  onAct: (status: 'ACCEPTED' | 'REJECTED') => void;
+}) {
+  const t = useTranslations('admin.proposals');
+  return (
+    <li className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4">
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="min-w-0 font-medium text-pretty">{topicName(row.sin ?? row.goodDeed, locale)}</span>
+        <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+          {row.relevanceScore == null ? '' : `${t('colScore')} ${formatDigits(row.relevanceScore)}`}
+        </span>
+      </div>
+      <p dir="rtl" lang="ar" className="line-clamp-5 font-arabic-text text-base leading-loose text-pretty">
+        {splitMatn(row.quote.textAr).matn}
+      </p>
+      {row.note ? (
+        <p className="text-sm text-muted-foreground">
+          <span className="font-medium text-foreground/80">{t('reason')}: </span>
+          <span dir="rtl" lang="ar">{formatDigits(row.note)}</span>
+        </p>
+      ) : null}
+      <div className="grid grid-cols-2 gap-2">
+        <Button variant="outline" className="desk-press" disabled={busy} onClick={() => onAct('ACCEPTED')}>
+          <Check data-icon="inline-start" aria-hidden />
+          {t('accept')}
+        </Button>
+        <Button variant="outline" className="desk-press" disabled={busy} onClick={() => onAct('REJECTED')}>
+          <X data-icon="inline-start" aria-hidden />
+          {t('reject')}
+        </Button>
+      </div>
+    </li>
   );
 }

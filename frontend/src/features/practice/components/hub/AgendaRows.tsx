@@ -4,6 +4,7 @@ import { useId, type ReactNode } from 'react';
 import { Check, NotebookPen, Plus, Sparkles, Undo2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
+  showsInlineCounter,
   type HabitItem,
   type MakeUpOffer,
   type OccasionItem,
@@ -224,7 +225,7 @@ export function HabitRow({ item, plan, habit, isEnabled, disabledNoteId, undo, o
       isMuted={item.complete}
       undo={secondary}
       trailing={
-        onAddOne && isEnabled && !item.complete && plan.unit === 'count' && item.required > 1 ? (
+        onAddOne && isEnabled && showsInlineCounter(plan, item.required, item.complete, habit?.rakah) ? (
           <InlineCounter done={item.done} required={item.required} label={tToday('addOne', { title: words.title })} onAdd={onAddOne} />
         ) : null
       }

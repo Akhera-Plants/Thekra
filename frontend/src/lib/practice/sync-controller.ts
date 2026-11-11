@@ -4,9 +4,11 @@
  * transient failures with back-off and never blocks the page (everything is async; the local copy stays the
  * working copy). Status is a small external store for `useSyncExternalStore`.
  */
+import { ownerRelation } from '@thekra/practice-core';
 import { postPracticeSync } from '@/lib/api/practice-me';
 import { reportFailure } from '@/lib/errors';
 import { getPracticeSnapshot, subscribePractice, updatePrefs, updateStore } from './local-store';
+import { wipeAllLocalPractice } from './local-wipe';
 import {
   EDIT_DEBOUNCE_MS,
   FOCUS_MIN_GAP_MS,
@@ -159,7 +161,7 @@ function detach(): void {
 
 /**
  * Turns sync on for `account` (the signed-in user's id) or off (`null`). A device copy last synced with another
- * account is not merged automatically: the status becomes 'otherAccount' until {@link mergeIntoAccount}.
+ * account is removed first (it must never be shown or uploaded): the visitor starts from the account's own data.
  */
 export function setSyncAccount(account: string | null): void {
   if (account === userId) return;
@@ -172,13 +174,71 @@ export function setSyncAccount(account: string | null): void {
     return;
   }
   const { prefs, store } = getPracticeSnapshot();
-  if (prefs.syncedUserId !== undefined && prefs.syncedUserId !== account) {
-    setStatus({ ...OFF, phase: 'otherAccount' });
+  if (ownerRelation(prefs.syncedUserId, account) === 'other') {
+    // Another account's copy (a session that ended without a sign-out): it is never shown to this account and never
+    // uploaded into it. It is removed, then this account's own data is pulled.
+    setStatus({ ...OFF, phase: 'syncing' });
+    void wipeAllLocalPractice().then(() => {
+      if (userId !== account) return;
+      setStatus({ phase: 'syncing', lastSyncedAt: null, error: null, willRetry: false });
+      attach();
+      void run();
+    });
     return;
   }
   setStatus({ phase: 'syncing', lastSyncedAt: store.sync.lastSyncedAt, error: null, willRetry: false });
   attach();
   void run();
+}
+
+/** The account whose sync {@link flushPracticeSync} switched off, for {@link resumePracticeSync}. */
+let suspendedFor: string | null = null;
+
+/** The sign-out did not go ahead: the sync that the flush switched off runs again. */
+export function resumePracticeSync(): void {
+  const account = suspendedFor;
+  suspendedFor = null;
+  if (account) setSyncAccount(account);
+}
+
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Before a sign-out: stops the sync of this tab, lets a run in flight end, and pushes what is still pending once
+ * (at most `timeoutMs`). Returns how many items did not reach the account (0 = nothing will be lost by wiping).
+ * Works from any page, with or without a mounted sync. A copy that belongs to another account is never pushed.
+ */
+export async function flushPracticeSync(account: string, timeoutMs = 6_000): Promise<number> {
+  const deadline = Date.now() + timeoutMs;
+  if (userId) suspendedFor = userId;
+  setSyncAccount(null);
+  while (running && Date.now() < deadline) await sleep(100);
+  const pending = () => pendingCount(getPracticeSnapshot().store);
+  const own = ownerRelation(getPracticeSnapshot().prefs.syncedUserId, account) !== 'other';
+  if (!own || pending() === 0 || isOffline()) return own ? pending() : 0;
+  running = true;
+  // A run that outlives the time-out must not write into a store that has been wiped by then.
+  let cancelled = false;
+  try {
+    await Promise.race([
+      syncUntilClean({
+        read: () => getPracticeSnapshot().store,
+        write: (change) => {
+          if (!cancelled) updateStore(change);
+        },
+        post: (request) => (cancelled ? Promise.reject(new Error('cancelled')) : postPracticeSync(request)),
+      }),
+      sleep(Math.max(0, deadline - Date.now())).then(() => {
+        throw new Error('timeout');
+      }),
+    ]);
+  } catch (error) {
+    reportFailure('practice sync before sign-out', error);
+  } finally {
+    cancelled = true;
+    running = false;
+  }
+  return pending();
 }
 
 /** «زامِن الآن»: an immediate run (also after a refused request). */

@@ -12,7 +12,7 @@
  * `Relative` rows (every circle). The round-5 people data needs no migration: the same rows are now the people of this
  * act (no row is moved, renamed or dropped).
  *
- * Limits: an act counts once toward the 7 periodic acts however many people or plans it holds ({@link periodicActKeyOf}
+ * Limits: an act counts once toward the 8 periodic acts (LIMITS.periodic) however many people or plans it holds ({@link periodicActKeyOf}
  * groups them); a custom act is always periodic, never a habit (limits, streak, commitment). Pure.
  */
 import { nowIso, type IsoTime, type LocalDate, type LocalTime } from './dates.js';

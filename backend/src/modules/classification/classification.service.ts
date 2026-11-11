@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
   UnprocessableEntityException,
@@ -74,7 +75,7 @@ export interface LinkConcernDto {
   concernNote: string | null;
   concernAt: string | null;
   reviewStatus: LinkReviewStatus;
-  topic: { slug: string; nameAr: string };
+  topic: { id: string; slug: string; nameAr: string };
   quote: { id: string; type: QuoteType; excerpt: string };
 }
 
@@ -361,23 +362,38 @@ export class ClassificationService {
    */
   async listLinkConcerns(query: LinkConcernsQueryDto): Promise<{
     data: LinkConcernDto[];
-    meta: { counts: Record<LinkKind, number>; limitPerKind: number };
+    meta: {
+      counts: Record<LinkKind, number>;
+      limitPerKind: number;
+      offset: number;
+      /** Rows matching the filters of the chosen `kind` (topic filter included); equals the kind's count when no topic is chosen. */
+      total: number;
+      /** With `kind`: the topics that have concerns under the same filters, most first. */
+      topics: Array<{ id: string; slug: string; nameAr: string; count: number }>;
+    };
   }> {
+    if (query.topicId && !query.kind) throw new BadRequestException('topicId needs kind');
     const limit = query.limit ?? 100;
-    const where = { concern: query.concern ? query.concern : { not: null } } as const;
+    const offset = query.offset ?? 0;
+    const decisionWhere =
+      query.decision === 'pending' ? { reviewStatus: { not: LinkReviewStatus.REJECTED } } : query.decision === 'hidden' ? { reviewStatus: LinkReviewStatus.REJECTED } : {};
+    const where = { concern: query.concern ? query.concern : { not: null }, ...decisionWhere } as const;
+    const topicKey = { sin: 'sinId', 'good-deed': 'goodDeedId', branch: 'imanBranchId' } as const;
+    const whereFor = (kind: LinkKind) => (query.topicId && query.kind === kind ? { ...where, [topicKey[kind]]: query.topicId } : where);
     const wants = (kind: LinkKind) => query.kind === undefined || query.kind === kind;
-    const page = { where, orderBy: [{ concernAt: 'desc' as const }, { id: 'asc' as const }], take: limit };
+    const page = (kind: LinkKind) => ({ where: whereFor(kind), orderBy: [{ concernAt: 'desc' as const }, { id: 'asc' as const }], take: limit, skip: offset });
     const base = { id: true, concern: true, concernNote: true, concernAt: true, reviewStatus: true, quote: { select: CONCERN_QUOTE_SELECT } } as const;
     const [sins, deeds, branches, sinCount, deedCount, branchCount] = await Promise.all([
-      wants('sin') ? this.prisma.sinQuote.findMany({ ...page, select: { ...base, sin: { select: { slug: true, nameAr: true } } } }) : [],
-      wants('good-deed') ? this.prisma.goodDeedQuote.findMany({ ...page, select: { ...base, goodDeed: { select: { slug: true, nameAr: true } } } }) : [],
-      wants('branch') ? this.prisma.imanBranchQuote.findMany({ ...page, select: { ...base, imanBranch: { select: { number: true, titleAr: true } } } }) : [],
-      wants('sin') ? this.prisma.sinQuote.count({ where }) : 0,
-      wants('good-deed') ? this.prisma.goodDeedQuote.count({ where }) : 0,
-      wants('branch') ? this.prisma.imanBranchQuote.count({ where }) : 0,
+      wants('sin') ? this.prisma.sinQuote.findMany({ ...page('sin'), select: { ...base, sin: { select: { id: true, slug: true, nameAr: true } } } }) : [],
+      wants('good-deed') ? this.prisma.goodDeedQuote.findMany({ ...page('good-deed'), select: { ...base, goodDeed: { select: { id: true, slug: true, nameAr: true } } } }) : [],
+      wants('branch') ? this.prisma.imanBranchQuote.findMany({ ...page('branch'), select: { ...base, imanBranch: { select: { id: true, number: true, titleAr: true } } } }) : [],
+      // The three counts are always returned (the page's kind tabs show all of them).
+      this.prisma.sinQuote.count({ where }),
+      this.prisma.goodDeedQuote.count({ where }),
+      this.prisma.imanBranchQuote.count({ where }),
     ]);
     type Row = { id: string; concern: LinkConcern | null; concernNote: string | null; concernAt: Date | null; reviewStatus: LinkReviewStatus; quote: { id: string; type: QuoteType; textAr: string } };
-    const present = (kind: LinkKind, row: Row, topic: { slug: string; nameAr: string }): LinkConcernDto => ({
+    const present = (kind: LinkKind, row: Row, topic: { id: string; slug: string; nameAr: string }): LinkConcernDto => ({
       kind,
       linkId: row.id,
       concern: row.concern as LinkConcern,
@@ -390,9 +406,40 @@ export class ClassificationService {
     const data = [
       ...sins.map((row) => present('sin', row, row.sin)),
       ...deeds.map((row) => present('good-deed', row, row.goodDeed)),
-      ...branches.map((row) => present('branch', row, { slug: String(row.imanBranch.number), nameAr: row.imanBranch.titleAr })),
+      ...branches.map((row) => present('branch', row, { id: row.imanBranch.id, slug: String(row.imanBranch.number), nameAr: row.imanBranch.titleAr })),
     ].sort((a, b) => (b.concernAt ?? '').localeCompare(a.concernAt ?? '') || a.linkId.localeCompare(b.linkId));
-    return { data, meta: { counts: { sin: sinCount, 'good-deed': deedCount, branch: branchCount }, limitPerKind: limit } };
+
+    const counts = { sin: sinCount, 'good-deed': deedCount, branch: branchCount };
+    const topics = query.kind ? await this.concernTopics(query.kind, where) : [];
+    const total = query.kind ? (query.topicId ? (topics.find((t) => t.id === query.topicId)?.count ?? 0) : counts[query.kind]) : sinCount + deedCount + branchCount;
+    return { data, meta: { counts, limitPerKind: limit, offset, total, topics } };
+  }
+
+  /** Topics that have flagged links of one kind, with how many, most first. */
+  private async concernTopics(kind: LinkKind, where: Prisma.SinQuoteWhereInput & Prisma.GoodDeedQuoteWhereInput & Prisma.ImanBranchQuoteWhereInput) {
+    if (kind === 'sin') {
+      const groups = await this.prisma.sinQuote.groupBy({ by: ['sinId'], where, _count: { _all: true } });
+      const names = await this.prisma.sin.findMany({ where: { id: { in: groups.map((g) => g.sinId) } }, select: { id: true, slug: true, nameAr: true } });
+      return this.joinTopics(groups.map((g) => ({ id: g.sinId, count: g._count._all })), names);
+    }
+    if (kind === 'good-deed') {
+      const groups = await this.prisma.goodDeedQuote.groupBy({ by: ['goodDeedId'], where, _count: { _all: true } });
+      const names = await this.prisma.goodDeed.findMany({ where: { id: { in: groups.map((g) => g.goodDeedId) } }, select: { id: true, slug: true, nameAr: true } });
+      return this.joinTopics(groups.map((g) => ({ id: g.goodDeedId, count: g._count._all })), names);
+    }
+    const groups = await this.prisma.imanBranchQuote.groupBy({ by: ['imanBranchId'], where, _count: { _all: true } });
+    const branches = await this.prisma.imanBranch.findMany({ where: { id: { in: groups.map((g) => g.imanBranchId) } }, select: { id: true, number: true, titleAr: true } });
+    return this.joinTopics(
+      groups.map((g) => ({ id: g.imanBranchId, count: g._count._all })),
+      branches.map((b) => ({ id: b.id, slug: String(b.number), nameAr: b.titleAr })),
+    );
+  }
+
+  private joinTopics(groups: Array<{ id: string; count: number }>, names: Array<{ id: string; slug: string; nameAr: string }>) {
+    const byId = new Map(names.map((n) => [n.id, n]));
+    return groups
+      .map((g) => ({ id: g.id, slug: byId.get(g.id)?.slug ?? '', nameAr: byId.get(g.id)?.nameAr ?? '', count: g.count }))
+      .sort((a, b) => b.count - a.count || a.nameAr.localeCompare(b.nameAr, 'ar'));
   }
 
   // ─── Binding objects (constructed per-call — no state) ────────────────────────

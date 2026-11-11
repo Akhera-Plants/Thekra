@@ -83,7 +83,7 @@ describe('practice strings', () => {
     expect(ar('tabs.more')).toBe('المزيد');
     expect(ar('record.title')).toBe('عاداتي');
     expect(ar('home.entryTitle')).toBe('أبواب الخير');
-    expect(ar('home.sinEntryLabel')).toBe('تخفَّف من معصية');
+    expect(ar('home.sinEntryLabel')).toBe('تخفَّف من ذنب');
     expect(ar('sinProgram.categoryQuestion')).toBe('هل فيها حقٌّ لأحد من الناس؟');
     expect(ar('practice.periodic.title')).toBe('أعمال دورية');
     expect(ar('practice.hub.habitsTrack')).toBe('عاداتي');

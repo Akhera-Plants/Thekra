@@ -95,10 +95,10 @@ export function DeleteAccount() {
       setFailure(tFeedback(`error.${failureKey(error)}`));
       return;
     }
-    // The account is gone; this device keeps its copy, linked to no account.
+    // The account is gone: nothing of it stays on this device.
     forgetAccount();
     setVaultSession(null);
-    await clearSession();
+    await clearSession({ discard: true });
     setOpen(false);
     toast.success(t('deleted'));
     router.push('/');

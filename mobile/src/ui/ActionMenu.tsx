@@ -43,16 +43,40 @@ const makeStyles = (t: Theme) => ({
   confirm: { gap: space.lg, paddingBottom: space.sm },
 });
 
-export function ActionMenu({ items, label }: { items: ActionMenuItem[]; label?: string }) {
+/**
+ * `open` / `onOpenChange` let a parent open the menu from somewhere else (a whole list row), with `hideTrigger` when
+ * the row already carries the «⋯» cue; without them the «⋯» button opens it.
+ */
+export function ActionMenu({
+  items,
+  label,
+  open: controlledOpen,
+  onOpenChange,
+  hideTrigger,
+}: {
+  items: ActionMenuItem[];
+  label?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
+}) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
   const { colors } = useTheme();
-  const [open, setOpen] = useState(false);
+  const [ownOpen, setOwnOpen] = useState(false);
+  const open = controlledOpen ?? ownOpen;
+  const setOpen = useCallback(
+    (next: boolean) => {
+      setOwnOpen(next);
+      onOpenChange?.(next);
+    },
+    [onOpenChange],
+  );
   const [asking, setAsking] = useState<ActionMenuItem | null>(null);
   const close = useCallback(() => {
     setOpen(false);
     setAsking(null);
-  }, []);
+  }, [setOpen]);
   const run = (item: ActionMenuItem) => {
     close();
     item.onPress();
@@ -60,7 +84,7 @@ export function ActionMenu({ items, label }: { items: ActionMenuItem[]; label?: 
   const menuLabel = label ?? t('common.moreActions');
   return (
     <>
-      <IconButton icon={Ellipsis} label={menuLabel} tone="default" onPress={() => setOpen(true)} />
+      {hideTrigger ? null : <IconButton icon={Ellipsis} label={menuLabel} tone="default" onPress={() => setOpen(true)} />}
       <BottomSheet visible={open} title={asking ? asking.confirm?.title ?? asking.label : menuLabel} onClose={close}>
         {asking ? (
           <View style={styles.confirm}>

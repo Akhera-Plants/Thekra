@@ -104,7 +104,6 @@ export interface CircleDetail {
   intention: string | null;
   memberCount: number;
   maxMembers: number;
-  inviteCode: string | null;
   me: { memberId: string; displayName: string; isOwner: boolean; sharesPresence: boolean };
   days: string[];
   members: CircleMember[];
@@ -119,11 +118,6 @@ export interface CircleDetail {
 export interface CreateCircleInput {
   name: string;
   intention?: string;
-  displayName: string;
-}
-
-export interface JoinCircleInput {
-  code: string;
   displayName: string;
 }
 
@@ -188,6 +182,6 @@ export interface CircleInvite {
 
 export interface RedeemInviteResult {
   enabled: true;
+  /** The circle the invite joined (in the same step), when it names one. */
   circle: CircleDetail | null;
-  joinError: string | null;
 }

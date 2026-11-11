@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import {
-  getPracticeSnapshot,
+  getReadyPracticeSnapshot,
   getServerPracticeSnapshot,
   subscribePractice,
   type PracticeSnapshot,
@@ -8,5 +8,5 @@ import {
 
 /** The device store, or null during the server render and hydration (no device data there). */
 export function usePracticeStore(): PracticeSnapshot | null {
-  return useSyncExternalStore(subscribePractice, getPracticeSnapshot, getServerPracticeSnapshot);
+  return useSyncExternalStore(subscribePractice, getReadyPracticeSnapshot, getServerPracticeSnapshot);
 }

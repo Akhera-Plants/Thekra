@@ -20,7 +20,7 @@ export interface CatalogOccasion {
 
 export interface CatalogHabit {
   key: string;
-  /** `periodic`: a template of «أعمال دورية» (7 periodic acts, not the 3 saplings). */
+  /** `periodic`: a template of «أعمال دورية» (8 periodic acts, not the 3 saplings). */
   kind?: 'periodic';
   /** A people list: people are added on the kinship screen with this circle. */
   people?: PeopleCircle;

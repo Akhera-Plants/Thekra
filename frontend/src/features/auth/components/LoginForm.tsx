@@ -1,6 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { useForm } from 'react-hook-form';
@@ -45,6 +46,12 @@ export function LoginForm({ redirectTo = '/' }: LoginFormProps) {
     resolver: zodResolver(loginSchema(t)),
     defaultValues: { email: '', password: '' },
   });
+
+  // «سجّل الدخول» from a taken email on the register form carries the typed email here (`?email=`).
+  useEffect(() => {
+    const carried = new URLSearchParams(window.location.search).get('email');
+    if (carried) form.setValue('email', carried);
+  }, [form]);
 
   async function onSubmit(values: LoginFormValues) {
     try {

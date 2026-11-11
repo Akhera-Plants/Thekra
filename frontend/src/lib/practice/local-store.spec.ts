@@ -68,7 +68,8 @@ describe('practice local store', () => {
       ...store,
       programs: [startProgram({ sinSlug: 'ghibah', category: 'haqq_ibad', hardToLeaveAtOnce: false, startedOn: '2026-10-28' })],
     }));
-    expect(storage.getItem(STORE_KEY)).toContain('ghibah');
+    // Never in clear: the plain store names no sin (sealing is covered in local-store-sealed.spec.ts).
+    expect(storage.getItem(STORE_KEY)).not.toContain('ghibah');
     wipeSinPrograms();
     expect(storage.getItem(STORE_KEY)).not.toContain('ghibah');
     expect(storage.getItem(PENDING_PROGRAM_KEY)).toBeNull();

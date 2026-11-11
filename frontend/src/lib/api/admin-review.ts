@@ -5,7 +5,7 @@
  * Counts use the list endpoints with limit=1 and read meta.total — no stats endpoint exists.
  */
 import type { AxiosRequestConfig } from 'axios';
-import { apiGet, apiPatch, apiPost } from '@/lib/api-client';
+import { apiClient, apiGet, apiPatch, apiPost } from '@/lib/api-client';
 import type { PageMeta } from '@/lib/types/api';
 import type {
   AdminQuotesQuery,
@@ -13,6 +13,7 @@ import type {
   FlagDto,
   FlagsQuery,
   GoodDeedQuoteLinkDto,
+  LibraryLedgerRow,
   ProposedLinkDto,
   SinQuoteLinkDto,
 } from '@/lib/types/admin';
@@ -80,4 +81,10 @@ export async function setLinkReviewStatus(
 ): Promise<void> {
   if (kind === 'sin') await apiPatch<SinQuoteLinkDto>(`/admin/sin-quotes/${id}`, { reviewStatus });
   else await apiPatch<GoodDeedQuoteLinkDto>(`/admin/good-deed-quotes/${id}`, { reviewStatus });
+}
+
+/** One call for «حالة المكتبة»: graded and unlinked per source (it used to be two requests per source). */
+export async function getLibraryLedger(): Promise<LibraryLedgerRow[]> {
+  const response = await apiClient.get<{ data: LibraryLedgerRow[] }>('/admin/quotes/ledger', { skipLang: true } as object);
+  return response.data.data;
 }

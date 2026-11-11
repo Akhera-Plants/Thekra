@@ -333,9 +333,19 @@ export class CircleFeedService {
   }
 
   /** GET /admin/circle-reports: newest first. */
-  async adminReports(query: { before?: string; limit?: number }): Promise<{ data: AdminCircleReportDto[]; nextBefore: string | null }> {
+  async adminReports(query: { before?: string; limit?: number; status?: 'open' | 'handled' | 'all' }): Promise<{
+    data: AdminCircleReportDto[];
+    nextBefore: string | null;
+    counts: { open: number; handled: number };
+  }> {
     const limit = query.limit ?? 50;
+    const status = query.status ?? 'open';
+    const [open, handled] = await Promise.all([
+      this.prisma.circleReport.count({ where: { status: 'OPEN' } }),
+      this.prisma.circleReport.count({ where: { status: 'HANDLED' } }),
+    ]);
     const rows = await this.prisma.circleReport.findMany({
+      where: status === 'all' ? {} : { status: status === 'open' ? 'OPEN' : 'HANDLED' },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       take: limit + 1,
       ...(query.before ? { cursor: { id: query.before }, skip: 1 } : {}),
@@ -359,6 +369,8 @@ export class CircleFeedService {
         kind: r.kind === 'MEMBER' ? 'member' : 'message',
         reason: r.reason as AdminCircleReportDto['reason'],
         note: r.note,
+        status: r.status === 'HANDLED' ? 'handled' : 'open',
+        handledAt: r.handledAt?.toISOString() ?? null,
         createdAt: r.createdAt.toISOString(),
         circle: { id: r.circleId, name: r.circleName },
         reporter: { userId: r.reporterId, name: r.reporterName },
@@ -372,7 +384,24 @@ export class CircleFeedService {
         reportsAboutSame: r.reportedUserId ? (countByUser.get(r.reportedUserId) ?? 1) : 1,
       })),
       nextBefore: rows.length > limit ? page[page.length - 1]!.id : null,
+      counts: { open, handled },
     };
+  }
+
+  /** PATCH /admin/circle-reports/:id: mark a report handled (or reopen it). It never removes or blocks anything. */
+  async adminSetReportStatus(id: string, status: 'open' | 'handled'): Promise<{ id: string; status: 'open' | 'handled'; handledAt: string | null }> {
+    const handledAt = status === 'handled' ? new Date() : null;
+    try {
+      const row = await this.prisma.circleReport.update({
+        where: { id },
+        data: { status: status === 'handled' ? 'HANDLED' : 'OPEN', handledAt },
+        select: { id: true, handledAt: true },
+      });
+      return { id: row.id, status, handledAt: row.handledAt?.toISOString() ?? null };
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') throw new NotFoundException('Report not found');
+      throw error;
+    }
   }
 
   private async memberTarget(me: CircleMember, circleId: string, dto: ReportDto) {

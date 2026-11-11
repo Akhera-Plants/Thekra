@@ -1,10 +1,11 @@
 /**
- * `thekra://circles/invite/<code>` (round 6, C-01k): a personal صحبة invite opens «أدخل رمز الدعوة» with the code filled
- * in; signed out, the code stays in the route while the user signs in. A member whose صحبة is already on goes to the list.
+ * `thekra://circles/invite/<code>`: the link behind «افتح في التطبيق» on the website's invite page. It is the same
+ * screen as «لديّ دعوة» with the code from the link filled in (see `../redeem.tsx`), for an account whose صحبة is off
+ * and for one that is already in a صحبة (a second one).
  */
 
 import React from 'react';
-import { Redirect, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { CircleListSkeleton, CirclesSignedOut } from '@/components/circles/CircleStates';
 import { RedeemInvite } from '@/components/circles/RedeemInvite';
@@ -16,7 +17,6 @@ export default function InviteLinkScreen() {
   const { code } = useLocalSearchParams<{ code?: string }>();
   const userId = useCircleUserId();
   const access = useCircleAccess();
-  if (userId && access.data?.enabled) return <Redirect href="/circles" />;
   return (
     <Screen edges={['bottom']} keyboard>
       <PageHeader title={t('circles.invites.redeemTitle')} />

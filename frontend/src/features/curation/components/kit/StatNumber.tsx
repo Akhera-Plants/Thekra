@@ -1,5 +1,6 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 import { ArrowUpLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
@@ -28,6 +29,9 @@ export interface StatNumberProps extends VariantProps<typeof numberVariants> {
   isLoading?: boolean;
   isError?: boolean;
   errorLabel?: string;
+  /** On a failed count: a small «حاول مجددًا» beside the message (never a fake zero). */
+  onRetry?: () => void;
+  retryLabel?: string;
   className?: string;
 }
 
@@ -44,6 +48,8 @@ export function StatNumber({
   isLoading,
   isError,
   errorLabel,
+  onRetry,
+  retryLabel,
   size,
   tone,
   className,
@@ -63,7 +69,21 @@ export function StatNumber({
       {isLoading ? (
         <Skeleton className={cn(size === 'inline' ? 'h-6 w-16' : 'h-12 w-28')} />
       ) : isError ? (
-        <span className="text-sm text-destructive">{errorLabel}</span>
+        <span role="alert" className="flex flex-wrap items-center gap-2 text-sm text-destructive">
+          {errorLabel}
+          {onRetry && retryLabel ? (
+            <Button
+              variant="outline"
+              size="xs"
+              onClick={(event) => {
+                event.preventDefault();
+                onRetry();
+              }}
+            >
+              {retryLabel}
+            </Button>
+          ) : null}
+        </span>
       ) : (
         <span className={numberVariants({ size, tone: effectiveTone })}>{formatCount(value ?? 0)}</span>
       )}
@@ -72,7 +92,8 @@ export function StatNumber({
   );
 
   const frame = 'group/stat flex min-w-0 flex-col gap-3 rounded-lg p-4';
-  if (!href) return <div className={cn(frame, className)}>{body}</div>;
+  // A failed count is not a link (it holds a retry button, and there is no number to open a queue for).
+  if (!href || isError) return <div className={cn(frame, className)}>{body}</div>;
   return (
     <Link
       href={href}

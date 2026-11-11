@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useQuery } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ErrorState } from '@/components/shared/ErrorState';
 import { EmptyState } from '@/components/shared/EmptyState';
@@ -11,7 +12,7 @@ import { getCatalogSources, type CatalogSource } from '@/lib/api/sources';
 import { adminLabel, sourceName } from '@/lib/format/admin-labels';
 import { queryKeys } from '@/lib/query-keys';
 import { cn } from '@/lib/utils';
-import { useSourceLedgerCounts } from '../../hooks/useAdminReview';
+import { useLibraryLedger } from '../../hooks/useAdminReview';
 import { formatCount } from '../kit/format';
 
 type CountCell = { data?: number; isLoading: boolean; isError: boolean };
@@ -35,8 +36,9 @@ export function LibraryLedger() {
     () => [...(sources.data?.data ?? [])].sort((a, b) => b.quoteCount - a.quoteCount),
     [sources.data],
   );
-  const ledger = useSourceLedgerCounts(rows.filter((s) => s.quoteCount > 0).map((s) => s.id));
-  const countsById = new Map(ledger.map((entry) => [entry.sourceId, entry]));
+  // One request for every source (it used to be two per source, ~185 calls at once, and the API answered 429).
+  const ledger = useLibraryLedger();
+  const countsById = new Map((ledger.data ?? []).map((entry) => [entry.sourceId, entry]));
 
   return (
     <section aria-labelledby="ledger-title" className="flex flex-col gap-3">
@@ -44,6 +46,14 @@ export function LibraryLedger() {
         <h2 id="ledger-title" className="text-lg font-semibold">{t('libraryTitle')}</h2>
         <p className="max-w-prose text-sm text-pretty text-muted-foreground">{t('libraryDescription')}</p>
       </div>
+      {ledger.isError && !sources.isError ? (
+        <p role="alert" className="flex flex-wrap items-center gap-3 text-sm text-destructive">
+          {t('ledgerError')}
+          <Button variant="outline" size="xs" onClick={() => void ledger.refetch()}>
+            {t('retry')}
+          </Button>
+        </p>
+      ) : null}
       {sources.isError ? (
         <ErrorState message={t('loadError')} retryLabel={t('retry')} onRetry={() => void sources.refetch()} />
       ) : !sources.isLoading && rows.length === 0 ? (
@@ -75,8 +85,7 @@ export function LibraryLedger() {
                       locale={locale}
                       notApplicable={t('notApplicable')}
                       errorLabel={t('countError')}
-                      graded={countsById.get(source.id)?.graded}
-                      unlinked={countsById.get(source.id)?.unlinked}
+                      ledger={{ isLoading: ledger.isLoading, isError: ledger.isError, graded: countsById.get(source.id)?.graded ?? 0, unlinked: countsById.get(source.id)?.unlinked ?? 0 }}
                     />
                   ))}
             </tbody>
@@ -96,22 +105,18 @@ function LedgerRow({
   locale,
   notApplicable,
   errorLabel,
-  graded,
-  unlinked,
+  ledger,
 }: {
   source: CatalogSource;
   locale: string;
   notApplicable: string;
   errorLabel: string;
-  graded?: CountCell;
-  unlinked?: CountCell;
+  ledger: { isLoading: boolean; isError: boolean; graded: number; unlinked: number };
 }) {
   const empty = source.quoteCount === 0;
   const share = empty ? 0 : source.publishedQuoteCount / source.quoteCount;
-  const linked: CountCell | undefined = unlinked && {
-    ...unlinked,
-    data: unlinked.data === undefined ? undefined : source.quoteCount - unlinked.data,
-  };
+  const graded: CountCell = { isLoading: ledger.isLoading, isError: ledger.isError, data: ledger.graded };
+  const linked: CountCell = { isLoading: ledger.isLoading, isError: ledger.isError, data: source.quoteCount - ledger.unlinked };
 
   return (
     <tr className={cn('h-10 border-b border-border/60', empty && 'text-muted-foreground')}>
@@ -166,7 +171,12 @@ function AsyncNumCell({ cell, errorLabel }: { cell?: CountCell; errorLabel: stri
     );
   }
   if (cell.isError || cell.data === undefined) {
-    return <td className="px-3 text-end text-xs text-destructive" title={errorLabel}>—</td>;
+    return (
+      <td className="px-3 text-end text-muted-foreground">
+        <span className="sr-only">{errorLabel}</span>
+        <span aria-hidden>—</span>
+      </td>
+    );
   }
   return <td className="px-3 text-end text-muted-foreground tabular-nums">{formatCount(cell.data)}</td>;
 }

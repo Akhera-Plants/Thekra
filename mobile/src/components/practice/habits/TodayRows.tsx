@@ -11,7 +11,7 @@ import { View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Plus } from 'lucide-react-native';
-import type { HabitItem, PlanUnit } from '@thekra/practice-core';
+import type { HabitItem, PlanUnit, RakahCount } from '@thekra/practice-core';
 import { hasCounter } from '@/lib/practice/hub-view';
 import { space, useStyles, type Theme } from '@/theme';
 import { Button, IconButton, Text } from '@/ui';
@@ -31,6 +31,8 @@ const makeStyles = (t: Theme) => ({
 export interface TodayHabitRowProps {
   item: HabitItem;
   unit: PlanUnit;
+  /** The habit's rak'ah counting, when it is a prayer (then there is no counter: its line counts rak'ahs). */
+  rakah?: RakahCount;
   title: string;
   meta: string;
   canLog: boolean;
@@ -46,6 +48,7 @@ export interface TodayHabitRowProps {
 export const TodayHabitRow = memo(function TodayHabitRow({
   item,
   unit,
+  rakah,
   title,
   meta,
   canLog,
@@ -59,7 +62,7 @@ export const TodayHabitRow = memo(function TodayHabitRow({
 }: TodayHabitRowProps) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
-  const counter = hasCounter(unit, item.required);
+  const counter = hasCounter(unit, item.required, item.complete, rakah);
   const open = useCallback(() => router.push(`/practice/plan/${item.planId}`), [item.planId]);
   return (
     <View style={[styles.row, last && styles.last]}>

@@ -58,7 +58,10 @@ export function AuthNavItems() {
   }
 
   async function handleLogout() {
-    await clearSession();
+    if ((await clearSession()) === 'unsynced') {
+      toast.warning(t('logoutUnsynced'));
+      return;
+    }
     toast.success(t('logoutSuccess'));
     router.push('/');
   }

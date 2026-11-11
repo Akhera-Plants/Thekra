@@ -5,7 +5,7 @@
  * - `habits_young`: 3 habits younger than three months; a new one fits on {date}, or after pausing one;
  * - `programs_young`: a running «تخفَّف» program has not lasted two months yet; the next one may start on {date};
  * - `programs_full`: 3 programs; finish one first;
- * - `periodic_full`: 7 periodic acts; delete one first.
+ * - `periodic_full`: 8 periodic acts; delete one first.
  */
 
 import type { LimitBlock } from '@thekra/practice-core';

@@ -28,6 +28,7 @@ import {
   type LocalDate,
   type Plan,
   type Rule,
+  LIMITS,
 } from '@thekra/practice-core';
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { pick } from '@/lib/practice/catalog-types';
@@ -272,7 +273,7 @@ function AddActSheet({ visible, acts, canAdd, onClose }: { visible: boolean; act
   return (
     <BottomSheet visible={visible} title={t('habitsHub.periodic.addTitle')} onClose={onClose}>
       <View style={styles.stack}>
-        {!canAdd ? <Notice>{t('habitsHub.periodic.full')}</Notice> : null}
+        {!canAdd ? <Notice>{t('habitsHub.periodic.full', { max: LIMITS.periodic })}</Notice> : null}
         <View>
           {offered.map((info) => (
             <ListRow

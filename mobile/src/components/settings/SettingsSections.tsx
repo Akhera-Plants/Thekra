@@ -7,13 +7,14 @@
  */
 
 import React, { useState } from 'react';
-import { ActivityIndicator, Share, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQueryClient } from '@tanstack/react-query';
 import { Database, Download, LayoutList, Mic } from 'lucide-react-native';
 import { RECITERS, chosenReciter, isLightenCovered, setLightenCovered, setReciter } from '@thekra/practice-core';
 import { exportAccountData } from '@/lib/api/practice';
+import { shareExportFile } from '@/lib/export-file';
 import { usePracticeStore } from '@/lib/practice/practice-store';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { switchDirectionIfNeeded, type SupportedLocale } from '@/lib/i18n';
@@ -81,7 +82,7 @@ export function PrivacySection() {
     setExportError(false);
     try {
       const data = await exportAccountData();
-      await Share.share({ message: JSON.stringify(data, null, 2) });
+      if (!(await shareExportFile(data, t('settings.exportData')))) setExportError(true);
     } catch {
       setExportError(true);
     } finally {

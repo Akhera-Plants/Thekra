@@ -107,7 +107,7 @@ describe('invite codes', () => {
 
 describe('CirclesService', () => {
   describe('create', () => {
-    it('makes the creator the owner and returns the invite code', async () => {
+    it('makes the creator the owner', async () => {
       const prisma = makePrisma();
       const detail = await service(prisma).create(USER, { name: 'صحبة الفجر', displayName: 'أبو عمر' }, NOW);
       expect(prisma.circle.create).toHaveBeenCalledWith(
@@ -115,7 +115,7 @@ describe('CirclesService', () => {
           data: expect.objectContaining({ members: { create: { userId: USER, displayName: 'أبو عمر', isOwner: true } } }),
         }),
       );
-      expect(detail.inviteCode).toBe('ABCDEFGHJK');
+      expect(detail.me.isOwner).toBe(true);
     });
 
     it(`refuses a ${CIRCLES_PER_USER_MAX + 1}th circle`, async () => {
@@ -138,12 +138,11 @@ describe('CirclesService', () => {
   });
 
   describe('invite-only (round 6, C-01k)', () => {
-    it('refuses to create or join while صحبة is off (403 CIRCLES_NOT_ENABLED)', async () => {
+    it('refuses to create while صحبة is off (403 CIRCLES_NOT_ENABLED)', async () => {
       const prisma = makePrisma();
       prisma.user.findUnique.mockResolvedValue({ role: 'USER', circlesEnabledAt: null });
       for (const call of [
         () => service(prisma).create(USER, { name: 'x', displayName: 'y' }, NOW),
-        () => service(prisma).join(USER, { code: 'ABCDEFGHJK', displayName: 'y' }, NOW),
       ]) {
         const error = await call().catch((e: unknown) => e);
         expect(statusOf(error)).toBe(403);
@@ -161,29 +160,18 @@ describe('CirclesService', () => {
     });
   });
 
-  describe('join', () => {
-    const dto = { code: 'abcde-fghjk', displayName: 'سالم' };
-
+  describe('addMember (used by an invite that names the circle)', () => {
     function joining() {
       const prisma = makePrisma(member({ id: OTHER, userId: OTHER_USER, isOwner: false }));
-      prisma.circle.findUnique.mockResolvedValueOnce({ id: CIRCLE });
       prisma.circleMember.findUnique.mockResolvedValueOnce(null);
       return prisma;
     }
 
-    it('finds the circle by the normalised code, locks it and adds a plain member', async () => {
+    it('locks the circle and adds a plain member', async () => {
       const prisma = joining();
-      await service(prisma).join(OTHER_USER, dto, NOW);
-      expect(prisma.circle.findUnique).toHaveBeenNthCalledWith(1, { where: { inviteCode: 'ABCDEFGHJK' }, select: { id: true } });
+      await service(prisma).addMember(prisma as never, CIRCLE, OTHER_USER, 'سالم');
       expect(prisma.$queryRaw).toHaveBeenCalled();
-      expect(prisma.circle.deleteMany).toHaveBeenCalledWith({ where: { members: { none: {} } } });
       expect(prisma.circleMember.create).toHaveBeenCalledWith({ data: { circleId: CIRCLE, userId: OTHER_USER, displayName: 'سالم' } });
-    });
-
-    it('404 CIRCLE_INVITE_INVALID for an unknown code', async () => {
-      const prisma = makePrisma();
-      prisma.circle.findUnique.mockResolvedValueOnce(null);
-      expect(codeOf(await service(prisma).join(OTHER_USER, dto, NOW).catch((e: unknown) => e))).toBe('CIRCLE_INVITE_INVALID');
     });
 
     it(`409 CIRCLE_FULL at ${CIRCLE_MAX_MEMBERS} members`, async () => {
@@ -191,7 +179,8 @@ describe('CirclesService', () => {
       prisma.circleMember.count.mockImplementation(({ where }: { where: { circleId?: string } }) =>
         Promise.resolve(where.circleId ? CIRCLE_MAX_MEMBERS : 0),
       );
-      expect(codeOf(await service(prisma).join(OTHER_USER, dto, NOW).catch((e: unknown) => e))).toBe('CIRCLE_FULL');
+      const error = await service(prisma).addMember(prisma as never, CIRCLE, OTHER_USER, 'سالم').catch((e: unknown) => e);
+      expect(codeOf(error)).toBe('CIRCLE_FULL');
       expect(prisma.circleMember.create).not.toHaveBeenCalled();
     });
 
@@ -200,13 +189,13 @@ describe('CirclesService', () => {
       prisma.circleMember.count.mockImplementation(({ where }: { where: { userId?: string } }) =>
         Promise.resolve(where.userId ? CIRCLES_PER_USER_MAX : 1),
       );
-      expect(codeOf(await service(prisma).join(OTHER_USER, dto, NOW).catch((e: unknown) => e))).toBe('CIRCLE_LIMIT_REACHED');
+      const error = await service(prisma).addMember(prisma as never, CIRCLE, OTHER_USER, 'سالم').catch((e: unknown) => e);
+      expect(codeOf(error)).toBe('CIRCLE_LIMIT_REACHED');
     });
 
-    it('a member joining again gets the circle, no second row', async () => {
+    it('a member added again gets no second row', async () => {
       const prisma = makePrisma();
-      prisma.circle.findUnique.mockResolvedValueOnce({ id: CIRCLE });
-      await service(prisma).join(USER, dto, NOW);
+      await service(prisma).addMember(prisma as never, CIRCLE, USER, 'x');
       expect(prisma.circleMember.create).not.toHaveBeenCalled();
     });
   });
@@ -230,11 +219,10 @@ describe('CirclesService', () => {
       expect(json).not.toContain(OTHER_USER);
     });
 
-    it('gives the invite code to the owner only', async () => {
-      expect((await service(makePrisma()).findOne(USER, CIRCLE, undefined, NOW)).inviteCode).toBe('ABCDEFGHJK');
-      const prisma = makePrisma(member({ id: OTHER, userId: OTHER_USER, isOwner: false }));
-      prisma.circleMember.count.mockResolvedValue(1);
-      expect((await service(prisma).findOne(OTHER_USER, CIRCLE, undefined, NOW)).inviteCode).toBeNull();
+    it('never gives out the circle’s stored code (round 8: personal invites only)', async () => {
+      const json = JSON.stringify(await service(makePrisma()).findOne(USER, CIRCLE, undefined, NOW));
+      expect(json).not.toContain('ABCDEFGHJK');
+      expect(json).not.toContain('inviteCode');
     });
 
     it('an ownerless circle (owner deleted the account) passes to the earliest member', async () => {
@@ -244,7 +232,6 @@ describe('CirclesService', () => {
       const detail = await service(prisma).findOne(OTHER_USER, CIRCLE, undefined, NOW);
       expect(prisma.circleMember.update).toHaveBeenCalledWith({ where: { id: OTHER }, data: { isOwner: true } });
       expect(detail.me.isOwner).toBe(true);
-      expect(detail.inviteCode).toBe('ABCDEFGHJK');
     });
 
     it('accepts the viewer’s today within ±1 day only', async () => {
@@ -378,7 +365,7 @@ describe('CirclesService', () => {
       expect(prisma.circle.delete).toHaveBeenCalledWith({ where: { id: CIRCLE } });
     });
 
-    it('only the owner removes members, rotates the code or deletes the circle', async () => {
+    it('only the owner removes members or deletes the circle', async () => {
       const plain = () => {
         const prisma = makePrisma(member({ id: OTHER, userId: OTHER_USER, isOwner: false }));
         prisma.circleMember.count.mockResolvedValue(1);
@@ -386,7 +373,6 @@ describe('CirclesService', () => {
       };
       for (const action of [
         (s: CirclesService) => s.removeMember(OTHER_USER, CIRCLE, ME),
-        (s: CirclesService) => s.rotateInviteCode(OTHER_USER, CIRCLE),
         (s: CirclesService) => s.deleteCircle(OTHER_USER, CIRCLE),
       ]) {
         const prisma = plain();
@@ -408,12 +394,8 @@ describe('CirclesService', () => {
       expect(codeOf(await service(prisma).removeMember(USER, CIRCLE, ME).catch((e: unknown) => e))).toBe('CIRCLE_OWNER_REMOVE_SELF');
     });
 
-    it('the owner rotates the code and deletes the circle', async () => {
+    it('the owner deletes the circle', async () => {
       const prisma = makePrisma();
-      expect(await service(prisma).rotateInviteCode(USER, CIRCLE)).toEqual({ inviteCode: 'NEWCODE234' });
-      expect(prisma.circle.update).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { id: CIRCLE }, data: { inviteCode: expect.stringMatching(/^[2-9A-Z]{10}$/) } }),
-      );
       await service(prisma).deleteCircle(USER, CIRCLE);
       expect(prisma.circle.delete).toHaveBeenCalledWith({ where: { id: CIRCLE } });
     });

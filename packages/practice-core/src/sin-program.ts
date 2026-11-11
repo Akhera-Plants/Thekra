@@ -625,7 +625,7 @@ export interface SinProgramEntryShape {
 }
 
 /**
- * «تخفَّف من معصية» for a sin without a written program (owner, 2026-11-01): the common five stages only. The category
+ * «تخفَّف من ذنب» for a sin without a written program (owner, 2026-11-01): the common five stages only. The category
  * comes from the visitor («هل فيها حقٌّ لأحد من الناس؟»); the path is always «cut» (no gradual steps were written, and a
  * right of others is never gradual). The stage texts are the common ones; «ما ورد فيها» is the sin's own page.
  * Pending the sheikh's review, like the written programs.

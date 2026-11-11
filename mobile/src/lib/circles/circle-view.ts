@@ -6,6 +6,7 @@
 import type { TFunction } from 'i18next';
 import type { AgendaItem, LocalDate, Store } from '@thekra/practice-core';
 import { ApiError } from '../types/api';
+import { sitePageUrl } from '../site';
 import { WHOLE_CIRCLE, type CircleMessage, type CircleRound } from '../types/circles';
 
 /**
@@ -16,13 +17,17 @@ export function loggedOn(store: Store, date: LocalDate): boolean {
   return store.plans.some((p) => (p.log[date] ?? 0) > 0) || store.relatives.some((r) => r.history.includes(date));
 }
 
-/** The app's deep link that opens the join screen with the code filled in. */
-export function inviteLink(code: string): string {
-  return `thekra://circles/join?code=${encodeURIComponent(code)}`;
+/**
+ * The link a personal invite is shared as: a page of the website (`/invite/<code>`, in the inviter's language) that
+ * explains the invite, shows the code and opens the app on it. A plain https address works in every messenger, and
+ * for a friend without the app it says where to get it.
+ */
+export function inviteShareLink(code: string, locale: string): string {
+  return sitePageUrl(`/invite/${encodeURIComponent(code)}`, locale);
 }
 
-/** The app's deep link of a personal صحبة invite (round 6, C-01k): opens «أدخل رمز الدعوة» with the code filled in. */
-export function personalInviteLink(code: string): string {
+/** The app's own address for an invite (`thekra://circles/invite/<code>`): the website's button opens it. */
+export function inviteAppLink(code: string): string {
   return `thekra://circles/invite/${encodeURIComponent(code)}`;
 }
 
@@ -39,6 +44,10 @@ export function cleanTypedCode(raw: string): string {
 /** i18n keys under `circles.errors`, by API error code. */
 const ERROR_KEYS: Record<string, string> = {
   CIRCLE_INVITE_INVALID: 'inviteInvalid',
+  // Round 8: an invite that exists but cannot be used says why.
+  CIRCLE_INVITE_EXPIRED: 'inviteExpired',
+  CIRCLE_INVITE_USED: 'inviteUsed',
+  CIRCLE_INVITE_REVOKED: 'inviteRevoked',
   // Round 6 (C-01k): صحبة is invite-only.
   CIRCLES_NOT_ENABLED: 'notEnabled',
   CIRCLE_INVITE_OWN: 'inviteOwn',
@@ -62,11 +71,6 @@ const ERROR_KEYS: Record<string, string> = {
   CIRCLE_OWNER_ONLY: 'ownerOnly',
   VALIDATION_FAILED: 'invalid',
 };
-
-/** The `circles.errors.*` key for a `joinError` code of a redeemed invite (صحبة is on, the circle was not joined). */
-export function joinErrorKey(code: string): string {
-  return `circles.errors.${ERROR_KEYS[code] ?? 'generic'}`;
-}
 
 /** The `circles.errors.*` key (or `errors.network`) for a failed request. */
 export function circleErrorKey(error: unknown): string {
@@ -150,4 +154,14 @@ export function groupByDay(newestFirst: readonly CircleMessage[]): FeedDay[] {
     else days.push({ date, messages: [m] });
   }
   return days;
+}
+
+/**
+ * One round is one entry in the feed: when «تم الحمد لله»/«لم يتم» was said, the start line already shows it and keeps
+ * the replies, so the separate «end» line (which repeated the outcome and the whole round line) is left out. An end
+ * line whose start line is not loaded (an older page, or «المحفوظة») stays, since nothing else tells that round.
+ */
+export function withoutRepeatedRoundEnds(items: readonly CircleMessage[]): CircleMessage[] {
+  const started = new Set(items.filter((m) => m.kind === 'round_start' && m.round).map((m) => m.round!.id));
+  return items.filter((m) => !(m.kind === 'round_end' && m.round && started.has(m.round.id)));
 }

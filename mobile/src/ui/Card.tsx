@@ -175,7 +175,7 @@ const ART_DEFAULT = 76;
 const ART_HALF = 56;
 
 /**
- * The home doors («أعنّي على فعل طاعة» / «تخفَّف من معصية» / «شُعَب الإيمان»): a label with an icon, a title, a line and the
+ * The home doors («أعنّي على فعل طاعة» / «تخفَّف من ذنب» / «شُعَب الإيمان»): a label with an icon, a title, a line and the
  * one door action. The line plant sits in the bottom inline-end corner, behind the words and cut by the card's edge,
  * as the website draws it (`Flourish`, absolute: the sprig on the filled door, the olive on the sage one). Owner round
  * 5 (A-17): «قبل لما كانت معمولة fit أحسن» — this restores that placement (commit c802b49) in place of the boxed plant.

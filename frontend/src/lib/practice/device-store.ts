@@ -8,6 +8,8 @@ export interface DeviceStore<T> {
   getServer(): T | null;
   subscribe(listener: () => void): () => void;
   update(change: (value: T) => T): void;
+  /** Removes the stored value and shows the empty one (sign-out). */
+  clear(): void;
   /** Test hook. */
   reset(): void;
 }
@@ -65,6 +67,15 @@ export function createDeviceStore<T>(key: string, parse: (raw: unknown) => T): D
       } catch {
         // Storage refused: the change lasts for this tab.
       }
+      for (const listener of listeners) listener();
+    },
+    clear() {
+      try {
+        storage()?.removeItem(key);
+      } catch {
+        // Nothing stored that could be removed.
+      }
+      snapshot = { value: parse(null) };
       for (const listener of listeners) listener();
     },
     reset() {

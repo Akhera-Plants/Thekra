@@ -10,7 +10,7 @@ import { appliesToHabit, applySuggestion } from '../lib/practice/strategies';
 import { buildTopicSections, filterSectionsByRead } from '../lib/topics';
 import { reportErrorKey } from '../lib/share/report-error';
 import { isTopicPath } from '../lib/home/moments';
-import { joinErrorKey, personalInviteLink, circleErrorKey } from '../lib/circles/circle-view';
+import { inviteAppLink, circleErrorKey } from '../lib/circles/circle-view';
 import { ApiError, type QuoteDto, type TopicText } from '../lib/types/api';
 import ar from '../lib/i18n/ar.json';
 
@@ -99,8 +99,7 @@ describe('home moments (C-09) and صحبة invites (C-01k)', () => {
   it('names the invite errors and links', () => {
     expect(circleErrorKey(new ApiError({ status: 403, code: 'CIRCLES_NOT_ENABLED', message: '' }))).toBe('circles.errors.notEnabled');
     expect(circleErrorKey(new ApiError({ status: 409, code: 'CIRCLE_INVITES_ACTIVE_LIMIT', message: '' }))).toBe('circles.errors.invitesActiveLimit');
-    expect(joinErrorKey('CIRCLE_FULL')).toBe('circles.errors.full');
-    expect(personalInviteLink('ABCDE12345')).toBe('thekra://circles/invite/ABCDE12345');
+    expect(inviteAppLink('ABCDE12345')).toBe('thekra://circles/invite/ABCDE12345');
   });
 });
 

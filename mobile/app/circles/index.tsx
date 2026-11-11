@@ -1,15 +1,16 @@
 /**
  * «صحبة»: my private circles. Round 6 (C-01k): صحبة is invite-only. Signed out it invites sign-in; while صحبة is not on
- * for me (`GET /circles/access`) it shows «أدخل رمز الدعوة» only (RedeemInvite); once on: my circles (or the empty
- * state with «أنشئ صحبة» / «انضم برمز»), and «دعواتي» to invite someone. Each row says how many members and whether my
- * presence shows there. No counts of days, no ranking.
+ * for me (`GET /circles/access`) it shows «لديّ دعوة» only (RedeemInvite); once on: my circles (or the empty state)
+ * with «أنشئ صحبة» and «لديّ دعوة» (round 8: the one entry for an invitation; inviting is «ادعُ» on a صحبة's own
+ * page, for its owner). Each row says how many members and whether my presence shows there. No counts of days, no
+ * ranking.
  */
 
 import React, { useCallback } from 'react';
 import { View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Lock, Ticket, Users } from 'lucide-react-native';
+import { Lock, Users } from 'lucide-react-native';
 import { CircleListSkeleton, CirclesSignedOut } from '@/components/circles/CircleStates';
 import { RedeemInvite } from '@/components/circles/RedeemInvite';
 import { useCircleAccess, useCircleUserId, useMyCircles } from '@/lib/api/circles';
@@ -20,7 +21,7 @@ import { space } from '@/theme';
 import { ButtonPair, EmptyState, ErrorState, ListRow, Notice, PageHeader, Screen, Text } from '@/ui';
 
 const openCreate = () => router.push('/circles/create');
-const openJoin = () => router.push('/circles/join');
+const openRedeem = () => router.push('/circles/redeem');
 
 function CircleRow({ circle }: { circle: CircleSummary }) {
   const { t } = useTranslation();
@@ -43,7 +44,7 @@ function Actions({ count }: { count: number }) {
       <ButtonPair
         size="lg"
         primary={{ label: t('circles.create'), onPress: openCreate, disabled: isAtLimit }}
-        secondary={{ label: t('circles.join'), onPress: openJoin, disabled: isAtLimit }}
+        secondary={{ label: t('circles.join'), onPress: openRedeem }}
       />
       {isAtLimit ? (
         <Text variant="caption" tone="muted">
@@ -54,22 +55,6 @@ function Actions({ count }: { count: number }) {
   );
 }
 
-/** «دعواتي»: what is left to give, opening the invites screen. */
-function InvitesRow() {
-  const { t } = useTranslation();
-  const access = useCircleAccess();
-  const remaining = access.data?.invites?.remaining;
-  return (
-    <ListRow
-      icon={Ticket}
-      title={t('circles.invites.title')}
-      hint={remaining === undefined ? undefined : t('circles.invites.left', { count: remaining })}
-      onPress={() => router.push('/circles/invites')}
-      last
-    />
-  );
-}
-
 /** صحبة on: the circles; off: the invite code only. */
 function Access() {
   const { t } = useTranslation();
@@ -77,12 +62,7 @@ function Access() {
   if (access.isPending) return <CircleListSkeleton />;
   if (access.isError) return <ErrorState message={t(circleErrorKey(access.error))} onRetry={() => void access.refetch()} />;
   if (!access.data.enabled) return <RedeemInvite />;
-  return (
-    <>
-      <CircleList />
-      <InvitesRow />
-    </>
-  );
+  return <CircleList />;
 }
 
 function CircleList() {

@@ -1,7 +1,9 @@
-import { BadRequestException, HttpException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, GoneException, HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service.js';
-import { CirclesService, generateInviteCode, normalizeInviteCode, notEnabled } from './circles.service.js';
+import { CIRCLE_MAX_MEMBERS, CirclesService, generateInviteCode, normalizeInviteCode, notEnabled } from './circles.service.js';
+import { safeMemberName } from './dto/circle-text.decorator.js';
+import { CIRCLE_DISPLAY_NAME_MAX } from './dto/create-circle.dto.js';
 import type { CreateCircleInviteDto } from './dto/create-circle-invite.dto.js';
 import type { RedeemCircleInviteDto } from './dto/redeem-circle-invite.dto.js';
 import type { CircleAccessDto, CircleInviteDto, CircleInviteStatus, RedeemCircleInviteResultDto } from './entities/circle.entity.js';
@@ -18,7 +20,22 @@ const INVITES_LISTED = 20;
 const CODE_ATTEMPTS = 3;
 const DAY_MS = 86_400_000;
 
+/** A code nobody issued (a typo): the only refusal that is a 404. */
 const invalidInvite = () => new NotFoundException({ code: 'CIRCLE_INVITE_INVALID', message: 'This invite code is not valid' });
+
+/**
+ * A code that exists but cannot be used any more says why (owner round 8, Q6: a kind, distinct sentence for each case):
+ * 410 CIRCLE_INVITE_EXPIRED / CIRCLE_INVITE_USED / CIRCLE_INVITE_REVOKED. Codes are 31^10 random and a client gets 5
+ * tries a minute, so telling «used» from «never issued» gives a guesser nothing.
+ */
+function unusableInvite(status: Exclude<CircleInviteStatus, 'active'>): GoneException {
+  const byStatus = {
+    expired: { code: 'CIRCLE_INVITE_EXPIRED', message: 'This invite has expired: ask for a new one' },
+    redeemed: { code: 'CIRCLE_INVITE_USED', message: 'This invite was already used: ask for a new one' },
+    revoked: { code: 'CIRCLE_INVITE_REVOKED', message: 'This invite was cancelled by the person who sent it' },
+  } as const;
+  return new GoneException(byStatus[status]);
+}
 
 function isUniqueViolation(error: unknown): boolean {
   return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002';
@@ -93,7 +110,13 @@ export class CircleInvitesService {
   /** An invite to صحبة, or (owner only) to one of the inviter's circles. */
   async create(userId: string, dto: CreateCircleInviteDto, now = new Date()): Promise<CircleInviteDto> {
     if (!(await this.circles.isEnabled(userId))) throw notEnabled();
-    if (dto.circleId !== undefined) await this.circles.ownerOf(userId, dto.circleId);
+    if (dto.circleId !== undefined) {
+      await this.circles.ownerOf(userId, dto.circleId);
+      const members = await this.prisma.circleMember.count({ where: { circleId: dto.circleId } });
+      if (members >= CIRCLE_MAX_MEMBERS) {
+        throw new ConflictException({ code: 'CIRCLE_FULL', message: `A circle has at most ${CIRCLE_MAX_MEMBERS} members` });
+      }
+    }
 
     return this.prisma.$transaction(async (tx) => {
       // Serialises one member's invite creation, so two taps cannot both pass the limits.
@@ -136,9 +159,14 @@ export class CircleInvitesService {
   }
 
   /**
-   * Redeems a code: one use, before it expires, not one's own. A wrong, used, revoked or expired code all answer
-   * the same 404. Redeeming the same invite again is harmless. When the invite names a circle and joining fails
-   * (full, or the redeemer is in too many circles), صحبة is still turned on and `joinError` says why.
+   * Redeems a code: one use, before it expires, not one's own. A code nobody issued is 404; one that exists but cannot
+   * be used says why (410 expired / used / cancelled). Redeeming the same invite again is harmless.
+   *
+   * An invite that names a circle joins it in the same step, even for an account that has not turned صحبة on (the
+   * invite turns it on): the name shown in the circle is the redeemer's own account name unless the request sends
+   * one, and only an account with no name is asked for it (400 CIRCLE_DISPLAY_NAME_REQUIRED, invite untouched).
+   * Joining is all-or-nothing: when the circle is full, the redeemer is in too many circles, or the inviter left, the
+   * answer is 409 (CIRCLE_FULL, CIRCLE_LIMIT_REACHED, CIRCLE_INVITE_CIRCLE_GONE) and the invite stays unused.
    */
   async redeem(userId: string, dto: RedeemCircleInviteDto, now = new Date()): Promise<RedeemCircleInviteResultDto> {
     const code = normalizeInviteCode(dto.code);
@@ -151,44 +179,48 @@ export class CircleInvitesService {
       throw new BadRequestException({ code: 'CIRCLE_INVITE_OWN', message: 'This is your own invite: share it with someone else' });
     }
     const again = invite.redeemedById === userId;
-    if (!again && inviteStatus(invite, now) !== 'active') throw invalidInvite();
-    if (invite.circleId && dto.displayName === undefined) {
-      throw new BadRequestException({
-        code: 'CIRCLE_DISPLAY_NAME_REQUIRED',
-        message: 'This invite also joins a circle: send the name to show there',
-        details: { circleName: invite.circle?.name ?? null },
-      });
+    const status = inviteStatus(invite, now);
+    if (!again && status !== 'active') throw unusableInvite(status);
+
+    let displayName: string | undefined;
+    if (invite.circleId) {
+      displayName = dto.displayName ?? (await this.accountName(userId));
+      if (displayName === undefined) {
+        throw new BadRequestException({
+          code: 'CIRCLE_DISPLAY_NAME_REQUIRED',
+          message: 'This invite also joins a circle: send the name to show there',
+          details: { circleName: invite.circle?.name ?? null },
+        });
+      }
     }
 
-    const joinError = await this.prisma.$transaction(async (tx) => {
+    await this.prisma.$transaction(async (tx) => {
       if (!again) {
         // The conditions make the claim atomic: of two people redeeming at once, one gets count 1.
         const claimed = await tx.circleInvite.updateMany({
           where: { id: invite.id, redeemedAt: null, revokedAt: null, expiresAt: { gt: now } },
           data: { redeemedAt: now, redeemedById: userId },
         });
-        if (claimed.count === 0) throw invalidInvite();
+        if (claimed.count === 0) throw unusableInvite('redeemed');
       }
       await tx.user.updateMany({ where: { id: userId, circlesEnabledAt: null }, data: { circlesEnabledAt: now } });
-      if (!invite.circleId || dto.displayName === undefined) return null;
-      // The circle is joined only while the inviter still belongs to it.
+      if (!invite.circleId || displayName === undefined) return;
+      // The circle is joined only while the inviter still belongs to it. Any refusal below rolls the claim back.
       const inviterStillMember = await tx.circleMember.count({ where: { circleId: invite.circleId, userId: invite.inviterId } });
-      if (inviterStillMember === 0) return 'CIRCLE_INVITE_CIRCLE_GONE';
-      try {
-        await this.circles.addMember(tx, invite.circleId, userId, dto.displayName);
-        return null;
-      } catch (error) {
-        if (error instanceof HttpException && error.getStatus() === 409) {
-          return (error.getResponse() as { code: string }).code;
-        }
-        throw error;
+      if (inviterStillMember === 0) {
+        throw new ConflictException({ code: 'CIRCLE_INVITE_CIRCLE_GONE', message: 'The circle this invite was for no longer exists' });
       }
+      await this.circles.addMember(tx, invite.circleId, userId, displayName);
     });
 
-    const circle = invite.circleId && joinError === null && dto.displayName !== undefined
-      ? await this.circles.findOne(userId, invite.circleId, undefined, now)
-      : null;
-    return { enabled: true, circle, joinError: invite.circleId ? joinError : null };
+    const circle = invite.circleId ? await this.circles.findOne(userId, invite.circleId, undefined, now) : null;
+    return { enabled: true, circle };
+  }
+
+  /** The account's own name as a circle display name, when it has a usable one. */
+  private async accountName(userId: string): Promise<string | undefined> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { displayName: true } });
+    return safeMemberName(user?.displayName, CIRCLE_DISPLAY_NAME_MAX);
   }
 
   private async counts(db: Pick<PrismaService, 'circleInvite'>, userId: string, now: Date) {

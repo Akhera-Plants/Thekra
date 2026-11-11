@@ -321,3 +321,73 @@ export interface ProposedLinkDto {
   goodDeed?: { slug: string; name: string; nameAr: string };
   quote: { id: string; type: QuoteType; textAr: string };
 }
+
+// ── صحبة reports (GET /admin/circle-reports) ──────────────────────────────────
+
+export type CircleReportReason = 'offensive' | 'harassment' | 'inappropriate' | 'spam' | 'other';
+export type CircleReportStatusFilter = 'open' | 'handled';
+
+export interface CircleReportDto {
+  id: string;
+  kind: 'member' | 'message';
+  reason: CircleReportReason;
+  note: string | null;
+  status: CircleReportStatusFilter;
+  handledAt: string | null;
+  createdAt: string;
+  circle: { id: string | null; name: string };
+  reporter: { userId: string | null; name: string };
+  reported: { userId: string | null; memberId: string | null; name: string; stillMember: boolean };
+  /** Message reports: what it said when it was reported (kept by the server, not looked up again). */
+  message: { id: string | null; snapshot: CircleMessageSnapshot | null } | null;
+  reportsAboutSame: number;
+}
+
+/** The words kept at report time: a suggested line by key, or a round (kind, label, minutes). */
+export interface CircleMessageSnapshot {
+  kind?: 'PRESET' | 'ROUND_START' | 'ROUND_END' | 'REPLY';
+  key?: string | null;
+  data?: { done?: number; total?: number } | null;
+  round?: { kind?: string; label?: string | null; minutes?: number; outcome?: 'DONE' | 'NOT_DONE' | null } | null;
+  createdAt?: string;
+}
+
+export interface CircleReportsPage {
+  data: CircleReportDto[];
+  nextBefore: string | null;
+  counts: { open: number; handled: number };
+}
+
+// ── Links flagged «لا علاقة حقيقية» (GET /admin/link-concerns) ────────────────
+
+export type LinkConcernKind = 'sin' | 'good-deed' | 'branch';
+export type LinkConcernDecision = 'pending' | 'hidden';
+
+export interface LinkConcernDto {
+  kind: LinkConcernKind;
+  linkId: string;
+  concern: 'NO_REAL_LINK';
+  concernNote: string | null;
+  concernAt: string | null;
+  reviewStatus: LinkReviewStatus;
+  topic: { id: string; slug: string; nameAr: string };
+  quote: { id: string; type: QuoteType; excerpt: string };
+}
+
+export interface LinkConcernsPage {
+  data: LinkConcernDto[];
+  meta: {
+    counts: Record<LinkConcernKind, number>;
+    limitPerKind: number;
+    offset: number;
+    total: number;
+    topics: Array<{ id: string; slug: string; nameAr: string; count: number }>;
+  };
+}
+
+/** GET /admin/quotes/ledger: per source, graded and unlinked counts, in one call. */
+export interface LibraryLedgerRow {
+  sourceId: string;
+  graded: number;
+  unlinked: number;
+}

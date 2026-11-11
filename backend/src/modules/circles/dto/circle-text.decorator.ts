@@ -18,3 +18,9 @@ export function CircleText(max: number): PropertyDecorator {
     Matches(SAFE_TEXT, { message: 'must not contain control or direction-override characters' }),
   );
 }
+
+/** An existing string (an account name) as a circle display name: trimmed, cut to `max`, `undefined` when nothing safe is left. */
+export function safeMemberName(raw: string | null | undefined, max: number): string | undefined {
+  const text = (raw ?? '').trim().slice(0, max).trim();
+  return text.length > 0 && SAFE_TEXT.test(text) ? text : undefined;
+}

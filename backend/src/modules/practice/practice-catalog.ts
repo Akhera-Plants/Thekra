@@ -46,7 +46,7 @@ export interface Occasion {
 
 export interface Habit {
   key: string;
-  /** `periodic`: a template of «أعمال دورية» (7 periodic acts, not the 3 saplings). Absent: a habit to build. */
+  /** `periodic`: a template of «أعمال دورية» (8 periodic acts, not the 3 saplings). Absent: a habit to build. */
   kind?: 'periodic';
   /** A people list: the user adds people with this circle; `defaultRule` is each person's rhythm. */
   people?: PeopleCircle;
@@ -544,7 +544,7 @@ export function scheduleForDeed(slug: string): { habits: Habit[]; occasions: Occ
 
 /** Whether a sin has a leaving program, and its category. Nothing else about the program is exposed here. */
 /**
- * «تخفَّف من معصية» (owner, 2026-11-01): every sin can start a program. A sin with a written program keeps its category
+ * «تخفَّف من ذنب» (owner, 2026-11-01): every sin can start a program. A sin with a written program keeps its category
  * and details; any other sin starts the common five stages, and `category: null` means the visitor answers «هل فيها حقٌّ
  * لأحد من الناس؟» when choosing (practice-core `genericProgramEntry`). Callers pass AVOID topics only.
  */

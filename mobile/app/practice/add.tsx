@@ -47,7 +47,7 @@ import { HabitAddChoiceSheet } from '@/components/practice/habits/HabitActions';
 import { StoryLine } from '@/components/practice/hub/KnowledgeCards';
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { pick, type CatalogHabit, type UiLocale } from '@/lib/practice/catalog-types';
-import { suitableDefaults } from '@/lib/practice/deed-window';
+import { startingSlots } from '@/lib/practice/deed-window';
 import { ruleToWeekdays, sortSlots, weekdaysToRule } from '@/lib/practice/format';
 import { activeDaysFrom, loopFromAnswers, type LoopAnswers } from '@/lib/practice/habits-view';
 import { ensurePermission } from '@/lib/practice/notifications';
@@ -85,7 +85,7 @@ type Step = 'what' | 'amount' | 'message' | 'review';
 const ALL_STEPS: readonly Step[] = ['what', 'amount', 'message', 'review'];
 
 function defaultSlotsFor(habit: CatalogHabit): LocalTime[] {
-  return sortSlots(suitableDefaults(habit.defaultSlots, habit.window, currentPrayerDay(today())));
+  return sortSlots(startingSlots(habit.defaultSlots, habit.window, currentPrayerDay(today())));
 }
 const DISTANCES: Distance[] = ['far', 'near'];
 const SKELETON_OPTIONS = ['a', 'b', 'c', 'd'];
@@ -125,7 +125,8 @@ export default function AddHabitScreen() {
   const [habitKey, setHabitKey] = useState<string | null>(params.habit ?? null);
   const [step, setStep] = useState<Step>(entryStep);
   const [distance, setDistance] = useState<Distance>('far');
-  const [slots, setSlots] = useState<LocalTime[]>([]);
+  // null = the habit's own default times (computed from the habit on every render, so the first render is already valid).
+  const [pickedSlots, setSlots] = useState<LocalTime[] | null>(null);
   const [weekdays, setWeekdays] = useState<number[] | null>(null);
   const [answers, setAnswers] = useState<LoopAnswers>({ after: '', ifBlocked: '' });
   const [minimum, setMinimumChoice] = useState<number | null>(null);
@@ -148,11 +149,11 @@ export default function AddHabitScreen() {
     if (peopleCircle) router.replace({ pathname: '/practice/kinship', params: { circle: peopleCircle } });
   }, [peopleCircle]);
 
+  const slots = useMemo(() => pickedSlots ?? (habit ? defaultSlotsFor(habit) : []), [pickedSlots, habit]);
   const [initialized, setInitialized] = useState<string | null>(null);
   useEffect(() => {
     if (habit && initialized !== habit.key) {
       setInitialized(habit.key);
-      setSlots(defaultSlotsFor(habit));
       setWeekdays(ruleToWeekdays(habit.defaultRule));
       setMinimumChoice(null);
     }
@@ -265,6 +266,7 @@ export default function AddHabitScreen() {
         error={error}
         onSelect={(key) => {
           setHabitKey(key);
+          setSlots(null);
           setError(null);
         }}
         onNext={() => (habitKey ? setStep('amount') : setError(t('practice.add.chooseHabit')))}
@@ -272,6 +274,7 @@ export default function AddHabitScreen() {
           const key = habitKey ?? defaultHabitKey(offered.filter((h) => !planByHabit.has(h.key)).map((h) => h.key));
           if (!key) return;
           setHabitKey(key);
+          setSlots(null);
           setStep('amount');
         }}
       />

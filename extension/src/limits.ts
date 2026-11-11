@@ -1,5 +1,5 @@
 /**
- * The redesign limits (§3) in the extension, through practice-core `limits`: at most 3 saplings and 7 periodic acts
+ * The redesign limits (§3) in the extension, through practice-core `limits`: at most 3 saplings and 8 periodic acts
  * (plans from a catalog template with `kind: periodic`). The extension has no people lists and no «تخفَّف» program,
  * so only plans count here. Pure, for Node tests.
  */

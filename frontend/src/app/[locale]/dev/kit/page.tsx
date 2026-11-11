@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import { setRequestLocale } from 'next-intl/server';
 import { KitSpecimen } from './KitSpecimen';
 
@@ -14,9 +15,10 @@ interface PageProps {
 /**
  * Living specimen for kit/Button (+ SegmentTabs).
  * Open `/dev/kit` (or `/en/dev/kit`) to visually audit every variant × tone × size.
- * Not linked in the product nav.
+ * Not linked in the product nav. Development only: a production build answers 404 (owner round 8, item 4).
  */
 export default async function KitSpecimenPage({ params }: PageProps) {
+  if (process.env.NODE_ENV === 'production') notFound();
   const { locale } = await params;
   setRequestLocale(locale);
 

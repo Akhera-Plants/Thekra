@@ -56,6 +56,12 @@ export class QuotesAdminController {
     return { data: quote };
   }
 
+  /** One call for the dashboard's «حالة المكتبة» (replaces two count requests per source). */
+  @Get('ledger')
+  ledger() {
+    return this.quotesService.adminLibraryLedger();
+  }
+
   @Get()
   findAll(@Query() query: AdminQuotesQueryDto) {
     return this.quotesService.adminSearch(query);

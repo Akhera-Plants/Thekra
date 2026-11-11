@@ -15,6 +15,7 @@ import {
   isPrayerAnchor,
   reflectionsOfPlan,
   slotChoices,
+  showsInlineCounter,
   weekday,
   type ArchiveNote,
   type DayLogState,
@@ -26,6 +27,7 @@ import {
   type PlanDayOptions,
   type PlanUnit,
   type PrayerAnchor,
+  type RakahCount,
   type Rule,
   type Store,
   type WeekDayStatus,
@@ -102,11 +104,11 @@ export function byBand<T>(items: readonly T[], bandOfItem: (item: T) => DayBand)
 }
 
 /**
- * The inline counter of the reference («2 / 4 صفحات» and «+»): counted habits (pages, times, a number) asked for more
- * than one unit. A minutes habit is ticked whole (one tap logs what is left).
+ * The inline counter «2 / 4» and «+»: the same rule as the web (practice-core `showsInlineCounter`): a `count` habit asked
+ * for more than one unit, not once complete, and not a prayer counted in rak'ahs.
  */
-export function hasCounter(unit: PlanUnit, required: number): boolean {
-  return unit !== 'minutes' && required > 1;
+export function hasCounter(unit: PlanUnit, required: number, complete = false, rakah?: RakahCount): boolean {
+  return showsInlineCounter({ unit }, required, complete, rakah);
 }
 
 // ── The week strip ─────────────────────────────────────────────────────────────────────────────────────────────
@@ -129,9 +131,9 @@ export function stripMark(status: WeekDayStatus): StripMark {
   }
 }
 
-/** Past days open their details; today is the page itself; future days are view-only. */
+/** Today and past days open their details (like the web); future days are plain, non-interactive text. */
 export function stripDayOpens(date: LocalDate, today: LocalDate): boolean {
-  return date < today;
+  return date <= today;
 }
 
 /** How many weeks back the strip may go (about two months: older days are in «سجلّي»). */

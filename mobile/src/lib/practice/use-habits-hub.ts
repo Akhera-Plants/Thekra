@@ -388,7 +388,7 @@ export function useStreak(todayDate: LocalDate): { current: number; longest: num
   }, [store, todayDate, planDays]);
 }
 
-/** The limits (3 young habits, 7 periodic acts, 3 «تخفَّف» programs); periodic acts come from the catalog's templates. */
+/** The limits (3 young habits, 8 periodic acts, 3 «تخفَّف» programs); periodic acts come from the catalog's templates. */
 export function useLimits(todayDate: LocalDate = today()): Limits {
   const locale = useUiLocale();
   const store = usePracticeStore((s) => s.store);

@@ -144,9 +144,14 @@ function WeekTable({ context, reviewDay, onOpenDay }: { context: WirdContext; re
           <span className="px-1 text-sm tabular-nums">
             {formatGregorian(days[0], locale)} – {formatGregorian(days[6], locale)}
           </span>
-          <button type="button" aria-label={t('nextWeek')} disabled={offset >= 0} onClick={() => setOffset((o) => Math.min(0, o + 1))} className={NAV_BUTTON}>
-            <ChevronRight aria-hidden className="size-5 rtl:-scale-x-100" />
-          </button>
+          {offset >= 0 ? (
+            // The current week has no next one: a spacer, not a dead button.
+            <span aria-hidden className="size-11" />
+          ) : (
+            <button type="button" aria-label={t('nextWeek')} onClick={() => setOffset((o) => Math.min(0, o + 1))} className={NAV_BUTTON}>
+              <ChevronRight aria-hidden className="size-5 rtl:-scale-x-100" />
+            </button>
+          )}
         </div>
       </div>
       {rows.length === 0 ? (

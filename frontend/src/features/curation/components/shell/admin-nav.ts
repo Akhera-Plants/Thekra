@@ -9,12 +9,16 @@ import {
   RefreshCcw,
   Scale,
   Tags,
+  Unlink,
+  UsersRound,
 } from 'lucide-react';
 
 export type AdminNavKey =
   | 'overview'
   | 'flags'
   | 'proposals'
+  | 'linkConcerns'
+  | 'circleReports'
   | 'quotes'
   | 'sins'
   | 'goodDeeds'
@@ -34,7 +38,7 @@ export interface AdminNavGroup {
   items: AdminNavItem[];
 }
 
-/** The desk's map. Order = the owner's priority: flags → proposals → texts → system. */
+/** The desk's map. Order = the owner's priority: flags → proposals → flagged links → صحبة reports → texts → system. */
 export const ADMIN_NAV: AdminNavGroup[] = [
   {
     key: 'groupReview',
@@ -42,6 +46,8 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { key: 'overview', href: '/admin', icon: Inbox },
       { key: 'flags', href: '/admin/flags', icon: Flag },
       { key: 'proposals', href: '/admin/linking', icon: Link2 },
+      { key: 'linkConcerns', href: '/admin/link-concerns', icon: Unlink },
+      { key: 'circleReports', href: '/admin/circle-reports', icon: UsersRound },
     ],
   },
   {

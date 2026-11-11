@@ -344,7 +344,7 @@ describe('daily reflections (round 6 §3)', () => {
 describe('completion and milestones (round 6 §2)', () => {
   it('completion counts to 66 kept days, 100 only once «راسخة»; milestones are keys with dates', () => {
     const p = plan('a', { createdOn: '2026-10-01', log: everyDay('2026-10-01', '2026-11-08') });
-    expect(habitCompletion(p, TODAY)).toEqual({ percent: 59, keptDays: 39, targetDays: 66, established: false });
+    expect(habitCompletion(p, TODAY)).toEqual({ percent: 59, keptDays: 39, doneDays: 39, targetDays: 66, established: false });
     expect(habitMilestones(p, TODAY)).toEqual([{ key: 'hardest-passed', on: '2026-10-29' }]);
     expect(shareSuggestion(p, TODAY)).toBeNull();
     expect(shareSuggestion(p, '2026-10-30')?.key).toBe('hardest-passed');
@@ -354,6 +354,19 @@ describe('completion and milestones (round 6 §2)', () => {
     // A habit kept poorly in its first month has not passed the hardest stretch.
     expect(habitMilestones(plan('b', { createdOn: '2026-10-01', log: { '2026-10-02': 10 } }), TODAY)).toEqual([]);
     expect(habitStreak(emptyStore(), p, TODAY, { now: Date.UTC(2026, 10, 9, 10) })).toBe(39);
+  });
+});
+
+describe('completion measures days done, not the habit age (round 8)', () => {
+  it('a habit 21 days old and missed on 7 of them is at 14 of 66, 21%', () => {
+    const log = everyDay('2026-10-19', '2026-11-08');
+    for (const d of ['2026-10-21', '2026-10-24', '2026-10-27', '2026-10-30', '2026-11-02', '2026-11-05', '2026-11-07']) delete log[d];
+    const p = plan('a', { createdOn: '2026-10-19', log });
+    const c = habitCompletion(p, TODAY);
+    expect(c.keptDays).toBe(21);
+    expect(c.doneDays).toBe(14);
+    expect(c.percent).toBe(21);
+    expect(habitCompletion(plan('b', { createdOn: '2026-10-19' }), TODAY).percent).toBe(0);
   });
 });
 
@@ -586,5 +599,17 @@ describe('strategy families (C-18 a, shared by web and app)', () => {
     expect(strategyAppliesToHabit('start-tiny')).toBe(true);
     expect(strategyAppliesToHabit('never-twice')).toBe(false);
     expect(strategyKind('unknown')).toBe('build');
+  });
+});
+
+describe('the inline counter rule shared by web and app (round 8)', () => {
+  it('shows only for a count habit asked more than once, not complete, not a rak‘ah prayer', async () => {
+    const { showsInlineCounter } = await import('../src/index.js');
+    expect(showsInlineCounter({ unit: 'count' }, 4, false)).toBe(true);
+    expect(showsInlineCounter({ unit: 'count' }, 1, false)).toBe(false);
+    expect(showsInlineCounter({ unit: 'count' }, 4, true)).toBe(false);
+    expect(showsInlineCounter({ unit: 'times' }, 4, false)).toBe(false);
+    expect(showsInlineCounter({ unit: 'minutes' }, 10, false)).toBe(false);
+    expect(showsInlineCounter({ unit: 'count' }, 2, false, 'pairs')).toBe(false);
   });
 });

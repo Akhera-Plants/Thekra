@@ -8,28 +8,39 @@
  * `upsertRelative`, `updateRelative`, `deleteRelative`, `undoContact`, `updateSettings`) inside `setStore`, so
  * `updatedAt` and the tombstones that sync needs stay right.
  *
- * Privacy: the sin programs are in this store in clear, on this device only. They leave it only sealed in the
- * vault (vault-runner.ts); sync bodies are built by practice-core `buildSyncRequest`, which has no programs.
- * Never log the store.
+ * Privacy (owner round 8, Q1): the sin programs live in memory in this store, but on the device they are ALWAYS sealed:
+ * AsyncStorage holds them only as `thekra.practice.sin.v1` (practice-core `sealForDevice`, AES-256-GCM under a key made
+ * on this device and kept in the keystore, device-key.ts); the plain store text carries none. Programs an older version
+ * wrote in clear are sealed once at the next start. Sign-out wipes everything (`wipeAll`), the key included. They
+ * leave the device only sealed in the vault (vault-runner.ts); sync bodies are built by practice-core
+ * `buildSyncRequest`, which has no programs. Never log the store.
  */
 
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
+  VaultLockedError,
   emptyHeart,
   emptyStore,
+  openFromDevice,
   parseHeart,
   parseStore,
+  sealForDevice,
   serializeHeart,
   serializeStore,
+  splitPrograms,
   todayFrom,
   updateSettings,
   type HeartData,
+  type SinProgram,
   type Store,
 } from '@thekra/practice-core';
+import { forgetDeviceKey, getDeviceKey } from './device-key';
 import { DEFAULT_PREFS, PREFS_KEY, legacyPrefs, parsePrefs, type PracticePrefs } from './prefs';
 
 export const STORE_KEY = 'thekra.practice.v1';
+/** The sin programs, sealed with the device key (`device-key.ts`). The plain store never carries them. */
+export const SIN_KEY = 'thekra.practice.sin.v1';
 /** «المقامات» (practice-core `HeartData`): «نية اليوم», reviews, pledges. Device-local, never synced. */
 export const HEART_KEY = 'thekra.practice.heart.v1';
 
@@ -77,13 +88,57 @@ interface PracticeState {
   setPrefs: (fn: (p: PracticePrefs) => PracticePrefs) => void;
   /** Removes every sin program, check-in and note from this device now (local part of the wipe). */
   wipePrograms: () => Promise<void>;
+  /**
+   * Sign-out and account deletion: removes everything personal (habits, relatives, programs, reviews, messages, the sealed
+   * copy and its key) and the link to the account. Device preferences stay, except the sin-related ones.
+   */
+  wipeAll: () => Promise<void>;
 }
 
 let writeChain: Promise<void> = Promise.resolve();
+/** Programs written by an older version still sit in clear in the plain store, until they are sealed once. */
+let plainPending = false;
 
 function persist(key: string, value: string): Promise<void> {
   writeChain = writeChain.then(() => AsyncStorage.setItem(key, value)).catch(() => undefined);
   return writeChain;
+}
+
+/** The plain store text: never the programs (unless an old clear copy is still waiting to be sealed). */
+function plainStoreText(store: Store): string {
+  return serializeStore(plainPending ? store : splitPrograms(store).rest);
+}
+
+/** Seals the programs with the device key and stores them (removes the copy when there are none). Never throws. */
+function persistPrograms(programs: readonly SinProgram[]): Promise<void> {
+  writeChain = writeChain
+    .then(async () => {
+      if (programs.length === 0) {
+        await AsyncStorage.removeItem(SIN_KEY);
+        return;
+      }
+      const key = await getDeviceKey(true);
+      if (!key) return;
+      await AsyncStorage.setItem(SIN_KEY, sealForDevice(programs, key));
+    })
+    .catch(() => undefined); // not sealed: the programs stay in memory this session, never written in clear
+  return writeChain;
+}
+
+/** The programs in the sealed copy: [] when there is none, the key is gone or the data is damaged (it is then dropped). */
+async function readSealedPrograms(raw: string | null): Promise<{ programs: SinProgram[]; keep: boolean }> {
+  if (!raw) return { programs: [], keep: false };
+  try {
+    const key = await getDeviceKey(false);
+    if (!key) {
+      await AsyncStorage.removeItem(SIN_KEY);
+      return { programs: [], keep: false };
+    }
+    return { programs: openFromDevice(raw, key), keep: true };
+  } catch (e) {
+    if (e instanceof VaultLockedError || (e instanceof Error && e.name === 'VaultError')) await AsyncStorage.removeItem(SIN_KEY).catch(() => undefined);
+    return { programs: [], keep: false };
+  }
 }
 
 export function today(): string {
@@ -147,12 +202,15 @@ export const usePracticeStore = create<PracticeState>((set, get) => ({
     let prefs = parsePrefs(null);
     let rawPrefs: string | null = null;
     let heart = emptyHeart();
+    let rawSin: string | null = null;
     try {
-      const [rawStore, p, rawHeart] = await Promise.all([
+      const [rawStore, p, rawHeart, sealed] = await Promise.all([
         AsyncStorage.getItem(STORE_KEY),
         AsyncStorage.getItem(PREFS_KEY),
         AsyncStorage.getItem(HEART_KEY),
+        AsyncStorage.getItem(SIN_KEY),
       ]);
+      rawSin = sealed;
       rawPrefs = p;
       if (rawHeart) heart = parseHeart(rawHeart);
       if (rawStore) store = parseStore(rawStore);
@@ -161,9 +219,26 @@ export const usePracticeStore = create<PracticeState>((set, get) => ({
       // Unreadable storage: start empty rather than crash.
     }
     const migrated = migrateLegacy(store, rawPrefs, newPracticeId);
-    set({ hydrated: true, store: migrated.store, prefs, heart });
-    if (migrated.changed) {
-      void persist(STORE_KEY, serializeStore(migrated.store));
+    let next = migrated.store;
+    let rewrite = migrated.changed;
+    if (next.programs.length > 0) {
+      // An older version wrote the programs in clear: seal them now; the clear copy goes only once the sealed one is saved.
+      try {
+        const key = await getDeviceKey(true);
+        if (key) {
+          await AsyncStorage.setItem(SIN_KEY, sealForDevice(next.programs, key));
+          rewrite = true;
+        } else plainPending = true;
+      } catch {
+        plainPending = true; // not sealed: nothing is lost, the next start tries again
+      }
+    } else {
+      const sealed = await readSealedPrograms(rawSin);
+      if (sealed.programs.length > 0) next = { ...next, programs: sealed.programs };
+    }
+    set({ hydrated: true, store: next, prefs, heart });
+    if (rewrite) {
+      void persist(STORE_KEY, plainStoreText(next));
       void persist(PREFS_KEY, JSON.stringify(prefs));
     }
   },
@@ -175,8 +250,10 @@ export const usePracticeStore = create<PracticeState>((set, get) => ({
     } catch {
       return; // an invalid edit (the helpers throw RangeError) changes nothing
     }
+    const before = get().store.programs;
     set({ store: next });
-    void persist(STORE_KEY, serializeStore(next));
+    void persist(STORE_KEY, plainStoreText(next));
+    if (!plainPending && JSON.stringify(before) !== JSON.stringify(next.programs)) void persistPrograms(next.programs);
   },
 
   setHeart: (fn) => {
@@ -201,8 +278,23 @@ export const usePracticeStore = create<PracticeState>((set, get) => ({
     const prefs: PracticePrefs = { ...get().prefs, sinReminders: false, rememberVaultKey: false };
     pendingProgramSlug = null;
     momentSourceSlug = undefined;
+    plainPending = false;
     set({ store: next, prefs });
     await persist(STORE_KEY, serializeStore(next));
     await persist(PREFS_KEY, JSON.stringify(prefs));
+    await persistPrograms([]);
+  },
+
+  wipeAll: async () => {
+    const prefs: PracticePrefs = { ...get().prefs, sinReminders: false, rememberVaultKey: false };
+    pendingProgramSlug = null;
+    momentSourceSlug = undefined;
+    plainPending = false;
+    set({ store: emptyStore(), heart: emptyHeart(), prefs });
+    // A write that was already queued finishes first; then every key goes, and the device key last.
+    await writeChain.catch(() => undefined);
+    await Promise.all([STORE_KEY, HEART_KEY, SIN_KEY].map((k) => AsyncStorage.removeItem(k).catch(() => undefined)));
+    await persist(PREFS_KEY, JSON.stringify(prefs));
+    await forgetDeviceKey();
   },
 }));

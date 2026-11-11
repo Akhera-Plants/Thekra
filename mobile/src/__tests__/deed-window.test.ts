@@ -10,6 +10,7 @@ import {
   isChoiceSuitable,
   offeredAnchors,
   pickerStart,
+  startingSlots,
   suitableDefaults,
   unsuitableChoices,
   windowRange,
@@ -39,6 +40,12 @@ describe('deed windows in the slot editors', () => {
     expect(suitableDefaults(['09:30', '11:00'], DUHA, TIMES)).toEqual(['09:30', '11:00']);
     expect(suitableDefaults(['13:00'], DUHA, TIMES)).toEqual(['06:35']);
     expect(suitableDefaults(['13:00'], undefined, TIMES)).toEqual(['13:00']);
+  });
+
+  it('never starts a new habit with no time (the add screen builds a plan from it on its first render)', () => {
+    expect(startingSlots([], undefined, TIMES)).toEqual(['09:00']);
+    expect(startingSlots(['13:00'], DUHA, TIMES)).toEqual(['06:35']);
+    expect(startingSlots(['09:30'], undefined, TIMES)).toEqual(['09:30']);
   });
 
   it('fixes a plan: drops what does not suit, or puts the suitable defaults back', () => {

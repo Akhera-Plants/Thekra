@@ -14,9 +14,11 @@
 'use client';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { addFavorite, removeFavorite } from '@/lib/api/favorites';
 import { queryKeys } from '@/lib/query-keys';
+import { useRouter } from '@/i18n/navigation';
 import { useSession } from '@/features/auth/hooks/useSession';
 import { ApiError } from '@/lib/types/api';
 
@@ -33,6 +35,8 @@ interface UseToggleFavoriteOptions {
 
 export function useToggleFavorite(options?: UseToggleFavoriteOptions) {
   const { isAuthenticated } = useSession();
+  const router = useRouter();
+  const tAuth = useTranslations('auth');
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -108,7 +112,14 @@ export function useToggleFavorite(options?: UseToggleFavoriteOptions) {
       if (options?.onRequireAuth) {
         options.onRequireAuth();
       } else {
-        toast.info(options?.labels?.authRequired ?? 'سجّل دخولك لحفظ المفضلة');
+        // A notice with its way out: «سجّل الدخول» (owner round 8, item 1), coming back to this page afterwards.
+        const here = `${window.location.pathname}${window.location.search}`;
+        toast.info(options?.labels?.authRequired ?? 'سجّل دخولك لحفظ المفضلة', {
+          action: {
+            label: tAuth('signInNow'),
+            onClick: () => router.push({ pathname: '/login', query: { why: 'bookmark', next: stripLocale(here) } }),
+          },
+        });
       }
       return;
     }
@@ -119,4 +130,9 @@ export function useToggleFavorite(options?: UseToggleFavoriteOptions) {
     toggle,
     isPending: mutation.isPending,
   };
+}
+
+/** The path without its locale prefix (`/en/quotes/1` → `/quotes/1`), the form `?next=` and the router use. */
+function stripLocale(path: string): string {
+  return path.replace(/^\/en(?=\/|$)/, '') || '/';
 }

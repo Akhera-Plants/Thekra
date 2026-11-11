@@ -22,7 +22,6 @@ import type {
   StartRoundInput,
   RedeemInviteResult,
   CreateCircleInput,
-  JoinCircleInput,
   UpdateMembershipInput,
 } from '../types/circles';
 
@@ -42,10 +41,6 @@ export async function fetchCircle(id: string, today: string): Promise<CircleDeta
 
 export async function createCircle(input: CreateCircleInput): Promise<CircleDetail> {
   return (await apiPost<CircleDetail>('/circles', input, noLang)).data;
-}
-
-export async function joinCircle(input: JoinCircleInput): Promise<CircleDetail> {
-  return (await apiPost<CircleDetail>('/circles/join', input, noLang)).data;
 }
 
 export async function updateMembership(id: string, input: UpdateMembershipInput) {
@@ -103,10 +98,6 @@ export async function removeMember(id: string, memberId: string): Promise<void> 
   await apiDelete(`${circlePath(id)}/members/${encodeURIComponent(memberId)}`, noLang);
 }
 
-export async function rotateInviteCode(id: string): Promise<string> {
-  return (await apiPost<{ inviteCode: string }>(`${circlePath(id)}/invite-code`, undefined, noLang)).data.inviteCode;
-}
-
 export async function deleteCircle(id: string): Promise<void> {
   await apiDelete(circlePath(id), noLang);
 }
@@ -153,11 +144,6 @@ function useInvalidateCircles() {
 export function useCreateCircle() {
   const invalidate = useInvalidateCircles();
   return useMutation({ mutationFn: createCircle, onSuccess: invalidate });
-}
-
-export function useJoinCircle() {
-  const invalidate = useInvalidateCircles();
-  return useMutation({ mutationFn: joinCircle, onSuccess: invalidate });
 }
 
 export function useUpdateMembership(id: string) {
@@ -257,11 +243,6 @@ export function useLeaveCircle(id: string) {
 export function useRemoveMember(id: string) {
   const invalidate = useInvalidateCircles();
   return useMutation({ mutationFn: (memberId: string) => removeMember(id, memberId), onSuccess: invalidate });
-}
-
-export function useRotateInviteCode(id: string) {
-  const invalidate = useInvalidateCircles();
-  return useMutation({ mutationFn: () => rotateInviteCode(id), onSuccess: invalidate });
 }
 
 export function useDeleteCircle(id: string) {

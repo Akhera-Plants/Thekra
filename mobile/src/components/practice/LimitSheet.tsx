@@ -1,6 +1,6 @@
 /**
  * The limit sheet (redesign §3; owner round 3, item 16; round 5, F-30 a), shown instead of adding past a limit: why
- * (practice-core `limitBlock`: 3 habits younger than three months; 7 periodic acts; 3 «تخفَّف» programs, or one not yet
+ * (practice-core `limitBlock`: 3 habits younger than three months; 8 periodic acts; 3 «تخفَّف» programs, or one not yet
  * two months old) and the day it unlocks by itself in words («من 3 ديسمبر»), then two actions only, side by side at one
  * size: «أكمل ما عندي» (solid, closes) and «أرشِف …» (pick one; its history stays). The archive IS the old pause (owner
  * round 6): it goes through practice-core `archivePlan`, so its cap of 10 holds here too; with a full archive the second
@@ -108,7 +108,7 @@ export function LimitSheet({ kind, visible, limits, onClose, onFreed }: LimitShe
         <Pressable style={styles.backdrop} onPress={close} accessibilityRole="button" accessibilityLabel={t('common.close')} />
         <View style={[styles.sheet, { paddingBottom: insets.bottom + space.lg }]} accessibilityViewIsModal>
           <Text variant="heading" accessibilityRole="header">
-            {t(`practice.limits.${kind}.title`)}
+            {t(`practice.limits.${kind}.title`, { max: limits[kind].max })}
           </Text>
           {step === 'menu' ? (
             <>

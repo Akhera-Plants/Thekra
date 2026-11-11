@@ -13,7 +13,7 @@ export function StudyReading({ rows, hideCaption }: { rows: ExplanationRow[]; hi
   const [expanded, setExpanded] = useState(false);
 
   if (rows.length === 0) {
-    return <p className="text-sm text-muted-foreground">{t('empty')}</p>;
+    return null;
   }
 
   return (

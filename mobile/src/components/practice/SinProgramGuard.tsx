@@ -2,7 +2,8 @@
  * Opens «تخفَّف» (owner decision 2026-11-01: always encrypted in the account, unlocked on the device). For a member:
  * the key kept behind the fingerprint / face (vault-runner `openWithDevice`), else the privacy code (`VaultCodeUnlock`);
  * the account unreachable → the device lock opens the device copy. Back from the background the device lock is asked
- * again. Always an opaque cover with the app mark while the app is not in the foreground. Screenshots are never blocked
+ * again. Always an opaque cover with the app mark while the app is not in the foreground (the root `AppSwitcherCover` now
+ * does it for every screen; this one stays as the guard's own). Screenshots are never blocked
  * (owner round 3, item 1).
  * `requireAccount` (the program screen): a guest is sent to sign in, since «تخفَّف» lives in the account. Without it
  * («لحظة مجاهدة» from a sin page) a guest sees the page, which then stores nothing.
@@ -11,7 +12,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { AppState, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Check, LockKeyhole, Sprout } from 'lucide-react-native';
+import { Check, LockKeyhole } from 'lucide-react-native';
 import { useRequireSignIn } from '@/lib/auth/require-sign-in';
 import { usePracticeStore } from '@/lib/practice/practice-store';
 import { unlockWithDevice, useAppInForeground } from '@/lib/practice/use-sin-privacy';
@@ -19,17 +20,11 @@ import { openWithDevice } from '@/lib/practice/vault-runner';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { space, useStyles, type Theme } from '@/theme';
 import { BottomSheet, Button, ButtonPair, Icon, Screen, Text } from '@/ui';
+import { PrivacyCover } from './PrivacyCover';
 import { VaultCodeUnlock } from './VaultCard';
 
 const makeStyles = (t: Theme) => ({
   frame: { flex: 1 },
-  cover: {
-    ...StyleSheet.absoluteFill,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    gap: space.sm,
-    backgroundColor: t.colors.background,
-  },
   locked: { flexGrow: 1, justifyContent: 'center' as const },
   lockedBox: { alignItems: 'center' as const, gap: space.lg },
 });
@@ -178,18 +173,6 @@ function LockedState({ onUnlock }: { onUnlock: () => void }) {
       >
         <Text variant="body">{t('sinLock.lockedHint')}</Text>
       </BottomSheet>
-    </View>
-  );
-}
-
-/** Opaque, with the app's mark only: what the app switcher and a passer-by see. */
-function PrivacyCover() {
-  const { t } = useTranslation();
-  const styles = useStyles(makeStyles);
-  return (
-    <View style={styles.cover} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <Icon icon={Sprout} size={40} tone="link" strokeWidth={1.3} />
-      <Text variant="title">{t('app.name')}</Text>
     </View>
   );
 }

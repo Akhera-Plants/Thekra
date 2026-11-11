@@ -52,6 +52,19 @@ export function suitableDefaults(
   return [windowBounds(window, times).from];
 }
 
+/** A plan always needs one time; a habit with neither suggested times nor a window starts at this one. */
+export const FALLBACK_SLOT = '09:00';
+
+/** The times a new habit starts with: its suitable defaults, never an empty list (a plan cannot be built without one). */
+export function startingSlots(
+  defaults: readonly SlotChoice[],
+  window: DeedWindow | undefined,
+  times?: PrayerTimesWithSunrise,
+): SlotChoice[] {
+  const slots = suitableDefaults(defaults, window, times);
+  return slots.length > 0 ? slots : [FALLBACK_SLOT];
+}
+
 /**
  * The slots once the unsuitable ones are taken out («صحّح الأوقات» on the plan screen); when nothing is left, the
  * habit's suitable defaults.

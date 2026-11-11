@@ -1,5 +1,5 @@
 /**
- * «تخفَّف من معصية» chooser (owner, 2026-11-01): every sin of the public list, grouped by its domain (the same
+ * «تخفَّف من ذنب» chooser (owner, 2026-11-01): every sin of the public list, grouped by its domain (the same
  * categories as «المعاصي»), filtered by a folded search. Pure, so it is tested without a browser.
  */
 import { foldArabic, namesMatch } from '@/lib/search/topic-themes';

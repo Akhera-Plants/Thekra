@@ -3,7 +3,8 @@
 /**
  * DashboardView — «ما ينتظرك الآن». One focal band (what needs the reviewer tonight),
  * then the library ledger, then topics that still lack texts.
- * Every number is a real count from an existing endpoint (meta.total of a limit=1 list).
+ * Every number is a real count from an existing endpoint (meta.total of a limit=1 list). A count that could not be
+ * loaded says «تعذّر التحميل» with a retry; it is never shown as zero.
  */
 
 import { useTranslations } from 'next-intl';
@@ -34,7 +35,9 @@ export function DashboardView() {
             value={high.data}
             isLoading={high.isLoading}
             isError={high.isError}
+            onRetry={() => void high.refetch()}
             errorLabel={t('countError')}
+            retryLabel={t('retry')}
             tone="danger"
             href="/admin/flags?severity=HIGH"
             className="rounded-none md:rounded-s-xl"
@@ -45,7 +48,9 @@ export function DashboardView() {
             value={medium.data}
             isLoading={medium.isLoading}
             isError={medium.isError}
+            onRetry={() => void medium.refetch()}
             errorLabel={t('countError')}
+            retryLabel={t('retry')}
             href="/admin/flags?severity=MEDIUM"
             className="rounded-none"
           />
@@ -62,7 +67,12 @@ export function DashboardView() {
             value={(sinLinks.data ?? 0) + (deedLinks.data ?? 0)}
             isLoading={linksLoading}
             isError={linksError}
+            onRetry={() => {
+              void sinLinks.refetch();
+              void deedLinks.refetch();
+            }}
             errorLabel={t('countError')}
+            retryLabel={t('retry')}
             href="/admin/linking"
             className="rounded-none md:rounded-e-xl"
           />

@@ -1324,28 +1324,32 @@ model CircleMute {
 /// hides anything by itself (the reporter's own feed drops a reported message). The names and words are copied at
 /// report time, so the report still reads after a member leaves or a message is gone.
 model CircleReport {
-  id               String           @id @default(uuid())
+  id               String             @id @default(uuid())
   kind             CircleReportKind
   circleId         String?
-  circle           Circle?          @relation(fields: [circleId], references: [id], onDelete: SetNull)
+  circle           Circle?            @relation(fields: [circleId], references: [id], onDelete: SetNull)
   circleName       String
   reporterId       String?
-  reporter         User?            @relation("CircleReportReporter", fields: [reporterId], references: [id], onDelete: SetNull)
+  reporter         User?              @relation("CircleReportReporter", fields: [reporterId], references: [id], onDelete: SetNull)
   reporterName     String
   reportedMemberId String?
-  reportedMember   CircleMember?    @relation(fields: [reportedMemberId], references: [id], onDelete: SetNull)
+  reportedMember   CircleMember?      @relation(fields: [reportedMemberId], references: [id], onDelete: SetNull)
   reportedUserId   String?
-  reportedUser     User?            @relation("CircleReportReported", fields: [reportedUserId], references: [id], onDelete: SetNull)
+  reportedUser     User?              @relation("CircleReportReported", fields: [reportedUserId], references: [id], onDelete: SetNull)
   reportedName     String
   messageId        String?
-  message          CircleMessage?   @relation(fields: [messageId], references: [id], onDelete: SetNull)
+  message          CircleMessage?     @relation(fields: [messageId], references: [id], onDelete: SetNull)
   /// MESSAGE reports: what the message said (`kind`, `key`, round `label`…), as stored.
   messageSnapshot  Json?
   reason           String
   note             String?
-  createdAt        DateTime         @default(now())
+  /// Round 8 (B5): the owner's workflow. OPEN until he marks it handled; nothing is ever removed automatically.
+  status           CircleReportStatus @default(OPEN)
+  handledAt        DateTime?
+  createdAt        DateTime           @default(now())
 
   @@index([createdAt])
+  @@index([status, createdAt])
   @@index([reporterId, createdAt])
   @@index([circleId])
   @@index([reportedMemberId])
@@ -1356,6 +1360,11 @@ model CircleReport {
 enum CircleReportKind {
   MEMBER
   MESSAGE
+}
+
+enum CircleReportStatus {
+  OPEN
+  HANDLED
 }
 
 model Favorite {

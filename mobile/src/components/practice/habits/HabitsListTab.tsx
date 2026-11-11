@@ -49,6 +49,7 @@ import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { planTitleOf } from '@/components/practice/hub/HeartCards';
 import { radius, space, useStyles, useTheme, type Theme } from '@/theme';
+import { LimitSheet } from '@/components/practice/LimitSheet';
 import { ActionMenu, Button, EmptyState, ForwardArrow, Icon, ListRow, Notice, SectionDivider, SectionHeader, Text, toast } from '@/ui';
 import { ArchiveSheet, HabitAddChoiceSheet } from './HabitActions';
 
@@ -229,7 +230,7 @@ function HabitRow({ plan, title, today, inCircle, last, onArchive }: { plan: Pla
             {title}
           </Text>
           <Text variant="caption" tone="muted">
-            {t('habitsHub.habits.completionLine', { percent: completion.percent, kept: Math.min(completion.keptDays, completion.targetDays), target: completion.targetDays })}
+            {t('habitsHub.habits.completionLine', { percent: completion.percent, done: completion.doneDays, target: completion.targetDays })}
           </Text>
           <View style={styles.bar}>
             <View style={[styles.fill, { width: `${completion.percent}%` }]} />
@@ -310,7 +311,17 @@ function ArchiveSection({ plans, today, title }: { plans: Plan[]; today: LocalDa
   const signedIn = useAuthStore((s) => Boolean(s.user));
   const limits = useLimits(today);
   const [open, setOpen] = useState(false);
-  const [limitOpen, setLimitOpen] = useState(false);
+  // The habit waiting for a free place: the limit sheet opens at the tap (archive one to bring this back), then it returns.
+  const [waiting, setWaiting] = useState<Plan | null>(null);
+  function restore(plan: Plan) {
+    let reset = false;
+    setStore((s) => {
+      const r = restorePlanInStore(s, plan.id, today);
+      reset = r.reset;
+      return r.store;
+    });
+    toast(t(restoreToastKey(reset), { habit: title(plan) }));
+  }
   return (
     <View style={styles.section}>
       <Pressable onPress={() => setOpen((v) => !v)} accessibilityRole="button" accessibilityState={{ expanded: open }} style={styles.toggle}>
@@ -344,16 +355,10 @@ function ArchiveSection({ plans, today, title }: { plans: Plan[]; today: LocalDa
                   size="sm"
                   onPress={() => {
                     if (!limits.canAdd('sapling')) {
-                      setLimitOpen(true);
+                      setWaiting(plan);
                       return;
                     }
-                    let reset = false;
-                    setStore((s) => {
-                      const r = restorePlanInStore(s, plan.id, today);
-                      reset = r.reset;
-                      return r.store;
-                    });
-                    toast(t(restoreToastKey(reset), { habit: title(plan) }));
+                    restore(plan);
                   }}
                 />
                 <ActionMenu
@@ -376,7 +381,17 @@ function ArchiveSection({ plans, today, title }: { plans: Plan[]; today: LocalDa
           })}
         </View>
       ) : null}
-      {limitOpen ? <Notice tone="destructive">{t('habitsHub.archive.restoreFull', { max: LIMITS.sapling })}</Notice> : null}
+      <LimitSheet
+        kind="sapling"
+        visible={waiting !== null}
+        limits={limits}
+        onClose={() => setWaiting(null)}
+        onFreed={() => {
+          const plan = waiting;
+          setWaiting(null);
+          if (plan) restore(plan);
+        }}
+      />
     </View>
   );
 }

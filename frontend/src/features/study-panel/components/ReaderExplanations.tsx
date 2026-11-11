@@ -26,6 +26,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export function ReaderExplanations({ quoteId, linkId, isHadith }: { quoteId: string; linkId: string | null; isHadith: boolean }) {
   const t = useTranslations('reader');
   const tTabs = useTranslations('studyPanel.tabs');
+  const tStudy = useTranslations('studyPanel');
   const lang = useLocale() === 'en' ? 'en' : 'ar';
   const link = linkId && UUID.test(linkId) ? linkId : null;
   const panelId = useId();
@@ -86,6 +87,18 @@ export function ReaderExplanations({ quoteId, linkId, isHadith }: { quoteId: str
             <p className="text-sm text-muted-foreground">{t('angleNote')}</p>
             {/* «أبلغ عن خطأ» under the line (C-01n), for every text: the report endpoint takes any type. */}
             <ReportMistakeButton quoteId={quoteId} className="self-start" />
+          </section>
+        </>
+      ) : null}
+
+      {sections.length === 0 ? (
+        <>
+          <SectionDivider />
+          <section aria-labelledby="reader-explain" className="flex flex-col gap-2">
+            <h2 id="reader-explain" className="text-xl font-medium">
+              {isHadith ? t('sharhTitle') : t('tafsirTitle')}
+            </h2>
+            <p className="text-base text-muted-foreground">{isHadith ? tStudy('emptySharh') : tStudy('emptyTafsir')}</p>
           </section>
         </>
       ) : null}

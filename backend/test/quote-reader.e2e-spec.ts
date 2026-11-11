@@ -106,7 +106,7 @@ describe('Quote reader (e2e)', () => {
     await http().get('/v1/admin/link-concerns').set(user).expect(403);
     expect((await http().get('/v1/admin/link-concerns').set(admin).expect(200)).body).toEqual({
       data: [],
-      meta: { counts: { sin: 0, 'good-deed': 0, branch: 0 }, limitPerKind: 100 },
+      meta: { counts: { sin: 0, 'good-deed': 0, branch: 0 }, limitPerKind: 100, offset: 0, total: 0, topics: [] },
     });
     await http().patch(`/v1/admin/sin-quotes/${linkId}`).set(admin).send({ concern: 'SOMETHING' }).expect(400);
     await http().patch(`/v1/admin/sin-quotes/${linkId}`).set(admin).send({ concern: 'NO_REAL_LINK', concernNote: 'الآية في الظن لا في الغيبة؟' }).expect(200);
@@ -133,5 +133,61 @@ describe('Quote reader (e2e)', () => {
     const row = await prisma.sinQuote.findUniqueOrThrow({ where: { id: linkId } });
     expect(row).toMatchObject({ concern: null, concernAt: null });
     expect((await http().get('/v1/admin/link-concerns').set(admin).expect(200)).body.data).toEqual([]);
+  });
+
+  it('link concerns: paging with offset, a topic filter, the pending / hidden decision, and the topic list', async () => {
+    const links = await prisma.sinQuote.findMany({ orderBy: { id: 'asc' }, take: 5, select: { id: true, sinId: true } });
+    expect(links.length).toBe(5);
+    for (const [i, l] of links.entries()) {
+      await http().patch(`/v1/admin/sin-quotes/${l.id}`).set(admin).send({ concern: 'NO_REAL_LINK', concernNote: `n${i}` }).expect(200);
+    }
+    const url = '/v1/admin/link-concerns?kind=sin';
+    const first = (await http().get(`${url}&limit=2`).set(admin).expect(200)).body;
+    const second = (await http().get(`${url}&limit=2&offset=2`).set(admin).expect(200)).body;
+    const third = (await http().get(`${url}&limit=2&offset=4`).set(admin).expect(200)).body;
+    expect([first, second, third].map((b) => b.data.length)).toEqual([2, 2, 1]);
+    const ids = [...first.data, ...second.data, ...third.data].map((r: { linkId: string }) => r.linkId);
+    expect(new Set(ids).size).toBe(5);
+    expect(first.meta).toMatchObject({ total: 5, offset: 0, counts: { sin: 5 } });
+    expect((await http().get('/v1/admin/link-concerns?kind=branch').set(admin).expect(200)).body.meta.counts).toEqual({ sin: 5, 'good-deed': 0, branch: 0 });
+    expect(second.meta.offset).toBe(2);
+    expect(first.meta.topics.reduce((n: number, t: { count: number }) => n + t.count, 0)).toBe(5);
+
+    // Topic filter (needs a kind).
+    const topicId = first.meta.topics[0].id as string;
+    const one = (await http().get(`${url}&topicId=${topicId}`).set(admin).expect(200)).body;
+    expect(one.data.every((r: { topic: { id: string } }) => r.topic.id === topicId)).toBe(true);
+    expect(one.meta.total).toBe(first.meta.topics[0].count);
+    await http().get(`/v1/admin/link-concerns?topicId=${topicId}`).set(admin).expect(400);
+    await http().get(`${url}&topicId=nope`).set(admin).expect(400);
+    await http().get(`${url}&offset=-1`).set(admin).expect(400);
+    await http().get(`${url}&decision=maybe`).set(admin).expect(400);
+
+    // «اخفِ الربط»: rejected link keeps its concern and moves to the hidden list; «أبقِ الربط» clears it.
+    const [hide, keep] = [links[0]!.id, links[1]!.id];
+    await http().patch(`/v1/admin/sin-quotes/${hide}`).set(admin).send({ reviewStatus: 'REJECTED' }).expect(200);
+    await http().patch(`/v1/admin/sin-quotes/${keep}`).set(admin).send({ reviewStatus: 'ACCEPTED', concern: null }).expect(200);
+    const pending = (await http().get(`${url}&decision=pending`).set(admin).expect(200)).body;
+    const hidden = (await http().get(`${url}&decision=hidden`).set(admin).expect(200)).body;
+    expect(pending.meta.counts.sin).toBe(3);
+    expect(hidden.data.map((r: { linkId: string }) => r.linkId)).toEqual([hide]);
+    expect(hidden.meta.counts.sin).toBe(1);
+    expect(pending.data.map((r: { linkId: string }) => r.linkId)).not.toContain(hide);
+    expect(pending.data.map((r: { linkId: string }) => r.linkId)).not.toContain(keep);
+  });
+
+  it('GET /v1/admin/quotes/ledger: graded and unlinked counts per source in one call (admin only)', async () => {
+    await http().get('/v1/admin/quotes/ledger').expect(401);
+    const user = await userAuthHeaders(app);
+    await http().get('/v1/admin/quotes/ledger').set(user).expect(403);
+    const res = await http().get('/v1/admin/quotes/ledger').set(admin).expect(200);
+    expect(res.body.data.length).toBeGreaterThan(0);
+    for (const row of res.body.data) expect(row).toEqual({ sourceId: expect.any(String), graded: expect.any(Number), unlinked: expect.any(Number) });
+    // Same numbers the per-source list requests give.
+    const row = res.body.data[0] as { sourceId: string; graded: number; unlinked: number };
+    const graded = await http().get(`/v1/admin/quotes?sourceId=${row.sourceId}&grades=SAHIH&grades=HASAN&grades=DAIF&limit=1`).set(admin).expect(200);
+    const unlinked = await http().get(`/v1/admin/quotes?sourceId=${row.sourceId}&unlinkedOnly=true&limit=1`).set(admin).expect(200);
+    expect(graded.body.meta.total).toBe(row.graded);
+    expect(unlinked.body.meta.total).toBe(row.unlinked);
   });
 });

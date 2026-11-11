@@ -772,6 +772,33 @@ export class QuotesService {
 
   // ─── Admin CRUD ───────────────────────────────────────────────────────────────
 
+  /**
+   * GET /admin/library-ledger: per source, how many texts are graded (صحيح، حسن، ضعيف) and how many have no topic link.
+   * The same two numbers the dashboard used to fetch with two list requests per source; here two grouped counts.
+   */
+  async adminLibraryLedger(): Promise<{ data: Array<{ sourceId: string; graded: number; unlinked: number }> }> {
+    const [graded, unlinked] = await Promise.all([
+      this.prisma.quote.groupBy({
+        by: ['sourceId'],
+        where: GradePolicy.whereClause(['SAHIH', 'HASAN', 'DAIF']),
+        _count: { _all: true },
+      }),
+      this.prisma.quote.groupBy({
+        by: ['sourceId'],
+        where: { sinLinks: { none: {} }, goodDeedLinks: { none: {} } },
+        _count: { _all: true },
+      }),
+    ]);
+    const gradedBy = new Map(graded.map((g) => [g.sourceId, g._count._all]));
+    const unlinkedBy = new Map(unlinked.map((g) => [g.sourceId, g._count._all]));
+    const ids = new Set([...gradedBy.keys(), ...unlinkedBy.keys()]);
+    return {
+      data: [...ids]
+        .filter((id): id is string => id !== null)
+        .map((sourceId) => ({ sourceId, graded: gradedBy.get(sourceId) ?? 0, unlinked: unlinkedBy.get(sourceId) ?? 0 })),
+    };
+  }
+
   async adminSearch(query: AdminQuotesQueryDto) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;

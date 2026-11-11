@@ -10,7 +10,6 @@ import { Prisma, UserRole, type CircleMember } from '@prisma/client';
 import { addDays, diffDays, eachDay, isValidDate, type LocalDate } from '@thekra/practice-core';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type { CreateCircleDto } from './dto/create-circle.dto.js';
-import type { JoinCircleDto } from './dto/join-circle.dto.js';
 import type { UpdateMembershipDto } from './dto/update-membership.dto.js';
 import { isRoundClosed, ROUND_MAX_OPEN_MS, roundInclude, toRoundDto } from './companion-view.js';
 import type { CircleDetailDto, CircleSummaryDto } from './entities/circle.entity.js';
@@ -120,21 +119,6 @@ export class CirclesService {
   }
 
   /**
-   * Joining with a circle's own code needs صحبة to be on (a personal invite turns it on: circle-invites.service.ts).
-   * Joining a circle one already belongs to answers that circle (a second tap on the link is harmless).
-   */
-  async join(userId: string, dto: JoinCircleDto, now = new Date()): Promise<CircleDetailDto> {
-    await this.assertEnabled(userId);
-    const inviteCode = normalizeInviteCode(dto.code);
-    await this.deleteEmptyCircles();
-    const circle = await this.prisma.circle.findUnique({ where: { inviteCode }, select: { id: true } });
-    if (!circle) throw new NotFoundException({ code: 'CIRCLE_INVITE_INVALID', message: 'This invite code is not valid' });
-
-    await this.prisma.$transaction((tx) => this.addMember(tx, circle.id, userId, dto.displayName));
-    return this.findOne(userId, circle.id, undefined, now);
-  }
-
-  /**
    * Adds `userId` to the circle inside the caller's transaction; a no-op for a member. Throws CIRCLE_FULL or
    * CIRCLE_LIMIT_REACHED (409).
    */
@@ -187,7 +171,6 @@ export class CirclesService {
       intention: circle.intention,
       memberCount: circle.members.length,
       maxMembers: CIRCLE_MAX_MEMBERS,
-      inviteCode: me.isOwner ? circle.inviteCode : null,
       me: { memberId: me.id, displayName: me.displayName, isOwner: me.isOwner, sharesPresence: me.sharesPresence },
       days,
       members: circle.members.map((m) => ({
@@ -256,13 +239,6 @@ export class CirclesService {
     }
     const { count } = await this.prisma.circleMember.deleteMany({ where: { id: memberId, circleId } });
     if (count === 0) throw new NotFoundException({ code: 'CIRCLE_MEMBER_NOT_FOUND', message: 'Member not found' });
-  }
-
-  async rotateInviteCode(userId: string, circleId: string): Promise<{ inviteCode: string }> {
-    await this.ownerOf(userId, circleId);
-    return this.withFreshCode((inviteCode) =>
-      this.prisma.circle.update({ where: { id: circleId }, data: { inviteCode }, select: { inviteCode: true } }),
-    );
   }
 
   async deleteCircle(userId: string, circleId: string): Promise<void> {

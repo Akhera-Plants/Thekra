@@ -6,7 +6,7 @@
  * details (practice-core `looksLikeContactDetails` through kinship-form.ts). Top to bottom: «هذا الأسبوع» (everyone due
  * or overdue, from every list), then one section per list — الأقارب، الوالدان، الجيران، الأصدقاء، المرضى — each with
  * «أضف» on its title line. A row has «تواصلت معه» («تراجع» in the toast); its «⋯» holds «عدّل» (the form in a sheet)
- * and «احذف» (confirmed there). The act counts once toward the 7 periodic acts (practice-core `periodicActKeyOf`).
+ * and «احذف» (confirmed there). The act counts once toward the 8 periodic acts (practice-core `periodicActKeyOf`).
  * `?circle=` and `?add=1` open that list's form at once.
  */
 

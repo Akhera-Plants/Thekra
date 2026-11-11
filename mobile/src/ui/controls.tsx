@@ -248,14 +248,22 @@ export function SwitchRow({
   const styles = useStyles(makeStyles);
   return (
     <View style={styles.switchRow}>
-      <View style={styles.flex}>
+      {/* The words toggle it too (owner round 8, item 7); the switch beside them stays the one accessible control. */}
+      <Pressable
+        style={styles.flex}
+        onPress={() => {
+          if (!disabled) onValueChange(!value);
+        }}
+        accessible={false}
+        importantForAccessibility="no"
+      >
         <Text variant="body">{label}</Text>
         {hint ? (
           <Text variant="caption" tone="muted">
             {hint}
           </Text>
         ) : null}
-      </View>
+      </Pressable>
       <Toggle value={value} onValueChange={onValueChange} disabled={disabled} label={label} />
     </View>
   );

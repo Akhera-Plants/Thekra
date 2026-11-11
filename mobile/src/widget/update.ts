@@ -25,3 +25,13 @@ export async function saveWidgetSnapshot(snapshot: WidgetSnapshot): Promise<void
     last = '';
   }
 }
+
+/** Sign-out: the habits on the home-screen widget are removed with the rest of the account's data on the device. */
+export async function clearWidgetSnapshot(): Promise<void> {
+  last = '';
+  try {
+    await AsyncStorage.removeItem(WIDGET_SNAPSHOT_KEY);
+  } catch {
+    // Nothing stored.
+  }
+}

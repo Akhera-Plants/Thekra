@@ -15,10 +15,12 @@
  *   in `pending` and is retried on the next refresh (foreground, sign-in, practice sync) and the next change.
  * - The lifecycle refresh (`refreshVault`) never reads the keystore (that would ask for the fingerprint at every
  *   foreground): it learns whether a vault exists, merges and saves while the key is in memory.
- * - Sign-out clears the kept key and the local programs; «ابدأ من جديد» also DELETEs the vault.
+ * - Sign-out locks the vault and clears the kept key; the device copy of the programs is wiped with the rest of the
+ *   practice data (`usePracticeStore.wipeAll`, owner round 8, Q1); «ابدأ من جديد» also DELETEs the vault.
  * - Round 7 (C6, owner): the code is optional. A member who skips it keeps the programs on this device only (status
- *   `none`): they are never sent (the practice sync refuses programs; nothing is sealed without a key) and never wiped
- *   on sign-out. Setting the code later (`createVaultWithCode`) seals them into the account.
+ *   `none`): they are never sent (the practice sync refuses programs; nothing is sealed without a key), and sealed on the
+ *   device (round 8, Q1). Sign-out removes them, after a warning. Setting the code later (`createVaultWithCode`) seals
+ *   them into the account.
  * Never logs anything from the programs, the code or the key.
  */
 
@@ -357,17 +359,15 @@ export async function unlockWithCode(userId: string, code: string): Promise<stri
 }
 
 /**
- * Sign-out: drops the in-memory key, the kept key and the device copy of the programs (the account keeps the vault).
- * A change not saved to the account yet (`pending`, e.g. offline) keeps the device copy, so nothing is lost.
+ * Sign-out: drops the in-memory key and the kept key (the account keeps the vault). The device copy of the programs is
+ * removed by the caller with everything else (`usePracticeStore.wipeAll`), whether or not it was saved: the caller
+ * warned about an unsaved one first (`sign-out.ts`).
  */
 export async function lockVault(): Promise<void> {
   session = null;
   lastRemote = null;
   await forgetKeptKey();
-  const { pending, status } = useVaultState.getState();
-  // Round 7 (C6): programs started without a privacy code exist only on this device (`none`): never wiped here.
-  if (!pending && status !== 'none') await usePracticeStore.getState().wipePrograms();
-  useVaultState.setState({ status: 'unknown', error: null, pending });
+  useVaultState.setState({ status: 'unknown', error: null, pending: false });
 }
 
 /**

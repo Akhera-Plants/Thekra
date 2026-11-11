@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/sidebar';
 import { useSession } from '@/features/auth/hooks/useSession';
 import { Link, usePathname, useRouter } from '@/i18n/navigation';
+import { useOpenCircleReportCount } from '../../hooks/useAdminCircleReports';
 import { useFlagCount } from '../../hooks/useAdminReview';
 import { formatCount } from '../kit/format';
 import { ADMIN_NAV, isActiveHref } from './admin-nav';
@@ -42,6 +43,7 @@ export function AdminSidebar() {
   const locale = useLocale();
   const pathname = usePathname();
   const highOpen = useFlagCount({ status: 'OPEN', severity: 'HIGH' });
+  const reportsOpen = useOpenCircleReportCount();
 
   return (
     <Sidebar side={locale === 'ar' ? 'right' : 'left'} collapsible="offcanvas">
@@ -64,6 +66,7 @@ export function AdminSidebar() {
                   {group.items.map((item) => {
                     const active = isActiveHref(pathname, item.href);
                     const showHigh = item.key === 'flags' && (highOpen.data ?? 0) > 0;
+                    const showReports = item.key === 'circleReports' && (reportsOpen.data ?? 0) > 0;
                     return (
                       <SidebarMenuItem key={item.key}>
                         <SidebarMenuButton asChild isActive={active}>
@@ -78,6 +81,11 @@ export function AdminSidebar() {
                             aria-label={t('highOpen', { count: highOpen.data ?? 0 })}
                           >
                             {formatCount(highOpen.data ?? 0)}
+                          </SidebarMenuBadge>
+                        ) : null}
+                        {showReports ? (
+                          <SidebarMenuBadge aria-label={t('reportsOpen', { count: reportsOpen.data ?? 0 })}>
+                            {formatCount(reportsOpen.data ?? 0)}
                           </SidebarMenuBadge>
                         ) : null}
                       </SidebarMenuItem>
@@ -124,7 +132,10 @@ function UserMenu() {
   const initial = name.trim().charAt(0).toUpperCase() || '·';
 
   async function logout() {
-    await clearSession();
+    if ((await clearSession()) === 'unsynced') {
+      toast.warning(tAuth('logoutUnsynced'));
+      return;
+    }
     toast.success(tAuth('logoutSuccess'));
     router.push('/');
   }

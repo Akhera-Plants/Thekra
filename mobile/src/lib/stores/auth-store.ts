@@ -101,12 +101,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   clearSession: async () => {
     setAccessToken(null);
     await clearRefreshToken();
-    // Forget the account link of the practice sync and lock the sin vault (in-memory key, kept key and the device copy
-    // of «تخفَّف», which the account keeps encrypted); the other practice data on this device is kept (local-first).
+    // The practice data of this account leaves the device (owner round 8): habits, programs (the sealed copy and its key),
+    // reviews, messages, the widget's snapshot, and the link to the account. The next account starts clean and can never
+    // see or upload it. The account keeps its own copy (synced, and the sin vault encrypted); the vault key is forgotten.
     const { clearSyncMeta } = await import('../practice/sync-runner');
     const { lockVault } = await import('../practice/vault-runner');
+    const { usePracticeStore } = await import('../practice/practice-store');
+    const { clearWidgetSnapshot } = await import('../../widget/update');
     await clearSyncMeta();
     await lockVault();
+    await usePracticeStore.getState().wipeAll();
+    await clearWidgetSnapshot();
     set({ user: null, isLoading: false, error: null });
   },
 

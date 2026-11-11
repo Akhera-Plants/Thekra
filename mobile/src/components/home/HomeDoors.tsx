@@ -1,6 +1,6 @@
 /**
  * «أبواب الخير» on the home page (owner round 6, C-06; docs/plan/2026-11-09-owner-round-6.md §8): the reference's
- * three doors and their drawings — a leaf for «أعنّي على فعل طاعة», an arched doorway for «تخفَّف من معصية», an open
+ * three doors and their drawings — a leaf for «أعنّي على فعل طاعة», an arched doorway for «تخفَّف من ذنب», an open
  * book for «شُعَب الإيمان» — redrawn here as react-native-svg line art (the same paths as the reference, viewBox
  * 240 × 260), behind the words in the card's inline-end corner and cut by its edge; mirrored in English.
  *

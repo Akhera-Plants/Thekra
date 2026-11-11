@@ -20,7 +20,10 @@ export function AccountSection({ user }: AccountSectionProps) {
   const { clearSession } = useSession();
 
   async function handleLogout() {
-    await clearSession();
+    if ((await clearSession()) === 'unsynced') {
+      toast.warning(tAuth('logoutUnsynced'));
+      return;
+    }
     toast.success(tAuth('logoutSuccess'));
     router.push('/');
   }

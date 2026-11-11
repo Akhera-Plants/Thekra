@@ -7,13 +7,16 @@
  * - Merge rules, versions and tombstones are practice-core's; this file only moves bodies.
  * - The sync body never contains the sin program: practice-core builds it from plans, relatives and settings
  *   only, and `assertNoPrograms` re-checks every body before it leaves.
- * - Another account on this device: the sync bookkeeping (`store.sync`) is reset so everything is pushed again.
+ * - Another account on this device (a sign-out that did not finish): that copy is wiped first, never shown to and never
+ *   uploaded into the new account. A copy linked to no account (a guest's own) is adopted: its bookkeeping is reset so
+ *   everything is pushed once. Sign-out itself wipes the device (`usePracticeStore.wipeAll`), so the next account
+ *   normally starts empty.
  * - Single-flight; never throws; offline is a normal state. Status for Settings in `useSyncStatus`.
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
-import { applyServerChanges, buildSyncRequest, countChanges, localChanges, type SyncResponse } from '@thekra/practice-core';
+import { applyServerChanges, buildSyncRequest, countChanges, localChanges, ownerRelation, type SyncResponse } from '@thekra/practice-core';
 import { getPracticeChanges, postPracticeSync } from '../api/practice';
 import { ApiError } from '../types/api';
 import { usePracticeStore } from './practice-store';
@@ -54,7 +57,7 @@ async function loadAccount(): Promise<string | null> {
   }
 }
 
-/** Forgets which account this device synced with (sign-out, account deletion). Local data is kept. */
+/** Forgets which account this device synced with (sign-out, account deletion: the data is wiped with it). */
 export async function clearSyncMeta(): Promise<void> {
   try {
     await AsyncStorage.removeItem(SYNC_META_KEY);
@@ -64,7 +67,11 @@ export async function clearSyncMeta(): Promise<void> {
 }
 
 async function ensureAccount(userId: string): Promise<void> {
-  if ((await loadAccount()) === userId) return;
+  const owner = await loadAccount();
+  const relation = ownerRelation(owner, userId);
+  if (relation === 'same') return;
+  // Another account's copy must not be shown to, or uploaded into, this account.
+  if (relation === 'other') await usePracticeStore.getState().wipeAll();
   // New account for this device: the server holds none of our items yet.
   usePracticeStore.getState().setStore((s) => ({ ...s, sync: { lastSyncedAt: null, acked: {} } }));
   await AsyncStorage.setItem(SYNC_META_KEY, JSON.stringify({ userId }));

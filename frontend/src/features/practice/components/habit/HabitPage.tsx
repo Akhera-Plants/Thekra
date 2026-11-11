@@ -380,8 +380,8 @@ function FollowTab({ plan, context }: { plan: Plan; context: WirdContext }) {
         </p>
         <p className="text-sm leading-7 text-muted-foreground">
           {completion.keptDays >= completion.targetDays
-            ? t('keptDaysReady', { n: formatDigits(completion.keptDays) })
-            : t('keptDays', { n: formatDigits(completion.keptDays), target: formatDigits(completion.targetDays) })}
+            ? t('keptDaysReady', { n: formatDigits(completion.doneDays) })
+            : t('keptDays', { n: formatDigits(completion.doneDays), target: formatDigits(completion.targetDays) })}
         </p>
         {milestones.length > 0 ? (
           <ul className="flex flex-wrap gap-2">

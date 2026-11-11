@@ -9,7 +9,7 @@
  */
 
 import React from 'react';
-import { Stack } from 'expo-router';
+import { Stack, usePathname } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useRequireSignIn } from '@/lib/auth/require-sign-in';
 import { useStackScreenOptions } from '@/ui';
@@ -20,7 +20,9 @@ export default function PracticeLayout() {
   const { t } = useTranslation();
   const options = useStackScreenOptions();
   // Members only (owner, 2026-11-01): a guest who reaches a practice screen by a link or a notification signs in first.
-  const signedIn = useRequireSignIn('/habits');
+  // The sign-in keeps the screen the guest asked for («لحظة مجاهدة», «تخفَّف»…), not always «عاداتي» (owner round 8, item 1).
+  const pathname = usePathname();
+  const signedIn = useRequireSignIn(pathname.startsWith('/practice/') ? pathname : '/habits');
   if (!signedIn) return null;
   return (
     <Stack screenOptions={options}>

@@ -122,5 +122,9 @@ export const queryKeys = {
     count: (scope: string, p: object) => ['admin', 'review', 'count', scope, p] as const,
     proposals: (kind: string, p: object) => ['admin', 'review', 'proposals', kind, p] as const,
     publicState: (quoteId: string) => ['admin', 'review', 'public-state', quoteId] as const,
+    ledger: ['admin', 'review', 'ledger'] as const,
+    circleReports: (p: object) => ['admin', 'review', 'circle-reports', p] as const,
+    circleReportsOpen: ['admin', 'review', 'circle-reports', 'open-count'] as const,
+    linkConcerns: (p: object) => ['admin', 'review', 'link-concerns', p] as const,
   },
 } as const;

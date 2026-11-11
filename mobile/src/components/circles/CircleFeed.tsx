@@ -2,7 +2,7 @@
  * «رسائل الصحبة» (owner round 7, D7: «مكان يظهر فيه وكأنه شات … مع القدرة على النسخ … والاحتفاظ برسالة معينة»): a
  * chat-like panel inside the صحبة page. Newest at the bottom, cut into days, each line with its sender (or on the
  * other side when it is mine), whom it went to and its time. A round shows its state and, for the others, the
- * preset encouragement (while it runs or after «لم يتم») or congratulations (after «تم»). Tapping a line opens its
+ * preset encouragement (while it runs or after «لم يتم») or congratulations (after «تم»). Each line ends with «⋯»; tapping a line opens its
  * options: copy, «احتفظ بها», and for someone else's line: report it, report the member, hide their messages.
  * «المحفوظة» shows only the kept ones. Pages of 30 («رسائل أقدم» at the top); the panel polls while it is open.
  */
@@ -11,11 +11,11 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Pressable, ScrollView, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { useTranslation } from 'react-i18next';
-import { Bookmark, BookmarkMinus, BookmarkPlus, CircleCheck, CircleSlash, Copy, EyeOff, Flag, MessageCircle, Timer, UserX } from 'lucide-react-native';
+import { Bookmark, BookmarkMinus, BookmarkPlus, CircleCheck, CircleSlash, Copy, Ellipsis, EyeOff, Flag, MessageCircle, Timer, UserX } from 'lucide-react-native';
 import { addDays, weekday } from '@thekra/practice-core';
 import { useDisplayTime } from '@/components/practice/editors';
 import { useCircleMessages, useKeepMessage, useMuteMember, useReplyToRound } from '@/lib/api/circles';
-import { circleErrorKey, groupByDay, messageText, roundLine } from '@/lib/circles/circle-view';
+import { circleErrorKey, groupByDay, messageText, roundLine, withoutRepeatedRoundEnds } from '@/lib/circles/circle-view';
 import { nowTime, shortDate } from '@/lib/practice/format';
 import { today } from '@/lib/practice/practice-store';
 import { ROUND_CHEERS, ROUND_CONGRATS, type CircleDetail, type CircleMessage, type RoundReplyKey } from '@/lib/types/circles';
@@ -59,6 +59,7 @@ const makeStyles = (t: Theme) => ({
   bubbleMine: { backgroundColor: t.colors.primarySoft, borderColor: 'transparent' },
   bubblePressed: { opacity: 0.8 },
   meta: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.xs, flexWrap: 'wrap' as const },
+  metaSpacer: { flex: 1 },
   line: { flexDirection: 'row' as const, alignItems: 'flex-start' as const, gap: space.sm },
   state: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 4 },
   older: { alignSelf: 'center' as const, marginBottom: space.sm },
@@ -164,6 +165,9 @@ function Bubble({
             <Text variant="caption" tone="muted" accessibilityLabel={m.saved ? `${time}. ${t('circles.feed.keptA11y')}` : time}>
               {time}
             </Text>
+            {/* The cue that a line has options (the same «⋯» as the menus); the Pressable above carries the hint for screen readers. */}
+            <View style={styles.metaSpacer} />
+            <Icon icon={Ellipsis} size={16} tone="muted" />
           </View>
         </Pressable>
         {keys.length > 0 && m.round ? (
@@ -271,7 +275,11 @@ export function CircleFeed({
   const [open, setOpen] = useState<CircleMessage | null>(null);
   const scroll = useRef<ScrollView>(null);
   const atBottom = useRef(true);
-  const items = useMemo(() => feed.data?.pages.flatMap((p) => p.items) ?? [], [feed.data]);
+  const items = useMemo(() => {
+    const all = feed.data?.pages.flatMap((p) => p.items) ?? [];
+    // «المحفوظة» lists what was kept as it is; the whole feed shows one entry per round.
+    return saved ? all : withoutRepeatedRoundEnds(all);
+  }, [feed.data, saved]);
   const days = useMemo(() => groupByDay(items), [items]);
   const newest = items[0]?.id;
 

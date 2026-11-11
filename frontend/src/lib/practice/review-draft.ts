@@ -7,6 +7,11 @@ import { useCallback, useState } from 'react';
 
 const drafts = new Map<string, unknown>();
 
+/** Sign-out: nothing typed in a review stays for the next person. */
+export function clearReviewDrafts(): void {
+  drafts.clear();
+}
+
 export function useReviewDraft<T extends object>(key: string, initial: T): { draft: T; patch: (change: Partial<T>) => void; clear: () => void } {
   const [draft, setDraft] = useState<T>(() => ({ ...initial, ...((drafts.get(key) as Partial<T> | undefined) ?? {}) }));
   const patch = useCallback(

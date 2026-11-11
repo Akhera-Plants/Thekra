@@ -9,7 +9,7 @@ import React, { useCallback, useState } from 'react';
 import { View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Eye, EyeOff, Flag, LogOut, Trash2, UserX } from 'lucide-react-native';
+import { Ellipsis, Eye, EyeOff, Flag, LogOut, Trash2, UserX } from 'lucide-react-native';
 import { CircleDetailSkeleton, CirclesSignedOut } from '@/components/circles/CircleStates';
 import { ReportSheet, type ReportTarget } from '@/components/circles/ReportSheet';
 import {
@@ -32,6 +32,7 @@ import {
   ErrorState,
   ErrorText,
   Field,
+  Icon,
   ListRow,
   PageHeader,
   Screen,
@@ -136,14 +137,20 @@ function MemberRow({
         ]
       : []),
   ];
+  const [menuOpen, setMenuOpen] = useState(false);
   const hint = [member.isOwner ? t('circles.owner') : null, isMuted ? t('circles.mutedHint') : null].filter(Boolean).join(' · ');
   return (
-    <ListRow
-      title={name}
-      hint={hint || undefined}
-      last={last}
-      trailing={<ActionMenu label={t('circles.memberActions', { name })} items={items} />}
-    />
+    // The whole row opens the member's options (it used to look tappable and only its «⋯» worked); the «⋯» stays as the cue.
+    <>
+      <ListRow
+        title={name}
+        hint={hint || undefined}
+        last={last}
+        onPress={() => setMenuOpen(true)}
+        trailing={<Icon icon={Ellipsis} size={22} tone="muted" />}
+      />
+      <ActionMenu label={t('circles.memberActions', { name })} items={items} open={menuOpen} onOpenChange={setMenuOpen} hideTrigger />
+    </>
   );
 }
 

@@ -72,6 +72,7 @@ const makeStyles = (t: Theme) => ({
   streakRow: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.sm },
   num: { fontVariant: ['tabular-nums' as const] },
   grow: { flex: 1, minWidth: 0 },
+  navSpacer: { width: 44, height: 44 },
   weekNav: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.sm },
   table: { borderWidth: 1, borderColor: t.colors.border, borderRadius: radius.card, backgroundColor: t.colors.card, paddingVertical: space.xs },
   tr: { flexDirection: 'row' as const, alignItems: 'center' as const, minHeight: 56, paddingHorizontal: space.sm, borderBottomWidth: 1, borderBottomColor: t.colors.border },
@@ -159,7 +160,12 @@ function WeekPart({ today, onOpenDay }: { today: LocalDate; onOpenDay: (d: Local
             {range}
           </Text>
         </View>
-        <IconButton icon={locale === 'ar' ? ChevronLeft : ChevronRight} label={t('habitsHub.week.next')} onPress={() => setOffset((o) => Math.min(0, o + 1))} disabled={offset >= 0} />
+        {/* The current week has no next one: a plain spacer, not a dead button (the layout keeps its centre). */}
+        {offset >= 0 ? (
+          <View style={styles.navSpacer} />
+        ) : (
+          <IconButton icon={locale === 'ar' ? ChevronLeft : ChevronRight} label={t('habitsHub.week.next')} onPress={() => setOffset((o) => Math.min(0, o + 1))} />
+        )}
       </View>
       {plans.length === 0 ? (
         <Text variant="body" tone="muted">
@@ -473,7 +479,7 @@ function HabitCompletionLine({ plan, title, today }: { plan: Plan; title: string
         <View style={[styles.fill, { width: `${c.percent}%` }]} />
       </View>
       <Text variant="caption" tone="muted">
-        {t('habitsHub.record.keptLine', { kept: Math.min(c.keptDays, c.targetDays), target: c.targetDays })}
+        {t('habitsHub.record.keptLine', { done: c.doneDays, target: c.targetDays })}
       </Text>
     </Pressable>
   );

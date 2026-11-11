@@ -310,7 +310,7 @@ export const GLOSSARY: readonly GlossaryTerm[] = [
     ar: 'تخفَّف من ذنب',
     en: 'Lighten a sin',
     avoidAr: ['ترك معصية', 'ترك المعصية', 'أترك معصية'],
-    note: 'Round 6 (C-01f): never «ترك معصية» as a label; «تخفَّف من ذنب / من معصية» everywhere. The door opens a searchable list of sins; a program is a habit of type «تخفَّف» (covered by default). Never names the sin in menus or notifications.',
+    note: 'Round 6 (C-01f): never «ترك معصية» as a label; «تخفَّف من ذنب» everywhere (owner round 8, Q8: the door name; never «من معصية»). The door opens a searchable list of sins; a program is a habit of type «تخفَّف» (covered by default). Never names the sin in menus or notifications.',
   },
   {
     key: 'moment',

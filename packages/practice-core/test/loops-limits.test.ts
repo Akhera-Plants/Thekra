@@ -120,14 +120,14 @@ describe('habit limit: 3 young habits; a habit kept 90 days frees its place', ()
     expect(currentStreak(done, '2026-10-27', { ...opts, isPeriodicAct })).toBe(1);
   });
 
-  it('periodic acts: 7, freed only by deleting one', () => {
-    // Round 6: plans of one catalog act count once, so seven acts = seven of the member's own periodic acts.
-    const plans = Array.from({ length: 7 }, (_, i) => plan(`w${i}`, '2026-01-01', 'custom-periodic'));
+  it('periodic acts: 8, freed only by deleting one', () => {
+    // Round 6: plans of one catalog act count once, so eight acts = eight of the member's own periodic acts.
+    const plans = Array.from({ length: 8 }, (_, i) => plan(`w${i}`, '2026-01-01', 'custom-periodic'));
     expect(limitBlock(storeOf(...plans), '2026-10-28', 'periodic', { isPeriodicAct })).toEqual({
       kind: 'periodic',
       reason: 'periodic_full',
-      count: 7,
-      max: 7,
+      count: 8,
+      max: 8,
       unlocksOn: null,
       waitingOn: [],
     });

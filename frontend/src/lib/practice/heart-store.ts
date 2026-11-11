@@ -65,6 +65,17 @@ export function updateHeart(change: (data: HeartData) => HeartData): void {
   for (const listener of listeners) listener();
 }
 
+/** Sign-out: «نية اليوم», the reviews, the messages to oneself and the pledges leave this browser. */
+export function wipeHeart(): void {
+  try {
+    storage()?.removeItem(HEART_KEY);
+  } catch {
+    // Blocked storage holds nothing to remove.
+  }
+  snapshot = emptyHeart();
+  for (const listener of listeners) listener();
+}
+
 /** Test hook. */
 export function resetHeartForTests(): void {
   snapshot = null;

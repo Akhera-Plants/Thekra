@@ -1,6 +1,6 @@
 import { Heart, MessageCircle, Pause, Sparkles, Sun, type LucideIcon } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
-import { Link } from '@/i18n/navigation';
+import { MomentLink } from './MomentLink';
 import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
 import type { HomeMoment } from '@/lib/api/home-moments';
 
@@ -34,7 +34,7 @@ export async function Moments({ moments }: MomentsProps) {
         {moments.map((moment) => {
           const Icon = ICONS[moment.icon] ?? Sparkles;
           return (
-            <Link key={moment.key} className="moment" href={moment.topic.path}>
+            <MomentLink key={moment.key} className="moment" moment={moment}>
               <span className="moment-symbol">
                 <Icon className="size-[18px]" aria-hidden />
               </span>
@@ -45,7 +45,7 @@ export async function Moments({ moments }: MomentsProps) {
               <span className="link-arrow">
                 <DirectionalArrow className="size-[17px]" />
               </span>
-            </Link>
+            </MomentLink>
           );
         })}
       </div>

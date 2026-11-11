@@ -9,7 +9,7 @@
  *   90 days or more. Pausing a habit takes it out of the count (its history stays).
  * - **«تخفَّف» programs: at most 3 at a time, and a new one may start only when every running one has lasted
  *   {@link PROGRAM_SETTLE_DAYS} (60) days** (days since its `startedOn`).
- * - **أعمال دورية: 7.** Periodic acts are reminders, not habits: live, unpaused plans from a periodic template (the
+ * - **أعمال دورية: 8** (owner round 8, Q9).** Periodic acts are reminders, not habits: live, unpaused plans from a periodic template (the
  *   catalog's `kind: periodic`, passed as {@link LimitOptions.isPeriodicAct}), the member's own acts (always periodic,
  *   `periodic.ts`), plus «صلة الرحم والأحباب» (round 6: ALL people lists together are one act, however many people or
  *   lists it holds). Plans of the same catalog act count once. They never count toward the habits (nor the streak:
@@ -30,7 +30,7 @@ import type { Store } from './storage.js';
 export type LimitKind = 'sapling' | 'periodic' | 'program';
 
 /** `sapling`: young habits at a time; `periodic`: periodic acts; `program`: running «تخفَّف» programs. */
-export const LIMITS: Readonly<Record<LimitKind, number>> = { sapling: 3, periodic: 7, program: 3 };
+export const LIMITS: Readonly<Record<LimitKind, number>> = { sapling: 3, periodic: 8, program: 3 };
 /** A habit kept this many days (pauses excluded) no longer counts toward {@link LIMITS}.sapling. */
 export const HABIT_SETTLE_DAYS = 90;
 /** Every running «تخفَّف» program must have lasted this many days before another may start. */
@@ -162,7 +162,7 @@ export function limits(store: Store, today: LocalDate, opts: LimitOptions = {}):
 export type LimitBlockReason =
   /** 3 young habits: wait until one has been kept 90 days, or pause / delete one. */
   | 'habits_young'
-  /** 7 periodic acts: delete one (they never settle). */
+  /** 8 periodic acts ({@link LIMITS}.periodic): delete one (they never settle). */
   | 'periodic_full'
   /** 3 running programs: end one (or finish it). */
   | 'programs_full'
@@ -190,7 +190,7 @@ export interface LimitBlock {
  *   ثلاثة أشهر، أو أوقِف أحدها مؤقتًا.»
  * - `programs_young`: «ابدأ برنامجًا جديدًا حين يُتمّ كل برنامج تعمل عليه شهرين (يوم {unlocksOn}).»
  * - `programs_full`: «تعمل على 3 برامج، وهذا الحد. أنهِ أحدها لتبدأ غيره.»
- * - `periodic_full`: «لديك 7 أعمال دورية، وهذا الحد. احذف أحدها لتضيف غيره.»
+ * - `periodic_full`: «لديك 8 أعمال دورية، وهذا الحد. احذف أحدها لتضيف غيره.»
  *
  * (The same wording is in docs/plan/2026-10-31-redesign-final.md §3; the clients own the strings.)
  */

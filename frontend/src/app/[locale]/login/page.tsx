@@ -1,5 +1,6 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import type { Metadata } from 'next';
+import { AuthWhy } from '@/features/auth/components/AuthWhy';
 import { AuthSwitchLink } from '@/features/auth/components/AuthSwitchLink';
 import { LoginForm } from '@/features/auth/components/LoginForm';
 
@@ -25,6 +26,7 @@ export default async function LoginPage({ params }: LoginPageProps) {
       <div className="flex flex-col gap-2 text-center">
         <h1 className="text-2xl font-semibold">{t('loginTitle')}</h1>
         <p className="text-sm text-muted-foreground">{t('loginSubtitle')}</p>
+        <AuthWhy />
       </div>
 
       <LoginForm />

@@ -142,16 +142,16 @@ describe('limits', () => {
     }
     const l = limits(s, '2026-10-28', { isPeriodicAct });
     expect(l.periodic.count).toBe(2);
-    expect(LIMITS.periodic).toBe(7);
+    expect(LIMITS.periodic).toBe(8);
     expect(l.canAdd('periodic')).toBe(true);
-    // A second plan of the same catalog act (sadaqah) adds no act; five own acts fill the seven.
+    // A second plan of the same catalog act (sadaqah) adds no act; six own acts fill the eight.
     let full = upsertPlan(s, { ...plan('g'), habitKey: 'sadaqah-weekly' }, T);
     expect(limits(full, '2026-10-28', { isPeriodicAct }).periodic.count).toBe(2);
-    for (const id of ['c1', 'c2', 'c3', 'c4', 'c5']) full = upsertPlan(full, { ...plan(id), habitKey: 'custom-periodic' }, T);
-    const seven = limits(full, '2026-10-28', { isPeriodicAct });
-    expect(seven.periodic.full).toBe(true);
-    expect(seven.canAdd('periodic')).toBe(false);
-    expect(seven.canAdd('periodic', { circle: 'kin' })).toBe(true);
+    for (const id of ['c1', 'c2', 'c3', 'c4', 'c5', 'c6']) full = upsertPlan(full, { ...plan(id), habitKey: 'custom-periodic' }, T);
+    const eight = limits(full, '2026-10-28', { isPeriodicAct });
+    expect(eight.periodic.full).toBe(true);
+    expect(eight.canAdd('periodic')).toBe(false);
+    expect(eight.canAdd('periodic', { circle: 'kin' })).toBe(true);
   });
 
   it('«تخفَّف»: a new program only when every running one has lasted 60 days', () => {

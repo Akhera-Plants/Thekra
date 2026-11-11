@@ -191,6 +191,11 @@ export class ReportDto {
 
 /** GET /admin/circle-reports */
 export class AdminCircleReportsQueryDto {
+  /** `open` (default) = waiting for the owner, `handled` = marked handled, `all`. */
+  @IsOptional()
+  @IsIn(['open', 'handled', 'all'])
+  status?: 'open' | 'handled' | 'all';
+
   @IsOptional()
   @IsUUID()
   before?: string;
@@ -201,4 +206,10 @@ export class AdminCircleReportsQueryDto {
   @Min(1)
   @Max(100)
   limit?: number;
+}
+
+/** PATCH /admin/circle-reports/:id: the owner marks a report handled, or reopens it. Nothing else changes. */
+export class UpdateCircleReportDto {
+  @IsIn(['open', 'handled'])
+  status!: 'open' | 'handled';
 }

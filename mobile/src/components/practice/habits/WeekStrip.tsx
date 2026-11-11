@@ -3,7 +3,8 @@
  * colours): seven days from the member's review day (Friday by default: the weekly review and the next week's plan),
  * «الأسبوع السابق» / «الأسبوع التالي» at the ends. Under each number one calm mark from practice-core `weekStrip`: a
  * filled dot (kept), a ring (part kept), the words «لم تتم» (muted, never red), «عذر», or nothing. Today sits on a soft
- * tint. A past day opens its details and asks (`onOpenDay`); today is the page itself; future days are view-only.
+ * tint. Today and past days open their details and asks (`onOpenDay`, like the web); future days are plain text: no pressed or
+ * selected look, no role.
  */
 
 import React, { useMemo, useState } from 'react';
@@ -109,15 +110,9 @@ function StripDay({ day, today, weekday, onOpen, dotColor }: { day: WeekStripDay
             : future
               ? t('habitsHub.week.future')
               : '';
-  return (
-    <Pressable
-      onPress={() => opens && onOpen(day.date)}
-      disabled={!opens}
-      accessibilityRole={opens ? 'button' : 'text'}
-      accessibilityLabel={[weekday, number, day.isToday ? t('practice.today') : '', markWords].filter(Boolean).join('، ')}
-      accessibilityState={{ selected: day.isToday, disabled: !opens }}
-      style={({ pressed }) => [styles.day, day.isToday && styles.dayToday, pressed && opens && styles.dayPressed]}
-    >
+  const label = [weekday, number, day.isToday ? t('practice.today') : '', markWords].filter(Boolean).join('، ');
+  const content = (
+    <>
       <Text variant="caption" tone="muted" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
         {shortWeekday(weekday)}
       </Text>
@@ -133,7 +128,21 @@ function StripDay({ day, today, weekday, onOpen, dotColor }: { day: WeekStripDay
           </Text>
         ) : null}
       </View>
+    </>
+  );
+  return opens ? (
+    <Pressable
+      onPress={() => onOpen(day.date)}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      style={({ pressed }) => [styles.day, day.isToday && styles.dayToday, pressed && styles.dayPressed]}
+    >
+      {content}
     </Pressable>
+  ) : (
+    <View accessible accessibilityLabel={label} style={styles.day}>
+      {content}
+    </View>
   );
 }
 

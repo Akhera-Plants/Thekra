@@ -27,6 +27,8 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   removeItem: jest.fn(async () => undefined),
 }));
 
+jest.mock('expo-secure-store', () => ({ WHEN_UNLOCKED_THIS_DEVICE_ONLY: 'x', getItemAsync: jest.fn(), setItemAsync: jest.fn(), deleteItemAsync: jest.fn() }));
+jest.mock('react-native', () => ({ Platform: { OS: 'android' } }));
 jest.mock('../lib/api/practice', () => ({ getPracticeChanges: jest.fn(), postPracticeSync: jest.fn() }));
 
 import { migrateLegacy } from '../lib/practice/practice-store';

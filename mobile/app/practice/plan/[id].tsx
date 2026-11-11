@@ -56,6 +56,7 @@ import {
   type Plan,
 } from '@thekra/practice-core';
 import { useDisplayTime } from '@/components/practice/editors';
+import { LimitSheet } from '@/components/practice/LimitSheet';
 import { fixedChoices, unsuitableChoices, windowRange } from '@/lib/practice/deed-window';
 import { currentPrayerDay } from '@/lib/practice/prayer';
 import { useMyCircles } from '@/lib/api/circles';
@@ -136,6 +137,7 @@ export default function PlanScreen() {
   const [tab, setTab] = useState<Tab>(parseTab(params.tab));
   const [editing, setEditing] = useState(false);
   const [archiving, setArchiving] = useState(false);
+  const [restoreLimit, setRestoreLimit] = useState(false);
 
   if (!hydrated) return <Loading />;
   if (!plan) {
@@ -168,9 +170,13 @@ export default function PlanScreen() {
 
   function handleRestore() {
     if (!limits.canAdd('sapling')) {
-      toast(t('habitsHub.archive.restoreFull', { max: 3 }));
+      setRestoreLimit(true);
       return;
     }
+    doRestore();
+  }
+
+  function doRestore() {
     let reset = false;
     setStore((s) => {
       const r = restorePlanInStore(s, id as string, d);
@@ -266,6 +272,7 @@ export default function PlanScreen() {
           toast(t('practice.plan.settingsSaved'));
         }}
       />
+      <LimitSheet kind="sapling" visible={restoreLimit} limits={limits} onClose={() => setRestoreLimit(false)} onFreed={() => { setRestoreLimit(false); doRestore(); }} />
       <ArchiveSheet plan={plan} title={title} today={d} visible={archiving} onClose={() => setArchiving(false)} onDone={() => router.back()} />
     </Screen>
   );
@@ -327,7 +334,7 @@ function FollowTab({ plan, title, amountLabel, archived, periodicAct }: TabProps
       <SectionDivider />
       {periodicAct ? null : (
       <Section title={t('habitsHub.plan.progress')}>
-        <Text variant="body">{t('habitsHub.habits.completionLine', { percent: completion.percent, kept: Math.min(completion.keptDays, completion.targetDays), target: completion.targetDays })}</Text>
+        <Text variant="body">{t('habitsHub.habits.completionLine', { percent: completion.percent, done: completion.doneDays, target: completion.targetDays })}</Text>
         {lines.map((key) => (
           <Text key={key} variant="small" tone="link" onPress={key === 'habitsHub.habits.share' ? () => router.push('/circles') : undefined}>
             {t(key)}

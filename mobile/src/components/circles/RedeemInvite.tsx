@@ -1,9 +1,9 @@
 /**
- * «أدخل رمز الدعوة» (owner round 6, C-01k: صحبة opens for a member only when an existing member invites him). The code
- * (a shared `thekra://circles/invite/<code>` link fills it in), then «فعّل صحبة». An invite that also joins a circle asks
- * for the name to show there (the API says so with CIRCLE_DISPLAY_NAME_REQUIRED, and names the circle). Every refusal is
- * one kind sentence (`circleErrorKey`); a redeemed invite whose circle could not be joined still turns صحبة on and says
- * why (`joinErrorKey`). After success: a toast, then the circle or the صحبة list.
+ * «لديّ دعوة» (owner round 8, Q6): the ONE place a person enters an invitation, for an account that has not turned صحبة
+ * on and for one that has. The code (a shared link fills it in), then «ادخل بالدعوة»: an invite that names a صحبة joins
+ * it in the same step (with the account's own name; the API asks for a name only when the account has none). Every
+ * refusal is its own kind sentence (`circleErrorKey`): not recognised, expired, already used, cancelled, full. After
+ * success: a toast, then the صحبة (or the list).
  */
 
 import React, { useState } from 'react';
@@ -12,7 +12,7 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { KeyRound } from 'lucide-react-native';
 import { useRedeemInvite } from '@/lib/api/circles';
-import { circleErrorKey, cleanTypedCode, joinErrorKey } from '@/lib/circles/circle-view';
+import { circleErrorKey, cleanTypedCode } from '@/lib/circles/circle-view';
 import { ApiError } from '@/lib/types/api';
 import { CIRCLE_TEXT_MAX } from '@/lib/types/circles';
 import { space } from '@/theme';
@@ -34,10 +34,13 @@ export function RedeemInvite({ initialCode = '' }: { initialCode?: string }) {
       { code, ...(askName ? { displayName: displayName.trim() } : {}) },
       {
         onSuccess: (result) => {
-          toast(t('circles.invites.redeemed'));
-          if (result.joinError) toast(t(joinErrorKey(result.joinError)));
-          if (result.circle) router.replace(`/circles/${result.circle.id}`);
-          else router.replace('/circles');
+          if (result.circle) {
+            toast(t('circles.invites.joined', { name: result.circle.name }));
+            router.replace(`/circles/${result.circle.id}`);
+          } else {
+            toast(t('circles.invites.redeemed'));
+            router.replace('/circles');
+          }
         },
         onError: (error) => {
           if (error instanceof ApiError && error.code === 'CIRCLE_DISPLAY_NAME_REQUIRED') {
@@ -51,6 +54,8 @@ export function RedeemInvite({ initialCode = '' }: { initialCode?: string }) {
   }
 
   const nameAsked = redeem.error instanceof ApiError && redeem.error.code === 'CIRCLE_DISPLAY_NAME_REQUIRED';
+  // A full circle leaves the invite unused: say so (the same code reads differently for the one who creates an invite).
+  const errorKey = redeem.error instanceof ApiError && redeem.error.code === 'CIRCLE_FULL' ? 'circles.errors.fullInvite' : circleErrorKey(redeem.error);
   return (
     <View style={{ gap: space.lg }}>
       <View style={{ flexDirection: 'row', gap: space.sm, alignItems: 'flex-start' }}>
@@ -84,7 +89,7 @@ export function RedeemInvite({ initialCode = '' }: { initialCode?: string }) {
           onSubmitEditing={submit}
         />
       ) : null}
-      {redeem.isError && !nameAsked ? <ErrorText>{t(circleErrorKey(redeem.error))}</ErrorText> : null}
+      {redeem.isError && !nameAsked ? <ErrorText>{t(errorKey)}</ErrorText> : null}
       <Button label={t('circles.invites.redeem')} onPress={submit} disabled={!ready} loading={redeem.isPending} block size="lg" />
     </View>
   );

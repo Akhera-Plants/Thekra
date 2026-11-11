@@ -1,8 +1,9 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { useRouter } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
 import { useForm } from 'react-hook-form';
 import { z } from '@/lib/zod';
 import { toast } from 'sonner';
@@ -38,6 +39,7 @@ export function RegisterForm() {
   const tFeedback = useTranslations('feedback');
   const router = useRouter();
   const { mutateAsync: register, isPending } = useRegister();
+  const [takenEmail, setTakenEmail] = useState<{ address: string; next: string } | null>(null);
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema(t)),
@@ -45,6 +47,7 @@ export function RegisterForm() {
   });
 
   async function onSubmit(values: RegisterFormValues) {
+    setTakenEmail(null);
     try {
       await register({
         email: values.email,
@@ -57,10 +60,13 @@ export function RegisterForm() {
     } catch (err) {
       // Never the raw API text: a taken email says so; connection-type failures get the shared localised message.
       const kind = failureKey(err);
+      // A taken email is said under the field with «سجّل الدخول» and the typed email carried over, not in a toast.
+      if (err instanceof ApiError && err.code === 'EMAIL_ALREADY_REGISTERED') {
+        setTakenEmail({ address: values.email, next: nextPathFromLocation('') });
+        return;
+      }
       toast.error(
-        err instanceof ApiError && err.code === 'EMAIL_ALREADY_REGISTERED'
-          ? t('emailTaken')
-          : kind === 'network' || kind === 'timeout' || kind === 'server' || kind === 'rateLimited'
+        kind === 'network' || kind === 'timeout' || kind === 'server' || kind === 'rateLimited'
             ? tFeedback(`error.${kind}`)
             : t('registerError'),
       );
@@ -106,9 +112,24 @@ export function RegisterForm() {
                   autoComplete="email"
                   placeholder={t('emailPlaceholder')}
                   {...field}
+                  onChange={(event) => {
+                    setTakenEmail(null);
+                    field.onChange(event);
+                  }}
                 />
               </FormControl>
               <FormMessage />
+              {takenEmail ? (
+                <p role="alert" className="flex flex-wrap items-center gap-x-2 text-sm text-destructive">
+                  {t('emailTaken')}
+                  <Link
+                    href={{ pathname: '/login', query: { email: takenEmail.address, ...(takenEmail.next ? { next: takenEmail.next } : {}) } }}
+                    className="font-medium underline underline-offset-2"
+                  >
+                    {t('signInNow')}
+                  </Link>
+                </p>
+              ) : null}
             </FormItem>
           )}
         />
@@ -124,9 +145,12 @@ export function RegisterForm() {
                   type="password"
                   autoComplete="new-password"
                   placeholder={t('passwordPlaceholder')}
+                  aria-describedby="password-rule"
                   {...field}
                 />
               </FormControl>
+              {/* The rule before submit, not only after a failure (owner round 8, item 2). */}
+              <p id="password-rule" className="text-sm text-muted-foreground">{t('passwordHint')}</p>
               <FormMessage />
             </FormItem>
           )}
@@ -135,6 +159,9 @@ export function RegisterForm() {
         <Button type="submit" variant="solid" tone="primary" size="md" className="w-full" disabled={isPending}>
           {isPending ? t('registering') : t('register')}
         </Button>
+        <Link href="/about#privacy" className="self-center text-sm text-muted-foreground underline underline-offset-2">
+          {t('privacyPolicy')}
+        </Link>
       </form>
     </Form>
   );

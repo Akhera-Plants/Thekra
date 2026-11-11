@@ -20,6 +20,7 @@ import {
   validatePlan,
   weekday,
   type Plan,
+  LIMITS,
 } from '@thekra/practice-core';
 import { SlotsEditor, WeekdayPicker, type SlotChoice } from '@/components/practice/editors';
 import { CUSTOM_RHYTHMS, customRhythmOf, customRule, type CustomRhythm, type CustomRhythmValues } from '@/lib/practice/hub-view';
@@ -84,7 +85,7 @@ export default function CustomPeriodicScreen() {
   return (
     <Screen edges={['bottom']} keyboard>
       <PageHeader title={existing ? t('habitsHub.custom.editTitle') : t('habitsHub.periodic.custom')} lead={t('habitsHub.custom.lead')} />
-      {full ? <Notice>{t('habitsHub.periodic.full')}</Notice> : null}
+      {full ? <Notice>{t('habitsHub.periodic.full', { max: LIMITS.periodic })}</Notice> : null}
       <Field label={t('habitsHub.custom.name')} placeholder={t('habitsHub.custom.namePlaceholder')} value={name} onChangeText={setName} maxLength={200} />
       <View style={styles.group}>
         <Text variant="heading" accessibilityRole="header">

@@ -1,5 +1,5 @@
 /**
- * A صحبة (owner round 7): its name and «نيّتنا» with «دعوة» (owner only, D3) and «إعداداتي» (D2) as controls on the
+ * A صحبة (owner round 7): its name and «نيّتنا» with «ادعُ» (owner only, D3; round 8: a personal invite tied to this صحبة) and «إعداداتي» (D2) as controls on the
  * title's line; «إنجازات الصحبة خلال آخر 7 أيام» (D4); then «رسائل الصحبة» (D7): my running round with «تم الحمد لله»
  * / «لم يتم» (D5), the chat-like feed (الكل · المحفوظة), and the two ways to speak in it, «ابدأ جولة» and «أرسل رسالة»
  * (suggested lines, D6). Reports (D8) open from a line's options. The days end on this device's today.
@@ -34,7 +34,7 @@ function HeaderActions({ circle, onInvite }: { circle: CircleDetail; onInvite: (
   const openSettings = useCallback(() => router.push(`/circles/${circle.id}/settings`), [circle.id]);
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.xs }}>
-      {circle.inviteCode ? <Button label={t('circles.inviteButton')} icon={UserPlus} variant="outline" size="sm" onPress={onInvite} /> : null}
+      {circle.me.isOwner ? <Button label={t('circles.inviteButton')} icon={UserPlus} variant="outline" size="sm" onPress={onInvite} /> : null}
       <IconButton icon={Settings2} label={t('circles.settings')} tone="link" bordered onPress={openSettings} />
     </View>
   );

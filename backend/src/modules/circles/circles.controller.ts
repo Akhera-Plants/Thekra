@@ -27,7 +27,6 @@ import { CreateCircleInviteDto } from './dto/create-circle-invite.dto.js';
 import { RedeemCircleInviteDto } from './dto/redeem-circle-invite.dto.js';
 import { CircleQueryDto } from './dto/circle-query.dto.js';
 import { CreateCircleDto } from './dto/create-circle.dto.js';
-import { JoinCircleDto } from './dto/join-circle.dto.js';
 import { PresenceDto } from './dto/presence.dto.js';
 import { CircleFeedService } from './circle-feed.service.js';
 import { EndRoundDto, MessagesQueryDto, ReplyRoundDto, ReportDto, SendMessageDto, StartRoundDto } from './dto/companion.dto.js';
@@ -67,13 +66,6 @@ export class CirclesController {
     const circle = await this.circles.create(user.sub, dto);
     setCreated(res, `/v1/circles/${circle.id}`);
     return circle;
-  }
-
-  @Post('join')
-  @HttpCode(HttpStatus.OK)
-  @Throttle(JOIN_THROTTLE)
-  join(@CurrentUser() user: JwtPayload, @Body() dto: JoinCircleDto) {
-    return this.circles.join(user.sub, dto);
   }
 
   @Get('access')
@@ -239,12 +231,6 @@ export class CirclesController {
     @Param('memberId', ParseUUIDPipe) memberId: string,
   ): Promise<void> {
     await this.circles.removeMember(user.sub, id, memberId);
-  }
-
-  @Post(':id/invite-code')
-  @HttpCode(HttpStatus.OK)
-  rotateInviteCode(@CurrentUser() user: JwtPayload, @Param('id', ParseUUIDPipe) id: string) {
-    return this.circles.rotateInviteCode(user.sub, id);
   }
 
   @Delete(':id')

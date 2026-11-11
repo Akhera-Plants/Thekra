@@ -882,3 +882,13 @@ export function setAmountAndMinimum(plan: Plan, amount: number, minimum: number 
   if (amount < baseAmount(next)) next = decreaseTo(next, amount, today, now);
   return next;
 }
+
+/**
+ * The ONE rule for the inline counter «2 / 4 +» of the «اليوم» rows (web and app): only a habit counted in plain units
+ * (`count`) that asks more than one unit today, and not once it is complete. A minutes habit is ticked whole; a `times`
+ * habit is one deed. A prayer habit counted in rak'ahs (`rakah`) shows its amount in rak'ahs («4 ركعات») while its unit is
+ * a pair, so a «0 / 2» beside it would disagree with the line above: it has no counter.
+ */
+export function showsInlineCounter(plan: { unit: PlanUnit }, required: number, complete: boolean, rakah?: RakahCount): boolean {
+  return plan.unit === 'count' && required > 1 && !complete && rakah === undefined;
+}

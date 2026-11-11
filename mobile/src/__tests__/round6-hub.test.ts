@@ -107,6 +107,10 @@ describe('«اليوم»', () => {
     expect(hasCounter('count', 4)).toBe(true);
     expect(hasCounter('times', 1)).toBe(false);
     expect(hasCounter('minutes', 10)).toBe(false);
+    // The same rule as the web (practice-core): none for `times` habits, none once complete, none for rak'ah prayers.
+    expect(hasCounter('times', 4)).toBe(false);
+    expect(hasCounter('count', 4, true)).toBe(false);
+    expect(hasCounter('count', 2, false, 'pairs')).toBe(false);
   });
 
   it('says the gentle line only on a hard day', () => {
@@ -124,7 +128,7 @@ describe('the week strip', () => {
     expect(stripMark('open')).toBe('none');
     expect(stripMark('future')).toBe('none');
     expect(stripDayOpens('2026-11-08', TODAY)).toBe(true);
-    expect(stripDayOpens(TODAY, TODAY)).toBe(false);
+    expect(stripDayOpens(TODAY, TODAY)).toBe(true);
     expect(stripDayOpens('2026-11-10', TODAY)).toBe(false);
   });
 

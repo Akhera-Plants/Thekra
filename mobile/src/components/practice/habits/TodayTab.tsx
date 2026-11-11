@@ -354,6 +354,7 @@ function HabitsGroup({ today, model }: { today: LocalDate; model: TodayModel }) 
         key={row.key}
         item={row.item}
         unit={plan?.unit ?? 'times'}
+        rakah={plan ? habitFor(plan, habits)?.rakah : undefined}
         title={row.title}
         meta={row.meta}
         canLog

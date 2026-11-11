@@ -56,7 +56,6 @@
       "members": "For members"
     },
     "inApp": "{name} (in the app)",
-    "circlesNote": "«Companions» lives in the Thekra phone app: you join the people you love on a shared wird, and each of you sees the others show up.",
     "more": "More",
     "accountMenu": "Account menu",
     "signOut": "Sign out"
@@ -144,6 +143,7 @@
     "registerSuccess": "Account created successfully",
     "registerError": "Registration failed. Please try again.",
     "logoutSuccess": "Signed out",
+    "logoutUnsynced": "Some data on this device is not saved to your account yet and will be erased on sign-out. Tap \"Sign out\" again to continue.",
     "noAccount": "Don't have an account?",
     "hasAccount": "Already have an account?",
     "userMenu": "User menu",
@@ -154,7 +154,18 @@
     "passwordMin": "The password needs at least 10 characters.",
     "passwordMax": "The password is too long; 128 characters at most.",
     "passwordRequired": "Enter your password.",
-    "emailTaken": "This email already has an account. Sign in with it."
+    "emailTaken": "This email already has an account.",
+    "signInNow": "Sign in",
+    "later": "Later",
+    "passwordHint": "At least 10 characters.",
+    "privacyPolicy": "Privacy policy",
+    "why": {
+      "bookmark": "Saved texts are kept in your account, so you find them on all your devices.",
+      "habits": "Your habits are kept in your account and synced across your devices, so we need an account to start with you.",
+      "moment": "\"A moment of striving\" works on your own program, which is kept encrypted in your account.",
+      "sin": "The \"Lighten\" program is kept encrypted in your account, so nobody else can read it.",
+      "reminders": "Your reminders belong to your account, so each reaches you on time."
+    }
   },
   "favorites": {
     "pageTitle": "Saved",
@@ -523,7 +534,10 @@
     "titleSharh": "Commentary",
     "loading": "Loading…",
     "error": "Could not load the text",
-    "empty": "No text for this place",
+    "emptyTafsir": "There is no tafsir for this text yet",
+    "emptySharh": "There is no explanation for this text yet",
+    "readText": "Read the text",
+    "back": "Go back",
     "readMore": "Read more",
     "readLess": "Show less",
     "close": "Close",
@@ -532,9 +546,9 @@
     "previous": "Previous",
     "next": "Next",
     "tabs": {
-      "mukhtasar": "Meaning",
+      "mukhtasar": "Al-Mukhtasar",
       "sadi": "Al-Sa'di",
-      "ashur": "Al-Tahrir wa al-Tanwir",
+      "ashur": "Ibn Ashur",
       "sharh": "Commentary",
       "fawaid": "Benefits",
       "gharib": "Word meanings",
@@ -565,6 +579,105 @@
     "notFound": "Page not found"
   },
   "admin": {
+    "circleReports": {
+      "title": "Circle reports",
+      "description": "What members reported in their circle. Nothing is removed and nobody is blocked automatically; the decision is yours.",
+      "tabOpen": "Waiting",
+      "tabHandled": "Handled",
+      "kindMember": "About a member",
+      "kindMessage": "About a message",
+      "reasons": {
+        "offensive": "Offensive words",
+        "harassment": "Harassment or nuisance",
+        "inappropriate": "Inappropriate content",
+        "spam": "Repeated nuisance messages",
+        "other": "Another reason"
+      },
+      "circle": "Circle",
+      "reported": "Reported",
+      "reporter": "Reported by",
+      "stillMember": "Still in the circle",
+      "leftCircle": "Left the circle",
+      "sameAccount": "Reports about the same account: {count}",
+      "note": "The reporter wrote",
+      "messageHeading": "The message when it was reported",
+      "snapshotGone": "The words of the message were not kept",
+      "roundLabel": "Round label",
+      "roundStart": "Started a {kind} round ({minutes} min)",
+      "roundEnd": "Ended a {kind} round: {outcome}",
+      "outcomeDone": "done",
+      "outcomeNotDone": "not done",
+      "roundKinds": {
+        "study": "study",
+        "focus": "focus",
+        "habit": "habit",
+        "reading": "reading",
+        "listening": "listening to a lesson",
+        "task": "task",
+        "sport": "sport"
+      },
+      "lines": {
+        "progress": "I did {done} of {total} of my habits today",
+        "steady": "Still on track, even with a little",
+        "back": "I am back after a break, thank God",
+        "thabat": "I prayed that you stay firm",
+        "jazak": "May God reward you",
+        "dhakkarani": "God reminded me of you",
+        "keep_going": "Keep going, one small step a day is enough",
+        "ask_dua": "Please pray that I stay firm",
+        "ask_remind": "Remind me of my routine today",
+        "ask_join": "Who will start a round with me now?",
+        "ask_heavy": "My day is heavy, help me with a prayer",
+        "thabbatak": "May God keep you firm",
+        "niyya": "Renew your intention before your routine",
+        "dont_break": "Even a little today, do not break it"
+      },
+      "replies": {
+        "go": "Good luck, God help you",
+        "with_you": "With you in prayer",
+        "next_time": "It is fine, the next round God willing",
+        "mashallah": "Mashallah, may God accept it from you",
+        "barak": "May God bless your time",
+        "zadak": "May God increase your success"
+      },
+      "handle": "Mark handled",
+      "reopen": "Put back in the list",
+      "handledOn": "Handled on {date}",
+      "handledToast": "Marked as handled",
+      "reopenedToast": "Put back in the list",
+      "saveError": "Could not save",
+      "emptyOpen": "No reports waiting",
+      "emptyHandled": "No handled reports yet",
+      "loadError": "Could not load the reports",
+      "more": "Show more"
+    },
+    "linkConcerns": {
+      "title": "Links without a real connection",
+      "description": "Texts the content team marked as not really about their topic. Keep the link if it holds, or hide it from readers.",
+      "kind": {
+        "sin": "Sins",
+        "good-deed": "Good deeds",
+        "branch": "Branches of faith"
+      },
+      "topicFilter": "Topic",
+      "allTopics": "All topics",
+      "tabPending": "Waiting for a decision",
+      "tabHidden": "Hidden",
+      "visible": "Visible to readers",
+      "notVisible": "Not visible yet",
+      "reason": "Reason",
+      "noNote": "No note",
+      "openText": "Open the text",
+      "keep": "Keep the link",
+      "hide": "Hide the link",
+      "keptToast": "Link kept",
+      "hiddenToast": "Link hidden from readers",
+      "saveError": "Could not save",
+      "emptyPending": "No links waiting for your decision",
+      "emptyHidden": "No hidden links",
+      "loadError": "Could not load the links",
+      "total": "{count} links"
+    },
     "forbidden": {
       "title": "Access Forbidden",
       "description": "This page is for administrators only."
@@ -843,7 +956,10 @@
       "quote": "Text",
       "intention": "Intention",
       "navLabel": "Review navigation",
-      "reminderSets": "Reminder sets"
+      "reminderSets": "Reminder sets",
+      "circleReports": "Circle reports",
+      "linkConcerns": "Unrelated links",
+      "reportsOpen": "{count} reports waiting"
     },
     "command": {
       "title": "Command palette",
@@ -879,7 +995,8 @@
       "sinsCol": "Sins",
       "deedsCol": "Good deeds",
       "allCovered": "All covered",
-      "countError": "Could not count",
+      "countError": "Could not load",
+      "ledgerError": "Could not load the status numbers",
       "loadError": "Could not load the library",
       "retry": "Try again",
       "empty": "No sources yet"
@@ -3006,5 +3123,23 @@
       "sadi": "Al-Sa'di",
       "ibn-ashur": "Ibn Ashur"
     }
+  },
+  "circlesApp": {
+    "lead": "Companions is in the Thekra phone app only, not on the website.",
+    "what": "A small private group that no one joins without a personal invitation from a member. Start a study, reading or focus round, and your companions encourage you with short messages.",
+    "get": "Get the app, then open Companions and enter your invite code.",
+    "notYet": "The app is not in the stores yet. If someone invited you, ask them for the install link.",
+    "appStore": "App Store",
+    "playStore": "Google Play",
+    "close": "Close"
+  },
+  "inviteLanding": {
+    "title": "An invitation to Companions",
+    "lead": "Someone invited you to Companions in the Thekra app.",
+    "codeLabel": "Invite code",
+    "stepGet": "Install the Thekra app on your phone.",
+    "stepOpen": "Tap “Open in the app”, or open Companions in the app and type the code under “I have an invite”.",
+    "open": "Open in the app",
+    "terms": "The invitation is for you alone: it works once, within seven days."
   }
 }

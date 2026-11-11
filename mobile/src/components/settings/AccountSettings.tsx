@@ -1,8 +1,8 @@
 /**
  * Settings ← «الحساب»: who is signed in and the practice sync (or the guest note with the way in), then signing out
  * (a plain row), and at the bottom, apart under its own «منطقة الحذف» header, «حذف الحساب» as a bordered destructive
- * button (password → DELETE /v1/auth/me → local sign-out; the practice data on this device is kept; store
- * policy requires it in the app).
+ * button (password → DELETE /v1/auth/me → local sign-out, which removes the practice data from this device; store
+ * policy requires it in the app). Signing out pushes what is unsynced first and warns once about what would be lost.
  */
 
 import React, { useState } from 'react';
@@ -13,6 +13,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { CircleCheck, LogOut, RefreshCw, Trash2 } from 'lucide-react-native';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { deleteAccount } from '@/lib/api/practice';
+import { signOutWouldLose } from '@/lib/practice/sign-out';
 import { syncPractice, useSyncStatus } from '@/lib/practice/sync-runner';
 import { nowTime } from '@/lib/practice/format';
 import { queryKeys } from '@/lib/query-keys';
@@ -55,7 +56,7 @@ export function AccountSettings() {
     setDeleteError(null);
     try {
       await deleteAccount(password);
-      // Signed-out locally; the account's synced copies in the cache go, this device's practice data stays.
+      // Signed out locally: the account's cached copies and this device's practice data go with it.
       await clearSession();
       qc.removeQueries({ queryKey: queryKeys.favorites.all });
       setDeleteOpen(false);
@@ -70,7 +71,15 @@ export function AccountSettings() {
   }
 
   async function handleLogout() {
-    const ok = await confirm({ title: t('settings.signOutTitle'), confirmLabel: t('settings.signOut'), tone: 'destructive', icon: LogOut });
+    // Pushes what is unsynced first; what cannot be saved to the account is said in the dialog (once).
+    const lose = user ? await signOutWouldLose(user.id) : false;
+    const ok = await confirm({
+      title: t('settings.signOutTitle'),
+      ...(lose ? { message: t('settings.signOutUnsynced') } : {}),
+      confirmLabel: t('settings.signOut'),
+      tone: 'destructive',
+      icon: LogOut,
+    });
     if (ok) await logout();
   }
 

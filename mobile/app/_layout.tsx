@@ -28,6 +28,7 @@ import i18n from '@/lib/i18n';
 import { setApiLocale } from '@/lib/api-client';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { dark, FontFiles, light, loadThemePreference, radius, ThemeProvider, useTheme } from '@/theme';
+import { AppSwitcherCover } from '@/components/practice/PrivacyCover';
 import { usePracticeLifecycle } from '@/lib/practice/use-practice-lifecycle';
 import { useWidgetSync } from '@/widget/use-widget-sync';
 import { ConfirmHost, ToastHost, useStackScreenOptions } from '@/ui';
@@ -156,6 +157,8 @@ function ThemedShell() {
         <Stack.Screen name="quotes/study/[id]" options={STUDY_SHEET} />
       </Stack>
       <PracticeLifecycle />
+      {/* The app-switcher cover over every screen while a «تخفَّف» program exists. */}
+      <AppSwitcherCover />
       {/* The one save confirmation (A-11), above every screen. */}
       <ToastHost />
       <ConfirmHost />

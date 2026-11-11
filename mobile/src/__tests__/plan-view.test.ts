@@ -2,8 +2,10 @@
  * The «صحّح السجل» stepper: minutes by 5 (by 1 under 5), counts by 1, inside 0..max.
  */
 
+import type { LocalTime } from '@thekra/practice-core';
 import type { CatalogHabit } from '../lib/practice/catalog-types';
 import { activeDaysFrom } from '../lib/practice/habits-view';
+import { startingSlots } from '../lib/practice/deed-window';
 import { fixLogStep, planFromHabit } from '../lib/practice/plan-view';
 
 describe('fixLogStep', () => {
@@ -49,5 +51,26 @@ describe('a habit on one weekday (QA round 5)', () => {
       planFromHabit({ id: 'p', habit, amount: 2, slots: ['04:00'], activeDaysPerWeek: activeDaysFrom([5], 3), rule: habit.defaultRule, today: '2026-11-07', locale: 'ar' });
     expect(make).not.toThrow();
     expect(make().rule).toEqual({ kind: 'weekdays', days: [5] });
+  });
+});
+
+describe('opening the add screen on a habit (?habit=…, «تخطَّ», «اجعلها عادة»)', () => {
+  it('builds the first-render preview from the starting times, even for a habit that suggests none', () => {
+    const habit = {
+      key: 'plain',
+      titleAr: 'عادة',
+      titleEn: 'Habit',
+      deed: 'plain',
+      unit: 'minutes',
+      start: { far: 5, near: 5 },
+      defaultRule: { kind: 'daily' },
+      defaultSlots: [],
+      basis: 'text',
+      evidence: [],
+    } as unknown as CatalogHabit;
+    const slots = startingSlots(habit.defaultSlots, habit.window) as LocalTime[];
+    expect(slots.length).toBeGreaterThan(0);
+    const plan = planFromHabit({ id: 'preview', habit, amount: 5, slots, activeDaysPerWeek: 7, rule: habit.defaultRule, today: '2026-11-07', locale: 'ar' });
+    expect(plan.slots).toEqual(['09:00']);
   });
 });

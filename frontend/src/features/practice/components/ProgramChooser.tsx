@@ -44,7 +44,7 @@ interface ProgramChooserProps {
 }
 
 /**
- * «تخفَّف من معصية» for any sin (owner, 2026-11-01): choose the sin (grouped and searchable), answer one question, start.
+ * «تخفَّف من ذنب» for any sin (owner, 2026-11-01): choose the sin (grouped and searchable), answer one question, start.
  * A sin with a written program may ask the willpower question; any other sin asks «هل فيها حقٌّ لأحد من الناس؟» and
  * starts the common five stages. Saved in the account, encrypted (the page seals it).
  */

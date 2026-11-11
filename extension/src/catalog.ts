@@ -7,7 +7,7 @@ import { formatPlanAmount, isValidTime, validateRule, type PlanUnit, type RakahC
 
 export interface Habit {
   key: string;
-  /** `periodic`: a template of «أعمال دورية» (counts toward the 7 periodic acts, not the 3 saplings). */
+  /** `periodic`: a template of «أعمال دورية» (counts toward the 8 periodic acts, not the 3 saplings). */
   kind?: 'periodic';
   /** A people list (صلة الرحم…): people live on the website and the app, not in the extension. */
   people?: string;

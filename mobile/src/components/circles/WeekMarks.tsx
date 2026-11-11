@@ -28,14 +28,6 @@ const makeStyles = (t: Theme) => ({
     gap: space.md,
   },
   head: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.md, paddingHorizontal: space.xs },
-  badge: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.full,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    backgroundColor: t.colors.primary,
-  },
   headText: { flex: 1, minWidth: 0 },
   grid: { borderRadius: radius.card, backgroundColor: t.colors.card, borderWidth: 1, borderColor: t.colors.border, overflow: 'hidden' as const },
   row: { flexDirection: 'row' as const, alignItems: 'center' as const, minHeight: 48, borderTopWidth: 1, borderTopColor: t.colors.border },
@@ -44,7 +36,8 @@ const makeStyles = (t: Theme) => ({
   cell: { flex: 1, alignItems: 'center' as const, justifyContent: 'center' as const, minHeight: 40 },
   todayCell: { backgroundColor: t.colors.muted },
   dayHead: { flex: 1, alignItems: 'center' as const, gap: 2, paddingVertical: 2, marginHorizontal: 2, borderRadius: radius.control },
-  dayHeadToday: { backgroundColor: t.colors.primary },
+  // Today is a tinted column and green text, not a filled green pill: nothing here is tappable, so nothing looks like a button.
+  dayHeadToday: { backgroundColor: t.colors.muted },
   mark: {
     width: MARK,
     height: MARK,
@@ -67,10 +60,10 @@ function DayHeads({ days, today }: { days: readonly string[]; today: string }) {
         const isToday = day === today;
         return (
           <View key={day} style={[styles.dayHead, isToday && styles.dayHeadToday]}>
-            <Text variant="caption" tone={isToday ? 'inverse' : 'muted'} numberOfLines={1}>
+            <Text variant="caption" tone={isToday ? 'link' : 'muted'} weight={isToday ? 'semibold' : 'regular'} numberOfLines={1}>
               {t(`practice.hub.weekdayShort.${weekday(day)}`)}
             </Text>
-            <Text variant="small" weight="medium" tone={isToday ? 'inverse' : 'default'}>
+            <Text variant="small" weight={isToday ? 'semibold' : 'medium'} tone={isToday ? 'link' : 'default'}>
               {String(Number(day.slice(8, 10)))}
             </Text>
           </View>
@@ -125,14 +118,11 @@ export function WeekMarks({
 }) {
   const { t } = useTranslation();
   const styles = useStyles(makeStyles);
-  const { colors } = useTheme();
   const today = days[days.length - 1] ?? '';
   return (
     <View style={styles.panel}>
       <View style={styles.head}>
-        <View style={styles.badge}>
-          <Icon icon={Sprout} size={22} color={colors.primaryForeground} />
-        </View>
+        <Icon icon={Sprout} size={26} tone="link" />
         <View style={styles.headText}>
           <Text variant="heading" accessibilityRole="header">
             {t('circles.weekTitle')}

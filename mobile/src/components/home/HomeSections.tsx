@@ -30,6 +30,7 @@ import {
   type LucideIcon,
 } from 'lucide-react-native';
 import {
+  activePrograms,
   correctLog,
   dayCompletion,
   HOME_SECTIONS,
@@ -42,14 +43,15 @@ import {
   type HomeSectionPref,
   type LocalDate,
 } from '@thekra/practice-core';
-import { useHomeMoments } from '@/lib/api/home-moments';
+import { useHomeMoments, type HomeMomentDto } from '@/lib/api/home-moments';
 import { usePracticeCatalog } from '@/lib/api/practice';
 import { useReminderOfTheDay } from '@/lib/api/quotes';
 import { homeEditRows, moveSectionBy, toggleSection } from '@/lib/home/home-edit';
 import { pick } from '@/lib/practice/catalog-types';
 import { dayMonth } from '@/lib/practice/calendar-grid';
 import { nextOccasion } from '@/lib/practice/habits-view';
-import { today as todayFn, usePracticeStore } from '@/lib/practice/practice-store';
+import { setMomentSource, today as todayFn, usePracticeStore } from '@/lib/practice/practice-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { habitFor } from '@/lib/practice/reminders';
 import { useAgendaRows, useDateNames, useDayAgenda, usePlanDays } from '@/lib/practice/use-habits-hub';
 import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
@@ -313,6 +315,19 @@ function DoorsSection({ before }: Before) {
 function MomentsSection({ before }: Before) {
   const title = useSectionTitle('moments');
   const moments = useHomeMoments();
+  const programs = usePracticeStore((st) => st.store.programs);
+  const signedIn = useAuthStore((st) => st.user !== null);
+  // A row about a sin the member already works on opens «لحظة مجاهدة» for that program; every other row opens its page
+  // (owner round 8, item 8: each row lands where its label promises).
+  function openMoment(moment: HomeMomentDto) {
+    const hasProgram = signedIn && moment.topic.type === 'sin' && activePrograms(programs).some((p) => p.sinSlug === moment.topic.slug);
+    if (hasProgram) {
+      setMomentSource(moment.topic.slug);
+      router.push('/practice/moment');
+      return;
+    }
+    router.push(moment.topic.path as Href);
+  }
   const list = moments.data ?? [];
   // Ours, from the API; nothing to show (none published, loading, offline without a cache): no section, no divider.
   if (list.length === 0) return null;
@@ -327,7 +342,7 @@ function MomentsSection({ before }: Before) {
               icon={MOMENT_ICONS[moment.icon] ?? Sparkles}
               title={moment.label}
               hint={moment.situation ?? undefined}
-              onPress={() => router.push(moment.topic.path as Href)}
+              onPress={() => openMoment(moment)}
               last={i === list.length - 1}
             />
           ))}

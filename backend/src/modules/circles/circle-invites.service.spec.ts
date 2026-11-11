@@ -1,4 +1,5 @@
 import { HttpException } from '@nestjs/common';
+import { CIRCLE_MAX_MEMBERS } from './circles.service.js';
 import type { PrismaService } from '../../prisma/prisma.service.js';
 import {
   CircleInvitesService,
@@ -41,7 +42,7 @@ function setup() {
       ),
       updateMany: vi.fn().mockResolvedValue({ count: 1 }),
     },
-    user: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+    user: { updateMany: vi.fn().mockResolvedValue({ count: 1 }), findUnique: vi.fn().mockResolvedValue({ displayName: 'سالم' }) },
     circleMember: { count: vi.fn().mockResolvedValue(1), findFirst: vi.fn().mockResolvedValue(null) },
     $queryRaw: vi.fn().mockResolvedValue([]),
     $transaction: vi.fn(),
@@ -118,6 +119,15 @@ describe('CircleInvitesService', () => {
       expect(prisma.circleInvite.create).not.toHaveBeenCalled();
     });
 
+    it('409 CIRCLE_FULL when the circle has no place left (no invite is made)', async () => {
+      const { service, prisma } = setup();
+      prisma.circleMember.count.mockResolvedValue(CIRCLE_MAX_MEMBERS);
+      const error = await service.create(INVITER, { circleId: CIRCLE }, NOW).catch((e: unknown) => e);
+      expect(statusOf(error)).toBe(409);
+      expect(codeOf(error)).toBe('CIRCLE_FULL');
+      expect(prisma.circleInvite.create).not.toHaveBeenCalled();
+    });
+
     it(`409 at ${INVITES_ACTIVE_MAX} unused invites, and at ${INVITES_PER_PERIOD_MAX} in the period`, async () => {
       const { service, prisma } = setup();
       prisma.circleInvite.count.mockResolvedValueOnce(INVITES_ACTIVE_MAX).mockResolvedValueOnce(0);
@@ -138,30 +148,32 @@ describe('CircleInvitesService', () => {
         data: { redeemedAt: NOW, redeemedById: GUEST },
       });
       expect(prisma.user.updateMany).toHaveBeenCalledWith({ where: { id: GUEST, circlesEnabledAt: null }, data: { circlesEnabledAt: NOW } });
-      expect(result).toEqual({ enabled: true, circle: null, joinError: null });
+      expect(result).toEqual({ enabled: true, circle: null });
     });
 
-    it('unknown, used, revoked and expired codes all answer 404 CIRCLE_INVITE_INVALID', async () => {
+    it('a wrong code is 404; an expired, used or cancelled one is 410 with its own code', async () => {
       const { service, prisma } = setup();
-      const cases = [
-        null,
-        activeInvite({ redeemedAt: NOW, redeemedById: 'someone-else' }),
-        activeInvite({ revokedAt: NOW }),
-        activeInvite({ expiresAt: NOW }),
+      const cases: [unknown, number, string][] = [
+        [null, 404, 'CIRCLE_INVITE_INVALID'],
+        [activeInvite({ redeemedAt: NOW, redeemedById: 'someone-else' }), 410, 'CIRCLE_INVITE_USED'],
+        [activeInvite({ revokedAt: NOW }), 410, 'CIRCLE_INVITE_REVOKED'],
+        [activeInvite({ expiresAt: NOW }), 410, 'CIRCLE_INVITE_EXPIRED'],
       ];
-      for (const row of cases) {
+      for (const [row, status, code] of cases) {
         prisma.circleInvite.findUnique.mockResolvedValueOnce(row);
         const error = await service.redeem(GUEST, { code: 'ABCDEFGHJK' }, NOW).catch((e: unknown) => e);
-        expect(statusOf(error)).toBe(404);
-        expect(codeOf(error)).toBe('CIRCLE_INVITE_INVALID');
+        expect(statusOf(error)).toBe(status);
+        expect(codeOf(error)).toBe(code);
       }
       expect(prisma.user.updateMany).not.toHaveBeenCalled();
     });
 
-    it('a race lost on the claim is 404 and enables nothing', async () => {
+    it('a race lost on the claim is 410 CIRCLE_INVITE_USED and enables nothing', async () => {
       const { service, prisma } = setup();
       prisma.circleInvite.updateMany.mockResolvedValue({ count: 0 });
-      expect(codeOf(await service.redeem(GUEST, { code: 'ABCDEFGHJK' }, NOW).catch((e: unknown) => e))).toBe('CIRCLE_INVITE_INVALID');
+      const error = await service.redeem(GUEST, { code: 'ABCDEFGHJK' }, NOW).catch((e: unknown) => e);
+      expect(statusOf(error)).toBe(410);
+      expect(codeOf(error)).toBe('CIRCLE_INVITE_USED');
       expect(prisma.user.updateMany).not.toHaveBeenCalled();
     });
 
@@ -170,40 +182,50 @@ describe('CircleInvitesService', () => {
       expect(codeOf(await service.redeem(INVITER, { code: 'ABCDEFGHJK' }, NOW).catch((e: unknown) => e))).toBe('CIRCLE_INVITE_OWN');
     });
 
-    it('a circle invite needs the display name first and stays unused without it', async () => {
+    it('a circle invite joins in one step with the account name when none is sent', async () => {
+      const { service, prisma, circles } = setup();
+      prisma.circleInvite.findUnique.mockResolvedValue(activeInvite({ circleId: CIRCLE, circle: { name: 'صحبة الفجر' } }));
+      const result = await service.redeem(GUEST, { code: 'ABCDEFGHJK' }, NOW);
+      expect(circles.addMember).toHaveBeenCalledWith(prisma, CIRCLE, GUEST, 'سالم');
+      expect(prisma.user.updateMany).toHaveBeenCalled();
+      expect(result).toEqual({ enabled: true, circle: { id: CIRCLE, name: 'صحبة الفجر' } });
+    });
+
+    it('a name sent with the code wins over the account name', async () => {
+      const { service, prisma, circles } = setup();
+      prisma.circleInvite.findUnique.mockResolvedValue(activeInvite({ circleId: CIRCLE, circle: { name: 'x' } }));
+      await service.redeem(GUEST, { code: 'ABCDEFGHJK', displayName: 'أبو خالد' }, NOW);
+      expect(circles.addMember).toHaveBeenCalledWith(prisma, CIRCLE, GUEST, 'أبو خالد');
+    });
+
+    it('an account without a name is asked for one first and the invite stays unused', async () => {
       const { service, prisma } = setup();
       prisma.circleInvite.findUnique.mockResolvedValue(activeInvite({ circleId: CIRCLE, circle: { name: 'صحبة الفجر' } }));
+      prisma.user.findUnique.mockResolvedValue({ displayName: null });
       const error = await service.redeem(GUEST, { code: 'ABCDEFGHJK' }, NOW).catch((e: unknown) => e);
       expect(statusOf(error)).toBe(400);
       expect(codeOf(error)).toBe('CIRCLE_DISPLAY_NAME_REQUIRED');
       expect(prisma.circleInvite.updateMany).not.toHaveBeenCalled();
     });
 
-    it('a circle invite joins the circle while the inviter is still in it', async () => {
-      const { service, prisma, circles } = setup();
-      prisma.circleInvite.findUnique.mockResolvedValue(activeInvite({ circleId: CIRCLE, circle: { name: 'صحبة الفجر' } }));
-      const result = await service.redeem(GUEST, { code: 'ABCDEFGHJK', displayName: 'سالم' }, NOW);
-      expect(circles.addMember).toHaveBeenCalledWith(prisma, CIRCLE, GUEST, 'سالم');
-      expect(result.circle).toMatchObject({ id: CIRCLE });
-      expect(result.joinError).toBeNull();
-    });
-
-    it('a full circle still turns صحبة on and says why it was not joined', async () => {
+    it('a full circle refuses with 409 CIRCLE_FULL and the invite stays valid (the transaction fails as a whole)', async () => {
       const { service, prisma, circles } = setup();
       prisma.circleInvite.findUnique.mockResolvedValue(activeInvite({ circleId: CIRCLE, circle: { name: 'x' } }));
       circles.addMember.mockRejectedValue(new HttpException({ code: 'CIRCLE_FULL' }, 409));
-      const result = await service.redeem(GUEST, { code: 'ABCDEFGHJK', displayName: 'سالم' }, NOW);
-      expect(prisma.user.updateMany).toHaveBeenCalled();
-      expect(result).toEqual({ enabled: true, circle: null, joinError: 'CIRCLE_FULL' });
+      const error = await service.redeem(GUEST, { code: 'ABCDEFGHJK' }, NOW).catch((e: unknown) => e);
+      expect(statusOf(error)).toBe(409);
+      expect(codeOf(error)).toBe('CIRCLE_FULL');
+      expect(circles.findOne).not.toHaveBeenCalled();
     });
 
-    it('the inviter left the circle: صحبة on, circle not joined', async () => {
+    it('the inviter left the circle: 409 CIRCLE_INVITE_CIRCLE_GONE, nobody joined', async () => {
       const { service, prisma, circles } = setup();
       prisma.circleInvite.findUnique.mockResolvedValue(activeInvite({ circleId: CIRCLE, circle: { name: 'x' } }));
       prisma.circleMember.count.mockResolvedValue(0);
-      const result = await service.redeem(GUEST, { code: 'ABCDEFGHJK', displayName: 'سالم' }, NOW);
+      const error = await service.redeem(GUEST, { code: 'ABCDEFGHJK', displayName: 'سالم' }, NOW).catch((e: unknown) => e);
+      expect(statusOf(error)).toBe(409);
+      expect(codeOf(error)).toBe('CIRCLE_INVITE_CIRCLE_GONE');
       expect(circles.addMember).not.toHaveBeenCalled();
-      expect(result.joinError).toBe('CIRCLE_INVITE_CIRCLE_GONE');
     });
 
     it('redeeming one’s own used invite again is harmless', async () => {

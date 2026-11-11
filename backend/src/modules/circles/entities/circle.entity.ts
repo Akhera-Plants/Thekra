@@ -80,6 +80,8 @@ export interface AdminCircleReportDto {
   kind: 'member' | 'message';
   reason: ReportReason;
   note: string | null;
+  status: 'open' | 'handled';
+  handledAt: string | null;
   createdAt: string;
   circle: { id: string | null; name: string };
   reporter: { userId: string | null; name: string };
@@ -97,8 +99,6 @@ export interface CircleDetailDto {
   intention: string | null;
   memberCount: number;
   maxMembers: number;
-  /** Only for the owner. */
-  inviteCode: string | null;
   me: { memberId: string; displayName: string; isOwner: boolean; sharesPresence: boolean };
   /** The last 7 local dates, oldest first, ending on the viewer's today. */
   days: string[];
@@ -153,6 +153,4 @@ export interface RedeemCircleInviteResultDto {
   enabled: true;
   /** The circle joined through the invite. */
   circle: CircleDetailDto | null;
-  /** Why the invite's circle was not joined: CIRCLE_FULL, CIRCLE_LIMIT_REACHED or CIRCLE_INVITE_CIRCLE_GONE. */
-  joinError: string | null;
 }

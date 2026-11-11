@@ -13,7 +13,9 @@ import {
   formatInviteCode,
   groupByDay,
   habitProgress,
-  inviteLink,
+  inviteAppLink,
+  inviteShareLink,
+  withoutRepeatedRoundEnds,
   loggedOn,
   messageText,
   roundLine,
@@ -45,10 +47,25 @@ describe('loggedOn', () => {
 });
 
 describe('invite helpers', () => {
-  it('builds the app link and groups the code', () => {
-    expect(inviteLink('ABCDEFGHJK')).toBe('thekra://circles/join?code=ABCDEFGHJK');
+  it('shares an https link of the invite page (in the inviter’s language) and keeps the app link for its button', () => {
+    expect(inviteShareLink('ABCDEFGHJK', 'ar')).toBe('https://thekra-web.vercel.app/invite/ABCDEFGHJK');
+    expect(inviteShareLink('ABCDEFGHJK', 'en')).toBe('https://thekra-web.vercel.app/en/invite/ABCDEFGHJK');
+    expect(inviteAppLink('ABCDEFGHJK')).toBe('thekra://circles/invite/ABCDEFGHJK');
+  });
+
+  it('groups the code and cleans a typed one', () => {
     expect(formatInviteCode('ABCDEFGHJK')).toBe('ABCDE-FGHJK');
     expect(cleanTypedCode(' abcde-fghjk!؟ ')).toBe(' abcde-fghjk ');
+  });
+});
+
+describe('one entry per round in the feed', () => {
+  const line = (id: string, kind: 'round_start' | 'round_end' | 'preset', roundId: string | null) =>
+    ({ id, kind, round: roundId ? { id: roundId } : null }) as unknown as CircleMessage;
+
+  it('drops the end line of a round whose start line is shown, keeps a lone one', () => {
+    const items = [line('e1', 'round_end', 'r1'), line('s1', 'round_start', 'r1'), line('e2', 'round_end', 'r2'), line('p', 'preset', null)];
+    expect(withoutRepeatedRoundEnds(items).map((m) => m.id)).toEqual(['s1', 'e2', 'p']);
   });
 });
 
@@ -57,6 +74,10 @@ describe('circleErrorKey', () => {
   it('maps API codes to calm sentences', () => {
     expect(circleErrorKey(error('CIRCLE_INVITE_INVALID', 404))).toBe('circles.errors.inviteInvalid');
     expect(circleErrorKey(error('CIRCLE_FULL', 409))).toBe('circles.errors.full');
+    // Round 8: an invite that exists but cannot be used says why, each in its own words.
+    expect(circleErrorKey(error('CIRCLE_INVITE_EXPIRED', 410))).toBe('circles.errors.inviteExpired');
+    expect(circleErrorKey(error('CIRCLE_INVITE_USED', 410))).toBe('circles.errors.inviteUsed');
+    expect(circleErrorKey(error('CIRCLE_INVITE_REVOKED', 410))).toBe('circles.errors.inviteRevoked');
     expect(circleErrorKey(error('CIRCLE_LIMIT_REACHED', 409))).toBe('circles.errors.limit');
     expect(circleErrorKey(error('CIRCLE_CHEER_ALREADY_SENT', 409))).toBe('circles.errors.cheerSent');
     expect(circleErrorKey(error('THROTTLED', 429))).toBe('circles.errors.tooManyTries');

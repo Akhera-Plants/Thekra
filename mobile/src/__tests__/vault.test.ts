@@ -186,13 +186,12 @@ describe('«تخفَّف» always encrypted in the account (owner, 2026-11-01)',
     expect(await openWithDevice('user-1', labels)).toBe('none');
   });
 
-  it('sign-out clears the device copy, unless a change still waits to be saved', async () => {
+  it('locking at sign-out forgets the keys; the device copy goes with wipeAll, saved or not (owner round 8)', async () => {
     usePracticeStore.getState().setStore((s) => ({ ...s, programs: [program()] }));
     useVaultState.setState({ pending: true });
     await lockVault();
-    expect(usePracticeStore.getState().store.programs).toHaveLength(1);
-    useVaultState.setState({ pending: false });
-    await lockVault();
+    expect(useVaultState.getState().status).toBe('unknown');
+    await usePracticeStore.getState().wipeAll();
     expect(usePracticeStore.getState().store.programs).toHaveLength(0);
   });
 });

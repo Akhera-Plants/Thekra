@@ -5,11 +5,11 @@ import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { queryKeys } from '@/lib/query-keys';
 import {
-  countAdminQuotes,
   countFlags,
   countLinks,
   getFlag,
   getFlags,
+  getLibraryLedger,
   getProposedLinks,
   runFlagAction,
   setLinkReviewStatus,
@@ -103,33 +103,13 @@ export function useLinkCount(kind: 'sin' | 'good-deed', reviewStatus: LinkReview
   });
 }
 
-/** Per-source "graded" and "linked" counts for the library ledger (two count requests per source). */
-export function useSourceLedgerCounts(sourceIds: string[]) {
-  const graded = useQueries({
-    queries: sourceIds.map((sourceId) => {
-      const query = { sourceId, grades: ['SAHIH', 'HASAN', 'DAIF'] as const };
-      return {
-        queryKey: queryKeys.adminReview.count('quotes', query),
-        queryFn: () => countAdminQuotes({ sourceId, grades: ['SAHIH', 'HASAN', 'DAIF'] }),
-        ...COUNT_OPTIONS,
-      };
-    }),
+/** Per-source "graded" and "unlinked" counts for the library ledger: ONE request for every source. */
+export function useLibraryLedger() {
+  return useQuery({
+    queryKey: queryKeys.adminReview.ledger,
+    queryFn: getLibraryLedger,
+    ...COUNT_OPTIONS,
   });
-  const unlinked = useQueries({
-    queries: sourceIds.map((sourceId) => {
-      const query = { sourceId, unlinkedOnly: true };
-      return {
-        queryKey: queryKeys.adminReview.count('quotes', query),
-        queryFn: () => countAdminQuotes(query),
-        ...COUNT_OPTIONS,
-      };
-    }),
-  });
-  return sourceIds.map((sourceId, index) => ({
-    sourceId,
-    graded: graded[index],
-    unlinked: unlinked[index],
-  }));
 }
 
 // ── Publish probe ─────────────────────────────────────────────────────────────

@@ -121,5 +121,15 @@ export function useToggleFavorite(quoteId: string) {
     networkMode: 'offlineFirst',
   });
 
-  return { isFavorite, toggle: mutation.mutate, isPending: mutation.isPending };
+  // A guest has no account to save in: say so and offer «سجّل الدخول» instead of a request that fails (owner round 8, item 1).
+  const toggle = () => {
+    if (useAuthStore.getState().user === null) {
+      // Loaded on demand: the sign-in helpers pull in the router, which a plain data module should not need.
+      void import('../auth/require-sign-in').then((m) => m.askSignIn('bookmark'));
+      return;
+    }
+    mutation.mutate();
+  };
+
+  return { isFavorite, toggle, isPending: mutation.isPending };
 }

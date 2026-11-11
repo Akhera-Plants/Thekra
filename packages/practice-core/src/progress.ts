@@ -4,9 +4,10 @@
  * «شارك تطورك مع الصحبة». Keys only; the clients own the words.
  *
  * Rules (from the ladder in `plan.ts`, research notes docs/research/anas-sheikh-akrim/4EkrbmmIlno-analysis.md §4):
- * - **Completion**: kept days (archive days left out, from the restart after a long archive) over
- *   {@link GRADUATION_MIN_DAYS} (66, the age from which «رسخت هذه العادة» may be offered). 100% only once the member
- *   marked the habit «راسخة»; before that it stops at 99%.
+ * - **Completion**: the days the member DID the habit (a day with something logged, from the progress start: the
+ *   restart after a long archive; today counts) over {@link GRADUATION_MIN_DAYS} (66). It measures days done, not the
+ *   habit's age (a habit missed 7 of 21 days is at 14 of 66, not 21). 100% only once the member marked the habit
+ *   «راسخة»; before that it stops at 99%.
  * - **`hardest-passed` «تعدّيت أصعب فترة»**: the first hold of the ladder ({@link HOLD_DAYS}, 28 days: «اثبت على البداية
  *   شهرًا قبل أي زيادة») kept with at least {@link HARDEST_ADHERENCE} (50%, the «جيد» band) of its asked days logged.
  * - **`habit-made` «صنعت العادة»**: the habit was marked «راسخة» (`establishedOn`), offered by `graduationReady`.
@@ -42,17 +43,29 @@ export interface Milestone {
 export interface HabitCompletion {
   /** Whole percent 0…100. */
   percent: number;
+  /** Days since the progress start, pauses left out (the habit's age; the milestones use it). */
   keptDays: number;
+  /** Days the member did the habit since the progress start: what the percentage and «أتممتها n من 66 يومًا» show. */
+  doneDays: number;
   /** {@link GRADUATION_MIN_DAYS}. */
   targetDays: number;
   established: boolean;
 }
 
+/** Days with something logged from the progress start to `today` (each day once). */
+export function doneDays(plan: Plan, today: LocalDate): number {
+  const start = progressStart(plan);
+  let n = 0;
+  for (const [d, v] of Object.entries(plan.log)) if (v > 0 && d >= start && d <= today) n++;
+  return n;
+}
+
 export function habitCompletion(plan: Plan, today: LocalDate): HabitCompletion {
   const kept = keptDays(plan, today);
+  const done = Math.min(doneDays(plan, today), GRADUATION_MIN_DAYS);
   const established = isEstablished(plan);
-  const percent = established ? 100 : Math.min(99, Math.floor((kept / GRADUATION_MIN_DAYS) * 100));
-  return { percent, keptDays: kept, targetDays: GRADUATION_MIN_DAYS, established };
+  const percent = established ? 100 : Math.min(99, Math.floor((done / GRADUATION_MIN_DAYS) * 100));
+  return { percent, keptDays: kept, doneDays: done, targetDays: GRADUATION_MIN_DAYS, established };
 }
 
 /** The milestones reached by `today`, in the order they were reached. */

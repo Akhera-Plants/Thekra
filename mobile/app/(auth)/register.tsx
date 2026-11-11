@@ -15,6 +15,10 @@ import { useAuthStore } from '@/lib/stores/auth-store';
 import { ApiError } from '@/lib/types/api';
 import { space, useStyles } from '@/theme';
 import { Button, ErrorText, Field, PageHeader, Screen, Text, TextLink } from '@/ui';
+import type { SignInWhy } from '@/lib/auth/require-sign-in';
+
+/** The API's rule (backend register.dto): at least 10 characters. */
+const PASSWORD_MIN = 10;
 
 const makeStyles = () => ({
   form: { gap: space.lg },
@@ -30,16 +34,28 @@ export default function RegisterScreen() {
   const clearError = useAuthStore((s) => s.clearError);
 
   const [name, setName] = useState('');
-  const { next } = useLocalSearchParams<{ next?: string }>();
+  const { next, why } = useLocalSearchParams<{ next?: string; why?: SignInWhy }>();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [failure, setFailure] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [taken, setTaken] = useState(false);
   const canSubmit = name.trim().length > 0 && email.trim().length > 0 && password.length > 0;
 
   async function handleRegister() {
     if (!canSubmit) return;
     clearError();
     setFailure(null);
+    setTaken(false);
+    // The rule is checked here first, so a short password never reaches the server and the person is told which rule.
+    if (password.length < PASSWORD_MIN) {
+      setPasswordError(t('auth.passwordMin'));
+      return;
+    }
+    if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
+      setFailure(t('auth.emailInvalid'));
+      return;
+    }
     try {
       await register({ email, password, displayName: name.trim() });
       // A new account sees the first steps once (owner round 5, F-26 a); they end in «عاداتي» or on home.
@@ -47,14 +63,17 @@ export default function RegisterScreen() {
       else router.replace('/practice/onboarding');
     } catch (e) {
       const offline = e instanceof ApiError && (e.status === 0 || e.code === 'NETWORK_ERROR');
-      const taken = e instanceof ApiError && e.code === 'EMAIL_ALREADY_REGISTERED';
-      setFailure(offline ? t('errors.network') : taken ? t('auth.emailTaken') : t('auth.registerError'));
+      const isTaken = e instanceof ApiError && e.code === 'EMAIL_ALREADY_REGISTERED';
+      const weak = e instanceof ApiError && Array.isArray(e.details) && e.details.some((d) => d.field === 'password');
+      if (weak) setPasswordError(t('auth.passwordMin'));
+      else if (isTaken) setTaken(true);
+      else setFailure(offline ? t('errors.network') : t('auth.registerError'));
     }
   }
 
   return (
       <Screen edges={['bottom']} keyboard>
-        <PageHeader title={t('auth.registerTitle')} lead={t('auth.guestNote')} />
+        <PageHeader title={t('auth.registerTitle')} lead={why ? t(`auth.why.${why}`) : t('auth.guestNote')} />
         <View style={styles.form}>
           <Field
             label={t('auth.name')}
@@ -73,6 +92,7 @@ export default function RegisterScreen() {
             onChangeText={(v) => {
               setEmail(v);
               setFailure(null);
+              setTaken(false);
             }}
             keyboardType="email-address"
             textContentType="username"
@@ -84,9 +104,12 @@ export default function RegisterScreen() {
           <Field
             label={t('auth.password')}
             value={password}
+            hint={t('auth.passwordHint')}
+            error={passwordError}
             onChangeText={(v) => {
               setPassword(v);
               setFailure(null);
+              setPasswordError(null);
             }}
             secureTextEntry
             textContentType="newPassword"
@@ -98,6 +121,16 @@ export default function RegisterScreen() {
             style={styles.ltr}
           />
           {failure ? <ErrorText>{failure}</ErrorText> : null}
+          {taken ? (
+            <View style={styles.switch}>
+              <ErrorText>{t('auth.emailTaken')}</ErrorText>
+              <Button
+                label={t('auth.signInNow')}
+                variant="outline"
+                onPress={() => router.replace({ pathname: '/(auth)/login', params: { email: email.trim(), ...(next ? { next } : {}), ...(why ? { why } : {}) } })}
+              />
+            </View>
+          ) : null}
           <Button
             label={t('auth.registerButton')}
             onPress={() => void handleRegister()}
@@ -106,6 +139,11 @@ export default function RegisterScreen() {
             block
             size="lg"
           />
+          {!canSubmit ? (
+            <Text variant="caption" tone="muted">
+              {t('auth.registerFill')}
+            </Text>
+          ) : null}
           <TextLink
             label={t('settings.privacyPolicy')}
             muted
@@ -116,7 +154,7 @@ export default function RegisterScreen() {
           <Text variant="small" tone="muted">
             {t('auth.haveAccount')}
           </Text>
-          <TextLink label={t('auth.login')} onPress={() => router.replace({ pathname: '/(auth)/login', params: next ? { next } : {} })} />
+          <TextLink label={t('auth.login')} onPress={() => router.replace({ pathname: '/(auth)/login', params: { ...(next ? { next } : {}), ...(why ? { why } : {}) } })} />
         </View>
       </Screen>
   );

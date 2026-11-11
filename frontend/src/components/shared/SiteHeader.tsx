@@ -5,11 +5,13 @@ import { ChevronDown, Menu, Smartphone, X } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link, usePathname } from '@/i18n/navigation';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { LocaleSwitcher } from './LocaleSwitcher';
 import { ThemeToggle } from './ThemeToggle';
+import { AppStoreLinks } from './AppStoreLinks';
 import { AuthNavItems } from './AuthNavItems';
 import { currentHeaderItem, HEADER_LINKS, HEADER_MORE, isMoreCurrent, type HeaderMenuItem, type HeaderMenuKey } from './header-menu';
 
@@ -18,7 +20,7 @@ import { currentHeaderItem, HEADER_LINKS, HEADER_MORE, isMoreCurrent, type Heade
  * الإيمان · عاداتي», then «المزيد ▾» (الاستراتيجيات، المحفوظات، «صحبة (في التطبيق)»), then language, theme and the
  * account (C-05 a: the settings live only in the account avatar menu). «المزيد» opens on hover, on click and from the
  * keyboard. Below the wide layout the same items open in a side drawer from the inline-start side. «صحبة» opens a
- * short note that it lives in the app (W-12 b).
+ * short note that it lives in the app (W-12 b; round 8: what it is now, store links, a close button).
  */
 export function SiteHeader() {
   const pathname = usePathname();
@@ -278,16 +280,31 @@ function MenuDrawer({ current, onAppNote }: MenuProps) {
   );
 }
 
-/** «صحبة» lives in the app (W-12 b, C-01k: invite-only there): one short note, no store link until the owner publishes one. */
+/**
+ * «صحبة» lives in the app (owner round 8, Q2: app only, an honest dialog and store links). What it is today (rounds,
+ * short encouraging messages, by personal invitation), where to get the app (a button per store that has an address:
+ * `lib/app-stores.ts`; none yet, so one plain line instead of a dead button) and a close button.
+ */
 function AppOnlyNote({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const tNav = useTranslations('nav');
+  const t = useTranslations('circlesApp');
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader className="pe-8">
           <DialogTitle className="leading-8">{tNav('menuItems.circles')}</DialogTitle>
-          <DialogDescription className="leading-7">{tNav('circlesNote')}</DialogDescription>
+          <DialogDescription className="leading-7">{t('lead')}</DialogDescription>
         </DialogHeader>
+        <div className="flex flex-col gap-3 text-sm leading-7">
+          <p>{t('what')}</p>
+          <p>{t('get')}</p>
+        </div>
+        <AppStoreLinks />
+        <DialogClose asChild>
+          <Button variant="outline" size="lg" className="min-h-11 w-full">
+            {t('close')}
+          </Button>
+        </DialogClose>
       </DialogContent>
     </Dialog>
   );
