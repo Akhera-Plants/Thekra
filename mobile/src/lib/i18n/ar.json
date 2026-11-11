@@ -675,11 +675,16 @@
         "checkIn": "سجّل حالك في برنامجك الخاص",
         "save": "تمّت المحاسبة",
         "doneNone": "لا عادات مطلوبة اليوم.",
-        "savedToast": "حُفظت محاسبة اليوم"
+        "savedToast": "حُفظت محاسبة اليوم",
+        "helpedQ": "ما أعانك اليوم؟",
+        "hardQ": "ما صعّب عليك اليوم؟",
+        "tomorrowQ": "خطوة لغد",
+        "tomorrowPlaceholder": "سطر واحد",
+        "fromDaily": "من إجاباتك اليوم"
       },
       "weekly": {
         "title": "محاسبة الأسبوع",
-        "lead": "دقيقتان مع نفسك، بلا لوم.",
+        "lead": "دقيقتان مع نفسك، بلا لوم. كل ما هنا اختياري.",
         "steady": "ما ثبتَّ عليه",
         "steadyNone": "لم يكتمل شيء هذا الأسبوع، والأسبوع القادم فرصة جديدة.",
         "weak": "أين ضعفت",
@@ -694,15 +699,24 @@
         "middle": "متوسط",
         "hard": "قاسٍ",
         "message": "رسالة إلى نفسي",
-        "messagePlaceholder": "سطر تقرؤه يوم {{day}} القادم",
+        "messagePlaceholder": "تُحفظ في «رسائلي إلى نفسي» في «العادات»",
         "save": "احفظ المحاسبة",
+        "savedToast": "حُفظت محاسبة الأسبوع",
+        "weekFacts": "أسبوعك",
+        "helpedQ": "ما الذي أعانك هذا الأسبوع؟",
+        "hardQ": "ما الذي صعّب عليك؟",
+        "changeQ": "ماذا ستغيّر الأسبوع القادم؟",
+        "fromDaily": "من إجاباتك هذا الأسبوع",
+        "heartNoteLabel": "سطر عن قلبك",
+        "heartNotePlaceholder": "سطر عن حالك، إن شئت",
+        "messageLabel": "اكتب رسالة لنفسك",
+        "messageFull": "رسائلك ممتلئة ({{max}}). احذف واحدة من «العادات» لتكتب جديدة.",
         "missed_zero": "لم يفتك شيء",
-        "missed_one": "فاتك يوم واحد",
-        "missed_two": "فاتك يومان",
-        "missed_few": "فاتك {{count}} أيام",
-        "missed_many": "فاتك {{count}} يومًا",
-        "missed_other": "فاتك {{count}} يوم",
-        "savedToast": "حُفظت محاسبة الأسبوع"
+        "missed_one": "لم تتم في يوم واحد",
+        "missed_two": "لم تتم في يومين",
+        "missed_few": "لم تتم في {{count}} أيام",
+        "missed_many": "لم تتم في {{count}} يومًا",
+        "missed_other": "لم تتم في {{count}} يوم"
       },
       "selfMessage": {
         "title": "رسالتك إلى نفسك",
@@ -730,7 +744,9 @@
         "emptyHint": "تظهر هنا محاسباتك الأسبوعية.",
         "start": "ابدأ محاسبة الأسبوع",
         "settings": "إعدادات المحاسبة"
-      }
+      },
+      "placeholder": "اكتب بكلماتك",
+      "count": "{{n}} / {{max}}"
     },
     "notifyPrefs": {
       "title": "التنبيهات",
@@ -2270,19 +2286,19 @@
       "archiveTitle": "محاسباتي السابقة",
       "intentionOffToast": "أُوقفت نية اليوم",
       "steady": "ثابت",
-      "missed_zero": "ثابت",
-      "missed_one": "فاتك 1",
-      "missed_two": "فاتك 2",
-      "missed_few": "فاتك {{count}}",
-      "missed_many": "فاتك {{count}}",
-      "missed_other": "فاتك {{count}}",
       "more_zero": "المزيد",
       "more_one": "المزيد (1)",
       "more_two": "المزيد (2)",
       "more_few": "المزيد ({{count}})",
       "more_many": "المزيد ({{count}})",
       "more_other": "المزيد ({{count}})",
-      "less": "أقل"
+      "less": "أقل",
+      "missed_zero": "لم يفتك شيء",
+      "missed_one": "لم تتم في يوم واحد",
+      "missed_two": "لم تتم في يومين",
+      "missed_few": "لم تتم في {{count}} أيام",
+      "missed_many": "لم تتم في {{count}} يومًا",
+      "missed_other": "لم تتم في {{count}} يوم"
     },
     "record": {
       "habitsTitle": "عاداتك",
@@ -2760,7 +2776,12 @@
       "weeklyOpen": "لم تحاسب نفسك على هذا الأسبوع · يومها {{day}}",
       "start": "ابدأ",
       "pastTitle": "وقفات سابقة",
-      "yourLine": "كتبتَ لنفسك"
+      "yourLine": "كتبتَ لنفسك",
+      "archiveHelped": "ما أعانك",
+      "archiveHard": "ما صعّب عليك",
+      "archiveChange": "ما ستغيّره",
+      "archiveTomorrow": "خطوة لغد",
+      "nextChange": "ما ستغيّره: {{text}}"
     },
     "plan": {
       "tabs": {

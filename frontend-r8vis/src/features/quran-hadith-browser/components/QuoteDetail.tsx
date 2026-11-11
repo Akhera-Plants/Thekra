@@ -1,0 +1,228 @@
+'use client';
+
+import { Suspense, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
+import { FormattedNumber } from '@/components/shared/FormattedNumber';
+import { SectionDivider } from '@/components/shared/SectionDivider';
+import { Badge } from '@/components/ui/badge';
+import { Link } from '@/i18n/navigation';
+import { GradeBadge } from '@/components/shared/quote/GradeBadge';
+import { SourceBadge } from '@/components/shared/quote/SourceBadge';
+import { QuoteBody } from '@/components/shared/quote/QuoteBody';
+import { QuoteMoreMenu } from '@/components/shared/quote/QuoteMoreMenu';
+import { RecitationButton } from '@/components/shared/quote/RecitationButton';
+import { SourceAttribution } from '@/components/shared/quote/SourceAttribution';
+import { ShareButton } from '@/components/shared/share/ShareButton';
+import { useQuoteSharePayload } from '@/components/shared/share/useQuoteSharePayload';
+import { ReaderExplanations } from '@/features/study-panel/components/ReaderExplanations';
+import { markReadOnOpen, useReadMarks } from '@/features/topic/hooks/useReadMarks';
+import type { QuoteDetailDto } from '@/lib/types/api';
+import { HadithGrade } from '@/lib/types/enums';
+import { formatGradeCitation } from '@/lib/format/grade-citation';
+
+interface QuoteDetailProps {
+  quote: QuoteDetailDto;
+}
+
+/**
+ * The reader, /quotes/[id] (owner round 6, C-13 / C-01n): our design with three parts parted by the flower divider —
+ * the text (with its grade, recitation in the member's reciter, share and «⋯») · «وجه التذكير» of the topic it was
+ * opened from (`?linkId=`, only when written) · the explanations inline (المختصر، السعدي، ابن عاشور for a verse; the
+ * sharh for a hadith). Then the source and the related topics. A member's text is marked «مقروء» when it opens.
+ * Server-rendered (ISR) for SEO; the link and the explanations load on the client.
+ */
+export function QuoteDetail({ quote }: QuoteDetailProps) {
+  const t = useTranslations('quote');
+  const tDetail = useTranslations('quoteDetail');
+  const arabic = useLocale() === 'ar';
+  const reads = useReadMarks();
+  // Opening the reader marks the text read (members; synced with the account).
+  useEffect(() => {
+    if (reads.enabled) markReadOnOpen(quote.id);
+  }, [reads.enabled, quote.id]);
+
+  const grade = quote.hadith?.grade;
+  const isWeak =
+    grade === HadithGrade.DAIF || grade === HadithGrade.MAWDU;
+  const canStudy = quote.type === 'QURAN_VERSE' || quote.type === 'HADITH';
+  const isHadith = quote.type === 'HADITH';
+  // What the provenance part adds once the source badge is in the header (owner round 7, B4).
+  const footerGradeLine = formatGradeCitation({
+    locale: arabic ? 'ar' : 'en',
+    gradeAuthority: quote.citation?.gradeAuthority,
+    gradeReference: quote.citation?.gradeReference,
+    grade: quote.hadith?.grade,
+    besideSource: isHadith ? quote.hadith?.reference : null,
+    collectorInBadge: isHadith,
+  });
+  const hasProvenance = !isHadith || Boolean(
+    (arabic ? quote.hadith?.narratorAr : quote.hadith?.narrator || quote.hadith?.narratorAr)
+      || quote.citation?.volume || quote.citation?.page || footerGradeLine,
+  );
+  // Same shareable units as the quote cards: verses, hadith and athar.
+  const sharePayload = useQuoteSharePayload(quote);
+
+  return (
+    <article className="flex flex-col gap-6">
+      {/* Grade badge + type */}
+      <header className="flex flex-wrap items-center gap-2">
+        {/* 13px: the Arabic floor beside the grade and source badges. */}
+        <Badge variant="outline" className="text-[13px]">
+          {t(`type.${
+            quote.isAthar
+              ? 'athar'
+              : quote.type === 'QURAN_VERSE'
+                ? 'quran'
+                : quote.type === 'HADITH'
+                  ? 'hadith'
+                  : quote.type === 'SCHOLAR_QUOTE'
+                    ? 'scholar'
+                    : 'book'
+          }`)}
+        </Badge>
+        {grade && grade !== HadithGrade.UNGRADED && !quote.isAthar && (
+          <GradeBadge
+            grade={grade}
+            label={t(`grade.${grade.toLowerCase()}`)}
+          />
+        )}
+        {/* Beside the grade the source is a badge, as on the cards and in the app (owner round 7, B4). */}
+        {quote.type === 'HADITH' ? <SourceBadge quote={quote} /> : null}
+        {canStudy ? (
+          <span className="ms-auto flex items-center gap-0.5">
+            {quote.type === 'QURAN_VERSE' && quote.quran?.surahNumber && quote.quran.ayahNumber ? (
+              <RecitationButton surah={quote.quran.surahNumber} ayah={quote.quran.ayahNumber} />
+            ) : null}
+            <ShareButton payload={sharePayload} path={`/quotes/${quote.id}`} fileName={`thekra-${quote.id}`} />
+            {quote.type === 'HADITH' ? <QuoteMoreMenu quoteId={quote.id} /> : null}
+          </span>
+        ) : null}
+      </header>
+
+      {/* Weak notice */}
+      {isWeak && (
+        <p className="rounded-md border border-border bg-muted px-4 py-3 text-sm text-muted-foreground" role="note">
+          {t('weakNotice')}
+        </p>
+      )}
+
+      {quote.type === 'HADITH' && quote.hadith?.outsideSahihayn && (
+        <p className="text-sm text-muted-foreground" role="note">{t('outsideSahihayn')}</p>
+      )}
+
+      <QuoteBody quote={quote}>
+        {(quote.citation?.volume || quote.citation?.page || footerGradeLine || quote.book?.pageOrChapter) && (
+          <a
+            href={`#quote-${quote.id}-source`}
+            className="ms-1 inline-block text-sm text-primary-text underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <sup>(<FormattedNumber value={1} />)</sup>
+            <span className="sr-only">{t('citationMarker')}</span>
+          </a>
+        )}
+      </QuoteBody>
+
+      {canStudy ? (
+        <Suspense fallback={null}>
+          <ReaderSections quoteId={quote.id} isHadith={quote.type === 'HADITH' && !quote.isAthar} />
+        </Suspense>
+      ) : null}
+
+      {/* Provenance: for a hadith the badge above already gives the source, so this part shows only what it adds. */}
+      {hasProvenance ? (
+        <>
+          <SectionDivider />
+          <SourceAttribution
+            quote={quote}
+            citationAnchorId={`quote-${quote.id}-source`}
+            sourceInHeader
+            labels={{
+              narrator: t('narrator'),
+              reference: t('reference'),
+              source: t('source'),
+              volume: t('volume'),
+              page: t('page'),
+              gradeAuthority: t('gradeAuthority'),
+              gradeReference: t('gradeReference'),
+            }}
+          />
+        </>
+      ) : null}
+
+      {/* Tags */}
+      {quote.tags.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          <span className="text-sm font-medium text-muted-foreground me-1">
+            {t('tags')}:
+          </span>
+          {quote.tags.filter((tag) => (arabic ? Boolean(tag.nameAr) : Boolean(tag.name || tag.nameAr))).map((tag) => (
+            <Link key={tag.id} href={`/feelings/${tag.slug}`}>
+              <Badge variant="secondary">
+                {arabic || !tag.name ? (
+                  tag.nameAr ? <span dir="rtl" lang="ar" className="font-arabic-ui">{tag.nameAr}</span> : null
+                ) : (
+                  tag.name
+                )}
+              </Badge>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {/* Related sins */}
+      {quote.relatedSins && quote.relatedSins.length > 0 && (
+        <section aria-labelledby="related-sins-heading">
+          <h2 id="related-sins-heading" className="mb-2 text-sm font-semibold text-muted-foreground">
+            {tDetail('relatedSins')}
+          </h2>
+          <ul className="flex flex-wrap gap-2">
+            {quote.relatedSins.map((sin) => (
+              <li key={sin.slug}>
+                <Link href={`/sins/${sin.slug}`}>
+                  <Badge variant="outline">
+                    {arabic || !sin.name ? (
+                      <span dir="rtl" lang="ar" className="font-arabic-ui">{sin.nameAr}</span>
+                    ) : (
+                      sin.name
+                    )}
+                  </Badge>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Related good deeds */}
+      {quote.relatedGoodDeeds && quote.relatedGoodDeeds.length > 0 && (
+        <section aria-labelledby="related-deeds-heading">
+          <h2 id="related-deeds-heading" className="mb-2 text-sm font-semibold text-muted-foreground">
+            {tDetail('relatedGoodDeeds')}
+          </h2>
+          <ul className="flex flex-wrap gap-2">
+            {quote.relatedGoodDeeds.map((deed) => (
+              <li key={deed.slug}>
+                <Link href={`/good-deeds/${deed.slug}`}>
+                  <Badge variant="outline">
+                    {arabic || !deed.name ? (
+                      <span dir="rtl" lang="ar" className="font-arabic-ui">{deed.nameAr}</span>
+                    ) : (
+                      deed.name
+                    )}
+                  </Badge>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </article>
+  );
+}
+
+/** The parts after the text; `?linkId=` names the topic link whose «وجه التذكير» to show. */
+function ReaderSections({ quoteId, isHadith }: { quoteId: string; isHadith: boolean }) {
+  const linkId = useSearchParams().get('linkId');
+  return <ReaderExplanations quoteId={quoteId} linkId={linkId} isHadith={isHadith} />;
+}

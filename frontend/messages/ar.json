@@ -1591,11 +1591,16 @@
         "partly": "بعضه",
         "no": "لا",
         "checkIn": "سجّل حالك في برنامجك الخاص",
-        "save": "تمّت المحاسبة"
+        "save": "تمّت المحاسبة",
+        "helpedQ": "ما أعانك اليوم؟",
+        "hardQ": "ما صعّب عليك اليوم؟",
+        "tomorrowQ": "خطوة لغد",
+        "tomorrowPlaceholder": "سطر واحد",
+        "fromDaily": "من إجاباتك اليوم"
       },
       "weekly": {
         "title": "محاسبة الأسبوع",
-        "lead": "دقيقتان مع نفسك، بلا لوم.",
+        "lead": "دقيقتان مع نفسك، بلا لوم. كل ما هنا اختياري.",
         "steady": "ما ثبتَّ عليه",
         "steadyNone": "لم يكتمل شيء هذا الأسبوع، والأسبوع القادم فرصة جديدة.",
         "weak": "ما الذي صعُب عليك",
@@ -1611,8 +1616,17 @@
         "middle": "متوسط",
         "hard": "قاسٍ",
         "message": "رسالة إلى نفسي",
-        "messagePlaceholder": "سطر تقرؤه يوم الجمعة القادم",
-        "save": "احفظ المحاسبة"
+        "messagePlaceholder": "تُحفظ في «رسائلي إلى نفسي» في «عاداتي»",
+        "save": "احفظ المحاسبة",
+        "weekFacts": "أسبوعك",
+        "helpedQ": "ما الذي أعانك هذا الأسبوع؟",
+        "hardQ": "ما الذي صعّب عليك؟",
+        "changeQ": "ماذا ستغيّر الأسبوع القادم؟",
+        "fromDaily": "من إجاباتك هذا الأسبوع",
+        "heartNoteLabel": "سطر عن قلبك",
+        "heartNotePlaceholder": "سطر عن حالك، إن شئت",
+        "messageLabel": "اكتب رسالة لنفسك",
+        "messageFull": "رسائلك ممتلئة ({max}). احذف واحدة من «عاداتي» لتكتب جديدة."
       },
       "selfMessage": {
         "title": "رسالتك إلى نفسك",
@@ -1620,7 +1634,9 @@
         "read": "قرأتها"
       },
       "minimum": "القدر الأدنى",
-      "minimumMet": "سجّلت القدر الأدنى"
+      "minimumMet": "سجّلت القدر الأدنى",
+      "placeholder": "اكتب بكلماتك",
+      "count": "{n} / {max}"
     },
     "notify": {
       "title": "التنبيهات",
@@ -2191,7 +2207,13 @@
         "keep": "اثبت على «{title}» بقدره ({amount})."
       },
       "openHabit": "افتح العادة",
-      "stepWas": "الخطوة: {step} · {title}"
+      "stepWas": "الخطوة: {step} · {title}",
+      "archiveHelped": "ما أعانك",
+      "archiveHard": "ما صعّب عليك",
+      "archiveChange": "ما ستغيّره",
+      "archiveTomorrow": "خطوة لغد",
+      "archiveHeart": "القلب: {feeling}",
+      "nextChange": "ما ستغيّره: {text}"
     },
     "recordTab": {
       "monthTitle": "الشهر",

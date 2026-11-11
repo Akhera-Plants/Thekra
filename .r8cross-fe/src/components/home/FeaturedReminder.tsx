@@ -1,0 +1,154 @@
+'use client';
+
+import { stripOuterQuotes } from '@/lib/texts/quote-text';
+import { Fragment } from 'react';
+import { Bookmark, BookMarked, BookOpen } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
+import { DirectionalArrow } from '@/components/shared/DirectionalArrow';
+import { ShareButton } from '@/components/shared/share/ShareButton';
+import { useQuoteSharePayload } from '@/components/shared/share/useQuoteSharePayload';
+import { useFavoriteQuoteIds } from '@/features/favorites/hooks/useFavoriteQuoteIds';
+import { useToggleFavorite } from '@/features/favorites/hooks/useToggleFavorite';
+import { formatDigits } from '@/lib/format/digits';
+import { collectorReferences, formatGradeCitation } from '@/lib/format/grade-citation';
+import { englishOnlyProvenance } from '@/lib/format/provenance';
+import { QuoteType } from '@/lib/types/enums';
+import type { QuoteDto } from '@/lib/types/api';
+import { cn } from '@/lib/utils';
+import { FeaturedText } from './FeaturedText';
+import { splitChain } from './today/chain';
+import { featuredVerseScale } from './today/verse-scale';
+
+interface FeaturedReminderProps {
+  quote: QuoteDto;
+}
+
+function EnglishWithHonorific({ text }: { text: string }) {
+  const parts = text.split('ﷺ');
+  return (
+    <>
+      {parts.map((part, index) => (
+        <Fragment key={index}>
+          {index > 0 ? <span lang="ar">ﷺ</span> : null}
+          {part}
+        </Fragment>
+      ))}
+    </>
+  );
+}
+
+/** Selected reminder card matching thekra-source `.featured-reminder`. */
+export function FeaturedReminder({ quote }: FeaturedReminderProps) {
+  const t = useTranslations('home');
+  const tFav = useTranslations('favorites');
+  const locale = useLocale() === 'en' ? 'en' : 'ar';
+  const { ids } = useFavoriteQuoteIds();
+  const { toggle, isPending } = useToggleFavorite({
+    labels: {
+      added: tFav('added'),
+      removed: tFav('removed'),
+      error: tFav('error'),
+      authRequired: tFav('authRequired'),
+    },
+  });
+
+  const scripture = quote.type === QuoteType.HADITH || quote.type === QuoteType.QURAN_VERSE;
+  const english = locale === 'en' && scripture ? (quote.translation?.text ?? null) : null;
+  // A-04: quote marks wrapping the whole text are not drawn.
+  const text = stripOuterQuotes(splitChain(quote.textAr).text);
+  const isQuran = quote.type === QuoteType.QURAN_VERSE;
+  const saved = ids.has(quote.id) || Boolean(quote.isFavorite);
+
+  const sourceName =
+    (locale === 'ar' ? quote.source?.nameAr : quote.source?.name)?.trim() ||
+    (isQuran ? t('quranSource') : t('hadithSource'));
+
+  const gradeLine = formatGradeCitation({
+    locale,
+    gradeAuthority: quote.citation?.gradeAuthority,
+    gradeReference: quote.citation?.gradeReference,
+    grade: quote.hadith?.grade,
+    // The reference follows in the same line: the book and number are said once (owner round 7, B4).
+    besideSource: quote.hadith?.reference,
+    collectorInBadge: true,
+  });
+  // The collector (Muslim 206) joins the one stamp line when it is another book than the source named.
+  const collectors = collectorReferences({
+    locale,
+    gradeAuthority: quote.citation?.gradeAuthority,
+    gradeReference: quote.citation?.gradeReference,
+    besideSource: [quote.source?.nameAr, quote.hadith?.reference].filter(Boolean).join(' '),
+  });
+  const rawReference = quote.hadith?.reference?.trim()
+    || (quote.quran?.surahNumber != null && quote.quran.ayahNumber != null
+      ? t('verseCitation', {
+          surah: (locale === 'ar' ? quote.quran.surahNameAr : quote.quran.surahName) ?? '',
+          chapter: formatDigits(quote.quran.surahNumber),
+          ayah: formatDigits(quote.quran.ayahNumber),
+        })
+      : null);
+  // English keeps only the parts of the reference that came out in English.
+  const sourceLine =
+    rawReference && locale === 'en'
+      ? englishOnlyProvenance(rawReference)
+      : rawReference;
+  const meta = [sourceLine, ...collectors, gradeLine].filter(Boolean).join(' · ');
+  const body = english ?? text;
+  const scale = featuredVerseScale(body.length);
+  // Share exactly what this card shows: its text and its source stamp.
+  const sharePayload = useQuoteSharePayload(quote, {
+    body,
+    bodyLang: english ? 'en' : 'ar',
+    attribution: [sourceName, meta].filter(Boolean),
+  });
+
+  return (
+    <article className="featured-reminder">
+      <FeaturedText
+        key={`${quote.id}-${locale}`}
+        heading={<h2>{t('todayHeading')}</h2>}
+        actions={
+          <div className="flex shrink-0 items-center gap-2">
+            <ShareButton
+              appearance="site"
+              payload={sharePayload}
+              path={`/quotes/${quote.id}`}
+              fileName={`thekra-${quote.id}`}
+            />
+            <button
+              type="button"
+              className="icon-button save-button"
+              aria-label={saved ? tFav('remove') : tFav('add')}
+              aria-pressed={saved}
+              disabled={isPending}
+              onClick={() => toggle(quote.id, saved)}
+            >
+              <Bookmark className="size-[19px]" aria-hidden />
+            </button>
+          </div>
+        }
+        className={cn('featured-verse', scale, { quran: isQuran })}
+        lang={english ? 'en' : 'ar'}
+      >
+        {english ? <EnglishWithHonorific text={body} /> : body}
+      </FeaturedText>
+      <div className="reading-bottom">
+        <div className="source-stamp">
+          {isQuran ? (
+            <BookMarked className="size-6" aria-hidden />
+          ) : (
+            <BookOpen className="size-6" aria-hidden />
+          )}
+          <span>
+            <strong>{sourceName}</strong>
+            {meta ? <small>{formatDigits(meta)}</small> : null}
+          </span>
+        </div>
+        <Link className="outline-button" href={`/quotes/${quote.id}`}>
+          {t('readFull')} <DirectionalArrow className="size-[18px]" />
+        </Link>
+      </div>
+    </article>
+  );
+}

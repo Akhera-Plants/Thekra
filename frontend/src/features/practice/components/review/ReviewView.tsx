@@ -13,6 +13,8 @@ import {
   intentionOf,
   intentionState,
   reviewHistory,
+  reviewSteps,
+  type EveningReview,
   setHeartPrefs,
   weeklyOf,
   weeklyReviewDue,
@@ -150,6 +152,7 @@ function ReviewBody({ ctx, context }: { ctx: HeartContext; context: WirdContext 
               }
             >
               <p className="text-sm leading-7 text-muted-foreground">{evening ? t('eveningDone') : t('eveningHint')}</p>
+              {evening ? <WrittenLines lines={eveningLines(evening, (k) => t(k))} /> : null}
             </Section>
             <LearnSection context={context} from={addDays(today, -1)} to={today} />
           </SegmentTabsContent>
@@ -241,13 +244,23 @@ function Section({ id, title, action, children }: { id: string; title: string; a
 /** «خطوتك القادمة» (reference): the step chosen in the latest weekly review, on its habit; else how to choose one. */
 function NextStep({ review, context }: { review: WeeklyReview | undefined; context: WirdContext }) {
   const t = useTranslations('practice.review');
-  const plan = review?.step ? context.snapshot.store.plans.find((p) => p.id === review.step?.planId) : undefined;
+  const steps = review
+    ? reviewSteps(review).flatMap((step) => {
+        const plan = context.snapshot.store.plans.find((p) => p.id === step.planId);
+        return plan ? [{ plan, choice: step.choice }] : [];
+      })
+    : [];
   return (
     <section aria-labelledby="review-next" className="flex flex-col gap-2">
       <h3 id="review-next" className="text-xl font-medium">
         {t('nextTitle')}
       </h3>
-      {plan && review?.step ? <StepLine plan={plan} choice={review.step.choice} context={context} /> : <p className="text-sm leading-7 text-muted-foreground">{t('nextNone')}</p>}
+      {steps.length > 0 ? (
+        steps.map((s) => <StepLine key={s.plan.id} plan={s.plan} choice={s.choice} context={context} />)
+      ) : review?.change ? null : (
+        <p className="text-sm leading-7 text-muted-foreground">{t('nextNone')}</p>
+      )}
+      {review?.change ? <p className="text-base leading-8 break-words">{t('nextChange', { text: review.change })}</p> : null}
     </section>
   );
 }
@@ -319,7 +332,30 @@ function ShortList<T>({ items, render }: { items: readonly T[]; render: (item: T
   );
 }
 
-/** One weekly review: the week, then the habits that were hard as short rows (the two weakest first), and its step. */
+/** The member's own words from a review, as small labelled lines (what he wrote, nothing computed). */
+function WrittenLines({ lines }: { lines: { key: string; label: string; text: string }[] }) {
+  if (lines.length === 0) return null;
+  return (
+    <dl className="flex flex-col gap-1.5">
+      {lines.map((l) => (
+        <div key={l.key} className="flex flex-col">
+          <dt className="text-sm text-muted-foreground">{l.label}</dt>
+          {l.text ? <dd className="text-sm leading-7 break-words">{l.text}</dd> : null}
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+function eveningLines(review: EveningReview, t: (key: 'archiveHelped' | 'archiveHard' | 'archiveTomorrow') => string) {
+  return [
+    review.helped ? { key: 'helped', label: t('archiveHelped'), text: review.helped } : null,
+    review.hard ? { key: 'hard', label: t('archiveHard'), text: review.hard } : null,
+    review.tomorrow ? { key: 'tomorrow', label: t('archiveTomorrow'), text: review.tomorrow } : null,
+  ].filter((l): l is { key: string; label: string; text: string } => l !== null);
+}
+
+/** One weekly review: the week, the habits that were hard as short rows (the two weakest first), what he wrote, and his steps. */
 function ArchiveRow({ review, context }: { review: WeeklyReview; context: WirdContext }) {
   const t = useTranslations('practice.review');
   const tWeekly = useTranslations('practice.heart.weekly');
@@ -329,6 +365,14 @@ function ArchiveRow({ review, context }: { review: WeeklyReview; context: WirdCo
     return plan ? planTitle(plan, context.habits, locale === 'en') : stored;
   };
   const weak = review.weak.slice(0, 2);
+  const written = [
+    review.helped ? { key: 'helped', label: t('archiveHelped'), text: review.helped } : null,
+    review.hard ? { key: 'hard', label: t('archiveHard'), text: review.hard } : null,
+    review.change ? { key: 'change', label: t('archiveChange'), text: review.change } : null,
+    review.heart ? { key: 'heart', label: t('archiveHeart', { feeling: tWeekly(review.heart) }), text: review.heartNote ?? '' } : null,
+  ]
+    .filter((l): l is { key: string; label: string; text: string } => l !== null);
+  const steps = reviewSteps(review);
   return (
     <li className="flex flex-col gap-2 py-3">
       <p className="text-base font-medium">{t('weekOf', { date: formatGregorian(review.weekOf, locale, false) })}</p>
@@ -347,11 +391,12 @@ function ArchiveRow({ review, context }: { review: WeeklyReview; context: WirdCo
         <p className="text-sm text-muted-foreground">{tWeekly('weakNone')}</p>
       )}
       {review.weak.length > 2 ? <p className="text-xs text-muted-foreground">{t('moreWeak', { n: formatDigits(review.weak.length - 2) })}</p> : null}
-      {review.step ? (
-        <p className="text-sm text-muted-foreground">
-          {t('stepWas', { title: titleOf(review.step.planId, ''), step: tWeekly(review.step.choice) })}
+      <WrittenLines lines={written} />
+      {steps.map((step) => (
+        <p key={step.planId} className="text-sm text-muted-foreground">
+          {t('stepWas', { title: titleOf(step.planId, ''), step: tWeekly(step.choice) })}
         </p>
-      ) : null}
+      ))}
     </li>
   );
 }

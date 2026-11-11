@@ -5,10 +5,19 @@ import { Check } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
   activePrograms,
+  addDays,
+  addSelfMessage,
   applyStep,
+  cleanSelfMessage,
+  periodAnswers,
+  REVIEW_STEP_ROWS,
+  SELF_MESSAGE_MAX_LENGTH,
+  SELF_MESSAGES_MAX,
+  selfMessageError,
   dayAgenda,
   daySummary,
   eveningCardVisible,
+  HEART_LINE_MAX,
   intentionOf,
   intentionState,
   makeIntention,
@@ -38,12 +47,15 @@ import { formatDigits } from '@/lib/format/digits';
 import { formatGregorian } from '@/lib/practice/format';
 import { updateHeart } from '@/lib/practice/heart-store';
 import { updateStore } from '@/lib/practice/local-store';
+import { newUuid } from '@/lib/practice/ids';
 import { habitOf } from '@/lib/practice/plans';
+import { useReviewDraft } from '@/lib/practice/review-draft';
 import type { PracticeHabit } from '@/lib/types/practice';
 import { cn } from '@/lib/utils';
 import { TextSourceLine } from '@/components/shared/quote/TextSourceLine';
 import { stripOuterQuotes } from '@/lib/texts/quote-text';
 import { usePracticeEvidence } from '../../hooks/usePracticeEvidence';
+import { NoteField, nextFieldOnEnter, REVIEW_FIELD } from './ReviewFields';
 
 export interface HeartContext {
   store: Store;
@@ -241,11 +253,49 @@ export function IntentionCard({ ctx, bare = false, onSaved }: HeartCardProps) {
   );
 }
 
-/** المحاسبة (evening, opt-in): what was completed, the day's pledge kept or not, and the private check-in link. */
+/** «زِد خطوة / خفّف / أبقِ» for one habit: a tap chooses, a second tap on the same chip clears it (no step). */
+function StepChips({ label, value, options, onChange }: { label: string; value: StepChoice | undefined; options: StepChoice[]; onChange: (v: StepChoice | undefined) => void }) {
+  const t = useTranslations('practice.heart.weekly');
+  return (
+    <div role="group" aria-label={label} className="flex flex-wrap gap-2">
+      {options.map((c) => (
+        <button
+          key={c}
+          type="button"
+          aria-pressed={value === c}
+          onClick={() => onChange(value === c ? undefined : c)}
+          className={cn(
+            'min-h-11 rounded-full border px-4 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transition-none',
+            value === c ? 'border-primary bg-secondary text-primary-text' : 'border-border hover:bg-muted',
+          )}
+        >
+          {t(c)}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** A small heading inside a form. */
+function FormHeading({ children }: { children: ReactNode }) {
+  return <h3 className="text-base font-medium">{children}</h3>;
+}
+
+/** The save row stays at the foot of the dialog's scroll area, so «احفظ» is always in reach on a long form. */
+function SaveBar({ children, bare }: { children: ReactNode; bare: boolean }) {
+  return <div className={cn(bare && 'sticky bottom-0 -mx-1 border-t border-border bg-background px-1 pt-3 pb-1')}>{children}</div>;
+}
+
+/**
+ * المحاسبة (evening, opt-in), a form (round 8): what was completed, the day's pledge kept or not, then the member's own
+ * words, all optional: «ما أعانك اليوم؟», «ما صعّب عليك اليوم؟» (the day's own answers to the daily question as chips) and
+ * «خطوة لغد». Saves with every field empty too.
+ */
 export function EveningCard({ ctx, bare = false, onSaved }: HeartCardProps) {
   const t = useTranslations('practice.heart.evening');
   const { store, heart, today, time, planDays } = ctx;
-  const [kept, setKept] = useState<PledgeKept | null>(null);
+  const { draft, patch, clear } = useReviewDraft(`evening:${today}`, { kept: null as PledgeKept | null, helped: '', hard: '', tomorrow: '' });
+  const answers = useMemo(() => periodAnswers(store, today, today), [store, today]);
   // In the dialog the card stays until it closes (the slot is gone once saved).
   if (!bare && !eveningCardVisible(heart, today, time)) return null;
   const summary = daySummary(store, today, planDays);
@@ -253,46 +303,60 @@ export function EveningCard({ ctx, bare = false, onSaved }: HeartCardProps) {
   const hasProgram = activePrograms(store.programs).length > 0;
   return (
     <Card title={t('title')} bare={bare}>
-      <p className="text-sm font-medium">{t('doneQ')}</p>
-      <p className="text-sm leading-7 text-muted-foreground">
-        {t('doneSummary', { total: summary.asked.length, totalN: formatDigits(summary.asked.length), done: formatDigits(summary.done.length) })}
-      </p>
-      {intention?.pledge ? (
-        <>
-          <p className="text-sm font-medium">{t('keptQ')}</p>
-          <p className="text-sm leading-7 text-muted-foreground">{intention.pledge}</p>
-          <Chips
-            label={t('keptQ')}
-            value={kept}
-            onChange={setKept}
-            options={(['yes', 'partly', 'no'] as const).map((k) => ({ key: k, text: t(k) }))}
-          />
-        </>
-      ) : null}
-      {/* «تمّت المحاسبة» and «سجّل حالك في برنامجك الخاص» are one choice (O-02): side by side, the same size, the save
-          solid and the check-in outlined, as in the app. Without a program the save stands alone. */}
-      <ActionPair layout={hasProgram ? 'fill' : 'hug'}>
-        {/* A long label wraps inside its button; the two keep one height (grid row), never overflow. */}
-        <Button
-          className="h-auto min-h-11 whitespace-normal py-2 leading-6"
-          onClick={() => {
-            updateHeart((h) => saveEvening(h, { date: today, ...(kept ? { kept } : {}) }));
-            onSaved?.();
-          }}
-        >
-          {t('save')}
-        </Button>
-        {hasProgram ? (
-          <Button asChild variant="outline" className="h-auto min-h-11 whitespace-normal py-2 text-center leading-6">
-            <Link href="/practice/leave-sin">{t('checkIn')}</Link>
-          </Button>
+      <div data-review-form className="flex flex-col gap-5">
+        <p className="text-sm leading-7 text-muted-foreground">
+          {t('doneSummary', { total: summary.asked.length, totalN: formatDigits(summary.asked.length), done: formatDigits(summary.done.length) })}
+        </p>
+        {intention?.pledge ? (
+          <div className="flex flex-col gap-2">
+            <FormHeading>{t('keptQ')}</FormHeading>
+            <p className="text-sm leading-7 text-muted-foreground">{intention.pledge}</p>
+            <Chips
+              label={t('keptQ')}
+              value={draft.kept}
+              onChange={(kept) => patch({ kept })}
+              options={(['yes', 'partly', 'no'] as const).map((k) => ({ key: k, text: t(k) }))}
+            />
+          </div>
         ) : null}
-      </ActionPair>
+        <NoteField label={t('helpedQ')} value={draft.helped} onChange={(helped) => patch({ helped })} answers={answers.helped} answersLabel={t('fromDaily')} />
+        <NoteField label={t('hardQ')} value={draft.hard} onChange={(hard) => patch({ hard })} answers={answers.hard} answersLabel={t('fromDaily')} />
+        <NoteField label={t('tomorrowQ')} value={draft.tomorrow} onChange={(tomorrow) => patch({ tomorrow })} placeholder={t('tomorrowPlaceholder')} />
+        {/* «تمّت المحاسبة» and «سجّل حالك في برنامجك الخاص» are one choice (O-02): side by side, the same size, the save
+            solid and the check-in outlined, as in the app. Without a program the save stands alone. */}
+        <SaveBar bare={bare}>
+          <ActionPair layout={hasProgram ? 'fill' : 'hug'}>
+            {/* A long label wraps inside its button; the two keep one height (grid row), never overflow. */}
+            <Button
+              className="h-auto min-h-11 whitespace-normal py-2 leading-6"
+              onClick={() => {
+                updateHeart((h) =>
+                  saveEvening(h, { date: today, ...(draft.kept ? { kept: draft.kept } : {}), helped: draft.helped, hard: draft.hard, tomorrow: draft.tomorrow }),
+                );
+                clear();
+                onSaved?.();
+              }}
+            >
+              {t('save')}
+            </Button>
+            {hasProgram ? (
+              <Button asChild variant="outline" className="h-auto min-h-11 whitespace-normal py-2 text-center leading-6">
+                <Link href="/practice/leave-sin">{t('checkIn')}</Link>
+              </Button>
+            ) : null}
+          </ActionPair>
+        </SaveBar>
+      </div>
     </Card>
   );
 }
 
-/** «المحاسبة الأسبوعية» (the chosen day; the next morning if skipped): kept, weakened, one step, the heart. */
+/**
+ * «المحاسبة الأسبوعية» as a form (round 8; the chosen day, the next morning if skipped): the week's facts as a compact
+ * context, then the member's own words («ما الذي أعانك؟», «ما الذي صعّب عليك؟», «ماذا ستغيّر؟»; the week's daily
+ * answers are one-tap chips), a step per listed habit, the heart with an optional line and an optional message to
+ * himself (saved to «رسائلي إلى نفسي»). Nothing is required; what is typed survives an accidental close until saved.
+ */
 export function WeeklyCard({ ctx, bare = false, onSaved, weekOf: forced }: HeartCardProps & { weekOf?: string }) {
   const t = useTranslations('practice.heart.weekly');
   const english = useLocale() === 'en';
@@ -300,89 +364,131 @@ export function WeeklyCard({ ctx, bare = false, onSaved, weekOf: forced }: Heart
   // «ابدأ محاسبة الأسبوع» in «محاسبتي» opens the review for the current week even on another day (`weekOf`).
   const weekOf = forced ?? weeklyReviewDue(heart, today, time);
   const summary = useMemo(() => (weekOf ? weekSummary(store, weekOf, today, planDays) : null), [store, weekOf, today, planDays]);
-  const candidates = useMemo(() => store.plans.filter((p) => !p.pausedOn || p.resumedOn), [store.plans]);
-  const firstPlan = summary?.weak[0]?.planId ?? summary?.steady[0]?.planId ?? candidates[0]?.id ?? null;
-  const [planId, setPlanId] = useState<string | null>(null);
-  const [choice, setChoice] = useState<StepChoice>('keep');
-  const [feeling, setFeeling] = useState<HeartFeeling | null>(null);
+  const answers = useMemo(() => (weekOf ? periodAnswers(store, addDays(weekOf, -6), weekOf) : { helped: [], hard: [] }), [store, weekOf]);
+  const { draft, patch, clear } = useReviewDraft(`weekly:${weekOf ?? ''}`, {
+    helped: '',
+    hard: '',
+    change: '',
+    steps: {} as Record<string, StepChoice | undefined>,
+    feeling: null as HeartFeeling | null,
+    heartNote: '',
+    message: '',
+  });
   if (!weekOf || !summary) return null;
 
-  const selectedId = planId ?? firstPlan;
-  const selected = store.plans.find((p) => p.id === selectedId) ?? null;
-  const choices = selected ? stepChoices(selected, today) : [];
   const byId = (id: string) => store.plans.find((p) => p.id === id);
   const title = (id: string) => {
     const plan = byId(id);
     return plan ? planTitle(plan, habits, english) : '';
   };
+  // The hardest habits get a step row; a week with none missed offers the steady ones instead.
+  const rows = (summary.weak.length > 0 ? summary.weak : summary.steady).filter((r) => byId(r.planId)).slice(0, REVIEW_STEP_ROWS);
+  const messagesFull = (heart.messages?.length ?? 0) >= SELF_MESSAGES_MAX;
 
   function save() {
     if (!weekOf || !summary) return;
-    const step = selected && choices.includes(choice) ? { planId: selected.id, choice } : undefined;
-    if (step && step.choice !== 'keep') {
-      updateStore((s) => updatePlan(s, step.planId, (p) => applyStep(p, step.choice, today)));
+    const steps = rows.flatMap((r) => {
+      const plan = byId(r.planId);
+      const choice = draft.steps[r.planId];
+      return plan && choice && stepChoices(plan, today).includes(choice) ? [{ planId: r.planId, choice }] : [];
+    });
+    const applied = steps.filter((s) => s.choice !== 'keep');
+    if (applied.length > 0) {
+      updateStore((s) => applied.reduce((acc, st) => updatePlan(acc, st.planId, (p) => applyStep(p, st.choice, today)), s));
     }
-    updateHeart((h) =>
-      saveWeeklyReview(h, {
+    updateHeart((h) => {
+      const next = saveWeeklyReview(h, {
         weekOf,
         steady: summary.steady.map((r) => ({ planId: r.planId, title: title(r.planId), missed: 0 })),
         weak: summary.weak.map((r) => ({ planId: r.planId, title: title(r.planId), missed: r.missed })),
-        ...(step ? { step } : {}),
-        ...(feeling ? { heart: feeling } : {}),
-      }),
-    );
+        ...(steps.length > 0 ? { steps } : {}),
+        ...(draft.feeling ? { heart: draft.feeling } : {}),
+        helped: draft.helped,
+        hard: draft.hard,
+        change: draft.change,
+        heartNote: draft.heartNote,
+      });
+      // The message goes to the list at the top of «عاداتي» (the usual limits: 280 characters, ten messages).
+      return cleanSelfMessage(draft.message) && !selfMessageError(next, draft.message) ? addSelfMessage(next, { id: newUuid(), text: draft.message }) : next;
+    });
+    clear();
     onSaved?.();
   }
 
+  const hasFacts = summary.steady.length > 0 || summary.weak.length > 0;
   return (
     <Card title={t('title')} bare={bare}>
-      <p className="text-sm leading-7 text-muted-foreground">{t('lead')}</p>
-      <h3 className="text-base font-medium">{t('steady')}</h3>
-      {summary.steady.length > 0 ? (
-        <ul className="flex flex-col gap-1 text-sm leading-7">
+      <div data-review-form className="flex flex-col gap-5">
+        <p className="text-sm leading-7 text-muted-foreground">{t('lead')}</p>
+        <ul aria-label={t('weekFacts')} className="flex flex-col gap-1 rounded-xl border border-border px-3 py-2 text-sm leading-7">
+          {hasFacts ? null : <li className="text-muted-foreground">{t('steadyNone')}</li>}
           {summary.steady.map((r) => (
             <li key={r.planId} className="flex items-center gap-2">
-              <Check aria-hidden className="size-4 text-primary-text" />
-              {title(r.planId)}
+              <Check aria-hidden className="size-4 shrink-0 text-primary-text" />
+              <span className="min-w-0 break-words">{title(r.planId)}</span>
             </li>
           ))}
-        </ul>
-      ) : (
-        <p className="text-sm leading-7 text-muted-foreground">{t('steadyNone')}</p>
-      )}
-      <h3 className="text-base font-medium">{t('weak')}</h3>
-      {summary.weak.length > 0 ? (
-        <ul className="flex flex-col gap-1 text-sm leading-7">
           {summary.weak.map((r) => (
-            <li key={r.planId}>
-              {title(r.planId)} · <span className="text-muted-foreground">{t('missed', { count: r.missed, n: formatDigits(r.missed) })}</span>
+            <li key={r.planId} className="flex items-baseline justify-between gap-3 ps-6">
+              <span className="min-w-0 break-words">{title(r.planId)}</span>
+              <span className="shrink-0 text-muted-foreground">{t('missed', { count: r.missed, n: formatDigits(r.missed) })}</span>
             </li>
           ))}
         </ul>
-      ) : (
-        <p className="text-sm leading-7 text-muted-foreground">{t('weakNone')}</p>
-      )}
-      {candidates.length > 0 ? (
-        <>
-          <h3 className="text-base font-medium">{t('step')}</h3>
-          <Chips
-            label={t('stepHabit')}
-            value={selectedId}
-            onChange={(id) => {
-              setPlanId(id);
-              setChoice('keep');
-            }}
-            options={candidates.map((p) => ({ key: p.id, text: planTitle(p, habits, english) }))}
+        <NoteField label={t('helpedQ')} value={draft.helped} onChange={(helped) => patch({ helped })} answers={answers.helped} answersLabel={t('fromDaily')} />
+        <NoteField label={t('hardQ')} value={draft.hard} onChange={(hard) => patch({ hard })} answers={answers.hard} answersLabel={t('fromDaily')} />
+        <NoteField label={t('changeQ')} value={draft.change} onChange={(change) => patch({ change })} />
+        {rows.length > 0 ? (
+          <div className="flex flex-col gap-3">
+            <FormHeading>{t('step')}</FormHeading>
+            <ul className="flex flex-col gap-4">
+              {rows.map((r) => {
+                const plan = byId(r.planId);
+                if (!plan) return null;
+                return (
+                  <li key={r.planId} className="flex flex-col gap-2">
+                    <p className="text-sm leading-7">{title(r.planId)}</p>
+                    <StepChips
+                      label={title(r.planId)}
+                      value={draft.steps[r.planId]}
+                      options={stepChoices(plan, today)}
+                      onChange={(choice) => patch({ steps: { ...draft.steps, [r.planId]: choice } })}
+                    />
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ) : null}
+        <div className="flex flex-col gap-2">
+          <FormHeading>{t('heart')}</FormHeading>
+          <Chips label={t('heart')} value={draft.feeling} onChange={(feeling) => patch({ feeling })} options={(['present', 'middle', 'hard'] as const).map((k) => ({ key: k, text: t(k) }))} />
+          <Input
+            {...{ [REVIEW_FIELD]: '' }}
+            value={draft.heartNote}
+            maxLength={HEART_LINE_MAX}
+            placeholder={t('heartNotePlaceholder')}
+            aria-label={t('heartNoteLabel')}
+            enterKeyHint="next"
+            onChange={(e) => patch({ heartNote: e.target.value })}
+            onKeyDown={nextFieldOnEnter}
+            className="h-11"
           />
-          <Chips label={t('step')} value={choice} onChange={setChoice} options={choices.map((c) => ({ key: c, text: t(c) }))} />
-        </>
-      ) : null}
-      <h3 className="text-base font-medium">{t('heart')}</h3>
-      <Chips label={t('heart')} value={feeling} onChange={setFeeling} options={(['present', 'middle', 'hard'] as const).map((k) => ({ key: k, text: t(k) }))} />
-      {/* Round 6 (C-02c): no «رسالة إلى نفسي» here any more; the messages are a list at the top of «عاداتي». */}
-      <Button className="self-start" onClick={save}>
-        {t('save')}
-      </Button>
+        </div>
+        {messagesFull ? (
+          <div className="flex flex-col gap-1">
+            <FormHeading>{t('messageLabel')}</FormHeading>
+            <p className="text-sm leading-7 text-muted-foreground">{t('messageFull', { max: formatDigits(SELF_MESSAGES_MAX) })}</p>
+          </div>
+        ) : (
+          <NoteField label={t('messageLabel')} value={draft.message} onChange={(message) => patch({ message })} placeholder={t('messagePlaceholder')} max={SELF_MESSAGE_MAX_LENGTH} />
+        )}
+        <SaveBar bare={bare}>
+          <Button className="self-start" onClick={save}>
+            {t('save')}
+          </Button>
+        </SaveBar>
+      </div>
     </Card>
   );
 }

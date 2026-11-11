@@ -20,6 +20,10 @@ import { isExcused, type Store } from './storage.js';
 export const HEART_VERSION = 1;
 /** «عهد اليوم», «رسالة إلى نفسي» and a pledge's own text: one line. */
 export const HEART_LINE_MAX = 140;
+/** Round 8: the review forms' own-words fields («ما أعانك؟», «ما صعّب عليك؟», «ماذا ستغيّر؟»), as long as a self message. */
+export const REVIEW_NOTE_MAX = 280;
+/** Round 8: hard habits listed with a step choice in the weekly review (the weakest). */
+export const REVIEW_STEP_ROWS = 3;
 /** Days of intentions and evening reviews kept on the device. */
 export const HEART_DAYS_KEPT = 60;
 /** Weekly reviews kept (two years of Fridays). */
@@ -82,6 +86,12 @@ export interface EveningReview {
   date: LocalDate;
   /** «هل وفيت بعهد اليوم؟», only when a line was set that day. */
   kept?: PledgeKept;
+  /** Round 8: «ما أعانك اليوم؟», the member's own words (≤ {@link REVIEW_NOTE_MAX}). */
+  helped?: string;
+  /** Round 8: «ما صعّب عليك اليوم؟». */
+  hard?: string;
+  /** Round 8: «خطوة لغد», one line. */
+  tomorrow?: string;
 }
 
 export type HeartFeeling = 'present' | 'middle' | 'hard';
@@ -102,8 +112,19 @@ export interface WeeklyReview {
   weekOf: LocalDate;
   steady: ReviewPlan[];
   weak: ReviewPlan[];
+  /** The first of {@link steps} (the one choice of rounds before 8; old data has only this). */
   step?: { planId: string; choice: StepChoice };
+  /** Round 8: one chosen step per listed hard habit (at most {@link REVIEW_STEP_ROWS}); each is applied to its plan. */
+  steps?: { planId: string; choice: StepChoice }[];
   heart?: HeartFeeling;
+  /** Round 8: «ما الذي أعانك هذا الأسبوع؟» (≤ {@link REVIEW_NOTE_MAX}). */
+  helped?: string;
+  /** Round 8: «ما الذي صعّب عليك؟». */
+  hard?: string;
+  /** Round 8: «ماذا ستغيّر الأسبوع القادم؟». */
+  change?: string;
+  /** Round 8: an optional line beside the heart feeling (≤ {@link HEART_LINE_MAX}). */
+  heartNote?: string;
   /** «رسالة إلى نفسي»: shown first on «ورد اليوم» the next Friday. */
   message?: string;
   /** The message was read («المعاتبة»). */
@@ -224,6 +245,39 @@ export function cleanLine(value: unknown): string | undefined {
   return line.length > 0 ? line : undefined;
 }
 
+/** Round 8: one field of a review form: trimmed, single spaces, at most {@link REVIEW_NOTE_MAX}; empty → undefined. */
+export function cleanNote(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const text = value.replace(/\s+/g, ' ').trim().slice(0, REVIEW_NOTE_MAX).trim();
+  return text.length > 0 ? text : undefined;
+}
+
+/** Copies the cleaned own-words fields `keys` of `from` onto `to` (empty ones are left out). */
+function copyNotes<T extends object>(to: T, from: Record<string, unknown>, keys: readonly string[]): T {
+  for (const k of keys) {
+    const v = cleanNote(from[k]);
+    if (v) (to as Record<string, unknown>)[k] = v;
+  }
+  return to;
+}
+
+function parseSteps(value: unknown): { planId: string; choice: StepChoice }[] {
+  if (!Array.isArray(value)) return [];
+  const seen = new Set<string>();
+  const out: { planId: string; choice: StepChoice }[] = [];
+  for (const v of value) {
+    if (!isRecord(v) || typeof v.planId !== 'string' || !STEP_CHOICES.includes(v.choice as StepChoice) || seen.has(v.planId)) continue;
+    seen.add(v.planId);
+    out.push({ planId: v.planId, choice: v.choice as StepChoice });
+  }
+  return out.slice(0, REVIEW_STEP_ROWS);
+}
+
+/** The steps of a review: `steps`, else the single old `step`. */
+export function reviewSteps(review: Pick<WeeklyReview, 'step' | 'steps'>): { planId: string; choice: StepChoice }[] {
+  return review.steps && review.steps.length > 0 ? review.steps : review.step ? [review.step] : [];
+}
+
 function strings(value: unknown): string[] {
   return Array.isArray(value) ? [...new Set(value.filter((v): v is string => typeof v === 'string' && v.length > 0))] : [];
 }
@@ -280,7 +334,7 @@ export function parseHeart(json: unknown): HeartData {
   for (const v of Array.isArray(raw.evenings) ? raw.evenings : []) {
     if (!isRecord(v) || !isValidDate(v.date)) continue;
     const kept = v.kept === 'yes' || v.kept === 'partly' || v.kept === 'no' ? v.kept : undefined;
-    evenings.push({ date: v.date, ...(kept ? { kept } : {}) });
+    evenings.push(copyNotes({ date: v.date, ...(kept ? { kept } : {}) } as EveningReview, v, ['helped', 'hard', 'tomorrow']));
   }
   out.evenings = byDate(evenings);
   const weekly = new Map<LocalDate, WeeklyReview>();
@@ -290,7 +344,15 @@ export function parseHeart(json: unknown): HeartData {
     if (isRecord(v.step) && typeof v.step.planId === 'string' && STEP_CHOICES.includes(v.step.choice as StepChoice)) {
       review.step = { planId: v.step.planId, choice: v.step.choice as StepChoice };
     }
+    const steps = parseSteps(v.steps);
+    if (steps.length > 0) {
+      review.steps = steps;
+      review.step = steps[0];
+    }
     if (HEART_FEELINGS.includes(v.heart as HeartFeeling)) review.heart = v.heart as HeartFeeling;
+    copyNotes(review, v, ['helped', 'hard', 'change']);
+    const heartNote = cleanLine(v.heartNote);
+    if (heartNote) review.heartNote = heartNote;
     const message = cleanLine(v.message);
     if (message) review.message = message;
     if (v.messageSeen === true) review.messageSeen = true;
@@ -441,7 +503,7 @@ export function eveningCardVisible(data: HeartData, date: LocalDate, time: Local
 
 export function saveEvening(data: HeartData, review: EveningReview): HeartData {
   if (!isValidDate(review.date)) throw new RangeError('Invalid date');
-  const clean: EveningReview = review.kept ? { date: review.date, kept: review.kept } : { date: review.date };
+  const clean = copyNotes<EveningReview>(review.kept ? { date: review.date, kept: review.kept } : { date: review.date }, review as unknown as Record<string, unknown>, ['helped', 'hard', 'tomorrow']);
   return { ...data, evenings: byDate([...data.evenings.filter((e) => e.date !== review.date), clean]) };
 }
 
@@ -542,13 +604,36 @@ export function applyStep(plan: Plan, choice: StepChoice, today: LocalDate, now:
 export function saveWeeklyReview(data: HeartData, review: Omit<WeeklyReview, 'savedAt'>, now: IsoTime = nowIso()): HeartData {
   if (!isValidDate(review.weekOf)) throw new RangeError('Invalid weekOf');
   const message = cleanLine(review.message);
-  const clean: WeeklyReview = { ...review, savedAt: now };
+  const clean: WeeklyReview = { weekOf: review.weekOf, steady: review.steady, weak: review.weak, savedAt: now };
+  const steps = parseSteps(review.steps ?? (review.step ? [review.step] : []));
+  if (steps.length > 0) {
+    clean.steps = steps;
+    clean.step = steps[0];
+  }
+  if (review.heart) clean.heart = review.heart;
+  if (review.messageSeen) clean.messageSeen = true;
+  copyNotes(clean, review as unknown as Record<string, unknown>, ['helped', 'hard', 'change']);
+  const heartNote = cleanLine(review.heartNote);
+  if (heartNote) clean.heartNote = heartNote;
   if (message) clean.message = message;
-  else delete clean.message;
   const weekly = [...data.weekly.filter((w) => w.weekOf !== review.weekOf), clean]
     .sort((a, b) => (a.weekOf < b.weekOf ? -1 : 1))
     .slice(-WEEKLY_KEPT);
   return { ...data, weekly };
+}
+
+/**
+ * Round 8: what the member wrote as the daily answers «ما الذي أعانك…؟» / «ما الذي صعّب عليك…؟» between `from` and `to`
+ * (habit reflections and «تخفّف» check-ins), newest day first, each text once. Offered as one-tap chips in the review forms.
+ */
+export function periodAnswers(store: Pick<Store, 'reflections' | 'programs'>, from: LocalDate, to: LocalDate): { helped: string[]; hard: string[] } {
+  const rows: { date: LocalDate; helped?: string; hard?: string }[] = [
+    ...(store.reflections ?? []),
+    ...store.programs.flatMap((p) => p.checkIns),
+  ].filter((r) => r.date >= from && r.date <= to);
+  rows.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+  const pick = (key: 'helped' | 'hard') => [...new Set(rows.map((r) => cleanNote(r[key])).filter((v): v is string => v !== undefined))];
+  return { helped: pick('helped'), hard: pick('hard') };
 }
 
 /** Weekly reviews, newest first («المحاسبة» in «سجلّي»). */

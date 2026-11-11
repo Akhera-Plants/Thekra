@@ -638,11 +638,16 @@
         "checkIn": "Check in on your private program",
         "save": "Review done",
         "doneNone": "No habit was asked today.",
-        "savedToast": "Today's review saved"
+        "savedToast": "Today's review saved",
+        "helpedQ": "What helped you today?",
+        "hardQ": "What made it hard today?",
+        "tomorrowQ": "One step for tomorrow",
+        "tomorrowPlaceholder": "One line",
+        "fromDaily": "From your answers today"
       },
       "weekly": {
         "title": "Weekly review",
-        "lead": "Two minutes with yourself, without blame.",
+        "lead": "Two minutes with yourself, without blame. Everything here is optional.",
         "steady": "What you kept",
         "steadyNone": "Nothing was complete this week; next week is a new chance.",
         "weak": "Where you weakened",
@@ -657,11 +662,20 @@
         "middle": "In between",
         "hard": "Hard",
         "message": "A message to myself",
-        "messagePlaceholder": "A line to read next {{day}}",
+        "messagePlaceholder": "Saved in «My messages to myself» under «Habits»",
         "save": "Save the review",
-        "missed_one": "Missed 1 day",
-        "missed_other": "Missed {{count}} days",
-        "savedToast": "This week's review saved"
+        "savedToast": "This week's review saved",
+        "weekFacts": "Your week",
+        "helpedQ": "What helped you this week?",
+        "hardQ": "What made it hard?",
+        "changeQ": "What will you change next week?",
+        "fromDaily": "From your answers this week",
+        "heartNoteLabel": "A line about your heart",
+        "heartNotePlaceholder": "A line about how you are, if you like",
+        "messageLabel": "Write a message to yourself",
+        "messageFull": "Your messages are full ({{max}}). Delete one under «Habits» to write a new one.",
+        "missed_one": "Not done on 1 day",
+        "missed_other": "Not done on {{count}} days"
       },
       "selfMessage": {
         "title": "Your message to yourself",
@@ -689,7 +703,9 @@
         "emptyHint": "Your weekly reviews appear here.",
         "start": "Start this week's review",
         "settings": "Review settings"
-      }
+      },
+      "placeholder": "Write in your own words",
+      "count": "{{n}} / {{max}}"
     },
     "notifyPrefs": {
       "title": "Notifications",
@@ -2169,11 +2185,11 @@
       "archiveTitle": "My past reviews",
       "intentionOffToast": "Intention of the day is off",
       "steady": "Steady",
-      "missed_one": "Missed 1",
-      "missed_other": "Missed {{count}}",
       "more_one": "More (1)",
       "more_other": "More ({{count}})",
-      "less": "Less"
+      "less": "Less",
+      "missed_one": "Not done on 1 day",
+      "missed_other": "Not done on {{count}} days"
     },
     "record": {
       "habitsTitle": "Your habits",
@@ -2599,7 +2615,12 @@
       "weeklyOpen": "This week is not reviewed yet · its day: {{day}}",
       "start": "Start",
       "pastTitle": "Earlier reviews",
-      "yourLine": "You wrote to yourself"
+      "yourLine": "You wrote to yourself",
+      "archiveHelped": "What helped",
+      "archiveHard": "What made it hard",
+      "archiveChange": "To change",
+      "archiveTomorrow": "Step for tomorrow",
+      "nextChange": "To change: {{text}}"
     },
     "plan": {
       "tabs": {

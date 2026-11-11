@@ -1,0 +1,324 @@
+/*
+ * Loading feedback: BrandLoader, route skeletons, navigation progress, pending links.
+ * Logical properties only, so every rule mirrors with the document direction.
+ * Colours come from the shared tokens (--ring is the calm brand green in both themes).
+ */
+
+/* ── BrandLoader: the favicon leaf, drawn stroke by stroke ──────────────── */
+.brand-loader {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--ring);
+  line-height: 1;
+}
+
+.brand-loader__mark {
+  display: block;
+  flex: none;
+  overflow: visible;
+}
+
+.brand-loader[data-size='inline'] .brand-loader__mark {
+  inline-size: 1.15em;
+  block-size: 1.15em;
+}
+
+.brand-loader__leaf {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+
+.brand-loader__tile {
+  fill: var(--primary);
+}
+
+.brand-loader[data-size='page'] .brand-loader__leaf {
+  stroke: var(--primary-foreground);
+  stroke-width: 1.8;
+}
+
+.brand-loader[data-size='page'] {
+  flex-direction: column;
+  gap: 0.9rem;
+  color: var(--muted-foreground);
+}
+
+.brand-loader[data-size='page'] .brand-loader__mark {
+  inline-size: 3.5rem;
+  block-size: 3.5rem;
+}
+
+.brand-loader__label {
+  font-size: 0.95rem;
+}
+
+/* Inline: the label is read aloud, not drawn, unless motion is off (see below). */
+.brand-loader[data-size='inline'] .brand-loader__label {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.brand-loader[data-size='inline'][data-label='visible'] .brand-loader__label {
+  position: static;
+  inline-size: auto;
+  block-size: auto;
+  margin: 0;
+  overflow: visible;
+  clip-path: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .brand-loader__leaf {
+    animation: brand-leaf-draw 1.9s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+  }
+  .brand-loader__leaf:nth-child(2) {
+    animation-delay: 0.12s;
+  }
+  .brand-loader__leaf:nth-child(3) {
+    animation-delay: 0.24s;
+  }
+  .brand-loader__leaf:nth-child(4) {
+    animation-delay: 0.36s;
+  }
+  .brand-loader[data-size='page'] .brand-loader__mark {
+    animation: brand-breathe 3.2s ease-in-out infinite;
+  }
+}
+
+/* With motion off the mark is a still leaf, so the words carry the "busy" signal. */
+@media (prefers-reduced-motion: reduce) {
+  .brand-loader[data-size='inline'] .brand-loader__label {
+    position: static;
+    inline-size: auto;
+    block-size: auto;
+    margin: 0;
+    overflow: visible;
+    clip-path: none;
+  }
+}
+
+@keyframes brand-leaf-draw {
+  0% {
+    stroke-dashoffset: 1;
+    opacity: 0.35;
+  }
+  55%,
+  80% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: -1;
+    opacity: 0.35;
+  }
+}
+
+@keyframes brand-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+
+/* ── Route skeletons ─────────────────────────────────────────────────────── */
+.route-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.route-loading__status {
+  display: flex;
+  justify-content: center;
+  padding-block: 0.5rem;
+}
+
+.skeleton {
+  display: block;
+  border-radius: 0.5rem;
+  background: var(--muted);
+}
+
+.skeleton[data-shape='line'] {
+  block-size: 0.9rem;
+  border-radius: 999px;
+}
+
+.skeleton[data-shape='title'] {
+  block-size: 2.4rem;
+  inline-size: min(26rem, 80%);
+}
+
+.skeleton[data-shape='chip'] {
+  block-size: 2.25rem;
+  inline-size: 6.5rem;
+  border-radius: 999px;
+}
+
+.skeleton[data-shape='search'] {
+  block-size: 3rem;
+  max-inline-size: 48rem;
+}
+
+.skeleton[data-shape='row'] {
+  block-size: 6rem;
+  border-radius: 0;
+  background: transparent;
+  border-block-end: 1px solid var(--border);
+}
+
+.skeleton-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.skeleton-row-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  column-gap: 2.5rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .skeleton {
+    animation: skeleton-breathe 1.8s ease-in-out infinite;
+  }
+}
+
+@keyframes skeleton-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ── A list that is refetching: a pill pinned to the viewport, nothing shifts ── */
+.list-pending-pill {
+  position: fixed;
+  inset-block-end: 1.25rem;
+  inset-inline: 0;
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.list-pending-pill > .brand-loader {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--background);
+  color: var(--ring);
+  box-shadow: 0 6px 18px color-mix(in oklch, var(--foreground) 10%, transparent);
+  font-size: 0.9rem;
+  /* Quick answers never show it: it fades in only if the wait is real. */
+  animation: pill-in 0.2s ease-out 0.25s both;
+}
+
+.list-pending-pill .brand-loader__label {
+  color: var(--foreground);
+}
+
+@keyframes pill-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── Navigation progress bar ─────────────────────────────────────────────── */
+.nav-progress {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  z-index: 100;
+  block-size: 3px;
+  inline-size: 0;
+  background: var(--ring);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.nav-progress[data-state='running'] {
+  opacity: 1;
+  inline-size: 85%;
+  transition:
+    inline-size 12s cubic-bezier(0.08, 0.6, 0.2, 1),
+    opacity 0.12s linear 0.12s;
+}
+
+.nav-progress[data-state='done'] {
+  opacity: 0;
+  inline-size: 100%;
+  transition:
+    inline-size 0.18s ease-out,
+    opacity 0.28s ease 0.18s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* No sliding: a still, full-width line says "working", then goes away. */
+  .nav-progress[data-state='running'] {
+    inline-size: 100%;
+    opacity: 0.7;
+    transition: opacity 0s;
+  }
+  .nav-progress[data-state='done'] {
+    transition: none;
+  }
+}
+
+/* ── Link pressed / pending (useLinkStatus + the click marker) ───────────── */
+a[data-nav-pending] {
+  cursor: progress;
+}
+
+a[data-nav-pending] {
+  opacity: 0.7;
+}
+
+.link-pending {
+  display: inline-flex;
+  inline-size: 1.15em;
+  block-size: 1.15em;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.12s ease 0.1s;
+}
+
+.link-pending[data-pending='true'] {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  a[data-nav-pending] {
+    transition: none;
+  }
+}

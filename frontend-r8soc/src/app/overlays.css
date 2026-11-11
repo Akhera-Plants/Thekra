@@ -1,0 +1,109 @@
+/*
+ * Popups and toasts in our identity (owner round 7, R7-A3/A4). The shared components (components/ui/dialog,
+ * alert-dialog, sheet, confirm-dialog, sonner) carry the layout in Tailwind classes; this file holds what classes
+ * cannot reach: the overlays' type face (they render in a portal, outside `.site-public`) and the toast, whose
+ * library injects its own unlayered stylesheet. Colours come from the tokens in globals.css only.
+ * The app mirrors this look in mobile/src/ui/{ConfirmDialog,Sheet,Toast}.tsx.
+ */
+
+/* ── Type face: the site's UI face (Plex Arabic; the English face on English pages) ─────────────────────── */
+@layer base {
+  :where(
+      [data-slot='dialog-content'],
+      [data-slot='alert-dialog-content'],
+      [data-slot='sheet-content'],
+      [data-sonner-toaster]
+    ) {
+    font-family: var(--font-plex), Tahoma, sans-serif;
+  }
+  html[lang='en']
+    :where(
+      [data-slot='dialog-content'],
+      [data-slot='alert-dialog-content'],
+      [data-slot='sheet-content'],
+      [data-sonner-toaster]
+    ) {
+    font-family: var(--font-english), Georgia, serif;
+  }
+}
+
+/* ── Toasts (sonner) ───────────────────────────────────────────────────────────────────────────────────────
+   A white card with a hairline and a soft lift, the mark in a tinted circle, the line in the UI face at reading
+   size, an outlined action. Same place on every page: bottom centre, above the content. */
+[data-sonner-toaster] [data-sonner-toast][data-styled='true'] {
+  gap: 0.75rem;
+  align-items: center;
+  padding-block: 0.75rem;
+  padding-inline: 0.875rem 1rem;
+  border-radius: 0.875rem;
+  border: 1px solid var(--border);
+  background: var(--popover);
+  color: var(--popover-foreground);
+  box-shadow:
+    0 16px 36px -14px var(--overlay-shadow),
+    0 2px 6px -3px var(--overlay-shadow);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-styled='true'] [data-icon] {
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  margin: 0;
+  justify-content: center;
+  border-radius: 999px;
+  color: var(--primary-text);
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-styled='true'][data-type='error'] [data-icon] {
+  color: var(--destructive);
+  background: color-mix(in srgb, var(--destructive) 12%, transparent);
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-styled='true'] [data-icon] svg {
+  inline-size: 1rem;
+  block-size: 1rem;
+  margin: 0;
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-styled='true'] [data-title] {
+  font-weight: 500;
+  line-height: 1.6;
+  color: var(--popover-foreground);
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-styled='true'] [data-description] {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--muted-foreground);
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-styled='true'] [data-button] {
+  block-size: 2.25rem;
+  padding-inline: 0.875rem;
+  margin-inline-start: auto;
+  border-radius: 0.4375rem;
+  border: 1px solid var(--primary);
+  background: transparent;
+  color: var(--primary-text);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-styled='true'] [data-button]:hover {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-styled='true'] [data-button]:focus-visible {
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-styled='true'] [data-cancel] {
+  background: transparent;
+  border: 1px solid var(--control-border);
+  color: var(--foreground);
+}

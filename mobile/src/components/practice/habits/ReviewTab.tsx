@@ -21,9 +21,11 @@ import {
   INTENTION_UNTIL,
   intentionOf,
   reviewHistory,
+  reviewSteps,
   setHeartPrefs,
   weekSummary,
   weeklyOf,
+  type EveningReview,
   type LocalDate,
   type WeeklyReview,
 } from '@thekra/practice-core';
@@ -50,6 +52,8 @@ const makeStyles = (t: Theme) => ({
   head: { gap: space.xs },
   row: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.md },
   rowText: { flex: 1, minWidth: 0, gap: 2 },
+  stepLine: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.md },
+  written: { gap: 2 },
   step: { gap: space.sm, padding: space.lg, borderRadius: radius.card, backgroundColor: t.colors.primarySoft },
   review: { gap: space.xs, paddingVertical: space.md, borderBottomWidth: 1, borderBottomColor: t.colors.border },
   learn: { gap: 2, paddingVertical: space.sm, borderBottomWidth: 1, borderBottomColor: t.colors.border },
@@ -99,8 +103,13 @@ function NextStepCard({ onWeekly }: { onWeekly: () => void }) {
   const heart = usePracticeStore((s) => s.heart);
   const plans = usePracticeStore((s) => s.store.plans);
   const habits = usePracticeCatalog(locale).data?.habits ?? [];
-  const last = reviewHistory(heart).find((r) => r.step);
-  const plan = last?.step ? plans.find((p) => p.id === last.step?.planId) : undefined;
+  const last = reviewHistory(heart).find((r) => reviewSteps(r).length > 0 || r.change);
+  const steps = last
+    ? reviewSteps(last).flatMap((step) => {
+        const plan = plans.find((p) => p.id === step.planId);
+        return plan ? [{ plan, choice: step.choice }] : [];
+      })
+    : [];
   return (
     <View style={styles.step}>
       <View style={styles.row}>
@@ -109,12 +118,17 @@ function NextStepCard({ onWeekly }: { onWeekly: () => void }) {
           {t('habitsHub.review.nextStep')}
         </Text>
       </View>
-      {last?.step && plan ? (
+      {last && (steps.length > 0 || last.change) ? (
         <>
-          <Text variant="body">
-            {t('habitsHub.review.stepLine', { habit: planTitleOf(plan, habits, locale), choice: t(`practice.heart.weekly.${last.step.choice}`) })}
-          </Text>
-          <Button label={t('habitsHub.review.openHabit')} variant="outline" size="sm" onPress={() => router.push(`/practice/plan/${plan.id}`)} />
+          {steps.map(({ plan, choice }) => (
+            <View key={plan.id} style={styles.stepLine}>
+              <Text variant="body" style={styles.rowText}>
+                {t('habitsHub.review.stepLine', { habit: planTitleOf(plan, habits, locale), choice: t(`practice.heart.weekly.${choice}`) })}
+              </Text>
+              <Button label={t('habitsHub.review.openHabit')} variant="outline" size="sm" onPress={() => router.push(`/practice/plan/${plan.id}`)} />
+            </View>
+          ))}
+          {last.change ? <Text variant="body">{t('habitsHub.review.nextChange', { text: last.change })}</Text> : null}
         </>
       ) : (
         <>
@@ -164,6 +178,7 @@ function DayPart({ today, onSheet }: { today: LocalDate; onSheet: (s: HeartSheet
           action={t(evening ? 'habitsTab.review.again' : 'habitsHub.review.startEvening')}
           onPress={() => onSheet('evening')}
         />
+        {evening ? <WrittenLines lines={eveningLines(evening, t)} /> : null}
       </Section>
       <SectionDivider />
       <LearnFromRecent from={addDays(today, -(RECENT_DAYS - 1))} to={today} />
@@ -260,14 +275,54 @@ function PastReview({ review, titleOf }: { review: WeeklyReview; titleOf: (id: s
         {t('practice.heart.reviews.weekOf', { date: weekRangeTitle(review.weekOf, names) })}
       </Text>
       <HabitLines lines={reviewLines(review).map((l) => ({ ...l, title: titleOf(l.planId, l.title) }))} />
-      {review.step ? (
-        <Text variant="small" tone="muted">
-          {t('habitsHub.review.stepLine', { habit: titleOf(review.step.planId, ''), choice: t(`practice.heart.weekly.${review.step.choice}`) })}
+      <WrittenLines lines={weeklyLines(review, t)} />
+      {reviewSteps(review).map((step) => (
+        <Text key={step.planId} variant="small" tone="muted">
+          {t('habitsHub.review.stepLine', { habit: titleOf(step.planId, ''), choice: t(`practice.heart.weekly.${step.choice}`) })}
         </Text>
-      ) : null}
+      ))}
       {review.message ? (
         <Text variant="small">{`${t('habitsHub.review.yourLine')}: ${review.message}`}</Text>
       ) : null}
+    </View>
+  );
+}
+
+type Written = { key: string; label: string; text: string };
+type Tr = (key: string, opts?: Record<string, unknown>) => string;
+
+/** The member's own words of an evening review (what he wrote, nothing computed). */
+function eveningLines(review: EveningReview, t: Tr): Written[] {
+  return [
+    review.helped ? { key: 'helped', label: t('habitsHub.review.archiveHelped'), text: review.helped } : null,
+    review.hard ? { key: 'hard', label: t('habitsHub.review.archiveHard'), text: review.hard } : null,
+    review.tomorrow ? { key: 'tomorrow', label: t('habitsHub.review.archiveTomorrow'), text: review.tomorrow } : null,
+  ].filter((l): l is Written => l !== null);
+}
+
+/** The member's own words of a weekly review, and its heart with its line. */
+function weeklyLines(review: WeeklyReview, t: Tr): Written[] {
+  return [
+    review.helped ? { key: 'helped', label: t('habitsHub.review.archiveHelped'), text: review.helped } : null,
+    review.hard ? { key: 'hard', label: t('habitsHub.review.archiveHard'), text: review.hard } : null,
+    review.change ? { key: 'change', label: t('habitsHub.review.archiveChange'), text: review.change } : null,
+    review.heart ? { key: 'heart', label: t('practice.heart.reviews.heart', { value: t(`practice.heart.weekly.${review.heart}`) }), text: review.heartNote ?? '' } : null,
+  ].filter((l): l is Written => l !== null);
+}
+
+function WrittenLines({ lines }: { lines: Written[] }) {
+  const styles = useStyles(makeStyles);
+  if (lines.length === 0) return null;
+  return (
+    <View style={{ gap: space.sm }}>
+      {lines.map((l) => (
+        <View key={l.key} style={styles.written}>
+          <Text variant="small" tone="muted">
+            {l.label}
+          </Text>
+          {l.text ? <Text variant="small">{l.text}</Text> : null}
+        </View>
+      ))}
     </View>
   );
 }

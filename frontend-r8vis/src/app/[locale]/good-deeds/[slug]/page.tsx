@@ -1,0 +1,214 @@
+import type { Metadata } from 'next';
+import { setRequestLocale, getTranslations } from 'next-intl/server';
+import { Link } from '@/i18n/navigation';
+import { ArabicText } from '@/components/shared/ArabicText';
+import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
+import { SectionDivider } from '@/components/shared/SectionDivider';
+// The variants module only (no 'use client'), so this server component can call it.
+import { buttonVariants } from '@/components/shared/kit/button/variants';
+import { cn } from '@/lib/utils';
+import type { ReaderItem, ReaderSection } from '@/components/shared/editorial/ReminderReader';
+import { GoodDeedReader } from '@/features/good-deed-motivation/components/GoodDeedReader';
+import { DeedHabitAction } from '@/features/practice/components/DeedHabitAction';
+import { TopicBranchLinks } from '@/features/topic/components/TopicTemplate';
+import { TOPIC_PAGE_SIZE, interleaveReading } from '@/lib/reading';
+import { getGoodDeed, getGoodDeedQuotes, getGoodDeeds } from '@/lib/api/good-deeds';
+import { rethrowUnlessNotFound, topSlugs } from '@/lib/api/server-guard';
+import type { LocaleCode } from '@/lib/types/enums';
+import type { GoodDeedQuotesMeta } from '@/lib/types/api';
+import { localeAlternates, metaDescription } from '@/lib/seo';
+
+// Same for every visitor: cached and revalidated, not rendered per request. The `?theme=` chip
+// is applied on the client (useTopicReader), which is what keeps this page out of dynamic rendering.
+export const revalidate = 300;
+
+export async function generateStaticParams() {
+  const slugs = await topSlugs('good-deeds', async () => (await getGoodDeeds({ limit: 100, lang: 'ar' })).data, (deed) => deed.slug);
+  return slugs.map((slug) => ({ slug }));
+}
+
+export async function generateMetadata({
+  params,
+}: PageProps<'/[locale]/good-deeds/[slug]'>): Promise<Metadata> {
+  const { slug, locale } = await params;
+  try {
+    const { data } = await getGoodDeed(slug, locale as LocaleCode);
+    const title = data.pair
+      ? (locale === 'en' ? data.pair.titleEn : data.pair.titleAr)
+      : (locale === 'en' ? (data.name || data.nameAr) : data.nameAr);
+    return {
+      title,
+      description: metaDescription(locale === 'en' ? data.description : data.descriptionAr),
+      alternates: localeAlternates(locale, `/good-deeds/${slug}`),
+    };
+  } catch {
+    return {};
+  }
+}
+
+export default async function GoodDeedDetailPage({
+  params,
+}: PageProps<'/[locale]/good-deeds/[slug]'>) {
+  const { slug, locale } = await params;
+  setRequestLocale(locale);
+  const t = await getTranslations('goodDeedDetail');
+  const tNav = await getTranslations('nav');
+  const tCrumbs = await getTranslations('breadcrumbs');
+
+  let deed: Awaited<ReturnType<typeof getGoodDeed>>['data'];
+  try {
+    deed = (await getGoodDeed(slug, locale as LocaleCode)).data;
+  } catch (error) {
+    rethrowUnlessNotFound('good-deed page', error);
+  }
+
+  const paired = Boolean(deed.pair);
+  // See the sin page: fail rather than cache an empty reader.
+  const quotes = await getGoodDeedQuotes(slug, {
+    page: 1,
+    limit: TOPIC_PAGE_SIZE,
+    lang: locale as LocaleCode,
+  }).catch((error: unknown) => rethrowUnlessNotFound('good-deed quotes', error));
+
+  const toReader = (item: { quote: { id: string }; link: { id: string; note: string | null } }): ReaderItem => ({
+    id: item.quote.id,
+    quote: item.quote as ReaderItem['quote'],
+    note: item.link.note,
+    linkId: item.link.id,
+  });
+  const virtue = (quotes?.data.items ?? []).map(toReader);
+  const seen = new Set(virtue.map((item) => item.id));
+  const neglect = (quotes?.data.companion?.items ?? [])
+    .map(toReader)
+    .filter((item) => !seen.has(item.id));
+  const derived = quotes?.data.derived ?? [];
+  const quotesMeta = quotes?.meta as GoodDeedQuotesMeta | undefined;
+  const activeTheme = quotesMeta?.theme ?? null;
+  // A theme is one merged list (virtue and warning together), so it has no section headings.
+  const sections: ReaderSection[] = activeTheme ? [] : [
+    ...(virtue.length > 0
+      ? [{ heading: paired ? t('pairVirtueHeading') : t('virtueHeading'), items: virtue, source: 'items' as const }]
+      : []),
+    ...(neglect.length > 0
+      ? [{ heading: paired ? t('pairNeglectHeading') : t('neglectHeading'), items: neglect, source: 'companion' as const }]
+      : []),
+    ...derived.filter((group) => group.items.length > 0).map((group) => ({
+      heading: locale === 'en' ? (group.name || group.nameAr) : group.nameAr,
+      items: group.items.map(toReader),
+    })),
+  ];
+  const items = interleaveReading(virtue, neglect).concat(derived.flatMap((group) => group.items.map(toReader)));
+  const heading = paired
+    ? (locale === 'en' ? deed.pair!.titleEn : deed.pair!.titleAr)
+    : (locale === 'en' ? (deed.name || deed.nameAr) : deed.nameAr);
+  // English shows the English description and reward or nothing: never Arabic prose on /en.
+  const description = locale === 'en' ? deed.description : deed.descriptionAr;
+  const reward = paired ? null : (locale === 'en' ? deed.reward : deed.rewardAr);
+  const opposite = !paired && deed.oppositeSin
+    ? (locale === 'en' ? (deed.oppositeSin.name || deed.oppositeSin.nameAr) : deed.oppositeSin.nameAr)
+    : null;
+
+  return (
+    <div className="page-width inner-page topic-page">
+      <Breadcrumbs
+        ariaLabel={tNav('breadcrumbs')}
+        items={[
+          { label: tCrumbs('home'), href: '/' },
+          { label: tCrumbs('goodDeeds'), href: '/good-deeds' },
+          { label: heading },
+        ]}
+      />
+
+      <article className="flex min-w-0 flex-1 flex-col gap-10">
+        <header className="page-heading">
+          <p className="eyebrow">{tCrumbs('goodDeeds')}</p>
+          <div className="title-line">
+            <h1
+              id="page-title"
+              tabIndex={-1}
+              lang={/[\u0600-\u06FF]/.test(heading) ? 'ar' : undefined}
+              dir={/[\u0600-\u06FF]/.test(heading) ? 'rtl' : undefined}
+            >
+              {heading}
+            </h1>
+            <DeedHabitAction habits={deed.schedule?.habits} />
+          </div>
+          {description ? <p className="page-lead">{description}</p> : null}
+          {reward ? (
+            <aside className="next-step" aria-label={t('rewardHeading')}>
+              <strong>{t('rewardHeading')}</strong>
+              {/[\u0600-\u06FF]/.test(reward) ? <ArabicText size="lg">{reward}</ArabicText> : <p>{reward}</p>}
+            </aside>
+          ) : null}
+          {deed.isContemporary ? (
+            <p className="page-lead">{t('contemporaryNote')}</p>
+          ) : null}
+        </header>
+
+        {/* The topic template (owner, 2026-11-01): the tabs right under the title; «الميزان» and every text inside them,
+            then شعب الإيمان and the opposite. */}
+        {items.length === 0 ? (
+          <div className="flex flex-col gap-6">
+            <div className="next-step">
+              <p>{t('noMotivations')}</p>
+              <Link
+                href={deed.oppositeSin ? `/sins/${deed.oppositeSin.slug}` : '/good-deeds'}
+                className="outline-button mt-3"
+              >
+                {opposite ? (
+                  <span lang={/[\u0600-\u06FF]/.test(opposite) ? 'ar' : undefined} dir={/[\u0600-\u06FF]/.test(opposite) ? 'rtl' : undefined}>
+                    {opposite}
+                  </span>
+                ) : (
+                  tCrumbs('goodDeeds')
+                )}
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <GoodDeedReader
+            slug={slug}
+            lang={locale}
+            items={items}
+            sections={sections}
+            total={items.length}
+            countsByKind={quotesMeta?.countsByKind}
+            themes={quotesMeta?.themes}
+            initialTheme={activeTheme}
+          initialHasNext={quotesMeta?.hasNext ?? false}
+          complete={derived.some((group) => group.items.length > 0) && !(quotesMeta?.hasNext ?? false)}
+          />
+        )}
+
+        {/* The flower between sections, never a line (O-04/W-23). */}
+        {deed.branches && deed.branches.length > 0 ? (
+          <>
+            <SectionDivider />
+            <TopicBranchLinks branches={deed.branches} />
+          </>
+        ) : null}
+
+        {deed.oppositeSin && opposite ? (
+          <>
+            <SectionDivider />
+            <section aria-labelledby="opposite-title" className="flex flex-col gap-3">
+              <h2 id="opposite-title" className="text-xl font-medium">
+                {t('oppositeSin')}
+              </h2>
+              {/* A link styled as the kit button, not `<Button asChild>`: from a server component the Link can reach the
+                  client Slot as a lazy reference during SSR, which fails («Slot failed to slot onto its children»). */}
+              <Link
+                href={`/sins/${deed.oppositeSin.slug}`}
+                className={cn(buttonVariants({ variant: 'outline', tone: 'primary', size: 'md' }), 'self-start')}
+              >
+                <span lang={/[\u0600-\u06FF]/.test(opposite) ? 'ar' : undefined} dir={/[\u0600-\u06FF]/.test(opposite) ? 'rtl' : undefined}>
+                  {opposite}
+                </span>
+              </Link>
+            </section>
+          </>
+        ) : null}
+      </article>
+    </div>
+  );
+}

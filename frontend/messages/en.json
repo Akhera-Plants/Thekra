@@ -1591,11 +1591,16 @@
         "partly": "Partly",
         "no": "No",
         "checkIn": "Check in on your private program",
-        "save": "Review done"
+        "save": "Review done",
+        "helpedQ": "What helped you today?",
+        "hardQ": "What made it hard today?",
+        "tomorrowQ": "One step for tomorrow",
+        "tomorrowPlaceholder": "One line",
+        "fromDaily": "From your answers today"
       },
       "weekly": {
         "title": "Weekly review",
-        "lead": "Two minutes with yourself, without blame.",
+        "lead": "Two minutes with yourself, without blame. Everything here is optional.",
         "steady": "What you kept",
         "steadyNone": "Nothing was complete this week; next week is a new chance.",
         "weak": "What was hard",
@@ -1611,8 +1616,17 @@
         "middle": "In between",
         "hard": "Hard",
         "message": "A message to myself",
-        "messagePlaceholder": "A line to read next Friday",
-        "save": "Save the review"
+        "messagePlaceholder": "Saved in «My messages to myself» in «My habits»",
+        "save": "Save the review",
+        "weekFacts": "Your week",
+        "helpedQ": "What helped you this week?",
+        "hardQ": "What made it hard?",
+        "changeQ": "What will you change next week?",
+        "fromDaily": "From your answers this week",
+        "heartNoteLabel": "A line about your heart",
+        "heartNotePlaceholder": "A line about how you are, if you like",
+        "messageLabel": "Write a message to yourself",
+        "messageFull": "Your messages are full ({max}). Delete one in «My habits» to write a new one."
       },
       "selfMessage": {
         "title": "Your message to yourself",
@@ -1620,7 +1634,9 @@
         "read": "I read it"
       },
       "minimum": "The minimum",
-      "minimumMet": "Minimum logged"
+      "minimumMet": "Minimum logged",
+      "placeholder": "Write in your own words",
+      "count": "{n} / {max}"
     },
     "notify": {
       "title": "Notifications",
@@ -2191,7 +2207,13 @@
         "keep": "Keep «{title}» at its amount ({amount})."
       },
       "openHabit": "Open the habit",
-      "stepWas": "Step: {step} · {title}"
+      "stepWas": "Step: {step} · {title}",
+      "archiveHelped": "What helped",
+      "archiveHard": "What made it hard",
+      "archiveChange": "To change",
+      "archiveTomorrow": "Step for tomorrow",
+      "archiveHeart": "Heart: {feeling}",
+      "nextChange": "To change: {text}"
     },
     "recordTab": {
       "monthTitle": "The month",

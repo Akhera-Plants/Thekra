@@ -10,17 +10,26 @@ import React, { useMemo, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { ChevronDown, ChevronUp, ClipboardCheck, HeartHandshake, Moon, Sun, type LucideIcon } from 'lucide-react-native';
+import { Check, ChevronDown, ChevronUp, ClipboardCheck, HeartHandshake, Moon, Sun, type LucideIcon } from 'lucide-react-native';
 import {
   activePrograms,
+  addDays,
+  addSelfMessage,
   applyStep,
+  cleanSelfMessage,
   dayAgenda,
   daySummary,
+  HEART_LINE_MAX,
   heartSlot,
   intentionOf,
   makeIntention,
   saveEvening,
+  periodAnswers,
+  REVIEW_STEP_ROWS,
   saveWeeklyReview,
+  SELF_MESSAGE_MAX_LENGTH,
+  SELF_MESSAGES_MAX,
+  selfMessageError,
   setHeartPrefs,
   stepChoices,
   updatePlan,
@@ -36,7 +45,8 @@ import { usePracticeCatalog } from '@/lib/api/practice';
 import { pick, type CatalogHabit } from '@/lib/practice/catalog-types';
 import { nowTime } from '@/lib/practice/format';
 import { heartCardView, REVIEW_LINES_SHOWN, type HeartSheet } from '@/lib/practice/habits-view';
-import { usePracticeStore } from '@/lib/practice/practice-store';
+import { newPracticeId, usePracticeStore } from '@/lib/practice/practice-store';
+import { useReviewDraft } from '@/lib/practice/review-draft';
 import { pledgeDeedWords } from '@/lib/practice/pledges';
 import { habitFor } from '@/lib/practice/reminders';
 import { usePlanDays } from '@/lib/practice/use-habits-hub';
@@ -44,6 +54,7 @@ import { useUiLocale } from '@/lib/practice/use-practice-lifecycle';
 import { radius, space, useStyles, type Theme } from '@/theme';
 import { BottomSheet, Button, ButtonPair, CheckRow, Chip, Field, Icon, Text, toast } from '@/ui';
 import { StoryBody } from './KnowledgeCards';
+import { NoteField, useFieldChain } from './ReviewFields';
 
 const makeStyles = (t: Theme) => ({
   card: {
@@ -279,26 +290,32 @@ export function IntentionForm({ today, onDone }: { today: LocalDate; onDone: () 
   );
 }
 
+/**
+ * «محاسبة المساء» as a form (round 8): what was completed, the day's pledge, then the member's own words, all optional:
+ * «ما أعانك اليوم؟», «ما صعّب عليك اليوم؟» (his answers to the daily question as chips) and «خطوة لغد».
+ */
 export function EveningForm({ today, onDone }: { today: LocalDate; onDone: () => void }) {
   const { t } = useTranslation();
   const store = usePracticeStore((s) => s.store);
   const heart = usePracticeStore((s) => s.heart);
   const setHeart = usePracticeStore((s) => s.setHeart);
   const planDays = usePlanDays();
-  const [kept, setKept] = useState<PledgeKept | null>(null);
+  const { draft, patch, clear } = useReviewDraft(`evening:${today}`, { kept: null as PledgeKept | null, helped: '', hard: '', tomorrow: '' });
+  const chain = useFieldChain();
+  const answers = useMemo(() => periodAnswers(store, today, today), [store, today]);
   const summary = daySummary(store, today, planDays);
   const intention = intentionOf(heart, today);
   const hasProgram = activePrograms(store.programs).length > 0;
   function save() {
-    setHeart((h) => saveEvening(h, { date: today, ...(kept ? { kept } : {}) }));
+    setHeart((h) =>
+      saveEvening(h, { date: today, ...(draft.kept ? { kept: draft.kept } : {}), helped: draft.helped, hard: draft.hard, tomorrow: draft.tomorrow }),
+    );
+    clear();
     toast(t('practice.heart.evening.savedToast'));
     onDone();
   }
   return (
     <>
-      <Text variant="small" weight="medium">
-        {t('practice.heart.evening.doneQ')}
-      </Text>
       <Text variant="small" tone="muted">
         {summary.asked.length === 0
           ? t('practice.heart.evening.doneNone')
@@ -306,19 +323,46 @@ export function EveningForm({ today, onDone }: { today: LocalDate; onDone: () =>
       </Text>
       {intention?.pledge ? (
         <>
-          <Text variant="small" weight="medium">
+          <Text variant="body" weight="medium">
             {t('practice.heart.evening.keptQ')}
           </Text>
           <Text variant="small" tone="muted">
             {intention.pledge}
           </Text>
           <Choices
-            value={kept}
-            onChange={setKept}
+            value={draft.kept}
+            onChange={(kept) => patch({ kept })}
             options={(['yes', 'partly', 'no'] as const).map((k) => ({ key: k, label: t(`practice.heart.evening.${k}`) }))}
           />
         </>
       ) : null}
+      <NoteField
+        chain={chain}
+        index={0}
+        label={t('practice.heart.evening.helpedQ')}
+        value={draft.helped}
+        onChange={(helped) => patch({ helped })}
+        answers={answers.helped}
+        answersLabel={t('practice.heart.evening.fromDaily')}
+      />
+      <NoteField
+        chain={chain}
+        index={1}
+        label={t('practice.heart.evening.hardQ')}
+        value={draft.hard}
+        onChange={(hard) => patch({ hard })}
+        answers={answers.hard}
+        answersLabel={t('practice.heart.evening.fromDaily')}
+      />
+      <NoteField
+        chain={chain}
+        index={2}
+        last
+        label={t('practice.heart.evening.tomorrowQ')}
+        placeholder={t('practice.heart.evening.tomorrowPlaceholder')}
+        value={draft.tomorrow}
+        onChange={(tomorrow) => patch({ tomorrow })}
+      />
       {/* «تمّت المحاسبة» and «سجّل حالك في برنامجك الخاص» are one choice: side by side, the same size (O-02). */}
       <ButtonPair
         size="lg"
@@ -371,8 +415,29 @@ export function HabitLines({ lines }: { lines: readonly { planId: string; title:
   );
 }
 
+/** «زِد خطوة / خفّف / أبقِ» of one habit: a tap chooses, a second tap on the same chip clears it (no step). */
+function StepChoices({ value, options, onChange }: { value: StepChoice | undefined; options: StepChoice[]; onChange: (v: StepChoice | undefined) => void }) {
+  const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
+  return (
+    <View style={styles.chips}>
+      {options.map((c) => (
+        <Chip key={c} label={t(`practice.heart.weekly.${c}`)} selected={value === c} onPress={() => onChange(value === c ? undefined : c)} />
+      ))}
+    </View>
+  );
+}
+
+/**
+ * «محاسبة الأسبوع» as a form (round 8): the week's facts as a compact context (steady habits checked, hard ones with
+ * «لم تتم في n أيام»), then the member's own words («ما الذي أعانك؟», «ما الذي صعّب عليك؟», «ماذا ستغيّر؟»; his daily
+ * answers of the week are one-tap chips), a step per listed habit (the three weakest, one choice each, each applied),
+ * the heart with an optional line, and an optional message to himself (saved to «رسائلي إلى نفسي»). Nothing is required;
+ * what is typed survives closing the sheet until it is saved.
+ */
 export function WeeklyForm({ today, weekOf, onDone }: { today: LocalDate; weekOf: LocalDate; onDone: () => void }) {
   const { t } = useTranslation();
+  const styles = useStyles(makeStyles);
   const locale = useUiLocale();
   const store = usePracticeStore((s) => s.store);
   const setStore = usePracticeStore((s) => s.setStore);
@@ -381,78 +446,168 @@ export function WeeklyForm({ today, weekOf, onDone }: { today: LocalDate; weekOf
   const habits = usePracticeCatalog(locale).data?.habits ?? [];
   const planDays = usePlanDays();
   const summary = useMemo(() => weekSummary(store, weekOf, today, planDays), [store, weekOf, today, planDays]);
-  const candidates = store.plans.filter((p) => !p.pausedOn || p.resumedOn);
-  const [planId, setPlanId] = useState<string | null>(null);
-  const [choice, setChoice] = useState<StepChoice>('keep');
-  const [feeling, setFeeling] = useState<HeartFeeling | null>(null);
-  const [message, setMessage] = useState('');
-
-  const selectedId = planId ?? summary.weak[0]?.planId ?? summary.steady[0]?.planId ?? candidates[0]?.id ?? null;
-  const selected = store.plans.find((p) => p.id === selectedId) ?? null;
-  const choices = selected ? stepChoices(selected, today) : [];
+  const answers = useMemo(() => periodAnswers(store, addDays(weekOf, -6), weekOf), [store, weekOf]);
+  const { draft, patch, clear } = useReviewDraft(`weekly:${weekOf}`, {
+    helped: '',
+    hard: '',
+    change: '',
+    steps: {} as Record<string, StepChoice | undefined>,
+    feeling: null as HeartFeeling | null,
+    heartNote: '',
+    message: '',
+  });
+  const chain = useFieldChain();
+  const byId = (id: string) => store.plans.find((p) => p.id === id);
   const title = (id: string) => {
-    const plan = store.plans.find((p) => p.id === id);
+    const plan = byId(id);
     return plan ? planTitleOf(plan, habits, locale) : '';
   };
-  const lines = [
-    ...summary.weak.map((r) => ({ planId: r.planId, title: title(r.planId), missed: r.missed })),
-    ...summary.steady.map((r) => ({ planId: r.planId, title: title(r.planId), missed: 0 })),
-  ];
+  // The hardest habits get a step row; a week with none missed offers the steady ones instead.
+  const rows = (summary.weak.length > 0 ? summary.weak : summary.steady).filter((r) => byId(r.planId)).slice(0, REVIEW_STEP_ROWS);
+  const messagesFull = (heart.messages?.length ?? 0) >= SELF_MESSAGES_MAX;
 
   function save() {
-    const step = selected && choices.includes(choice) ? { planId: selected.id, choice } : undefined;
-    if (step && step.choice !== 'keep') setStore((s) => updatePlan(s, step.planId, (p) => applyStep(p, step.choice, today)));
-    setHeart((h) =>
-      saveWeeklyReview(h, {
+    const steps = rows.flatMap((r) => {
+      const plan = byId(r.planId);
+      const choice = draft.steps[r.planId];
+      return plan && choice && stepChoices(plan, today).includes(choice) ? [{ planId: r.planId, choice }] : [];
+    });
+    const applied = steps.filter((s) => s.choice !== 'keep');
+    if (applied.length > 0) setStore((s) => applied.reduce((acc, st) => updatePlan(acc, st.planId, (p) => applyStep(p, st.choice, today)), s));
+    setHeart((h) => {
+      const next = saveWeeklyReview(h, {
         weekOf,
         steady: summary.steady.map((r) => ({ planId: r.planId, title: title(r.planId), missed: 0 })),
         weak: summary.weak.map((r) => ({ planId: r.planId, title: title(r.planId), missed: r.missed })),
-        ...(step ? { step } : {}),
-        ...(feeling ? { heart: feeling } : {}),
-        message,
-      }),
-    );
+        ...(steps.length > 0 ? { steps } : {}),
+        ...(draft.feeling ? { heart: draft.feeling } : {}),
+        helped: draft.helped,
+        hard: draft.hard,
+        change: draft.change,
+        heartNote: draft.heartNote,
+      });
+      // The message goes to the list in «العادات» (the usual limits: 280 characters, ten messages).
+      return cleanSelfMessage(draft.message) && !selfMessageError(next, draft.message)
+        ? addSelfMessage(next, { id: newPracticeId(), text: draft.message })
+        : next;
+    });
+    clear();
     toast(t('practice.heart.weekly.savedToast'));
     onDone();
   }
 
+  const hasFacts = summary.steady.length > 0 || summary.weak.length > 0;
   return (
     <>
       <Text variant="small" tone="muted">
         {t('practice.heart.weekly.lead')}
       </Text>
-      {lines.length > 0 ? <HabitLines lines={lines} /> : null}
-      {candidates.length > 0 ? (
-        <>
-          <Text variant="small" weight="medium">
+      <View accessibilityLabel={t('practice.heart.weekly.weekFacts')}>
+        {hasFacts ? null : (
+          <Text variant="small" tone="muted">
+            {t('practice.heart.weekly.steadyNone')}
+          </Text>
+        )}
+        {summary.steady.map((r) => (
+          <View key={r.planId} style={styles.line}>
+            <Icon icon={Check} size={16} tone="link" />
+            <Text variant="small" style={styles.lineText} numberOfLines={2}>
+              {title(r.planId)}
+            </Text>
+          </View>
+        ))}
+        {summary.weak.map((r) => (
+          <View key={r.planId} style={styles.line}>
+            <Text variant="small" style={styles.lineText} numberOfLines={2}>
+              {title(r.planId)}
+            </Text>
+            <Text variant="caption" tone="muted">
+              {t('habitsTab.review.missed', { count: r.missed })}
+            </Text>
+          </View>
+        ))}
+      </View>
+      <NoteField
+        chain={chain}
+        index={0}
+        label={t('practice.heart.weekly.helpedQ')}
+        value={draft.helped}
+        onChange={(helped) => patch({ helped })}
+        answers={answers.helped}
+        answersLabel={t('practice.heart.weekly.fromDaily')}
+      />
+      <NoteField
+        chain={chain}
+        index={1}
+        label={t('practice.heart.weekly.hardQ')}
+        value={draft.hard}
+        onChange={(hard) => patch({ hard })}
+        answers={answers.hard}
+        answersLabel={t('practice.heart.weekly.fromDaily')}
+      />
+      <NoteField chain={chain} index={2} label={t('practice.heart.weekly.changeQ')} value={draft.change} onChange={(change) => patch({ change })} />
+      {rows.length > 0 ? (
+        <View style={styles.stack}>
+          <Text variant="body" weight="medium">
             {t('practice.heart.weekly.step')}
           </Text>
-          <Choices
-            value={selectedId}
-            onChange={(id) => {
-              setPlanId(id);
-              setChoice('keep');
-            }}
-            options={candidates.map((p) => ({ key: p.id, label: planTitleOf(p, habits, locale) }))}
-          />
-          <Choices value={choice} onChange={setChoice} options={choices.map((c) => ({ key: c, label: t(`practice.heart.weekly.${c}`) }))} />
-        </>
+          {rows.map((r) => {
+            const plan = byId(r.planId);
+            if (!plan) return null;
+            return (
+              <View key={r.planId} style={styles.stack}>
+                <Text variant="small">{title(r.planId)}</Text>
+                <StepChoices
+                  value={draft.steps[r.planId]}
+                  options={stepChoices(plan, today)}
+                  onChange={(choice) => patch({ steps: { ...draft.steps, [r.planId]: choice } })}
+                />
+              </View>
+            );
+          })}
+        </View>
       ) : null}
-      <Text variant="small" weight="medium">
-        {t('practice.heart.weekly.heart')}
-      </Text>
-      <Choices
-        value={feeling}
-        onChange={setFeeling}
-        options={(['present', 'middle', 'hard'] as const).map((k) => ({ key: k, label: t(`practice.heart.weekly.${k}`) }))}
-      />
-      <Field
-        label={t('practice.heart.weekly.message')}
-        placeholder={t('practice.heart.weekly.messagePlaceholder', { day: t(`practice.weekdays.${heart.prefs.reviewDay}`) })}
-        value={message}
-        maxLength={140}
-        onChangeText={setMessage}
-      />
+      <View style={styles.stack}>
+        <Text variant="body" weight="medium">
+          {t('practice.heart.weekly.heart')}
+        </Text>
+        <Choices
+          value={draft.feeling}
+          onChange={(feeling) => patch({ feeling })}
+          options={(['present', 'middle', 'hard'] as const).map((k) => ({ key: k, label: t(`practice.heart.weekly.${k}`) }))}
+        />
+        <Field
+          ref={chain.ref(3)}
+          accessibilityLabel={t('practice.heart.weekly.heartNoteLabel')}
+          placeholder={t('practice.heart.weekly.heartNotePlaceholder')}
+          value={draft.heartNote}
+          maxLength={HEART_LINE_MAX}
+          onChangeText={(heartNote) => patch({ heartNote })}
+          returnKeyType="next"
+          onSubmitEditing={chain.next(3)}
+        />
+      </View>
+      {messagesFull ? (
+        <View style={styles.stack}>
+          <Text variant="body" weight="medium">
+            {t('practice.heart.weekly.messageLabel')}
+          </Text>
+          <Text variant="small" tone="muted">
+            {t('practice.heart.weekly.messageFull', { max: SELF_MESSAGES_MAX })}
+          </Text>
+        </View>
+      ) : (
+        <NoteField
+          chain={chain}
+          index={4}
+          last
+          label={t('practice.heart.weekly.messageLabel')}
+          placeholder={t('practice.heart.weekly.messagePlaceholder')}
+          value={draft.message}
+          onChange={(message) => patch({ message })}
+          max={SELF_MESSAGE_MAX_LENGTH}
+        />
+      )}
       <Button size="lg" label={t('practice.heart.weekly.save')} onPress={save} />
     </>
   );
